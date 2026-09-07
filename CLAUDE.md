@@ -53,12 +53,16 @@ here NOW, and what is not yet:
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
-  `rows.ts` (the line, pair and gap node views), `editor.ts` (the view with
-  its plugins), `editor.css` (the surface's stylesheet, ported from
-  ../writer/src/style.css). Tests beside them.
+  `rows.ts` (the line, pair and gap node views), `rowKeys.ts` (the
+  gestures under a fence, as commands: Enter, Backspace, Delete, Tab, the
+  typed pipe), `editor.ts` (the view with its plugins), `editor.css` (the
+  surface's stylesheet, ported from ../writer/src/style.css). Tests beside
+  them; the command tests are markdown in, a caret, the command, markdown
+  and caret out.
 - `fixtures/` — the markdown the page opens with, copied from the export
-  mirror: Horace, Odes 1.1 (paired), and the Introduction of Pippa Passes
-  (a direction, then songs declared `⟨line⟩`).
+  mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
+  direction, then songs declared `⟨line⟩`), and Twelfth Night 1.1
+  (speakers and directions).
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything). In phase 1 it is the editor
   over a fixture, a line-numbering select, a file input, and the markdown
@@ -135,6 +139,20 @@ here NOW, and what is not yet:
   `--virtual-time-budget=4000` and `--screenshot`/`--dump-dom` renders the
   built page from `file://` and exits; the old `--headless` mode HUNG past
   120 s on the same page (MEASURED 2026-09-07) — wrap any run in a kill.
+- THE ROW IS THE UNIT under a fence, and every key makes, joins or leaves
+  a row — never a cell, never the block (`rowKeys.ts`, ahead of the base
+  keymap, which would split the fence at an empty row and join its first
+  line into the heading above). Enter splits a line, or a pair's caret cell
+  with the rest carried to a new row beneath; an empty last row is the way
+  out, to a paragraph below the block; an empty row mid-block is a stanza
+  break and a fresh row. A typed `|` in a line makes the pair at the caret
+  (MEASURED: the corpus holds two literal pipes in full-width rows, so the
+  gesture is the pair's); Backspace at the translation's start, or Delete at
+  the original's end, takes it out again. Backspace at a row's start deletes
+  a gap above, joins a line above, and only moves the caret to another
+  shape. Tab crosses the pipe, Shift-Tab back. Shift-Enter in a row is
+  Enter: a break inside a cell would be written as a space.
 - Not yet in phase 1: the fitted measure (`--vb-col` falls back to 520px),
-  keymaps and input rules for the fence family, folio labels in the gutter,
-  the landing mark, the note row's view.
+  input rules for the as-you-type transforms, folio labels in the gutter,
+  the landing mark, the note row's view and the exit from a note nested in
+  a row fence (today Enter there is the base keymap's).
