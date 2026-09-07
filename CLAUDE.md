@@ -219,7 +219,9 @@ here NOW, and what is not yet:
   marks, and an italic label ran on into the prose until the stored marks
   were cleared. Backspace straight after any rule undoes it
   (undoInputRule), which the current app did not have — its "type the
-  quote again" step is kept beside it. No as-you-type arm for the :::
+  quote again" step is kept beside it; accepted 2026-09-07 after a look
+  in Helium, as were Shift-Enter in a row being Enter and Tab in a
+  full-width row being consumed. No as-you-type arm for the :::
   family, as the current app has none. Not done: a URL finished with Enter
   inside a verse row stays bare (the row's Enter claims the key first).
 - Not yet in phase 1: the landing mark (deferred to phase 3 with the go-to
