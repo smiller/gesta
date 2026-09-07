@@ -71,7 +71,7 @@ here NOW, and what is not yet:
   BEFORE emphasis, so a `_` or `*` in an address is never a marker — `folio`,
   and `<u>` as a matched pair. Disabled: `escape`, `entity`, `html_inline`,
   `autolink`, `linkify`. `*`/`_` emphasis and `~~` are markdown-it's own,
-  CommonMark's flanking rules included — DECIDED by Sean 2026-09-07 over a
+  CommonMark's flanking rules included — settled 2026-09-07 over a
   port of the current app's regex passes (the plan's Status section has the
   measured price of each: 15 files against 9).
 - The serializer is this repository's own, not prosemirror-markdown's: the
