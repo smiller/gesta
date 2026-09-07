@@ -133,7 +133,8 @@ here NOW, and what is not yet:
   (`rowKeys.ts`): every row the selection touches is declared, or returned
   to the convention when all of them already are — over the selection,
   because a song is several lines. The chord is ⌃⌘I, "italic, but a
-  line" (Sean's choice, 2026-09-07). ⌃⌘N is RESERVED for "new" — a book, a
+  line" (Sean's choice, 2026-09-07; MEASURED by him in Helium the same
+  day: it reaches the page, and toggles on and off). ⌃⌘N is RESERVED for "new" — a book, a
   sub-page, a tagged entry — in the phase 3 chrome (Sean, the same day).
   Free ⌃⌘ letters by the current app's table and macOS's defaults, after
   these two: A E O P U V X Y Z; whether Helium passes one through is
