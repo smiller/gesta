@@ -8,6 +8,7 @@ import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
+import { idbEntryStore } from "./store/store.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -55,3 +56,16 @@ const q = new URLSearchParams(location.search);
 if (q.get("fixture") && fixtures[q.get("fixture")!]) fixture.value = q.get("fixture")!;
 if (q.get("interval") !== null) interval.value = q.get("interval")!;
 open(fixtures[fixture.value]);
+/* PHASE 2's PROBE, until the bridge replaces it: does a row written from
+   file:// survive a relaunch? `?store=write` writes one row keyed by the
+   moment; every load then writes the row count on the root as data-store,
+   for a headless dump to read. */
+const root = document.documentElement;
+const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; console.log("probe", s); };
+stage("start");
+const store = idbEntryStore();
+const wrote = q.get("store") === "write" ? store.set("probe/" + Date.now(), "probe").then(() => stage("set")) : Promise.resolve();
+wrote.then(() => store.all()).then(
+  (rows) => { stage("all"); root.dataset.store = String(rows.length); },
+  (err) => { stage("fail"); root.dataset.store = "failed: " + err; },
+);

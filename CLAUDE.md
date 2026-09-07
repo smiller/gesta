@@ -50,6 +50,9 @@ here NOW, and what is not yet:
   `node tools/corpus.ts [dir]`; writes `tools/out/corpus-report.txt`.
   Phase 0's gate: nothing in later phases is worth building until it is
   green over the corpus.
+- `tools/helium-probe.mjs` — the built page opened in headless Helium by
+  executable path, one persistent profile, one launch per query string
+  given; prints the root's `data-store`, `data-probe` and the console.
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
@@ -272,6 +275,23 @@ here NOW, and what is not yet:
   ledger, the index debt and the emptiness memo stay the chrome's, in
   phase 3. The rescue text a stale write offers for copying is the refused
   markdown itself; the current app converted its HTML first.
-- THE INDEXEDDB ADAPTER IS NOT PORTED: Dexie fills the adapter slot next
-  (the plan's inventory), behind the same five-call contract the memory
-  adapter and the tests pin. Until it lands nothing persists.
+- THE INDEXEDDB ADAPTER IS DEXIE'S (`dexieKeyedStore`, store.ts), behind
+  the same five-call contract as the memory adapter; the contract tests and
+  the entry-store tests run over BOTH, Dexie under fake-indexeddb, the
+  "other tab" over Dexie being a second connection to the same database.
+  One database per store, as the current app keeps. The hand-rolled
+  adapter's four measured failures (the cached handle, the reopen, the
+  blocked open, the versionchange) are Dexie 4's own concerns: auto-open, a
+  close on versionchange, a reopen on the next access.
+- MEASURED 2026-09-07 in Helium 0.14.8.1, headless by executable path
+  (`node tools/helium-probe.mjs --fresh '?store=write' '' '?store=write'`,
+  one persistent profile under tools/out): the write run reports 1 row, the
+  relaunch reads 1 back, the next write makes 2 — a Dexie row written from
+  file:// survives a relaunch. The page's probe is `?store=write` and the
+  root's `data-store` / `data-probe` (main.ts), until the bridge replaces
+  it. HEADLESS DUMPS CANNOT ANSWER A STORAGE QUESTION: `--dump-dom` under
+  `--virtual-time-budget` dumps before IndexedDB's real-time I/O settles
+  (one read run showed 0, the others no attribute at all), and `--timeout`
+  never exited; playwright-core 1.63.0 (decision 9's harness) drives Helium
+  and waits for the attribute. Dexie 4.4.5, fake-indexeddb 6.2.5 and
+  playwright-core 1.63.0 are pinned exact.

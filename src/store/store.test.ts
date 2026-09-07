@@ -1,21 +1,45 @@
 // The memory adapter, the wrappers and the entry ledger, ported 2026-09-07
 // from ../writer/src/js/store.test.mjs; the stored text is markdown here.
-import { test, expect } from "vitest";
+// The adapter contract and the entry store run over BOTH adapters — the
+// memory one and Dexie over fake-indexeddb — so the fake cannot be green
+// where the shipped store is not.
+import "fake-indexeddb/auto";
+import { test, expect, describe } from "vitest";
 import {
-  baseLedger, staleWriteErr, isStale, memKeyedStore,
+  baseLedger, staleWriteErr, isStale, memKeyedStore, dexieKeyedStore, entryStoreOver,
   memEntryStore, memBackupStore, memImageStore,
   ENTRY_DB, IMG_DB, BACKUP_DB,
+  type KeyedStore, type EntryStore, type EntryRow,
 } from "./store.ts";
 
 interface Row { k: string; n?: number; x?: number }
 const stale = (err: unknown) => { expect(isStale(err)).toBe(true); return true; };
+/* a fresh database per store, so no test reads another's rows */
+let dbs = 0;
+const adapters: [string, <R extends object>(keyField: keyof R & string) => KeyedStore<R>][] = [
+  ["mem", (keyField) => memKeyedStore(keyField)],
+  ["dexie", (keyField) => dexieKeyedStore("test." + (++dbs), "rows", keyField)],
+];
+/* an entry store and the "other tab" beside it: over Dexie the other tab is
+   a SECOND connection to the same database, as it is live */
+interface Tabs { s: EntryStore; foreign(key: string, md: string): Promise<void> }
+const entryStores: [string, () => Tabs][] = [
+  ["mem", () => { const m = memEntryStore(); return { s: m, foreign: m.foreignSet }; }],
+  ["dexie", () => {
+    const name = "test.entries." + (++dbs);
+    const other = dexieKeyedStore<EntryRow>(name, "entries", "key");
+    return { s: entryStoreOver(dexieKeyedStore<EntryRow>(name, "entries", "key")),
+             foreign: (key, md) => other.put({ key, md }) };
+  }],
+];
 
 test("the database names sit outside page750.*", () => {
   for (const n of [ENTRY_DB, IMG_DB, BACKUP_DB]) expect(n.startsWith("page750")).toBe(false);
 });
 
-test("memKeyedStore: records cross the boundary as copies, both directions", async () => {
-  const s = memKeyedStore<Row>("k");
+describe.each(adapters)("keyed store over %s", (_name, make) => {
+test("records cross the boundary as copies, both directions", async () => {
+  const s = make<Row>("k");
   const rec: Row = { k: "a", n: 1 };
   await s.put(rec);
   rec.n = 999;
@@ -25,8 +49,8 @@ test("memKeyedStore: records cross the boundary as copies, both directions", asy
   expect((await s.get("a"))!.n).toBe(1);
 });
 
-test("memKeyedStore: all() is ascending-key copies", async () => {
-  const s = memKeyedStore<Row>("k");
+test("all() is ascending-key copies", async () => {
+  const s = make<Row>("k");
   await s.put({ k: "b" });
   await s.put({ k: "a" });
   const rows = await s.all();
@@ -35,22 +59,22 @@ test("memKeyedStore: all() is ascending-key copies", async () => {
   expect((await s.get("a"))!.x).toBe(undefined);
 });
 
-test("memKeyedStore: a rekeyed put lands under the record's own key, as keyPath files it", async () => {
-  const s = memKeyedStore<Row>("k");
+test("a rekeyed put lands under the record's own key, as keyPath files it", async () => {
+  const s = make<Row>("k");
   await s.put({ k: "a", n: 1 });
   await s.update("a", () => ({ put: { k: "b", n: 2 } }));
   expect((await s.get("b"))!.n).toBe(2);
   expect((await s.get("a"))!.n).toBe(1);
 });
 
-test("memKeyedStore: a throwing decide becomes a rejection carrying the thrown error", async () => {
-  const s = memKeyedStore<Row>("k");
+test("a throwing decide becomes a rejection carrying the thrown error", async () => {
+  const s = make<Row>("k");
   const boom = new Error("corrupt record");
   await expect(s.update("a", () => { throw boom; })).rejects.toBe(boom);
 });
 
-test("memKeyedStore: a record without its key field is refused, as keyPath refuses it", async () => {
-  const s = memKeyedStore<Row>("k");
+test("a record without its key field is refused, as keyPath refuses it", async () => {
+  const s = make<Row>("k");
   await expect(s.put({ n: 1 } as unknown as Row)).rejects.toMatchObject({ name: "DataError" });
   expect(await s.get("undefined")).toBe(null);
   await s.put({ k: "a", n: 1 });
@@ -58,8 +82,8 @@ test("memKeyedStore: a record without its key field is refused, as keyPath refus
   expect((await s.get("a"))!.n).toBe(1);
 });
 
-test("memKeyedStore: update carries out put, del, and verdict-only decisions", async () => {
-  const s = memKeyedStore<Row>("k");
+test("update carries out put, del, and verdict-only decisions", async () => {
+  const s = make<Row>("k");
   await s.put({ k: "a", n: 1 });
   let verdict = await s.update("a", (row) => ({ put: { k: "a", n: row!.n! + 1 } }));
   expect(verdict!.put!.n).toBe(2);
@@ -74,6 +98,7 @@ test("memKeyedStore: update carries out put, del, and verdict-only decisions", a
   expect(await s.get("a")).toBe(null);
   verdict = await s.update("a", (row) => ({ sawNull: row === null }));
   expect(verdict!.sawNull).toBe(true);
+});
 });
 
 test("memEntryStore: foreignSet hands back the adapter's promise", async () => {
@@ -112,44 +137,45 @@ test("baseLedger: unseen is null before sawAll, empty-string after", () => {
   expect(b.base("never")).toBe("");
 });
 
-test("memEntryStore: a write with no base lands unjudged", async () => {
-  const s = memEntryStore();
+describe.each(entryStores)("entry store over %s", (_name, open) => {
+test("a write with no base lands unjudged", async () => {
+  const { s, foreign } = open();
   await s.set("2026-01-01", "a");
   expect(await s.get("2026-01-01")).toEqual({ key: "2026-01-01", md: "a" });
 });
 
-test("memEntryStore: a write on a moved base is refused, not landed", async () => {
-  const s = memEntryStore();
+test("a write on a moved base is refused, not landed", async () => {
+  const { s, foreign } = open();
   await s.set("k", "mine");
-  await s.foreignSet("k", "theirs");
+  await foreign("k", "theirs");
   await expect(s.set("k", "mine edited")).rejects.toMatchObject({ stale: true, stored: "theirs", refused: "mine edited" });
   expect((await s.get("k"))!.md).toBe("theirs");
 });
 
-test("memEntryStore: get on a missing key bases it, so a foreign fill refuses", async () => {
-  const s = memEntryStore();
+test("get on a missing key bases it, so a foreign fill refuses", async () => {
+  const { s, foreign } = open();
   expect(await s.get("k")).toBe(null);
-  await s.foreignSet("k", "theirs");
+  await foreign("k", "theirs");
   await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
 });
 
-test("memEntryStore: all() bases every key, known-absent included", async () => {
-  const s = memEntryStore();
+test("all() bases every key, known-absent included", async () => {
+  const { s, foreign } = open();
   await s.all();
-  await s.foreignSet("k", "theirs");
+  await foreign("k", "theirs");
   await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
 });
 
-test("memEntryStore: del is judged like a write", async () => {
-  const s = memEntryStore();
+test("del is judged like a write", async () => {
+  const { s, foreign } = open();
   await s.set("k", "mine");
-  await s.foreignSet("k", "theirs");
+  await foreign("k", "theirs");
   await expect(s.del("k")).rejects.toMatchObject({ stale: true, stored: "theirs", refused: "" });
   expect((await s.get("k"))!.md).toBe("theirs");
 });
 
-test("memEntryStore: del forgets the base, and a re-set lands", async () => {
-  const s = memEntryStore();
+test("del forgets the base, and a re-set lands", async () => {
+  const { s, foreign } = open();
   await s.set("k", "mine");
   await s.del("k");
   expect(await s.get("k")).toBe(null);
@@ -157,22 +183,23 @@ test("memEntryStore: del forgets the base, and a re-set lands", async () => {
   expect((await s.get("k"))!.md).toBe("again");
 });
 
-test("memEntryStore: a landed write moves the base, so the same handle continues", async () => {
-  const s = memEntryStore();
+test("a landed write moves the base, so the same handle continues", async () => {
+  const { s, foreign } = open();
   await s.get("k");
   await s.set("k", "one");
   await s.set("k", "two");
   expect((await s.get("k"))!.md).toBe("two");
 });
 
-test("memEntryStore: all() is ascending-key fresh copies", async () => {
-  const s = memEntryStore();
+test("all() is ascending-key fresh copies", async () => {
+  const { s, foreign } = open();
   await s.set("b", "2");
   await s.set("a", "1");
   const rows = await s.all();
   expect(rows.map((r) => r.key)).toEqual(["a", "b"]);
   rows[0].md = "mutated";
   expect((await s.get("a"))!.md).toBe("1");
+});
 });
 
 test("memImageStore: keyed rows, null on a miss", async () => {

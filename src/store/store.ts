@@ -2,11 +2,15 @@
    adapter, and the domain stores, each spelled ONCE over whichever adapter it
    is handed — so the fake the suite runs is the same domain code as the
    store the app ships. Ported 2026-09-07 from ../writer/src/js/store.mjs.
-   Not ported: the hand-rolled IndexedDB adapter (Dexie takes that slot, the
-   plan's inventory) and the cutover flag store (the successor has no
-   localStorage era to cut over from: data arrives by import). Names sit
-   OUTSIDE page750.* — every file:// page shares one storage origin (MEASURED
+   The IndexedDB adapter is Dexie's (the plan's inventory) in place of the
+   hand-rolled one: the cached handle, the reopen after a close, the blocked
+   open and the versionchange from another tab were four measured failures
+   there, and Dexie 4 answers each (auto-open, a close on versionchange, a
+   reopen on the next access). Not ported: the cutover flag store — the
+   successor has no localStorage era to cut over from. Names sit OUTSIDE
+   page750.* — every file:// page shares one storage origin (MEASURED
    2026-09-07 in Helium). */
+import Dexie, { type Table } from "dexie";
 
 /* THE ADAPTER CONTRACT, five calls every adapter answers identically:
    get(key)→record|null, put(record), del(key), all()→ascending-key records,
@@ -70,6 +74,30 @@ export function memKeyedStore<R extends object>(keyField: keyof R & string): Key
   };
 }
 
+/* the same contract over IndexedDB, one Dexie database per store as the
+   current app keeps one database per store. `update` is one readwrite
+   transaction holding the read and the write: the engine serializes
+   overlapping readwrite transactions on a store, so a second tab's decide
+   reads the winner's record. A decide's own throw aborts the transaction
+   and rejects with that error, nothing written. */
+export function dexieKeyedStore<R extends object>(dbName: string, storeName: string, keyField: keyof R & string): KeyedStore<R> {
+  const db = new Dexie(dbName);
+  db.version(1).stores({ [storeName]: keyField });
+  const table: Table<R, string> = db.table(storeName);
+  return {
+    get: (key) => table.get(key).then((row) => row ?? null),
+    put: (record) => table.put(record).then(() => {}),
+    del: (key) => table.delete(key),
+    all: () => table.toArray(),
+    update: (key, decide) => db.transaction("rw", table, async () => {
+      const verdict = decide((await table.get(key)) ?? null);
+      if (verdict && verdict.put) await table.put(verdict.put);
+      else if (verdict && verdict.del) await table.delete(key);
+      return verdict;
+    }),
+  };
+}
+
 export const IMG_DB = "gesta.images";
 export const IMG_STORE = "images";
 export interface ImageRow { id: string; data: string }
@@ -83,6 +111,7 @@ export function imageStoreOver(store: KeyedStore<ImageRow>): ImageStore {
     set: (id, data) => store.put({ id, data }),
   };
 }
+export function idbImageStore(): ImageStore { return imageStoreOver(dexieKeyedStore<ImageRow>(IMG_DB, IMG_STORE, "id")); }
 export function memImageStore(): ImageStore { return imageStoreOver(memKeyedStore<ImageRow>("id")); }
 
 export const ENTRY_DB = "gesta.entries";
@@ -185,6 +214,7 @@ export interface MemEntryStore extends EntryStore {
   /* a second tab's write: it lands in the rows without this handle seeing it */
   foreignSet(key: string, md: string): Promise<void>;
 }
+export function idbEntryStore(): EntryStore { return entryStoreOver(dexieKeyedStore<EntryRow>(ENTRY_DB, ENTRY_STORE, "key")); }
 export function memEntryStore(): MemEntryStore {
   const adapter = memKeyedStore<EntryRow>("key");
   return { ...entryStoreOver(adapter), foreignSet: (key, md) => adapter.put({ key, md }) };
@@ -237,4 +267,5 @@ export function backupStoreOver(store: KeyedStore<BackupRow>): BackupStore {
     setArchives: (a) => setSlot("archives", a),
   };
 }
+export function idbBackupStore(): BackupStore { return backupStoreOver(dexieKeyedStore<BackupRow>(BACKUP_DB, BACKUP_STORE, "k")); }
 export function memBackupStore(): BackupStore { return backupStoreOver(memKeyedStore<BackupRow>("k")); }
