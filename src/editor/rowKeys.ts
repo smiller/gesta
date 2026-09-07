@@ -216,8 +216,10 @@ export const toggleDeclaredLine: Command = (state, dispatch) => {
   return true;
 };
 
+/* toggleDeclaredLine has NO KEY YET: the chord is Sean's to choose, and
+   ⌃⌘N — bound here for an hour on 2026-09-07 — is reserved for "new" (a
+   book, a sub-page, a tagged entry) in the phase 3 chrome */
 export const rowKeymap = keymap({
-  "Ctrl-Mod-n": toggleDeclaredLine,
   Enter: enterInRow,
   "Shift-Enter": enterInRow,
   Backspace: backspaceInRow,

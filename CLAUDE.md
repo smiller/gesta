@@ -129,11 +129,15 @@ here NOW, and what is not yet:
   MEASURED: no `⟨word⟩` of any kind exists in the corpus. The model carries
   it as `kind` on a line or pair node (null = the convention reads the
   marks); the serializer writes it flush at the row's head; the numbering
-  walk asks it before the marks. The gesture is ⌃⌘N (`rowKeys.ts`,
-  toggleDeclaredLine): every row the selection touches is declared, or
-  returned to the convention when all of them already are — over the
-  selection, because a song is several lines. ⌃⌘N is free in the current
-  app's shortcut table.
+  walk asks it before the marks. The gesture is `toggleDeclaredLine`
+  (`rowKeys.ts`): every row the selection touches is declared, or returned
+  to the convention when all of them already are — over the selection,
+  because a song is several lines. IT HAS NO KEY YET: a chord is
+  user-facing and Sean's to choose. ⌃⌘N is RESERVED for "new" — a book, a
+  sub-page, a tagged entry — in the phase 3 chrome (Sean, 2026-09-07).
+  Free ⌃⌘ letters by the current app's table and macOS's defaults:
+  A E I O P U V X Y Z; whether Helium passes one through is answered only
+  by pressing it there.
 - The line number is a NODE DECORATION (`lineNumbers.ts`), recomputed whole
   from position on every change of the document and drawn by the stylesheet
   from `data-line` — never in the document, never stored. The gutter is
