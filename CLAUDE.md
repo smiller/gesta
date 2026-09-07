@@ -53,7 +53,7 @@ here NOW, and what is not yet:
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
-  `rows.ts` (the line, pair and gap node views), `rowKeys.ts` (the
+  `rows.ts` (the line, pair, gap and note node views), `rowKeys.ts` (the
   gestures under a fence, as commands: Enter, Backspace, Delete, Tab, the
   typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
   measuring pass and its scheduling as a plugin view), `folios.ts` (the
@@ -224,6 +224,11 @@ here NOW, and what is not yet:
   full-width row being consumed. No as-you-type arm for the :::
   family, as the current app has none. Not done: a URL finished with Enter
   inside a verse row stays bare (the row's Enter claims the key first).
-- Not yet in phase 1: the landing mark (deferred to phase 3 with the go-to
-  bar that is its only trigger), the note row's view and the exit from a
-  note nested in a row fence (today Enter there is the base keymap's).
+- A NOTE THAT IS A ROW takes the family's exit: Enter inside it is the
+  note's (the base keymap splits its paragraph), and the second Enter on
+  its empty last paragraph steps out into a ROW of the fence — paired
+  where the block holds a pair, full-width where it does not, never a bare
+  paragraph. A note emptied by the exit goes with it. Elsewhere a note's
+  exit is the base keymap's lift, which lands a paragraph after the note.
+- PHASE 1 CLOSED 2026-09-07, with one item moved: the landing mark waits
+  for phase 3 and the go-to bar that is its only trigger.

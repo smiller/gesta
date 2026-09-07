@@ -8,7 +8,8 @@ import { EditorState, TextSelection, NodeSelection, type Command } from "prosemi
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { schema } from "../model/schema.ts";
-import { enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine } from "./rowKeys.ts";
+import { baseKeymap } from "prosemirror-commands";
+import { enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
 
 /* a state with the caret placed `offset` characters into the first text
    holding `needle` (its end when omitted) */
@@ -174,4 +175,27 @@ test("⌃⌘N declares the selection's rows lines, and returns them to the conve
   expect(md(run(toggleDeclaredLine, sel2))).toBe("::: verse\n⟨line⟩*a*\n⟨line⟩*b*\n:::");
   expect(refuses(toggleDeclaredLine, at("prose *here*", "here"))).toBe(true);
   expect(refuses(toggleDeclaredLine, at("::: verse\na\n::: note\ngloss\n:::\n:::", "gloss"))).toBe(true);
+});
+
+test("Enter inside a nested note is the note's; the second Enter on its empty last paragraph exits to a ROW", () => {
+  const paired = at("::: verse\na | b\n::: note\ngloss\n:::\nc | d\n:::", "gloss");
+  expect(refuses(enterInRow, paired)).toBe(true);
+  expect(refuses(exitNoteRow, paired)).toBe(true);
+  const split = run(baseKeymap.Enter, paired);
+  expect(split.doc.firstChild!.child(1).childCount).toBe(2);
+  expect(split.doc.firstChild!.childCount).toBe(3);
+  const out = run(exitNoteRow, split);
+  expect(md(out)).toBe("::: verse\na | b\n::: note\ngloss\n:::\n |\nc | d\n:::");
+  expect(caret(out)).toBe("cell:|");
+  /* the row it mints matches the block it lands in: pipe-less, a line */
+  const plain = run(exitNoteRow, run(baseKeymap.Enter, at("::: verse\nalpha\n::: note\ngloss\n:::\nbeta\n:::", "gloss")));
+  expect(md(plain)).toBe("::: verse\nalpha\n::: note\ngloss\n:::\n\nbeta\n:::");
+  expect(caret(plain)).toBe("line:|");
+  /* a note emptied by the exit goes with it */
+  const only = at("::: prose\na | b\n::: note\nx\n:::\n:::", "x");
+  const emptied = only.apply(only.tr.delete(only.selection.from - 1, only.selection.from));
+  const gone = run(exitNoteRow, emptied);
+  expect(md(gone)).toBe("::: prose\na | b\n |\n:::");
+  /* not the last paragraph, not empty, not in a row fence: not this command's */
+  expect(refuses(exitNoteRow, at("::: note\ngloss\n:::", "gloss"))).toBe(true);
 });

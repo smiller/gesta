@@ -10,6 +10,7 @@
    empty row, and joinBackward would join the block's first line into the
    heading above it (both have inline content, so the join is legal). */
 import { type Command, TextSelection, NodeSelection, Selection, type Transaction } from "prosemirror-state";
+import { chainCommands } from "prosemirror-commands";
 import { Fragment, type Node, type ResolvedPos } from "prosemirror-model";
 import { keymap } from "prosemirror-keymap";
 import { schema } from "../model/schema.ts";
@@ -118,6 +119,36 @@ export const enterInRow: Command = (state, dispatch) => {
   return true;
 };
 
+/* THE EXIT FROM A NOTE THAT IS A ROW. Inside a nested note Enter is the
+   note's — the base keymap splits its paragraph — and the way out is the
+   family's second Enter on the empty last paragraph. The exit lands in the
+   unit its new parent is written in: under a row fence that is a ROW,
+   paired where the block holds a pair and full-width where it does not,
+   never a bare paragraph (which the markdown arm would read as a
+   full-width row, and which a pipe-less block would take as two empty
+   cells and go wide). A note left with nothing in it goes with the exit.
+   Elsewhere a note's exit is the base keymap's lift, which lands a
+   paragraph after the note. */
+export const exitNoteRow: Command = (state, dispatch) => {
+  const sel = state.selection;
+  if (!sel.empty) return false;
+  const $c = sel.$from;
+  if ($c.depth < 2 || $c.parent.type !== N.paragraph || $c.parent.content.size) return false;
+  const note = $c.node(-1), block = $c.node(-2);
+  if (note.type !== N.note || (block.type !== N.verse && block.type !== N.prose)) return false;
+  if ($c.index(-1) !== note.childCount - 1) return false;
+  const tr = state.tr;
+  const after = $c.after(-1);
+  if (note.childCount === 1) tr.delete($c.before(-1), after);
+  else tr.delete($c.before(), $c.after());
+  const at = tr.mapping.map(after, -1);
+  let paired = false;
+  block.forEach((row) => { if (row.type === N.pair) paired = true; });
+  tr.insert(at, paired ? pair(null, Fragment.empty, Fragment.empty) : N.line.create());
+  if (dispatch) dispatch(caretAt(tr, at + 1 + (paired ? 1 : 0)));
+  return true;
+};
+
 /* a typed pipe in a line: the text after the caret becomes its translation.
    In a cell a pipe is a pipe (the serializer escapes it), and in prose it
    is not this command's. */
@@ -220,7 +251,7 @@ export const toggleDeclaredLine: Command = (state, dispatch) => {
    for an hour that day, is reserved for "new" in the phase 3 chrome. */
 export const rowKeymap = keymap({
   "Ctrl-Mod-i": toggleDeclaredLine,
-  Enter: enterInRow,
+  Enter: chainCommands(enterInRow, exitNoteRow),
   "Shift-Enter": enterInRow,
   Backspace: backspaceInRow,
   Delete: deleteInRow,

@@ -43,8 +43,24 @@ class GapView implements NodeView {
   ignoreMutation(): boolean { return true; }
 }
 
+/* a note — a footnote, or the argument at a book's head — wherever it sits:
+   a block of the document, or a ROW of a verse or prose fence, which is how
+   a footnote interrupts a text without closing its count. One view for
+   both: the row shape is the block's own, and the seat is for the copy
+   button the current app hangs on a hovered note. */
+class NoteView implements NodeView {
+  dom: HTMLElement;
+  contentDOM: HTMLElement;
+  constructor() {
+    this.dom = this.contentDOM = document.createElement("div");
+    this.dom.className = "note";
+  }
+  update(node: Node): boolean { return node.type.name === "note"; }
+}
+
 export const rowNodeViews = {
   line: (node: Node): NodeView => new RowView(node),
   pair: (node: Node): NodeView => new RowView(node),
   gap: (): NodeView => new GapView(),
+  note: (): NodeView => new NoteView(),
 };
