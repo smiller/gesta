@@ -2,8 +2,10 @@
 
 Gesta rebuilt as a project with a build step: the editor on ProseMirror, the
 chrome on Svelte 5, the output still ONE `index.html` that opens from
-`file://`. The plan, its decisions and its measurements are
+`file://`. The plan and phase 0's record are
 `../writer/docs/plans/2026-09-07-feat-successor-app-prosemirror-svelte-plan.md`;
+from phase 1 on the decisions and measurements are recorded HERE, in the
+dated sections below, and in this repository's history;
 the running app is `../writer`, and it stays the running app until this one
 imports the whole export and has been used for real entries.
 
