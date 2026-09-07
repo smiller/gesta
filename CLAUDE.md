@@ -64,6 +64,15 @@ here NOW, and what is not yet:
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
   and caret out.
+- `src/store/` — storage, no DOM: `keys.ts` (what an entry key IS: the day
+  and namespace vocabulary, the hash and its highlight payload, `byName`),
+  `names.ts` (what a name may be on DISK: `pageName`, the byte budgets,
+  `entryFile` and its inverse `importTarget`, `collidingFile`), `store.ts`
+  (the keyed-store adapter contract, the memory adapter, the entry store
+  with its stale-write refusal, the image and backup-handle stores),
+  `entries.ts` (the entry layer: the cache, the one write path, the per-key
+  chain, the warm — a factory over an injected store and notices). Tests
+  beside them, ported from the current app's node suites.
 - `fixtures/` — the markdown the page opens with, copied from the export
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
   direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
@@ -232,3 +241,37 @@ here NOW, and what is not yet:
   exit is the base keymap's lift, which lands a paragraph after the note.
 - PHASE 1 CLOSED 2026-09-07, with one item moved: the landing mark waits
   for phase 3 and the go-to bar that is its only trigger.
+
+## Phase 2 decisions (2026-09-07)
+
+- THE PORTED MODULES are keys, names, store and entries (`src/store/`),
+  from ../writer/src/js, with their node tests re-spelled for Vitest: 67
+  tests, every case the four suites pinned except the ones below that have
+  no ground here. The comments kept are the decisions, measurements and
+  failures behind each rule; the cross-references to the flat scope and the
+  fragments are not.
+- STORAGE NAMES: the prefix is `gesta.` — `gesta.v1.` on localStorage,
+  `gesta.entries`, `gesta.images` and `gesta.backup` for the databases —
+  outside `page750.*` as decision 8 requires. No cutover database: there is
+  nothing to cut over from.
+- THE STORED TEXT IS MARKDOWN, the field `md` where the current app stores
+  `html`: the model's own form (phase 0), so export is a file write, import
+  is a parse, and the corpus round trip IS the storage format. The cost is a
+  parse per open and a serialize per save.
+- NO LOCALSTORAGE ERA. entries.mjs carries a device through a dual-write
+  period into the store being authoritative; the successor starts there, so
+  the pre-cutover arms — `cutoverEntries`, `reclaimLocalEntries`,
+  `confirmStored`, `eachStoredEntryKey`, `migrated`, the flag store — are
+  not ported. What is: the cache, `setEntry`/`removeEntry`, the per-key
+  write chain with the stale arm that puts the cache back (guarded by the
+  removal counter), `primeEntry`, and the warm with its read-failure flag
+  and held error.
+- THE BARE GLOBALS BECOME AN INTERFACE: `entryLayer(store, notices)` is a
+  factory, and `EntryNotices` (landed, removed, stuck, stuckIdle) is the
+  enacted list of what the layer tells the chrome — the save-failure
+  ledger, the index debt and the emptiness memo stay the chrome's, in
+  phase 3. The rescue text a stale write offers for copying is the refused
+  markdown itself; the current app converted its HTML first.
+- THE INDEXEDDB ADAPTER IS NOT PORTED: Dexie fills the adapter slot next
+  (the plan's inventory), behind the same five-call contract the memory
+  adapter and the tests pin. Until it lands nothing persists.
