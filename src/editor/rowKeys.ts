@@ -216,7 +216,7 @@ export const toggleDeclaredLine: Command = (state, dispatch) => {
   return true;
 };
 
-/* ⌃⌘I, "italic, but a line" — Sean's choice, 2026-09-07. ⌃⌘N, bound here
+/* ⌃⌘I, "italic, but a line" — chosen 2026-09-07. ⌃⌘N, bound here
    for an hour that day, is reserved for "new" in the phase 3 chrome. */
 export const rowKeymap = keymap({
   "Ctrl-Mod-i": toggleDeclaredLine,

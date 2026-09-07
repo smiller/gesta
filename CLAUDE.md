@@ -133,9 +133,9 @@ here NOW, and what is not yet:
   (`rowKeys.ts`): every row the selection touches is declared, or returned
   to the convention when all of them already are — over the selection,
   because a song is several lines. The chord is ⌃⌘I, "italic, but a
-  line" (Sean's choice, 2026-09-07; MEASURED by him in Helium the same
-  day: it reaches the page, and toggles on and off). ⌃⌘N is RESERVED for "new" — a book, a
-  sub-page, a tagged entry — in the phase 3 chrome (Sean, the same day).
+  line" (chosen 2026-09-07; MEASURED in Helium the same day: it reaches
+  the page, and toggles on and off). ⌃⌘N is RESERVED for "new" — a book, a
+  sub-page, a tagged entry — in the phase 3 chrome (decided the same day).
   Free ⌃⌘ letters by the current app's table and macOS's defaults, after
   these two: A E O P U V X Y Z; whether Helium passes one through is
   answered only by pressing it there.
@@ -180,7 +180,7 @@ here NOW, and what is not yet:
   330.8, translations 399.8, gap 43.2, frame 62.2); the entry fits at
   839px with a 332px original column, and under a narrower window the cap
   alone moves it — headless Helium's innerWidth is 6px under the window
-  size it was given. MEASURED by Sean in Helium the same day: typing
+  size it was given. MEASURED in Helium, by hand, the same day: typing
   "and on" repeatedly into both cells of Odes 1.1's first line widened the
   columns keystroke by keystroke until the sixth, where the entry met the
   cap and the row wrapped — the grow side, which no test can prove.
@@ -193,14 +193,15 @@ here NOW, and what is not yet:
   mid-paragraph lands its label on the third visual line of one with no
   measurement (MEASURED 2026-09-07 in headless Helium over Witchcraft 3:
   "p. 61" and "p. 62" beside the lines their markers sit in, the tick at
-  the word; Sean, in Helium the same day: plausible). The plugin's whole
+  the word; looked at in Helium the same day: plausible). The plugin's whole
   job is the `foliopage` class on the root,
   set where a folio sits outside every note. The gutter column is ONE
   declaration for verse numbers and folios.
 - DATA REPAIRED 2026-09-07: the Tey and Allingham shelves' leaf markers,
   1,070 in 396 files, taken out by
   ../writer/docs/plans/2026-09-07-repair-folios-fiction.py over a copy in
-  export layout (~/Desktop/repair4) and imported by Sean (890 entries).
+  export layout (~/Desktop/repair4) and imported the same day (890
+  entries, 398 files backed up).
   Fiction prose does not want folio numbers, and MEASURED before the
   repair those shelves carried them partially — one per chapter opening
   in The Man in the Queue, under two a file across Allingham. The plan's
