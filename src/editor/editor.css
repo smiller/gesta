@@ -6,9 +6,9 @@
    `.versepage` sits on the root rather than on body, set by the plugin
    exactly where the document numbers its own lines. The measurements the
    original's comments carry (the 4ch + 1em gutter, the 54px column, the
-   2.3 line-height that baselines the number) are kept as measured; the
-   fitted measure (--vb-col) is phase 1 work still to come, so the 520px
-   fallback is what every paired block gets today. */
+   2.3 line-height that baselines the number) are kept as measured. The
+   520px track is the fallback for a detached parse; fit.ts writes the
+   measured --par-w and --vb-col on the root. */
 :root {
   --bg: #f4f7ec;
   --ink: #1a2418;
@@ -89,6 +89,13 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   grid-template-columns: minmax(0, var(--vb-col, 520px)) 1fr;
   gap: 0 2.4em;
 }
+/* THE MEASURING PASS (fit.ts): nothing is pulled and every track is
+   intrinsic, so each cell reports the width it would take unwrapped and the
+   entry's own box reports the prose measure it would have with no block on
+   it. Applied and removed inside one synchronous call. */
+.page.fitting:has(> .verse > .vpair) { margin-left: 0; margin-right: 0; }
+.page.fitting .verse:has(> .vpair) { width: max-content; }
+.page.fitting .verse > .vpair { grid-template-columns: max-content max-content; }
 /* an empty row is still a row */
 .page .verse > .vrow { min-height: 1.2em; }
 /* a stanza break carries the blank line's height and nothing else */

@@ -55,7 +55,9 @@ here NOW, and what is not yet:
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
   `rows.ts` (the line, pair and gap node views), `rowKeys.ts` (the
   gestures under a fence, as commands: Enter, Backspace, Delete, Tab, the
-  typed pipe), `editor.ts` (the view with its plugins), `editor.css` (the
+  typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
+  measuring pass and its scheduling as a plugin view), `editor.ts` (the
+  view with its plugins), `editor.css` (the
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
   and caret out.
@@ -152,7 +154,21 @@ here NOW, and what is not yet:
   a gap above, joins a line above, and only moves the caret to another
   shape. Tab crosses the pipe, Shift-Tab back. Shift-Enter in a row is
   Enter: a break inside a cell would be written as a space.
-- Not yet in phase 1: the fitted measure (`--vb-col` falls back to 520px),
-  input rules for the as-you-type transforms, folio labels in the gutter,
+- THE FITTED MEASURE is ported whole (`fit.ts`, from
+  03-the-fitted-measure.js, whose comments hold the measurements behind
+  every constant): one column edge per entry, written as `--par-w` and
+  `--vb-col` on the editor root, outside the document. The arithmetic is a
+  pure function pinned in fit.test.ts with the current app's measured
+  cases; the pass and the scheduling (a grow per keystroke gated on the
+  caret's row having spilled, a settle 500 ms after typing stops and on
+  resize, one measurement per frame) are DOM and are looked at in Helium.
+  The measured inputs are written as `data-fit` on the root, so a headless
+  dump can compare them against the answer. MEASURED 2026-09-07, Odes 1.1:
+  inputs identical at 1400px and 900px windows (floor 712, originals
+  330.8, translations 399.8, gap 43.2, frame 62.2); the entry fits at
+  839px with a 332px original column, and under a narrower window the cap
+  alone moves it — headless Helium's innerWidth is 6px under the window
+  size it was given.
+- Not yet in phase 1: input rules for the as-you-type transforms, folio labels in the gutter,
   the landing mark, the note row's view and the exit from a note nested in
   a row fence (today Enter there is the base keymap's).

@@ -9,6 +9,7 @@ import { keymap } from "prosemirror-keymap";
 import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
 import { rowKeymap, pipeInLine } from "./rowKeys.ts";
+import { fittedMeasure } from "./fit.ts";
 import type { Node } from "prosemirror-model";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
@@ -33,6 +34,7 @@ export function editorState(doc: Node, interval: number): EditorState {
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
       lineNumbers(interval),
+      fittedMeasure(),
     ],
   });
 }
