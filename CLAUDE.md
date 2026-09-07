@@ -189,6 +189,14 @@ here NOW, and what is not yet:
   job is the `foliopage` class on the root,
   set where a folio sits outside every note. The gutter column is ONE
   declaration for verse numbers and folios.
+- DATA REPAIRED 2026-09-07: the Tey and Allingham shelves' leaf markers,
+  1,070 in 396 files, taken out by
+  ../writer/docs/plans/2026-09-07-repair-folios-fiction.py over a copy in
+  export layout (~/Desktop/repair4) and imported by Sean (890 entries).
+  Fiction prose does not want folio numbers, and MEASURED before the
+  repair those shelves carried them partially — one per chapter opening
+  in The Man in the Queue, under two a file across Allingham. The plan's
+  census of 1,046 files with folio tokens predates this.
 - MARKDOWN AS YOU TYPE is prosemirror-inputrules over the document
   (`typing.ts`), the current app's transforms re-asked of the tree: inline
   marks on the closing marker with the body's own marks kept (the markers
