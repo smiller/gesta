@@ -1,7 +1,6 @@
 /* The editor: a ProseMirror view over the document model, with the row node
-   views, the line-number decoration, and the row gestures (rowKeys.ts) ahead
-   of the base keymap. Input rules for the as-you-type transforms come later
-   in phase 1. */
+   views, the line-number decoration, the row gestures (rowKeys.ts) ahead of
+   the base keymap, and markdown as you type (typing.ts). */
 import { EditorState, type Transaction, type Command } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
@@ -11,6 +10,7 @@ import { schema } from "../model/schema.ts";
 import { rowKeymap, pipeInLine } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { folios } from "./folios.ts";
+import { typing, typingKeymap } from "./typing.ts";
 import type { Node } from "prosemirror-model";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
@@ -32,8 +32,10 @@ export function editorState(doc: Node, interval: number): EditorState {
       history(),
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo }),
       rowKeymap,
+      typingKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
+      typing(),
       lineNumbers(interval),
       fittedMeasure(),
       folios(),

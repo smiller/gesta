@@ -58,7 +58,8 @@ here NOW, and what is not yet:
   typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
   measuring pass and its scheduling as a plugin view), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's),
-  `editor.ts` (the
+  `typing.ts` (markdown as you type: the input rules and the two Enter
+  arms), `editor.ts` (the
   view with its plugins), `editor.css` (the
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
@@ -184,10 +185,27 @@ here NOW, and what is not yet:
   mid-paragraph lands its label on the third visual line of one with no
   measurement (MEASURED 2026-09-07 in headless Helium over Witchcraft 3:
   "p. 61" and "p. 62" beside the lines their markers sit in, the tick at
-  the word). The plugin's whole job is the `foliopage` class on the root,
+  the word; Sean, in Helium the same day: plausible). The plugin's whole
+  job is the `foliopage` class on the root,
   set where a folio sits outside every note. The gutter column is ONE
   declaration for verse numbers and folios.
-- Not yet in phase 1: input rules for the as-you-type transforms, the
-  landing mark (deferred to phase 3 with the go-to bar that is its only
-  trigger), the note row's view and the exit from a note nested in a row
-  fence (today Enter there is the base keymap's).
+- MARKDOWN AS YOU TYPE is prosemirror-inputrules over the document
+  (`typing.ts`), the current app's transforms re-asked of the tree: inline
+  marks on the closing marker with the body's own marks kept (the markers
+  come out and the mark goes on over what is there), block markers on the
+  space at a LINE's start — a quote's lines are one paragraph with breaks,
+  so a marker behind a break first peels its line into its own paragraph —
+  `--` between spaces, the curl and its step, the bare URL on space or
+  Enter, `[title](url)` on its `)`, a ``` line and Enter. The tests drive
+  the plugin's own text-input handler character by character. What is
+  typed after a made link is PLAIN: the caret then touches the label's
+  marks, and an italic label ran on into the prose until the stored marks
+  were cleared. Backspace straight after any rule undoes it
+  (undoInputRule), which the current app did not have — its "type the
+  quote again" step is kept beside it. No as-you-type arm for the :::
+  family, as the current app has none. Not done: a URL finished with Enter
+  inside a verse row stays bare (the row's Enter claims the key first).
+- Not yet in phase 1: the landing mark (deferred to phase 3 with the go-to
+  bar that is its only trigger), the note row's view and the exit from a
+  note nested in a row fence (today Enter there is the base keymap's), a
+  gesture that sets `⟨line⟩`.

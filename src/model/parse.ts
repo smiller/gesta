@@ -332,7 +332,7 @@ const TERMINATORS = new Set([0x0a, 0x21, 0x23, 0x24, 0x25, 0x26, 0x2a, 0x2b, 0x2
    rules in silent mode, and a URL that ate the "](" would leave the label
    unclosed — MEASURED 2026-09-07, four files whose link text is itself an
    address. A bracket inside an address is IPv6-only. */
-const URL_START = /^(?:https?:\/\/|www\.)[^\s<>⟨\]]+/i;
+export const URL_START = /^(?:https?:\/\/|www\.)[^\s<>⟨\]]+/i;
 function urlAt(src: string, pos: number, max: number): RegExpExecArray | null {
   const c = src.charCodeAt(pos);
   if (c !== 0x68 && c !== 0x48 && c !== 0x77 && c !== 0x57) return null;
@@ -360,7 +360,7 @@ function text(state: StateInline, silent: boolean): boolean {
    address itself opened. The text inside a link is never re-linked. */
 const URL_BOUNDARY = /[\s([{“‘"'>⟩*_~]/;
 const URL_TRAIL_CHAR = /[.,;:!?…'")\]}»”’]/;
-function trimUrl(run: string): string {
+export function trimUrl(run: string): string {
   let end = run.length;
   while (end > 0) {
     const c = run.charAt(end - 1);
