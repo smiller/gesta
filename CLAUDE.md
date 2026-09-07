@@ -56,15 +56,18 @@ here NOW, and what is not yet:
   `rows.ts` (the line, pair and gap node views), `rowKeys.ts` (the
   gestures under a fence, as commands: Enter, Backspace, Delete, Tab, the
   typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
-  measuring pass and its scheduling as a plugin view), `editor.ts` (the
+  measuring pass and its scheduling as a plugin view), `folios.ts` (the
+  gutter's switch: `foliopage` on the root where a leaf is the text's),
+  `editor.ts` (the
   view with its plugins), `editor.css` (the
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
   and caret out.
 - `fixtures/` — the markdown the page opens with, copied from the export
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
-  direction, then songs declared `⟨line⟩`), and Twelfth Night 1.1
-  (speakers and directions).
+  direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
+  and directions), and Williams's Witchcraft chapter 3 (a prose book with
+  leaves).
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything). In phase 1 it is the editor
   over a fixture, a line-numbering select, a file input, and the markdown
@@ -168,7 +171,23 @@ here NOW, and what is not yet:
   330.8, translations 399.8, gap 43.2, frame 62.2); the entry fits at
   839px with a 332px original column, and under a narrower window the cap
   alone moves it — headless Helium's innerWidth is 6px under the window
-  size it was given.
-- Not yet in phase 1: input rules for the as-you-type transforms, folio labels in the gutter,
-  the landing mark, the note row's view and the exit from a note nested in
-  a row fence (today Enter there is the base keymap's).
+  size it was given. MEASURED by Sean in Helium the same day: typing
+  "and on" repeatedly into both cells of Odes 1.1's first line widened the
+  columns keystroke by keystroke until the sixth, where the entry met the
+  cap and the row wrapped — the grow side, which no test can prove.
+- FOLIO LABELS ARE NOT A DECORATION AND NOT MEASURED. The plan said
+  decorations; the current app measured every marker into an overlay
+  because its inline ::after sat in the text flow and could move a line
+  break. Here the tick and the "p. N" label are the marker's own
+  pseudo-elements, absolutely positioned, and both take the marker's STATIC
+  position — the visual line it sits in — so a leaf that turns
+  mid-paragraph lands its label on the third visual line of one with no
+  measurement (MEASURED 2026-09-07 in headless Helium over Witchcraft 3:
+  "p. 61" and "p. 62" beside the lines their markers sit in, the tick at
+  the word). The plugin's whole job is the `foliopage` class on the root,
+  set where a folio sits outside every note. The gutter column is ONE
+  declaration for verse numbers and folios.
+- Not yet in phase 1: input rules for the as-you-type transforms, the
+  landing mark (deferred to phase 3 with the go-to bar that is its only
+  trigger), the note row's view and the exit from a note nested in a row
+  fence (today Enter there is the base keymap's).

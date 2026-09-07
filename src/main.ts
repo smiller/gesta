@@ -11,8 +11,9 @@ import { setLineInterval } from "./editor/lineNumbers.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
+import williams from "../fixtures/williams-witchcraft-3.md?raw";
 
-const fixtures: Record<string, string> = { horace, pippa, twelfth };
+const fixtures: Record<string, string> = { horace, pippa, twelfth, williams };
 const mount = document.getElementById("editor") as HTMLElement;
 const out = document.getElementById("out") as HTMLElement;
 const same = document.getElementById("same") as HTMLElement;

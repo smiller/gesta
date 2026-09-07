@@ -60,7 +60,42 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page div.note > :first-child, .page div[class^="card-"] > :first-child { margin-top: 0; }
 .page div.note > :last-child, .page div[class^="card-"] > :last-child { margin-bottom: 0; }
 .page div.reference { font-family: var(--mono); font-size: 0.8em; color: var(--muted); }
-.page .folio::before { content: "⟨" attr(data-folio) "⟩"; color: var(--muted); font-size: 0.75em; font-family: var(--sans); }
+/* THE LEAF MARKER draws nothing in the text: its tick and its label are
+   its own pseudo-elements, absolutely positioned, and both take the
+   marker's STATIC position — the visual line it sits in — so nothing is
+   measured. The current app measured every marker into an overlay because
+   its ::after sat in the text flow and could move a line break; taken out
+   of the flow it moves nothing. The label is LEFT-ALIGNED in the gutter
+   where a line number is right-aligned against the text, deliberately: a
+   line number is essential and hugs its line, a folio is ambient and sits
+   further out. A marker inside a note draws neither: a note is not the
+   text, so it cannot be where a leaf begins. */
+.page .folio::before {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 1.25em;
+  margin-left: -3px;
+  background: var(--muted);
+  opacity: 0.5;
+  pointer-events: none;
+}
+.page.foliopage .folio::after {
+  content: "p. " attr(data-folio);
+  position: absolute;
+  /* clear of a quote's rule, which the pseudo learns of by inheritance */
+  left: calc(var(--quote-rule, 0px) + 4px);
+  font-family: var(--sans);
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+  line-height: 2.3;
+  white-space: nowrap;
+  color: var(--muted);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+.page div.note .folio::before, .page div.note .folio::after { content: none; }
 
 /* ---------- the verse block: a run of lines, paired or not ---------- */
 .page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }
@@ -120,16 +155,21 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   inherits: true;
   initial-value: 0px;
 }
-.page.versepage {
+/* the reserved number column, shared by verse line numbers and folios: ONE
+   declaration, so a book carrying both cannot end up with two columns */
+.page.versepage, .page.foliopage {
   position: relative;
   --ln-gutter: calc(4ch + 1em);
   --ln-column: 54px;
 }
-.page.versepage > p { padding-left: var(--ln-gutter); }
-.page.versepage > blockquote { padding-left: calc(var(--ln-gutter) - var(--quote-rule)); }
-.page.versepage > :is(ul, ol) { padding-left: calc(var(--ln-gutter) + 1.6em); }
+.page.versepage > p, .page.foliopage > p { padding-left: var(--ln-gutter); }
+.page.versepage > blockquote, .page.foliopage > blockquote { padding-left: calc(var(--ln-gutter) - var(--quote-rule)); }
+.page.versepage > :is(ul, ol), .page.foliopage > :is(ul, ol) { padding-left: calc(var(--ln-gutter) + 1.6em); }
+/* the prose block pays the folio gutter like every other top-level block:
+   a folio label is content, and without this it painted over the original */
+.page.foliopage > .prose { padding-left: var(--ln-gutter); }
 .page.versepage > .verse { position: relative; padding-left: var(--ln-gutter); }
-.page.versepage:has(> .verse > .vpair) > :is(h1, h2, h3) { padding-left: var(--ln-gutter); }
+.page.versepage:has(> .verse > .vpair) > :is(h1, h2, h3), .page.foliopage > :is(h1, h2, h3) { padding-left: var(--ln-gutter); }
 .page.versepage .ln::before {
   content: "";
   position: absolute;
