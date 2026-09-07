@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Gesta</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body { font: 15px/1.45 -apple-system, system-ui, sans-serif; margin: 2rem; color: #222; }
+  h1 { font-size: 1.2rem; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  textarea, pre { font: 13px/1.4 ui-monospace, Menlo, monospace; width: 100%; min-height: 20rem; box-sizing: border-box; white-space: pre-wrap; }
+  #view { border: 1px solid #ddd; padding: 0 1rem; white-space: pre-wrap; }
+  .verse, .prose { border-left: 3px solid #ccc; padding-left: .6em; margin: .5em 0; }
+  .vrow { display: flex; gap: 1em; } .vcell { flex: 1; } .vgap { height: .8em; }
+  .note { border: 1px solid #ccc; padding: .2em .6em; font-size: .9em; }
+  [class^="card-"] { background: #fff8d6; padding: .2em .6em; }
+  .folio::before { content: "⟨" attr(data-folio) "⟩"; color: #888; font-size: .8em; }
+  #same { color: #060; } #same.no { color: #900; }
+</style>
+</head>
+<body>
+<h1>Gesta — phase 0: the markdown round trip <span id="same"></span></h1>
+<p><label>Open a .md file: <input id="file" type="file" accept=".md,text/markdown"></label> <span id="name"></span></p>
+<div class="cols">
+  <div><textarea id="src" spellcheck="false"></textarea></div>
+  <div><pre id="out"></pre></div>
+</div>
+<div id="view"></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
