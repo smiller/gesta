@@ -129,8 +129,11 @@ here NOW, and what is not yet:
   MEASURED: no `⟨word⟩` of any kind exists in the corpus. The model carries
   it as `kind` on a line or pair node (null = the convention reads the
   marks); the serializer writes it flush at the row's head; the numbering
-  walk asks it before the marks. Not yet: a gesture that sets it in the
-  editor — for now it is typed in the markdown.
+  walk asks it before the marks. The gesture is ⌃⌘N (`rowKeys.ts`,
+  toggleDeclaredLine): every row the selection touches is declared, or
+  returned to the convention when all of them already are — over the
+  selection, because a song is several lines. ⌃⌘N is free in the current
+  app's shortcut table.
 - The line number is a NODE DECORATION (`lineNumbers.ts`), recomputed whole
   from position on every change of the document and drawn by the stylesheet
   from `data-line` — never in the document, never stored. The gutter is
@@ -215,5 +218,4 @@ here NOW, and what is not yet:
   inside a verse row stays bare (the row's Enter claims the key first).
 - Not yet in phase 1: the landing mark (deferred to phase 3 with the go-to
   bar that is its only trigger), the note row's view and the exit from a
-  note nested in a row fence (today Enter there is the base keymap's), a
-  gesture that sets `⟨line⟩`.
+  note nested in a row fence (today Enter there is the base keymap's).

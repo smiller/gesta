@@ -190,7 +190,34 @@ export const shiftTabInRow: Command = (state, dispatch) => {
   return true;
 };
 
+/* THE ROW SAYS WHAT IT IS (grammar.ts, ROW_LINE_TOKEN): every row the
+   selection touches is declared a line, or — when every one of them
+   already is — returned to the convention. Over the selection rather than
+   the caret's row alone because a song is several lines, and marking it
+   is one gesture. Rows in the selection that are gaps or notes are passed
+   over; outside a fence the command is not this editor's. */
+export const toggleDeclaredLine: Command = (state, dispatch) => {
+  const { from, to } = state.selection;
+  const rows: { pos: number; node: Node }[] = [];
+  state.doc.nodesBetween(from, to, (node, pos, parent) => {
+    if ((node.type === N.line || node.type === N.pair) && parent && (parent.type === N.verse || parent.type === N.prose)) {
+      rows.push({ pos, node });
+      return false;
+    }
+    return true;
+  });
+  if (!rows.length) return false;
+  const kind = rows.every((r) => r.node.attrs.kind === "line") ? null : "line";
+  if (dispatch) {
+    const tr = state.tr;
+    for (const r of rows) tr.setNodeMarkup(r.pos, undefined, { ...r.node.attrs, kind });
+    dispatch(tr);
+  }
+  return true;
+};
+
 export const rowKeymap = keymap({
+  "Ctrl-Mod-n": toggleDeclaredLine,
   Enter: enterInRow,
   "Shift-Enter": enterInRow,
   Backspace: backspaceInRow,

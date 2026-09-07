@@ -8,7 +8,7 @@ import { EditorState, TextSelection, NodeSelection, type Command } from "prosemi
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { schema } from "../model/schema.ts";
-import { enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine } from "./rowKeys.ts";
+import { enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine } from "./rowKeys.ts";
 
 /* a state with the caret placed `offset` characters into the first text
    holding `needle` (its end when omitted) */
@@ -157,4 +157,21 @@ test("Tab moves from the original to its translation and Shift-Tab back; in a li
   const line = at("::: verse\nalpha\n:::", "al");
   expect(run(tabInRow, line).doc).toBe(line.doc);
   expect(refuses(tabInRow, at("plain", "pl"))).toBe(true);
+});
+
+test("⌃⌘N declares the selection's rows lines, and returns them to the convention when all are", () => {
+  const one = run(toggleDeclaredLine, at("::: verse\n*Exit*\n*Flower o’ the broom,*\n:::", "Flower"));
+  expect(md(one)).toBe("::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n:::");
+  expect(md(run(toggleDeclaredLine, one))).toBe("::: verse\n*Exit*\n*Flower o’ the broom,*\n:::");
+  /* a song of three lines, selected from its first word to its last */
+  const song = at("::: verse\n*a*\n\n*b* | *c*\n*d*\n:::", "a");
+  const sel = song.apply(song.tr.setSelection(TextSelection.create(song.doc, song.selection.from, song.doc.content.size - 3)));
+  const all = run(toggleDeclaredLine, sel);
+  expect(md(all)).toBe("::: verse\n⟨line⟩*a*\n\n⟨line⟩*b* | *c*\n⟨line⟩*d*\n:::");
+  /* one already declared among plain ones: all become declared, not none */
+  const mixed = at("::: verse\n⟨line⟩*a*\n*b*\n:::", "a");
+  const sel2 = mixed.apply(mixed.tr.setSelection(TextSelection.create(mixed.doc, mixed.selection.from, mixed.doc.content.size - 3)));
+  expect(md(run(toggleDeclaredLine, sel2))).toBe("::: verse\n⟨line⟩*a*\n⟨line⟩*b*\n:::");
+  expect(refuses(toggleDeclaredLine, at("prose *here*", "here"))).toBe(true);
+  expect(refuses(toggleDeclaredLine, at("::: verse\na\n::: note\ngloss\n:::\n:::", "gloss"))).toBe(true);
 });
