@@ -168,3 +168,24 @@ test("fenceBody counts depth for the recursing forms and shields raw bodies", ()
   // the raw "::: card-red" row inside the verse is no depth; the card closes at line 5
   expect(fenceBody(lines, 1)).toEqual({ body: ["::: verse", "::: card-red", ":::", "x"], next: 6 });
 });
+
+test("a ⟨line⟩ token at a row's head is the row's declared kind, not its text", () => {
+  const d = parseMarkdown("::: verse\n⟨line⟩*sung*\n⟨line⟩ *a* | *b*\n⟨line⟩\nplain\n:::");
+  const rows = d.firstChild!;
+  expect(rows.child(0).type.name).toBe("line");
+  expect(rows.child(0).attrs.kind).toBe("line");
+  expect(rows.child(0).textContent).toBe("sung");
+  expect(rows.child(1).type.name).toBe("pair");
+  expect(rows.child(1).attrs.kind).toBe("line");
+  expect(rows.child(1).child(0).textContent).toBe("a");
+  expect(rows.child(2).type.name).toBe("line");
+  expect(rows.child(2).attrs.kind).toBe("line");
+  expect(rows.child(2).childCount).toBe(0);
+  expect(rows.child(3).attrs.kind).toBe(null);
+  expect(visibleText(d)).not.toContain("⟨line⟩");
+});
+
+test("the token is a row's head only: in a paragraph, or mid-row, it is text", () => {
+  expect(visibleText(parseMarkdown("⟨line⟩ in prose"))).toBe("⟨line⟩ in prose");
+  expect(visibleText(parseMarkdown("::: verse\na ⟨line⟩ b\n:::"))).toBe("a ⟨line⟩ b");
+});

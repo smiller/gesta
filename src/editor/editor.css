@@ -1,0 +1,143 @@
+/* The editing surface's stylesheet, ported 2026-09-07 from
+   ../writer/src/style.css — the page measure, the verse and prose blocks,
+   the gutter and the number — under the successor's own class names: the
+   ProseMirror root is `.page`, a paired row is `.vpair` (the schema
+   guarantees its two cells, so nothing asks `:has(> .vb)` any more), and
+   `.versepage` sits on the root rather than on body, set by the plugin
+   exactly where the document numbers its own lines. The measurements the
+   original's comments carry (the 4ch + 1em gutter, the 54px column, the
+   2.3 line-height that baselines the number) are kept as measured; the
+   fitted measure (--vb-col) is phase 1 work still to come, so the 520px
+   fallback is what every paired block gets today. */
+:root {
+  --bg: #f4f7ec;
+  --ink: #1a2418;
+  --muted: #6b7568;
+  --rule: #cdd6c2;
+  --accent: #3d6b2c;
+  --aside-bg: #eef4dd;
+  --flash: rgba(245, 215, 110, 0.55);
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: ui-monospace, Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+body { font-family: var(--serif); line-height: 1.55; font-size: 18px; }
+main { max-width: 760px; margin: 0 auto; padding: 24px; }
+
+/* what prosemirror-view's own stylesheet asks of the root */
+.ProseMirror { position: relative; white-space: pre-wrap; word-wrap: break-word; -webkit-font-variant-ligatures: none; font-variant-ligatures: none; }
+.ProseMirror-hideselection *::selection { background: transparent; }
+.ProseMirror-selectednode { outline: 2px solid #8cf; }
+
+.page {
+  --par-w: min(1285px, 100vw - 64px);
+  min-height: 60vh;
+  outline: none;
+  caret-color: var(--accent);
+}
+.page p { margin: 0 0 1em; }
+.page h1 { font-size: 1.5em; font-weight: 600; line-height: 1.3; margin: 1.3em 0 0.5em; }
+.page h2 { font-size: 1.2em; font-weight: 600; line-height: 1.35; margin: 1.2em 0 0.4em; }
+.page h3, .page h4, .page h5, .page h6 { font-size: 1em; font-weight: 600; margin: 1em 0 0.4em; }
+.page blockquote {
+  --quote-rule: 3px;
+  margin: 1.2em 0;
+  padding: 0.4em 1.1em;
+  background: var(--aside-bg);
+  border-left: var(--quote-rule) solid var(--rule);
+}
+.page blockquote blockquote { margin: 0.6em 0; background: rgba(30, 51, 32, 0.05); }
+.page ul, .page ol { margin: 0 0 1em; padding-left: 1.6em; }
+.page li { margin: 0.15em 0; }
+.page pre { font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); padding: 0.6em 0.9em; overflow-x: auto; }
+.page code { font-family: var(--mono); font-size: 0.9em; }
+.page table { border-collapse: collapse; margin: 0 0 1em; }
+.page td, .page th { border: 1px solid var(--rule); padding: 0.2em 0.6em; }
+.page div.note { color: var(--muted); font-size: 0.8em; }
+.page div.note, .page div[class^="card-"] { margin: 1.2em 0; padding: 0.8em 1.2em; border: 1px solid var(--rule); }
+.page div.note > :first-child, .page div[class^="card-"] > :first-child { margin-top: 0; }
+.page div.note > :last-child, .page div[class^="card-"] > :last-child { margin-bottom: 0; }
+.page div.reference { font-family: var(--mono); font-size: 0.8em; color: var(--muted); }
+.page .folio::before { content: "⟨" attr(data-folio) "⟩"; color: var(--muted); font-size: 0.75em; font-family: var(--sans); }
+
+/* ---------- the verse block: a run of lines, paired or not ---------- */
+.page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }
+/* a verse block outside a book is quoted matter, and reads as such */
+.page:not(.versepage) > .verse,
+.page:not(.versepage) > .prose:has(> .vpair) {
+  background: var(--aside-bg);
+  border-left: var(--quote-rule, 3px) solid var(--rule);
+  padding: 0.4em 1.1em;
+}
+/* the width and the pull are one number, and the whole entry takes the
+   block's measure */
+.page .verse:has(> .vpair),
+.page .prose:has(> .vpair) {
+  width: var(--par-w);
+  margin-left: calc(50% - var(--par-w) / 2);
+  margin-right: calc(50% - var(--par-w) / 2);
+}
+.page:has(> .verse > .vpair),
+.page:has(> .prose > .vpair) {
+  margin-left: calc(50% - var(--par-w) / 2);
+  margin-right: calc(50% - var(--par-w) / 2);
+}
+.page .verse > .vpair {
+  display: grid;
+  grid-template-columns: minmax(0, var(--vb-col, 520px)) 1fr;
+  gap: 0 2.4em;
+}
+/* an empty row is still a row */
+.page .verse > .vrow { min-height: 1.2em; }
+/* a stanza break carries the blank line's height and nothing else */
+.page .verse > .vgap { height: 1em; }
+
+/* ---------- the ::: prose block ---------- */
+.page .prose { margin-top: 1.2em; margin-bottom: 1.2em; }
+.page .prose > .vpair { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.4em; }
+.page .prose > .vrow { min-height: 1.2em; margin-bottom: 0.2em; }
+.page .prose > .vgap { height: 2.4em; position: relative; }
+.page .prose > .vgap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(26, 36, 24, 0.16); }
+/* rows in an inset box sit on equal halves at a narrower gap */
+.page :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: 1fr 1fr; gap: 0 1.6em; }
+.page :is(div.note, div[class^="card-"]) :is(.verse, .prose):has(> .vpair) { width: auto; margin-left: 0; margin-right: 0; }
+
+/* ---------- the verse gutter ----------
+   Reserved on a page that numbers, whatever the interval, so changing it
+   can never move a word. The gutter belongs to the block, the column to
+   the page: the paint adds a class and an attribute and no layout. */
+@property --ln-gutter {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+.page.versepage {
+  position: relative;
+  --ln-gutter: calc(4ch + 1em);
+  --ln-column: 54px;
+}
+.page.versepage > p { padding-left: var(--ln-gutter); }
+.page.versepage > blockquote { padding-left: calc(var(--ln-gutter) - var(--quote-rule)); }
+.page.versepage > :is(ul, ol) { padding-left: calc(var(--ln-gutter) + 1.6em); }
+.page.versepage > .verse { position: relative; padding-left: var(--ln-gutter); }
+.page.versepage:has(> .verse > .vpair) > :is(h1, h2, h3) { padding-left: var(--ln-gutter); }
+.page.versepage .ln::before {
+  content: "";
+  position: absolute;
+  right: calc(100% - var(--ln-column));
+  font-family: var(--sans);
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+  line-height: 2.3;
+  white-space: nowrap;
+  color: var(--muted);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+.page.versepage .ln.shown::before { content: attr(data-line); }
+.page.versepage .ln.stage { color: var(--muted); }
+/* the line ⌃⌘G landed on — the jump is phase 3's; the class is named now */
+.page .landed { background: var(--flash); }

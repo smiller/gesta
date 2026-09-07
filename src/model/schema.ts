@@ -2,7 +2,7 @@
    ProseMirror nodes and marks. A form the schema does not know cannot be
    parsed (the token walker throws) and cannot be typed, which is the whole
    reason a schema replaces a contenteditable surface. */
-import { Schema, type NodeSpec, type MarkSpec } from "prosemirror-model";
+import { Schema, type NodeSpec, type MarkSpec, type Node as PMNode } from "prosemirror-model";
 
 /* THE MARK NESTING ORDER, outermost first — the tie-break when the
    serializer's fewest-stretches rule (serialize.ts, runMd) finds two marks
@@ -21,6 +21,9 @@ const rowBlock = (cls: string): NodeSpec => ({
   defining: true,
   toDOM: (n) => ["div", n.attrs.start > 1 ? { class: cls, "data-start": String(n.attrs.start) } : { class: cls }, 0],
 });
+
+const rowAttrs = (cls: string, n: PMNode): Record<string, string> =>
+  n.attrs.kind ? { class: cls, "data-kind": String(n.attrs.kind) } : { class: cls };
 
 const nodes: Record<string, NodeSpec> = {
   doc: { content: "block+" },
@@ -84,11 +87,13 @@ const nodes: Record<string, NodeSpec> = {
   },
   verse: rowBlock("verse"),
   prose: rowBlock("prose"),
-  /* a full-width row: a line with no pipe */
-  line: { content: "inline*", toDOM: () => ["div", { class: "vrow" }, 0] },
+  /* a full-width row: a line with no pipe. `kind` is the row's DECLARED kind:
+     null leaves the numbering convention to read the marks, "line" counts
+     the row whatever they say (grammar.ts, ROW_LINE_TOKEN, has the decision) */
+  line: { attrs: { kind: { default: null } }, content: "inline*", toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
   /* a paired row: an original beside its translation; which cell is which is
      its position, and an empty translation is still a pair */
-  pair: { content: "cell cell", toDOM: () => ["div", { class: "vrow vpair" }, 0] },
+  pair: { attrs: { kind: { default: null } }, content: "cell cell", toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
   cell: { content: "inline*", toDOM: () => ["div", { class: "vcell" }, 0] },
   /* a blank line inside the fence: verse's stanza break, prose's paragraph break */
   gap: { toDOM: () => ["div", { class: "vgap" }] },

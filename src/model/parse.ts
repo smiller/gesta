@@ -11,7 +11,7 @@ import { Fragment, Mark, Node, type NodeType } from "prosemirror-model";
 import { schema } from "./schema.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, FOLIO_NUM_SRC,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
   fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -155,16 +155,22 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
   while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
     const line = lines[from];
     if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from); continue; }
-    const body = line.trim();
-    if (!body) sink.push("gap", "div", 0);
+    const raw = line.trim();
+    /* the row's declared kind comes off its head before the pipe is looked
+       for; a declared row is a row even with nothing after the token */
+    const declared = ROW_LINE_AT.test(raw);
+    const body = declared ? raw.replace(ROW_LINE_AT, "") : raw;
+    const meta = declared ? { kind: "line" } : undefined;
+    if (!body && !declared) sink.push("gap", "div", 0);
     else {
-      const at = verseSplit(line);
-      if (at < 0) sink.inline("line", "div", unescapeCell(body));
+      const at = verseSplit(body);
+      if (at < 0) sink.inline("line", "div", unescapeCell(body), meta);
       else {
-        const a = line.slice(0, at).trim(), b = line.slice(at + 1).trim();
-        if (emptyPairGaps && !a && !b) sink.push("gap", "div", 0);
+        const a = body.slice(0, at).trim(), b = body.slice(at + 1).trim();
+        if (emptyPairGaps && !a && !b && !declared) sink.push("gap", "div", 0);
         else {
-          sink.push("pair_open", "div", 1);
+          const open = sink.push("pair_open", "div", 1);
+          if (meta) open.meta = meta;
           sink.inline("cell", "div", unescapeCell(a));
           sink.inline("cell", "div", unescapeCell(b));
           sink.push("pair_close", "div", -1);
@@ -477,8 +483,8 @@ function buildDoc(tokens: Token[]): Node {
         case "note_open": open(schema.nodes.note); break;
         case "verse_open": open(schema.nodes.verse, { start: t.meta!.start }); break;
         case "prose_open": open(schema.nodes.prose, { start: t.meta!.start }); break;
-        case "line_open": open(schema.nodes.line); break;
-        case "pair_open": open(schema.nodes.pair); break;
+        case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null }); break;
+        case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null }); break;
         case "cell_open": open(schema.nodes.cell); break;
         case "gap": add(schema.nodes.gap.create()); break;
         case "fence": add(schema.nodes.code_block.create({ lang: t.info }, t.content ? schema.text(t.content) : null)); break;

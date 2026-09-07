@@ -58,6 +58,8 @@ const ROUND_TRIPS = [
   "> ::: card-red\n> a card inside a quote\n> :::",
   "text with a ⟨8⟩ folio",
   "⟨xxiv⟩**Enter GHOST**",
+  "::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*a* | *b*\n⟨line⟩\n:::",
+  "::: prose\n⟨line⟩ |\n:::",
   "an image ![alt text](2022-02-06-img-1.webp) inline",
   "<u>underlined</u> text",
   "<Sean> a transcript line\n<suzie> stays literal",

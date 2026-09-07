@@ -52,6 +52,26 @@ export function folioToken(label: string): string {
   return `⟨${label}⟩`;
 }
 
+/* ---------- a row's declared kind ---------- */
+/* THE ROW THAT SAYS WHAT IT IS. The numbering convention infers a row's kind
+   from its marks — wholly italic is a stage direction, wholly bold a speaker
+   label, and neither takes a number — and MEASURED 2026-09-07 over the mirror
+   the convention cannot be narrowed to bracketed rows (Shakespeare's 5,627
+   directions are bare italics, `*Exit*`). What it lacked was "italic, but a
+   line": Pippa's songs and Fra Lippo Lippi's `*Flower o' the broom,*` fell
+   out of the count where editions number them.
+   DECIDED 2026-09-07 (phase 1): the exception rides on the ROW, as a token at
+   its head in the folio's own brackets. PER ROW, not per block: Pippa Passes
+   interleaves songs with directions through 198 italic rows, so a block flag
+   would split the block at every song and hand-number every restart. IN THE
+   TEXT, not in a side table: a backup carries it, and the running app shows
+   it harmlessly as text until the cutover. MEASURED: no `⟨word⟩` of any kind
+   exists in the corpus, and `line` is not a folio label (n, e are not roman).
+   The token names what the row IS, so a second value can follow the same
+   grammar if one is ever wanted; only this one is read. */
+export const ROW_LINE_TOKEN = "⟨line⟩";
+export const ROW_LINE_AT = /^⟨line⟩\s*/;
+
 /* ---------- the ::: family ---------- */
 /* the number a row fence starts at — "::: verse 2" numbers its first line 2;
    1 when the opener carries none. The opener regexes are the whole grammar,

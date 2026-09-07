@@ -1,48 +1,55 @@
-/* Phase 0's only screen: markdown in, the ProseMirror document rendered, and
-   the markdown the serializer writes back beside it — enough to see the round
-   trip from file:// and nothing more. The editor is phase 1. */
-import { DOMSerializer } from "prosemirror-model";
-import { schema } from "./model/schema.ts";
+/* Phase 1's screen: the editor over a fixture, the line numbers in the
+   gutter, and the markdown the document serializes to underneath — enough
+   to type into a poem from file:// and watch the count follow. Storage is
+   phase 2; the chrome is phase 3. */
+import "./editor/editor.css";
+import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
+import { createEditor } from "./editor/editor.ts";
+import { setLineInterval } from "./editor/lineNumbers.ts";
+import horace from "../fixtures/horace-odes-1.1.md?raw";
+import pippa from "../fixtures/pippa-passes-intro.md?raw";
 
-const src = document.getElementById("src") as HTMLTextAreaElement;
+const fixtures: Record<string, string> = { horace, pippa };
+const mount = document.getElementById("editor") as HTMLElement;
 const out = document.getElementById("out") as HTMLElement;
-const view = document.getElementById("view") as HTMLElement;
 const same = document.getElementById("same") as HTMLElement;
-const render = DOMSerializer.fromSchema(schema);
+const fixture = document.getElementById("fixture") as HTMLSelectElement;
+const interval = document.getElementById("interval") as HTMLSelectElement;
+const file = document.getElementById("file") as HTMLInputElement;
 
-src.value = [
-  "# Canto 1",
-  "",
-  "::: verse",
-  "Nel mezzo del cammin di nostra vita | Midway upon the journey of our life",
-  "mi ritrovai per una selva oscura, | I found myself within a forest dark,",
-  "",
-  "⟨2⟩Ahi quanto a dir qual era è cosa dura | Ah me! how hard a thing it is to say",
-  ":::",
-  "",
-  "A **bold** word, an *italic* one, and `code`.",
-].join("\n");
+let source = "";
+let view: EditorView | null = null;
 
-function run(): void {
-  const doc = parseMarkdown(src.value);
-  const md = serializeMarkdown(doc);
+function show(v: EditorView): void {
+  const md = serializeMarkdown(v.state.doc);
   out.textContent = md;
-  view.replaceChildren(render.serializeFragment(doc.content));
-  const ok = md === src.value;
-  same.textContent = ok ? "(byte-identical)" : "(differs)";
+  const ok = md === source;
+  same.textContent = ok ? "(byte-identical to what was opened)" : "(differs from what was opened)";
   same.className = ok ? "" : "no";
 }
-src.addEventListener("input", run);
-/* a file from disk into the textarea — the one way to look at a corpus file
-   here until phase 2 brings the import */
-const file = document.getElementById("file") as HTMLInputElement;
+
+function open(md: string): void {
+  source = md;
+  view?.destroy();
+  mount.replaceChildren();
+  view = createEditor(mount, parseMarkdown(md), { interval: +interval.value, onChange: show });
+  show(view);
+}
+
+fixture.addEventListener("change", () => open(fixtures[fixture.value]));
+interval.addEventListener("change", () => {
+  if (view) setLineInterval(+interval.value)(view.state, view.dispatch);
+});
 file.addEventListener("change", async () => {
   const f = file.files?.[0];
   if (!f) return;
-  src.value = await f.text();
-  (document.getElementById("name") as HTMLElement).textContent = f.name;
-  run();
+  open(await f.text());
 });
-run();
+/* ?fixture=pippa&interval=1 — the page opened at a fixture, for a headless
+   look as much as for a hand */
+const q = new URLSearchParams(location.search);
+if (q.get("fixture") && fixtures[q.get("fixture")!]) fixture.value = q.get("fixture")!;
+if (q.get("interval") !== null) interval.value = q.get("interval")!;
+open(fixtures[fixture.value]);

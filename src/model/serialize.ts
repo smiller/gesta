@@ -10,7 +10,7 @@ import type { Node, Mark, MarkType } from "prosemirror-model";
 import { schema, MARK_ORDER } from "./schema.ts";
 import {
   LIST_LINE, ITEM_BLOCK_INDENT, FENCE_CLOSE, blockLineAt, escapeProse, escapeIndent,
-  escapeCell, folioToken, quotePrefix,
+  escapeCell, folioToken, quotePrefix, ROW_LINE_TOKEN,
 } from "./grammar.ts";
 
 const N = schema.nodes;
@@ -206,13 +206,17 @@ function cellMd(node: Node): string {
 function pairMd(a: string, b: string): string {
   return b ? a + " | " + b : a + " |";
 }
+/* a row's declared kind, at its head and flush, as a folio at a row's head is */
+function rowHead(row: Node): string {
+  return row.attrs.kind === "line" ? ROW_LINE_TOKEN : "";
+}
 function rowsMd(block: Node, word: string): string {
   const rows: string[] = [];
   block.forEach((row) => {
     if (row.type === N.gap) rows.push("");
     else if (row.type === N.note) rows.push(blockMd(row, true));
-    else if (row.type === N.pair) rows.push(pairMd(cellMd(row.child(0)), cellMd(row.child(1))));
-    else rows.push(cellMd(row));
+    else if (row.type === N.pair) rows.push(rowHead(row) + pairMd(cellMd(row.child(0)), cellMd(row.child(1))));
+    else rows.push(rowHead(row) + cellMd(row));
   });
   const start = block.attrs.start as number;
   const open = "::: " + word + (start > 1 ? " " + start : "") + "\n";
