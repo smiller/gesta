@@ -1417,4 +1417,12 @@ at the head is kept current per phase.
   the new name, and the old tag is gone from the day's bar; the contents
   link after a refresh, the walk before the warm, the bar gone on ⌃⌘M, a
   search during an export, and a delete's day all good by hand the same
-  day. The reference-block paste is a headless measurement only.
+  day. The reference-block paste confirmed by hand too, with a note:
+  the block accepts any pasted text, sense or not, as the current app's
+  does — kept (asked and settled 2026-09-08). THE REFERENCE BLOCK'S LOOK
+  is the current app's, ported whole the same day when the monospace
+  stand-in was seen beside it by hand: a quiet aside on a left rule with
+  the small-caps "Reference style" label. MEASURED in headless Helium:
+  the label in small caps, a 3px rule in the rule colour, Georgia at
+  0.85em in the muted ink, the paragraph after it unchanged.
+  `dist/index.html` is 730.64 kB.
