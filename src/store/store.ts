@@ -23,7 +23,8 @@ import Dexie, { type Table } from "dexie";
    DataError, as keyPath semantics demand. The promise resolves only once the
    write has LANDED. Records cross the boundary as one-level copies, so a
    NESTED value rides as a shared reference — a wrapper that hands one out
-   takes its own copy. */
+   takes its own copy. `clear()` empties the store (added 2026-09-07 for the
+   import: probe rows and a failed import are swept before a real one). */
 export interface Verdict<R> { put?: R; del?: boolean; [k: string]: unknown }
 export type Decide<R> = (row: R | null) => Verdict<R> | null;
 export interface KeyedStore<R extends object> {
@@ -32,6 +33,7 @@ export interface KeyedStore<R extends object> {
   del(key: string): Promise<void>;
   all(): Promise<R[]>;
   update(key: string, decide: Decide<R>): Promise<Verdict<R> | null>;
+  clear(): Promise<void>;
 }
 export function memKeyedStore<R extends object>(keyField: keyof R & string): KeyedStore<R> {
   const rows: Record<string, R> = Object.create(null);
@@ -71,6 +73,7 @@ export function memKeyedStore<R extends object>(keyField: keyof R & string): Key
       } catch (e) { return Promise.reject(e); }
       return Promise.resolve(verdict);
     },
+    clear: () => { for (const k of Object.keys(rows)) delete rows[k]; return Promise.resolve(); },
   };
 }
 
@@ -95,20 +98,29 @@ export function dexieKeyedStore<R extends object>(dbName: string, storeName: str
       else if (verdict && verdict.del) await table.delete(key);
       return verdict;
     }),
+    clear: () => table.clear(),
   };
 }
 
 export const IMG_DB = "gesta.images";
 export const IMG_STORE = "images";
-export interface ImageRow { id: string; data: string }
+/* a picture is its BYTES under the path its entry's markdown names it by —
+   `page/Trip Log/Trip Log-img-1.webp` — so the ref in the text stays as
+   written (phase 0), the import files the sidecar under the path the ref
+   resolves to, and the export writes it back to the same path (decided
+   2026-09-07). The current app kept data URLs under a content hash and
+   rewrote every ref both ways. */
+export interface ImageRow { id: string; bytes: Uint8Array }
 export interface ImageStore {
   get(id: string): Promise<ImageRow | null>;
-  set(id: string, data: string): Promise<void>;
+  set(id: string, bytes: Uint8Array): Promise<void>;
+  clear(): Promise<void>;
 }
 export function imageStoreOver(store: KeyedStore<ImageRow>): ImageStore {
   return {
     get: (id) => store.get(id),
-    set: (id, data) => store.put({ id, data }),
+    set: (id, bytes) => store.put({ id, bytes }),
+    clear: () => store.clear(),
   };
 }
 export function idbImageStore(): ImageStore { return imageStoreOver(dexieKeyedStore<ImageRow>(IMG_DB, IMG_STORE, "id")); }
@@ -171,9 +183,10 @@ export interface EntryStore {
   set(key: string, md: string): Promise<void>;
   del(key: string): Promise<void>;
   all(): Promise<EntryRow[]>;
+  clear(): Promise<void>;
 }
 export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
-  const bases = baseLedger();
+  let bases = baseLedger();
   /* the judged write or delete — one spelling for both, since both destroy
      what they land on. With NO base the read is skipped entirely. The ledger
      is only touched after the verdict settles: a base recorded ahead of the
@@ -208,6 +221,9 @@ export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
       bases.sawAll();
       return rows;
     }),
+    /* the store emptied is a store KNOWN empty: a fresh ledger with every
+       key based at "", or the old bases would refuse the first write after */
+    clear: () => store.clear().then(() => { bases = baseLedger(); bases.sawAll(); }),
   };
 }
 export interface MemEntryStore extends EntryStore {

@@ -60,13 +60,22 @@ test("persistEntry serializes one key's ops, and one failure doesn't wedge the c
 
 test("persistEntry rejection sticks keyed and releases nothing; only a landing releases", async () => {
   const { layer, calls } = fresh();
-  await layer.persistEntry("k", () => Promise.reject(new Error("idb blocked")));
+  expect(await layer.persistEntry("k", () => Promise.reject(new Error("idb blocked")))).toBe(false);
   expect(calls.stuck.length).toBe(1);
   expect(calls.stuck[0][0]).toBe("not saved");
   expect(calls.stuck[0][2]).toBe("k");
   expect(calls.landed).toEqual([]);
-  await layer.persistEntry("k", () => Promise.resolve());
+  expect(await layer.persistEntry("k", () => Promise.resolve())).toBe(true);
   expect(calls.landed).toEqual(["k"]);
+});
+
+test("clear empties the cache and the store", async () => {
+  const { layer, mem } = fresh();
+  await layer.setEntry("k", "a");
+  await layer.clear();
+  expect(Object.keys(layer.cache)).toEqual([]);
+  expect(await mem.all()).toEqual([]);
+  expect(await layer.setEntry("k", "b")).toBe(true);
 });
 
 test("a stale write restores the cache and offers the refused text for copying", async () => {

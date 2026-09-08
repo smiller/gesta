@@ -53,6 +53,9 @@ here NOW, and what is not yet:
 - `tools/helium-probe.mjs` — the built page opened in headless Helium by
   executable path, one persistent profile, one launch per query string
   given; prints the root's `data-store`, `data-probe` and the console.
+- `tools/importCorpus.ts` — the import run over an export folder under
+  node into memory, `node tools/importCorpus.ts [dir]`; prints the tally
+  and names every failure with its reason.
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
@@ -74,8 +77,12 @@ here NOW, and what is not yet:
   (the keyed-store adapter contract, the memory adapter, the entry store
   with its stale-write refusal, the image and backup-handle stores),
   `entries.ts` (the entry layer: the cache, the one write path, the per-key
-  chain, the warm — a factory over an injected store and notices). Tests
-  beside them, ported from the current app's node suites.
+  chain, the warm — a factory over an injected store and notices),
+  `files.ts` (the pick's file records, `oneEach` and `entryDocs`),
+  `importFiles.ts` (the import over a file list: the sidecar refs, the
+  parse gate, the tally), `pick.ts` (the walk over directory handles,
+  names first, then the read). Tests beside them, ported from the current
+  app's node suites where they had one.
 - `fixtures/` — the markdown the page opens with, copied from the export
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
   direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
@@ -295,3 +302,31 @@ here NOW, and what is not yet:
   never exited; playwright-core 1.63.0 (decision 9's harness) drives Helium
   and waits for the attribute. Dexie 4.4.5, fake-indexeddb 6.2.5 and
   playwright-core 1.63.0 are pinned exact.
+- THE IMPORT (`importFiles.ts`, `pick.ts`, the buttons in main.ts) is
+  29-import.js re-asked of a store that holds markdown: the file's text is
+  stored AS WRITTEN, after a PARSE that the current app did not have — a
+  form the schema refuses is a counted, named failure, never a blind row —
+  and the write reports whether it landed, so the tally is what the store
+  holds. The count-then-confirm gate, the refused-.md note, the sequential
+  loop, the unreadable-file rules and the duplicate-key refusal before any
+  read are the current app's. The import NEVER CLEARS: it overwrites entry
+  by entry and deletes nothing, so a subset folder lands only its own
+  entries (asked and settled 2026-09-07). `clear` is its own button with
+  its own confirm, for probe rows and starting over.
+- A PICTURE IS ITS BYTES UNDER THE PATH ITS REF RESOLVES TO
+  (`page/Trip Log-img-1.webp`), the ref in the text staying as written
+  (phase 0): the import files the sidecar there, the export will write it
+  back to the same path, and the editor's rendering of a relative src is
+  the bridge's question. The current app rewrote refs to data URLs and
+  stored them under a content hash; `imgHash` is ported but unused.
+  MEASURED 2026-09-07 over the mirror: 297 webp sidecars, refs spelled
+  `![](stem-img-N.webp)`, no legacy folio markup left, one file with the
+  `![img-N]` registry form.
+- MEASURED 2026-09-07 (`node tools/importCorpus.ts`, the mirror at
+  gesta-snapshots/current): 13,876 files read, 13,565 entry docs
+  attempted, 13,565 imported, 0 failed, 297 pictures filed, 3.8 s in
+  memory. The parse gate refused nothing. MEASURED the same day in Helium
+  by hand, from file://, the picker over the same folder: "imported 13565
+  entries", none failed, on a profile that read 0 before, and the reload
+  after it "13565 entries stored" — the warm reads the whole journal back.
+  Playwright cannot answer a directory picker, so that half stays a hand's.

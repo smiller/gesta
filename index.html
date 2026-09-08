@@ -8,7 +8,8 @@
   /* the page's own chrome — phase 3 replaces this with the Svelte masthead */
   .bar { font: 14px/1.4 -apple-system, system-ui, sans-serif; background: #1e3320; color: #eef1e0; padding: 8px 32px; display: flex; gap: 1.5em; align-items: center; flex-wrap: wrap; }
   .bar strong { font-weight: 600; }
-  .bar select, .bar input { font: inherit; }
+  .bar select, .bar input, .bar button { font: inherit; }
+  #status { opacity: .85; }
   details { font: 13px/1.4 -apple-system, system-ui, sans-serif; margin: 2rem 32px; color: #6b7568; }
   details pre { font: 13px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; color: #1a2418; }
   #same.no { color: #900; }
@@ -30,6 +31,9 @@
     <option value="5" selected>every 5</option>
     <option value="10">every 10</option>
   </select></label>
+  <button id="import">import…</button>
+  <button id="clear">clear</button>
+  <span id="status"></span>
 </header>
 <main><div id="editor"></div></main>
 <details><summary>the markdown the editor holds <span id="same"></span></summary><pre id="out"></pre></details>

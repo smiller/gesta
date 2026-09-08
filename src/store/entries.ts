@@ -32,9 +32,13 @@ export interface EntryLayer {
      while still the latest issued */
   saveSeq: Record<string, number>;
   entryMd(ekey: string): string;
-  setEntry(ekey: string, md: string): Promise<void>;
-  removeEntry(ekey: string): Promise<void>;
-  persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel?: boolean): Promise<void>;
+  /* resolves whether the write LANDED: the notices carry the failure, and
+     the promise never rejects, but a tally (the import's) needs the answer */
+  setEntry(ekey: string, md: string): Promise<boolean>;
+  removeEntry(ekey: string): Promise<boolean>;
+  persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel?: boolean): Promise<boolean>;
+  /* every entry gone, cache and store — the import's clean slate */
+  clear(): Promise<void>;
   primeEntry(ekey: string): Promise<boolean>;
   warm(): Promise<void>;
   readonly warmed: boolean;
@@ -55,11 +59,11 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
   let storeReadError: unknown = null;
 
   function entryMd(ekey: string): string { return cache[ekey] || ""; }
-  function setEntry(ekey: string, md: string): Promise<void> {
+  function setEntry(ekey: string, md: string): Promise<boolean> {
     cache[ekey] = md;
     return persistEntry(ekey, () => store.set(ekey, md));
   }
-  function removeEntry(ekey: string): Promise<void> {
+  function removeEntry(ekey: string): Promise<boolean> {
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
     delete cache[ekey];
     notices.removed(ekey);
@@ -73,12 +77,12 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
      float unhandled. The store is the only durable copy, so a failed write
      is real data loss: stick it, keyed; a success is the durable landing
      and releases the pin. */
-  function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<void> {
+  function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {
     const seqAt = saveSeq[ekey];
     const tail = (chain[ekey] || Promise.resolve()).then(op, op);
     chain[ekey] = tail;
     return tail.then(
-      () => { notices.landed(ekey); },
+      () => { notices.landed(ekey); return true; },
       (err: unknown) => {
         /* PUT THE CACHE BACK: the mirror and the export are written from
            the cache, so a refused write left there goes out over the backup
@@ -93,8 +97,13 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
         }
         else if (isDel) notices.stuckIdle("couldn't delete — reload", err);
         else notices.stuck("not saved", err, ekey);
+        return false;
       },
     );
+  }
+  function clear(): Promise<void> {
+    for (const k of Object.keys(cache)) delete cache[k];
+    return store.clear();
   }
   /* seed the cache with ONE entry from its store row, ahead of the warm.
      Additive and idempotent: a key already held is left untouched, so the
@@ -121,7 +130,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     }).then(() => { warmed = !storeReadFailed; });
   }
   return {
-    cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm,
+    cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm, clear,
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },
     get storeReadError() { return storeReadError; },

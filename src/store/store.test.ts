@@ -82,6 +82,15 @@ test("a record without its key field is refused, as keyPath refuses it", async (
   expect((await s.get("a"))!.n).toBe(1);
 });
 
+test("clear empties the store", async () => {
+  const s = make<Row>("k");
+  await s.put({ k: "a" });
+  await s.put({ k: "b" });
+  await s.clear();
+  expect(await s.all()).toEqual([]);
+  expect(await s.get("a")).toBe(null);
+});
+
 test("update carries out put, del, and verdict-only decisions", async () => {
   const s = make<Row>("k");
   await s.put({ k: "a", n: 1 });
@@ -191,6 +200,17 @@ test("a landed write moves the base, so the same handle continues", async () => 
   expect((await s.get("k"))!.md).toBe("two");
 });
 
+test("clear empties the store and the ledger, so the first write after lands and the next is judged", async () => {
+  const { s, foreign } = open();
+  await s.set("k", "mine");
+  await s.clear();
+  expect(await s.all()).toEqual([]);
+  await s.set("k", "after");            // the old base "mine" must not refuse this
+  expect((await s.get("k"))!.md).toBe("after");
+  await foreign("j", "theirs");         // known-absent after the clear: judged
+  await expect(s.set("j", "mine")).rejects.toSatisfy(stale);
+});
+
 test("all() is ascending-key fresh copies", async () => {
   const { s, foreign } = open();
   await s.set("b", "2");
@@ -202,11 +222,13 @@ test("all() is ascending-key fresh copies", async () => {
 });
 });
 
-test("memImageStore: keyed rows, null on a miss", async () => {
+test("memImageStore: bytes under the sidecar's path, null on a miss", async () => {
   const s = memImageStore();
-  expect(await s.get("h1")).toBe(null);
-  await s.set("h1", "data:x");
-  expect(await s.get("h1")).toEqual({ id: "h1", data: "data:x" });
+  expect(await s.get("page/A/A-img-1.webp")).toBe(null);
+  await s.set("page/A/A-img-1.webp", new Uint8Array([1, 2]));
+  expect(await s.get("page/A/A-img-1.webp")).toEqual({ id: "page/A/A-img-1.webp", bytes: new Uint8Array([1, 2]) });
+  await s.clear();
+  expect(await s.get("page/A/A-img-1.webp")).toBe(null);
 });
 
 const dir = (name: string) => ({ name }) as unknown as FileSystemDirectoryHandle;
