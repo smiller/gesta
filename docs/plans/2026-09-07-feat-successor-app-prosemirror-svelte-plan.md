@@ -1424,5 +1424,5 @@ at the head is kept current per phase.
   stand-in was seen beside it by hand: a quiet aside on a left rule with
   the small-caps "Reference style" label. MEASURED in headless Helium:
   the label in small caps, a 3px rule in the rule colour, Georgia at
-  0.85em in the muted ink, the paragraph after it unchanged.
-  `dist/index.html` is 730.64 kB.
+  0.85em in the muted ink, the paragraph after it unchanged; looked at
+  by hand the same day: better. `dist/index.html` is 730.64 kB.
