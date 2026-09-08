@@ -70,8 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; the toolbar over a double-clicked word, B, and
-  Tag with its dialog; the source view through ⌃⌘M with the caret's
+  scope pick and Escape; a reference pasted as plain text; the toolbar
+  over a double-clicked word, B, and Tag with its dialog; the source view through ⌃⌘M with the caret's
   count carried across, an edit and a Tab in the source, and ⌃⌘M back;
   a tagged entry created, renamed and deleted
   through the dialogs, the host's link and tag bar read at each step; the
@@ -97,7 +97,8 @@ here NOW, and what is not yet:
   toolbar's acts as commands: the marks and their chords, the heading,
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code
-  block's empty last line, the way out), `listKeys.ts` (the gestures in a list:
+  block's empty last line, the way out), `paste.ts` (what pasted text
+  becomes and what copied text says), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -901,5 +902,30 @@ here NOW, and what is not yet:
   card and a note and the row keys for verse, had no arm for the code
   block; `codeKeys.ts` takes the empty line with it and lands in a
   paragraph below. MEASURED in headless Helium: a fence typed, a line,
-  Enter twice, "after the block" in its own paragraph.
+  Enter twice, "after the block" in its own paragraph. Confirmed by hand
+  the same day.
+- THE PASTE AND THE COPY (the same day, by hand: a reference pasted into
+  the rendered view arrived as its markdown text): the text half of
+  13c-paste-and-source-copy.js ported as the editor's clipboardTextParser
+  and clipboardTextSerializer (`editor/paste.ts`). Several pasted lines
+  render as the markdown they spell; a single line stays as typed unless
+  it is an unambiguous quote or heading line or a pasted entry link,
+  which lands inline; inside a list item, a table cell or a verse row
+  the lines arrive as breaks; in a code block every character is
+  literal; a form the schema refuses stays as typed. The copied text is
+  the selection's markdown, inline content as a paragraph. NOT CARRIED:
+  the current app's own clipboard flavour — the editor's HTML carries
+  its structure between entries, and the text parser is asked only of
+  PLAIN text; the quote-body arm's DOM surgery — a block slice fits
+  inside a quote through the model; the pad paragraphs — the model's
+  own fit. The serializer's decisions stand where the paste meets them:
+  a pasted literal asterisk is the serializer's to escape or not, and a
+  continuation line inside an item that READS as a block becomes that
+  block. NOT YET: a pasted image (the sidecar store exists; the paste
+  of bytes is its own slice). MEASURED 2026-09-07 in headless Helium
+  (`tools/helium-corner.mjs`, a synthetic paste event — the handler's
+  reach, the real paste being a hand's): "[*Gesta*, 7 September
+  2026](#2026-09-07?h=blind%20cord):\n\n> blind cord" pasted into a
+  fresh page stores as that markdown, the link and the quote drawn.
+  `dist/index.html` is 640.37 kB.
 

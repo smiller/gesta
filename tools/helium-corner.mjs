@@ -69,6 +69,13 @@ console.log("a plain click on an internal link:", JSON.stringify({ entry: await 
 /* the dialogs, answered by the harness: `answer` is what a prompt gets, a confirm is accepted */
 let answer = null;
 page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });
+/* a reference pasted as plain text into the rendered view renders as its markdown */
+await page.goto(PAGE + "#page/Pasted");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pasted", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
+await page.waitForTimeout(200);
+console.log("a reference pasted:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out")?.textContent), link: await page.evaluate(() => document.querySelector("#editor a")?.getAttribute("href")), quote: await page.evaluate(() => document.querySelector("#editor blockquote")?.textContent) }));
 /* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
@@ -77,7 +84,7 @@ const word = await page.evaluate(() => { const w = document.createTreeWalker(doc
 await page.mouse.dblclick(word.x, word.y);
 await page.waitForFunction(() => document.querySelector(".fmt")?.classList.contains("show"), null, { timeout: 5000 });
 await page.waitForTimeout(100);   /* the editor's own selection lands a beat after the DOM's */
-const barState = () => page.evaluate(() => { const f = document.querySelector(".fmt"); const r = f.getBoundingClientRect(); return { show: f.classList.contains("show"), selected: document.getSelection().toString(), lit: [...f.querySelectorAll("button.on")].map((b) => b.title.split(" ")[0]), aboveSelection: r.bottom < document.getSelection().getRangeAt(0).getBoundingClientRect().top, tag: !f.querySelector(".t").hidden }; });
+const barState = () => page.evaluate(() => { const f = document.querySelector(".fmt"); const r = f.getBoundingClientRect(); return { show: f.classList.contains("show"), selected: document.getSelection().toString(), lit: [...f.querySelectorAll("button.on")].map((b) => b.title.split(" ")[0]), aboveSelection: document.getSelection().rangeCount ? r.bottom < document.getSelection().getRangeAt(0).getBoundingClientRect().top : null, focused: document.activeElement?.className.slice(0, 20), tag: !f.querySelector(".t").hidden }; });
 console.log("a word double-clicked:", JSON.stringify(await barState()));
 await page.click(".fmt .b");
 await page.waitForTimeout(100);

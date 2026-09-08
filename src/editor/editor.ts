@@ -19,6 +19,7 @@ import { linkClick } from "./links.ts";
 import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
+import { pasteSlice, copyMd } from "./paste.ts";
 
 export interface EditorOptions {
   interval: number;
@@ -68,6 +69,10 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
        pair; anywhere else it is the character */
     handleTextInput: (view, _from, _to, text) => text === "|" && pipeInLine(view.state, view.dispatch),
     handleDOMEvents: { click: linkClick((frag) => opts.onRoute?.(frag)) },
+    /* plain text pasted renders the markdown it spells; the copied text is
+       the selection's markdown (paste.ts) */
+    clipboardTextParser: (text, $context) => pasteSlice(text, $context),
+    clipboardTextSerializer: (slice) => copyMd(slice),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       this.updateState(this.state.apply(tr));
       if (tr.docChanged) opts.onChange?.(this);
