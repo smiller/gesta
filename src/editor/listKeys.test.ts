@@ -75,7 +75,7 @@ test("Tab on the first item, or one already nested under its neighbour, refuses 
 test("Shift-Tab at the outermost level does nothing and says so", () => {
   const s = at("- one\n- two", "two");
   expect(refuses(shiftTabInList, s)).toBe(true);
-  expect(listRefusal(s, true)).toBe("at the outer level");
+  expect(listRefusal(s, true)).toBe("at the outer level: switch to markdown (⌃⌘M) to remove");
 });
 test("several selected items move together, and the ones below an outdented item follow it", () => {
   const s = run(tabInList, at("- one\n- two\n- three\n- four", "two", 0, "three"));

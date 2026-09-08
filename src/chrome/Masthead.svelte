@@ -56,7 +56,11 @@
     const panel = e.currentTarget as HTMLElement;
     if (!(e.relatedTarget instanceof Node && panel.contains(e.relatedTarget))) onClosePanel();
   };
-  const INTERVALS = [[0, "none"], [1, "every line"], [5, "every 5"], [10, "every 10"]] as const;
+  /* HOW OFTEN A LINE NUMBER IS DRAWN — the reader's choice, the current
+     app's seven */
+  const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
+  let linesSelect: HTMLSelectElement | undefined = $state();
+  export function focusLines(): void { linesSelect?.focus(); }
 </script>
 
 <header class="site-head">
@@ -117,10 +121,10 @@
     </nav>
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
-  <details class="page-lines" hidden={!screen.gutter}>
+  <details class="page-lines" hidden={!screen.gutter} open={screen.linesOpen} ontoggle={(e) => { screen.linesOpen = (e.currentTarget as HTMLDetailsElement).open; }}>
     <summary>Line numbering</summary>
     <span class="page-lines-body">
-      <select aria-label="Line numbering" value={screen.interval} onchange={(e) => onInterval(+e.currentTarget.value)}>
+      <select aria-label="Line numbering" bind:this={linesSelect} value={screen.interval} onchange={(e) => onInterval(+e.currentTarget.value)}>
         {#each INTERVALS as [n, label] (n)}<option value={n}>{label}</option>{/each}
       </select>
     </span>

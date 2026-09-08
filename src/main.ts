@@ -88,6 +88,7 @@ const acts = {
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
   copyBlock: () => {},
+  lines: (_open: boolean) => {},
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {} },
@@ -124,7 +125,7 @@ document.addEventListener("click", (e) => {
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); acts.lineBar.close(); }
+  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); acts.lineBar.close(); if (screen.linesOpen) acts.lines(false); }
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
   /* ⌃⌘K toggles the Search row, the current app's chord; ⌃⌘N is "new" —
      a tagged entry, a sub-page, a book — reserved for it in phase 1 */
@@ -134,6 +135,10 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "h") { e.preventDefault(); acts.panel("help"); }
   else if (e.key === "b") { e.preventDefault(); acts.panel("bookmarks"); }
   else if (e.key === "s") { e.preventDefault(); acts.panel("shortcuts"); }
+  /* ⌃⌘L toggles the Line numbering row — L for lines; Tab belongs to
+     indent, so no masthead row is reachable from the editor without a
+     chord of its own */
+  else if (e.key === "l") { e.preventDefault(); acts.lines(!screen.linesOpen); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
@@ -211,6 +216,14 @@ if (fixture && fixtures[fixture]) {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   acts.interval = (n) => session.setInterval(n);
   acts.today = () => session.today();
+  /* ⌃⌘L: the Line numbering row opens with its select focused, closes
+     with the caret back in the editor; refused where nothing is numbered */
+  acts.lines = (open) => {
+    if (open && !screen.gutter) { say("no line numbers here", 2000); return; }
+    screen.linesOpen = open;
+    if (open) { closePanel(); closeLineBar(); setTimeout(() => masthead.focusLines(), 0); }
+    else session.view?.focus();
+  };
   /* SEARCH. The index is built from the parsed text, once per session:
      MEASURED 4.4 s over the whole mirror under node, so it is built in
      chunks that yield — kicked off in idle time after the warm, and

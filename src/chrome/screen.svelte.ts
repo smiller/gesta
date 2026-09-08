@@ -59,8 +59,10 @@ export interface Screen {
   copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
   /* the floating format bar over a selection: where it sits, what is lit */
   bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean };
-  /* the open entry draws a gutter: the Line numbering row shows */
+  /* the open entry draws a gutter: the Line numbering row shows; and
+     whether the row stands open (⌃⌘L, the summary) */
   gutter: boolean;
+  linesOpen: boolean;
   /* the markdown source view is on: the mode pill shows */
   mdView: boolean;
   interval: number;
@@ -77,7 +79,7 @@ export function screenState(interval: number): Screen {
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
     backups: { canPick: true, configured: false, trouble: "", warm: "loading" },
-    gutter: false, mdView: false, interval,
+    gutter: false, linesOpen: false, mdView: false, interval,
   });
   return screen;
 }

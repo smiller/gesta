@@ -67,6 +67,25 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* Tab in a quote nests, Shift-Tab lifts, again at the floor says so; ⌃⌘L opens the Line numbering row over verse */
+await page.goto(PAGE + "#page/Quoted");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Quoted", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.type("> quoted words");
+await page.keyboard.press("Tab");
+await page.waitForTimeout(150);
+console.log("Tab in a quote:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out").textContent) }));
+await page.keyboard.press("Shift+Tab");
+await page.keyboard.press("Shift+Tab");
+await page.waitForTimeout(150);
+console.log("Shift-Tab twice:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out").textContent), corner: await page.evaluate(() => document.querySelector(".saved.show")?.textContent) }));
+await page.goto(PAGE + "#page/Horace");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });
+await page.keyboard.press("Control+Meta+l");
+await page.waitForTimeout(100);
+console.log("⌃⌘L over Horace:", JSON.stringify(await page.evaluate(() => ({ open: document.querySelector(".page-lines").open, focused: document.activeElement?.getAttribute("aria-label"), options: [...document.querySelectorAll(".page-lines option")].map((o) => o.textContent) }))));
+await page.keyboard.press("Escape");
+console.log("Escape:", JSON.stringify(await page.evaluate(() => ({ open: document.querySelector(".page-lines").open }))));
 /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the citation anchor and the pair's grid inline */
 await page.goto(PAGE + "#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });

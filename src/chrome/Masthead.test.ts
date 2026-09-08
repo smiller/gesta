@@ -45,6 +45,7 @@ describe("Masthead", () => {
     const html = draw("2026-09-07", null, { gutter: true, interval: 1 });
     expect(html).not.toMatch(/class="page-lines[^"]*" hidden/);
     expect(html).toMatch(/<option value="1" selected[^>]*>every line/);
+    expect(html).toMatch(/<option value="3"[^>]*>every 3rd/);
   });
   it("no panel by default; an open pages panel lists its rows and the create row; an empty shelf explains itself", () => {
     expect(draw("2026-09-07", null)).not.toContain('class="pages');

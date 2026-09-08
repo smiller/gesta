@@ -11,8 +11,7 @@
    module's is the gate, the floor, and the two truths of the Tab
    refusal: the item is the first of ITS list either way, but when that
    list is nested the writer can see the parent above it, and what stops
-   the press is the level it would skip. The refusal's ⌃⌘M half returns
-   with the source view. */
+   the press is the level it would skip. */
 import { type Command, type EditorState } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { chainCommands } from "prosemirror-commands";
@@ -36,7 +35,7 @@ export const tabInList: Command = (state, dispatch, view) => inListItem(state) &
 export const shiftTabInList: Command = (state, dispatch, view) =>
   inListItem(state) && nested(state) && liftListItem(item)(state, dispatch, view);
 export function listRefusal(state: EditorState, shift: boolean): string {
-  if (shift) return "at the outer level";
+  if (shift) return "at the outer level: switch to markdown (⌃⌘M) to remove";
   return nested(state) ? "can't indent an item more than one deeper than its parent" : "can't indent the first item in a list";
 }
 /* a Tab in a list is CONSUMED whether or not it moved: the press must not

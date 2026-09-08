@@ -72,7 +72,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; ⌃⌘R over a paired row with the clipboard read
+  scope pick and Escape; Tab and Shift-Tab in a quote, ⌃⌘L over verse
+  and Escape; ⌃⌘R over a paired row with the clipboard read
   back; a js fence typed, its tokens, its label, the
   copy button hovered and clicked; a PNG drawn on a canvas pasted as a
   file; the
@@ -114,7 +115,8 @@ here NOW, and what is not yet:
   refusals), `landing.ts` (the landing mark as a plugin: a position that
   maps through edits, drawn as a node decoration), `codeHighlight.ts`
   (the tokens drawn as inline decorations over every code block),
-  `listKeys.ts` (the gestures in a list:
+  `quoteKeys.ts` (Tab and Shift-Tab in a quote: the run between blank
+  lines nested, or spliced back), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -1134,4 +1136,29 @@ here NOW, and what is not yet:
   file's full address — the write is `href="#…"`, as the current app's
   is; what a receiving application sees is its clipboard's doing.
   `dist/index.html` is 723.76 kB.
+- TAB IN A QUOTE, ⌃⌘L AND THE INTERVALS (2026-09-08): the quote arm of
+  13e-enter-and-tab-dispatch.js ported (`editor/quoteKeys.ts`), re-asked
+  of the model, where a quote's body is ONE paragraph of lines with
+  breaks and a blank line is two breaks (the grammar's line run, phase
+  0): THE UNIT IS THE RUN between the blank lines around the selection —
+  several runs when it crosses one — cut out of the paragraph and
+  wrapped in a quote of its own, the lines before and after staying;
+  Shift-Tab splices the inner quote's lines back into the flat run with
+  a blank line either side (the library's lift left two paragraphs
+  adjacent, which the serializer writes with no blank quote line and the
+  parser reads back as one run — MEASURED by the round-trip test, the
+  lift fails it); an inner quote holding anything but paragraphs takes
+  the lift. The serializer's spellings stand: a nested quote as `>>`, no
+  blank quote line between a quote's blocks. A selection reaching outside
+  the outermost quote says "Tab indents one list, quote, or code block at
+  a time"; Shift-Tab on the outermost says the floor, now in full: "at
+  the outer level: switch to markdown (⌃⌘M) to remove", the list's floor
+  reading the same. ⌃⌘L toggles the Line numbering row with its select
+  focused, "no line numbers here" where nothing is numbered, Escape
+  closing it; the intervals are the current app's seven (none, every
+  line, every 2nd, 3rd, 4th, 5th, 10th). MEASURED 2026-09-08 in headless
+  Helium: "> quoted words" then Tab stores ">> quoted words"; Shift-Tab
+  twice puts it back and says the floor; ⌃⌘L over Horace opens the row
+  with the select focused and the seven intervals; Escape closes.
+  `dist/index.html` is 727.52 kB.
 
