@@ -1412,4 +1412,6 @@ at the head is kept current per phase.
   `[Plans](#2026-09-06/Plans)` back (the tool had a placeholder there),
   85 lines, the console empty; 475 tests, tsc clean. `dist/index.html`
   is 730.45 kB. The round closes here: a third pass is the exception,
-  and this one found no behaviour past the rename.
+  and this one found no behaviour past the rename. Confirmed by hand
+  in Helium the same day: words typed just before a rename stand under
+  the new name, and the old tag is gone from the day's bar.
