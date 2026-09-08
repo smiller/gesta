@@ -66,6 +66,19 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
+await page.goto(PAGE + "#2026-09-06");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
+await page.evaluate(() => { const t = [...document.querySelectorAll("#editor .ProseMirror p, #editor .ProseMirror .vrow")].find((n) => n.textContent.includes("music be")); const s = document.getSelection(); const r = document.createRange(); const tn = [...t.childNodes].find((c) => c.nodeType === 3 && c.textContent.includes("music be")) || t.firstChild; r.setStart(tn, tn.textContent.indexOf("music be")); r.collapse(true); s.removeAllRanges(); s.addRange(r); });
+await page.keyboard.press("Control+Meta+m");
+await page.waitForSelector("textarea.source", { timeout: 5000 });
+console.log("⌃⌘M:", JSON.stringify(await page.evaluate(() => { const ta = document.querySelector("textarea.source"); return { pill: !document.querySelector(".mode")?.hidden, focused: document.activeElement === ta, sameAsStore: ta.value === document.getElementById("out")?.textContent, caretAt: ta.value.slice(ta.selectionStart, ta.selectionStart + 12) }; })));
+await page.keyboard.type("MUSIC ");
+await page.keyboard.press("Tab");
+await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
+await page.keyboard.press("Control+Meta+m");
+await page.waitForSelector("#editor .ProseMirror", { timeout: 5000 });
+console.log("⌃⌘M back:", JSON.stringify(await page.evaluate(() => { const s = document.getSelection(); return { pill: !document.querySelector(".mode")?.hidden, text: document.querySelector("#editor .ProseMirror").textContent.includes("MUSIC   music be"), caretBefore: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 6), s.anchorOffset), caretAfter: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 8), saved: document.getElementById("same")?.textContent }; })));
 /* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });

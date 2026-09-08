@@ -42,6 +42,8 @@ export interface Screen {
   goto: { open: boolean; levels: Level[] };
   /* the open entry draws a gutter: the Line numbering row shows */
   gutter: boolean;
+  /* the markdown source view is on: the mode pill shows */
+  mdView: boolean;
   backupsLabel: string;
   interval: number;
 }
@@ -51,7 +53,7 @@ export function screenState(interval: number): Screen {
     masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelEmpty: "",
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
-    gutter: false, backupsLabel: "", interval,
+    gutter: false, mdView: false, backupsLabel: "", interval,
   });
   return screen;
 }

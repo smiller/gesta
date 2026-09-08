@@ -48,7 +48,8 @@ here NOW, and what is not yet:
   (markdown → document), `serialize.ts` (document → markdown),
   `flatten.ts` (the document as ONE character stream with a position map,
   the stream every search site shares: the index text, the jump, the
-  reference payload's count). Tests sit beside them as `*.test.ts`.
+  reference payload's count; and the same fold over a source text, for
+  the view switch). Tests sit beside them as `*.test.ts`.
 - `tools/corpus.ts` — the whole-corpus round trip over an export folder,
   `node tools/corpus.ts [dir]`; writes `tools/out/corpus-report.txt`.
   Phase 0's gate: nothing in later phases is worth building until it is
@@ -69,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; a tagged entry created, renamed and deleted
+  scope pick and Escape; the source view through ⌃⌘M with the caret's
+  count carried across, an edit and a Tab in the source, and ⌃⌘M back; a tagged entry created, renamed and deleted
   through the dialogs, the host's link and tag bar read at each step; the
   pill under `?corner=pill`; prints each reading and the console, and
   screenshots when given a path.
@@ -88,7 +90,8 @@ here NOW, and what is not yet:
   arms), `links.ts` (a click on a link: the pure decision and the
   handler), `highlight.ts` (the jump: the nth occurrence of a query
   selected and scrolled to), `insertLink.ts` (a link placed after the
-  caret, and what refuses one), `listKeys.ts` (the gestures in a list:
+  caret, and what refuses one), `sourceKeys.ts` (Tab and Shift-Tab in
+  the source view, over a text and a selection), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -148,7 +151,9 @@ here NOW, and what is not yet:
   selects), `subEntries.ts` (the sub-entry rules, pure: where
   a new one lives, what blocks a rename or delete, the blank subtree the
   confirm sweeps, the buttons' wording, the dialogs' texts, where a delete
-  lands, the host of a sub-entry),
+  lands, the host of a sub-entry), `viewCarets.ts` (where the view
+  toggle puts you back: the count held per view, the alignment between
+  the two streams),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -156,7 +161,7 @@ here NOW, and what is not yet:
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
   open by hash, the debounced save through the layer, the flush on leave,
   the refusal of an unknown book, the walk and today, the reference and
-  the entry link to the clipboard. `src/editor/images.ts` is the image node
+  the entry link to the clipboard, the source view and its switch. `src/editor/images.ts` is the image node
   view it supplies, resolving a relative src from the store;
   `src/editor/reference.ts` the selection half of a reference — the rows
   covered, the line and leaf ranges, the highlight payload, the passage.
@@ -799,4 +804,36 @@ here NOW, and what is not yet:
   closed; on Pippa Passes the chain reads "← the author" over the book
   by its title; Journal picked there gives today's shape; Escape closes.
   `dist/index.html` is 622.07 kB.
+- THE SOURCE VIEW (the same day, second of the three asked for): 13b-the-
+  view-switch-and-its-carets.js ported, re-asked of a store that holds
+  markdown. The surface is a TEXTAREA over the entry's markdown, sized to
+  its text (`field-sizing: content`), in the current app's source face,
+  saving on the same debounce; the switch is a serialize, the switch
+  back a parse, and a text the model refuses stays in the source view
+  and says why — so the stored text the model refuses, which phase 2
+  showed as an inert <pre>, now opens as editable source. ⌃⌘M toggles;
+  the mode pill leads the tools while the source is on; a navigation in
+  the source view paints the next entry's source. THE CARETS
+  (`chrome/viewCarets.ts`, pure): what survives the flip is a COUNT of
+  flat characters before the caret, held per view with the text as the
+  staleness test, and the greedy alignment between the two streams —
+  the rendered a subsequence of the source — carries it the other way
+  when the hold is stale; glued syntax stays ahead of the caret, a
+  separate token is crossed, the tail belongs behind a reader below it
+  all; a MOVED caret retires the other view's hold. The rendered stream
+  is flattenDoc's and the source's flattenText's, the same fold with raw
+  indices. TAB IN THE SOURCE (`editor/sourceKeys.ts`, pure): two spaces
+  at a caret; a selection shifts whole lines and stays selected; an end
+  at a line start leaves that line; an empty line gains nothing;
+  Shift-Tab takes up to two back, and at a caret with none is left to
+  the browser; a selection that moved nothing says why. NOT CARRIED: the
+  picture-pad distinction in the tail bit (no pad is drawn below a
+  trailing picture here), the `![img-N]` markers (a picture is its
+  `![](…)` as written), the caret's visibility in the source (assumed
+  seen). ⌃⌘R in the source view says to switch. MEASURED 2026-09-07 in
+  headless Helium (`tools/helium-corner.mjs`): ⌃⌘M over Twelfth Night
+  shows the pill, focuses the source, whose text equals the store's,
+  with the caret at "music be" where it had been placed; "MUSIC " typed
+  and a Tab, then ⌃⌘M back, render "MUSIC   music be" with the caret
+  after the edit and the store identical. `dist/index.html` is 626.38 kB.
 

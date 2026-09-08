@@ -164,6 +164,7 @@ if (fixture && fixtures[fixture]) {
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
+    onView: (md) => { screen.mdView = md; },
   });
   /* leaving the tab with a backup still pending writes it at once, after
      the session's own flush (registered first, so it runs first) */

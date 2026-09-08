@@ -23,6 +23,10 @@ import type { ImageStore } from "./store/store.ts";
 import { copyText } from "./chrome/clipboard.ts";
 import { highlightIn } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
+import { TextSelection } from "prosemirror-state";
+import { flattenDoc, flattenText } from "./model/flatten.ts";
+import { countBefore, positionAt, arrivingCount, type Hold } from "./chrome/viewCarets.ts";
+import { sourceTab } from "./editor/sourceKeys.ts";
 
 export interface SessionOptions {
   mount: HTMLElement;
@@ -36,6 +40,8 @@ export interface SessionOptions {
   onShow?: (md: string, stored: string, ekey: string) => void;
   /* an edit landed in the document — what arms the backup's idle timer */
   onEdit?: () => void;
+  /* the view switched: true in the markdown source view */
+  onView?: (md: boolean) => void;
 }
 export interface Session {
   readonly current: { date: string; tag: string | null };
@@ -52,6 +58,9 @@ export interface Session {
   /* select the nth occurrence of q in the open entry and scroll to it;
      honorMarkers for a search-box jump, literal for a link's payload */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
+  /* the markdown source view: both views edit the one entry */
+  readonly mdView: boolean;
+  setView(md: boolean): void;
   /* open the entry and highlight once it paints — or at once when it is
      the open one, since a hash set to its own value fires no hashchange */
   jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
@@ -73,11 +82,116 @@ export function startSession(opts: SessionOptions): Session {
      wrong, now-current entry */
   let pending: { hl: Highlight; honor: boolean; gen: number } | null = null;
   let navGen = 0;
+  /* THE SOURCE VIEW: the same markdown in a textarea, both views editing
+     the one entry. Ported 2026-09-07 from 13b-the-view-switch-and-its-
+     carets.js, re-asked of a store that holds markdown: the switch is a
+     serialize, the switch back a parse, and a text the model refuses
+     stays in the source view and says why. The carets are viewCarets'. */
+  let mdView = false;
+  let source: HTMLTextAreaElement | null = null;
+  const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
+  let placedAt: number | null = null;
+  const currentMd = (): string => mdView ? (source ? source.value : "") : view ? serializeMarkdown(view.state.doc) : "";
   const ekeyOf = (): string => entryKey(current.date, current.tag);
   const show = (): void => {
-    if (!view || !opts.onShow) return;
-    opts.onShow(serializeMarkdown(view.state.doc), layer.entryMd(ekeyOf()), ekeyOf());
+    if ((!view && !source) || !opts.onShow) return;
+    opts.onShow(currentMd(), layer.entryMd(ekeyOf()), ekeyOf());
   };
+  const teardown = (): void => { view?.destroy(); view = null; source = null; mount.replaceChildren(); };
+  /* the source surface: a textarea over the markdown, sized to its text,
+     saving on the debounce like the editor; Tab and Shift-Tab are the
+     source's (sourceKeys.ts) */
+  function mountSource(md: string): void {
+    teardown();
+    const ta = document.createElement("textarea");
+    ta.className = "source";
+    ta.spellcheck = false;
+    ta.value = md;
+    ta.addEventListener("input", () => { scheduleSave(); show(); opts.onEdit?.(); });
+    ta.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab") return;
+      if (e.repeat && ta.selectionStart !== ta.selectionEnd) { e.preventDefault(); return; }
+      const r = sourceTab(ta.value, ta.selectionStart, ta.selectionEnd, e.shiftKey);
+      if (r === null) return;
+      e.preventDefault();
+      if ("refuse" in r) { if (!e.repeat) say(r.refuse); return; }
+      ta.value = r.value;
+      ta.setSelectionRange(r.start, r.end);
+      ta.dispatchEvent(new Event("input"));
+    });
+    mount.appendChild(ta);
+    source = ta;
+  }
+  function mountEditor(doc: import("prosemirror-model").Node, date: string, tag: string | null): void {
+    teardown();
+    const dir = entryFile(date, tag).dir;
+    view = createEditor(mount, doc, {
+      interval,
+      onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
+      nodeViews: { image: imageView(resolver(dir)) },
+      onRoute: (frag) => goto(frag, "already here"),
+      onRefuse: (why) => say(why),
+    });
+  }
+  /* held on the way OUT: how many flat characters precede the caret, the
+     text as the staleness test, whether anything follows, whether the
+     reader was looking at it. A MOVED caret retires the other view's hold. */
+  function holdViewCaret(): void {
+    let hold: Hold | null = null;
+    if (mdView && source) {
+      const flat = flattenText(source.value);
+      const at = countBefore(flat, source.selectionStart);
+      hold = { at, text: flat.text, tail: at >= flat.text.length, seen: true };
+    } else if (view) {
+      const flat = flattenDoc(view.state.doc);
+      const pos = view.state.selection.from;
+      const at = countBefore(flat, pos);
+      let seen = true;
+      try { const box = view.coordsAtPos(pos); seen = box.bottom >= 0 && box.top <= document.documentElement.clientHeight; } catch { seen = true; }
+      hold = { at, text: flat.text, tail: at >= flat.text.length, seen };
+    }
+    if (hold && hold.at !== placedAt) carets[mdView ? "rendered" : "source"] = null;
+    carets[mdView ? "source" : "rendered"] = hold;
+  }
+  function putViewCaret(): void {
+    const here = mdView ? "source" : "rendered", other = mdView ? "rendered" : "source";
+    if (mdView && source) {
+      const flat = flattenText(source.value);
+      const arriving = arrivingCount(carets[here], carets[other], flat.text, true);
+      const pos = arriving ? (positionAt(flat, arriving.at) ?? source.value.length) : source.value.length;
+      placedAt = arriving ? arriving.at : null;
+      source.focus();
+      source.setSelectionRange(pos, pos);
+    } else if (view) {
+      const flat = flattenDoc(view.state.doc);
+      const arriving = arrivingCount(carets[here], carets[other], flat.text, false);
+      const pos = arriving ? (positionAt(flat, arriving.at) ?? view.state.doc.content.size) : 0;
+      placedAt = arriving ? arriving.at : null;
+      const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(Math.min(pos, view.state.doc.content.size))));
+      if (!arriving || arriving.seen) tr.scrollIntoView();
+      view.dispatch(tr);
+      view.focus();
+    }
+  }
+  function setView(md: boolean): void {
+    if (md === mdView) return;
+    holdViewCaret();
+    if (md) {
+      const text = currentMd();
+      mdView = true;
+      mountSource(text);
+    } else {
+      let doc;
+      try { doc = parseMarkdown(source ? source.value : ""); }
+      catch (err) { say("the source cannot be rendered — " + (err as Error).message); return; }
+      mdView = false;
+      mountEditor(doc, current.date, current.tag);
+    }
+    opts.onView?.(mdView);
+    scheduleSave();
+    show();
+    putViewCaret();
+  }
   /* a relative src resolves in the entry's OWN export folder, which is
      where the import filed it */
   const resolver = (dir: string) => (src: string): Promise<string | null> =>
@@ -91,28 +205,28 @@ export function startSession(opts: SessionOptions): Session {
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
-    let doc;
-    try { doc = parseMarkdown(md); }
-    catch (err) {
-      /* a stored text the model refuses is shown, not edited: an editor over
-         a lossy parse would save the loss */
-      console.error("cannot open", ekey, err);
-      say("cannot open " + ekey + " — " + (err as Error).message);
-      view?.destroy(); view = null;
-      mount.replaceChildren();
-      const pre = document.createElement("pre"); pre.textContent = md; mount.appendChild(pre);
-      return;
+    /* the open view stays the open view: a navigation in the source view
+       paints the next entry's source; the holds belong to the entry left */
+    carets.rendered = carets.source = null; placedAt = null;
+    if (mdView) { mountSource(md); }
+    else {
+      let doc;
+      try { doc = parseMarkdown(md); }
+      catch (err) {
+        /* a stored text the model refuses is not edited as a document — an
+           editor over a lossy parse would save the loss — but it IS edited
+           as source: the switch back parses it again */
+        console.error("cannot render", ekey, err);
+        say("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+        mdView = true;
+        mountSource(md);
+        opts.onView?.(true);
+        document.documentElement.dataset.entry = ekey;
+        show();
+        return;
+      }
+      mountEditor(doc, date, tag);
     }
-    view?.destroy();
-    mount.replaceChildren();
-    const dir = entryFile(date, tag).dir;
-    view = createEditor(mount, doc, {
-      interval,
-      onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
-      nodeViews: { image: imageView(resolver(dir)) },
-      onRoute: (frag) => goto(frag, "already here"),
-      onRefuse: (why) => say(why),
-    });
     document.documentElement.dataset.entry = ekey;
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
@@ -149,9 +263,9 @@ export function startSession(opts: SessionOptions): Session {
   }
   function saveNow(): Promise<boolean> {
     cancelSave();
-    if (!view || layer.storeReadFailed) return Promise.resolve(false);
+    if ((!view && !source) || layer.storeReadFailed) return Promise.resolve(false);
     const ekey = ekeyOf();
-    const md = serializeMarkdown(view.state.doc);
+    const md = currentMd();
     const stored = layer.entryMd(ekey);
     if (md === stored) return Promise.resolve(true);
     if (!md.trim() && !stored) return Promise.resolve(true);   /* an empty document mints nothing */
@@ -180,6 +294,7 @@ export function startSession(opts: SessionOptions): Session {
     copyText(text).then(() => say(okText), (err: unknown) => { console.error(failText, err, text); say(failText); });
   }
   function copyReference(): void {
+    if (mdView) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, current.date, current.tag, journal);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
@@ -194,8 +309,9 @@ export function startSession(opts: SessionOptions): Session {
   window.addEventListener("hashchange", () => { flushSave().then(openHash); });
   window.addEventListener("beforeunload", () => { saveNow(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
-  /* ⌃⌘, and ⌃⌘. walk, ⌃⌘T is today — the current app's chords (measured
-     there 2026-07-24 as silent in Helium); both modifiers, ⇧ and ⌥ excluded */
+  /* ⌃⌘, and ⌃⌘. walk, ⌃⌘T is today, ⌃⌘M the view — the current app's
+     chords (measured there 2026-07-24 as silent in Helium); both
+     modifiers, ⇧ and ⌥ excluded */
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
     if (e.key === ",") { e.preventDefault(); step("prev"); }
@@ -203,11 +319,13 @@ export function startSession(opts: SessionOptions): Session {
     else if (e.key === "t") { e.preventDefault(); today(); }
     else if (e.key === "r") { e.preventDefault(); copyReference(); }
     else if (e.key === "c") { e.preventDefault(); copyEntryLink(); }
+    else if (e.key === "m") { e.preventDefault(); setView(!mdView); }
   });
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump,
+    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView,
+    get mdView() { return mdView; },
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };
 }

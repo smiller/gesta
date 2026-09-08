@@ -6,7 +6,8 @@
      with the tag bar under it, the tools, the title row and the Line
      numbering row. The create, rename and delete of a tagged entry and a
      sub-page are the tools' first three buttons, worded per namespace.
-     Not yet: help, the mode pill, the ⌃⌘G bar. The Go to and Search
+     The mode pill leads the tools while the source view is on. Not yet:
+     help, the ⌃⌘G bar. The Go to and Search
      rows are their own components, drawn between the title row and the
      Line numbering row in the current app's order. A panel's rows are anchors, so ⌘-click and middle-click work; a
      row click closes the panel itself, since a click on the open entry's
@@ -74,6 +75,7 @@
     </span>
   </nav>
   <div class="site-tools">
+    <span class="mode" title="⌃⌘M toggles the markdown source view" hidden={!screen.mdView}>markdown</span>
     <button class="toolbtn" type="button" title="Go to today" hidden={!screen.masthead.showToday} onclick={onToday}>today</button>
     <button class="toolbtn" type="button" title={screen.masthead.buttons.createTitle} hidden={!screen.masthead.buttons.canCreate} onclick={onCreate}>{screen.masthead.buttons.create}</button>
     <button class="toolbtn" type="button" title={screen.masthead.buttons.renameTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onRename}>rename</button>
@@ -202,6 +204,19 @@
   .pages .panel-new { color: var(--bar-link); }
   .pages .panel-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
+  /* the mode pill: the one sign the page is showing its source */
+  .mode {
+    font-family: var(--sans);
+    font-size: 0.7em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--bar-link);
+    border: 1px solid var(--bar-input-border);
+    border-radius: 999px;
+    padding: 3px 10px;
+    user-select: none;
+  }
+  .mode[hidden] { display: none; }
   /* the full-width rows take a line each; min-width:0 is load-bearing so a
      long select option or an unbroken title cannot push the sticky bar
      wider than the viewport */
