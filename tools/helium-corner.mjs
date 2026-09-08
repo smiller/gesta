@@ -67,6 +67,25 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* a refused fence named on the switch back: "::: versey" typed in the source stays a paragraph and the corner says why; a clean switch releases it */
+await page.goto(PAGE + "#page/Fenced");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Fenced", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.press("Control+Meta+m");
+await page.waitForSelector("textarea.source");
+await page.keyboard.type("::: versey\nline\n:::");
+await page.keyboard.press("Control+Meta+m");
+await page.waitForSelector("#editor .ProseMirror");
+await page.waitForTimeout(150);
+console.log("a refused fence:", JSON.stringify(await page.evaluate(() => ({ corner: document.querySelector(".saved.show")?.textContent, paragraphs: document.querySelectorAll("#editor p").length }))));
+await page.keyboard.press("Control+Meta+m");
+await page.waitForSelector("textarea.source");
+await page.keyboard.press("Meta+a");
+await page.keyboard.type("::: verse\nline\n:::");
+await page.keyboard.press("Control+Meta+m");
+await page.waitForSelector("#editor .ProseMirror");
+await page.waitForTimeout(150);
+console.log("a clean switch:", JSON.stringify(await page.evaluate(() => ({ corner: document.querySelector(".saved.show")?.textContent || "", verse: !!document.querySelector("#editor .verse") }))));
 /* Tab in a quote nests, Shift-Tab lifts, again at the floor says so; ⌃⌘L opens the Line numbering row over verse */
 await page.goto(PAGE + "#page/Quoted");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Quoted", null, { timeout: 15000 });

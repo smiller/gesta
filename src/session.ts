@@ -14,6 +14,7 @@ import { imageView, pastedPictureBytes, pastedImageFile } from "./editor/images.
 import { nextImageName } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { schema } from "./model/schema.ts";
+import { fenceRefusals, refusalsText } from "./model/fenceRefusals.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, pageParts } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
@@ -42,6 +43,10 @@ export interface SessionOptions {
   say: (text: string, ms?: number) => void;
   /* a failure worth pinning until seen — a lost picture */
   stick?: (text: string) => void;
+  /* an OWNED pin: the refused fences named on a switch back, released by
+     the next clean parse of the page (the switch's, and only that one) */
+  pin?: (text: string) => number;
+  releasePin?: (gen: number) => void;
   /* the markdown on screen changed or an entry opened: the page's own
      display of it (the details pane, the root's data attributes) */
   onShow?: (md: string, stored: string, ekey: string) => void;
@@ -147,6 +152,7 @@ export function startSession(opts: SessionOptions): Session {
      open then is the current app's measured loss. Every way it cannot
      land sticks, since the gesture is spent. */
   let decoding = false;
+  let fencePin = 0;
   function pasteFile(file: File): void {
     if (decoding) { say("picture not pasted — one at a time; paste it again", 2600); return; }
     const aimedAt = ekeyOf(), aimedMd = mdView;
@@ -248,6 +254,10 @@ export function startSession(opts: SessionOptions): Session {
       catch (err) { say("the source cannot be rendered — " + (err as Error).message); return; }
       mdView = false;
       mountEditor(doc, current.date, current.tag);
+      /* a clean parse OF THE PAGE releases the pin; a refusal renews it */
+      const refused = fenceRefusals(doc);
+      if (fencePin) { opts.releasePin?.(fencePin); fencePin = 0; }
+      if (refused.length) fencePin = opts.pin?.(refusalsText(refused)) || 0;
     }
     window.scrollTo(0, y);
     opts.onView?.(mdView);
@@ -269,8 +279,10 @@ export function startSession(opts: SessionOptions): Session {
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
     /* the open view stays the open view: a navigation in the source view
-       paints the next entry's source; the holds belong to the entry left */
+       paints the next entry's source; the holds belong to the entry left,
+       and so does a pinned fence refusal (the data pins stay) */
     carets.rendered = carets.source = null; placedAt = null;
+    if (fencePin) { opts.releasePin?.(fencePin); fencePin = 0; }
     if (mdView) { mountSource(md); }
     else {
       let doc;

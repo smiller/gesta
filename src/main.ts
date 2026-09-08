@@ -200,6 +200,7 @@ if (fixture && fixtures[fixture]) {
   const session = startSession({
     mount: mountEl, layer, images, interval: screen.interval, say,
     stick: (text) => { notices.stick(text); },
+    pin: (text) => notices.stick(text), releasePin: (gen) => notices.releasePin(gen),
     onShow: (md, stored, ekey) => {
       showMd(md, stored);
       screen.gutter = !!session.view?.dom.classList.contains("versepage");

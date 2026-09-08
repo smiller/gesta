@@ -47,7 +47,8 @@ here NOW, and what is not yet:
   regexes and the pure string transforms both arms share), `parse.ts`
   (markdown → document), `serialize.ts` (document → markdown),
   `tokens.ts` (syntax highlighting's tokenizer: the language table and
-  the one-pass scan, yielding spans), `flatten.ts` (the document as ONE
+  the one-pass scan, yielding spans), `fenceRefusals.ts` (the `:::` lines
+  a parse left as paragraphs, named with their reasons), `flatten.ts` (the document as ONE
   character stream with a position map,
   the stream every search site shares: the index text, the jump, the
   reference payload's count; and the same fold over a source text, for
@@ -72,7 +73,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; Tab and Shift-Tab in a quote, ⌃⌘L over verse
+  scope pick and Escape; a refused fence typed in the source and the
+  switch back, then a clean one; Tab and Shift-Tab in a quote, ⌃⌘L over verse
   and Escape; ⌃⌘R over a paired row with the clipboard read
   back; a js fence typed, its tokens, its label, the
   copy button hovered and clicked; a PNG drawn on a canvas pasted as a
@@ -1161,4 +1163,24 @@ here NOW, and what is not yet:
   twice puts it back and says the floor; ⌃⌘L over Horace opens the row
   with the select focused and the seven intervals; Escape closes.
   `dist/index.html` is 727.52 kB.
+- THE REFUSED FENCE NAMED (2026-09-08, the last of the list but the
+  scaffolding): md.mjs's noteRefusals and 11b's stickFenceRefusals
+  ported. `model/fenceRefusals.ts` walks the DOCUMENT rather than the
+  parse: had a `:::`-shaped line opened anything it would not be a
+  paragraph's text, so every such line in a paragraph is a refusal by
+  construction, with the current app's reasons — a starting number that
+  is not one, a word that takes nothing after it, a card without its
+  colour, a block Gesta does not know. The session pins them on the
+  switch back from the source, one per line (an OWNED pin through the
+  ledger), and a clean parse of the page releases it — the switch's, and
+  only that one; a navigation releases it too, the page having gone.
+  NOT CARRIED: the pin on a rendered-view paste (the text parser has no
+  seat at the ledger; the source view is where a fence is typed). MEASURED
+  2026-09-08 in headless Helium: "::: versey / line / :::" typed in the
+  source and ⌃⌘M pins "::: versey — not a block Gesta knows, so it stayed
+  a paragraph"; the fence corrected to "::: verse" and switched again
+  clears the corner with the verse rendered. `dist/index.html` is
+  728.50 kB. WHAT REMAINS of phase 3 is the scaffolding out — the clear
+  button and the markdown pane under the entry — once the cutover is
+  close, on Sean's word.
 
