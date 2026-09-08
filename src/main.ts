@@ -45,6 +45,9 @@ import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
 import { registered, childrenOf } from "./store/lists.ts";
 import Corner from "./chrome/Corner.svelte";
 import Masthead from "./chrome/Masthead.svelte";
+import Toolbar from "./chrome/Toolbar.svelte";
+import { bold, italic, underline, strike, heading, quote, codeBlock, curlSelection, inCode, formatState, cutMd, replaceWithLink } from "./editor/format.ts";
+import { firstHeading } from "./store/headings.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -70,10 +73,12 @@ const acts = {
   interval: (_n: number) => {}, panel: (_ns: Ns) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
+  bar: (_act: string) => {},
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
+mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
@@ -165,6 +170,7 @@ if (fixture && fixtures[fixture]) {
     },
     onEdit: () => backup.scheduleBackup(),
     onView: (md) => { screen.mdView = md; },
+    onSelect: () => requestAnimationFrame(placeBar),
   });
   /* leaving the tab with a backup still pending writes it at once, after
      the session's own flush (registered first, so it runs first) */
@@ -245,6 +251,7 @@ if (fixture && fixtures[fixture]) {
     if (!row) return;
     const q = sr.query;   /* the query the row was BUILT for */
     openRow(false);
+    suppressBar();
     session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
   };
   acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };
@@ -272,6 +279,66 @@ if (fixture && fixtures[fixture]) {
     if (!out) return;
     if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
     screen.goto.levels = out.levels;
+  };
+  /* THE FLOATING BAR: placed over the selection on every selection change
+     (a frame later) and scroll, clamped under the masthead; hidden in the
+     source view and over a search jump's selection until the reader next
+     touches the page — the bar is for text the reader chose to format. */
+  let barSuppressed = false;
+  const placeBar = (): void => {
+    const view = session.view;
+    const sel = document.getSelection();
+    if (!view || session.mdView || barSuppressed || !sel || sel.rangeCount === 0 || sel.isCollapsed || !view.dom.contains(sel.anchorNode)) { screen.bar.show = false; return; }
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    if (!rect.width && !rect.height) { screen.bar.show = false; return; }
+    const floor = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 8;
+    screen.bar.left = rect.left + rect.width / 2;
+    screen.bar.top = Math.max(rect.top, floor);
+    screen.bar.incode = inCode(view.state);
+    screen.bar.on = formatState(view.state);
+    screen.bar.canTag = screen.masthead.buttons.canCreate;
+    screen.bar.show = true;
+  };
+  document.addEventListener("selectionchange", () => requestAnimationFrame(placeBar));
+  window.addEventListener("scroll", placeBar, { passive: true });
+  document.addEventListener("mousedown", () => { barSuppressed = false; });
+  mountEl.addEventListener("keydown", () => { barSuppressed = false; });
+  const suppressBar = (): void => { barSuppressed = true; screen.bar.show = false; };
+  acts.bar = (act) => {
+    const view = session.view;
+    if (!view) return;
+    if (act === "reference") { session.copyReference(); return; }
+    if (act === "words") { session.showWordCount(); return; }
+    if (act === "tag") { extractToTag(); return; }
+    const cmd = { bold, italic, underline, strike, heading, quote, code: codeBlock, curl: curlSelection }[act];
+    if (cmd && !cmd(view.state, view.dispatch)) say("nothing to change there", 2000);
+    view.focus();
+    placeBar();
+  };
+  /* the selection into a new sub-entry, the link left in its place: the
+     new entry is born WITH its heading, so the link is labelled by it at
+     birth where a later relabel would never see the change */
+  const extractToTag = (): void => {
+    const view = session.view;
+    if (!view || view.state.selection.empty || warmBlock()) return;
+    const { from, to } = view.state.selection;
+    const c = session.current;
+    const ns = nsOf(c.date);
+    const typedRaw = typedName(prompt(ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:"));
+    if (!typedRaw) return;
+    if ("refuse" in typedRaw) { say(typedRaw.refuse); return; }
+    const spec = subEntrySpec(c.date, c.tag, typedRaw.name);
+    if (!spec) return;
+    if ("refuse" in spec) { say(spec.refuse); return; }
+    if (childrenOf(keysNow(), spec.listKey).indexOf(spec.tag) !== -1) { alert(takenText(spec.listKey, spec.tag)); return; }
+    const md = cutMd(view.state.doc, from, to);
+    const label = ns ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
+    layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
+      if (!landed) { say("couldn't create the entry — see the corner", 3000); return; }
+      view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
+      screen.bar.show = false;
+      return session.saveNow().then(() => { refreshMasthead(); session.goto(spec.href); });
+    });
   };
   /* THE SUB-ENTRIES. Every gate over "what exists" refuses on a cold
      cache: a create would write into a blank painted over a real entry.

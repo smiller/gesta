@@ -40,6 +40,8 @@ export interface Screen {
   /* the Go to row: open, and its run of selects; the body is EMPTY when
      closed, so a dismissed control is a dead mechanism */
   goto: { open: boolean; levels: Level[] };
+  /* the floating format bar over a selection: where it sits, what is lit */
+  bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean };
   /* the open entry draws a gutter: the Line numbering row shows */
   gutter: boolean;
   /* the markdown source view is on: the mode pill shows */
@@ -53,6 +55,7 @@ export function screenState(interval: number): Screen {
     masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelEmpty: "",
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
+    bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false },
     gutter: false, mdView: false, backupsLabel: "", interval,
   });
   return screen;

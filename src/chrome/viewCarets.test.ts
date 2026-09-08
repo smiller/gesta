@@ -49,6 +49,8 @@ describe("arrivingCount", () => {
   it("an exact hold wins while the text matches; else the other view's place carries across; else nothing", () => {
     const held = { at: 7, text: "same text", tail: false, seen: true };
     expect(arrivingCount(held, null, "same text", false)).toEqual({ at: 7, tail: false, seen: true });
+    /* the exact count, but the leaving view's visibility */
+    expect(arrivingCount(held, { at: 1, text: "other", tail: false, seen: false }, "same text", false)).toEqual({ at: 7, tail: false, seen: false });
     const left = { at: 5, text: "Title bold", tail: false, seen: false };
     expect(arrivingCount(held, left, "# Title **bold**", true)).toEqual({ at: 7, tail: false, seen: false });   /* before the space that precedes the glued ** */
     expect(arrivingCount(null, null, "x", true)).toBeNull();

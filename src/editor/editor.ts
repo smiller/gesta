@@ -17,10 +17,13 @@ import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
 import { linkClick } from "./links.ts";
 import { listKeymap } from "./listKeys.ts";
+import { formatKeymap } from "./format.ts";
 
 export interface EditorOptions {
   interval: number;
   onChange?: (view: EditorView) => void;
+  /* the selection moved, by a gesture or a command: what places the bar */
+  onSelect?: (view: EditorView) => void;
   /* node views beyond the rows' — the image view the session supplies */
   nodeViews?: Record<string, NodeViewConstructor>;
   /* a plain click on an internal link: the fragment to route to */
@@ -43,6 +46,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       rowKeymap,
       typingKeymap,
       listKeymap(onRefuse),
+      formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
       typing(),
@@ -65,6 +69,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     dispatchTransaction(this: EditorView, tr: Transaction) {
       this.updateState(this.state.apply(tr));
       if (tr.docChanged) opts.onChange?.(this);
+      if (tr.selectionSet || tr.docChanged) opts.onSelect?.(this);
     },
   });
 }

@@ -68,8 +68,14 @@ export function crossViewOffset(from: string, to: string, at: number, toSource: 
 /* the count to land on in a view being entered: the hold when it still
    describes this text, else the place the view just left was held at,
    carried across; null with nothing to go on */
+/* THE VISIBILITY BIT IS THE LEAVING VIEW'S, whichever count is used: an
+   exact hold remembers where this view's caret WAS, but whether the
+   reader was looking at the caret is a fact about the view just left,
+   written on every toggle — MEASURED 2026-09-07, a reader scrolled to
+   the bottom was pulled back to the top by a hold whose own bit was
+   older than the scroll. */
 export function arrivingCount(held: Hold | null, left: Hold | null, text: string, toSource: boolean): { at: number; tail: boolean; seen: boolean } | null {
-  if (held && held.text === text) return { at: held.at, tail: held.tail, seen: held.seen };
+  if (held && held.text === text) return { at: held.at, tail: held.tail, seen: left ? left.seen : held.seen };
   if (left) return { at: crossViewOffset(left.text, text, left.at, toSource, left.tail), tail: left.tail, seen: left.seen };
   return null;
 }

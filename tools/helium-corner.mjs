@@ -66,19 +66,43 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* the dialogs, answered by the harness: `answer` is what a prompt gets, a confirm is accepted */
+let answer = null;
+page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });
+/* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */
+await page.goto(PAGE + "#2026-09-06");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
+await page.evaluate(() => scrollTo(0, 0));
+const word = await page.evaluate(() => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let tn; while ((tn = w.nextNode())) if (tn.textContent.includes("music be")) break; const r = document.createRange(); r.setStart(tn, tn.textContent.indexOf("music")); r.setEnd(tn, tn.textContent.indexOf("music") + 5); const b = r.getBoundingClientRect(); tn.parentElement.scrollIntoView({ block: "center" }); const b2 = r.getBoundingClientRect(); return { x: b2.left + b2.width / 2, y: b2.top + b2.height / 2 }; });
+await page.mouse.dblclick(word.x, word.y);
+await page.waitForFunction(() => document.querySelector(".fmt")?.classList.contains("show"), null, { timeout: 5000 });
+await page.waitForTimeout(100);   /* the editor's own selection lands a beat after the DOM's */
+const barState = () => page.evaluate(() => { const f = document.querySelector(".fmt"); const r = f.getBoundingClientRect(); return { show: f.classList.contains("show"), selected: document.getSelection().toString(), lit: [...f.querySelectorAll("button.on")].map((b) => b.title.split(" ")[0]), aboveSelection: r.bottom < document.getSelection().getRangeAt(0).getBoundingClientRect().top, tag: !f.querySelector(".t").hidden }; });
+console.log("a word double-clicked:", JSON.stringify(await barState()));
+await page.click(".fmt .b");
+await page.waitForTimeout(100);
+console.log("B clicked:", JSON.stringify({ ...(await barState()), md: await page.evaluate(() => document.getElementById("out").textContent.includes("**music**")) }));
+answer = "Music";
+await page.click(".fmt .t");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06/Music", null, { timeout: 5000 });
+console.log("Tag with Music answered:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), body: await page.evaluate(() => document.getElementById("out").textContent) }));
+await page.goto(PAGE + "#2026-09-06");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 5000 });
+console.log("the day's text around the link:", JSON.stringify(await page.evaluate(() => { const a = document.querySelector("#editor a[href='#2026-09-06/Music']"); return a && a.parentElement.textContent.slice(0, 40); })));
+answer = null;
 /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
-await page.evaluate(() => { const t = [...document.querySelectorAll("#editor .ProseMirror p, #editor .ProseMirror .vrow")].find((n) => n.textContent.includes("music be")); const s = document.getSelection(); const r = document.createRange(); const tn = [...t.childNodes].find((c) => c.nodeType === 3 && c.textContent.includes("music be")) || t.firstChild; r.setStart(tn, tn.textContent.indexOf("music be")); r.collapse(true); s.removeAllRanges(); s.addRange(r); });
+await page.evaluate(() => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let tn; while ((tn = w.nextNode())) if (tn.textContent.includes("food of love")) break; const r = document.createRange(); r.setStart(tn, tn.textContent.indexOf("food of love")); r.collapse(true); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); });
 await page.keyboard.press("Control+Meta+m");
 await page.waitForSelector("textarea.source", { timeout: 5000 });
 console.log("⌃⌘M:", JSON.stringify(await page.evaluate(() => { const ta = document.querySelector("textarea.source"); return { pill: !document.querySelector(".mode")?.hidden, focused: document.activeElement === ta, sameAsStore: ta.value === document.getElementById("out")?.textContent, caretAt: ta.value.slice(ta.selectionStart, ta.selectionStart + 12) }; })));
-await page.keyboard.type("MUSIC ");
+await page.keyboard.type("FOOD ");
 await page.keyboard.press("Tab");
 await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
 await page.keyboard.press("Control+Meta+m");
 await page.waitForSelector("#editor .ProseMirror", { timeout: 5000 });
-console.log("⌃⌘M back:", JSON.stringify(await page.evaluate(() => { const s = document.getSelection(); return { pill: !document.querySelector(".mode")?.hidden, text: document.querySelector("#editor .ProseMirror").textContent.includes("MUSIC   music be"), caretBefore: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 6), s.anchorOffset), caretAfter: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 8), saved: document.getElementById("same")?.textContent }; })));
+console.log("⌃⌘M back:", JSON.stringify(await page.evaluate(() => { const s = document.getSelection(); return { pill: !document.querySelector(".mode")?.hidden, text: document.querySelector("#editor .ProseMirror").textContent.includes("FOOD   food of love"), caretBefore: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 6), s.anchorOffset), caretAfter: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 8), saved: document.getElementById("same")?.textContent }; })));
 /* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
@@ -99,9 +123,7 @@ await page.waitForTimeout(100);
 console.log("Journal picked from the book:", JSON.stringify((await grow()).selects));
 await page.keyboard.press("Escape");
 console.log("Escape:", JSON.stringify(await grow()));
-/* the sub-entries: the dialogs answered by the harness */
-let answer = null;
-page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });
+/* the sub-entries: the dialogs answered by the harness (declared at the top) */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
 console.log("the masthead over the day after the rows closed:", JSON.stringify(await page.evaluate(() => ({ height: document.querySelector(".site-head").getBoundingClientRect().height, gotoOpen: document.querySelector(".page-goto")?.open, searchOpen: document.querySelector(".page-search")?.open }))));
@@ -119,7 +141,7 @@ console.log("⌃⌘N, Ideas typed:", JSON.stringify({ entry: await page.evaluate
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 5000 });
 console.log("the day's body ends with the link, its tag bar lists it:", JSON.stringify({ link: await page.evaluate(() => { const a = [...document.querySelectorAll("#editor a")].pop(); return a && [a.textContent, a.getAttribute("href")]; }), tags: await page.evaluate(() => [...document.querySelectorAll(".tagbar a")].map((a) => a.textContent)) }));
-await page.click(".tagbar a");
+await page.click(".tagbar a[href='#2026-09-06/Ideas']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06/Ideas", null, { timeout: 5000 });
 answer = "Plans";
 await page.click(".toolbtn[title=\"Rename this entry's tag\"]");
@@ -129,11 +151,11 @@ console.log("renamed to Plans:", JSON.stringify({ entry: await page.evaluate(() 
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.querySelector("#editor a[href='#2026-09-06/Plans']"), null, { timeout: 5000 }).catch(() => {});
 console.log("the host's link followed:", JSON.stringify(await page.evaluate(() => { const a = [...document.querySelectorAll("#editor a")].pop(); return a && [a.textContent, a.getAttribute("href")]; })));
-await page.click(".tagbar a");
+await page.click(".tagbar a[href='#2026-09-06/Plans']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06/Plans", null, { timeout: 5000 });
 await page.click(".toolbtn[title='Delete this tagged entry']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06" && !document.querySelector("#editor a[href='#2026-09-06/Plans']"), null, { timeout: 5000 }).catch(() => {});
-console.log("deleted: back on the day, the link gone, no tags:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), links: await page.evaluate(() => [...document.querySelectorAll("#editor a")].map((a) => a.getAttribute("href"))), tags: await page.evaluate(() => [...document.querySelectorAll(".tagbar a")].length) }));
+console.log("deleted: back on the day, its link gone, the other tag left:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), links: await page.evaluate(() => [...document.querySelectorAll("#editor a")].map((a) => a.getAttribute("href"))), tags: await page.evaluate(() => [...document.querySelectorAll(".tagbar a")].map((a) => a.textContent)) }));
 answer = null;
 await page.goto(PAGE + "#page/Brand%20New");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Brand New", null, { timeout: 15000 });

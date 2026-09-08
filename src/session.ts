@@ -27,6 +27,7 @@ import { TextSelection } from "prosemirror-state";
 import { flattenDoc, flattenText } from "./model/flatten.ts";
 import { countBefore, positionAt, arrivingCount, type Hold } from "./chrome/viewCarets.ts";
 import { sourceTab } from "./editor/sourceKeys.ts";
+import { wordCount, wordsOf } from "./editor/format.ts";
 
 export interface SessionOptions {
   mount: HTMLElement;
@@ -42,6 +43,9 @@ export interface SessionOptions {
   onEdit?: () => void;
   /* the view switched: true in the markdown source view */
   onView?: (md: boolean) => void;
+  /* the editor's selection moved — read AFTER the editor has it, where
+     the DOM's selectionchange runs a beat ahead of the state */
+  onSelect?: () => void;
 }
 export interface Session {
   readonly current: { date: string; tag: string | null };
@@ -61,6 +65,7 @@ export interface Session {
   /* the markdown source view: both views edit the one entry */
   readonly mdView: boolean;
   setView(md: boolean): void;
+  showWordCount(): void;
   /* open the entry and highlight once it paints — or at once when it is
      the open one, since a hash set to its own value fires no hashchange */
   jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
@@ -128,6 +133,7 @@ export function startSession(opts: SessionOptions): Session {
     view = createEditor(mount, doc, {
       interval,
       onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
+      onSelect: () => opts.onSelect?.(),
       nodeViews: { image: imageView(resolver(dir)) },
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
@@ -164,7 +170,11 @@ export function startSession(opts: SessionOptions): Session {
          its end, and focusing scrolls that into view — MEASURED 2026-09-07
          in Helium, a toggle from the top landed the window at the end */
       source.setSelectionRange(pos, pos);
-      source.focus();
+      /* KEEP THE CARET AS VISIBLE AS IT WAS, a weaker promise than always
+         visible: a reader who scrolled away from the caret stays where
+         they scrolled — the current app's rule, asked for again by hand
+         2026-09-07; the miss scrolls, having no bit to follow */
+      source.focus({ preventScroll: !!arriving && !arriving.seen });
     } else if (view) {
       const flat = flattenDoc(view.state.doc);
       const arriving = arrivingCount(carets[here], carets[other], flat.text, false);
@@ -179,6 +189,13 @@ export function startSession(opts: SessionOptions): Session {
   function setView(md: boolean): void {
     if (md === mdView) return;
     holdViewCaret();
+    /* THE SCROLL SURVIVES THE SWAP: the teardown empties the page for an
+       instant and the window's scroll clamps to the top before the new
+       surface is tall again — MEASURED 2026-09-07, a reader scrolled to
+       the bottom arrived at the top of the source. Put back before the
+       caret is placed, so a caret that was seen still scrolls into view
+       and one that was not leaves the reader where they scrolled. */
+    const y = window.scrollY;
     if (md) {
       const text = currentMd();
       mdView = true;
@@ -190,6 +207,7 @@ export function startSession(opts: SessionOptions): Session {
       mdView = false;
       mountEditor(doc, current.date, current.tag);
     }
+    window.scrollTo(0, y);
     opts.onView?.(mdView);
     scheduleSave();
     show();
@@ -296,6 +314,21 @@ export function startSession(opts: SessionOptions): Session {
   function copy(text: string, okText: string, failText: string): void {
     copyText(text).then(() => say(okText), (err: unknown) => { console.error(failText, err, text); say(failText); });
   }
+  /* ⌃⌘W and the bar's Words: the selection's count, else the whole
+     entry's; in the source view the markdown is parsed first so syntax
+     never counts as words and both views report one number */
+  function showWordCount(): void {
+    let n = 0;
+    if (mdView && source) {
+      const a = source.selectionStart, b = source.selectionEnd;
+      const text = a === b ? source.value : source.value.slice(a, b);
+      try { n = wordCount(parseMarkdown(text), 0, 0); } catch { n = wordsOf(text); }
+    } else if (view) {
+      const { from, to } = view.state.selection;
+      n = wordCount(view.state.doc, from, to);
+    }
+    say(n === 1 ? "1 word" : n + " words", 2000);
+  }
   function copyReference(): void {
     if (mdView) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
@@ -323,11 +356,12 @@ export function startSession(opts: SessionOptions): Session {
     else if (e.key === "r") { e.preventDefault(); copyReference(); }
     else if (e.key === "c") { e.preventDefault(); copyEntryLink(); }
     else if (e.key === "m") { e.preventDefault(); setView(!mdView); }
+    else if (e.key === "w") { e.preventDefault(); showWordCount(); }
   });
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView,
+    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount,
     get mdView() { return mdView; },
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };
