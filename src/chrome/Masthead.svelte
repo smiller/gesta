@@ -21,20 +21,24 @@
   import Goto from "./Goto.svelte";
   import LineBar from "./LineBar.svelte";
   import Help from "./Help.svelte";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, onCreate, onRename, onDelete }: {
+  import Bookmarks from "./Bookmarks.svelte";
+  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
     /* the sub-entry gestures: create under the open entry, rename and delete the open one */
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     /* the opener's click: the page's wiring toggles the slot and fills the rows */
-    onPanel: (ns: "page" | "bookshelf" | "help") => void;
+    onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
     lineBar: { onInput: (kind: "line" | "page", value: string) => void; onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void; onClose: () => void };
+    bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
   } = $props();
+  let bookmarksCard: { focusCard(): void } | undefined = $state();
+  export function focusBookmarks(): void { bookmarksCard?.focusCard(); }
   let lineBarEl: { focusAsk(): void } | undefined = $state();
   export function focusLineBar(): void { lineBarEl?.focusAsk(); }
   let gotoRow: { focusFirst(): void } | undefined = $state();
@@ -96,6 +100,7 @@
   <Goto bind:this={gotoRow} goto={screen.goto} {...goto} />
   <Search bind:this={searchRow} search={screen.search} {...search} />
   <Help open={screen.panel === "help"} />
+  {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} />{/if}
   {#if screen.panel === "page" || screen.panel === "bookshelf"}
     <nav class="pages" onfocusout={leave}>
       {#each screen.panelRows as r (r.href)}<a href={r.href} title={r.text} onclick={onClosePanel}>{r.text}</a>{/each}

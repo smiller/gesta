@@ -7,6 +7,7 @@ import type { MastheadModel, Link } from "./mastheadModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
 import type { Level } from "./gotoModel.ts";
 import type { AskKind } from "../editor/goto.ts";
+import type { BookmarkRow } from "./bookmarksModel.ts";
 import type { Result } from "../store/search.ts";
 
 /* the Search row: open, the query as typed, the scope options with the
@@ -33,7 +34,7 @@ export interface Screen {
      shortcuts panels. Every opener sets it, so opening one closes the
      others by construction; null is none. The in-flow rows (Line
      numbering) compete for no spot and are not in it. */
-  panel: "page" | "bookshelf" | "help" | null;
+  panel: "page" | "bookshelf" | "help" | "bookmarks" | null;
   panelRows: Link[];
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;
@@ -41,6 +42,9 @@ export interface Screen {
   /* the Go to row: open, and its run of selects; the body is EMPTY when
      closed, so a dismissed control is a dead mechanism */
   goto: { open: boolean; levels: Level[] };
+  /* the bookmarks card: its rows, the foot line, the editor's row and
+     draft, the held prefix, and the latch for an unreadable store */
+  bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
   /* ⌃⌘G's bar: open, which boxes the entry can answer, what each holds */
   lineBar: { open: boolean; kind: AskKind; line: string; page: string };
   /* the floating format bar over a selection: where it sits, what is lit */
@@ -60,6 +64,7 @@ export function screenState(interval: number): Screen {
     goto: { open: false, levels: [] },
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false },
     lineBar: { open: false, kind: "none", line: "", page: "" },
+    bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     gutter: false, mdView: false, backupsLabel: "", interval,
   });
   return screen;

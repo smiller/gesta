@@ -42,6 +42,9 @@ import { gotoLevels, gotoPick } from "./chrome/gotoModel.ts";
 import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck } from "./editor/goto.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
+import { parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
+import { reachableBookmarks, bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, bookmarkParts, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./chrome/bookmarksModel.ts";
+import { NS } from "./store/keys.ts";
 import { pageParts, nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
@@ -71,13 +74,14 @@ const notices = noticeLedger(copyText);
 const say = notices.whisper;
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
 type Ns = "page" | "bookshelf";
-type PanelName = Ns | "help";
+type PanelName = Ns | "help" | "bookmarks";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
   interval: (_n: number) => {}, panel: (_ns: PanelName) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
+  bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
@@ -91,6 +95,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
+  bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
     onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
@@ -116,6 +121,7 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
   else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
   else if (e.key === "h") { e.preventDefault(); acts.panel("help"); }
+  else if (e.key === "b") { e.preventDefault(); acts.panel("bookmarks"); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
@@ -287,6 +293,142 @@ if (fixture && fixtures[fixture]) {
     if (!out) return;
     if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
     screen.goto.levels = out.levels;
+  };
+  /* BOOKMARKS (⌃⌘B): a list of pinned entries in ONE localStorage key —
+     device-local, an accepted loss, the list being small and re-made in a
+     minute. THE LATCH is where the cache and the store disagree on
+     purpose: empty here, unreadable text there that somebody could still
+     recover by hand, so writes are refused until a clean read. The two
+     pages the current app pinned are seeded ONCE, when the key is absent;
+     emptying the list writes "[]", which is present. */
+  const BOOKMARKS_KEY = NS + "bookmarks";
+  const bm = screen.bookmarks;
+  let bookmarks: Bookmark[] = [];
+  let bookmarksFailGen = 0;
+  const loadBookmarks = (): void => {
+    const read = parseBookmarks(localStorage.getItem(BOOKMARKS_KEY));
+    bm.unreadable = read === null;
+    bookmarks = read || [];
+  };
+  const saveBookmarks = (list: Bookmark[]): Error | null => {
+    if (bm.unreadable) return new Error("bookmarks unreadable");
+    try { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(serializeBookmarks(list))); } catch (e) { return (e as Error) || new Error("setItem failed"); }
+    loadBookmarks();
+    return null;
+  };
+  const writeBookmarks = (list: Bookmark[]): boolean => {
+    const err = saveBookmarks(list);
+    if (err) { bookmarksFailGen = notices.stickErrIdle("bookmarks not saved", err); return false; }
+    notices.releasePin(bookmarksFailGen);
+    bookmarksFailGen = 0;
+    return true;
+  };
+  loadBookmarks();
+  if (localStorage.getItem(BOOKMARKS_KEY) === null) saveBookmarks([{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }]);
+  const hereKey = (): string => entryKey(session.current.date, session.current.tag);
+  /* every render hands focus back: a delete removes the row its own
+     button sits in, and "open" and "listening" must not disagree */
+  const renderBookmarks = (): void => {
+    bm.rows = bookmarkRows(bookmarks, hereKey(), journal);
+    bm.foot = bookmarkFoot(bookmarks, hereKey(), journal);
+    if (bm.buf && !aliasCandidates(bookmarks, bm.buf).length) bm.buf = "";
+    setTimeout(() => { masthead.focusBookmarks(); bm.opening = 0; }, 0);
+  };
+  const openBookmarks = (): void => {
+    openRow(false); gotoRow(false); closeLineBar();
+    /* the sweep and its write together, gated on the warm: an absence and
+       a deletion read the same, and only one should cost rows */
+    if (layer.warmed) {
+      const live = reachableBookmarks(bookmarks, keysNow());
+      if (live.length !== bookmarks.length) writeBookmarks(live);
+    }
+    bm.editing = ""; bm.draft = ""; bm.buf = "";
+    screen.panel = "bookmarks";
+    renderBookmarks();
+  };
+  const jumpBookmark = (b: Bookmark): void => {
+    const p = bookmarkParts(b.key);
+    closePanel();
+    session.goto(entryHash(p.date, p.tag), alreadyOn(b.key, journal));
+  };
+  const resolved = (r: { buf: string; jump?: Bookmark; say?: string }): void => {
+    bm.buf = r.buf;
+    if (r.jump) jumpBookmark(r.jump);
+    else if (r.say) say(r.say, 2000);
+  };
+  const addOpenBookmark = (): void => {
+    const here = hereKey();
+    if (bookmarkIndex(bookmarks, here) !== -1) { say("already bookmarked", 2000); return; }
+    if (bookmarksFull(bookmarks)) { say("bookmarks full — delete one, or give one its own key", 3000); return; }
+    session.flushSave().then(() => {
+      if (screen.panel !== "bookmarks") return;
+      if (!reachableBookmarks([{ key: here, alias: "" }], keysNow()).length) { if (!warmBlock()) say("nothing to bookmark here yet", 2500); return; }
+      const next = addBookmark(bookmarks, here);
+      if (next && writeBookmarks(next)) renderBookmarks();
+    });
+  };
+  acts.bookmarks.key = (e) => {
+    if (e.key === "Escape") {
+      if (bm.editing) { e.stopPropagation(); bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
+      if (bm.buf) { e.stopPropagation(); bm.buf = ""; return; }
+      closePanel(); session.view?.focus(); return;
+    }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (bm.editing) return;   /* the editor keeps every other key; its Enter is its own */
+    if (e.key === "Enter" && bm.buf) { e.preventDefault(); resolved(resolveAlias(bookmarks, bm.buf)); return; }
+    if (!bm.buf && (e.key === "a" || e.key === "A")) { e.preventDefault(); addOpenBookmark(); return; }
+    if (!bm.buf && e.key >= "1" && e.key <= "9" && e.key.length === 1) {
+      e.preventDefault();
+      const b = numberedBookmarks(bookmarks)[+e.key - 1];
+      if (!b) say("no bookmark " + e.key, 2000); else jumpBookmark(b);
+      return;
+    }
+    const ch = e.key.length === 1 ? e.key.toLowerCase() : "";
+    const r = ch ? typeAlias(bookmarks, bm.buf, ch) : null;
+    if (r) { e.preventDefault(); resolved(r); }
+  };
+  acts.bookmarks.draft = (v) => { bm.draft = v; };
+  acts.bookmarks.commit = (typed) => {
+    const key = bm.editing, alias = typed.trim().toLowerCase();
+    if (!key) return;
+    const holder = aliasHolder(bookmarks, alias);
+    if (holder && holder.key !== key) { say("“" + alias + "” already goes to " + trimLabel(bookmarkLabel(holder.key, journal), ECHO_CAP), 2500); return; }
+    const why = aliasRefusal(alias);
+    if (why) { say(why, 2500); return; }
+    const next = setBookmarkAlias(bookmarks, key, alias);
+    if (!next) { bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
+    if (!writeBookmarks(next)) { renderBookmarks(); return; }
+    bm.editing = ""; bm.draft = "";
+    renderBookmarks();
+  };
+  acts.bookmarks.act = (key, what) => {
+    const i = bookmarkIndex(bookmarks, key);
+    if (i === -1) return;
+    const b = bookmarks[i];
+    if (what === "del") {
+      const wasEditing = bm.editing === key;
+      const next = bookmarks.slice(); next.splice(i, 1);
+      if (!writeBookmarks(next)) return;
+      if (wasEditing) { bm.editing = ""; bm.draft = ""; }
+      renderBookmarks();
+    } else if (what === "key") {
+      bm.buf = ""; bm.editing = key; bm.draft = b.alias; bm.opening = 1;
+      renderBookmarks();
+    } else if (what === "link") {
+      /* the link at the caret the editor still holds; every way it cannot
+         land says why, nothing is appended at the end */
+      if (warmBlock()) return;
+      closePanel();
+      if (key === hereKey()) { say(alreadyOn(key, journal), 2000); return; }
+      const view = session.view;
+      if (!view) { say("place your cursor in the entry", 2000); return; }
+      const why = linkRefusal(view.state);
+      if (why) { say(why, 2000); return; }
+      const p = bookmarkParts(key);
+      insertLinkAfter(view, entryHash(p.date, p.tag), mdLabel(bookmarkLinkLabel(key, journal), "entry"));
+      view.focus();
+      session.saveNow();
+    } else jumpBookmark(b);
   };
   /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
      focus and Enter cycles through the blocks that hold that line. The
@@ -567,6 +709,7 @@ if (fixture && fixtures[fixture]) {
   acts.panel = (ns) => {
     if (screen.panel === ns) { closePanel(); return; }
     if (ns === "help") { openRow(false); closeLineBar(); screen.panel = "help"; return; }
+    if (ns === "bookmarks") { openBookmarks(); return; }
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")

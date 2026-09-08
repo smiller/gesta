@@ -70,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; ⌃⌘H over an open panel and Escape; ⌃⌘G over
+  scope pick and Escape; ⌃⌘B, A, a numbered jump, a key given and typed,
+  ×; ⌃⌘H over an open panel and Escape; ⌃⌘G over
   verse and over a book of leaves; a
   reference pasted as plain text and its link followed back; the toolbar
   over a double-clicked word, B, and Tag with its dialog; the source view through ⌃⌘M with the caret's
@@ -137,7 +138,9 @@ here NOW, and what is not yet:
   directive, read from the cache), `search.ts` (the query grammar, the
   scope filter, the scan over an index with its snippets),
   `searchIndex.ts` (the index over the cache: memoised per entry on its
-  text, built in chunks), `contents.ts` (a book's own order and sections
+  text, built in chunks), `bookmarks.ts` (the list's rules: what the
+  store parses to and refuses, the two views, the trigger's grammar),
+  `contents.ts` (a book's own order and sections
   read off its parent's contents, the feed flip), `links.ts` (the links in a stored entry
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
@@ -168,7 +171,9 @@ here NOW, and what is not yet:
   the two streams), `Toolbar.svelte` (the floating format bar over a
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),
   `Help.svelte` over `help.html` (the help card and its text, the
-  acceptance list carried whole),
+  acceptance list carried whole), `bookmarksModel.ts` (the card's
+  decisions: the rows, the foot line, the typed-key grammar),
+  `Bookmarks.svelte` (the card),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -990,4 +995,31 @@ here NOW, and what is not yet:
   it. MEASURED 2026-09-08 in headless Helium: ⌃⌘H over an open pages
   panel shows the card with "Custom keys" and the panel gone; Escape
   closes. `dist/index.html` is 689.75 kB, the help text being 42 kB of it.
+- BOOKMARKS (2026-09-08): bookmarks.mjs ported whole with its tests
+  (`store/bookmarks.ts`) — the store's two member shapes, null for
+  anything this app would not have written, the numbered cap of nine
+  with keyed rows uncapped, the trigger grammar — and 22-bookmarks-b.js
+  as `chrome/bookmarksModel.ts` (pure: the rows keyed-first, the labels
+  read live, the foot line, the sweep of rows that lead nowhere, the
+  typed key resolving on the press when nothing can grow and waiting
+  when it can, Enter taking the sole candidate or asking for the rest)
+  and `Bookmarks.svelte` (the card in the panel slot's fourth value,
+  holding focus itself so A, 1-9 and a typed key reach the page's
+  handler; the keyed column measured off a probe in a row). The store is
+  `gesta.v1.bookmarks`, device-local; an unreadable store latches and
+  refuses writes; a failed write pins through the ledger's deferred
+  one-shot and a landed one releases it; the two pages the current app
+  pinned are seeded once when the key is absent. The link button drops
+  an entry link after the editor's caret through insertLink.ts with the
+  same refusals as a minted sub-entry's, labelled by what the entry is
+  called. ⌃⌘B toggles; a jump closes the card before the hash write and
+  says "already on …" for the open entry. NOT CARRIED: the current app's
+  panelCaret capture at the open — the editor's selection survives the
+  card taking focus. MEASURED 2026-09-08 in headless Helium
+  (`tools/helium-corner.mjs`, a fresh profile where the seeded pages are
+  unreachable and swept): ⌃⌘B on a day shows "No bookmarks yet." with
+  "Press A to add bookmark for 2026-09-06"; A adds the row marked "you
+  are here"; from Horace, ⌃⌘B then 1 opens the day; the key button, "fb",
+  Enter keys the row; "f" lights it; "b" jumps with "already on
+  2026-09-06"; × empties the list. `dist/index.html` is 702.48 kB.
 
