@@ -836,4 +836,5 @@ here NOW, and what is not yet:
   with the caret at "music be" where it had been placed; "MUSIC " typed
   and a Tab, then ⌃⌘M back, render "MUSIC   music be" with the caret
   after the edit and the store identical. `dist/index.html` is 626.38 kB.
+  Confirmed by hand in Helium the same day.
 
