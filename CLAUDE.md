@@ -620,7 +620,9 @@ here NOW, and what is not yet:
   (`tools/helium-corner.mjs`): the link to itself whispers "already
   here"; the external link leaves the entry; ⌘-click opens page/Horace in
   a new tab with the entry unmoved; a plain click opens it in the tab.
-  Also that day, by hand: the `::: card-*` fills were missing — the box
+  MEASURED by hand the same day over the journal: the shelf's Lewis row
+  to The Screwtape Letters to Letter 1 by plain clicks, ⌘-click into a
+  new tab. Also that day, by hand: the `::: card-*` fills were missing — the box
   was ported, the eleven colours and the card's own ink were not; ported
   into editor.css. `dist/index.html` is 588.28 kB.
 
