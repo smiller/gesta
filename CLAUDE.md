@@ -1210,7 +1210,9 @@ here NOW, and what is not yet:
   is the truer question — what LANDED, not what the editor would write.
   MEASURED 2026-09-08 in headless Helium: the corner tool's twelve
   store reads give the same markdown the pane gave, and the bridge tool
-  is green. `dist/index.html` is 729.51 kB.
+  is green. `dist/index.html` is 729.51 kB. Confirmed gone by hand the
+  same day over today's entry: the tools read tagged entry, export,
+  import, backups, help, and the page ends at the entry.
 - THE OPEN ENTRY FIRST (2026-09-08, by hand: two seconds of blank after a
   refresh): the current app's primeOpenEntry, whose seat the layer's
   `primeEntry` had kept — the address's ONE row read and opened before
