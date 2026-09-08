@@ -175,7 +175,17 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
 };
 /* the whole clipboard text: the heading line as the link, a colon outside
    it, the passage quoted under it — or the refusal */
-export function referencePayload(state: EditorState, date: string, tag: string | null, journal: Journal): { text: string } | { refused: Refusal } {
+/* the *italics* of a citation label as HTML, for the rich flavour: the
+   label is BUILT here, so its only markdown is the emphasis this puts
+   back; the anchor is spelled once for the reference and the entry link */
+export function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+export function citationAnchorHTML(url: string, label: string): string {
+  return '<a href="' + escapeHtml(url) + '">' + escapeHtml(label).replace(/\*([^*]+)\*/g, "<em>$1</em>") + "</a>";
+}
+export interface Payload { text: string; label: string; url: string; passage: string }
+export function referencePayload(state: EditorState, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
   const { from, to, empty } = state.selection;
   if (empty) return { refused: "select" };
   const doc = state.doc;
@@ -187,11 +197,15 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   if (!hl) return { refused: "select" };
   const label = referenceLabel(date, tag, referenceRange(doc, from, to), folioRange(doc, from, to), journal);
   const url = entryLinkUrl(date, tag, hl);
-  return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passageMd(doc, from, to) };
+  const passage = passageMd(doc, from, to);
+  return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 /* ⌃⌘C: a link to the entry — the citation's heading line with nothing
    quoted under it, named the same way */
+export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
+  return { label: mdLabel(referenceLabel(date, tag, "", null, journal), "entry"), url: entryLinkUrl(date, tag) };
+}
 export function entryLink(date: string, tag: string | null, journal: Journal): string {
-  const label = mdLabel(referenceLabel(date, tag, "", null, journal), "entry");
-  return "[" + label + "](" + entryLinkUrl(date, tag) + ")";
+  const p = entryLinkParts(date, tag, journal);
+  return "[" + p.label + "](" + p.url + ")";
 }

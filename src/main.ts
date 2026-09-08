@@ -55,6 +55,7 @@ import Masthead from "./chrome/Masthead.svelte";
 import Toolbar from "./chrome/Toolbar.svelte";
 import CopyButton from "./chrome/CopyButton.svelte";
 import { writeClipboard } from "./chrome/clipboard.ts";
+import { richBlockHtml } from "./chrome/richCopy.ts";
 import { schema } from "./model/schema.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, curlSelection, inCode, formatState, cutMd, replaceWithLink } from "./editor/format.ts";
 import { firstHeading } from "./store/headings.ts";

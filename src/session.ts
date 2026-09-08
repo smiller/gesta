@@ -20,10 +20,11 @@ import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { journalOf } from "./store/headings.ts";
-import { referencePayload, entryLink, REFUSAL_TEXT } from "./editor/reference.ts";
+import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
+import { writeClipboard } from "./chrome/clipboard.ts";
+import { richReferenceHtml } from "./chrome/richCopy.ts";
 import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
-import { copyText } from "./chrome/clipboard.ts";
 import { highlightIn } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
 import { TextSelection } from "prosemirror-state";
@@ -364,11 +365,16 @@ export function startSession(opts: SessionOptions): Session {
   }
   function today(): void { goto(entryHash(todayKey()), "already on today"); }
   /* ⌃⌘R copies a reference to the selected passage, ⌃⌘C a link to the
-     entry; text/plain only until phase 3 adds the rich flavour, through
-     the writer with the textarea fallback. A failed write is logged with
-     the payload, which lives nowhere else. */
-  function copy(text: string, okText: string, failText: string): void {
-    copyText(text).then(() => say(okText), (err: unknown) => { console.error(failText, err, text); say(failText); });
+     entry, in TWO flavours: the markdown as text, and the HTML beside it
+     for the applications that take one (richCopy.ts), through the writer
+     with the textarea fallback. A failed write is logged with the
+     markdown, which lives nowhere else. */
+  function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
+    writeClipboard(payload).then((ok) => {
+      if (ok) { say(okText); return; }
+      console.error(failText, payload.text);
+      say(failText);
+    });
   }
   /* ⌃⌘W and the bar's Words: the selection's count, else the whole
      entry's; in the source view the markdown is parsed first so syntax
@@ -390,11 +396,14 @@ export function startSession(opts: SessionOptions): Session {
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, current.date, current.tag, journal);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
-    copy(out.text, "Reference copied to clipboard", "Couldn't copy the reference");
+    let html = "";
+    try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }
+    copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn't copy the reference");
   }
   function copyEntryLink(): void {
     if (!layer.warmed) { say("Still loading — try that again in a moment"); return; }
-    copy(entryLink(current.date, current.tag, journal), "Link copied", "Couldn't copy the link");
+    const p = entryLinkParts(current.date, current.tag, journal);
+    copy({ text: "[" + p.label + "](" + p.url + ")", html: citationAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }
   /* the flush on leave: a navigation saves the entry being left; a hidden
      tab and an unload land what the debounce still holds */

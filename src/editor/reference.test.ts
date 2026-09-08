@@ -4,7 +4,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, folioRange, selectionLink, passageMd, spansTwoBlocks, referencePayload, entryLink } from "./reference.ts";
+import { referenceRange, folioRange, selectionLink, passageMd, spansTwoBlocks, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -79,9 +79,11 @@ test("selectionLink: the text and which occurrence it is", () => {
 test("referencePayload: the link line with the range and the highlight, the passage under it", () => {
   const [a, b] = span(verse, "forbidden", "Brought death");
   const out = referencePayload(state(verse, a, b), "bookshelf", "Milton, John/Paradise Lost/Book 1", journal);
-  expect(out).toEqual({ text:
+  expect(out).toMatchObject({ text:
     "[Milton, *Paradise Lost*, 1.2-3](#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death):\n\n" +
     "> Of that forbidden tree, whose mortal taste\n>\n> Brought death into the World, and all our woe," });
+  /* the parts the rich flavour is built from ride beside the text */
+  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> Of that forbidden tree, whose mortal taste\n>\n> Brought death into the World, and all our woe," });
   expect(referencePayload(state(verse, a, a), "bookshelf", "x", journal)).toEqual({ refused: "select" });
 });
 
@@ -92,3 +94,9 @@ test("a leaf stands in for a prose book's titled chapter; entryLink names the en
   expect((out as { text: string }).text.split("\n")[0]).toMatch(/^\[Williams, \*Witchcraft\*, pp\. 61-62\]/);
   expect(entryLink("bookshelf", "Williams, Charles/Witchcraft/3. The Dark Ages", journal)).toBe("[Williams, *Witchcraft*, *3. The Dark Ages*](#bookshelf/Williams%2C%20Charles/Witchcraft/3.%20The%20Dark%20Ages)");
 });
+
+test("citationAnchorHTML: the label's italics as em, everything else escaped, the url escaped", () => {
+  expect(citationAnchorHTML("#2026-09-07?h=a%20b", "*Gesta*, 7 September 2026")).toBe('<a href="#2026-09-07?h=a%20b"><em>Gesta</em>, 7 September 2026</a>');
+  expect(citationAnchorHTML('#x"y', "a <b> & *c*")).toBe('<a href="#x&quot;y">a &lt;b&gt; &amp; <em>c</em></a>');
+});
+

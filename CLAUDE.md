@@ -72,7 +72,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; a js fence typed, its tokens, its label, the
+  scope pick and Escape; ⌃⌘R over a paired row with the clipboard read
+  back; a js fence typed, its tokens, its label, the
   copy button hovered and clicked; a PNG drawn on a canvas pasted as a
   file; the
   backups panel unconfigured; ⌃⌘S over an
@@ -186,7 +187,8 @@ here NOW, and what is not yet:
   `Bookmarks.svelte` (the card), `Shortcuts.svelte` (the text expander's
   popup with its editor), `Backups.svelte` (the backups panel: setup,
   resume, the status line, the recovery note), `CopyButton.svelte` (the
-  one hover copy button over a block),
+  one hover copy button over a block), `richCopy.ts` (the HTML flavour:
+  the inline-style sweep over a live twin, the staged passage),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -1112,4 +1114,24 @@ here NOW, and what is not yet:
   42 and the comment as tokens; the hover shows "Copy this code block"
   inside the block's edge with the label faded; the click says "copied".
   `dist/index.html` is 722.23 kB.
+- THE RICH FLAVOUR (2026-09-08): 12-block-clipboard.js's inline-style
+  sweep and the reference's staging ported (`chrome/richCopy.ts`).
+  Anything whose look is class-driven CSS — a card's colour, a note's
+  rule and smaller type, a paired row's grid, a code block's box and its
+  token ink — is written inline, read off the LIVE twin's computed
+  style; a quote and a reference block are left unstyled on purpose; a
+  passage built from markdown is parked under the editing surface for
+  the length of the sweep, since a detached element's computed style is
+  empty. ⌃⌘R now writes the markdown with the HTML beside it — the
+  citation anchor with the label's italics as em, then the passage's
+  blocks (`referencePayload` hands its parts, tested); ⌃⌘C the link as
+  an anchor; the hover copy button the block swept. MEASURED 2026-09-08
+  in headless Helium with the clipboard permission granted and read
+  back: text/plain and text/html both present, the HTML opening
+  `<p><a href="…#page/Horace?h=…"><em>Horace</em>` with
+  grid-template-columns inlined on the paired row. OBSERVED there:
+  Chromium's clipboard hands the fragment href back resolved to the
+  file's full address — the write is `href="#…"`, as the current app's
+  is; what a receiving application sees is its clipboard's doing.
+  `dist/index.html` is 723.76 kB.
 

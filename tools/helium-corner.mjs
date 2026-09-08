@@ -12,6 +12,7 @@ const PAGE = "file://" + resolve("dist/index.html");
 const PROFILE = process.argv[2] || resolve("tools/out/helium-corner-profile");
 const logs = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
+await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
 const page = await ctx.newPage();
 page.on("console", (m) => logs.push(m.type() + ": " + m.text()));
 page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
@@ -66,6 +67,14 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the citation anchor and the pair's grid inline */
+await page.goto(PAGE + "#page/Horace");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });
+await page.evaluate(() => { const row = document.querySelector("#editor .vpair .vcell"); const r = document.createRange(); r.selectNodeContents(row); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); });
+await page.waitForTimeout(100);
+await page.keyboard.press("Control+Meta+r");
+await page.waitForFunction(() => /copied|copy/.test(document.querySelector(".saved.show")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+console.log("⌃⌘R:", JSON.stringify(await page.evaluate(async () => { const corner = document.querySelector(".saved.show")?.textContent; try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), htmlHead: html.replace(/<meta[^>]*>/g, "").slice(0, 160), anchor: /<a href="[^"]*#page\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } })));
 /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
 await page.goto(PAGE + "#page/Coded");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Coded", null, { timeout: 15000 });
