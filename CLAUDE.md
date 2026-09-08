@@ -70,8 +70,10 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; the source view through ⌃⌘M with the caret's
-  count carried across, an edit and a Tab in the source, and ⌃⌘M back; a tagged entry created, renamed and deleted
+  scope pick and Escape; the toolbar over a double-clicked word, B, and
+  Tag with its dialog; the source view through ⌃⌘M with the caret's
+  count carried across, an edit and a Tab in the source, and ⌃⌘M back;
+  a tagged entry created, renamed and deleted
   through the dialogs, the host's link and tag bar read at each step; the
   pill under `?corner=pill`; prints each reading and the console, and
   screenshots when given a path.
@@ -91,7 +93,10 @@ here NOW, and what is not yet:
   handler), `highlight.ts` (the jump: the nth occurrence of a query
   selected and scrolled to), `insertLink.ts` (a link placed after the
   caret, and what refuses one), `sourceKeys.ts` (Tab and Shift-Tab in
-  the source view, over a text and a selection), `listKeys.ts` (the gestures in a list:
+  the source view, over a text and a selection), `format.ts` (the
+  toolbar's acts as commands: the marks and their chords, the heading,
+  quote and code toggles, the curl over a selection, the word count, the
+  cut of a selection into a link), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -153,7 +158,8 @@ here NOW, and what is not yet:
   confirm sweeps, the buttons' wording, the dialogs' texts, where a delete
   lands, the host of a sub-entry), `viewCarets.ts` (where the view
   toggle puts you back: the count held per view, the alignment between
-  the two streams),
+  the two streams), `Toolbar.svelte` (the floating format bar over a
+  selection),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -843,5 +849,50 @@ here NOW, and what is not yet:
   focusing scrolls that into view before the caret was placed; MEASURED
   in headless Helium (scrollY 1619 for a caret at index 2), fixed by
   placing the caret BEFORE the focus (scrollY 0 from the top, 466 for the
-  mid-entry caret's own line).
+  mid-entry caret's own line). FOUND by hand the same day, twice more:
+  a reader who SCROLLED away from the caret without clicking was pulled
+  back to the caret. Two causes, both measured with a scroll log: the
+  teardown between the surfaces empties the page for an instant and the
+  window's scroll clamps to the top — the scroll is now put back after
+  the mount, before the caret is placed; and the arriving view took the
+  visibility bit from its own older hold, where the bit that describes
+  the reader is the LEAVING view's, written on every toggle — the
+  current app's "keep the caret as visible as it was" — so an unseen
+  caret is placed with `preventScroll`. MEASURED after: mid-entry 529,
+  from the top 0, scrolled to the bottom 1546 of 1542.
+- THE TOOLBAR (the same day, third of the three asked for): 14-floating-
+  format-toolbar.js, 25-word-count-on-demand.js, md.mjs's curlQuotes and
+  extractToTag ported. THE ACTS (`editor/format.ts`, pure over a state):
+  the four marks are prosemirror-commands' toggleMark, ⌘B ⌘I ⌘U bound in
+  the editor's keymap with ⌘' for the curl; H is the current app's `#`,
+  level 1 here, toggling with the paragraph; quote wraps or lifts; the
+  code block toggles; the curl walks every text node the selection
+  touches outside code with the previous character carried within a
+  block (the current app's dash, quote, closed-dash and elision rules);
+  the word count is over the flat stream, the selection's or the whole
+  document's, and in the source view over the PARSED markdown so both
+  views report one number; the extract cuts a run inside one textblock
+  as a PARAGRAPH (the current app's blockNormalize; measured first as a
+  one-line verse fence when the word came from a verse line) and a run
+  across blocks as the covered structure, and replaces it with the link,
+  an emptied heading shell becoming a paragraph, a deletion that leaves
+  no textblock getting a paragraph of its own. THE BAR
+  (`chrome/Toolbar.svelte`) floats over the selection, placed by the
+  page on selectionchange a frame later, on scroll, and on the EDITOR'S
+  own selection changes (`onSelect`, since the DOM's selectionchange
+  runs a beat before the state has the new selection — measured, the H
+  lit for the old caret's heading); clamped under the masthead; hidden
+  in the source view and over a search jump's selection until the
+  reader next touches the page; inside a code block only the code
+  toggle shows; Tag shows where the entry hosts. Its mousedown is
+  swallowed so the selection survives the click. Tag is the current
+  app's extract: the prompt, the naming rule, the taken check, the new
+  entry stored with the cut, the link in its place labelled by the cut's
+  first heading on a page, the host saved, the new entry opened. ⌃⌘W
+  says the count. MEASURED 2026-09-07 in headless Helium
+  (`tools/helium-corner.mjs`): a double-click on "music" floats the bar
+  above the word with Tag offered; B lights and the store holds
+  **music**; Tag with "Music" answered opens #2026-09-06/Music holding
+  "**music**", the day reading "If Music be the food of love" with Music
+  the link. `dist/index.html` is 638.85 kB.
 
