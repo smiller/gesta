@@ -84,7 +84,9 @@ here NOW, and what is not yet:
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the
   handler), `highlight.ts` (the jump: the nth occurrence of a query
-  selected and scrolled to), `editor.ts` (the
+  selected and scrolled to), `listKeys.ts` (the gestures in a list:
+  Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
+  (the
   view with its plugins), `editor.css` (the
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
@@ -676,4 +678,24 @@ here NOW, and what is not yet:
   › 3. The Dark Ages" then "2026-09-05" with the word marked in each
   snippet; ↓ moves the bar; Enter opens the chosen day with "sister"
   selected and the row closed. `dist/index.html` is 603.33 kB.
+- THE LIST KEYMAP (`editor/listKeys.ts`, the same day, by hand: Enter at
+  the end of a bullet made no bullet): prosemirror-schema-list 1.5.1
+  pinned exact, its splitListItem, sinkListItem and liftListItem over the
+  schema's list_item, ahead of the base keymap. What is this module's:
+  the gate (a caret in an item), Enter chaining the split with the lift
+  so an empty last item steps out into a paragraph, Shift-Tab REFUSED at
+  the outermost level where the library would lift the item out of the
+  list — leaving a list is the source view's job, as the README says —
+  and the two truths of Tab's refusal (13e-enter-and-tab-dispatch.js):
+  "can't indent the first item in a list", or when that list is nested
+  "can't indent an item more than one deeper than its parent". The floor
+  reads "at the outer level" until ⌃⌘M exists to be named. A Tab in a
+  list is consumed whether or not it moved. Refusals reach the corner
+  through the editor's `onRefuse`, the session's say. Every item the
+  selection touches moves together (the library's range), and the items
+  below an outdented one follow it down a level, pinned in the tests.
+  MEASURED 2026-09-07 in headless Helium (`tools/helium-corner.mjs`):
+  "- one", Enter, "two", Tab, Enter, "three", Shift-Tab, Shift-Tab typed
+  into a fresh page gave "- one / (nested) two / - three" and the corner
+  "at the outer level". `dist/index.html` is 606.64 kB.
 

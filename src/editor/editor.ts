@@ -1,6 +1,7 @@
 /* The editor: a ProseMirror view over the document model, with the row node
-   views, the line-number decoration, the row gestures (rowKeys.ts) ahead of
-   the base keymap, and markdown as you type (typing.ts). */
+   views, the line-number decoration, the row gestures (rowKeys.ts) and the
+   list gestures (listKeys.ts) ahead of the base keymap, and markdown as
+   you type (typing.ts). */
 import { EditorState, type Transaction, type Command } from "prosemirror-state";
 import { EditorView, type NodeViewConstructor } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
@@ -15,6 +16,7 @@ import type { Node } from "prosemirror-model";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
 import { linkClick } from "./links.ts";
+import { listKeymap } from "./listKeys.ts";
 
 export interface EditorOptions {
   interval: number;
@@ -23,6 +25,8 @@ export interface EditorOptions {
   nodeViews?: Record<string, NodeViewConstructor>;
   /* a plain click on an internal link: the fragment to route to */
   onRoute?: (frag: string) => void;
+  /* a swallowed press that changed nothing SAYS why */
+  onRefuse?: (why: string) => void;
 }
 
 const hardBreak: Command = (state, dispatch) => {
@@ -30,7 +34,7 @@ const hardBreak: Command = (state, dispatch) => {
   return true;
 };
 
-export function editorState(doc: Node, interval: number): EditorState {
+export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void): EditorState {
   return EditorState.create({
     doc,
     plugins: [
@@ -38,6 +42,7 @@ export function editorState(doc: Node, interval: number): EditorState {
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo }),
       rowKeymap,
       typingKeymap,
+      listKeymap(onRefuse),
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
       typing(),
@@ -50,7 +55,7 @@ export function editorState(doc: Node, interval: number): EditorState {
 
 export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions): EditorView {
   return new EditorView(mount, {
-    state: editorState(doc, opts.interval),
+    state: editorState(doc, opts.interval, opts.onRefuse),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     attributes: { class: "page", spellcheck: "false" },
     /* the typed pipe, before the character lands: in a line it makes the
