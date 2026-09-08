@@ -1257,4 +1257,10 @@ here NOW, and what is not yet:
   headless Helium: a fence pasted as text stores "start end / ::: verse
   / Heil! Heil! | Hail! Hail! / Erlösung | Salvation / :::", the first
   pair whole. `dist/index.html` is 730.62 kB.
-
+- PHASE 3 CLOSED 2026-09-08, on Sean's word, every item of the list
+  agreed 2026-09-07 built, measured in headless Helium and looked at by
+  hand, the scaffolding out. The current app stays the running app until
+  this one has been used for real entries. Phase 4 next: the review
+  order first, because it governs spend, then the acceptance gate,
+  `hooks/` and the prose checkers, carried over from ../writer/CLAUDE.md
+  per checker as each becomes relevant.
