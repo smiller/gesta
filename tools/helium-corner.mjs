@@ -22,7 +22,7 @@ console.log("the launch's stages:", JSON.stringify(await page.evaluate(() => doc
 /* the markdown the store holds for the open entry, read straight from
    IndexedDB after the save's debounce — phase 2's pane, which showed the
    editor's serialize per keystroke, came out 2026-09-08 */
-const storedMd = async () => { await page.waitForTimeout(800); return page.evaluate(() => new Promise((res, rej) => { const key = document.documentElement.dataset.entry; const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction("entries").objectStore("entries").get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; })); };
+const storedMd = async (which) => { await page.waitForTimeout(800); return page.evaluate((which) => new Promise((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction("entries").objectStore("entries").get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), which); };
 const corner = () => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; });
 console.log("after warm:", JSON.stringify(await corner()));
 console.log("masthead over Horace:", JSON.stringify(await page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; })));
@@ -384,7 +384,7 @@ answer = "Plans";
 await page.click(".toolbtn[title=\"Rename this entry's tag\"]");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06/Plans", null, { timeout: 5000 });
 await page.waitForTimeout(300);
-console.log("renamed to Plans:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), hash: page.url().split("#")[1], hostLink: await page.evaluate(() => null) }));
+console.log("renamed to Plans:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), hash: page.url().split("#")[1], hostLink: /\[Plans\]\(#2026-09-06\/Plans\)/.test(await storedMd("2026-09-06")) }));
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.querySelector("#editor a[href='#2026-09-06/Plans']"), null, { timeout: 5000 }).catch(() => {});
 console.log("the host's link followed:", JSON.stringify(await page.evaluate(() => { const a = [...document.querySelectorAll("#editor a")].pop(); return a && [a.textContent, a.getAttribute("href")]; })));

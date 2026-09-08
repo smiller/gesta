@@ -799,6 +799,7 @@ if (fixture && fixtures[fixture]) {
     renaming = true;
     session.flushSave().then(() => {
       if (session.current.date !== date || session.current.tag !== old) return;
+      session.suspendSaves();   /* nothing lands under the old key from here; open(new) lifts it */
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
       const sweep = ns ? blankSubTree(keysNow(), oldKey).map((k) => layer.removeEntry(k)) : [];
       /* an EMPTY body moves too: the row is the registration here, where

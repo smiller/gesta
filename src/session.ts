@@ -71,6 +71,7 @@ export interface Session {
   saveNow(): Promise<boolean>;
   flushSave(): Promise<boolean>;
   refresh(): Promise<void>;
+  suspendSaves(): void;
   surfaceMd(): string;
   readonly hashDeferred: boolean;
   goto(hash: string, sameMsg?: string): void;
@@ -286,6 +287,7 @@ export function startSession(opts: SessionOptions): Session {
     });
   function open(date: string, tag: string | null): void {
     cancelSave();
+    suspended = false;
     if (forced) { mdView = readerView; forced = false; }
     current = { date, tag };
     const ekey = ekeyOf();
@@ -387,7 +389,14 @@ export function startSession(opts: SessionOptions): Session {
     if (!md.trim() && !stored) return Promise.resolve(true);   /* an empty document mints nothing */
     return layer.setEntry(ekey, md).then((landed) => { if (landed) say("saved", SAVED_MS); show(); return landed; });
   }
-  function scheduleSave(): void { cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
+  /* SUSPENDED while a rename moves the entry between keys: a debounce
+     firing then wrote the surface back under the OLD key, just removed,
+     and the entry stood under both (the confirmation pass, 2026-09-08).
+     What is typed meanwhile is carried to the new key by the rename;
+     the next open() lifts the suspension. */
+  let suspended = false;
+  function suspendSaves(): void { cancelSave(); suspended = true; }
+  function scheduleSave(): void { if (suspended) return; cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
   function cancelSave(): void { if (saveTimer) clearTimeout(saveTimer); saveTimer = null; }
   function flushSave(): Promise<boolean> { return saveTimer ? saveNow() : Promise.resolve(true); }
   /* the open entry repainted from the store ONLY where the store moved
@@ -473,7 +482,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount, insertText,
+    open, openHash, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount, insertText,
     get mdView() { return mdView; },
     get hashDeferred() { return hashDeferred; },
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },

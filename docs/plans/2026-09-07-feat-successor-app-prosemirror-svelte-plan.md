@@ -1391,3 +1391,25 @@ at the head is kept current per phase.
   OBSERVED: a verifier's scratch test under src/ moved the signature
   mid-review and a sibling's Agent call was refused by the gate — the
   gate works, and a reviewer must not write under src/.
+- THE CONFIRMATION PASS over the fix commit, after a second acceptance
+  by hand: one sonnet agent scoped to e8b4781, told what was settled and
+  forbidden to write under src/; MEASURED 177,838 tokens, 42 tool uses,
+  12 minutes. It fuzzed the new `indexOrder` against the old over 200
+  key sets (the one difference the intended one), and walked the
+  deferred hash, the forced view, the extract guard and the bar's close
+  clean. ONE DEFECT CONFIRMED in the delta, fixed the same day: a rename
+  left the editor live under the OLD key through its writes, so a
+  debounce firing then wrote the surface back under the key just removed
+  and the entry stood under both — saves are SUSPENDED from the rename's
+  flush until the open of the new key (`session.suspendSaves`), what is
+  typed meanwhile still carried. Also taken: the order memo's signature
+  is `JSON.stringify(keys)`, unambiguous where a joined string could in
+  principle collide (a key may hold any character). ACCEPTED as a
+  residual: a keystroke landing between `refresh`'s flush and its
+  compare, while a retarget writes, is dropped by the repaint — a window
+  of one IndexedDB write, not the whole operation it was. MEASURED after
+  in headless Helium: the rename step now reads the day's stored link
+  `[Plans](#2026-09-06/Plans)` back (the tool had a placeholder there),
+  85 lines, the console empty; 475 tests, tsc clean. `dist/index.html`
+  is 730.45 kB. The round closes here: a third pass is the exception,
+  and this one found no behaviour past the rename.

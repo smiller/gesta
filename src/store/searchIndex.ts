@@ -67,7 +67,7 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
      re-ordered 13,600 keys before it read a byte (the review, 2026-09-08) */
   let orderSig = "", ordered: string[] = [];
   const currentOrder = (): string[] => {
-    const keys = Object.keys(cache), sig = keys.length + "\n" + keys.join("\n");
+    const keys = Object.keys(cache), sig = JSON.stringify(keys);   /* a key may hold any character; the join is unambiguous */
     if (sig !== orderSig) { orderSig = sig; ordered = indexOrder(keys); }
     return ordered;
   };
