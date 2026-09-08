@@ -60,6 +60,9 @@ here NOW, and what is not yet:
 - `tools/helium-bridge.mjs` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
+- `tools/helium-corner.mjs` — the corner in headless Helium over a fresh
+  profile: the indicator after the warm, past its whisper, after typing,
+  after a click, and on a refused walk; prints each reading and the console.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.
@@ -103,6 +106,13 @@ here NOW, and what is not yet:
   injected journal), `headings.ts` (an entry's title and a root's
   directive, read from the cache). Tests beside them, ported from the
   current app's node suites where they had one.
+- `src/chrome/` — the chrome, Svelte 5: `notices.svelte.ts` (the notice
+  ledger: the whisper, the pin, the progress line, the deferred one-shot,
+  the keyed save-failure family and the pill's text — a factory over the
+  clipboard writer, its state a rune), `Corner.svelte` (the indicator and
+  the paused pill, drawing that state). Tests beside them: the ledger's
+  under node with faked timers, the component's rendered to a string by
+  svelte/server.
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
   open by hash, the debounced save through the layer, the flush on leave,
   the refusal of an unknown book, the walk and today, the reference and
@@ -445,3 +455,78 @@ here NOW, and what is not yet:
   fourteen entries gave the same fourteen labels character for character,
   and its hrefs the encoding the successor's entry link writes. The
   passage half (⌃⌘R over one selection in both apps) is not yet compared.
+
+## Phase 3 decisions (2026-09-07)
+
+- SVELTE 5.57.0 and @sveltejs/vite-plugin-svelte 7.3.0, pinned exact, the
+  plugin ahead of singlefile in vite.config.ts; `svelte.config.js` is empty
+  (no preprocessor: the compiler reads erasable TypeScript, which is all
+  the tsconfig allows) and exists to stop the plugin announcing its
+  absence. svelte-check 4.7.6 is NOT installed: MEASURED, npm refuses it
+  as a peer of TypeScript 7.0.2 (it wants ^5 || ^6), so a component's
+  `<script lang="ts">` is checked by the compile and its test only; the
+  `.svelte.ts` modules are checked by tsc, whose ambient runes come from
+  `/// <reference types="svelte" />` in vite-env.d.ts.
+- SHARED STATE IS A RUNE IN A `.svelte.ts` MODULE, made by a factory like
+  the store's layers, and read by a component's template. MEASURED: under
+  Vitest's node environment the plugin compiles for the server, so a rune
+  module's state is a plain object and a component renders to a string
+  through svelte/server — the ledger's 30 tests and the corner's 4 run with
+  no DOM package. The reactivity is Svelte's own and is looked at in
+  Helium. MEASURED: `Notices.svelte` beside `notices.svelte.ts` fails tsc
+  on this case-insensitive disk (TS1149), so the component is `Corner`,
+  named for what it draws. FAILURE the same day: writing `Notices.test.ts`
+  beside `notices.test.ts` silently overwrote the ledger's tests, and the
+  rename to `Corner.test.ts` carried the wrong file; the ledger's suite was
+  rewritten from the record. A component never shares a stem with a
+  module — the disk cannot tell them apart.
+- THE NOTICE LEDGER (`notices.svelte.ts`) is 06-save-load.js ported with
+  its decisions intact: the whisper that yields to a pin and a busy line,
+  the pin whose click copies its detail and whose affordance no caller can
+  omit, the owned release that stands down under a newer notice, the
+  progress handle that alone ends the busy state and drops a prior
+  unclicked pin, the deferred one-shot in ONE slot, the keyed save-failure
+  family with its latch replayed at an op's end, and "with both latches
+  armed only the save failure shows". DROPPED: the index-debt key shape
+  and the `lesser` rank — the lists are derived from the cache (lists.ts),
+  so a save owes one write and there is nothing to rank. The entry layer's
+  `EntryNotices` is the ledger's `entry` object: landed and removed release
+  the key, stuck is the keyed family, stuckIdle the deferred one-shot.
+- THE CORNER (`Corner.svelte`) keeps the current app's span: a status line
+  whose click is a mouse's convenience and never in the tab order, so the
+  compiler's two a11y codes are ignored with the reason beside them.
+  MEASURED in 5.57.0: the space-separated `svelte-ignore` list silenced
+  only its first code; the comma-separated form silences both.
+- WHAT PAINTS WHAT (main.ts): the session's `say` is the whisper, "saved"
+  at the current app's 1400 ms and the rest at 3000; the backup's `say` is
+  the whisper too, each "backing up… N / M" restarting the clock, so an
+  autosave "saved" may overwrite it as the current app let it and a pin
+  outranks both; the backup's `stick` is stickErr and its `onTrouble` the
+  pill; export and import hold a progress handle from the click (import's
+  from the confirm), stepping through the file writes, ending in ok, fail
+  with the failures listed one per line as the copy, or a silent cancel on
+  a dismissed picker; an unreadable store at the warm sticks with the error
+  copyable where it used to whisper.
+- MEASURED 2026-09-07 in headless Helium over the build: `node
+  tools/helium-bridge.mjs` green over a fresh profile with every status
+  now read from `.saved.show` (the tools were pointed there from the old
+  `#status`); `node tools/helium-corner.mjs` over the seeded page saw "5 entries stored"
+  shown then fading past 3 s, "saved" shown after typing and gone on a
+  click, "no earlier entry" on ⌃⌘, at the first entry, the pill hidden with
+  no backup configured, and an empty console; under `?corner=pill` (set
+  AFTER the launch run, which clears an unconfigured backup's trouble) the
+  pill drawn bottom-right with its text, 22px in from the right edge. The
+  pin and the progress line are not reachable from a headless run (a stale
+  write needs a second tab, the pickers a hand) and wait for a look in
+  Helium. DECIDED the same day, after the look: the text STAYS as a
+  notice fades, where the current app's hide reset it to "saved" for the
+  fade. MEASURED by hand the same day: "saved" whispers and dismisses,
+  the export line counts the whole journal; NO pill on launch over a
+  configured folder — READ backup.ts: the pill is drawn for any permission
+  but "granted" and for a failed run, so its absence means Helium restored
+  the grant without a prompt and the run went ahead. ACCEPTED 2026-09-07:
+  the remembered grant is welcome; the pill is for the prompt and the
+  failed run, and the README's "asks once a session" no longer describes
+  Helium.
+  `dist/index.html` is 563.94 kB after Svelte.
+

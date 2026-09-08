@@ -26,7 +26,8 @@ export interface SessionOptions {
   layer: EntryLayer;
   images: ImageStore;
   interval: number;
-  say: (text: string) => void;
+  /* the corner's whisper; "saved" takes the current app's shorter time */
+  say: (text: string, ms?: number) => void;
   /* the markdown on screen changed or an entry opened: the page's own
      display of it (the details pane, the root's data attributes) */
   onShow?: (md: string, stored: string, ekey: string) => void;
@@ -48,6 +49,7 @@ export interface Session {
   setInterval(n: number): void;
 }
 export const SAVE_DEBOUNCE_MS = 500;
+export const SAVED_MS = 1400;
 const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
 
 export function startSession(opts: SessionOptions): Session {
@@ -125,7 +127,7 @@ export function startSession(opts: SessionOptions): Session {
     const stored = layer.entryMd(ekey);
     if (md === stored) return Promise.resolve(true);
     if (!md.trim() && !stored) return Promise.resolve(true);   /* an empty document mints nothing */
-    return layer.setEntry(ekey, md).then((landed) => { if (landed) say("saved"); show(); return landed; });
+    return layer.setEntry(ekey, md).then((landed) => { if (landed) say("saved", SAVED_MS); show(); return landed; });
   }
   function scheduleSave(): void { cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
   function cancelSave(): void { if (saveTimer) clearTimeout(saveTimer); saveTimer = null; }

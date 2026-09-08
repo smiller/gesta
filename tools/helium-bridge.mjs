@@ -12,7 +12,7 @@ rmSync(PROFILE, { recursive: true, force: true });
 mkdirSync(PROFILE, { recursive: true });
 const read = (page) => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
-  same: document.getElementById("same")?.textContent, status: document.getElementById("status")?.textContent,
+  same: document.getElementById("same")?.textContent, status: document.querySelector(".saved.show")?.textContent || "",
   first: document.querySelector("#editor .ProseMirror")?.firstElementChild?.textContent?.slice(0, 60),
   images: [...document.querySelectorAll("#editor img")].map((i) => (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "")),
 }));
@@ -38,7 +38,7 @@ say("an unknown page mints on visit", await launch(PAGE + "#page/Brand%20New", r
 say("type, wait past the debounce", await launch(PAGE + "#page/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
-  await page.waitForFunction(() => document.getElementById("status")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
   return read(page);
 }));
 say("relaunch: the text came back", await launch(PAGE + "#page/Brand%20New", read));
