@@ -38,6 +38,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   caret-color: var(--accent);
 }
 .page p { margin: 0 0 1em; }
+/* a selection is painted in the flash, the current app's colour for a
+   found passage and a chosen one alike; left out of the port and seen by
+   hand 2026-09-07 as the browser's blue */
+.page ::selection { background: var(--flash); }
 /* the current app's rule, left out of the 2026-09-07 port and noticed the
    day the first pictures rendered: a photo fills its column, never more */
 .page img { max-width: 100%; height: auto; display: block; margin: 0.8em 0; border: 1px solid var(--rule); border-radius: 3px; }

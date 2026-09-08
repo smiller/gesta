@@ -935,5 +935,7 @@ here NOW, and what is not yet:
   places (`onHighlight`), and the page keeps the bar off it until the
   reader next touches the page, for a link's payload as for a search.
   MEASURED in headless Helium: a pasted link with "?h=food%20of%20love"
-  followed selects the words with the bar hidden.
+  followed selects the words with the bar hidden. The selection's
+  colour, by hand the same day: the browser's blue — `.page ::selection`
+  in the flash was left out of the stylesheet port and is in.
 
