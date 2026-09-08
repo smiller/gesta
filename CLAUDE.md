@@ -35,11 +35,35 @@ here NOW, and what is not yet:
 - IN FORCE — storage names live OUTSIDE `page750.*`: every `file://` page
   shares one storage origin (MEASURED 2026-09-07 in Helium), and the successor
   never reads the old databases. Data arrives by import of the export folder.
-- NOT YET — the acceptance gate, the review order, `hooks/`, the prose
-  checkers (`tools/*.sh` in ../writer). They come with phase 4, the review
-  order first because it governs spend. Until then: finish the work, make the
-  suite green, tell Sean what to look at, and STOP — no reviewers run on code
-  he has not seen.
+- IN FORCE from 2026-09-08 — THE REVIEW SHAPE, asked from "this is a new
+  app; what is the sensible and economic way to review it" rather than
+  ported: the free checkers first (tsc with the unused checks on, the
+  suite, the corpus tool, the Helium tools), then ONE `/code-review` at
+  medium over a commit range, by BATCH — when a batch touches a DOM seam
+  (main.ts, session.ts, editor.ts, paste.ts) or closes a phase — never
+  per commit; its findings land in one fix commit; a confirmation pass
+  is offered at its measured price and runs only on the reader's word,
+  and only when a finding changed behaviour. No cheap reviewer tier: in
+  the running app it cost 750k–985k tokens a round against 101k–154k for
+  the medium pass, which found more (MEASURED there 2026-09-01). A
+  reviewer finding a MECHANICAL class — a literal, a name that does not
+  resolve, a comment shape — owes a checker under `tools/`, not just a
+  fix: a grep runs free forever.
+- IN FORCE from 2026-09-08 — THE GATE: no review-shaped call while
+  `src/` or `index.html` has moved past the last acceptance. Finish the
+  work, make the suite green, tell the reader what to look at, and STOP;
+  they run `! sh hooks/accept.sh` once they have looked, which records
+  the tree's signature, and `hooks/pre-review.sh` (a PreToolUse hook on
+  Skill, Agent and Workflow) refuses the review skills, any Workflow and
+  a review-shaped Agent until the signature matches. `hooks/**`,
+  `.claude/settings.json` and the accept script are permission-denied to
+  the agent. Everything else the running app's apparatus did — the Stop
+  hook, the reviewer list, the mark-reviewed pin, the skip lines — served
+  a five-reviewer loop this app does not run, and is not carried.
+- NOT YET — the prose checkers (`tools/*.sh` in ../writer), re-aimed at
+  this tree's comments and the plan's record as each class first shows up
+  in a review; each keeps its self-test and has its hit count measured
+  before its rule is chosen.
 - NEVER — the single-file checkers (the vocabulary index, check-sync, map.sh,
   names.sh, the concatenating build): TypeScript and the import graph answer
   their question.
@@ -232,6 +256,9 @@ is in the plan's record, under the phase named):
   view it supplies, resolving a relative src from the store;
   `src/editor/reference.ts` the selection half of a reference — the rows
   covered, the line and leaf ranges, the highlight payload, the passage.
+- `hooks/` — the gate (2026-09-08): `sig.sh` (the app tree's signature,
+  shared), `accept.sh` (the reader's, records it), `pre-review.sh` (the
+  PreToolUse refusal); wired in `.claude/settings.json`.
 - `docs/plans/` — the plan, moved here 2026-09-07, with a "Where we are"
   table at its head kept current per phase, and since 2026-09-08 THE
   RECORD after its Status section: one dated section per phase.

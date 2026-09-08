@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(hooks/**)", "Write(hooks/**)",
+      "Edit(.claude/settings.json)", "Write(.claude/settings.json)",
+      "Bash(sh hooks/accept.sh*)", "Bash(bash hooks/accept.sh*)", "Bash(./hooks/accept.sh*)", "Bash(hooks/accept.sh*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Skill|Agent|Workflow",
+        "hooks": [
+          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/pre-review.sh\"", "timeout": 20, "statusMessage": "Checking the tree has been looked at before a review" }
+        ]
+      }
+    ]
+  }
+}
