@@ -20,6 +20,7 @@ import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLink, REFUSAL_TEXT } from "./editor/reference.ts";
 import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
+import { copyText } from "./chrome/clipboard.ts";
 
 export interface SessionOptions {
   mount: HTMLElement;
@@ -143,10 +144,11 @@ export function startSession(opts: SessionOptions): Session {
   }
   function today(): void { goto(entryHash(todayKey())); }
   /* ⌃⌘R copies a reference to the selected passage, ⌃⌘C a link to the
-     entry; text/plain only until phase 3 adds the rich flavour. A failed
-     write is logged with the payload, which lives nowhere else. */
+     entry; text/plain only until phase 3 adds the rich flavour, through
+     the writer with the textarea fallback. A failed write is logged with
+     the payload, which lives nowhere else. */
   function copy(text: string, okText: string, failText: string): void {
-    navigator.clipboard.writeText(text).then(() => say(okText), (err: unknown) => { console.error(failText, err, text); say(failText); });
+    copyText(text).then(() => say(okText), (err: unknown) => { console.error(failText, err, text); say(failText); });
   }
   function copyReference(): void {
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }

@@ -60,9 +60,11 @@ here NOW, and what is not yet:
 - `tools/helium-bridge.mjs` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
-- `tools/helium-corner.mjs` — the corner in headless Helium over a fresh
-  profile: the indicator after the warm, past its whisper, after typing,
-  after a click, and on a refused walk; prints each reading and the console.
+- `tools/helium-corner.mjs` — the corner and the masthead in headless
+  Helium over a fresh profile: the indicator after the warm, past its
+  whisper, after typing, after a click, and on a refused walk; the masthead
+  over the verse fixture; the pill under `?corner=pill`; prints each
+  reading and the console, and screenshots when given a path.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.
@@ -110,9 +112,16 @@ here NOW, and what is not yet:
   ledger: the whisper, the pin, the progress line, the deferred one-shot,
   the keyed save-failure family and the pill's text — a factory over the
   clipboard writer, its state a rune), `Corner.svelte` (the indicator and
-  the paused pill, drawing that state). Tests beside them: the ledger's
-  under node with faked timers, the component's rendered to a string by
-  svelte/server.
+  the paused pill, drawing that state), `clipboard.ts` (the writer: the
+  async API, then the textarea fallback that gives back selection and
+  focus), `screen.svelte.ts` (the shared screen state: what the masthead
+  reads, the gutter switch, the backups label, the interval),
+  `mastheadModel.ts` (what the masthead READS for the open entry, pure:
+  the crumbs, the leaf, the title, the sibling tags, the today switch),
+  `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
+  tokens, global). Tests beside them: the ledger's and the model's under
+  node, the components' rendered to a string by svelte/server. A
+  component never shares a stem with a module (see phase 3).
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
   open by hash, the debounced save through the layer, the flush on leave,
   the refusal of an unknown book, the walk and today, the reference and
@@ -528,5 +537,39 @@ here NOW, and what is not yet:
   the remembered grant is welcome; the pill is for the prompt and the
   failed run, and the README's "asks once a session" no longer describes
   Helium.
-  `dist/index.html` is 563.94 kB after Svelte.
+  `dist/index.html` is 563.94 kB after Svelte. MEASURED by hand the same
+  day: a two-tab export ended in the stale tab's "not saved" over its
+  count (the save-fail latch outranking the op's end, as ported); from one
+  tab, "exported 13565 entries".
+- THE CLIPBOARD WRITER (`clipboard.ts`) is the current app's writeClipboard
+  ported, added the same day when the pin's click COPIED NOTHING by hand
+  in Helium over a bare `navigator.clipboard.writeText`: the async API
+  first, and on its refusal the off-screen textarea plus execCommand that
+  restores the selection and the focus it displaced (the current app's
+  measured reason: focusing an editing host with no selection invents a
+  caret at offset 0). The ledger's click and the session's ⌃⌘R and ⌃⌘C
+  go through it. Whether the fallback is what Helium needs from file:// is
+  a hand's answer.
+- THE MASTHEAD, first slice (`Masthead.svelte` over `mastheadModel.ts`):
+  the sticky dark bar ported from .site-head with the journal icon, the
+  date line as a BREADCRUMB (every ancestor its own link, the leaf bold,
+  a top-level page its bold label alone, a day "Era — date"), the day's
+  sibling tags under it, the tools (today when the open day is not today,
+  export, import, backups, clear — the last phase 2's own, kept while the
+  successor is not the running app), the title row (a sub-page's or a
+  day's first level-one heading, hidden when none) and the Line numbering
+  row, shown only over a gutter. The model is pure over the cache's keys
+  and the journal's headings and is recomputed on an open, a landed save,
+  an import and a clear — never per keystroke, since a day's tag list
+  walks every key. NOT YET: the books and pages icons (their panels), the
+  create, rename and delete of tagged entries and sub-pages, Go to,
+  Search, help, the mode pill, the ⌃⌘G bar. Dropped with the bar: phase
+  2's prev and next buttons — the current app has none, the chords walk.
+  MEASURED 2026-09-07 in headless Helium: the bridge tool reads the crumb
+  "Past — Sunday, 6 September 2026" on a day, "Browning, Robert › Pippa
+  Passes" with the title row on the book page, "Brand New" on a minted
+  page; over Horace the bar is sticky, 118px tall with the Line numbering
+  row shown, the title row hidden, today shown. `dist/index.html` is
+  582.10 kB. MEASURED in 5.57.0: `return $state(...)` is refused by the
+  compiler — a rune is declared into a variable first.
 

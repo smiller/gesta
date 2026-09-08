@@ -1,14 +1,15 @@
-/* Phase 2's screen with phase 3's first component: the editor over the
-   journal in the store, the bar that walks, imports and clears, the details
-   pane showing the markdown the editor holds beside what the store holds —
-   and the CORNER, the notice ledger drawn by the Corner component, which
-   every status line here now goes through. The rest of the chrome is
-   phase 3. `?fixture=pippa&interval=1` opens a fixture in SCRATCH — no
+/* The page: the editor over the journal in the store, under the MASTHEAD
+   and beside the CORNER — phase 3's components over the shared screen
+   state — with phase 2's details pane still showing the markdown the
+   editor holds beside what the store holds. This file is the wiring: the
+   layer, the backup, the session and the ledger meet here, and the
+   masthead's buttons call what each arm binds. `?fixture=pippa&interval=1` opens a fixture in SCRATCH — no
    store, no save — for a headless look as much as for a hand;
    `?store=write` writes one probe row; `?store=seed` writes the four
    fixtures as entries, for a headless look at the bridge over a profile no
    picker can fill; `?corner=pill` draws the paused pill. */
 import "./editor/editor.css";
+import "./chrome/chrome.css";
 import { mount } from "svelte";
 import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
@@ -25,7 +26,13 @@ import { importFiles } from "./store/importFiles.ts";
 import { entryDocs, isDoc, failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
 import { noticeLedger, type Progress } from "./chrome/notices.svelte.ts";
+import { copyText } from "./chrome/clipboard.ts";
+import { screenState } from "./chrome/screen.svelte.ts";
+import { mastheadModel } from "./chrome/mastheadModel.ts";
+import { journalOf } from "./store/headings.ts";
+import { todayKey } from "./store/keys.ts";
 import Corner from "./chrome/Corner.svelte";
+import Masthead from "./chrome/Masthead.svelte";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -35,27 +42,31 @@ const fixtures: Record<string, string> = { horace, pippa, twelfth, williams };
 const mountEl = document.getElementById("editor") as HTMLElement;
 const out = document.getElementById("out") as HTMLElement;
 const same = document.getElementById("same") as HTMLElement;
-const interval = document.getElementById("interval") as HTMLSelectElement;
-const backupsBtn = document.getElementById("backups") as HTMLButtonElement;
-const where = document.getElementById("where") as HTMLElement;
 const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
 const q = new URLSearchParams(location.search);
-if (q.get("interval") !== null) interval.value = q.get("interval")!;
 
-/* the ledger over the clipboard; the corner is mounted at the body's end,
-   outside the bar the masthead will replace */
-const notices = noticeLedger((text) => navigator.clipboard.writeText(text));
+/* the chrome: the ledger over the clipboard writer, the corner at the
+   body's end, the masthead before <main>, both over the shared screen
+   state. The handlers the masthead calls are bound below, per arm. */
+const notices = noticeLedger(copyText);
 const say = notices.whisper;
-let onResume: () => void = () => {};
-mount(Corner, { target: document.body, props: { notices, onResume: () => onResume() } });
+const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
+const acts = {
+  today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
+  interval: (_n: number) => {},
+};
+mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
+mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
+  screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
+  onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
+} });
 
-function showMd(md: string, source: string, label: string): void {
+function showMd(md: string, source: string): void {
   out.textContent = md;
   const ok = md === source;
   same.textContent = ok ? "(identical to what the store holds)" : "(differs from what the store holds)";
   same.className = ok ? "" : "no";
-  where.textContent = label;
 }
 
 const layer = entryLayer(idbEntryStore(), notices.entry);
@@ -66,9 +77,12 @@ const fixture = q.get("fixture");
 if (fixture && fixtures[fixture]) {
   /* SCRATCH: the fixture in the editor, nothing stored, nothing saved */
   const md = fixtures[fixture];
-  const v = createEditor(mountEl, parseMarkdown(md), { interval: +interval.value, onChange: (v) => showMd(serializeMarkdown(v.state.doc), md, "fixture " + fixture) });
-  showMd(md, md, "fixture " + fixture);
-  interval.addEventListener("change", () => setLineInterval(+interval.value)(v.state, v.dispatch));
+  const gutter = (v: { dom: HTMLElement }): void => { screen.gutter = v.dom.classList.contains("versepage"); };
+  const v = createEditor(mountEl, parseMarkdown(md), { interval: screen.interval, onChange: (v) => { showMd(serializeMarkdown(v.state.doc), md); gutter(v); } });
+  showMd(md, md);
+  gutter(v);
+  screen.masthead = { crumbs: [{ text: "fixture " + fixture, href: null, title: "" }], leaf: null, title: "", tags: [], showToday: false };
+  acts.interval = (n) => setLineInterval(n)(v.state, v.dispatch);
   root.dataset.store = "scratch";
 } else {
   const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
@@ -76,28 +90,41 @@ if (fixture && fixtures[fixture]) {
      an autosave "saved" may overwrite "backing up…", as the current app
      let it (a background backup must not suppress the user's own save
      feedback), and a pin outranks both */
+  const backupsLabel = (): void => { screen.backupsLabel = backup.configured ? "change backup folder…" : "set up automatic backups…"; };
   const backup = backupRunner({
     layer, images, store: idbBackupStore(),
     picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
     say,
-    onTrouble: (msg) => { notices.setTrouble(msg); backupsBtn.textContent = backup.configured ? "change backup folder…" : "set up automatic backups…"; },
+    onTrouble: (msg) => { notices.setTrouble(msg); backupsLabel(); },
     stick: (text, err, copy) => { notices.stickErr(text, err, copy); },
   });
-  backupsBtn.textContent = backup.configured ? "change backup folder…" : "set up automatic backups…";
-  backupsBtn.addEventListener("click", () => { backup.setupBackupFolder(); });
-  onResume = () => { backup.resumeBackups(); };
+  backupsLabel();
+  acts.backups = () => { backup.setupBackupFolder(); };
+  acts.resume = () => { backup.resumeBackups(); };
+  /* the masthead reads the open entry: recomputed when the entry or the
+     text the store holds changes — an open, a landed save, an import's
+     re-render — never per keystroke, since a day's tag list is a walk over
+     every key. The heading behind the title row is memoised on the text. */
+  const journal = journalOf(layer.cache);
+  let shown = { ekey: "", stored: "" };
+  const refreshMasthead = (): void => {
+    const c = session.current;
+    screen.masthead = mastheadModel(c.date, c.tag, Object.keys(layer.cache), journal, todayKey());
+  };
   const session = startSession({
-    mount: mountEl, layer, images, interval: +interval.value, say,
-    onShow: (md, stored, ekey) => showMd(md, stored, ekey),
+    mount: mountEl, layer, images, interval: screen.interval, say,
+    onShow: (md, stored, ekey) => {
+      showMd(md, stored);
+      screen.gutter = !!session.view?.dom.classList.contains("versepage");
+      if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); }
+    },
     onEdit: () => backup.scheduleBackup(),
   });
   /* leaving the tab with a backup still pending writes it at once, after
      the session's own flush (registered first, so it runs first) */
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
-  interval.addEventListener("change", () => session.setInterval(+interval.value));
-  document.getElementById("prev")!.addEventListener("click", () => session.step("prev"));
-  document.getElementById("next")!.addEventListener("click", () => session.step("next"));
-  document.getElementById("today")!.addEventListener("click", () => session.today());
+  acts.interval = (n) => session.setInterval(n);
+  acts.today = () => session.today();
   stage("start");
   const seeds: Record<string, string> = {
     "page/Horace": horace, "bookshelf/Browning, Robert/Pippa Passes": pippa,
@@ -123,7 +150,7 @@ if (fixture && fixtures[fixture]) {
      progress line; the flush and the walk run alongside. Nothing here
      deletes: the sweep belongs to the backup tiers, whose names this app
      reserves. A dismissed picker cancels the line silently. */
-  document.getElementById("export")!.addEventListener("click", () => {
+  acts.export = () => {
     if (!win.showDirectoryPicker) { say("export needs a browser that can open a folder to write into"); return; }
     if (!layer.warmed) { say("still loading — try that again in a moment"); return; }
     const dirPicked = win.showDirectoryPicker({ mode: "readwrite" });
@@ -146,13 +173,13 @@ if (fixture && fixtures[fixture]) {
       const msg = (err as { collision?: boolean })?.collision ? "export failed — " + (err as Error).message : failMsg("export failed", err);
       p.fail(msg, msg);
     });
-  });
+  };
   /* the picker opens synchronously in the click, then: names, the refusal,
      the read, the count-then-confirm gate, the progress line, the
      sequential import, the tally. The import NEVER clears — it overwrites
      entry by entry and deletes nothing, so a subset folder lands only its
      own entries. */
-  document.getElementById("import")!.addEventListener("click", () => {
+  acts.import = () => {
     if (!win.showDirectoryPicker) { say("import needs a folder picker"); return; }
     session.flushSave();
     let p: Progress | null = null;
@@ -175,6 +202,7 @@ if (fixture && fixtures[fixture]) {
           p!.fail(msg, tally.failures.map((x) => x.path + ": " + x.error).join("\n"));
         } else p!.ok(msg + " entries");
         session.open(session.current.date, session.current.tag);   /* re-render in case the open entry was overwritten */
+        refreshMasthead();   /* the key list moved under the tag bar */
       });
     }).catch((err: unknown) => {
       if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
@@ -182,12 +210,12 @@ if (fixture && fixtures[fixture]) {
       const msg = failMsg("import failed", err);
       if (p) p.fail(msg, msg); else notices.stickErr("import failed", err);
     });
-  });
+  };
   /* its own gesture, never the import's */
-  document.getElementById("clear")!.addEventListener("click", () => {
+  acts.clear = () => {
     const n = Object.keys(layer.cache).length;
     if (!confirm("Delete all " + n + " stored entries and every picture? There is no undo.")) return;
-    Promise.all([layer.clear(), images.clear()]).then(() => { count(); say("cleared"); session.open(session.current.date, session.current.tag); },
+    Promise.all([layer.clear(), images.clear()]).then(() => { count(); say("cleared"); session.open(session.current.date, session.current.tag); refreshMasthead(); },
       (err: unknown) => { notices.stickErr("clear failed", err); });
-  });
+  };
 }

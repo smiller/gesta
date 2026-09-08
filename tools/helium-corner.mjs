@@ -1,7 +1,8 @@
 // The corner in headless Helium over a fresh profile: seed the fixtures,
 // read the indicator after the warm and past its whisper, type and wait
 // for "saved", click it away, press ⌃⌘, at the first entry; prints what
-// the span and the pill read at each step, then the pill under
+// the span and the pill read at each step, the masthead over a verse
+// page, then the pill under
 // `?corner=pill`, then the console.
 // `node tools/helium-corner.mjs [profileDir] [screenshot.png]`.
 import { chromium } from "playwright-core";
@@ -18,6 +19,8 @@ await page.goto(PAGE + "?store=seed#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 const corner = () => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; });
 console.log("after warm:", JSON.stringify(await corner()));
+console.log("masthead over Horace:", JSON.stringify(await page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; })));
+if (process.argv[3]) await page.screenshot({ path: process.argv[3].replace(/\.png$/, "-masthead.png"), clip: { x: 0, y: 0, width: 1000, height: 130 } });
 await page.waitForTimeout(3200);
 console.log("3.2 s later:", JSON.stringify(await corner()));
 await page.click("#editor .ProseMirror");

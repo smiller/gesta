@@ -1,0 +1,49 @@
+/* The masthead rendered to a string by svelte/server over a model in each
+   shape: what the markup says. The sticky bar, the wrap and the clicks are
+   looked at in Helium. */
+import { describe, it, expect } from "vitest";
+import { render } from "svelte/server";
+import Masthead from "./Masthead.svelte";
+import { screenState } from "./screen.svelte.ts";
+import { mastheadModel } from "./mastheadModel.ts";
+import { journalOf } from "../store/headings.ts";
+
+const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "page/Books/Essay": "# The essay\n\nb" };
+const journal = journalOf(cache);
+const none = () => {};
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number }> = {}): string {
+  const screen = screenState(extra.interval ?? 5);
+  screen.masthead = mastheadModel(date, tag, Object.keys(cache), journal, "2026-09-07");
+  screen.gutter = !!extra.gutter;
+  screen.backupsLabel = "set up automatic backups…";
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none } }).body;
+}
+
+describe("Masthead", () => {
+  it("today's main entry: the plain date unit, the title row, the tag, no today button", () => {
+    const html = draw("2026-09-07", null);
+    expect(html).toMatch(/<span class="date-unit[^"]*">Today — /);
+    expect(html).toMatch(/<span class="page-title[^"]*">Titled<\/span>/);
+    expect(html).toMatch(/href="#2026-09-07\/Ideas"[^>]*>Ideas<\/a>/);
+    expect(html).toMatch(/title="Go to today" hidden/);
+  });
+  it("a tagged entry: the date links back, the bold leaf after ›, the today button hidden still", () => {
+    const html = draw("2026-09-07", "Ideas");
+    expect(html).toMatch(/<a class="datelink date-unit[^"]*" href="#2026-09-07" title="Back to the main entry">Today — /);
+    expect(html).toMatch(/ › (<!--[^>]*-->)*<strong class="tag-current[^"]*">Ideas<\/strong>/);
+    expect(html).toMatch(/class="page-title[^"]*" hidden/);
+    expect(html).not.toContain(">Ideas</a>");
+  });
+  it("a sub-page: the parent crumb, the leaf, its heading as the title, the today button shown", () => {
+    const html = draw("page", "Books/Essay");
+    expect(html).toMatch(/href="#page\/Books" title="Back to Books">Books<\/a>(<!--[^>]*-->|\s)* › (<!--[^>]*-->)*<strong class="tag-current[^"]*">Essay<\/strong>/);
+    expect(html).toContain(">The essay</span>");
+    expect(html).toMatch(/title="Go to today">today/);
+  });
+  it("the Line numbering row shows only over a gutter, its select at the interval", () => {
+    expect(draw("2026-09-07", null)).toMatch(/class="page-lines[^"]*" hidden/);
+    const html = draw("2026-09-07", null, { gutter: true, interval: 1 });
+    expect(html).not.toMatch(/class="page-lines[^"]*" hidden/);
+    expect(html).toMatch(/<option value="1" selected[^>]*>every line/);
+  });
+});

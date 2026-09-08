@@ -12,6 +12,7 @@ rmSync(PROFILE, { recursive: true, force: true });
 mkdirSync(PROFILE, { recursive: true });
 const read = (page) => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
+  crumb: document.querySelector(".datelabel")?.textContent?.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent,
   same: document.getElementById("same")?.textContent, status: document.querySelector(".saved.show")?.textContent || "",
   first: document.querySelector("#editor .ProseMirror")?.firstElementChild?.textContent?.slice(0, 60),
   images: [...document.querySelectorAll("#editor img")].map((i) => (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "")),

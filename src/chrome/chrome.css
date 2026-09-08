@@ -1,0 +1,18 @@
+/* The chrome's tokens, global where the components' own styles are scoped:
+   the sticky bar's palette and the two heights every masthead row shares.
+   Ported 2026-09-07 from ../writer/src/style.css's :root. */
+:root {
+  --bar-bg: #1e3320;
+  --bar-ink: #eef1e0;
+  --bar-link: #c5d8a7;
+  --bar-input-bg: #2a4226;
+  --bar-input-border: #4a6b3c;
+  --bar-shadow: #000;
+  --card-bg: #fff;
+  --gold: #f5d76e;
+  --masthead-h: 55px;
+  /* ONE height for every control in the masthead rows: a flex row stretches
+     its items, and stating the height is what makes the rows agree whatever
+     each happens to sit beside (35px against a natural 32px, measured) */
+  --masthead-control-h: 35px;
+}

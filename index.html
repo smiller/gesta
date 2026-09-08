@@ -5,34 +5,14 @@
 <title>Gesta</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  /* the page's own bar — phase 3 replaces it with the Svelte masthead; the
-     corner (the notices and the paused pill) is already the Corner component */
-  .bar { font: 14px/1.4 -apple-system, system-ui, sans-serif; background: #1e3320; color: #eef1e0; padding: 8px 32px; display: flex; gap: 1.5em; align-items: center; flex-wrap: wrap; }
-  .bar strong { font-weight: 600; }
-  .bar select, .bar input, .bar button { font: inherit; }
+  /* phase 2's details pane, the last of the page's own chrome; the masthead
+     and the corner are Svelte components mounted around <main> */
   details { font: 13px/1.4 -apple-system, system-ui, sans-serif; margin: 2rem 32px; color: #6b7568; }
   details pre { font: 13px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; color: #1a2418; }
   #same.no { color: #900; }
 </style>
 </head>
 <body>
-<header class="bar">
-  <strong>Gesta — phase 2: the journal</strong>
-  <button id="today">today</button>
-  <button id="prev" title="⌃⌘,">‹ prev</button>
-  <button id="next" title="⌃⌘.">next ›</button>
-  <span id="where"></span>
-  <label>Line numbering <select id="interval">
-    <option value="0">none</option>
-    <option value="1">every line</option>
-    <option value="5" selected>every 5</option>
-    <option value="10">every 10</option>
-  </select></label>
-  <button id="import">import…</button>
-  <button id="export">export…</button>
-  <button id="backups">set up automatic backups…</button>
-  <button id="clear">clear</button>
-</header>
 <main><div id="editor"></div></main>
 <details><summary>the markdown the editor holds <span id="same"></span></summary><pre id="out"></pre></details>
 <script type="module" src="/src/main.ts"></script>
