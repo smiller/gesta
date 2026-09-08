@@ -28,9 +28,11 @@ import { startSession } from "./session.ts";
 import { noticeLedger, type Progress } from "./chrome/notices.svelte.ts";
 import { copyText } from "./chrome/clipboard.ts";
 import { screenState } from "./chrome/screen.svelte.ts";
-import { mastheadModel } from "./chrome/mastheadModel.ts";
+import { mastheadModel, panelRows, rootLabel, trimLabel, ECHO_CAP } from "./chrome/mastheadModel.ts";
+import { typedName } from "./chrome/naming.ts";
 import { journalOf } from "./store/headings.ts";
-import { todayKey } from "./store/keys.ts";
+import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
+import { registered } from "./store/lists.ts";
 import Corner from "./chrome/Corner.svelte";
 import Masthead from "./chrome/Masthead.svelte";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
@@ -52,15 +54,28 @@ const q = new URLSearchParams(location.search);
 const notices = noticeLedger(copyText);
 const say = notices.whisper;
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
+type Ns = "page" | "bookshelf";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
-  interval: (_n: number) => {},
+  interval: (_n: number) => {}, panel: (_ns: Ns) => {}, newRoot: (_ns: Ns) => {},
 };
+const closePanel = (): void => { screen.panel = null; };
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
 mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
+  onPanel: (ns: Ns) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
 } });
+/* the panels are not modal: a click outside any panel or opener closes
+   the slot, and so does Escape. Read from the target, not from
+   propagation — the components' handlers are delegated, and a
+   stopPropagation there would not reach a document listener anyway. */
+document.addEventListener("click", (e) => {
+  const t = e.target as Element | null;
+  if (t?.closest(".pages, .opener")) return;
+  closePanel();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePanel(); });
 
 function showMd(md: string, source: string): void {
   out.textContent = md;
@@ -116,6 +131,7 @@ if (fixture && fixtures[fixture]) {
     onShow: (md, stored, ekey) => {
       showMd(md, stored);
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
+      if (ekey !== shown.ekey) closePanel();   /* a navigation dismisses an overlay drawn for another entry */
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); }
     },
     onEdit: () => backup.scheduleBackup(),
@@ -125,6 +141,35 @@ if (fixture && fixtures[fixture]) {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   acts.interval = (n) => session.setInterval(n);
   acts.today = () => session.today();
+  /* an opener TOGGLES its own panel and displaces any other: the rows are
+     built per open and never rebuilt while open — a live rebuild would
+     detach a mid-click target. "No authors" is a claim about the journal,
+     not made before the warm has read it. */
+  acts.panel = (ns) => {
+    if (screen.panel === ns) { closePanel(); return; }
+    screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
+    screen.panelEmpty = ns !== "bookshelf" ? ""
+      : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
+      : "No authors yet — import a folder, or start one below.";
+    screen.panel = ns;
+  };
+  /* create a namespace ROOT: prompt → the naming rule → register → go. An
+     existing name just opens; a new one is stored with an empty body at
+     once so the list holds it while it is empty (the export skips a blank,
+     so nothing lands on disk) — and in the bookshelf, whose unknown keys
+     are refused, that registration is what lets the address open at all.
+     The echo is the LABEL, where the key is what was typed. */
+  acts.newRoot = (ns) => {
+    closePanel();
+    const noun = KEYED_NS[ns].noun;
+    const typed = typedName(prompt("Name for the new " + noun + ":"));
+    if (!typed) return;
+    if ("refuse" in typed) { say(typed.refuse); return; }
+    const name = typed.name;
+    const go = (): void => session.goto(entryHash(ns, name), "already on " + trimLabel(rootLabel(ns, name, journal), ECHO_CAP));
+    if (registered(Object.keys(layer.cache), ns, name)) { go(); return; }
+    layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(); });
+  };
   stage("start");
   const seeds: Record<string, string> = {
     "page/Horace": horace, "bookshelf/Browning, Robert/Pippa Passes": pippa,

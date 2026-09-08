@@ -42,7 +42,7 @@ export interface Session {
   openHash(): void;
   saveNow(): Promise<boolean>;
   flushSave(): Promise<boolean>;
-  goto(hash: string): void;
+  goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
   copyReference(): void;
@@ -133,8 +133,10 @@ export function startSession(opts: SessionOptions): Session {
   function scheduleSave(): void { cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
   function cancelSave(): void { if (saveTimer) clearTimeout(saveTimer); saveTimer = null; }
   function flushSave(): Promise<boolean> { return saveTimer ? saveNow() : Promise.resolve(true); }
-  function goto(hash: string): void {
-    if (location.hash === hash) return;
+  /* a navigation that lands where it already is SAYS so, when given the
+     words: silence there reads as a dead control */
+  function goto(hash: string, sameMsg?: string): void {
+    if (location.hash === hash) { if (sameMsg) say(sameMsg, 1500); return; }
     location.hash = hash;
   }
   function step(dir: "prev" | "next"): void {
@@ -142,7 +144,7 @@ export function startSession(opts: SessionOptions): Session {
     if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
   }
-  function today(): void { goto(entryHash(todayKey())); }
+  function today(): void { goto(entryHash(todayKey()), "already on today"); }
   /* ⌃⌘R copies a reference to the selected passage, ⌃⌘C a link to the
      entry; text/plain only until phase 3 adds the rich flavour, through
      the writer with the textarea fallback. A failed write is logged with

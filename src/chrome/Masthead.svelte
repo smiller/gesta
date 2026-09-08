@@ -1,22 +1,51 @@
 <!-- The masthead: the sticky dark bar, ported 2026-09-07 from the current
      app's .site-head (body.html, style.css) with the measurements its
-     comments carry. THIS SLICE: the journal icon, the date line as a
-     breadcrumb with the tag bar under it, the tools, the title row and the
-     Line numbering row. Not yet: the books and pages icons (their panels),
-     the tagged-entry and sub-page create, rename and delete, the Go to and
-     Search rows, help, the mode pill, the ⌃⌘G bar. -->
+     comments carry. BUILT: the three icons — the bookshelf and the pages
+     lists, each a dropdown panel in the one slot the overlays share, and
+     the journal icon that goes to today — the date line as a breadcrumb
+     with the tag bar under it, the tools, the title row and the Line
+     numbering row. Not yet: the tagged-entry and sub-page create, rename
+     and delete, the Go to and Search rows, help, the mode pill, the ⌃⌘G
+     bar. A panel's rows are anchors, so ⌘-click and middle-click work; a
+     row click closes the panel itself, since a click on the open entry's
+     own row moves no hash. Attention leaving a panel (a Tab out) dismisses
+     it like a click outside; relatedTarget, not activeElement, which is
+     mid-flight during focusout. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval }: {
+  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
     onInterval: (n: number) => void;
+    /* the opener's click: the page's wiring toggles the slot and fills the rows */
+    onPanel: (ns: "page" | "bookshelf") => void;
+    onClosePanel: () => void;
+    onNewRoot: (ns: "page" | "bookshelf") => void;
   } = $props();
+  const NOUN = { page: "page", bookshelf: "author" } as const;
+  const leave = (e: FocusEvent): void => {
+    const panel = e.currentTarget as HTMLElement;
+    if (!(e.relatedTarget instanceof Node && panel.contains(e.relatedTarget))) onClosePanel();
+  };
   const INTERVALS = [[0, "none"], [1, "every line"], [5, "every 5"], [10, "every 10"]] as const;
 </script>
 
 <header class="site-head">
   <nav class="site-home">
+    <button class="datebtn opener" title="List the authors on the bookshelf" aria-label="List the authors on the bookshelf" onclick={() => onPanel("bookshelf")}>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 4.6C6.5 3.6 4.8 3.4 3 3.7v8c1.8-.3 3.5-.1 5 .9 1.5-1 3.2-1.2 5-.9v-8c-1.8-.3-3.5-.1-5 .9z"></path>
+        <path d="M8 4.6v8.9"></path>
+      </svg>
+      <span class="caret">▾</span>
+    </button>
+    <button class="datebtn opener" title="Open the pages list" aria-label="Open the pages list" onclick={() => onPanel("page")}>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 1.8 h5.2 L12 4.6 v9.6 H4 z"></path>
+        <path d="M9.2 1.8 v2.8 H12"></path>
+      </svg>
+      <span class="caret">▾</span>
+    </button>
     <button class="datebtn" title="Go to today" aria-label="Go to today" onclick={onToday}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
         <rect x="2.5" y="3.5" width="11" height="10" rx="1.5"></rect>
@@ -40,6 +69,13 @@
     <button class="toolbtn" type="button" title="Delete every stored entry" onclick={onClear}>clear</button>
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
+  {#if screen.panel}
+    <nav class="pages" onfocusout={leave}>
+      {#each screen.panelRows as r (r.href)}<a href={r.href} title={r.text} onclick={onClosePanel}>{r.text}</a>{/each}
+      {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}
+      <button class="panel-new" type="button" onclick={() => onNewRoot(screen.panel!)}>New {NOUN[screen.panel]}…</button>
+    </nav>
+  {/if}
   <details class="page-lines" hidden={!screen.gutter}>
     <summary>Line numbering</summary>
     <span class="page-lines-body">
@@ -112,6 +148,42 @@
   .date-unit { white-space: nowrap; }
   .datebtn { display: inline-flex; align-items: center; gap: 3px; }
   .datebtn svg { width: 17px; height: 17px; display: block; pointer-events: none; }
+  .datebtn .caret { font-size: 0.7em; opacity: 0.8; pointer-events: none; }
+  /* THE DROPDOWN PANEL, hung off the bar's bottom edge at the gutter. The
+     cap is the room below the masthead, in CSS rather than a measurement:
+     a JS cap is taken at a MOMENT and the bar grows under an open panel.
+     The 100% is the sticky bar's own height (a percentage against the
+     containing block's padding box); 18px is the 6px hang plus a 12px
+     breathing gap; dvh, not vh, under a phone's retracting URL bar; the
+     floor is ONE ROW, since a floor above the room overhangs and strands
+     the create row. */
+  .pages {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: var(--head-gutter);
+    z-index: 80;
+    min-width: 190px;
+    max-width: 320px;
+    background: var(--card-bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    max-height: max(48px, calc(100dvh - 100% - 18px));
+    overflow-y: auto;
+  }
+  /* every line on one vertical rhythm, tight: every 10px off a line is
+     another root on the screen; flex: none so the lines hold their size
+     under the max-height and the panel scrolls */
+  .pages a, .pages button, .pages .panel-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
+  .pages a, .pages button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
+  .pages a:hover, .pages button:hover { background: var(--aside-bg); }
+  /* a long name ellipsizes instead of widening the panel */
+  .pages a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pages .panel-new { color: var(--bar-link); }
+  .pages .panel-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
   /* the full-width rows take a line each; min-width:0 is load-bearing so a
      long select option or an unbroken title cannot push the sticky bar

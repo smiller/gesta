@@ -11,12 +11,13 @@ import { journalOf } from "../store/headings.ts";
 const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "page/Books/Essay": "# The essay\n\nb" };
 const journal = journalOf(cache);
 const none = () => {};
-function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number }> = {}): string {
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "page" | "bookshelf"; rows: { text: string; href: string }[]; empty: string }> = {}): string {
   const screen = screenState(extra.interval ?? 5);
   screen.masthead = mastheadModel(date, tag, Object.keys(cache), journal, "2026-09-07");
   screen.gutter = !!extra.gutter;
   screen.backupsLabel = "set up automatic backups…";
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none } }).body;
+  if (extra.panel) { screen.panel = extra.panel; screen.panelRows = extra.rows || []; screen.panelEmpty = extra.empty || ""; }
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none } }).body;
 }
 
 describe("Masthead", () => {
@@ -45,5 +46,15 @@ describe("Masthead", () => {
     const html = draw("2026-09-07", null, { gutter: true, interval: 1 });
     expect(html).not.toMatch(/class="page-lines[^"]*" hidden/);
     expect(html).toMatch(/<option value="1" selected[^>]*>every line/);
+  });
+  it("no panel by default; an open pages panel lists its rows and the create row; an empty shelf explains itself", () => {
+    expect(draw("2026-09-07", null)).not.toContain('class="pages');
+    const html = draw("2026-09-07", null, { panel: "page", rows: [{ text: "Books", href: "#page/Books" }] });
+    expect(html).toMatch(/<nav class="pages[^"]*">(<!--[^>]*-->)*<a href="#page\/Books" title="Books"[^>]*>Books<\/a>/);
+    expect(html).toContain(">New page…</button>");
+    expect(html).not.toContain("panel-empty");
+    const shelf = draw("2026-09-07", null, { panel: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });
+    expect(shelf).toMatch(/<span class="panel-empty[^"]*">No authors yet/);
+    expect(shelf).toContain(">New author…</button>");
   });
 });

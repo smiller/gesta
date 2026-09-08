@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mastheadModel, rootLabel } from "./mastheadModel.ts";
+import { mastheadModel, rootLabel, panelRows, trimLabel } from "./mastheadModel.ts";
 import { journalOf } from "../store/headings.ts";
 import { prettyDate } from "../store/keys.ts";
 
@@ -88,5 +88,18 @@ describe("the bookshelf", () => {
     expect(x.crumbs[0].href).toBe("#bookshelf/Milton%2C%20John");
     expect(x.leaf).toBe("1");
     expect(x.title).toBe("Book 1");
+  });
+});
+
+describe("the panels", () => {
+  it("a namespace's roots as rows, labelled as roots are, in key order", () => {
+    expect(panelRows("page", keys, journal)).toEqual([{ text: "Books", href: "#page/Books" }]);
+    expect(panelRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }]);
+    expect(panelRows("nowhere", keys, journal)).toEqual([]);
+  });
+  it("trimLabel keeps a short label, cuts a long one to the cap with an ellipsis, never inside a surrogate pair", () => {
+    expect(trimLabel("short", 10)).toBe("short");
+    expect(trimLabel("a long label indeed", 8)).toBe("a long …");
+    expect(trimLabel("ab😀cd", 4)).toBe("ab…");
   });
 });

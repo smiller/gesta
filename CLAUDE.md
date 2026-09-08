@@ -63,8 +63,10 @@ here NOW, and what is not yet:
 - `tools/helium-corner.mjs` — the corner and the masthead in headless
   Helium over a fresh profile: the indicator after the warm, past its
   whisper, after typing, after a click, and on a refused walk; the masthead
-  over the verse fixture; the pill under `?corner=pill`; prints each
-  reading and the console, and screenshots when given a path.
+  over the verse fixture; the pages and bookshelf panels through open,
+  displace, toggle, Escape, a click outside and a row click; the pill
+  under `?corner=pill`; prints each reading and the console, and
+  screenshots when given a path.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.
@@ -117,7 +119,10 @@ here NOW, and what is not yet:
   focus), `screen.svelte.ts` (the shared screen state: what the masthead
   reads, the gutter switch, the backups label, the interval),
   `mastheadModel.ts` (what the masthead READS for the open entry, pure:
-  the crumbs, the leaf, the title, the sibling tags, the today switch),
+  the crumbs, the leaf, the title, the sibling tags, the today switch, a
+  namespace's roots as panel rows, the label trim), `naming.ts` (what a
+  typed name becomes: the URL, slash and filename rules and the two
+  refusals, pure over the store's names),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -572,4 +577,33 @@ here NOW, and what is not yet:
   row shown, the title row hidden, today shown. `dist/index.html` is
   582.10 kB. MEASURED in 5.57.0: `return $state(...)` is refused by the
   compiler — a rune is declared into a variable first.
+- THE PANELS (the same day, asked for by hand: "only the journal icon"):
+  the bookshelf and pages icons with their dropdowns, ported from
+  18-pages-panel.js. THE ONE SLOT is `screen.panel` — every opener sets
+  it, so opening one closes the others by construction, and the later
+  overlays (help, backups, bookmarks, shortcuts) join it as values; the
+  in-flow rows compete for no spot and stay out of it. The rows are built
+  per open (`panelRows`, pure) and never rebuilt while open; a row is an
+  anchor so ⌘-click works, and its click closes the panel since a click on
+  the open entry's own row moves no hash. Closes: the opener again, a
+  click outside any panel or opener (read from the target, since the
+  components' handlers are delegated), Escape, a Tab out (focusout with
+  relatedTarget outside), and a navigation (the masthead's refresh on a
+  new key). "New page…" / "New author…" is `typedName` (naming.ts, the
+  promptTag and refuseName rules, pure) over window.prompt; a new root is
+  REGISTERED by storing an EMPTY body — the cache is the index, the warm
+  keeps an empty row, the export skips a blank, and in the bookshelf that
+  registration is what lets the refused-when-unknown address open — then
+  opened, or "already on <label>" when it is the open one (session.goto
+  now takes the same-place words; today says "already on today"). The
+  shelf's repaint-while-hovered debt is not carried: nothing here repaints
+  an open panel. NOT CARRIED: the shelf's empty line before the warm reads
+  "Still loading…" as the current app's did, though the openers are
+  reachable before the warm only for the instant the warm takes.
+  MEASURED 2026-09-07 in headless Helium (`tools/helium-corner.mjs` over
+  the seeded fixtures): the pages panel lists Horace and Williams over
+  "New page…"; the shelf icon displaces it with "Browning, Robert" over
+  "New author…"; the shelf's own icon again closes it; Escape closes; a
+  click outside closes; a row click opens the page and closes the panel.
+  The prompt is a hand's. `dist/index.html` is 586.95 kB.
 

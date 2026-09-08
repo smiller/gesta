@@ -68,3 +68,20 @@ export function mastheadModel(date: string, tag: string | null, keys: string[], 
   }
   return { crumbs, leaf, title, tags, showToday: date !== today };
 }
+
+/* the row-label cap every list surface shares, so their truncation of an
+   untrusted name cannot drift apart; and how much of what the reader
+   TYPED a refusal may quote back, shorter because it lands mid-sentence */
+export const LABEL_CAP = 60;
+export const ECHO_CAP = 24;
+export function trimLabel(s: string, max: number): string {
+  if (s.length <= max) return s;
+  let cut = max - 1;
+  if (/[\uD800-\uDBFF]/.test(s.charAt(cut - 1))) cut--;
+  return s.slice(0, cut) + "…";
+}
+/* one namespace's roots as panel rows, each labelled the one way a root is
+   labelled everywhere (rootLabel), in byName order of the KEYS */
+export function panelRows(ns: string, keys: string[], journal: Journal): Link[] {
+  return childrenOf(keys, ns).map((name) => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name) }));
+}
