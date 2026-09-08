@@ -6,8 +6,8 @@
      with the tag bar under it, the tools, the title row and the Line
      numbering row. The create, rename and delete of a tagged entry and a
      sub-page are the tools' first three buttons, worded per namespace.
-     The mode pill leads the tools while the source view is on. Not yet:
-     help, the ⌃⌘G bar. The Go to and Search
+     The mode pill leads the tools while the source view is on. The ⌃⌘G bar hangs off the bar's
+     bottom edge at the right gutter, its own component. Not yet: help. The Go to and Search
      rows are their own components, drawn between the title row and the
      Line numbering row in the current app's order. A panel's rows are anchors, so ⌘-click and middle-click work; a
      row click closes the panel itself, since a click on the open entry's
@@ -18,7 +18,8 @@
   import type { Screen } from "./screen.svelte.ts";
   import Search from "./Search.svelte";
   import Goto from "./Goto.svelte";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, onCreate, onRename, onDelete }: {
+  import LineBar from "./LineBar.svelte";
+  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
     /* the sub-entry gestures: create under the open entry, rename and delete the open one */
@@ -30,7 +31,10 @@
     onNewRoot: (ns: "page" | "bookshelf") => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
+    lineBar: { onInput: (kind: "line" | "page", value: string) => void; onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void; onClose: () => void };
   } = $props();
+  let lineBarEl: { focusAsk(): void } | undefined = $state();
+  export function focusLineBar(): void { lineBarEl?.focusAsk(); }
   let gotoRow: { focusFirst(): void } | undefined = $state();
   export function focusGoto(): void { gotoRow?.focusFirst(); }
   let searchRow: { focusInput(): void } | undefined = $state();
@@ -95,6 +99,7 @@
       <button class="panel-new" type="button" onclick={() => onNewRoot(screen.panel!)}>New {NOUN[screen.panel]}…</button>
     </nav>
   {/if}
+  <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
   <details class="page-lines" hidden={!screen.gutter}>
     <summary>Line numbering</summary>
     <span class="page-lines-body">

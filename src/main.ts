@@ -39,6 +39,9 @@ import { retargetLinks, relabelLinks } from "./store/links.ts";
 import { linkRefusal, insertLinkAfter } from "./editor/insertLink.ts";
 import { mdLabel } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./chrome/gotoModel.ts";
+import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck } from "./editor/goto.ts";
+import { landingPos, setLanding } from "./editor/landing.ts";
+import { TextSelection } from "prosemirror-state";
 import { pageParts, nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
@@ -74,6 +77,7 @@ const acts = {
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
+  lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
@@ -85,6 +89,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onPanel: (ns: Ns) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
+  lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
     onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
@@ -102,12 +107,13 @@ document.addEventListener("click", (e) => {
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); }
+  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); acts.lineBar.close(); }
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
   /* ⌃⌘K toggles the Search row, the current app's chord; ⌃⌘N is "new" —
      a tagged entry, a sub-page, a book — reserved for it in phase 1 */
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
   else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
+  else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
@@ -165,7 +171,7 @@ if (fixture && fixtures[fixture]) {
     onShow: (md, stored, ekey) => {
       showMd(md, stored);
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
-      if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); gotoRow(false); }   /* a navigation dismisses an overlay drawn for another entry, the search with its query, and the go-to line whose preselects it made stale */
+      if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); gotoRow(false); closeLineBar(); }   /* a navigation dismisses an overlay drawn for another entry, the search with its query, and the go-to line whose preselects it made stale */
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
@@ -280,6 +286,95 @@ if (fixture && fixtures[fixture]) {
     if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
     screen.goto.levels = out.levels;
   };
+  /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
+     focus and Enter cycles through the blocks that hold that line. The
+     landing is CENTRED in the readable band under the masthead — a
+     reader who asked for line 254 wants the lines around it. The three
+     routes aimed at the bar (Escape, the ×, ⌃⌘G again) hand the caret
+     back to the landed row, the first cell of a pair, or just after a
+     leaf marker; a navigation and a click outside take the plain close.
+     A number is a coordinate into ONE text, so the boxes empty when the
+     bar opens on another entry. */
+  const lb = screen.lineBar;
+  let lineAsked = 0, lastAskKey = "";
+  const scrollIntoBand = (rect: { top: number; bottom: number }): void => {
+    const top = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
+    const mid = top + (document.documentElement.clientHeight - top) / 2;
+    window.scrollBy(0, (rect.top + rect.bottom) / 2 - mid);
+  };
+  const landOn = (pos: number): void => {
+    const view = session.view!;
+    setLanding(view, pos);
+    const node = view.state.doc.nodeAt(pos)!;
+    const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));
+    scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
+  };
+  const goToLine = (n: number): void => {
+    const view = session.view!;
+    const { hits, blocks } = lineHits(view.state.doc, n);
+    if (!hits.length) { say(lineRefusal(blocks, n), 3000); return; }
+    const hit = nextHit(hits, landingPos(view.state), n === lineAsked);
+    lineAsked = n;
+    landOn(hit.pos);
+    const word = landingWord(hit, blocks, n);
+    if (word) say(word, 2500);
+  };
+  const goToFolio = (tok: string): void => {
+    const view = session.view!;
+    const hit = folioHit(view.state.doc, tok);
+    if (!hit) { say(folioRefusal(view.state.doc, tok), 3000); return; }
+    landOn(hit.pos);
+  };
+  const closeLineBar = (): void => {
+    if (!lb.open) return;
+    if (session.view) setLanding(session.view, null);
+    lb.open = false;
+  };
+  /* the caret hand-back: only the routes aimed at the bar */
+  const putLineCaret = (): void => {
+    if (!lb.open) return;
+    const view = session.view;
+    const had = document.querySelector(".linebar")?.contains(document.activeElement);
+    const pos = view ? landingPos(view.state) : null;
+    closeLineBar();
+    if (!view) return;
+    if (had && pos !== null) {
+      const node = view.state.doc.nodeAt(pos);
+      if (node) {
+        const at = node.isLeaf ? pos + 1 : pos + 1 + (node.type.name === "pair" ? 1 : 0);
+        view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(at))));
+      }
+    }
+    view.focus();
+  };
+  acts.lineBar.toggle = () => {
+    if (lb.open) { putLineCaret(); return; }
+    if (session.mdView) { say("Switch to the rendered view to go to a line or a page", 3000); return; }
+    const view = session.view;
+    if (!view) return;
+    const kind = askKind(view.state.doc);
+    if (kind === "none") { say("no line or page numbers here", 2000); return; }
+    const c = session.current, askKey = entryKey(c.date, c.tag);
+    if (askKey !== lastAskKey) { lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0; }
+    closePanel(); openRow(false); gotoRow(false);
+    lb.kind = kind;
+    lb.open = true;
+    setTimeout(() => masthead.focusLineBar(), 0);
+  };
+  acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
+  acts.lineBar.enter = (kind, v, repeat) => {
+    if (repeat) return;
+    const why = askCheck(v, kind);
+    if (why) { say(why, 2000); return; }
+    if (kind === "page") goToFolio(v.trim()); else goToLine(parseInt(v.trim(), 10));
+  };
+  acts.lineBar.close = putLineCaret;
+  document.addEventListener("click", (e) => {
+    if (!lb.open) return;
+    if (e.clientX > document.documentElement.clientWidth || e.clientY > document.documentElement.clientHeight) return;
+    if ((e.target as Element).closest(".linebar")) return;
+    closeLineBar();
+  });
   /* THE FLOATING BAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
      source view and over a search jump's selection until the reader next

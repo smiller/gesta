@@ -70,8 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; a reference pasted as plain text and its link
-  followed back; the toolbar
+  scope pick and Escape; ⌃⌘G over verse and over a book of leaves; a
+  reference pasted as plain text and its link followed back; the toolbar
   over a double-clicked word, B, and Tag with its dialog; the source view through ⌃⌘M with the caret's
   count carried across, an edit and a Tab in the source, and ⌃⌘M back;
   a tagged entry created, renamed and deleted
@@ -99,7 +99,10 @@ here NOW, and what is not yet:
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code
   block's empty last line, the way out), `paste.ts` (what pasted text
-  becomes and what copied text says), `listKeys.ts` (the gestures in a list:
+  becomes and what copied text says), `goto.ts` (⌃⌘G's decisions over a
+  document: what the entry can be asked for, the hits and the cycle, the
+  refusals), `landing.ts` (the landing mark as a plugin: a position that
+  maps through edits, drawn as a node decoration), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -162,7 +165,7 @@ here NOW, and what is not yet:
   lands, the host of a sub-entry), `viewCarets.ts` (where the view
   toggle puts you back: the count held per view, the alignment between
   the two streams), `Toolbar.svelte` (the floating format bar over a
-  selection),
+  selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -938,4 +941,34 @@ here NOW, and what is not yet:
   followed selects the words with the bar hidden. The selection's
   colour, by hand the same day: the browser's blue — `.page ::selection`
   in the flash was left out of the stylesheet port and is in.
+- ⌃⌘G AND THE LANDING MARK (2026-09-08, first of the remaining list, the
+  order confirmed the night before): 20-g-go-to-a-line.js ported. THE
+  DECISIONS (`editor/goto.ts`, pure): what the entry can be asked for —
+  line, page, both or none, the line box answering for sentences too — the
+  hits of a line number across every numbered block, the cycle that
+  re-finds the marked row among the live hits rather than carrying an
+  index, the landing word said only where several blocks make the
+  ordinal load-bearing and form-neutral in a prosimetrum, the three
+  refusals (one block its range, several the longest, a number below the
+  first named back), a leaf found case-blind and named back when
+  missing, the ask checked and named back as typed. THE MARK
+  (`editor/landing.ts`) is a plugin position mapped through every edit
+  and drawn as a node decoration in the flash — a row's background, a
+  leaf marker's spread shadow — never in the document; the bar's close
+  takes it off. THE BAR (`chrome/LineBar.svelte`) hangs off the masthead
+  at the right gutter with one box per kind of number and an "or" where
+  both stand; ⌃⌘G toggles it (refused in the source view, and where
+  nothing is numbered), the boxes emptying when it opens on another
+  entry; the landing is CENTRED in the band under the masthead; Escape,
+  the × and ⌃⌘G again hand the caret to the landed row (a pair's first
+  cell, or just after a leaf marker), a click outside and a navigation
+  take the plain close. NOT CARRIED: the current app's repaint of a
+  gutter stripped by typing (the numbers are decorations here and never
+  leave), and its focus recovery when a box hides under the reader (the
+  kind is fixed at the open). MEASURED 2026-09-08 in headless Helium
+  (`tools/helium-corner.mjs`): over Horace ⌃⌘G focuses the Line box
+  alone; "3" Enter marks row 3, its middle 3px off the band's; Enter
+  again on one block stays; Escape closes with the caret in row 3; over
+  Witchcraft 3 the Page box alone; "9z" says "9z is not a page number";
+  "61" marks leaf 61. `dist/index.html` is 647.51 kB.
 

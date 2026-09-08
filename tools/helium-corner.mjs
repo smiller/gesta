@@ -66,6 +66,38 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* ⌃⌘G: the bar over verse takes a line, cycles nothing on one block, marks and centres; Escape hands the caret to the row; over a book of leaves the Page box */
+await page.goto(PAGE + "#page/Horace");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });
+await page.keyboard.press("Control+Meta+g");
+await page.waitForTimeout(100);
+const lbar = () => page.evaluate(() => { const b = document.querySelector(".linebar"); const marked = document.querySelector("#editor .landed"); const r = marked?.getBoundingClientRect(); return { open: !b.hidden, focused: document.activeElement?.id, lineBox: !b.querySelector("label[for=lineinput]").parentElement.hidden, pageBox: !b.querySelector("label[for=folioinput]").parentElement.hidden, marked: marked ? (marked.dataset.line || marked.dataset.folio || marked.className) : null, centred: r ? Math.round((r.top + r.bottom) / 2 - innerHeight / 2) : null, corner: document.querySelector(".saved.show")?.textContent || "" }; });
+console.log("⌃⌘G over Horace:", JSON.stringify(await lbar()));
+await page.keyboard.type("3");
+await page.keyboard.press("Enter");
+await page.waitForTimeout(150);
+console.log("3, Enter:", JSON.stringify(await lbar()));
+await page.keyboard.press("Enter");
+await page.waitForTimeout(150);
+console.log("Enter again on one block:", JSON.stringify(await lbar()));
+await page.keyboard.press("Escape");
+await page.waitForTimeout(100);
+console.log("Escape:", JSON.stringify({ ...(await lbar()), caretRow: await page.evaluate(() => document.getSelection()?.anchorNode?.parentElement?.closest(".vrow")?.dataset.line) }));
+await page.goto(PAGE + "#page/Williams/Witchcraft%203");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Williams/Witchcraft 3", null, { timeout: 15000 });
+await page.keyboard.press("Control+Meta+g");
+await page.waitForTimeout(100);
+console.log("⌃⌘G over Witchcraft:", JSON.stringify(await lbar()));
+await page.keyboard.type("9z");
+await page.keyboard.press("Enter");
+await page.waitForTimeout(100);
+console.log("9z, Enter:", JSON.stringify(await lbar()));
+await page.keyboard.press("Meta+a");
+await page.keyboard.type("61");
+await page.keyboard.press("Enter");
+await page.waitForTimeout(150);
+console.log("61, Enter:", JSON.stringify(await lbar()));
+await page.keyboard.press("Escape");
 /* the dialogs, answered by the harness: `answer` is what a prompt gets, a confirm is accepted */
 let answer = null;
 page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });

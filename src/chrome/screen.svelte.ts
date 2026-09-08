@@ -6,6 +6,7 @@
 import type { MastheadModel, Link } from "./mastheadModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
 import type { Level } from "./gotoModel.ts";
+import type { AskKind } from "../editor/goto.ts";
 import type { Result } from "../store/search.ts";
 
 /* the Search row: open, the query as typed, the scope options with the
@@ -40,6 +41,8 @@ export interface Screen {
   /* the Go to row: open, and its run of selects; the body is EMPTY when
      closed, so a dismissed control is a dead mechanism */
   goto: { open: boolean; levels: Level[] };
+  /* ⌃⌘G's bar: open, which boxes the entry can answer, what each holds */
+  lineBar: { open: boolean; kind: AskKind; line: string; page: string };
   /* the floating format bar over a selection: where it sits, what is lit */
   bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean };
   /* the open entry draws a gutter: the Line numbering row shows */
@@ -56,6 +59,7 @@ export function screenState(interval: number): Screen {
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false },
+    lineBar: { open: false, kind: "none", line: "", page: "" },
     gutter: false, mdView: false, backupsLabel: "", interval,
   });
   return screen;
