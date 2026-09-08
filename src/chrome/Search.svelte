@@ -51,7 +51,7 @@
     </select>
     <input type="search" class="search-input" placeholder="Search" aria-label="Search entries" autocomplete="off"
       bind:this={input} value={search.query} oninput={(e) => onQuery(e.currentTarget.value)} onkeydown={keydown}>
-    <ul class="search-results">
+    <ul class="search-results" hidden={!search.rows.length && !search.empty && !search.capped}>
       {#if search.empty}<li class="empty">{search.empty}</li>{/if}
       {#each search.rows as r, i (i)}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
@@ -110,8 +110,9 @@
     border-bottom: 1px solid var(--rule);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
   }
-  /* an empty list would hang a stray rule across the window */
-  .search-results:empty { display: none; }
+  /* an empty list would hang a stray rule across the window; `hidden`
+     rather than :empty, which the compiler's comment markers defeat */
+  .search-results[hidden] { display: none; }
   .search-results li {
     display: block;
     padding: 8px var(--head-gutter);

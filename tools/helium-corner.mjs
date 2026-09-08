@@ -66,12 +66,33 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
+await page.goto(PAGE + "#2026-09-06");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
+await page.keyboard.press("Control+Meta+j");
+await page.waitForTimeout(100);
+const grow = () => page.evaluate(() => ({ open: document.querySelector(".page-goto")?.open, focused: document.activeElement?.getAttribute("aria-label"), selects: [...document.querySelectorAll(".page-goto select")].map((s) => s.getAttribute("aria-label") + "=" + (s.selectedOptions[0]?.disabled ? "—" : s.value) + " [" + [...s.options].map((o) => o.textContent).join("|") + "]") }));
+console.log("⌃⌘J on a day:", JSON.stringify(await grow()));
+await page.selectOption(".page-goto select[aria-label='Day']", "05");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-05", null, { timeout: 5000 });
+console.log("a day picked:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), open: await page.evaluate(() => document.querySelector(".page-goto")?.open) }));
+await page.goto(PAGE + "#bookshelf/Browning,%20Robert/Pippa%20Passes");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "bookshelf/Browning, Robert/Pippa Passes", null, { timeout: 15000 });
+await page.keyboard.press("Control+Meta+j");
+await page.waitForTimeout(100);
+console.log("⌃⌘J on a book:", JSON.stringify(await grow()));
+await page.selectOption(".page-goto select[aria-label='Destination']", "");
+await page.waitForTimeout(100);
+console.log("Journal picked from the book:", JSON.stringify((await grow()).selects));
+await page.keyboard.press("Escape");
+console.log("Escape:", JSON.stringify(await grow()));
 /* the sub-entries: the dialogs answered by the harness */
 let answer = null;
 page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });
-await page.click("#editor .ProseMirror");
+console.log("the masthead over the day after the rows closed:", JSON.stringify(await page.evaluate(() => ({ height: document.querySelector(".site-head").getBoundingClientRect().height, gotoOpen: document.querySelector(".page-goto")?.open, searchOpen: document.querySelector(".page-search")?.open }))));
+await page.click("#editor .ProseMirror > :first-child");
 await page.keyboard.press("End");
 const tools = () => page.evaluate(() => [...document.querySelectorAll(".site-tools .toolbtn")].filter((b) => !b.hidden).map((b) => b.textContent));
 console.log("a day's tools:", JSON.stringify(await tools()));

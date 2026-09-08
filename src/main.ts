@@ -38,6 +38,7 @@ import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt,
 import { retargetLinks, relabelLinks } from "./store/links.ts";
 import { linkRefusal, insertLinkAfter } from "./editor/insertLink.ts";
 import { mdLabel } from "./store/reference.ts";
+import { gotoLevels, gotoPick } from "./chrome/gotoModel.ts";
 import { pageParts, nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
@@ -68,6 +69,7 @@ const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
   interval: (_n: number) => {}, panel: (_ns: Ns) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
+  goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
@@ -77,6 +79,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
   onPanel: (ns: Ns) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
+  goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
     onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
@@ -94,11 +97,12 @@ document.addEventListener("click", (e) => {
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); }
+  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); }
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
   /* ⌃⌘K toggles the Search row, the current app's chord; ⌃⌘N is "new" —
      a tagged entry, a sub-page, a book — reserved for it in phase 1 */
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
+  else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
@@ -156,7 +160,7 @@ if (fixture && fixtures[fixture]) {
     onShow: (md, stored, ekey) => {
       showMd(md, stored);
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
-      if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); }   /* a navigation dismisses an overlay drawn for another entry, and the search with its query */
+      if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); gotoRow(false); }   /* a navigation dismisses an overlay drawn for another entry, the search with its query, and the go-to line whose preselects it made stale */
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
@@ -243,6 +247,31 @@ if (fixture && fixtures[fixture]) {
     session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
   };
   acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };
+  /* THE GO TO ROW: built fresh on every open — the lazy fill that keeps
+     the list walks off the navigation hot path — with the first select
+     focused; emptied on close. A terminal pick closes the row BEFORE the
+     hash write, since a pick of the open entry moves no hash. Opening
+     dismisses the overlays, which would cover the row just asked for;
+     the row itself covers nothing, so an overlay opening leaves it alone.
+     No save flush: it would rewrite an untouched entry. */
+  const gotoWorld = () => ({ keys: keysNow(), cache: layer.cache, journal });
+  const gotoRow = (open: boolean): void => {
+    if (screen.goto.open === open) return;
+    screen.goto.open = open;
+    if (!open) { screen.goto.levels = []; session.view?.focus(); return; }
+    closePanel();
+    const c = session.current;
+    screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
+    setTimeout(() => masthead.focusGoto(), 0);
+  };
+  acts.goto.toggle = gotoRow;
+  acts.goto.pick = (level, value, ns) => {
+    const c = session.current;
+    const out = gotoPick(gotoWorld(), c.date, c.tag, screen.goto.levels, level, value, ns);
+    if (!out) return;
+    if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
+    screen.goto.levels = out.levels;
+  };
   /* THE SUB-ENTRIES. Every gate over "what exists" refuses on a cold
      cache: a create would write into a blank painted over a real entry.
      A new name REGISTERS at once (an empty body, as a root does) so the

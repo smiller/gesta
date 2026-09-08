@@ -5,6 +5,7 @@
    live here when the panels arrive. */
 import type { MastheadModel, Link } from "./mastheadModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
+import type { Level } from "./gotoModel.ts";
 import type { Result } from "../store/search.ts";
 
 /* the Search row: open, the query as typed, the scope options with the
@@ -36,6 +37,9 @@ export interface Screen {
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;
   search: SearchState;
+  /* the Go to row: open, and its run of selects; the body is EMPTY when
+     closed, so a dismissed control is a dead mechanism */
+  goto: { open: boolean; levels: Level[] };
   /* the open entry draws a gutter: the Line numbering row shows */
   gutter: boolean;
   backupsLabel: string;
@@ -46,6 +50,7 @@ export function screenState(interval: number): Screen {
   const screen = $state<Screen>({
     masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelEmpty: "",
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
+    goto: { open: false, levels: [] },
     gutter: false, backupsLabel: "", interval,
   });
   return screen;

@@ -68,9 +68,10 @@ here NOW, and what is not yet:
   over the verse fixture; the pages and bookshelf panels through open,
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
-  a tagged entry created, renamed and deleted through the dialogs, the
-  host's link and tag bar read at each step; the pill under
-  `?corner=pill`; prints each reading and the console, and
+  the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
+  scope pick and Escape; a tagged entry created, renamed and deleted
+  through the dialogs, the host's link and tag bar read at each step; the
+  pill under `?corner=pill`; prints each reading and the console, and
   screenshots when given a path.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
@@ -121,7 +122,8 @@ here NOW, and what is not yet:
   directive, read from the cache), `search.ts` (the query grammar, the
   scope filter, the scan over an index with its snippets),
   `searchIndex.ts` (the index over the cache: memoised per entry on its
-  text, built in chunks), `links.ts` (the links in a stored entry
+  text, built in chunks), `contents.ts` (a book's own order and sections
+  read off its parent's contents, the feed flip), `links.ts` (the links in a stored entry
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
   them, ported from the current app's node suites where they had one.
@@ -140,7 +142,10 @@ here NOW, and what is not yet:
   refusals, pure over the store's names), `searchModel.ts` (what the
   Search row reads: the starting scope, the scope options, a result's
   "where" label), `Search.svelte` (the row: the scope select, the input,
-  the results overlay), `subEntries.ts` (the sub-entry rules, pure: where
+  the results overlay), `gotoModel.ts` (what the Go to row reads and how a
+  pick routes: the destination, the journal shape, a page's chain with
+  the sole-child collapse), `Goto.svelte` (the row: a run of native
+  selects), `subEntries.ts` (the sub-entry rules, pure: where
   a new one lives, what blocks a rename or delete, the blank subtree the
   confirm sweeps, the buttons' wording, the dialogs' texts, where a delete
   lands, the host of a sub-entry),
@@ -757,4 +762,41 @@ here NOW, and what is not yet:
   hidden, since a chord is a press. MEASURED in headless Helium: ⌃⌘N on
   a day with "Ideas" answered opens #2026-09-06/Ideas; ⌃⌘N there
   whispers the refusal. Confirmed by hand in Helium the same day.
+- THE GO TO ROW (the same day, first of the three asked for: Go to, the
+  source view, the toolbar): 19-the-consolidated-go-to-line…js ported.
+  THE ORDER (`store/contents.ts`) is a book's own, read off the parent's
+  contents over the document model — the links in document order with
+  the section heading in force, all or nothing over the content-bearing
+  subs, a heading that is itself a link a child where it stands, a feed
+  of dated names newest first unless the book states its order, memoised
+  on the parent's text. THE LINE (`chrome/gotoModel.ts`, pure with the
+  routing): a Destination select (Journal, then every root grouped by
+  namespace, the open unregistered book unioned in), then the journal
+  shape at full preselect depth — Year, Month, Day labelled by its
+  heading, a Tagged entry select with "← the day" only when the day has
+  tags — or ONE SELECT PER LEVEL of a page's chain with "← the parent"
+  and its own path; a terminal pick jumps, a non-terminal one rebuilds
+  strictly downstream placeholder-led (a preselected option can never be
+  re-picked, and under terminal navigation the placeholder is safety); a
+  page with no content-bearing subs is terminal on the scope pick; a
+  SOLE CHILD THAT IS ITSELF A PARENT collapses, its children standing in
+  its place under its name with the work's own row reading "Index" —
+  one hop, not a walk. THE ROW (`Goto.svelte`, between the title and
+  Search): ⌃⌘J or the summary toggles, built fresh on open with the
+  first select focused, emptied on close so a dismissed control is dead;
+  a jump closes the row BEFORE the hash write; Escape and a navigation
+  close it. NOT CARRIED: the open-line rebuild after a warm. FOUND by
+  the row's arrival, by hand and by the tool: index.html's `details {
+  margin: 2rem 32px }` for phase 2's pane reached the three masthead rows
+  and set them 64px apart (MEASURED 325px of masthead over a day); the
+  rule is scoped to `details.pane` and the rows sit 4px apart. The
+  results list's `:empty` never matched the compiler's comment markers,
+  so an open Search with no query hung an empty ruled bar; it hides by
+  attribute now. MEASURED 2026-09-07 in headless Helium
+  (`tools/helium-corner.mjs`): ⌃⌘J on a day focuses the Destination with
+  2026, September and "6 — Act 1, Scene 1…" preselected and the other
+  day labelled by its heading; "05" picked opens 2026-09-05 with the row
+  closed; on Pippa Passes the chain reads "← the author" over the book
+  by its title; Journal picked there gives today's shape; Escape closes.
+  `dist/index.html` is 622.07 kB.
 

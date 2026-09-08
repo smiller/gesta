@@ -6,9 +6,9 @@
      with the tag bar under it, the tools, the title row and the Line
      numbering row. The create, rename and delete of a tagged entry and a
      sub-page are the tools' first three buttons, worded per namespace.
-     Not yet: the Go to row, help, the mode pill, the ⌃⌘G bar. The
-     Search row is its own component, drawn between the title row and the
-     Line numbering row as the current app orders them. A panel's rows are anchors, so ⌘-click and middle-click work; a
+     Not yet: help, the mode pill, the ⌃⌘G bar. The Go to and Search
+     rows are their own components, drawn between the title row and the
+     Line numbering row in the current app's order. A panel's rows are anchors, so ⌘-click and middle-click work; a
      row click closes the panel itself, since a click on the open entry's
      own row moves no hash. Attention leaving a panel (a Tab out) dismisses
      it like a click outside; relatedTarget, not activeElement, which is
@@ -16,7 +16,8 @@
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   import Search from "./Search.svelte";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, onCreate, onRename, onDelete }: {
+  import Goto from "./Goto.svelte";
+  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
     /* the sub-entry gestures: create under the open entry, rename and delete the open one */
@@ -27,7 +28,10 @@
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
+    goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
   } = $props();
+  let gotoRow: { focusFirst(): void } | undefined = $state();
+  export function focusGoto(): void { gotoRow?.focusFirst(); }
   let searchRow: { focusInput(): void } | undefined = $state();
   export function focusSearch(): void { searchRow?.focusInput(); }
   const NOUN = { page: "page", bookshelf: "author" } as const;
@@ -80,6 +84,7 @@
     <button class="toolbtn" type="button" title="Delete every stored entry" onclick={onClear}>clear</button>
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
+  <Goto bind:this={gotoRow} goto={screen.goto} {...goto} />
   <Search bind:this={searchRow} search={screen.search} {...search} />
   {#if screen.panel}
     <nav class="pages" onfocusout={leave}>
