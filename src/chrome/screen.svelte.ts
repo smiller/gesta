@@ -33,7 +33,7 @@ export interface Screen {
      shortcuts panels. Every opener sets it, so opening one closes the
      others by construction; null is none. The in-flow rows (Line
      numbering) compete for no spot and are not in it. */
-  panel: "page" | "bookshelf" | null;
+  panel: "page" | "bookshelf" | "help" | null;
   panelRows: Link[];
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;

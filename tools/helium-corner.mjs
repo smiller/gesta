@@ -66,6 +66,13 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* help: ⌃⌘H opens the card over the entry and closes the pages panel; Escape closes it */
+await page.click(".opener[title='Open the pages list']");
+await page.keyboard.press("Control+Meta+h");
+await page.waitForTimeout(100);
+console.log("⌃⌘H over an open pages panel:", JSON.stringify(await page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden, pages: !!document.querySelector(".pages"), heading: document.querySelector(".helppanel h3")?.textContent }))));
+await page.keyboard.press("Escape");
+console.log("Escape:", JSON.stringify(await page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden }))));
 /* ⌃⌘G: the bar over verse takes a line, cycles nothing on one block, marks and centres; Escape hands the caret to the row; over a book of leaves the Page box */
 await page.goto(PAGE + "#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });

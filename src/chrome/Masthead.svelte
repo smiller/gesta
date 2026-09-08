@@ -7,7 +7,8 @@
      numbering row. The create, rename and delete of a tagged entry and a
      sub-page are the tools' first three buttons, worded per namespace.
      The mode pill leads the tools while the source view is on. The ⌃⌘G bar hangs off the bar's
-     bottom edge at the right gutter, its own component. Not yet: help. The Go to and Search
+     bottom edge at the right gutter, its own component; the help card is
+     the panel slot's third value. The Go to and Search
      rows are their own components, drawn between the title row and the
      Line numbering row in the current app's order. A panel's rows are anchors, so ⌘-click and middle-click work; a
      row click closes the panel itself, since a click on the open entry's
@@ -19,6 +20,7 @@
   import Search from "./Search.svelte";
   import Goto from "./Goto.svelte";
   import LineBar from "./LineBar.svelte";
+  import Help from "./Help.svelte";
   let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
@@ -26,7 +28,7 @@
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     /* the opener's click: the page's wiring toggles the slot and fills the rows */
-    onPanel: (ns: "page" | "bookshelf") => void;
+    onPanel: (ns: "page" | "bookshelf" | "help") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
@@ -88,11 +90,13 @@
     <button class="toolbtn" type="button" title="Import Markdown files from a folder" onclick={onImport}>import</button>
     <button class="toolbtn" type="button" title="Automatic folder backups" onclick={onBackups}>{screen.backupsLabel}</button>
     <button class="toolbtn" type="button" title="Delete every stored entry" onclick={onClear}>clear</button>
+    <button class="toolbtn opener" type="button" title="How Gesta works (⌃⌘H)" onclick={() => onPanel("help")}>help</button>
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
   <Goto bind:this={gotoRow} goto={screen.goto} {...goto} />
   <Search bind:this={searchRow} search={screen.search} {...search} />
-  {#if screen.panel}
+  <Help open={screen.panel === "help"} />
+  {#if screen.panel === "page" || screen.panel === "bookshelf"}
     <nav class="pages" onfocusout={leave}>
       {#each screen.panelRows as r (r.href)}<a href={r.href} title={r.text} onclick={onClosePanel}>{r.text}</a>{/each}
       {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}

@@ -11,7 +11,7 @@ import { journalOf } from "../store/headings.ts";
 const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "page/Books/Essay": "# The essay\n\nb" };
 const journal = journalOf(cache);
 const none = () => {};
-function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "page" | "bookshelf"; rows: { text: string; href: string }[]; empty: string }> = {}): string {
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "page" | "bookshelf" | "help"; rows: { text: string; href: string }[]; empty: string }> = {}): string {
   const screen = screenState(extra.interval ?? 5);
   screen.masthead = mastheadModel(date, tag, Object.keys(cache), journal, "2026-09-07");
   screen.gutter = !!extra.gutter;

@@ -70,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; ⌃⌘G over verse and over a book of leaves; a
+  scope pick and Escape; ⌃⌘H over an open panel and Escape; ⌃⌘G over
+  verse and over a book of leaves; a
   reference pasted as plain text and its link followed back; the toolbar
   over a double-clicked word, B, and Tag with its dialog; the source view through ⌃⌘M with the caret's
   count carried across, an edit and a Tab in the source, and ⌃⌘M back;
@@ -166,6 +167,8 @@ here NOW, and what is not yet:
   toggle puts you back: the count held per view, the alignment between
   the two streams), `Toolbar.svelte` (the floating format bar over a
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),
+  `Help.svelte` over `help.html` (the help card and its text, the
+  acceptance list carried whole),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -971,4 +974,20 @@ here NOW, and what is not yet:
   again on one block stays; Escape closes with the caret in row 3; over
   Witchcraft 3 the Page box alone; "9z" says "9z is not a page number";
   "61" marks leaf 61. `dist/index.html` is 647.51 kB.
+- HELP (2026-09-08): 16-help-panel.js ported, the help section of the
+  current app's body.html carried WHOLE into `chrome/help.html` and drawn
+  by `Help.svelte` as trusted markup — it is phase 3's acceptance list,
+  and it is edited here only where this app differs: the source view's
+  picture references (`![](name.webp)`, not `![img-N]`), and ⌃⌘N in the
+  key table. WHAT IT PROMISES THAT IS NOT YET BUILT, as of this entry:
+  bookmarks (⌃⌘B), custom shortcuts (⌃⌘S), the pasted image, the backups
+  panel behind the button, the code block's language label and copy
+  button, the hover copy of quotes and cards, the rich clipboard flavour,
+  Tab in a quote, ⌃⌘L, the every-2nd/3rd/4th intervals — the remaining
+  list, in order. The card is the panel slot's third value, so ⌃⌘H or
+  the help button opening it closes the pages and bookshelf panels, and
+  either of those opening closes it; Escape and a click outside close
+  it. MEASURED 2026-09-08 in headless Helium: ⌃⌘H over an open pages
+  panel shows the card with "Custom keys" and the panel gone; Escape
+  closes. `dist/index.html` is 689.75 kB, the help text being 42 kB of it.
 

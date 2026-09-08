@@ -71,9 +71,10 @@ const notices = noticeLedger(copyText);
 const say = notices.whisper;
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
 type Ns = "page" | "bookshelf";
+type PanelName = Ns | "help";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
-  interval: (_n: number) => {}, panel: (_ns: Ns) => {}, newRoot: (_ns: Ns) => {},
+  interval: (_n: number) => {}, panel: (_ns: PanelName) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
@@ -86,7 +87,7 @@ mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: s
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
-  onPanel: (ns: Ns) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
+  onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
@@ -101,7 +102,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
    stopPropagation there would not reach a document listener anyway. */
 document.addEventListener("click", (e) => {
   const t = e.target as Element | null;
-  if (!t?.closest(".pages, .opener")) closePanel();
+  if (!t?.closest(".pages, .opener, .helppanel")) closePanel();
   /* the results are an opaque overlay over the entry: a click into the
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
@@ -114,6 +115,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
   else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
   else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
+  else if (e.key === "h") { e.preventDefault(); acts.panel("help"); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
@@ -564,6 +566,7 @@ if (fixture && fixtures[fixture]) {
      not made before the warm has read it. */
   acts.panel = (ns) => {
     if (screen.panel === ns) { closePanel(); return; }
+    if (ns === "help") { openRow(false); closeLineBar(); screen.panel = "help"; return; }
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
