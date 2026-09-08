@@ -7,7 +7,6 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection, NodeSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { schema } from "../model/schema.ts";
 import { baseKeymap } from "prosemirror-commands";
 import { enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
 

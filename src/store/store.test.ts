@@ -148,7 +148,7 @@ test("baseLedger: unseen is null before sawAll, empty-string after", () => {
 
 describe.each(entryStores)("entry store over %s", (_name, open) => {
 test("a write with no base lands unjudged", async () => {
-  const { s, foreign } = open();
+  const { s } = open();
   await s.set("2026-01-01", "a");
   expect(await s.get("2026-01-01")).toEqual({ key: "2026-01-01", md: "a" });
 });
@@ -184,7 +184,7 @@ test("del is judged like a write", async () => {
 });
 
 test("del forgets the base, and a re-set lands", async () => {
-  const { s, foreign } = open();
+  const { s } = open();
   await s.set("k", "mine");
   await s.del("k");
   expect(await s.get("k")).toBe(null);
@@ -193,7 +193,7 @@ test("del forgets the base, and a re-set lands", async () => {
 });
 
 test("a landed write moves the base, so the same handle continues", async () => {
-  const { s, foreign } = open();
+  const { s } = open();
   await s.get("k");
   await s.set("k", "one");
   await s.set("k", "two");
@@ -212,7 +212,7 @@ test("clear empties the store and the ledger, so the first write after lands and
 });
 
 test("all() is ascending-key fresh copies", async () => {
-  const { s, foreign } = open();
+  const { s } = open();
   await s.set("b", "2");
   await s.set("a", "1");
   const rows = await s.all();
