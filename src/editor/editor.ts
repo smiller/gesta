@@ -18,6 +18,7 @@ import { rowNodeViews } from "./rows.ts";
 import { linkClick } from "./links.ts";
 import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
+import { codeKeymap } from "./codeKeys.ts";
 
 export interface EditorOptions {
   interval: number;
@@ -46,6 +47,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       rowKeymap,
       typingKeymap,
       listKeymap(onRefuse),
+      codeKeymap,
       formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),

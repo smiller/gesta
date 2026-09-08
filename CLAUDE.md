@@ -96,7 +96,8 @@ here NOW, and what is not yet:
   the source view, over a text and a selection), `format.ts` (the
   toolbar's acts as commands: the marks and their chords, the heading,
   quote and code toggles, the curl over a selection, the word count, the
-  cut of a selection into a link), `listKeys.ts` (the gestures in a list:
+  cut of a selection into a link), `codeKeys.ts` (Enter on a code
+  block's empty last line, the way out), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -894,5 +895,11 @@ here NOW, and what is not yet:
   above the word with Tag offered; B lights and the store holds
   **music**; Tag with "Music" answered opens #2026-09-06/Music holding
   "**music**", the day reading "If Music be the food of love" with Music
-  the link. `dist/index.html` is 638.85 kB.
+  the link. `dist/index.html` is 638.85 kB. By hand the same day: Enter
+  on a code block's empty last line did not leave it — the README's rule
+  for every fence, which the base keymap's lift answers for a quote, a
+  card and a note and the row keys for verse, had no arm for the code
+  block; `codeKeys.ts` takes the empty line with it and lands in a
+  paragraph below. MEASURED in headless Helium: a fence typed, a line,
+  Enter twice, "after the block" in its own paragraph.
 
