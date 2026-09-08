@@ -95,8 +95,11 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") { closePanel(); acts.search.toggle(false); }
-  /* ⌃⌘K toggles the Search row, the current app's chord */
-  if (e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey && e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
+  if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
+  /* ⌃⌘K toggles the Search row, the current app's chord; ⌃⌘N is "new" —
+     a tagged entry, a sub-page, a book — reserved for it in phase 1 */
+  if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
+  else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
 function showMd(md: string, source: string): void {
@@ -271,6 +274,8 @@ if (fixture && fixtures[fixture]) {
     if (warmBlock()) return;
     const c = session.current;
     const ns = nsOf(c.date);
+    /* the one leaf: the button is hidden there, but ⌃⌘N is a press */
+    if (!ns && c.tag) { say("a tagged entry holds no entries of its own", 2500); return; }
     const typedRaw = typedName(prompt(ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:"));
     if (!typedRaw) return;
     if ("refuse" in typedRaw) { say(typedRaw.refuse); return; }

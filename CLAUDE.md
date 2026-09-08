@@ -749,5 +749,12 @@ here NOW, and what is not yet:
   delete in its place; the day's body ends with [Ideas](#2026-09-06/Ideas)
   and its tag bar lists it; "Plans" typed at rename moves the address and
   the host's link; delete lands on the day with the link gone and no
-  tags. `dist/index.html` is 613.03 kB.
+  tags. `dist/index.html` is 613.03 kB. ⌃⌘N, reserved for "new" in
+  phase 1 and asked for by hand the same day, is bound to the create:
+  a tagged entry on a day, a sub-page on a page, a book on an author;
+  on the one leaf that hosts nothing, a day's tagged entry, it whispers
+  "a tagged entry holds no entries of its own" where the button is
+  hidden, since a chord is a press. MEASURED in headless Helium: ⌃⌘N on
+  a day with "Ideas" answered opens #2026-09-06/Ideas; ⌃⌘N there
+  whispers the refusal.
 
