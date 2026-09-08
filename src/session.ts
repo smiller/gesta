@@ -21,6 +21,8 @@ import { referencePayload, entryLink, REFUSAL_TEXT } from "./editor/reference.ts
 import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
 import { copyText } from "./chrome/clipboard.ts";
+import { highlightIn } from "./editor/highlight.ts";
+import type { Highlight } from "./store/keys.ts";
 
 export interface SessionOptions {
   mount: HTMLElement;
@@ -47,6 +49,12 @@ export interface Session {
   today(): void;
   copyReference(): void;
   copyEntryLink(): void;
+  /* select the nth occurrence of q in the open entry and scroll to it;
+     honorMarkers for a search-box jump, literal for a link's payload */
+  highlight(q: string, nth: number, honorMarkers: boolean): boolean;
+  /* open the entry and highlight once it paints — or at once when it is
+     the open one, since a hash set to its own value fires no hashchange */
+  jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
   setInterval(n: number): void;
 }
 export const SAVE_DEBOUNCE_MS = 500;
@@ -60,6 +68,11 @@ export function startSession(opts: SessionOptions): Session {
   let current = { date: todayKey(), tag: null as string | null };
   let view: EditorView | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  /* the highlight owed to the next paint, and the navigation it belongs
+     to: a later navigation drops it, or it would select against the
+     wrong, now-current entry */
+  let pending: { hl: Highlight; honor: boolean; gen: number } | null = null;
+  let navGen = 0;
   const ekeyOf = (): string => entryKey(current.date, current.tag);
   const show = (): void => {
     if (!view || !opts.onShow) return;
@@ -101,6 +114,15 @@ export function startSession(opts: SessionOptions): Session {
     });
     document.documentElement.dataset.entry = ekey;
     show();
+    if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
+  }
+  function highlight(q: string, nth: number, honorMarkers: boolean): boolean {
+    return !!view && highlightIn(view, q, nth, honorMarkers);
+  }
+  function jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void {
+    if (date === current.date && (tag || null) === current.tag) { navGen++; highlight(hl.q || "", hl.nth || 0, honorMarkers); return; }
+    pending = { hl, honor: honorMarkers, gen: ++navGen };
+    goto(entryHash(date, tag));
   }
   /* the address → the entry it opens. A namespace that does not mint on
      visit refuses an unknown key and the refusal lands on the entry already
@@ -119,6 +141,9 @@ export function startSession(opts: SessionOptions): Session {
       if (!view) open(current.date, current.tag);
       return;
     }
+    /* a "?h=" payload replays LITERALLY: the passage is text, and an old
+       link's nth, counted under substring rules, still lands */
+    if (h.hl) pending = { hl: h.hl, honor: false, gen: ++navGen };
     open(h.date, h.tag);
   }
   function saveNow(): Promise<boolean> {
@@ -181,7 +206,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink,
+    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump,
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };
 }

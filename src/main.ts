@@ -30,6 +30,10 @@ import { copyText } from "./chrome/clipboard.ts";
 import { screenState } from "./chrome/screen.svelte.ts";
 import { mastheadModel, panelRows, rootLabel, trimLabel, ECHO_CAP } from "./chrome/mastheadModel.ts";
 import { typedName } from "./chrome/naming.ts";
+import { scopeOptions, defaultScope, sameScope, resultLabel } from "./chrome/searchModel.ts";
+import { searchIndex } from "./store/searchIndex.ts";
+import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
+import { flattenDoc } from "./model/flatten.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
 import { registered } from "./store/lists.ts";
@@ -58,13 +62,18 @@ type Ns = "page" | "bookshelf";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
   interval: (_n: number) => {}, panel: (_ns: Ns) => {}, newRoot: (_ns: Ns) => {},
+  search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
-mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
+const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
   onPanel: (ns: Ns) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
+  search: {
+    onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
+    onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
+  },
 } });
 /* the panels are not modal: a click outside any panel or opener closes
    the slot, and so does Escape. Read from the target, not from
@@ -72,10 +81,16 @@ mount(Masthead, { target: document.body, anchor: document.querySelector("main")!
    stopPropagation there would not reach a document listener anyway. */
 document.addEventListener("click", (e) => {
   const t = e.target as Element | null;
-  if (t?.closest(".pages, .opener")) return;
-  closePanel();
+  if (!t?.closest(".pages, .opener")) closePanel();
+  /* the results are an opaque overlay over the entry: a click into the
+     writing lands on them, so a click outside the row closes it */
+  if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePanel(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); }
+  /* ⌃⌘K toggles the Search row, the current app's chord */
+  if (e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey && e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
+});
 
 function showMd(md: string, source: string): void {
   out.textContent = md;
@@ -131,7 +146,7 @@ if (fixture && fixtures[fixture]) {
     onShow: (md, stored, ekey) => {
       showMd(md, stored);
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
-      if (ekey !== shown.ekey) closePanel();   /* a navigation dismisses an overlay drawn for another entry */
+      if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); }   /* a navigation dismisses an overlay drawn for another entry, and the search with its query */
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); }
     },
     onEdit: () => backup.scheduleBackup(),
@@ -141,6 +156,83 @@ if (fixture && fixtures[fixture]) {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   acts.interval = (n) => session.setInterval(n);
   acts.today = () => session.today();
+  /* SEARCH. The index is built from the parsed text, once per session:
+     MEASURED 4.4 s over the whole mirror under node, so it is built in
+     chunks that yield — kicked off in idle time after the warm, and
+     finished on demand under a progress line when a search comes first.
+     After that every scan is a walk over the memo. The scan runs 150 ms
+     after the last keystroke, off the query as TYPED; Enter and the
+     arrows flush a pending scan first, so type-then-Enter opens the top
+     row. A real navigation collapses the row and drops its query; a
+     same-entry re-render leaves an open row alone. */
+  const index = searchIndex(layer.cache, (md) => flattenDoc(parseMarkdown(md)).text);
+  let indexing: Progress | null = null;
+  const CHUNK_MS = 12;
+  const buildIndex = (then?: () => void): void => {
+    if (index.complete) { then?.(); return; }
+    const { done, total } = index.step(performance.now() + CHUNK_MS);
+    if (indexing) indexing.step(done, total);
+    if (index.complete) { indexing?.ok("indexed " + total + " entries", 1400); indexing = null; then?.(); return; }
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
+    if (then) setTimeout(() => buildIndex(then), 0);   /* wanted now: keep going, yielding only to paint */
+    else if (idle) idle(() => buildIndex());
+    else setTimeout(() => buildIndex(), 50);
+  };
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+  const sr = screen.search;
+  const scopeNow = () => sr.options[sr.scopeAt]?.scope || defaultScope(session.current.date, session.current.tag);
+  const renderSearch = (): void => {
+    if (!sr.open) return;
+    const q = sr.query.trim();
+    sr.rows = []; sr.capped = false; sr.active = -1; sr.empty = "";
+    if (!q) return;
+    if (!layer.warmed) { sr.empty = layer.storeReadFailed ? "Couldn’t load entries." : "Still loading…"; return; }
+    if (!index.complete) {
+      if (!indexing) indexing = notices.progress("indexing…");
+      buildIndex(renderSearch);
+      return;
+    }
+    const scope = scopeNow();
+    let results = searchEntries(index.rows(), q, scope);
+    if (!results.length) { sr.empty = "No matches."; return; }
+    sr.capped = results.length > SEARCH_CAP;
+    if (sr.capped) results = results.slice(0, SEARCH_CAP);
+    sr.rows = results.map((result) => ({ result, where: resultLabel(result, scope, journal), runs: snippetRuns(result.snippet, q) }));
+    sr.active = 0;
+  };
+  const cancelScan = (): void => { if (searchTimer) clearTimeout(searchTimer); searchTimer = null; };
+  const flushScan = (): void => { if (searchTimer) { cancelScan(); renderSearch(); } };
+  const openRow = (open: boolean): void => {
+    if (sr.open === open) return;
+    cancelScan();
+    sr.open = open;
+    if (!open) { session.view?.focus(); return; }
+    closePanel();
+    session.flushSave();
+    const c = session.current;
+    sr.options = scopeOptions(c.date, c.tag, Object.keys(layer.cache), journal);
+    const pre = defaultScope(c.date, c.tag);
+    sr.scopeAt = Math.max(0, sr.options.findIndex((o) => sameScope(o.scope, pre)));
+    setTimeout(() => masthead.focusSearch(), 0);
+    renderSearch();
+  };
+  acts.search.toggle = openRow;
+  acts.search.query = (q) => { sr.query = q; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
+  acts.search.scope = (at) => { sr.scopeAt = at; cancelScan(); renderSearch(); };
+  acts.search.walk = (dir) => {
+    flushScan();
+    if (!sr.rows.length) return;
+    sr.active = (sr.active + dir + sr.rows.length) % sr.rows.length;
+    document.querySelectorAll(".search-results li.hit")[sr.active]?.scrollIntoView({ block: "nearest" });
+  };
+  acts.search.pick = (i) => {
+    const row = sr.rows[i];
+    if (!row) return;
+    const q = sr.query;   /* the query the row was BUILT for */
+    openRow(false);
+    session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
+  };
+  acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };
   /* an opener TOGGLES its own panel and displaces any other: the rows are
      built per open and never rebuilt while open — a live rebuild would
      detach a mid-click target. "No authors" is a claim about the journal,
@@ -186,6 +278,7 @@ if (fixture && fixtures[fixture]) {
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
     session.openHash();
+    buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an
        unconfigured backup: the one state no headless run reaches */

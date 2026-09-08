@@ -5,15 +5,17 @@
      the journal icon that goes to today — the date line as a breadcrumb
      with the tag bar under it, the tools, the title row and the Line
      numbering row. Not yet: the tagged-entry and sub-page create, rename
-     and delete, the Go to and Search rows, help, the mode pill, the ⌃⌘G
-     bar. A panel's rows are anchors, so ⌘-click and middle-click work; a
+     and delete, the Go to row, help, the mode pill, the ⌃⌘G bar. The
+     Search row is its own component, drawn between the title row and the
+     Line numbering row as the current app orders them. A panel's rows are anchors, so ⌘-click and middle-click work; a
      row click closes the panel itself, since a click on the open entry's
      own row moves no hash. Attention leaving a panel (a Tab out) dismisses
      it like a click outside; relatedTarget, not activeElement, which is
      mid-flight during focusout. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot }: {
+  import Search from "./Search.svelte";
+  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
     onInterval: (n: number) => void;
@@ -21,7 +23,10 @@
     onPanel: (ns: "page" | "bookshelf") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
+    search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
   } = $props();
+  let searchRow: { focusInput(): void } | undefined = $state();
+  export function focusSearch(): void { searchRow?.focusInput(); }
   const NOUN = { page: "page", bookshelf: "author" } as const;
   const leave = (e: FocusEvent): void => {
     const panel = e.currentTarget as HTMLElement;
@@ -69,6 +74,7 @@
     <button class="toolbtn" type="button" title="Delete every stored entry" onclick={onClear}>clear</button>
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
+  <Search bind:this={searchRow} search={screen.search} {...search} />
   {#if screen.panel}
     <nav class="pages" onfocusout={leave}>
       {#each screen.panelRows as r (r.href)}<a href={r.href} title={r.text} onclick={onClosePanel}>{r.text}</a>{/each}

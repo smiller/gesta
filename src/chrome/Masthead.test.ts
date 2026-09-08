@@ -17,7 +17,7 @@ function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean
   screen.gutter = !!extra.gutter;
   screen.backupsLabel = "set up automatic backups…";
   if (extra.panel) { screen.panel = extra.panel; screen.panelRows = extra.rows || []; screen.panelEmpty = extra.empty || ""; }
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none } }).body;
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none } } }).body;
 }
 
 describe("Masthead", () => {
