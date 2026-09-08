@@ -45,8 +45,10 @@ here NOW, and what is not yet:
 - `src/model/` — the document model, no DOM: `schema.ts` (nodes, marks, and
   `MARK_ORDER`, the nesting the serializer writes), `grammar.ts` (the line
   regexes and the pure string transforms both arms share), `parse.ts`
-  (markdown → document), `serialize.ts` (document → markdown). Tests sit
-  beside them as `*.test.ts`.
+  (markdown → document), `serialize.ts` (document → markdown),
+  `flatten.ts` (the document as ONE character stream with a position map,
+  the stream every search site shares: the index text, the jump, the
+  reference payload's count). Tests sit beside them as `*.test.ts`.
 - `tools/corpus.ts` — the whole-corpus round trip over an export folder,
   `node tools/corpus.ts [dir]`; writes `tools/out/corpus-report.txt`.
   Phase 0's gate: nothing in later phases is worth building until it is
@@ -64,8 +66,9 @@ here NOW, and what is not yet:
   Helium over a fresh profile: the indicator after the warm, past its
   whisper, after typing, after a click, and on a refused walk; the masthead
   over the verse fixture; the pages and bookshelf panels through open,
-  displace, toggle, Escape, a click outside and a row click; the pill
-  under `?corner=pill`; prints each reading and the console, and
+  displace, toggle, Escape, a click outside and a row click; the three
+  kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
+  the pill under `?corner=pill`; prints each reading and the console, and
   screenshots when given a path.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
@@ -80,7 +83,8 @@ here NOW, and what is not yet:
   gutter's switch: `foliopage` on the root where a leaf is the text's),
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the
-  handler), `editor.ts` (the
+  handler), `highlight.ts` (the jump: the nth occurrence of a query
+  selected and scrolled to), `editor.ts` (the
   view with its plugins), `editor.css` (the
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
@@ -109,8 +113,11 @@ here NOW, and what is not yet:
   resume, as a factory over callbacks), `folio.ts` (the folio token
   grammar), `reference.ts` (the citation grammar and the label over an
   injected journal), `headings.ts` (an entry's title and a root's
-  directive, read from the cache). Tests beside them, ported from the
-  current app's node suites where they had one.
+  directive, read from the cache), `search.ts` (the query grammar, the
+  scope filter, the scan over an index with its snippets),
+  `searchIndex.ts` (the index over the cache: memoised per entry on its
+  text, built in chunks). Tests beside them, ported from the current
+  app's node suites where they had one.
 - `src/chrome/` — the chrome, Svelte 5: `notices.svelte.ts` (the notice
   ledger: the whisper, the pin, the progress line, the deferred one-shot,
   the keyed save-failure family and the pill's text — a factory over the
@@ -123,7 +130,10 @@ here NOW, and what is not yet:
   the crumbs, the leaf, the title, the sibling tags, the today switch, a
   namespace's roots as panel rows, the label trim), `naming.ts` (what a
   typed name becomes: the URL, slash and filename rules and the two
-  refusals, pure over the store's names),
+  refusals, pure over the store's names), `searchModel.ts` (what the
+  Search row reads: the starting scope, the scope options, a result's
+  "where" label), `Search.svelte` (the row: the scope select, the input,
+  the results overlay),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -625,4 +635,45 @@ here NOW, and what is not yet:
   new tab. Also that day, by hand: the `::: card-*` fills were missing — the box
   was ported, the eleven colours and the card's own ink were not; ported
   into editor.css. `dist/index.html` is 588.28 kB.
+- SEARCH (the same day, asked for by hand): search.mjs, 23-search.js,
+  26-search-results…js and 27-the-masthead-search-line.js ported. THE
+  ENGINE (`store/search.ts`) is the module whole with its seven tests
+  re-spelled and the scan beside them: the 1:1 fold, the edge-underscore
+  grammar, the boundary rule, the stride, the ONE scope filter failing
+  closed, the cap with one past it. THE STREAM (`model/flatten.ts`) is
+  exactly `textBetween(0, size, " ", " ")` with whitespace runs folded,
+  built by hand so every character knows its position: the index text,
+  the jump and the reference payload's count all read it, pinned equal
+  over every fixture, and a link selectionLink minted lands where findHit
+  looks. THE INDEX (`store/searchIndex.ts`) is a walk over the cache's
+  keys with a memo per entry on its exact markdown, so it needs no
+  invalidation and re-flattens only what moved; the flatten is a PARSE,
+  MEASURED 4.4 s over the whole mirror under node (123 MB) against 0.15 s
+  to lowercase the raw text, so the first build is CHUNKED at 12 ms a
+  step — kicked off in idle time after the warm, finished on demand under
+  an "indexing… N / M" progress line when a search comes first — and
+  every scan after it is memo hits. DECIDED without asking: searching the
+  parsed text, as the current app searched the visible text, over the raw
+  markdown that would have cost nothing to index but shown markers and
+  matched addresses. THE ROW (`Search.svelte`, in the masthead between
+  the title and Line numbering) is the current app's: ⌃⌘K or the summary
+  toggles, the scope select preselects the open book else Journal with
+  the roots grouped by namespace and the open unregistered book unioned
+  in, the scan 150 ms after the last keystroke off the query as typed,
+  Enter and the arrows flushing a pending scan, ↑↓ wrapping, the results
+  an overlay under the whole bar, Escape, a click outside and a
+  navigation closing it (the navigation dropping the query), focus to the
+  input on open and back to the editor on close. THE JUMP
+  (`editor/highlight.ts`) selects the nth occurrence under the search
+  parse and scrolls to it; a "?h=" payload replays LITERALLY through the
+  session's pending highlight, applied after the paint and dropped by a
+  newer navigation. NOT CARRIED: the current app's re-answer of an open
+  row after a warm (the warm completes before the chrome can be used),
+  the scope relabel on an edited heading (the options are rebuilt per
+  open). MEASURED 2026-09-07 in headless Helium (`tools/helium-corner.mjs`
+  over the seeded fixtures): ⌃⌘K opens the row with the input focused and
+  the page's book preselected; "sister" under Everything lists "Williams
+  › 3. The Dark Ages" then "2026-09-05" with the word marked in each
+  snippet; ↓ moves the bar; Enter opens the chosen day with "sister"
+  selected and the row closed. `dist/index.html` is 603.33 kB.
 
