@@ -2,7 +2,7 @@
    views, the line-number decoration, the row gestures (rowKeys.ts) ahead of
    the base keymap, and markdown as you type (typing.ts). */
 import { EditorState, type Transaction, type Command } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import { EditorView, type NodeViewConstructor } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
@@ -18,6 +18,8 @@ import { rowNodeViews } from "./rows.ts";
 export interface EditorOptions {
   interval: number;
   onChange?: (view: EditorView) => void;
+  /* node views beyond the rows' — the image view the session supplies */
+  nodeViews?: Record<string, NodeViewConstructor>;
 }
 
 const hardBreak: Command = (state, dispatch) => {
@@ -46,7 +48,7 @@ export function editorState(doc: Node, interval: number): EditorState {
 export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions): EditorView {
   return new EditorView(mount, {
     state: editorState(doc, opts.interval),
-    nodeViews: rowNodeViews,
+    nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     attributes: { class: "page", spellcheck: "false" },
     /* the typed pipe, before the character lands: in a line it makes the
        pair; anywhere else it is the character */

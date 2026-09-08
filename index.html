@@ -17,14 +17,11 @@
 </head>
 <body>
 <header class="bar">
-  <strong>Gesta — phase 1: the editor</strong>
-  <label>Fixture <select id="fixture">
-    <option value="horace">Horace, Odes 1.1 (paired)</option>
-    <option value="pippa">Browning, Pippa Passes (directions and songs)</option>
-    <option value="twelfth">Shakespeare, Twelfth Night 1.1 (speakers and directions)</option>
-    <option value="williams">Williams, Witchcraft 3 (a prose book with leaves)</option>
-  </select></label>
-  <label>or a .md file <input id="file" type="file" accept=".md,text/markdown"></label>
+  <strong>Gesta — phase 2: the journal</strong>
+  <button id="today">today</button>
+  <button id="prev" title="⌃⌘,">‹ prev</button>
+  <button id="next" title="⌃⌘.">next ›</button>
+  <span id="where"></span>
   <label>Line numbering <select id="interval">
     <option value="0">none</option>
     <option value="1">every line</option>

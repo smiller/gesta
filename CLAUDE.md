@@ -56,6 +56,9 @@ here NOW, and what is not yet:
 - `tools/importCorpus.ts` — the import run over an export folder under
   node into memory, `node tools/importCorpus.ts [dir]`; prints the tally
   and names every failure with its reason.
+- `tools/helium-bridge.mjs` — the bridge in headless Helium over a fresh
+  profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
+  relaunch, walk; prints what each launch found.
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
@@ -81,8 +84,16 @@ here NOW, and what is not yet:
   `files.ts` (the pick's file records, `oneEach` and `entryDocs`),
   `importFiles.ts` (the import over a file list: the sidecar refs, the
   parse gate, the tally), `pick.ts` (the walk over directory handles,
-  names first, then the read). Tests beside them, ported from the current
-  app's node suites where they had one.
+  names first, then the read), `nav.ts` (the address grammar: a hash to
+  the entry it names, an href to the link minted for it), `lists.ts` (the
+  derived lists and the neighbour walks, over the cache's keys). Tests
+  beside them, ported from the current app's node suites where they had
+  one.
+- `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
+  open by hash, the debounced save through the layer, the flush on leave,
+  the refusal of an unknown book, the walk and today. `src/editor/images.ts`
+  is the image node view it supplies, resolving a relative src from the
+  store.
 - `fixtures/` — the markdown the page opens with, copied from the export
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
   direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
@@ -330,3 +341,32 @@ here NOW, and what is not yet:
   entries", none failed, on a profile that read 0 before, and the reload
   after it "13565 entries stored" — the warm reads the whole journal back.
   Playwright cannot answer a directory picker, so that half stays a hand's.
+- THE BRIDGE (`session.ts`) is load, saveNow, routeHash and the
+  flush-on-leave listeners re-asked of a store that holds markdown: a save
+  is SERIALIZE AND COMPARE, skipped when the text is what the store holds
+  (a navigation through 13,565 entries rewrites none of them), and an
+  empty document over no stored entry mints nothing. The debounce is the
+  current app's 500 ms; a navigation flushes the entry being left; a
+  hidden tab and an unload land what the debounce holds. A stored text
+  the model refuses is SHOWN as text, not edited: an editor over a lossy
+  parse would save the loss. The chords are the current app's — ⌃⌘, and
+  ⌃⌘. walk, ⌃⌘T is today — and the buttons beside them.
+- THE DERIVED LISTS ARE THE CACHE'S KEYS (`lists.ts`): the current app
+  kept a day index and per-parent tag lists in localStorage, healed after
+  every warm, with an index-debt ledger for a listing that failed to
+  write. Here the warm leaves every key in the cache, so a day's tags, a
+  page's sub-pages and a namespace's roots are one walk over
+  Object.keys, an ancestor counting as registered whether or not it has a
+  body, and there is nothing to heal or owe.
+- MEASURED 2026-09-07 (`node tools/helium-bridge.mjs`, headless Helium,
+  a fresh profile seeded with the fixtures): a page, a book page and a day
+  open by hash with the editor's markdown identical to the store's; an
+  unknown author is refused with "no such author" and today stays open; an
+  unknown page mints on visit; text typed into it reads "saved" after the
+  debounce and comes back after a relaunch; ⌃⌘. walks from one seeded day
+  to the next. MEASURED by hand the same day over the imported journal:
+  #2021-11-28, the corpus's largest entry (657 KB), "appears fairly
+  instantly" and the details pane reads "identical to what the store
+  holds"; #2022-02-06 shows its pictures, resolved from the store by their
+  relative names, the pane still identical. No fixture carries a picture,
+  so the image view's look stays a hand's.
