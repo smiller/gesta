@@ -41,7 +41,7 @@ export interface Screen {
   backupsLabel: string;
   interval: number;
 }
-export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false };
+export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false, buttons: { create: "", createTitle: "", canCreate: false, canEdit: false, renameTitle: "", deleteTitle: "" } };
 export function screenState(interval: number): Screen {
   const screen = $state<Screen>({
     masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelEmpty: "",

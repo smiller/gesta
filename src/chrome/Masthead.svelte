@@ -4,8 +4,9 @@
      lists, each a dropdown panel in the one slot the overlays share, and
      the journal icon that goes to today — the date line as a breadcrumb
      with the tag bar under it, the tools, the title row and the Line
-     numbering row. Not yet: the tagged-entry and sub-page create, rename
-     and delete, the Go to row, help, the mode pill, the ⌃⌘G bar. The
+     numbering row. The create, rename and delete of a tagged entry and a
+     sub-page are the tools' first three buttons, worded per namespace.
+     Not yet: the Go to row, help, the mode pill, the ⌃⌘G bar. The
      Search row is its own component, drawn between the title row and the
      Line numbering row as the current app orders them. A panel's rows are anchors, so ⌘-click and middle-click work; a
      row click closes the panel itself, since a click on the open entry's
@@ -15,9 +16,11 @@
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   import Search from "./Search.svelte";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search }: {
+  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
+    /* the sub-entry gestures: create under the open entry, rename and delete the open one */
+    onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     /* the opener's click: the page's wiring toggles the slot and fills the rows */
     onPanel: (ns: "page" | "bookshelf") => void;
@@ -68,6 +71,9 @@
   </nav>
   <div class="site-tools">
     <button class="toolbtn" type="button" title="Go to today" hidden={!screen.masthead.showToday} onclick={onToday}>today</button>
+    <button class="toolbtn" type="button" title={screen.masthead.buttons.createTitle} hidden={!screen.masthead.buttons.canCreate} onclick={onCreate}>{screen.masthead.buttons.create}</button>
+    <button class="toolbtn" type="button" title={screen.masthead.buttons.renameTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onRename}>rename</button>
+    <button class="toolbtn" type="button" title={screen.masthead.buttons.deleteTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onDelete}>delete</button>
     <button class="toolbtn" type="button" title="Export every entry as Markdown files" onclick={onExport}>export</button>
     <button class="toolbtn" type="button" title="Import Markdown files from a folder" onclick={onImport}>import</button>
     <button class="toolbtn" type="button" title="Automatic folder backups" onclick={onBackups}>{screen.backupsLabel}</button>

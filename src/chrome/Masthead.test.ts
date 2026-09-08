@@ -17,7 +17,7 @@ function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean
   screen.gutter = !!extra.gutter;
   screen.backupsLabel = "set up automatic backups…";
   if (extra.panel) { screen.panel = extra.panel; screen.panelRows = extra.rows || []; screen.panelEmpty = extra.empty || ""; }
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none } } }).body;
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none } } }).body;
 }
 
 describe("Masthead", () => {
@@ -56,5 +56,16 @@ describe("Masthead", () => {
     const shelf = draw("2026-09-07", null, { panel: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });
     expect(shelf).toMatch(/<span class="panel-empty[^"]*">No authors yet/);
     expect(shelf).toContain(">New author…</button>");
+  });
+  it("the sub-entry buttons: a day offers the create only, a tagged entry rename and delete only, a page all three with its nouns", () => {
+    const day = draw("2026-09-07", null);
+    expect(day).toMatch(/title="Create a tagged sub-entry for this day"[^>]*>\+ tagged entry/);
+    expect(day).toMatch(/title="Rename this entry's tag" hidden/);
+    const tagged = draw("2026-09-07", "Ideas");
+    expect(tagged).toMatch(/title="Create a tagged sub-entry for this day" hidden/);
+    expect(tagged).toMatch(/title="Delete this tagged entry">delete/);
+    const page = draw("page", "Books/Essay");
+    expect(page).toMatch(/title="Create a sub-page here">\+ sub-page/);
+    expect(page).toMatch(/title="Rename this sub-page">rename/);
   });
 });

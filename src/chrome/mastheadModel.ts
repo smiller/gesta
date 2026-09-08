@@ -15,6 +15,7 @@
 import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
+import { subButtons, type SubButtons } from "./subEntries.ts";
 
 /* a unit of the date line: a link back up, or the plain date */
 export interface Crumb { text: string; href: string | null; title: string }
@@ -27,6 +28,8 @@ export interface MastheadModel {
   title: string;
   tags: Link[];
   showToday: boolean;
+  /* the create, rename and delete buttons: wording and presence per namespace */
+  buttons: SubButtons;
 }
 /* a root's display name: the heading of its own entry where the
    namespace titles its roots, else the name */
@@ -66,7 +69,7 @@ export function mastheadModel(date: string, tag: string | null, keys: string[], 
       tags = childrenOf(keys, date).filter((t) => t !== tag).map((t) => ({ text: t, href: entryHash(date, t) }));
     }
   }
-  return { crumbs, leaf, title, tags, showToday: date !== today };
+  return { crumbs, leaf, title, tags, showToday: date !== today, buttons: subButtons(date, tag) };
 }
 
 /* the row-label cap every list surface shares, so their truncation of an

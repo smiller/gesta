@@ -68,7 +68,9 @@ here NOW, and what is not yet:
   over the verse fixture; the pages and bookshelf panels through open,
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
-  the pill under `?corner=pill`; prints each reading and the console, and
+  a tagged entry created, renamed and deleted through the dialogs, the
+  host's link and tag bar read at each step; the pill under
+  `?corner=pill`; prints each reading and the console, and
   screenshots when given a path.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
@@ -84,7 +86,8 @@ here NOW, and what is not yet:
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the
   handler), `highlight.ts` (the jump: the nth occurrence of a query
-  selected and scrolled to), `listKeys.ts` (the gestures in a list:
+  selected and scrolled to), `insertLink.ts` (a link placed after the
+  caret, and what refuses one), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -118,8 +121,10 @@ here NOW, and what is not yet:
   directive, read from the cache), `search.ts` (the query grammar, the
   scope filter, the scan over an index with its snippets),
   `searchIndex.ts` (the index over the cache: memoised per entry on its
-  text, built in chunks). Tests beside them, ported from the current
-  app's node suites where they had one.
+  text, built in chunks), `links.ts` (the links in a stored entry
+  rewritten over the document model: the host's retarget on a rename or
+  a delete, the parent's relabel to a sub-page's heading). Tests beside
+  them, ported from the current app's node suites where they had one.
 - `src/chrome/` — the chrome, Svelte 5: `notices.svelte.ts` (the notice
   ledger: the whisper, the pin, the progress line, the deferred one-shot,
   the keyed save-failure family and the pill's text — a factory over the
@@ -135,7 +140,10 @@ here NOW, and what is not yet:
   refusals, pure over the store's names), `searchModel.ts` (what the
   Search row reads: the starting scope, the scope options, a result's
   "where" label), `Search.svelte` (the row: the scope select, the input,
-  the results overlay),
+  the results overlay), `subEntries.ts` (the sub-entry rules, pure: where
+  a new one lives, what blocks a rename or delete, the blank subtree the
+  confirm sweeps, the buttons' wording, the dialogs' texts, where a delete
+  lands, the host of a sub-entry),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -707,4 +715,39 @@ here NOW, and what is not yet:
   a nested list still 18px (its own 1em bottom margin, as in the current
   app); looked at by hand the same day over a journal entry's two
   bullets: right.
+- THE SUB-ENTRIES (the same day): 15-tagged-sub-entries-create-rename-
+  delete.js ported, minus the extract — the toolbar's Tag button, which
+  moves a selection into a new sub-entry, waits for the toolbar. The RULES
+  are pure (`chrome/subEntries.ts`): every page hosts at every depth and
+  a day's tagged entry is the one leaf; a sub-page's name takes the
+  filename rule, a day's tag is the typed text; content-bearing
+  descendants block a rename or a delete at every depth and blank ones
+  never do, the blank subtree swept only past the confirm; the delete
+  lands a root on today, a sub-page on its parent, a tag on its day; the
+  noun leads the name in both dialogs and the reading, not the key, is
+  shown. THE LINKS (`store/links.ts`) are rewritten over the document
+  model, parse → judge each link run → serialize, null when nothing
+  moved: the host's links retarget on a rename with a bare-name label
+  following and a hand-written one staying, drop on a delete with an
+  emptied paragraph, and a parent's minted label follows a sub-page's
+  heading (the bare name or the previous heading, remembered per key from
+  the last look). THE CREATE registers the name at once by storing an
+  empty body, drops the link after the caret through `insertLink.ts`
+  (never replacing a selection, never appended at the end; a code block
+  or a link refuses first), saves the host and goes. THE RENAME flushes
+  the save, stores the body under the new key BEFORE clearing the old
+  (an empty body moves too — the row is the registration here, and the
+  first run dropped it: MEASURED, the tag bar lost the renamed entry),
+  retargets the host, replaces the address and reopens. THE DELETE
+  opens the landing first (opening cancels the pending save that would
+  resurrect the entry), then removes, retargets, and reopens the landing
+  so a host that lost a link is redrawn. The three buttons sit first in
+  the tools, worded per namespace by `subButtons`. MEASURED 2026-09-07 in
+  headless Helium (`tools/helium-corner.mjs`, the dialogs answered by
+  the harness): a day offers "+ tagged entry"; "Ideas" typed opens
+  #2026-09-06/Ideas with the crumb "Past — … › Ideas" and rename and
+  delete in its place; the day's body ends with [Ideas](#2026-09-06/Ideas)
+  and its tag bar lists it; "Plans" typed at rename moves the address and
+  the host's link; delete lands on the day with the link gone and no
+  tags. `dist/index.html` is 613.03 kB.
 
