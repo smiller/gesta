@@ -1151,7 +1151,8 @@ here NOW, and what is not yet:
   `background-color: rgb(129, 177, 169)` — the live card's computed
   colour — with the grid on the row, and ⌘V on a fresh page brings back
   one card with one pair, the markdown opening `::: card-light-blue`.
-  Looked at by hand the same day in Mail: right.
+  Looked at by hand the same day in Mail: right; ⌃⌘R over a paired row
+  into Mail the same day: good.
 - TAB IN A QUOTE, ⌃⌘L AND THE INTERVALS (2026-09-08): the quote arm of
   13e-enter-and-tab-dispatch.js ported (`editor/quoteKeys.ts`), re-asked
   of the model, where a quote's body is ONE paragraph of lines with
