@@ -1183,4 +1183,15 @@ here NOW, and what is not yet:
   728.50 kB. WHAT REMAINS of phase 3 is the scaffolding out — the clear
   button and the markdown pane under the entry — once the cutover is
   close, on Sean's word.
+- THE OPEN ENTRY FIRST (2026-09-08, by hand: two seconds of blank after a
+  refresh): the current app's primeOpenEntry, whose seat the layer's
+  `primeEntry` had kept — the address's ONE row read and opened before
+  the warm reads the whole journal; a day opens whether or not its row
+  exists, a keyed entry once its row is in the cache (primed, or seeded),
+  an absent one waiting for the warm to answer whether it is refused;
+  the masthead's lists are redrawn when the warm lands. The page's probe
+  now stages "primed" before "all". MEASURED 2026-09-08 in headless
+  Helium: "start;seed;primed;all;" over the seeded profile; the two
+  seconds over the journal are a hand's to time. ⌃⌘G on Paradise Lost
+  book 1 with 254 was confirmed by hand the same night.
 

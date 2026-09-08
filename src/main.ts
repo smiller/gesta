@@ -50,6 +50,7 @@ import { pageParts, nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
 import { registered, childrenOf } from "./store/lists.ts";
+import { hashParts } from "./store/nav.ts";
 import Corner from "./chrome/Corner.svelte";
 import Masthead from "./chrome/Masthead.svelte";
 import Toolbar from "./chrome/Toolbar.svelte";
@@ -892,13 +893,25 @@ if (fixture && fixtures[fixture]) {
   const wrote = q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
     : q.get("store") === "seed" ? Promise.all(Object.keys(seeds).map((k) => layer.setEntry(k, seeds[k]))).then(() => stage("seed"))
     : Promise.resolve();
-  wrote.then(() => layer.warm()).then(() => {
+  /* THE OPEN ENTRY FIRST, from ONE store row, before the warm reads the
+     whole journal — the current app's primeOpenEntry: by hand 2026-09-08
+     the entry took two seconds to appear after a refresh, the warm's time
+     over 13,565 rows. A day opens whether or not its row exists; a keyed
+     entry opens once its row is in the cache, and an absent one waits
+     for the warm to answer whether it is refused. The masthead's lists
+     read the whole cache, so they are redrawn when the warm lands. */
+  let opened = false;
+  const h0 = hashParts(location.hash.slice(1));
+  const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
+    if (found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date)) { session.openHash(); opened = true; stage("primed"); }
+  }, () => {});
+  primed.then(() => layer.warm()).then(() => {
     /* an unreadable journal is an error, not a status: it sticks, the
        caught failure copyable */
     if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); return; }
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
-    session.openHash();
+    if (!opened) session.openHash(); else refreshMasthead();
     buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an

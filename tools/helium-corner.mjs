@@ -18,6 +18,7 @@ page.on("console", (m) => logs.push(m.type() + ": " + m.text()));
 page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
 await page.goto(PAGE + "?store=seed#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
+console.log("the launch's stages:", JSON.stringify(await page.evaluate(() => document.documentElement.dataset.probe)));
 const corner = () => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; });
 console.log("after warm:", JSON.stringify(await corner()));
 console.log("masthead over Horace:", JSON.stringify(await page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; })));
