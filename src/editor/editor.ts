@@ -20,7 +20,7 @@ import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
-import { pasteSlice, copyMd, closeRowSlice } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -80,7 +80,18 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     handleDOMEvents: { click: linkClick((frag) => opts.onRoute?.(frag)) },
     /* plain text pasted renders the markdown it spells; the copied text is
        the selection's markdown (paste.ts) */
-    handlePaste: (_view, event) => { const file = pastedImageFile(event.clipboardData); if (!file) return false; opts.onPasteFile?.(file); return true; },
+    handlePaste: (view, event) => {
+      const file = pastedImageFile(event.clipboardData);
+      if (file) { opts.onPasteFile?.(file); return true; }
+      /* plain text spelling blocks is SET DOWN, not fitted (paste.ts);
+         text carrying the editor's own HTML keeps the editor's paste */
+      const data = event.clipboardData;
+      if (!data || data.types.includes("text/html")) return false;
+      const blocks = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
+      if (!blocks) return false;
+      view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
+      return true;
+    },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
     clipboardTextSerializer: (slice) => copyMd(closeRowSlice(slice)),
     transformCopied: (slice) => closeRowSlice(slice),

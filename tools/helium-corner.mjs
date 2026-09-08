@@ -68,6 +68,16 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* a verse fence pasted as TEXT mid-paragraph is set down between the halves, its first line inside */
+await page.goto(PAGE + "#page/Pasted%20Fence");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pasted Fence", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.type("start end");
+await page.keyboard.press("Home");
+for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowRight");
+await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
+await page.waitForTimeout(200);
+console.log("a fence pasted as text mid-paragraph:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out").textContent) }));
 /* a verse block copied inside the rendered view with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
 await page.goto(PAGE + "#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });

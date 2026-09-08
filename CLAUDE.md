@@ -1210,4 +1210,20 @@ here NOW, and what is not yet:
   same closed slice. MEASURED 2026-09-08 in headless Helium: Horace's
   verse block selected, ⌘C, pasted with ⌘V into a fresh page stores
   "::: verse" with all 36 pairs and the first line inside the fence.
+- A BLOCK-SHAPED TEXT PASTE IS SET DOWN, NEVER FITTED (2026-09-08, by
+  hand: a verse fence copied from the source view and pasted into the
+  rendered view lost its first original line to the paragraph above,
+  the fence opening on the translation). The editor's replace opens a
+  closed block slice up to fit the paragraph it lands in, peeling the
+  first cell's text into it. `pasteBlocks` (paste.ts) names the blocks a
+  block-shaped plain-text paste spells — outside a code block, a list
+  item, a cell or a row, and not a single entry link — and `placeBlocks`
+  sets them down: an empty paragraph replaced, a caret at a paragraph's
+  edge putting them before or after it, a caret mid-paragraph splitting
+  it with the blocks between, the caret landing after them; the
+  editor's handlePaste takes that road for a paste carrying no HTML, the
+  editor's own copies keeping the editor's paste. MEASURED 2026-09-08 in
+  headless Helium: a fence pasted as text stores "start end / ::: verse
+  / Heil! Heil! | Hail! Hail! / Erlösung | Salvation / :::", the first
+  pair whole. `dist/index.html` is 730.62 kB.
 

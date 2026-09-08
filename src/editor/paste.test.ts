@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, copyMd, closeRowSlice } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice } from "./paste.ts";
 
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
@@ -52,3 +52,19 @@ test("a slice open inside a verse row is closed, so the block travels whole; ope
   const inline = doc.slice(proseStart, proseStart + 5);
   expect(closeRowSlice(inline)).toBe(inline);
 });
+
+test("a verse fence pasted as text is set down whole: mid-paragraph the paragraph splits, an empty paragraph is replaced", () => {
+  const fence = "::: verse\nHeil! | Hail!\nErlösung | Salvation\n:::";
+  const mid = at("start end", "start");
+  const blocks = pasteBlocks(fence, mid.selection.$from)!;
+  expect(blocks.map((b) => b.type.name)).toEqual(["verse"]);
+  const out = mid.apply(placeBlocks(mid, blocks));
+  expect(serializeMarkdown(out.doc)).toBe("start\n\n" + fence + "\n\n end");
+  const empty = parseMarkdown("before\n\nafter");
+  const s2 = EditorState.create({ doc: empty, selection: TextSelection.create(empty, 9) });
+  const blocks2 = pasteBlocks("# Title\n\nbody", s2.selection.$from)!;
+  expect(serializeMarkdown(s2.apply(placeBlocks(s2, blocks2)).doc)).toBe("before\n\n# Title\n\nbody\n\nafter");
+  expect(pasteBlocks("one line", mid.selection.$from)).toBeNull();
+  expect(pasteBlocks("a\nb", at("- item", "item").selection.$from)).toBeNull();
+});
+

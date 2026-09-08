@@ -12,6 +12,7 @@
    entry arrives as itself. The source view is a textarea and pastes
    literally by nature. */
 import { Fragment, Slice, type ResolvedPos, type Node } from "prosemirror-model";
+import { type EditorState, type Transaction, TextSelection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -32,6 +33,44 @@ function flat(lines: string[]): Slice {
   const nodes: Node[] = [];
   lines.forEach((l, i) => { if (i) nodes.push(N.hard_break.create()); if (l) nodes.push(schema.text(l)); });
   return new Slice(Fragment.from(nodes), 0, 0);
+}
+/* the blocks a block-shaped text paste spells, or null where the text
+   is not block-shaped or the host takes it flat */
+export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
+  const body = raw.replace(LINE_BREAK_RE, "\n").replace(/\n$/, "");
+  if ($context.parent.type === N.code_block || inAny($context, FLAT_HOSTS)) return null;
+  const lines = body.split("\n");
+  if (!(lines.length > 1 || ONE_HEADING_LINE.test(body) || ONE_QUOTE_LINE.test(body))) return null;
+  if (INTERNAL_LINK_RE.test(body.trim())) return null;
+  try {
+    const doc = parseMarkdown(body);
+    if (!doc.textContent.trim() && lines.length === 1) return null;
+    const blocks: Node[] = [];
+    doc.forEach((b) => blocks.push(b));
+    return blocks;
+  } catch { return null; }
+}
+/* the blocks SET DOWN, never fitted: the editor's replace opens a block
+   slice up to fit the paragraph it lands in and peels the first cell's
+   text into it (measured 2026-09-08: a pasted verse fence lost its
+   first original line to the paragraph above). An empty paragraph is
+   replaced; a caret mid-paragraph splits it and the blocks go between;
+   the caret lands after them. */
+export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
+  const tr = state.tr.deleteSelection();
+  const $at = tr.selection.$from;
+  const frag = Fragment.from(blocks);
+  let pos: number;
+  if ($at.parent.isTextblock && $at.parent.content.size === 0 && $at.depth >= 1) {
+    pos = $at.before();
+    tr.replaceWith(pos, $at.after(), frag);
+  } else if ($at.parent.isTextblock) {
+    if ($at.parentOffset === 0) { pos = $at.before(); tr.insert(pos, frag); }
+    else if ($at.parentOffset === $at.parent.content.size) { pos = $at.after(); tr.insert(pos, frag); }
+    else { tr.split($at.pos); pos = tr.mapping.map($at.pos, 1) - 1; pos = tr.doc.resolve(tr.mapping.map($at.pos)).before(); tr.insert(pos, frag); }
+  } else { pos = $at.pos; tr.insert(pos, frag); }
+  tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(pos + frag.size, tr.doc.content.size)), -1));
+  return tr;
 }
 export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   const txt = raw.replace(LINE_BREAK_RE, "\n");
