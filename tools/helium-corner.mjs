@@ -66,6 +66,25 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* shortcuts: ⌃⌘S with an empty table opens the editor; a table saved; a code typed and Enter inserts at the caret */
+await page.goto(PAGE + "#page/Expanded");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Expanded", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.press("Control+Meta+s");
+await page.waitForTimeout(150);
+const scard = () => page.evaluate(() => { const c = document.querySelector(".shortcuts"); return c ? { rows: [...c.querySelectorAll("li")].map((li) => li.textContent.trim()), editor: !!c.querySelector(".shortcut-edit"), focused: document.activeElement?.className.split(" ")[0] } : null; });
+console.log("⌃⌘S, no table yet:", JSON.stringify(await scard()));
+await page.fill(".shortcuts .shortcut-edit", "sig: Sean Miller\nmd: markdown");
+await page.click(".shortcuts .editbox .toolbtn");
+await page.waitForTimeout(150);
+console.log("saved:", JSON.stringify({ ...(await scard()), corner: await page.evaluate(() => document.querySelector(".saved.show")?.textContent) }));
+await page.click(".shortcuts .search-input");
+await page.keyboard.type("m");
+await page.waitForTimeout(100);
+console.log("m typed:", JSON.stringify((await scard()).rows));
+await page.keyboard.press("Enter");
+await page.waitForTimeout(200);
+console.log("Enter:", JSON.stringify({ card: await scard(), text: await page.evaluate(() => document.querySelector("#editor .ProseMirror").textContent.slice(0, 30)) }));
 /* bookmarks: ⌃⌘B on a day, A adds it, 1 jumps to it from elsewhere, a key given and typed, × deletes */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });

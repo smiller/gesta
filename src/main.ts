@@ -45,6 +45,7 @@ import { TextSelection } from "prosemirror-state";
 import { parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
 import { reachableBookmarks, bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, bookmarkParts, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./chrome/bookmarksModel.ts";
 import { NS } from "./store/keys.ts";
+import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { pageParts, nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
@@ -74,13 +75,14 @@ const notices = noticeLedger(copyText);
 const say = notices.whisper;
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
 type Ns = "page" | "bookshelf";
-type PanelName = Ns | "help" | "bookmarks";
+type PanelName = Ns | "help" | "bookmarks" | "shortcuts";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
   interval: (_n: number) => {}, panel: (_ns: PanelName) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
+  shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
@@ -95,6 +97,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
+  shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
   bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
@@ -122,6 +125,7 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
   else if (e.key === "h") { e.preventDefault(); acts.panel("help"); }
   else if (e.key === "b") { e.preventDefault(); acts.panel("bookmarks"); }
+  else if (e.key === "s") { e.preventDefault(); acts.panel("shortcuts"); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
@@ -294,6 +298,55 @@ if (fixture && fixtures[fixture]) {
     if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
     screen.goto.levels = out.levels;
   };
+  /* CUSTOM SHORTCUTS (⌃⌘S): a code → text table in ONE localStorage key,
+     raw text verbatim, device-local. The popup filters by prefix as you
+     type and Enter or a row inserts the highlighted expansion at the
+     caret, in either view. The editor's text is loaded ONLY on its
+     hidden→shown transition and never while dirty, so a reopen after a
+     close cannot wipe lines typed but not yet saved; only a landed Save
+     makes it read as storage again. */
+  const SHORTCUTS_KEY = NS + "shortcuts";
+  const sc = screen.shortcuts;
+  let shortcuts: Shortcut[] = parseShortcuts(localStorage.getItem(SHORTCUTS_KEY) || "");
+  let shortcutsFailGen = 0;
+  const renderShortcuts = (): void => {
+    if (!shortcuts.length) { sc.rows = []; sc.empty = "No shortcuts yet — add some below."; sc.active = 0; if (!sc.editing) showEditor(true); return; }
+    sc.rows = filterShortcuts(shortcuts, sc.query);
+    sc.empty = sc.rows.length ? "" : "No matches.";
+    sc.active = 0;
+  };
+  const showEditor = (on: boolean): void => {
+    if (on && !sc.editing && !sc.dirty) sc.draft = localStorage.getItem(SHORTCUTS_KEY) || "";
+    sc.editing = on;
+  };
+  const openShortcuts = (): void => {
+    openRow(false); gotoRow(false); closeLineBar();
+    sc.query = "";
+    sc.editing = false;
+    renderShortcuts();
+    screen.panel = "shortcuts";
+    setTimeout(() => masthead.focusShortcuts(), 0);
+  };
+  const insertShortcut = (expansion: string): void => {
+    closePanel();
+    if (!session.insertText(expansion)) say("place your cursor in the entry", 2000);
+  };
+  acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
+  acts.shortcuts.walk = (dir) => { if (sc.rows.length) sc.active = (sc.active + dir + sc.rows.length) % sc.rows.length; };
+  acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) insertShortcut(row.expansion); else say("no shortcut to insert", 2000); };
+  acts.shortcuts.pick = (i) => { const row = sc.rows[i]; if (row) insertShortcut(row.expansion); };
+  acts.shortcuts.edit = () => showEditor(!sc.editing);
+  acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };
+  acts.shortcuts.save = () => {
+    try { localStorage.setItem(SHORTCUTS_KEY, sc.draft); }
+    catch (e) { shortcutsFailGen = notices.stickErrIdle("shortcuts not saved — storage full", e); return; }
+    notices.releasePin(shortcutsFailGen); shortcutsFailGen = 0;
+    shortcuts = parseShortcuts(sc.draft);
+    sc.dirty = false;
+    renderShortcuts();
+    say("shortcuts saved", 2000);
+  };
+  acts.shortcuts.escape = () => { closePanel(); session.view?.focus(); };
   /* BOOKMARKS (⌃⌘B): a list of pinned entries in ONE localStorage key —
      device-local, an accepted loss, the list being small and re-made in a
      minute. THE LATCH is where the cache and the store disagree on
@@ -710,6 +763,7 @@ if (fixture && fixtures[fixture]) {
     if (screen.panel === ns) { closePanel(); return; }
     if (ns === "help") { openRow(false); closeLineBar(); screen.panel = "help"; return; }
     if (ns === "bookmarks") { openBookmarks(); return; }
+    if (ns === "shortcuts") { openShortcuts(); return; }
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")

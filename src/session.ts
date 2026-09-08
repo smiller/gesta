@@ -65,6 +65,8 @@ export interface Session {
   /* select the nth occurrence of q in the open entry and scroll to it;
      honorMarkers for a search-box jump, literal for a link's payload */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
+  /* text typed in at the caret, in either view — a shortcut's expansion */
+  insertText(text: string): boolean;
   /* the markdown source view: both views edit the one entry */
   readonly mdView: boolean;
   setView(md: boolean): void;
@@ -255,6 +257,19 @@ export function startSession(opts: SessionOptions): Session {
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
   }
+  function insertText(text: string): boolean {
+    if (mdView && source) {
+      const a = source.selectionStart, b = source.selectionEnd;
+      source.setRangeText(text, a, b, "end");
+      source.focus();
+      source.dispatchEvent(new Event("input"));
+      return true;
+    }
+    if (!view) return false;
+    view.dispatch(view.state.tr.insertText(text).scrollIntoView());
+    view.focus();
+    return true;
+  }
   function highlight(q: string, nth: number, honorMarkers: boolean): boolean {
     const did = !!view && highlightIn(view, q, nth, honorMarkers);
     if (did) opts.onHighlight?.();
@@ -366,7 +381,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount,
+    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount, insertText,
     get mdView() { return mdView; },
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };

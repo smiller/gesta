@@ -70,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; ⌃⌘B, A, a numbered jump, a key given and typed,
+  scope pick and Escape; ⌃⌘S over an empty table, a table saved, a code
+  filtered and Enter; ⌃⌘B, A, a numbered jump, a key given and typed,
   ×; ⌃⌘H over an open panel and Escape; ⌃⌘G over
   verse and over a book of leaves; a
   reference pasted as plain text and its link followed back; the toolbar
@@ -140,7 +141,8 @@ here NOW, and what is not yet:
   `searchIndex.ts` (the index over the cache: memoised per entry on its
   text, built in chunks), `bookmarks.ts` (the list's rules: what the
   store parses to and refuses, the two views, the trigger's grammar),
-  `contents.ts` (a book's own order and sections
+  `shortcuts.ts` (the text expander's table grammar and the prefix
+  filter), `contents.ts` (a book's own order and sections
   read off its parent's contents, the feed flip), `links.ts` (the links in a stored entry
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
@@ -173,7 +175,8 @@ here NOW, and what is not yet:
   `Help.svelte` over `help.html` (the help card and its text, the
   acceptance list carried whole), `bookmarksModel.ts` (the card's
   decisions: the rows, the foot line, the typed-key grammar),
-  `Bookmarks.svelte` (the card),
+  `Bookmarks.svelte` (the card), `Shortcuts.svelte` (the text expander's
+  popup with its editor),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -1022,4 +1025,23 @@ here NOW, and what is not yet:
   are here"; from Horace, ⌃⌘B then 1 opens the day; the key button, "fb",
   Enter keys the row; "f" lights it; "b" jumps with "already on
   2026-09-06"; × empties the list. `dist/index.html` is 702.48 kB.
+- CUSTOM SHORTCUTS (2026-09-08): shortcuts.mjs ported whole with its
+  tests (`store/shortcuts.ts`) and 21-custom-shortcuts-text-expander.js
+  as `Shortcuts.svelte` in the panel slot's fifth value: a code box that
+  filters the table by case-sensitive prefix, the rows with the first
+  highlighted, ↑↓ wrapping, Enter or a row's mousedown inserting the
+  expansion at the caret in EITHER view (the session's insertText: the
+  editor's transaction, or the source textarea's setRangeText), the
+  editor beneath loading its text only on its hidden→shown transition
+  and never while dirty, Save writing the raw text to
+  `gesta.v1.shortcuts` (device-local), a refused write pinned through
+  the deferred one-shot and released by a landed retry, "no shortcut to
+  insert" for an Enter over no row. An empty table opens the editor at
+  once. NOT CARRIED: the current app's caret capture at the open — the
+  editor's selection survives the popup. MEASURED 2026-09-08 in headless
+  Helium (`tools/helium-corner.mjs`): ⌃⌘S over no table shows "No
+  shortcuts yet — add some below." with the editor open; "sig: Sean
+  Miller / md: markdown" saved lists both and whispers "shortcuts
+  saved"; "m" typed filters to md; Enter closes the popup and the entry
+  reads "markdown". `dist/index.html` is 709.47 kB.
 

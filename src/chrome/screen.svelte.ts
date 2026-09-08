@@ -8,6 +8,7 @@ import type { ScopeOption } from "./searchModel.ts";
 import type { Level } from "./gotoModel.ts";
 import type { AskKind } from "../editor/goto.ts";
 import type { BookmarkRow } from "./bookmarksModel.ts";
+import type { Shortcut } from "../store/shortcuts.ts";
 import type { Result } from "../store/search.ts";
 
 /* the Search row: open, the query as typed, the scope options with the
@@ -34,7 +35,7 @@ export interface Screen {
      shortcuts panels. Every opener sets it, so opening one closes the
      others by construction; null is none. The in-flow rows (Line
      numbering) compete for no spot and are not in it. */
-  panel: "page" | "bookshelf" | "help" | "bookmarks" | null;
+  panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | null;
   panelRows: Link[];
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;
@@ -45,6 +46,9 @@ export interface Screen {
   /* the bookmarks card: its rows, the foot line, the editor's row and
      draft, the held prefix, and the latch for an unreadable store */
   bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
+  /* the shortcuts popup: the query, the rows it filters to, the active
+     one, the editor's visibility and its text, whether it has unsaved lines */
+  shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   /* ⌃⌘G's bar: open, which boxes the entry can answer, what each holds */
   lineBar: { open: boolean; kind: AskKind; line: string; page: string };
   /* the floating format bar over a selection: where it sits, what is lit */
@@ -65,6 +69,7 @@ export function screenState(interval: number): Screen {
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false },
     lineBar: { open: false, kind: "none", line: "", page: "" },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
+    shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
     gutter: false, mdView: false, backupsLabel: "", interval,
   });
   return screen;
