@@ -1414,4 +1414,7 @@ at the head is kept current per phase.
   is 730.45 kB. The round closes here: a third pass is the exception,
   and this one found no behaviour past the rename. Confirmed by hand
   in Helium the same day: words typed just before a rename stand under
-  the new name, and the old tag is gone from the day's bar.
+  the new name, and the old tag is gone from the day's bar; the contents
+  link after a refresh, the walk before the warm, the bar gone on ⌃⌘M, a
+  search during an export, and a delete's day all good by hand the same
+  day. The reference-block paste is a headless measurement only.
