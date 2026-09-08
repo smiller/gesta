@@ -27,7 +27,7 @@ for (const qs of queries.length ? queries : [""]) {
     await page.waitForFunction(() => document.documentElement.dataset.store !== undefined, null, { timeout: 15000 });
   } catch { logs.push("timed out waiting for data-store"); }
   const got = await page.evaluate(() => ({ store: document.documentElement.dataset.store, probe: document.documentElement.dataset.probe,
-    entry: document.documentElement.dataset.entry, same: document.getElementById("same")?.textContent, status: document.querySelector(".saved.show")?.textContent || "" }));
+    entry: document.documentElement.dataset.entry, status: document.querySelector(".saved.show")?.textContent || "" }));
   console.log("run [" + qs + "]", JSON.stringify(got), "| console:", logs.join(" / "));
   await ctx.close();
 }

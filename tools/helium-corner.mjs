@@ -339,7 +339,7 @@ await page.keyboard.press("Tab");
 await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
 await page.keyboard.press("Control+Meta+m");
 await page.waitForSelector("#editor .ProseMirror", { timeout: 5000 });
-console.log("⌃⌘M back:", JSON.stringify(await page.evaluate(() => { const s = document.getSelection(); return { pill: !document.querySelector(".mode")?.hidden, text: document.querySelector("#editor .ProseMirror").textContent.includes("FOOD   food of love"), caretBefore: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 6), s.anchorOffset), caretAfter: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 8), saved: document.getElementById("same")?.textContent }; })));
+console.log("⌃⌘M back:", JSON.stringify(await page.evaluate(() => { const s = document.getSelection(); return { pill: !document.querySelector(".mode")?.hidden, text: document.querySelector("#editor .ProseMirror").textContent.includes("FOOD   food of love"), caretBefore: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 6), s.anchorOffset), caretAfter: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 8) }; })));
 /* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });

@@ -13,19 +13,28 @@
 import { searchFold, type IndexRow } from "./search.ts";
 import { isDayKey, byName, NS_KEYS } from "./keys.ts";
 
+/* ONE PASS over the keys, bucketed by their first segment. The first
+   spelling filtered the whole key list once per day — O(days × keys),
+   MEASURED 2026-09-08 by the review at 500–708 ms a call over 13,600
+   keys, paid on every scan; this one is 13,600 keys in under 100 ms
+   (pinned in the test). A day with no main entry of its own stands in
+   date order among the days, where the first spelling appended its
+   tagged entries at the end. */
 export function indexOrder(keys: string[]): string[] {
-  const days = keys.filter(isDayKey).sort().reverse();
-  const out: string[] = [];
-  for (const ns of NS_KEYS) out.push(...keys.filter((k) => k === ns || k.startsWith(ns + "/")).sort(byName));
-  for (const d of days) {
-    out.push(d);
-    out.push(...keys.filter((k) => k.startsWith(d + "/")).sort(byName));
+  const ns: Record<string, string[]> = Object.create(null);
+  for (const n of NS_KEYS) ns[n] = [];
+  const dayMain = new Set<string>(), dayTags: Record<string, string[]> = Object.create(null);
+  for (const k of keys) {
+    if (isDayKey(k)) { dayMain.add(k); if (!dayTags[k]) dayTags[k] = []; continue; }
+    const cut = k.indexOf("/"), head = cut === -1 ? k : k.slice(0, cut);
+    if (head in ns) ns[head].push(k);
+    else if (cut !== -1 && isDayKey(head)) (dayTags[head] || (dayTags[head] = [])).push(k);
   }
-  const seen = new Set(out);
-  for (const k of keys) if (!seen.has(k) && !isDayKey(k) && k.indexOf("/") !== -1) {
-    /* a tagged entry of a day with no main entry of its own */
-    const d = k.slice(0, k.indexOf("/"));
-    if (isDayKey(d)) out.push(k);
+  const out: string[] = [];
+  for (const n of NS_KEYS) out.push(...ns[n].sort(byName));
+  for (const d of Object.keys(dayTags).sort().reverse()) {
+    if (dayMain.has(d)) out.push(d);
+    out.push(...dayTags[d].sort(byName));
   }
   return out;
 }
@@ -54,16 +63,24 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     const cut = key.indexOf("/");
     return cut === -1 ? { date: key, tag: null } : { date: key.slice(0, cut), tag: key.slice(cut + 1) };
   };
+  /* the order is kept while the KEY SET stands — a scan per keystroke
+     re-ordered 13,600 keys before it read a byte (the review, 2026-09-08) */
+  let orderSig = "", ordered: string[] = [];
+  const currentOrder = (): string[] => {
+    const keys = Object.keys(cache), sig = keys.length + "\n" + keys.join("\n");
+    if (sig !== orderSig) { orderSig = sig; ordered = indexOrder(keys); }
+    return ordered;
+  };
   return {
     step(deadlineMs) {
-      if (!order) { order = indexOrder(Object.keys(cache)); at = 0; }
+      if (!order) { order = currentOrder(); at = 0; }
       while (at < order.length && now() < deadlineMs) { entry(order[at]); at++; }
       return { done: at, total: order.length };
     },
     get complete() { return !!order && at >= order.length; },
     rows() {
       const out: IndexRow[] = [];
-      for (const key of indexOrder(Object.keys(cache))) {
+      for (const key of currentOrder()) {
         const e = entry(key);
         if (e) out.push({ ...split(key), text: e.text, lower: e.lower });
       }

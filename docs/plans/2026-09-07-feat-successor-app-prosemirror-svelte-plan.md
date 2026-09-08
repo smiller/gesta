@@ -23,7 +23,7 @@ line is the section of the same name below.
 | 1 — the editor | CLOSED 2026-09-07. Row views, line numbers, folios, the fitted measure, the row gestures, markdown as you type. One item moved to phase 3: the landing mark. | "Phase 1 decisions" below |
 | 2 — storage and the bridge | ALL BUILT 2026-09-07 and the cutover criterion MET on every count measured. Import: 13,565 of 13,565 by hand in Helium, the reload reads them back. Round trip: the largest entry identical after the round trip in the browser. Export and backup: identical to the mirror, 85 archives, the dedup writes nothing on relaunch. Citation: fourteen labels identical to the current app's ⌃⌘C, character for character; the quoted passage under ⌃⌘R not yet compared side by side. | "Phase 2 decisions" below |
 | 3 — the chrome | CLOSED 2026-09-08. Svelte 5 installed; the notice ledger and the corner, every status line through them; the masthead (the crumb, the tags, the title row, the tools, the Line numbering row, the pages and bookshelf icons with their panels in the one slot every opener claims, New page/author) over shared screen state; all green in headless Helium. Search is in: the engine ported with its tests, the chunked index, the row with its overlay and the jump, the "?h=" replay. The list keymap is in (Enter, Tab, Shift-Tab in a bullet). The sub-entries' create, rename and delete are in (the extract to a sub-entry waits for the toolbar). The Go to row, the source view, the toolbar with its Tag button, and the ⌃⌘G bar with its landing mark are in. Help, bookmarks, custom shortcuts, the backups panel and the pasted picture, the code blocks' highlighting and the hover copy button, and the rich flavour on ⌃⌘R and ⌃⌘C are in. Tab in a quote, ⌃⌘L and the intervals, and the refused fence named are in — every item of the list agreed 2026-09-07; phase 2's scaffolding (the clear button, the markdown pane) out 2026-09-08, asked that day. | "Phase 3 decisions" below |
-| 4 — the checkers | NEXT, from 2026-09-08. The review order first, because it governs spend; then the acceptance gate, `hooks/`, the prose checkers. | — |
+| 4 — the checkers | IN PROGRESS 2026-09-08. The review shape settled (one /code-review at medium by batch, a priced confirmation offered), tsc's unused checks on, the gate in `hooks/`; the phase 3 review run and its eight findings fixed in one commit. The prose checkers wait for their first class. | "Phase 4 decisions" below |
 
 Until phase 2's last count is measured and the successor has been used
 for real entries, `../writer` stays the running app.
@@ -1331,3 +1331,63 @@ at the head is kept current per phase.
   order first, because it governs spend, then the acceptance gate,
   `hooks/` and the prose checkers, carried over from ../writer/CLAUDE.md
   per checker as each becomes relevant.
+
+## Phase 4 decisions (2026-09-08)
+
+- THE REVIEW SHAPE, asked from "this is a new app; what is the sensible
+  and economic way to review it" (the running app's five-reviewer loop
+  had spent a week's allowance in a day, and its CLAUDE.md's order was
+  out of date — its memory records one /code-review at medium since
+  2026-09-02): the free checkers first, then ONE `/code-review` at
+  medium over a commit range by batch, findings in one fix commit, a
+  confirmation pass offered at its price. tsc gained `noUnusedLocals`
+  and `noUnusedParameters` (the card copy's lost colour was an import
+  used nowhere); five test sites fired, none in the app. THE GATE
+  (`hooks/`): `accept.sh` records the signature of src/ and index.html,
+  `pre-review.sh` refuses a review skill, a Workflow or a review-shaped
+  Agent while the tree differs from it; exercised from the shell —
+  refused, ungated for a search, accepted, re-armed by one byte. The
+  hooks and the settings are permission-denied to the agent.
+- THE PHASE 3 REVIEW, the first: `/code-review medium c5e1ff4^..HEAD`
+  after the acceptance by hand, MEASURED 155,660 tokens, 28 tool uses,
+  19 minutes; fifteen candidates verified, 13 confirmed, 2 plausible,
+  1 refuted (a pending-highlight leak: the payload is set after the
+  refusal). The eight most severe, all fixed in one commit:
+  a reopen after an async write (a delete's retarget, a rename's
+  writes, an import's tally) cancelled the debounce and repainted from
+  the store, dropping keystrokes typed in the window — `session.refresh`
+  flushes first and repaints only where the store differs, a rename
+  carries the surface's text to the new key; a multi-line paste inside
+  a `::: reference` block (a code-shaped textblock) was parsed and split
+  the directive in two — every code-shaped textblock is literal now,
+  pinned; Enter in the ⌃⌘G bar after ⌃⌘M dereferenced a null view — the
+  bar closes with the switch; `indexOrder` filtered every key once per
+  day, MEASURED by the review at 500–708 ms a call over 13,600 keys and
+  paid per scan — one bucketed pass, pinned under 100 ms, and the order
+  kept while the key set stands; a hash change in the two seconds before
+  the warm was refused over the one primed row ("no such author" on a
+  contents link), the walk said "no earlier entry" falsely, and a root
+  typed then could store an empty body over a real one — the address's
+  row is primed and failing that the warm reopens the hash, the walk and
+  the new root wait for the warm; the search's "indexing…" progress line
+  retired an export's handle, whose failed writes then ended unshown —
+  not while the ledger is busy; one stored text the model refuses forced
+  the source view on every later navigation — the forced view is its
+  own flag, the reader's choice put back on the next open; a refused
+  address in the source view remounted the textarea — the arm reads
+  `!view && !source`. Also from the review: the extract checks its text
+  still stands after the write before placing the link; the three tools
+  still read the pane's `#same`, gone with the pane.
+  NOTED, NOT FIXED: `stick` has no busy guard, so a pin raised
+  mid-export leaves the corner on the last "exporting…" line (a faithful
+  port of the current app's ledger); Tab on a heading, table or code
+  block inside a quote is swallowed with the bare floor; a warm that
+  fails after the primed entry is open leaves it editable with every
+  save silently refused, the one boot pin the only notice; the two
+  plausibles (an index flatten with no try/catch, Shift-⌘V over a
+  source offering text/html bypassing the set-down road). MEASURED
+  after: 475 tests green, tsc clean, both Helium tools green over a
+  fresh profile, the console empty. `dist/index.html` is 730.38 kB.
+  OBSERVED: a verifier's scratch test under src/ moved the signature
+  mid-review and a sibling's Agent call was refused by the gate — the
+  gate works, and a reviewer must not write under src/.

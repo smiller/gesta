@@ -68,3 +68,9 @@ test("a verse fence pasted as text is set down whole: mid-paragraph the paragrap
   expect(pasteBlocks("a\nb", at("- item", "item").selection.$from)).toBeNull();
 });
 
+
+test("inside a reference block every character is literal, as in a code block: the directive is never split", () => {
+  const s = at("::: reference\nfrom the last title\n:::\n\npara", "from ");
+  expect(pasteBlocks("one\n\ntwo\n", s.selection.$from)).toBeNull();
+  expect(paste(s, "one\n\ntwo\n")).toBe("::: reference\nfrom one\n\ntwo\nthe last title\n:::\n\npara");
+});

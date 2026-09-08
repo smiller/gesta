@@ -70,6 +70,9 @@ export interface Session {
   openHash(): void;
   saveNow(): Promise<boolean>;
   flushSave(): Promise<boolean>;
+  refresh(): Promise<void>;
+  surfaceMd(): string;
+  readonly hashDeferred: boolean;
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
@@ -111,6 +114,11 @@ export function startSession(opts: SessionOptions): Session {
      serialize, the switch back a parse, and a text the model refuses
      stays in the source view and says why. The carets are viewCarets'. */
   let mdView = false;
+  /* a stored text the model refuses FORCES the source view for that entry
+     only; the reader's own choice is put back on the next open (the
+     2026-09-08 review: one refused entry switched every later navigation
+     to source until a ⌃⌘M) */
+  let forced = false, readerView = false;
   let source: HTMLTextAreaElement | null = null;
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
@@ -238,6 +246,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function setView(md: boolean): void {
     if (md === mdView) return;
+    forced = false;   /* the reader's choice from here */
     holdViewCaret();
     /* THE SCROLL SURVIVES THE SWAP: the teardown empties the page for an
        instant and the window's scroll clamps to the top before the new
@@ -277,6 +286,7 @@ export function startSession(opts: SessionOptions): Session {
     });
   function open(date: string, tag: string | null): void {
     cancelSave();
+    if (forced) { mdView = readerView; forced = false; }
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
@@ -295,6 +305,7 @@ export function startSession(opts: SessionOptions): Session {
            as source: the switch back parses it again */
         console.error("cannot render", ekey, err);
         say("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+        readerView = mdView; forced = true;
         mdView = true;
         mountSource(md);
         opts.onView?.(true);
@@ -334,10 +345,23 @@ export function startSession(opts: SessionOptions): Session {
   /* the address → the entry it opens. A namespace that does not mint on
      visit refuses an unknown key and the refusal lands on the entry already
      open — at boot that is today — with the address put back. */
+  let hashDeferred = false;
   function openHash(): void {
+    hashDeferred = false;
     const h = hashParts(location.hash.slice(1));
     const keys = Object.keys(layer.cache);
     if (unmintedKey(keys, h.date, h.tag)) {
+      /* BEFORE THE WARM the cache holds the primed row alone, so an
+         address it lacks is not yet refused: its own row is primed, and
+         failing that the warm answers (the page reopens the hash when it
+         lands). The 2026-09-08 review: a contents link clicked in the two
+         seconds after a refresh said "no such author". */
+      if (!layer.warmed) {
+        hashDeferred = true;
+        const want = entryKey(h.date, h.tag);
+        layer.primeEntry(want).then(() => { if (hashDeferred && (layer.warmed || want in layer.cache)) openHash(); }, () => {});
+        return;
+      }
       /* the noun for what is MISSING: when the root is gone every segment
          under it reads unregistered too, so the depth asked for would call
          a vanished author a book — name the root, unless the root is there */
@@ -345,7 +369,7 @@ export function startSession(opts: SessionOptions): Session {
       const ns = nsOf(h.date)!;
       say("no such " + (pp.sub && registered(keys, h.date, pp.name) ? ns.subNoun : ns.noun));
       history.replaceState(null, "", entryHash(current.date, current.tag));
-      if (!view) open(current.date, current.tag);
+      if (!view && !source) open(current.date, current.tag);
       return;
     }
     /* a "?h=" payload replays LITERALLY: the passage is text, and an old
@@ -366,6 +390,14 @@ export function startSession(opts: SessionOptions): Session {
   function scheduleSave(): void { cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
   function cancelSave(): void { if (saveTimer) clearTimeout(saveTimer); saveTimer = null; }
   function flushSave(): Promise<boolean> { return saveTimer ? saveNow() : Promise.resolve(true); }
+  /* the open entry repainted from the store ONLY where the store moved
+     under it, after what the debounce holds has landed: open() cancels
+     the pending save and repaints, and a reopen after an async write —
+     a delete's retarget, an import's overwrite — threw away keystrokes
+     typed in the window (the 2026-09-08 review) */
+  function refresh(): Promise<void> {
+    return flushSave().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) open(current.date, current.tag); });
+  }
   /* a navigation that lands where it already is SAYS so, when given the
      words: silence there reads as a dead control */
   function goto(hash: string, sameMsg?: string): void {
@@ -373,6 +405,7 @@ export function startSession(opts: SessionOptions): Session {
     location.hash = hash;
   }
   function step(dir: "prev" | "next"): void {
+    if (!layer.warmed) { say("still loading — try that again in a moment", 2500); return; }
     const nb = navNeighbors(Object.keys(layer.cache), current.date, current.tag, (k) => !!layer.entryMd(k).trim())[dir];
     if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
@@ -440,8 +473,9 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount, insertText,
+    open, openHash, saveNow, flushSave, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount, insertText,
     get mdView() { return mdView; },
+    get hashDeferred() { return hashDeferred; },
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };
 }

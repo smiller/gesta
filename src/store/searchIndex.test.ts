@@ -41,3 +41,22 @@ describe("searchIndex", () => {
     expect(flattens).toBe(10);
   });
 });
+describe("indexOrder over a journal-sized key set", () => {
+  it("orders 13,600 keys in one pass, and rows() reuses the order while the key set stands", () => {
+    const keys: string[] = [];
+    for (let i = 0; i < 7600; i++) { const d = String(2000 + Math.floor(i / 336)) + "-" + String(1 + Math.floor((i % 336) / 28)).padStart(2, "0") + "-" + String(1 + (i % 28)).padStart(2, "0"); keys.push(d + (i % 3 ? "" : "/x" + i)); }
+    for (let i = 0; i < 6000; i++) keys.push((i % 2 ? "page/P" : "bookshelf/B") + (i % 7) + "/" + i);
+    const t0 = performance.now();
+    const order = indexOrder(keys);
+    const ms = performance.now() - t0;
+    expect(order.length).toBe(keys.length);
+    expect(ms).toBeLessThan(100);
+    const cache: Record<string, string> = {};
+    for (const k of keys) cache[k] = "t";
+    const idx = searchIndex(cache, (md) => md);
+    idx.rows();
+    const t1 = performance.now();
+    idx.rows();
+    expect(performance.now() - t1).toBeLessThan(50);
+  });
+});

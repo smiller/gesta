@@ -38,7 +38,10 @@ function flat(lines: string[]): Slice {
    is not block-shaped or the host takes it flat */
 export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
   const body = raw.replace(LINE_BREAK_RE, "\n").replace(/\n$/, "");
-  if ($context.parent.type === N.code_block || inAny($context, FLAT_HOSTS)) return null;
+  /* every code-shaped textblock is literal — the reference block too: a
+     split there cut the one directive the citation reads into two
+     (FOUND by the 2026-09-08 review) */
+  if ($context.parent.type.spec.code || inAny($context, FLAT_HOSTS)) return null;
   const lines = body.split("\n");
   if (!(lines.length > 1 || ONE_HEADING_LINE.test(body) || ONE_QUOTE_LINE.test(body))) return null;
   if (INTERNAL_LINK_RE.test(body.trim())) return null;
@@ -75,7 +78,7 @@ export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
 export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   const body = txt.replace(/\n$/, "");
-  if ($context.parent.type === N.code_block) return new Slice(Fragment.from(schema.text(txt)), 0, 0);
+  if ($context.parent.type.spec.code) return new Slice(Fragment.from(schema.text(txt)), 0, 0);
   const lines = body.split("\n");
   const blockShaped = lines.length > 1 || ONE_HEADING_LINE.test(body);
   if (INTERNAL_LINK_RE.test(body.trim())) {

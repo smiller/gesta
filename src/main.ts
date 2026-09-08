@@ -199,7 +199,7 @@ if (fixture && fixtures[fixture]) {
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
-    onView: (md) => { screen.mdView = md; },
+    onView: (md) => { screen.mdView = md; if (md) closeLineBar(); },   /* the bar's acts dereference the editor's view */
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => suppressBar(),
   });
@@ -248,7 +248,9 @@ if (fixture && fixtures[fixture]) {
     if (!q) return;
     if (!layer.warmed) { sr.empty = layer.storeReadFailed ? "Couldn’t load entries." : "Still loading…"; return; }
     if (!index.complete) {
-      if (!indexing) indexing = notices.progress("indexing…");
+      /* not while an op holds the line: progress() retires the live
+         handle, and an export's failed writes would end unshown */
+      if (!indexing && !notices.state.busy) indexing = notices.progress("indexing…");
       buildIndex(renderSearch);
       return;
     }
@@ -580,7 +582,7 @@ if (fixture && fixtures[fixture]) {
   };
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
-    if (repeat) return;
+    if (repeat || session.mdView || !session.view) return;
     const why = askCheck(v, kind);
     if (why) { say(why, 2000); return; }
     if (kind === "page") goToFolio(v.trim()); else goToLine(parseInt(v.trim(), 10));
@@ -712,9 +714,13 @@ if (fixture && fixtures[fixture]) {
     if ("refuse" in spec) { say(spec.refuse); return; }
     if (childrenOf(keysNow(), spec.listKey).indexOf(spec.tag) !== -1) { alert(takenText(spec.listKey, spec.tag)); return; }
     const md = cutMd(view.state.doc, from, to);
+    const cutText = view.state.doc.textBetween(from, to, " ", " ");
     const label = ns ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
     layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
       if (!landed) { say("couldn't create the entry — see the corner", 3000); return; }
+      /* the positions were taken before the write: a document that moved
+         under them keeps its text, the new entry standing (the review) */
+      if (view !== session.view || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { say("the text moved while the entry was made — the link was not placed", 3000); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
       screen.bar.show = false;
       return session.saveNow().then(() => { refreshMasthead(); session.goto(spec.href); });
@@ -799,6 +805,10 @@ if (fixture && fixtures[fixture]) {
          the current app re-listed the name in its index whatever the body */
       const moved = layer.setEntry(entryKey(date, full), md);
       return Promise.all([moved, ...sweep]).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
+        /* typed into the surface while the writes ran: carried to the new key */
+        const live = session.surfaceMd();
+        return live !== md ? layer.setEntry(entryKey(date, full), live) : true;
+      }).then(() => {
         history.replaceState(null, "", entryHash(date, full));
         session.open(date, full);
         refreshMasthead();
@@ -818,8 +828,9 @@ if (fixture && fixtures[fixture]) {
        that would otherwise resurrect this one */
     history.replaceState(null, "", entryHash(back.date, back.tag));
     session.open(back.date, back.tag);
-    Promise.all([layer.removeEntry(key), ...sweep]).then(() => retargetHost(date, tag, null)).then(() => {
-      session.open(back.date, back.tag);   /* the host's body may have lost a link */
+    /* the landing's typed text lands BEFORE the retarget reads the host,
+       and the repaint comes only where the store moved (a lost link) */
+    Promise.all([layer.removeEntry(key), ...sweep]).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
       refreshMasthead();
       session.view?.focus();
     });
@@ -873,6 +884,7 @@ if (fixture && fixtures[fixture]) {
     if ("refuse" in typed) { say(typed.refuse); return; }
     const name = typed.name;
     const go = (): void => session.goto(entryHash(ns, name), "already on " + trimLabel(rootLabel(ns, name, journal), ECHO_CAP));
+    if (warmBlock()) return;   /* a name checked against one primed row could store an empty body over a real one */
     if (registered(Object.keys(layer.cache), ns, name)) { go(); return; }
     layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(); });
   };
@@ -903,7 +915,7 @@ if (fixture && fixtures[fixture]) {
     if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); return; }
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
-    if (!opened) session.openHash(); else refreshMasthead();
+    if (!opened || session.hashDeferred) session.openHash(); else refreshMasthead();
     buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an
@@ -966,8 +978,9 @@ if (fixture && fixtures[fixture]) {
           console.error("import failures", tally.failures);
           p!.fail(msg, tally.failures.map((x) => x.path + ": " + x.error).join("\n"));
         } else p!.ok(msg + " entries");
-        session.open(session.current.date, session.current.tag);   /* re-render in case the open entry was overwritten */
-        refreshMasthead();   /* the key list moved under the tag bar */
+        /* the open entry may have been overwritten: repainted only where
+           the store differs from the surface, what was typed landing first */
+        return session.refresh().then(() => refreshMasthead());   /* the key list moved under the tag bar */
       });
     }).catch((err: unknown) => {
       if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
