@@ -705,5 +705,6 @@ here NOW, and what is not yet:
   marker was ported with it. MEASURED in headless Helium after: 2.7px
   between two adjacent item lines (the 0.15em item margin, collapsed),
   a nested list still 18px (its own 1em bottom margin, as in the current
-  app).
+  app); looked at by hand the same day over a journal entry's two
+  bullets: right.
 
