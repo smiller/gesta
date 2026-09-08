@@ -66,6 +66,21 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
+await page.goto(PAGE + "#page/Coded");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Coded", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.type("```js");
+await page.keyboard.press("Enter");
+await page.keyboard.type("const n = 42 // answer");
+await page.waitForTimeout(150);
+console.log("a js block typed:", JSON.stringify(await page.evaluate(() => { const pre = document.querySelector("#editor pre"); return { lang: pre.dataset.lang, label: getComputedStyle(pre, "::after").content, tokens: [...pre.querySelectorAll("[class^=tok-]")].map((t) => t.className + ":" + t.textContent) }; })));
+await page.hover("#editor pre");
+await page.waitForTimeout(150);
+console.log("hovered:", JSON.stringify(await page.evaluate(() => { const b = document.querySelector(".copybtn"); const pre = document.querySelector("#editor pre").getBoundingClientRect(); const r = b.getBoundingClientRect(); return { show: b.classList.contains("show"), title: b.title, insideBlock: r.top >= pre.top && r.right <= pre.right + 1, labelHidden: getComputedStyle(document.querySelector("#editor pre"), "::after").opacity }; })));
+await page.click(".copybtn");
+await page.waitForTimeout(300);
+console.log("clicked:", JSON.stringify(await page.evaluate(() => document.querySelector(".copybtn").textContent)));
 /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
 await page.goto(PAGE + "#page/Pictured");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pictured", null, { timeout: 15000 });

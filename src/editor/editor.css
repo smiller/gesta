@@ -74,7 +74,27 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page li > p { margin: 1em 0; }
 .page li > p:first-child { margin: 0; }
 .page li::marker { color: var(--accent); }
-.page pre { font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); padding: 0.6em 0.9em; overflow-x: auto; }
+.page pre { position: relative; font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); border: 1px solid var(--rule); border-radius: 3px; padding: 0.7em 1em; margin: 1em 0; white-space: pre-wrap; overflow-wrap: break-word; }
+/* the corner language label, off the block's data-lang; it yields its
+   spot to the copy button on hover */
+.page pre[data-lang]::after {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.4em;
+  right: 0.7em;
+  font-family: var(--sans);
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+.page pre:hover::after { opacity: 0; }
+.page pre .tok-c { color: var(--muted); font-style: italic; }
+.page pre .tok-s { color: #8a4a1f; }
+.page pre .tok-n { color: #1f5d75; }
+.page pre .tok-k { color: var(--accent); font-weight: 600; }
 .page code { font-family: var(--mono); font-size: 0.9em; }
 .page table { border-collapse: collapse; margin: 0 0 1em; }
 .page td, .page th { border: 1px solid var(--rule); padding: 0.2em 0.6em; }

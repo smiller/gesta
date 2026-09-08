@@ -54,6 +54,9 @@ export interface Screen {
   backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed" };
   /* ⌃⌘G's bar: open, which boxes the entry can answer, what each holds */
   lineBar: { open: boolean; kind: AskKind; line: string; page: string };
+  /* the hover copy button over a code block, a quote, a card, a verse or
+     prose block, a note or a reference: where it sits, what it says */
+  copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
   /* the floating format bar over a selection: where it sits, what is lit */
   bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean };
   /* the open entry draws a gutter: the Line numbering row shows */
@@ -69,6 +72,7 @@ export function screenState(interval: number): Screen {
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false },
+    copy: { show: false, top: 0, right: 0, minWidth: 0, title: "", label: "copy" },
     lineBar: { open: false, kind: "none", line: "", page: "" },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },

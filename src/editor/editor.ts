@@ -21,6 +21,7 @@ import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
 import { pasteSlice, copyMd } from "./paste.ts";
 import { landing } from "./landing.ts";
+import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
 
 export interface EditorOptions {
@@ -61,6 +62,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       fittedMeasure(),
       folios(),
       landing(),
+      codeHighlight(),
     ],
   });
 }

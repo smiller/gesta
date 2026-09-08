@@ -46,7 +46,9 @@ here NOW, and what is not yet:
   `MARK_ORDER`, the nesting the serializer writes), `grammar.ts` (the line
   regexes and the pure string transforms both arms share), `parse.ts`
   (markdown → document), `serialize.ts` (document → markdown),
-  `flatten.ts` (the document as ONE character stream with a position map,
+  `tokens.ts` (syntax highlighting's tokenizer: the language table and
+  the one-pass scan, yielding spans), `flatten.ts` (the document as ONE
+  character stream with a position map,
   the stream every search site shares: the index text, the jump, the
   reference payload's count; and the same fold over a source text, for
   the view switch). Tests sit beside them as `*.test.ts`.
@@ -70,7 +72,9 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; a PNG drawn on a canvas pasted as a file; the
+  scope pick and Escape; a js fence typed, its tokens, its label, the
+  copy button hovered and clicked; a PNG drawn on a canvas pasted as a
+  file; the
   backups panel unconfigured; ⌃⌘S over an
   empty table, a table saved, a code
   filtered and Enter; ⌃⌘B, A, a numbered jump, a key given and typed,
@@ -107,7 +111,9 @@ here NOW, and what is not yet:
   becomes and what copied text says), `goto.ts` (⌃⌘G's decisions over a
   document: what the entry can be asked for, the hits and the cycle, the
   refusals), `landing.ts` (the landing mark as a plugin: a position that
-  maps through edits, drawn as a node decoration), `listKeys.ts` (the gestures in a list:
+  maps through edits, drawn as a node decoration), `codeHighlight.ts`
+  (the tokens drawn as inline decorations over every code block),
+  `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -179,7 +185,8 @@ here NOW, and what is not yet:
   decisions: the rows, the foot line, the typed-key grammar),
   `Bookmarks.svelte` (the card), `Shortcuts.svelte` (the text expander's
   popup with its editor), `Backups.svelte` (the backups panel: setup,
-  resume, the status line, the recovery note),
+  resume, the status line, the recovery note), `CopyButton.svelte` (the
+  one hover copy button over a block),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -1081,4 +1088,28 @@ here NOW, and what is not yet:
   pasted as a file): the entry stores "A picture: ![](Pictured-img-1.webp)",
   the picture draws from the store at 1400×700 with a paragraph after
   it. `dist/index.html` is 715.02 kB.
+- CODE BLOCKS AND THE COPY BUTTON (2026-09-08): md.mjs's tokenizer ported
+  pure (`model/tokens.ts`, the language table and aliases whole, one
+  alternation pass yielding spans, with tests), drawn by
+  `editor/codeHighlight.ts` as inline decorations over every fenced block
+  with a language, recomputed on a document change — never in the text;
+  the corner language label and the four token colours are the
+  stylesheet's, off the block's data-lang, the label yielding to the
+  copy button on hover. THE COPY BUTTON (`chrome/CopyButton.svelte`,
+  11-copy-a-code-block…js) is ONE fixed button over whichever code
+  block, quote, card, verse or prose block, note or reference the mouse
+  is nearest inside — a quote inside a quote is one nest, a card or a
+  code block between them stopping the climb — clamped under the
+  masthead, wide enough to cover a code block's label, hidden in the
+  source view. It copies a code block's lines, or the block's FULL
+  markdown (the node found through the view, serialized as a document of
+  one block) with the block's rendered HTML beside it; "copied" is said
+  only for the block it is still over, keyed on the element and a click
+  counter. NOT CARRIED YET: the inline-style sweep that makes the HTML
+  flavour arrive with its colour, rule and paired grid — that is item 8's
+  rich flavour, next. MEASURED 2026-09-08 in headless Helium: "```js",
+  Enter, "const n = 42 // answer" gives a block labelled js with const,
+  42 and the comment as tokens; the hover shows "Copy this code block"
+  inside the block's edge with the label faded; the click says "copied".
+  `dist/index.html` is 722.23 kB.
 

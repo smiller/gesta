@@ -53,6 +53,9 @@ import { registered, childrenOf } from "./store/lists.ts";
 import Corner from "./chrome/Corner.svelte";
 import Masthead from "./chrome/Masthead.svelte";
 import Toolbar from "./chrome/Toolbar.svelte";
+import CopyButton from "./chrome/CopyButton.svelte";
+import { writeClipboard } from "./chrome/clipboard.ts";
+import { schema } from "./model/schema.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, curlSelection, inCode, formatState, cutMd, replaceWithLink } from "./editor/format.ts";
 import { firstHeading } from "./store/headings.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
@@ -83,6 +86,7 @@ const acts = {
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
+  copyBlock: () => {},
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {} },
@@ -91,6 +95,7 @@ const acts = {
 const closePanel = (): void => { screen.panel = null; };
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
 mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
+mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
@@ -581,6 +586,72 @@ if (fixture && fixtures[fixture]) {
     if ((e.target as Element).closest(".linebar")) return;
     closeLineBar();
   });
+  /* THE COPY BUTTON: over whichever code block, quote, card, verse or
+     prose block, note or reference the mouse is nearest inside; a quote
+     inside a quote is ONE block with levels, so the copy is the whole
+     nest, a card or a code block between them stopping the climb. It
+     copies a code block's lines, or the block's FULL markdown — fences
+     and "> " markers included — with the rendered HTML beside it. The
+     label says "copied" only for the block it is still over, keyed on
+     the element and a click counter, since a two-flavour write does not
+     settle at once. */
+  const cp = screen.copy;
+  let copyTarget: HTMLElement | null = null, copySeq = 0, copyReset: ReturnType<typeof setTimeout> | null = null;
+  const BLOCKS = "pre, blockquote, div.note, div.reference, div[class^='card-'], div.verse, div.prose";
+  const hideCopy = (): void => { copyTarget = null; cp.show = false; if (copyReset) clearTimeout(copyReset); cp.label = "copy"; };
+  const showCopy = (target: HTMLElement): void => {
+    if (target !== copyTarget) { if (copyReset) clearTimeout(copyReset); cp.label = "copy"; }
+    copyTarget = target;
+    const rect = target.getBoundingClientRect();
+    const head = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 7;
+    const top = Math.max(rect.top + 5, head);
+    if (top > rect.bottom - 27 || rect.top > window.innerHeight) { hideCopy(); return; }
+    let cover = 0;
+    const isPre = target.tagName === "PRE";
+    if (isPre && target.dataset.lang) { const cs = getComputedStyle(target, "::after"); cover = (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4; }
+    const cls = target.className || "";
+    cp.title = isPre ? "Copy this code block" : /^card-/.test(cls) ? "Copy this card" : target.classList.contains("verse") ? "Copy this verse"
+      : target.classList.contains("prose") ? "Copy this prose" : target.classList.contains("reference") ? "Copy this reference"
+      : target.classList.contains("note") ? "Copy this note" : "Copy this quote";
+    cp.minWidth = cover > 0 ? Math.ceil(cover) : 0;
+    cp.top = top;
+    cp.right = document.documentElement.clientWidth - rect.right + 8;
+    cp.show = true;
+  };
+  document.addEventListener("mouseover", (e) => {
+    const t = e.target as Element | null;
+    if (!t?.closest || t.closest(".copybtn")) return;
+    let target = t.closest(BLOCKS) as HTMLElement | null;
+    while (target && target.parentElement && target.tagName === "BLOCKQUOTE" && target.parentElement.tagName === "BLOCKQUOTE") target = target.parentElement;
+    if (target && session.view?.dom.contains(target) && !session.mdView) showCopy(target); else hideCopy();
+  });
+  window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
+  /* the block the DOM element draws, found through the view */
+  const blockAt = (el: HTMLElement): import("prosemirror-model").Node | null => {
+    const view = session.view;
+    if (!view) return null;
+    const pos = view.posAtDOM(el, 0);
+    const $pos = view.state.doc.resolve(pos);
+    for (let d = $pos.depth; d >= 1; d--) if (view.nodeDOM($pos.before(d)) === el) return $pos.node(d);
+    const after = view.state.doc.nodeAt(pos);
+    return after && view.nodeDOM(pos) === el ? after : null;
+  };
+  acts.copyBlock = () => {
+    const view = session.view;
+    if (!copyTarget || !view || !view.dom.contains(copyTarget)) { hideCopy(); say("Nothing to copy", 2000); return; }
+    const mine = copyTarget, seq = ++copySeq;
+    const done = (ok: boolean): void => {
+      if (mine !== copyTarget || seq !== copySeq) return;
+      cp.label = ok ? "copied" : "copy failed";
+      if (copyReset) clearTimeout(copyReset);
+      copyReset = setTimeout(() => { cp.label = "copy"; }, 1200);
+    };
+    const node = blockAt(copyTarget);
+    if (!node) { done(false); say("Copy failed", 3000); return; }
+    const payload = node.type === schema.nodes.code_block ? node.textContent.replace(/\n$/, "")
+      : { text: serializeMarkdown(schema.nodes.doc.create(null, [node])), html: copyTarget.outerHTML.replace(/​/g, "") };
+    writeClipboard(payload).then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
+  };
   /* THE FLOATING BAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
      source view and over a search jump's selection until the reader next
