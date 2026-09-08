@@ -836,5 +836,12 @@ here NOW, and what is not yet:
   with the caret at "music be" where it had been placed; "MUSIC " typed
   and a Tab, then ⌃⌘M back, render "MUSIC   music be" with the caret
   after the edit and the store identical. `dist/index.html` is 626.38 kB.
-  Confirmed by hand in Helium the same day.
+  Confirmed by hand in Helium the same day, the Making Verity Cards
+  page's formatting surviving the round trip. FOUND by hand the same
+  day: a toggle taken from the top of a long entry landed the window at
+  the source's END — a fresh textarea's selection sits at its end, and
+  focusing scrolls that into view before the caret was placed; MEASURED
+  in headless Helium (scrollY 1619 for a caret at index 2), fixed by
+  placing the caret BEFORE the focus (scrollY 0 from the top, 466 for the
+  mid-entry caret's own line).
 

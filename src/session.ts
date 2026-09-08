@@ -160,8 +160,11 @@ export function startSession(opts: SessionOptions): Session {
       const arriving = arrivingCount(carets[here], carets[other], flat.text, true);
       const pos = arriving ? (positionAt(flat, arriving.at) ?? source.value.length) : source.value.length;
       placedAt = arriving ? arriving.at : null;
-      source.focus();
+      /* the caret BEFORE the focus: a fresh textarea's selection sits at
+         its end, and focusing scrolls that into view — MEASURED 2026-09-07
+         in Helium, a toggle from the top landed the window at the end */
       source.setSelectionRange(pos, pos);
+      source.focus();
     } else if (view) {
       const flat = flattenDoc(view.state.doc);
       const arriving = arrivingCount(carets[here], carets[other], flat.text, false);
