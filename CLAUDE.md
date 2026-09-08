@@ -3,9 +3,10 @@
 Gesta rebuilt as a project with a build step: the editor on ProseMirror, the
 chrome on Svelte 5, the output still ONE `index.html` that opens from
 `file://`. The plan and phase 0's record are
-`../writer/docs/plans/2026-09-07-feat-successor-app-prosemirror-svelte-plan.md`;
-from phase 1 on the decisions and measurements are recorded HERE, in the
-dated sections below, and in this repository's history;
+`docs/plans/2026-09-07-feat-successor-app-prosemirror-svelte-plan.md`
+(moved here 2026-09-07; the copy in ../writer/docs/plans is marked
+continued here); from phase 1 on the decisions and measurements are
+recorded in the dated sections below, and in this repository's history;
 the running app is `../writer`, and it stays the running app until this one
 imports the whole export and has been used for real entries.
 
@@ -59,6 +60,9 @@ here NOW, and what is not yet:
 - `tools/helium-bridge.mjs` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
+- `tools/referenceCorpus.ts` — the citation label for entry keys over the
+  mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
+  the current app's ⌃⌘C on the same entries is the other side.
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
@@ -94,13 +98,20 @@ here NOW, and what is not yet:
   the backup writer with its sweep and reconcile), `exportEntries.ts` (the
   export walk over the cache and the image store), `backup.ts` (the
   automated backup: the run, the idle debounce, the folder setup and the
-  resume, as a factory over callbacks). Tests beside them, ported from the
+  resume, as a factory over callbacks), `folio.ts` (the folio token
+  grammar), `reference.ts` (the citation grammar and the label over an
+  injected journal), `headings.ts` (an entry's title and a root's
+  directive, read from the cache). Tests beside them, ported from the
   current app's node suites where they had one.
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
   open by hash, the debounced save through the layer, the flush on leave,
-  the refusal of an unknown book, the walk and today. `src/editor/images.ts`
-  is the image node view it supplies, resolving a relative src from the
-  store.
+  the refusal of an unknown book, the walk and today, the reference and
+  the entry link to the clipboard. `src/editor/images.ts` is the image node
+  view it supplies, resolving a relative src from the store;
+  `src/editor/reference.ts` the selection half of a reference — the rows
+  covered, the line and leaf ranges, the highlight payload, the passage.
+- `docs/plans/` — the plan, moved here 2026-09-07, with a "Where we are"
+  table at its head kept current per phase.
 - `fixtures/` — the markdown the page opens with, copied from the export
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
   direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
@@ -408,3 +419,29 @@ here NOW, and what is not yet:
   the export by `diff -rq`, and one archive (Marlowe, 20 files) passing
   `unzip -tq`. The reload after it said "13565 entries stored" and no
   "backing up…": the signature matched and the dedup wrote nothing.
+- THE CITATION is reference.mjs, folio.mjs and 24-copying-a-reference.js
+  ported: the grammar whole with its tests, the label over a Journal the
+  caller supplies (an entry's title, a root's "from the last title"
+  directive), and the selection half re-asked of document positions —
+  "covers" is an overlap that holds ink, a passage is rows or a cut of the
+  document serialized back to markdown. ⌃⌘R copies the reference, ⌃⌘C the
+  entry link, text/plain only until phase 3's chrome adds the rich
+  flavour. AN ENTRY'S TITLE IS ITS FIRST LEVEL-ONE HEADING everywhere
+  (decision 5), where the current app read a sub-page's first heading of
+  either level; the legacy `<a name="#pN">` folio form is not read
+  (MEASURED: none in the mirror). The highlight payload counts the
+  selected text as a literal substring without the search's case folding
+  (search is phase 3's).
+- MEASURED 2026-09-07 (`node tools/referenceCorpus.ts` over the mirror):
+  the nine corpus cases the current app's referenceParts documents label
+  exactly as its table says — Milton, *Paradise Lost*, 1; Shakespeare,
+  *King John*, 3.1; Rostand, *Cyrano de Bergerac*, 1.2; Boethius, *De
+  consolatione philosophiae*, 1m2; Housman, *Last Poems*, *25. The
+  Oracles*; Blake, *Songs of Innocence*, *A Cradle Song*; Dante,
+  *Inferno*, 7; Doctor Who, *New Earth*; Lewis, *The Screwtape Letters*,
+  12 — plus Williams, *Witchcraft*, *3. The Dark Ages*; Horace, *Odes*,
+  1.1; a Marginalian sub-page by its heading; *Books*; *Gesta*, 22 June
+  2021. MEASURED the same day by hand: the current app's ⌃⌘C on the same
+  fourteen entries gave the same fourteen labels character for character,
+  and its hrefs the encoding the successor's entry link writes. The
+  passage half (⌃⌘R over one selection in both apps) is not yet compared.

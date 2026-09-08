@@ -16,6 +16,8 @@ import { entryKey, entryHash, todayKey, nsOf, pageParts } from "./store/keys.ts"
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
+import { journalOf } from "./store/headings.ts";
+import { referencePayload, entryLink, REFUSAL_TEXT } from "./editor/reference.ts";
 import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
 
@@ -41,6 +43,8 @@ export interface Session {
   goto(hash: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
+  copyReference(): void;
+  copyEntryLink(): void;
   setInterval(n: number): void;
 }
 export const SAVE_DEBOUNCE_MS = 500;
@@ -48,6 +52,7 @@ const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg
 
 export function startSession(opts: SessionOptions): Session {
   const { mount, layer, images, say } = opts;
+  const journal = journalOf(layer.cache);
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
   let view: EditorView | null = null;
@@ -135,6 +140,22 @@ export function startSession(opts: SessionOptions): Session {
     goto(entryHash(nb[0], nb[1]));
   }
   function today(): void { goto(entryHash(todayKey())); }
+  /* ⌃⌘R copies a reference to the selected passage, ⌃⌘C a link to the
+     entry; text/plain only until phase 3 adds the rich flavour. A failed
+     write is logged with the payload, which lives nowhere else. */
+  function copy(text: string, okText: string, failText: string): void {
+    navigator.clipboard.writeText(text).then(() => say(okText), (err: unknown) => { console.error(failText, err, text); say(failText); });
+  }
+  function copyReference(): void {
+    if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
+    const out = referencePayload(view.state, current.date, current.tag, journal);
+    if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
+    copy(out.text, "Reference copied to clipboard", "Couldn't copy the reference");
+  }
+  function copyEntryLink(): void {
+    if (!layer.warmed) { say("Still loading — try that again in a moment"); return; }
+    copy(entryLink(current.date, current.tag, journal), "Link copied", "Couldn't copy the link");
+  }
   /* the flush on leave: a navigation saves the entry being left; a hidden
      tab and an unload land what the debounce still holds */
   window.addEventListener("hashchange", () => { flushSave().then(openHash); });
@@ -147,11 +168,13 @@ export function startSession(opts: SessionOptions): Session {
     if (e.key === ",") { e.preventDefault(); step("prev"); }
     else if (e.key === ".") { e.preventDefault(); step("next"); }
     else if (e.key === "t") { e.preventDefault(); today(); }
+    else if (e.key === "r") { e.preventDefault(); copyReference(); }
+    else if (e.key === "c") { e.preventDefault(); copyEntryLink(); }
   });
   return {
     get current() { return current; },
     get view() { return view; },
-    open, openHash, saveNow, flushSave, goto, step, today,
+    open, openHash, saveNow, flushSave, goto, step, today, copyReference, copyEntryLink,
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };
 }
