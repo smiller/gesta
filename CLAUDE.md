@@ -756,5 +756,5 @@ here NOW, and what is not yet:
   "a tagged entry holds no entries of its own" where the button is
   hidden, since a chord is a press. MEASURED in headless Helium: ⌃⌘N on
   a day with "Ideas" answered opens #2026-09-06/Ideas; ⌃⌘N there
-  whispers the refusal.
+  whispers the refusal. Confirmed by hand in Helium the same day.
 
