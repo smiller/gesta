@@ -4,9 +4,9 @@
    or http(s) src is left to the browser. Decided 2026-09-07 with the
    store's rule that a picture is its bytes under its export path. */
 import type { NodeViewConstructor } from "prosemirror-view";
+import { RELATIVE_SRC } from "../store/names.ts";
 
 export type ImageResolver = (src: string) => Promise<string | null>;
-export const RELATIVE_SRC = /^(?!(?:[a-z][a-z0-9+.-]*:|\/\/|\/))/i;
 export function imageView(resolve: ImageResolver): NodeViewConstructor {
   return (node) => {
     const dom = document.createElement("img");

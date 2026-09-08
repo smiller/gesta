@@ -2,7 +2,7 @@
    two pure decisions over a pick. Ported 2026-09-07 from
    ../writer/src/js/plans.mjs (the records) and io.mjs (oneEach, entryDocs). */
 import { entryKey } from "./keys.ts";
-import { importTarget } from "./names.ts";
+import { importTarget, type EntryFile } from "./names.ts";
 
 /* an export file is an entry's markdown (a doc) or a doc's image sidecar,
    which rides as raw `bytes` — or a file that is neither, which takes the
@@ -16,9 +16,24 @@ export interface DocFile { dir: string; name: string; text: string; unread?: fal
 export interface UnreadDoc { dir: string; name: string; unread: true }
 export interface SidecarFile { dir: string; name: string; bytes: Uint8Array | null; unread?: boolean }
 export type ImportFile = DocFile | UnreadDoc | SidecarFile;
-export function isDoc(f: ImportFile): f is DocFile | UnreadDoc { return !("bytes" in f); }
+/* an EXPORT record: a doc's text or a sidecar's bytes, and what the backup
+   needs to know about it — `flat` the stem it had before folders existed
+   (the relayout sweep's name), `entry` the entry it belongs to (the sweep's
+   unit of safety), `root` the archive it belongs to, `sig` its content
+   hash once asked for, `picsLost` the entry target when a picture the text
+   names had no bytes, `picsFaulted` when a picture read threw */
+export interface ExportFile {
+  dir: string; name: string;
+  text?: string; bytes?: Uint8Array | null;
+  flat?: string; entry?: string; root?: string; sig?: string;
+  picsLost?: EntryFile; picsFaulted?: boolean;
+}
+export function isDoc(f: object): boolean { return !("bytes" in f); }
+export function fileBody(f: ExportFile): string | Uint8Array { return isDoc(f) ? f.text! : f.bytes!; }
 /* where a file sits — the ONE spelling of the join */
-export function filePath(f: { dir: string; name: string }): string { return (f.dir || "") + f.name; }
+export function filePath(f: { dir?: string; name: string }): string { return (f.dir || "") + f.name; }
+/* the name a file carries where there are no folders at all */
+export function flatName(f: ExportFile): string { return f.flat || f.name; }
 export function unreadFile(name: string, dir: string): ImportFile {
   return /\.md$/i.test(name) ? { dir, name, unread: true } : { dir, name, unread: true, bytes: null };
 }
@@ -36,6 +51,13 @@ export function failMsg(op: string, err: unknown): string { return op + " — " 
 export function entryDocs(files: ImportFile[]): (DocFile | UnreadDoc)[] {
   return files.filter((f): f is DocFile | UnreadDoc => isDoc(f) && importTarget(filePath(f)) !== null);
 }
+/* the session-fatal File System Access errors — permission revoked, the
+   picker dismissed, the directory removed — that abort a whole write chain
+   rather than failing one file */
+export function fsaFatal(err: unknown): boolean {
+  const e = err as { name?: string } | null;
+  return !!e && (e.name === "AbortError" || e.name === "NotAllowedError" || e.name === "SecurityError");
+}
 export interface Merged extends Error { merged: string }
 /* one file per ENTRY — never per filename, which stopped being an identity
    when pages nested: page/A/Notes.md and page/B/Notes.md are two entries.
@@ -46,7 +68,7 @@ export interface Merged extends Error { merged: string }
    is read, reading a large folder being what exhausts the tab. An entry key
    and a path are both bare strings of one shape, so they are PREFIXED
    apart. Returns the input, in its order: nothing is dropped or preferred. */
-export function oneEach<F extends { dir: string; name: string }>(found: F[]): F[] {
+export function oneEach<F extends { dir?: string; name: string }>(found: F[]): F[] {
   const best: Record<string, F> = Object.create(null);
   for (const e of found) {
     const path = filePath(e);

@@ -11,9 +11,13 @@ import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
-import { idbEntryStore, idbImageStore } from "./store/store.ts";
+import { idbEntryStore, idbImageStore, idbBackupStore } from "./store/store.ts";
+import { exportEntries } from "./store/exportEntries.ts";
+import { writeFilesTo } from "./store/io.ts";
+import { backupRunner } from "./store/backup.ts";
 import { entryLayer } from "./store/entries.ts";
-import { pickImportFiles, type DirHandle } from "./store/pick.ts";
+import { pickImportFiles } from "./store/pick.ts";
+import type { Dir } from "./store/fsa.ts";
 import { importFiles } from "./store/importFiles.ts";
 import { entryDocs, isDoc, failMsg } from "./store/files.ts";
 import { startSession } from "./session.ts";
@@ -28,6 +32,8 @@ const out = document.getElementById("out") as HTMLElement;
 const same = document.getElementById("same") as HTMLElement;
 const interval = document.getElementById("interval") as HTMLSelectElement;
 const status = document.getElementById("status") as HTMLElement;
+const paused = document.getElementById("paused") as HTMLElement;
+const backupsBtn = document.getElementById("backups") as HTMLButtonElement;
 const where = document.getElementById("where") as HTMLElement;
 const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
@@ -61,10 +67,25 @@ if (fixture && fixtures[fixture]) {
   interval.addEventListener("change", () => setLineInterval(+interval.value)(v.state, v.dispatch));
   root.dataset.store = "scratch";
 } else {
+  const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
+  const backup = backupRunner({
+    layer, images, store: idbBackupStore(),
+    picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
+    say,
+    onTrouble: (msg) => { paused.hidden = !msg; paused.textContent = msg; backupsBtn.textContent = backup.configured ? "change backup folder…" : "set up automatic backups…"; },
+    stick: (text, err, copy) => { console.error(text, err, copy); say(text); },
+  });
+  backupsBtn.textContent = backup.configured ? "change backup folder…" : "set up automatic backups…";
+  backupsBtn.addEventListener("click", () => { backup.setupBackupFolder(); });
+  paused.addEventListener("click", () => { backup.resumeBackups(); });
   const session = startSession({
     mount, layer, images, interval: +interval.value, say,
     onShow: (md, stored, ekey) => showMd(md, stored, ekey),
+    onEdit: () => backup.scheduleBackup(),
   });
+  /* leaving the tab with a backup still pending writes it at once, after
+     the session's own flush (registered first, so it runs first) */
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   interval.addEventListener("change", () => session.setInterval(+interval.value));
   document.getElementById("prev")!.addEventListener("click", () => session.step("prev"));
   document.getElementById("next")!.addEventListener("click", () => session.step("next"));
@@ -82,12 +103,38 @@ if (fixture && fixtures[fixture]) {
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
     session.openHash();
+    backup.runBackup();
+  });
+  /* the manual export: a folder the user picks, filled with the journal as
+     it stands. The picker opens FIRST, in the click; the flush and the walk
+     run alongside. Nothing here deletes: the sweep belongs to the backup
+     tiers, whose names this app reserves. */
+  document.getElementById("export")!.addEventListener("click", () => {
+    if (!win.showDirectoryPicker) { say("export needs a browser that can open a folder to write into"); return; }
+    if (!layer.warmed) { say("still loading — try that again in a moment"); return; }
+    const dirPicked = win.showDirectoryPicker({ mode: "readwrite" });
+    dirPicked.catch(() => {});
+    say("exporting…");
+    session.flushSave().then(() => exportEntries(layer.cache, images)).then((files) => {
+      if (!files.length) { say("nothing to export"); return; }
+      const docs = files.filter(isDoc).length;
+      return dirPicked.then((dir) => writeFilesTo(dir, files, (n, of) => say("exporting… " + n + " / " + of))).then((failures) => {
+        if (failures.length) {
+          const lostDocs = failures.filter((x) => x.doc).length;
+          console.error("export: " + failures.length + " file(s) failed", failures);
+          say("exported " + (docs - lostDocs) + " entries; " + failures.length + " file(s) failed");
+        } else say("exported " + docs + " entries");
+      });
+    }).catch((err: unknown) => {
+      if ((err as Error)?.name === "AbortError") { say(""); return; }
+      console.error("export failed", err);
+      say((err as { collision?: boolean })?.collision ? "export failed — " + (err as Error).message : failMsg("export failed", err));
+    });
   });
   /* the picker opens synchronously in the click, then: names, the refusal,
      the read, the count-then-confirm gate, the sequential import, the tally.
      The import NEVER clears — it overwrites entry by entry and deletes
      nothing, so a subset folder lands only its own entries. */
-  const win = window as unknown as { showDirectoryPicker?: () => Promise<DirHandle> };
   document.getElementById("import")!.addEventListener("click", () => {
     if (!win.showDirectoryPicker) { say("import needs a folder picker"); return; }
     session.flushSave();

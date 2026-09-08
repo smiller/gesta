@@ -10,7 +10,7 @@
 import { parseMarkdown } from "../model/parse.ts";
 import { entryKey } from "./keys.ts";
 import { importTarget } from "./names.ts";
-import { entryDocs, filePath, isDoc, type ImportFile } from "./files.ts";
+import { entryDocs, filePath, type ImportFile } from "./files.ts";
 
 /* what the import writes through: the entry layer's landed-or-not write,
    and the image store keyed by path */
@@ -60,7 +60,7 @@ export interface Tally { imported: number; failed: number; attempted: number; fa
    is counted, never attempted. Progress reports after each doc settles. */
 export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: (done: number, total: number) => void): Promise<Tally> {
   const sidecars: Sidecars = Object.create(null);
-  for (const f of files) if (!isDoc(f)) sidecars[filePath(f)] = f.bytes;
+  for (const f of files) if ("bytes" in f) sidecars[filePath(f)] = f.bytes;
   const docs = entryDocs(files);
   const tally: Tally = { imported: 0, failed: 0, attempted: docs.length, failures: [] };
   let done = 0;

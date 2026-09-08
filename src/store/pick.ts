@@ -6,22 +6,15 @@
    is not, so nothing is opened until the decision is made. */
 import { oneEach, unreadFile, type ImportFile } from "./files.ts";
 
-/* the directory handle's iteration, which lib.dom does not yet declare */
-export interface DirHandle {
-  kind: "directory";
-  name: string;
-  values(): AsyncIterableIterator<DirHandle | FileHandle>;
-}
-export interface FileHandle {
-  kind: "file";
-  name: string;
-  getFile(): Promise<{ text(): Promise<string>; arrayBuffer(): Promise<ArrayBuffer> }>;
-}
-export interface Found { dir: string; name: string; handle: FileHandle }
-export async function walkFolder(dir: DirHandle): Promise<Found[]> {
+import type { Dir, FileH } from "./fsa.ts";
+export type { Dir as DirHandle, FileH as FileHandle };
+export interface Found { dir: string; name: string; handle: FileH }
+export async function walkFolder(dir: Dir): Promise<Found[]> {
   const found: Found[] = [];
-  async function walk(d: DirHandle, at: string): Promise<void> {
-    for await (const v of d.values()) {
+  async function walk(d: Dir, at: string): Promise<void> {
+    const it = d.values();
+    for (let res = await it.next(); !res.done; res = await it.next()) {
+      const v = res.value;
       if (v.kind === "directory") await walk(v, at + v.name + "/");
       else found.push({ dir: at, name: v.name, handle: v });
     }
@@ -40,6 +33,6 @@ export function readFound(e: Found): Promise<ImportFile> {
     .catch(() => unreadFile(e.name, e.dir));
 }
 /* PHASE TWO — read, once the names have passed oneEach, which drops nothing */
-export function pickImportFiles(dir: DirHandle): Promise<ImportFile[]> {
+export function pickImportFiles(dir: Dir): Promise<ImportFile[]> {
   return walkFolder(dir).then((found) => Promise.all(oneEach(found).map(readFound)));
 }

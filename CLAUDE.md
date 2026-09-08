@@ -86,9 +86,16 @@ here NOW, and what is not yet:
   parse gate, the tally), `pick.ts` (the walk over directory handles,
   names first, then the read), `nav.ts` (the address grammar: a hash to
   the entry it names, an href to the link minted for it), `lists.ts` (the
-  derived lists and the neighbour walks, over the cache's keys). Tests
-  beside them, ported from the current app's node suites where they had
-  one.
+  derived lists and the neighbour walks, over the cache's keys),
+  `fsa.ts` (the directory and file handle types the fakes are shaped to),
+  `plans.ts` (the backup's pure decisions: the dedup, the reconcile, the
+  archive plan, the day's census), `zip.ts` (the zip byte format),
+  `io.ts` (the disk edge: the tolerant writer, the listing, the zip walk,
+  the backup writer with its sweep and reconcile), `exportEntries.ts` (the
+  export walk over the cache and the image store), `backup.ts` (the
+  automated backup: the run, the idle debounce, the folder setup and the
+  resume, as a factory over callbacks). Tests beside them, ported from the
+  current app's node suites where they had one.
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
   open by hash, the debounced save through the layer, the flush on leave,
   the refusal of an unknown book, the walk and today. `src/editor/images.ts`
@@ -370,3 +377,34 @@ here NOW, and what is not yet:
   holds"; #2022-02-06 shows its pictures, resolved from the store by their
   relative names, the pane still identical. No fixture carries a picture,
   so the image view's look stays a hand's.
+- EXPORT AND THE BACKUP are plans.mjs, io.mjs, zip.mjs, 28-export.js and
+  35-automated-durable-export ported with their decisions intact — the
+  archives before the mirror, the dedup that may skip on its own and the
+  reconcile that may not delete on its own, the belt, the entry as the
+  sweep's unit, the day's census written only on a clean day. What the
+  markdown store made simpler: `exportEntries` is a walk over the cache
+  with the sidecars read back by path, no HTML to serialize and no data
+  URL to peel; `backupSig` hashes the cache's markdown. ZIP STAYS
+  HAND-ROLLED where the plan's inventory said fflate: 99 lines carrying
+  two measured decisions (the Unix host byte, the file mode) that a library
+  would have to be checked against, and the tests read the archive back
+  through the engine's own DecompressionStream. The notice ledger (the
+  savedGen pin, the busy yield) is not carried: the runner takes a status
+  line, a trouble callback and a stick callback, and phase 3's chrome
+  decides what they paint. `unreadEntries` has no counterpart — the cache
+  is complete after the warm — so the reconcile spares only the entries
+  whose pictures did not arrive.
+- MEASURED 2026-09-07 by hand in Helium: `export…` into an empty folder
+  wrote 13,565 entries, and `diff -rq` against the mirror it was imported
+  from found 13,565 md files and 297 pictures on each side, zero files
+  differing, nothing only in the export. The 70 directories only in the
+  mirror are EMPTY (`find -type d -empty`): the current app's reconcile
+  deletes files and never directories, and an export makes only the
+  folders its files need. MEASURED the same day by hand: `set up automatic
+  backups…` into an empty folder counted "backing up… N / 13650" (85
+  archives, then 13,565 docs) and ended "backed up"; the folder then held
+  `archive` and `current` only, 85 zips under bookshelf, journal and page,
+  a manifest of 85 lines naming each root's zip, `current` identical to
+  the export by `diff -rq`, and one archive (Marlowe, 20 files) passing
+  `unzip -tq`. The reload after it said "13565 entries stored" and no
+  "backing up…": the signature matched and the dedup wrote nothing.

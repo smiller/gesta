@@ -6,6 +6,9 @@
 import { nsOf, isDayKey, pageParts } from "./keys.ts";
 
 export const utf8 = new TextEncoder();
+/* a RELATIVE picture source — a sidecar's name as the markdown wrote it —
+   as against a data:, http(s): or absolute one the browser resolves itself */
+export const RELATIVE_SRC = /^(?!(?:[a-z][a-z0-9+.-]*:|\/\/|\/))/i;
 /* the folder a DAY's files sit in, derived from its own key. Spelled ONCE:
    entryFile builds a day's path from this and importTarget checks a day's
    path against it, so the two agree by construction. Not a namespace: a

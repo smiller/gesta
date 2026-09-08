@@ -14,16 +14,17 @@ function fakeDir(tree: Tree, name = ""): DirHandle {
         else yield fakeFile(n, v);
       }
     },
-  };
+  } as unknown as DirHandle;
 }
 function fakeFile(name: string, v: string | Uint8Array | Error): FileHandle {
   return {
     kind: "file", name,
     getFile: () => v instanceof Error ? Promise.reject(v) : Promise.resolve({
+      size: 0,
       text: () => typeof v === "string" ? Promise.resolve(v) : Promise.reject(new Error("binary")),
       arrayBuffer: () => Promise.resolve((typeof v === "string" ? new TextEncoder().encode(v) : v).buffer as ArrayBuffer),
     }),
-  };
+  } as unknown as FileHandle;
 }
 
 test("walkFolder lists every file with its folder path, depth-first, names only", async () => {
@@ -52,10 +53,16 @@ test("pickImportFiles reads a .md as text and anything else as bytes; an unreada
 test("pickImportFiles refuses two files spelling one entry before reading anything", async () => {
   let reads = 0;
   const dir = fakeDir({ "page": { "Trip--Log.md": "a", "Trip-Log.md": "b" } });
-  const counting: DirHandle = {
+  const counting = {
     ...dir,
-    async *values() { for await (const v of dir.values()) yield v.kind === "file" ? { ...v, getFile: () => { reads++; return v.getFile(); } } : v; },
-  };
+    async *values() {
+      const it = dir.values();
+      for (let r = await it.next(); !r.done; r = await it.next()) {
+        const v = r.value;
+        yield v.kind === "file" ? { ...v, getFile: () => { reads++; return v.getFile(); } } : v;
+      }
+    },
+  } as unknown as DirHandle;
   await expect(pickImportFiles(counting)).rejects.toMatchObject({ merged: "page/Trip-Log.md" });
   expect(reads).toBe(0);
 });

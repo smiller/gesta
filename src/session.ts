@@ -28,6 +28,8 @@ export interface SessionOptions {
   /* the markdown on screen changed or an entry opened: the page's own
      display of it (the details pane, the root's data attributes) */
   onShow?: (md: string, stored: string, ekey: string) => void;
+  /* an edit landed in the document — what arms the backup's idle timer */
+  onEdit?: () => void;
 }
 export interface Session {
   readonly current: { date: string; tag: string | null };
@@ -85,7 +87,7 @@ export function startSession(opts: SessionOptions): Session {
     const dir = entryFile(date, tag).dir;
     view = createEditor(mount, doc, {
       interval,
-      onChange: () => { scheduleSave(); show(); },
+      onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
       nodeViews: { image: imageView(resolver(dir)) },
     });
     document.documentElement.dataset.entry = ekey;
