@@ -79,6 +79,7 @@ await page.keyboard.press("Shift+Tab");
 await page.keyboard.press("Shift+Tab");
 await page.waitForTimeout(200);
 console.log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out")?.textContent), ...(await corner()) }));
+console.log("the gap between the two outer items, and a line's height:", JSON.stringify(await page.evaluate(() => { const li = document.querySelectorAll("#editor ul > li"); const a = li[0].getBoundingClientRect(), b = li[li.length - 1].getBoundingClientRect(); const p = document.querySelectorAll("#editor li > p"); return { outerGapPastNestedList: +(b.top - a.bottom).toFixed(1), lineToNextLine: +(p[1].getBoundingClientRect().top - p[0].getBoundingClientRect().bottom).toFixed(1), line: +p[0].getBoundingClientRect().height.toFixed(1) }; })));
 await page.goto(PAGE + "#page/Links");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Links", null, { timeout: 15000 });
 await page.keyboard.press("Control+Meta+k");

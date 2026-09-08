@@ -697,5 +697,13 @@ here NOW, and what is not yet:
   MEASURED 2026-09-07 in headless Helium (`tools/helium-corner.mjs`):
   "- one", Enter, "two", Tab, Enter, "three", Shift-Tab, Shift-Tab typed
   into a fresh page gave "- one / (nested) two / - three" and the corner
-  "at the outer level". `dist/index.html` is 606.64 kB.
+  "at the outer level". `dist/index.html` is 606.64 kB. By hand the same
+  day: two bullets sat a paragraph apart — the item's own line is its
+  first paragraph here, where the current app set it as bare text in the
+  li, so `.page li > p:first-child` takes no margin and a continuation
+  block keeps the current app's gap on both edges; the accent-coloured
+  marker was ported with it. MEASURED in headless Helium after: 2.7px
+  between two adjacent item lines (the 0.15em item margin, collapsed),
+  a nested list still 18px (its own 1em bottom margin, as in the current
+  app).
 

@@ -54,6 +54,17 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page blockquote blockquote { margin: 0.6em 0; background: rgba(30, 51, 32, 0.05); }
 .page ul, .page ol { margin: 0 0 1em; padding-left: 1.6em; }
 .page li { margin: 0.15em 0; }
+/* the item's OWN LINE is its first paragraph, and takes no margin: the
+   current app set that line as bare text in the li, and only a
+   continuation block hanging under an item was a paragraph. Those keep
+   the gap on BOTH edges — .page p carries its margin only on the bottom,
+   which never draws the space owed between the item's line and its first
+   block, and top-only left the last block hard against the next item.
+   Adjacent margins collapse, so blocks stay one gap apart. Noticed by
+   hand 2026-09-07: two bullets sat a paragraph apart. */
+.page li > p { margin: 1em 0; }
+.page li > p:first-child { margin: 0; }
+.page li::marker { color: var(--accent); }
 .page pre { font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); padding: 0.6em 0.9em; overflow-x: auto; }
 .page code { font-family: var(--mono); font-size: 0.9em; }
 .page table { border-collapse: collapse; margin: 0 0 1em; }
