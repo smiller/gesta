@@ -4,20 +4,9 @@
 <meta charset="utf-8">
 <title>Gesta</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  /* phase 2's details pane, the last of the page's own chrome; the masthead
-     and the corner are Svelte components mounted around <main> */
-  /* SCOPED to the pane: a bare `details` rule reached the masthead's Go to,
-     Search and Line numbering rows, which are details too, and set every
-     one 64px apart (measured 2026-09-07, by hand and by the tool) */
-  details.pane { font: 13px/1.4 -apple-system, system-ui, sans-serif; margin: 2rem 32px; color: #6b7568; }
-  details.pane pre { font: 13px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; color: #1a2418; }
-  #same.no { color: #900; }
-</style>
 </head>
 <body>
 <main><div id="editor"></div></main>
-<details class="pane"><summary>the markdown the editor holds <span id="same"></span></summary><pre id="out"></pre></details>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

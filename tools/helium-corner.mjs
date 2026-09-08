@@ -19,6 +19,10 @@ page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
 await page.goto(PAGE + "?store=seed#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 console.log("the launch's stages:", JSON.stringify(await page.evaluate(() => document.documentElement.dataset.probe)));
+/* the markdown the store holds for the open entry, read straight from
+   IndexedDB after the save's debounce — phase 2's pane, which showed the
+   editor's serialize per keystroke, came out 2026-09-08 */
+const storedMd = async () => { await page.waitForTimeout(800); return page.evaluate(() => new Promise((res, rej) => { const key = document.documentElement.dataset.entry; const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction("entries").objectStore("entries").get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; })); };
 const corner = () => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; });
 console.log("after warm:", JSON.stringify(await corner()));
 console.log("masthead over Horace:", JSON.stringify(await page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; })));
@@ -77,7 +81,7 @@ await page.keyboard.press("Home");
 for (let i = 0; i < 5; i++) await page.keyboard.press("ArrowRight");
 await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
 await page.waitForTimeout(200);
-console.log("a fence pasted as text mid-paragraph:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out").textContent) }));
+console.log("a fence pasted as text mid-paragraph:", JSON.stringify({ md: await storedMd() }));
 /* a verse block copied inside the rendered view with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
 await page.goto(PAGE + "#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });
@@ -89,7 +93,7 @@ await page.waitForFunction(() => document.documentElement.dataset.entry === "pag
 await page.click("#editor .ProseMirror");
 await page.keyboard.press("Meta+v");
 await page.waitForTimeout(300);
-console.log("a verse block copied and pasted:", JSON.stringify(await page.evaluate(() => { const md = document.getElementById("out").textContent; return { fence: md.startsWith("::: verse"), pairs: document.querySelectorAll("#editor .vpair").length, head: md.split("\n").slice(0, 3) }; })));
+{ const md = await storedMd(); console.log("a verse block copied and pasted:", JSON.stringify({ fence: md.startsWith("::: verse"), pairs: await page.evaluate(() => document.querySelectorAll("#editor .vpair").length), head: md.split("\n").slice(0, 3) })); }
 /* a refused fence named on the switch back: "::: versey" typed in the source stays a paragraph and the corner says why; a clean switch releases it */
 await page.goto(PAGE + "#page/Fenced");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Fenced", null, { timeout: 15000 });
@@ -116,11 +120,11 @@ await page.click("#editor .ProseMirror");
 await page.keyboard.type("> quoted words");
 await page.keyboard.press("Tab");
 await page.waitForTimeout(150);
-console.log("Tab in a quote:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out").textContent) }));
+console.log("Tab in a quote:", JSON.stringify({ md: await storedMd() }));
 await page.keyboard.press("Shift+Tab");
 await page.keyboard.press("Shift+Tab");
 await page.waitForTimeout(150);
-console.log("Shift-Tab twice:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out").textContent), corner: await page.evaluate(() => document.querySelector(".saved.show")?.textContent) }));
+console.log("Shift-Tab twice:", JSON.stringify({ md: await storedMd(), corner: await page.evaluate(() => document.querySelector(".saved.show")?.textContent) }));
 await page.goto(PAGE + "#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });
 await page.keyboard.press("Control+Meta+l");
@@ -173,7 +177,7 @@ await page.waitForFunction(() => document.documentElement.dataset.entry === "pag
 await page.click("#editor .ProseMirror");
 await page.keyboard.press("Meta+v");
 await page.waitForTimeout(300);
-console.log("pasted on a fresh page:", JSON.stringify(await page.evaluate(() => { const md = document.getElementById("out").textContent; return { fence: md.startsWith("::: card-light-blue"), cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length, lines: md.split("\n").length }; })));
+{ const md = await storedMd(); console.log("pasted on a fresh page:", JSON.stringify({ fence: md.startsWith("::: card-light-blue"), lines: md.split("\n").length, ...(await page.evaluate(() => ({ cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length }))) })); }
 /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
 await page.goto(PAGE + "#page/Pictured");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pictured", null, { timeout: 15000 });
@@ -182,7 +186,7 @@ await page.keyboard.type("A picture: ");
 await page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
 await page.waitForFunction(() => document.querySelector("#editor img"), null, { timeout: 8000 });
 await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
-console.log("a picture pasted:", JSON.stringify(await page.evaluate(() => { const img = document.querySelector("#editor img"); return { md: document.getElementById("out").textContent, src: img.getAttribute("src")?.slice(0, 5), width: img.naturalWidth, height: img.naturalHeight, last: document.querySelector("#editor .ProseMirror").lastElementChild?.tagName }; })));
+console.log("a picture pasted:", JSON.stringify({ md: await storedMd(), ...(await page.evaluate(() => { const img = document.querySelector("#editor img"); return { src: img.getAttribute("src")?.slice(0, 5), width: img.naturalWidth, height: img.naturalHeight, last: document.querySelector("#editor .ProseMirror").lastElementChild?.tagName }; })) }));
 /* shortcuts: ⌃⌘S with an empty table opens the editor; a table saved; a code typed and Enter inserts at the caret */
 await page.goto(PAGE + "#page/Expanded");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Expanded", null, { timeout: 15000 });
@@ -294,7 +298,7 @@ await page.waitForFunction(() => document.documentElement.dataset.entry === "pag
 await page.click("#editor .ProseMirror");
 await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
 await page.waitForTimeout(200);
-console.log("a reference pasted:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out")?.textContent), link: await page.evaluate(() => document.querySelector("#editor a")?.getAttribute("href")), quote: await page.evaluate(() => document.querySelector("#editor blockquote")?.textContent) }));
+console.log("a reference pasted:", JSON.stringify({ md: await storedMd(), link: await page.evaluate(() => document.querySelector("#editor a")?.getAttribute("href")), quote: await page.evaluate(() => document.querySelector("#editor blockquote")?.textContent) }));
 await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "[*Gesta*](#2026-09-06?h=food%20of%20love)"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
 await page.waitForTimeout(200);
 await page.click("#editor a[href='#2026-09-06?h=food%20of%20love']");
@@ -313,11 +317,11 @@ const barState = () => page.evaluate(() => { const f = document.querySelector(".
 console.log("a word double-clicked:", JSON.stringify(await barState()));
 await page.click(".fmt .b");
 await page.waitForTimeout(100);
-console.log("B clicked:", JSON.stringify({ ...(await barState()), md: await page.evaluate(() => document.getElementById("out").textContent.includes("**music**")) }));
+console.log("B clicked:", JSON.stringify({ ...(await barState()), md: (await storedMd()).includes("**music**") }));
 answer = "Music";
 await page.click(".fmt .t");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06/Music", null, { timeout: 5000 });
-console.log("Tag with Music answered:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), body: await page.evaluate(() => document.getElementById("out").textContent) }));
+console.log("Tag with Music answered:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), body: await storedMd() }));
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 5000 });
 console.log("the day's text around the link:", JSON.stringify(await page.evaluate(() => { const a = document.querySelector("#editor a[href='#2026-09-06/Music']"); return a && a.parentElement.textContent.slice(0, 40); })));
@@ -328,7 +332,8 @@ await page.waitForFunction(() => document.documentElement.dataset.entry === "202
 await page.evaluate(() => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let tn; while ((tn = w.nextNode())) if (tn.textContent.includes("food of love")) break; const r = document.createRange(); r.setStart(tn, tn.textContent.indexOf("food of love")); r.collapse(true); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); });
 await page.keyboard.press("Control+Meta+m");
 await page.waitForSelector("textarea.source", { timeout: 5000 });
-console.log("⌃⌘M:", JSON.stringify(await page.evaluate(() => { const ta = document.querySelector("textarea.source"); return { pill: !document.querySelector(".mode")?.hidden, focused: document.activeElement === ta, sameAsStore: ta.value === document.getElementById("out")?.textContent, caretAt: ta.value.slice(ta.selectionStart, ta.selectionStart + 12) }; })));
+await page.evaluate((md) => { window.__storedMd = md; }, await storedMd());
+console.log("⌃⌘M:", JSON.stringify(await page.evaluate(() => { const ta = document.querySelector("textarea.source"); return { pill: !document.querySelector(".mode")?.hidden, focused: document.activeElement === ta, sameAsStore: ta.value === window.__storedMd, caretAt: ta.value.slice(ta.selectionStart, ta.selectionStart + 12) }; })));
 await page.keyboard.type("FOOD ");
 await page.keyboard.press("Tab");
 await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
@@ -410,8 +415,8 @@ await page.keyboard.press("Enter");
 await page.keyboard.press("Enter");
 await page.keyboard.type("after the block");
 await page.waitForTimeout(200);
-console.log("a code block typed, Enter twice out of it:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out")?.textContent) }));
-console.log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out")?.textContent), ...(await corner()) }));
+console.log("a code block typed, Enter twice out of it:", JSON.stringify({ md: await storedMd() }));
+console.log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice:", JSON.stringify({ md: await storedMd(), ...(await corner()) }));
 console.log("the gap between the two outer items, and a line's height:", JSON.stringify(await page.evaluate(() => { const li = document.querySelectorAll("#editor ul > li"); const a = li[0].getBoundingClientRect(), b = li[li.length - 1].getBoundingClientRect(); const p = document.querySelectorAll("#editor li > p"); return { outerGapPastNestedList: +(b.top - a.bottom).toFixed(1), lineToNextLine: +(p[1].getBoundingClientRect().top - p[0].getBoundingClientRect().bottom).toFixed(1), line: +p[0].getBoundingClientRect().height.toFixed(1) }; })));
 await page.goto(PAGE + "#page/Links");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Links", null, { timeout: 15000 });

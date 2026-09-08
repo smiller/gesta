@@ -1,7 +1,8 @@
 /* The page: the editor over the journal in the store, under the MASTHEAD
    and beside the CORNER — phase 3's components over the shared screen
-   state — with phase 2's details pane still showing the markdown the
-   editor holds beside what the store holds. This file is the wiring: the
+   state. Phase 2's scaffolding, the clear button and the markdown pane
+   under the entry, came out 2026-09-08; the headless tools read the
+   store itself. This file is the wiring: the
    layer, the backup, the session and the ledger meet here, and the
    masthead's buttons call what each arm binds. `?fixture=pippa&interval=1` opens a fixture in SCRATCH — no
    store, no save — for a headless look as much as for a hand;
@@ -67,8 +68,6 @@ import williams from "../fixtures/williams-witchcraft-3.md?raw";
 
 const fixtures: Record<string, string> = { horace, pippa, twelfth, williams };
 const mountEl = document.getElementById("editor") as HTMLElement;
-const out = document.getElementById("out") as HTMLElement;
-const same = document.getElementById("same") as HTMLElement;
 const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
 const q = new URLSearchParams(location.search);
@@ -82,7 +81,7 @@ const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5)
 type Ns = "page" | "bookshelf";
 type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
-  today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
+  today: () => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {},
   backupsPanel: () => {},
   interval: (_n: number) => {}, panel: (_ns: PanelName) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
@@ -101,7 +100,7 @@ mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: s
 mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
-  onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
+  onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
   onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
@@ -143,13 +142,6 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
-function showMd(md: string, source: string): void {
-  out.textContent = md;
-  const ok = md === source;
-  same.textContent = ok ? "(identical to what the store holds)" : "(differs from what the store holds)";
-  same.className = ok ? "" : "no";
-}
-
 const layer = entryLayer(idbEntryStore(), notices.entry);
 const images = idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
@@ -159,8 +151,7 @@ if (fixture && fixtures[fixture]) {
   /* SCRATCH: the fixture in the editor, nothing stored, nothing saved */
   const md = fixtures[fixture];
   const gutter = (v: { dom: HTMLElement }): void => { screen.gutter = v.dom.classList.contains("versepage"); };
-  const v = createEditor(mountEl, parseMarkdown(md), { interval: screen.interval, onChange: (v) => { showMd(serializeMarkdown(v.state.doc), md); gutter(v); } });
-  showMd(md, md);
+  const v = createEditor(mountEl, parseMarkdown(md), { interval: screen.interval, onChange: gutter });
   gutter(v);
   screen.masthead = { ...EMPTY_MASTHEAD, crumbs: [{ text: "fixture " + fixture, href: null, title: "" }] };
   acts.interval = (n) => setLineInterval(n)(v.state, v.dispatch);
@@ -202,8 +193,7 @@ if (fixture && fixtures[fixture]) {
     mount: mountEl, layer, images, interval: screen.interval, say,
     stick: (text) => { notices.stick(text); },
     pin: (text) => notices.stick(text), releasePin: (gen) => notices.releasePin(gen),
-    onShow: (md, stored, ekey) => {
-      showMd(md, stored);
+    onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
       if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); gotoRow(false); closeLineBar(); }   /* a navigation dismisses an overlay drawn for another entry, the search with its query, and the go-to line whose preselects it made stale */
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
@@ -985,12 +975,5 @@ if (fixture && fixtures[fixture]) {
       const msg = failMsg("import failed", err);
       if (p) p.fail(msg, msg); else notices.stickErr("import failed", err);
     });
-  };
-  /* its own gesture, never the import's */
-  acts.clear = () => {
-    const n = Object.keys(layer.cache).length;
-    if (!confirm("Delete all " + n + " stored entries and every picture? There is no undo.")) return;
-    Promise.all([layer.clear(), images.clear()]).then(() => { count(); say("cleared"); session.open(session.current.date, session.current.tag); refreshMasthead(); },
-      (err: unknown) => { notices.stickErr("clear failed", err); });
   };
 }

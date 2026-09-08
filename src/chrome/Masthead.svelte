@@ -24,9 +24,9 @@
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
+  let { screen, onToday, onExport, onImport, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
     screen: Screen;
-    onToday: () => void; onExport: () => void; onImport: () => void; onClear: () => void;
+    onToday: () => void; onExport: () => void; onImport: () => void;
     /* the sub-entry gestures: create under the open entry, rename and delete the open one */
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
@@ -103,7 +103,6 @@
     <button class="toolbtn" type="button" title="Export every entry as Markdown files" onclick={onExport}>export</button>
     <button class="toolbtn" type="button" title="Import Markdown files from a folder" onclick={onImport}>import</button>
     <button class="toolbtn opener" type="button" title="Automatic folder backups" onclick={() => onPanel("backups")}>backups</button>
-    <button class="toolbtn" type="button" title="Delete every stored entry" onclick={onClear}>clear</button>
     <button class="toolbtn opener" type="button" title="How Gesta works (⌃⌘H)" onclick={() => onPanel("help")}>help</button>
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>

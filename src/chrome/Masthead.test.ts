@@ -16,7 +16,7 @@ function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean
   screen.masthead = mastheadModel(date, tag, Object.keys(cache), journal, "2026-09-07");
   screen.gutter = !!extra.gutter;
   if (extra.panel) { screen.panel = extra.panel; screen.panelRows = extra.rows || []; screen.panelEmpty = extra.empty || ""; }
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, lineBar: { onInput: none, onEnter: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none } } }).body;
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, lineBar: { onInput: none, onEnter: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none } } }).body;
 }
 
 describe("Masthead", () => {

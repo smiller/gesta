@@ -47,9 +47,11 @@ export interface SessionOptions {
      the next clean parse of the page (the switch's, and only that one) */
   pin?: (text: string) => number;
   releasePin?: (gen: number) => void;
-  /* the markdown on screen changed or an entry opened: the page's own
-     display of it (the details pane, the root's data attributes) */
-  onShow?: (md: string, stored: string, ekey: string) => void;
+  /* the document changed, a save landed or an entry opened: what the
+     store holds for the open entry and its key, for the chrome that reads
+     them. The markdown on screen is not handed over — until 2026-09-08 it
+     was, for phase 2's pane, at a serialize per keystroke. */
+  onShow?: (stored: string, ekey: string) => void;
   /* an edit landed in the document — what arms the backup's idle timer */
   onEdit?: () => void;
   /* the view switched: true in the markdown source view */
@@ -116,7 +118,7 @@ export function startSession(opts: SessionOptions): Session {
   const ekeyOf = (): string => entryKey(current.date, current.tag);
   const show = (): void => {
     if ((!view && !source) || !opts.onShow) return;
-    opts.onShow(currentMd(), layer.entryMd(ekeyOf()), ekeyOf());
+    opts.onShow(layer.entryMd(ekeyOf()), ekeyOf());
   };
   const teardown = (): void => { view?.destroy(); view = null; source = null; mount.replaceChildren(); };
   /* the source surface: a textarea over the markdown, sized to its text,

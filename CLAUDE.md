@@ -213,10 +213,11 @@ here NOW, and what is not yet:
   and directions), and Williams's Witchcraft chapter 3 (a prose book with
   leaves).
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
-  (vite-plugin-singlefile inlines everything). In phase 1 it is the editor
-  over a fixture, a line-numbering select, a file input, and the markdown
-  the document serializes to; `?fixture=pippa&interval=1` opens it at a
-  fixture, for a headless look as much as for a hand.
+  (vite-plugin-singlefile inlines everything): `<main>` holding the editor,
+  and main.ts the wiring — the layer, the backup, the session, the
+  ledger and the masthead's acts meet there. The query strings are the
+  headless tools' (`?store=seed`, `?store=write`, `?corner=pill`) and
+  `?fixture=pippa&interval=1` opens a fixture in scratch, no store.
 
 ## Phase 0 decisions (2026-09-07)
 
@@ -1195,9 +1196,21 @@ here NOW, and what is not yet:
   source and ⌃⌘M pins "::: versey — not a block Gesta knows, so it stayed
   a paragraph"; the fence corrected to "::: verse" and switched again
   clears the corner with the verse rendered. `dist/index.html` is
-  728.50 kB. WHAT REMAINS of phase 3 is the scaffolding out — the clear
-  button and the markdown pane under the entry — once the cutover is
+  728.50 kB. WHAT REMAINED of phase 3 was the scaffolding out — the clear
+  button and the markdown pane under the entry — once the cutover was
   close, on Sean's word.
+- THE SCAFFOLDING OUT (2026-09-08, on Sean's word): phase 2's clear
+  button and the markdown pane under the entry are gone, and with the
+  pane the SERIALIZE PER KEYSTROKE that fed it — the session's `onShow`
+  now hands the chrome what the store holds and the key, never the
+  markdown on screen. The store's `clear()` stays on the adapter contract
+  with its tests; nothing in the page calls it. The headless corner tool
+  read the pane at twelve steps and now reads the open entry's row
+  straight from IndexedDB after the save's debounce (`storedMd`), which
+  is the truer question — what LANDED, not what the editor would write.
+  MEASURED 2026-09-08 in headless Helium: the corner tool's twelve
+  store reads give the same markdown the pane gave, and the bridge tool
+  is green. `dist/index.html` is 729.51 kB.
 - THE OPEN ENTRY FIRST (2026-09-08, by hand: two seconds of blank after a
   refresh): the current app's primeOpenEntry, whose seat the layer's
   `primeEntry` had kept — the address's ONE row read and opened before
