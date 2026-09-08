@@ -60,3 +60,24 @@ export function copyMd(slice: Slice): string {
   if (!blocks.length) return "";
   try { return serializeMarkdown(N.doc.create(null, blocks)); } catch { return slice.content.textBetween(0, slice.content.size, "\n"); }
 }
+/* A DRAG FROM INSIDE ONE ROW, CELL OR ITEM INTO THE NEXT COPIES AS THE
+   BLOCK THOSE PARTS CAME FROM — the README's rule, the current app's
+   rebuildParts: a slice open inside a verse or prose row, a list or a
+   table is CLOSED, so the paste lands the block whole rather than
+   merging the first cell's text into the paragraph it lands in
+   (measured 2026-09-08: the first line of a copied canto pasted as a
+   paragraph before the fence). A slice open inside ordinary prose keeps
+   its openness, which is what lets a copied phrase land inline. */
+/* the blocks, AND their rows: a selection inside one block slices to
+   its rows with the block itself left out (measured: a drag across two
+   pairs slices to pairs, open two deep), and rows pasted as rows are
+   wrapped back into their block by the schema */
+const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row]);
+export function closeRowSlice(slice: Slice): Slice {
+  const first = slice.content.firstChild, last = slice.content.lastChild;
+  if (!first || !last) return slice;
+  if ((slice.openStart && ROW_BLOCKS.has(first.type)) || (slice.openEnd && ROW_BLOCKS.has(last.type))) {
+    return new Slice(slice.content, ROW_BLOCKS.has(first.type) ? 0 : slice.openStart, ROW_BLOCKS.has(last.type) ? 0 : slice.openEnd);
+  }
+  return slice;
+}

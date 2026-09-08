@@ -68,6 +68,18 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* a verse block copied inside the rendered view with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
+await page.goto(PAGE + "#page/Horace");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 15000 });
+await page.evaluate(() => { const v = document.querySelector("#editor .verse"); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); });
+await page.waitForTimeout(100);
+await page.keyboard.press("Meta+c");
+await page.goto(PAGE + "#page/Pasted%20Verse");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pasted Verse", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.press("Meta+v");
+await page.waitForTimeout(300);
+console.log("a verse block copied and pasted:", JSON.stringify(await page.evaluate(() => { const md = document.getElementById("out").textContent; return { fence: md.startsWith("::: verse"), pairs: document.querySelectorAll("#editor .vpair").length, head: md.split("\n").slice(0, 3) }; })));
 /* a refused fence named on the switch back: "::: versey" typed in the source stays a paragraph and the corner says why; a clean switch releases it */
 await page.goto(PAGE + "#page/Fenced");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Fenced", null, { timeout: 15000 });

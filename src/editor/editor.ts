@@ -20,7 +20,7 @@ import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
-import { pasteSlice, copyMd } from "./paste.ts";
+import { pasteSlice, copyMd, closeRowSlice } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -82,7 +82,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
        the selection's markdown (paste.ts) */
     handlePaste: (_view, event) => { const file = pastedImageFile(event.clipboardData); if (!file) return false; opts.onPasteFile?.(file); return true; },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
-    clipboardTextSerializer: (slice) => copyMd(slice),
+    clipboardTextSerializer: (slice) => copyMd(closeRowSlice(slice)),
+    transformCopied: (slice) => closeRowSlice(slice),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       this.updateState(this.state.apply(tr));
       if (tr.docChanged) opts.onChange?.(this);

@@ -1194,4 +1194,20 @@ here NOW, and what is not yet:
   Helium: "start;seed;primed;all;" over the seeded profile; the two
   seconds over the journal are a hand's to time. ⌃⌘G on Paradise Lost
   book 1 with 254 was confirmed by hand the same night.
+- THE COPIED BLOCK COMES BACK WHOLE (2026-09-08, by hand: a paired verse
+  block copied in the rendered view and pasted back arrived as its cells'
+  text in paragraphs, the two languages interleaved). Two causes. Every
+  node that drew itself lacked a rule to READ itself back — the editor's
+  own copy travels as that DOM — so the verse, prose, line, pair, cell,
+  gap, card, note and reference nodes now carry parseDOM rules matching
+  their toDOM. And a drag from inside one row copies open at the row
+  (MEASURED: a selection across two pairs slices to the pairs, open two
+  deep, the block left out), which a paste merges into the paragraph it
+  lands in; `closeRowSlice` (paste.ts, `transformCopied`) closes a slice
+  whose ends are inside a row block, a list or a table — the README's
+  "a drag from inside one bullet, cell or verse line into the next copies
+  as the block those parts came from" — and the copied text follows the
+  same closed slice. MEASURED 2026-09-08 in headless Helium: Horace's
+  verse block selected, ⌘C, pasted with ⌘V into a fresh page stores
+  "::: verse" with all 36 pairs and the first line inside the fence.
 

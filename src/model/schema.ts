@@ -14,13 +14,20 @@ import { Schema, type NodeSpec, type MarkSpec, type Node as PMNode } from "prose
    so a bold code span writes **`x`** and never `**x**`. */
 export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"] as const;
 
+/* EVERY NODE THAT DRAWS ITSELF READS ITSELF BACK: the editor's own copy
+   travels as this DOM (the row views draw exactly what toDOM would), so
+   without a parseDOM rule a copied verse block pasted back arrived as its
+   cells' text in paragraphs — by hand 2026-09-08, a paired canto
+   interleaved line by line. */
 const rowBlock = (cls: string): NodeSpec => ({
   attrs: { start: { default: 1 } },
   content: "(line | pair | gap | note)*",
   group: "block",
   defining: true,
+  parseDOM: [{ tag: "div." + cls, getAttrs: (dom) => ({ start: dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1 }) }],
   toDOM: (n) => ["div", n.attrs.start > 1 ? { class: cls, "data-start": String(n.attrs.start) } : { class: cls }, 0],
 });
+const kindOf = (dom: HTMLElement): { kind: string | null } => ({ kind: dom.getAttribute("data-kind") || null });
 
 const rowAttrs = (cls: string, n: PMNode): Record<string, string> =>
   n.attrs.kind ? { class: cls, "data-kind": String(n.attrs.kind) } : { class: cls };
@@ -74,15 +81,17 @@ const nodes: Record<string, NodeSpec> = {
   },
   card: {
     attrs: { colour: {} }, content: "block+", group: "block", defining: true,
+    parseDOM: [{ tag: "div[class^='card-']", getAttrs: (dom) => ({ colour: dom.className.split(/\s+/).find((c) => /^card-/.test(c)) }) }],
     toDOM: (n) => ["div", { class: n.attrs.colour }, 0],
   },
   /* text that is NOT the text; the one block form that may also be a ROW of
      a verse or prose block, which is how a footnote interrupts a text without
      closing its count */
-  note: { content: "block+", group: "block", defining: true, toDOM: () => ["div", { class: "note" }, 0] },
+  note: { content: "block+", group: "block", defining: true, parseDOM: [{ tag: "div.note" }], toDOM: () => ["div", { class: "note" }, 0] },
   /* one directive read by code, never by the reader: plain text */
   reference: {
     content: "text*", marks: "", group: "block", code: true, defining: true,
+    parseDOM: [{ tag: "div.reference", preserveWhitespace: "full" }],
     toDOM: () => ["div", { class: "reference" }, 0],
   },
   verse: rowBlock("verse"),
@@ -90,13 +99,13 @@ const nodes: Record<string, NodeSpec> = {
   /* a full-width row: a line with no pipe. `kind` is the row's DECLARED kind:
      null leaves the numbering convention to read the marks, "line" counts
      the row whatever they say (grammar.ts, ROW_LINE_TOKEN, has the decision) */
-  line: { attrs: { kind: { default: null } }, content: "inline*", toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
+  line: { attrs: { kind: { default: null } }, content: "inline*", parseDOM: [{ tag: "div.vrow:not(.vpair)", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
   /* a paired row: an original beside its translation; which cell is which is
      its position, and an empty translation is still a pair */
-  pair: { attrs: { kind: { default: null } }, content: "cell cell", toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
-  cell: { content: "inline*", toDOM: () => ["div", { class: "vcell" }, 0] },
+  pair: { attrs: { kind: { default: null } }, content: "cell cell", parseDOM: [{ tag: "div.vrow.vpair", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
+  cell: { content: "inline*", parseDOM: [{ tag: "div.vcell" }], toDOM: () => ["div", { class: "vcell" }, 0] },
   /* a blank line inside the fence: verse's stanza break, prose's paragraph break */
-  gap: { toDOM: () => ["div", { class: "vgap" }] },
+  gap: { parseDOM: [{ tag: "div.vgap" }], toDOM: () => ["div", { class: "vgap" }] },
   text: { group: "inline" },
   /* every newline inside a paragraph, kept as the line break it is */
   hard_break: { inline: true, group: "inline", selectable: false, parseDOM: [{ tag: "br" }], toDOM: () => ["br"] },

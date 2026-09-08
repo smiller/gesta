@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, copyMd } from "./paste.ts";
+import { pasteSlice, copyMd, closeRowSlice } from "./paste.ts";
 
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
@@ -39,4 +39,16 @@ test("copyMd: the selection's markdown, inline content as a paragraph, blocks as
   const s = at("some *words* here\n\n- a\n- b", "words");
   expect(copyMd(s.doc.slice(6, 11))).toBe("*words*");
   expect(copyMd(s.doc.slice(0, s.doc.content.size))).toBe("some *words* here\n\n- a\n- b");
+});
+
+test("a slice open inside a verse row is closed, so the block travels whole; open prose stays open", () => {
+  const doc = parseMarkdown("::: verse\nMaecenas atavis | O Maecenas\nedite regibus | born of kings\n:::\n\nprose after");
+  const open = doc.slice(3, doc.firstChild!.nodeSize - 3);
+  expect([open.openStart, open.content.firstChild!.type.name]).toEqual([2, "pair"]);   /* the block itself is left out of a slice within it */
+  const closed = closeRowSlice(open);
+  expect([closed.openStart, closed.openEnd]).toEqual([0, 0]);
+  expect(closed.content.childCount).toBe(2);
+  const proseStart = doc.firstChild!.nodeSize + 2;
+  const inline = doc.slice(proseStart, proseStart + 5);
+  expect(closeRowSlice(inline)).toBe(inline);
 });
