@@ -76,6 +76,12 @@ await page.click("#editor .ProseMirror");
 await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
 await page.waitForTimeout(200);
 console.log("a reference pasted:", JSON.stringify({ md: await page.evaluate(() => document.getElementById("out")?.textContent), link: await page.evaluate(() => document.querySelector("#editor a")?.getAttribute("href")), quote: await page.evaluate(() => document.querySelector("#editor blockquote")?.textContent) }));
+await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "[*Gesta*](#2026-09-06?h=food%20of%20love)"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
+await page.waitForTimeout(200);
+await page.click("#editor a[href='#2026-09-06?h=food%20of%20love']");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06" && document.getSelection()?.toString() === "food of love", null, { timeout: 5000 });
+await page.waitForTimeout(300);
+console.log("the reference link followed:", JSON.stringify(await page.evaluate(() => ({ selected: document.getSelection().toString(), bar: document.querySelector(".fmt").classList.contains("show") }))));
 /* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */
 await page.goto(PAGE + "#2026-09-06");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "2026-09-06", null, { timeout: 15000 });

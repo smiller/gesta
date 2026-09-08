@@ -46,6 +46,9 @@ export interface SessionOptions {
   /* the editor's selection moved — read AFTER the editor has it, where
      the DOM's selectionchange runs a beat ahead of the state */
   onSelect?: () => void;
+  /* a highlight was placed — a search jump's or a link payload's — which
+     the format bar must not float over: it is for text the reader chose */
+  onHighlight?: () => void;
 }
 export interface Session {
   readonly current: { date: string; tag: string | null };
@@ -253,7 +256,9 @@ export function startSession(opts: SessionOptions): Session {
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
   }
   function highlight(q: string, nth: number, honorMarkers: boolean): boolean {
-    return !!view && highlightIn(view, q, nth, honorMarkers);
+    const did = !!view && highlightIn(view, q, nth, honorMarkers);
+    if (did) opts.onHighlight?.();
+    return did;
   }
   function jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void {
     if (date === current.date && (tag || null) === current.tag) { navGen++; highlight(hl.q || "", hl.nth || 0, honorMarkers); return; }

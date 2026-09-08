@@ -171,6 +171,7 @@ if (fixture && fixtures[fixture]) {
     onEdit: () => backup.scheduleBackup(),
     onView: (md) => { screen.mdView = md; },
     onSelect: () => requestAnimationFrame(placeBar),
+    onHighlight: () => suppressBar(),
   });
   /* leaving the tab with a backup still pending writes it at once, after
      the session's own flush (registered first, so it runs first) */
@@ -251,7 +252,6 @@ if (fixture && fixtures[fixture]) {
     if (!row) return;
     const q = sr.query;   /* the query the row was BUILT for */
     openRow(false);
-    suppressBar();
     session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
   };
   acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };

@@ -70,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; a reference pasted as plain text; the toolbar
+  scope pick and Escape; a reference pasted as plain text and its link
+  followed back; the toolbar
   over a double-clicked word, B, and Tag with its dialog; the source view through ⌃⌘M with the caret's
   count carried across, an edit and a Tab in the source, and ⌃⌘M back;
   a tagged entry created, renamed and deleted
@@ -927,5 +928,12 @@ here NOW, and what is not yet:
   reach, the real paste being a hand's): "[*Gesta*, 7 September
   2026](#2026-09-07?h=blind%20cord):\n\n> blind cord" pasted into a
   fresh page stores as that markdown, the link and the quote drawn.
-  `dist/index.html` is 640.37 kB.
+  `dist/index.html` is 640.37 kB. Confirmed by hand the same day; and
+  found by hand: the reference link followed back showed the passage
+  selected WITH the format bar over it — only the search's own jump had
+  told the bar to stay away. The session now reports every highlight it
+  places (`onHighlight`), and the page keeps the bar off it until the
+  reader next touches the page, for a link's payload as for a search.
+  MEASURED in headless Helium: a pasted link with "?h=food%20of%20love"
+  followed selects the words with the bar hidden.
 
