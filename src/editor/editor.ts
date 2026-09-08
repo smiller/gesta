@@ -12,7 +12,8 @@ import { rowKeymap, pipeInLine } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { folios } from "./folios.ts";
 import { typing, typingKeymap } from "./typing.ts";
-import type { Node } from "prosemirror-model";
+import { DOMSerializer, type Node } from "prosemirror-model";
+import { inlineBlockStyles } from "./inlineStyles.ts";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
 import { linkClick } from "./links.ts";
@@ -70,7 +71,29 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
 }
 
 export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions): EditorView {
-  return new EditorView(mount, {
+  const base = DOMSerializer.fromSchema(schema);
+  const view: EditorView = new EditorView(mount, {
+    /* ⌘C's HTML flavour with the look swept inline (richCopy.ts): parked
+       under the surface for the length of the sweep, since a detached
+       node's computed style is empty. Without it a card copied by
+       selection arrives in Mail as uncoloured lines, as the hover copy
+       did until 2026-09-08. */
+    clipboardSerializer: {
+      serializeFragment: (frag, options) => {
+        const out = base.serializeFragment(frag, options);
+        const stage = document.createElement("div");
+        stage.setAttribute("aria-hidden", "true");
+        stage.style.cssText = "position:absolute;left:-9999px;top:0;width:" + view.dom.clientWidth + "px";
+        try {
+          stage.appendChild(out);
+          view.dom.appendChild(stage);
+          inlineBlockStyles(stage, stage);
+          while (stage.firstChild) out.appendChild(stage.firstChild);
+        } finally { stage.remove(); }
+        return out;
+      },
+      serializeNode: (node, options) => base.serializeNode(node, options),
+    } as DOMSerializer,
     state: editorState(doc, opts.interval, opts.onRefuse),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     attributes: { class: "page", spellcheck: "false" },
@@ -101,4 +124,5 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       if (tr.selectionSet || tr.docChanged) opts.onSelect?.(this);
     },
   });
+  return view;
 }

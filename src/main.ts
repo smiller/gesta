@@ -665,7 +665,9 @@ if (fixture && fixtures[fixture]) {
     const node = blockAt(copyTarget);
     if (!node) { done(false); say("Copy failed", 3000); return; }
     const payload = node.type === schema.nodes.code_block ? node.textContent.replace(/\n$/, "")
-      : { text: serializeMarkdown(schema.nodes.doc.create(null, [node])), html: copyTarget.outerHTML.replace(/​/g, "") };
+      /* the swept HTML, not the raw: the raw outerHTML went out here until
+         2026-09-08, when a card pasted into Mail arrived as plain lines */
+      : { text: serializeMarkdown(schema.nodes.doc.create(null, [node])), html: richBlockHtml(copyTarget) };
     writeClipboard(payload).then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
   };
   /* THE FLOATING BAR: placed over the selection on every selection change

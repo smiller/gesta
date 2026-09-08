@@ -17,26 +17,9 @@ import { DOMSerializer } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { citationAnchorHTML } from "../editor/reference.ts";
+import { inlineBlockStyles } from "../editor/inlineStyles.ts";
+export { inlineBlockStyles };
 
-const BOX = ["background-color", "color", "border", "border-radius", "padding"];
-const STYLED: { sel: string; props: string[] }[] = [
-  { sel: "div[class^='card-']", props: BOX },
-  { sel: "div.note", props: BOX.concat(["font-size"]) },
-  /* the pairing lives on the row, and only a row that holds a translation */
-  { sel: "div.vrow.vpair", props: ["display", "grid-template-columns", "column-gap"] },
-  { sel: "pre", props: BOX.concat(["font-family", "font-size", "white-space"]) },
-  { sel: "pre span", props: ["color", "font-style", "font-weight"] },
-];
-export function inlineBlockStyles(el: Element, clone: Element): void {
-  for (const kind of STYLED) {
-    const live = Array.from(el.querySelectorAll(kind.sel)), copies = Array.from(clone.querySelectorAll(kind.sel));
-    if (el.matches(kind.sel)) { live.unshift(el); copies.unshift(clone); }
-    live.forEach((node, i) => {
-      const cs = getComputedStyle(node);
-      for (const prop of kind.props) (copies[i] as HTMLElement).style.setProperty(prop, cs.getPropertyValue(prop));
-    });
-  }
-}
 /* a live block's HTML with its look inlined and the caret-holders gone */
 export function richBlockHtml(el: Element): string {
   const clone = el.cloneNode(true) as Element;

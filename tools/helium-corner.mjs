@@ -151,6 +151,29 @@ console.log("hovered:", JSON.stringify(await page.evaluate(() => { const b = doc
 await page.click(".copybtn");
 await page.waitForTimeout(300);
 console.log("clicked:", JSON.stringify(await page.evaluate(() => document.querySelector(".copybtn").textContent)));
+/* a card copied both ways carries its colour: the hover copy's HTML and ⌘C's HTML both spell the background inline, and ⌘V on a fresh page brings the card back */
+await page.goto(PAGE + "#page/Carded");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Carded", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.evaluate(() => { const dt = new DataTransfer(); dt.setData("text/plain", "::: card-light-blue\n*Purgatorio* 19.26\n\n::: verse\nquand’ una donna apparve | When a lady appeared\n:::\n:::"); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
+await page.waitForTimeout(200);
+const readHtml = () => page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const bg = /background-color:\s*([^;"]+)/.exec(html); return { bg: bg && bg[1], grid: /grid-template-columns:/.test(html), card: /class="card-light-blue"/.test(html), raw: /background-color/.test(html) ? undefined : html.replace(/<meta[^>]*>/g, "").slice(0, 120) }; } catch (e) { return { clipboard: String(e) }; } });
+await page.hover("#editor .card-light-blue");
+await page.waitForTimeout(150);
+await page.click(".copybtn");
+await page.waitForTimeout(300);
+console.log("a card hover-copied:", JSON.stringify({ label: await page.evaluate(() => document.querySelector(".copybtn").textContent), live: await page.evaluate(() => getComputedStyle(document.querySelector("#editor .card-light-blue")).backgroundColor), ...(await readHtml()) }));
+await page.evaluate(() => { const v = document.querySelector("#editor .card-light-blue"); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); });
+await page.waitForTimeout(100);
+await page.keyboard.press("Meta+c");
+await page.waitForTimeout(200);
+console.log("a card ⌘C'd:", JSON.stringify(await readHtml()));
+await page.goto(PAGE + "#page/Pasted%20Card");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pasted Card", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.press("Meta+v");
+await page.waitForTimeout(300);
+console.log("pasted on a fresh page:", JSON.stringify(await page.evaluate(() => { const md = document.getElementById("out").textContent; return { fence: md.startsWith("::: card-light-blue"), cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length, lines: md.split("\n").length }; })));
 /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
 await page.goto(PAGE + "#page/Pictured");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pictured", null, { timeout: 15000 });

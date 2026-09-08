@@ -192,7 +192,8 @@ here NOW, and what is not yet:
   popup with its editor), `Backups.svelte` (the backups panel: setup,
   resume, the status line, the recovery note), `CopyButton.svelte` (the
   one hover copy button over a block), `richCopy.ts` (the HTML flavour:
-  the inline-style sweep over a live twin, the staged passage),
+  the staged passage, over `editor/inlineStyles.ts`, the inline-style
+  sweep over a live twin that ⌘C and the hover copy share),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -1138,6 +1139,19 @@ here NOW, and what is not yet:
   file's full address — the write is `href="#…"`, as the current app's
   is; what a receiving application sees is its clipboard's doing.
   `dist/index.html` is 723.76 kB.
+  FAILED 2026-09-08 by hand: a card hover-copied into Mail arrived as
+  uncoloured lines with the pair interleaved — the button wrote the
+  block's RAW outerHTML, the sweep imported and never called. Fixed the
+  same day, and ⌘C over a selection given the same sweep: the editor's
+  `clipboardSerializer` parks the serialized fragment under the surface
+  and sweeps it against itself (`editor/inlineStyles.ts`, moved out of
+  richCopy.ts so the editor does not import the chrome). MEASURED the
+  same day in headless Helium over a light-blue card holding a paired
+  row: the hover copy's HTML and ⌘C's both spell
+  `background-color: rgb(129, 177, 169)` — the live card's computed
+  colour — with the grid on the row, and ⌘V on a fresh page brings back
+  one card with one pair, the markdown opening `::: card-light-blue`.
+  Looked at by hand the same day in Mail: "Better".
 - TAB IN A QUOTE, ⌃⌘L AND THE INTERVALS (2026-09-08): the quote arm of
   13e-enter-and-tab-dispatch.js ported (`editor/quoteKeys.ts`), re-asked
   of the model, where a quote's body is ONE paragraph of lines with
