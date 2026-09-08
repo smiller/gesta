@@ -1210,6 +1210,7 @@ here NOW, and what is not yet:
   same closed slice. MEASURED 2026-09-08 in headless Helium: Horace's
   verse block selected, ⌘C, pasted with ⌘V into a fresh page stores
   "::: verse" with all 36 pairs and the first line inside the fence.
+  Confirmed by hand in Helium the same day over the German block.
 - A BLOCK-SHAPED TEXT PASTE IS SET DOWN, NEVER FITTED (2026-09-08, by
   hand: a verse fence copied from the source view and pasted into the
   rendered view lost its first original line to the paragraph above,
