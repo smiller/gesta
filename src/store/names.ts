@@ -202,3 +202,14 @@ export function collidingFile(jobs: FileJob[]): Collision | null {
   }
   return hit;
 }
+/* the name a PASTED picture is filed under beside its entry: the entry's
+   base stem, "-img-", one past the highest number the text already
+   names, ".webp" — the mirror's own spelling (MEASURED 2026-09-07: 297
+   sidecars as `stem-img-N.webp`), so a paste here exports as the current
+   app's did */
+export function nextImageName(base: string, refs: string[]): string {
+  let n = 0;
+  const re = new RegExp("^" + base.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "-img-(\\d+)\\.\\w+$");
+  for (const r of refs) { const m = re.exec(r); if (m) n = Math.max(n, +m[1]); }
+  return base + "-img-" + (n + 1) + ".webp";
+}

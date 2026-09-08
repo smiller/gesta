@@ -10,7 +10,10 @@ import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
-import { imageView } from "./editor/images.ts";
+import { imageView, pastedPictureBytes, pastedImageFile } from "./editor/images.ts";
+import { nextImageName } from "./store/names.ts";
+import { imageRefs } from "./store/exportEntries.ts";
+import { schema } from "./model/schema.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, pageParts } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
@@ -36,6 +39,8 @@ export interface SessionOptions {
   interval: number;
   /* the corner's whisper; "saved" takes the current app's shorter time */
   say: (text: string, ms?: number) => void;
+  /* a failure worth pinning until seen — a lost picture */
+  stick?: (text: string) => void;
   /* the markdown on screen changed or an entry opened: the page's own
      display of it (the details pane, the root's data attributes) */
   onShow?: (md: string, stored: string, ekey: string) => void;
@@ -118,6 +123,7 @@ export function startSession(opts: SessionOptions): Session {
     ta.spellcheck = false;
     ta.value = md;
     ta.addEventListener("input", () => { scheduleSave(); show(); opts.onEdit?.(); });
+    ta.addEventListener("paste", (e) => { const f = pastedImageFile(e.clipboardData); if (f) { e.preventDefault(); pasteFile(f); } });
     ta.addEventListener("keydown", (e) => {
       if (e.key !== "Tab") return;
       if (e.repeat && ta.selectionStart !== ta.selectionEnd) { e.preventDefault(); return; }
@@ -132,6 +138,35 @@ export function startSession(opts: SessionOptions): Session {
     mount.appendChild(ta);
     source = ta;
   }
+  /* A PASTED PICTURE: filed beside the entry under the next sidecar name,
+     then placed — the image node at the caret in the rendered view, its
+     `![](name)` in the source — and saved. WHERE IT WAS AIMED is checked
+     when the bytes are ready: the decode lands a beat later and a reader
+     can navigate in that window, and a picture dropped into whatever is
+     open then is the current app's measured loss. Every way it cannot
+     land sticks, since the gesture is spent. */
+  let decoding = false;
+  function pasteFile(file: File): void {
+    if (decoding) { say("picture not pasted — one at a time; paste it again", 2600); return; }
+    const aimedAt = ekeyOf(), aimedMd = mdView;
+    decoding = true;
+    pastedPictureBytes(file).then((bytes) => {
+      decoding = false;
+      if (aimedAt !== ekeyOf() || aimedMd !== mdView) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
+      const at = entryFile(current.date, current.tag);
+      const name = nextImageName(at.base, imageRefs(currentMd()));
+      return images.set(at.dir + name, bytes).then(() => {
+        if (mdView && source) { insertText("![](" + name + ")"); return; }
+        if (!view) return;
+        const tr = view.state.tr.replaceSelectionWith(schema.nodes.image.create({ src: name, alt: "" }));
+        /* a picture at the entry's end gets a line below it, the caret there */
+        const $end = tr.doc.resolve(tr.selection.to);
+        if ($end.pos >= tr.doc.content.size - 1) tr.insert(tr.doc.content.size, schema.nodes.paragraph.create());
+        view.dispatch(tr.scrollIntoView());
+        view.focus();
+      });
+    }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
+  }
   function mountEditor(doc: import("prosemirror-model").Node, date: string, tag: string | null): void {
     teardown();
     const dir = entryFile(date, tag).dir;
@@ -142,6 +177,7 @@ export function startSession(opts: SessionOptions): Session {
       nodeViews: { image: imageView(resolver(dir)) },
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
+      onPasteFile: pasteFile,
     });
   }
   /* held on the way OUT: how many flat characters precede the caret, the

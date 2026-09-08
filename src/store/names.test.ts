@@ -3,7 +3,7 @@ import { test, expect } from "vitest";
 import {
   dayDir, pageName, trimToBytes, nameFromUrl,
   nsTarget, importTarget, NAME_BYTES, imgHash,
-  entryFile, collidingFile,
+  entryFile, collidingFile, nextImageName,
 } from "./names.ts";
 
 test("imgHash: the string math must not move, and the arms differ past ASCII", () => {
@@ -127,4 +127,11 @@ test("collidingFile: two entries claiming one flat stem refuse the run", () => {
 test("collidingFile: the same key twice is a drifted registry, not a clash", () => {
   const job = { at: entryFile("page", "Recipes"), key: "page/Recipes" };
   expect(collidingFile([job, { ...job }])).toBe(null);
+});
+
+test("nextImageName: one past the highest the text names, the mirror's spelling", () => {
+  expect(nextImageName("Trip Log", [])).toBe("Trip Log-img-1.webp");
+  expect(nextImageName("Trip Log", ["Trip Log-img-1.webp", "Trip Log-img-3.webp", "other-img-9.webp"])).toBe("Trip Log-img-4.webp");
+  expect(nextImageName("2022-02-06", ["2022-02-06-img-2.png"])).toBe("2022-02-06-img-3.webp");
+  expect(nextImageName("a.b", ["a.b-img-1.webp", "aXb-img-5.webp"])).toBe("a.b-img-2.webp");
 });

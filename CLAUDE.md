@@ -70,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; the backups panel unconfigured; ⌃⌘S over an
+  scope pick and Escape; a PNG drawn on a canvas pasted as a file; the
+  backups panel unconfigured; ⌃⌘S over an
   empty table, a table saved, a code
   filtered and Enter; ⌃⌘B, A, a numbered jump, a key given and typed,
   ×; ⌃⌘H over an open panel and Escape; ⌃⌘G over
@@ -1059,4 +1060,25 @@ here NOW, and what is not yet:
   the button opens the card with the setup button alone and no status
   on a profile with no folder; Escape closes. `dist/index.html` is
   713.34 kB.
+- THE PASTED PICTURE (2026-09-08): the image arm of 13c-paste-and-source-
+  copy.js ported. The editor's handlePaste hands an image file to the
+  session, which decodes it (createImageBitmap), downscales to 1400
+  across on white and recompresses as webp at 0.85 (`editor/images.ts`,
+  the current app's placeImage re-asked of bytes), files the bytes under
+  the entry's folder as `<base>-img-<N>.webp` — N one past the highest
+  the text already names (`nextImageName`, names.ts, pure with a test),
+  the mirror's own spelling, so a paste here exports as the current
+  app's did — and places it: the image node at the caret in the rendered
+  view with a paragraph minted below when it lands at the end, the
+  `![](name)` text in the source view. WHERE IT WAS AIMED is checked when
+  the bytes are ready, the decode landing a beat later; a picture that
+  cannot land, one pasted during another's decode, or one the engine
+  cannot read STICKS, the gesture being spent. NOT CARRIED: the current
+  app's content-addressed dedup (a picture is its bytes under its own
+  name here, phase 2's decision) and its jpeg fallback for an engine
+  without webp (Helium has it). MEASURED 2026-09-08 in headless Helium
+  (`tools/helium-corner.mjs`, a 1600×800 PNG drawn on a canvas and
+  pasted as a file): the entry stores "A picture: ![](Pictured-img-1.webp)",
+  the picture draws from the store at 1400×700 with a paragraph after
+  it. `dist/index.html` is 715.02 kB.
 

@@ -66,6 +66,15 @@ console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await po
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));
+/* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
+await page.goto(PAGE + "#page/Pictured");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Pictured", null, { timeout: 15000 });
+await page.click("#editor .ProseMirror");
+await page.keyboard.type("A picture: ");
+await page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); });
+await page.waitForFunction(() => document.querySelector("#editor img"), null, { timeout: 8000 });
+await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
+console.log("a picture pasted:", JSON.stringify(await page.evaluate(() => { const img = document.querySelector("#editor img"); return { md: document.getElementById("out").textContent, src: img.getAttribute("src")?.slice(0, 5), width: img.naturalWidth, height: img.naturalHeight, last: document.querySelector("#editor .ProseMirror").lastElementChild?.tagName }; })));
 /* shortcuts: ⌃⌘S with an empty table opens the editor; a table saved; a code typed and Enter inserts at the caret */
 await page.goto(PAGE + "#page/Expanded");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Expanded", null, { timeout: 15000 });

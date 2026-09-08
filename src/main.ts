@@ -188,6 +188,7 @@ if (fixture && fixtures[fixture]) {
   };
   const session = startSession({
     mount: mountEl, layer, images, interval: screen.interval, say,
+    stick: (text) => { notices.stick(text); },
     onShow: (md, stored, ekey) => {
       showMd(md, stored);
       screen.gutter = !!session.view?.dom.classList.contains("versepage");

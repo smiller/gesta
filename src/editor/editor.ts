@@ -21,6 +21,7 @@ import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
 import { pasteSlice, copyMd } from "./paste.ts";
 import { landing } from "./landing.ts";
+import { pastedImageFile } from "./images.ts";
 
 export interface EditorOptions {
   interval: number;
@@ -33,6 +34,8 @@ export interface EditorOptions {
   onRoute?: (frag: string) => void;
   /* a swallowed press that changed nothing SAYS why */
   onRefuse?: (why: string) => void;
+  /* a picture on the clipboard: the session files it and places it */
+  onPasteFile?: (file: File) => void;
 }
 
 const hardBreak: Command = (state, dispatch) => {
@@ -73,6 +76,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     handleDOMEvents: { click: linkClick((frag) => opts.onRoute?.(frag)) },
     /* plain text pasted renders the markdown it spells; the copied text is
        the selection's markdown (paste.ts) */
+    handlePaste: (_view, event) => { const file = pastedImageFile(event.clipboardData); if (!file) return false; opts.onPasteFile?.(file); return true; },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
     clipboardTextSerializer: (slice) => copyMd(slice),
     dispatchTransaction(this: EditorView, tr: Transaction) {
