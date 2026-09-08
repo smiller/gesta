@@ -123,6 +123,12 @@ await page.click(".bookmarks .bookmark-del");
 await page.waitForTimeout(150);
 console.log("× pressed:", JSON.stringify(await bcard()));
 await page.keyboard.press("Escape");
+/* the backups panel: the button opens the card; unconfigured, the setup button alone; Escape closes */
+await page.click(".toolbtn[title='Automatic folder backups']");
+await page.waitForTimeout(100);
+console.log("backups:", JSON.stringify(await page.evaluate(() => { const c = document.querySelector(".backups"); return c ? { buttons: [...c.querySelectorAll("button")].map((b) => b.textContent), status: c.querySelector(".backups-status")?.textContent || null } : null; })));
+await page.keyboard.press("Escape");
+console.log("Escape:", JSON.stringify({ card: await page.evaluate(() => !!document.querySelector(".backups")) }));
 /* help: ⌃⌘H opens the card over the entry and closes the pages panel; Escape closes it */
 await page.click(".opener[title='Open the pages list']");
 await page.keyboard.press("Control+Meta+h");

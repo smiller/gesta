@@ -35,7 +35,7 @@ export interface Screen {
      shortcuts panels. Every opener sets it, so opening one closes the
      others by construction; null is none. The in-flow rows (Line
      numbering) compete for no spot and are not in it. */
-  panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | null;
+  panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
   panelRows: Link[];
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;
@@ -49,6 +49,9 @@ export interface Screen {
   /* the shortcuts popup: the query, the rows it filters to, the active
      one, the editor's visibility and its text, whether it has unsaved lines */
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
+  /* the backups panel's reading: a folder picker at all, a folder set,
+     the last run's trouble, and whether the journal is in */
+  backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed" };
   /* ⌃⌘G's bar: open, which boxes the entry can answer, what each holds */
   lineBar: { open: boolean; kind: AskKind; line: string; page: string };
   /* the floating format bar over a selection: where it sits, what is lit */
@@ -57,7 +60,6 @@ export interface Screen {
   gutter: boolean;
   /* the markdown source view is on: the mode pill shows */
   mdView: boolean;
-  backupsLabel: string;
   interval: number;
 }
 export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false, buttons: { create: "", createTitle: "", canCreate: false, canEdit: false, renameTitle: "", deleteTitle: "" } };
@@ -70,7 +72,8 @@ export function screenState(interval: number): Screen {
     lineBar: { open: false, kind: "none", line: "", page: "" },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
-    gutter: false, mdView: false, backupsLabel: "", interval,
+    backups: { canPick: true, configured: false, trouble: "", warm: "loading" },
+    gutter: false, mdView: false, interval,
   });
   return screen;
 }

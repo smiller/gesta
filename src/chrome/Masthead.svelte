@@ -23,14 +23,15 @@
   import Help from "./Help.svelte";
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
-  let { screen, onToday, onExport, onImport, onBackups, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, shortcuts, onCreate, onRename, onDelete }: {
+  import Backups from "./Backups.svelte";
+  let { screen, onToday, onExport, onImport, onClear, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
     screen: Screen;
-    onToday: () => void; onExport: () => void; onImport: () => void; onBackups: () => void; onClear: () => void;
+    onToday: () => void; onExport: () => void; onImport: () => void; onClear: () => void;
     /* the sub-entry gestures: create under the open entry, rename and delete the open one */
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     /* the opener's click: the page's wiring toggles the slot and fills the rows */
-    onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts") => void;
+    onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
@@ -38,6 +39,7 @@
     lineBar: { onInput: (kind: "line" | "page", value: string) => void; onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void; onClose: () => void };
     bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
     shortcuts: { onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void };
+    backups: { onSetup: () => void; onResume: () => void };
   } = $props();
   let shortcutsCard: { focusInput(): void } | undefined = $state();
   export function focusShortcuts(): void { shortcutsCard?.focusInput(); }
@@ -96,7 +98,7 @@
     <button class="toolbtn" type="button" title={screen.masthead.buttons.deleteTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onDelete}>delete</button>
     <button class="toolbtn" type="button" title="Export every entry as Markdown files" onclick={onExport}>export</button>
     <button class="toolbtn" type="button" title="Import Markdown files from a folder" onclick={onImport}>import</button>
-    <button class="toolbtn" type="button" title="Automatic folder backups" onclick={onBackups}>{screen.backupsLabel}</button>
+    <button class="toolbtn opener" type="button" title="Automatic folder backups" onclick={() => onPanel("backups")}>backups</button>
     <button class="toolbtn" type="button" title="Delete every stored entry" onclick={onClear}>clear</button>
     <button class="toolbtn opener" type="button" title="How Gesta works (⌃⌘H)" onclick={() => onPanel("help")}>help</button>
   </div>
@@ -106,6 +108,7 @@
   <Help open={screen.panel === "help"} />
   {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} />{/if}
   {#if screen.panel === "shortcuts"}<Shortcuts bind:this={shortcutsCard} shortcuts={screen.shortcuts} {...shortcuts} />{/if}
+  {#if screen.panel === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
   {#if screen.panel === "page" || screen.panel === "bookshelf"}
     <nav class="pages" onfocusout={leave}>
       {#each screen.panelRows as r (r.href)}<a href={r.href} title={r.text} onclick={onClosePanel}>{r.text}</a>{/each}

@@ -75,9 +75,10 @@ const notices = noticeLedger(copyText);
 const say = notices.whisper;
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
 type Ns = "page" | "bookshelf";
-type PanelName = Ns | "help" | "bookmarks" | "shortcuts";
+type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, clear: () => {}, resume: () => {},
+  backupsPanel: () => {},
   interval: (_n: number) => {}, panel: (_ns: PanelName) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
@@ -92,12 +93,13 @@ mount(Corner, { target: document.body, props: { notices, onResume: () => acts.re
 mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
-  onBackups: () => acts.backups(), onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
+  onClear: () => acts.clear(), onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
   onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
   shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
+  backups: { onSetup: () => acts.backups(), onResume: () => acts.resume() },
   bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
@@ -157,17 +159,23 @@ if (fixture && fixtures[fixture]) {
      an autosave "saved" may overwrite "backing up…", as the current app
      let it (a background backup must not suppress the user's own save
      feedback), and a pin outranks both */
-  const backupsLabel = (): void => { screen.backupsLabel = backup.configured ? "change backup folder…" : "set up automatic backups…"; };
+  /* the backups panel reads the runner's state at its open and again on
+     every trouble change while it stands */
+  const readBackups = (): void => {
+    screen.backups.canPick = !!win.showDirectoryPicker;
+    screen.backups.configured = backup.configured;
+    screen.backups.trouble = backup.trouble;
+    screen.backups.warm = layer.storeReadFailed ? "failed" : layer.warmed ? "ok" : "loading";
+  };
   const backup = backupRunner({
     layer, images, store: idbBackupStore(),
     picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
     say,
-    onTrouble: (msg) => { notices.setTrouble(msg); backupsLabel(); },
+    onTrouble: (msg) => { notices.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
     stick: (text, err, copy) => { notices.stickErr(text, err, copy); },
   });
-  backupsLabel();
-  acts.backups = () => { backup.setupBackupFolder(); };
-  acts.resume = () => { backup.resumeBackups(); };
+  acts.backups = () => { backup.setupBackupFolder().then(readBackups); };
+  acts.resume = () => { backup.resumeBackups().then(readBackups); };
   /* the masthead reads the open entry: recomputed when the entry or the
      text the store holds changes — an open, a landed save, an import's
      re-render — never per keystroke, since a day's tag list is a walk over
@@ -764,6 +772,7 @@ if (fixture && fixtures[fixture]) {
     if (ns === "help") { openRow(false); closeLineBar(); screen.panel = "help"; return; }
     if (ns === "bookmarks") { openBookmarks(); return; }
     if (ns === "shortcuts") { openShortcuts(); return; }
+    if (ns === "backups") { openRow(false); closeLineBar(); readBackups(); screen.panel = "backups"; return; }
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")

@@ -70,7 +70,8 @@ here NOW, and what is not yet:
   displace, toggle, Escape, a click outside and a row click; the three
   kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
   the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; ⌃⌘S over an empty table, a table saved, a code
+  scope pick and Escape; the backups panel unconfigured; ⌃⌘S over an
+  empty table, a table saved, a code
   filtered and Enter; ⌃⌘B, A, a numbered jump, a key given and typed,
   ×; ⌃⌘H over an open panel and Escape; ⌃⌘G over
   verse and over a book of leaves; a
@@ -176,7 +177,8 @@ here NOW, and what is not yet:
   acceptance list carried whole), `bookmarksModel.ts` (the card's
   decisions: the rows, the foot line, the typed-key grammar),
   `Bookmarks.svelte` (the card), `Shortcuts.svelte` (the text expander's
-  popup with its editor),
+  popup with its editor), `Backups.svelte` (the backups panel: setup,
+  resume, the status line, the recovery note),
   `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
@@ -1044,4 +1046,17 @@ here NOW, and what is not yet:
   Miller / md: markdown" saved lists both and whispers "shortcuts
   saved"; "m" typed filters to md; Enter closes the popup and the entry
   reads "markdown". `dist/index.html` is 709.47 kB.
+- THE BACKUPS PANEL (2026-09-08): 17-backups-panel.js ported as
+  `Backups.svelte` in the panel slot's sixth value, behind the masthead's
+  "backups" button where phase 2 had the setup button bare: "Set up
+  automatic backups…" or "Change backup folder…", "Resume backups" where
+  the last run stalled, the status line — an unloaded journal outranking
+  every other status, the trouble's own words, else "Automatic backups
+  are on." — and the recovery note. The runner's state is read at the
+  open and again on every trouble change while the panel stands; a
+  browser with no folder picker is told so and offered nothing. The
+  corner's pill stays as it was. MEASURED 2026-09-08 in headless Helium:
+  the button opens the card with the setup button alone and no status
+  on a profile with no folder; Escape closes. `dist/index.html` is
+  713.34 kB.
 

@@ -11,13 +11,12 @@ import { journalOf } from "../store/headings.ts";
 const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "page/Books/Essay": "# The essay\n\nb" };
 const journal = journalOf(cache);
 const none = () => {};
-function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts"; rows: { text: string; href: string }[]; empty: string }> = {}): string {
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups"; rows: { text: string; href: string }[]; empty: string }> = {}): string {
   const screen = screenState(extra.interval ?? 5);
   screen.masthead = mastheadModel(date, tag, Object.keys(cache), journal, "2026-09-07");
   screen.gutter = !!extra.gutter;
-  screen.backupsLabel = "set up automatic backups…";
   if (extra.panel) { screen.panel = extra.panel; screen.panelRows = extra.rows || []; screen.panelEmpty = extra.empty || ""; }
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onBackups: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, lineBar: { onInput: none, onEnter: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none } } }).body;
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onClear: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, lineBar: { onInput: none, onEnter: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none } } }).body;
 }
 
 describe("Masthead", () => {
