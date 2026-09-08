@@ -174,6 +174,7 @@ if (fixture && fixtures[fixture]) {
   const seeds: Record<string, string> = {
     "page/Horace": horace, "bookshelf/Browning, Robert/Pippa Passes": pippa,
     "2026-09-06": twelfth, "2026-09-05": williams, "page/Williams/Witchcraft 3": williams,
+    "page/Links": "A link to [Horace](#page/Horace), one to [itself](#page/Links), and one [outside](https://example.org/).\n",
   };
   const wrote = q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
     : q.get("store") === "seed" ? Promise.all(Object.keys(seeds).map((k) => layer.setEntry(k, seeds[k]))).then(() => stage("seed"))

@@ -97,6 +97,7 @@ export function startSession(opts: SessionOptions): Session {
       interval,
       onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
       nodeViews: { image: imageView(resolver(dir)) },
+      onRoute: (frag) => goto(frag, "already here"),
     });
     document.documentElement.dataset.entry = ekey;
     show();

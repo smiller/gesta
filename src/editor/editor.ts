@@ -14,12 +14,15 @@ import { typing, typingKeymap } from "./typing.ts";
 import type { Node } from "prosemirror-model";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
+import { linkClick } from "./links.ts";
 
 export interface EditorOptions {
   interval: number;
   onChange?: (view: EditorView) => void;
   /* node views beyond the rows' — the image view the session supplies */
   nodeViews?: Record<string, NodeViewConstructor>;
+  /* a plain click on an internal link: the fragment to route to */
+  onRoute?: (frag: string) => void;
 }
 
 const hardBreak: Command = (state, dispatch) => {
@@ -53,6 +56,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     /* the typed pipe, before the character lands: in a line it makes the
        pair; anywhere else it is the character */
     handleTextInput: (view, _from, _to, text) => text === "|" && pipeInLine(view.state, view.dispatch),
+    handleDOMEvents: { click: linkClick((frag) => opts.onRoute?.(frag)) },
     dispatchTransaction(this: EditorView, tr: Transaction) {
       this.updateState(this.state.apply(tr));
       if (tr.docChanged) opts.onChange?.(this);

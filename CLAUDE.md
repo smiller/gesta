@@ -79,7 +79,8 @@ here NOW, and what is not yet:
   measuring pass and its scheduling as a plugin view), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's),
   `typing.ts` (markdown as you type: the input rules and the two Enter
-  arms), `editor.ts` (the
+  arms), `links.ts` (a click on a link: the pure decision and the
+  handler), `editor.ts` (the
   view with its plugins), `editor.css` (the
   surface's stylesheet, ported from ../writer/src/style.css). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
@@ -606,4 +607,20 @@ here NOW, and what is not yet:
   "New author…"; the shelf's own icon again closes it; Escape closes; a
   click outside closes; a row click opens the page and closes the panel.
   The prompt is a hand's. `dist/index.html` is 586.95 kB.
+- LINK CLICKS IN THE EDITOR (`src/editor/links.ts`, the same day, by hand:
+  a book's contents row did not open): 07c-link-clicks.js ported as a
+  DOM click handler on the view over a pure decision — the modifier opens
+  EVERY link in a new tab, internal ones included; a plain click on an
+  internal link (a bare fragment, or a full URL pointing at this document)
+  routes in this tab, "already here" when it points at the entry it is
+  printed on; a plain click on an external link places the caret. The
+  reference block's whisper is not carried: there is no markdown view to
+  send the reader to yet. The seed gains `page/Links`, an entry holding
+  the three kinds. MEASURED 2026-09-07 in headless Helium
+  (`tools/helium-corner.mjs`): the link to itself whispers "already
+  here"; the external link leaves the entry; ⌘-click opens page/Horace in
+  a new tab with the entry unmoved; a plain click opens it in the tab.
+  Also that day, by hand: the `::: card-*` fills were missing — the box
+  was ported, the eleven colours and the card's own ink were not; ported
+  into editor.css. `dist/index.html` is 588.28 kB.
 

@@ -62,6 +62,23 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page div.note, .page div[class^="card-"] { margin: 1.2em 0; padding: 0.8em 1.2em; border: 1px solid var(--rule); }
 .page div.note > :first-child, .page div[class^="card-"] > :first-child { margin-top: 0; }
 .page div.note > :last-child, .page div[class^="card-"] > :last-child { margin-bottom: 0; }
+/* the Making Verity cards: the fence word is the class, the colour per
+   class. A CARD'S TEXT IS READ AGAINST ITS FILL: it takes the ink whatever
+   container it sits in — inside a note the muted grey vanished on
+   card-red. Left out of the 2026-09-07 port and noticed by hand the same
+   day. */
+.page div[class^="card-"] { border-radius: 4px; color: var(--ink); }
+.page div.card-bright-yellow { background: #f5c96e; }
+.page div.card-brighter-yellow { background: #e5d35f; }
+.page div.card-light-yellow { background: #eddc8d; }
+.page div.card-light-green { background: #94ae6b; }
+.page div.card-bright-green { background: #628673; }
+.page div.card-light-blue { background: #81b1a9; }
+.page div.card-bright-blue { background: #127a94; }
+.page div.card-red { background: #bc5858; }
+.page div.card-pink { background: #ed9892; }
+.page div.card-light-purple { background: #b39daf; }
+.page div.card-orange { background: #ffa500; }
 .page div.reference { font-family: var(--mono); font-size: 0.8em; color: var(--muted); }
 /* THE LEAF MARKER draws nothing in the text: its tick and its label are
    its own pseudo-elements, absolutely positioned, and both take the
