@@ -1456,3 +1456,9 @@ at the head is kept current per phase.
   lingers across quick steps, a whisper's clock being longer than the
   tool's waits, which is the notice fading as decided. The bridge tool's
   nine steps already read entry, crumb, title, status and first line.
+- LINKS IN THE TEXT (2026-09-09, by hand: the browser's blue and visited
+  purple): the current app's one rule, `.page a { color: var(--accent) }`,
+  was left out of the 2026-09-07 stylesheet port; ported. MEASURED in
+  headless Helium over the Links page: all three links rgb(61, 107, 44)
+  with the underline kept, visited or not. `dist/index.html` is
+  730.75 kB.

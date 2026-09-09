@@ -74,6 +74,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page li > p { margin: 1em 0; }
 .page li > p:first-child { margin: 0; }
 .page li::marker { color: var(--accent); }
+/* a link in the text is the accent, visited or not, the current app's one
+   rule; left out of the 2026-09-07 port and seen by hand 2026-09-09 as
+   the browser's blue and purple */
+.page a { color: var(--accent); }
 .page pre { position: relative; font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); border: 1px solid var(--rule); border-radius: 3px; padding: 0.7em 1em; margin: 1em 0; white-space: pre-wrap; overflow-wrap: break-word; }
 /* the corner language label, off the block's data-lang; it yields its
    spot to the copy button on hover */
