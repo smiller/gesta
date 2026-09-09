@@ -1442,3 +1442,17 @@ at the head is kept current per phase.
   CLAUDE.md: a headless step reads the screen after a gesture, not the
   one bit the feature promises. `dist/index.html` is 730.74 kB.
   Confirmed by hand in Helium the same day.
+- THE AUDIT OF THE HEADLESS STEPS (2026-09-09, asked for): every one of
+  the corner tool's 82 steps now reads THE SCREEN after its gesture
+  through one reader — the entry, what is selected (a node, N chars,
+  none), the bar, which panel and which rows stand open, the view, the
+  corner's text — appended to the step's own reading as one line.
+  MEASURED over a fresh profile: no step leaves a panel, a row or the
+  source view standing that it should have closed; the bar is on only
+  where the step itself made a selection (⌃⌘R, the ⌘C, the
+  double-click) and off over the two highlights that suppress it; the
+  view is rendered again after every switch. No defect in the app; the
+  tool named a panel by its Svelte hash class, fixed. The corner's text
+  lingers across quick steps, a whisper's clock being longer than the
+  tool's waits, which is the notice fading as decided. The bridge tool's
+  nine steps already read entry, crumb, title, status and first line.
