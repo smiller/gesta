@@ -1441,3 +1441,4 @@ at the head is kept current per phase.
   tab for each, nothing selected, no bar. The rule taken from it is in
   CLAUDE.md: a headless step reads the screen after a gesture, not the
   one bit the feature promises. `dist/index.html` is 730.74 kB.
+  Confirmed by hand in Helium the same day.
