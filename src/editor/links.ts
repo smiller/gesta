@@ -6,7 +6,13 @@
    (a bare fragment, or a full URL that points at this document) routes in
    this tab, and a link can point at the entry it is printed on, which is
    the router's cell to answer; a plain click on an external link keeps
-   placing the caret. The decision is pure; the handler applies it. */
+   placing the caret. The decision is pure; the handler applies it.
+   THE MODIFIED PRESS IS TAKEN ON MOUSEDOWN: a ⌘-mousedown is ProseMirror's
+   own "select this node" gesture, and a handler on click ran after it
+   had selected the whole paragraph and raised the format bar — FOUND by
+   hand 2026-09-09 on an external link; the headless step had asked only
+   whether a new tab appeared. The plain click stays a click, so a drag
+   that starts on a link routes nothing. */
 import type { EditorView } from "prosemirror-view";
 import { internalHash } from "../store/nav.ts";
 
@@ -17,11 +23,13 @@ export function linkAction(href: string | null, modified: boolean, docHref: stri
   const frag = internalHash(href, docHref);
   return frag ? { kind: "route", frag } : null;
 }
-export function linkClick(onRoute: (frag: string) => void): (view: EditorView, e: MouseEvent) => boolean {
+export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {
   return (_view, e) => {
     const a = (e.target as Element | null)?.closest("a");
     if (!a) return false;
-    const act = linkAction(a.getAttribute("href"), e.metaKey || e.ctrlKey);
+    const modified = e.metaKey || e.ctrlKey;
+    if (modified !== (phase === "mousedown")) return false;
+    const act = linkAction(a.getAttribute("href"), modified);
     if (!act) return false;
     e.preventDefault();
     if (act.kind === "open") window.open(new URL(act.href, location.href).href, "_blank", "noopener");

@@ -86,6 +86,10 @@ is in the plan's record, under the phase named):
   but a line", ⌃⌘N is "new". Whether Helium passes a chord through is
   answered only by pressing it there, and every new chord is named for a
   hand to try.
+- A headless step reads THE SCREEN after a gesture — the entry, the
+  selection, the bar, the corner — not only the one bit the feature
+  promises: the ⌘-click step asked whether a tab opened and was green
+  while the gesture also selected the paragraph (2026-09-09).
 - The stored text is markdown, the field `md`; a save is serialize and
   compare, and an entry the model refuses is shown as source, never
   edited as a lossy document (phases 2 and 3).

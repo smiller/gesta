@@ -1426,3 +1426,18 @@ at the head is kept current per phase.
   the label in small caps, a 3px rule in the rule colour, Georgia at
   0.85em in the muted ink, the paragraph after it unchanged; looked at
   by hand the same day: better. `dist/index.html` is 730.64 kB.
+- ⌘-CLICK ON A LINK (2026-09-09, by hand in the cutover trial: a ⌘-click
+  on an external link selected the whole paragraph and raised the format
+  bar). A ⌘-mousedown is ProseMirror's own "select this node" gesture,
+  and the link handler ran on CLICK, after the node selection was made;
+  the new tab opened even so. The modified press is taken on mousedown
+  now, before ProseMirror sees it; the plain click stays a click.
+  WHY NO CHECK CAUGHT IT: the pure test covers the decision, not the
+  handler's meeting with the editor's mouse gesture; and the headless
+  step ⌘-clicked one internal link and asked ONE question, whether a new
+  tab appeared — true on the old code too. MEASURED 2026-09-09: over the
+  old handler the extended step reads nodeSelected true, the paragraph's
+  text selected and the bar shown for both links; over the fix, a new
+  tab for each, nothing selected, no bar. The rule taken from it is in
+  CLAUDE.md: a headless step reads the screen after a gesture, not the
+  one bit the feature promises. `dist/index.html` is 730.74 kB.

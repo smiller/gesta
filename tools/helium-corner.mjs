@@ -66,9 +66,15 @@ console.log("a link to itself:", JSON.stringify({ entry: await page.evaluate(() 
 await page.click("#editor a[href='https://example.org/']");
 await page.waitForTimeout(200);
 console.log("a plain click on an external link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry), url: page.url().split("#")[1] }));
+const afterModClick = () => page.evaluate(() => ({ stayed: document.documentElement.dataset.entry, nodeSelected: !!document.querySelector(".ProseMirror-selectednode"), selection: document.getSelection()?.toString().slice(0, 20), bar: document.querySelector(".fmt")?.classList.contains("show") }));
 const popup = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
 await page.click("#editor a[href='#page/Horace']", { modifiers: ["Meta"] });
-console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await popup).split("#")[1], stayed: await page.evaluate(() => document.documentElement.dataset.entry) }));
+await page.waitForTimeout(200);
+console.log("⌘-click on an internal link:", JSON.stringify({ newTab: (await popup).split("#")[1], ...(await afterModClick()) }));
+const popup2 = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
+await page.click("#editor a[href='https://example.org/']", { modifiers: ["Meta"] });
+await page.waitForTimeout(200);
+console.log("⌘-click on an external link:", JSON.stringify({ newTab: await popup2, ...(await afterModClick()) }));
 await page.click("#editor a[href='#page/Horace']");
 await page.waitForFunction(() => document.documentElement.dataset.entry === "page/Horace", null, { timeout: 5000 });
 console.log("a plain click on an internal link:", JSON.stringify({ entry: await page.evaluate(() => document.documentElement.dataset.entry) }));

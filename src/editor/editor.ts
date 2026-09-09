@@ -100,7 +100,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     /* the typed pipe, before the character lands: in a line it makes the
        pair; anywhere else it is the character */
     handleTextInput: (view, _from, _to, text) => text === "|" && pipeInLine(view.state, view.dispatch),
-    handleDOMEvents: { click: linkClick((frag) => opts.onRoute?.(frag)) },
+    handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
     /* plain text pasted renders the markdown it spells; the copied text is
        the selection's markdown (paste.ts) */
     handlePaste: (view, event) => {
