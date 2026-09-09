@@ -1460,5 +1460,5 @@ at the head is kept current per phase.
   purple): the current app's one rule, `.page a { color: var(--accent) }`,
   was left out of the 2026-09-07 stylesheet port; ported. MEASURED in
   headless Helium over the Links page: all three links rgb(61, 107, 44)
-  with the underline kept, visited or not. `dist/index.html` is
-  730.75 kB.
+  with the underline kept, visited or not; looked at by hand the same
+  day: better. `dist/index.html` is 730.75 kB.
