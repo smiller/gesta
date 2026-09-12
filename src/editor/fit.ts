@@ -68,6 +68,8 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
 
 /* ---------- the DOM side ---------- */
 
+/* NOT a quotation: a paired citation is fitted with the entry (tried as
+   an inset box 2026-09-12 — equal halves wrapped its English column) */
 const INSET = "div.note, div[class^=\"card-\"]";
 
 /* every paired block the width rule governs for one form: a descendant
@@ -116,8 +118,17 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
       const cs = getComputedStyle(b);
       /* the block's own box, and in a book that includes the line-number
          gutter, so a four-digit number sits inside the fitted width */
-      frame = Math.max(frame, parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) +
-        parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth));
+      let own = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) +
+        parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+      /* and a quoted block pays its quotation's padding and rule: the
+         columns have the entry's measure less that box, and a citation's
+         English column wrapped by exactly it (by hand 2026-09-12) */
+      for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
+        if (el.tagName !== "BLOCKQUOTE") continue;
+        const q = getComputedStyle(el);
+        own += parseFloat(q.paddingLeft) + parseFloat(q.paddingRight) + parseFloat(q.borderLeftWidth) + parseFloat(q.borderRightWidth);
+      }
+      frame = Math.max(frame, own);
       b.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
         gapRow ??= r;
         const cells = r.children;
@@ -167,12 +178,13 @@ export function rowSpills(row: HTMLElement): boolean {
   return false;
 }
 
-/* the paired top-level verse row the caret is in, or null */
+/* the paired verse row the caret is in — top-level or quoted, never in
+   an inset box — or null */
 function caretRow(view: EditorView): HTMLElement | null {
   const { node } = view.domAtPos(view.state.selection.from);
   const el = node instanceof Element ? node : node.parentElement;
-  const row = el?.closest<HTMLElement>(".page > .verse > .vpair") ?? null;
-  return row && row.closest(".page") === view.dom ? row : null;
+  const row = el?.closest<HTMLElement>(".verse > .vpair") ?? null;
+  return row && row.closest(".page") === view.dom && !row.parentElement?.closest(INSET) ? row : null;
 }
 
 /* the settle's delay after typing stops — the current app settles at the

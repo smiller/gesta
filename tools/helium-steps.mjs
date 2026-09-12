@@ -316,6 +316,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.pasteText(page, "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord");
   await page.waitForTimeout(200);
   await log("a reference pasted", { md: await A.stored(page), ...(await R.pastedReference(page)) });
+  /* a paired citation is a fence inside the quotation (2026-09-12): its
+     pair stands where a quoted paragraph's text does, its cells unwrapped */
+  await go("page/Pasted Pair");
+  await page.click(S.editor);
+  await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#page/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
+  await page.waitForTimeout(700);
+  await log("a paired citation pasted", await R.quotedPair(page));
   await R.pasteText(page, "[*Gesta*](#2026-09-06?h=food%20of%20love)");
   await page.waitForTimeout(200);
   await page.click(S.editorLink("#2026-09-06?h=food%20of%20love"));

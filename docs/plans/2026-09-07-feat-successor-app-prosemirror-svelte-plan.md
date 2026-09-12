@@ -1582,6 +1582,21 @@ at the head is kept current per phase.
   numbers in the citation are given up for now, a second step if they
   are wanted back. The shared ⌃⌘R step reads the passage's shape now
   (its first 60 characters), listed as a decided difference; the rich
-  flavour follows the markdown into a blockquote by itself. OPEN, to
-  experiment next: the two columns fitting the quotation's narrower box
-  without wrapping.
+  flavour follows the markdown into a blockquote by itself. Then the
+  box, the same day, by hand: the quoted pair stood 21px LEFT of the
+  quoted text beside it, since a paired block pulls itself to the
+  entry's measure. Tried as an inset box like a note's (equal halves):
+  the margin aligned, but the English column wrapped — "clothes" alone
+  on a line — and the rich flavour's twin gave equal halves too.
+  DECIDED: a paired citation is FITTED with the entry, the fit's own
+  intent (its comment already said a quoted paired block widens the
+  entry with the rest); the measure counts the quotation's padding and
+  rule in the frame, the entry pulls to the measure when a quoted pair
+  is present, and the quoted block itself pulls nothing, standing at
+  the text's edge with a paragraph's margins. MEASURED in headless
+  Helium over four Horace lines, the English up to "have hung up my
+  still dripping clothes": indent 0, columns 266 and 360, nothing
+  wrapped, the two quotation boxes the same; the current app's pair
+  reads indent −21 and columns 266 and 403, pulled out of its box. Both
+  are listed as decided differences. The rich flavour's columns are 332
+  and 421, the English narrower by the quotation's box.
