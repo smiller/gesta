@@ -1513,11 +1513,14 @@ at the head is kept current per phase.
   non-breaking space the contenteditable stores; the landing centred
   within 8px; a row's second class in the clipboard HTML); FOUR are open
   questions for a hand: the "N entries stored" whisper after the warm,
-  which the current app does not say; ⌃⌘, on a page, silent there and
+  which the current app does not say (SETTLED the same day: kept, the
+  one sign the journal read completely); ⌃⌘, on a page, silent there and
   "no earlier entry" here (SETTLED the same day: the whisper); the Tag extract, which keeps the bold here
   and loses it there (SETTLED the same day: keeping the marks is right,
   the current app's loss a defect); and a day's tag bar, in creation order there and
-  by name here — SETTLED the same day: by name. The tool's summary
+  by name here — SETTLED the same day: by name. With the four settled
+  the comparison stands at 83 steps, 68 identical and 15 differing only
+  where a decision is listed, none open. The tool's summary
   counts steps and fields apart since the same day, a sum of the two
   having been misread. The corner's approved copy was re-taken after the
   readers were normalised (no Svelte hash classes, "editor" for the

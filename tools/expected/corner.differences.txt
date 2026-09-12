@@ -21,3 +21,6 @@ the day's body ends with the link, its tag bar lists it · tags · a day's tagge
 Tag with Music answered · body · the extract KEEPS the selection's marks here; the current app's loses the bold — a defect there, not a rule; asked and settled 2026-09-12
 after ⌃⌘, on the first entry · text · ⌃⌘, with nowhere to go whispers "no earlier entry" here; the current app says nothing — silence reads as a dead control; asked and settled 2026-09-12
 after ⌃⌘, on the first entry · show · the same whisper
+after warm · text · the corner whispers "N entries stored" when the warm lands, the one sign the journal read completely and how many it holds; the current app says nothing; asked and settled 2026-09-12: kept
+after warm · show · the same whisper
+3.2 s later · text · the same whisper's text, standing as it fades
