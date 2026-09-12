@@ -1514,7 +1514,7 @@ at the head is kept current per phase.
   within 8px; a row's second class in the clipboard HTML); FOUR are open
   questions for a hand: the "N entries stored" whisper after the warm,
   which the current app does not say; ⌃⌘, on a page, silent there and
-  "no earlier entry" here; the Tag extract, which keeps the bold here
+  "no earlier entry" here (SETTLED the same day: the whisper); the Tag extract, which keeps the bold here
   and loses it there (SETTLED the same day: keeping the marks is right,
   the current app's loss a defect); and a day's tag bar, in creation order there and
   by name here — SETTLED the same day: by name. The tool's summary

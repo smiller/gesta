@@ -19,3 +19,5 @@ Enter again on one block · centred · the same
 ⌃⌘R · htmlHead · the successor's paired row carries `vpair` beside `vrow` in the clipboard HTML; the inline grid is the same and a receiving application reads neither class
 the day's body ends with the link, its tag bar lists it · tags · a day's tagged entries list BY NAME here, in creation order in the current app; asked and settled 2026-09-12 — the lists are derived from the cache's keys, which keep no creation order
 Tag with Music answered · body · the extract KEEPS the selection's marks here; the current app's loses the bold — a defect there, not a rule; asked and settled 2026-09-12
+after ⌃⌘, on the first entry · text · ⌃⌘, with nowhere to go whispers "no earlier entry" here; the current app says nothing — silence reads as a dead control; asked and settled 2026-09-12
+after ⌃⌘, on the first entry · show · the same whisper
