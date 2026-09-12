@@ -62,13 +62,13 @@ test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pai
   const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
   /* one end outside the quoted pair: whole rows, no throw, and the quotation holding only that end STAYS, as the source had it (asked 2026-09-12) */
   let [a, b] = span(q, "four", "After");
-  expect(passageMd(q, a, b)).toBe(">> ::: verse 13\n>> gamma delta | three four\n>> :::\n> After");
+  expect(passageMd(q, a, b)).toBe(">> ::: verse 14\n>> gamma delta | three four\n>> :::\n> After");   /* numbered from the row the cut opens on (the block's closing review) */
   [a, b] = span(q, "Horace", "alph");
   expect(passageMd(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
   /* a note inside a quoted verse block: its text, as before */
   const noted = parseMarkdown("> ::: verse 13\n> alpha beta | one two\n> ::: note\n> a footnote here\n> :::\n> gamma delta | three four\n> :::");
   [a, b] = span(noted, "footnote", "footnote");
-  expect(passageMd(noted, a, b)).toBe("> ::: verse 13\n> ::: note\n> footnote\n> :::\n> :::");
+  expect(passageMd(noted, a, b)).toBe("> ::: verse 14\n> ::: note\n> footnote\n> :::\n> :::");   /* the block's count at the note's row, as a direction alone is numbered */
   /* two quoted fences are two blocks, refused as at the top level */
   const two = parseMarkdown("> ::: verse 13\n> alpha | one\n> beta | two\n> :::\n>\n> ::: verse 40\n> gamma | three\n> :::");
   [a, b] = span(two, "beta", "three");
@@ -114,7 +114,7 @@ test("the shapes the second confirmation pass measured: a block inside a note, t
   /* two quotations deep, or inside a note: one level out */
   const deep = parseMarkdown("> > ::: verse 13\n> > alpha beta | one two\n> > gamma delta | three four\n> > :::\n> >\n> > After the quote.");
   [a, b] = span(deep, "four", "After");
-  expect(passageMd(deep, a, b)).toBe("> ::: verse 13\n> gamma delta | three four\n> :::\n> After");   /* both ends in the inner quotation: both levels off */
+  expect(passageMd(deep, a, b)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::\n> After");   /* both ends in the inner quotation: both levels off */
   const noted = parseMarkdown("::: note\nfootnote here\n:::");
   [a, b] = span(noted, "footnote", "footnote");
   expect(passageMd(noted, a, b)).toBe("> footnote");
@@ -125,6 +125,27 @@ test("the shapes the second confirmation pass measured: a block inside a note, t
   const last = parseMarkdown("::: verse 13\nalpha | one\n*exit* | *exit*\n:::");
   [a, b] = span(last, "exit", "exit");
   expect(passageMd(last, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
+});
+test("the shapes the block's closing review measured: the passage as a quotation node the serializer spells", () => {
+  /* a stanza gap beside a note inside the fence is a row, kept through the cut arm */
+  const gapped = parseMarkdown("Intro.\n\n::: verse\na | b\n\n::: note\nfoot\n:::\n\nc | d\n:::");
+  let [a, b] = span(gapped, "Intro", "d");
+  expect(passageMd(gapped, a, b)).toBe("> Intro.\n> ::: verse\n> a | b\n> \n> ::: note\n> foot\n> :::\n> \n> c | d\n> :::");
+  /* a refused `:::` line is a text line, its paragraph breaks kept */
+  const refused = parseMarkdown("First para.\n\n::: verse x\n\nLast para.");
+  [a, b] = span(refused, "First", "Last");
+  expect(passageMd(refused, a, b)).toBe("> First para.\n> \n> ::: verse x\n> \n> Last");
+  /* a retained quotation's edge blank comes off inside the nested box */
+  const edge = parseMarkdown("> The mind\n>\n\nAfter.");
+  [a, b] = span(edge, "mind", "After");
+  expect(passageMd(edge, a, b)).toBe(">> mind\n> After");
+  const mirror = parseMarkdown("Before.\n\n>\n> The mind");
+  [a, b] = span(mirror, "Before", "mind");
+  expect(passageMd(mirror, a, b)).toBe("> Before.\n>> The mind");
+  /* a top-level fence cut mid-way is numbered from the row the cut opens on */
+  const top = parseMarkdown("::: verse 13\nalpha | one\ngamma | three\n:::\n\nAfter.");
+  [a, b] = span(top, "three", "After");
+  expect(passageMd(top, a, b)).toBe("> ::: verse 14\n> gamma | three\n> :::\n> After");
 });
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");

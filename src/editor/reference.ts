@@ -6,7 +6,7 @@
    document in place of DOM ranges: "covers" is an overlap that holds ink,
    and a passage is rows or a cut of the document serialized back to
    markdown. The label itself is store/reference.ts's. */
-import type { Node } from "prosemirror-model";
+import { Fragment, type Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -121,22 +121,25 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
   while ((i = before.indexOf(q, i + 1)) !== -1) nth++;
   return { q, nth };
 }
-/* the serializer's own quote level, so a pasted citation is spelled as
-   its first save will spell it (the 2026-09-12 review: a blank line here
-   was ">" and there "> ") */
-/* A BLANK LINE AT A FENCE'S EDGE IS DROPPED before the prefix goes on:
-   in a quote body a blank line is content — the empty line a paragraph
-   break looks like there — and beside a fence it painted an empty line
-   on top of the fence's own margin (asked 2026-09-12 by hand, over a
-   drag from a citation into the line after it). Between two text lines
-   the blank stays, being the paragraph break; a stanza gap inside a
-   fence stands between rows, not at an edge. */
-const FENCE_EDGE = /^(?:>\s?)*:::/, BLANK = /^(?:>\s?)*$/;
-const quote = (md: string): string => {
-  const lines = md.split("\n");
-  const kept = lines.filter((l, i) => !(BLANK.test(l) && (FENCE_EDGE.test(lines[i - 1] ?? "") || FENCE_EDGE.test(lines[i + 1] ?? ""))));
-  return kept.map(quotePrefix).join("\n");
-};
+/* THE PASSAGE IS A QUOTATION NODE and the serializer spells it: the
+   quote body's own grammar — a fence's lines under the prefix, a blank
+   line only where a paragraph break stands between two text lines, no
+   blank beside a fence or another block — is the serializer's, asked
+   once. A textual filter over serialized lines stood here for a day
+   (2026-09-12) and misread a note's fence lines inside a verse block, a
+   refused `:::` paragraph and a gap at a fence's edge (the block's
+   closing review). Consecutive paragraphs become one quote-body
+   paragraph with the double break a blank line is there. */
+function quoted(blocks: Node[]): string {
+  const body: Node[] = [];
+  for (const b of blocks) {
+    const last = body[body.length - 1];
+    if (b.type === N.paragraph && last && last.type === N.paragraph) {
+      body[body.length - 1] = last.copy(last.content.append(Fragment.from([N.hard_break.create(), N.hard_break.create()])).append(b.content));
+    } else body.push(b);
+  }
+  return serializeMarkdown(schema.nodes.doc.create(null, [N.blockquote.create(null, body)])).trim();
+}
 /* does the selection reach ink the row arms cannot carry — loose prose,
    a pipe-less prose fence, anything outside a verse block or a paired
    prose block, at whatever depth the block stands */
@@ -180,25 +183,52 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
    `> >` at two). A container holding only ONE END stays: a drag from a
    citation into the line after it keeps the pair quoted beside the line
    that was not, as the source had them (asked 2026-09-12 by hand, after
-   a version flattened it; the current app's copy keeps a partly
-   selected ancestor too). A quote body's blank line is a break at a
-   paragraph's edge, which the block join spells again once lifted, so
-   an edge break comes off; a lifted block with no ink is nothing to
-   quote. */
+   a version flattened it; INFERRED from the current app's copy, which
+   clones a partly selected ancestor). A quote body's blank line is a
+   break at a paragraph's edge, which the block join spells again once
+   lifted, so an edge break comes off — inside a retained container as
+   well (the block's closing review: a retained quotation carried its
+   edge blank into the nested box); a lifted block with no ink is
+   nothing to quote. */
 const CONTAINERS = new Set(["blockquote", "note", "card"]);
-function unquoted(cut: Node): Node {
+function trimEdges(b: Node): Node {
+  if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => inner.push(trimEdges(c))); return b.copy(Fragment.from(inner)); }
+  if (b.type !== N.paragraph) return b;
+  let c = b.content;
+  if (c.firstChild?.type === N.hard_break) c = c.cut(c.firstChild.nodeSize);
+  if (c.lastChild?.type === N.hard_break) c = c.cut(0, c.size - c.lastChild.nodeSize);
+  return b.copy(c);
+}
+function unquoted(cut: Node): Node[] {
   let n = cut;
   while (n.childCount === 1 && CONTAINERS.has(n.firstChild!.type.name)) n = schema.nodes.doc.create(null, n.firstChild!.content);
   const blocks: Node[] = [];
   n.forEach((b) => blocks.push(b));
-  const trimmed = blocks.map((b) => {
-    if (b.type !== N.paragraph) return b;
-    let c = b.content;
-    if (c.firstChild?.type === N.hard_break) c = c.cut(c.firstChild.nodeSize);
-    if (c.lastChild?.type === N.hard_break) c = c.cut(0, c.size - c.lastChild.nodeSize);
-    return b.copy(c);
-  }).filter((b) => b.type === N.gap || drawsInk(b));
-  return schema.nodes.doc.create(null, trimmed);
+  return blocks.map(trimEdges).filter((b) => b.type === N.gap || drawsInk(b));
+}
+/* the cut's first block renumbered where the cut opened INSIDE a row
+   block: a fence keeps its block's start through a cut, and a passage
+   dragged from row 15 into the paragraph after the fence numbered it
+   13 (the block's closing review, a defect measured and left by the
+   pass before it). The number is the block's count at the row the cut
+   opens on, as the row arm's is; a retained container is entered to
+   reach the fence. */
+function renumbered(doc: Node, at: number, blocks: Node[]): Node[] {
+  const $at = doc.resolve(at);
+  for (let d = $at.depth; d >= 1; d--) {
+    const block = $at.node(d);
+    if (block.type !== N.verse && block.type !== N.prose) continue;
+    const blockPos = $at.before(d), rowPos = $at.depth > d ? $at.before(d + 1) : at;
+    let start = block.attrs.start as number;
+    for (const u of blockUnits(block, blockPos, 0)) { if (u.pos >= rowPos) break; if (u.line) start = u.line + 1; }
+    const fix = (b: Node): Node => {
+      if (b.type === N.verse || b.type === N.prose) return b.type.create({ ...b.attrs, start }, b.content);
+      if (CONTAINERS.has(b.type.name) && b.firstChild) return b.copy(Fragment.from([fix(b.firstChild), ...b.content.content.slice(1)]));
+      return b;
+    };
+    return blocks.length ? [fix(blocks[0]), ...blocks.slice(1)] : blocks;
+  }
+  return blocks;
 }
 /* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
    with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
@@ -214,7 +244,7 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {
     const [a, b] = wholeRows(doc, from, to);
-    return quote(serializeMarkdown(unquoted(doc.cut(a, b))).trim());
+    return quoted(renumbered(doc, a, unquoted(doc.cut(a, b))));
   }
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
@@ -253,7 +283,7 @@ export function passageMd(doc: Node, from: number, to: number): string {
     let firstLine = block.attrs.start as number;
     for (const u of blockUnits(block, blockPos, 0)) { if (u.pos >= rows[first].pos) break; if (u.line) firstLine = u.line + 1; }
     const fence = block.type.create({ ...block.attrs, start: firstLine }, kept);
-    return quote(serializeMarkdown(schema.nodes.doc.create(null, [fence])).trim());
+    return quoted([fence]);
   }
   return kept.map((row) => {
     if (row.type === N.gap || !drawsInk(row)) return quotePrefix("");

@@ -1700,7 +1700,7 @@ at the head is kept current per phase.
   had none, as the source had them — and only the containers around the
   whole selection come off; INFERRED from the current app's copy, which
   clones a partly selected ancestor, this is its rule too. The two
-  pinned shapes expect the nested form. And the box, by hand the same
+  pinned shapes expect the nested form (READ reference.test.ts). And the box, by hand the same
   day: every quotation had more room below its text than above — the
   last block's em of bottom margin inside the box's padding (READ
   editor.css: `.page p` and the quoted pair's margins, `blockquote`'s
@@ -1712,4 +1712,26 @@ at the head is kept current per phase.
   that paints an empty line, and the reference builder wrote one
   between the fence and the line after it. DECIDED, asked: the builder
   drops a blank line at a fence's edge before quoting; between text
-  lines it stays, being the paragraph break. The model is untouched.
+  lines it stays, being the paragraph break. The model is untouched
+  (MEASURED `git diff --stat -- src/model`, nothing).
+  THE BLOCK'S CLOSING REVIEW, the same day (MEASURED 149,776 tokens,
+  18 minutes), over the four commits: five findings had one root — the
+  blank-line filter was a `:::` literal over serialized text, and it
+  misread a note's fence lines inside a verse block (stanza gaps
+  dropped), a refused `:::` paragraph (paragraph breaks dropped), a gap
+  at a fence's edge, and the general case, a blank beside any block
+  line; and the edge-break trim stopped at the top of the cut, so a
+  retained quotation carried its edge blank into the nested box (all
+  MEASURED by the review in node). DECIDED: the passage is a QUOTATION
+  NODE and the serializer spells it — consecutive paragraphs merged
+  with the double break a blank line is in a quote body, everything
+  else the serializer's own grammar — and the trim recurses into
+  retained containers. With it the standing defect goes: a fence cut
+  mid-way is numbered from the row the cut opens on (the passage
+  dragged from row 15 into the paragraph after numbered 13), a note's
+  row included. Also: a note, card or reference ending a quotation
+  kept its bottom margin (MEASURED by the review in headless Helium,
+  17px) — named in the rule; a dead selector and a false comment
+  sentence gone. MEASURED in node, the new shapes pinned in
+  reference.test.ts; the corner run reads the top-level ⌃⌘R, whose
+  spelling is unchanged.
