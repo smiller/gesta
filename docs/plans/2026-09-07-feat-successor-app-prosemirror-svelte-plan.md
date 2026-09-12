@@ -1528,3 +1528,43 @@ at the head is kept current per phase.
   line). `npm run test:helium` is the approval and the comparison;
   `npm run verify` chains tsc, the suite and it; `npm run
   compare:writer` regenerates the reference.
+- 2026-09-12, the reference link's jump. FOUND by hand: a reference
+  link into Paradise Lost 1.254–5 opened the book at its top, the
+  passage selected off screen; the headless step had followed a link
+  into a short entry, which needed no scroll. READ in prosemirror-view
+  1.42.3: `selectionToDOM` writes the selection to the DOM only while
+  the editor has focus, and `scrollToSelection` is skipped when the
+  DOM selection is not in the editor — so a `scrollIntoView()`
+  dispatched at a freshly mounted view BEFORE `view.focus()` never
+  scrolled. DECIDED: the focus comes before the dispatch — first by
+  hand at the jump and four other sites of the shape, then, on the
+  same day's review, ONCE in editor.ts's dispatchTransaction, gated on
+  the transaction's scrollIntoView so a background dispatch takes no
+  focus from a panel; main.ts centres the passage in the band under the
+  masthead, the same landing ⌃⌘G makes, since the current app centred
+  the passage too (`block: "center"` in 23-search.js) and the point is
+  the lines around it — A FRAME LATER, since the review MEASURED the
+  fit's first pass re-wrapping a paired entry after a synchronous
+  centring: a passage in Horace sat mid-band, then the page shrank from
+  6611px to 2065px and the passage sat 304px above centre under the
+  masthead. The shared step now follows a second link deep into Pippa
+  Passes and reads whether the selection is ON SCREEN, the bar off;
+  MEASURED: the current app answers on-screen for both links, the
+  successor answered off-screen for the deep one before the fix and
+  on-screen after it, and no other step's reading moved. The review of
+  the batch (one medium pass, 140k tokens) also found: the comparison
+  keyed steps by label, so four of the five "Escape" steps and one of
+  two "Enter" steps were outside the verdict (keyed with a count now);
+  it read a leftover received copy silently (it names its input, and
+  takes it as an argument); a child killed by a signal read as a clean
+  run (a failure now, never approved); the panel-row readers had
+  stripped every space since the split, so words run together read the
+  same (the rendered text with word spaces now); an open, unsaved sub
+  under a stated order walked to the top of the index (it stands at the
+  end, as the picker shows it); and the Layout still listed the steps
+  under the corner tool. With every Escape compared, one field opened:
+  the ⌃⌘G bar's Escape read the focused element's id, "page" there and
+  "" here, where the editor has no id — MEASURED the editor focused on
+  both once the readers named it "editor", as the bar reader already
+  did. The comparison stands at 89 steps, 74 identical, 15 decided,
+  none open; `npm run verify` green end to end.

@@ -44,9 +44,12 @@ if (args.includes("--writer")) {
   const prof = resolve(tmpdir(), "gesta-helium-writer-profile");
   for (let i = 0; i < 20; i++) { try { rmSync(prof, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
   const r = spawnSync("node", [WRITER], { env, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  writeFileSync(resolve("tools/expected/corner.writer.txt"), scrub((r.stdout || "") + (r.status ? "\nEXIT " + r.status + "\n" + (r.stderr || "") : "")));
-  console.log("writer: " + (r.stdout || "").split("\n").length + " lines to tools/expected/corner.writer.txt");
-  process.exit(r.status || 0);
+  /* a child killed by a signal has a null status: read as clean, its
+     truncated run became the reference (the 2026-09-12 review) */
+  const bad = r.status || r.signal;
+  writeFileSync(resolve("tools/expected/corner.writer.txt"), scrub((r.stdout || "") + (bad ? "\nEXIT " + bad + "\n" + (r.stderr || "") : "")));
+  console.log("writer: " + (r.stdout || "").split("\n").length + " lines to tools/expected/corner.writer.txt" + (bad ? " — FAILED, " + bad : ""));
+  process.exit(bad ? (r.status || 1) : 0);
 }
 let failed = 0;
 const build = spawnSync("npm", ["run", "build"], { env, encoding: "utf8" });
@@ -58,9 +61,12 @@ for (const name of run) {
   const prof = resolve(tmpdir(), "gesta-helium-" + name + "-profile");
   for (let i = 0; i < 20; i++) { try { rmSync(prof, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
   const r = spawnSync("node", [TOOLS[name]], { env, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  const received = scrub((r.stdout || "") + (r.status ? "\nEXIT " + r.status + "\n" + (r.stderr || "") : ""));
+  const bad = r.status || r.signal;
+  const received = scrub((r.stdout || "") + (bad ? "\nEXIT " + bad + "\n" + (r.stderr || "") : ""));
   const approvedPath = resolve("tools/expected/" + name + ".approved.txt"), receivedPath = resolve("tools/expected/" + name + ".received.txt");
   const approved = existsSync(approvedPath) ? readFileSync(approvedPath, "utf8") : null;
+  /* a run that died is never the approved copy, whatever the flag */
+  if (approve && bad) { failed++; writeFileSync(receivedPath, received); console.log(name + ": FAILED (" + bad + "), not approved; see " + receivedPath); continue; }
   if (approve) { writeFileSync(approvedPath, received); rmSync(receivedPath, { force: true }); console.log(name + ": approved (" + received.split("\n").length + " lines)"); continue; }
   if (approved === received) { rmSync(receivedPath, { force: true }); console.log(name + ": ok"); continue; }
   failed++;
@@ -68,6 +74,6 @@ for (const name of run) {
   console.log(name + ": DIFFERS from " + approvedPath + (approved === null ? " (no approved copy yet)" : ""));
   const d = spawnSync("diff", ["-u", approvedPath, receivedPath], { encoding: "utf8" });
   console.log((d.stdout || "").split("\n").slice(0, 80).join("\n"));
-  console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.mjs --approve " + name + "`");
+  console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.mjs --approve " + name + "`" + (name === "corner" ? "; to compare it as it stands, `node tools/helium-compare.mjs tools/expected/corner.received.txt`" : ""));
 }
 process.exit(failed ? 1 : 0);

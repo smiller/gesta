@@ -140,31 +140,11 @@ is in the plan's record, under the phase named):
   `tools/expected/`; `tools/helium-compare.mjs` reads the two runs step
   by step, the decided differences listed in `corner.differences.txt`;
   `tools/helium-writer.mjs` is the current app's driver.
-- `tools/helium-corner.mjs` — the corner and the masthead in headless
-  Helium over a fresh profile: the indicator after the warm, past its
-  whisper, after typing, after a click, and on a refused walk; the masthead
-  over the verse fixture; the pages and bookshelf panels through open,
-  displace, toggle, Escape, a click outside and a row click; the three
-  kinds of link click; the Search row through ⌃⌘K, a query, ↓ and Enter;
-  the Go to row through ⌃⌘J on a day, a day pick, the book's chain, a
-  scope pick and Escape; a refused fence typed in the source and the
-  switch back, then a clean one; Tab and Shift-Tab in a quote, ⌃⌘L over verse
-  and Escape; ⌃⌘R over a paired row with the clipboard read
-  back; a js fence typed, its tokens, its label, the
-  copy button hovered and clicked; a PNG drawn on a canvas pasted as a
-  file; the
-  backups panel unconfigured; ⌃⌘S over an
-  empty table, a table saved, a code
-  filtered and Enter; ⌃⌘B, A, a numbered jump, a key given and typed,
-  ×; ⌃⌘H over an open panel and Escape; ⌃⌘G over
-  verse and over a book of leaves; a
-  reference pasted as plain text and its link followed back; the toolbar
-  over a double-clicked word, B, and Tag with its dialog; the source view through ⌃⌘M with the caret's
-  count carried across, an edit and a Tab in the source, and ⌃⌘M back;
-  a tagged entry created, renamed and deleted
-  through the dialogs, the host's link and tag bar read at each step; the
-  pill under `?corner=pill`; prints each reading and the console, and
-  screenshots when given a path.
+- `tools/helium-corner.mjs` — the shared steps played over the successor
+  in headless Helium over a fresh profile, a 19-line driver since
+  2026-09-12: the steps and their readings are `tools/helium-steps.mjs`'s
+  (above); this prints each reading and the console, and screenshots
+  when given a path.
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.
@@ -179,7 +159,7 @@ is in the plan's record, under the phase named):
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the
   handler), `highlight.ts` (the jump: the nth occurrence of a query
-  selected and scrolled to), `insertLink.ts` (a link placed after the
+  selected; the scroll is main's, a frame later), `insertLink.ts` (a link placed after the
   caret, and what refuses one), `sourceKeys.ts` (Tab and Shift-Tab in
   the source view, over a text and a selection), `format.ts` (the
   toolbar's acts as commands: the marks and their chords, the heading,

@@ -52,8 +52,11 @@ export function unmintedKey(keys: string[], date: string, tag: string | null): b
 }
 /* the nearest content-bearing sibling on either side of `sub` under its
    parent, in byName order; a sub the list does not hold still resolves, by
-   comparison. Blank siblings are skipped lazily, each direction probing
-   only until its first hit. */
+   comparison — or, under a stated order, at its END, where the picker
+   shows it (contents.ts): an open sub not yet saved has no cache row,
+   and placed by comparison in an order that is not alphabetical it
+   walked to the top of the index (the 2026-09-12 review). Blank siblings
+   are skipped lazily, each direction probing only until its first hit. */
 /* THE ORDER IS THE CALLER'S TO GIVE: a book's index states its own — in
    the Consolatio the prose and the verse alternate, 3pr1 then 3m1 — and
    the walk follows it where the go-to row does (contents.ts); by name
@@ -62,7 +65,7 @@ export function unmintedKey(keys: string[], date: string, tag: string | null): b
 export function subPageNeighbors(keys: string[], parentKey: string, sub: string, bearing: (key: string) => boolean, order?: string[]): Neighbors {
   const subs = order || childrenOf(keys, parentKey);
   let at = subs.indexOf(sub);
-  if (at < 0) { at = 0; while (at < subs.length && byName(subs[at], sub) < 0) at++; }
+  if (at < 0) { if (order) at = subs.length; else { at = 0; while (at < subs.length && byName(subs[at], sub) < 0) at++; } }
   let prev: string | null = null, next: string | null = null;
   for (let i = at - 1; i >= 0 && !prev; i--) if (bearing(entryKey(parentKey, subs[i]))) prev = subs[i];
   for (let i = at; i < subs.length && !next; i++) if (subs[i] !== sub && bearing(entryKey(parentKey, subs[i]))) next = subs[i];

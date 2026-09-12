@@ -60,8 +60,10 @@ export interface SessionOptions {
   /* the editor's selection moved — read AFTER the editor has it, where
      the DOM's selectionchange runs a beat ahead of the state */
   onSelect?: () => void;
-  /* a highlight was placed — a search jump's or a link payload's — which
-     the format bar must not float over: it is for text the reader chose */
+  /* a highlight was placed — a search jump's or a link payload's: the
+     format bar must not float over it (the bar is for text the reader
+     chose), and the caller brings it into view, the lines around it
+     showing — the reference is to be read in context */
   onHighlight?: () => void;
 }
 export interface Session {

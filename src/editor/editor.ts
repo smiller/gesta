@@ -119,6 +119,19 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     clipboardTextSerializer: (slice) => copyMd(closeRowSlice(slice)),
     transformCopied: (slice) => closeRowSlice(slice),
     dispatchTransaction(this: EditorView, tr: Transaction) {
+      /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to
+         the DOM only while the editor has focus, and skips its
+         scroll-to-selection when the DOM selection is not in the editor
+         (READ in prosemirror-view 1.42.3, selectionToDOM and
+         scrollToSelection) — so a `scrollIntoView()` dispatched at an
+         unfocused view, a freshly mounted one above all, never scrolled:
+         a reference link into Paradise Lost 1.254 landed at the top of
+         the book (found by hand 2026-09-12). Taken here, once, rather
+         than at each site — the review of the same day found the rule
+         applied by hand at five and the next site missing it. Gated on
+         the scroll: an unconditional focus would take it from a panel's
+         input on a background dispatch, a refresh after a rename. */
+      if (tr.scrolledIntoView && !this.hasFocus()) this.focus();
       this.updateState(this.state.apply(tr));
       if (tr.docChanged) opts.onChange?.(this);
       if (tr.selectionSet || tr.docChanged) opts.onSelect?.(this);

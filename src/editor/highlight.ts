@@ -20,10 +20,17 @@ export function findHit(doc: Node, query: string, nth: number, honorMarkers: boo
   if (nth >= hits.length) return null;
   return flatRange(flat, hits[nth], p.needle.length);
 }
+/* the passage selected and the editor focused. NO SCROLL HERE: the
+   selection's box is not yet where it will be — the fit's first pass
+   (fit.ts) re-wraps a paired entry a frame after the mount — so the
+   caller brings the selection into view a frame later, centred as ⌃⌘G's
+   landing is (main.ts). Until 2026-09-12 a `scrollIntoView()` here ran
+   before the focus, and a reference link into Paradise Lost 1.254 landed
+   at the top of the book; editor.ts's dispatch has the rule. */
 export function highlightIn(view: EditorView, query: string, nth: number, honorMarkers: boolean): boolean {
   const hit = findHit(view.state.doc, query, nth, honorMarkers);
   if (!hit) return false;
-  view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, hit.from, hit.to)).scrollIntoView());
   view.focus();
+  view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, hit.from, hit.to)));
   return true;
 }

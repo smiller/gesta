@@ -322,6 +322,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitEntryAndSelection(page, "2026-09-06", "food of love");
   await page.waitForTimeout(300);
   await log("the reference link followed", await R.highlightFollowed(page));
+  /* the link's passage is deep in a long entry: the jump must SCROLL to it,
+     not only select it — the one-line case above never needed a scroll,
+     and the jump landed at the top of Paradise Lost (found by hand
+     2026-09-12); the bar stays off, the passage is to be read in context */
+  await go("page/Pasted");
+  await page.click(S.editor);
+  await R.pasteText(page, "[*Pippa*](#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed)");
+  await page.waitForTimeout(200);
+  await page.click(S.editorLink("#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed"));
+  await R.waitEntryAndSelection(page, "bookshelf/Browning, Robert/Pippa Passes", "Power shall fall short in or exceed");
+  await page.waitForTimeout(300);
+  await log("a link deep into a long entry followed", await R.highlightFollowed(page));
     }],
     ["toolbar", async () => {
   /* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */

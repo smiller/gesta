@@ -201,7 +201,7 @@ if (fixture && fixtures[fixture]) {
     onEdit: () => backup.scheduleBackup(),
     onView: (md) => { screen.mdView = md; if (md) closeLineBar(); },   /* the bar's acts dereference the editor's view */
     onSelect: () => requestAnimationFrame(placeBar),
-    onHighlight: () => suppressBar(),
+    onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
   /* leaving the tab with a backup still pending writes it at once, after
      the session's own flush (registered first, so it runs first) */
@@ -501,14 +501,14 @@ if (fixture && fixtures[fixture]) {
       if (why) { say(why, 2000); return; }
       const p = bookmarkParts(key);
       insertLinkAfter(view, entryHash(p.date, p.tag), mdLabel(bookmarkLinkLabel(key, journal), "entry"));
-      view.focus();
       session.saveNow();
     } else jumpBookmark(b);
   };
   /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
      focus and Enter cycles through the blocks that hold that line. The
      landing is CENTRED in the readable band under the masthead — a
-     reader who asked for line 254 wants the lines around it. The three
+     reader who asked for line 254 wants the lines around it, and so does
+     one following a reference link, which lands the same way. The three
      routes aimed at the bar (Escape, the ×, ⌃⌘G again) hand the caret
      back to the landed row, the first cell of a pair, or just after a
      leaf marker; a navigation and a click outside take the plain close.
@@ -516,11 +516,25 @@ if (fixture && fixtures[fixture]) {
      bar opens on another entry. */
   const lb = screen.lineBar;
   let lineAsked = 0, lastAskKey = "";
-  const scrollIntoBand = (rect: { top: number; bottom: number }): void => {
+  function scrollIntoBand(rect: { top: number; bottom: number }): void {
     const top = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
     const mid = top + (document.documentElement.clientHeight - top) / 2;
     window.scrollBy(0, (rect.top + rect.bottom) / 2 - mid);
-  };
+  }
+  /* a jump's selection centred A FRAME AFTER it was placed: the fit's
+     first pass runs on the frame after a mount, and a paired entry's rows
+     re-wrap under it — centred at once, a passage in Horace sat exactly
+     mid-band, then the fit shrank the page from 6611px to 2065px, the
+     scroll clamped and the passage sat 304px above centre, under the
+     masthead (MEASURED in headless Helium by the 2026-09-12 review). A
+     frame queued after the fit's measures the settled box. */
+  function centreSelection(): void {
+    const view = session.view;
+    if (!view || session.mdView || view.state.selection.empty) return;
+    const { from, to } = view.state.selection;
+    const a = view.coordsAtPos(from), b = view.coordsAtPos(to);
+    scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
+  }
   const landOn = (pos: number): void => {
     const view = session.view!;
     setLanding(view, pos);
