@@ -29,3 +29,5 @@ a paired citation pasted · indent · the current app's quoted pair pulls itself
 a paired citation pasted · cols · the columns are the fitted measure less the quotation's box here; the current app's quoted pair takes its own
 typed into the quoted pair · indent · the same: the current app's quoted pair stands out of its box
 typed into the quoted pair · cols · the same: the fitted measure less the quotation's box here
+typed into the quoted pair · grew · whether the columns moved within 400ms of the typing: the successor's grow side re-fits on the frame; the current app's timing is its own
+typed into the quoted pair · wrapped · read within 400ms of the keys: the current app has not re-fitted yet and its cell wraps for the moment; the successor's grow side has already widened it

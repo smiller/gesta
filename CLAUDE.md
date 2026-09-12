@@ -75,7 +75,10 @@ here NOW, and what is not yet:
 - NOT YET — the prose checkers (`tools/*.sh` in ../writer), re-aimed at
   this tree's comments and the plan's record as each class first shows up
   in a review; each keeps its self-test and has its hit count measured
-  before its rule is chosen.
+  before its rule is chosen. THE FIRST CLASS HAS SHOWN UP (2026-09-12,
+  the citation batch's confirmation pass): a comment asserting another
+  module's mechanism — ../writer/tools/claims.sh's class — and its port
+  is owed, not yet made.
 - NEVER — the single-file checkers (the vocabulary index, check-sync, map.sh,
   names.sh, the concatenating build): TypeScript and the import graph answer
   their question.

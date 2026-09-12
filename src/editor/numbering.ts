@@ -56,7 +56,7 @@ export function whollyIn(row: Node, mark: MarkType): boolean {
 
 /* THE ROW'S DECLARED KIND DECIDES BEFORE ITS MARKS DO: a ⟨line⟩ row is a
    line whatever it is set in (grammar.ts, ROW_LINE_TOKEN) */
-export function rowKind(row: Node): UnitKind {
+function rowKind(row: Node): UnitKind {
   if (row.attrs.kind === "line") return "line";
   if (whollyIn(row, schema.marks.em)) return "stage";
   if (whollyIn(row, schema.marks.strong)) return "speaker";
@@ -72,20 +72,28 @@ export function rowKind(row: Node): UnitKind {
    counts but never paints. */
 export function lineUnits(doc: Node, interval: number): Unit[] {
   const out: Unit[] = [];
-  doc.forEach((block, blockPos) => {
-    const prose = block.type === N.prose;
-    if (!prose && block.type !== N.verse) return;
-    let line = (block.attrs.start as number) - 1;
-    block.forEach((row, offset) => {
-      if (row.type === N.gap || row.type === N.note) return;
-      if (prose && row.type !== N.pair) return;
-      if (!drawsInk(row)) return;
-      const kind: UnitKind = prose ? "sentence" : rowKind(row);
-      const num = kind === "line" || kind === "sentence" ? ++line : 0;
-      out.push({
-        pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
-        shown: interval > 0 && kind === "line" && num % interval === 0,
-      });
+  doc.forEach((block, blockPos) => { for (const u of blockUnits(block, blockPos, interval)) out.push(u); });
+  return out;
+}
+/* the units of ONE block, wherever it stands: the gutter folds this over
+   the top level; the reference folds it over every block it may quote
+   from, a quotation's included (the 2026-09-12 confirmation pass: the
+   reference had a copy of this walk beside it, and a quoted block's
+   fence would have drifted from the gutter's count) */
+export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
+  const out: Unit[] = [];
+  const prose = block.type === N.prose;
+  if (!prose && block.type !== N.verse) return out;
+  let line = (block.attrs.start as number) - 1;
+  block.forEach((row, offset) => {
+    if (row.type === N.gap || row.type === N.note) return;
+    if (prose && row.type !== N.pair) return;
+    if (!drawsInk(row)) return;
+    const kind: UnitKind = prose ? "sentence" : rowKind(row);
+    const num = kind === "line" || kind === "sentence" ? ++line : 0;
+    out.push({
+      pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
+      shown: interval > 0 && kind === "line" && num % interval === 0,
     });
   });
   return out;

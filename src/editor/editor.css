@@ -183,12 +183,9 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 /* the width and the pull are one number, and the whole entry takes the
    block's measure: the entry pulls on the class the fit writes (fit.ts
    writeFit), wherever the pair it measured stands — a quotation, a
-   quotation in a quotation — and a top-level block pulls with it */
-.page > :is(.verse, .prose):has(> .vpair) {
-  width: var(--par-w);
-  margin-left: calc(50% - var(--par-w) / 2);
-  margin-right: calc(50% - var(--par-w) / 2);
-}
+   quotation in a quotation — and its blocks fill it. A block-level pull
+   beside it was a no-op when fitted and an overflow when not (the
+   2026-09-12 confirmation pass). */
 .page.fitted {
   margin-left: calc(50% - var(--par-w) / 2);
   margin-right: calc(50% - var(--par-w) / 2);

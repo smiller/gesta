@@ -341,11 +341,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#page/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
   await page.waitForTimeout(700);
   await log("a paired citation pasted", await R.quotedPair(page));
-  /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured 2026-09-12 with a longer phrase) */
+  /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured 2026-09-12 with a longer phrase). READ BEFORE THE SETTLE: the settle at 500ms computes the same answer, so a reading after it proved nothing about the grow (the confirmation pass) */
+  const pasted = await R.quotedPair(page);
   await R.caretAfter(page, "rules the sea.", 14);
   await page.keyboard.type(" and every creature in it");
-  await page.waitForTimeout(700);
-  await log("typed into the quoted pair", await R.quotedPair(page));
+  const grew = await R.waitPairGrew(page, pasted.cols, 400);
+  await log("typed into the quoted pair", { grew, ...(await R.quotedPair(page)) });
     }],
     ["toolbar", async () => {
   /* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */

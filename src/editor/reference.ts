@@ -10,7 +10,7 @@ import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { lineUnits, drawsInk, rowKind, type Unit } from "./numbering.ts";
+import { blockUnits, drawsInk, type Unit } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -33,11 +33,30 @@ export function inkBetween(doc: Node, a: number, b: number): boolean {
 }
 /* the units the selection covers — an overlap holding ink, so a drag
    ending just past a row's edge does not pull that row in */
-export function coveredUnits(doc: Node, from: number, to: number): Unit[] {
-  return lineUnits(doc, 0).filter((u) => {
-    const a = Math.max(from, u.pos), b = Math.min(to, u.pos + u.node.nodeSize);
-    return inkBetween(doc, a, b);
+/* every verse or prose block a reference may quote from, AT ANY DEPTH
+   short of a note: a citation inside a quotation is a block like any
+   other. The 2026-09-12 confirmation pass: walked at the top level alone,
+   a quoted pair fell to the cut arm, which cut through its cells and the
+   serializer threw; a selection across two quoted fences was not refused. */
+function rowBlocks(doc: Node): { node: Node; pos: number }[] {
+  const out: { node: Node; pos: number }[] = [];
+  doc.descendants((n, pos) => {
+    if (n.type === N.note) return false;
+    if (n.type === N.verse || n.type === N.prose) { out.push({ node: n, pos }); return false; }
+    return true;
   });
+  return out;
+}
+const hasPair = (block: Node): boolean => { let yes = false; block.forEach((row) => { if (row.type === N.pair) yes = true; }); return yes; };
+export function coveredUnits(doc: Node, from: number, to: number): Unit[] {
+  const out: Unit[] = [];
+  for (const b of rowBlocks(doc)) {
+    if (b.pos + b.node.nodeSize <= from || b.pos >= to) continue;
+    for (const u of blockUnits(b.node, b.pos, 0)) {
+      if (inkBetween(doc, Math.max(from, u.pos), Math.min(to, u.pos + u.node.nodeSize))) out.push(u);
+    }
+  }
+  return out;
 }
 /* the line range, "" when no numbered unit is covered — a selection
    opening on a speaker label takes the line under it */
@@ -101,33 +120,40 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
    its first save will spell it (the 2026-09-12 review: a blank line here
    was ">" and there "> ") */
 const quote = (md: string): string => md.split("\n").map(quotePrefix).join("\n");
-/* the verse or prose block holding BOTH ends of the selection below the
-   top level — a paired citation inside a quotation: the units walk numbers
-   top-level blocks alone, and the loose-prose arm cut ONE cell out of a
-   pair, which the serializer refused (the 2026-09-12 review) */
-function quotedRowBlock(doc: Node, from: number, to: number): { node: Node; pos: number } | null {
-  const $from = doc.resolve(from), $to = doc.resolve(to);
-  for (let d = Math.min($from.depth, $to.depth); d >= 2; d--) {
-    const node = $from.node(d);
-    if (node !== $to.node(d)) continue;
-    if (node.type === N.verse || node.type === N.prose) return { node, pos: $from.before(d) };
-  }
-  return null;
-}
-/* does the selection reach a top-level block the row arms cannot carry —
-   loose prose, and a pipe-less prose fence with it */
+/* does the selection reach ink the row arms cannot carry — loose prose,
+   a pipe-less prose fence, anything outside a verse block or a paired
+   prose block, at whatever depth the block stands */
 export function coversProse(doc: Node, from: number, to: number): boolean {
-  let yes = false;
-  doc.forEach((block, pos) => {
-    if (yes || block.type === N.verse) return;
-    if (block.type === N.prose) {
-      let pair = false;
-      block.forEach((row) => { if (row.type === N.pair) pair = true; });
-      if (pair) return;
-    }
-    if (inkBetween(doc, Math.max(from, pos), Math.min(to, pos + block.nodeSize))) yes = true;
-  });
-  return yes;
+  let at = from;
+  for (const b of rowBlocks(doc)) {
+    if (b.node.type === N.prose && !hasPair(b.node)) continue;
+    const end = b.pos + b.node.nodeSize;
+    if (end <= from) continue;
+    if (b.pos >= to) break;
+    if (inkBetween(doc, at, Math.min(b.pos, to))) return true;
+    at = Math.max(at, end);
+  }
+  return inkBetween(doc, at, to);
+}
+/* the selection widened to WHOLE pair rows: the serializer refuses a
+   pair cut through a cell (the 2026-09-12 confirmation pass, a drag from
+   a pair's last cell into the paragraph after it) */
+function wholeRows(doc: Node, from: number, to: number): [number, number] {
+  const $from = doc.resolve(from), $to = doc.resolve(to);
+  let a = from, b = to;
+  for (let d = $from.depth; d >= 1; d--) if ($from.node(d).type === N.pair) { a = $from.before(d); break; }
+  for (let d = $to.depth; d >= 1; d--) if ($to.node(d).type === N.pair) { b = $to.after(d); break; }
+  return [a, b];
+}
+/* the cut with its top-level quotations unwrapped: a citation cited
+   again is quoted ONE level deep, as the current app's copy of the
+   selected content was, carrying no ancestor of the selection's ends
+   (DECIDED 2026-09-12, the confirmation pass: a quoted pair re-cited
+   came out at one level, a quoted paragraph at two) */
+function unquoted(cut: Node): Node {
+  const blocks: Node[] = [];
+  cut.forEach((b) => { if (b.type === N.blockquote) b.forEach((inner) => blocks.push(inner)); else blocks.push(b); });
+  return schema.nodes.doc.create(null, blocks);
 }
 /* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
    with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
@@ -136,45 +162,49 @@ export function coversProse(doc: Node, from: number, to: number): boolean {
    bare, and beside a single-column citation it read as the entry's own
    verse). In a row block the ROW is the unit and whole rows are quoted,
    the contiguous run carrying the stanza gaps between them; a nested
-   note stays behind and a page-turn row is dropped. A row block inside
-   a quotation — a citation referenced again — is walked the same way.
-   In loose prose the unit is the selection. */
+   note stays behind and a page-turn row is dropped. In loose prose the
+   unit is the selection, widened to whole pair rows. */
 export function passageMd(doc: Node, from: number, to: number): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
-  let block: Node, blockPos: number;
-  if (units.length) { blockPos = units[0].blockPos; block = doc.nodeAt(blockPos)!; }
-  else {
-    const quoted = quotedRowBlock(doc, from, to);
-    if (!quoted) return quote(serializeMarkdown(doc.cut(from, to)).trim());
-    block = quoted.node; blockPos = quoted.pos;
+  if (!units.length) {
+    const [a, b] = wholeRows(doc, from, to);
+    return quote(serializeMarkdown(unquoted(doc.cut(a, b))).trim());
   }
-  const prose = block.type === N.prose;
+  const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
+  const paired = units.some((u) => u.node.type === N.pair);
   const rows: { node: Node; pos: number }[] = [];
   block.forEach((row, offset) => rows.push({ node: row, pos: blockPos + 1 + offset }));
-  /* the run is the covered inked rows, first to last, whatever they are
-     (a prose block's heading row rides along), stepping over ink-less
-     rows between them; the number is the first line among them */
+  let first = rows.findIndex((r) => r.pos === units[0].pos);
+  let last = rows.findIndex((r) => r.pos === units[units.length - 1].pos);
+  /* the run's ends widen to covered non-unit rows (a prose block's heading
+     row), stepping over ink-less rows */
   const covered = (r: { node: Node; pos: number }) => drawsInk(r.node) && inkBetween(doc, Math.max(from, r.pos), Math.min(to, r.pos + r.node.nodeSize));
-  const first = rows.findIndex(covered);
-  let last = first;
-  for (let i = first + 1; i < rows.length; i++) if (covered(rows[i])) last = i;
+  const widened = (i: number, step: number): number => {
+    let end = i;
+    for (let j = i + step; j >= 0 && j < rows.length; j += step) {
+      if (!drawsInk(rows[j].node)) continue;
+      if (!covered(rows[j])) break;
+      end = j;
+    }
+    return end;
+  };
+  first = widened(first, -1);
+  last = widened(last, 1);
   const kept: Node[] = [];
-  let line = (block.attrs.start as number) - 1, firstLine = 0;
-  for (let i = 0; i <= last; i++) {
+  for (let i = first; i <= last; i++) {
     const row = rows[i].node;
-    const counts = row.type !== N.gap && row.type !== N.note && drawsInk(row) && (prose ? row.type === N.pair : rowKind(row) === "line");
-    if (counts) line++;
-    if (i < first) continue;
-    if (counts && !firstLine) firstLine = line;
     if (row.type === N.note) continue;
     let turn = false;
     if (!drawsInk(row)) row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
     if (turn) continue;
     kept.push(row);
   }
-  if (kept.some((row) => row.type === N.pair)) {
-    const fence = block.type.create({ ...block.attrs, start: firstLine > 1 ? firstLine : 1 }, kept);
+  if (paired) {
+    /* the number is the first counted line at or after the first kept
+       row — a speaker row alone still carries the block's own count */
+    const firstLine = blockUnits(block, blockPos, 0).find((u) => u.line && u.pos >= rows[first].pos)?.line || 0;
+    const fence = block.type.create({ ...block.attrs, start: firstLine || 1 }, kept);
     return quote(serializeMarkdown(schema.nodes.doc.create(null, [fence])).trim());
   }
   return kept.map((row) => {

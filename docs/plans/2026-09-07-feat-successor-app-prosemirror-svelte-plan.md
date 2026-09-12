@@ -1604,7 +1604,8 @@ at the head is kept current per phase.
   flavour's columns are 332 and 421; INFERRED, the English is narrower
   by the quotation's box (2 × 1.1em at 18px + 3px ≈ 42.6, against
   463.8 − 421.2 = 42.6).
-  The batch's review (one medium pass, 146k tokens, 12 minutes) found:
+  The batch's review (one medium pass, MEASURED 145,917 tokens, 12
+  minutes) found:
   ⌃⌘R with the selection inside ONE cell of a quoted pair threw from
   the serializer (MEASURED by the review in node, a one-cell cut of a
   pair) — a quoted row block is now walked whole like a top-level one,
@@ -1624,3 +1625,35 @@ at the head is kept current per phase.
   and pinned. DECIDED on the review's question: a quoted PROSE pair
   pulls the entry to the measure as a top-level one has since 7742a91 —
   the entry takes the block's measure wherever the block stands.
+  THE CONFIRMATION PASS, the same day (MEASURED 180,489 tokens, 16
+  minutes), found the fix's shape wrong rather than its cases: the
+  reference still walked top-level blocks alone, with a quoted pair
+  bolted on as one arm, so a drag from a pair's last cell into the
+  paragraph after it still cut through a cell and threw (MEASURED by
+  the pass in node, four shapes); a note inside a quoted verse block
+  came out empty; two quoted fences were not refused as two blocks; a
+  quoted paragraph re-cited came out two levels deep where a quoted
+  pair came out one; an ink-less pair row flipped a single-column
+  passage to a fence; a speaker row alone lost the block's own count;
+  the block-level pull was a no-op when fitted and an overflow when
+  not; the typing step read the settle's answer, not the grow's; the
+  reference had a copy of the units walk beside numbering's. DECIDED:
+  the units walk is ONE function over one block (`blockUnits`), the
+  gutter folding it over the top level and the reference over every
+  verse or prose block at any depth short of a note; the cut arm widens
+  to whole pair rows and unwraps the cut's top-level quotations, so a
+  citation cited again is quoted one level deep as the current app's
+  copy of the selected content was (INFERRED by the pass from its
+  cloneContents, which carries no ancestor); the block-level pull is
+  gone; the typing step reads the columns within 400ms of the keys, a
+  frame's grow rather than the settle. MEASURED in node, the eight
+  shapes pinned in reference.test.ts. KNOWN and left: a selection that
+  reaches from a quoted pair into prose is quoted as it stands, its
+  fence keeping the block's start rather than the first kept line's.
+  OWED: the pass named three MECHANICAL classes — a literal spelled
+  twice, a comment asserting another module's mechanism, an untagged
+  record sentence — and the current app's `tools/claims.sh` is the
+  comment-shape checker, 643 lines aimed at index.html's helper names;
+  its port to this tree, with its self-test and its hit count measured
+  before a rule is chosen, is the first prose checker owed (CLAUDE.md's
+  NOT YET line), and is not in this commit.

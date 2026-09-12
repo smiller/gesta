@@ -58,6 +58,38 @@ test("a paired citation referenced again: the quoted block walked whole, the num
   const [c, d] = span(doc, "gamma", "four");
   expect(passageMd(doc, c, d)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::");
 });
+test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pair, one quote level, a note kept, the block's own count", () => {
+  const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
+  /* one end outside the quoted pair: whole rows, one level, no throw */
+  let [a, b] = span(q, "four", "After");
+  expect(passageMd(q, a, b)).toBe("> ::: verse 13\n> gamma delta | three four\n> :::\n> \n> After");
+  [a, b] = span(q, "Horace", "alph");
+  expect(passageMd(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n> \n> ::: verse 13\n> alpha beta | one two\n> :::");
+  /* a note inside a quoted verse block: its text, as before */
+  const noted = parseMarkdown("> ::: verse 13\n> alpha beta | one two\n> ::: note\n> a footnote here\n> :::\n> gamma delta | three four\n> :::");
+  [a, b] = span(noted, "footnote", "footnote");
+  expect(passageMd(noted, a, b)).toBe("> ::: verse 13\n> ::: note\n> footnote\n> :::\n> :::");
+  /* two quoted fences are two blocks, refused as at the top level */
+  const two = parseMarkdown("> ::: verse 13\n> alpha | one\n> beta | two\n> :::\n>\n> ::: verse 40\n> gamma | three\n> :::");
+  [a, b] = span(two, "beta", "three");
+  expect(spansTwoBlocks(two, a, b)).toBe(true);
+  /* a speaker row alone keeps the block's own count */
+  const spoken = parseMarkdown("> ::: verse 13\n> **Duke** | **Duke**\n> alpha | one\n> :::");
+  [a, b] = span(spoken, "Duke", "Duke");
+  expect(passageMd(spoken, a, b)).toBe("> ::: verse 13\n> **Duke** | **Duke**\n> :::");
+  /* an ink-less pair row between plain lines does not make the passage paired */
+  const stray = parseMarkdown("::: verse\nfirst line\n |\nsecond line\n:::");
+  [a, b] = span(stray, "first", "second");
+  expect(passageMd(stray, a, b)).toBe("> first line\n> \n> second line");
+  /* a quoted paragraph cited again: one level */
+  const para = parseMarkdown("[*M*](#x):\n\n> The mind is its own place\n\n[*H*](#y):\n\n> ::: verse 13\n> a | b\n> :::");
+  [a, b] = span(para, "mind", "own");
+  expect(passageMd(para, a, b)).toBe("> mind is its own");
+  /* a top-level pair's cell into the paragraph after it: whole rows, no throw */
+  const top = parseMarkdown("::: verse\nalpha | one\n:::\n\nAfter.");
+  [a, b] = span(top, "one", "After");
+  expect(passageMd(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> \n> After");
+});
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
   const [a, b] = span(doc, "paragraph", "Second");
