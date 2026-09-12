@@ -1494,4 +1494,5 @@ at the head is kept current per phase.
   with a three-entry index. MEASURED in headless Helium: ⌃⌘. from 3pr1
   opens 3m1, again 3pr2, ⌃⌘, back 3m1; the bookshelf panel now lists
   Boethius over Browning; the console empty. `dist/index.html` is
-  731.48 kB.
+  731.48 kB. Confirmed by hand the same day over the Consolatio's
+  book 3.
