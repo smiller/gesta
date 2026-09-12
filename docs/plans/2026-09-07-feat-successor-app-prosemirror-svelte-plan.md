@@ -1700,4 +1700,9 @@ at the head is kept current per phase.
   had none, as the source had them — and only the containers around the
   whole selection come off; INFERRED from the current app's copy, which
   clones a partly selected ancestor, this is its rule too. The two
-  pinned shapes expect the nested form.
+  pinned shapes expect the nested form. And the box, by hand the same
+  day: every quotation had more room below its text than above — the
+  last block's em of bottom margin inside the box's padding (READ
+  editor.css: `.page p` and the quoted pair's margins, `blockquote`'s
+  padding), the current app's rule carried. DECIDED, asked: the last
+  block in a quotation drops its bottom margin, on every quotation.
