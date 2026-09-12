@@ -1579,8 +1579,8 @@ at the head is kept current per phase.
   a blockquote and round-trips it with its start and a stanza gap; the
   numbering walk and the gutter switch count top-level verse alone, so
   the quoted fence draws no gutter numbers and raises no row — the
-  numbers in the citation are given up for now, a second step if they
-  are wanted back. The shared ⌃⌘R step reads the passage's shape now
+  numbers in the citation are given up — SETTLED the same day: not
+  wanted. The shared ⌃⌘R step reads the passage's shape now
   (its first 60 characters), listed as a decided difference; the rich
   flavour follows the markdown into a blockquote by itself. Then the
   box, the same day, by hand: the quoted pair stood 21px LEFT of the
