@@ -1636,8 +1636,10 @@ at the head is kept current per phase.
   pair came out one; an ink-less pair row flipped a single-column
   passage to a fence; a speaker row alone lost the block's own count;
   the block-level pull was a no-op when fitted and an overflow when
-  not; the typing step read the settle's answer, not the grow's; the
-  reference had a copy of the units walk beside numbering's. DECIDED:
+  not (READ by the pass off editor.css and fit.ts); the typing step
+  read the settle's answer, not the grow's (READ off fit.ts's SETTLE_MS
+  against the step's 700ms wait); the reference had a copy of the units
+  walk beside numbering's (READ, the two loops side by side). DECIDED:
   the units walk is ONE function over one block (`blockUnits`), the
   gutter folding it over the top level and the reference over every
   verse or prose block at any depth short of a note; the cut arm widens
@@ -1647,13 +1649,15 @@ at the head is kept current per phase.
   cloneContents, which carries no ancestor); the block-level pull is
   gone; the typing step reads the columns within 400ms of the keys, a
   frame's grow rather than the settle. MEASURED in node, the eight
-  shapes pinned in reference.test.ts. KNOWN and left: a selection that
-  reaches from a quoted pair into prose is quoted as it stands, its
-  fence keeping the block's start rather than the first kept line's.
+  shapes pinned in reference.test.ts. MEASURED by the pass and left: a
+  selection that reaches from a quoted pair into prose is quoted as it
+  stands, its fence keeping the block's start rather than the first
+  kept line's.
   OWED: the pass named three MECHANICAL classes — a literal spelled
   twice, a comment asserting another module's mechanism, an untagged
   record sentence — and the current app's `tools/claims.sh` is the
-  comment-shape checker, 643 lines aimed at index.html's helper names;
+  comment-shape checker (READ its header; MEASURED `wc -l`, 643 lines),
+  aimed at index.html's helper names;
   its port to this tree, with its self-test and its hit count measured
   before a rule is chosen, is the first prose checker owed (CLAUDE.md's
   NOT YET line), and is not in this commit. FOUND by `npm run verify`
@@ -1663,3 +1667,29 @@ at the head is kept current per phase.
   wrapped, then 266 and 418, on two runs). The wait now requires the
   whole typed phrase present, the row grown AND unwrapped, within
   400ms; MEASURED on two consecutive runs, 266 and 425, unwrapped.
+  THE SECOND CONFIRMATION PASS, the same day (MEASURED 218,756 tokens,
+  19 minutes), over the two fix commits: the serializer's own one-cell
+  throw was worked around in the reference alone and still escaped ⌘C's
+  text flavour and the cut-to-link act (MEASURED by the pass in node) —
+  a one-cell pair is its cell's line now, pinned in roundtrip.test.ts;
+  the any-depth walk stopped at a note, so a verse block inside a note
+  inside a verse block (Satires 1.10, MEASURED by the pass over the
+  mirror: nine such fences in 13,565 files) was cut and fenced three
+  deep — the walk passes through everything now; the label folded the
+  walk over pasted citations and took their fence numbers for the
+  host's (MEASURED by the pass: a quoted Horace pair in Paradise Lost
+  labelled "1.13-14") — the label counts the top level alone; an end
+  merely resting at a row's edge widened to the whole row — only an end
+  over the row's ink widens, the other clips off the row; a quote
+  body's blank line, a break at a paragraph's edge, doubled once lifted
+  — an edge break comes off; the unwrapping stripped one quotation and
+  carried a second, or a note or a card — every container around the
+  cut comes off; an apparatus row alone as a block's last row numbered
+  1 — the number is the block's count at the row, from the lines before
+  it; the typing step read only within the grow window, and every field
+  of it was a decided difference — a settled reading follows it; three
+  new comments and three record clauses asserted or went untagged —
+  trimmed and tagged. MEASURED in node, the nine shapes pinned in
+  reference.test.ts. Cut by the pass's own cap: `hasPair` is a third
+  copy of one loop, `waitPairGrew` a fourth copy of the wrap test,
+  `rowBlocks` visits text it need not.

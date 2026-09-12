@@ -75,11 +75,9 @@ export function lineUnits(doc: Node, interval: number): Unit[] {
   doc.forEach((block, blockPos) => { for (const u of blockUnits(block, blockPos, interval)) out.push(u); });
   return out;
 }
-/* the units of ONE block, wherever it stands: the gutter folds this over
-   the top level; the reference folds it over every block it may quote
-   from, a quotation's included (the 2026-09-12 confirmation pass: the
-   reference had a copy of this walk beside it, and a quoted block's
-   fence would have drifted from the gutter's count) */
+/* the units of ONE block, wherever it stands (the 2026-09-12
+   confirmation pass: the reference had a copy of this walk beside it,
+   and a quoted block's fence would have drifted from the gutter's count) */
 export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
   const out: Unit[] = [];
   const prose = block.type === N.prose;

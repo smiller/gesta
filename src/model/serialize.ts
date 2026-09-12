@@ -215,7 +215,10 @@ function rowsMd(block: Node, word: string): string {
   block.forEach((row) => {
     if (row.type === N.gap) rows.push("");
     else if (row.type === N.note) rows.push(blockMd(row, true));
-    else if (row.type === N.pair) rows.push(rowHead(row) + pairMd(cellMd(row.child(0)), cellMd(row.child(1))));
+    /* a pair with one cell — a cut that dropped the other — is its one
+       cell's line: until 2026-09-12 it threw out of ⌘C's text flavour
+       and the cut-to-link act (the confirmation pass) */
+    else if (row.type === N.pair) rows.push(rowHead(row) + (row.childCount > 1 ? pairMd(cellMd(row.child(0)), cellMd(row.child(1))) : cellMd(row.child(0))));
     else rows.push(rowHead(row) + cellMd(row));
   });
   const start = block.attrs.start as number;

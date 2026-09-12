@@ -151,3 +151,11 @@ test("the serializer's output is the parser's fixed point", () => {
     expect(trip(once), JSON.stringify(md)).toBe(once);
   }
 });
+
+
+test("a pair cut down to one cell serializes as that cell's line, never a throw (the 2026-09-12 second confirmation pass: ⌘C's text flavour and the cut-to-link act)", () => {
+  const doc = parseMarkdown("::: verse\nalpha | one two\n:::\n\nAfter.");
+  let from = 0, to = 0;
+  doc.descendants((n, pos) => { if (n.isText && n.text!.includes("two")) from = pos + n.text!.indexOf("two"); if (n.isText && n.text!.includes("After")) to = pos + n.text!.indexOf("After") + 5; });
+  expect(serializeMarkdown(doc.cut(from, to))).toBe("::: verse\ntwo\n:::\n\nAfter");
+});

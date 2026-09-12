@@ -90,6 +90,42 @@ test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pai
   [a, b] = span(top, "one", "After");
   expect(passageMd(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> \n> After");
 });
+test("the shapes the second confirmation pass measured: a block inside a note, the label's top level, an end resting on a row, blanks, depth, the count before", () => {
+  /* a verse block inside a note inside a verse block is walked whole (Satires 1.10's shape) */
+  const satires = parseMarkdown("::: verse\nLucili, quam sis mendosus, teste Catone,\n::: note\n::: verse\nquam sis mendosus, teste Catone,\ndefensore tuo, pervincam\n:::\n:::\n:::");
+  let [a, b] = span(satires, "defensore", "pervincam");
+  expect(passageMd(satires, a, b)).toBe("> defensore tuo, pervincam");
+  /* the label counts the entry's own lines, never a pasted citation's */
+  const host = parseMarkdown("::: verse\nline one\nline two\n:::\n\n> ::: verse 13\n> a | b\n> c | d\n> :::");
+  [a, b] = span(host, "a", "d");
+  expect(referenceRange(host, a, b)).toBe("");
+  expect(passageMd(host, a, b)).toBe("> ::: verse 13\n> a | b\n> c | d\n> :::");
+  [a, b] = span(host, "line one", "line two");
+  expect(referenceRange(host, a, b)).toBe("1-2");
+  /* an end resting at a row's edge with none of its ink selected takes none of the row */
+  const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> :::");
+  [a] = span(q, "Horace", "Horace");
+  let cellStart = 0; q.descendants((n, pos) => { if (n.type.name === "cell" && !cellStart) cellStart = pos + 1; });
+  expect(passageMd(q, a, cellStart)).toBe("> [*Horace*](#page/Horace?h=x):");
+  /* a quote body's blank line stays one blank once lifted */
+  const blanks = parseMarkdown("> The mind\n>\n> ::: verse 13\n> a | b\n> :::\n> \n> After.");
+  [a, b] = span(blanks, "mind", "After");
+  expect(passageMd(blanks, a, b)).toBe("> mind\n> \n> ::: verse 13\n> a | b\n> :::\n> \n> After");
+  /* two quotations deep, or inside a note: one level out */
+  const deep = parseMarkdown("> > ::: verse 13\n> > alpha beta | one two\n> > gamma delta | three four\n> > :::\n> >\n> > After the quote.");
+  [a, b] = span(deep, "four", "After");
+  expect(passageMd(deep, a, b)).toBe("> ::: verse 13\n> gamma delta | three four\n> :::\n> \n> After");
+  const noted = parseMarkdown("::: note\nfootnote here\n:::");
+  [a, b] = span(noted, "footnote", "footnote");
+  expect(passageMd(noted, a, b)).toBe("> footnote");
+  /* a direction alone carries the block's count at its row, as the last row too */
+  const mid = parseMarkdown("::: verse 13\nalpha | one\n*exit* | *exit*\nbeta | two\n:::");
+  [a, b] = span(mid, "exit", "exit");
+  expect(passageMd(mid, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
+  const last = parseMarkdown("::: verse 13\nalpha | one\n*exit* | *exit*\n:::");
+  [a, b] = span(last, "exit", "exit");
+  expect(passageMd(last, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
+});
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
   const [a, b] = span(doc, "paragraph", "Second");
