@@ -1706,3 +1706,10 @@ at the head is kept current per phase.
   editor.css: `.page p` and the quoted pair's margins, `blockquote`'s
   padding), the current app's rule carried. DECIDED, asked: the last
   block in a quotation drops its bottom margin, on every quotation.
+  And the gap under a nested citation, by hand the same day: more than
+  a paragraph's. READ in parse.ts and MEASURED in node: a quote body's
+  blank line is content (phase 0's rule, the current app's), a break
+  that paints an empty line, and the reference builder wrote one
+  between the fence and the line after it. DECIDED, asked: the builder
+  drops a blank line at a fence's edge before quoting; between text
+  lines it stays, being the paragraph break. The model is untouched.

@@ -124,7 +124,19 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
 /* the serializer's own quote level, so a pasted citation is spelled as
    its first save will spell it (the 2026-09-12 review: a blank line here
    was ">" and there "> ") */
-const quote = (md: string): string => md.split("\n").map(quotePrefix).join("\n");
+/* A BLANK LINE AT A FENCE'S EDGE IS DROPPED before the prefix goes on:
+   in a quote body a blank line is content — the empty line a paragraph
+   break looks like there — and beside a fence it painted an empty line
+   on top of the fence's own margin (asked 2026-09-12 by hand, over a
+   drag from a citation into the line after it). Between two text lines
+   the blank stays, being the paragraph break; a stanza gap inside a
+   fence stands between rows, not at an edge. */
+const FENCE_EDGE = /^(?:>\s?)*:::/, BLANK = /^(?:>\s?)*$/;
+const quote = (md: string): string => {
+  const lines = md.split("\n");
+  const kept = lines.filter((l, i) => !(BLANK.test(l) && (FENCE_EDGE.test(lines[i - 1] ?? "") || FENCE_EDGE.test(lines[i + 1] ?? ""))));
+  return kept.map(quotePrefix).join("\n");
+};
 /* does the selection reach ink the row arms cannot carry — loose prose,
    a pipe-less prose fence, anything outside a verse block or a paired
    prose block, at whatever depth the block stands */

@@ -62,9 +62,9 @@ test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pai
   const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
   /* one end outside the quoted pair: whole rows, no throw, and the quotation holding only that end STAYS, as the source had it (asked 2026-09-12) */
   let [a, b] = span(q, "four", "After");
-  expect(passageMd(q, a, b)).toBe(">> ::: verse 13\n>> gamma delta | three four\n>> :::\n> \n> After");
+  expect(passageMd(q, a, b)).toBe(">> ::: verse 13\n>> gamma delta | three four\n>> :::\n> After");
   [a, b] = span(q, "Horace", "alph");
-  expect(passageMd(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n> \n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
+  expect(passageMd(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
   /* a note inside a quoted verse block: its text, as before */
   const noted = parseMarkdown("> ::: verse 13\n> alpha beta | one two\n> ::: note\n> a footnote here\n> :::\n> gamma delta | three four\n> :::");
   [a, b] = span(noted, "footnote", "footnote");
@@ -88,7 +88,7 @@ test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pai
   /* a top-level pair's cell into the paragraph after it: whole rows, no throw */
   const top = parseMarkdown("::: verse\nalpha | one\n:::\n\nAfter.");
   [a, b] = span(top, "one", "After");
-  expect(passageMd(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> \n> After");
+  expect(passageMd(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> After");
 });
 test("the shapes the second confirmation pass measured: a block inside a note, the label's top level, an end resting on a row, blanks, depth, the count before", () => {
   /* a verse block inside a note inside a verse block is walked whole (Satires 1.10's shape) */
@@ -110,11 +110,11 @@ test("the shapes the second confirmation pass measured: a block inside a note, t
   /* a quote body's blank line stays one blank once lifted */
   const blanks = parseMarkdown("> The mind\n>\n> ::: verse 13\n> a | b\n> :::\n> \n> After.");
   [a, b] = span(blanks, "mind", "After");
-  expect(passageMd(blanks, a, b)).toBe("> mind\n> \n> ::: verse 13\n> a | b\n> :::\n> \n> After");
+  expect(passageMd(blanks, a, b)).toBe("> mind\n> ::: verse 13\n> a | b\n> :::\n> After");   /* no blank at a fence's edge: it painted an empty line (asked 2026-09-12) */
   /* two quotations deep, or inside a note: one level out */
   const deep = parseMarkdown("> > ::: verse 13\n> > alpha beta | one two\n> > gamma delta | three four\n> > :::\n> >\n> > After the quote.");
   [a, b] = span(deep, "four", "After");
-  expect(passageMd(deep, a, b)).toBe("> ::: verse 13\n> gamma delta | three four\n> :::\n> \n> After");   /* both ends in the inner quotation: both levels off */
+  expect(passageMd(deep, a, b)).toBe("> ::: verse 13\n> gamma delta | three four\n> :::\n> After");   /* both ends in the inner quotation: both levels off */
   const noted = parseMarkdown("::: note\nfootnote here\n:::");
   [a, b] = span(noted, "footnote", "footnote");
   expect(passageMd(noted, a, b)).toBe("> footnote");
