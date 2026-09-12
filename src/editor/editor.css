@@ -66,7 +66,8 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    below its text than above (asked 2026-09-12 by hand, over a nested
    citation where the box is small enough to show it; the current app's
    quotations carry the asymmetry) */
-.page blockquote > :last-child { margin-bottom: 0; }
+.page blockquote > :last-child,
+.page blockquote > blockquote:last-child { margin-bottom: 0; }
 .page ul, .page ol { margin: 0 0 1em; padding-left: 1.6em; }
 .page li { margin: 0.15em 0; }
 /* the item's OWN LINE is its first paragraph, and takes no margin: the
@@ -227,6 +228,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    21px out of the box; as an inset box, equal halves wrapped its
    English). A single-column quoted fence keeps a verse block's margins. */
 .page blockquote > :is(.verse, .prose):has(> .vpair) { margin: 0 0 1em; }
+/* and as the quotation's last block it drops that margin like any other:
+   the rule above outweighs the general one (by hand 2026-09-12, the
+   pair alone still sat high in its box) */
+.page blockquote > :is(.verse, .prose):has(> .vpair):last-child { margin-bottom: 0; }
 
 /* ---------- the verse gutter ----------
    Reserved on a page that numbers, whatever the interval, so changing it
