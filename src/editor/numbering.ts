@@ -56,7 +56,7 @@ export function whollyIn(row: Node, mark: MarkType): boolean {
 
 /* THE ROW'S DECLARED KIND DECIDES BEFORE ITS MARKS DO: a ⟨line⟩ row is a
    line whatever it is set in (grammar.ts, ROW_LINE_TOKEN) */
-function rowKind(row: Node): UnitKind {
+export function rowKind(row: Node): UnitKind {
   if (row.attrs.kind === "line") return "line";
   if (whollyIn(row, schema.marks.em)) return "stage";
   if (whollyIn(row, schema.marks.strong)) return "speaker";

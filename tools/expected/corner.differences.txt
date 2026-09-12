@@ -27,3 +27,5 @@ after warm · show · the same whisper
 3.2 s later · text · the same whisper's text, standing as it fades
 a paired citation pasted · indent · the current app's quoted pair pulls itself 21px out of the quotation; here it stands at the quoted text's edge (asked 2026-09-12)
 a paired citation pasted · cols · the columns are the fitted measure less the quotation's box here; the current app's quoted pair takes its own
+typed into the quoted pair · indent · the same: the current app's quoted pair stands out of its box
+typed into the quoted pair · cols · the same: the fitted measure less the quotation's box here

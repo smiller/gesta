@@ -35,7 +35,7 @@ test("referenceRange over covered lines; a speaker label takes the line under it
 
 test("a single-column passage quotes whole rows with the stanza gap, apparatus and prose left out of the count", () => {
   const [a, b] = span(verse, "forbidden", "Brought death");
-  expect(passageMd(verse, a, b)).toBe("> Of that forbidden tree, whose mortal taste\n>\n> Brought death into the World, and all our woe,");
+  expect(passageMd(verse, a, b)).toBe("> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,");
 });
 
 test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
@@ -46,14 +46,22 @@ test("a paired block copies as its own fence inside the quotation, numbered from
   const gapped = parseMarkdown("::: verse\na | b\nc | d\n\ne | f\n:::");
   const [c, d] = span(gapped, "c", "f");
   const md = passageMd(gapped, c, d);
-  expect(md).toBe("> ::: verse 2\n> c | d\n>\n> e | f\n> :::");
+  expect(md).toBe("> ::: verse 2\n> c | d\n> \n> e | f\n> :::");
   expect(parseMarkdown(md).toString()).toBe("doc(blockquote(verse(pair(cell(\"c\"), cell(\"d\")), gap, pair(cell(\"e\"), cell(\"f\")))))");
 });
 
+test("a paired citation referenced again: the quoted block walked whole, the number from its own start", () => {
+  /* the 2026-09-12 review: the units walk numbers top-level blocks alone, and the loose-prose arm cut one cell out of the pair, which the serializer refused */
+  const doc = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::");
+  const [a, b] = span(doc, "alph", "alph");
+  expect(passageMd(doc, a, b + 4)).toBe("> ::: verse 13\n> alpha beta | one two\n> :::");
+  const [c, d] = span(doc, "gamma", "four");
+  expect(passageMd(doc, c, d)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::");
+});
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
   const [a, b] = span(doc, "paragraph", "Second");
-  expect(passageMd(doc, a, b)).toBe("> paragraph here.\n>\n> Second");
+  expect(passageMd(doc, a, b)).toBe("> paragraph here.\n> \n> Second");
 });
 
 test("two verse blocks are a refusal", () => {
@@ -87,9 +95,9 @@ test("referencePayload: the link line with the range and the highlight, the pass
   const out = referencePayload(state(verse, a, b), "bookshelf", "Milton, John/Paradise Lost/Book 1", journal);
   expect(out).toMatchObject({ text:
     "[Milton, *Paradise Lost*, 1.2-3](#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death):\n\n" +
-    "> Of that forbidden tree, whose mortal taste\n>\n> Brought death into the World, and all our woe," });
+    "> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe," });
   /* the parts the rich flavour is built from ride beside the text */
-  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> Of that forbidden tree, whose mortal taste\n>\n> Brought death into the World, and all our woe," });
+  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe," });
   expect(referencePayload(state(verse, a, a), "bookshelf", "x", journal)).toEqual({ refused: "select" });
 });
 

@@ -181,16 +181,15 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   padding: 0.4em 1.1em;
 }
 /* the width and the pull are one number, and the whole entry takes the
-   block's measure */
-.page .verse:has(> .vpair),
-.page .prose:has(> .vpair) {
+   block's measure: the entry pulls on the class the fit writes (fit.ts
+   writeFit), wherever the pair it measured stands — a quotation, a
+   quotation in a quotation — and a top-level block pulls with it */
+.page > :is(.verse, .prose):has(> .vpair) {
   width: var(--par-w);
   margin-left: calc(50% - var(--par-w) / 2);
   margin-right: calc(50% - var(--par-w) / 2);
 }
-.page:has(> .verse > .vpair),
-.page:has(> .prose > .vpair),
-.page:has(> blockquote > :is(.verse, .prose) > .vpair) {
+.page.fitted {
   margin-left: calc(50% - var(--par-w) / 2);
   margin-right: calc(50% - var(--par-w) / 2);
 }
@@ -203,7 +202,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    intrinsic, so each cell reports the width it would take unwrapped and the
    entry's own box reports the prose measure it would have with no block on
    it. Applied and removed inside one synchronous call. */
-.page.fitting:has(> .verse > .vpair), .page.fitting:has(> blockquote > :is(.verse, .prose) > .vpair) { margin-left: 0; margin-right: 0; }
+.page.fitting { margin-left: 0; margin-right: 0; }
 .page.fitting .verse:has(> .vpair) { width: max-content; }
 .page.fitting .verse > .vpair { grid-template-columns: max-content max-content; }
 /* an empty row is still a row */
@@ -219,14 +218,12 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .prose > .vgap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(26, 36, 24, 0.16); }
 /* rows in an inset box sit on equal halves at a narrower gap */
 .page :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: 1fr 1fr; gap: 0 1.6em; }
-.page :is(div.note, div[class^="card-"]) :is(.verse, .prose):has(> .vpair) { width: auto; margin-left: 0; margin-right: 0; }
-/* A PAIRED CITATION: a quoted verse block is fitted with the entry (the
-   pull above, the frame in fit.ts) but pulls nothing itself — the
-   quotation is the box, and the pair stands at its text's edge with a
-   quoted paragraph's margins (by hand 2026-09-12: pulled, it stood 21px
-   out of the box; as an inset box, equal halves wrapped its English) */
-.page blockquote > :is(.verse, .prose) { margin: 0 0 1em; }
-.page blockquote > :is(.verse, .prose):has(> .vpair) { width: auto; margin-left: 0; margin-right: 0; }
+/* A PAIRED CITATION: a quoted pair is fitted with the entry (the pull
+   above, the frame in fit.ts) and stands at the quoted text's edge with
+   a quoted paragraph's margins (by hand 2026-09-12: pulled, it stood
+   21px out of the box; as an inset box, equal halves wrapped its
+   English). A single-column quoted fence keeps a verse block's margins. */
+.page blockquote > :is(.verse, .prose):has(> .vpair) { margin: 0 0 1em; }
 
 /* ---------- the verse gutter ----------
    Reserved on a page that numbers, whatever the interval, so changing it

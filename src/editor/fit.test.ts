@@ -2,7 +2,12 @@
 // measured (2026-08-09, 03-the-fitted-measure.js). The measuring pass and
 // the scheduling are DOM and are looked at in Helium.
 import { test, expect } from "vitest";
-import { fitWidth, MIN_COL, FIT_SLACK } from "./fit.ts";
+import { fitWidth, sideBox, MIN_COL, FIT_SLACK } from "./fit.ts";
+
+test("the side box is padding and border on both sides, in px, whatever the style spells them as", () => {
+  expect(sideBox({ paddingLeft: "19.8px", paddingRight: "19.8px", borderLeftWidth: "3px", borderRightWidth: "0px" })).toBeCloseTo(42.6);
+  expect(sideBox({ paddingLeft: "0px", paddingRight: "0px", borderLeftWidth: "0px", borderRightWidth: "0px" })).toBe(0);
+});
 
 const m = (c1: number, c2: number, over = {}) => ({ floor: 712, c1, c2, gap: 43.2, frame: 62.2, cap: 1285, ...over });
 

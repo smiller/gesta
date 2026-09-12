@@ -1581,14 +1581,16 @@ at the head is kept current per phase.
   the quoted fence draws no gutter numbers and raises no row — the
   numbers in the citation are given up — SETTLED the same day: not
   wanted. The shared ⌃⌘R step reads the passage's shape now
-  (its first 60 characters), listed as a decided difference; the rich
-  flavour follows the markdown into a blockquote by itself. Then the
+  (its first 60 characters), listed as a decided difference; MEASURED by
+  the same step's htmlHead, the rich flavour follows the markdown into
+  a blockquote by itself. Then the
   box, the same day, by hand: the quoted pair stood 21px LEFT of the
   quoted text beside it, since a paired block pulls itself to the
   entry's measure. Tried as an inset box like a note's (equal halves):
-  the margin aligned, but the English column wrapped — "clothes" alone
-  on a line — and the rich flavour's twin gave equal halves too.
-  DECIDED: a paired citation is FITTED with the entry, the fit's own
+  MEASURED headless, the margin aligned (indent 0) and the ⌃⌘R step
+  read the twin's columns as equal halves, 383 and 383; by hand, the
+  English column wrapped — "clothes" alone on a line. DECIDED, asked
+  that day: a paired citation is FITTED with the entry, the fit's own
   intent (its comment already said a quoted paired block widens the
   entry with the rest); the measure counts the quotation's padding and
   rule in the frame, the entry pulls to the measure when a quoted pair
@@ -1598,5 +1600,27 @@ at the head is kept current per phase.
   still dripping clothes": indent 0, columns 266 and 360, nothing
   wrapped, the two quotation boxes the same; the current app's pair
   reads indent −21 and columns 266 and 403, pulled out of its box. Both
-  are listed as decided differences. The rich flavour's columns are 332
-  and 421, the English narrower by the quotation's box.
+  are listed as decided differences. MEASURED by the ⌃⌘R step, the rich
+  flavour's columns are 332 and 421; INFERRED, the English is narrower
+  by the quotation's box (2 × 1.1em at 18px + 3px ≈ 42.6, against
+  463.8 − 421.2 = 42.6).
+  The batch's review (one medium pass, 146k tokens, 12 minutes) found:
+  ⌃⌘R with the selection inside ONE cell of a quoted pair threw from
+  the serializer (MEASURED by the review in node, a one-cell cut of a
+  pair) — a quoted row block is now walked whole like a top-level one,
+  numbered from its own start, and the reference tests pin it; the
+  pull selectors enumerated the containers a pair may stand in and
+  missed a quotation in a quotation — the fit writes ONE class,
+  `fitted`, and the stylesheet pulls on that; the quoted block's margin
+  rule reached single-column quoted fences — gated on a pair now; the
+  quoted-pair reader dereferenced unguarded — by shape now, guarded; the
+  step left the caret in the pair's last cell and the next paste landed
+  there — the step stands at its section's end on its own page, and
+  types into the pair to read the grow side; the reference's quote
+  spelled a blank line ">" where the serializer spells "> " — one
+  spelling, the serializer's; the passage comment asserted what the
+  numbering walk does — a decision and a date now; three record
+  sentences were untagged — tagged above; the side box is spelled once
+  and pinned. DECIDED on the review's question: a quoted PROSE pair
+  pulls the entry to the measure as a top-level one has since 7742a91 —
+  the entry takes the block's measure wherever the block stands.

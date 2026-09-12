@@ -66,6 +66,10 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
   return { width, col };
 }
 
+/* the horizontal box a style reserves: padding and border, both sides */
+export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderLeftWidth: string; borderRightWidth: string }): number {
+  return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
+}
 /* ---------- the DOM side ---------- */
 
 /* NOT a quotation: a paired citation is fitted with the entry (tried as
@@ -90,7 +94,12 @@ function readFit(host: HTMLElement): Fit | null {
   const col = parseFloat(host.style.getPropertyValue("--vb-col"));
   return { width: w, col: col || null };
 }
+/* the answer as ONE class beside the two properties: `fitted` is what
+   the stylesheet pulls the entry on, so the containers a pair may stand
+   in are not enumerated there as well (the 2026-09-12 review: a pair two
+   quotes deep was measured and never widened) */
 function writeFit(host: HTMLElement, fit: Fit | null): void {
+  host.classList.toggle("fitted", !!fit);
   if (!fit) { host.style.removeProperty("--par-w"); host.style.removeProperty("--vb-col"); return; }
   host.style.setProperty("--par-w", fit.width + "px");
   if (fit.col == null) host.style.removeProperty("--vb-col");
@@ -115,18 +124,14 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
   try {
     floor = host.getBoundingClientRect().width;
     for (const b of verse) {
-      const cs = getComputedStyle(b);
       /* the block's own box, and in a book that includes the line-number
-         gutter, so a four-digit number sits inside the fitted width */
-      let own = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) +
-        parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
-      /* and a quoted block pays its quotation's padding and rule: the
-         columns have the entry's measure less that box, and a citation's
-         English column wrapped by exactly it (by hand 2026-09-12) */
+         gutter, so a four-digit number sits inside the fitted width; and
+         a quoted block pays its quotation's padding and rule: the columns
+         have the entry's measure less that box, and a citation's English
+         column wrapped by exactly it (by hand 2026-09-12) */
+      let own = sideBox(getComputedStyle(b));
       for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
-        if (el.tagName !== "BLOCKQUOTE") continue;
-        const q = getComputedStyle(el);
-        own += parseFloat(q.paddingLeft) + parseFloat(q.paddingRight) + parseFloat(q.borderLeftWidth) + parseFloat(q.borderRightWidth);
+        if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
       }
       frame = Math.max(frame, own);
       b.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {

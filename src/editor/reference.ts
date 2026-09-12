@@ -10,9 +10,10 @@ import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { lineUnits, drawsInk, type Unit } from "./numbering.ts";
+import { lineUnits, drawsInk, rowKind, type Unit } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
+import { quotePrefix } from "../model/grammar.ts";
 
 const N = schema.nodes;
 /* does [a, b] of the document hold ink: text that is not whitespace, or a
@@ -96,7 +97,23 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
   while ((i = before.indexOf(q, i + 1)) !== -1) nth++;
   return { q, nth };
 }
-const quote = (md: string): string => md.split("\n").map((l) => l.trim() ? "> " + l : ">").join("\n");
+/* the serializer's own quote level, so a pasted citation is spelled as
+   its first save will spell it (the 2026-09-12 review: a blank line here
+   was ">" and there "> ") */
+const quote = (md: string): string => md.split("\n").map(quotePrefix).join("\n");
+/* the verse or prose block holding BOTH ends of the selection below the
+   top level — a paired citation inside a quotation: the units walk numbers
+   top-level blocks alone, and the loose-prose arm cut ONE cell out of a
+   pair, which the serializer refused (the 2026-09-12 review) */
+function quotedRowBlock(doc: Node, from: number, to: number): { node: Node; pos: number } | null {
+  const $from = doc.resolve(from), $to = doc.resolve(to);
+  for (let d = Math.min($from.depth, $to.depth); d >= 2; d--) {
+    const node = $from.node(d);
+    if (node !== $to.node(d)) continue;
+    if (node.type === N.verse || node.type === N.prose) return { node, pos: $from.before(d) };
+  }
+  return null;
+}
 /* does the selection reach a top-level block the row arms cannot carry —
    loose prose, and a pipe-less prose fence with it */
 export function coversProse(doc: Node, from: number, to: number): boolean {
@@ -115,54 +132,53 @@ export function coversProse(doc: Node, from: number, to: number): boolean {
 /* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
    with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
    numbered from its first quoted line, keeping the two columns — INSIDE
-   the quotation since 2026-09-12. The current app pasted the fence bare,
-   and on a journal page that read as the entry's own verse and raised the
-   Line numbering row (the gutter counts top-level verse alone); asked
-   that day, a citation is a quotation whether or not it is paired, and a
-   quoted fence draws no gutter numbers. In a row block the ROW is the
-   unit and whole rows are quoted, the contiguous run carrying the stanza
-   gaps between them; a nested note stays behind and a page-turn row is
-   dropped. In loose prose the unit is the selection. */
+   the quotation, DECIDED 2026-09-12 (the current app pasted the fence
+   bare, and beside a single-column citation it read as the entry's own
+   verse). In a row block the ROW is the unit and whole rows are quoted,
+   the contiguous run carrying the stanza gaps between them; a nested
+   note stays behind and a page-turn row is dropped. A row block inside
+   a quotation — a citation referenced again — is walked the same way.
+   In loose prose the unit is the selection. */
 export function passageMd(doc: Node, from: number, to: number): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
-  if (!units.length) return quote(serializeMarkdown(doc.cut(from, to)).trim());
-  const block = doc.nodeAt(units[0].blockPos)!, blockPos = units[0].blockPos;
-  const paired = units.some((u) => u.node.type === N.pair);
+  let block: Node, blockPos: number;
+  if (units.length) { blockPos = units[0].blockPos; block = doc.nodeAt(blockPos)!; }
+  else {
+    const quoted = quotedRowBlock(doc, from, to);
+    if (!quoted) return quote(serializeMarkdown(doc.cut(from, to)).trim());
+    block = quoted.node; blockPos = quoted.pos;
+  }
+  const prose = block.type === N.prose;
   const rows: { node: Node; pos: number }[] = [];
   block.forEach((row, offset) => rows.push({ node: row, pos: blockPos + 1 + offset }));
-  let first = rows.findIndex((r) => r.pos === units[0].pos);
-  let last = rows.findIndex((r) => r.pos === units[units.length - 1].pos);
-  /* the run's ends widen to covered non-unit rows (a prose block's heading
-     row), stepping over ink-less rows */
+  /* the run is the covered inked rows, first to last, whatever they are
+     (a prose block's heading row rides along), stepping over ink-less
+     rows between them; the number is the first line among them */
   const covered = (r: { node: Node; pos: number }) => drawsInk(r.node) && inkBetween(doc, Math.max(from, r.pos), Math.min(to, r.pos + r.node.nodeSize));
-  const widened = (i: number, step: number): number => {
-    let end = i;
-    for (let j = i + step; j >= 0 && j < rows.length; j += step) {
-      if (!drawsInk(rows[j].node)) continue;
-      if (!covered(rows[j])) break;
-      end = j;
-    }
-    return end;
-  };
-  first = widened(first, -1);
-  last = widened(last, 1);
+  const first = rows.findIndex(covered);
+  let last = first;
+  for (let i = first + 1; i < rows.length; i++) if (covered(rows[i])) last = i;
   const kept: Node[] = [];
-  for (let i = first; i <= last; i++) {
+  let line = (block.attrs.start as number) - 1, firstLine = 0;
+  for (let i = 0; i <= last; i++) {
     const row = rows[i].node;
+    const counts = row.type !== N.gap && row.type !== N.note && drawsInk(row) && (prose ? row.type === N.pair : rowKind(row) === "line");
+    if (counts) line++;
+    if (i < first) continue;
+    if (counts && !firstLine) firstLine = line;
     if (row.type === N.note) continue;
     let turn = false;
     if (!drawsInk(row)) row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
     if (turn) continue;
     kept.push(row);
   }
-  if (paired) {
-    const firstLine = units.find((u) => u.line)?.line || 0;
+  if (kept.some((row) => row.type === N.pair)) {
     const fence = block.type.create({ ...block.attrs, start: firstLine > 1 ? firstLine : 1 }, kept);
     return quote(serializeMarkdown(schema.nodes.doc.create(null, [fence])).trim());
   }
   return kept.map((row) => {
-    if (row.type === N.gap || !drawsInk(row)) return ">";
+    if (row.type === N.gap || !drawsInk(row)) return quotePrefix("");
     const line = serializeMarkdown(schema.nodes.doc.create(null, [N.paragraph.create(null, row.content)]));
     return "> " + line.replace(/\s*\n\s*/g, " ").trim();
   }).join("\n");
