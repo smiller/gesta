@@ -60,3 +60,15 @@ test("the gutter class is set exactly where a top-level verse block is", () => {
   expect(attrs("prose only")).toEqual({});
   expect(attrs("> ::: verse\n> a\n> :::")).toEqual({});
 });
+
+test("a top-level prose block holding a pair marks the root prosepage: the text, not quoted matter", () => {
+  const attrs = (md: string) => {
+    const s = state(md);
+    const a = s.plugins[0].props.attributes;
+    return typeof a === "function" ? a(s) : a;
+  };
+  expect(attrs("::: prose\nIam cantum | When her song\n:::")).toEqual({ class: "prosepage" });
+  expect(attrs("::: prose\nno pipe here\n:::")).toEqual({});
+  expect(attrs("::: verse\na\n:::\n\n::: prose\nx | y\n:::")).toEqual({ class: "versepage prosepage" });
+  expect(attrs("> ::: prose\n> x | y\n> :::")).toEqual({});
+});

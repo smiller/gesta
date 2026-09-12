@@ -1462,3 +1462,18 @@ at the head is kept current per phase.
   headless Helium over the Links page: all three links rgb(61, 107, 44)
   with the underline kept, visited or not; looked at by hand the same
   day: better. `dist/index.html` is 730.75 kB.
+- A BOOK'S PAIRED PROSE IS THE TEXT (2026-09-12, by hand: Boethius 3pr1
+  drawn as a blockquote — the fill and the left rule). The current app's
+  quoted-matter dress for a verse or paired-prose block is scoped OFF
+  both `versepage` and `prosepage`; the port carried `versepage` alone,
+  and nothing set `prosepage`, so a book's paired prose, which paints no
+  gutter, took the dress. `countsSentences` (numbering.ts) is the
+  current app's numbersSentences — a top-level prose block holding a
+  pair — and the line-number plugin sets `prosepage` on the root from
+  it beside `versepage`; the stylesheet's rule is scoped on both.
+  Pinned: prosepage on a paired prose block, not on a pipe-less one nor
+  one inside a quote, both classes where a verse and a paired prose
+  block share the entry. MEASURED in headless Helium over 3pr1 pasted
+  whole: the prose block with no border and a transparent background,
+  its rows a two-column grid, the root `prosepage`; both tools green,
+  the console empty. `dist/index.html` is 730.96 kB.

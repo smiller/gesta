@@ -8,7 +8,7 @@
 import { Plugin, PluginKey, type Command } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
-import { lineUnits, paintsLines } from "./numbering.ts";
+import { lineUnits, paintsLines, countsSentences } from "./numbering.ts";
 
 export interface LineNumbersState {
   /* every nth line carries a drawn number; 0 draws none. The gutter is
@@ -53,9 +53,13 @@ export function lineNumbers(interval: number): Plugin<LineNumbersState> {
     },
     props: {
       decorations: (state) => lineNumbersKey.getState(state)!.decorations,
-      /* the class the gutter rules hang on: set exactly where the document
-         numbers its own lines */
-      attributes: (state): Record<string, string> => (paintsLines(state.doc) ? { class: "versepage" } : {}),
+      /* the classes the stylesheet hangs on: `versepage` exactly where the
+         document numbers its own lines (the gutter), `prosepage` where it
+         counts sentences (no gutter, but the text is the text) */
+      attributes: (state): Record<string, string> => {
+        const cls = [paintsLines(state.doc) ? "versepage" : "", countsSentences(state.doc) ? "prosepage" : ""].filter(Boolean).join(" ");
+        return cls ? { class: cls } : {};
+      },
     },
   });
 }

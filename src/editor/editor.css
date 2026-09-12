@@ -169,9 +169,13 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 
 /* ---------- the verse block: a run of lines, paired or not ---------- */
 .page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }
-/* a verse block outside a book is quoted matter, and reads as such */
-.page:not(.versepage) > .verse,
-.page:not(.versepage) > .prose:has(> .vpair) {
+/* a verse block outside a book is quoted matter, and reads as such.
+   SCOPED ON BOTH CLASSES, as the current app's rule is: in a book the
+   verse or the paired prose IS the text, and the port scoped on versepage
+   alone, so a book's paired prose — Boethius 3pr1 — drew as a blockquote
+   (by hand 2026-09-12). A pipe-less prose block takes no dress anywhere. */
+.page:not(.versepage):not(.prosepage) > .verse,
+.page:not(.versepage):not(.prosepage) > .prose:has(> .vpair) {
   background: var(--aside-bg);
   border-left: var(--quote-rule, 3px) solid var(--rule);
   padding: 0.4em 1.1em;

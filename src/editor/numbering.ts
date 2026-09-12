@@ -98,6 +98,20 @@ export function paintsLines(doc: Node): boolean {
   doc.forEach((block) => { if (block.type === N.verse) yes = true; });
   return yes;
 }
+/* paintsLines' sibling: DOES THIS DOCUMENT COUNT SENTENCES — a top-level
+   prose block holding a pair. The current app's numbersSentences: a
+   pipe-less prose block has no effect, so it counts nothing. Nothing is
+   painted for it; the class it sets (`prosepage`) is what keeps the
+   quoted-matter dress off a book's own paired prose (by hand 2026-09-12:
+   Boethius 3pr1 drawn as a blockquote). */
+export function countsSentences(doc: Node): boolean {
+  let yes = false;
+  doc.forEach((block) => {
+    if (block.type !== N.prose) return;
+    block.forEach((row) => { if (row.type === N.pair) yes = true; });
+  });
+  return yes;
+}
 
 /* the numbered units grouped by block, in document order — a block
    registering on its first NUMBERED line, so a fence holding nothing but
