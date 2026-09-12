@@ -1656,4 +1656,10 @@ at the head is kept current per phase.
   comment-shape checker, 643 lines aimed at index.html's helper names;
   its port to this tree, with its self-test and its hit count measured
   before a rule is chosen, is the first prose checker owed (CLAUDE.md's
-  NOT YET line), and is not in this commit.
+  NOT YET line), and is not in this commit. FOUND by `npm run verify`
+  after the fix commit (7a0f71a): the grow reading raced the input —
+  it resolved on the first column change, an early keystroke's, and
+  read the row mid-fit (MEASURED: columns 266 and 409 with the cell
+  wrapped, then 266 and 418, on two runs). The wait now requires the
+  whole typed phrase present, the row grown AND unwrapped, within
+  400ms; MEASURED on two consecutive runs, 266 and 425, unwrapped.

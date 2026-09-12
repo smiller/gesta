@@ -345,7 +345,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const pasted = await R.quotedPair(page);
   await R.caretAfter(page, "rules the sea.", 14);
   await page.keyboard.type(" and every creature in it");
-  const grew = await R.waitPairGrew(page, pasted.cols, 400);
+  const grew = await R.waitPairGrew(page, pasted.cols, 400, "every creature in it");   /* the whole phrase present, the row grown AND unwrapped: the first column change is an early keystroke's, and a read then caught the row mid-fit, twice (verify, 2026-09-12) */
   await log("typed into the quoted pair", { grew, ...(await R.quotedPair(page)) });
     }],
     ["toolbar", async () => {
