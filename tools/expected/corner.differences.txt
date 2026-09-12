@@ -17,3 +17,4 @@ a fence pasted as text mid-paragraph · md · the current app's contenteditable 
 3, Enter · centred · the landing is centred within 8px on both; the band's arithmetic differs by the masthead's height
 Enter again on one block · centred · the same
 ⌃⌘R · htmlHead · the successor's paired row carries `vpair` beside `vrow` in the clipboard HTML; the inline grid is the same and a receiving application reads neither class
+the day's body ends with the link, its tag bar lists it · tags · a day's tagged entries list BY NAME here, in creation order in the current app; asked and settled 2026-09-12 — the lists are derived from the cache's keys, which keep no creation order

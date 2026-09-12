@@ -13,19 +13,23 @@ if (existsSync("tools/expected/corner.differences.txt")) for (const line of read
 const isAccepted = (label, k) => accepted.has(label + " · " + k) || accepted.has(label + " · *");
 const writer = parse("tools/expected/corner.writer.txt");
 const succ = parse(existsSync("tools/expected/corner.received.txt") ? "tools/expected/corner.received.txt" : "tools/expected/corner.approved.txt");
-let same = 0, diff = 0, decided = 0;
+/* STEPS in one count and FIELDS in another: a step is identical, differs
+   only where a decision is listed, or is open; the fields are tallied
+   beside them (a summary that summed the two was misread 2026-09-12) */
+let identical = 0, decidedOnly = 0, open = 0, decidedFields = 0, openFields = 0;
 for (const [label, w] of writer) {
-  if (!succ.has(label)) { if (isAccepted(label, "*")) { decided++; continue; } console.log("only the current app: " + label); diff++; continue; }
+  if (!succ.has(label)) { if (isAccepted(label, "*")) { decidedOnly++; continue; } console.log("only the current app: " + label); open++; continue; }
   const s = succ.get(label);
   const keys = new Set([...Object.keys(w && typeof w === "object" ? w : { value: w }), ...Object.keys(s && typeof s === "object" ? s : { value: s })]);
-  let any = false;
+  let any = false, decidedHere = 0;
   for (const k of keys) {
     const a = JSON.stringify((w && typeof w === "object" ? w : { value: w })[k]), b = JSON.stringify((s && typeof s === "object" ? s : { value: s })[k]);
-    if (a !== b && isAccepted(label, k)) { decided++; continue; }
-    if (a !== b) { if (!any) { console.log("\n" + label); any = true; } console.log("  " + k + ": current " + (a ?? "—").slice(0, 160) + "\n  " + " ".repeat(k.length) + "  successor " + (b ?? "—").slice(0, 160)); }
+    if (a !== b && isAccepted(label, k)) { decidedFields++; decidedHere++; continue; }
+    if (a !== b) { openFields++; if (!any) { console.log("\n" + label); any = true; } console.log("  " + k + ": current " + (a ?? "—").slice(0, 160) + "\n  " + " ".repeat(k.length) + "  successor " + (b ?? "—").slice(0, 160)); }
   }
-  if (any) diff++; else same++;
+  if (any) open++; else if (decidedHere) decidedOnly++; else identical++;
 }
-for (const label of succ.keys()) if (!writer.has(label)) { if (isAccepted(label, "*")) { decided++; continue; } console.log("only the successor: " + label); diff++; }
-console.log("\n" + same + " steps read the same, " + decided + " decided differences, " + diff + " steps differ");
-process.exit(diff ? 1 : 0);
+for (const label of succ.keys()) if (!writer.has(label)) { if (isAccepted(label, "*")) { decidedOnly++; continue; } console.log("only the successor: " + label); open++; }
+console.log("\nsteps: " + (identical + decidedOnly + open) + " — " + identical + " identical, " + decidedOnly + " differing only where a decision is listed, " + open + " open");
+console.log("fields: " + decidedFields + " decided, " + openFields + " open");
+process.exit(open ? 1 : 0);

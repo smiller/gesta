@@ -1516,7 +1516,9 @@ at the head is kept current per phase.
   which the current app does not say; ⌃⌘, on a page, silent there and
   "no earlier entry" here; the Tag extract, which keeps the bold here
   and loses it there; and a day's tag bar, in creation order there and
-  by name here. The corner's approved copy was re-taken after the
+  by name here — SETTLED the same day: by name. The tool's summary
+  counts steps and fields apart since the same day, a sum of the two
+  having been misread. The corner's approved copy was re-taken after the
   readers were normalised (no Svelte hash classes, "editor" for the
   surface, a link's block rather than its parent, the list's first text
   line). `npm run test:helium` is the approval and the comparison;
