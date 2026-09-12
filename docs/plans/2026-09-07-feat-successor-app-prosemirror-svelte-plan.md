@@ -1476,4 +1476,5 @@ at the head is kept current per phase.
   block share the entry. MEASURED in headless Helium over 3pr1 pasted
   whole: the prose block with no border and a transparent background,
   its rows a two-column grid, the root `prosepage`; both tools green,
-  the console empty. `dist/index.html` is 730.96 kB.
+  the console empty. `dist/index.html` is 730.96 kB. Confirmed by hand
+  in Helium the same day.
