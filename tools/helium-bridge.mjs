@@ -5,8 +5,9 @@
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
+import { tmpdir } from "node:os";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
-const PROFILE = resolve("tools/out/helium-bridge-profile");
+const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: see adapters/successor.mjs */
 const PAGE = "file://" + resolve("dist/index.html");
 rmSync(PROFILE, { recursive: true, force: true });
 mkdirSync(PROFILE, { recursive: true });
@@ -24,7 +25,8 @@ async function launch(url, fn) {
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
   page.on("console", (m) => { if (m.type() === "error") logs.push(m.text()); });
   await page.goto(url);
-  await page.waitForFunction(() => document.documentElement.dataset.entry !== undefined, null, { timeout: 15000 }).catch(() => logs.push("no entry opened"));
+  /* the WARM, not the primed open: the store count and the status are read at every step */
+  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;") || document.documentElement.dataset.probe?.includes("fail"), null, { timeout: 15000 }).catch(() => logs.push("no warm"));
   const out = await fn(page);
   if (logs.length) out.logs = logs;
   await ctx.close();

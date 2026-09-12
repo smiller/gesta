@@ -1,0 +1,9 @@
+seed, open #page/Horace            {"entry":"page/Horace","store":"10","crumb":"Horace","title":"","status":"10 entries stored","first":"Odes, 1.1","images":[]}
+open a book page                   {"entry":"bookshelf/Browning, Robert/Pippa Passes","store":"10","crumb":"Browning, Robert › Pippa Passes","title":"Pippa Passes, Introduction (an extract)","status":"10 entries stored","first":"Pippa Passes, Introduction (an extract)","images":[]}
+open a day                         {"entry":"2026-09-06","store":"10","crumb":"Past — Sunday, 6 September 2026","title":"Act 1, Scene 1. DUKE ORSINO’s palace.","status":"10 entries stored","first":"Act 1, Scene 1. DUKE ORSINO’s palace.","images":[]}
+an unknown book is refused         {"entry":"[today]","store":"10","crumb":"Today — [today's label]","title":"","status":"no such author","first":"","images":[]}
+an unknown page mints on visit     {"entry":"page/Brand New","store":"10","crumb":"Brand New","title":"","status":"10 entries stored","first":"","images":[]}
+type, wait past the debounce       {"entry":"page/Brand New","store":"10","crumb":"Brand New","title":"","status":"saved","first":"Typed in headless Helium.","images":[]}
+relaunch: the text came back       {"entry":"page/Brand New","store":"11","crumb":"Brand New","title":"","status":"11 entries stored","first":"Typed in headless Helium.","images":[]}
+an unknown book under a known author {"entry":"[today]","store":"11","crumb":"Today — [today's label]","title":"","status":"no such book","first":"","images":[]}
+walk: next from the earlier day    {"entry":"2026-09-06","store":"11","crumb":"Past — Sunday, 6 September 2026","title":"Act 1, Scene 1. DUKE ORSINO’s palace.","status":"11 entries stored","first":"Act 1, Scene 1. DUKE ORSINO’s palace.","images":[]}

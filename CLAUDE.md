@@ -26,8 +26,20 @@ here NOW, and what is not yet:
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.
-- IN FORCE — new behaviour is built test-first (`npm test`, Vitest), and the
-  suite plus `npm run check` (tsc) pass before work is called done.
+- IN FORCE — new behaviour is built test-first (`npm test`, Vitest), and
+  `npm run verify` — tsc, the suite, then the headless tools under their
+  verdict — passes before work is called done. THE HEADLESS TOOLS HAVE A
+  VERDICT since 2026-09-12: `npm run test:helium` plays the shared steps
+  (`tools/helium-steps.mjs`) over the successor and compares the whole
+  run, scrubbed, against `tools/expected/corner.approved.txt`, then
+  compares it step by step against THE CURRENT APP's run of the same
+  steps, `tools/expected/corner.writer.txt`, failing on any difference
+  not listed with its reason in `tools/expected/corner.differences.txt`.
+  The current app is the reference for what the app should do; the
+  approved copy is only a fence against change. `--approve` makes a run
+  the approved copy, a judgement made after reading the diff, never to
+  quiet it; `npm run compare:writer` regenerates the current app's run
+  when ../writer changes. A `.received.txt` is never committed.
 - IN FORCE — `node_modules` carries the Dropbox-ignore attribute. A
   `rm -rf node_modules` loses it with the directory, so a clean reinstall runs
   `mkdir -p node_modules && xattr -w com.dropbox.ignored 1 node_modules`
@@ -120,6 +132,14 @@ is in the plan's record, under the phase named):
 - `tools/helium-bridge.mjs` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
+- `tools/helium-steps.mjs` — THE SHARED STEPS: one list of gestures and
+  readings, played over an adapter; `tools/adapters/successor.mjs` and
+  `tools/adapters/writer.mjs` answer the same questions over this app
+  and over ../writer (its `window.gesta` seam seeds it, its own ids read
+  it). `tools/helium-approve.mjs` runs a tool under its verdict against
+  `tools/expected/`; `tools/helium-compare.mjs` reads the two runs step
+  by step, the decided differences listed in `corner.differences.txt`;
+  `tools/helium-writer.mjs` is the current app's driver.
 - `tools/helium-corner.mjs` — the corner and the masthead in headless
   Helium over a fresh profile: the indicator after the warm, past its
   whisper, after typing, after a click, and on a refused walk; the masthead

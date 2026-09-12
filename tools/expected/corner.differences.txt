@@ -1,0 +1,19 @@
+# Differences between the current app's run (corner.writer.txt) and the
+# successor's that are DECIDED, one per line: `step label · field · why`.
+# helium-compare.mjs reports every other difference and fails on it. A
+# line here is a decision with its record, not a way to quiet a diff.
+the launch's stages · value · the probes differ: the successor stages its launch, the current app is seeded through its seam
+with ?corner=pill · * · the paused pill under ?corner=pill is the successor's probe alone
+a card ⌘C'd · bg · ⌘C sweeps the look inline here (2026-09-08, the copied card's colour); the current app's ⌘C did not
+a card ⌘C'd · card · the same sweep
+a card ⌘C'd · raw · the same sweep
+pasted on a fresh page · fence · the current app's own ⌘C round trip loses the card; here it comes back whole (2026-09-08, the copied block)
+pasted on a fresh page · lines · the same round trip
+pasted on a fresh page · cards · the same round trip
+a picture pasted · md · a picture is its bytes under its own name, `![](name.webp)`, not the current app's `![img-N]` registry (phase 2)
+a picture pasted · src · the bytes are served from the store as a blob, not inlined as a data URL (phase 2)
+⌃⌘N on the tagged entry · * · ⌃⌘N is the successor's chord (asked 2026-09-07); the current app has the button, hidden on a tagged entry
+a fence pasted as text mid-paragraph · md · the current app's contenteditable stores a non-breaking space before "end"; the model keeps the space typed
+3, Enter · centred · the landing is centred within 8px on both; the band's arithmetic differs by the masthead's height
+Enter again on one block · centred · the same
+⌃⌘R · htmlHead · the successor's paired row carries `vpair` beside `vrow` in the clipboard HTML; the inline grid is the same and a receiving application reads neither class

@@ -9,7 +9,10 @@
     "build": "vite build",
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "corpus": "node tools/corpus.ts"
+    "corpus": "node tools/corpus.ts",
+    "test:helium": "node tools/helium-approve.mjs && node tools/helium-compare.mjs",
+    "verify": "npm run check && npm test && npm run test:helium",
+    "compare:writer": "node tools/helium-approve.mjs --writer && node tools/helium-compare.mjs"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "7.3.0",

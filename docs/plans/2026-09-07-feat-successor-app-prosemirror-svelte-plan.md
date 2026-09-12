@@ -1496,3 +1496,29 @@ at the head is kept current per phase.
   Boethius over Browning; the console empty. `dist/index.html` is
   731.48 kB. Confirmed by hand the same day over the Consolatio's
   book 3.
+- THE CURRENT APP AS THE REFERENCE (2026-09-12, asked, after the walk's
+  order was found ported from an older spelling): the headless steps
+  split into ONE shared list over an adapter, and a second adapter over
+  ../writer, seeded through its `window.gesta` seam (setEntry over its
+  own mdToHtml, the derived lists rebuilt) and read through its ids; the
+  same 89 steps play over both apps and `helium-compare.mjs` reads them
+  step by step, the screen line left out. FOUND on the way: the driver
+  opened Horace before seeding it and the open page's autosave of its
+  blank body emptied the seed; the current app has no ⌃⌘N, so the create
+  is a gesture the adapter spells; a profile under Dropbox failed its
+  delete one run in three. MEASURED: 76 of 94 steps read the same across
+  the two apps; 18 differences are decided and listed with their
+  reasons (the ⌘C sweep and the card's round trip, where the current
+  app loses the card; the picture's name and its blob; ⌃⌘N; a
+  non-breaking space the contenteditable stores; the landing centred
+  within 8px; a row's second class in the clipboard HTML); FOUR are open
+  questions for a hand: the "N entries stored" whisper after the warm,
+  which the current app does not say; ⌃⌘, on a page, silent there and
+  "no earlier entry" here; the Tag extract, which keeps the bold here
+  and loses it there; and a day's tag bar, in creation order there and
+  by name here. The corner's approved copy was re-taken after the
+  readers were normalised (no Svelte hash classes, "editor" for the
+  surface, a link's block rather than its parent, the list's first text
+  line). `npm run test:helium` is the approval and the comparison;
+  `npm run verify` chains tsc, the suite and it; `npm run
+  compare:writer` regenerates the reference.

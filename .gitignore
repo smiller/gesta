@@ -2,3 +2,4 @@ node_modules
 dist
 tools/out
 .DS_Store
+*.received.txt
