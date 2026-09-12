@@ -112,12 +112,17 @@ export function coversProse(doc: Node, from: number, to: number): boolean {
   });
   return yes;
 }
-/* THE QUOTED PASSAGE TAKES ONE OF TWO SHAPES: single-column verse or prose
-   quotes with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
-   numbered from its first quoted line, keeping the two columns. In a row
-   block the ROW is the unit and whole rows are quoted, the contiguous run
-   carrying the stanza gaps between them; a nested note stays behind and a
-   page-turn row is dropped. In loose prose the unit is the selection. */
+/* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
+   with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
+   numbered from its first quoted line, keeping the two columns — INSIDE
+   the quotation since 2026-09-12. The current app pasted the fence bare,
+   and on a journal page that read as the entry's own verse and raised the
+   Line numbering row (the gutter counts top-level verse alone); asked
+   that day, a citation is a quotation whether or not it is paired, and a
+   quoted fence draws no gutter numbers. In a row block the ROW is the
+   unit and whole rows are quoted, the contiguous run carrying the stanza
+   gaps between them; a nested note stays behind and a page-turn row is
+   dropped. In loose prose the unit is the selection. */
 export function passageMd(doc: Node, from: number, to: number): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
@@ -154,7 +159,7 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (paired) {
     const firstLine = units.find((u) => u.line)?.line || 0;
     const fence = block.type.create({ ...block.attrs, start: firstLine > 1 ? firstLine : 1 }, kept);
-    return serializeMarkdown(schema.nodes.doc.create(null, [fence])).trim();
+    return quote(serializeMarkdown(schema.nodes.doc.create(null, [fence])).trim());
   }
   return kept.map((row) => {
     if (row.type === N.gap || !drawsInk(row)) return ">";

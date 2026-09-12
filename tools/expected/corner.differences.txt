@@ -16,7 +16,8 @@ a picture pasted · src · the bytes are served from the store as a blob, not in
 a fence pasted as text mid-paragraph · md · the current app's contenteditable stores a non-breaking space before "end"; the model keeps the space typed
 3, Enter · centred · the landing is centred within 8px on both; the band's arithmetic differs by the masthead's height
 Enter again on one block · centred · the same
-⌃⌘R · htmlHead · the successor's paired row carries `vpair` beside `vrow` in the clipboard HTML; the inline grid is the same and a receiving application reads neither class
+⌃⌘R · htmlHead · the successor's paired row carries `vpair` beside `vrow` in the clipboard HTML, and since 2026-09-12 the fence sits in a blockquote (the passage line below); the inline grid is the same and a receiving application reads neither class
+⌃⌘R · passage · a paired passage is a fence INSIDE the quotation here, bare in the current app: asked 2026-09-12 — a citation is a quotation whether or not it is paired, and a bare fence on a journal page raised the Line numbering row
 the day's body ends with the link, its tag bar lists it · tags · a day's tagged entries list BY NAME here, in creation order in the current app; asked and settled 2026-09-12 — the lists are derived from the cache's keys, which keep no creation order
 Tag with Music answered · body · the extract KEEPS the selection's marks here; the current app's loses the bold — a defect there, not a rule; asked and settled 2026-09-12
 after ⌃⌘, on the first entry · text · ⌃⌘, with nowhere to go whispers "no earlier entry" here; the current app says nothing — silence reads as a dead control; asked and settled 2026-09-12

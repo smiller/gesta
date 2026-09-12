@@ -38,10 +38,16 @@ test("a single-column passage quotes whole rows with the stanza gap, apparatus a
   expect(passageMd(verse, a, b)).toBe("> Of that forbidden tree, whose mortal taste\n>\n> Brought death into the World, and all our woe,");
 });
 
-test("a paired block copies as its own fence, numbered from the first quoted line", () => {
+test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
   const doc = parseMarkdown("::: verse\nMaecenas atavis | Maecenas, descended\nedite regibus | of kings\no et praesidium | my bulwark\n:::");
   const [a, b] = span(doc, "regibus", "bulwark");
-  expect(passageMd(doc, a, b)).toBe("::: verse 2\nedite regibus | of kings\no et praesidium | my bulwark\n:::");
+  expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> edite regibus | of kings\n> o et praesidium | my bulwark\n> :::");
+  /* the quoted fence is the model's own shape: it parses back to a quotation holding the pair, the start kept, and a stanza gap survives the quote marks */
+  const gapped = parseMarkdown("::: verse\na | b\nc | d\n\ne | f\n:::");
+  const [c, d] = span(gapped, "c", "f");
+  const md = passageMd(gapped, c, d);
+  expect(md).toBe("> ::: verse 2\n> c | d\n>\n> e | f\n> :::");
+  expect(parseMarkdown(md).toString()).toBe("doc(blockquote(verse(pair(cell(\"c\"), cell(\"d\")), gap, pair(cell(\"e\"), cell(\"f\")))))");
 });
 
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {

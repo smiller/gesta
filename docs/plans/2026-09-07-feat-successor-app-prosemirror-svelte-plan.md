@@ -1568,3 +1568,20 @@ at the head is kept current per phase.
   both once the readers named it "editor", as the bar reader already
   did. The comparison stands at 89 steps, 74 identical, 15 decided,
   none open; `npm run verify` green end to end.
+- 2026-09-12, the paired passage quoted. FOUND by hand: a reference to
+  Horace 1.5.13–16 pasted on a day page as a bare fence, so it read as
+  the entry's own verse and raised the Line numbering row, while the
+  Milton reference beside it was a quotation. That was the current app's
+  rule ported (a dual-language block skips the blockquote, keeping its
+  columns). DECIDED, asked that day: a citation is a quotation whether
+  or not it is paired — the fence goes INSIDE the quotation, `> :::
+  verse 13`. MEASURED in node: the model already holds a verse fence in
+  a blockquote and round-trips it with its start and a stanza gap; the
+  numbering walk and the gutter switch count top-level verse alone, so
+  the quoted fence draws no gutter numbers and raises no row — the
+  numbers in the citation are given up for now, a second step if they
+  are wanted back. The shared ⌃⌘R step reads the passage's shape now
+  (its first 60 characters), listed as a decided difference; the rich
+  flavour follows the markdown into a blockquote by itself. OPEN, to
+  experiment next: the two columns fitting the quotation's narrower box
+  without wrapping.
