@@ -159,21 +159,26 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
   }
   return [a, b];
 }
-/* the cut with the containers around it unwrapped: a citation cited
-   again is quoted ONE level deep, as the current app's copy of the
-   selected content was, carrying no ancestor of the selection's ends —
-   however many quotations, notes or cards deep it stood (DECIDED
-   2026-09-12, the confirmation passes: a quoted pair re-cited came out
-   at one level, a quoted paragraph at two, one under `> >` at two). A
-   quote body's blank line is a break at a paragraph's edge, which the
-   block join spells again once lifted, so an edge break comes off; a
-   lifted block with no ink is nothing to quote. */
+/* the cut with the containers around THE WHOLE of it unwrapped: a
+   citation cited again is quoted ONE level deep, as the current app's
+   copy of the selected content was, carrying no container that holds
+   the whole selection — however many quotations, notes or cards deep it
+   stood (DECIDED 2026-09-12, the confirmation passes: a quoted pair
+   re-cited came out at one level, a quoted paragraph at two, one under
+   `> >` at two). A container holding only ONE END stays: a drag from a
+   citation into the line after it keeps the pair quoted beside the line
+   that was not, as the source had them (asked 2026-09-12 by hand, after
+   a version flattened it; the current app's copy keeps a partly
+   selected ancestor too). A quote body's blank line is a break at a
+   paragraph's edge, which the block join spells again once lifted, so
+   an edge break comes off; a lifted block with no ink is nothing to
+   quote. */
 const CONTAINERS = new Set(["blockquote", "note", "card"]);
 function unquoted(cut: Node): Node {
   let n = cut;
   while (n.childCount === 1 && CONTAINERS.has(n.firstChild!.type.name)) n = schema.nodes.doc.create(null, n.firstChild!.content);
   const blocks: Node[] = [];
-  n.forEach((b) => { if (b.type === N.blockquote) b.forEach((inner) => blocks.push(inner)); else blocks.push(b); });
+  n.forEach((b) => blocks.push(b));
   const trimmed = blocks.map((b) => {
     if (b.type !== N.paragraph) return b;
     let c = b.content;

@@ -1692,4 +1692,12 @@ at the head is kept current per phase.
   trimmed and tagged. MEASURED in node, the nine shapes pinned in
   reference.test.ts. Cut by the pass's own cap: `hasPair` is a third
   copy of one loop, `waitPairGrew` a fourth copy of the wrap test,
-  `rowBlocks` visits text it need not.
+  `rowBlocks` visits text it need not. Then by hand, the same day, over
+  a drag from a citation's last row into the line after it: the pass's
+  unwrapping had flattened the quotation holding only the START of the
+  selection to the line's level. ASKED and settled: a container holding
+  only one end stays — the pair keeps its quotation beside the line that
+  had none, as the source had them — and only the containers around the
+  whole selection come off; INFERRED from the current app's copy, which
+  clones a partly selected ancestor, this is its rule too. The two
+  pinned shapes expect the nested form.
