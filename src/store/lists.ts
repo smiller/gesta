@@ -54,8 +54,13 @@ export function unmintedKey(keys: string[], date: string, tag: string | null): b
    parent, in byName order; a sub the list does not hold still resolves, by
    comparison. Blank siblings are skipped lazily, each direction probing
    only until its first hit. */
-export function subPageNeighbors(keys: string[], parentKey: string, sub: string, bearing: (key: string) => boolean): Neighbors {
-  const subs = childrenOf(keys, parentKey);
+/* THE ORDER IS THE CALLER'S TO GIVE: a book's index states its own — in
+   the Consolatio the prose and the verse alternate, 3pr1 then 3m1 — and
+   the walk follows it where the go-to row does (contents.ts); by name
+   otherwise, as the current app's walk was. Asked 2026-09-12, when ⌃⌘.
+   from 3pr1 went to 3pr2. */
+export function subPageNeighbors(keys: string[], parentKey: string, sub: string, bearing: (key: string) => boolean, order?: string[]): Neighbors {
+  const subs = order || childrenOf(keys, parentKey);
   let at = subs.indexOf(sub);
   if (at < 0) { at = 0; while (at < subs.length && byName(subs[at], sub) < 0) at++; }
   let prev: string | null = null, next: string | null = null;
@@ -66,10 +71,11 @@ export function subPageNeighbors(keys: string[], parentKey: string, sub: string,
 /* the open entry's previous and next as {date, tag}: a day's are the
    adjacent days, a sub-page's the adjacent content-bearing siblings; a day's
    tagged entry and a top-level page have neither */
-export function navNeighbors(keys: string[], date: string, tag: string | null, bearing: (key: string) => boolean): { prev: [string, string | null] | null; next: [string, string | null] | null } {
+export function navNeighbors(keys: string[], date: string, tag: string | null, bearing: (key: string) => boolean, orderOf?: (parentKey: string) => string[]): { prev: [string, string | null] | null; next: [string, string | null] | null } {
   const pp = nsOf(date) && tag ? pageParts(tag) : null;
   if (pp && pp.sub) {
-    const nb = subPageNeighbors(keys, entryKey(date, pp.parent), pp.leaf, bearing);
+    const parentKey = entryKey(date, pp.parent);
+    const nb = subPageNeighbors(keys, parentKey, pp.leaf, bearing, orderOf?.(parentKey));
     return { prev: nb.prev ? [date, pp.parent + "/" + nb.prev] : null, next: nb.next ? [date, pp.parent + "/" + nb.next] : null };
   }
   if (tag) return { prev: null, next: null };

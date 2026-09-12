@@ -458,6 +458,18 @@ await log("after ↓", (await srow()).rows.filter((r) => r.includes("active")));
 await page.keyboard.press("Enter");
 await page.waitForFunction(() => document.getSelection()?.toString().toLowerCase() === "sister", null, { timeout: 5000 }).catch(() => {});
 await log("Enter", { entry: await page.evaluate(() => document.documentElement.dataset.entry), selected: await page.evaluate(() => document.getSelection()?.toString()), open: await page.evaluate(() => document.querySelector(".page-search")?.open) });
+/* the walk over a book whose index alternates prose and verse follows the index, not the alphabet */
+await page.goto(PAGE + "#bookshelf/Boethius/Consolatio/3pr1");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "bookshelf/Boethius/Consolatio/3pr1", null, { timeout: 15000 });
+await page.keyboard.press("Control+Meta+.");
+await page.waitForFunction(() => document.documentElement.dataset.entry !== "bookshelf/Boethius/Consolatio/3pr1", null, { timeout: 5000 }).catch(() => {});
+await log("⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2", { entry: await page.evaluate(() => document.documentElement.dataset.entry) });
+await page.keyboard.press("Control+Meta+.");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "bookshelf/Boethius/Consolatio/3pr2", null, { timeout: 5000 }).catch(() => {});
+await log("⌃⌘. again", { entry: await page.evaluate(() => document.documentElement.dataset.entry) });
+await page.keyboard.press("Control+Meta+,");
+await page.waitForFunction(() => document.documentElement.dataset.entry === "bookshelf/Boethius/Consolatio/3m1", null, { timeout: 5000 }).catch(() => {});
+await log("⌃⌘, back", { entry: await page.evaluate(() => document.documentElement.dataset.entry) });
 await page.goto(PAGE + "?corner=pill#page/Horace");
 await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 await log("with ?corner=pill", await page.evaluate(() => { const b = document.querySelector(".backup-paused"); const r = b.getBoundingClientRect(); return { text: b.textContent, hidden: b.hidden, display: getComputedStyle(b).display, right: innerWidth - r.right, bottom: innerHeight - r.bottom }; }));

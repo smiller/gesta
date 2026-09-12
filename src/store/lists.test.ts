@@ -41,6 +41,19 @@ test("registered: itself present, or an ancestor of one that is; unmintedKey rea
   expect(unmintedKey(keys, "2026-01-05", "new tag")).toBe(false); // a day has no row
 });
 
+test("subPageNeighbors walks the order it is given — a book's index order, prose and verse alternating", () => {
+  const keys = ["bookshelf/Boethius/Consolatio", "bookshelf/Boethius/Consolatio/3pr1", "bookshelf/Boethius/Consolatio/3m1", "bookshelf/Boethius/Consolatio/3pr2", "bookshelf/Boethius/Consolatio/3m2"];
+  const order = ["3pr1", "3m1", "3pr2", "3m2"];
+  const parent = "bookshelf/Boethius/Consolatio";
+  expect(subPageNeighbors(keys, parent, "3pr1", () => true, order)).toEqual({ prev: null, next: "3m1" });
+  expect(subPageNeighbors(keys, parent, "3m1", () => true, order)).toEqual({ prev: "3pr1", next: "3pr2" });
+  expect(subPageNeighbors(keys, parent, "3m2", () => true, order)).toEqual({ prev: "3pr2", next: null });
+  /* a blank in the order is skipped as before */
+  expect(subPageNeighbors(keys, parent, "3pr1", (k) => k !== parent + "/3m1", order)).toEqual({ prev: null, next: "3pr2" });
+  /* by name, the same keys walk 3m1, 3m2, 3pr1, 3pr2 */
+  expect(subPageNeighbors(keys, parent, "3pr1", () => true)).toEqual({ prev: "3m2", next: "3pr2" });
+  expect(navNeighbors(keys, "bookshelf", "Boethius/Consolatio/3pr1", () => true, () => order)).toEqual({ prev: null, next: ["bookshelf", "Boethius/Consolatio/3m1"] });
+});
 test("subPageNeighbors: siblings in reading order, blanks skipped, an unlisted sub placed by comparison", () => {
   const bearing = (k: string) => k !== "bookshelf/Dante/Inferno/2";
   expect(subPageNeighbors(keys, "bookshelf/Dante/Inferno", "1", bearing)).toEqual({ prev: null, next: "10" });

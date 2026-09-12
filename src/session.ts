@@ -20,6 +20,7 @@ import { entryKey, entryHash, todayKey, nsOf, pageParts } from "./store/keys.ts"
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
+import { subPageOrder, type ContentsLink } from "./store/contents.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
 import { writeClipboard } from "./chrome/clipboard.ts";
@@ -413,9 +414,13 @@ export function startSession(opts: SessionOptions): Session {
     if (location.hash === hash) { if (sameMsg) say(sameMsg, 1500); return; }
     location.hash = hash;
   }
+  /* the walk follows the parent's index where it states one, as the go-to
+     row does; the contents parse is memoised on the parent's text */
+  const orderMemo = new Map<string, { md: string; links: ContentsLink[] }>();
   function step(dir: "prev" | "next"): void {
     if (!layer.warmed) { say("still loading — try that again in a moment", 2500); return; }
-    const nb = navNeighbors(Object.keys(layer.cache), current.date, current.tag, (k) => !!layer.entryMd(k).trim())[dir];
+    const keys = Object.keys(layer.cache), bearing = (k: string) => !!layer.entryMd(k).trim();
+    const nb = navNeighbors(keys, current.date, current.tag, bearing, (pk) => subPageOrder(keys, pk, layer.entryMd(pk), bearing, orderMemo).names)[dir];
     if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
   }

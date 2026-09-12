@@ -1478,3 +1478,20 @@ at the head is kept current per phase.
   its rows a two-column grid, the root `prosepage`; both tools green,
   the console empty. `dist/index.html` is 730.96 kB. Confirmed by hand
   in Helium the same day.
+- THE WALK FOLLOWS THE INDEX (2026-09-12, asked: ⌃⌘. from the Consolatio's
+  3pr1 went to 3pr2 where the book's index reads 3pr1, 3m1, 3pr2 — the
+  prose and the verse alternate in the text). `subPageNeighbors` takes
+  the sibling order it is given and `navNeighbors` an order provider;
+  the session hands it the parent's `subPageOrder` (contents.ts), the
+  same order the go-to row reads, memoised on the parent's text — a
+  stated index as stated, by name where the parent states none, and by
+  name where a content-bearing sub is missing from the index (the
+  row's all-or-nothing rule, kept). A sub the order does not hold (an
+  open unregistered one) is still placed by comparison. Pinned: next
+  from 3pr1 is 3m1, prev from 3m1 is 3pr1, a blank in the order is
+  skipped, and the same keys walk 3m1, 3m2, 3pr1, 3pr2 by name; the
+  test red over the old walk, MEASURED. The seed gains a Boethius book
+  with a three-entry index. MEASURED in headless Helium: ⌃⌘. from 3pr1
+  opens 3m1, again 3pr2, ⌃⌘, back 3m1; the bookshelf panel now lists
+  Boethius over Browning; the console empty. `dist/index.html` is
+  731.48 kB.
