@@ -254,6 +254,11 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 }
 .page.versepage > p, .page.foliopage > p { padding-left: var(--ln-gutter); }
 .page.versepage > blockquote, .page.foliopage > blockquote { padding-left: calc(var(--ln-gutter) - var(--quote-rule)); }
+/* a code block's box starts where the paragraph's text does, its own
+   padding inside that, as the current app draws it on a plain page: the
+   whole box pays the gutter, not its text. A first cut padded the text
+   alone, the quotation's shape, and was refused by hand 2026-09-12 */
+.page.versepage > pre, .page.foliopage > pre { margin-left: var(--ln-gutter); }
 .page.versepage > :is(ul, ol), .page.foliopage > :is(ul, ol) { padding-left: calc(var(--ln-gutter) + 1.6em); }
 /* the prose block pays the folio gutter like every other top-level block:
    a folio label is content, and without this it painted over the original */
