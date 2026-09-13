@@ -10,7 +10,7 @@ import { Fragment, type Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, drawsInk, type Unit } from "./numbering.ts";
+import { blockUnits, countAt, drawsInk, type Unit } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -48,7 +48,6 @@ function rowBlocks(doc: Node, topOnly = false): { node: Node; pos: number }[] {
   });
   return out;
 }
-const hasPair = (block: Node): boolean => { let yes = false; block.forEach((row) => { if (row.type === N.pair) yes = true; }); return yes; };
 export function coveredUnits(doc: Node, from: number, to: number, topOnly = false): Unit[] {
   const out: Unit[] = [];
   for (const b of rowBlocks(doc, topOnly)) {
@@ -121,35 +120,26 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
   while ((i = before.indexOf(q, i + 1)) !== -1) nth++;
   return { q, nth };
 }
-/* THE PASSAGE IS A QUOTATION NODE and the serializer spells it: the
-   quote body's own grammar — a fence's lines under the prefix, a blank
-   line only where a paragraph break stands between two text lines, no
-   blank beside a fence or another block — is the serializer's, asked
-   once. A textual filter over serialized lines stood here for a day
-   (2026-09-12) and misread a note's fence lines inside a verse block, a
-   refused `:::` paragraph and a gap at a fence's edge (the block's
-   closing review). Consecutive paragraphs become one quote-body
-   paragraph with the double break a blank line is there. */
+/* THE PASSAGE IS A QUOTATION NODE and the serializer spells it, asked
+   once (DECIDED 2026-09-12: a textual filter over serialized lines stood
+   here for a day and misread a note's fence lines inside a verse block,
+   a refused `:::` paragraph and a gap at a fence's edge — the block's
+   closing review; the shapes are pinned in reference.test.ts). */
 function quoted(blocks: Node[]): string {
-  const body: Node[] = [];
-  for (const b of blocks) {
-    const last = body[body.length - 1];
-    if (b.type === N.paragraph && last && last.type === N.paragraph) {
-      body[body.length - 1] = last.copy(last.content.append(Fragment.from([N.hard_break.create(), N.hard_break.create()])).append(b.content));
-    } else body.push(b);
-  }
-  return serializeMarkdown(schema.nodes.doc.create(null, [N.blockquote.create(null, body)])).trim();
+  return serializeMarkdown(schema.nodes.doc.create(null, [N.blockquote.create(null, blocks)])).trim();
 }
 /* does the selection reach ink the row arms cannot carry — loose prose,
-   a pipe-less prose fence, anything outside a verse block or a paired
-   prose block, at whatever depth the block stands */
+   a pipe-less prose fence, a note's own paragraph outside a nested block:
+   ink outside the blocks whose units the selection covers. (The block's
+   closing review, 2026-09-12: skipping every row block's whole span hid
+   a note's paragraph inside an outer block, and a drag from a nested
+   pair into it dropped the paragraph from the passage.) */
 export function coversProse(doc: Node, from: number, to: number): boolean {
+  const blocks = new Set(coveredUnits(doc, from, to).map((u) => u.blockPos));
   let at = from;
   for (const b of rowBlocks(doc)) {
-    if (b.node.type === N.prose && !hasPair(b.node)) continue;
+    if (!blocks.has(b.pos)) continue;
     const end = b.pos + b.node.nodeSize;
-    if (end <= from) continue;
-    if (b.pos >= to) break;
     if (inkBetween(doc, at, Math.min(b.pos, to))) return true;
     at = Math.max(at, end);
   }
@@ -184,51 +174,57 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
    citation into the line after it keeps the pair quoted beside the line
    that was not, as the source had them (asked 2026-09-12 by hand, after
    a version flattened it; INFERRED from the current app's copy, which
-   clones a partly selected ancestor). A quote body's blank line is a
-   break at a paragraph's edge, which the block join spells again once
-   lifted, so an edge break comes off — inside a retained container as
-   well (the block's closing review: a retained quotation carried its
-   edge blank into the nested box); a lifted block with no ink is
-   nothing to quote. */
+   clones a partly selected ancestor). Every edge break comes off a
+   paragraph, a gap row off a cut block's edge, and a block with no ink
+   goes — inside a retained container as well (the block's closing
+   review: one break of two stayed, an empty paragraph stood in the
+   nested box, and an edge gap painted an empty row under the opener). */
 const CONTAINERS = new Set(["blockquote", "note", "card"]);
-function trimEdges(b: Node): Node {
-  if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => inner.push(trimEdges(c))); return b.copy(Fragment.from(inner)); }
+const keep = (b: Node): boolean => b.type === N.gap || drawsInk(b);
+function trimmed(b: Node): Node {
+  if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); }); return b.copy(Fragment.from(inner)); }
+  if (b.type === N.verse || b.type === N.prose) {
+    const rows: Node[] = []; b.forEach((row) => rows.push(row));
+    while (rows.length && rows[0].type === N.gap) rows.shift();
+    while (rows.length && rows[rows.length - 1].type === N.gap) rows.pop();
+    return b.copy(Fragment.from(rows));
+  }
   if (b.type !== N.paragraph) return b;
   let c = b.content;
-  if (c.firstChild?.type === N.hard_break) c = c.cut(c.firstChild.nodeSize);
-  if (c.lastChild?.type === N.hard_break) c = c.cut(0, c.size - c.lastChild.nodeSize);
+  while (c.firstChild?.type === N.hard_break) c = c.cut(c.firstChild.nodeSize);
+  while (c.lastChild?.type === N.hard_break) c = c.cut(0, c.size - c.lastChild.nodeSize);
   return b.copy(c);
 }
 function unquoted(cut: Node): Node[] {
   let n = cut;
   while (n.childCount === 1 && CONTAINERS.has(n.firstChild!.type.name)) n = schema.nodes.doc.create(null, n.firstChild!.content);
   const blocks: Node[] = [];
-  n.forEach((b) => blocks.push(b));
-  return blocks.map(trimEdges).filter((b) => b.type === N.gap || drawsInk(b));
-}
-/* the cut's first block renumbered where the cut opened INSIDE a row
-   block: a fence keeps its block's start through a cut, and a passage
-   dragged from row 15 into the paragraph after the fence numbered it
-   13 (the block's closing review, a defect measured and left by the
-   pass before it). The number is the block's count at the row the cut
-   opens on, as the row arm's is; a retained container is entered to
-   reach the fence. */
-function renumbered(doc: Node, at: number, blocks: Node[]): Node[] {
-  const $at = doc.resolve(at);
-  for (let d = $at.depth; d >= 1; d--) {
-    const block = $at.node(d);
-    if (block.type !== N.verse && block.type !== N.prose) continue;
-    const blockPos = $at.before(d), rowPos = $at.depth > d ? $at.before(d + 1) : at;
-    let start = block.attrs.start as number;
-    for (const u of blockUnits(block, blockPos, 0)) { if (u.pos >= rowPos) break; if (u.line) start = u.line + 1; }
-    const fix = (b: Node): Node => {
-      if (b.type === N.verse || b.type === N.prose) return b.type.create({ ...b.attrs, start }, b.content);
-      if (CONTAINERS.has(b.type.name) && b.firstChild) return b.copy(Fragment.from([fix(b.firstChild), ...b.content.content.slice(1)]));
-      return b;
-    };
-    return blocks.length ? [fix(blocks[0]), ...blocks.slice(1)] : blocks;
-  }
+  n.forEach((b) => { const t = trimmed(b); if (keep(t)) blocks.push(t); });
   return blocks;
+}
+/* the cut's opening chain renumbered BEFORE anything is unwrapped or
+   dropped: a fence keeps its block's start through a cut, and a passage
+   cut from a fence's second row kept the start (the block's closing
+   review's predecessor); then the number landed on the wrong block once
+   a truncated remainder had been dropped, and on the outer block of a
+   verse inside a note inside a verse (the closing review). On the raw
+   cut the first-child chain IS the selection start's ancestor chain, so
+   each verse or prose ancestor is stamped at its own depth with its own
+   count at the row the cut opens on. */
+function renumbered(doc: Node, at: number, cut: Node): Node {
+  const $at = doc.resolve(at);
+  const stamp = (node: Node, d: number): Node => {
+    if (d > $at.depth || !node.firstChild) return node;
+    const child = stamp(node.firstChild, d + 1);
+    const anc = $at.node(d);
+    let out = child;
+    if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
+      const rowPos = $at.depth > d ? $at.before(d + 1) : at;
+      out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos) }, child.content);
+    }
+    return node.copy(Fragment.from([out, ...node.content.content.slice(1)]));
+  };
+  return stamp(cut, 1);
 }
 /* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
    with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
@@ -244,7 +240,7 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {
     const [a, b] = wholeRows(doc, from, to);
-    return quoted(renumbered(doc, a, unquoted(doc.cut(a, b))));
+    return quoted(unquoted(renumbered(doc, a, doc.cut(a, b))));
   }
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
@@ -280,9 +276,7 @@ export function passageMd(doc: Node, from: number, to: number): string {
        past the last counted line before it, whatever the row is (a
        direction alone as the block's last row numbered 1 — the
        2026-09-12 second confirmation pass) */
-    let firstLine = block.attrs.start as number;
-    for (const u of blockUnits(block, blockPos, 0)) { if (u.pos >= rows[first].pos) break; if (u.line) firstLine = u.line + 1; }
-    const fence = block.type.create({ ...block.attrs, start: firstLine }, kept);
+    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, kept);
     return quoted([fence]);
   }
   return kept.map((row) => {

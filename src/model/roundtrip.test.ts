@@ -159,3 +159,10 @@ test("a pair cut down to one cell serializes as that cell's line, never a throw 
   doc.descendants((n, pos) => { if (n.isText && n.text!.includes("two")) from = pos + n.text!.indexOf("two"); if (n.isText && n.text!.includes("After")) to = pos + n.text!.indexOf("After") + 5; });
   expect(serializeMarkdown(doc.cut(from, to))).toBe("::: verse\ntwo\n:::\n\nAfter");
 });
+
+
+test("two adjacent paragraphs in a quotation are written with the blank quote line between them, and read back as the one run that line is (the block's closing review, 2026-09-12)", () => {
+  const two = schema.nodes.doc.create(null, [schema.nodes.blockquote.create(null, [schema.nodes.paragraph.create(null, schema.text("a")), schema.nodes.paragraph.create(null, schema.text("b"))])]);
+  expect(serializeMarkdown(two)).toBe("> a\n> \n> b");
+  expect(serializeMarkdown(parseMarkdown(serializeMarkdown(two)))).toBe("> a\n> \n> b");
+});

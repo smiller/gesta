@@ -78,6 +78,15 @@ export function lineUnits(doc: Node, interval: number): Unit[] {
 /* the units of ONE block, wherever it stands (the 2026-09-12
    confirmation pass: the reference had a copy of this walk beside it,
    and a quoted block's fence would have drifted from the gutter's count) */
+/* the block's count at a row: one past the last counted line before it
+   (the block's start when none) — what a passage cut or quoted from that
+   row is numbered from, whatever the row is (spelled once since the
+   block's closing review, 2026-09-12, having stood at two sites) */
+export function countAt(block: Node, blockPos: number, rowPos: number): number {
+  let n = block.attrs.start as number;
+  for (const u of blockUnits(block, blockPos, 0)) { if (u.pos >= rowPos) break; if (u.line) n = u.line + 1; }
+  return n;
+}
 export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
   const out: Unit[] = [];
   const prose = block.type === N.prose;

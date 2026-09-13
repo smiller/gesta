@@ -1234,7 +1234,10 @@ at the head is kept current per phase.
   parser reads back as one run — MEASURED by the round-trip test, the
   lift fails it); an inner quote holding anything but paragraphs takes
   the lift. The serializer's spellings stand: a nested quote as `>>`, no
-  blank quote line between a quote's blocks. A selection reaching outside
+  blank quote line between a quote's blocks (AMENDED 2026-09-12, the
+  citation block's last pass: two ADJACENT PARAGRAPHS take the blank
+  line between them, the parser yielding none such and the mirror's
+  40,756 quotations holding none, MEASURED by that pass). A selection reaching outside
   the outermost quote says "Tab indents one list, quote, or code block at
   a time"; Shift-Tab on the outermost says the floor, now in full: "at
   the outer level: switch to markdown (⌃⌘M) to remove", the list's floor
@@ -1727,11 +1730,38 @@ at the head is kept current per phase.
   with the double break a blank line is in a quote body, everything
   else the serializer's own grammar — and the trim recurses into
   retained containers. With it the standing defect goes: a fence cut
-  mid-way is numbered from the row the cut opens on (the passage
-  dragged from row 15 into the paragraph after numbered 13), a note's
-  row included. Also: a note, card or reference ending a quotation
+  mid-way is numbered from the row the cut opens on (READ
+  reference.test.ts, a cut from a fence's second row numbered 14 where
+  it kept the start, 13), a note's row included. Also: a note, card or reference ending a quotation
   kept its bottom margin (MEASURED by the review in headless Helium,
-  17px) — named in the rule; a dead selector and a false comment
-  sentence gone. MEASURED in node, the new shapes pinned in
+  17px) — named in the rule; the dead `blockquote:last-child` selector
+  and the false sentence "a stanza gap inside a fence stands between
+  rows, not at an edge" gone (READ editor.css, reference.ts). MEASURED in node, the new shapes pinned in
   reference.test.ts; the corner run reads the top-level ⌃⌘R, whose
-  spelling is unchanged.
+  spelling is unchanged (MEASURED `npm run test:helium`, corner ok).
+  THE BLOCK'S LAST PASS, the same day (MEASURED 169,783 tokens, 15
+  minutes), over that commit: the renumbering stamped the opening
+  block's count on the wrong block once an ink-less remainder was
+  dropped, and on the outer block of a verse inside a note inside a
+  verse; the ink filter stopped at the top of the cut, an empty
+  paragraph standing in the nested box; one edge break of two stayed;
+  an edge gap row painted an empty row under the opener; a note's own
+  paragraph outside a nested block was never prose, so a drag from the
+  nested pair into it dropped the paragraph (all MEASURED by the pass
+  in node). DECIDED: the cut's opening chain is renumbered on the RAW
+  cut, whose first-child chain is the selection start's ancestor chain,
+  each verse or prose ancestor at its own depth; then the containers
+  around the whole come off, every edge break, every edge gap and every
+  ink-less block inside a retained container as well; prose is ink
+  outside the blocks whose units the selection covers; `countAt` is
+  spelled once in numbering.ts. The serializer writes the blank line
+  between two adjacent quoted paragraphs (the amendment above), so
+  `quoted` is wrap-and-serialize. MEASURED `node tools/corpus.ts`: the
+  counts stand (13,565 files, round trip differs 31, text differs 44).
+  The pass also named a divergence the record now carries: the passage
+  puts no blank line between a paragraph and a list, heading or table,
+  where the current app's quote put a break before every block — the
+  serializer's grammar, DECIDED with the quotation node; a blank there
+  painted the empty line a fence's did. Six shapes pinned in
+  reference.test.ts, the adjacent paragraphs in roundtrip.test.ts.
+  STILL OWED: the comment-shape checker.

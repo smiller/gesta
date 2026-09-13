@@ -4,7 +4,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, folioRange, selectionLink, passageMd, spansTwoBlocks, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
+import { referenceRange, folioRange, selectionLink, passageMd, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -146,6 +146,37 @@ test("the shapes the block's closing review measured: the passage as a quotation
   const top = parseMarkdown("::: verse 13\nalpha | one\ngamma | three\n:::\n\nAfter.");
   [a, b] = span(top, "three", "After");
   expect(passageMd(top, a, b)).toBe("> ::: verse 14\n> gamma | three\n> :::\n> After");
+});
+test("the shapes the block's last pass measured: the number on the right block at every depth, the nested box trimmed, an edge gap off, a note's paragraph kept", () => {
+  /* the count lands on the block the cut opens in, not on the next block once an ink-less remainder is dropped */
+  const two = parseMarkdown("::: verse 13\nalpha | one\n:::\n\n::: verse 40\nbeta | two\n:::\n\nAfter.");
+  let [a, b] = span(two, "one", "After");
+  expect(passageMd(two, a + 3, b)).toBe("> ::: verse 40\n> beta | two\n> :::\n> After");
+  /* a verse inside a note inside a verse: each block its own count at its own depth */
+  const nested = parseMarkdown("::: verse 13\nline one\n::: note\n::: verse 5\nqa | qb\nqc | qd\n:::\n:::\n:::\n\nAfter.");
+  [a, b] = span(nested, "qd", "After");
+  expect(passageMd(nested, a, b)).toBe("> ::: verse 14\n> ::: note\n> ::: verse 6\n> qc | qd\n> :::\n> :::\n> :::\n> After");
+  /* an empty paragraph inside a retained quotation goes, as at the top */
+  const empty = parseMarkdown("Intro.\n\n> ::: verse 13\n> a | b\n> :::\n>\n> ::: note\n> foot\n> :::");
+  [a, b] = span(empty, "Intro", "foot");
+  expect(passageMd(empty, a, b)).toBe("> Intro.\n>> ::: verse 13\n>> a | b\n>> :::\n>> ::: note\n>> foot\n>> :::");
+  /* a gap row at a cut block's edge goes, as the row arm never quoted one */
+  const gap = parseMarkdown("::: verse\na | b\n\nc | d\n:::\n\nAfter.");
+  [a, b] = span(gap, "b", "After");
+  expect(passageMd(gap, a + 1, b)).toBe("> ::: verse 2\n> c | d\n> :::\n> After");
+  /* every edge break comes off, not one */
+  const twice = parseMarkdown("Before.\n\n>\n>\n> The mind");
+  [a, b] = span(twice, "Before", "mind");
+  expect(passageMd(twice, a, b)).toBe("> Before.\n>> The mind");
+  /* a note's own paragraph outside the nested block is prose the cut arm keeps; a note passed over inside one block still stays behind */
+  const notePara = parseMarkdown("::: verse 13\nline one\n::: note\n::: verse 5\nqa | qb\nqc | qd\n:::\n\nfoot text\n:::\nline two\n:::");
+  [a, b] = span(notePara, "qd", "foot");
+  expect(coversProse(notePara, a, b)).toBe(true);
+  expect(passageMd(notePara, a, b)).toBe("> ::: verse 14\n> ::: note\n> ::: verse 6\n> qc | qd\n> :::\n> \n> foot\n> :::\n> :::");
+  const behind = parseMarkdown("::: verse\nalpha\n::: note\nfoot\n:::\nbeta\n:::");
+  [a, b] = span(behind, "alpha", "beta");
+  expect(coversProse(behind, a, b)).toBe(false);
+  expect(passageMd(behind, a, b)).toBe("> alpha\n> beta");
 });
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");

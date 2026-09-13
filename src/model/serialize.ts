@@ -143,14 +143,23 @@ export function blocksMd(parent: Node): string {
 
 /* a quote body is a LINE RUN: a paragraph contributes its lines (a break is
    a line, so a blank quote line is a paragraph's empty line), a block its
-   own, and nothing is joined by a blank line that the text did not hold */
+   own, and nothing is joined by a blank line that the text did not hold —
+   EXCEPT two adjacent paragraphs, which take the blank line between them:
+   written with none they read back as one run, a paragraph break lost
+   on the first save (the quote toggle's shape, and the reference's; the
+   parser yields no adjacent quoted paragraphs, so no stored text changes
+   spelling — MEASURED by the block's closing review over 40,756 quotations
+   in the mirror, 2026-09-12). */
 function quoteBodyMd(parent: Node): string {
   const lines: string[] = [];
+  let lastWasParagraph = false;
   parent.forEach((child) => {
     if (child.type === N.paragraph) {
+      if (lastWasParagraph) lines.push("");
       const md = escapeIndent(paragraphMd(child, true), lines.join("\n"));
       lines.push(...md.split("\n"));
     } else lines.push(...blockMd(child, true).split("\n"));
+    lastWasParagraph = child.type === N.paragraph;
   });
   return lines.join("\n");
 }
