@@ -1,7 +1,7 @@
 ---
 title: "feat: a grid of cards — ::: grid N, cards N across"
 type: feat
-status: active
+status: completed
 date: 2026-09-22
 origin: docs/brainstorms/2026-09-22-card-grid-brainstorm.md
 ---
