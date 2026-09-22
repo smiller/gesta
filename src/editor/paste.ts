@@ -120,11 +120,14 @@ export function copyMd(slice: Slice): string {
    never fired for a grid and changed how a loose card pasted (found by
    the same review, pinned in the tests). The card is not a row. */
 const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row, N.grid]);
+/* a grid is a row block only when the drag CROSSES a card: a slice of one
+   card with two paragraphs is prose (the confirmation pass, 2026-09-22) */
+const rowish = (n: Node): boolean => ROW_BLOCKS.has(n.type) && !(n.type === N.grid && n.childCount < 2);
 export function closeRowSlice(slice: Slice): Slice {
   const first = slice.content.firstChild, last = slice.content.lastChild;
   if (!first || !last) return slice;
-  if ((slice.openStart && ROW_BLOCKS.has(first.type)) || (slice.openEnd && ROW_BLOCKS.has(last.type))) {
-    return new Slice(slice.content, ROW_BLOCKS.has(first.type) ? 0 : slice.openStart, ROW_BLOCKS.has(last.type) ? 0 : slice.openEnd);
+  if ((slice.openStart && rowish(first)) || (slice.openEnd && rowish(last))) {
+    return new Slice(slice.content, rowish(first) ? 0 : slice.openStart, rowish(last) ? 0 : slice.openEnd);
   }
   return slice;
 }

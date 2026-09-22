@@ -100,3 +100,8 @@ test("a plain card is not a row: a drag from a card into the prose after it, or 
   const twoCards = closeRowSlice(across("::: card-red\nalpha beta\n:::\n\n::: card-pink\ngamma delta\n:::", "beta", "gamma").selection.content());
   expect(pasteAt(at("one two three", "two"), twoCards)).toBe("one twobeta\n\n::: card-pink\ngamma three\n:::");
 });
+test("a drag that stays inside ONE card of a grid is prose, not the grid (the confirmation pass, 2026-09-22)", () => {
+  const inOne = closeRowSlice(across("::: grid 2\n::: card-red\nalpha beta\n\ngamma delta\n:::\n\n::: card-pink\nother\n:::\n:::", "beta", "gamma").selection.content());
+  expect(inOne.openStart).toBe(3);
+  expect(pasteAt(at("one two three", "two"), inOne)).toBe("one twobeta\n\ngamma three");
+});

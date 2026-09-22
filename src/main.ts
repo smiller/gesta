@@ -650,37 +650,52 @@ if (fixture && fixtures[fixture]) {
     cp.right = document.documentElement.clientWidth - rect.right + 8;
     cp.show = true;
   };
+  /* the band above a grid's top-right corner: 26px tall, the rightmost
+     140px. DECIDED 2026-09-22 (the review and its confirmation): the band
+     is asked first, on mouseover and on mousemove alike, because a card
+     directly above a grid covers most of it and the band wins there; and
+     leaving the band falls back to the block under the mouse, so the card
+     above keeps its own button. The grid list is read afresh each time:
+     MEASURED the same day in headless Helium, 1,000 synthetic moves over
+     an entry with one grid: 0.012 ms per move over a clean tree, 0.028 ms
+     with the tree dirtied before each. */
+  const GRID_BAND = { above: 26, wide: 140 };
+  const bandGrid = (x: number, y: number): HTMLElement | null => {
+    const grids = session.view?.dom.getElementsByClassName("grid");
+    if (!grids?.length) return null;
+    for (const g of Array.from(grids) as HTMLElement[]) {
+      const r = g.getBoundingClientRect();
+      if (x >= r.right - GRID_BAND.wide && x <= r.right + 8 && y >= r.top - GRID_BAND.above && y <= r.top + 2) return g;
+    }
+    return null;
+  };
+  const blockUnder = (t: Element): HTMLElement | null => {
+    let target = t.closest(BLOCKS) as HTMLElement | null;
+    while (target && target.parentElement && target.tagName === "BLOCKQUOTE" && target.parentElement.tagName === "BLOCKQUOTE") target = target.parentElement;
+    return target && session.view?.dom.contains(target) && !session.mdView ? target : null;
+  };
+  const point = (e: MouseEvent, t: Element): void => {
+    const target = (session.view && !session.mdView && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
+    if (target) { if (target !== copyTarget) showCopy(target); } else hideCopy();
+  };
   document.addEventListener("mouseover", (e) => {
     const t = e.target as Element | null;
     if (!t?.closest || t.closest(".copybtn")) return;
-    let target = t.closest(BLOCKS) as HTMLElement | null;
-    while (target && target.parentElement && target.tagName === "BLOCKQUOTE" && target.parentElement.tagName === "BLOCKQUOTE") target = target.parentElement;
-    if (target && session.view?.dom.contains(target) && !session.mdView) showCopy(target); else hideCopy();
+    point(e, t);
   });
-  /* the band above a grid's top-right corner: 26px tall, the rightmost
-     140px, read on every move since no element changes there. The band
-     is tested BEFORE the block under the mouse: a card directly above a
-     grid covers most of the band (the 2026-09-22 review), and the band
-     wins there. The grids are a live collection, so an entry with none
-     costs one length read per move. */
-  const GRID_BAND = { above: 26, wide: 140 };
   document.addEventListener("mousemove", (e) => {
     const t = e.target as Element | null;
-    if (!t?.closest || t.closest(".copybtn") || !session.view || session.mdView) return;
-    const grids = session.view.dom.getElementsByClassName("grid");
-    if (!grids.length) return;
-    for (const g of Array.from(grids) as HTMLElement[]) {
-      const r = g.getBoundingClientRect();
-      if (e.clientX >= r.right - GRID_BAND.wide && e.clientX <= r.right + 8 && e.clientY >= r.top - GRID_BAND.above && e.clientY <= r.top + 2) { if (g !== copyTarget) showCopy(g); return; }
-    }
-    if (copyTarget?.classList.contains("grid") && !t.closest("div.grid")) hideCopy();
+    if (!t?.closest || t.closest(".copybtn")) return;
+    if (session.view && !session.mdView && session.view.dom.getElementsByClassName("grid").length) point(e, t);
   });
   /* the layout viewport's width on the root, for the grid's break-out:
      100vw counts a classic scrollbar's width and overflowed by it (the
-     2026-09-22 review) */
+     2026-09-22 review); observed on the root element, not the window's
+     resize, because a scrollbar's arrival changes the width and fires no
+     resize (the confirmation pass) */
   const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
   clientW();
-  window.addEventListener("resize", clientW);
+  new ResizeObserver(clientW).observe(document.documentElement);
   window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
   /* the block the DOM element draws, found through the view */
   const blockAt = (el: HTMLElement): import("prosemirror-model").Node | null => {

@@ -230,7 +230,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(400);
   await log("a stray line in a grid, switched back", { corner: await R.gridCorner(page) });
   /* the open path forces source over the stored fault (away and back, once the save has landed — a reload ended the old app's run); a refused ⌃⌘M leaves it forced, so the next entry opens rendered (the 2026-09-22 review) */
-  await page.waitForTimeout(1200);
+  for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse (the confirmation pass) */
   await go("page/Carded");
   await page.keyboard.press("Control+Meta+m");   /* back to the rendered view on a sound entry, so the faulty one is opened from it */
   await page.waitForTimeout(300);

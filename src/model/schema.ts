@@ -81,8 +81,12 @@ const nodes: Record<string, NodeSpec> = {
   },
   card: {
     attrs: { colour: {} }, content: "block+", group: "block", defining: true,
-    parseDOM: [{ tag: "div[class^='card-']", getAttrs: (dom) => ({ colour: dom.className.split(/\s+/).find((c) => /^card-/.test(c)) }) }],
-    toDOM: (n) => ["div", { class: n.attrs.colour }, 0],
+    /* only the editor's own copies, marked data-card: a web page's
+       `card-body` div would become a card of a colour the stylesheet has
+       no rule for (the confirmation pass, 2026-09-22; the grid's rule
+       took the same guard that morning) */
+    parseDOM: [{ tag: "div[class^='card-'][data-card]", getAttrs: (dom) => ({ colour: dom.className.split(/\s+/).find((c) => /^card-/.test(c)) }) }],
+    toDOM: (n) => ["div", { class: n.attrs.colour, "data-card": "" }, 0],
   },
   /* cards N across (2026-09-22): `n` is null when the count was not typed,
      drawn as 3, so a bare opener is written back bare. Cards only, and

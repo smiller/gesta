@@ -788,3 +788,33 @@ measured, what the reader was told to look at, what the review found.
 - Not built here, owed still: the port of ../writer/tools/claims.sh, the
   checker for a comment asserting another module's mechanism — its class
   showed up on 2026-09-12 and again in this review.
+
+### The confirmation pass — 2026-09-22, /code-review at medium over 7fa1843..cc22c7f
+
+- MEASURED: 92,344 tokens, 10 tool uses, 5 minutes; seven findings, none
+  the first pass's. Fixed in one commit:
+- Leaving the band while still over the card above it hid that card's
+  button: the point under the mouse now falls back to the block under it,
+  on mouseover and mousemove alike, so the card keeps its button and the
+  band never flickers back to the card on an element boundary (two
+  findings, one path: `bandGrid` first, then `blockUnder`).
+- The grid in `ROW_BLOCKS` closed a drag inside ONE card (two paragraphs)
+  into a whole grid: a grid slice is a row block only when it holds more
+  than one card; pinned in paste.test.ts, the single-card drag pasting as
+  prose.
+- `--client-w` refreshed on the window's resize only, and a scrollbar's
+  arrival changes the width without one: a ResizeObserver on the root
+  element now writes it.
+- The card's own parse rule took any foreign `div[class^='card-']` — a
+  web page's `card-body` would have become a card of a colour the
+  stylesheet has no rule for: the card's toDOM writes `data-card` and its
+  parseDOM asks for it, the guard the grid took that morning. A card
+  copied from the OLD app's HTML no longer parses as a card here; the
+  old app is not in use.
+- The step's fixed 1,200 ms sleep before navigating away is a loop on the
+  store until it holds the stray line.
+- The cost claim about the band scan, asserted without a number in the
+  comment and the record: MEASURED in headless Helium, 1,000 synthetic
+  mousemoves over an entry with one grid, 0.012 ms per move over a clean
+  tree and 0.028 ms with the tree dirtied before each move. The comment
+  now says that; the scan stays as it is.
