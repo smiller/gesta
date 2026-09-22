@@ -157,10 +157,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the citation anchor and the pair's grid inline */
   await go("page/Horace");
   await R.selectAll(page, S.editorCell);
-  await page.waitForTimeout(100);
-  await page.keyboard.press("Control+Meta+r");
-  await R.waitCornerMatch(page, /copied|copy/);
-  await log("⌃⌘R", await R.clipboardReference(page));
+  /* the bar, not 100ms: it shows after the selectionchange the editor takes the selection on */
+  await R.waitBar(page);
+  const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  await log("⌃⌘R", { said, ...await R.clipboardReference(page) });
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */

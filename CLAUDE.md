@@ -113,7 +113,11 @@ is in the plan's record, under the phase named):
 - A headless step reads THE SCREEN after a gesture — the entry, the
   selection, the bar, the corner — not only the one bit the feature
   promises: the ⌘-click step asked whether a tab opened and was green
-  while the gesture also selected the paragraph (2026-09-09).
+  while the gesture also selected the paragraph (2026-09-09). And a
+  step's wait never swallows its timeout: the reading carries what the
+  corner said, matching or not — a 3 s whisper had faded by a 5 s wait's
+  end, so a chord that did not take read as no corner at all, with
+  nothing to say why (2026-09-22).
 - The stored text is markdown, the field `md`; a save is serialize and
   compare, and an entry the model refuses is shown as source, never
   edited as a lossy document (phases 2 and 3).

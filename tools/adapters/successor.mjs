@@ -52,6 +52,7 @@ export const screen = (page) => page.evaluate(() => {
     "panel " + (panel ? panel[0] : "none"), "rows " + (rows.length ? rows.join("+") : "none"),
     q(".mode") && !q(".mode").hidden ? "source" : "rendered", "corner " + JSON.stringify(corner)].join(" · ");
 });
+const SAVED = ".saved.show";   /* the corner, for cornerAfter */
 export const read = {
   corner: (page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
   cornerText: (page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent),
@@ -113,7 +114,13 @@ export const read = {
   pasteText: (page, text) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),
   waitCorner: (page, text, ms = 5000) => page.waitForFunction((t) => document.querySelector(".saved.show")?.textContent === t, text, { timeout: ms }).catch(() => {}),
-  waitCornerMatch: (page, re) => page.waitForFunction((src) => new RegExp(src).test(document.querySelector(".saved.show")?.textContent || ""), re.source, { timeout: 5000 }).catch(() => {}),
+  /* the corner's FIRST new text after a gesture, matching or not. The wait
+     it replaces swallowed its timeout, and a refusal's 3s whisper had faded
+     by the 5s read, so a chord that did not take read as no corner and an
+     older clipboard, with nothing to say why (the pre-commit's refusal,
+     2026-09-22). "New": a whisper already standing — the warm's count — is
+     not the gesture's answer unless it is the one asked for. */
+  cornerAfter: async (page, gesture, re) => { const before = await page.evaluate((s) => document.querySelector(s)?.textContent || "", SAVED); await gesture(); const h = await page.waitForFunction(([s, b, src]) => { const t = document.querySelector(s)?.textContent || ""; return (t && t !== b) || new RegExp(src).test(t) ? t : false; }, [SAVED, before, re.source], { timeout: 5000 }).catch(() => null); return h ? await h.jsonValue() : "(no whisper within 5s)"; },
   settle: (page) => page.waitForFunction(() => !document.querySelector(".saved.show"), null, { timeout: 5000 }).catch(() => {}),
   waitSelection: (page, text) => page.waitForFunction((t) => document.getSelection()?.toString().toLowerCase() === t, text, { timeout: 5000 }).catch(() => {}),
   waitEntryAndSelection: (page, key, text) => page.waitForFunction(([k, t]) => document.documentElement.dataset.entry === k && document.getSelection()?.toString() === t, [key, text], { timeout: 5000 }),
