@@ -1,0 +1,8 @@
+#!/bin/sh
+# Commit gate, 2026-09-21: `npm run verify` — tsc, the suite, then the
+# headless tools under their verdict — must pass on its OWN exit code before
+# anything is committed. The rule was prose until now (a hidden red on
+# 2026-09-12 when a grep in a chain stood in for the exit code); this is it
+# as a mechanism. One-time setup after clone: git config core.hooksPath hooks
+cd "$(dirname "$0")/.." || exit 1
+npm run verify || { echo "pre-commit: npm run verify FAILED — fix it before committing."; exit 1; }

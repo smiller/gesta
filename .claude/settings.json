@@ -14,6 +14,13 @@
           { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/pre-review.sh\"", "timeout": 20, "statusMessage": "Checking the tree has been looked at before a review" }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/stop.sh\"", "timeout": 120, "statusMessage": "Running tsc and the suite before the turn ends" }
+        ]
+      }
     ]
   }
 }

@@ -69,9 +69,18 @@ here NOW, and what is not yet:
   Skill, Agent and Workflow) refuses the review skills, any Workflow and
   a review-shaped Agent until the signature matches. `hooks/**`,
   `.claude/settings.json` and the accept script are permission-denied to
-  the agent. Everything else the running app's apparatus did — the Stop
-  hook, the reviewer list, the mark-reviewed pin, the skip lines — served
-  a five-reviewer loop this app does not run, and is not carried.
+  the agent. The reviewer list, the mark-reviewed pin and the skip lines
+  of the running app's apparatus served a five-reviewer loop this app
+  does not run, and are not carried.
+- IN FORCE from 2026-09-22 — THE TEST GATES, carried back from the
+  running app's stop.sh and pre-commit after a look on 2026-09-21 found
+  the rule above was prose only: `hooks/stop.sh` (a Stop hook) refuses
+  to end a turn while `src/` or `index.html` differ from HEAD and tsc or
+  the suite is red, so the reader is never asked to look at a red tree;
+  `hooks/pre-commit` (git's, `core.hooksPath hooks`, set once per clone)
+  runs `npm run verify` on its own exit code before any commit lands,
+  the Helium tools included. The Stop hook leaves the Helium tools to
+  the commit: they took most of a Stop timeout in the running app.
 - NOT YET — the prose checkers (`tools/*.sh` in ../writer), re-aimed at
   this tree's comments and the plan's record as each class first shows up
   in a review; each keeps its self-test and has its hit count measured
@@ -265,7 +274,9 @@ is in the plan's record, under the phase named):
   covered, the line and leaf ranges, the highlight payload, the passage.
 - `hooks/` — the gate (2026-09-08): `sig.sh` (the app tree's signature,
   shared), `accept.sh` (the reader's, records it), `pre-review.sh` (the
-  PreToolUse refusal); wired in `.claude/settings.json`.
+  PreToolUse refusal); and the test gates (2026-09-22): `stop.sh` (the
+  Stop hook: tsc and the suite over a moved tree), `pre-commit` (git's:
+  `npm run verify`). Wired in `.claude/settings.json` and `core.hooksPath`.
 - `docs/plans/` — the plan, moved here 2026-09-07, with a "Where we are"
   table at its head kept current per phase, and since 2026-09-08 THE
   RECORD after its Status section: one dated section per phase.
