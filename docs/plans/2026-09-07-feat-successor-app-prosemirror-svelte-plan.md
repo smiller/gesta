@@ -1790,7 +1790,18 @@ at the head is kept current per phase.
   app reads the clock for a fade), the writer adapter seeds from it, and
   the three today scrubs are gone. MEASURED: the run on the 22nd read
   the 12th, one line changed in each copy; the bridge's two refusals
-  land on today and changed on those lines; 0 open.
+  land on today and changed on those lines; 0 open. THE SELF-TEST, asked
+  the same day ("the hooks should have a self-test, as they did in the
+  writer"): `tools/hooks-test.sh`, the running app's gate-test.sh cut to
+  the five scripts — copied into a throwaway repo, every case on the
+  hook's exit code and, where two arms share a code, its message; the
+  wiring read from the real repo. MEASURED: 42 checks in 3.5 s; four
+  mutations (stop.sh and pre-review.sh exiting 0, the pre-commit's
+  refusal exiting 0, sig.sh dropping src/) each fail their own cases.
+  Two holes it found are reported, not pinned: stop.sh reads `git diff
+  HEAD`, so an untracked file under src/ alone does not wake it, where
+  sig.sh counts one; and pre-review.sh fails OPEN on input its python
+  cannot parse. Under `npm run verify`, so the pre-commit runs it.
 - 2026-09-22, THE ⌃⌘R FENCE. FOUND by the pre-commit, once in five
   verify runs that day: the ⌃⌘R reading held no corner and the
   clipboard's earlier ⌘C, green on the next run. READ: the step pressed

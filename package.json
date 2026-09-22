@@ -11,7 +11,8 @@
     "test": "vitest run",
     "corpus": "node tools/corpus.ts",
     "test:helium": "node tools/helium-approve.mjs && node tools/helium-compare.mjs",
-    "verify": "npm run check && npm test && npm run test:helium",
+    "test:hooks": "sh tools/hooks-test.sh",
+    "verify": "npm run check && npm test && npm run test:hooks && npm run test:helium",
     "compare:writer": "node tools/helium-approve.mjs --writer && node tools/helium-compare.mjs"
   },
   "devDependencies": {

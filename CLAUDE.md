@@ -80,7 +80,11 @@ here NOW, and what is not yet:
   `hooks/pre-commit` (git's, `core.hooksPath hooks`, set once per clone)
   runs `npm run verify` on its own exit code before any commit lands,
   the Helium tools included. The Stop hook leaves the Helium tools to
-  the commit: they took most of a Stop timeout in the running app.
+  the commit: they took most of a Stop timeout in the running app. THE
+  HOOKS HAVE A SELF-TEST, `tools/hooks-test.sh`, the running app's
+  gate-test.sh cut to these five scripts: every hook's exit code over a
+  throwaway repo, and the wiring read from this one; `npm run verify`
+  runs it, so the pre-commit certifies the gates it is one of.
 - NOT YET — the prose checkers (`tools/*.sh` in ../writer), re-aimed at
   this tree's comments and the plan's record as each class first shows up
   in a review; each keeps its self-test and has its hit count measured
@@ -157,6 +161,11 @@ is in the plan's record, under the phase named):
   `tools/expected/`; `tools/helium-compare.mjs` reads the two runs step
   by step, the decided differences listed in `corner.differences.txt`;
   `tools/helium-writer.mjs` is the current app's driver.
+- `tools/hooks-test.sh` — the hooks' self-test (2026-09-22): the five
+  scripts under `hooks/` copied into a throwaway git repo and asserted
+  on their exit codes, then the wiring — settings.json, `core.hooksPath`,
+  the executable bits — read from this repo; `npm run test:hooks`,
+  under `verify`.
 - `tools/helium-corner.mjs` — the shared steps played over the successor
   in headless Helium over a fresh profile, a 19-line driver since
   2026-09-12: the steps and their readings are `tools/helium-steps.mjs`'s
