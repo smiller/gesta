@@ -8,7 +8,7 @@
 # running app's record) and are `npm run verify`'s, gated at commit instead.
 # Exit 2 feeds the message back to the agent and refuses the stop.
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}" || exit 0
-git diff --quiet HEAD -- src index.html && exit 0
+[ -z "$(git status --porcelain -- src index.html)" ] && exit 0
 log="$(git rev-parse --git-dir)/gesta-stop-tests.log"
 if ! { npm run check && npm test; } > "$log" 2>&1; then
   {

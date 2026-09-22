@@ -176,6 +176,9 @@ clean; red test.sh
 touch_index; stop_says "index.html moved, suite red: blocked" 2 "Stop blocked"
 clean; red test.sh
 touch_tool;  stop_says "only tools/ moved, suite red: not the Stop gate's" 0
+clean; red test.sh
+echo 'export const b = 2;' > src/new.ts
+stop_says "an untracked file under src/ alone, suite red: blocked (the hole found 2026-09-22: git diff HEAD read tracked files only)" 2 "Stop blocked"
 clean; green test.sh
 
 # === pre-commit ============================================================

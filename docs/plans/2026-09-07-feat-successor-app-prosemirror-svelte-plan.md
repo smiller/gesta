@@ -1798,10 +1798,14 @@ at the head is kept current per phase.
   wiring read from the real repo. MEASURED: 42 checks in 3.5 s; four
   mutations (stop.sh and pre-review.sh exiting 0, the pre-commit's
   refusal exiting 0, sig.sh dropping src/) each fail their own cases.
-  Two holes it found are reported, not pinned: stop.sh reads `git diff
-  HEAD`, so an untracked file under src/ alone does not wake it, where
-  sig.sh counts one; and pre-review.sh fails OPEN on input its python
-  cannot parse. Under `npm run verify`, so the pre-commit runs it.
+  Two holes it found are reported, not pinned: stop.sh read `git diff
+  HEAD`, so an untracked file under src/ alone did not wake it, where
+  sig.sh counts one — CLOSED the same day by hand, and the first cut of
+  the fix (`git status --porcelain ... && exit 0`, which exits 0 with
+  or without output) switched the gate OFF: the self-test caught it, 4
+  of 42 red, before the test of the output went in; the case is pinned
+  now, 43. And pre-review.sh fails OPEN on input its python cannot
+  parse, still open. Under `npm run verify`, so the pre-commit runs it.
 - 2026-09-22, THE ⌃⌘R FENCE. FOUND by the pre-commit, once in five
   verify runs that day: the ⌃⌘R reading held no corner and the
   clipboard's earlier ⌘C, green on the next run. READ: the step pressed
