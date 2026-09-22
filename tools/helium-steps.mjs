@@ -5,6 +5,13 @@
 // out of helium-corner.mjs 2026-09-12, asked: the approved output should
 // be what the current app does, not what the successor did on the day.
 // Every step logs its label, its own reading and the screen after it.
+/* the day both drivers pin the page's clock to (context.clock.setFixedTime,
+   Date only; the timers run): the day the reference run was made. A
+   reading that spells today — the Go to row's Day select — was scrubbed by
+   the day number until 2026-09-22, when a run on a day whose number a
+   seeded day shares (the 5th, the 6th) would have read one option fewer
+   and no scrub could say so. Never a seeded day. */
+export const TODAY = "2026-09-12";
 export const SEEDS = {
   "2026-09-06": "twelfth", "2026-09-05": "williams", "page/Horace": "horace", "page/Williams/Witchcraft 3": "williams",
   "bookshelf/Browning, Robert/Pippa Passes": "pippa",

@@ -4,11 +4,12 @@
 // `node tools/helium-writer.mjs`
 import { chromium } from "playwright-core";
 import * as A from "./adapters/writer.mjs";
-import { runSteps } from "./helium-steps.mjs";
+import { runSteps, TODAY } from "./helium-steps.mjs";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const logs = [];
 const ctx = await chromium.launchPersistentContext(A.profile, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
 const page = await ctx.newPage();
 page.on("console", (m) => { if (m.type() === "error") logs.push(m.type() + ": " + m.text()); });
 page.on("pageerror", (e) => logs.push("pageerror: " + e.message));

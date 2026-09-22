@@ -5,12 +5,13 @@
 // (helium-approve.mjs). `node tools/helium-corner.mjs [profileDir] [screenshot.png]`.
 import { chromium } from "playwright-core";
 import * as A from "./adapters/successor.mjs";
-import { runSteps } from "./helium-steps.mjs";
+import { runSteps, TODAY } from "./helium-steps.mjs";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = process.argv[2] || A.profile;
 const logs = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
 const page = await ctx.newPage();
 page.on("console", (m) => logs.push(m.type() + ": " + m.text()));
 page.on("pageerror", (e) => logs.push("pageerror: " + e.message));

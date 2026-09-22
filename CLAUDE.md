@@ -145,7 +145,8 @@ is in the plan's record, under the phase named):
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
 - `tools/helium-steps.mjs` — THE SHARED STEPS: one list of gestures and
-  readings, played over an adapter; `tools/adapters/successor.mjs` and
+  readings, played over an adapter, and `TODAY`, the day the drivers
+  and the bridge pin the page's clock to (2026-09-22; never a seeded day); `tools/adapters/successor.mjs` and
   `tools/adapters/writer.mjs` answer the same questions over this app
   and over ../writer (its `window.gesta` seam seeds it, its own ids read
   it). `tools/helium-approve.mjs` runs a tool under its verdict against

@@ -1,7 +1,7 @@
 // The headless tools under a VERDICT: each tool's whole printed run is
 // compared against its approved copy in tools/expected/, the volatile
 // bits scrubbed — a fade's opacity, a whisper still on screen at an
-// incidental step, today's date. A difference writes the received copy
+// incidental step, the app's path. A difference writes the received copy
 // beside the approved one, prints the diff and exits 1; `--approve` makes
 // the received copy the approved one, which is a judgement to be made
 // after reading it. Decided 2026-09-12, asked: the tools printed and a
@@ -23,25 +23,16 @@ const approve = args.includes("--approve");
 const names = args.filter((a) => a in TOOLS);
 const run = names.length ? names : Object.keys(TOOLS);
 
-const today = new Date();
-const todayKey = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-/* today's label as the crumb spells it, "Tuesday, 8 September 2026" — the
-   seeded days keep their own fixed labels */
-const todayLabel = today.toLocaleDateString("en-US", { weekday: "long" }) + ", " + today.getDate() + " " + today.toLocaleDateString("en-GB", { month: "long" }) + " " + today.getFullYear();
-const todayDay = String(today.getDate()).padStart(2, "0");
+/* today is not scrubbed: the drivers pin the page's clock to
+   helium-steps.mjs's TODAY since 2026-09-22. The scrub used to rewrite
+   today's key, its crumb label and its day number, and the day number
+   was missed until the first verify on another day went red on it. */
 function scrub(text) {
   return text
     .replace(/"opacity":"[0-9.e-]+"/g, '"opacity":"[fading]"')
     /* the corner's text in the screen line is a whisper's clock against
        the tool's waits: the steps that care read the corner themselves */
     .replace(/· corner \\"(?:[^"\\]|\\.)*\\"/g, "· corner [whatever stood]")
-    .replace(new RegExp(todayKey, "g"), "[today]")
-    /* the Go to row spells today a third way, as its Day select's value
-       and last option, "Day=22 [...|22]": the first verify run on a day
-       other than the approved copy's went red on it (2026-09-22) */
-    .replace(new RegExp("Day=" + todayDay + " \\[", "g"), "Day=[today's day] [")
-    .replace(new RegExp("\\|" + today.getDate() + "\\]", "g"), "|[today's day]]")
-    .split(todayLabel).join("[today's label]")
     .replace(/file:\/\/\/[^"\\ ]*\/(dist|writer)\/index\.html/g, "file:///[app]/index.html");
 }
 const env = { ...process.env, NODE_OPTIONS: "" };

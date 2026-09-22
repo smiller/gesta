@@ -6,6 +6,7 @@ import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { TODAY } from "./helium-steps.mjs";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: see adapters/successor.mjs */
 const PAGE = "file://" + resolve("dist/index.html");
@@ -20,6 +21,7 @@ const read = (page) => page.evaluate(() => ({
 }));
 async function launch(url, fn) {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
+  await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed, since 2026-09-22 */
   const page = await ctx.newPage();
   const logs = [];
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));

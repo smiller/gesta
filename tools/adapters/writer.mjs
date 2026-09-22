@@ -8,6 +8,7 @@
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { readFileSync } from "node:fs";
+import { TODAY } from "../helium-steps.mjs";
 export const name = "writer";
 export const profile = resolve(tmpdir(), "gesta-helium-writer-profile");
 const PAGE = "file://" + resolve("../writer/index.html");
@@ -19,7 +20,7 @@ export async function launch(page, seeds) {
   /* seeded from TODAY, not from Horace: the open page's autosave of its
      blank body landed after the seed and emptied Horace (measured
      2026-09-12, the first run) */
-  await page.goto(url(new Date().toISOString().slice(0, 10)));
+  await page.goto(url(TODAY));
   await page.waitForFunction(() => window.gesta && document.getElementById("page")?.getAttribute("contenteditable") === "true", null, { timeout: 15000 });
   const bodies = {};
   for (const [k, v] of Object.entries(seeds)) bodies[k] = FIX[v] ? readFileSync(resolve(FIX[v]), "utf8") : v;
