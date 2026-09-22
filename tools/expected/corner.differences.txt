@@ -50,3 +50,8 @@ the line made a card, switched back · grid · the successor drew the grid; the 
 the line made a card, switched back · columns · the same
 the line made a card, switched back · wider · the same
 the line made a card, switched back · type · the same
+a grid pasted · cards · the successor counts the grid's own children (2); the old app has no grid and counts every card on the page, the one above included (3)
+two cards pasted mid-paragraph · grid · two cards copied out of a grid arrive mid-paragraph as a grid here (the 2026-09-22 review's finding, fixed the same day); the old app pastes loose cards
+two cards pasted mid-paragraph · columns · the same
+two cards pasted mid-paragraph · wider · the same
+two cards pasted mid-paragraph · type · the same

@@ -75,11 +75,28 @@ test("inside a reference block every character is literal, as in a code block: t
   expect(paste(s, "one\n\ntwo\n")).toBe("::: reference\nfrom one\n\ntwo\nthe last title\n:::\n\npara");
 });
 
-test("a slice open across two cards of a grid is closed, so the grid travels whole (2026-09-22)", () => {
-  const doc = parseMarkdown("::: grid 2\n::: card-red\nalpha beta\n:::\n\n::: card-pink\ngamma delta\n:::\n:::");
-  const open = doc.slice(8, doc.firstChild!.nodeSize - 8);
-  expect([open.openStart, open.content.firstChild!.type.name]).toEqual([2, "card"]);
+/* THE SLICE THE CLIPBOARD SEES (2026-09-22, the review's finding): a
+   selection's content() keeps its parents, so a drag across two cards of
+   a grid slices to the GRID, open three deep — never to open cards */
+function across(md: string, from: string, to: string): EditorState {
+  const doc = parseMarkdown(md);
+  const find = (n: string): number => { let pos = -1; doc.descendants((node, p) => { if (pos < 0 && node.isText && node.text!.indexOf(n) >= 0) pos = p + node.text!.indexOf(n); return pos < 0; }); if (pos < 0) throw new Error(n); return pos; };
+  return EditorState.create({ doc, selection: TextSelection.create(doc, find(from), find(to) + to.length) });
+}
+const pasteAt = (s: EditorState, slice: ReturnType<typeof closeRowSlice>): string => serializeMarkdown(s.apply(s.tr.replaceSelection(slice)).doc);
+const GRID = "::: grid 2\n::: card-red\nalpha beta\n:::\n\n::: card-pink\ngamma delta\n:::\n:::";
+test("a drag across two cards of a grid is closed at the grid, so the grid travels whole — mid-paragraph too", () => {
+  const open = across(GRID, "beta", "gamma").selection.content();
+  expect([open.openStart, open.openEnd, open.content.firstChild!.type.name]).toEqual([3, 3, "grid"]);
   const closed = closeRowSlice(open);
-  expect([closed.openStart, closed.openEnd]).toEqual([0, 0]);
-  expect(closed.content.childCount).toBe(2);
+  expect([closed.openStart, closed.openEnd, closed.content.childCount]).toEqual([0, 0, 1]);
+  const md = pasteAt(at("one two three", "two"), closed);   /* the caret sits after "two" */
+  expect(md).toContain("::: grid 2\n::: card-red\nbeta\n:::\n\n::: card-pink\ngamma\n:::\n:::");
+  expect(md.startsWith("one two\n\n::: grid 2") && md.endsWith(":::\n\n three")).toBe(true);
+});
+test("a plain card is not a row: a drag from a card into the prose after it, or across two loose cards, pastes as it did before the grid", () => {
+  const intoProse = closeRowSlice(across("::: card-red\nalpha beta\n:::\n\nplain gamma delta", "beta", "gamma").selection.content());
+  expect(pasteAt(at("one two three", "two"), intoProse)).toBe("one twobeta\n\nplain gamma three");
+  const twoCards = closeRowSlice(across("::: card-red\nalpha beta\n:::\n\n::: card-pink\ngamma delta\n:::", "beta", "gamma").selection.content());
+  expect(pasteAt(at("one two three", "two"), twoCards)).toBe("one twobeta\n\n::: card-pink\ngamma three\n:::");
 });

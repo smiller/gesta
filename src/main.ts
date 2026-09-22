@@ -658,18 +658,29 @@ if (fixture && fixtures[fixture]) {
     if (target && session.view?.dom.contains(target) && !session.mdView) showCopy(target); else hideCopy();
   });
   /* the band above a grid's top-right corner: 26px tall, the rightmost
-     140px, outside every block, read on every move since no element
-     changes there */
+     140px, read on every move since no element changes there. The band
+     is tested BEFORE the block under the mouse: a card directly above a
+     grid covers most of the band (the 2026-09-22 review), and the band
+     wins there. The grids are a live collection, so an entry with none
+     costs one length read per move. */
   const GRID_BAND = { above: 26, wide: 140 };
   document.addEventListener("mousemove", (e) => {
     const t = e.target as Element | null;
-    if (!t?.closest || t.closest(".copybtn") || t.closest(BLOCKS) || !session.view || session.mdView) return;
-    for (const g of Array.from(session.view.dom.querySelectorAll<HTMLElement>("div.grid"))) {
+    if (!t?.closest || t.closest(".copybtn") || !session.view || session.mdView) return;
+    const grids = session.view.dom.getElementsByClassName("grid");
+    if (!grids.length) return;
+    for (const g of Array.from(grids) as HTMLElement[]) {
       const r = g.getBoundingClientRect();
       if (e.clientX >= r.right - GRID_BAND.wide && e.clientX <= r.right + 8 && e.clientY >= r.top - GRID_BAND.above && e.clientY <= r.top + 2) { if (g !== copyTarget) showCopy(g); return; }
     }
-    if (copyTarget?.classList.contains("grid")) hideCopy();
+    if (copyTarget?.classList.contains("grid") && !t.closest("div.grid")) hideCopy();
   });
+  /* the layout viewport's width on the root, for the grid's break-out:
+     100vw counts a classic scrollbar's width and overflowed by it (the
+     2026-09-22 review) */
+  const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
+  clientW();
+  window.addEventListener("resize", clientW);
   window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
   /* the block the DOM element draws, found through the view */
   const blockAt = (el: HTMLElement): import("prosemirror-model").Node | null => {

@@ -94,7 +94,10 @@ const nodes: Record<string, NodeSpec> = {
      serializer writes an empty grid node as nothing. */
   grid: {
     attrs: { n: { default: null } }, content: "card*", group: "block", defining: true, isolating: true,
-    parseDOM: [{ tag: "div.grid", getAttrs: (dom) => ({ n: dom.dataset.n ? +dom.dataset.n : null }) }],
+    /* only the editor's own copies, which carry data-n: a foreign
+       `div.grid` (a web page's) would parse to an empty grid node drawn
+       as a blank gap (the 2026-09-22 review) */
+    parseDOM: [{ tag: "div.grid", getAttrs: (dom) => dom.hasAttribute("data-n") ? { n: dom.dataset.n ? +dom.dataset.n : null } : false }],
     toDOM: (n) => ["div", { class: "grid", "data-n": n.attrs.n ?? "", style: "--n: " + (n.attrs.n ?? 3) }, 0],
   },
   /* text that is NOT the text; the one block form that may also be a ROW of

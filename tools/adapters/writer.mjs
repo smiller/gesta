@@ -34,7 +34,7 @@ const KEY = () => { const G = window.gesta, s = G.state(); return G.entryKey(s.d
 export const entry = (page) => page.evaluate(KEY);
 /* the key AND the paint: the current app sets its state before the body
    is painted, and a reader that ran between found an empty #page */
-export const waitEntry = (page, key, ms = 15000) => page.waitForFunction((k) => { const G = window.gesta; if (!G) return false; const s = G.state(); if (G.entryKey(s.date, s.tag) !== k) return false; const p = document.getElementById("page"); return !G.entryHtml(k) || p.childElementCount > 0; }, key, { timeout: ms });
+export const waitEntry = (page, key, ms = 15000) => page.waitForFunction((k) => { const G = window.gesta; if (!G) return false; const s = G.state(); if (G.entryKey(s.date, s.tag) !== k) return false; const p = document.getElementById("page"); return !G.entryHtml(k) || p.childElementCount > 0 || (document.body.classList.contains("mdview") && p.textContent.length > 0); }, key, { timeout: ms });   /* a painted source view is text with no elements (the grid step, 2026-09-22) */
 export const waitWarm = (page) => page.waitForFunction(() => document.getElementById("page")?.getAttribute("contenteditable") === "true", null, { timeout: 15000 });
 /* what the store holds, read through the seam and turned back into markdown
    by the current app's own converter */
@@ -94,7 +94,7 @@ export const read = {
   gridLayout: (page) => page.evaluate(() => { const g = document.querySelector("#page div.grid"); if (!g) return { grid: false, columns: 0, cards: document.querySelectorAll("#page [class^='card-']").length, wider: false, type: null }; const cs = getComputedStyle(g); return { grid: true, columns: cs.gridTemplateColumns.split(" ").length, cards: g.children.length, wider: g.getBoundingClientRect().width > document.getElementById("page").getBoundingClientRect().width, type: cs.fontSize }; }),
   gridHover: async (page) => { const r = await page.evaluate(() => { const g = document.querySelector("#page div.grid"); return g ? g.getBoundingClientRect().toJSON() : null; }); if (!r) return { show: false, label: null, title: null }; await page.mouse.move(r.right - 30, r.top - 12); await page.waitForTimeout(150); return page.evaluate(() => { const b = document.getElementById("copybtn"); return { show: b.classList.contains("show"), label: b.textContent, title: b.title }; }); },
   clipboardText: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).slice(0, 40); } catch (e) { return String(e); } }),
-  selectCards: (page) => page.evaluate(() => { const cards = document.querySelectorAll("#page [class^='card-']"); const r = document.createRange(); r.setStart(cards[0], 0); r.setEnd(cards[cards.length - 1], cards[cards.length - 1].childNodes.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }),
+  selectCards: (page) => page.evaluate(() => { const cards = document.querySelectorAll("#page [class^='card-']"); const r = document.createRange(); r.setStart(cards[1], 0);   /* the grid's cards: the first card on the page is the one above the grid */ r.setEnd(cards[cards.length - 1], cards[cards.length - 1].childNodes.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }),
   setSource: (page, text) => page.fill("body.mdview #page", text),
   inSource: (page) => page.evaluate(() => document.body.classList.contains("mdview")),
   gridCorner: (page) => page.evaluate(() => document.querySelector("#saved.show")?.textContent || ""),

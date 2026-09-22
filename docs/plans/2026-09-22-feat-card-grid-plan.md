@@ -743,3 +743,48 @@ measured, what the reader was told to look at, what the review found.
   moving a grid; CLAUDE.md's layout names the grid under grammar.ts,
   gridKeys.ts and editor.css; the brainstorm's example is the canonical
   spelling with a note.
+
+### The review — 2026-09-22, one /code-review at medium over 3c9d0d6..7fa1843
+
+- MEASURED: 164,042 tokens, 25 tool uses, 12 minutes; seven findings, two
+  of them behaviour faults measured under node by the reviewer, the rest
+  read. All seven fixed in one commit, the fixes test-first where a test
+  can reach and read in the Helium step where it cannot:
+- The grid did not travel on a mid-paragraph paste. A selection's
+  content() keeps its parents (READ prosemirror-state), so a drag across
+  two cards slices to the GRID, open three deep, and the CARD put in
+  `ROW_BLOCKS` in batch 2 never fired for a grid — while changing how a
+  loose card pasted, unstated. Now the grid is in the set and the card
+  out; paste.test.ts builds its slice from a real TextSelection, pins the
+  mid-paragraph paste of a grid, and pins the loose-card cases at their
+  pre-batch strings. The comment that had asserted the clipboard's
+  mechanism (the class CLAUDE.md names as owed a checker, claims.sh's)
+  is replaced by what was measured. The step pastes two copied cards
+  mid-paragraph on a fresh page and reads a grid, 2 across.
+- A foreign `div.grid` in pasted HTML would have parsed to an empty grid
+  node drawn as a blank gap: the parse rule now requires `data-n`, which
+  only the editor's own copies carry.
+- A refused switch back cleared `forced`, so a refused entry opened from
+  the rendered view left every later entry in source: `forced` is kept
+  across the refusal. The step reads it: the faulty entry opened from a
+  sound one, ⌃⌘M refused, the next entry rendered. That reading found a
+  latent fault beside it — the forced branch of open() restored the
+  reader's view without telling the chrome, so the mode pill stayed on —
+  fixed with one call.
+- The band above a grid's corner was tested after the block under the
+  mouse, so a card directly above covered most of it; the band is tested
+  first, and the scan reads a live collection's length before anything
+  else, so an entry with no grid costs one property read per move. The
+  step's grid now sits directly under a card, and the band still finds it.
+- `100vw` counts a classic scrollbar: main.ts writes the layout
+  viewport's width to the root as `--client-w` on load and resize, and
+  the stylesheet reads it with `100vw` as the fallback.
+- The step's first cut reloaded the page to reach the open path, which
+  ended the OLD app's run; a navigation away and back does the same, once
+  the save has landed, and the old app's adapter now accepts a painted
+  source view as an entry (text, no elements). The refused entry's
+  console line lost its stack: minified names churn per build in the
+  tools' console.
+- Not built here, owed still: the port of ../writer/tools/claims.sh, the
+  checker for a comment asserting another module's mechanism — its class
+  showed up on 2026-09-12 and again in this review.

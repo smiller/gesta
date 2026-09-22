@@ -250,7 +250,8 @@ export function startSession(opts: SessionOptions): Session {
   }
   function setView(md: boolean): void {
     if (md === mdView) return;
-    forced = false;   /* the reader's choice from here */
+    const wasForced = forced;
+    forced = false;   /* the reader's choice from here — unless the switch back is refused below */
     holdViewCaret();
     /* THE SCROLL SURVIVES THE SWAP: the teardown empties the page for an
        instant and the window's scroll clamps to the top before the new
@@ -273,6 +274,7 @@ export function startSession(opts: SessionOptions): Session {
            below, as a fence refusal's pin is */
         if (fencePin) opts.releasePin?.(fencePin);
         fencePin = opts.pin?.("cannot render " + ekeyOf() + " — " + (err as Error).message + "; shown as source") || 0;
+        forced = wasForced;   /* a forced source view stays forced, so the next open renders (the 2026-09-22 review: every later entry opened in source) */
         return;
       }
       mdView = false;
@@ -299,7 +301,7 @@ export function startSession(opts: SessionOptions): Session {
   function open(date: string, tag: string | null): void {
     cancelSave();
     suspended = false;
-    if (forced) { mdView = readerView; forced = false; }
+    if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (read 2026-09-22 by the grid step) */
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
@@ -316,7 +318,7 @@ export function startSession(opts: SessionOptions): Session {
         /* a stored text the model refuses is not edited as a document — an
            editor over a lossy parse would save the loss — but it IS edited
            as source: the switch back parses it again */
-        console.error("cannot render", ekey, err);
+        console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build in the Helium tools' console (2026-09-22) */
         /* PINNED (2026-09-22), released by the next open above: a whisper
            was covered by the warm's count before it was read */
         fencePin = opts.pin?.("cannot render " + ekey + " — " + (err as Error).message + "; shown as source") || 0;

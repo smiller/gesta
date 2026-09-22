@@ -204,7 +204,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* a grid of cards (2026-09-22, successor-only): drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason pinned */
   await go("page/Gridded");
   await page.click(S.editor);
-  await R.pasteText(page, "Prose above.\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");
+  await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid (the 2026-09-22 review) */
   await page.waitForTimeout(300);
   await log("a grid pasted", await R.gridLayout(page));
   const hover = await R.gridHover(page);
@@ -216,12 +216,32 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+c");
   await page.waitForTimeout(200);
   await log("two cards ⌘C'd", await R.clipboardCard(page));
+  await go("page/Pasted%20Grid");
+  await page.click(S.editor);
+  await page.keyboard.type("prose first ");
+  await page.keyboard.press("Meta+v");
+  await page.waitForTimeout(300);
+  await log("two cards pasted mid-paragraph", await R.gridLayout(page));
+  await go("page/Gridded");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(200);
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
   await log("a stray line in a grid, switched back", { corner: await R.gridCorner(page) });
+  /* the open path forces source over the stored fault (away and back, once the save has landed — a reload ended the old app's run); a refused ⌃⌘M leaves it forced, so the next entry opens rendered (the 2026-09-22 review) */
+  await page.waitForTimeout(1200);
+  await go("page/Carded");
+  await page.keyboard.press("Control+Meta+m");   /* back to the rendered view on a sound entry, so the faulty one is opened from it */
+  await page.waitForTimeout(300);
+  await go("page/Gridded");
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(300);
+  await go("page/Carded");
+  await log("the next entry after a refused switch", { source: await R.inSource(page) });
+  await go("page/Gridded");
+  await page.waitForTimeout(200);
   /* the line fixed and the view restored: the pin released, the grid drawn — and the source view is the reader's choice until switched back, so a step that left it would run every later section in source */
   if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(200); }   /* the current app rendered the stray line as a paragraph and came back */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");

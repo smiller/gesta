@@ -141,7 +141,9 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    pair, not a card at the window's left edge. Below a 240px card the count
    steps down. Measured on the mockup (docs/brainstorms/2026-09-22-card-
    grid-mockup.html): a 1493px window drew 3 across at 1445px, a 760px
-   window 2 across at 712px; 0.8em was the first step at which the longest
+   window 2 across at 712px (--client-w is main's measured layout width,
+   set on the root, since 100vw counts a classic scrollbar — the
+   2026-09-22 review); 0.8em was the first step at which the longest
    title sat on one line at 3 across. Inside a quote, a note or a card the
    grid keeps its container's width, or it would ride over the quote's
    rule. A card's own margin would not collapse inside a track. THE BOX
@@ -164,7 +166,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page div.grid:has(> :nth-child(5):last-child) { --cards: 5; }
 .page > div.grid {
   --across: min(var(--n), var(--cards, 99));
-  --grid-w: min(100vw - 48px, calc(var(--across) * 650px + (var(--across) - 1) * 1em));
+  --grid-w: min(var(--client-w, 100vw) - 48px, calc(var(--across) * 650px + (var(--across) - 1) * 1em));
   width: var(--grid-w);
   margin: 1.2em calc(50% - var(--grid-w) / 2);
 }
