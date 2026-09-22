@@ -55,7 +55,12 @@ const ROUND_TRIPS = [
   "\\- not a list",
   "\\# not a heading",
   "\\::: not a fence",
+  "\\::: grid 3",
   "> ::: card-red\n> a card inside a quote\n> :::",
+  "::: grid\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::",
+  "::: grid 2\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::",
+  "::: grid\n::: card-red\n\n:::\n:::",
+  "> ::: grid 3\n> ::: card-red\n> a\n> :::\n> :::",
   "text with a ⟨8⟩ folio",
   "⟨xxiv⟩**Enter GHOST**",
   "::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*a* | *b*\n⟨line⟩\n:::",
@@ -104,12 +109,21 @@ const NORMALIZED: [string, string][] = [
   ["[www link](www.x.test/p)", "[www link](https://www.x.test/p)"],
   ["a\n\n\n\nb", "a\n\nb"],
   ["```Ruby\nx\n```", "```ruby\nx\n```"],
+  ["::: grid\n::: card-red\na\n:::\n::: card-pink\nb\n:::\n:::", "::: grid\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::"],
+  ["::: grid 03\n::: card-red\na\n:::\n:::", "::: grid 3\n::: card-red\na\n:::\n:::"],
 ];
 test("non-canonical spellings normalize in one pass and then hold", () => {
   for (const [input, canonical] of NORMALIZED) {
     expect(trip(input), JSON.stringify(input)).toBe(canonical);
     expect(trip(canonical), "a fixed point").toBe(canonical);
   }
+});
+
+// an empty grid node, which the parse refuses, is written as nothing, so a
+// text the editor saved always opens (2026-09-22)
+test("an empty grid serializes to nothing", () => {
+  const d = schema.nodes.doc.create(null, [schema.nodes.grid.create({ n: 2 }), schema.nodes.paragraph.create(null, schema.text("after"))]);
+  expect(serializeMarkdown(d)).toBe("after");
 });
 
 // the hoist: a mark's edge whitespace belongs OUTSIDE its markers

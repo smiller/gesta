@@ -9,9 +9,10 @@
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance, type StateCore, type StateInline, type Token, type Env } from "markdown-it";
 import { Fragment, Mark, Node, type NodeType } from "prosemirror-model";
 import { schema } from "./schema.ts";
+import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
   fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -58,6 +59,7 @@ function emitBlocks(sink: Sink, lines: string[], quote: boolean): void {
     else if (PROSE_OPEN.test(line)) i = emitRows(sink, lines, i, "prose");
     else if (REFERENCE_OPEN.test(line)) i = emitReference(sink, lines, i);
     else if (NOTE_OPEN.test(line)) i = emitNote(sink, lines, i);
+    else if (GRID_OPEN.test(line)) i = emitGrid(sink, lines, i);
     else if (HEADING_LINE.test(line)) { emitHeading(sink, line); i++; }
     else if (QUOTE_LINE.test(line)) {
       const inner: string[] = [];
@@ -123,6 +125,26 @@ function emitCard(sink: Sink, lines: string[], from: number): number {
   const colour = lines[from].match(CARD_OPEN)![1];
   const box = fenceBody(lines, from + 1);
   emitBody(sink, "card", { colour }, box.body);
+  return box.next;
+}
+
+/* a grid's body is cards and nothing else, judged BEFORE any token is
+   pushed so the reason is this one and not the schema's generic "cannot
+   build" (2026-09-22). The refusal throws: a body-level fault cannot stay a
+   paragraph, because its opener would then be escaped on the next save. */
+function emitGrid(sink: Sink, lines: string[], from: number): number {
+  const typed = lines[from].match(/\s(\d+)\s*$/);
+  const box = fenceBody(lines, from + 1);
+  let cards = 0;
+  for (let i = 0; i < box.body.length;) {
+    const l = box.body[i];
+    if (!l.trim()) { i++; continue; }
+    if (CARD_OPEN.test(l)) { cards++; i = fenceBody(box.body, i + 1).next; continue; }
+    const why = fenceLineReason(l);
+    throw new Error(`a grid holds only cards; "${l.trim().slice(0, 60)}" is not a card` + (why ? " — " + why : ""));
+  }
+  if (!cards) throw new Error("a grid holds at least one card");
+  emitBody(sink, "grid", { n: typed ? parseInt(typed[1], 10) : null }, box.body);
   return box.next;
 }
 
@@ -481,6 +503,7 @@ function buildDoc(tokens: Token[]): Node {
         case "table_cell_open": open(schema.nodes.table_cell, { header: !!t.meta?.header }); break;
         case "card_open": open(schema.nodes.card, { colour: t.meta!.colour }); break;
         case "note_open": open(schema.nodes.note); break;
+        case "grid_open": open(schema.nodes.grid, { n: t.meta!.n }); break;
         case "verse_open": open(schema.nodes.verse, { start: t.meta!.start }); break;
         case "prose_open": open(schema.nodes.prose, { start: t.meta!.start }); break;
         case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null }); break;
@@ -492,7 +515,7 @@ function buildDoc(tokens: Token[]): Node {
         case "paragraph_close": case "heading_close": case "blockquote_close":
         case "bullet_list_close": case "ordered_list_close": case "list_item_close":
         case "table_close": case "table_row_close": case "table_cell_close":
-        case "card_close": case "note_close": case "verse_close": case "prose_close":
+        case "card_close": case "note_close": case "grid_close": case "verse_close": case "prose_close":
         case "line_close": case "pair_close": case "cell_close":
           close(); break;
         default:

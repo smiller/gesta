@@ -34,6 +34,9 @@ export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*)?\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
+/* the grid opener (2026-09-22): an optional count in the verse opener's
+   spelling; the body is cards, so it recurses like card and note */
+export const GRID_OPEN = /^\s*:::\s*grid(?:\s+0*[1-9]\d*)?\s*$/;
 /* a table starts at a "| … |" row with a "| --- |" divider directly beneath */
 export const TABLE_ROW = /^\s*\|.*\|\s*$/;
 export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
@@ -83,7 +86,7 @@ export function fenceStart(line: string): number {
 /* does this line open a ::: block — the opener list as one guard */
 export function opensFence(line: string): boolean {
   return CARD_OPEN.test(line) || VERSE_OPEN.test(line) ||
-    REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || PROSE_OPEN.test(line);
+    REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
 }
 /* the openers whose body is NOT blocks */
 export function flatFence(line: string): boolean {

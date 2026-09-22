@@ -23,18 +23,27 @@ export function fenceRefusals(doc: Node): FenceRefusal[] {
     n.forEach((c) => { if (c.type === schema.nodes.hard_break) { lines.push(line); line = ""; } else if (c.isText) line += c.text; });
     lines.push(line);
     for (const l of lines) {
-      const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
-      if (!m || opensFence(l)) continue;
-      const tok = m[1].match(/^(verse|prose)\s+(.+)$/);
-      const tail = m[1].match(/^(note|reference|card-[\w-]+)\s+\S/);
-      out.push({ line: l.trim(), reason: tok ? tok[2] + " is not a starting " + (tok[1] === "verse" ? "line" : "sentence")
-        : tail ? tail[1] + " takes nothing after it"
-        : /^card(?:[\s-]|$)/.test(m[1]) ? "card blocks must include a colour, like card-light-green"
-        : "not a block Gesta knows" });
+      const reason = fenceLineReason(l);
+      if (reason) out.push({ line: l.trim(), reason });
     }
     return false;
   });
   return out;
+}
+/* the reason a `:::`-shaped line opens nothing, or null for a line that is
+   not one or that opens a block. Shared with the grid's body check
+   (2026-09-22), so a colourless card inside a grid is told the same thing */
+export function fenceLineReason(l: string): string | null {
+  const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
+  if (!m || opensFence(l)) return null;
+  const tok = m[1].match(/^(verse|prose)\s+(.+)$/);
+  const tail = m[1].match(/^(note|reference|card-[\w-]+)\s+\S/);
+  const count = m[1].match(/^grid\s+(.+)$/);
+  return tok ? tok[2] + " is not a starting " + (tok[1] === "verse" ? "line" : "sentence")
+    : tail ? tail[1] + " takes nothing after it"
+    : count ? count[1] + " is not a count"
+    : /^card(?:[\s-]|$)/.test(m[1]) ? "card blocks must include a colour, like card-light-green"
+    : "not a block Gesta knows";
 }
 /* the pin's text: every refusal on a line of its own, so a second is not
    hidden behind a count */

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Card grid mockup</title>
+<link rel="stylesheet" href="../../src/editor/editor.css">
+<style>
+/* the mockup's own rules: the grid as it might be written in editor.css.
+   A grid breaks out of the measure the way a paired row does (the
+   --par-w margins at editor.css:200); its columns are the count, stepping
+   down when the window cannot hold the count at --card-min. */
+.page { --n: 3; --grid-max: 100vw; --card-max: 650px; --grid-type: 0.8em; --card-min: 240px; --card-height: stretch; }
+.page div.grid {
+  --grid-w: min(var(--grid-max), 100vw - 48px, calc(var(--n) * var(--card-max) + (var(--n) - 1) * 1em));
+  width: var(--grid-w);
+  margin: 1.2em calc(50% - var(--grid-w) / 2);
+  display: grid;
+  gap: 1em;
+  grid-template-columns: repeat(auto-fit, minmax(max(var(--card-min), calc((100% - (var(--n) - 1) * 1em) / var(--n))), 1fr));
+  font-size: var(--grid-type);
+  align-items: var(--card-height);
+}
+.page div.grid > div[class^="card-"] { margin: 0; }
+/* the control strip, not part of the design */
+#ctl { position: fixed; top: 8px; right: 8px; font: 12px var(--sans); background: #fff; border: 1px solid var(--rule); border-radius: 4px; padding: 6px 8px; display: grid; gap: 4px; z-index: 9; }
+#ctl label { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+#w { font: 12px var(--mono); color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="ctl">
+  <label>across <select data-var="--n"><option>2</option><option selected>3</option><option>4</option></select></label>
+  <label>max width <select data-var="--grid-max"><option value="100vw" selected>window</option><option>1000px</option><option>1200px</option><option>1400px</option></select></label>
+  <label>card max <select data-var="--card-max"><option value="100vw">none</option><option selected>650px</option><option>550px</option><option>450px</option></select></label>
+  <label>card type <select data-var="--grid-type"><option value="1em">page (1em)</option><option value="0.9em">0.9em</option><option value="0.85em">0.85em</option><option value="0.8em" selected>0.8em</option><option value="0.75em">0.75em</option><option value="0.7em">0.7em</option></select></label>
+  <label>card height <select data-var="--card-height"><option value="stretch" selected>the row's (like index cards)</option><option value="start">its own text</option></select></label>
+  <label>card min <select data-var="--card-min"><option>200px</option><option selected>240px</option><option>280px</option></select></label>
+  <span id="w"></span>
+</div>
+<main><div class="page ProseMirror">
+<h1>Nine cards</h1>
+<p>The prose above a grid stays at the page's measure. The desk's 3x3 sits below it; the controls at the top right change the count, how far the grid may widen, the size of its type and the width below which the count steps down. Narrow the window to see the step.</p>
+<div class="grid">
+<div class="card-bright-green"><p><strong>Finding Verity</strong></p><p>tu mi fai rimembrar dove e qual era<br>Proserpina nel tempo che perdette<br>la madre lei, ed ella primavera</p><p>You make me recall where and what Proserpina was<br>at the time her mother lost her, and she the spring.</p><p>quand' una donna apparve, santa e presta<br>When a lady appeared, holy and alert.</p></div>
+<div class="card-pink"><p><strong>'Ware Snakes of Tenedos</strong></p><p>Remember, when the self-criticizing Dragon comes knocking, full of frustration and bile and seductive darkness and apparently ineluctable despair and free-fall</p><p>ardentisque oculos suffecti sanguine et igni<br>sibila lambebant linguis vibrantibus ora</p><p>I can always, instead, step back, laugh it off, and walk away. Remember I can always walk out of the darkness.</p></div>
+<div class="card-bright-green"><p><strong>Mary Oliver, When I Am Among the Trees</strong></p><p>Around me the trees stir in their leaves<br>and call out, "Stay awhile."</p><p>The light flows from their branches.<br>And they call again, "It's simple," they say,<br>"and you too have come<br>into the world to do this, to go easy, to be filled<br>with light, and to shine."</p></div>
+<div class="card-red"><p>O brother! Don't come without a tambourine,<br>as the sad can't join in God's celebration.</p><p>—Rumi, not Caia (pers. comm.),<br>though some days it feels like it could go either way.</p></div>
+<div class="card-light-green"><p>Retrace our steps, escape above,<br>That is the task and that the strife.<br>(So said the Sibyl: she should know.)<br>How do we mend our work and life?<br>And how should we prepare to be<br>A vessel fit for amplitude?<br>Fulfilling hearts with joy and love<br>With kindness, patience, gratitude?</p><p>With that deep smile beneath it all<br>Shining with love, that far from strife<br>Moves the sun and the other stars<br>And lifts our wild and precious life.</p></div>
+<div class="card-light-yellow"><p><strong>The Twelfth Doctor's Farewell</strong></p><p>Never be cruel, never be cowardly</p><p>Hate is foolish, and love is wise</p><p>Always try to be nice, but never fail to be kind</p><p>Laugh hard, run fast, be kind</p><p>Doctor, I let you go.</p></div>
+<div class="card-bright-green"><p><strong>You have a lovely smile</strong></p><p>so many of the hospital people came to see<br>Caia's lovely smile or hear her laugh.</p><p>Caia wheeled off to her liver transplant and a nurse<br>had tied white surgical tape as a ribbon in her hair</p></div>
+<div class="card-red"><p><strong>19 December 2007</strong></p><p>Just saw this year's Handel's Messiah.</p><p>And if anyone were to ask me any question,<br>my answer would simply be "love".</p><p>Or "Caia". Same thing, really.</p></div>
+<div class="card-bright-green"><p><strong>George Saunders: the most loving, generous and unafraid</strong></p><p>Be a good and proactive and even somewhat desperate patient on your own behalf – seek out the most efficacious anti-selfishness medicines, energetically, for the rest of your life. Find out what makes you kinder, what opens you up and brings out the most loving, generous, and unafraid version of you – and go after those things as if nothing else matters.</p><p>Because, actually, nothing else does.</p></div>
+</div>
+<p>And the prose below it returns to the measure. A seventh card under a count of three would sit alone at the left of a fourth row; delete two cards above to see that, or set the count to four to see the 4-4-1.</p>
+</div></main>
+<script>
+const page = document.querySelector('.page');
+for (const s of document.querySelectorAll('#ctl select')) {
+  s.addEventListener('change', () => page.style.setProperty(s.dataset.var, s.value));
+}
+const w = document.getElementById('w');
+const report = () => { const g = document.querySelector('.grid'); const cols = getComputedStyle(g).gridTemplateColumns.split(' ').length; w.textContent = `window ${innerWidth}px · grid ${Math.round(g.getBoundingClientRect().width)}px · ${cols} across`; };
+addEventListener('resize', report); document.querySelectorAll('#ctl select').forEach(s => s.addEventListener('change', report)); report();
+</script>
+</body>
+</html>

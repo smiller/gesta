@@ -8,8 +8,53 @@ const doc = (md: string) => parseMarkdown(md).toJSON();
 const kinds = (md: string) => parseMarkdown(md).content.content.map((n) => n.type.name);
 
 test("the block dispatch: every top-level form lands as its node", () => {
-  expect(kinds("text\n\n# h\n\n> q\n\n- a\n\n1. b\n\n```\nc\n```\n\n| a |\n| - |\n\n::: card-red\nx\n:::\n\n::: note\nn\n:::\n\n::: reference\nr\n:::\n\n::: verse\nv\n:::\n\n::: prose\np\n:::"))
-    .toEqual(["paragraph", "heading", "blockquote", "bullet_list", "ordered_list", "code_block", "table", "card", "note", "reference", "verse", "prose"]);
+  expect(kinds("text\n\n# h\n\n> q\n\n- a\n\n1. b\n\n```\nc\n```\n\n| a |\n| - |\n\n::: card-red\nx\n:::\n\n::: note\nn\n:::\n\n::: reference\nr\n:::\n\n::: verse\nv\n:::\n\n::: prose\np\n:::\n\n::: grid\n::: card-red\ng\n:::\n:::"))
+    .toEqual(["paragraph", "heading", "blockquote", "bullet_list", "ordered_list", "code_block", "table", "card", "note", "reference", "verse", "prose", "grid"]);
+});
+
+test("a grid holds cards and remembers whether its count was typed: none is null, a typed count is the number", () => {
+  const bare = parseMarkdown("::: grid\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::").child(0);
+  expect(bare.type.name).toBe("grid");
+  expect(bare.attrs.n).toBeNull();
+  expect(bare.content.content.map((n) => n.type.name)).toEqual(["card", "card"]);
+  expect(bare.child(1).attrs.colour).toBe("card-pink");
+  expect(parseMarkdown("::: grid 2\n::: card-red\na\n:::\n:::").child(0).attrs.n).toBe(2);
+  expect(parseMarkdown("::: grid 03\n::: card-red\na\n:::\n:::").child(0).attrs.n).toBe(3);
+});
+
+test("the grid opener: no space after the colons opens, a capital or a word or a zero count stays a paragraph", () => {
+  expect(kinds(":::grid\n::: card-red\na\n:::\n:::")).toEqual(["grid"]);
+  expect(kinds("::: Grid\n::: card-red\na\n:::\n:::")).toEqual(["paragraph", "card", "paragraph"]);
+  expect(kinds("::: grid three\n::: card-red\na\n:::\n:::")).toEqual(["paragraph", "card", "paragraph"]);
+  expect(kinds("::: grid 0\n::: card-red\na\n:::\n:::")).toEqual(["paragraph", "card", "paragraph"]);
+});
+
+test("a grid nests where a card does, its closer counted: a note holding a grid ends at the note's own closer", () => {
+  const note = parseMarkdown("::: note\n::: grid 2\n::: card-red\na\n:::\n::: card-red\nb\n:::\n:::\nstill the note\n:::\n\nafter");
+  expect(note.childCount).toBe(2);
+  expect(note.child(0).type.name).toBe("note");
+  expect(note.child(0).content.content.map((n) => n.type.name)).toEqual(["grid", "paragraph"]);
+  expect(note.child(0).child(0).childCount).toBe(2);
+  expect(kinds("> ::: grid\n> ::: card-red\n> a\n> :::\n> :::")).toEqual(["blockquote"]);
+  expect(parseMarkdown("> ::: grid\n> ::: card-red\n> a\n> :::\n> :::").child(0).child(0).type.name).toBe("grid");
+  const inCard = parseMarkdown("::: card-pink\n::: grid\n::: card-red\n::: grid\n::: card-red\ndeep\n:::\n:::\n:::\n:::\n:::");
+  expect(inCard.child(0).child(0).type.name).toBe("grid");
+  expect(inCard.child(0).child(0).child(0).child(0).type.name).toBe("grid");
+  expect(inCard.child(0).child(0).child(0).child(0).textContent).toBe("deep");
+});
+
+test("a grid holding anything but cards is refused at the parse, the offending line quoted; an empty grid too", () => {
+  const refuse = (md: string) => expect(() => parseMarkdown(md));
+  refuse("::: grid\ntext first\n::: card-red\na\n:::\n:::").toThrow('a grid holds only cards; "text first" is not a card');
+  refuse("::: grid\n::: card-red\na\n:::\n\nbetween\n\n::: card-red\nb\n:::\n:::").toThrow('a grid holds only cards; "between" is not a card');
+  refuse("::: grid\n::: card-red\na\n:::\n# a heading\n:::").toThrow('"# a heading" is not a card');
+  refuse("::: grid\n::: note\nn\n:::\n:::").toThrow('"::: note" is not a card');
+  refuse("::: grid\n::: grid\n::: card-red\na\n:::\n:::\n:::").toThrow('"::: grid" is not a card');
+  refuse("::: grid\n::: card\na\n:::\n:::").toThrow('a grid holds only cards; "::: card" is not a card — card blocks must include a colour, like card-light-green');
+  refuse("::: grid 3\n:::").toThrow("a grid holds at least one card");
+  refuse("::: grid\n\n:::").toThrow("a grid holds at least one card");
+  refuse("::: grid\n::: card-red\na\n:::\nprose after a forgotten closer").toThrow('"prose after a forgotten closer" is not a card');
+  refuse("> ::: grid\n> loose\n> :::").toThrow('"loose" is not a card');
 });
 
 test("headings take every level, and a hash without a space is text", () => {

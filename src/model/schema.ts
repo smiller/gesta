@@ -84,6 +84,19 @@ const nodes: Record<string, NodeSpec> = {
     parseDOM: [{ tag: "div[class^='card-']", getAttrs: (dom) => ({ colour: dom.className.split(/\s+/).find((c) => /^card-/.test(c)) }) }],
     toDOM: (n) => ["div", { class: n.attrs.colour }, 0],
   },
+  /* cards N across (2026-09-22): `n` is null when the count was not typed,
+     drawn as 3, so a bare opener is written back bare. Cards only, and
+     isolating, so no lift or join crosses the grid's edge under the base
+     keymap. The count reaches the stylesheet as --n on the element.
+     MEASURED 2026-09-22: `card+` is refused by prosemirror-model — a card's
+     colour has no default, so the model cannot generate one for a required
+     slot — hence `card*`; the parse refuses an empty grid, and the
+     serializer writes an empty grid node as nothing. */
+  grid: {
+    attrs: { n: { default: null } }, content: "card*", group: "block", defining: true, isolating: true,
+    parseDOM: [{ tag: "div.grid", getAttrs: (dom) => ({ n: dom.dataset.n ? +dom.dataset.n : null }) }],
+    toDOM: (n) => ["div", { class: "grid", "data-n": n.attrs.n ?? "", style: "--n: " + (n.attrs.n ?? 3) }, 0],
+  },
   /* text that is NOT the text; the one block form that may also be a ROW of
      a verse or prose block, which is how a footnote interrupts a text without
      closing its count */

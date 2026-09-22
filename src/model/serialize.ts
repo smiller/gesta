@@ -174,6 +174,10 @@ function blockMd(node: Node, escaping: boolean): string {
     case N.table: return tableMd(node);
     case N.card: return "::: " + String(node.attrs.colour) + "\n" + blocksMd(node) + "\n:::";
     case N.note: return "::: note\n" + blocksMd(node) + "\n:::";
+    /* a bare opener is written back bare (a save is serialize and compare,
+       so a normalised count would dirty every such entry on open); an empty
+       grid, which the parse refuses, is written as nothing (2026-09-22) */
+    case N.grid: return node.childCount ? "::: grid" + (node.attrs.n == null ? "" : " " + String(node.attrs.n)) + "\n" + blocksMd(node) + "\n:::" : "";
     case N.reference: return node.textContent ? "::: reference\n" + node.textContent + "\n:::" : "::: reference\n:::";
     case N.verse: return rowsMd(node, "verse");
     case N.prose: return rowsMd(node, "prose");

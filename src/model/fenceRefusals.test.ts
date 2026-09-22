@@ -9,6 +9,8 @@ test("a fence-shaped line that opens nothing is named with its reason; the words
   expect(refused("::: prose x\nline\n:::")[0].reason).toBe("x is not a starting sentence");
   expect(refused("::: note 2\nline\n:::")[0].reason).toBe("note takes nothing after it");
   expect(refused("::: card\nline\n:::")[0].reason).toBe("card blocks must include a colour, like card-light-green");
+  expect(refused("::: grid three\nline\n:::")[0].reason).toBe("three is not a count");
+  expect(refused("::: grid 0\nline\n:::")[0].reason).toBe("0 is not a count");
 });
 test("a real fence, a bare closer, a code block's line and a row are none of them refusals", () => {
   expect(refused("::: verse\nline\n:::")).toEqual([]);
