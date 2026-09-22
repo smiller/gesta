@@ -21,17 +21,25 @@ in place — only placed.
 ::: card-light-yellow
 first card
 :::
+
 ::: card-light-yellow
 second card
 :::
+
 ::: card-red
 third card
 :::
+
 ::: card-red
 fourth card
 :::
 :::
 ```
+
+(The canonical spelling, with a blank line between cards, is what the
+serializer writes; the same grid typed without the blank lines parses the
+same and is written with them on the first save — the plan's batch 1,
+2026-09-22.)
 
 ## Why This Approach
 

@@ -503,16 +503,17 @@ release). Every new key behaviour is named for a hand to try (CLAUDE.md).
       Backspace at a card's start and Delete at its end whisper the
       refusal; the mid-card split and the cross-card join do what was
       measured (batch 2, 2026-09-22, pinned in gridKeys.test.ts and read
-      headless) — help.html says so in batch 3.
+      headless) and help.html says so (batch 3).
 - [x] ⌃⌘R inside a grid's card cites and quotes as in a card (batch 2,
       2026-09-22, reference.test.ts).
 - [x] ⌘C across two cards pastes into another entry as a grid (MEASURED
       by hand 2026-09-22); the clipboard HTML carries
-      `grid-template-columns` (read headless); the hover button over the
-      gaps copies the whole grid. The shared step reads them in batch 3.
-- [ ] Both adapters answer the grid step; the differences are listed;
+      `grid-template-columns` (read headless); the hover button above the
+      corner copies the whole grid. The shared step reads them (batch 3).
+- [x] Both adapters answer the grid step; the differences are listed;
       the current app's reading is recorded; `npm run verify` green; the
-      record in this plan carries every measurement with its date.
+      record in this plan carries every measurement with its date (batch
+      3, 2026-09-22).
 
 ## Dependencies and risks
 
@@ -687,3 +688,58 @@ measured, what the reader was told to look at, what the review found.
   corner.differences.txt:1-10; ../writer/src/js/md.mjs:508-515.
 - The successor plan and its record:
   docs/plans/2026-09-07-feat-successor-app-prosemirror-svelte-plan.md.
+
+### Batch 3 — 2026-09-22, the tools and the docs
+
+- THE SHARED STEP, `grid` in helium-steps.mjs after `card copy`: a
+  two-card `::: grid 2` pasted under a line of prose, then six readings —
+  the layout (a grid or not, its columns, its cards, wider than the page
+  or not, its type size), the band above its top-right corner hovered
+  (the button's show, label, title), the button clicked (the label and
+  the clipboard's text head), ⌘C across both cards (the HTML flavour's
+  columns), a stray line put in the grid in the source view and ⌃⌘M back
+  (the corner's text), and the line made a card and ⌃⌘M back (the corner
+  and the layout again). Both adapters answer every reading by the same
+  name over their own ids: `gridLayout`, `gridHover`, `clipboardText`,
+  `selectCards`, `setSource`, `inSource`, `gridCorner`.
+- FOUND on the first run: a step that leaves the page in the source view
+  leaves EVERY later section there — the view is the reader's choice
+  until switched back — and five sections failed on selectors the source
+  view lacks. The step now ends by fixing the line and switching back,
+  which is a reading worth having (the pin's release, the grid drawn).
+  And the current app, which rendered the stray line and came back,
+  needs a second ⌃⌘M before the fix, so the step asks `inSource` first.
+- MEASURED, the successor's run: `{"grid":true,"columns":2,"cards":2,
+  "wider":true,"type":"14.4px"}`; the band `copy grid` / `Copy this grid`;
+  the click `copied` with `::: grid 2\n::: card-light-blue\nalpha…` on
+  the clipboard; ⌘C's HTML `grid: true`; the stray line's corner
+  `cannot render page/Gridded — a grid holds only cards; "loose" is not a
+  card; shown as source`; after the fix the corner empty and the grid
+  drawn 3 across (a bare count). Approved after reading the diff: the six
+  readings and the page `Gridded` in the Go to and Search lists, nothing
+  else.
+- MEASURED, THE CURRENT APP over the same steps (`npm run compare:writer`,
+  the measurement the plan asked for): it draws the two cards loose
+  (`grid: false`, `cards: 2`, not wider, no type change), shows no button
+  above where a grid's corner would be, its ⌘C carries no columns, and on
+  the switch back its corner pins `::: grid — not a block Gesta knows, so
+  it stayed a paragraph` and renders the rest as paragraphs and cards;
+  the pin stands after the fix, the word still unknown to it. Sixteen
+  fields over six steps, each listed in corner.differences.txt with its
+  reason; the compare then passes. The INFERRED consequence in the plan —
+  a save in the current app writing the grid's closer as `\:::` — was not
+  exercised by the step and stays inferred.
+- VOCABULARY, and THE CUTOVER (2026-09-22, the reader's word after this
+  batch): "the current app" in this plan, in CLAUDE.md and in the tools
+  means `../writer`, which is now the OLD app — this is the app in use,
+  and a feature built here is never back-ported. The help sentence that
+  warned of a grid saved in the old app was dropped the same day, there
+  being no one to save one there; CLAUDE.md's running-app sentence and
+  its reference rule were rewritten, dated.
+- The docs: help.html gains a grid sentence after the card's (the fence,
+  the count, cards only, the refusal and ⌃⌘M, the shape edited in source,
+  the nesting, the current app), Enter's clause for a grid's cards, the
+  copy button's `copy grid`, the paste sentence, and Tab in a quote
+  moving a grid; CLAUDE.md's layout names the grid under grammar.ts,
+  gridKeys.ts and editor.css; the brainstorm's example is the canonical
+  spelling with a note.

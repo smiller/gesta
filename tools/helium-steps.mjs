@@ -200,6 +200,35 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(300);
   { const md = await A.stored(page); console.log("pasted on a fresh page:", JSON.stringify({ fence: md.startsWith("::: card-light-blue"), lines: md.split("\n").length, ...(await R.cardsAndPairs(page)) })); }
     }],
+    ["grid", async () => {
+  /* a grid of cards (2026-09-22, successor-only): drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason pinned */
+  await go("page/Gridded");
+  await page.click(S.editor);
+  await R.pasteText(page, "Prose above.\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");
+  await page.waitForTimeout(300);
+  await log("a grid pasted", await R.gridLayout(page));
+  const hover = await R.gridHover(page);
+  await log("hovered above its corner", hover);
+  if (hover.show) { await page.click(S.copybtn); await page.waitForTimeout(300); }
+  await log("the grid copied", { label: await R.copyLabel(page), text: await R.clipboardText(page) });
+  await R.selectCards(page);
+  await page.waitForTimeout(100);
+  await page.keyboard.press("Meta+c");
+  await page.waitForTimeout(200);
+  await log("two cards ⌘C'd", await R.clipboardCard(page));
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(200);
+  await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(400);
+  await log("a stray line in a grid, switched back", { corner: await R.gridCorner(page) });
+  /* the line fixed and the view restored: the pin released, the grid drawn — and the source view is the reader's choice until switched back, so a step that left it would run every later section in source */
+  if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(200); }   /* the current app rendered the stray line as a paragraph and came back */
+  await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(400);
+  await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await R.gridLayout(page)) });
+    }],
     ["picture", async () => {
   /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
   await go("page/Pictured");

@@ -26,7 +26,10 @@ line is the section of the same name below.
 | 4 — the checkers | IN PROGRESS 2026-09-08. The review shape settled (one /code-review at medium by batch, a priced confirmation offered), tsc's unused checks on, the gate in `hooks/`; the phase 3 review run and its eight findings fixed in one commit. The prose checkers wait for their first class. | "Phase 4 decisions" below |
 
 Until phase 2's last count is measured and the successor has been used
-for real entries, `../writer` stays the running app.
+for real entries, `../writer` stays the running app. — THE CUTOVER
+HAPPENED: on 2026-09-22 the reader said this is the app in use, and
+`../writer` is the old one, kept for the comparison tools, not
+maintained, nothing back-ported.
 
 
 # feat: the successor app

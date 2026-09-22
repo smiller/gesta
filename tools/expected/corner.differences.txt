@@ -34,3 +34,19 @@ typed into the quoted pair · wrapped · read within 400ms of the keys: the curr
 
 typed into the quoted pair, settled · indent · the same: the current app's quoted pair stands out of its box
 typed into the quoted pair, settled · cols · the same: the fitted measure less the quotation's box here
+a grid pasted · grid · a grid is successor-only (2026-09-22): the current app has no `::: grid` word and draws its cards loose, one under the other
+a grid pasted · columns · the same: no grid, no columns
+a grid pasted · wider · the same: loose cards stay at the measure
+a grid pasted · type · the same: no grid's 0.8em
+hovered above its corner · show · the current app has no grid to hover above; its copy button never shows
+hovered above its corner · label · the same
+hovered above its corner · title · the same
+the grid copied · label · nothing was clicked there — the button never showed — so the label is the idle one
+the grid copied · text · the current app's clipboard still holds the card step's ⌘C; the successor's holds the grid copied whole
+two cards ⌘C'd · grid · the successor's HTML flavour carries the grid's columns; the current app has no grid around its cards
+a stray line in a grid, switched back · corner · the current app pins its own refusal of the unknown word and renders the rest as paragraphs and cards; the successor refuses the grid at the parse, quotes the line, and stays in source
+the line made a card, switched back · corner · the current app's pin stands (the word is still unknown to it); the successor's clean parse released its pin
+the line made a card, switched back · grid · the successor drew the grid; the current app never does
+the line made a card, switched back · columns · the same
+the line made a card, switched back · wider · the same
+the line made a card, switched back · type · the same

@@ -10,9 +10,13 @@ measurements, one dated section per phase under "Phase N decisions",
 moved out of this file 2026-09-08 (they were four fifths of it, loaded
 into every session). This file holds what is IN FORCE — the process and
 the layout — and points at the record; a rule a record entry set that
-later work must keep is restated here, not only there. The running app
-is `../writer`, and it stays the running app until this one imports the
-whole export and has been used for real entries.
+later work must keep is restated here, not only there. THIS IS THE RUNNING APP
+since 2026-09-22 (the reader said so that day: the export imported,
+real entries written here). `../writer` is the OLD app: kept as the
+comparison tools' other side and not maintained — a feature built here
+is never back-ported. Where this file, the plan's record and the tools
+say "the current app" they mean `../writer`, the vocabulary of the days
+before the cutover.
 
 The process this repository follows is `../writer/CLAUDE.md`, carried over
 PER CHECKER as each becomes relevant (the plan's decision 7). What is in force
@@ -35,8 +39,10 @@ here NOW, and what is not yet:
   compares it step by step against THE CURRENT APP's run of the same
   steps, `tools/expected/corner.writer.txt`, failing on any difference
   not listed with its reason in `tools/expected/corner.differences.txt`.
-  The current app is the reference for what the app should do; the
-  approved copy is only a fence against change. `--approve` makes a run
+  `../writer` is the reference for what was PORTED; a feature new here
+  (the grid, 2026-09-22) has no reference there and lists every field
+  it reads differently with that reason. The approved copy is only a
+  fence against change. `--approve` makes a run
   the approved copy, a judgement made after reading the diff, never to
   quiet it; `npm run compare:writer` regenerates the current app's run
   when ../writer changes. A `.received.txt` is never committed.
@@ -130,7 +136,8 @@ is in the plan's record, under the phase named):
 
 - `src/model/` — the document model, no DOM: `schema.ts` (nodes, marks, and
   `MARK_ORDER`, the nesting the serializer writes), `grammar.ts` (the line
-  regexes and the pure string transforms both arms share), `parse.ts`
+  regexes — the `:::` family, the grid's since 2026-09-22 — and the pure
+  string transforms both arms share), `parse.ts`
   (markdown → document), `serialize.ts` (document → markdown),
   `tokens.ts` (syntax highlighting's tokenizer: the language table and
   the one-pass scan, yielding spans), `fenceRefusals.ts` (the `:::` lines
@@ -198,11 +205,13 @@ is in the plan's record, under the phase named):
   maps through edits, drawn as a node decoration), `codeHighlight.ts`
   (the tokens drawn as inline decorations over every code block),
   `quoteKeys.ts` (Tab and Shift-Tab in a quote: the run between blank
-  lines nested, or spliced back), `listKeys.ts` (the gestures in a list:
+  lines nested, or spliced back), `gridKeys.ts` (a grid's edges: Enter
+  out of the last card, the joins between cards refused), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
-  surface's stylesheet, ported from ../writer/src/style.css). Tests beside
+  surface's stylesheet, ported from ../writer/src/style.css; the grid's
+  rules, 2026-09-22, are its first responsive ones). Tests beside
   them; the command tests are markdown in, a caret, the command, markdown
   and caret out.
 - `src/store/` — storage, no DOM: `keys.ts` (what an entry key IS: the day
