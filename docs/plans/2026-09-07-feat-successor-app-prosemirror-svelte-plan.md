@@ -1765,3 +1765,49 @@ at the head is kept current per phase.
   painted the empty line a fence's did. Six shapes pinned in
   reference.test.ts, the adjacent paragraphs in roundtrip.test.ts.
   STILL OWED: the comment-shape checker.
+- 2026-09-22, THE TEST GATES. FOUND, asked "what ensures the tests run
+  on changed code": nothing by mechanism — the running app's stop.sh had
+  a test gate as its first part, independent of the reviewer loop behind
+  it, and dropping the Stop hook whole on 2026-09-08 dropped the gate
+  too; its pre-commit was never installed here (no `core.hooksPath`).
+  DECIDED: `hooks/stop.sh` refuses to end a turn while src/ or
+  index.html differ from HEAD and tsc or the suite is red (the reader is
+  never asked to look at a red tree); `hooks/pre-commit` runs `npm run
+  verify` on its own exit code, the Helium tools included, and the Stop
+  hook leaves those to the commit (they took most of a Stop timeout in
+  the running app). MEASURED: 485 green exits 0 silent; a one-line
+  failing probe exits 2 with the tail. THE PRE-COMMIT'S FIRST RUN
+  REFUSED ITS OWN COMMIT: the Go to row spells today as its Day select's
+  value and last option, "Day=22 [...|22]", a form the scrub missed, so
+  both expected copies carried the 12 of the day they were made and no
+  verify since 2026-09-12 could have been green on another day (nothing
+  was committed between). Scrubbed first; then the edge, asked: on a day
+  whose number a seeded day shares (the 5th, the 6th) today already has
+  an entry, the select reads one option fewer with that entry's title,
+  and no rewrite can say so. DECIDED: the drivers and the bridge PIN the
+  page's clock to `TODAY` in helium-steps.mjs, 2026-09-12, the day the
+  reference was made (`context.clock.setFixedTime`, Date alone; neither
+  app reads the clock for a fade), the writer adapter seeds from it, and
+  the three today scrubs are gone. MEASURED: the run on the 22nd read
+  the 12th, one line changed in each copy; the bridge's two refusals
+  land on today and changed on those lines; 0 open.
+- 2026-09-22, THE ⌃⌘R FENCE. FOUND by the pre-commit, once in five
+  verify runs that day: the ⌃⌘R reading held no corner and the
+  clipboard's earlier ⌘C, green on the next run. READ: the step pressed
+  100 ms after a programmatic selection and waited 5 s for "copied",
+  swallowing the timeout; a whisper lasts 3 s, so a refusal — the editor
+  not yet holding the selection, or the payload refusing — had faded
+  before the reading, with nothing to say why. DECIDED: the fixed wait
+  is a wait for the format bar, which shows after the selectionchange
+  the editor takes the selection on; `cornerAfter` in both adapters
+  presses the chord and returns the corner's FIRST new text, matching or
+  not, logged as `said` — a whisper already standing (the warm's count)
+  is not the answer unless it is the one asked for. RULE, restated in
+  CLAUDE.md: a step's wait never swallows its timeout. MEASURED: twenty
+  replays of the run's shape all copied the reference, so the fault is
+  not reproduced on demand; with a caret and no selection the wait says
+  "Select a passage to reference first", with no gesture "(no whisper
+  within 5s)". Chased the same day: the warm's whisper seen standing at
+  chord time in one replay was one whisper per LOAD — the launch URL
+  carries `?store=seed` and the first hash-only navigation drops the
+  query, a full load; later hash navigations load nothing. Not a fault.
