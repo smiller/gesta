@@ -113,8 +113,11 @@ export function copyMd(slice: Slice): string {
 /* the blocks, AND their rows: a selection inside one block slices to
    its rows with the block itself left out (measured: a drag across two
    pairs slices to pairs, open two deep), and rows pasted as rows are
-   wrapped back into their block by the schema */
-const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row]);
+   wrapped back into their block by the schema. A card joined the set
+   2026-09-22 for the grid: a drag across two cards slices to open cards
+   with the grid left out, and closed they travel whole — the in-app paste
+   re-wraps them in their grid from the clipboard's own context. */
+const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row, N.card]);
 export function closeRowSlice(slice: Slice): Slice {
   const first = slice.content.firstChild, last = slice.content.lastChild;
   if (!first || !last) return slice;

@@ -26,6 +26,11 @@ describe("searchIndex", () => {
     delete cache["2020-01-02"];
     expect(idx.rows().length).toBe(2);
   });
+  it("an entry whose flatten throws is indexed as its raw source, and the build carries on (2026-09-22)", () => {
+    const cache: Record<string, string> = { "2020-01-01": "fine", "page/Bad": "::: grid\nbad\n:::" };
+    const idx = searchIndex(cache, (md) => { if (md.includes("bad")) throw new Error("a grid holds only cards"); return md; });
+    expect(idx.rows().map((r) => r.text)).toEqual(["::: grid\nbad\n:::", "fine"]);
+  });
   it("the chunked build stops at its deadline and resumes, and rows() then hits the memo", () => {
     const cache: Record<string, string> = {};
     for (let i = 0; i < 10; i++) cache["2020-01-" + String(i + 10)] = "entry " + i;

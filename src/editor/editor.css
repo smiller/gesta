@@ -133,6 +133,42 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page div.card-pink { background: #ed9892; }
 .page div.card-light-purple { background: #b39daf; }
 .page div.card-orange { background: #ffa500; }
+/* THE GRID (2026-09-22): cards --n across, the count from the node. A
+   grid that is the page's own child breaks out of the measure the way
+   .page.fitted pulls the whole entry (the margins at the paired measure):
+   to the window less the gutter, capped so a card never passes 650px, and
+   centred — so a count of 1 or 2 on a wide window is a centred card or
+   pair, not a card at the window's left edge. Below a 240px card the count
+   steps down. Measured on the mockup (docs/brainstorms/2026-09-22-card-
+   grid-mockup.html): a 1493px window drew 3 across at 1445px, a 760px
+   window 2 across at 712px; 0.8em was the first step at which the longest
+   title sat on one line at 3 across. Inside a quote, a note or a card the
+   grid keeps its container's width, or it would ride over the quote's
+   rule. A card's own margin would not collapse inside a track. THE BOX
+   IS SIZED BY THE CARDS WHEN THEY ARE FEWER THAN THE COUNT (by hand
+   2026-09-22: two cards pasted under a count of three grew to 715px each,
+   filling the three-card box), read with :has — Helium is Chromium 150.
+   The cap cannot be the track's: a definite maximum makes auto-fit count
+   its repetitions by the maximum, and three cards at 1445px wrapped to
+   two tracks of 650px (MEASURED headless the same day). */
+.page div.grid {
+  display: grid; gap: 1em;
+  grid-template-columns: repeat(auto-fit, minmax(max(240px, calc((100% - (var(--n) - 1) * 1em) / var(--n))), 1fr));
+  font-size: 0.8em;
+  margin: 1.2em 0;
+}
+.page div.grid:has(> :nth-child(1):last-child) { --cards: 1; }
+.page div.grid:has(> :nth-child(2):last-child) { --cards: 2; }
+.page div.grid:has(> :nth-child(3):last-child) { --cards: 3; }
+.page div.grid:has(> :nth-child(4):last-child) { --cards: 4; }
+.page div.grid:has(> :nth-child(5):last-child) { --cards: 5; }
+.page > div.grid {
+  --across: min(var(--n), var(--cards, 99));
+  --grid-w: min(100vw - 48px, calc(var(--across) * 650px + (var(--across) - 1) * 1em));
+  width: var(--grid-w);
+  margin: 1.2em calc(50% - var(--grid-w) / 2);
+}
+.page div.grid > div[class^="card-"] { margin: 0; }
 /* A ::: reference block is SETTINGS, not reading, so it draws as a quiet
    aside rather than as part of the text — and LABELLED, or a bare
    directive line on an author's entry reads as a stray note nobody can

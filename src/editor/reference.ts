@@ -179,7 +179,7 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
    goes — inside a retained container as well (the block's closing
    review: one break of two stayed, an empty paragraph stood in the
    nested box, and an edge gap painted an empty row under the opener). */
-const CONTAINERS = new Set(["blockquote", "note", "card"]);
+const CONTAINERS = new Set(["blockquote", "note", "card", "grid"]);
 const keep = (b: Node): boolean => b.type === N.gap || drawsInk(b);
 function trimmed(b: Node): Node {
   if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); }); return b.copy(Fragment.from(inner)); }

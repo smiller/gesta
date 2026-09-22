@@ -306,11 +306,12 @@ The listKeys/quoteKeys shape (READ CLAUDE.md's layout: commands with an
   HTML, as the card's is today (READ helium-steps.mjs:181-202,
   `clipboardCard` reads `grid-template-columns` from the HTML already).
 - `session.ts:273-279`: the switch-path wording and pin (above).
+- `main.ts:622` the hover-copy `BLOCKS`: the grid joins it (reversed
+  2026-09-22 at the reader's question, batch 2's record): each card keeps
+  its own button, innermost wins (READ :612-615), and the gaps between
+  the cards are the grid's zone, its label `copy grid`.
 - NOT joined, by decision: `typing.ts:27` `BLOCK_HOSTS` (a grid holds no
-  paragraph; the cards inside are hosts already); `main.ts:622` the
-  hover-copy `BLOCKS` (no button for the whole grid; each card keeps its
-  own, innermost wins, READ :612-615; the mouse over the gap between
-  cards finds nothing and hides the button, consistent); `fit.ts:77`
+  paragraph; the cards inside are hosts already); `fit.ts:77`
   `INSET` (a pair inside a grid's card is already inset by the card, READ
   fit.ts:78-86, so the entry is not fitted by it).
 
@@ -476,11 +477,12 @@ release). Every new key behaviour is named for a hand to try (CLAUDE.md).
       grid node of cards with the right `n`; grids sit in a quote, a
       note, a card; grid > card > grid parses (batch 1, 2026-09-22; renders
       is batch 2's).
-- [ ] Each refusal input throws its pinned message quoting the line
+- [x] Each refusal input throws its pinned message quoting the line
       (batch 1, 2026-09-22: done, without a line number — see the record);
       the entry is shown as source with it (MEASURED in Helium); ⌃⌘M with
       the fault still there pins the same wording; fixing it and ⌃⌘M
-      renders the grid and releases the pin (batch 2).
+      renders the grid and releases the pin (batch 2, 2026-09-22: all
+      measured headless, the record).
 - [x] `::: grid three` stays a paragraph and the pin names the count
       (batch 1, 2026-09-22).
 - [x] Round trip: bare stays bare, a count stays its count, cards are
@@ -493,15 +495,21 @@ release). Every new key behaviour is named for a hand to try (CLAUDE.md).
       stretched; a narrowed window steps to 2 across; `::: grid 1` on a
       wide window is one centred card; a grid in a quote stays inside the
       quote's rule; a long entry shows no horizontal scroll; with a paired
-      verse block above, the reading is recorded whatever it is.
-- [ ] Enter on the last card's empty last line lands after the grid;
+      verse block above, the reading is recorded whatever it is. (Batch 2,
+      2026-09-22: measured HEADLESS at 1493 and 760 wide, the record; the
+      hand's readings — the laptop, the scrollbar, `::: grid 1` — are the
+      reader's, named in the handoff.)
+- [x] Enter on the last card's empty last line lands after the grid;
       Backspace at a card's start and Delete at its end whisper the
       refusal; the mid-card split and the cross-card join do what was
-      measured and help.html says so.
-- [ ] ⌃⌘R inside a grid's card cites and quotes as in a card.
-- [ ] ⌘C across two cards pastes into another entry as a grid; the
-      clipboard HTML carries `grid-template-columns`; the shared step
-      reads both.
+      measured (batch 2, 2026-09-22, pinned in gridKeys.test.ts and read
+      headless) — help.html says so in batch 3.
+- [x] ⌃⌘R inside a grid's card cites and quotes as in a card (batch 2,
+      2026-09-22, reference.test.ts).
+- [x] ⌘C across two cards pastes into another entry as a grid (MEASURED
+      by hand 2026-09-22); the clipboard HTML carries
+      `grid-template-columns` (read headless); the hover button over the
+      gaps copies the whole grid. The shared step reads them in batch 3.
 - [ ] Both adapters answer the grid step; the differences are listed;
       the current app's reading is recorded; `npm run verify` green; the
       record in this plan carries every measurement with its date.
@@ -561,6 +569,105 @@ measured, what the reader was told to look at, what the review found.
   (emitGrid and the two token cases), serialize.ts (the grid case),
   fenceRefusals.ts (fenceLineReason, the count reason), tools/corpus.ts
   (the skip), and the three model test files.
+
+### Batch 2 — 2026-09-22, the editor
+
+- MEASURED under node (gridKeys.test.ts, the base keymap's own commands
+  over a grid): Enter at the end of the last card's text adds an empty
+  paragraph in the card (`splitBlock`); Enter again, the new arm, removes
+  it and lands in a paragraph after the grid, the card keeping its text;
+  in a middle card the arm declines and the base keymap's Enter adds a
+  line — with the grid isolating, nothing lifts out; Enter on an empty
+  paragraph MID-card splits the card into two of the same colour inside
+  the grid (the INFERRED behaviour, confirmed). `atCardEdge` is true at a
+  card's first offset and last offset inside a grid, false a character in
+  and false in a plain card.
+- DECIDED: `ROW_BLOCKS` in paste.ts gains the CARD, not the grid — a drag
+  across two cards slices to open cards with the grid, their common
+  ancestor, left out, so it is the card the closer must see. Two cards
+  then travel whole; the in-app paste re-wraps them in their grid from the
+  clipboard's own context (ProseMirror's `data-pm-slice`), which the hand
+  reads. A drag across two PLAIN cards now also pastes as whole cards
+  rather than merging the first card's tail into the target paragraph;
+  no test pinned the old behaviour, and the row precedent says whole.
+- MEASURED in headless Helium over the built page (a scratch script over
+  the successor's own paste seam, 2026-09-22): at a 1493px window a
+  four-card `::: grid` drew 1445px wide, 3 across, its left edge at 24px,
+  the page 712px wide at 391px, the cards' type 14.4px (0.8 × 18); at
+  760px the grid was 712px at 2 across; with sixty paragraphs below it no
+  horizontal overflow (headless Chromium's scrollbar takes no width —
+  the hand reads a visible one); inside a quote the grid was 669px at 2
+  across with the blockquote as its parent; with a paired verse block
+  above, the page fitted to 788px and the grid still drew 1445px at 24px —
+  the two pulls are independent, the reading the plan said to record.
+- MEASURED the refusal, both paths: ⌃⌘M with a stray line in a grid pins
+  `cannot render page/GridBad — a grid holds only cards; "loose line" is
+  not a card; shown as source` in the corner, still there after 3.5 s,
+  the source view kept; fixing the line and ⌃⌘M rendered the grid at 3
+  across with no corner. On OPEN of a stored bad grid the same wording
+  was at first only WHISPERED and the warm's `14 entries stored` covered
+  it, and a page error showed a second, unguarded parse: the search index
+  builds its text by parsing every entry. Both fixed: the open path pins
+  too (released by the next open, as its fence pin is), and the index
+  falls back to the raw source for an entry whose flatten throws
+  (searchIndex.test.ts). After the fix: pinned on open, no page error.
+- MEASURED the keys in the browser: two Enters at the end of the last
+  card then typing landed `after the grid` as a paragraph after it;
+  Backspace at the second card's start left both cards and whispered
+  `a grid's cards are joined in the source view (⌃⌘M)`. ⌘C across the
+  two cards: the HTML flavour carries `grid-template-columns` and the
+  grid div; the text flavour is the two partial cards under `::: grid 2`.
+- MEASURED: `npm run verify` failed once at the reference-copy step's 5 s
+  wait while the readings script drove a second headless Helium and the
+  clipboard at the same time; alone, `npm run test:helium` passed with 92
+  steps identical or decided. A lingering headless process was killed by
+  its scratch profile's name, as CLAUDE.md's rule says.
+- MEASURED BY HAND in Helium (2026-09-22, the reader): the nine cards of
+  the photo drew 3x3 on the wide window at the 650px cap, the short cards
+  stretched, the Saunders title on one line; the last two cards copied
+  and pasted arrived as a new grid — the paste re-wrap from the
+  clipboard's context, confirmed.
+- ASKED AND CHANGED (2026-09-22, at the reader's question "should I be
+  able to copy a whole grid?"): the plan had said no hover button for the
+  grid; now `div.grid` joins the hover copy's BLOCKS in main.ts. A card
+  wins while the mouse is over it, so the gaps between the cards are the
+  grid's hover zone; the button sits at the grid's top-right, the same
+  corner as the top-right card's, so its idle label reads `copy grid`
+  where a card's reads `copy`, and its title `Copy this grid`. MEASURED
+  headless: over a card `copy` / `Copy this card`; over the gap
+  `copy grid` / `Copy this grid`; the click wrote the whole fence
+  (`::: grid 2` and both cards) to the clipboard and said `copied`,
+  settling back to `copy grid`.
+- FOUND BY HAND (2026-09-22, the reader): the grid's button drawn inside
+  the top-right corner could not be reached from a gap — the path crossed
+  the top-right card, which took the button over. Asked for instead: the
+  button appears when the mouse comes to just ABOVE the top-right corner,
+  as a block's appears at its corner. Now a band 26px tall over the
+  rightmost 140px above a grid's top edge, read on `mousemove` since no
+  element changes there, shows the grid's button DRAWN ABOVE the corner
+  (25px up), and the gaps still show the same button in the same place.
+  MEASURED headless: in the band the button read `copy grid` at 100–122px
+  with the grid's top at 125px; the mouse on the button kept it; moving
+  out of the band along the top hid it; the click copied the fence.
+  MEASURED BY HAND in the live app the same day: it works.
+- FOUND BY HAND (2026-09-22, the reader): two cards pasted under an
+  inherited count of three drew 715px each — the 650px cap was the BOX's,
+  sized from the count, and two tracks grew to fill a three-card box. The
+  first fix, a definite 650px track maximum, MEASURED headless as wrong
+  the other way: auto-fit counts its repetitions by a definite maximum,
+  so three cards at 1445px wrapped to two tracks of 650px. The rule now:
+  the track keeps `1fr`, and the box is sized by `min(--n, --cards)`,
+  `--cards` read with `:has(> :nth-child(k):last-child)` for one to five
+  cards (Helium is Chromium 150; `:has` is Chromium 105). MEASURED headless
+  after: at 1493px, two cards under a bare count 650px each, centred, in
+  a 1314px box; `::: grid 1` one 650px card centred; three cards 472px
+  each across 1445px. At 760px: two cards 349px each; three cards 2
+  across then 1; the single card 650px.
+- Files: gridKeys.ts and its test (new), editor.ts (the keymap in order),
+  editor.css (the grid rules), reference.ts (CONTAINERS), paste.ts
+  (ROW_BLOCKS), inlineStyles.ts (STYLED), session.ts (both pins),
+  searchIndex.ts (the fallback), main.ts (the hover copy) and the
+  reference, paste and index tests.
 
 ## Sources
 

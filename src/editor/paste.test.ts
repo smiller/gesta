@@ -74,3 +74,12 @@ test("inside a reference block every character is literal, as in a code block: t
   expect(pasteBlocks("one\n\ntwo\n", s.selection.$from)).toBeNull();
   expect(paste(s, "one\n\ntwo\n")).toBe("::: reference\nfrom one\n\ntwo\nthe last title\n:::\n\npara");
 });
+
+test("a slice open across two cards of a grid is closed, so the grid travels whole (2026-09-22)", () => {
+  const doc = parseMarkdown("::: grid 2\n::: card-red\nalpha beta\n:::\n\n::: card-pink\ngamma delta\n:::\n:::");
+  const open = doc.slice(8, doc.firstChild!.nodeSize - 8);
+  expect([open.openStart, open.content.firstChild!.type.name]).toEqual([2, "card"]);
+  const closed = closeRowSlice(open);
+  expect([closed.openStart, closed.openEnd]).toEqual([0, 0]);
+  expect(closed.content.childCount).toBe(2);
+});

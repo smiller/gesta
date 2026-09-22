@@ -12,6 +12,8 @@ const STYLED: { sel: string; props: string[] }[] = [
   { sel: "div.note", props: BOX.concat(["font-size"]) },
   /* the pairing lives on the row, and only a row that holds a translation */
   { sel: "div.vrow.vpair", props: ["display", "grid-template-columns", "column-gap"] },
+  /* the grid's columns (2026-09-22), so a copied grid arrives as one */
+  { sel: "div.grid", props: ["display", "grid-template-columns", "gap"] },
   { sel: "pre", props: BOX.concat(["font-family", "font-size", "white-space"]) },
   { sel: "pre span", props: ["color", "font-style", "font-weight"] },
 ];

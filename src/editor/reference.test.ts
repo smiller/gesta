@@ -234,3 +234,13 @@ test("citationAnchorHTML: the label's italics as em, everything else escaped, th
   expect(citationAnchorHTML('#x"y', "a <b> & *c*")).toBe('<a href="#x&quot;y">a &lt;b&gt; &amp; <em>c</em></a>');
 });
 
+
+test("a passage in a grid's card cites as it does in a plain card: the grid is a container the trim looks through (2026-09-22)", () => {
+  const plain = parseMarkdown("::: card-red\nsome words here\n:::");
+  const grid = parseMarkdown("::: grid\n::: card-red\nsome words here\n:::\n\n::: card-pink\nother words\n:::\n:::");
+  const [a, b] = span(plain, "words");
+  const [c, d] = span(grid, "words");
+  expect(passageMd(grid, c, d)).toBe(passageMd(plain, a, b));
+  const [e, f] = span(grid, "words", "other");
+  expect(passageMd(grid, e, f)).toBe("> ::: card-red\n> words here\n> :::\n> ::: card-pink\n> other\n> :::");
+});

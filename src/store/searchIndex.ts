@@ -54,7 +54,11 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     if (!md || !md.trim()) return null;
     const m = memo[key];
     if (m && m.md === md) return m;
-    const text = flatten(md);
+    /* a text the model refuses (a grid holding a stray line, 2026-09-22)
+       is indexed as its source: the build never stops on one entry, and
+       the entry is still found by its words */
+    let text: string;
+    try { text = flatten(md); } catch { text = md; }
     const fresh = { md, text, lower: searchFold(text) };
     memo[key] = fresh;
     return fresh;

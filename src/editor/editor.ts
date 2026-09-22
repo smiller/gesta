@@ -21,6 +21,7 @@ import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
+import { gridKeymap } from "./gridKeys.ts";
 import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
@@ -56,6 +57,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       typingKeymap,
       listKeymap(onRefuse),
       quoteKeymap(onRefuse),
+      gridKeymap(onRefuse),
       codeKeymap,
       formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),

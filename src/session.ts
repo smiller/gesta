@@ -266,7 +266,15 @@ export function startSession(opts: SessionOptions): Session {
     } else {
       let doc;
       try { doc = parseMarkdown(source ? source.value : ""); }
-      catch (err) { say("the source cannot be rendered — " + (err as Error).message); return; }
+      catch (err) {
+        /* PINNED, in the open path's words (2026-09-22): the writer stays
+           in source to fix the line the message quotes, and a whisper had
+           faded before a slow reader found it; released by the clean parse
+           below, as a fence refusal's pin is */
+        if (fencePin) opts.releasePin?.(fencePin);
+        fencePin = opts.pin?.("cannot render " + ekeyOf() + " — " + (err as Error).message + "; shown as source") || 0;
+        return;
+      }
       mdView = false;
       mountEditor(doc, current.date, current.tag);
       /* a clean parse OF THE PAGE releases the pin; a refusal renews it */
@@ -309,7 +317,9 @@ export function startSession(opts: SessionOptions): Session {
            editor over a lossy parse would save the loss — but it IS edited
            as source: the switch back parses it again */
         console.error("cannot render", ekey, err);
-        say("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+        /* PINNED (2026-09-22), released by the next open above: a whisper
+           was covered by the warm's count before it was read */
+        fencePin = opts.pin?.("cannot render " + ekey + " — " + (err as Error).message + "; shown as source") || 0;
         readerView = mdView; forced = true;
         mdView = true;
         mountSource(md);

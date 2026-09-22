@@ -619,20 +619,30 @@ if (fixture && fixtures[fixture]) {
      settle at once. */
   const cp = screen.copy;
   let copyTarget: HTMLElement | null = null, copySeq = 0, copyReset: ReturnType<typeof setTimeout> | null = null;
-  const BLOCKS = "pre, blockquote, div.note, div.reference, div[class^='card-'], div.verse, div.prose";
+  const BLOCKS = "pre, blockquote, div.note, div.reference, div[class^='card-'], div.verse, div.prose, div.grid";
+  /* THE GRID'S BUTTON (asked 2026-09-22): a card wins while the mouse is
+     over it, so the grid's own corner is a card's. Its button is drawn
+     ABOVE the top-right corner, and appears when the mouse comes to the
+     band just above that corner — the way every block's appears at its
+     corner — or is in a gap between the cards; asked by hand the same
+     day, when a button drawn inside the corner could not be reached from
+     a gap without crossing the card, which took it over. Its idle label
+     says which one it is. */
+  const idle = (t: HTMLElement | null): string => t?.classList.contains("grid") ? "copy grid" : "copy";
   const hideCopy = (): void => { copyTarget = null; cp.show = false; if (copyReset) clearTimeout(copyReset); cp.label = "copy"; };
   const showCopy = (target: HTMLElement): void => {
-    if (target !== copyTarget) { if (copyReset) clearTimeout(copyReset); cp.label = "copy"; }
+    if (target !== copyTarget) { if (copyReset) clearTimeout(copyReset); cp.label = idle(target); }
     copyTarget = target;
     const rect = target.getBoundingClientRect();
     const head = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 7;
-    const top = Math.max(rect.top + 5, head);
+    const grid = target.classList.contains("grid");
+    const top = Math.max(grid ? rect.top - 25 : rect.top + 5, head);
     if (top > rect.bottom - 27 || rect.top > window.innerHeight) { hideCopy(); return; }
     let cover = 0;
     const isPre = target.tagName === "PRE";
     if (isPre && target.dataset.lang) { const cs = getComputedStyle(target, "::after"); cover = (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4; }
     const cls = target.className || "";
-    cp.title = isPre ? "Copy this code block" : /^card-/.test(cls) ? "Copy this card" : target.classList.contains("verse") ? "Copy this verse"
+    cp.title = isPre ? "Copy this code block" : /^card-/.test(cls) ? "Copy this card" : target.classList.contains("grid") ? "Copy this grid" : target.classList.contains("verse") ? "Copy this verse"
       : target.classList.contains("prose") ? "Copy this prose" : target.classList.contains("reference") ? "Copy this reference"
       : target.classList.contains("note") ? "Copy this note" : "Copy this quote";
     cp.minWidth = cover > 0 ? Math.ceil(cover) : 0;
@@ -646,6 +656,19 @@ if (fixture && fixtures[fixture]) {
     let target = t.closest(BLOCKS) as HTMLElement | null;
     while (target && target.parentElement && target.tagName === "BLOCKQUOTE" && target.parentElement.tagName === "BLOCKQUOTE") target = target.parentElement;
     if (target && session.view?.dom.contains(target) && !session.mdView) showCopy(target); else hideCopy();
+  });
+  /* the band above a grid's top-right corner: 26px tall, the rightmost
+     140px, outside every block, read on every move since no element
+     changes there */
+  const GRID_BAND = { above: 26, wide: 140 };
+  document.addEventListener("mousemove", (e) => {
+    const t = e.target as Element | null;
+    if (!t?.closest || t.closest(".copybtn") || t.closest(BLOCKS) || !session.view || session.mdView) return;
+    for (const g of Array.from(session.view.dom.querySelectorAll<HTMLElement>("div.grid"))) {
+      const r = g.getBoundingClientRect();
+      if (e.clientX >= r.right - GRID_BAND.wide && e.clientX <= r.right + 8 && e.clientY >= r.top - GRID_BAND.above && e.clientY <= r.top + 2) { if (g !== copyTarget) showCopy(g); return; }
+    }
+    if (copyTarget?.classList.contains("grid")) hideCopy();
   });
   window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
   /* the block the DOM element draws, found through the view */
@@ -666,7 +689,7 @@ if (fixture && fixtures[fixture]) {
       if (mine !== copyTarget || seq !== copySeq) return;
       cp.label = ok ? "copied" : "copy failed";
       if (copyReset) clearTimeout(copyReset);
-      copyReset = setTimeout(() => { cp.label = "copy"; }, 1200);
+      copyReset = setTimeout(() => { cp.label = idle(mine); }, 1200);
     };
     const node = blockAt(copyTarget);
     if (!node) { done(false); say("Copy failed", 3000); return; }
