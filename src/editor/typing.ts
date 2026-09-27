@@ -10,11 +10,10 @@
    straight after any rule undoes it (prosemirror-inputrules' own
    undoInputRule) — the successor's spelling of "type the quote again". */
 import { InputRule, inputRules, undoInputRule } from "prosemirror-inputrules";
-import { type Command, type EditorState, type Transaction, Selection } from "prosemirror-state";
+import { type Command, type EditorState, type Transaction, Selection, Plugin } from "prosemirror-state";
 import { findWrapping, canJoin } from "prosemirror-transform";
 import type { MarkType, NodeType, Node, Attrs } from "prosemirror-model";
 import { keymap } from "prosemirror-keymap";
-import { baseKeymap, chainCommands } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
 import { trimUrl, URL_START } from "../model/parse.ts";
 
@@ -193,17 +192,24 @@ export const fenceEnter: Command = (state, dispatch) => {
   dispatch?.(tr.setSelection(Selection.near(tr.doc.resolve(at + 1))).scrollIntoView());
   return true;
 };
-/* a URL finished with Enter links first, then Enter does what it does */
-const linkThenEnter: Command = (state, dispatch, view) => {
-  const tr = autolinkTr(state);
-  if (!tr || !dispatch || !view) return false;
-  dispatch(tr);
-  baseKeymap.Enter(view.state, view.dispatch, view);
-  return true;
-};
+/* a URL finished with Enter links first, then Enter does what it does
+   THERE: the handler links and returns false, so the key goes on down the
+   chain to the list, quote, grid or base Enter. Until 2026-09-27 it was a
+   command that called the base Enter itself, and a bare URL ending a list
+   item split the paragraph inside the item instead of making the next one. */
+export const autolinkEnter = new Plugin({
+  props: {
+    handleKeyDown(view, event) {
+      if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return false;
+      const tr = autolinkTr(view.state);
+      if (tr) view.dispatch(tr);
+      return false;
+    },
+  },
+});
 
 export const typingBindings: Record<string, Command> = {
   Backspace: undoInputRule,
-  Enter: chainCommands(fenceEnter, linkThenEnter),
+  Enter: fenceEnter,
 };
 export const typingKeymap = keymap(typingBindings);

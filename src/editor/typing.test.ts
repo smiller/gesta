@@ -8,7 +8,7 @@ import type { EditorView } from "prosemirror-view";
 import { undoInputRule } from "prosemirror-inputrules";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { typing, curlChar, fenceEnter, typingBindings } from "./typing.ts";
+import { typing, curlChar, fenceEnter, typingBindings, autolinkEnter } from "./typing.ts";
 
 const plugin = typing();
 /* a state whose caret sits at the end of the first text holding `needle`,
@@ -134,12 +134,21 @@ test("a ``` line and Enter opens a code block, on the caret's own line", () => {
   expect(() => run(fenceEnter, state("\\```js after", "js"))).toThrow();
 });
 
-test("a URL finished with Enter links first, then Enter splits", () => {
-  const s = run(typingBindings.Enter, type(state(), "see https://x.test/p"));
-  expect(s.doc.childCount).toBe(2);
-  expect(s.doc.firstChild!.lastChild!.marks[0]?.type.name).toBe("link");
-  expect(md(s)).toBe("see https://x.test/p");
-  expect(() => run(typingBindings.Enter, type(state(), "plain"))).toThrow();
+test("a URL finished with Enter links, and the key is left to whoever owns Enter there", () => {
+  const enter = (s: EditorState, key = "Enter", shiftKey = false): { taken: boolean; s: EditorState } => {
+    let next = s;
+    const view = { get state() { return next; }, dispatch: (tr: Transaction) => { next = next.apply(tr); } } as unknown as EditorView;
+    const taken = !!autolinkEnter.props.handleKeyDown!.call(autolinkEnter, view, { key, shiftKey, altKey: false, ctrlKey: false, metaKey: false } as KeyboardEvent);
+    return { taken, s: next };
+  };
+  const url = enter(type(state(), "see https://x.test/p"));
+  expect(url.taken).toBe(false);
+  expect(url.s.doc.childCount).toBe(1);   /* linked, not split: the split is the next handler's */
+  expect(url.s.doc.firstChild!.lastChild!.marks[0]?.type.name).toBe("link");
+  const plain = type(state(), "plain");
+  expect(enter(plain)).toEqual({ taken: false, s: plain });
+  expect(enter(type(state(), "see https://x.test/p"), "Enter", true).s.doc.firstChild!.lastChild!.marks).toEqual([]);
+  expect(() => run(typingBindings.Enter, type(state(), "see https://x.test/p"))).toThrow();   /* fenceEnter alone now */
 });
 
 test("Backspace straight after a rule undoes it", () => {

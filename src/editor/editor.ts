@@ -11,7 +11,7 @@ import { schema } from "../model/schema.ts";
 import { rowKeymap, pipeInLine } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { folios } from "./folios.ts";
-import { typing, typingKeymap } from "./typing.ts";
+import { typing, typingKeymap, autolinkEnter } from "./typing.ts";
 import { DOMSerializer, type Node } from "prosemirror-model";
 import { inlineBlockStyles } from "./inlineStyles.ts";
 import { lineNumbers } from "./lineNumbers.ts";
@@ -54,6 +54,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       history(),
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo }),
       rowKeymap,
+      autolinkEnter,
       typingKeymap,
       listKeymap(onRefuse),
       quoteKeymap(onRefuse),
