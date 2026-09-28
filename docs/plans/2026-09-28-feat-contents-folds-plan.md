@@ -381,3 +381,28 @@ judged real and fixed in one commit:
   its 50 ms bound in one pre-commit run; the current app's regenerated run
   read its "saved" whisper faded at "a list typed" once and showing on the
   next regeneration, which is the copy kept.
+
+### The fifth pass — 2026-09-28, /code-review at HIGH over bdeb1c6..cb1b26c
+
+- COST: 90,925 tokens (the run's report; transcript 87,414 context +
+  3,511 output), 3 min 36 s, ten tool uses. Ten findings, its cap — five
+  high passes, five capped lists.
+- The reader's rule, set before it ran: CUT HERE unless something really
+  bad. None is: no finding loses text or a backup; each misplaces the
+  reading by a line or two, or leaves a convenience record stale.
+- Findings, the reviewer's, NOT FIXED, kept for a later look: (1) a
+  sticky masthead growing after the warm (a wrapped tag list) moves the
+  text without resizing the mount, so a held place is not set again;
+  (2) a hold outlives a scroll or edit that fires no wheel, key, pointer
+  or touch — a classic scrollbar dragged, Edit-menu paste, dictation — and
+  the next resize jumps back; (3) the fold store is neither moved on a
+  rename nor dropped on a delete, the class just fixed for places;
+  (4) a section opened by a restore is saved as the reader's own;
+  a ResizeObserver loop error is possible from that dispatch; (5) a held
+  visit never moves its record to the front, so a daily-read entry can
+  age out of the 300; (6) places dropped before the removal resolves, not
+  put back on its failure; (7) one list rewrite per swept key; (8) the
+  place bookkeeping hangs off two chrome call sites, not the entry
+  layer's remove and move; (9) the last-written skip trusts this tab over
+  another window's write; (10) `wheelTo` swallows its timeout, against
+  the steps' rule.
