@@ -1,7 +1,7 @@
 ---
 title: "feat: stanza fences and the Faerie Queene — ::: stanza N, cited I.i.2.1"
 type: feat
-status: built, awaiting the reader
+status: built and reviewed; the import folder built
 date: 2026-09-27
 origin: the grilling of 2026-09-27 (this conversation's questions 1–21)
 ---
@@ -446,3 +446,29 @@ decisions table.
   fenceStart separation, parseDOM/toDOM, the refusal, the numbering, the
   two-block rule, stanzaRange, the passage's grouping, the Roman
   respelling, the corpus exclusion.
+- The confirmation pass over the fix (dbfdaea..4d4bccb, 50,284 tokens):
+  no findings.
+
+### 2026-09-28 — the import folder
+
+- `~/Desktop/gesta-bookshelf-import-spenser/`, `bookshelf/` at the top
+  (the preview folder's nesting sent the first pick to the wrong level),
+  85 entries; the author page left out, on the shelf since the preview.
+  The converter (`build.py` over `fq.py` and `frontmatter.py`) and its
+  NOTES.md beside it.
+- Decided on the way, by the reader: drop caps modernised (`LO I` reads
+  `Lo I`; a modern text, not a facsimile). Found on the way: the
+  Mutabilitie page anchors canto viii differently and gives it no
+  argument; the Raleigh page's drop caps come in three more sizes, its
+  signatures ride in the next title's heading, and the print alternates
+  its poems between roman and italic type (the italic type's italics
+  dropped, as the letter's and the arguments'); a split italic run
+  around a repaired letter (`*Ph**æ**dria*`) joined up.
+- MEASURED: stanza counts agree with Smith in all 81 poem entries (3,848);
+  corpus clean 85/85; import 85/85; in headless Helium the contents page
+  drew 84/84 links and every canto opened with its stanza numbers drawn.
+  A checker counting stanzas with a non-greedy fence match read III.xii
+  as 49 — the note's nested fences (docs/source-to-bookshelf.md §4's
+  landmine); a depth-aware count reads 45.
+- Left as both sources print it: II.vii.55.6 `th’*Idæan*`, closed up as
+  all 402 of the text's `th’` elisions are; the reader to check the print.
