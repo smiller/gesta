@@ -216,3 +216,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
 - The approved "⌃⌘M from 20px down" still reads source 25: at 20px down
   the first line sits half under the masthead, and the first WHOLE line
   is carried — the text rule, not the guard's case.
+- A further confirmation pass over 573fcff was offered at about 100k and
+  SKIPPED on the reader's word. The day's review runs, summed from the
+  three plans' records: nine (seven at high, two at medium), 829,228
+  tokens; the folds and remembered-place chain alone ran six.
