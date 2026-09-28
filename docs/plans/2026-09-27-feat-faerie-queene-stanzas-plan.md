@@ -58,6 +58,9 @@ All from the grilling of 2026-09-27, by the reader, unless marked.
 | The stanza number is ALWAYS drawn, wherever a `::: stanza N` fence stands; citing by stanza waits on the directive (a hand-typed stanza elsewhere cites its line only) | the reader, 2026-09-27 (question C) |
 | A passage copied from mid-stanza is written `::: verse K`, the citation beside it naming the stanza | the reader, 2026-09-27 (question A) |
 | Editorial insertions: II.viii.48.8 keeps the printed `Sir *Guyon*`, a `::: note` after the stanza reading `“Sir *Guyon*”, 1590, 1596, corrected 1609.  *recte* “Prince *Arthur*”`; IV.xii.35.9's `[here, in 1609, ‘The end of the Fourth Booke.’]` dropped | the reader, 2026-09-27 (question B) |
+| III.xii's 1590 ending — five stanzas replaced in 1596 by 43–45 — kept in a `::: note` after the canto, under `*Stanzas of 1590, replaced in 1596 by 43–45:*`, each a `::: stanza` numbered as 1590 numbered it (43–47) | the reader, 2026-09-28 (question D) |
+| A stanza inside a note (or a quote, or a card) draws its number too, at the container's edge | the reader, 2026-09-28 |
+| Books and cantos in the modern Roman form everywhere, headings as citations: `Book IV`, not the print's `IIII` | the reader, 2026-09-28 (question F) |
 | The site's navigation and end-of-book lines (`Finis Book II.`, `Go on to Book III.`) are dropped: the structure says it | the reader, 2026-09-27 |
 
 ## Proposed solution
@@ -294,9 +297,7 @@ Mutabilitie canto and reads them.
 A, B and C were answered by the reader on 2026-09-27 and moved into the
 decisions table.
 
-- D. III.xii's 1590 ending (five stanzas, replaced in 1596 by 43–45):
-  leave it out, or keep it — e.g. in a `::: note` after the canto under
-  its heading, or as an entry of its own?
+- D and F answered 2026-09-28 (the decisions table).
 - E. The shared Helium step for the stanza (the Record's batch 3 says why
   it was not written unattended).
 
@@ -394,3 +395,18 @@ decisions table.
   probe above stood in for it.
 - MEASURED: `npm run verify` exit 0 — 519 tests, 43/43 hook checks, the
   Helium runs 0 open.
+
+### 2026-09-28 — the stanza inside a note
+
+- editor.css: `.page :is(div.note, blockquote, div[class^="card-"])
+  .verse[data-stanza]` takes 3ch of left padding and draws its number at
+  the container's edge, in the container's own colour (a note's muted);
+  help.html says so.
+- The converter writes III.xii's 1590 stanzas into a note after the
+  canto as `::: stanza 43`–`47` under their heading; the note
+  round-trips clean through tools/corpus.ts (MEASURED).
+- MEASURED, headless Helium, III.xii's stanzas 44–45 and the note
+  imported through the import act: the crumb `III.xii`, the title
+  `Book III, Canto xii`; the note's five stanzas each drew their number
+  (43–47) at its left edge (screenshot), the top-level 44–45 in the
+  gutter's column as before.

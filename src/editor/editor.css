@@ -324,6 +324,29 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    how a citation is followed. Variant D of the mockup, which was drawn
    over this stylesheet; the column fits inside the gutter's reserve, so
    no line moves. */
+/* a stanza inside a note, a quote or a card draws its number too
+   (2026-09-28: III.xii's 1590 stanzas stand in a note after the canto),
+   in a narrow column of its own at the container's edge — there is no
+   gutter there — in the container's own colour */
+.page :is(div.note, blockquote, div[class^="card-"]) .verse[data-stanza] {
+  position: relative;
+  padding-left: 3ch;
+}
+.page :is(div.note, blockquote, div[class^="card-"]) .verse[data-stanza]::before {
+  content: attr(data-stanza);
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: var(--sans);
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.9;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
 .page.versepage > .verse[data-stanza]::before {
   content: attr(data-stanza);
   position: absolute;
