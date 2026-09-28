@@ -42,8 +42,8 @@ here NOW, and what is not yet:
     `(pin: <section> › <reading label>)` for a Helium step,
     `(pin: bridge › <reading label>)` for the bridge tool's,
     `(pin: console › <line prefix>)` for a console line of the approved run,
-    `(pin: <file>.test › <title prefix>)` for a Vitest test. A checker will
-    verify every pin resolves (owed, with the rest of the plan).
+    `(pin: <file>.test › <title prefix>)` for a Vitest test. The comment
+    checker verifies every pin resolves (below).
   - No module header where the layout below says what the file is; an
     interface member's comment only where its name and type cannot say it.
   - The standing stock is audited against this directory by directory,
@@ -122,13 +122,27 @@ here NOW, and what is not yet:
   gate-test.sh cut to these five scripts: every hook's exit code over a
   throwaway repo, and the wiring read from this one; `npm run verify`
   runs it, so the pre-commit certifies the gates it is one of.
-- NOT YET — the prose checkers (`tools/*.sh` in ../writer), re-aimed at
-  this tree's comments and the plan's record as each class first shows up
-  in a review; each keeps its self-test and has its hit count measured
-  before its rule is chosen. THE FIRST CLASS HAS SHOWN UP (2026-09-12,
-  the citation batch's confirmation pass): a comment asserting another
-  module's mechanism — ../writer/tools/claims.sh's class — and its port
-  is owed, not yet made.
+- IN FORCE from 2026-09-28 — THE COMMENT CHECKER, `tools/comments.ts`
+  (`npm run test:comments`, under `verify`, so the pre-commit gates on
+  it), the first prose checker, ../writer/tools/claims.sh's class
+  re-aimed: over src/ with its tests, it FAILS on a pin that does not
+  resolve (the whole tree) and on an added or changed comment block that
+  names another module — an identifier another file declares at its top
+  level, a file path, a role noun's possessive ("the session's") — or
+  carries PROVENANCE — a date outside quotes, "the reader", "the review",
+  "the reviewer", a confirmation pass — with no waiver (the app's user,
+  in a sentence about behaviour, is "a reader"; "asked" is not checked,
+  being mostly prose); and prints THE LEDGER, every block the diff added or
+  changed. `--commit R` reads one commit; `--sweep` lists every block
+  that names another module or carries provenance, a reading list for
+  the audit. It catches
+  five of the nine known-bad blocks; the other four name a module only
+  by a role in plain English, and the review stays the net for them
+  (MEASURED, the plan's record).
+- NOT YET — the other prose checkers (`tools/*.sh` in ../writer),
+  re-aimed at this tree's comments and the plan's record as each class
+  first shows up in a review; each keeps its self-test and has its hit
+  count measured before its rule is chosen.
 - NEVER — the single-file checkers (the vocabulary index, check-sync, map.sh,
   names.sh, the concatenating build): TypeScript and the import graph answer
   their question.
@@ -204,6 +218,12 @@ is in the plan's record, under the phase named):
   on their exit codes, then the wiring — settings.json, `core.hooksPath`,
   the executable bits — read from this repo; `npm run test:hooks`,
   under `verify`.
+- `tools/comments.ts` — the comment checker's run (above);
+  `tools/commentRules.ts` its rules, pure: the comment scanner (its own:
+  TypeScript 7 exposes none), the pin resolver, the other-module rule,
+  the provenance rule, the diff's added lines; `tools/commentRules.test.ts` the self-test,
+  the known-bad blocks verbatim from git and real quiet ones (Vitest
+  reads `tools/**/*.test.ts` too).
 - `tools/helium-corner.mjs` — the shared steps played over the successor
   in headless Helium over a fresh profile, a 19-line driver since
   2026-09-12: the steps and their readings are `tools/helium-steps.mjs`'s

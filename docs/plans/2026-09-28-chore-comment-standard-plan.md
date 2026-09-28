@@ -220,3 +220,82 @@ pinned (a performance choice), 2 pinned with a neighbour.
   SKIPPED on the reader's word. The day's review runs, summed from the
   three plans' records: nine (seven at high, two at medium), 829,228
   tokens; the folds and remembered-place chain alone ran six.
+
+### 2026-09-28 — step 3: the checker
+
+- THE FOUR INFERRED KNOWN-BAD BLOCKS, checked against the reviewers' own
+  words in the transcripts (READ): three CONFIRMED — reference.ts "the
+  units walk numbers top-level blocks alone" (the 7d24ba2 review: "the
+  mechanism claim about numbering.ts the review named, moved rather than
+  removed"); numbering.ts "the gutter folds this over the top level" (the
+  420a712..f2313ef and 7d24ba2 reviews: "blockUnits' comment asserts what
+  lineNumbers.ts and reference.ts do with it"); main.ts "the landing sets
+  no selection" (the d1deeb7..7539133 review: "main.ts:542 and
+  folds.ts:102 assert that setLanding 'sets no selection'"). One NOT
+  confirmed: session.ts "the open sections are drawn with the view"
+  (e81e417) — the fix rewrote it, and no finding named it. It is out of
+  the self-test, which holds NINE.
+- BUILT: `tools/commentRules.ts` (the scanner — strings, template
+  literals and their interpolations, regex literals, a component's
+  markup, script and style, a stylesheet; the pin resolver; the
+  other-module rule; the diff's added lines), `tools/comments.ts` (the
+  run), `tools/commentRules.test.ts` (35 tests: the nine known-bad
+  blocks verbatim, six real quiet ones, the scanner's and the pins'
+  cases). `npm run test:comments`, under `verify`.
+- A PIN RESOLVES, by its head: a Helium section — the section in
+  helium-steps.mjs holds the reading label as a string literal, AND the
+  approved run has a line `<label>: ` (so it ran); `bridge` — a literal in
+  helium-bridge.mjs and a line of bridge.approved.txt; `console` — a line
+  of the approved run's console, its level aside, beginning with the
+  text; `<file>.test` — a test, it or describe title in that file
+  beginning with the text. A Helium or bridge label is the WHOLE label.
+- FOUND by its first run (MEASURED): two pins in session.ts named a
+  truncated label, "walk › ⌃⌘. from 3pr1"; the reading is "⌃⌘. from 3pr1
+  over an index of 3pr1, 3m1, 3pr2". The pins now name it whole. All 64
+  pins resolve.
+- EACH RULE BROKEN ONCE (MEASURED): the regex arm off, the role noun's
+  owner ignored, a label matched as any substring, the approved-run
+  check off — each turned exactly one self-test red.
+- MEASURED, the rule over the nine: 5 caught (paste.ts "the clipboard's";
+  folds.ts's header, foldsContents, store/contents.ts and "the
+  session's"; foldState.ts "the session's", and later "placeState.ts";
+  numbering.ts "the gutter's"), 4 missed (reference.ts, folds.ts and
+  main.ts on the landing, session.ts's highlight's own scroll) — the
+  prototype's figure.
+- MEASURED, the tree: 1,050 comment blocks in 156 files (the prototype
+  read 981 in 151: this scanner reads the stylesheets, help.html and
+  every trailing comment too); the sweep lists 138 naming another
+  module — 100 with a path (most of them the old app's files in port
+  provenance), 23 with a role possessive, 29 with an identifier.
+- MEASURED, the replay over the last 80 commits touching src/: the
+  ledger holds 858 blocks; 49 commits would have failed, on 119 blocks.
+  The gate is strict by decision (no waiver); a block MOVED counts as
+  added (INFERRED from the diff, where a moved line is an added one), so
+  moving code whose comment names another module fails until the audit
+  has cleared it.
+- The run costs 0.3 s over the working tree (MEASURED `time`).
+
+### 2026-09-28 — the provenance rule
+
+- DECIDED by the reader, on the question the checker's report left: dates,
+  the reader and the reviewer are recorded in docs/plans alone, so the
+  checker refuses them in an added or changed comment block, no waiver.
+- MEASURED before the rule's words were chosen, over today's 1,050
+  blocks: 242 dates (all but one provenance — a sub-page name quoted as
+  an example, so a date inside quotes or backticks does not count); 31
+  blocks naming the review, the reviewer or a confirmation pass, all
+  provenance; 24 with "the reader", most of them the app's user in a
+  sentence about behaviour ("until the reader's own wheel") — the phrase
+  is refused whole, and such a sentence says "a reader"; 38 with
+  "asked", most of them prose ("the depth asked for"), each one
+  recording provenance carrying a date as well (READ, the list) — so
+  "asked" is not checked.
+- BUILT: `provenance` in tools/commentRules.ts, three tests (the markers
+  verbatim from the tree, the quiet cases, a pin's text not the
+  comment's), each red before the rule (MEASURED) and after two breaks
+  (the quote strip, the pin strip: each turned its test red). The run
+  fails on it as on the other-module rule; `--sweep` lists 245 blocks.
+- MEASURED, the replay over the last 80 commits touching src/: 76
+  commits would have failed on it, 279 blocks. A probe file carrying
+  "(the review, 2026-09-28)" failed the run with exit 1; the clean tree
+  exits 0.

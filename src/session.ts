@@ -581,7 +581,7 @@ export function startSession(opts: SessionOptions): Session {
     location.hash = hash;
   }
   /* the walk follows the parent's index where it states one
-     (pin: walk › ⌃⌘. from 3pr1) */
+     (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2) */
   const orderMemo = new Map<string, { md: string; links: ContentsLink[] }>();
   function step(dir: "prev" | "next"): void {
     if (!layer.warmed) { say("still loading — try that again in a moment", 2500); return; }
@@ -647,7 +647,8 @@ export function startSession(opts: SessionOptions): Session {
   window.addEventListener("beforeunload", () => { saveNow(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
   /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
-     excluded (pin: walk › ⌃⌘. from 3pr1) (pin: source view › ⌃⌘W rendered) */
+     excluded (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
+     (pin: source view › ⌃⌘W rendered) */
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
     if (e.key === ",") { e.preventDefault(); step("prev"); }

@@ -12,5 +12,5 @@ import { viteSingleFile } from "vite-plugin-singlefile";
 export default defineConfig({
   plugins: [svelte(), viteSingleFile()],
   build: { target: "esnext", assetsInlineLimit: 100_000_000, cssCodeSplit: false },
-  test: { include: ["src/**/*.test.ts"], environment: "node" },
+  test: { include: ["src/**/*.test.ts", "tools/**/*.test.ts"], environment: "node" },
 });
