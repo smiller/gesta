@@ -18,10 +18,11 @@ import { fenceRefusals, refusalsText } from "./model/fenceRefusals.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, pageParts, NS } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
-import { hashParts, internalHash } from "./store/nav.ts";
+import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
 import { parseFoldStore, foldPage, withFoldPage, type FoldPage } from "./store/foldState.ts";
+import { parsePlaces, placeOf, withPlace, type Place } from "./store/placeState.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
@@ -37,13 +38,15 @@ import { countBefore, positionAt, arrivingCount, type Hold } from "./chrome/view
 import { sourceTab } from "./editor/sourceKeys.ts";
 import { wordCount, wordsOf } from "./editor/format.ts";
 
-/* WHAT AN OPEN IS, for the window's place (2026-09-28, three review
-   passes over the contents folds): a NEW navigation opens at the top (a
-   work's contents then scrolls to the link it was left from); a Back or
-   Forward restores the place the entry had when it was left, remembered
-   here — the browser's own restore ran against the page being left, and a
-   short one clamped it to 0; KEEP (a refresh, a rename) moves nothing. */
-export type OpenHow = "new" | "traverse" | "keep";
+/* WHAT AN OPEN IS, for the window's place (2026-09-28): ARRIVING at an
+   entry — a link, a walk, a pick, Back or Forward, a reload — returns the
+   reading to where the entry was last left, remembered in this browser
+   (store/placeState.ts; the reader: back on Book I, Canto vi, the reading
+   should stand at stanza 7), and a first visit opens at the top; KEEP (a
+   refresh, a rename) moves nothing. Three review passes had split arriving
+   into new and traverse, the browser's own restore running against the
+   page being left; one remembered place answers both. */
+export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
   mount: HTMLElement;
   layer: EntryLayer;
@@ -200,29 +203,53 @@ export function startSession(opts: SessionOptions): Session {
     }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
   }
   /* A WORK'S CONTENTS FOLD (2026-09-28, the contents-folds plan): which
-     sections were open and the link it was left from, kept in this browser
-     under one key; read and written inside try, a convenience only */
+     sections were open, kept in this browser under one key; read and
+     written inside try, a convenience only */
   const FOLDS_KEY = NS + "folds";
-  /* the link the open page was left from, owed one scroll back; and where
-     the window stood when the page opened, so the warm's second look
-     never moves a reader who has scrolled since (the review at high) */
-  let pendingLeft: string | null = null;
-  let openedAtY = 0;
-  let openedHow: OpenHow = "keep";
-  /* each entry's place when it was left, for a Back or Forward to it */
-  const places = new Map<string, number>();
-  /* the navigation under way is a Back or Forward — the Navigation API's
-     "traverse", recorded at its start and read by the one openHash it
-     leads to; a deferred open keeps the kind it was deferred with */
-  let traversing = false;
-  let deferredHow: OpenHow | null = null;
-  (window as unknown as { navigation?: EventTarget }).navigation?.addEventListener?.("navigate", (e: Event) => {
-    traversing = (e as Event & { navigationType?: string }).navigationType === "traverse";
-  });
-  const readFolds = (ekey: string): FoldPage => { try { return foldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey); } catch { return { open: [], left: null }; } };
+  const readFolds = (ekey: string): FoldPage => { try { return foldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey); } catch { return { open: [] }; } };
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => {
     try { localStorage.setItem(FOLDS_KEY, JSON.stringify(withFoldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey, patch))); } catch { /* a convenience lost, not a failure */ }
   };
+  /* WHERE EACH ENTRY WAS LEFT (placeState.ts), under one key; and where the
+     window stood when the open entry was arrived at, so the warm's second
+     look never moves a reader who has scrolled since (the review at high) */
+  const PLACES_KEY = NS + "places";
+  let openedAtY = 0;
+  let arrived = false;
+  const readPlace = (ekey: string): Place | null => { try { return placeOf(parsePlaces(localStorage.getItem(PLACES_KEY)), ekey); } catch { return null; } };
+  const writePlace = (ekey: string, place: Place): void => {
+    try { localStorage.setItem(PLACES_KEY, JSON.stringify(withPlace(parsePlaces(localStorage.getItem(PLACES_KEY)), ekey, place))); } catch { /* a convenience lost, not a failure */ }
+  };
+  /* the masthead is sticky over the page's top: a place is read, and set,
+     just under it */
+  const underMasthead = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0) + 4;
+  function recordPlace(): void {
+    if (mdView && source) { writePlace(ekeyOf(), { pos: -1, y: window.scrollY }); return; }
+    if (!view) return;
+    const box = view.dom.getBoundingClientRect();
+    const hit = view.posAtCoords({ left: box.left + 24, top: Math.max(underMasthead(), box.top + 1) });
+    writePlace(ekeyOf(), { pos: hit ? hit.pos : 0, y: window.scrollY });
+  }
+  /* the place set: by its text position in the rendered view, again a
+     frame later once the fitted measure has re-wrapped; by offset in the
+     source view. False when the entry has none. */
+  function restorePlace(ekey: string): boolean {
+    const p = readPlace(ekey);
+    if (!p) return false;
+    const apply = (): void => {
+      if (mdView || !view || p.pos < 0) { window.scrollTo(0, p.y); return; }
+      try {
+        const c = view.coordsAtPos(Math.min(p.pos, view.state.doc.content.size));
+        window.scrollTo(0, window.scrollY + c.top - underMasthead());
+      } catch { window.scrollTo(0, p.y); }
+    };
+    apply();
+    requestAnimationFrame(apply);
+    return true;
+  }
+  let placeTimer: ReturnType<typeof setTimeout> | null = null;
+  window.addEventListener("scroll", () => { if (placeTimer) clearTimeout(placeTimer); placeTimer = setTimeout(recordPlace, 400); }, { passive: true });
+  window.addEventListener("pagehide", () => recordPlace());
   function mountEditor(doc: import("prosemirror-model").Node, date: string, tag: string | null): void {
     teardown();
     const dir = entryFile(date, tag).dir;
@@ -238,8 +265,7 @@ export function startSession(opts: SessionOptions): Session {
          its one primed row, before the warm, cannot yet see its sub-entries
          and is switched on when the warm lands (refreshFolds) */
       folds: { on: folding, open: page ? page.open : [], onChange: (open) => writeFolds(ekey, { open }) },
-      /* a link followed from a folding page is where it was left from */
-      onRoute: (frag) => { if (view && foldsKey.getState(view.state)?.on) writeFolds(ekey, { left: frag }); goto(frag, "already here"); },
+      onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
     });
@@ -345,7 +371,7 @@ export function startSession(opts: SessionOptions): Session {
     cancelSave();
     suspended = false;
     if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (read 2026-09-22 by the grid step) */
-    if (view || source) places.set(ekeyOf(), window.scrollY);
+    if (view || source) recordPlace();
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
@@ -381,41 +407,17 @@ export function startSession(opts: SessionOptions): Session {
     document.documentElement.dataset.entry = ekey;
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
-    /* AFTER the highlight, so a placed one is seen and wins: run before
-       it, the check read the fresh empty selection and the page jumped
-       twice (the confirmation pass). Only on a NEW navigation, and only
-       where the page folds; a Back restores its own place instead */
-    pendingLeft = how === "new" && !mdView && view && foldsKey.getState(view.state)?.on ? readFolds(ekey).left : null;
-    scrollToLeft(ekey);
   }
-  /* the window's place for an open, by its kind (OpenHow); a restored
-     place is set again a frame later, once the fitted measure has re-wrapped */
+  /* the window's place for an open, by its kind: arriving returns to where
+     the entry was left, or the top on a first visit — and the top when a
+     highlight is owed, whose own scroll then centres the hit */
   function place(ekey: string, how: OpenHow): void {
-    openedHow = how;
-    if (how === "new") window.scrollTo(0, 0);
-    else if (how === "traverse") {
-      const y = places.get(ekey) ?? 0;
-      window.scrollTo(0, y);
-      requestAnimationFrame(() => window.scrollTo(0, y));
+    arrived = how === "arrive";
+    if (arrived) {
+      const hl = pending && pending.gen === navGen;
+      if (hl || !restorePlace(ekey)) window.scrollTo(0, 0);
     }
     openedAtY = window.scrollY;
-  }
-  /* coming back to a folding page: the link it was left from in view, a
-     frame after the paint. Used ONCE and then forgotten — kept, every
-     later reopen (an import's refresh, a walk) jumped to it — and not
-     used at all when a highlight has landed, whose place wins (the
-     review at high, 2026-09-28) */
-  function scrollToLeft(ekey: string): void {
-    const left = pendingLeft;
-    pendingLeft = null;
-    if (!left || !view) return;
-    writeFolds(ekey, { left: null });
-    if (!view.state.selection.empty) return;
-    requestAnimationFrame(() => {
-      if (!view || !view.state.selection.empty) return;
-      const a = [...mount.querySelectorAll("a")].find((x) => internalHash(x.getAttribute("href") || "") === left);
-      if (a && a.offsetParent) a.scrollIntoView({ block: "center" });
-    });
   }
   /* THE WARM LANDED: whether the open page folds is asked again, now the
      cache holds every key. After a refresh the page opens from its one
@@ -431,11 +433,11 @@ export function startSession(opts: SessionOptions): Session {
     const page = on ? readFolds(ekey) : null;
     /* read BEFORE the folds close sections and move the page under the
        reader (the confirmation pass: read after, a clamped or anchored
-       scroll read as the reader's own) */
+       scroll read as the reader's own); the place is set again after the
+       folds, which moved the text under it */
     const still = Math.abs(window.scrollY - openedAtY) < 2;
     setFolds(on, page ? page.open : [])(view.state, view.dispatch);
-    if (page && still && openedHow === "new") { pendingLeft = page.left; scrollToLeft(ekey); }
-    else if (page && page.left) writeFolds(ekey, { left: null });   /* used once, even when skipped */
+    if (page && still && arrived && view.state.selection.empty) restorePlace(ekey);
   }
   function insertText(text: string): boolean {
     if (mdView && source) {
@@ -466,9 +468,6 @@ export function startSession(opts: SessionOptions): Session {
   let hashDeferred = false;
   function openHash(): void {
     hashDeferred = false;
-    const how: OpenHow = deferredHow ?? (traversing ? "traverse" : "new");
-    traversing = false;
-    deferredHow = null;
     const h = hashParts(location.hash.slice(1));
     const keys = Object.keys(layer.cache);
     if (unmintedKey(keys, h.date, h.tag)) {
@@ -479,7 +478,6 @@ export function startSession(opts: SessionOptions): Session {
          seconds after a refresh said "no such author". */
       if (!layer.warmed) {
         hashDeferred = true;
-        deferredHow = how;
         const want = entryKey(h.date, h.tag);
         layer.primeEntry(want).then(() => { if (hashDeferred && (layer.warmed || want in layer.cache)) openHash(); }, () => {});
         return;
@@ -497,7 +495,7 @@ export function startSession(opts: SessionOptions): Session {
     /* a "?h=" payload replays LITERALLY: the passage is text, and an old
        link's nth, counted under substring rules, still lands */
     if (h.hl) pending = { hl: h.hl, honor: false, gen: ++navGen };
-    open(h.date, h.tag, how);
+    open(h.date, h.tag, "arrive");
   }
   function saveNow(): Promise<boolean> {
     cancelSave();

@@ -282,3 +282,32 @@ judged real and fixed in one commit:
   Back — 2310, and still 2310 a frame later; a canto at 2000, walked, Back
   — 2000; a source-view walk from 1500 opens at 0; the fold probe as before.
 - The comment class (claims.sh's) found in all three passes: owed.
+
+### 2026-09-28 — every entry returns to where it was left
+
+- Asked by the reader, trying it: Book I, Canto vi, scrolled to stanza 7,
+  the contents, then Canto vi again, opened at the top — "I'd expect it to
+  go to stanza 7, the last place I was at on that page". Chosen: across
+  reloads, in this browser (the reader, option 2 of two).
+- src/store/placeState.ts: one key, `gesta.v1.places`, the 300 most
+  recently left entries, each `{ pos, y }` — the text position just under
+  the masthead in the rendered view (a pixel offset drifts with the
+  window's width and edits above) and the offset for the source view.
+- session.ts: an open is ARRIVE (a link, a walk, a pick, Back or Forward,
+  a reload: back to the remembered place, the top on a first visit, the
+  top when a highlight is owed and its own scroll centres the hit) or KEEP
+  (a refresh, a rename). The place is recorded on leaving an entry, on a
+  debounced scroll and on pagehide. This RETIRES the three passes'
+  new/traverse split and the Navigation API's traversal flag, and the
+  contents page's separate remembered-link scroll (foldState keeps the
+  open sections only; a stored `left` from before is ignored): the
+  contents' own place, remembered when a link is followed from it, does
+  that job. The warm's second look re-applies the place once folding has
+  moved the text.
+- MEASURED, headless Helium: Canto vi at the top on a first visit;
+  scrolled to stanza 7, the crumb to the contents, Canto vi's link — stanza
+  7 at the top; a true reload — stanza 7; Book II, Canto iii on a first
+  visit at the top; a highlight link into Canto vi's stanza 30 — the hit
+  selected, stanza 28 at the top, not the remembered 7. `npm run verify`
+  exit 0 with the shared Helium runs unchanged: the contents step's "back
+  on the contents" reads its canto link in view through the place alone.

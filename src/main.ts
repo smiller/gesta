@@ -909,7 +909,7 @@ if (fixture && fixtures[fixture]) {
     /* the landing FIRST: opening another entry cancels the pending save
        that would otherwise resurrect this one */
     history.replaceState(null, "", entryHash(back.date, back.tag));
-    session.open(back.date, back.tag, "new");
+    session.open(back.date, back.tag, "arrive");
     /* the landing's typed text lands BEFORE the retarget reads the host,
        and the repaint comes only where the store moved (a lost link) */
     Promise.all([layer.removeEntry(key), ...sweep]).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {

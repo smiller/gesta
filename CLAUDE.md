@@ -258,7 +258,8 @@ is in the plan's record, under the phase named):
   `shortcuts.ts` (the text expander's table grammar and the prefix
   filter), `contents.ts` (a book's own order and sections
   read off its parent's contents, the feed flip), `foldState.ts` (what a folding contents page remembers in this browser:
-  its open sections, the link it was left from), `links.ts` (the links in a stored entry
+  its open sections), `placeState.ts` (where each entry was left, the 300
+  most recent, for every arrival back), `links.ts` (the links in a stored entry
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
   them, ported from the current app's node suites where they had one.
