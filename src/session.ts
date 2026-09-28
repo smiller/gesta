@@ -18,7 +18,7 @@ import { fenceRefusals, refusalsText } from "./model/fenceRefusals.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { entryKey, entryHash, todayKey, nsOf, pageParts, NS } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
-import { hashParts } from "./store/nav.ts";
+import { hashParts, internalHash } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
 import { parseFoldStore, foldPage, withFoldPage, type FoldPage } from "./store/foldState.ts";
@@ -196,6 +196,11 @@ export function startSession(opts: SessionOptions): Session {
      sections were open and the link it was left from, kept in this browser
      under one key; read and written inside try, a convenience only */
   const FOLDS_KEY = NS + "folds";
+  /* the link the open page was left from, owed one scroll back; and where
+     the window stood when the page opened, so the warm's second look
+     never moves a reader who has scrolled since (the review at high) */
+  let pendingLeft: string | null = null;
+  let openedAtY = 0;
   const readFolds = (ekey: string): FoldPage => { try { return foldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey); } catch { return { open: [], left: null }; } };
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => {
     try { localStorage.setItem(FOLDS_KEY, JSON.stringify(withFoldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey, patch))); } catch { /* a convenience lost, not a failure */ }
@@ -205,6 +210,8 @@ export function startSession(opts: SessionOptions): Session {
     const dir = entryFile(date, tag).dir;
     const ekey = entryKey(date, tag);
     const folding = foldsContents(Object.keys(layer.cache), date, tag);
+    const page = folding ? readFolds(ekey) : null;
+    pendingLeft = page ? page.left : null;
     view = createEditor(mount, doc, {
       interval,
       onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
@@ -213,7 +220,7 @@ export function startSession(opts: SessionOptions): Session {
       /* always given, off where the page does not fold: a page opened from
          its one primed row, before the warm, cannot yet see its sub-entries
          and is switched on when the warm lands (refreshFolds) */
-      folds: { on: folding, open: folding ? readFolds(ekey).open : [], onChange: (open) => writeFolds(ekey, { open }) },
+      folds: { on: folding, open: page ? page.open : [], onChange: (open) => writeFolds(ekey, { open }) },
       /* a link followed from a folding page is where it was left from */
       onRoute: (frag) => { if (view && foldsKey.getState(view.state)?.on) writeFolds(ekey, { left: frag }); goto(frag, "already here"); },
       onRefuse: (why) => say(why),
@@ -357,13 +364,19 @@ export function startSession(opts: SessionOptions): Session {
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
   }
   /* coming back to a folding page: the link it was left from in view, a
-     frame after the paint (the open sections are drawn with the view) */
+     frame after the paint. Used ONCE and then forgotten — kept, every
+     later reopen (an import's refresh, a walk) jumped to it — and not
+     used at all when a highlight has landed, whose place wins (the
+     review at high, 2026-09-28) */
   function scrollToLeft(ekey: string): void {
-    if (!foldsContents(Object.keys(layer.cache), current.date, current.tag)) return;
-    const left = readFolds(ekey).left;
-    if (!left) return;
+    const left = pendingLeft;
+    pendingLeft = null;
+    openedAtY = window.scrollY;
+    if (!left || !view) return;
+    writeFolds(ekey, { left: null });
+    if (!view.state.selection.empty) return;
     requestAnimationFrame(() => {
-      const a = [...mount.querySelectorAll("a")].find((x) => x.getAttribute("href") === left);
+      const a = [...mount.querySelectorAll("a")].find((x) => internalHash(x.getAttribute("href") || "") === left);
       if (a && a.offsetParent) a.scrollIntoView({ block: "center" });
     });
   }
@@ -378,8 +391,9 @@ export function startSession(opts: SessionOptions): Session {
     const on = foldsContents(Object.keys(layer.cache), current.date, current.tag);
     if (!st || st.on === on) return;
     const ekey = ekeyOf();
-    setFolds(on, on ? readFolds(ekey).open : [])(view.state, view.dispatch);
-    if (on) scrollToLeft(ekey);
+    const page = on ? readFolds(ekey) : null;
+    setFolds(on, page ? page.open : [])(view.state, view.dispatch);
+    if (page && Math.abs(window.scrollY - openedAtY) < 2) { pendingLeft = page.left; scrollToLeft(ekey); }
   }
   function insertText(text: string): boolean {
     if (mdView && source) {

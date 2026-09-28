@@ -42,6 +42,7 @@ import { linkRefusal, insertLinkAfter } from "./editor/insertLink.ts";
 import { mdLabel, romanWorkKey } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./chrome/gotoModel.ts";
 import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
+import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
 import { parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
@@ -538,6 +539,10 @@ if (fixture && fixtures[fixture]) {
   }
   const landOn = (pos: number): void => {
     const view = session.view!;
+    /* a landing inside a closed contents section opens it first: the
+       landing sets no selection, and a hidden row has no box to scroll to
+       (the review at high, 2026-09-28) */
+    openFoldAt(pos)(view.state, view.dispatch);
     setLanding(view, pos);
     const node = view.state.doc.nodeAt(pos)!;
     const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));

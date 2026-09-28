@@ -5,7 +5,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Decoration } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
-import { foldSections, foldDecorations, sectionAt, folds, foldsKey, toggleFold, setFolds } from "./folds.ts";
+import { foldSections, foldDecorations, sectionAt, folds, foldsKey, toggleFold, setFolds, openFoldAt, openKeys } from "./folds.ts";
 
 const CONTENTS = "# The Faerie Queene\n\n*Disposed into twelue bookes*\n\n::: reference\nroman book and canto\n:::\n\n" +
   "## Dedications\n\nTo the most high, mightie and magnificent empresse\n\n- [Letter to Raleigh](#bookshelf/S/W/Letter)\n- [Commendatory Verses](#bookshelf/S/W/CV)\n\n" +
@@ -42,8 +42,8 @@ test("the decorations: every heading marked with its count and state, a closed s
 test("sectionAt: the section a position's body belongs to, null above the first heading or on a heading", () => {
   let inCanto = -1;
   doc.descendants((n, pos) => { if (inCanto < 0 && n.isText && n.text === "Canto ii") inCanto = pos + 1; return inCanto < 0; });
-  expect(sectionAt(doc, inCanto)?.key).toBe("Book I: The Legende of the Knight");
-  expect(sectionAt(doc, 3)).toBe(null);
+  expect(sectionAt(foldSections(doc), inCanto)?.key).toBe("Book I: The Legende of the Knight");
+  expect(sectionAt(foldSections(doc), 3)).toBe(null);
 });
 
 function stateWith(opts: Parameters<typeof folds>[0]): EditorState {
@@ -52,11 +52,11 @@ function stateWith(opts: Parameters<typeof folds>[0]): EditorState {
 test("the plugin: off draws nothing; on starts from the open set it is given; a toggle opens and closes one section", () => {
   expect(foldsKey.getState(stateWith({ on: false, open: [] }))!.decorations.find().length).toBe(0);
   let s = stateWith({ on: true, open: ["Dedications"] });
-  expect([...foldsKey.getState(s)!.open]).toEqual(["Dedications"]);
+  expect(openKeys(s)).toEqual(["Dedications"]);
   toggleFold("Book VII: Two Cantos of Mutabilitie")(s, (tr) => { s = s.apply(tr); });
-  expect([...foldsKey.getState(s)!.open].sort()).toEqual(["Book VII: Two Cantos of Mutabilitie", "Dedications"]);
+  expect(openKeys(s).sort()).toEqual(["Book VII: Two Cantos of Mutabilitie", "Dedications"]);
   toggleFold("Dedications")(s, (tr) => { s = s.apply(tr); });
-  expect([...foldsKey.getState(s)!.open]).toEqual(["Book VII: Two Cantos of Mutabilitie"]);
+  expect(openKeys(s)).toEqual(["Book VII: Two Cantos of Mutabilitie"]);
   setFolds(false, [])(s, (tr) => { s = s.apply(tr); });
   expect(foldsKey.getState(s)!.decorations.find().length).toBe(0);
 });
@@ -65,5 +65,57 @@ test("a selection landing inside a closed section opens it (a search result, a h
   let pos = -1;
   doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text === "Canto i") pos = p + 2; return pos < 0; });
   s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, pos)));
-  expect([...foldsKey.getState(s)!.open]).toEqual(["Book I: The Legende of the Knight"]);
+  expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight"]);
+});
+
+// The review of 2026-09-28 (one /code-review at high, three of its findings
+// also medium's): a section is followed by POSITION while the page is
+// edited and remembered by its heading's text, twins numbered.
+const at = (d: typeof doc, text: string, offset = 0): number => {
+  let pos = -1;
+  d.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.includes(text)) pos = p + n.text!.indexOf(text) + offset; return pos < 0; });
+  if (pos < 0) throw new Error("not found: " + text);
+  return pos;
+};
+test("typing in an open heading keeps its section open, and the new text is what is remembered", () => {
+  let s = stateWith({ on: true, open: ["Book I: The Legende of the Knight"] });
+  s = s.apply(s.tr.insertText("!", at(s.doc, "the Knight", 10)));
+  expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight!"]);
+  expect(foldsKey.getState(s)!.decorations.find().filter((d) => (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs.class === "folded").length).toBe(3);   /* Dedications' two blocks and Book VII's list */
+});
+test("twin headings are two sections: toggled apart, remembered as Notes and Notes (2)", () => {
+  const twin = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)");
+  expect(foldSections(twin).map((x) => x.key)).toEqual(["Notes", "Notes (2)"]);
+  let s = EditorState.create({ doc: twin, plugins: [folds({ on: true, open: [] })] });
+  toggleFold("Notes (2)")(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual(["Notes (2)"]);
+});
+test("closing a section moves a caret out of it onto the heading's end", () => {
+  let s = stateWith({ on: true, open: ["Dedications"] });
+  s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, at(s.doc, "Letter to Raleigh", 3))));
+  toggleFold("Dedications")(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual([]);
+  expect(s.selection.$head.parent.textContent).toBe("Dedications");
+  expect(s.selection.$head.parentOffset).toBe("Dedications".length);
+});
+test("an edit leaving the caret inside a closed section opens it", () => {
+  let s = stateWith({ on: true, open: ["Book I: The Legende of the Knight"] });
+  s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, at(s.doc, "Canto ii", 2))));
+  toggleFold("Book I: The Legende of the Knight")(s, (tr) => { s = s.apply(tr); });   /* caret moved to the heading */
+  /* an edit whose mapping carries the caret into the closed body */
+  const inside = at(s.doc, "Canto ii", 2);
+  s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, inside)).insertText("x"));
+  expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight"]);
+});
+test("switching folding on opens the section holding the selection (a highlight placed before the warm)", () => {
+  let s = stateWith({ on: false, open: [] });
+  s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, at(s.doc, "Canto vi"), at(s.doc, "Canto vi", 8))));
+  setFolds(true, ["Dedications"])(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s).sort()).toEqual(["Book VII: Two Cantos of Mutabilitie", "Dedications"]);
+});
+test("openFoldAt opens the section a position is in (⌃⌘G's landing), and does nothing outside one", () => {
+  let s = stateWith({ on: true, open: [] });
+  openFoldAt(at(s.doc, "Canto ii"))(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight"]);
+  expect(openFoldAt(3)(s)).toBe(false);
 });

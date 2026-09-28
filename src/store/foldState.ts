@@ -1,9 +1,9 @@
 /* What a folding contents page remembers between visits (2026-09-28, the
    contents-folds plan): its open sections, by heading text, and the link
    it was left from, so coming back shows the page as it was left and in
-   view where it was left. ONE localStorage key (the session's, NS +
-   "folds"), a JSON map from entry key to a page record — a per-browser
-   convenience, never in the text or a backup. Parsing forgives anything:
+   view where it was left. ONE localStorage key, NS + "folds", a JSON
+   map from entry key to a page record — a per-browser convenience, never
+   in the text or a backup. Parsing forgives anything:
    a damaged store is an empty one. */
 export interface FoldPage { open: string[]; left: string | null }
 export type FoldStore = Record<string, FoldPage>;

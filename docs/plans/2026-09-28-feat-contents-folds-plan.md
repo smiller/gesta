@@ -1,7 +1,7 @@
 ---
 title: "feat: a work's contents fold under its headings — seven books on one screen"
 type: feat
-status: built, awaiting the reader
+status: built and reviewed
 date: 2026-09-28
 origin: the Faerie Queene contents page, and a mockup iterated with the reader 2026-09-28
 ---
@@ -166,3 +166,48 @@ and editor.ts, DOM seams).
   rather than list a difference whose cause is timing. Ten fields decided
   in corner.differences.txt, the current app having no folds: 109 steps,
   0 open.
+
+### The review — 2026-09-28, /code-review at HIGH and at MEDIUM over 04435e9..d1deeb7
+
+Asked by the reader: high instead of medium, both run, cost and findings
+compared. The diff: 424 lines over src and tools.
+
+| | medium | high |
+|---|---|---|
+| tokens (final context + output, the figure a review reports) | 69,499 | 89,181 (+28%) |
+| output tokens written | 2,028 | 4,078 |
+| cache read over all turns | 520,109 | 651,215 (+25%) |
+| turns / tool calls | 10 / 9 | 11 / 11 |
+| recipe (the transcript's first line) | one careful diff pass, ≤15 findings | 8 inline angles, dedup, no verify, ≤10 findings |
+| findings | 3 | 10 (the cap) |
+
+MEASURED from the two transcripts in the session's subagents folder: the
+medium run went in the foreground and reported no count; the arithmetic
+reproduces the reported figures of the other runs exactly (89,181, 85,878)
+and one within 30 (50,254 against 50,284).
+
+Findings, both levels: typing in an open heading closed it (keyed by live
+text); twin headings toggled together; the warm's switch-on folded away a
+highlight and scrolled to the remembered link. High alone, behaviour:
+closing a section left the caret in hidden blocks; the remembered link was
+never cleared and every reopen jumped to it; a ⌃⌘G landing inside a closed
+section stayed hidden; a full-URL contents link was never found for the
+scroll back. High alone, cost and form: sections recomputed per keystroke
+and caret move; the fold decision and the stored state read three times
+per open; two comments asserting another module's mechanism. All ten
+judged real and fixed in one commit:
+- folds.ts: sections cached in the plugin state, recomputed on a doc
+  change; open sections held as heading positions mapped through edits,
+  remembered by text with twins numbered (`Notes`, `Notes (2)`); a section
+  made by an edit opens; closing moves a caret inside onto the heading's
+  end; any selection, edit or switch-on landing inside a closed section
+  opens it; `openFoldAt` for ⌃⌘G (main.ts's landOn).
+- session.ts: the fold decision and the stored page read once per open;
+  the remembered link used once then cleared, skipped when a highlight
+  has landed, matched through internalHash; the warm's second look scrolls
+  only if the window has not moved since the open.
+- MEASURED: folds.test.ts 12 tests (6 new, each failing first); headless
+  Helium over the Faerie Queene folder — typing in an open heading kept it
+  open; back from Canto ix, Book III open and its link in view; reopened
+  again, no scroll; a true reload on a highlight into Dedications opened
+  Dedications.
