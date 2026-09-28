@@ -57,13 +57,23 @@ here NOW, and what is not yet:
   app; what is the sensible and economic way to review it" rather than
   ported: the free checkers first (tsc with the unused checks on, the
   suite, the corpus tool, the Helium tools), then ONE `/code-review` at
-  medium over a commit range, by BATCH — when a batch touches a DOM seam
+  HIGH over a commit range, by BATCH — when a batch touches a DOM seam
   (main.ts, session.ts, editor.ts, paste.ts) or closes a phase — never
   per commit; its findings land in one fix commit; a confirmation pass
   is offered at its measured price and runs only on the reader's word,
-  and only when a finding changed behaviour. No cheap reviewer tier: in
-  the running app it cost 750k–985k tokens a round against 101k–154k for
-  the medium pass, which found more (MEASURED there 2026-09-01). A
+  and only when a finding changed behaviour. HIGH, NOT MEDIUM, from
+  2026-09-28 (the reader, on Opus 5.5): over one diff (the contents
+  folds, 424 lines) high cost 89,181 tokens against medium's 69,499
+  (+28%) and found ten issues against three, all three of medium's among
+  them (MEASURED, docs/plans/2026-09-28-feat-contents-folds-plan.md).
+  EVERY review's cost is recorded in its plan's record and reported to
+  the reader: the figure is the run's final context plus final output; a
+  run that returns in the foreground reports none, and it is read from
+  the session's `subagents/agent-*.jsonl` transcript (the last message's
+  input + cache_creation + cache_read + output tokens), never estimated.
+  No cheap reviewer tier: in the running app it cost 750k–985k tokens a
+  round against 101k–154k for the medium pass, which found more
+  (MEASURED there 2026-09-01). A
   reviewer finding a MECHANICAL class — a literal, a name that does not
   resolve, a comment shape — owes a checker under `tools/`, not just a
   fix: a grep runs free forever.
