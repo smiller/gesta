@@ -397,19 +397,25 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    down when the section is open; a closed heading shows its count beside
    it and sits closer to the next. */
 .page h2.fold { position: relative; }
+/* the triangle takes a box 1.2em square, so a mouse can hit it — drawn as
+   a border trick it was a box ten pixels wide, and the shared Helium step's
+   click missed it (2026-09-28); the shape is a mask, so it takes the
+   page's colours in either theme */
 .page h2.fold::before {
   content: "";
   position: absolute;
-  left: -1.1em;
-  top: 0.5em;
-  border: 0.32em solid transparent;
-  border-left: 0.5em solid var(--muted);
-  transform-origin: 25% 50%;
+  left: -1.35em;
+  top: 0.08em;
+  width: 1.2em;
+  height: 1.2em;
+  background-color: var(--muted);
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><polygon points='2.5,1.8 8.5,5 2.5,8.2'/></svg>") center / 0.62em 0.62em no-repeat;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'><polygon points='2.5,1.8 8.5,5 2.5,8.2'/></svg>") center / 0.62em 0.62em no-repeat;
   transition: transform 120ms ease;
   cursor: pointer;
 }
 .page h2.fold[aria-expanded="true"]::before { transform: rotate(90deg); }
-.page h2.fold:hover::before { border-left-color: var(--accent); }
+.page h2.fold:hover::before { background-color: var(--accent); }
 .page h2.fold[aria-expanded="false"]::after {
   content: attr(data-count);
   font-family: var(--sans);

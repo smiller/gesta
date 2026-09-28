@@ -583,6 +583,21 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G 2.9", await R.linebar(page));
   await page.keyboard.press("Escape");
     }],
+    ["contents folds", async () => {
+  /* a work's contents folding under its headings (2026-09-28, successor-only): the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
+  await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
+  await R.settle(page);
+  await log("a contents page opened", await R.folds(page));
+  await R.clickFoldTriangle(page, "Book I");
+  await log("the triangle clicked", await R.folds(page));
+  await page.click(S.editorLink("#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1")).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Spenser, Edmund/The Faerie Queene/1.1", 5000).catch(() => {});
+  await log("its canto followed", { entry: await A.entry(page) });
+  await page.evaluate(() => scrollTo(0, 0));
+  await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
+  await page.waitForTimeout(200);
+  await log("back on the contents", await R.folds(page));
+    }],
     ["pill", async () => {
   if (A.pill) {
     await page.goto(A.url("page/Horace", "corner=pill"));

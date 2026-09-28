@@ -206,7 +206,9 @@ is in the plan's record, under the phase named):
   (the tokens drawn as inline decorations over every code block),
   `quoteKeys.ts` (Tab and Shift-Tab in a quote: the run between blank
   lines nested, or spliced back), `gridKeys.ts` (a grid's edges: Enter
-  out of the last card, the joins between cards refused), `listKeys.ts` (the gestures in a list:
+  out of the last card, the joins between cards refused), `folds.ts` (a
+  work's contents folding under its `##` headings: the sections, their
+  counts, the decorations, the triangle's toggle), `listKeys.ts` (the gestures in a list:
   Enter, Tab, Shift-Tab, with the two truths of the refusal), `editor.ts`
   (the
   view with its plugins), `editor.css` (the
@@ -245,7 +247,8 @@ is in the plan's record, under the phase named):
   store parses to and refuses, the two views, the trigger's grammar),
   `shortcuts.ts` (the text expander's table grammar and the prefix
   filter), `contents.ts` (a book's own order and sections
-  read off its parent's contents, the feed flip), `links.ts` (the links in a stored entry
+  read off its parent's contents, the feed flip), `foldState.ts` (what a folding contents page remembers in this browser:
+  its open sections, the link it was left from), `links.ts` (the links in a stored entry
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
   them, ported from the current app's node suites where they had one.

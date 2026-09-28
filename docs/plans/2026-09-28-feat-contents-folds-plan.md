@@ -1,7 +1,7 @@
 ---
 title: "feat: a work's contents fold under its headings — seven books on one screen"
 type: feat
-status: planned
+status: built, awaiting the reader
 date: 2026-09-28
 origin: the Faerie Queene contents page, and a mockup iterated with the reader 2026-09-28
 ---
@@ -144,3 +144,25 @@ and editor.ts, DOM seams).
   viii`, landed in an already open book and proved nothing).
 - `npm run verify` exit 0 — 531 tests, 43/43 hook checks, 105 Helium
   steps, 0 open.
+
+### Batch 3 — 2026-09-28, the Helium step
+
+- tools/helium-steps.mjs: "contents folds", after the stanza step, on the
+  contents page its seeds already make (a `##` Book heading over a canto
+  link): closed with `1 entry` on arrival, opened by the triangle, the
+  canto followed, and on the way back still open with the link in view.
+  Readers `folds` and `clickFoldTriangle` in both adapters.
+- THE TRIANGLE'S TARGET: the step's first click missed. Drawn with a
+  border trick the triangle's box was ten pixels wide (editor.css now
+  gives it a 1.2em square, the shape a mask in the page's colours); and
+  the step aimed at a two-line heading's MIDDLE, below the triangle,
+  which stands beside the first line — `elementFromPoint` there read
+  `MAIN`. The step now aims beside the first line.
+- MEASURED: the successor's run gained exactly the four new lines, read
+  and approved (112 lines). The current app's run, regenerated twice, read
+  the list step's "saved" whisper as `show: false` where this morning's
+  record and the successor read `true` — the whisper racing the read, in
+  an app this plan does not touch; the record keeps its earlier `true`
+  rather than list a difference whose cause is timing. Ten fields decided
+  in corner.differences.txt, the current app having no folds: 109 steps,
+  0 open.
