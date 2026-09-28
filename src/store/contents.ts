@@ -19,7 +19,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { linkRuns } from "./links.ts";
 import { childrenOf } from "./lists.ts";
-import { entryKey, entryHash, byName, DATE_KEY_SRC } from "./keys.ts";
+import { entryKey, entryHash, byName, DATE_KEY_SRC, NS_BOOK } from "./keys.ts";
 
 export interface ContentsLink { href: string; group: string | null }
 export function contentsLinks(md: string): ContentsLink[] {
@@ -79,4 +79,13 @@ export function subPageDisplayList(order: SubOrder, parentKey: string, bearing: 
   if (extra && subs.indexOf(extra) === -1) { subs.push(extra); if (!order.stated) subs.sort(byName); }
   if (reversed) subs.reverse();
   return subs;
+}
+
+/* DOES THIS ENTRY FOLD (2026-09-28, the contents-folds plan): a WORK's
+   contents — a bookshelf entry below its author that has sub-entries. An
+   author page's grouped works are searched whole (the reader), and
+   nothing outside the bookshelf folds. */
+export function foldsContents(keys: string[], date: string, tag: string | null): boolean {
+  if (date !== NS_BOOK.key || !tag || tag.split("/").length < 2) return false;
+  return childrenOf(keys, entryKey(date, tag)).length > 0;
 }

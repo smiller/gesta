@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { contentsLinks, subPageOrder, subPageDisplayList } from "./contents.ts";
+import { contentsLinks, subPageOrder, subPageDisplayList, foldsContents } from "./contents.ts";
 
 describe("contentsLinks", () => {
   it("links in document order with the section heading in force; a heading that is a link is a child where it stands", () => {
@@ -48,5 +48,24 @@ describe("subPageDisplayList", () => {
   it("the extra joins the end of a stated order and is sorted into an alphabetical one", () => {
     expect(subPageDisplayList({ names: ["b", "a"], rows: [], stated: true }, "p", bearing, "c")).toEqual(["b", "a", "c"]);
     expect(subPageDisplayList({ names: ["a", "c"], rows: null, stated: false }, "p", bearing, "b")).toEqual(["a", "b", "c"]);
+  });
+});
+
+// Which entries fold (2026-09-28, the contents-folds plan): a WORK's
+// contents — a bookshelf entry below its author with sub-entries. An author
+// page's grouped works are searched whole, so it does not fold.
+describe("foldsContents", () => {
+  const keys = ["bookshelf/Spenser, Edmund", "bookshelf/Spenser, Edmund/The Faerie Queene", "bookshelf/Spenser, Edmund/The Faerie Queene/1.1",
+    "bookshelf/Milton, John/Lycidas", "bookshelf/Dante/Commedia/Inferno", "bookshelf/Dante/Commedia/Inferno/1", "page/Notes", "page/Notes/Sub", "2026-09-28", "2026-09-28/Tag"];
+  it("a work with sub-entries folds, at any depth below the author", () => {
+    expect(foldsContents(keys, "bookshelf", "Spenser, Edmund/The Faerie Queene")).toBe(true);
+    expect(foldsContents(keys, "bookshelf", "Dante/Commedia/Inferno")).toBe(true);
+  });
+  it("an author page, a leaf, a page or a day does not", () => {
+    expect(foldsContents(keys, "bookshelf", "Spenser, Edmund")).toBe(false);
+    expect(foldsContents(keys, "bookshelf", "Milton, John/Lycidas")).toBe(false);
+    expect(foldsContents(keys, "bookshelf", "Spenser, Edmund/The Faerie Queene/1.1")).toBe(false);
+    expect(foldsContents(keys, "page", "Notes")).toBe(false);
+    expect(foldsContents(keys, "2026-09-28", null)).toBe(false);
   });
 });
