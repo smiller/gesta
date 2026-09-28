@@ -539,9 +539,9 @@ if (fixture && fixtures[fixture]) {
   }
   const landOn = (pos: number): void => {
     const view = session.view!;
-    /* a landing inside a closed contents section opens it first: the
-       landing sets no selection, and a hidden row has no box to scroll to
-       (the review at high, 2026-09-28) */
+    /* a landing inside a closed contents section opens it first: it
+       stayed hidden and scrolled to nothing (the review at high,
+       2026-09-28) */
     openFoldAt(pos)(view.state, view.dispatch);
     setLanding(view, pos);
     const node = view.state.doc.nodeAt(pos)!;

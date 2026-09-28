@@ -26,7 +26,8 @@ test("a section's count is its links: N entries, 1 entry", () => {
   expect(foldSections(doc).map((x) => x.count)).toEqual(["2 entries", "3 entries", "1 entry"]);
 });
 test("the decorations: every heading marked with its count and state, a closed section's blocks hidden", () => {
-  const decos = (open: string[]) => foldDecorations(doc, new Set(open)).find() as Decoration[];
+  const sections = foldSections(doc);
+  const decos = (open: string[]) => foldDecorations(doc, sections, new Set(sections.filter((x) => open.includes(x.key)).map((x) => x.heading))).find() as Decoration[];
   const attrsAt = (open: string[], text: string) => {
     const d = decos(open).find((x) => doc.nodeAt(x.from)!.textContent.startsWith(text));
     return d ? (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs : null;
@@ -83,12 +84,14 @@ test("typing in an open heading keeps its section open, and the new text is what
   expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight!"]);
   expect(foldsKey.getState(s)!.decorations.find().filter((d) => (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs.class === "folded").length).toBe(3);   /* Dedications' two blocks and Book VII's list */
 });
-test("twin headings are two sections: toggled apart, remembered as Notes and Notes (2)", () => {
+test("twin headings are two sections, toggled apart and remembered apart", () => {
   const twin = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)");
-  expect(foldSections(twin).map((x) => x.key)).toEqual(["Notes", "Notes (2)"]);
+  const keys = foldSections(twin).map((x) => x.key);
+  expect(keys[0]).toBe("Notes");
+  expect(keys[1]).not.toBe("Notes");
   let s = EditorState.create({ doc: twin, plugins: [folds({ on: true, open: [] })] });
-  toggleFold("Notes (2)")(s, (tr) => { s = s.apply(tr); });
-  expect(openKeys(s)).toEqual(["Notes (2)"]);
+  toggleFold(keys[1])(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual([keys[1]]);
 });
 test("closing a section moves a caret out of it onto the heading's end", () => {
   let s = stateWith({ on: true, open: ["Dedications"] });
@@ -118,4 +121,37 @@ test("openFoldAt opens the section a position is in (⌃⌘G's landing), and doe
   openFoldAt(at(s.doc, "Canto ii"))(s, (tr) => { s = s.apply(tr); });
   expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight"]);
   expect(openFoldAt(3)(s)).toBe(false);
+});
+
+// The confirmation pass at high, 2026-09-28.
+test("a twin's key never collides with a heading that reads like one", () => {
+  const d = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)\n\n## Notes (2)\n\n- [c](#c)");
+  const keys = foldSections(d).map((x) => x.key);
+  expect(new Set(keys).size).toBe(3);
+  let s = EditorState.create({ doc: d, plugins: [folds({ on: true, open: [] })] });
+  toggleFold("Notes (2)")(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual(["Notes (2)"]);
+  const drawnOpen = foldsKey.getState(s)!.decorations.find().filter((x) => (x as unknown as { type: { attrs: Record<string, string> } }).type.attrs["aria-expanded"] === "true");
+  expect(drawnOpen.map((x) => s.doc.nodeAt(x.from)!.textContent)).toEqual(["Notes (2)"]);
+});
+test("deleting an open section does not open the one after it", () => {
+  let s = stateWith({ on: true, open: ["Dedications"] });
+  const secs = foldSections(s.doc);
+  s = s.apply(s.tr.delete(secs[0].heading, secs[1].heading));
+  expect(openKeys(s)).toEqual([]);
+});
+test("closing a section collapses a selection that reaches into it from anywhere", () => {
+  let s = stateWith({ on: true, open: ["Dedications"] });
+  s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, at(s.doc, "Letter to Raleigh", 3), at(s.doc, "Dedications", 4))));
+  toggleFold("Dedications")(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual([]);
+  expect(s.selection.empty).toBe(true);
+  expect(s.selection.$head.parent.textContent).toBe("Dedications");
+});
+test("with folding off an edit computes no sections; switching on computes them", () => {
+  let s = stateWith({ on: false, open: [] });
+  s = s.apply(s.tr.insertText("x", 3));
+  expect(foldsKey.getState(s)!.sections).toEqual([]);
+  setFolds(true, [])(s, (tr) => { s = s.apply(tr); });
+  expect(foldsKey.getState(s)!.sections.length).toBe(3);
 });

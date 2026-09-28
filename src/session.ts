@@ -201,6 +201,12 @@ export function startSession(opts: SessionOptions): Session {
      never moves a reader who has scrolled since (the review at high) */
   let pendingLeft: string | null = null;
   let openedAtY = 0;
+  /* the navigation under way is a Back or Forward (the Navigation API's
+     "traverse"): its place is the browser's to restore, not the top */
+  let traversing = false;
+  (window as unknown as { navigation?: EventTarget }).navigation?.addEventListener?.("navigate", (e: Event) => {
+    traversing = (e as Event & { navigationType?: string }).navigationType === "traverse";
+  });
   const readFolds = (ekey: string): FoldPage => { try { return foldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey); } catch { return { open: [], left: null }; } };
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => {
     try { localStorage.setItem(FOLDS_KEY, JSON.stringify(withFoldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey, patch))); } catch { /* a convenience lost, not a failure */ }
@@ -328,12 +334,15 @@ export function startSession(opts: SessionOptions): Session {
     cancelSave();
     suspended = false;
     if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (read 2026-09-22 by the grid step) */
-    /* a DIFFERENT entry opens at its top; the same one reopened (an
-       import's refresh, the view switch's remount) keeps its place. Until
+    /* a DIFFERENT entry opens at its top, in either view; the same one
+       reopened (an import's refresh) keeps its place, and so does a Back
+       or Forward, whose place is the browser's to restore. Until
        2026-09-28 nothing moved the window on an open, and a link followed
        from far down a contents page opened the next entry as far down,
-       its heading under the masthead (the reader, Book V's proem) */
-    const moved = entryKey(date, tag) !== entryKey(current.date, current.tag);
+       its heading under the masthead (the reader, Book V's proem); the
+       first fix forced Back to the top too (the confirmation pass) */
+    const toTop = entryKey(date, tag) !== entryKey(current.date, current.tag) && !traversing;
+    traversing = false;
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
@@ -342,7 +351,7 @@ export function startSession(opts: SessionOptions): Session {
        and so does a pinned fence refusal (the data pins stay) */
     carets.rendered = carets.source = null; placedAt = null;
     if (fencePin) { opts.releasePin?.(fencePin); fencePin = 0; }
-    if (mdView) { mountSource(md); }
+    if (mdView) { mountSource(md); if (toTop) window.scrollTo(0, 0); }
     else {
       let doc;
       try { doc = parseMarkdown(md); }
@@ -357,18 +366,22 @@ export function startSession(opts: SessionOptions): Session {
         readerView = mdView; forced = true;
         mdView = true;
         mountSource(md);
+        if (toTop) window.scrollTo(0, 0);
         opts.onView?.(true);
         document.documentElement.dataset.entry = ekey;
         show();
         return;
       }
       mountEditor(doc, date, tag);
-      if (moved) window.scrollTo(0, 0);
-      scrollToLeft(ekey);
+      if (toTop) window.scrollTo(0, 0);
     }
     document.documentElement.dataset.entry = ekey;
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
+    /* AFTER the highlight, so a placed one is seen and wins: run before
+       it, the check read the fresh empty selection and the page jumped
+       twice (the confirmation pass) */
+    if (!mdView) scrollToLeft(ekey);
   }
   /* coming back to a folding page: the link it was left from in view, a
      frame after the paint. Used ONCE and then forgotten — kept, every
@@ -383,6 +396,7 @@ export function startSession(opts: SessionOptions): Session {
     writeFolds(ekey, { left: null });
     if (!view.state.selection.empty) return;
     requestAnimationFrame(() => {
+      if (!view || !view.state.selection.empty) return;
       const a = [...mount.querySelectorAll("a")].find((x) => internalHash(x.getAttribute("href") || "") === left);
       if (a && a.offsetParent) a.scrollIntoView({ block: "center" });
     });
@@ -399,8 +413,13 @@ export function startSession(opts: SessionOptions): Session {
     if (!st || st.on === on) return;
     const ekey = ekeyOf();
     const page = on ? readFolds(ekey) : null;
+    /* read BEFORE the folds close sections and move the page under the
+       reader (the confirmation pass: read after, a clamped or anchored
+       scroll read as the reader's own) */
+    const still = Math.abs(window.scrollY - openedAtY) < 2;
     setFolds(on, page ? page.open : [])(view.state, view.dispatch);
-    if (page && Math.abs(window.scrollY - openedAtY) < 2) { pendingLeft = page.left; scrollToLeft(ekey); }
+    if (page && still) { pendingLeft = page.left; scrollToLeft(ekey); }
+    else if (page && page.left) writeFolds(ekey, { left: null });   /* used once, even when skipped */
   }
   function insertText(text: string): boolean {
     if (mdView && source) {

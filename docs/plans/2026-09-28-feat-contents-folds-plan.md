@@ -225,3 +225,31 @@ judged real and fixed in one commit:
   clicked — before, the proem opened at 265 with its heading at -66; after,
   at 0 with its heading at 199. The fold probe re-run: the scroll back to
   Canto ix, the link used once, the highlight after a reload, all as before.
+
+### The confirmation pass — 2026-09-28, /code-review at HIGH over d1deeb7..7539133
+
+- COST: 87,278 tokens (the run's report), over 240 changed lines (188+,
+  52−, src and tools) — the two fix commits. Ten findings, its cap.
+- All ten judged real, fixed in one commit:
+  - folds.ts: OFF computes nothing (sections walked every link per
+    keystroke on pages that never fold); a deleted heading drops out of the
+    open set (mapped by its start it landed on the next heading and opened
+    it); closing collapses a selection reaching in from either end; drawn by
+    position, a twin's key numbered after U+0001 (a visible "Notes (2)"
+    collided with a heading of that text); a dead exemption removed.
+  - session.ts: Back and Forward keep the browser's place (the Navigation
+    API's "traverse"), the first fix having forced them to the top; the
+    open-at-top reset in the source view and the refused-as-source branch
+    too; the scroll back to the remembered link runs AFTER a highlight is
+    placed and checks again in its frame; the warm's second look reads the
+    scroll before the folds move it and clears the link even when it
+    skips.
+  - Comments: the open() comment's false claim about the view switch and
+    two claims about another module's mechanism, rewritten. This is the
+    comment class CLAUDE.md names as owed a checker (claims.sh's port);
+    found in two reviews of this plan, the port is owed twice over.
+- MEASURED: folds.test.ts 16 tests (5 new, each failing first); `npm
+  test` 541. Headless Helium: a canto scrolled to 2000, walked forward
+  (the next at 0), Back — 2000 again; a source-view walk from 1500 opens at
+  0; the fold probe as before (typing in an open heading, the scroll back
+  once, the highlight after a true reload).

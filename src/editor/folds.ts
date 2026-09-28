@@ -21,7 +21,9 @@ export interface FoldSection {
   from: number;
   to: number;
   /* what a visit remembers: the heading's text, a twin's with its
-     number — "Notes", then "Notes (2)" */
+     number after a U+0001 — no heading can be typed to read like one (a
+     visible "Notes (2)" collided with a heading of that text: the
+     confirmation pass at high) */
   key: string;
   /* `N entries`, the links under the heading */
   count: string;
@@ -40,7 +42,7 @@ export function foldSections(doc: Node): FoldSection[] {
     for (let j = i + 1; j < heads.length; j++) if (heads[j].level <= 2) { to = heads[j].pos; break; }
     const n = runs.filter((r) => r.from >= h.end && r.to <= to).length;
     const nth = (seen[h.text] = (seen[h.text] || 0) + 1);
-    out.push({ heading: h.pos, from: h.end, to, key: nth > 1 ? h.text + " (" + nth + ")" : h.text, count: n + (n === 1 ? " entry" : " entries") });
+    out.push({ heading: h.pos, from: h.end, to, key: nth > 1 ? h.text + "\u0001" + nth : h.text, count: n + (n === 1 ? " entry" : " entries") });
   });
   return out;
 }
@@ -48,10 +50,11 @@ export function foldSections(doc: Node): FoldSection[] {
 export function sectionAt(sections: FoldSection[], pos: number): FoldSection | null {
   return sections.find((s) => pos >= s.from && pos < s.to) || null;
 }
-export function foldDecorations(doc: Node, openKeys: Set<string>, sections: FoldSection[] = foldSections(doc)): DecorationSet {
+/* drawn BY POSITION: a key is only what a visit remembers */
+export function foldDecorations(doc: Node, sections: FoldSection[], openHeadings: Set<number>): DecorationSet {
   const decos: Decoration[] = [];
   for (const s of sections) {
-    const isOpen = openKeys.has(s.key);
+    const isOpen = openHeadings.has(s.heading);
     decos.push(Decoration.node(s.heading, s.from, { class: "fold", "data-count": s.count, "aria-expanded": String(isOpen) }));
     if (isOpen) continue;
     doc.nodesBetween(s.from, s.to, (block, pos) => {
@@ -75,21 +78,22 @@ export function openKeys(state: EditorState): string[] {
   return st ? keysOf(st.sections, st.open) : [];
 }
 function draw(doc: Node, on: boolean, open: Set<number>, sections: FoldSection[]): FoldState {
-  return { on, open, sections, decorations: on ? foldDecorations(doc, new Set(keysOf(sections, open)), sections) : DecorationSet.empty };
+  return { on, open, sections, decorations: on ? foldDecorations(doc, sections, open) : DecorationSet.empty };
 }
 const positionsOf = (sections: FoldSection[], keys: string[]): Set<number> =>
   new Set(sections.filter((s) => keys.includes(s.key)).map((s) => s.heading));
 
-/* a toggle; CLOSING a section the caret is inside moves the caret onto the
-   heading's end, where it can be seen (the review: it stayed in the hidden
-   blocks and the next keys edited what no one could see) */
+/* a toggle; CLOSING a section a selection reaches into, from either end,
+   collapses it onto the heading's end, where it can be seen (the review:
+   a caret stayed in the hidden blocks, and the confirmation pass: so did a
+   range anchored there, and the next keys edited what no one could see) */
 function toggleAt(state: EditorState, s: FoldSection, dispatch?: (tr: Transaction) => void): boolean {
   const st = foldsKey.getState(state);
   if (!st) return false;
   const tr = state.tr.setMeta(foldsKey, { toggle: s.heading } satisfies FoldMeta);
   const closing = st.open.has(s.heading);
-  const head = state.selection.head;
-  if (closing && head >= s.from && head < s.to) tr.setSelection(TextSelection.create(state.doc, s.from - 1));
+  const { from, to } = state.selection;
+  if (closing && from < s.to && to > s.from) tr.setSelection(TextSelection.create(state.doc, s.from - 1));
   dispatch?.(tr);
   return true;
 }
@@ -99,8 +103,8 @@ export function toggleFold(key: string): Command {
     return s ? toggleAt(state, s, dispatch) : false;
   };
 }
-/* open the section a position is in: ⌃⌘G's landing, which sets no
-   selection of its own */
+/* open the section a position is in: ⌃⌘G's landing stayed hidden inside
+   a closed section (the review at high) */
 export function openFoldAt(pos: number): Command {
   return (state, dispatch) => {
     const st = foldsKey.getState(state);
@@ -123,30 +127,46 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
   return new Plugin<FoldState>({
     key: foldsKey,
     state: {
+      /* OFF, nothing is computed: the plugin sits on every entry, and
+         the sections walked every link per keystroke on pages that never
+         fold (the confirmation pass at high) */
       init: (_config, state) => {
-        const sections = foldSections(state.doc);
+        const sections = opts.on ? foldSections(state.doc) : [];
         return draw(state.doc, opts.on, positionsOf(sections, opts.open), sections);
       },
       apply(tr, prev, _old, next: EditorState) {
         const meta = tr.getMeta(foldsKey) as FoldMeta | undefined;
         let { on, open, sections } = prev;
-        if (tr.docChanged) {
+        if (tr.docChanged && on) {
           sections = foldSections(next.doc);
           const heads = new Set(sections.map((s) => s.heading));
-          const before = new Set(prev.sections.map((s) => tr.mapping.map(s.heading, 1)));
-          open = new Set([...prev.open].map((p) => tr.mapping.map(p, 1)).filter((p) => heads.has(p)));
+          /* a heading SURVIVES an edit while its mapped start stays before
+             its mapped end; a deleted one collapses, and mapped by its start
+             alone it landed on the next heading and opened it (the
+             confirmation pass at high) */
+          const moved = new Map<number, number>();
+          for (const s of prev.sections) {
+            const a = tr.mapping.map(s.heading, 1), b = tr.mapping.map(s.from, -1);
+            if (b > a && heads.has(a)) moved.set(s.heading, a);
+          }
+          const before = new Set(moved.values());
+          open = new Set([...prev.open].filter((p) => moved.has(p)).map((p) => moved.get(p)!));
           /* a section MADE by an edit opens: a `##` typed inside an open
              section would otherwise hide everything below the caret */
           for (const s of sections) if (!before.has(s.heading)) open.add(s.heading);
         }
-        if (meta && "set" in meta) { on = meta.set.on; open = positionsOf(sections, meta.set.open); }
+        if (meta && "set" in meta) {
+          on = meta.set.on;
+          sections = on ? foldSections(next.doc) : [];
+          open = positionsOf(sections, meta.set.open);
+        }
         else if (meta && "toggle" in meta) { open = new Set(open); if (open.has(meta.toggle)) open.delete(meta.toggle); else open.add(meta.toggle); }
         /* a caret or selection inside a closed section opens it: a search
            result's highlight, a link's payload, a caret moved there, an
            edit that carried it in, or folding switched on over it */
         if (on && (tr.selectionSet || tr.docChanged || meta)) {
           const s = sectionAt(sections, next.selection.head);
-          if (s && !open.has(s.heading) && !(meta && "toggle" in meta && meta.toggle === s.heading)) { open = new Set(open); open.add(s.heading); }
+          if (s && !open.has(s.heading)) { open = new Set(open); open.add(s.heading); }
         }
         if (on === prev.on && open === prev.open && sections === prev.sections) return prev;
         return draw(next.doc, on, open, sections);
