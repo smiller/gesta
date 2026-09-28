@@ -86,6 +86,15 @@ export function stanzaAskCheck(ask: string): string | null {
   if (!a) return "type a stanza, or stanza.line";
   return /^\d+(?:\.\d+)?$/.test(a) ? null : trimLabel(a, ECHO_CAP) + " is not a stanza or stanza.line, like 2.1";
 }
+/* does the page ask by stanza: a top-level stanza stands on it. The page
+   decides, not the work's directive alone — a plain verse entry under a
+   work citing by stanza (the commendatory verses) keeps the line ask
+   (the review of 2026-09-28) */
+export function hasStanzas(doc: Node): boolean {
+  let yes = false;
+  doc.forEach((block) => { if (block.attrs.stanza != null) yes = true; });
+  return yes;
+}
 /* the row to land on, or the refusal in words */
 export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));

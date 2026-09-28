@@ -429,3 +429,20 @@ decisions table.
   the entry alone, its Line bar unopened); decided in
   corner.differences.txt, six lines with their reasons — 105 steps, 0
   open. `npm run verify` exit 0.
+
+### The review — 2026-09-28, one /code-review at medium over 90571c0..dbfdaea
+
+- One finding (the reviewer's reading, 85,878 tokens): main.ts took the
+  stanza ask on EVERY entry under a work citing by stanza, so a plain
+  verse page there — the commendatory verses, the dedicatory sonnets —
+  answered ⌃⌘G `5` with "no stanzas here" and no line could be reached.
+  Fixed: `hasStanzas(doc)` (goto.ts, a top-level stanza on the page) gates
+  the ask beside the directive; goto.test.ts pins it.
+- MEASURED, headless Helium: on a stand-in Commendatory Verses entry under
+  the directive, ⌃⌘G `5` landed on its fifth line; on I.i, `2.1` still
+  landed on stanza 2's first line.
+- Checked and found sound by the reviewer (READ): the stanza's parse,
+  serialize and round trip, the cut written as `::: verse K`, the
+  fenceStart separation, parseDOM/toDOM, the refusal, the numbering, the
+  two-block rule, stanzaRange, the passage's grouping, the Roman
+  respelling, the corpus exclusion.

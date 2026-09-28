@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit } from "./goto.ts";
+import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
@@ -87,5 +87,17 @@ describe("stanza.line", () => {
     expect(stanzaAskCheck("")).toBe("type a stanza, or stanza.line");
     expect(stanzaAskCheck("I.i.2")).toBe("I.i.2 is not a stanza or stanza.line, like 2.1");
     expect(stanzaAskCheck("2.")).toBe("2. is not a stanza or stanza.line, like 2.1");
+  });
+});
+
+// The review of 2026-09-28: the stanza ask was taken on every entry under
+// a work citing by stanza, so a plain verse page there — the commendatory
+// verses — could not be reached by line. The page decides, not the key.
+describe("hasStanzas", () => {
+  it("a page holding a top-level stanza asks by stanza; plain verse, a stanza only inside a note, or prose does not", () => {
+    expect(hasStanzas(parseMarkdown("::: stanza 1\na\n:::"))).toBe(true);
+    expect(hasStanzas(parseMarkdown("::: verse\na\nb\n:::"))).toBe(false);
+    expect(hasStanzas(parseMarkdown("::: note\n::: stanza 43\na\n:::\n:::"))).toBe(false);
+    expect(hasStanzas(parseMarkdown("plain"))).toBe(false);
   });
 });
