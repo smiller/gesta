@@ -1,9 +1,6 @@
-/* Syntax highlighting: the tokenizer, pure. Ported 2026-09-08 from
-   md.mjs's LANG_ALIAS, LANG_DEFS, compileLang and highlightCode, re-asked
-   of ranges rather than HTML: one alternation pass over the raw text —
-   comments | strings | numbers | keywords — yielding the token spans a
-   decoration paints. A language the table lacks yields nothing, and the
-   block stays plain. */
+/* ONE alternation pass, comments | strings | numbers | keywords, the first
+   group to match winning (pin: tokens.test › javascript: comments, strings,
+   numbers and keywords, in one pass) */
 export const LANG_ALIAS: Record<string, string> = {
   rb: "ruby", js: "javascript", mjs: "javascript", ts: "javascript",
   tsx: "javascript", jsx: "javascript", py: "python", bash: "shell",

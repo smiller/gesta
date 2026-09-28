@@ -299,3 +299,43 @@ pinned (a performance choice), 2 pinned with a neighbour.
   commits would have failed on it, 279 blocks. A probe file carrying
   "(the review, 2026-09-28)" failed the run with exit 1; the clean tree
   exits 0.
+
+### 2026-09-28 — step 4 begins: src/model audited
+
+- ASKED by the reader with the go-ahead: the comment checker in the Stop
+  hook, so it runs before any review. `hooks/**` is denied to the agent:
+  the patch is drafted for the reader to apply (`hooks/stop.sh` runs
+  `npm run test:comments` after tsc and the suite), and
+  `tools/hooks-test.sh` gained the case "src/ moved, the comment checker
+  red: blocked", RED against today's hook (MEASURED: 1 of 44 failing)
+  until the patch lands.
+- src/model first: the smallest directory, no DOM, its pins all Vitest.
+  MEASURED: 130 comment blocks → 91, 359 comment lines → 254, 61 pins;
+  the sweep lists nothing in src/model (it listed 21 naming another
+  module, 36 carrying provenance). Module headers the layout covers went
+  (schema, grammar, tokens); port history, dates, "the reader", the
+  review, and every clause about another module (the serializer, the
+  numbering, the stylesheet, the source view, search) went; each kept
+  decision, measurement or failure names its pin.
+- NEW PINS, each red once on a broken rule (MEASURED): schema.test.ts
+  (new) — every node that draws itself reads itself back (a note's
+  parseDOM removed), a grid read back only with data-n (the guard
+  removed), the card guard's selector and toDOM, and `card+` refused by
+  prosemirror-model (MEASURED: the Schema constructor throws "Only
+  non-generatable nodes (card) in a required position"; the test pins
+  the library's refusal, so it stays green when the real schema is
+  changed — a `card+` there throws at import instead); parse.test — the
+  other marker kind opens a sibling list (the break removed), a fence's
+  lang drops its backticks (the replace removed), a pipe row with no
+  divider is a paragraph (not broken: the rule's break is an endless
+  loop); roundtrip.test — a fence holding a backtick line (escalation
+  removed: three tests red), a break in a row's cell written as a space
+  (the collapse removed), a list item's empty continuation line written
+  unindented (the guard removed); flatten.test — flattenText's own test,
+  the one before it sitting in viewCarets.test.
+- Two test titles lost their provenance ("(the 2026-09-12 second
+  confirmation pass: …)", "(the block's closing review, 2026-09-12)").
+- Kept UNPINNED: the table cell's "inline, never blocks", image src
+  never resolved here, the folio as content, the block-shaped list line
+  left unindented, flatRange's fail-safe, the marker parsing to NaN, the
+  table's two skipped lines.

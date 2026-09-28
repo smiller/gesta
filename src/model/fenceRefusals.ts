@@ -1,13 +1,11 @@
-/* THE REFUSED FENCE NAMED. A line shaped like a `:::` opener that opens
-   nothing stays a paragraph, which is right and SILENT: the writer sees
-   their fence sitting as text and not why. Ported 2026-09-08 from
-   md.mjs's noteRefusals, re-asked of the document: had the line opened,
-   it would not be a paragraph's text, so every `:::`-shaped line found
-   in a paragraph is a refusal by construction — a bare `:::`, a line in
-   a code block and a row of a row fence are none of them (the first
-   closes, the second is code, the third is a row). A word Gesta knows
-   is told what it lacks or what it does not take; "unknown" would send
-   the writer looking for a typo in a word they spelled right. */
+/* Had the line opened, it would not be a paragraph's text, so every
+   `:::`-shaped line found in a paragraph is a refusal by construction — a
+   bare `:::`, a code block's line and a row are none of them (pin:
+   fenceRefusals.test › a real fence, a bare closer, a code block's line and
+   a row are none of them refusals). A word Gesta knows is told what it
+   lacks or does not take: "unknown" would send the writer looking for a
+   typo in a word they spelled right (pin: fenceRefusals.test › a
+   fence-shaped line that opens nothing is named with its reason) */
 import type { Node } from "prosemirror-model";
 import { schema } from "./schema.ts";
 import { opensFence } from "./grammar.ts";
@@ -30,9 +28,6 @@ export function fenceRefusals(doc: Node): FenceRefusal[] {
   });
   return out;
 }
-/* the reason a `:::`-shaped line opens nothing, or null for a line that is
-   not one or that opens a block. Shared with the grid's body check
-   (2026-09-22), so a colourless card inside a grid is told the same thing */
 export function fenceLineReason(l: string): string | null {
   const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
   if (!m || opensFence(l)) return null;
@@ -47,8 +42,9 @@ export function fenceLineReason(l: string): string | null {
     : /^card(?:[\s-]|$)/.test(m[1]) ? "card blocks must include a colour, like card-light-green"
     : "not a block Gesta knows";
 }
-/* the pin's text: every refusal on a line of its own, so a second is not
-   hidden behind a count */
+/* every refusal on a line of its own, so a second is not hidden behind a
+   count (pin: fenceRefusals.test › the pin's text: one line with its tail,
+   several one per line with the count) */
 export function refusalsText(r: FenceRefusal[]): string {
   const lines = r.map((x) => x.line + " — " + x.reason);
   return r.length === 1 ? lines[0] + ", so it stayed a paragraph" : lines.join("\n") + "\n" + r.length + " fences stayed paragraphs";

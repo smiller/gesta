@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { flattenDoc, flatRange } from "./flatten.ts";
+import { flattenDoc, flatRange, flattenText } from "./flatten.ts";
 import { parseMarkdown } from "./parse.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../../fixtures/pippa-passes-intro.md?raw";
@@ -27,5 +27,12 @@ describe("flattenDoc", () => {
     expect(flatRange(flat, 3, 2)).toEqual({ from: 5, to: 7 });
     expect(doc.textBetween(5, 7)).toBe("cd");
     expect(flatRange(flat, 2, 2)).toBeNull();
+  });
+});
+describe("flattenText", () => {
+  it("folds a plain text as flattenDoc does, each kept character at its raw index", () => {
+    const flat = flattenText("ab\n\n  cd\te");
+    expect(flat.text).toBe("ab cd e");
+    expect(flat.pos).toEqual([0, 1, 2, 6, 7, 8, 9]);
   });
 });

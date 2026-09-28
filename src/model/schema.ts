@@ -1,27 +1,17 @@
-/* The document model: every form the CURRENT markdown grammar can spell, as
-   ProseMirror nodes and marks. A form the schema does not know cannot be
-   parsed (the token walker throws) and cannot be typed, which is the whole
-   reason a schema replaces a contenteditable surface. */
 import { Schema, type NodeSpec, type MarkSpec, type Node as PMNode } from "prosemirror-model";
 
-/* THE MARK NESTING ORDER, outermost first — the tie-break when the
-   serializer's fewest-stretches rule (serialize.ts, runMd) finds two marks
-   covering the same run, and the DOM serializer's nesting. Bold OUTSIDE
-   italic, deliberately not CommonMark's em-outside: ***x*** must come back
-   as ***x***. A link OUTSIDE emphasis covering the same text: MEASURED
-   2026-09-07 over the corpus, "[*title*](u)" 31 times in 25 files against
-   "*[title](u)*" 17 in 15, and the strong forms 0 and 0. Code innermost,
-   so a bold code span writes **`x`** and never `**x**`. */
+/* THE MARK NESTING ORDER, outermost first, for marks covering the same
+   run. Bold OUTSIDE italic, not CommonMark's em-outside: ***x*** must come
+   back as ***x***. A link OUTSIDE emphasis: MEASURED over the corpus,
+   "[*title*](u)" 31 times in 25 files against "*[title](u)*" 17 in 15, and
+   the strong forms 0 and 0. Code innermost: **`x`**, never `**x**`.
+   (pin: roundtrip.test › round trips: every form survives) */
 export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"] as const;
 
-/* EVERY NODE THAT DRAWS ITSELF READS ITSELF BACK: the editor's own copy
-   travels as this DOM (the row views draw exactly what toDOM would), so
-   without a parseDOM rule a copied verse block pasted back arrived as its
-   cells' text in paragraphs — by hand 2026-09-08, a paired canto
-   interleaved line by line. */
-/* verse alone carries `stanza` (2026-09-27): the number a `::: stanza N`
-   fence writes, null on a plain verse fence; the stylesheet draws it from
-   data-stanza */
+/* EVERY NODE THAT DRAWS ITSELF READS ITSELF BACK: without a parseDOM rule a
+   copied verse block pasted back arrived as its cells' text in paragraphs,
+   a paired canto interleaved line by line (pin: schema.test › every node
+   that draws itself reads itself back) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
   attrs: stanzas ? { start: { default: 1 }, stanza: { default: null } } : { start: { default: 1 } },
   content: "(line | pair | gap | note)*",
@@ -67,7 +57,7 @@ const nodes: Record<string, NodeSpec> = {
   },
   /* start records where the run OPENS; an item whose own number breaks the
      count carries it as list_item's value — the only way a countdown is
-     expressible */
+     expressible (pin: parse.test › an ordered countdown keeps its own numbers) */
   ordered_list: {
     attrs: { start: { default: 1 } }, content: "list_item+", group: "block",
     parseDOM: [{ tag: "ol", getAttrs: (dom) => ({ start: dom.hasAttribute("start") ? +dom.getAttribute("start")! : 1 }) }],
@@ -86,8 +76,7 @@ const nodes: Record<string, NodeSpec> = {
   },
   table: { content: "table_row+", group: "block", parseDOM: [{ tag: "table" }], toDOM: () => ["table", ["tbody", 0]] },
   table_row: { content: "table_cell+", parseDOM: [{ tag: "tr" }], toDOM: () => ["tr", 0] },
-  /* a cell is ONE LINE of inline content: the markdown table has no room for
-     a block in a cell, and the serializer collapses a break to a space */
+  /* inline, never blocks: a markdown table row has no room for a block */
   table_cell: {
     attrs: { header: { default: false } }, content: "inline*",
     parseDOM: [{ tag: "td" }, { tag: "th", attrs: { header: true } }],
@@ -96,33 +85,29 @@ const nodes: Record<string, NodeSpec> = {
   card: {
     attrs: { colour: {} }, content: "block+", group: "block", defining: true,
     /* only the editor's own copies, marked data-card: a web page's
-       `card-body` div would become a card of a colour the stylesheet has
-       no rule for (the confirmation pass, 2026-09-22; the grid's rule
-       took the same guard that morning) */
+       `card-body` div became a card of a colour nothing draws (pin:
+       schema.test › a card is read back only from the editor's own copy) */
     parseDOM: [{ tag: "div[class^='card-'][data-card]", getAttrs: (dom) => ({ colour: dom.className.split(/\s+/).find((c) => /^card-/.test(c)) }) }],
     toDOM: (n) => ["div", { class: n.attrs.colour, "data-card": "" }, 0],
   },
-  /* cards N across (2026-09-22): `n` is null when the count was not typed,
-     drawn as 3, so a bare opener is written back bare. Cards only, and
-     isolating, so no lift or join crosses the grid's edge under the base
-     keymap. The count reaches the stylesheet as --n on the element.
-     MEASURED 2026-09-22: `card+` is refused by prosemirror-model — a card's
-     colour has no default, so the model cannot generate one for a required
-     slot — hence `card*`; the parse refuses an empty grid, and the
-     serializer writes an empty grid node as nothing. */
+  /* `n` is null when the count was not typed, drawn as 3, so a bare opener
+     stays bare (pin: parse.test › a grid holds cards and remembers whether
+     its count was typed). Isolating, so no lift or join crosses the grid's
+     edge. `card*`, not `card+`: a card's colour has no default, and
+     prosemirror-model refuses a required node it cannot generate (pin:
+     schema.test › a grid cannot require a card) */
   grid: {
     attrs: { n: { default: null } }, content: "card*", group: "block", defining: true, isolating: true,
-    /* only the editor's own copies, which carry data-n: a foreign
-       `div.grid` (a web page's) would parse to an empty grid node drawn
-       as a blank gap (the 2026-09-22 review) */
+    /* only the editor's own copies, which carry data-n: a web page's
+       `div.grid` parsed to an empty grid drawn as a blank gap (pin:
+       schema.test › a grid is read back only when it carries data-n) */
     parseDOM: [{ tag: "div.grid", getAttrs: (dom) => dom.hasAttribute("data-n") ? { n: dom.dataset.n ? +dom.dataset.n : null } : false }],
     toDOM: (n) => ["div", { class: "grid", "data-n": n.attrs.n ?? "", style: "--n: " + (n.attrs.n ?? 3) }, 0],
   },
-  /* text that is NOT the text; the one block form that may also be a ROW of
-     a verse or prose block, which is how a footnote interrupts a text without
-     closing its count */
+  /* the one block form that may also be a ROW of a verse or prose block:
+     a footnote interrupts a text without closing its count (pin: parse.test
+     › a ::: note inside a row fence is a row, and does not close it) */
   note: { content: "block+", group: "block", defining: true, parseDOM: [{ tag: "div.note" }], toDOM: () => ["div", { class: "note" }, 0] },
-  /* one directive read by code, never by the reader: plain text */
   reference: {
     content: "text*", marks: "", group: "block", code: true, defining: true,
     parseDOM: [{ tag: "div.reference", preserveWhitespace: "full" }],
@@ -130,29 +115,27 @@ const nodes: Record<string, NodeSpec> = {
   },
   verse: rowBlock("verse", true),
   prose: rowBlock("prose"),
-  /* a full-width row: a line with no pipe. `kind` is the row's DECLARED kind:
-     null leaves the numbering convention to read the marks, "line" counts
-     the row whatever they say (grammar.ts, ROW_LINE_TOKEN, has the decision) */
+  /* `kind` is what the row DECLARES, null when it declares nothing — never
+     read off its marks (pin: parse.test › a ⟨line⟩ token at a row's head is
+     the row's declared kind, not its text) */
   line: { attrs: { kind: { default: null } }, content: "inline*", parseDOM: [{ tag: "div.vrow:not(.vpair)", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
-  /* a paired row: an original beside its translation; which cell is which is
-     its position, and an empty translation is still a pair */
+  /* an original beside its translation, told apart by position; an empty
+     translation is still a pair (pin: roundtrip.test › round trips: every
+     form survives) */
   pair: { attrs: { kind: { default: null } }, content: "cell cell", parseDOM: [{ tag: "div.vrow.vpair", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
   cell: { content: "inline*", parseDOM: [{ tag: "div.vcell" }], toDOM: () => ["div", { class: "vcell" }, 0] },
-  /* a blank line inside the fence: verse's stanza break, prose's paragraph break */
   gap: { parseDOM: [{ tag: "div.vgap" }], toDOM: () => ["div", { class: "vgap" }] },
   text: { group: "inline" },
-  /* every newline inside a paragraph, kept as the line break it is */
   hard_break: { inline: true, group: "inline", selectable: false, parseDOM: [{ tag: "br" }], toDOM: () => ["br"] },
-  /* a picture by whatever path the markdown names — relative sidecar, data:
-     or http — storage's business, not the model's */
+  /* src is the path as the markdown wrote it, never resolved here */
   image: {
     inline: true, group: "inline", draggable: true,
     attrs: { src: {}, alt: { default: "" } },
     parseDOM: [{ tag: "img[src]", getAttrs: (dom) => ({ src: dom.getAttribute("src"), alt: dom.getAttribute("alt") || "" }) }],
     toDOM: (n) => ["img", { src: n.attrs.src, alt: n.attrs.alt }],
   },
-  /* the number a physical book prints on its leaves, marked where a new one
-     begins: CONTENT that renders like display-only markup */
+  /* a printed book's leaf number, where a new leaf begins: CONTENT, in the
+     text, though it renders like display-only markup */
   folio: {
     inline: true, group: "inline",
     attrs: { label: {} },

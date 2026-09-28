@@ -1,57 +1,43 @@
-/* The markdown grammar's line-level facts: the regexes every block arm and
-   the serializer share, and the pure string transforms around them. Ported
-   2026-09-07 from ../writer/src/js/md.mjs, serialize.mjs and folio.mjs, whose
-   comments hold the measurements behind each rule; what is kept here is the
-   rule itself, and a comment only where this port decided something. */
-
-/* the ONE spelling of "what counts as a line break" — CRLF, a lone \r, and
-   the U+2028/U+2029 separators; parseMarkdown normalizes its input with it */
+/* the ONE spelling of what counts as a line break */
 export const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
-/* one markdown list line: leading indent, a bullet or number marker, its text */
 export const LIST_LINE = /^(\s*)([-*]|\d+[.)])\s+(.*)$/;
-/* the MINIMUM indent the serializer writes a continuation block at. The parse
-   arm does NOT read it: takeItemBlocks attaches on the item's own content
-   column, which is what makes the "at least" rule work. */
+/* a continuation block's indent is AT LEAST this, never exactly it: a block
+   hangs under its item by reaching the item's content column (pin:
+   parse.test › a hanging block joins its item, one convention at every
+   marker width) */
 export const ITEM_BLOCK_INDENT = "    ";
-/* a line opening (or closing) a ``` code fence, at column 0 */
 export const FENCE_LINE = /^```/;
-/* the opener's backtick run, captured — the length the close rule compares */
 export const FENCE_TICKS = /^(`{3,})/;
-/* a line of nothing but backticks — what closes a fence */
 export const FENCE_CLOSE = /^(`{3,})\s*$/;
-/* a line belonging to a > quote */
 export const QUOTE_LINE = /^>\s?/;
-/* a heading line. LEVELS UNCAPPED (decision 5 of the successor plan,
-   2026-09-07): "#" is level 1, and an entry's title is its first level-one
-   heading. The current app maps # to h2 and reads ## as the deepest. */
+/* LEVELS UNCAPPED: "#" is level one (pin: parse.test › headings take every
+   level) */
 export const HEADING_LINE = /^(#{1,6})\s+(.*)$/;
 /* the ::: family. EVERY FENCE LINE TOLERATES LEADING WHITESPACE, opener and
-   closer alike, and the six move together. The card opener REQUIRES the
-   hyphenated colour word; the other words are exact. */
+   closer alike, and they move together. The card opener REQUIRES the
+   hyphenated colour word; the other words are exact (pin: parse.test › a
+   ::: line may be indented, opener and closer alike) */
 export const CARD_OPEN = /^\s*:::\s*(card-[\w-]+)\s*$/;
 export const CARD_CLOSE = /^\s*:::\s*$/;
 export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*)?\s*$/;
-/* a stanza (2026-09-27, the Faerie Queene plan): a verse block carrying its
-   stanza number, which is REQUIRED — a bare `::: stanza` names nothing. The
-   number is not a start: every stanza's lines count from 1 */
+/* the stanza number is REQUIRED — a bare `::: stanza` names nothing (pin:
+   parse.test › the stanza opener requires its number) */
 export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
-/* the grid opener (2026-09-22): an optional count in the verse opener's
-   spelling; the body is cards, so it recurses like card and note */
 export const GRID_OPEN = /^\s*:::\s*grid(?:\s+0*[1-9]\d*)?\s*$/;
-/* a table starts at a "| … |" row with a "| --- |" divider directly beneath */
 export const TABLE_ROW = /^\s*\|.*\|\s*$/;
 export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
 
 /* ---------- folios ---------- */
 export const FOLIO_ARABIC_SRC = "[0-9]";
-/* either case: a book printing XXIV is as ordinary as one printing xxiv */
+/* either case: a book printing XXIV is as ordinary as one printing xxiv
+   (pin: folio.test › FOLIO_ONE: arabic or roman, either case) */
 export const FOLIO_ROMAN_SRC = "[ivxlcdmIVXLCDM]";
 export const FOLIO_NUM_SRC = `(?:${FOLIO_ARABIC_SRC}+|${FOLIO_ROMAN_SRC}+)`;
-/* the canonical form, ⟨8⟩ — U+27E8/9, measured over the corpus to appear
-   nowhere else. .replace ONLY — /g under .test() carries lastIndex */
+/* ⟨8⟩ — U+27E8/9, MEASURED over the corpus to appear nowhere else. .replace
+   ONLY: /g under .test() carries lastIndex */
 export const FOLIO_TOKEN = new RegExp(`⟨(${FOLIO_NUM_SRC})⟩`, "g");
 export const FOLIO_ONE = new RegExp(`^${FOLIO_NUM_SRC}$`);
 export const FOLIO_ARABIC = new RegExp(`^${FOLIO_ARABIC_SRC}+$`);
@@ -60,40 +46,35 @@ export function folioToken(label: string): string {
 }
 
 /* ---------- a row's declared kind ---------- */
-/* THE ROW THAT SAYS WHAT IT IS. The numbering convention infers a row's kind
-   from its marks — wholly italic is a stage direction, wholly bold a speaker
-   label, and neither takes a number — and MEASURED 2026-09-07 over the mirror
-   the convention cannot be narrowed to bracketed rows (Shakespeare's 5,627
-   directions are bare italics, `*Exit*`). What it lacked was "italic, but a
-   line": Pippa's songs and Fra Lippo Lippi's `*Flower o' the broom,*` fell
-   out of the count where editions number them.
-   DECIDED 2026-09-07 (phase 1): the exception rides on the ROW, as a token at
-   its head in the folio's own brackets. PER ROW, not per block: Pippa Passes
-   interleaves songs with directions through 198 italic rows, so a block flag
-   would split the block at every song and hand-number every restart. IN THE
-   TEXT, not in a side table: a backup carries it, and the running app shows
-   it harmlessly as text until the cutover. MEASURED: no `⟨word⟩` of any kind
-   exists in the corpus, and `line` is not a folio label (n, e are not roman).
-   The token names what the row IS, so a second value can follow the same
-   grammar if one is ever wanted; only this one is read. */
+/* THE ROW THAT SAYS WHAT IT IS: "italic, but a line" — Pippa's songs and
+   Fra Lippo Lippi's `*Flower o' the broom,*` are italic rows that editions
+   number. MEASURED over the mirror: italics cannot be narrowed to bracketed
+   rows (Shakespeare's 5,627 directions are bare italics, `*Exit*`). PER
+   ROW, not per block: Pippa Passes interleaves songs with directions
+   through 198 italic rows, so a block flag would split the block at every
+   song. IN THE TEXT, not a side table, so a backup carries it. MEASURED: no
+   `⟨word⟩` of any kind exists in the corpus, and `line` is not a folio label
+   (n, e are not roman). The token names what the row IS, so a second value
+   can follow the same grammar; only this one is read (pin: parse.test › a
+   ⟨line⟩ token at a row's head is the row's declared kind, not its text) */
 export const ROW_LINE_TOKEN = "⟨line⟩";
 export const ROW_LINE_AT = /^⟨line⟩\s*/;
 
 /* ---------- the ::: family ---------- */
-/* the number a row fence starts at — "::: verse 2" numbers its first line 2;
-   1 when the opener carries none. The opener regexes are the whole grammar,
-   so this reads the one token they admit and parses nothing itself. */
+/* "::: verse 2" numbers its first line 2; 1 when the opener carries none.
+   The opener regexes are the whole grammar: this reads the one token they
+   admit and validates nothing itself */
 export function fenceStart(line: string): number {
   const m = line.match(/\s(\d+)\s*$/);
   return m ? parseInt(m[1], 10) : 1;
 }
-/* a stanza opener's number, null for any other line. Read here and never
-   through fenceStart, which would take it for the first line's number */
+/* never read through fenceStart, which would take it for the first line's
+   number: a stanza's lines count from 1 (pin: parse.test › a stanza fence
+   is a verse block carrying its number, and its first line is 1) */
 export function stanzaNumber(line: string): number | null {
   const m = line.match(STANZA_OPEN);
   return m ? parseInt(m[1], 10) : null;
 }
-/* does this line open a ::: block — the opener list as one guard */
 export function opensFence(line: string): boolean {
   return CARD_OPEN.test(line) || VERSE_OPEN.test(line) || STANZA_OPEN.test(line) ||
     REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
@@ -107,7 +88,6 @@ export function flatFence(line: string): boolean {
 export function rowFence(line: string): boolean {
   return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || PROSE_OPEN.test(line);
 }
-/* does the code fence opened with `run` backticks ever close from `at`? */
 export function codeCloses(lines: string[], at: number, run: string): boolean {
   for (let i = at; i < lines.length; i++) {
     const m = lines[i].match(FENCE_CLOSE);
@@ -115,11 +95,11 @@ export function codeCloses(lines: string[], at: number, run: string): boolean {
   }
   return false;
 }
-/* the body lines of the ::: fence opened above lines[from], and the index of
-   the line past its close. It counts depth for the recursing forms (card,
-   note), shields a code fence's body — only one that actually closes — and
-   takes a row fence's rows raw, handing a ::: note row's extent back to this
-   same scan. An unclosed opener swallows the rest of the text. */
+/* depth counts for the recursing forms; a code fence's body is shielded
+   only when that fence closes; a row fence's rows are taken raw, a ::: note
+   row's extent handed back to this scan. An unclosed opener swallows the
+   rest of the text (pin: parse.test › fenceBody counts depth for the
+   recursing forms and shields raw bodies) */
 export function fenceBody(lines: string[], from: number): { body: string[]; next: number } {
   const body: string[] = [];
   let depth = 1;
@@ -159,8 +139,8 @@ export function fenceBody(lines: string[], from: number): { body: string[]; next
 }
 
 /* ---------- rows ---------- */
-/* the index of the separator: the first pipe not itself escaped, or -1. A
-   walk, so a consumed pipe is never mistaken for the start of the line. */
+/* the first pipe not itself escaped, or -1 (pin: parse.test › the split is
+   at the FIRST pipe, and an escaped one stays in its cell) */
 export function verseSplit(line: string): number {
   for (let k = 0; k < line.length; k++) {
     if (line.charAt(k) === "\\") { k++; continue; }
@@ -168,8 +148,8 @@ export function verseSplit(line: string): number {
   }
   return -1;
 }
-/* the row separator is a bare "|", so a typed one is escaped; the backslash
-   escapes itself too, or a cell ending in one would escape the separator */
+/* the backslash escapes itself too, or a cell ending in one would escape
+   the separator (pin: roundtrip.test › round trips: every form survives) */
 export function escapeCell(md: string): string {
   return md.replace(/([\\|])/g, "\\$1");
 }
@@ -186,21 +166,17 @@ export function tableRowCells(line: string): string[] {
 }
 
 /* ---------- prose that would read back as syntax ---------- */
-/* does lines[i] OPEN A BLOCK — the OR of the dispatch arms, so the paragraph
-   run, the list continuation and the serializer's indent rule all gate on the
-   one predicate */
+/* the ONE spelling of "does lines[i] open a block" */
 export function blockLineAt(lines: string[], i: number): boolean {
   return FENCE_LINE.test(lines[i]) || opensFence(lines[i]) ||
     HEADING_LINE.test(lines[i]) || QUOTE_LINE.test(lines[i]) ||
     LIST_LINE.test(lines[i]) || isTableStart(lines, i);
 }
-/* would the parse read this line as structure — the question above over the
-   line alone, plus the bare ::: that closes a fence */
 export function readsAsBlock(l: string): boolean {
   return blockLineAt([l], 0) || CARD_CLOSE.test(l);
 }
-/* a backslash at column 0 marks a prose line that would otherwise read as a
-   block; the mark escapes itself, so the first pass is the fixed point */
+/* the column-0 backslash escapes itself, so the first pass is the fixed
+   point (pin: parse.test › the escaping helpers: the mark escapes itself) */
 export function escapeProse(l: string): string {
   return readsAsBlock(l) || unescapeProse(l) !== l ? "\\" + l : l;
 }
@@ -210,7 +186,8 @@ export function unescapeProse(l: string): string {
   return /^\s/.test(bare) || readsAsBlock(bare) || unescapeProse(bare) !== bare ? bare : l;
 }
 /* the content column of the item still open at the end of the markdown
-   written so far, or -1 when no list is — read backwards off what was written */
+   written so far, or -1 (pin: parse.test › the escaping helpers: the mark
+   escapes itself, and the indent is read backwards) */
 export function openItemCol(md: string): number {
   const lines = md.split("\n");
   for (let i = lines.length - 1; i >= 0; i--) {
@@ -221,9 +198,8 @@ export function openItemCol(md: string): number {
   }
   return -1;
 }
-/* the indent arm: a block whose first line with anything on it is indented
-   to at least the open item's column would hang under that item, so it takes
-   the mark; a block opening at column 0 is left alone */
+/* a block indented to the open item's column would hang under that item,
+   so it takes the mark; one at column 0 is left alone */
 export function escapeIndent(md: string, before: string): string {
   const lines = md.split("\n");
   let k = 0;
@@ -236,7 +212,6 @@ export function escapeIndent(md: string, before: string): string {
   lines[k] = "\\" + lines[k];
   return lines.join("\n");
 }
-/* one quote level: an already-quoted line just gains another ">" */
 export function quotePrefix(l: string): string {
   return l.charAt(0) === ">" ? ">" + l : "> " + l;
 }

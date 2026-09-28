@@ -1,5 +1,3 @@
-// The parse arm: what each markdown form becomes as a document. The shapes
-// are the current app's md.test.mjs pins (2026-09-07), re-asked of the tree.
 import { test, expect } from "vitest";
 import { parseMarkdown, visibleText } from "./parse.ts";
 import { fenceBody, escapeProse, unescapeProse, openItemCol, escapeIndent, verseSplit, blockLineAt, readsAsBlock } from "./grammar.ts";
@@ -91,6 +89,19 @@ test("a nested list sits inside the item above it, by relative indent", () => {
   const a = d.firstChild!.child(0);
   expect(a.child(1).type.name).toBe("bullet_list");
   expect(a.child(1).child(0).child(1).type.name).toBe("bullet_list");
+});
+
+test("a pipe row with no divider under it is a paragraph, and the line after it is read", () => {
+  expect(kinds("| a | b |\nafter\n\n# next")).toEqual(["paragraph", "heading"]);
+  expect(visibleText(parseMarkdown("| a | b |\nafter"))).toBe("| a | b |\nafter");
+});
+
+test("a same-indent line of the other marker kind opens a sibling list", () => {
+  expect(kinds("- a\n- b\n1. c\n2. d")).toEqual(["bullet_list", "ordered_list"]);
+});
+
+test("a fence's lang drops its backticks", () => {
+  expect(doc("```a`b\nx\n```")).toMatchObject({ content: [{ type: "code_block", attrs: { lang: "ab" } }] });
 });
 
 test("a fence carries its lang lowercased; unclosed runs to EOF; a shorter backtick line stays code", () => {
@@ -235,9 +246,6 @@ test("the token is a row's head only: in a paragraph, or mid-row, it is text", (
   expect(visibleText(parseMarkdown("::: verse\na ⟨line⟩ b\n:::"))).toBe("a ⟨line⟩ b");
 });
 
-// `::: stanza N` (2026-09-27, the Faerie Queene plan): a verse block carrying
-// its stanza number. THE NUMBER IS NOT A START: fenceStart reads the last
-// number on an opener as the first line's, so the stanza arm reads its own.
 test("a stanza fence is a verse block carrying its number, and its first line is 1", () => {
   const b = parseMarkdown("::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\n:::").child(0);
   expect(b.type.name).toBe("verse");

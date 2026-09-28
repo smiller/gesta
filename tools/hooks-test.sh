@@ -63,11 +63,11 @@ done
 # it does in anger
 cat > package.json <<'JSON'
 { "name": "hooks-fixture", "private": true,
-  "scripts": { "check": "sh ./check.sh", "test": "sh ./test.sh", "verify": "sh ./verify.sh" } }
+  "scripts": { "check": "sh ./check.sh", "test": "sh ./test.sh", "test:comments": "sh ./comments.sh", "verify": "sh ./verify.sh" } }
 JSON
 green() { printf '#!/bin/sh\nexit 0\n' > "$1"; }
 red()   { printf '#!/bin/sh\necho "%s says red"\nexit 1\n' "$1" > "$1"; }
-green check.sh; green test.sh; green verify.sh
+green check.sh; green test.sh; green comments.sh; green verify.sh
 echo app > index.html
 echo 'export const a = 1;' > src/a.ts
 echo tool > tools/t.mjs
@@ -172,6 +172,8 @@ touch_src;   stop_says "src/ moved, checks green: silent and 0" 0
 red check.sh; stop_says "src/ moved, tsc red: blocked" 2 "Stop blocked"
 green check.sh; red test.sh; stop_says "src/ moved, suite red: blocked" 2 "Stop blocked"
 serr=$(sh hooks/stop.sh 2>&1 >/dev/null); case "$serr" in *"test.sh says red"*) ok "the block carries the log's tail" ;; *) bad "the block did not carry the log's tail" ;; esac
+green test.sh; red comments.sh; stop_says "src/ moved, the comment checker red: blocked" 2 "Stop blocked"
+green comments.sh
 clean; red test.sh
 touch_index; stop_says "index.html moved, suite red: blocked" 2 "Stop blocked"
 clean; red test.sh

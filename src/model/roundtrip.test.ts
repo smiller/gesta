@@ -1,8 +1,3 @@
-// The round trip: md -> document -> md. The 32-form matrix from the current
-// app's serialize.test.mjs (2026-09-07), each form a fixed point at the top
-// level and inside a quote, then the normalizations the grammar makes in one
-// pass and then holds, then the mark hoist that keeps emphasis with edge
-// whitespace from decaying a marker per cycle.
 import { test, expect } from "vitest";
 import { schema } from "./schema.ts";
 import { parseMarkdown } from "./parse.ts";
@@ -34,6 +29,7 @@ const ROUND_TRIPS = [
   "> # heading in a quote\n> \n>> nested\n>> quote",
   "```\ncode here\nmore\n```",
   "```js\nvar x = 1;\n```",
+  "````\n```\ninner\n```\n````",
   "| a | b |\n| --- | --- |\n| 1 | 2 |",
   "::: card-red\ninside a card\n:::",
   "::: card-blue\n# a heading in a card\n\n- and a list\n:::",
@@ -126,8 +122,6 @@ test("non-canonical spellings normalize in one pass and then hold", () => {
   }
 });
 
-// an empty grid node, which the parse refuses, is written as nothing, so a
-// text the editor saved always opens (2026-09-22)
 test("an empty grid serializes to nothing", () => {
   const d = schema.nodes.doc.create(null, [schema.nodes.grid.create({ n: 2 }), schema.nodes.paragraph.create(null, schema.text("after"))]);
   expect(serializeMarkdown(d)).toBe("after");
@@ -165,7 +159,6 @@ test("each hoisted form is a fixed point", () => {
   for (const md of forms) expect(trip(md), JSON.stringify(md)).toBe(md);
 });
 
-// the property the whole-corpus check rests on: a second pass changes nothing
 test("the serializer's output is the parser's fixed point", () => {
   for (const md of ROUND_TRIPS.concat(NORMALIZED.map(([i]) => i))) {
     const once = trip(md);
@@ -174,7 +167,7 @@ test("the serializer's output is the parser's fixed point", () => {
 });
 
 
-test("a pair cut down to one cell serializes as that cell's line, never a throw (the 2026-09-12 second confirmation pass: ⌘C's text flavour and the cut-to-link act)", () => {
+test("a pair cut down to one cell serializes as that cell's line, never a throw", () => {
   const doc = parseMarkdown("::: verse\nalpha | one two\n:::\n\nAfter.");
   let from = 0, to = 0;
   doc.descendants((n, pos) => { if (n.isText && n.text!.includes("two")) from = pos + n.text!.indexOf("two"); if (n.isText && n.text!.includes("After")) to = pos + n.text!.indexOf("After") + 5; });
@@ -182,23 +175,30 @@ test("a pair cut down to one cell serializes as that cell's line, never a throw 
 });
 
 
-test("two adjacent paragraphs in a quotation are written with the blank quote line between them, and read back as the one run that line is (the block's closing review, 2026-09-12)", () => {
+test("two adjacent paragraphs in a quotation are written with the blank quote line between them, and read back as the one run that line is", () => {
   const two = schema.nodes.doc.create(null, [schema.nodes.blockquote.create(null, [schema.nodes.paragraph.create(null, schema.text("a")), schema.nodes.paragraph.create(null, schema.text("b"))])]);
   expect(serializeMarkdown(two)).toBe("> a\n> \n> b");
   expect(serializeMarkdown(parseMarkdown(serializeMarkdown(two)))).toBe("> a\n> \n> b");
 });
 
-// A stanza block cut from its middle holds a start the `::: stanza N` opener
-// has no room for: it is written as a plain verse fence numbered from there,
-// the citation beside a copied passage naming the stanza (decided
-// 2026-09-27). Cut from its first line it stays a stanza.
+test("a break inside a row's cell is written as a space: one row stays one line", () => {
+  const cell = (...kids: ReturnType<typeof schema.text>[]) => schema.nodes.cell.create(null, kids);
+  const pair = schema.nodes.pair.create(null, [cell(schema.text("a"), schema.nodes.hard_break.create(), schema.text("b")), cell(schema.text("c"))]);
+  expect(serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.verse.create(null, [pair])]))).toBe("::: verse\na b | c\n:::");
+});
+
+test("a list item's empty continuation line is written unindented, and holds", () => {
+  const p = schema.nodes.paragraph.create(null, [schema.text("a"), schema.nodes.hard_break.create(), schema.nodes.hard_break.create(), schema.text("b")]);
+  const md = serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.bullet_list.create(null, [schema.nodes.list_item.create(null, [p])])]));
+  expect(md).toBe("- a\n\n    b");
+  expect(trip(md)).toBe(md);
+});
+
 test("a stanza block starting past its first line is written as a verse fence", () => {
   const rows = [schema.nodes.line.create(null, schema.text("third line"))];
   expect(serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.verse.create({ stanza: 2, start: 3 }, rows)]))).toBe("::: verse 3\nthird line\n:::");
   expect(serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.verse.create({ stanza: 2, start: 1 }, rows)]))).toBe("::: stanza 2\nthird line\n:::");
 });
-// the HTML flavour of a copy is ProseMirror's own DOM, read back by
-// parseDOM (editor.ts's paste): the stanza rides it as data-stanza
 test("the stanza travels in the DOM: toDOM writes it and parseDOM reads it back", () => {
   const verse = schema.nodes.verse;
   const dom = (attrs: Record<string, string>) => ({ hasAttribute: (k: string) => k in attrs, getAttribute: (k: string) => attrs[k] ?? null }) as unknown as HTMLElement;

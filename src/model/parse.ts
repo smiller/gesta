@@ -1,11 +1,10 @@
-/* markdown -> ProseMirror document. markdown-it is the INLINE engine and the
-   token pipeline; the block grammar is this file's own, ported whole from
-   ../writer/src/js/md.mjs as the core "block" rule (decided 2026-09-07,
-   phase 0: markdown-it's block loop discards a blank line before any rule
-   sees it, and a quote body here is a line run in which a blank line is
-   content — so neither its rules nor markdown-it-container fit). Every token
-   the walker meets must be one it knows, or it throws: a form the schema does
-   not know is refused, never dropped. */
+/* markdown-it is the INLINE engine and the token pipeline; the block grammar
+   is this file's own, as the core "block" rule: markdown-it's block loop
+   discards a blank line before any rule sees it, and a quote body is a line
+   run in which a blank line is content, so neither its rules nor
+   markdown-it-container fit (pin: parse.test › a quote takes blocks at its
+   own level, to any depth, and a blank quote line is content). A token the
+   walker does not know throws: a form is refused, never dropped. */
 import MarkdownIt, { type MarkdownIt as MarkdownItInstance, type StateCore, type StateInline, type Token, type Env } from "markdown-it";
 import { Fragment, Mark, Node, type NodeType } from "prosemirror-model";
 import { schema } from "./schema.ts";
@@ -19,7 +18,6 @@ import {
 
 type TokenCtor = new (type: string, tag: string, nesting: -1 | 0 | 1) => Token;
 
-/* where the block arms write their tokens */
 class Sink {
   Token: TokenCtor;
   tokens: Token[];
@@ -32,7 +30,6 @@ class Sink {
     this.tokens.push(t);
     return t;
   }
-  /* a block whose body is one inline run */
   inline(name: string, tag: string, content: string, meta?: Record<string, unknown>): void {
     const open = this.push(name + "_open", tag, 1);
     if (meta) open.meta = meta;
@@ -45,9 +42,9 @@ class Sink {
 
 /* ---------- the block arms ---------- */
 
-/* the lines of one body, dispatched. `quote` selects the quote body's
-   grammar: blank lines are content (a run of text lines absorbs them) and
-   nothing is skipped; at every other level a blank line only separates. */
+/* `quote` selects the quote body's grammar: blank lines are content (a run
+   of text lines absorbs them); at every other level a blank line only
+   separates */
 function emitBlocks(sink: Sink, lines: string[], quote: boolean): void {
   let i = 0;
   while (i < lines.length) {
@@ -76,8 +73,9 @@ function emitBlocks(sink: Sink, lines: string[], quote: boolean): void {
       emitParagraph(sink, txt.map(unescapeProse));
     }
     else {
-      /* the current line first: it may itself be block-start-like (a pipe
-         row with no divider under it) yet land here, and the loop must advance */
+      /* the current line first: it may be block-start-like (a pipe row with
+         no divider under it) yet land here, and the loop must advance (pin:
+         parse.test › a pipe row with no divider under it is a paragraph) */
       const p = [lines[i++]];
       while (i < lines.length && lines[i].trim() && !blockLineAt(lines, i)) p.push(lines[i++]);
       emitParagraph(sink, p.map(unescapeProse));
@@ -96,7 +94,7 @@ function emitHeading(sink: Sink, line: string): void {
 
 function emitFence(sink: Sink, lines: string[], from: number): number {
   const open = FENCE_TICKS.exec(lines[from])!;
-  /* backticks stay out of the lang; the serializer's escalation counts on it */
+  /* no backtick in a lang (pin: parse.test › a fence's lang drops its backticks) */
   const lang = lines[from].slice(open[1].length).trim().split(/\s+/)[0].toLowerCase().replace(/`/g, "");
   from++;
   const code: string[] = [];
@@ -108,12 +106,11 @@ function emitFence(sink: Sink, lines: string[], from: number): number {
   const t = sink.push("fence", "code", 0);
   t.info = lang;
   t.content = code.join("\n");
-  return from + 1;   /* past the closer, or past EOF when unclosed */
+  return from + 1;
 }
 
-/* a body that is itself blocks — card and note. The body is markdown, so it
-   recurses at the top-level grammar (blank lines separate), as the current
-   parser's mdToHtml re-entry does. */
+/* a card's or note's body recurses at the top-level grammar: blank lines
+   separate (pin: parse.test › a nested note's body recurses) */
 function emitBody(sink: Sink, name: string, meta: Record<string, unknown> | null, body: string[]): void {
   const open = sink.push(name + "_open", "div", 1);
   if (meta) open.meta = meta;
@@ -128,10 +125,10 @@ function emitCard(sink: Sink, lines: string[], from: number): number {
   return box.next;
 }
 
-/* a grid's body is cards and nothing else, judged BEFORE any token is
-   pushed so the reason is this one and not the schema's generic "cannot
-   build" (2026-09-22). The refusal throws: a body-level fault cannot stay a
-   paragraph, because its opener would then be escaped on the next save. */
+/* judged BEFORE any token is pushed, so the reason is this one and not the
+   generic "cannot build". It throws: left as paragraphs, the opener would
+   be escaped on the next save (pin: parse.test › a grid holding anything but
+   cards is refused at the parse, the offending line quoted) */
 function emitGrid(sink: Sink, lines: string[], from: number): number {
   const typed = lines[from].match(/\s(\d+)\s*$/);
   const box = fenceBody(lines, from + 1);
@@ -154,7 +151,6 @@ function emitNote(sink: Sink, lines: string[], from: number): number {
   return box.next;
 }
 
-/* the reference body is PLAIN TEXT: one directive read by code */
 function emitReference(sink: Sink, lines: string[], from: number): number {
   from++;
   const body: string[] = [];
@@ -164,13 +160,9 @@ function emitReference(sink: Sink, lines: string[], from: number): number {
   return from + 1;
 }
 
-/* the verse and prose arms — one row walk, two containers. A blank line is a
-   gap, a line with an unescaped pipe is a pair, a line without one is a
-   full-width line, and a ::: note is a row that does not close the fence. In
-   prose an all-empty pair is a gap too. */
+/* in prose an all-empty pair is a gap too (pin: parse.test › verse rows:
+   paired, full-width, and the stanza gap; prose gaps on an empty pair) */
 function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "prose"): number {
-  /* a stanza's number is its own and its lines count from 1: fenceStart
-     would read `::: stanza 2` as a start of 2 */
   const stanza = stanzaNumber(lines[from]);
   const start = stanza === null ? fenceStart(lines[from]) : 1;
   from++;
@@ -181,8 +173,9 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
     const line = lines[from];
     if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from); continue; }
     const raw = line.trim();
-    /* the row's declared kind comes off its head before the pipe is looked
-       for; a declared row is a row even with nothing after the token */
+    /* the declared kind comes off the head before the pipe is looked for;
+       a declared row is a row even with nothing after the token (pin:
+       parse.test › a ⟨line⟩ token at a row's head is the row's declared kind) */
     const declared = ROW_LINE_AT.test(raw);
     const body = declared ? raw.replace(ROW_LINE_AT, "") : raw;
     const meta = declared ? { kind: "line" } : undefined;
@@ -210,9 +203,9 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
 
 interface Item { indent: number; ordered: boolean; num: number; text: string; cont: string[]; blocks: string[][] }
 
-/* consume the continuation blocks hanging under item: lines indented to AT
-   LEAST the item's content column. Straight under the marker they continue
-   the item's own line as soft breaks; after a blank line they are a block. */
+/* lines indented to AT LEAST the item's content column hang under it:
+   straight under the marker as soft breaks, after a blank line as a block
+   (pin: parse.test › a hanging block joins its item) */
 function takeItemBlocks(item: Item, lines: string[], from: number, col: number): number {
   const indentOf = (l: string): number => l.match(/^\s*/)![0].length;
   const continues = (j: number): boolean =>
@@ -250,10 +243,8 @@ function emitList(sink: Sink, lines: string[], from: number): number {
   return from;
 }
 
-/* a run of items to a nested list: a deeper indent opens a child list inside
-   the item just emitted, a shallower one closes levels, each level's kind
-   fixed by its first item's marker. Relative indent, so 2- or 3-space steps
-   both nest. */
+/* RELATIVE indent, so 2- or 3-space steps both nest (pin: parse.test › a
+   nested list sits inside the item above it, by relative indent) */
 function buildList(sink: Sink, items: Item[]): void {
   let pos = 0;
   function level(): void {
@@ -263,8 +254,9 @@ function buildList(sink: Sink, items: Item[]): void {
     let want = ordered ? items[pos].num : 0;
     while (pos < items.length && items[pos].indent >= L) {
       const it = items[pos];
-      /* a same-indent line of the other marker kind closes this list; the
-         outer loop opens a fresh sibling of that kind */
+      /* the other marker kind at this indent closes the list (pin:
+         parse.test › a same-indent line of the other marker kind opens a
+         sibling list) */
       if (it.ordered !== ordered) break;
       const li = sink.push("list_item_open", "li", 1);
       if (ordered && it.num !== want) li.meta = { value: it.num };
@@ -272,7 +264,6 @@ function buildList(sink: Sink, items: Item[]): void {
       emitParagraph(sink, [it.text, ...it.cont]);
       it.blocks.forEach((b) => emitParagraph(sink, b));
       pos++;
-      /* a deeper line nests inside the item just emitted */
       while (pos < items.length && items[pos].indent > L) level();
       sink.push("list_item_close", "li", -1);
     }
@@ -287,7 +278,6 @@ function emitTable(sink: Sink, lines: string[], from: number): number {
   const rows: string[][] = [head];
   while (from < lines.length && /^\s*\|.*\|\s*$/.test(lines[from])) {
     const cells = tableRowCells(lines[from++]);
-    /* body rows pad or trim to the header's column count */
     rows.push(head.map((_, k) => cells[k] || ""));
   }
   sink.push("table_open", "table", 1);
@@ -302,10 +292,10 @@ function emitTable(sink: Sink, lines: string[], from: number): number {
 
 /* ---------- the markdown-it instance: inline rules and the pipeline ---------- */
 
-/* every newline inside a paragraph is a break, and the text around it is
-   kept verbatim — no trailing-space trim, no leading-space skip on the next
-   line (markdown-it's rule does both). MEASURED 2026-09-07 over the mirror:
-   5,371 lines open with whitespace, most of them one-space chat transcripts. */
+/* every newline inside a paragraph is a break, the text around it kept
+   verbatim — markdown-it's rule trims both sides. MEASURED over the mirror:
+   5,371 lines open with whitespace, most of them one-space chat transcripts
+   (pin: parse.test › a paragraph keeps its breaks, its leading whitespace) */
 function newline(state: StateInline, silent: boolean): boolean {
   if (state.src.charCodeAt(state.pos) !== 0x0a) return false;
   if (!silent) state.push("softbreak", "br", 0);
@@ -313,8 +303,8 @@ function newline(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-/* a code span is ONE backtick each side, on one line, its spaces kept —
-   the current grammar's rule, narrower than CommonMark's */
+/* ONE backtick each side, on one line, its spaces kept — narrower than
+   CommonMark's (pin: parse.test › inline: code spans keep markers literal) */
 function backticks(state: StateInline, silent: boolean): boolean {
   if (state.src.charCodeAt(state.pos) !== 0x60) return false;
   const m = /^`([^`\n]+)`/.exec(state.src.slice(state.pos, state.posMax));
@@ -328,8 +318,9 @@ function backticks(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-/* the one inline HTML form the grammar reads: <u>…</u>. Every other angle
-   bracket is text — the 1998–99 chat transcripts carry ~8,000 <name> tags. */
+/* the one inline HTML form the grammar reads. Every other angle bracket is
+   text: the 1998–99 chat transcripts carry ~8,000 <name> tags (pin:
+   parse.test › the underline tag is read only as a matched pair) */
 function underline(state: StateInline, silent: boolean): boolean {
   const src = state.src, pos = state.pos;
   if (src.charCodeAt(pos) !== 0x3c) return false;
@@ -349,14 +340,14 @@ function underline(state: StateInline, silent: boolean): boolean {
 }
 
 /* markdown-it's own text rule stops only at ASCII syntax characters, so a
-   bare URL or a folio would be swallowed into text before any rule could
-   claim it. This one stops there too — at a ⟨, and at an h or w that opens a
-   URL — so the rules below get their turn. */
+   bare URL or a folio would be swallowed into text; this one stops at a ⟨
+   and at an h or w that opens a URL too */
 const TERMINATORS = new Set([0x0a, 0x21, 0x23, 0x24, 0x25, 0x26, 0x2a, 0x2b, 0x2d, 0x3a, 0x3c, 0x3d, 0x3e, 0x40, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x7b, 0x7d, 0x7e, 0x27e8]);
-/* "]" ends the run too: markdown-it scans a link label with the same inline
-   rules in silent mode, and a URL that ate the "](" would leave the label
-   unclosed — MEASURED 2026-09-07, four files whose link text is itself an
-   address. A bracket inside an address is IPv6-only. */
+/* "]" ends the run: markdown-it scans a link label with these rules in
+   silent mode, and a URL that ate the "](" left the label unclosed —
+   MEASURED, four files whose link text is itself an address. A bracket
+   inside an address is IPv6-only (pin: roundtrip.test › round trips: every
+   form survives) */
 export const URL_START = /^(?:https?:\/\/|www\.)[^\s<>⟨\]]+/i;
 function urlAt(src: string, pos: number, max: number): RegExpExecArray | null {
   const c = src.charCodeAt(pos);
@@ -377,12 +368,13 @@ function text(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-/* a bare URL becomes a link — claimed HERE, before emphasis runs, so an
-   underscore or a star inside an address is never a marker (MEASURED
-   2026-09-07: five files' URLs lost "_" runs to emphasis when the link was
-   made after the inline pass). ⟨ ends the run, a folio carrying no space;
-   trailing punctuation is the reader's, except a ")" closing a "(" the
-   address itself opened. The text inside a link is never re-linked. */
+/* claimed HERE, before emphasis runs, so an underscore or a star inside an
+   address is never a marker: MEASURED, five files' URLs lost "_" runs when
+   the link was made after the inline pass. ⟨ ends the run, a folio carrying
+   no space; trailing punctuation is the text's, except a ")" closing a "("
+   the address opened (pin: parse.test › a bare URL is one link even when it
+   holds emphasis markers or a paren) (pin: parse.test › a bare URL links,
+   trailing punctuation stays outside, and a folio ends the run) */
 const URL_BOUNDARY = /[\s([{“‘"'>⟩*_~]/;
 const URL_TRAIL_CHAR = /[.,;:!?…'")\]}»”’]/;
 export function trimUrl(run: string): string {
@@ -417,9 +409,9 @@ function autolink(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-/* a folio token in the text — after the code-span rule, so a token in
-   backticks stays literal, and never in an href, which the link rule reads
-   as a destination rather than as inline text */
+/* after the code-span rule, so a token in backticks stays literal (pin:
+   parse.test › inline: code spans keep markers literal, ⟩ is a word
+   boundary, a folio in an href stays a token) */
 const FOLIO_AT = new RegExp(`^⟨(${FOLIO_NUM_SRC})⟩`);
 function folio(state: StateInline, silent: boolean): boolean {
   if (state.src.charCodeAt(state.pos) !== 0x27e8) return false;
@@ -434,8 +426,8 @@ function folio(state: StateInline, silent: boolean): boolean {
 }
 
 export const md: MarkdownItInstance = new MarkdownIt({ html: false, linkify: false, typographer: false });
-/* a link's address is stored as written: no percent-encoding, no scheme
-   policing — this app renders one reader's own text */
+/* an address is stored as written: no percent-encoding, no scheme policing
+   (pin: roundtrip.test › round trips: every form survives) */
 md.normalizeLink = (url: string) => url;
 md.normalizeLinkText = (url: string) => url;
 md.validateLink = () => true;
@@ -487,7 +479,6 @@ function buildDoc(tokens: Token[]): Node {
         case "u_close": unmark("underline"); break;
         case "link_open": {
           let href = String(t.attrGet("href") ?? "");
-          /* the www upgrade every minting path in the current app applies */
           if (/^www\./i.test(href)) href = "https://" + href;
           mark("link", { href });
           break;
@@ -542,8 +533,6 @@ export function parseMarkdown(src: string): Node {
   return buildDoc(tokenize(src));
 }
 
-/* the reader's text, block by block — what a search reads and what the
-   round-trip check compares */
 export function visibleText(doc: Node): string {
   return doc.textBetween(0, doc.content.size, "\n", "\n");
 }
