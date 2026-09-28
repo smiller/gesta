@@ -213,10 +213,26 @@ The converter is `converter/fq.py`, to ship beside its import folder at
 `~/Desktop/gesta-bookshelf-import-spenser/` as the Dickens converter did.
 State at this plan (MEASURED 2026-09-27, over Books I–VI):
 
-- 72 cantos parse, 3,765 stanzas (by book: 622, 695, 694, 611, 577, 566),
-  every stanza nine lines once the site's own navigation is dropped
-  (`Go on to Book II.`, `Finis Book II.` — read at first as a tenth line
-  of II.xii.87).
+- 72 cantos parse, 3,695 stanzas, every one nine lines once the site's
+  own navigation is dropped (`Go on to Book II.`, `Finis Book II.` — read
+  at first as a tenth line of II.xii.87). CORRECTED 2026-09-27: this line
+  first said 3,765, a count taken before the canto slicing was fixed,
+  when 65 cantos each ended in a one-line pseudo-stanza (the next
+  heading's half-cut tag, `*<a*`); and III.xii's 1590 stanzas (below)
+  were counted as its 46–50.
+- THE WITNESS (question 17): J. C. Smith's Clarendon Press text (1909),
+  Gutenberg #70717 and #72698, prints each stanza's number in the margin.
+  Read off those numerals, its count agrees with the converter's in all
+  72 cantos of Books I–VI (MEASURED; by book 617, 683, 677, 599, 565,
+  554). Two misreadings of the witness were mine: a footnote marker after
+  a numeral (`iii[363]`, I.xi.3) and a numeral set two spaces off a long
+  line (III.iv.46); one is its transcription's (II.x.74 printed `lxiv`).
+  Smith also prints `Y cladd` at I.i.1.2, as the source does; the
+  reader's print has `Ycladd`, and the reader's emendation stands.
+- III.xii: the source prints 1596's forty-five stanzas and then, under
+  "STANZAS IN 1590 REPLACED IN 1596 WITH OTHERS.", 1590's five (READ).
+  The converter ends the canto at the heading and holds the five aside
+  (`canto_1590`); how to present them is question D below.
 - Repairs, each listed per stanza: 118 editorial brackets dropped, the
   letter kept; 33 characters mis-encoded in Book II restored (UTF-8 read
   as Windows-1252 once or twice: `CongÃƒÂ©` → `Congé`, `Ã´` → `ô`,
@@ -275,8 +291,14 @@ Mutabilitie canto and reads them.
 
 ## Questions still open
 
-None at 2026-09-27: A, B and C were answered by the reader the same day
-and moved into the decisions table.
+A, B and C were answered by the reader on 2026-09-27 and moved into the
+decisions table.
+
+- D. III.xii's 1590 ending (five stanzas, replaced in 1596 by 43–45):
+  leave it out, or keep it — e.g. in a `::: note` after the canto under
+  its heading, or as an entry of its own?
+- E. The shared Helium step for the stanza (the Record's batch 3 says why
+  it was not written unattended).
 
 ## Record
 
