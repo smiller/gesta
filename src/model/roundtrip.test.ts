@@ -61,6 +61,11 @@ const ROUND_TRIPS = [
   "::: grid 2\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::",
   "::: grid\n::: card-red\n\n:::\n:::",
   "> ::: grid 3\n> ::: card-red\n> a\n> :::\n> :::",
+  "::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\n:::",
+  "::: stanza 1\nline\n::: note\na note as a row\n:::\nline after\n:::",
+  "::: stanza 48\nSo did Sir *Guyon* beare himselfe in fight,\n:::\n\n::: note\nan editor’s note after the stanza\n:::",
+  "::: stanza 3\n*Sad verse, giue death to him that death does giue,*\n:::",
+  "\\::: stanza 2",
   "text with a ⟨8⟩ folio",
   "⟨xxiv⟩**Enter GHOST**",
   "::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*a* | *b*\n⟨line⟩\n:::",
@@ -111,6 +116,8 @@ const NORMALIZED: [string, string][] = [
   ["```Ruby\nx\n```", "```ruby\nx\n```"],
   ["::: grid\n::: card-red\na\n:::\n::: card-pink\nb\n:::\n:::", "::: grid\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::"],
   ["::: grid 03\n::: card-red\na\n:::\n:::", "::: grid 3\n::: card-red\na\n:::\n:::"],
+  ["::: stanza 02\na\n:::", "::: stanza 2\na\n:::"],
+  [":::stanza 2\na\n:::", "::: stanza 2\na\n:::"],
 ];
 test("non-canonical spellings normalize in one pass and then hold", () => {
   for (const [input, canonical] of NORMALIZED) {
@@ -179,4 +186,26 @@ test("two adjacent paragraphs in a quotation are written with the blank quote li
   const two = schema.nodes.doc.create(null, [schema.nodes.blockquote.create(null, [schema.nodes.paragraph.create(null, schema.text("a")), schema.nodes.paragraph.create(null, schema.text("b"))])]);
   expect(serializeMarkdown(two)).toBe("> a\n> \n> b");
   expect(serializeMarkdown(parseMarkdown(serializeMarkdown(two)))).toBe("> a\n> \n> b");
+});
+
+// A stanza block cut from its middle holds a start the `::: stanza N` opener
+// has no room for: it is written as a plain verse fence numbered from there,
+// the citation beside a copied passage naming the stanza (decided
+// 2026-09-27). Cut from its first line it stays a stanza.
+test("a stanza block starting past its first line is written as a verse fence", () => {
+  const rows = [schema.nodes.line.create(null, schema.text("third line"))];
+  expect(serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.verse.create({ stanza: 2, start: 3 }, rows)]))).toBe("::: verse 3\nthird line\n:::");
+  expect(serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.verse.create({ stanza: 2, start: 1 }, rows)]))).toBe("::: stanza 2\nthird line\n:::");
+});
+// the HTML flavour of a copy is ProseMirror's own DOM, read back by
+// parseDOM (editor.ts's paste): the stanza rides it as data-stanza
+test("the stanza travels in the DOM: toDOM writes it and parseDOM reads it back", () => {
+  const verse = schema.nodes.verse;
+  const dom = (attrs: Record<string, string>) => ({ hasAttribute: (k: string) => k in attrs, getAttribute: (k: string) => attrs[k] ?? null }) as unknown as HTMLElement;
+  expect(verse.spec.toDOM!(verse.create({ stanza: 2 }))).toEqual(["div", { class: "verse", "data-stanza": "2" }, 0]);
+  expect(verse.spec.toDOM!(verse.create())).toEqual(["div", { class: "verse" }, 0]);
+  const rule = verse.spec.parseDOM![0] as { getAttrs: (d: HTMLElement) => Record<string, unknown> };
+  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2 });
+  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null });
+  expect(schema.nodes.prose.spec.attrs).not.toHaveProperty("stanza");
 });

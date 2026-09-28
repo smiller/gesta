@@ -39,7 +39,9 @@ export function fenceLineReason(l: string): string | null {
   const tok = m[1].match(/^(verse|prose)\s+(.+)$/);
   const tail = m[1].match(/^(note|reference|card-[\w-]+)\s+\S/);
   const count = m[1].match(/^grid\s+(.+)$/);
+  const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
   return tok ? tok[2] + " is not a starting " + (tok[1] === "verse" ? "line" : "sentence")
+    : stanza ? (stanza[1] ? stanza[1] + " is not a stanza number" : "stanza needs its number, like ::: stanza 2")
     : tail ? tail[1] + " takes nothing after it"
     : count ? count[1] + " is not a count"
     : /^card(?:[\s-]|$)/.test(m[1]) ? "card blocks must include a colour, like card-light-green"

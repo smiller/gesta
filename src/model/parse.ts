@@ -12,7 +12,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
   fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -55,7 +55,7 @@ function emitBlocks(sink: Sink, lines: string[], quote: boolean): void {
     if (!quote && !line.trim()) { i++; continue; }
     if (FENCE_LINE.test(line)) i = emitFence(sink, lines, i);
     else if (CARD_OPEN.test(line)) i = emitCard(sink, lines, i);
-    else if (VERSE_OPEN.test(line)) i = emitRows(sink, lines, i, "verse");
+    else if (VERSE_OPEN.test(line) || STANZA_OPEN.test(line)) i = emitRows(sink, lines, i, "verse");
     else if (PROSE_OPEN.test(line)) i = emitRows(sink, lines, i, "prose");
     else if (REFERENCE_OPEN.test(line)) i = emitReference(sink, lines, i);
     else if (NOTE_OPEN.test(line)) i = emitNote(sink, lines, i);
@@ -169,10 +169,13 @@ function emitReference(sink: Sink, lines: string[], from: number): number {
    full-width line, and a ::: note is a row that does not close the fence. In
    prose an all-empty pair is a gap too. */
 function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "prose"): number {
-  const start = fenceStart(lines[from]);
+  /* a stanza's number is its own and its lines count from 1: fenceStart
+     would read `::: stanza 2` as a start of 2 */
+  const stanza = stanzaNumber(lines[from]);
+  const start = stanza === null ? fenceStart(lines[from]) : 1;
   from++;
   const open = sink.push(cls + "_open", "div", 1);
-  open.meta = { start };
+  open.meta = { start, stanza };
   const emptyPairGaps = cls === "prose";
   while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
     const line = lines[from];
@@ -504,7 +507,7 @@ function buildDoc(tokens: Token[]): Node {
         case "card_open": open(schema.nodes.card, { colour: t.meta!.colour }); break;
         case "note_open": open(schema.nodes.note); break;
         case "grid_open": open(schema.nodes.grid, { n: t.meta!.n }); break;
-        case "verse_open": open(schema.nodes.verse, { start: t.meta!.start }); break;
+        case "verse_open": open(schema.nodes.verse, { start: t.meta!.start, stanza: t.meta!.stanza ?? null }); break;
         case "prose_open": open(schema.nodes.prose, { start: t.meta!.start }); break;
         case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null }); break;
         case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null }); break;

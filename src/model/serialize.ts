@@ -234,8 +234,12 @@ function rowsMd(block: Node, word: string): string {
     else if (row.type === N.pair) rows.push(rowHead(row) + (row.childCount > 1 ? pairMd(cellMd(row.child(0)), cellMd(row.child(1))) : cellMd(row.child(0))));
     else rows.push(rowHead(row) + cellMd(row));
   });
-  const start = block.attrs.start as number;
-  const open = "::: " + word + (start > 1 ? " " + start : "") + "\n";
+  const start = block.attrs.start as number, stanza = block.attrs.stanza as number | null | undefined;
+  /* a stanza is written with its number while it starts at its first line;
+     cut from its middle it has a start `::: stanza N` has no room for, and is
+     written as the plain verse fence it now is (decided 2026-09-27: the
+     citation beside a copied passage names the stanza) */
+  const open = (stanza != null && start === 1 ? "::: stanza " + stanza : "::: " + word + (start > 1 ? " " + start : "")) + "\n";
   return rows.length ? open + rows.join("\n") + "\n:::" : open + ":::";
 }
 

@@ -31,6 +31,10 @@ export const HEADING_LINE = /^(#{1,6})\s+(.*)$/;
 export const CARD_OPEN = /^\s*:::\s*(card-[\w-]+)\s*$/;
 export const CARD_CLOSE = /^\s*:::\s*$/;
 export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*)?\s*$/;
+/* a stanza (2026-09-27, the Faerie Queene plan): a verse block carrying its
+   stanza number, which is REQUIRED — a bare `::: stanza` names nothing. The
+   number is not a start: every stanza's lines count from 1 */
+export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
@@ -83,19 +87,25 @@ export function fenceStart(line: string): number {
   const m = line.match(/\s(\d+)\s*$/);
   return m ? parseInt(m[1], 10) : 1;
 }
+/* a stanza opener's number, null for any other line. Read here and never
+   through fenceStart, which would take it for the first line's number */
+export function stanzaNumber(line: string): number | null {
+  const m = line.match(STANZA_OPEN);
+  return m ? parseInt(m[1], 10) : null;
+}
 /* does this line open a ::: block — the opener list as one guard */
 export function opensFence(line: string): boolean {
-  return CARD_OPEN.test(line) || VERSE_OPEN.test(line) ||
+  return CARD_OPEN.test(line) || VERSE_OPEN.test(line) || STANZA_OPEN.test(line) ||
     REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
 }
 /* the openers whose body is NOT blocks */
 export function flatFence(line: string): boolean {
-  return VERSE_OPEN.test(line) || REFERENCE_OPEN.test(line) || PROSE_OPEN.test(line);
+  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || REFERENCE_OPEN.test(line) || PROSE_OPEN.test(line);
 }
 /* the openers whose body is ROWS — narrower than flatFence by the reference
    block, whose one directive admits no nested note */
 export function rowFence(line: string): boolean {
-  return VERSE_OPEN.test(line) || PROSE_OPEN.test(line);
+  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || PROSE_OPEN.test(line);
 }
 /* does the code fence opened with `run` backticks ever close from `at`? */
 export function codeCloses(lines: string[], at: number, run: string): boolean {

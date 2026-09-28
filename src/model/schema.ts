@@ -19,13 +19,27 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    without a parseDOM rule a copied verse block pasted back arrived as its
    cells' text in paragraphs — by hand 2026-09-08, a paired canto
    interleaved line by line. */
-const rowBlock = (cls: string): NodeSpec => ({
-  attrs: { start: { default: 1 } },
+/* verse alone carries `stanza` (2026-09-27): the number a `::: stanza N`
+   fence writes, null on a plain verse fence; the stylesheet draws it from
+   data-stanza */
+const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
+  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null } } : { start: { default: 1 } },
   content: "(line | pair | gap | note)*",
   group: "block",
   defining: true,
-  parseDOM: [{ tag: "div." + cls, getAttrs: (dom) => ({ start: dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1 }) }],
-  toDOM: (n) => ["div", n.attrs.start > 1 ? { class: cls, "data-start": String(n.attrs.start) } : { class: cls }, 0],
+  parseDOM: [{
+    tag: "div." + cls,
+    getAttrs: (dom) => {
+      const start = dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1;
+      return stanzas ? { start, stanza: dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null } : { start };
+    },
+  }],
+  toDOM: (n) => {
+    const attrs: Record<string, string> = { class: cls };
+    if (n.attrs.start > 1) attrs["data-start"] = String(n.attrs.start);
+    if (n.attrs.stanza != null) attrs["data-stanza"] = String(n.attrs.stanza);
+    return ["div", attrs, 0];
+  },
 });
 const kindOf = (dom: HTMLElement): { kind: string | null } => ({ kind: dom.getAttribute("data-kind") || null });
 
@@ -114,7 +128,7 @@ const nodes: Record<string, NodeSpec> = {
     parseDOM: [{ tag: "div.reference", preserveWhitespace: "full" }],
     toDOM: () => ["div", { class: "reference" }, 0],
   },
-  verse: rowBlock("verse"),
+  verse: rowBlock("verse", true),
   prose: rowBlock("prose"),
   /* a full-width row: a line with no pipe. `kind` is the row's DECLARED kind:
      null leaves the numbering convention to read the marks, "line" counts

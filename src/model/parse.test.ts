@@ -234,3 +234,30 @@ test("the token is a row's head only: in a paragraph, or mid-row, it is text", (
   expect(visibleText(parseMarkdown("⟨line⟩ in prose"))).toBe("⟨line⟩ in prose");
   expect(visibleText(parseMarkdown("::: verse\na ⟨line⟩ b\n:::"))).toBe("a ⟨line⟩ b");
 });
+
+// `::: stanza N` (2026-09-27, the Faerie Queene plan): a verse block carrying
+// its stanza number. THE NUMBER IS NOT A START: fenceStart reads the last
+// number on an opener as the first line's, so the stanza arm reads its own.
+test("a stanza fence is a verse block carrying its number, and its first line is 1", () => {
+  const b = parseMarkdown("::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\n:::").child(0);
+  expect(b.type.name).toBe("verse");
+  expect(b.attrs).toEqual({ start: 1, stanza: 2 });
+  expect(b.childCount).toBe(2);
+  expect(parseMarkdown("::: verse\na\n:::").child(0).attrs.stanza).toBe(null);
+  expect(parseMarkdown("::: stanza 012\na\n:::").child(0).attrs.stanza).toBe(12);
+  expect(kinds(":::stanza 3\na\n:::")).toEqual(["verse"]);
+});
+test("the stanza opener requires its number: bare, zero, a word or a capital stays a paragraph", () => {
+  for (const opener of ["::: stanza", "::: stanza 0", "::: stanza two", "::: Stanza 2", "::: stanza 2 3"])
+    expect(kinds(opener + "\na\n:::"), opener).not.toContain("verse");
+});
+test("a stanza nests a note row, sits in a quote, and a prose line spelling it is escaped", () => {
+  const withNote = parseMarkdown("::: stanza 1\nline\n::: note\nn\n:::\nline after\n:::");
+  expect(kinds("::: stanza 1\nline\n::: note\nn\n:::\nline after\n:::")).toEqual(["verse"]);
+  expect(withNote.child(0).content.content.map((n) => n.type.name)).toEqual(["line", "note", "line"]);
+  const quoted = parseMarkdown("> ::: stanza 3\n> a\n> :::").child(0);
+  expect(quoted.type.name).toBe("blockquote");
+  expect(quoted.child(0).attrs.stanza).toBe(3);
+  expect(escapeProse("::: stanza 2")).toBe("\\::: stanza 2");
+  expect(kinds("::: stanza 4\na\n:::\n\n::: stanza 5\nb\n:::")).toEqual(["verse", "verse"]);
+});

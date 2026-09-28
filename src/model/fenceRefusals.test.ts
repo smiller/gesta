@@ -11,9 +11,13 @@ test("a fence-shaped line that opens nothing is named with its reason; the words
   expect(refused("::: card\nline\n:::")[0].reason).toBe("card blocks must include a colour, like card-light-green");
   expect(refused("::: grid three\nline\n:::")[0].reason).toBe("three is not a count");
   expect(refused("::: grid 0\nline\n:::")[0].reason).toBe("0 is not a count");
+  expect(refused("::: stanza\nline\n:::")[0].reason).toBe("stanza needs its number, like ::: stanza 2");
+  expect(refused("::: stanza two\nline\n:::")[0].reason).toBe("two is not a stanza number");
+  expect(refused("::: stanza 0\nline\n:::")[0].reason).toBe("0 is not a stanza number");
 });
 test("a real fence, a bare closer, a code block's line and a row are none of them refusals", () => {
   expect(refused("::: verse\nline\n:::")).toEqual([]);
+  expect(refused("::: stanza 2\nline\n:::")).toEqual([]);
   expect(refused("::: note\ntext\n:::")).toEqual([]);
   expect(refused("```\n::: nope\n```")).toEqual([]);
   expect(refused("plain\n\n:::")).toEqual([]);
