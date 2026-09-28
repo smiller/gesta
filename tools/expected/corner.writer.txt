@@ -106,4 +106,10 @@ a contents page opened: {"folds":0,"open":[],"counts":[null],"linksShowing":1,"c
 the triangle clicked: {"folds":0,"open":[],"counts":[null],"linksShowing":1,"cantoInView":true,"screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 its canto followed: {"entry":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 back on the contents: {"folds":0,"open":[],"counts":[null],"linksShowing":1,"cantoInView":true,"screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Pippa scrolled down: {"unavailable":"an entry's remembered place is the successor's (2026-09-28)","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Horace followed: {"unavailable":"an entry's remembered place is the successor's (2026-09-28)","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Back: {"unavailable":"an entry's remembered place is the successor's (2026-09-28)","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Forward: {"unavailable":"an entry's remembered place is the successor's (2026-09-28)","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Back again: {"unavailable":"an entry's remembered place is the successor's (2026-09-28)","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+reloaded: {"unavailable":"an entry's remembered place is the successor's (2026-09-28)","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: (nothing)

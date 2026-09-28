@@ -2,7 +2,7 @@
 // (2026-09-28, the reader: back on Book I, Canto vi, the reading should
 // stand at stanza 7, where it was left).
 import { test, expect } from "vitest";
-import { parsePlaces, placeOf, withPlace, PLACES_CAP } from "./placeState.ts";
+import { parsePlaces, placeOf, withPlace, movedPlace, PLACES_CAP } from "./placeState.ts";
 
 test("an absent or damaged store reads as empty; an entry never left has no place", () => {
   for (const raw of [null, "", "nope", "{}", '[{"k": 3}]']) expect(placeOf(parsePlaces(raw), "bookshelf/S/W/1.6")).toBe(null);
@@ -20,6 +20,18 @@ test("the most recently left come first, and only the cap is kept", () => {
   s = withPlace(s, "e10", { pos: 99, y: 99 });
   expect(s[0]).toEqual({ key: "e10", pos: 99, y: 99 });
   expect(s.filter((x) => x.key === "e10").length).toBe(1);
+});
+test("a rename carries the place to the new key; a delete drops it; a stale record under the new key goes", () => {
+  let s = withPlace(withPlace(parsePlaces(null), "p/old", { pos: 40, y: 900 }), "p/other", { pos: 3, y: 4 });
+  s = withPlace(s, "p/new", { pos: 7, y: 8 });
+  const renamed = movedPlace(s, "p/old", "p/new");
+  expect(placeOf(renamed, "p/new")).toEqual({ pos: 40, y: 900 });
+  expect(placeOf(renamed, "p/old")).toBe(null);
+  expect(renamed.length).toBe(2);
+  const deleted = movedPlace(s, "p/old", null);
+  expect(placeOf(deleted, "p/old")).toBe(null);
+  expect(placeOf(deleted, "p/other")).toEqual({ pos: 3, y: 4 });
+  expect(placeOf(movedPlace(s, "p/none", "p/new"), "p/new")).toBe(null);
 });
 test("a malformed record is dropped, the rest kept", () => {
   const s = parsePlaces('[{"key":"a","pos":3,"y":4},{"key":"b","pos":"x"},{"pos":1,"y":2},{"key":"c","pos":5,"y":6}]');

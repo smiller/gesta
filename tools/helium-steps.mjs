@@ -32,6 +32,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, screen: await A.screen(page) })); };
   const go = async (hash, ms = 15000) => { await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms); };
   const R = A.read, S = A.sel;
+  /* a scroll BY THE READER'S HAND, a wheel over the page: a script's
+     scrollTo is no reader, and since 2026-09-28 an arrival holds the entry's
+     remembered place until a wheel, key, pointer or touch — the toolbar
+     step's scrollTo(0, 0) was undone by the held place and its double-click
+     missed the word */
+  const wheelTo = async (y) => {
+    await page.mouse.move(500, 400);
+    await page.mouse.wheel(0, y - (await page.evaluate(() => scrollY)));
+    await page.waitForFunction((y) => Math.abs(scrollY - Math.min(y, document.documentElement.scrollHeight - innerHeight)) < 2, y, { timeout: 3000 }).catch(() => {});
+  };
   /* the dialogs, answered by the harness: `answer` is what a prompt gets, a confirm is accepted */
   let answer = null;
   page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });
@@ -417,7 +427,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["toolbar", async () => {
   /* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */
   await go("2026-09-06");
-  await page.evaluate(() => scrollTo(0, 0));
+  await wheelTo(0);
   const word = await R.wordAt(page, "music", 5);
   await page.mouse.dblclick(word.x, word.y);
   await R.waitBar(page);
@@ -593,10 +603,38 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.editorLink("#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1")).catch(() => {});
   await A.waitEntry(page, "bookshelf/Spenser, Edmund/The Faerie Queene/1.1", 5000).catch(() => {});
   await log("its canto followed", { entry: await A.entry(page) });
-  await page.evaluate(() => scrollTo(0, 0));
+  await wheelTo(0);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
   await page.waitForTimeout(200);
   await log("back on the contents", await R.folds(page));
+    }],
+    ["places", async () => {
+  /* every entry returns to where it was left (2026-09-28, successor-only): Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it (the review at high, 2026-09-28) */
+  const pippa = "bookshelf/Browning, Robert/Pippa Passes";
+  await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
+  await wheelTo(1200);
+  await page.waitForTimeout(700);
+  await log("Pippa scrolled down", await R.place(page));
+  await go("page/Horace");
+  await page.waitForTimeout(200);
+  await log("Horace followed", await R.place(page));
+  await page.goBack();
+  await A.waitEntry(page, pippa, 5000).catch(() => {});
+  await page.waitForTimeout(200);
+  await log("Back", await R.place(page));
+  await page.goForward();
+  await A.waitEntry(page, "page/Horace", 5000).catch(() => {});
+  await page.waitForTimeout(200);
+  await log("Forward", await R.place(page));
+  await page.goBack();
+  await A.waitEntry(page, pippa, 5000).catch(() => {});
+  await page.waitForTimeout(200);
+  await log("Back again", await R.place(page));
+  await page.reload();
+  await A.waitEntry(page, pippa).catch(() => {});
+  await A.waitWarm(page).catch(() => {});
+  await page.waitForTimeout(300);
+  await log("reloaded", await R.place(page));
     }],
     ["pill", async () => {
   if (A.pill) {

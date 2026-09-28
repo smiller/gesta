@@ -106,6 +106,12 @@ a contents page opened: {"folds":1,"open":[],"counts":["1 entry"],"linksShowing"
 the triangle clicked: {"folds":1,"open":["Book I: The "],"counts":["1 entry"],"linksShowing":1,"cantoInView":true,"screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 its canto followed: {"entry":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 back on the contents: {"folds":1,"open":["Book I: The "],"counts":["1 entry"],"linksShowing":1,"cantoInView":true,"screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Pippa scrolled down: {"atTop":false,"line":"A large mean airy chamber. A gir","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Horace followed: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Back: {"atTop":false,"line":"A large mean airy chamber. A gir","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Forward: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Back again: {"atTop":false,"line":"A large mean airy chamber. A gir","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+reloaded: {"atTop":false,"line":"A large mean airy chamber. A gir","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card

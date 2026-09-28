@@ -71,3 +71,9 @@ the triangle clicked · counts · the same
 back on the contents · folds · the successor remembers the section open and brings the followed link into view; the current app has neither
 back on the contents · open · the same
 back on the contents · counts · the same
+Pippa scrolled down · * · an entry's remembered place is the successor's (2026-09-28): the current app has no reader for it
+Horace followed · * · the same
+Back · * · the same
+Forward · * · the same
+Back again · * · the same
+reloaded · * · the same

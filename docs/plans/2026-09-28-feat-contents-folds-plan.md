@@ -311,3 +311,73 @@ judged real and fixed in one commit:
   selected, stanza 28 at the top, not the remembered 7. `npm run verify`
   exit 0 with the shared Helium runs unchanged: the contents step's "back
   on the contents" reads its canto link in view through the place alone.
+
+### The review — 2026-09-28, /code-review at HIGH over 1a8a616..bdeb1c6
+
+- COST: 84,245 tokens (the run's report; its transcript's last message
+  reads 79,960 context + 4,285 output, the same figure), 2 min 36 s, six
+  tool uses. Ten findings, its cap — the fourth high pass of four capped.
+- Findings, the reviewer's: (1) Back and Forward — the browser's scroll
+  restore runs before hashchange, so the place recorded for the entry
+  being left is read at the target's offset, and now persisted;
+  (2) `openedAtY` is taken before the frame re-apply, so the warm's
+  "still" test skips the post-fold restore; (3) the scroll-idle recorder
+  records a place drifted by content settling above it (images from
+  IndexedDB), each visit higher; (4) a forced source view's place is lost
+  (mdView reset before recordPlace); (5) delete and rename record a place
+  under the old key — a deleted key's place outlives it, a renamed one's
+  is not carried; (6) a stored place inside a folded section restores to a
+  meaningless offset and does not open the section; (7) a new comment
+  asserts main's mechanism, and wrongly (claims.sh's class, fifth
+  sighting); (8) the DOM half has no test and no headless step; (9) every
+  scroll pause parses and rewrites the whole 300-record list, and the
+  read/write shape duplicates the folds'; (10) the frame re-apply reads the
+  session's view when it runs, not the one it was scheduled for.
+
+### Its fix — 2026-09-28, the ten findings in one commit
+
+- (1) `history.scrollRestoration = "manual"`: the page alone sets the
+  window's place. MEASURED before the fix, headless Helium, a new shared
+  step "places": Pippa left at 1200, Horace, Back, Forward, Back — Horace
+  at 670 and Pippa at its top, and a reload kept the wrong place. After:
+  Pippa at its line each time and after the reload, Horace at its top.
+- (2)(3)(10) REPLACED rather than patched, as the third pass's scroll
+  was: an arrival HOLDS its restored place and sets it again whenever the
+  editor's mount changes size (a ResizeObserver) until the reader's own
+  wheel, key, pointer or touch releases it; while held nothing is recorded
+  from the scroll. `openedAtY`, the "still" test and the frame re-apply
+  are gone; the warm's refreshFolds sets a held place at once. MEASURED:
+  400px added above Pippa's held place (the editor's padding, as a
+  picture resolving would), the window 1198 → 1598 on the same line, and
+  the next visit on that line.
+- (4) the place recorded before a forced source view is released.
+- (5) `movePlace(from, to)`: a rename carries the place, a delete and its
+  swept blank sub-entries drop theirs (`movedPlace`, placeState.ts, tested).
+- (6) a place inside a closed section opens it (openFoldAt) before its box
+  is read. MEASURED: Consolatio padded to six Books, all opened, left in
+  Book 5's fourth paragraph, the fold store emptied, back — Book 5 open,
+  the paragraph in view at the page's clamped bottom (612 of 612).
+- (7) the comment asserting main's centring reworded as a decision; the
+  foldState header's claim about placeState reworded as history.
+- (8) the shared step "places" (six readings, successor-only, listed in
+  corner.differences.txt); the old app's run regenerated: 115 steps, 0 open.
+- (9) one `stored(key, parse)` helper under both keys; a place equal to
+  the last written is not written.
+- Found by the step, not the review: an entry left at the TOP came back
+  57px down (the text position under the masthead lies below the page's
+  top padding); a place left at y 0 now returns to 0.
+- NOT PROBED: finding 2's own path (a contents page opened from its
+  primed row before the warm, left scrolled) — the warm lands too fast in
+  a seeded profile to open that window; the held place covers it by the
+  same ResizeObserver the 400px probe exercised.
+- The steps scroll BY A WHEEL since this fix (`wheelTo` in helium-steps.mjs):
+  the first pre-commit run failed the toolbar step — its script
+  `scrollTo(0, 0)` did not release the held place, a late resize set
+  Twelfth Night's place again, and the double-click selected a node
+  instead of "music" (MEASURED, the run before it had passed). A script's
+  scroll is no reader's; the three `scrollTo`s in the steps are wheels.
+- Two timing flakes on the way to the commit, neither in this change's
+  code (MEASURED): `searchIndex.test.ts`'s rows() reuse took 67 ms against
+  its 50 ms bound in one pre-commit run; the current app's regenerated run
+  read its "saved" whisper faded at "a list typed" once and showing on the
+  next regeneration, which is the copy kept.

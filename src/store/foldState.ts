@@ -1,7 +1,8 @@
 /* What a folding contents page remembers between visits (2026-09-28, the
    contents-folds plan): its open sections, by heading text, so coming back
-   shows the page as it was left (where the reading stood is placeState.ts's,
-   for every entry: the link it was left from, kept here first, retired). ONE localStorage key, NS + "folds", a JSON
+   shows the page as it was left. The link it was left from was kept here
+   too on the morning of 2026-09-28, and retired that day for a place kept
+   for every entry. ONE localStorage key, NS + "folds", a JSON
    map from entry key to a page record — a per-browser convenience, never
    in the text or a backup. Parsing forgives anything:
    a damaged store is an empty one. */

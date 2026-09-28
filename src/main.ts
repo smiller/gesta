@@ -882,7 +882,8 @@ if (fixture && fixtures[fixture]) {
       if (session.current.date !== date || session.current.tag !== old) return;
       session.suspendSaves();   /* nothing lands under the old key from here; open(new) lifts it */
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
-      const sweep = ns ? blankSubTree(keysNow(), oldKey).map((k) => layer.removeEntry(k)) : [];
+      const sweptKeys = ns ? blankSubTree(keysNow(), oldKey) : [];
+      const sweep = sweptKeys.map((k) => layer.removeEntry(k));
       /* an EMPTY body moves too: the row is the registration here, where
          the current app re-listed the name in its index whatever the body */
       const moved = layer.setEntry(entryKey(date, full), md);
@@ -893,6 +894,8 @@ if (fixture && fixtures[fixture]) {
       }).then(() => {
         history.replaceState(null, "", entryHash(date, full));
         session.open(date, full);
+        session.movePlace(oldKey, entryKey(date, full));
+        for (const k of sweptKeys) session.movePlace(k, null);
         refreshMasthead();
       });
     }).finally(() => { renaming = false; });
@@ -904,12 +907,14 @@ if (fixture && fixtures[fixture]) {
     if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) { say("delete the " + ns.subNoun + "s first", 2500); return; }
     if (!confirm(deleteConfirm(date, tag, shownName(date, tag)))) return;
     const key = entryKey(date, tag);
-    const sweep = ns ? blankSubTree(keysNow(), key).map((k) => layer.removeEntry(k)) : [];
+    const sweptKeys = ns ? blankSubTree(keysNow(), key) : [];
+    const sweep = sweptKeys.map((k) => layer.removeEntry(k));
     const back = deleteLanding(date, tag);
     /* the landing FIRST: opening another entry cancels the pending save
        that would otherwise resurrect this one */
     history.replaceState(null, "", entryHash(back.date, back.tag));
     session.open(back.date, back.tag, "arrive");
+    for (const k of [key, ...sweptKeys]) session.movePlace(k, null);
     /* the landing's typed text lands BEFORE the retarget reads the host,
        and the repaint comes only where the store moved (a lost link) */
     Promise.all([layer.removeEntry(key), ...sweep]).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
