@@ -20,10 +20,9 @@ export interface FoldSection {
   heading: number;
   from: number;
   to: number;
-  /* what a visit remembers: the heading's text, a twin's with its
-     number after a U+0001 — no heading can be typed to read like one (a
-     visible "Notes (2)" collided with a heading of that text: the
-     confirmation pass at high) */
+  /* what a visit remembers: the heading's text, a twin's with its number
+     after a U+0001 (a visible "Notes (2)" collided with a heading of that
+     text: the confirmation pass at high) */
   key: string;
   /* `N entries`, the links under the heading */
   count: string;
@@ -46,9 +45,12 @@ export function foldSections(doc: Node): FoldSection[] {
   });
   return out;
 }
-/* the section whose BODY holds pos, or null */
+/* the section whose BODY holds pos, or null. The boundary right after the
+   heading is not the body: a heading selected whole (Escape's parent
+   selection) ends there, and read as inside it reopened a section as it
+   closed (the third pass at high) */
 export function sectionAt(sections: FoldSection[], pos: number): FoldSection | null {
-  return sections.find((s) => pos >= s.from && pos < s.to) || null;
+  return sections.find((s) => pos > s.from && pos < s.to) || null;
 }
 /* drawn BY POSITION: a key is only what a visit remembers */
 export function foldDecorations(doc: Node, sections: FoldSection[], openHeadings: Set<number>): DecorationSet {
@@ -191,6 +193,9 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
     },
     view: () => ({
       update(view, prevState) {
+        /* apply returns the same state object when nothing changed: no
+           keys are built on a keystroke that folds nothing (the third pass) */
+        if (foldsKey.getState(prevState) === foldsKey.getState(view.state)) return;
         const a = openKeys(prevState), b = openKeys(view.state);
         if (foldsKey.getState(view.state)!.on && a.join("\u0000") !== b.join("\u0000")) opts.onChange?.(b);
       },

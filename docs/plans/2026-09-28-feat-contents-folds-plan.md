@@ -253,3 +253,32 @@ judged real and fixed in one commit:
   (the next at 0), Back — 2000 again; a source-view walk from 1500 opens at
   0; the fold probe as before (typing in an open heading, the scroll back
   once, the highlight after a true reload).
+
+### The third pass — 2026-09-28, /code-review at HIGH over 7539133..016c951
+
+- COST: 93,330 tokens (the run's report). Ten findings, its cap again —
+  three high passes, three capped lists (89,181; 87,278; 93,330).
+- Most traced to scroll handling bolted onto open() over two rounds; it
+  was REPLACED rather than patched: `open(date, tag, how)` with an
+  `OpenHow` of "new" (the top, then a folding page's scroll back to the
+  link it was left from), "traverse" (the entry's own place, remembered by
+  the session when it was left — the browser's restore ran against the page
+  being left and a short one clamped it to 0) or "keep" (a refresh, a
+  rename — which had jumped to the top under its new key). The traversal is
+  read once by openHash from the Navigation API's "traverse" and kept
+  across a pre-warm deferral; the remembered link is set only on a new
+  navigation, never by the view switch's remount.
+- folds.ts: the boundary after a heading is not its body (a heading
+  selected whole by Escape reopened a section as it closed); the plugin
+  view builds no keys when the fold state is the same object; comments
+  reworded; the twin test asserts the exact key.
+- NOT FIXED, decided: twin keys stored under this morning's spelling
+  ("Notes (2)") are not migrated. The feature is a day old, only the
+  reader's browser holds fold state, and the Faerie Queene has no twin
+  headings; a migration would outlive the one record it serves.
+- MEASURED: folds.test.ts 17 (the Escape test failing with the old
+  boundary, passing with the new); `npm test` 542. Headless Helium: the
+  contents opened out long, left at 2310 for Canto viii (a page 1000 tall),
+  Back — 2310, and still 2310 a frame later; a canto at 2000, walked, Back
+  — 2000; a source-view walk from 1500 opens at 0; the fold probe as before.
+- The comment class (claims.sh's) found in all three passes: owed.

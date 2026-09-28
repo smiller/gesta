@@ -2,7 +2,7 @@
 // contents-folds plan): the sections, their counts, the decorations, and
 // the plugin state that opens a section the selection lands in.
 import { test, expect } from "vitest";
-import { EditorState, TextSelection } from "prosemirror-state";
+import { EditorState, TextSelection, NodeSelection } from "prosemirror-state";
 import type { Decoration } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { foldSections, foldDecorations, sectionAt, folds, foldsKey, toggleFold, setFolds, openFoldAt, openKeys } from "./folds.ts";
@@ -87,8 +87,7 @@ test("typing in an open heading keeps its section open, and the new text is what
 test("twin headings are two sections, toggled apart and remembered apart", () => {
   const twin = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)");
   const keys = foldSections(twin).map((x) => x.key);
-  expect(keys[0]).toBe("Notes");
-  expect(keys[1]).not.toBe("Notes");
+  expect(keys).toEqual(["Notes", "Notes\u00012"]);
   let s = EditorState.create({ doc: twin, plugins: [folds({ on: true, open: [] })] });
   toggleFold(keys[1])(s, (tr) => { s = s.apply(tr); });
   expect(openKeys(s)).toEqual([keys[1]]);
@@ -154,4 +153,14 @@ test("with folding off an edit computes no sections; switching on computes them"
   expect(foldsKey.getState(s)!.sections).toEqual([]);
   setFolds(true, [])(s, (tr) => { s = s.apply(tr); });
   expect(foldsKey.getState(s)!.sections.length).toBe(3);
+});
+
+// The third pass at high, 2026-09-28.
+test("a heading selected whole (Escape) is not inside its section: the triangle closes it and it stays closed", () => {
+  let s = stateWith({ on: true, open: ["Dedications"] });
+  const secs = foldSections(s.doc);
+  s = s.apply(s.tr.setSelection(NodeSelection.create(s.doc, secs[0].heading)));
+  expect(openKeys(s)).toEqual(["Dedications"]);
+  toggleFold("Dedications")(s, (tr) => { s = s.apply(tr); });
+  expect(openKeys(s)).toEqual([]);
 });

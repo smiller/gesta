@@ -37,6 +37,13 @@ import { countBefore, positionAt, arrivingCount, type Hold } from "./chrome/view
 import { sourceTab } from "./editor/sourceKeys.ts";
 import { wordCount, wordsOf } from "./editor/format.ts";
 
+/* WHAT AN OPEN IS, for the window's place (2026-09-28, three review
+   passes over the contents folds): a NEW navigation opens at the top (a
+   work's contents then scrolls to the link it was left from); a Back or
+   Forward restores the place the entry had when it was left, remembered
+   here — the browser's own restore ran against the page being left, and a
+   short one clamped it to 0; KEEP (a refresh, a rename) moves nothing. */
+export type OpenHow = "new" | "traverse" | "keep";
 export interface SessionOptions {
   mount: HTMLElement;
   layer: EntryLayer;
@@ -71,7 +78,7 @@ export interface SessionOptions {
 export interface Session {
   readonly current: { date: string; tag: string | null };
   readonly view: EditorView | null;
-  open(date: string, tag: string | null): void;
+  open(date: string, tag: string | null, how?: OpenHow): void;
   openHash(): void;
   saveNow(): Promise<boolean>;
   flushSave(): Promise<boolean>;
@@ -201,9 +208,14 @@ export function startSession(opts: SessionOptions): Session {
      never moves a reader who has scrolled since (the review at high) */
   let pendingLeft: string | null = null;
   let openedAtY = 0;
-  /* the navigation under way is a Back or Forward (the Navigation API's
-     "traverse"): its place is the browser's to restore, not the top */
+  let openedHow: OpenHow = "keep";
+  /* each entry's place when it was left, for a Back or Forward to it */
+  const places = new Map<string, number>();
+  /* the navigation under way is a Back or Forward — the Navigation API's
+     "traverse", recorded at its start and read by the one openHash it
+     leads to; a deferred open keeps the kind it was deferred with */
   let traversing = false;
+  let deferredHow: OpenHow | null = null;
   (window as unknown as { navigation?: EventTarget }).navigation?.addEventListener?.("navigate", (e: Event) => {
     traversing = (e as Event & { navigationType?: string }).navigationType === "traverse";
   });
@@ -217,7 +229,6 @@ export function startSession(opts: SessionOptions): Session {
     const ekey = entryKey(date, tag);
     const folding = foldsContents(Object.keys(layer.cache), date, tag);
     const page = folding ? readFolds(ekey) : null;
-    pendingLeft = page ? page.left : null;
     view = createEditor(mount, doc, {
       interval,
       onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
@@ -330,19 +341,11 @@ export function startSession(opts: SessionOptions): Session {
       const ext = (src.split(".").pop() || "").toLowerCase();
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
-  function open(date: string, tag: string | null): void {
+  function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
     cancelSave();
     suspended = false;
     if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (read 2026-09-22 by the grid step) */
-    /* a DIFFERENT entry opens at its top, in either view; the same one
-       reopened (an import's refresh) keeps its place, and so does a Back
-       or Forward, whose place is the browser's to restore. Until
-       2026-09-28 nothing moved the window on an open, and a link followed
-       from far down a contents page opened the next entry as far down,
-       its heading under the masthead (the reader, Book V's proem); the
-       first fix forced Back to the top too (the confirmation pass) */
-    const toTop = entryKey(date, tag) !== entryKey(current.date, current.tag) && !traversing;
-    traversing = false;
+    if (view || source) places.set(ekeyOf(), window.scrollY);
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
@@ -351,7 +354,7 @@ export function startSession(opts: SessionOptions): Session {
        and so does a pinned fence refusal (the data pins stay) */
     carets.rendered = carets.source = null; placedAt = null;
     if (fencePin) { opts.releasePin?.(fencePin); fencePin = 0; }
-    if (mdView) { mountSource(md); if (toTop) window.scrollTo(0, 0); }
+    if (mdView) { mountSource(md); place(ekey, how); }
     else {
       let doc;
       try { doc = parseMarkdown(md); }
@@ -366,22 +369,36 @@ export function startSession(opts: SessionOptions): Session {
         readerView = mdView; forced = true;
         mdView = true;
         mountSource(md);
-        if (toTop) window.scrollTo(0, 0);
+        place(ekey, how);
         opts.onView?.(true);
         document.documentElement.dataset.entry = ekey;
         show();
         return;
       }
       mountEditor(doc, date, tag);
-      if (toTop) window.scrollTo(0, 0);
+      place(ekey, how);
     }
     document.documentElement.dataset.entry = ekey;
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
     /* AFTER the highlight, so a placed one is seen and wins: run before
        it, the check read the fresh empty selection and the page jumped
-       twice (the confirmation pass) */
-    if (!mdView) scrollToLeft(ekey);
+       twice (the confirmation pass). Only on a NEW navigation, and only
+       where the page folds; a Back restores its own place instead */
+    pendingLeft = how === "new" && !mdView && view && foldsKey.getState(view.state)?.on ? readFolds(ekey).left : null;
+    scrollToLeft(ekey);
+  }
+  /* the window's place for an open, by its kind (OpenHow); a restored
+     place is set again a frame later, once the fitted measure has re-wrapped */
+  function place(ekey: string, how: OpenHow): void {
+    openedHow = how;
+    if (how === "new") window.scrollTo(0, 0);
+    else if (how === "traverse") {
+      const y = places.get(ekey) ?? 0;
+      window.scrollTo(0, y);
+      requestAnimationFrame(() => window.scrollTo(0, y));
+    }
+    openedAtY = window.scrollY;
   }
   /* coming back to a folding page: the link it was left from in view, a
      frame after the paint. Used ONCE and then forgotten — kept, every
@@ -391,7 +408,6 @@ export function startSession(opts: SessionOptions): Session {
   function scrollToLeft(ekey: string): void {
     const left = pendingLeft;
     pendingLeft = null;
-    openedAtY = window.scrollY;
     if (!left || !view) return;
     writeFolds(ekey, { left: null });
     if (!view.state.selection.empty) return;
@@ -418,7 +434,7 @@ export function startSession(opts: SessionOptions): Session {
        scroll read as the reader's own) */
     const still = Math.abs(window.scrollY - openedAtY) < 2;
     setFolds(on, page ? page.open : [])(view.state, view.dispatch);
-    if (page && still) { pendingLeft = page.left; scrollToLeft(ekey); }
+    if (page && still && openedHow === "new") { pendingLeft = page.left; scrollToLeft(ekey); }
     else if (page && page.left) writeFolds(ekey, { left: null });   /* used once, even when skipped */
   }
   function insertText(text: string): boolean {
@@ -450,6 +466,9 @@ export function startSession(opts: SessionOptions): Session {
   let hashDeferred = false;
   function openHash(): void {
     hashDeferred = false;
+    const how: OpenHow = deferredHow ?? (traversing ? "traverse" : "new");
+    traversing = false;
+    deferredHow = null;
     const h = hashParts(location.hash.slice(1));
     const keys = Object.keys(layer.cache);
     if (unmintedKey(keys, h.date, h.tag)) {
@@ -460,6 +479,7 @@ export function startSession(opts: SessionOptions): Session {
          seconds after a refresh said "no such author". */
       if (!layer.warmed) {
         hashDeferred = true;
+        deferredHow = how;
         const want = entryKey(h.date, h.tag);
         layer.primeEntry(want).then(() => { if (hashDeferred && (layer.warmed || want in layer.cache)) openHash(); }, () => {});
         return;
@@ -477,7 +497,7 @@ export function startSession(opts: SessionOptions): Session {
     /* a "?h=" payload replays LITERALLY: the passage is text, and an old
        link's nth, counted under substring rules, still lands */
     if (h.hl) pending = { hl: h.hl, honor: false, gen: ++navGen };
-    open(h.date, h.tag);
+    open(h.date, h.tag, how);
   }
   function saveNow(): Promise<boolean> {
     cancelSave();
