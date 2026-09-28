@@ -389,3 +389,39 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   caret-color: var(--accent);
 }
 
+
+/* ---------- a work's contents, folding under its headings ----------
+   (2026-09-28, the contents-folds plan; the look is the mockup's, drawn
+   over this stylesheet with the reader). A triangle in the margin before
+   each `##` heading — only it toggles, the words stay editable — pointing
+   down when the section is open; a closed heading shows its count beside
+   it and sits closer to the next. */
+.page h2.fold { position: relative; }
+.page h2.fold::before {
+  content: "";
+  position: absolute;
+  left: -1.1em;
+  top: 0.5em;
+  border: 0.32em solid transparent;
+  border-left: 0.5em solid var(--muted);
+  transform-origin: 25% 50%;
+  transition: transform 120ms ease;
+  cursor: pointer;
+}
+.page h2.fold[aria-expanded="true"]::before { transform: rotate(90deg); }
+.page h2.fold:hover::before { border-left-color: var(--accent); }
+.page h2.fold[aria-expanded="false"]::after {
+  content: attr(data-count);
+  font-family: var(--sans);
+  font-size: 0.55em;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 0.8em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
+.page h2.fold[aria-expanded="false"] { margin-bottom: 0.2em; }
+.page .folded { display: none; }

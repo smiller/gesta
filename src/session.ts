@@ -16,11 +16,13 @@ import { imageRefs } from "./store/exportEntries.ts";
 import { schema } from "./model/schema.ts";
 import { fenceRefusals, refusalsText } from "./model/fenceRefusals.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
-import { entryKey, entryHash, todayKey, nsOf, pageParts } from "./store/keys.ts";
+import { entryKey, entryHash, todayKey, nsOf, pageParts, NS } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
-import { subPageOrder, type ContentsLink } from "./store/contents.ts";
+import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
+import { parseFoldStore, foldPage, withFoldPage, type FoldPage } from "./store/foldState.ts";
+import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
 import { writeClipboard } from "./chrome/clipboard.ts";
@@ -77,6 +79,8 @@ export interface Session {
   suspendSaves(): void;
   surfaceMd(): string;
   readonly hashDeferred: boolean;
+  /* ask again whether the open page folds: the warm has landed */
+  refreshFolds(): void;
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
@@ -188,15 +192,30 @@ export function startSession(opts: SessionOptions): Session {
       });
     }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
   }
+  /* A WORK'S CONTENTS FOLD (2026-09-28, the contents-folds plan): which
+     sections were open and the link it was left from, kept in this browser
+     under one key; read and written inside try, a convenience only */
+  const FOLDS_KEY = NS + "folds";
+  const readFolds = (ekey: string): FoldPage => { try { return foldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey); } catch { return { open: [], left: null }; } };
+  const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => {
+    try { localStorage.setItem(FOLDS_KEY, JSON.stringify(withFoldPage(parseFoldStore(localStorage.getItem(FOLDS_KEY)), ekey, patch))); } catch { /* a convenience lost, not a failure */ }
+  };
   function mountEditor(doc: import("prosemirror-model").Node, date: string, tag: string | null): void {
     teardown();
     const dir = entryFile(date, tag).dir;
+    const ekey = entryKey(date, tag);
+    const folding = foldsContents(Object.keys(layer.cache), date, tag);
     view = createEditor(mount, doc, {
       interval,
       onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
       onSelect: () => opts.onSelect?.(),
       nodeViews: { image: imageView(resolver(dir)) },
-      onRoute: (frag) => goto(frag, "already here"),
+      /* always given, off where the page does not fold: a page opened from
+         its one primed row, before the warm, cannot yet see its sub-entries
+         and is switched on when the warm lands (refreshFolds) */
+      folds: { on: folding, open: folding ? readFolds(ekey).open : [], onChange: (open) => writeFolds(ekey, { open }) },
+      /* a link followed from a folding page is where it was left from */
+      onRoute: (frag) => { if (view && foldsKey.getState(view.state)?.on) writeFolds(ekey, { left: frag }); goto(frag, "already here"); },
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
     });
@@ -331,10 +350,36 @@ export function startSession(opts: SessionOptions): Session {
         return;
       }
       mountEditor(doc, date, tag);
+      scrollToLeft(ekey);
     }
     document.documentElement.dataset.entry = ekey;
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
+  }
+  /* coming back to a folding page: the link it was left from in view, a
+     frame after the paint (the open sections are drawn with the view) */
+  function scrollToLeft(ekey: string): void {
+    if (!foldsContents(Object.keys(layer.cache), current.date, current.tag)) return;
+    const left = readFolds(ekey).left;
+    if (!left) return;
+    requestAnimationFrame(() => {
+      const a = [...mount.querySelectorAll("a")].find((x) => x.getAttribute("href") === left);
+      if (a && a.offsetParent) a.scrollIntoView({ block: "center" });
+    });
+  }
+  /* THE WARM LANDED: whether the open page folds is asked again, now the
+     cache holds every key. After a refresh the page opens from its one
+     primed row (main.ts), when a work's contents cannot see its sub-entries
+     and draws unfolded, and the warm reopens only an entry it deferred —
+     read 2026-09-28, after the reader's contents page stayed unfolded */
+  function refreshFolds(): void {
+    if (!view || mdView) return;
+    const st = foldsKey.getState(view.state);
+    const on = foldsContents(Object.keys(layer.cache), current.date, current.tag);
+    if (!st || st.on === on) return;
+    const ekey = ekeyOf();
+    setFolds(on, on ? readFolds(ekey).open : [])(view.state, view.dispatch);
+    if (on) scrollToLeft(ekey);
   }
   function insertText(text: string): boolean {
     if (mdView && source) {
@@ -504,6 +549,7 @@ export function startSession(opts: SessionOptions): Session {
     open, openHash, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView, showWordCount, insertText,
     get mdView() { return mdView; },
     get hashDeferred() { return hashDeferred; },
+    refreshFolds,
     setInterval: (n) => { interval = n; if (view) setLineInterval(n)(view.state, view.dispatch); },
   };
 }

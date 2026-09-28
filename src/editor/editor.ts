@@ -26,6 +26,7 @@ import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice } from "./p
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
+import { folds, type FoldOptions } from "./folds.ts";
 
 export interface EditorOptions {
   interval: number;
@@ -40,6 +41,9 @@ export interface EditorOptions {
   onRefuse?: (why: string) => void;
   /* a picture on the clipboard: the session files it and places it */
   onPasteFile?: (file: File) => void;
+  /* a work's contents page folds under its headings (folds.ts): whether,
+     the sections open, and who keeps them */
+  folds?: FoldOptions;
 }
 
 const hardBreak: Command = (state, dispatch) => {
@@ -47,7 +51,7 @@ const hardBreak: Command = (state, dispatch) => {
   return true;
 };
 
-export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void): EditorState {
+export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
   return EditorState.create({
     doc,
     plugins: [
@@ -69,6 +73,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       folios(),
       landing(),
       codeHighlight(),
+      folds(foldOpts),
     ],
   });
 }
@@ -97,7 +102,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       },
       serializeNode: (node, options) => base.serializeNode(node, options),
     } as DOMSerializer,
-    state: editorState(doc, opts.interval, opts.onRefuse),
+    state: editorState(doc, opts.interval, opts.onRefuse, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     attributes: { class: "page", spellcheck: "false" },
     /* the typed pipe, before the character lands: in a line it makes the

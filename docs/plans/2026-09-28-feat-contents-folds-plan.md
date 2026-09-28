@@ -115,3 +115,32 @@ and editor.ts, DOM seams).
 - src/store/contents.ts: `foldsContents` — bookshelf, two or more key
   segments, at least one child.
 - MEASURED: folds.test.ts and contents.test.ts 14 tests green; tsc clean.
+
+### Batch 2 — 2026-09-28, the wiring
+
+- editor.ts takes the plugin (`folds` in EditorOptions, `editorState`'s
+  fourth argument); session.ts decides with `foldsContents`, reads and
+  writes `gesta.v1.folds` (src/store/foldState.ts: parse forgiving, per
+  page `{ open, left }`), records a followed link as `left`, and scrolls
+  back to it a frame after an open; editor.css carries the mockup's
+  rules, the count as `::after` from `data-count`; help.html a paragraph.
+- THE WARM GAP, found by the reader: after a refresh the page opens from
+  its ONE primed row (main.ts:989-1007) — a work's contents cannot see its
+  sub-entries then, and draws unfolded — and the warm reopens only an
+  entry it deferred. `session.refreshFolds()`, called when the warm lands,
+  asks again; the editor is now always given the plugin's options (off
+  where the page does not fold) so a page switched on later remembers.
+  MEASURED in headless Helium with a TRUE reload (`page.reload()`): 0
+  folds with the call taken out, 8 with it. An earlier "reload" test had
+  navigated by hash within the same document, reloaded nothing, and read
+  8 — it could not have seen the gap.
+- MEASURED, headless Helium over the Faerie Queene folder through the
+  import act: eight headings closed with their counts (3, 13 ×6, 3
+  entries), no link showing; the triangle beside Book III opened it alone;
+  a click on Book II's words placed the caret there and toggled nothing;
+  after following Canto v and coming back, Book III open and Canto v's
+  link in view; a highlight link to `Letter to Raleigh` opened Dedications
+  (a first try aimed at `Canto vii`, which also matches inside `Canto
+  viii`, landed in an already open book and proved nothing).
+- `npm run verify` exit 0 — 531 tests, 43/43 hook checks, 105 Helium
+  steps, 0 open.

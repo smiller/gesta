@@ -1004,7 +1004,9 @@ if (fixture && fixtures[fixture]) {
     if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); return; }
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
-    if (!opened || session.hashDeferred) session.openHash(); else refreshMasthead();
+    /* an entry opened from its primed row is redrawn only where the warm
+       changes it: the masthead's lists, and whether a contents page folds */
+    if (!opened || session.hashDeferred) session.openHash(); else { refreshMasthead(); session.refreshFolds(); }
     buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an
