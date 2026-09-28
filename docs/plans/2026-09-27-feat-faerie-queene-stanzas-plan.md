@@ -49,7 +49,7 @@ All from the grilling of 2026-09-27, by the reader, unless marked.
 | Entry headings `Book I, Canto i`, `Book I, Proem`, `Book VII, Canto viii (vnperfite)`; contents links under their group read `Canto i`, `Proem` | Q "Headings", Q2, Q6, Q9 |
 | Each book a `##` group whose heading is its title page: `## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse` (source spelling, out of capitals); `## Book VII: Two Cantos of Mutabilitie` | Q7, Q8, Q12, Q13 |
 | Scope: Books I–VI, the Mutabilitie Cantos, the dedication, the Raleigh page; the front matter BEFORE Book I, the dedication on the contents page, sentence-cased (by hand, for the proper nouns) | Q "Scope", Q "Front matter", Q15 |
-| Text as printed out of capitals; apostrophes curled; leading indentation thrown away; the canto's argument in a `::: note` | Q "Spelling", Q3, Q5, the request |
+| Text as printed out of capitals — u/v and i/j MODERNISED since 2026-09-28 (the record's last section); apostrophes curled; leading indentation thrown away; the canto's argument in a `::: note` | Q "Spelling", Q3, Q5, the request; revised 2026-09-28 |
 | Editorial brackets dropped, the letter kept (`co[m]peld` → `compeld`) | Q19 |
 | Mechanical slips fixed by the converter and each listed; `Y cladd` → `Ycladd` confirmed against the reader's print; `Humiltá` kept (the print has it) | Q21 |
 | Stanza counts checked against a second witness, Project Gutenberg's text | Q17 |
@@ -486,3 +486,37 @@ decisions table.
   all 81 poem entries, hygiene clean; headless Helium over the Desktop
   folder: "Import 85 entries", no refused file (NOTES.txt, not .md), the
   contents 84/84 links, every canto read as before.
+
+### 2026-09-28 — u/v and i/j modernised, a decision revised
+
+- Asked by the reader after reading the imported text: "normalize /
+  modernize the u/v and i/j spellings" — I.pr.1.3 `vnfitter` reads
+  `unfitter`. Asked and answered: nothing had been emended in Gesta, so a
+  full re-import; every part of the work, headings and contents labels
+  with it (`Canto viii (unperfite)`, `or of Justice`); u/v and i/j only,
+  `vertue` stays `vertue`.
+- THE RULE, the reader's: the reading that matches or comes closer to a
+  modern word wins (web2, loosely matched over Spenser's habits; edit
+  distance to the nearest word). Found on the way, each MEASURED over the
+  text: letters decided one at a time spoiled each other (`Iuory` →
+  `Juory`), so a word's readings are scored together; the loose match
+  scored two words outright as ties (`haue` via `hau`, `value`/`valve`), so
+  a word outright beats a loose match and among words outright the u
+  stands; the loose match found `iollitee` in *iolite*, so a word-initial
+  i before a vowel is a j by rule, as a word-initial v before a consonant
+  is a u; words were cut at an inner apostrophe (102 `u’` forms: `lou’d`),
+  so an elided word is scored with its e; 18 `VV` read as W. A tie falls
+  to the word's shape (a u after l, r, d, n or m with a vowel before it
+  is a v).
+- The reader read the first 25 undecided forms (I.i.5.2 to II.i.6.8) and
+  passed them, with `Anduile` → `Andvile` and "Hymen iO Hymen" → `io`
+  (the reader's edition prints a length mark, not carried). The 63 places
+  where distance overruled the shape and the 154 capitalised forms were
+  read here: Druons, Iolas, Iulus kept; Arvirage, Genviss’, rove, juell
+  made exceptions.
+- MEASURED against the as-printed build: 85 files, line for line the
+  same, every link target the same, only u>v 9,417, v>u 2,606, V>U 600,
+  i>j 615, I>J 165 and the 18 VV differ; `node tools/corpus.ts` 85 clean,
+  `node tools/importCorpus.ts` 85 imported. The rule and its reasons are
+  the import folder's `converter/modern.py`; every changed form, with its
+  first citation and how it was decided, `converter/spelling-decisions.txt`.
