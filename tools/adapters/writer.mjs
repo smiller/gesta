@@ -150,6 +150,8 @@ export const read = {
   search: (page) => page.evaluate(() => ({ open: document.getElementById("pagesearch")?.open, focused: document.activeElement?.className, scope: document.getElementById("pagesearchscope")?.selectedOptions[0]?.textContent, options: [...document.querySelectorAll("#pagesearchscope option")].map((o) => o.textContent), rows: [...document.querySelectorAll("#pagesearchresults li")].map((li) => li.className + ": " + li.innerText.replace(/\s+/g, " ").trim()) })),
   searchOpen: (page) => page.evaluate(() => document.getElementById("pagesearch")?.open),
   selectionText: (page) => page.evaluate(() => document.getSelection()?.toString()),
+  lastStanzaShowing: () => NA("a stanza fence is the successor's (2026-09-28)"),
+  topStanza: () => NA("a stanza fence is the successor's (2026-09-28)"),
   place: () => NA("an entry's remembered place is the successor's (2026-09-28)"),
   pill: () => NA("the paused pill is drawn by ?corner=pill in the successor only"),
   selectAll: (page, sel) => page.evaluate((sel) => { const v = document.querySelector(sel); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }, sel),

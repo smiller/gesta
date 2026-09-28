@@ -119,3 +119,33 @@ pinned (a performance choice), 2 pinned with a neighbour.
     as the current app's run does.
   Each reading stood at the failing value before the change (MEASURED
   above) and at the passing one after.
+
+### 2026-09-28 — the switch carries the text, not the offset
+
+- FOUND by the reader in Helium: Book I, Canto i at its foot (stanza 55),
+  ⌃⌘M showed stanza 45 in the source. And the question: shouldn't a test
+  have caught it? It should have. "⌃⌘M scrolled away from the caret"
+  read only the window's pixel offset, within 60px, on Twelfth Night —
+  a short prose entry whose two views are nearly one height. It tested the
+  comment's mechanism, not the screen: the rule CLAUDE.md keeps ("a
+  headless step reads THE SCREEN after a gesture") was not followed.
+- The reader's other sighting, back at stanza 1 on the way home, was a
+  tab on a build from before the day's fix: after a refresh it came back
+  at 55. Not reproduced headless over five set-ups (MEASURED).
+- The reading first: a new section, "the switch carries the text" — a
+  40-stanza canto switched at its middle (the stanza at the window's top
+  in the rendered view, the source, and back) and at its end (the last
+  stanza on screen in all three). On the code as it stood, MEASURED:
+  20 → 16 → 20 and 39 → 32 → 39.
+- The fix, session.ts: the switch reads the text at the window's top as a
+  count into the leaving view's flat stream and sets it at the top of the
+  view entered; the source's character geometry measured on a hidden twin
+  (`sourceTwin`, shared with the caret's visibility). Two faults found on
+  the way, each MEASURED: the rendered side read a point in the gap
+  between stanzas as the stanza above (one early; both sides now take the
+  first line at or below the masthead); and the two flat streams are not
+  equal for fenced text — the source's holds every fence line, 18
+  characters a stanza, 365 by stanza 21 — so the count is carried by
+  `crossViewOffset`, the caret's own crossing (viewCarets.ts).
+- MEASURED after: 20 → 20 → 20; the last stanza showing in all three;
+  the reader's own Canto i at 1440×900, 53 → 53 → 53.

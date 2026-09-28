@@ -94,6 +94,25 @@ export const read = {
   selectCards: (page) => page.evaluate(() => { const cards = document.querySelectorAll("#editor [class^='card-']"); const r = document.createRange(); r.setStart(cards[1], 0);   /* the grid's cards: the first card on the page is the one above the grid */ r.setEnd(cards[cards.length - 1], cards[cards.length - 1].childNodes.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }),
   setSource: (page, text) => page.fill("textarea.source", text),
   sourceCaretTo: (page, text) => page.evaluate((t) => { const a = document.querySelector("textarea.source"); const i = a.value.indexOf(t); a.focus(); a.setSelectionRange(i, i); }, text),
+  /* the stanza at the window's top, just under the masthead: in the rendered view the first verse still showing; in the source the stanza whose lines hold the top line, or the next after a gap (the lines unwrapped: the step's are short) */
+  topStanza: (page) => page.evaluate(() => {
+    const under = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 2;
+    const ta = document.querySelector("textarea.source");
+    if (!ta) { const v = [...document.querySelectorAll("#editor .verse[data-stanza]")].find((x) => x.getBoundingClientRect().bottom > under); return v ? +v.dataset.stanza : null; }
+    const cs = getComputedStyle(ta), lines = ta.value.split("\n");
+    let i = Math.max(0, Math.floor((under - ta.getBoundingClientRect().top - parseFloat(cs.paddingTop)) / parseFloat(cs.lineHeight)));
+    for (let k = i; k >= 0; k--) { if (/^:::\s*$/.test(lines[k]) && k < i) break; const m = lines[k].match(/^::: stanza (\d+)/); if (m) return +m[1]; }
+    for (let k = i; k < lines.length; k++) { const m = lines[k].match(/^::: stanza (\d+)/); if (m) return +m[1]; }
+    return null;
+  }),
+  /* whether the entry's last stanza is on screen, in either view */
+  lastStanzaShowing: (page) => page.evaluate(() => {
+    const ta = document.querySelector("textarea.source");
+    if (!ta) { const vs = document.querySelectorAll("#editor .verse[data-stanza]"); const r = vs[vs.length - 1]?.getBoundingClientRect(); return !!r && r.top < innerHeight && r.bottom > 0; }
+    const cs = getComputedStyle(ta), lines = ta.value.split("\n"), at = lines.map((l) => /^::: stanza /.test(l)).lastIndexOf(true);
+    const top = ta.getBoundingClientRect().top + parseFloat(cs.paddingTop) + at * parseFloat(cs.lineHeight);
+    return top < innerHeight && top > 0;
+  }),
   inSource: (page) => page.evaluate(() => !!document.querySelector("textarea.source")),
   gridCorner: (page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),
   cardsAndPairs: (page) => page.evaluate(() => ({ cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length })),

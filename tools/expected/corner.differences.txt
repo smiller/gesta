@@ -81,7 +81,7 @@ the faulty entry opened · corner · a grid is successor-only (2026-09-22): the 
 a picture pasted at the entry's end · md · a picture is its bytes under its own name, `![](name.webp)`, not the current app's `![img-N]` registry (phase 2)
 a picture pasted, then another entry at once · corner · the successor decodes a picture before it lands, and a navigation in that window refuses it with a pinned notice; the current app places it at once, where it was aimed (session.ts, where a picture was aimed)
 a picture pasted, then another entry at once · aimedAtHasOne · the same
-⌃⌘M scrolled away from the caret · stayed · the successor puts the scroll back before placing the caret, so a reader scrolled away from it stays (MEASURED 2026-09-28: 27px, within two lines); the current app's window moved
+⌃⌘M scrolled away from the caret · stayed · the successor carries the text at the window's top across the switch before placing the caret, so a reader scrolled away from it stays where they were reading (2026-09-28); the current app's window moved
 400px grown above the held place · * · an entry's remembered place is the successor's (2026-09-28): the current app has no reader for it
 Pippa after the growth · * · the same
 back to a place in a closed section · * · a work's contents folding and an entry's remembered place are successor-only (2026-09-28)
@@ -90,3 +90,5 @@ the warm landed · * · the same, and the current app draws no folds
 a contents link clicked before the warm · * · the same: the current app's page holds no such link at that place to click
 a forced entry left scrolled, returned to · * · the refusal is the grid's, successor-only, and the remembered place is the successor's: the current app renders the entry and keeps no place
 ⌃⌘M back, still scrolled away · stayed · both directions keep a reader who scrolled away from the caret where they scrolled (the reader, 2026-09-28): the textarea's caret is measured, where the current app jumps back to it
+a long canto switched at its middle · * · a stanza fence is the successor's (2026-09-28): the current app has no stanza to read at the window's top
+a long canto switched at its end · * · the same

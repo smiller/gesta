@@ -504,7 +504,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(150);
-  /* within two lines: the swap moved the window 27px, not to the top or the caret (measured 2026-09-28) */
+  /* within two lines, not to the top or to the caret: the switch carries the text at the window's top, and the pixel offset follows the other view's layout */
   await log("⌃⌘M scrolled away from the caret", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
@@ -670,6 +670,33 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(150);
   await log("⌃⌘G 2.9", await R.linebar(page));
   await page.keyboard.press("Escape");
+    }],
+    ["the switch carries the text", async () => {
+  /* ⌃⌘M carries the TEXT at the window's top across the switch, not its pixel offset: a long canto switched at its middle and at its end (2026-09-28: stanza 55 in the rendered view came up as 45 in the source) */
+  const canto = Array.from({ length: 40 }, (_, k) => "::: stanza " + (k + 1) + "\n" + Array.from({ length: 9 }, (_, j) => "Stanza " + (k + 1) + ", line " + (j + 1) + ", set down to fill the measure").join("\n") + "\n:::").join("\n\n") + "\n";
+  await go("page/Long%20Canto");
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.setSource(page, canto);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(600);
+  await wheelTo(0);
+  await page.click(S.editorFirst);
+  for (const [label, where] of [["a long canto switched at its middle", 0.5], ["a long canto switched at its end", 1]]) {
+    await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) * where));
+    const rendered = await R.topStanza(page), renderedEnd = await R.lastStanzaShowing(page);
+    await page.keyboard.press("Control+Meta+m");
+    await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    const source = await R.topStanza(page), sourceEnd = await R.lastStanzaShowing(page);
+    await page.keyboard.press("Control+Meta+m");
+    await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(300);
+    /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
+    await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
+  }
     }],
     ["contents folds", async () => {
   /* a work's contents folding under its headings (2026-09-28, successor-only): the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */

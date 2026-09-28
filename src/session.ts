@@ -27,7 +27,7 @@ import { highlightIn } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
 import { TextSelection } from "prosemirror-state";
 import { flattenDoc, flattenText } from "./model/flatten.ts";
-import { countBefore, positionAt, arrivingCount, type Hold } from "./chrome/viewCarets.ts";
+import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "./chrome/viewCarets.ts";
 import { sourceTab } from "./editor/sourceKeys.ts";
 import { wordCount, wordsOf } from "./editor/format.ts";
 
@@ -256,21 +256,76 @@ export function startSession(opts: SessionOptions): Session {
     if (hold && hold.at !== placedAt) carets[mdView ? "rendered" : "source"] = null;
     carets[mdView ? "source" : "rendered"] = hold;
   }
-  /* whether the textarea's caret is on screen, measured on a hidden twin
-     that wraps as it does: reported seen always, the switch back jumped to
-     a caret the reader had scrolled away from
-     (pin: source view › ⌃⌘M back, still scrolled away) */
-  function sourceCaretSeen(ta: HTMLTextAreaElement): boolean {
+  /* where a character of the textarea stands on screen, measured on a
+     hidden twin that wraps as it does: a textarea reports no geometry for
+     its text. Built once per question, removed with done(). */
+  function sourceTwin(ta: HTMLTextAreaElement): { topOf(i: number): number; indexAt(y: number): number; done(): void } {
     const cs = getComputedStyle(ta), twin = document.createElement("div");
     for (const p of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const) twin.style[p] = cs[p];
     Object.assign(twin.style, { position: "absolute", visibility: "hidden", top: "0", left: "-9999px", whiteSpace: "pre-wrap", width: ta.getBoundingClientRect().width + "px" });
-    twin.textContent = ta.value.slice(0, ta.selectionStart);
-    const mark = twin.appendChild(document.createElement("span"));
-    mark.textContent = "\u200b";
+    const text = twin.appendChild(document.createTextNode(ta.value + "\u200b"));
     document.body.appendChild(twin);
-    const top = ta.getBoundingClientRect().top + mark.offsetTop - ta.scrollTop, height = mark.offsetHeight;
-    twin.remove();
-    return top + height >= 0 && top <= document.documentElement.clientHeight;
+    const range = document.createRange();
+    const origin = ta.getBoundingClientRect().top - twin.getBoundingClientRect().top - ta.scrollTop;
+    const topOf = (i: number): number => {
+      range.setStart(text, Math.min(i, ta.value.length)); range.setEnd(text, Math.min(i, ta.value.length) + 1);
+      const r = range.getClientRects()[0] || range.getBoundingClientRect();
+      return origin + r.top;
+    };
+    /* the first character whose line starts at or below y */
+    const indexAt = (y: number): number => {
+      let lo = 0, hi = ta.value.length;
+      while (lo < hi) { const mid = (lo + hi) >> 1; if (topOf(mid) < y - 1) lo = mid + 1; else hi = mid; }
+      return lo;
+    };
+    return { topOf, indexAt, done: () => twin.remove() };
+  }
+  /* reported seen always, the switch back jumped to a caret the reader had
+     scrolled away from (pin: source view › ⌃⌘M back, still scrolled away) */
+  function sourceCaretSeen(ta: HTMLTextAreaElement): boolean {
+    const t = sourceTwin(ta), top = t.topOf(ta.selectionStart);
+    t.done();
+    return top + parseFloat(getComputedStyle(ta).lineHeight) >= 0 && top <= document.documentElement.clientHeight;
+  }
+  /* the text at the window's top: a count into the leaving view's flat
+     stream, with that stream, for the crossing */
+  function topCount(): { at: number; text: string } | null {
+    const under = underMasthead();
+    if (mdView && source) {
+      const t = sourceTwin(source), i = t.indexAt(under);
+      t.done();
+      const flat = flattenText(source.value);
+      return { at: countBefore(flat, i), text: flat.text };
+    }
+    if (!view) return null;
+    /* the first line whose top is at or below the masthead, as the source's
+       twin reads it: a point in the gap between stanzas resolved to the end
+       of the stanza above, one stanza early */
+    const box = view.dom.getBoundingClientRect();
+    for (let dy = 0; dy < 240; dy += 4) {
+      const hit = view.posAtCoords({ left: box.left + box.width / 2, top: Math.max(under, box.top + 1) + dy });
+      if (!hit) continue;
+      try { if (view.coordsAtPos(hit.pos).top >= under - 1) { const flat = flattenDoc(view.state.doc); return { at: countBefore(flat, hit.pos), text: flat.text }; } } catch { /* no box: the next point */ }
+    }
+    return null;
+  }
+  /* carried across by the caret's own crossing: the source's stream holds
+     every fence line the rendered one lacks, and a count taken as equal in
+     both drifted seven lines by stanza 21 */
+  function alignTop(from: { at: number; text: string }): void {
+    const under = underMasthead();
+    if (mdView && source) {
+      const flat = flattenText(source.value), count = crossViewOffset(from.text, flat.text, from.at, true, false);
+      const i = positionAt(flat, count) ?? source.value.length;
+      const t = sourceTwin(source), top = t.topOf(i);
+      t.done();
+      window.scrollTo(0, window.scrollY + top - under);
+      return;
+    }
+    if (!view) return;
+    const flat = flattenDoc(view.state.doc), count = crossViewOffset(from.text, flat.text, from.at, false, false);
+    const pos = Math.min(positionAt(flat, count) ?? view.state.doc.content.size, view.state.doc.content.size);
+    try { window.scrollTo(0, window.scrollY + view.coordsAtPos(pos).top - under); } catch { /* no box: the offset stands */ }
   }
   function putViewCaret(): void {
     const here = mdView ? "source" : "rendered", other = mdView ? "rendered" : "source";
@@ -302,12 +357,15 @@ export function startSession(opts: SessionOptions): Session {
     const wasForced = forced;
     forced = false;
     holdViewCaret();
-    /* THE SCROLL SURVIVES THE SWAP: the teardown empties the page for an
-       instant and the scroll clamps to the top before the new surface is
-       tall again. Put back before the caret is placed, so a caret that was
-       seen still scrolls into view and one that was not leaves the reader
-       where they scrolled. (pin: source view › ⌃⌘M scrolled away from the caret) */
-    const y = window.scrollY;
+    /* THE TEXT AT THE TOP SURVIVES THE SWAP: the two views lay one text out
+       at different heights, and the pixel offset alone put another passage
+       there (stanza 55 came up as 45). Set after the new surface is built —
+       the teardown clamps the scroll to the top — and before the caret is
+       placed, so a caret that was seen still scrolls into view and one that
+       was not leaves the reader where they were reading.
+       (pin: the switch carries the text › a long canto switched at its middle)
+       (pin: source view › ⌃⌘M scrolled away from the caret) */
+    const y = window.scrollY, top = y > 0 ? topCount() : null;
     if (md) {
       const text = currentMd();
       mdView = true;
@@ -332,6 +390,7 @@ export function startSession(opts: SessionOptions): Session {
       if (refused.length) fencePin = opts.pin?.(refusalsText(refused)) || 0;
     }
     window.scrollTo(0, y);
+    if (top !== null) alignTop(top);
     opts.onView?.(mdView);
     scheduleSave();
     show();
