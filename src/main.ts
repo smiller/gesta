@@ -38,9 +38,9 @@ import { flattenDoc } from "./model/flatten.ts";
 import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, deleteConfirm, deleteLanding, hostKey } from "./chrome/subEntries.ts";
 import { retargetLinks, relabelLinks } from "./store/links.ts";
 import { linkRefusal, insertLinkAfter } from "./editor/insertLink.ts";
-import { mdLabel } from "./store/reference.ts";
+import { mdLabel, romanWorkKey } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./chrome/gotoModel.ts";
-import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck } from "./editor/goto.ts";
+import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit } from "./editor/goto.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
 import { parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
@@ -597,6 +597,16 @@ if (fixture && fixtures[fixture]) {
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
     if (repeat || session.mdView || !session.view) return;
+    /* a work citing by stanza (the Faerie Queene, 2026-09-27): the Line box
+       takes `N` or `N.M`, stanza and line, one place each */
+    const c = session.current;
+    if (kind === "line" && romanWorkKey(c.date, c.tag, journal)) {
+      const bad = stanzaAskCheck(v);
+      if (bad) { say(bad, 2000); return; }
+      const hit = stanzaHit(session.view.state.doc, v);
+      if (typeof hit === "string") say(hit, 3000); else landOn(hit.pos);
+      return;
+    }
     const why = askCheck(v, kind);
     if (why) { say(why, 2000); return; }
     if (kind === "page") goToFolio(v.trim()); else goToLine(parseInt(v.trim(), 10));

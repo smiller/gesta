@@ -1,7 +1,7 @@
 ---
 title: "feat: stanza fences and the Faerie Queene — ::: stanza N, cited I.i.2.1"
 type: feat
-status: planned
+status: built, awaiting the reader
 date: 2026-09-27
 origin: the grilling of 2026-09-27 (this conversation's questions 1–21)
 ---
@@ -332,3 +332,43 @@ and moved into the decisions table.
   The wiring into the Line box is batch 3's.
 - MEASURED: `npm test` 65 files, 519 tests (from 507); `npm run check`
   clean.
+
+### Batch 3 — 2026-09-27, the drawing and the wiring
+
+- editor.css: `.page.versepage > .verse[data-stanza]::before` draws the
+  number — bold, ink, the sans face at 0.85em, absolute at
+  `right: calc(100% - var(--ln-column) + 3.2ch)` — the mockup's variant
+  D. NO ROOT CLASS AND NO PAGE SHIFT, a change from the plan: the line
+  numbers hang right-aligned 54px into each verse box (editor.css:304-319,
+  READ) and the stanza column sits 3.2ch further left inside the same
+  box; the mockup's 2.5em shift only moved the page. Drawn for a
+  TOP-LEVEL stanza only, where the gutter is reserved; a stanza nested
+  in a quote (only a copy's cut path can make one) draws no number.
+- main.ts: the Line box, under the work's directive, takes the stanza ask
+  (`stanzaAskCheck`, `stanzaHit`) and lands on the row.
+- help.html: the stanza fence and the directive described beside
+  `::: verse`; the apparatus rule, ⌃⌘G and the two-block refusal each
+  given the stanza's exception.
+- MEASURED, headless Helium over a throwaway profile, a three-file
+  Faerie Queene folder (author, work page with the directive, I.i with
+  the argument and stanzas 1–10 from the converter) imported through the
+  import act with the picker stubbed:
+  - the crumb read `Edmund Spenser/The Faerie Queene › I.i`, the title
+    row `Book I, Canto i`;
+  - every stanza's `::before` read its number at "every 5th", "every
+    line" and "none", and at "every line" the column stood clear of the
+    line numbers 1–9 (screenshot);
+  - ⌃⌘R on "bloudie Crosse" copied `Spenser, *The Faerie Queene*,
+    I.i.2.1`; from "deepe wounds" to "bloudie Crosse" `I.i.1.3–2.1`,
+    the passage stanza 1 from its line 3, a `> ` gap, stanza 2's line 1;
+    stanzas 2–3 whole `I.i.2–3`;
+  - ⌃⌘G `2.1`, `10`, `3.9` landed on the right rows; `11` said "no
+    stanza 11 here — the last is 10", `2.10` "stanza 2 has 9 lines",
+    `I.i` "I.i is not a stanza or stanza.line, like 2.1".
+- NOT DONE: the shared Helium step (the plan's "The tools and the
+  help"). A stanza step needs a seeded bookshelf work carrying the
+  directive and the old app's reading of every field; left for the
+  reader's word rather than changing the approved runs unattended. The
+  probe above stood in for it.
+- MEASURED: `npm run verify` exit 0 — 519 tests, 43/43 hook checks, the
+  Helium runs 0 open.

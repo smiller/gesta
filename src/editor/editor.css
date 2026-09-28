@@ -318,6 +318,28 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   pointer-events: none;
 }
 .page.versepage .ln.shown::before { content: attr(data-line); }
+/* THE STANZA'S NUMBER (2026-09-27, the Faerie Queene): bold, ink, in a
+   column of its own left of the line numbers, beside the stanza's first
+   line, and drawn whatever the interval — "none" included — since it is
+   how a citation is followed. Variant D of the mockup, which was drawn
+   over this stylesheet; the column fits inside the gutter's reserve, so
+   no line moves. */
+.page.versepage > .verse[data-stanza]::before {
+  content: attr(data-stanza);
+  position: absolute;
+  top: 0;
+  right: calc(100% - var(--ln-column) + 3.2ch);
+  font-family: var(--sans);
+  font-size: 0.85em;
+  font-weight: 700;
+  line-height: 1.9;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
 .page.versepage .ln.stage { color: var(--muted); }
 /* the line ⌃⌘G landed on — the jump is phase 3's; the class is named now */
 .page .landed { background: var(--flash); }
