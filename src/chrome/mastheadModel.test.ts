@@ -14,6 +14,10 @@ const cache: Record<string, string> = {
   "page/Books/Deep/Down": "no heading",
   "bookshelf/Milton, John": "# John Milton\n\n- Paradise Lost",
   "bookshelf/Milton, John/Paradise Lost/1": "# Book 1\n\n::: verse\nOf Man's first disobedience\n:::",
+  "bookshelf/Spenser, Edmund": "# Edmund Spenser",
+  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::",
+  "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i",
+  "bookshelf/Spenser, Edmund/The Faerie Queene/1.pr": "# Book I, Proem",
 };
 const keys = Object.keys(cache);
 const journal = journalOf(cache);
@@ -91,10 +95,22 @@ describe("the bookshelf", () => {
   });
 });
 
+describe("a work citing book and canto in Roman (2026-09-27)", () => {
+  it("the leaf is the key respelled as the citation spells it; the title row stays the heading", () => {
+    const x = m("bookshelf", "Spenser, Edmund/The Faerie Queene/1.1");
+    expect(x.crumbs.map((c) => c.text)).toEqual(["Edmund Spenser", "The Faerie Queene"]);
+    expect(x.leaf).toBe("I.i");
+    expect(x.title).toBe("Book I, Canto i");
+    expect(m("bookshelf", "Spenser, Edmund/The Faerie Queene/1.pr").leaf).toBe("I.pr");
+    /* the work's own page names itself as ever */
+    expect(m("bookshelf", "Spenser, Edmund/The Faerie Queene").leaf).toBe("The Faerie Queene");
+  });
+});
+
 describe("the panels", () => {
   it("a namespace's roots as rows, labelled as roots are, in key order", () => {
     expect(panelRows("page", keys, journal)).toEqual([{ text: "Books", href: "#page/Books" }]);
-    expect(panelRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }]);
+    expect(panelRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }, { text: "Edmund Spenser", href: "#bookshelf/Spenser%2C%20Edmund" }]);
     expect(panelRows("nowhere", keys, journal)).toEqual([]);
   });
   it("trimLabel keeps a short label, cuts a long one to the cap with an ellipsis, never inside a surrogate pair", () => {

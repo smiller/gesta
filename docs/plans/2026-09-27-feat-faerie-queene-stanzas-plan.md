@@ -303,3 +303,32 @@ and moved into the decisions table.
   and the report identical byte for byte with the batch stashed. The
   converter's sample (I.i, argument and stanzas 1–10) is clean through
   the corpus tool.
+
+### Batch 2 — 2026-09-27, the citation and the chrome's logic
+
+- numbering.ts: in a block carrying a stanza attr every inked row is a
+  `line` — no stage direction, no speaker (numbering.test.ts: a wholly
+  italic and a wholly bold row both numbered; a plain verse fence keeps
+  its apparatus).
+- store/reference.ts: `roman` (subtractive: IV, ix — the modern
+  citation's form, not the print's IIII), `romanKey` (`1.1` → `I.i`,
+  `1.pr` → `I.pr`, anything not digit-led as it stands) and
+  `romanWorkKey` (a book's author/work/leaf whose work page carries the
+  directive). `referenceLabel` respells the deepest numeral run before
+  the range joins; the Journal gains `romanBookCanto(workKey)`,
+  implemented once in headings.ts (`directsRomanBookCanto`, top level
+  only, as the root directive is read).
+- editor/reference.ts: `stanzaRange` (`2.1`, `2.1-4`, `2`, `2–3`,
+  `2.8–3.2`); `spansTwoBlocks` takes a stanza flag and refuses only a
+  run reaching a block that is not a top-level stanza; the passage
+  quotes each covered stanza's rows with a blank quoted line between
+  (`blockPassage`, the old single-block body). `referencePayload` asks
+  the work's directive once and uses the stanza range where every
+  covered line is a stanza's.
+- mastheadModel.ts: the leaf respelled under the directive (`I.i`,
+  `I.pr`); the title row stays the heading; the work's own page as ever.
+- goto.ts: `stanzaAskCheck` and `stanzaHit` (one place per stanza, no
+  cycle; "no stanza 4 here — the last is 3", "stanza 2 has 3 lines").
+  The wiring into the Line box is batch 3's.
+- MEASURED: `npm test` 65 files, 519 tests (from 507); `npm run check`
+  clean.

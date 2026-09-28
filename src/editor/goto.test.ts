@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck } from "./goto.ts";
+import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
@@ -60,5 +60,32 @@ describe("the refusals", () => {
     expect(askCheck("xiv", "line")).toBe("xiv is not a line number");
     expect(askCheck("9z", "page")).toBe("9z is not a page number");
     expect(askCheck("x9", "page")).toBe("use roman or arabic characters, not both");
+  });
+});
+
+// The Faerie Queene (2026-09-27): in a work citing by stanza the Line box
+// takes `stanza.line` — `2` is stanza 2, `2.1` its first line. A stanza
+// number names one place, so there is no cycle.
+describe("stanza.line", () => {
+  const canto = parseMarkdown("# Book I, Canto i\n\n::: note\nargument\n:::\n\n::: stanza 1\na1\na2\na3\n:::\n\n::: stanza 2\nb1\nb2\nb3\n:::\n\n::: stanza 3\nc1\n*c2 wholly italic*\nc3\n:::");
+  const text = (r: { pos: number } | string): string => typeof r === "string" ? r : canto.nodeAt(r.pos)!.textContent;
+  it("a stanza lands on its first line; stanza.line on that line, an italic row counted", () => {
+    expect(text(stanzaHit(canto, "2"))).toBe("b1");
+    expect(text(stanzaHit(canto, "2.3"))).toBe("b3");
+    expect(text(stanzaHit(canto, "3.2"))).toBe("c2 wholly italic");
+    expect(text(stanzaHit(canto, "1.1"))).toBe("a1");
+  });
+  it("a stanza that is not there, or a line past a stanza's end, is refused in words", () => {
+    expect(stanzaHit(canto, "4")).toBe("no stanza 4 here — the last is 3");
+    expect(stanzaHit(canto, "2.9")).toBe("stanza 2 has 3 lines");
+    expect(stanzaHit(canto, "0")).toBe("no stanza 0 here — the last is 3");
+    expect(stanzaHit(parseMarkdown("::: verse\na\n:::"), "1")).toBe("no stanzas here");
+  });
+  it("the ask is a stanza or stanza.line, named back as typed when it is neither", () => {
+    expect(stanzaAskCheck("2")).toBe(null);
+    expect(stanzaAskCheck(" 2.1 ")).toBe(null);
+    expect(stanzaAskCheck("")).toBe("type a stanza, or stanza.line");
+    expect(stanzaAskCheck("I.i.2")).toBe("I.i.2 is not a stanza or stanza.line, like 2.1");
+    expect(stanzaAskCheck("2.")).toBe("2. is not a stanza or stanza.line, like 2.1");
   });
 });

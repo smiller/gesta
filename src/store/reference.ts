@@ -75,6 +75,36 @@ export function folioLabel(from: string, to?: string | null): string {
 export interface Journal {
   heading(ekey: string): string;
   fromLastTitle(rootKey: string): boolean;
+  /* the WORK's page carries `roman book and canto` (2026-09-27) */
+  romanBookCanto(workKey: string): boolean;
+}
+
+/* THE FAERIE QUEENE'S SPELLING (2026-09-27, the stanzas plan): its keys
+   stay digit-led so book and canto join as numerals (`1.1`, `1.pr`), and a
+   work whose page says `roman book and canto` cites them as Spenserians
+   do — the book upper-case Roman, the canto lower-case, `pr` (the proem)
+   as it stands: I.i.2.1. Subtractive, the modern citation's form (IV, ix),
+   not the print's IIII. */
+const ROMAN: [number, string][] = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+export function roman(n: number, lower = false): string {
+  let out = "";
+  for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
+  return lower ? out : out.toUpperCase();
+}
+/* a book.canto key respelled; anything else as it stands */
+export function romanKey(seg: string): string {
+  const m = seg.match(/^(\d+)(?:\.(\d+|pr))?$/);
+  if (!m) return seg;
+  const book = roman(+m[1]);
+  return m[2] === undefined ? book : book + "." + (m[2] === "pr" ? "pr" : roman(+m[2], true));
+}
+/* the work's key when an entry below it sits under the directive, else
+   null: a book's author/work/leaf, the work being the second level */
+export function romanWorkKey(date: string, tag: string | null, journal: Journal): string | null {
+  const segs = tag ? tag.split("/") : [];
+  if (!titlesRoots(date) || segs.length < 3) return null;
+  const work = entryKey(date, segs[0] + "/" + segs[1]);
+  return journal.romanBookCanto(work) ? work : null;
 }
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null }
 /* the "<key><separator> " an entry's own heading opens with when it repeats
@@ -145,6 +175,7 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
     if (at >= 0) parts.splice(0, at);
   }
   const books = titlesRoots(date), deepest = parts[parts.length - 1];
+  if (deepest && deepest.n !== undefined && romanWorkKey(date, tag, journal)) deepest.n = romanKey(deepest.n);
   const ns = nsOf(date), locates = !!(ns && ns.citesLocator);
   if (range && locates) {
     if (deepest && deepest.n !== undefined) deepest.n += "." + range;

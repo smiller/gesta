@@ -96,7 +96,9 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
     if (row.type === N.gap || row.type === N.note) return;
     if (prose && row.type !== N.pair) return;
     if (!drawsInk(row)) return;
-    const kind: UnitKind = prose ? "sentence" : rowKind(row);
+    /* a stanza has no apparatus (2026-09-27): in the Faerie Queene a row
+       wholly in italics is an inscription or a song, and it is numbered */
+    const kind: UnitKind = prose ? "sentence" : block.attrs.stanza != null ? "line" : rowKind(row);
     const num = kind === "line" || kind === "sentence" ? ++line : 0;
     out.push({
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,

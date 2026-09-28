@@ -36,6 +36,17 @@ test("a ⟨line⟩ row is a line whatever it is set in", () => {
   expect(kinds("::: verse\n⟨line⟩\n:::")).toBe("");
 });
 
+// a stanza has no apparatus (2026-09-27): a row set wholly in italics is an
+// inscription or a song in the Faerie Queene, never a stage direction, and
+// nine such rows in Books I–VI must each keep their line number
+test("every inked row of a stanza is a line, whatever it is set in", () => {
+  expect(kinds("::: stanza 55\nAnd sent to her his Nymphe to haue in charge,\n*Sad verse, giue death to him that death does giue,*\n**bold**\nlast\n:::"))
+    .toBe("line:1 line:2 line:3 line:4");
+  expect(kinds("::: stanza 1\na\n::: note\nfoot\n:::\nb\n:::")).toBe("line:1 line:2");
+  /* a plain verse fence keeps its apparatus */
+  expect(kinds("::: verse\n*Exit*\na\n:::")).toBe("stage line:1");
+});
+
 test("a paired row is one unit whichever column; a note row takes no number", () => {
   expect(kinds("::: verse\na | b\n::: note\nfoot\n:::\nc | d\n:::")).toBe("line:1 line:2");
 });

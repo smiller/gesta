@@ -14,7 +14,7 @@
    names itself in the crumb. */
 import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
-import type { Journal } from "../store/reference.ts";
+import { romanKey, romanWorkKey, type Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
 
 /* a unit of the date line: a link back up, or the plain date */
@@ -49,7 +49,9 @@ export function mastheadModel(date: string, tag: string | null, keys: string[], 
         const label = i ? name : rootLabel(date, name, journal);
         crumbs.push({ text: label, href: entryHash(date, path.slice(0, i + 1).join("/")), title: "Back to " + label });
       });
-      leaf = pp.leaf;
+      /* a work citing book and canto in Roman shows its keys the way its
+         citations spell them: `I.i`, not `1.1` (2026-09-27) */
+      leaf = romanWorkKey(date, tag, journal) ? romanKey(pp.leaf!) : pp.leaf;
       title = journal.heading(entryKey(date, tag));
     } else {
       leaf = rootLabel(date, pp.name, journal);

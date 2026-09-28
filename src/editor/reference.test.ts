@@ -4,7 +4,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, folioRange, selectionLink, passageMd, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
+import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -243,4 +243,50 @@ test("a passage in a grid's card cites as it does in a plain card: the grid is a
   expect(passageMd(grid, c, d)).toBe(passageMd(plain, a, b));
   const [e, f] = span(grid, "words", "other");
   expect(passageMd(grid, e, f)).toBe("> ::: card-red\n> words here\n> :::\n> ::: card-pink\n> other\n> :::");
+});
+
+// The Faerie Queene (2026-09-27): under the work's `roman book and canto`
+// directive a citation names the stanza — I.i.2.1 — and a selection may run
+// across stanzas, which a plain verse fence refuses.
+const fqJournal = journalOf({
+  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::",
+  "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i",
+});
+const FQ1 = "Spenser, Edmund/The Faerie Queene/1.1";
+const canto = parseMarkdown("# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\n:::\n\n" +
+  "::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n" +
+  "::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n" +
+  "::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::");
+test("stanzaRange: a line, lines, a whole stanza, whole stanzas, a run across them", () => {
+  const r = (a: string, b?: string) => { const [x, y] = span(canto, a, b); return stanzaRange(canto, x, y); };
+  expect(r("bloudie Crosse")).toBe("2.1");
+  expect(r("bloudie Crosse", "dying Lord")).toBe("2.1-2");
+  expect(r("But on his brest", "badge he wore,")).toBe("2");
+  expect(r("A Gentle Knight", "badge he wore,")).toBe("1–2");
+  expect(r("deepe wounds", "dying Lord")).toBe("1.3–2.2");
+  expect(r("Patron")).toBe("");
+});
+test("referencePayload under the directive: I.i.2.1, a run across a stanza gap allowed and quoted whole", () => {
+  const [a, b] = span(canto, "bloudie Crosse");
+  const one = referencePayload(state(canto, a, b), "bookshelf", FQ1, fqJournal);
+  expect("label" in one && one.label).toBe("Spenser, *The Faerie Queene*, I.i.2.1");
+  const [c, d] = span(canto, "deepe wounds", "dying Lord");
+  const run = referencePayload(state(canto, c, d), "bookshelf", FQ1, fqJournal);
+  expect("label" in run && run.label).toBe("Spenser, *The Faerie Queene*, I.i.1.3–2.2");
+  expect("passage" in run && run.passage).toBe("> Wherein old dints of deepe wounds did remaine,\n> \n> But on his brest a bloudie Crosse he bore,\n> The deare remembrance of his dying Lord,");
+  const [e, f] = span(canto, "A Gentle Knight", "Faerie lond,");
+  const all = referencePayload(state(canto, e, f), "bookshelf", FQ1, fqJournal);
+  expect("label" in all && all.label).toBe("Spenser, *The Faerie Queene*, I.i.1–3");
+});
+test("without the directive stanzas cite by line and a run across them is refused as before", () => {
+  const [a, b] = span(canto, "bloudie Crosse");
+  const plain = referencePayload(state(canto, a, b), "bookshelf", "Somebody/A Work/1.1", journalOf({}));
+  expect("label" in plain && plain.label).toBe("Somebody, *A Work*, 1.1.1");
+  const [c, d] = span(canto, "deepe wounds", "dying Lord");
+  expect(referencePayload(state(canto, c, d), "bookshelf", "Somebody/A Work/1.1", journalOf({}))).toEqual({ refused: "two-blocks" });
+});
+test("under the directive a run reaching a plain verse block is still refused", () => {
+  const mixed = parseMarkdown("::: stanza 1\na\nb\n:::\n\n::: verse\nc\n:::");
+  const [a, b] = span(mixed, "b", "c");
+  expect(referencePayload(state(mixed, a, b), "bookshelf", FQ1, fqJournal)).toEqual({ refused: "two-blocks" });
 });

@@ -11,7 +11,7 @@
    named, never counted (leaves are neither contiguous nor 1-based). THE
    BOX KEEPS WHAT WAS TYPED, and Enter says what is wrong with it. */
 import type { Node } from "prosemirror-model";
-import { lineUnits, blocksOf, paintsLines, type Unit } from "./numbering.ts";
+import { lineUnits, blocksOf, paintsLines, blockUnits, type Unit } from "./numbering.ts";
 import { hasFolios } from "./folios.ts";
 import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
@@ -75,4 +75,31 @@ export function askCheck(ask: string, kind: "line" | "page"): string | null {
   const ok = kind === "page" ? FOLIO_ONE.test(a) : FOLIO_ARABIC.test(a);
   if (ok) return null;
   return kind === "page" && FOLIO_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + kind + " number";
+}
+
+/* THE STANZA ASK (2026-09-27, the Faerie Queene): in a work citing by
+   stanza the Line box takes `N` (stanza N, at its first line) or `N.M`
+   (its line M). A stanza number names one place — the stanzas are
+   numbered in the text, each once — so there is nothing to cycle. */
+export function stanzaAskCheck(ask: string): string | null {
+  const a = ask.trim();
+  if (!a) return "type a stanza, or stanza.line";
+  return /^\d+(?:\.\d+)?$/.test(a) ? null : trimLabel(a, ECHO_CAP) + " is not a stanza or stanza.line, like 2.1";
+}
+/* the row to land on, or the refusal in words */
+export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
+  const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
+  let last = 0, found: { node: Node; pos: number } | null = null;
+  doc.forEach((block, pos) => {
+    const n = block.attrs.stanza as number | null | undefined;
+    if (n == null) return;
+    if (n > last) last = n;
+    if (n === s && !found) found = { node: block, pos };
+  });
+  if (!last) return "no stanzas here";
+  if (!found) return "no stanza " + s + " here — the last is " + last;
+  const { node, pos } = found as { node: Node; pos: number };
+  const lines = blockUnits(node, pos, 0).filter((u) => u.line);
+  const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
+  return want ? { pos: want.pos } : "stanza " + s + " has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
 }

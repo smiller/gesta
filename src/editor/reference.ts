@@ -11,7 +11,7 @@ import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, countAt, drawsInk, type Unit } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, romanWorkKey, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 
@@ -73,10 +73,38 @@ export function referenceRange(doc: Node, from: number, to: number): string {
   }
   return lo ? elideRange(lo, hi) : "";
 }
-/* TWO BLOCKS IS A REFUSAL: every block numbers from 1 */
-export function spansTwoBlocks(doc: Node, from: number, to: number): boolean {
-  const blocks = new Set(coveredUnits(doc, from, to).map((u) => u.blockPos));
-  return blocks.size > 1;
+/* THE STANZA RANGE (2026-09-27, the Faerie Queene): where every covered
+   numbered line stands in a top-level stanza, the range names stanza and
+   line — `2.1`, `2.1-4` (lines within a stanza keep the app's hyphen),
+   `2` for one whole stanza, `2–3` for whole stanzas, `2.8–3.2` for a run
+   across them (the en dash the reader chose); "" when a covered line
+   stands outside a stanza, or none is covered */
+export function stanzaRange(doc: Node, from: number, to: number): string {
+  const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
+  if (!lines.length) return "";
+  const stanzaOf = (u: Unit): number | null => doc.nodeAt(u.blockPos)!.attrs.stanza ?? null;
+  if (lines.some((u) => stanzaOf(u) === null)) return "";
+  const lastLine = (u: Unit): number => {
+    let n = 0;
+    for (const v of blockUnits(doc.nodeAt(u.blockPos)!, u.blockPos, 0)) if (v.line > n) n = v.line;
+    return n;
+  };
+  const a = lines[0], b = lines[lines.length - 1];
+  const sa = stanzaOf(a)!, sb = stanzaOf(b)!;
+  const whole = a.line === 1 && b.line === lastLine(b);
+  if (sa === sb) return whole ? String(sa) : sa + "." + elideRange(a.line, b.line);
+  return whole ? sa + "–" + sb : sa + "." + a.line + "–" + sb + "." + b.line;
+}
+/* TWO BLOCKS IS A REFUSAL: every block numbers from 1 — except a run of
+   top-level stanzas in a work that cites by stanza, whose range names
+   each end's stanza */
+export function spansTwoBlocks(doc: Node, from: number, to: number, stanzas = false): boolean {
+  const units = coveredUnits(doc, from, to);
+  const blocks = new Set(units.map((u) => u.blockPos));
+  if (blocks.size <= 1) return false;
+  if (!stanzas) return true;
+  const top = new Set(coveredUnits(doc, from, to, true).map((u) => u.blockPos));
+  return [...blocks].some((p) => !top.has(p) || doc.nodeAt(p)!.attrs.stanza == null);
 }
 /* the leaves that are THE TEXT'S — a folio inside a note turns no page */
 export function folioLeaves(doc: Node): { pos: number; label: string }[] {
@@ -242,6 +270,19 @@ export function passageMd(doc: Node, from: number, to: number): string {
     const [a, b] = wholeRows(doc, from, to);
     return quoted(unquoted(renumbered(doc, a, doc.cut(a, b))));
   }
+  /* a run across stanzas (allowed only where the work cites by stanza):
+     each stanza's rows quoted as one block's are, a blank quoted line
+     between them, as the stanza gap stands in print */
+  const byBlock: Unit[][] = [];
+  for (const u of units) {
+    const last = byBlock[byBlock.length - 1];
+    if (last && last[0].blockPos === u.blockPos) last.push(u); else byBlock.push([u]);
+  }
+  if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group)).join("\n" + quotePrefix("") + "\n");
+  return blockPassage(doc, from, to, units);
+}
+/* one block's passage: its covered run of rows, quoted */
+function blockPassage(doc: Node, from: number, to: number, units: Unit[]): string {
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
   const rows: { node: Node; pos: number }[] = [];
@@ -315,10 +356,12 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   let inCode = false;
   doc.nodesBetween(from, to, (n) => { if (n.type === N.code_block) inCode = true; return !inCode; });
   if (inCode) return { refused: "code" };
-  if (spansTwoBlocks(doc, from, to)) return { refused: "two-blocks" };
+  const stanzas = romanWorkKey(date, tag, journal) !== null;
+  if (spansTwoBlocks(doc, from, to, stanzas)) return { refused: "two-blocks" };
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
-  const label = referenceLabel(date, tag, referenceRange(doc, from, to), folioRange(doc, from, to), journal);
+  const range = (stanzas && stanzaRange(doc, from, to)) || referenceRange(doc, from, to);
+  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal);
   const url = entryLinkUrl(date, tag, hl);
   const passage = passageMd(doc, from, to);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };

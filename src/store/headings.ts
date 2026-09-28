@@ -33,6 +33,16 @@ export function directsFromLastTitle(md: string): boolean {
   doc.forEach((block) => { if (block.type === N.reference && /last title/i.test(block.textContent)) yes = true; });
   return yes;
 }
+/* does the WORK's page carry a top-level `::: reference` directive saying
+   "roman book and canto" (2026-09-27) — top level only, as above */
+export function directsRomanBookCanto(md: string): boolean {
+  if (!/^::: reference/m.test(md)) return false;
+  let doc: Node;
+  try { doc = parseMarkdown(md); } catch { return false; }
+  let yes = false;
+  doc.forEach((block) => { if (block.type === N.reference && /roman book and canto/i.test(block.textContent)) yes = true; });
+  return yes;
+}
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
   return {
@@ -45,5 +55,6 @@ export function journalOf(cache: Record<string, string>): Journal {
       return heading;
     },
     fromLastTitle: (rootKey) => directsFromLastTitle(cache[rootKey] || ""),
+    romanBookCanto: (workKey) => directsRomanBookCanto(cache[workKey] || ""),
   };
 }
