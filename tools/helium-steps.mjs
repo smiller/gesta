@@ -19,6 +19,14 @@ export const SEEDS = {
   "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
   "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
 };
+/* the stanza step's seeds (2026-09-28): written by that step alone, so no
+   earlier reading moves; src/main.ts's `?store=seed-stanza` holds the
+   same text for the successor */
+export const STANZA_SEEDS = {
+    "bookshelf/Spenser, Edmund": "# Edmund Spenser\n\n- [The Faerie Queene](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene)\n",
+    "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
+    "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
+};
 export async function runSteps(page, ctx, A, opts = {}) {
   const shot = opts.screenshot;
   const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, screen: await A.screen(page) })); };
@@ -544,6 +552,36 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+,");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3m1", 5000).catch(() => {});
   await log("⌃⌘, back", { entry: await A.entry(page) });
+    }],
+    ["stanza", async () => {
+  /* the Faerie Queene's stanzas (2026-09-28, successor-only): a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap citing I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
+  await A.seedStanza(page, STANZA_SEEDS);
+  await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1");
+  await R.settle(page);
+  await log("a canto opened", { ...(await R.stanzas(page)), crumb: (await R.masthead(page)).crumb, title: (await R.masthead(page)).title });
+  await R.selectBetween(page, "bloudie Crosse", "bloudie Crosse");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await page.waitForTimeout(300);
+  await log("⌃⌘R on a line", { lines: await R.clipboardLines(page) });
+  await R.selectBetween(page, "deepe wounds", "bloudie Crosse");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await page.waitForTimeout(300);
+  await log("⌃⌘R across a stanza gap", { lines: await R.clipboardLines(page) });
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+g");
+  await page.waitForTimeout(100);
+  await page.keyboard.type("2.1");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(150);
+  await log("⌃⌘G 2.1", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("2.9");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(150);
+  await log("⌃⌘G 2.9", await R.linebar(page));
+  await page.keyboard.press("Escape");
     }],
     ["pill", async () => {
   if (A.pill) {

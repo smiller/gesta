@@ -55,3 +55,9 @@ two cards pasted mid-paragraph · grid · two cards copied out of a grid arrive 
 two cards pasted mid-paragraph · columns · the same
 two cards pasted mid-paragraph · wider · the same
 two cards pasted mid-paragraph · type · the same
+a canto opened · drawn · a stanza is successor-only (2026-09-27, the Faerie Queene plan): the current app has no `::: stanza` word, reads the fences as text, and draws no stanza number
+a canto opened · crumb · the successor respells the key under the work's `roman book and canto` directive (I.i); the current app has no such directive and shows the key (1.1)
+⌃⌘R on a line · lines · the successor cites the stanza under the directive (I.i.2.1) and quotes the whole row; the current app, whose stanzas are text, cites the entry alone and quotes the selection
+⌃⌘R across a stanza gap · lines · the successor cites a run across stanzas (I.i.1.3–2.1) and quotes both with the gap; the current app quotes the fences as text
+⌃⌘G 2.1 · * · the successor's Line box takes stanza.line under the directive; the current app finds no numbered lines in fences it reads as text, and its bar does not open
+⌃⌘G 2.9 · * · the same: the successor refuses a line past the stanza's end in words; the current app's bar never opened

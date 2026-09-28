@@ -30,6 +30,10 @@ export async function launch(page, seeds) {
   await waitEntry(page, "page/Horace");
   return "seeded " + n;
 }
+/* the stanza step's seed, through the seam as the launch's are */
+export async function seedStanza(page, seeds) {
+  await page.evaluate(async (bodies) => { const G = window.gesta; for (const k of Object.keys(bodies)) await G.setEntry(k, G.mdToHtml(bodies[k])); G.reindex(); }, seeds);
+}
 const KEY = () => { const G = window.gesta, s = G.state(); return G.entryKey(s.date, s.tag); };
 export const entry = (page) => page.evaluate(KEY);
 /* the key AND the paint: the current app sets its state before the body
@@ -73,6 +77,11 @@ export const screen = (page) => page.evaluate(() => {
 const NA = (what) => ({ unavailable: what });
 const SAVED = "#saved.show";   /* the corner, for cornerAfter */
 export const read = {
+  /* the stanza step (2026-09-28): the current app has no stanza fence; what it draws is read the same way */
+  stanzas: (page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#page .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#page .ln.shown, #page [data-line].shown")].map((r) => r.dataset.line) })),
+  selectBetween: (page, a, b) => page.evaluate(([a, b]) => { const root = document.getElementById("page"); const find = (n) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),
+  clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
+  landedText: (page) => page.evaluate(() => document.querySelector("#page .landed")?.textContent || null),
   corner: (page) => page.evaluate(() => { const s = document.getElementById("saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.getElementById("backuppaused")?.hidden }; }),
   cornerText: (page) => page.evaluate(() => document.querySelector("#saved.show")?.textContent),
   cornerTextOrEmpty: (page) => page.evaluate(() => document.querySelector("#saved.show")?.textContent || ""),

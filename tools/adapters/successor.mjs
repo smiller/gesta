@@ -18,6 +18,11 @@ export async function launch(page, seeds) {
   await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
   return page.evaluate(() => document.documentElement.dataset.probe);
 }
+/* the stanza step's seed, written by the page under ?store=seed-stanza */
+export async function seedStanza(page) {
+  await page.goto(url("page/Horace", "store=seed-stanza"));
+  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
+}
 export const entry = (page) => page.evaluate(() => document.documentElement.dataset.entry);
 export const waitEntry = (page, key, ms = 15000) => page.waitForFunction((k) => document.documentElement.dataset.entry === k, key, { timeout: ms });
 export const waitWarm = (page) => page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
@@ -54,6 +59,11 @@ export const screen = (page) => page.evaluate(() => {
 });
 const SAVED = ".saved.show";   /* the corner, for cornerAfter */
 export const read = {
+  /* the stanza step (2026-09-28): the number each stanza DRAWS (its ::before), and the line numbers shown */
+  stanzas: (page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
+  selectBetween: (page, a, b) => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),
+  clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
+  landedText: (page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
   corner: (page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
   cornerText: (page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent),
   cornerTextOrEmpty: (page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),

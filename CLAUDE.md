@@ -312,5 +312,6 @@ is in the plan's record, under the phase named):
   (vite-plugin-singlefile inlines everything): `<main>` holding the editor,
   and main.ts the wiring — the layer, the backup, the session, the
   ledger and the masthead's acts meet there. The query strings are the
-  headless tools' (`?store=seed`, `?store=write`, `?corner=pill`) and
+  headless tools' (`?store=seed`, `?store=seed-stanza`, `?store=write`,
+  `?corner=pill`) and
   `?fixture=pippa&interval=1` opens a fixture in scratch, no store.

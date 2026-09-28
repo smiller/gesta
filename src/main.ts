@@ -8,7 +8,8 @@
    store, no save — for a headless look as much as for a hand;
    `?store=write` writes one probe row; `?store=seed` writes the four
    fixtures as entries, for a headless look at the bridge over a profile no
-   picker can fill; `?corner=pill` draws the paused pill. */
+   picker can fill; `?store=seed-stanza` writes the stanza step's Faerie
+   Queene alone (2026-09-28); `?corner=pill` draws the paused pill. */
 import "./editor/editor.css";
 import "./chrome/chrome.css";
 import { mount } from "svelte";
@@ -970,8 +971,18 @@ if (fixture && fixtures[fixture]) {
     "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
     "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
   };
+  /* the stanza step's own seed (2026-09-28): a Faerie Queene work under
+     its directive, written only when that step asks, so the entries every
+     earlier step reads — the books panel, search, Go to — stay as they were;
+     tools/helium-steps.mjs's STANZA_SEEDS holds the same text */
+  const stanzaSeeds: Record<string, string> = {
+    "bookshelf/Spenser, Edmund": "# Edmund Spenser\n\n- [The Faerie Queene](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene)\n",
+    "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
+    "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
+  };
   const wrote = q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
     : q.get("store") === "seed" ? Promise.all(Object.keys(seeds).map((k) => layer.setEntry(k, seeds[k]))).then(() => stage("seed"))
+    : q.get("store") === "seed-stanza" ? Promise.all(Object.keys(stanzaSeeds).map((k) => layer.setEntry(k, stanzaSeeds[k]))).then(() => stage("seed"))
     : Promise.resolve();
   /* THE OPEN ENTRY FIRST, from ONE store row, before the warm reads the
      whole journal — the current app's primeOpenEntry: by hand 2026-09-08

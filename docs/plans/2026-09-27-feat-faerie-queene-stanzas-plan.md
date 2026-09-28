@@ -298,8 +298,7 @@ A, B and C were answered by the reader on 2026-09-27 and moved into the
 decisions table.
 
 - D and F answered 2026-09-28 (the decisions table).
-- E. The shared Helium step for the stanza (the Record's batch 3 says why
-  it was not written unattended).
+- E answered 2026-09-28: add it (the Record, below).
 
 ## Record
 
@@ -410,3 +409,23 @@ decisions table.
   `Book III, Canto xii`; the note's five stanzas each drew their number
   (43–47) at its left edge (screenshot), the top-level 44–45 in the
   gutter's column as before.
+
+### 2026-09-28 — the shared Helium step
+
+- tools/helium-steps.mjs: a "stanza" section, run last before "pill",
+  seeding its own Faerie Queene work (`STANZA_SEEDS`: the author, the
+  work page with the directive, a three-stanza I.i) through a new adapter
+  call, `seedStanza` — `?store=seed-stanza` in the successor (main.ts,
+  beside `?store=seed`), the `window.gesta` seam in the current app — so
+  no earlier step's reading moves. It reads the drawn numbers and the
+  crumb, ⌃⌘R on a line and across a stanza gap, and ⌃⌘G `2.1` and `2.9`;
+  new readers `stanzas`, `selectBetween`, `clipboardLines`, `landedText`
+  in both adapters.
+- MEASURED: the successor's received run differed from the approved copy
+  by exactly the five new lines, read and approved (108 lines); the
+  current app's run, regenerated (`npm run compare:writer`), by the same
+  five. The compare then listed 19 open fields, every one the current
+  app's want of the stanza fence (its fences read as text, its citation
+  the entry alone, its Line bar unopened); decided in
+  corner.differences.txt, six lines with their reasons — 105 steps, 0
+  open. `npm run verify` exit 0.
