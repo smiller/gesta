@@ -474,7 +474,9 @@ decisions table.
   elided `th’` — the print's closing-up is its typesetting (II.vii.55.6
   `th’*Idæan*` first raised it). 406 spaced (an earlier count, 402, missed
   `Th’` and `th’` before an italic); 29 elisions inside a word (`bath’d`,
-  `Nath’lesse`) and `t’` (`T’embrace`) left as printed.
+  `Nath’lesse`) left as printed. Then `t’` the same way, after its first
+  25: 132 spaced on 131 lines (`For to maligne, t’ enuie, t’ vse
+  shifting slight,` holds two).
 - Found reading the front matter for that list: three of the Raleigh
   page's poems ran their stanzas together (`…mounting singes.  Thy louely
   Rosolinde…`) — its stanzas are `<p>`s, split now, a blank line for the
