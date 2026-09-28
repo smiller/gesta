@@ -211,3 +211,17 @@ judged real and fixed in one commit:
   open; back from Canto ix, Book III open and its link in view; reopened
   again, no scroll; a true reload on a highlight into Dedications opened
   Dedications.
+
+### 2026-09-28 — a different entry opens at its top
+
+- Found by the reader after the review: Book V's proem, opened from its
+  link far down the contents page, opened scrolled down, its heading under
+  the masthead. Nothing moved the window on an open (READ, the open path);
+  the folds made long scrolls through a contents page common. session.ts's
+  open now scrolls to the top when the entry is a DIFFERENT one; the same
+  entry reopened (an import's refresh) keeps its place; a highlight and the
+  remembered link still scroll after it.
+- MEASURED, headless Helium: the contents at scrollY 237, the proem's link
+  clicked — before, the proem opened at 265 with its heading at -66; after,
+  at 0 with its heading at 199. The fold probe re-run: the scroll back to
+  Canto ix, the link used once, the highlight after a reload, all as before.

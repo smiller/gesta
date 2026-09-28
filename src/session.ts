@@ -328,6 +328,12 @@ export function startSession(opts: SessionOptions): Session {
     cancelSave();
     suspended = false;
     if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (read 2026-09-22 by the grid step) */
+    /* a DIFFERENT entry opens at its top; the same one reopened (an
+       import's refresh, the view switch's remount) keeps its place. Until
+       2026-09-28 nothing moved the window on an open, and a link followed
+       from far down a contents page opened the next entry as far down,
+       its heading under the masthead (the reader, Book V's proem) */
+    const moved = entryKey(date, tag) !== entryKey(current.date, current.tag);
     current = { date, tag };
     const ekey = ekeyOf();
     const md = layer.entryMd(ekey);
@@ -357,6 +363,7 @@ export function startSession(opts: SessionOptions): Session {
         return;
       }
       mountEditor(doc, date, tag);
+      if (moved) window.scrollTo(0, 0);
       scrollToLeft(ekey);
     }
     document.documentElement.dataset.entry = ekey;
