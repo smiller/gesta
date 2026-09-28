@@ -181,3 +181,38 @@ pinned (a performance choice), 2 pinned with a neighbour.
 - The closed-section reading's first gesture was wrong: it scrolled the
   source by counting lines, and the Filler paragraphs wrap — it stopped in
   Book 2. It measures on a wrapping twin now.
+
+### The confirmation pass — 2026-09-28, /code-review at HIGH over 054af51..972dc9d
+
+- COST: 102,519 tokens (the run's report), 3 min 58 s, 15 tool uses. Nine
+  findings, under its cap.
+- FIXED:
+  - the near-the-top guard read the LEAVING view's count; a source top
+    just above its first fence's text maps to rendered count 0 — the
+    guard is on the arriving count now, in both arms;
+  - the switch's remembered place paired a rendered position with the
+    source's offset: the rendered offset is taken after the place is set
+    ("the switch's place remembered": false with the old order, true now,
+    MEASURED);
+  - a caret that was seen now wins over the switch's held place, which
+    the mount's resize re-applies a frame later (the re-apply MEASURED
+    live, counted on the switch back). UNPINNED: the old behaviour stayed
+    green on a canto, a heading page and a page of pictures (MEASURED) —
+    no step's page has shown the caret leaving view;
+  - copies settling out of order: only the latest copy's outcome touches
+    the pin (unpinned: two writes no step can order);
+  - UNREADABLE IS NOT EMPTY: `readRaw` (undefined when the storage cannot
+    be reached, null for an absent key) and `writeRaw` (false, never a
+    throw) in store/local.ts, tested; main.ts's shortcuts and bookmarks
+    read through it — a refused read is the bookmarks card's unreadable
+    state, never a first run seeding the defaults — and every backup hint
+    goes through it, so a refused localStorage costs the mirror's
+    signature, not every run; `stored` built on the two;
+  - the storage reading claimed "site data blocked" and read the other
+    tab's screen: it is "a page opened with localStorage refused" now,
+    with the blocked tab's own screen, and says IndexedDB still answers;
+  - the new comment on copy() asserted the notices' behaviour: reworded
+    to its own code's decision.
+- The approved "⌃⌘M from 20px down" still reads source 25: at 20px down
+  the first line sits half under the masthead, and the first WHOLE line
+  is carried — the text rule, not the guard's case.

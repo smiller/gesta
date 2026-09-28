@@ -697,6 +697,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
     if (where < 1) {
+      await log("the switch's place remembered", { matches: await page.evaluate(() => { try { const r = JSON.parse(localStorage.getItem("gesta.v1.places") || "[]").find((x) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }) });
       /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
       await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);
       await page.waitForTimeout(300);
@@ -714,6 +715,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(300);
   await log("⌃⌘M from 20px down", { source: nearTop, back: await winY() });
+  /* a caret placed low in the source's window, then back: it is still in view */
+  await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  await page.mouse.click(400, (await page.evaluate(() => innerHeight)) - 30);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await log("a caret seen in the source, ⌃⌘M back", { caretInView: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) });
     }],
     ["contents folds", async () => {
   /* a work's contents folding under its headings (2026-09-28, successor-only): the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
@@ -872,7 +883,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await blocked.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new DOMException("site data blocked", "SecurityError"); } }); });
   await blocked.goto(A.url("page/Horace"));
   await A.waitEntry(blocked, "page/Horace", 8000).catch(() => {});
-  await log("a page opened with its site data blocked", { entry: (await A.entry(blocked)) ?? null });
+  /* localStorage alone refused: the profile's IndexedDB still answers, so the store's own failure path is not what this reads */
+  await log("a page opened with localStorage refused", { entry: (await A.entry(blocked)) ?? null, blockedScreen: ((await A.screen(blocked).catch(() => "")) || "").split(" · corner")[0] });
   await blocked.close();
     }],
     ["pill", async () => {

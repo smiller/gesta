@@ -314,14 +314,15 @@ export function startSession(opts: SessionOptions): Session {
      every fence line the rendered one lacks, and a count taken as equal in
      both drifted seven lines by stanza 21
      (pin: the switch carries the text › a long canto switched at its middle).
-     Nothing above the first line: near the top stays at the top, where
-     setting the first character under the masthead pushed the page's own
-     top out of view (pin: the switch carries the text › ⌃⌘M from 20px down) */
+     Nothing above the first line ARRIVED AT: near the top stays at the top,
+     where setting the first character under the masthead pushed the page's
+     own top out of view, and a source top above its first fence's text maps
+     to the rendered start (pin: the switch carries the text › ⌃⌘M from 20px down) */
   function alignTop(from: { at: number; text: string }): void {
-    if (from.at === 0) { window.scrollTo(0, 0); return; }
     const under = underMasthead();
     if (mdView && source) {
       const flat = flattenText(source.value), count = crossViewOffset(from.text, flat.text, from.at, true, false);
+      if (count === 0) { window.scrollTo(0, 0); return; }
       const i = positionAt(flat, count) ?? source.value.length;
       const t = sourceTwin(source), top = t.topOf(i);
       t.done();
@@ -330,15 +331,20 @@ export function startSession(opts: SessionOptions): Session {
     }
     if (!view) return;
     const flat = flattenDoc(view.state.doc), count = crossViewOffset(from.text, flat.text, from.at, false, false);
+    if (count === 0) { window.scrollTo(0, 0); return; }
     const pos = Math.min(positionAt(flat, count) ?? view.state.doc.content.size, view.state.doc.content.size);
     /* HELD like an arrival's place, and remembered: a closed section opens,
        and a page that grows above it — pictures, the fitted measure — sets it
        again (pin: the switch carries the text › ⌃⌘M back, then 400px grown above)
        (pin: places › a closed section's text switched to) */
-    const place = { pos, y: Math.max(1, window.scrollY) };
+    const place = { pos, y: 1 };
     held = { ekey: ekeyOf(), place };
-    writePlace(ekeyOf(), place);
     applyPlace(place);
+    /* the offset remembered is the rendered view's, after the place is set:
+       the source's beside a rendered position misled the fallback
+       (pin: the switch carries the text › the switch's place remembered) */
+    place.y = Math.max(1, window.scrollY);
+    writePlace(ekeyOf(), place);
   }
   function putViewCaret(): void {
     const here = mdView ? "source" : "rendered", other = mdView ? "rendered" : "source";
@@ -360,7 +366,11 @@ export function startSession(opts: SessionOptions): Session {
       const pos = arriving ? (positionAt(flat, arriving.at) ?? view.state.doc.content.size) : 0;
       placedAt = arriving ? arriving.at : null;
       const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(Math.min(pos, view.state.doc.content.size))));
-      if (!arriving || arriving.seen) tr.scrollIntoView();
+      /* a caret that was seen is brought into view and wins over the switch's
+         held place, which the mount's resize re-applies a frame later.
+         Unpinned: no step's page has shown the re-apply taking the caret out
+         of view — a canto, headings and pictures tried */
+      if (!arriving || arriving.seen) { tr.scrollIntoView(); held = null; }
       view.dispatch(tr);
       view.focus();
     }
@@ -584,11 +594,15 @@ export function startSession(opts: SessionOptions): Session {
   /* a failed write is an error, pinned to be clicked into a bug report;
      the markdown, which lives nowhere else, goes to the console
      (pin: entries left and renamed › ⌃⌘C with the clipboard refused) */
-  let copyPin = 0;
+  let copyPin = 0, copyGen = 0;
   function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
+    const gen = ++copyGen;
     writeClipboard(payload).then((ok) => {
-      /* a copy that lands releases a failed one's pin: a pin silences every
-         whisper, the success's own (pin: entries left and renamed › ⌃⌘C again, the clipboard back) */
+      /* the LATEST copy's outcome is the corner's: one that lands releases a
+         failed one's pin (pin: entries left and renamed › ⌃⌘C again, the
+         clipboard back); an older copy settling late changes nothing
+         (unpinned: two writes no step can order) */
+      if (gen !== copyGen) return;
       if (copyPin) { opts.releasePin?.(copyPin); copyPin = 0; }
       if (ok) { say(okText); return; }
       console.error(failText, payload.text);

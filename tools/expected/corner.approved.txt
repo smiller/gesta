@@ -114,9 +114,11 @@ a canto opened: {"drawn":["1","2","3"],"shown":[],"crumb":"Edmund Spenser/The Fa
 ⌃⌘G 2.1: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":79,"corner":"Reference copied to clipboard","landedText":"But on his brest a bloudie Crosse he bore,","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G 2.9: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":79,"corner":"stanza 2 has 3 lines","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 a long canto switched at its middle: {"rendered":20,"source":20,"back":20,"screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the switch's place remembered: {"matches":true,"screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘M back, then 400px grown above: {"top":20,"screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a long canto switched at its end: {"rendered":true,"source":true,"back":true,"screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘M from 20px down: {"source":25,"back":0,"screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a caret seen in the source, ⌃⌘M back: {"caretInView":true,"screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a contents page opened: {"folds":1,"open":[],"counts":["1 entry"],"linksShowing":0,"cantoInView":null,"screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the triangle clicked: {"folds":1,"open":["Book I: The "],"counts":["1 entry"],"linksShowing":1,"cantoInView":true,"screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 its canto followed: {"entry":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -140,7 +142,7 @@ a long entry renamed, scrolled: {"entry":"2026-09-05/Longer","stayed":true,"scre
 deleted scrolled: its place dropped: {"entry":"2026-09-05","placeKept":false,"screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘C with the clipboard refused: {"corner":"Couldn't copy the link (click to copy)","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘C again, the clipboard back: {"corner":"Link copied","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a page opened with its site data blocked: {"entry":"page/Horace","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a page opened with localStorage refused: {"entry":"page/Horace","blockedScreen":"page/Horace · sel none · bar off · panel none · rows none · rendered","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card

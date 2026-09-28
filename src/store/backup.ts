@@ -6,7 +6,7 @@
    line and the trouble affordance — in place of the notice ledger. Restore
    is not new code: point the import at an archive you have unzipped. */
 import { NS, todayKey } from "./keys.ts";
-import { stored } from "./local.ts";
+import { readRaw, writeRaw } from "./local.ts";
 import { imgHash } from "./names.ts";
 import { filePath, errText, failMsg, fsaFatal } from "./files.ts";
 import { backupPlan, type Manifest, type Archived } from "./plans.ts";
@@ -62,7 +62,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   let committedSig: string | null = null;
   /* a synchronous "a folder is configured" mirror for the edit hot path,
      seeded from the durable hint; the run's store read corrects it */
-  let configured = !!stored(BACKUP_ON, (raw) => raw).read();   /* at boot: a bare read threw where site data is blocked (pin: entries left and renamed › a page opened with its site data blocked) */
+  let configured = !!readRaw(BACKUP_ON);   /* every hint through readRaw and writeRaw: reaching localStorage throws where it is refused (pin: entries left and renamed › a page opened with localStorage refused) */
   let handle: Dir | null = null;   /* cached so a resume can requestPermission SYNCHRONOUSLY in the click */
   let running: Promise<void> | null = null;   /* the single-flight latch */
   let trouble = "";
@@ -79,14 +79,14 @@ export function backupRunner(opts: BackupOptions): Backup {
       if (handle && handle !== h) return;
       handle = h;
       configured = !!h;
-      if (!h) { localStorage.removeItem(BACKUP_ON); setTrouble(""); return; }
+      if (!h) { writeRaw(BACKUP_ON, null); setTrouble(""); return; }
       /* no gesture behind a launch or idle run, so only a handle already
          granted writes; a 'prompt' handle (a file:// tab after a restart)
          surfaces the paused affordance, whose click is the gesture */
       return h.queryPermission({ mode: "readwrite" }).then((perm) => {
         if (perm !== "granted") { setTrouble(PAUSED_MSG); return; }
-        const today = todayKey(), sig = backupSig(layer.cache), lastSig = localStorage.getItem(BACKUP_SIG);
-        const datedWas = localStorage.getItem(BACKUP_DATED);
+        const today = todayKey(), sig = backupSig(layer.cache), lastSig = readRaw(BACKUP_SIG) ?? null;
+        const datedWas = readRaw(BACKUP_DATED) ?? null;
         const plan = backupPlan(today, datedWas, sig, lastSig, committedSig !== null && lastSig === committedSig);
         if (!plan.writeMirror && !plan.dated) { setTrouble(""); return; }
         say("backing up…");
@@ -115,9 +115,9 @@ export function backupRunner(opts: BackupOptions): Backup {
                run was asked to write landed */
             const lostWrite = failures.some((x) => !x.sweep && !x.blind);
             const blind = failures.some((x) => x.blind);
-            const datedThen = localStorage.getItem(BACKUP_DATED);   /* sampled BEFORE our own write */
-            if (plan.dated && !lostWrite) localStorage.setItem(BACKUP_DATED, plan.dated);
-            if (plan.writeMirror && !lostWrite && !blind) { localStorage.setItem(BACKUP_SIG, sig); committedSig = sig; }
+            const datedThen = readRaw(BACKUP_DATED) ?? null;   /* sampled BEFORE our own write */
+            if (plan.dated && !lostWrite) writeRaw(BACKUP_DATED, plan.dated);
+            if (plan.writeMirror && !lostWrite && !blind) { writeRaw(BACKUP_SIG, sig); committedSig = sig; }
             if (failures.length) {
               console.error("backup: " + failures.length + " file(s) failed\n" + failures.map((x) => x.name + " — " + (errText(x.error) || x.error)).join("\n"), failures);
             }
@@ -183,9 +183,9 @@ export function backupRunner(opts: BackupOptions): Backup {
       handle = h;
       return store.set(h as unknown as FileSystemDirectoryHandle).then(() => {
         configured = true;
-        localStorage.setItem(BACKUP_ON, "1");
-        localStorage.removeItem(BACKUP_SIG);   /* the first backup writes everything */
-        localStorage.removeItem(BACKUP_DATED);
+        writeRaw(BACKUP_ON, "1");
+        writeRaw(BACKUP_SIG, null);   /* the first backup writes everything */
+        writeRaw(BACKUP_DATED, null);
         setTrouble("");
         return Promise.resolve(running).then(runBackup);
       });
