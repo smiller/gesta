@@ -113,6 +113,8 @@ export const read = {
     const top = ta.getBoundingClientRect().top + parseFloat(cs.paddingTop) + at * parseFloat(cs.lineHeight);
     return top < innerHeight && top > 0;
   }),
+  /* the source scrolled until a text is at the window's top, measured on a twin that wraps as the textarea does: its paragraphs wrap, and a line count stopped a Book short */
+  sourceScrollTo: (page, text) => page.evaluate((t) => { const a = document.querySelector("textarea.source"), cs = getComputedStyle(a), twin = document.createElement("div"); for (const p of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"]) twin.style[p] = cs[p]; Object.assign(twin.style, { position: "absolute", visibility: "hidden", left: "-9999px", top: "0", whiteSpace: "pre-wrap", width: a.getBoundingClientRect().width + "px" }); twin.textContent = a.value.slice(0, a.value.indexOf(t)); const mark = twin.appendChild(document.createElement("span")); mark.textContent = "x"; document.body.appendChild(twin); const y = mark.offsetTop; twin.remove(); const under = document.querySelector(".site-head").getBoundingClientRect().bottom + 4; scrollTo(0, scrollY + a.getBoundingClientRect().top + y - under); }, text),
   inSource: (page) => page.evaluate(() => !!document.querySelector("textarea.source")),
   gridCorner: (page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),
   cardsAndPairs: (page) => page.evaluate(() => ({ cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length })),

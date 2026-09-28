@@ -28,6 +28,7 @@ import type { Dir } from "./store/fsa.ts";
 import { importFiles } from "./store/importFiles.ts";
 import { entryDocs, isDoc, failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
+import { stored } from "./store/local.ts";
 import { noticeLedger, type Progress } from "./chrome/notices.svelte.ts";
 import { copyText } from "./chrome/clipboard.ts";
 import { screenState, EMPTY_MASTHEAD } from "./chrome/screen.svelte.ts";
@@ -330,9 +331,13 @@ if (fixture && fixtures[fixture]) {
      hidden→shown transition and never while dirty, so a reopen after a
      close cannot wipe lines typed but not yet saved; only a landed Save
      makes it read as storage again. */
+  /* read through stored(): reaching localStorage throws where site data is
+     blocked, and read bare at boot it stopped the page before it drew
+     (pin: entries left and renamed › a page opened with its site data blocked) */
+  const rawKey = (key: string): string | null => stored(key, (raw) => raw).read();
   const SHORTCUTS_KEY = NS + "shortcuts";
   const sc = screen.shortcuts;
-  let shortcuts: Shortcut[] = parseShortcuts(localStorage.getItem(SHORTCUTS_KEY) || "");
+  let shortcuts: Shortcut[] = parseShortcuts(rawKey(SHORTCUTS_KEY) || "");
   let shortcutsFailGen = 0;
   const renderShortcuts = (): void => {
     if (!shortcuts.length) { sc.rows = []; sc.empty = "No shortcuts yet — add some below."; sc.active = 0; if (!sc.editing) showEditor(true); return; }
@@ -341,7 +346,7 @@ if (fixture && fixtures[fixture]) {
     sc.active = 0;
   };
   const showEditor = (on: boolean): void => {
-    if (on && !sc.editing && !sc.dirty) sc.draft = localStorage.getItem(SHORTCUTS_KEY) || "";
+    if (on && !sc.editing && !sc.dirty) sc.draft = rawKey(SHORTCUTS_KEY) || "";
     sc.editing = on;
   };
   const openShortcuts = (): void => {
@@ -384,7 +389,7 @@ if (fixture && fixtures[fixture]) {
   let bookmarks: Bookmark[] = [];
   let bookmarksFailGen = 0;
   const loadBookmarks = (): void => {
-    const read = parseBookmarks(localStorage.getItem(BOOKMARKS_KEY));
+    const read = parseBookmarks(rawKey(BOOKMARKS_KEY));
     bm.unreadable = read === null;
     bookmarks = read || [];
   };
@@ -402,7 +407,7 @@ if (fixture && fixtures[fixture]) {
     return true;
   };
   loadBookmarks();
-  if (localStorage.getItem(BOOKMARKS_KEY) === null) saveBookmarks([{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }]);
+  if (rawKey(BOOKMARKS_KEY) === null) saveBookmarks([{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }]);
   const hereKey = (): string => entryKey(session.current.date, session.current.tag);
   /* every render hands focus back: a delete removes the row its own
      button sits in, and "open" and "listening" must not disagree */

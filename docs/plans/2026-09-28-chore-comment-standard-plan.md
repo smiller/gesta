@@ -149,3 +149,35 @@ pinned (a performance choice), 2 pinned with a neighbour.
   `crossViewOffset`, the caret's own crossing (viewCarets.ts).
 - MEASURED after: 20 → 20 → 20; the last stanza showing in all three;
   the reader's own Canto i at 1440×900, 53 → 53 → 53.
+
+### The review — 2026-09-28, /code-review at HIGH over a31427a..054af51
+
+- COST: 126,373 tokens (the run's report), 5 min 23 s, 24 tool uses. Ten
+  findings, its cap. The reviewer also resolved every pin in the touched
+  files: all resolve; "bridge" and "console" were outside the documented
+  form, which now names them.
+- NOT FIXED, wrong: the forced entry's "wait for the stray line" loop
+  "does not wait" — each `A.stored` call waits 800 ms (READ, the adapter).
+- FIXED, each reading red on the code before (MEASURED) and green after:
+  - a failed copy's pin silenced every later whisper, a successful copy's
+    too: a copy that lands releases it ("⌃⌘C again, the clipboard back":
+    was the pin, now "Link copied");
+  - the switch into the rendered view set the text by its box alone: a
+    closed section's text had none ("a closed section's text switched
+    to": was no section open, now Book 3 open, its text in view), and a
+    page growing after the switch drifted it ("⌃⌘M back, then 400px grown
+    above": stanza 18, now 20). The switch's place is now held and
+    remembered as an arrival's is, through applyPlace;
+  - a switch near the top set the first character under the masthead:
+    near the top now stays at the top ("⌃⌘M from 20px down": back at 72,
+    now 0);
+  - main.ts and backup.ts read localStorage bare at boot, and a page with
+    its site data blocked never drew ("a page opened with its site data
+    blocked": no entry, now page/Horace) — through `stored` now;
+  - `pictureKey` had split entryFile from its comment; the export built
+    the picture key by hand (`pictureIn`, shared with `pictureKey`);
+  - two new comments lacked their pins; three new step comments carried
+    dates.
+- The closed-section reading's first gesture was wrong: it scrolled the
+  source by counting lines, and the Filler paragraphs wrap — it stopped in
+  Book 2. It measures on a wrapping twin now.

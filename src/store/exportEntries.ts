@@ -4,7 +4,7 @@
    2026-09-07 from exportEntries in ../writer/src/js/28-export.js, without
    the half that peeled data URLs out of HTML: the store already holds
    markdown and bytes, so an export is a walk and a write. */
-import { entryFile, collidingFile, RELATIVE_SRC } from "./names.ts";
+import { entryFile, collidingFile, pictureIn, RELATIVE_SRC } from "./names.ts";
 import { yieldToTaskQueue } from "./io.ts";
 import type { ExportFile } from "./files.ts";
 import type { ImageStore } from "./store.ts";
@@ -54,7 +54,7 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
     const doc: ExportFile = { dir: job.at.dir, name: job.at.base + ".md", flat: job.at.flatBase + ".md", text: job.md, entry: job.at.flatBase, root: job.at.root };
     const files: ExportFile[] = [doc];
     let lost = 0, faulted = 0;
-    return Promise.all(imageRefs(job.md).map((ref) => images.get(job.at.dir + ref).then((row) => {
+    return Promise.all(imageRefs(job.md).map((ref) => images.get(pictureIn(job.at, ref)).then((row) => {
       if (row) files.push({ dir: job.at.dir, name: ref, bytes: row.bytes, entry: job.at.flatBase, root: job.at.root });
       else lost++;
     }, () => { lost++; faulted++; }))).then(() => {

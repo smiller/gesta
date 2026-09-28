@@ -110,6 +110,7 @@ export const read = {
   selectCards: (page) => page.evaluate(() => { const cards = document.querySelectorAll("#page [class^='card-']"); const r = document.createRange(); r.setStart(cards[1], 0);   /* the grid's cards: the first card on the page is the one above the grid */ r.setEnd(cards[cards.length - 1], cards[cards.length - 1].childNodes.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }),
   setSource: (page, text) => page.fill("body.mdview #page", text),
   sourceCaretTo: (page, text) => page.evaluate((t) => { const root = document.getElementById("page"); root.focus(); const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) { const i = n.data.indexOf(t); if (i >= 0) { const r = document.createRange(); r.setStart(n, i); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return; } } }, text),
+  sourceScrollTo: async () => {},
   inSource: (page) => page.evaluate(() => document.body.classList.contains("mdview")),
   gridCorner: (page) => page.evaluate(() => document.querySelector("#saved.show")?.textContent || ""),
   cardsAndPairs: (page) => page.evaluate(() => ({ cards: document.querySelectorAll("#page .card-light-blue").length, pairs: document.querySelectorAll("#page .vrow:has(> .vb)").length })),

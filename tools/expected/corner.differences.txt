@@ -92,3 +92,8 @@ a forced entry left scrolled, returned to · * · the refusal is the grid's, suc
 ⌃⌘M back, still scrolled away · stayed · both directions keep a reader who scrolled away from the caret where they scrolled (the reader, 2026-09-28): the textarea's caret is measured, where the current app jumps back to it
 a long canto switched at its middle · * · a stanza fence is the successor's (2026-09-28): the current app has no stanza to read at the window's top
 a long canto switched at its end · * · the same
+⌃⌘M back, then 400px grown above · * · a stanza fence is the successor's (2026-09-28): the current app has no stanza to read
+⌃⌘M from 20px down · * · the successor carries the text at the window's top, and a switch near the top comes back to the top (the review at high, 2026-09-28); the current app keeps the pixel offset
+a closed section's text switched to · * · a work's contents folding is successor-only (2026-09-28)
+⌃⌘C again, the clipboard back · corner · a copy that lands releases a failed copy's pin here (the review at high, 2026-09-28); the current app's pin stays and silences the success
+a page opened with its site data blocked · * · the current app does not boot with site data blocked: its run stops at this reading, the adapter finding no app

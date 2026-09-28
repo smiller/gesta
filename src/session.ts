@@ -300,7 +300,8 @@ export function startSession(opts: SessionOptions): Session {
     if (!view) return null;
     /* the first line whose top is at or below the masthead, as the source's
        twin reads it: a point in the gap between stanzas resolved to the end
-       of the stanza above, one stanza early */
+       of the stanza above, one stanza early
+       (pin: the switch carries the text › a long canto switched at its middle) */
     const box = view.dom.getBoundingClientRect();
     for (let dy = 0; dy < 240; dy += 4) {
       const hit = view.posAtCoords({ left: box.left + box.width / 2, top: Math.max(under, box.top + 1) + dy });
@@ -311,8 +312,13 @@ export function startSession(opts: SessionOptions): Session {
   }
   /* carried across by the caret's own crossing: the source's stream holds
      every fence line the rendered one lacks, and a count taken as equal in
-     both drifted seven lines by stanza 21 */
+     both drifted seven lines by stanza 21
+     (pin: the switch carries the text › a long canto switched at its middle).
+     Nothing above the first line: near the top stays at the top, where
+     setting the first character under the masthead pushed the page's own
+     top out of view (pin: the switch carries the text › ⌃⌘M from 20px down) */
   function alignTop(from: { at: number; text: string }): void {
+    if (from.at === 0) { window.scrollTo(0, 0); return; }
     const under = underMasthead();
     if (mdView && source) {
       const flat = flattenText(source.value), count = crossViewOffset(from.text, flat.text, from.at, true, false);
@@ -325,7 +331,14 @@ export function startSession(opts: SessionOptions): Session {
     if (!view) return;
     const flat = flattenDoc(view.state.doc), count = crossViewOffset(from.text, flat.text, from.at, false, false);
     const pos = Math.min(positionAt(flat, count) ?? view.state.doc.content.size, view.state.doc.content.size);
-    try { window.scrollTo(0, window.scrollY + view.coordsAtPos(pos).top - under); } catch { /* no box: the offset stands */ }
+    /* HELD like an arrival's place, and remembered: a closed section opens,
+       and a page that grows above it — pictures, the fitted measure — sets it
+       again (pin: the switch carries the text › ⌃⌘M back, then 400px grown above)
+       (pin: places › a closed section's text switched to) */
+    const place = { pos, y: Math.max(1, window.scrollY) };
+    held = { ekey: ekeyOf(), place };
+    writePlace(ekeyOf(), place);
+    applyPlace(place);
   }
   function putViewCaret(): void {
     const here = mdView ? "source" : "rendered", other = mdView ? "rendered" : "source";
@@ -571,11 +584,16 @@ export function startSession(opts: SessionOptions): Session {
   /* a failed write is an error, pinned to be clicked into a bug report;
      the markdown, which lives nowhere else, goes to the console
      (pin: entries left and renamed › ⌃⌘C with the clipboard refused) */
+  let copyPin = 0;
   function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
     writeClipboard(payload).then((ok) => {
+      /* a copy that lands releases a failed one's pin: a pin silences every
+         whisper, the success's own (pin: entries left and renamed › ⌃⌘C again, the clipboard back) */
+      if (copyPin) { opts.releasePin?.(copyPin); copyPin = 0; }
       if (ok) { say(okText); return; }
       console.error(failText, payload.text);
-      opts.stick ? opts.stick(failText) : say(failText);
+      copyPin = opts.pin ? opts.pin(failText) : 0;
+      if (!copyPin) say(failText);
     });
   }
   /* in the source view the markdown is parsed first, so syntax never counts

@@ -6,6 +6,7 @@
    line and the trouble affordance — in place of the notice ledger. Restore
    is not new code: point the import at an archive you have unzipped. */
 import { NS, todayKey } from "./keys.ts";
+import { stored } from "./local.ts";
 import { imgHash } from "./names.ts";
 import { filePath, errText, failMsg, fsaFatal } from "./files.ts";
 import { backupPlan, type Manifest, type Archived } from "./plans.ts";
@@ -61,7 +62,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   let committedSig: string | null = null;
   /* a synchronous "a folder is configured" mirror for the edit hot path,
      seeded from the durable hint; the run's store read corrects it */
-  let configured = !!localStorage.getItem(BACKUP_ON);
+  let configured = !!stored(BACKUP_ON, (raw) => raw).read();   /* at boot: a bare read threw where site data is blocked (pin: entries left and renamed › a page opened with its site data blocked) */
   let handle: Dir | null = null;   /* cached so a resume can requestPermission SYNCHRONOUSLY in the click */
   let running: Promise<void> | null = null;   /* the single-flight latch */
   let trouble = "";

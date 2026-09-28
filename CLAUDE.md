@@ -40,6 +40,8 @@ here NOW, and what is not yet:
   - A failure or decision a test can check is PINNED, and the comment names
     its pin in a fixed trailing form, one group per pin:
     `(pin: <section> › <reading label>)` for a Helium step,
+    `(pin: bridge › <reading label>)` for the bridge tool's,
+    `(pin: console › <line prefix>)` for a console line of the approved run,
     `(pin: <file>.test › <title prefix>)` for a Vitest test. A checker will
     verify every pin resolves (owed, with the rest of the plan).
   - No module header where the layout below says what the file is; an

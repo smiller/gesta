@@ -32,7 +32,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, screen: await A.screen(page) })); };
   const go = async (hash, ms = 15000) => { await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms); };
   const R = A.read, S = A.sel;
-  /* the window and a paragraph by its first words: the readings the comment audit's pins added (2026-09-28) */
+  /* the window, a paragraph by its first words, the corner's text */
   const winY = () => page.evaluate(() => Math.round(scrollY));
   const inView = (start) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
   const cornerText = () => page.evaluate((s) => document.querySelector(s)?.textContent || "", S.corner);
@@ -672,7 +672,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
     }],
     ["the switch carries the text", async () => {
-  /* ⌃⌘M carries the TEXT at the window's top across the switch, not its pixel offset: a long canto switched at its middle and at its end (2026-09-28: stanza 55 in the rendered view came up as 45 in the source) */
+  /* ⌃⌘M carries the TEXT at the window's top across the switch, not its pixel offset: a long canto switched at its middle and at its end */
   const canto = Array.from({ length: 40 }, (_, k) => "::: stanza " + (k + 1) + "\n" + Array.from({ length: 9 }, (_, j) => "Stanza " + (k + 1) + ", line " + (j + 1) + ", set down to fill the measure").join("\n") + "\n:::").join("\n\n") + "\n";
   await go("page/Long%20Canto");
   await page.click(S.editor);
@@ -696,7 +696,24 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.waitForTimeout(300);
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
+    if (where < 1) {
+      /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
+      await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);
+      await page.waitForTimeout(300);
+      await log("⌃⌘M back, then 400px grown above", { top: await R.topStanza(page) });
+      await page.evaluate((s) => { document.querySelector(s).style.paddingTop = ""; }, S.editor);
+      await page.waitForTimeout(300);
+    }
   }
+  await wheelTo(20);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  const nearTop = await winY();
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(300);
+  await log("⌃⌘M from 20px down", { source: nearTop, back: await winY() });
     }],
     ["contents folds", async () => {
   /* a work's contents folding under its headings (2026-09-28, successor-only): the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
@@ -781,6 +798,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000).catch(() => {});
   await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await cornerText()) });
   await A.waitWarm(page).catch(() => {});
+  /* the source read down to text a closed section hides, then back to the rendered view: the section opens */
+  await go("bookshelf/Boethius/Consolatio");
+  await page.waitForTimeout(300);
+  for (const b of (await R.folds(page)).open) await R.clickFoldTriangle(page, b.trim().split(":")[0]);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.sourceScrollTo(page, "Filler 3.4");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(400);
+  await log("a closed section's text switched to", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 3.4") });
   /* a forced entry: refused on the open path, scrolled, left and returned to */
   await go("page/Forced%20Long");
   await page.click(S.editor);
@@ -805,7 +834,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
     }],
     ["entries left and renamed", async () => {
-  /* what leaving, renaming and deleting do to an entry, and a clipboard that refuses (2026-09-28, the comment audit's pins) */
+  /* what leaving, renaming and deleting do to an entry, a clipboard that refuses, and a page whose site data is blocked */
   await go("page/Never%20Typed");
   await go("page/Horace");
   await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "page/Never Typed")) ?? null });
@@ -836,6 +865,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(300);
   await log("⌃⌘C with the clipboard refused", { corner: await cornerText() });
   await page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
+  await page.keyboard.press("Control+Meta+c");
+  await page.waitForTimeout(300);
+  await log("⌃⌘C again, the clipboard back", { corner: await cornerText() });
+  const blocked = await ctx.newPage();
+  await blocked.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new DOMException("site data blocked", "SecurityError"); } }); });
+  await blocked.goto(A.url("page/Horace"));
+  await A.waitEntry(blocked, "page/Horace", 8000).catch(() => {});
+  await log("a page opened with its site data blocked", { entry: (await A.entry(blocked)) ?? null });
+  await blocked.close();
     }],
     ["pill", async () => {
   if (A.pill) {
