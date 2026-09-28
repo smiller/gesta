@@ -32,6 +32,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, screen: await A.screen(page) })); };
   const go = async (hash, ms = 15000) => { await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms); };
   const R = A.read, S = A.sel;
+  /* the window and a paragraph by its first words: the readings the comment audit's pins added (2026-09-28) */
+  const winY = () => page.evaluate(() => Math.round(scrollY));
+  const inView = (start) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
+  const cornerText = () => page.evaluate((s) => document.querySelector(s)?.textContent || "", S.corner);
   /* a scroll BY THE READER'S HAND, a wheel over the page: a script's
      scrollTo is no reader, and since 2026-09-28 an arrival holds the entry's
      remembered place until a wheel, key, pointer or touch — the toolbar
@@ -254,6 +258,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(300);
   await go("page/Gridded");
   await page.waitForTimeout(300);
+  await log("the faulty entry opened", { source: await R.inSource(page), corner: await R.gridCorner(page) });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(300);
   await go("page/Carded");
@@ -276,6 +281,23 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitImg(page);
   await R.waitCorner(page, "saved");
   await log("a picture pasted", { md: await A.stored(page), ...(await R.picture(page)) });
+  await go("page/Pictured%20End");
+  await page.click(S.editor);
+  await page.keyboard.type("Last line");
+  await page.keyboard.press("Enter");
+  await R.pastePng(page);
+  await R.waitImg(page);
+  await R.waitCorner(page, "saved");
+  await log("a picture pasted at the entry's end", { md: await A.stored(page), lineBelowPicture: await page.evaluate((s) => { const last = document.querySelector(s)?.lastElementChild; const prev = last?.previousElementSibling; return !!last && !last.textContent.trim() && !last.querySelector("img") && !!prev?.querySelector("img"); }, S.editor), caretBelowPicture: await page.evaluate((s) => { const n = getSelection().anchorNode; const el = n && (n.nodeType === 1 ? n : n.parentElement); const root = document.querySelector(s); let b = el; while (b && b.parentElement !== root) b = b.parentElement; return !!b && b === root.lastElementChild && !!b.previousElementSibling?.querySelector("img"); }, S.editor) });
+  await go("page/Pictured%20Away");
+  await page.click(S.editor);
+  await page.keyboard.type("Aimed here");
+  await R.pastePng(page);
+  await page.evaluate(() => { location.hash = "#page/Horace"; });
+  await A.waitEntry(page, "page/Horace", 5000).catch(() => {});
+  await page.waitForTimeout(1500);
+  await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await cornerText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "page/Pictured Away")) || "") });
+  await page.click(S.corner).catch(() => {});   /* the pin read, dismissed as a reader does: a whisper yields to it */
     }],
     ["shortcuts", async () => {
   /* shortcuts: ⌃⌘S with an empty table opens the editor; a table saved; a code typed and Enter inserts at the caret */
@@ -458,6 +480,46 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 });
   await log("⌃⌘M back", await R.sourceBack(page));
+  /* the caret moved in the source without an edit: back, it stands where it was moved to, not where it came from */
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.sourceCaretTo(page, "play on");
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(100);
+  await log("the caret moved in the source, ⌃⌘M back", await R.sourceBack(page));
+  await wheelTo(0);
+  await page.click(S.editorFirst);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  await log("⌃⌘M from the top", { y: await winY() });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.click(S.editorFirst);
+  await wheelTo(600);
+  const away = await winY();
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  /* within two lines: the swap moved the window 27px, not to the top or the caret (measured 2026-09-28) */
+  await log("⌃⌘M scrolled away from the caret", { stayed: Math.abs((await winY()) - away) < 60 });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  await log("⌃⌘M back, still scrolled away", { stayed: Math.abs((await winY()) - away) < 60 });
+  await page.keyboard.press("Control+Meta+w");
+  await page.waitForTimeout(200);
+  await log("⌃⌘W rendered", { corner: await cornerText() });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.keyboard.press("Control+Meta+w");
+  await page.waitForTimeout(200);
+  await log("⌃⌘W in the source view", { corner: await cornerText() });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
     }],
     ["go to", async () => {
   /* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
@@ -549,6 +611,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Enter");
   await R.waitSelection(page, "sister");
   await log("Enter", { entry: await A.entry(page), selected: await R.selectionText(page), open: await R.searchOpen(page) });
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForTimeout(100);
+  await page.selectOption(S.searchScope, { label: "Journal" });
+  await page.keyboard.type("blackamoor");
+  await R.waitSearchRows(page);
+  await page.keyboard.press("Enter");
+  await R.waitSelection(page, "blackamoor");
+  await log("a jump to a hit in the entry already open", { entry: await A.entry(page), selected: await R.selectionText(page), open: await R.searchOpen(page) });
     }],
     ["walk", async () => {
   /* the walk over a book whose index alternates prose and verse follows the index, not the alphabet */
@@ -562,6 +632,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+,");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3m1", 5000).catch(() => {});
   await log("⌃⌘, back", { entry: await A.entry(page) });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.keyboard.press("Control+Meta+.");
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
+  await page.waitForTimeout(200);
+  await log("⌃⌘M, then ⌃⌘.", { entry: await A.entry(page), source: await R.inSource(page) });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
     }],
     ["stanza", async () => {
   /* the Faerie Queene's stanzas (2026-09-28, successor-only): a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap citing I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
@@ -635,6 +713,102 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.waitWarm(page).catch(() => {});
   await page.waitForTimeout(300);
   await log("reloaded", await R.place(page));
+  await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);   /* the page grows above the held place, as a picture resolving does */
+  await page.waitForTimeout(300);
+  await log("400px grown above the held place", await R.place(page));
+  await page.waitForTimeout(500);
+  await go("page/Horace");
+  await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
+  await page.waitForTimeout(200);
+  await log("Pippa after the growth", await R.place(page));
+  /* a place inside a section closed on the way back: Consolatio grown to six Books, left in Book 5, its fold state forgotten, returned to */
+  let consolatio = "# De consolatione philosophiae\n\n";
+  for (let b = 1; b <= 6; b++) { consolatio += "## Book " + b + "\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n\n"; for (let i = 1; i <= 6; i++) consolatio += "Filler " + b + "." + i + " " + "words to fill a line of the page out ".repeat(6) + "\n\n"; }
+  await go("bookshelf/Boethius/Consolatio");
+  await page.click(S.editor);
+  await page.keyboard.press("Meta+a");
+  await R.pasteText(page, consolatio);
+  await page.waitForTimeout(900);
+  for (let b = 1; b <= 6; b++) await R.clickFoldTriangle(page, "Book " + b);
+  const toFiller = await page.evaluate((s) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith("Filler 5.4")); return p ? Math.round(p.getBoundingClientRect().top - (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) - 4) : 0; }, S.editor);
+  await page.mouse.move(500, 400);
+  await page.mouse.wheel(0, toFiller);
+  await page.waitForTimeout(700);
+  await go("page/Horace");
+  await page.evaluate(() => { try { localStorage.removeItem("gesta.v1.folds"); } catch { /* none */ } });
+  await go("bookshelf/Boethius/Consolatio");
+  await page.waitForTimeout(300);
+  await log("back to a place in a closed section", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
+  /* the same page reloaded with the warm held back: drawn unfolded from its one row, then folded when the warm lands, the place set again */
+  await page.goto(A.url("bookshelf/Boethius/Consolatio", "warm=slow"));
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000).catch(() => {});
+  await page.waitForTimeout(200);
+  await log("before the warm", { folds: (await R.folds(page)).folds, fillerInView: await inView("Filler 5.4") });
+  await A.waitWarm(page).catch(() => {});
+  await page.waitForTimeout(300);
+  await log("the warm landed", { folds: (await R.folds(page)).folds, open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
+  await page.goto(A.url("bookshelf/Boethius/Consolatio", "warm=slow"));
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000).catch(() => {});
+  /* Book 5's link, beside the held place: Book 1's lies far above it, and the held place moved the page under the click */
+  await page.locator(S.editorLink("#bookshelf/Boethius/Consolatio/3pr1")).nth(4).click().catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000).catch(() => {});
+  await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await cornerText()) });
+  await A.waitWarm(page).catch(() => {});
+  /* a forced entry: refused on the open path, scrolled, left and returned to */
+  await go("page/Forced%20Long");
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.setSource(page, Array.from({ length: 90 }, (_, i) => "Line " + (i + 1) + " of a long refused entry.").join("\n\n") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(400);
+  for (let i = 0; i < 12 && !((await A.stored(page, "page/Forced Long")) || "").includes("loose"); i++);
+  await go("page/Horace");
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+  await go("page/Forced%20Long");
+  await page.waitForTimeout(300);
+  await wheelTo(900);
+  const leftAt = await winY();
+  await page.waitForTimeout(700);
+  await go("page/Horace");
+  await go("page/Forced%20Long");
+  await page.waitForTimeout(300);
+  await log("a forced entry left scrolled, returned to", { source: await R.inSource(page), stayed: Math.abs((await winY()) - leftAt) < 3 });
+  await go("page/Horace");
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+    }],
+    ["entries left and renamed", async () => {
+  /* what leaving, renaming and deleting do to an entry, and a clipboard that refuses (2026-09-28, the comment audit's pins) */
+  await go("page/Never%20Typed");
+  await go("page/Horace");
+  await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "page/Never Typed")) ?? null });
+  await go("2026-09-05");
+  answer = "Long";
+  await A.act.create(page);
+  await A.waitEntry(page, "2026-09-05/Long", 5000).catch(() => {});
+  await page.click(S.editor);
+  await R.pasteText(page, Array.from({ length: 80 }, (_, i) => "Line " + (i + 1) + " of a long entry.").join("\n\n"));
+  await R.waitCorner(page, "saved");
+  await wheelTo(900);
+  await page.waitForTimeout(700);
+  const before = await winY();
+  answer = "Longer";
+  await page.click(S.renameButton);
+  await A.waitEntry(page, "2026-09-05/Longer", 5000).catch(() => {});
+  await page.waitForTimeout(300);
+  await log("a long entry renamed, scrolled", { entry: await A.entry(page), stayed: Math.abs((await winY()) - before) < 3 });
+  await wheelTo(600);
+  await page.waitForTimeout(700);
+  await page.click(S.deleteButton);
+  await A.waitEntry(page, "2026-09-05", 5000).catch(() => {});
+  await page.waitForTimeout(300);
+  await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate(() => { try { return JSON.parse(localStorage.getItem("gesta.v1.places") || "[]").some((r) => r.key === "2026-09-05/Longer"); } catch { return null; } }) });
+  answer = null;
+  await page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
+  await page.keyboard.press("Control+Meta+c");
+  await page.waitForTimeout(300);
+  await log("⌃⌘C with the clipboard refused", { corner: await cornerText() });
+  await page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
     }],
     ["pill", async () => {
   if (A.pill) {
@@ -646,6 +820,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     }],
   ];
   for (const [name, fn] of sections) {
+    if (opts.only && name !== sections[0][0] && !opts.only.includes(name)) continue;
     try { await fn(); }
     catch (e) { console.log("SECTION FAILED (" + name + "): " + String(e).split("\n")[0].slice(0, 200)); }
   }

@@ -3,6 +3,7 @@
 import { test, expect } from "vitest";
 import { importFiles, importEntry, sidecarRefs, type ImportSink } from "./importFiles.ts";
 import type { ImportFile } from "./files.ts";
+import { entryFile, pictureKey } from "./names.ts";
 
 function sink(landed = true) {
   const entries: Record<string, string> = {};
@@ -89,4 +90,14 @@ test("a write that does not land is a failure, not an import", async () => {
   expect(await importEntry("README.md", "x", {}, s)).toBe("skipped");
   const tally = await importFiles([{ dir: "journal/2026/", name: "2026-01-01.md", text: "x" }], s);
   expect(tally).toEqual({ imported: 0, failed: 1, attempted: 1, failures: [{ path: "journal/2026/2026-01-01.md", error: "the write did not land" }] });
+});
+
+test("a picture the import files is found where the entry looks, for every kind of key", async () => {
+  const keys: [string, string | null][] = [["2026-01-05", null], ["2026-01-05", "morning"], ["page", "Trip Log"], ["page", "Recipes/Bread"], ["bookshelf", "Spenser, Edmund/The Faerie Queene/1.1"]];
+  for (const [date, tag] of keys) {
+    const { s, images } = sink();
+    const at = entryFile(date, tag);
+    await importFiles([{ dir: at.dir, name: at.base + ".md", text: "![](pic.webp)" }, { dir: at.dir, name: "pic.webp", bytes: bytes(7) }], s);
+    expect(Object.keys(images)).toEqual([pictureKey(date, tag, "pic.webp")]);
+  }
 });

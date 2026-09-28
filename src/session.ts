@@ -1,17 +1,9 @@
-/* THE BRIDGE: the editor over the journal. Open the entry the address
-   names, save what is typed through the entry layer on a debounce, flush
-   on the way out, walk to the neighbours. Ported 2026-09-07 from the
-   current app's load, saveNow, routeHash and the flush-on-leave listeners,
-   re-asked of a store that holds markdown and a document model that
-   serializes to it: a save is serialize-and-compare, skipped when the text
-   is what the store holds, and an empty document over no stored entry
-   mints nothing. */
 import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { imageView, pastedPictureBytes, pastedImageFile } from "./editor/images.ts";
-import { nextImageName } from "./store/names.ts";
+import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { schema } from "./model/schema.ts";
 import { fenceRefusals, refusalsText } from "./model/fenceRefusals.ts";
@@ -23,6 +15,7 @@ import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
 import { parseFoldStore, foldPage, withFoldPage, type FoldPage } from "./store/foldState.ts";
 import { parsePlaces, placeOf, withPlace, movedPlace, type Place } from "./store/placeState.ts";
+import { stored } from "./store/local.ts";
 import { foldsKey, setFolds, openFoldAt } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
@@ -38,44 +31,27 @@ import { countBefore, positionAt, arrivingCount, type Hold } from "./chrome/view
 import { sourceTab } from "./editor/sourceKeys.ts";
 import { wordCount, wordsOf } from "./editor/format.ts";
 
-/* WHAT AN OPEN IS, for the window's place (2026-09-28): ARRIVING at an
-   entry — a link, a walk, a pick, Back or Forward, a reload — returns the
-   reading to where the entry was last left, remembered in this browser
-   (store/placeState.ts; the reader: back on Book I, Canto vi, the reading
-   should stand at stanza 7), and a first visit opens at the top; KEEP (a
-   refresh, a rename) moves nothing. Three review passes had split arriving
-   into new and traverse, the browser's own restore running against the
-   page being left; one remembered place answers both. */
+/* ARRIVING at an entry — a link, a walk, a pick, Back or Forward, a
+   reload — returns to where it was last left, or the top on a first visit;
+   KEEP (a refresh, a rename) moves nothing.
+   (pin: places › Back again) (pin: entries left and renamed › a long entry renamed, scrolled) */
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
   mount: HTMLElement;
   layer: EntryLayer;
   images: ImageStore;
   interval: number;
-  /* the corner's whisper; "saved" takes the current app's shorter time */
   say: (text: string, ms?: number) => void;
-  /* a failure worth pinning until seen — a lost picture */
   stick?: (text: string) => void;
-  /* an OWNED pin: the refused fences named on a switch back, released by
-     the next clean parse of the page (the switch's, and only that one) */
   pin?: (text: string) => number;
   releasePin?: (gen: number) => void;
-  /* the document changed, a save landed or an entry opened: what the
-     store holds for the open entry and its key, for the chrome that reads
-     them. The markdown on screen is not handed over — until 2026-09-08 it
-     was, for phase 2's pane, at a serialize per keystroke. */
   onShow?: (stored: string, ekey: string) => void;
-  /* an edit landed in the document — what arms the backup's idle timer */
   onEdit?: () => void;
-  /* the view switched: true in the markdown source view */
   onView?: (md: boolean) => void;
-  /* the editor's selection moved — read AFTER the editor has it, where
-     the DOM's selectionchange runs a beat ahead of the state */
+  /* read AFTER the editor has the selection: the DOM's selectionchange
+     runs a beat ahead of the state. Unpinned: headless Helium does not
+     reproduce the beat */
   onSelect?: () => void;
-  /* a highlight was placed — a search jump's or a link payload's: the
-     format bar must not float over it (the bar is for text the reader
-     chose), and the caller brings it into view, the lines around it
-     showing — the reference is to be read in context */
   onHighlight?: () => void;
 }
 export interface Session {
@@ -89,38 +65,25 @@ export interface Session {
   suspendSaves(): void;
   surfaceMd(): string;
   readonly hashDeferred: boolean;
-  /* ask again whether the open page folds: the warm has landed */
   refreshFolds(): void;
-  /* an entry renamed (to its new key) or deleted (to null): its place follows */
+  /* to null: deleted (pin: placeState.test › a rename carries the place) */
   movePlace(from: string, to: string | null): void;
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
   copyReference(): void;
   copyEntryLink(): void;
-  /* select the nth occurrence of q in the open entry and scroll to it;
-     honorMarkers for a search-box jump, literal for a link's payload */
+  /* honorMarkers for a search-box jump; a link's payload is literal
+     (pin: search › Enter) (pin: reference paste › the reference link followed) */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
-  /* text typed in at the caret, in either view — a shortcut's expansion */
   insertText(text: string): boolean;
-  /* the markdown source view: both views edit the one entry */
   readonly mdView: boolean;
   setView(md: boolean): void;
   showWordCount(): void;
-  /* open the entry and highlight once it paints — or at once when it is
-     the open one, since a hash set to its own value fires no hashchange */
   jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
   setInterval(n: number): void;
 }
 export const SAVE_DEBOUNCE_MS = 500;
-/* one localStorage key, read and written inside try: a per-browser
-   convenience lost is not a failure */
-function stored<T>(key: string, parse: (raw: string | null) => T): { read(): T; write(next: (s: T) => T): void } {
-  return {
-    read: () => { try { return parse(localStorage.getItem(key)); } catch { return parse(null); } },
-    write: (next) => { try { localStorage.setItem(key, JSON.stringify(next(parse(localStorage.getItem(key))))); } catch { /* a convenience lost */ } },
-  };
-}
 export const SAVED_MS = 1400;
 const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
 
@@ -132,20 +95,14 @@ export function startSession(opts: SessionOptions): Session {
   let view: EditorView | null = null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   /* the highlight owed to the next paint, and the navigation it belongs
-     to: a later navigation drops it, or it would select against the
-     wrong, now-current entry */
+     to: a later navigation drops it, or it would select against the wrong
+     entry. Unpinned: a race between two tasks no step can order */
   let pending: { hl: Highlight; honor: boolean; gen: number } | null = null;
   let navGen = 0;
-  /* THE SOURCE VIEW: the same markdown in a textarea, both views editing
-     the one entry. Ported 2026-09-07 from 13b-the-view-switch-and-its-
-     carets.js, re-asked of a store that holds markdown: the switch is a
-     serialize, the switch back a parse, and a text the model refuses
-     stays in the source view and says why. The carets are viewCarets'. */
   let mdView = false;
   /* a stored text the model refuses FORCES the source view for that entry
-     only; the reader's own choice is put back on the next open (the
-     2026-09-08 review: one refused entry switched every later navigation
-     to source until a ⌃⌘M) */
+     only; the reader's own choice is put back on the next open
+     (pin: grid › the next entry after a refused switch) */
   let forced = false, readerView = false;
   let source: HTMLTextAreaElement | null = null;
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
@@ -157,9 +114,6 @@ export function startSession(opts: SessionOptions): Session {
     opts.onShow(layer.entryMd(ekeyOf()), ekeyOf());
   };
   const teardown = (): void => { view?.destroy(); view = null; source = null; mount.replaceChildren(); };
-  /* the source surface: a textarea over the markdown, sized to its text,
-     saving on the debounce like the editor; Tab and Shift-Tab are the
-     source's (sourceKeys.ts) */
   function mountSource(md: string): void {
     teardown();
     const ta = document.createElement("textarea");
@@ -182,13 +136,9 @@ export function startSession(opts: SessionOptions): Session {
     mount.appendChild(ta);
     source = ta;
   }
-  /* A PASTED PICTURE: filed beside the entry under the next sidecar name,
-     then placed — the image node at the caret in the rendered view, its
-     `![](name)` in the source — and saved. WHERE IT WAS AIMED is checked
-     when the bytes are ready: the decode lands a beat later and a reader
-     can navigate in that window, and a picture dropped into whatever is
-     open then is the current app's measured loss. Every way it cannot
-     land sticks, since the gesture is spent. */
+  /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
+     can navigate while the decode runs. Every way it cannot land sticks:
+     the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */
   let decoding = false;
   let fencePin = 0;
   function pasteFile(file: File): void {
@@ -198,28 +148,29 @@ export function startSession(opts: SessionOptions): Session {
     pastedPictureBytes(file).then((bytes) => {
       decoding = false;
       if (aimedAt !== ekeyOf() || aimedMd !== mdView) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
-      const at = entryFile(current.date, current.tag);
-      const name = nextImageName(at.base, imageRefs(currentMd()));
-      return images.set(at.dir + name, bytes).then(() => {
+      const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
+      return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => {
         if (mdView && source) { insertText("![](" + name + ")"); return; }
         if (!view) return;
         const tr = view.state.tr.replaceSelectionWith(schema.nodes.image.create({ src: name, alt: "" }));
-        /* a picture at the entry's end gets a line below it, the caret there */
+        /* a picture at the entry's end gets a line below it, the caret there:
+           there is no other way to write on after it
+           (pin: picture › a picture pasted at the entry's end) */
         const $end = tr.doc.resolve(tr.selection.to);
-        if ($end.pos >= tr.doc.content.size - 1) tr.insert(tr.doc.content.size, schema.nodes.paragraph.create());
+        if ($end.pos >= tr.doc.content.size - 1) {
+          tr.insert(tr.doc.content.size, schema.nodes.paragraph.create());
+          tr.setSelection(TextSelection.create(tr.doc, tr.doc.content.size - 1));
+        }
         view.dispatch(tr.scrollIntoView());
         view.focus();
       });
     }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
   }
-  /* A WORK'S CONTENTS FOLD (2026-09-28, the contents-folds plan): which
-     sections were open, kept in this browser under one key */
   const folds = stored(NS + "folds", parseFoldStore);
   const readFolds = (ekey: string): FoldPage => foldPage(folds.read(), ekey);
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => folds.write((s) => withFoldPage(s, ekey, patch));
-  /* WHERE EACH ENTRY WAS LEFT (placeState.ts), under one key. A place the
-     same as the last one written is not written: every scroll pause parsed
-     and rewrote the whole list (the review at high, 2026-09-28) */
+  /* a place the same as the last one written is not written: every scroll
+     pause rewrote the whole list. Unpinned: a performance choice */
   const places = stored(NS + "places", parsePlaces);
   let lastWritten: (Place & { key: string }) | null = null;
   const writePlace = (ekey: string, place: Place): void => {
@@ -229,41 +180,35 @@ export function startSession(opts: SessionOptions): Session {
   };
   /* a rename carries the place to the new key, a delete drops it: a new
      entry under a deleted one's name opened where the deleted one was left
-     (the review at high, 2026-09-28) */
+     (pin: entries left and renamed › deleted scrolled: its place dropped) */
   function movePlace(from: string, to: string | null): void {
     places.write((s) => movedPlace(s, from, to));
     lastWritten = null;
   }
-  /* ARRIVED AND NOT YET MOVED BY THE READER: the restored place is HELD,
-     and set again whenever the page under it changes size — the fitted
-     measure re-wrapping, pictures resolving from the store, the folds when
-     the warm lands — until the reader's own hand moves the page. Read back
-     from the scroll instead, the place drifted up with every picture above
-     it, further each visit, and a frame's re-apply could land on the next
-     entry opened (the review at high, 2026-09-28) */
+  /* the restored place is HELD, and set again whenever the page under it
+     changes size, until the reader's own wheel, key, pointer or touch. Read
+     back from the scroll instead, the place drifted up with every picture
+     above it. (pin: places › 400px grown above the held place) */
   let held: { ekey: string; place: Place } | null = null;
   const release = (): void => { held = null; };
   for (const t of ["wheel", "keydown", "pointerdown", "touchstart"]) window.addEventListener(t, release, { capture: true, passive: true });
   new ResizeObserver(() => { if (held && held.ekey === ekeyOf()) applyPlace(held.place); }).observe(mount);
   /* the masthead is sticky over the page's top: a place is read, and set,
-     just under it */
+     just under it (pin: places › Back) */
   const underMasthead = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0) + 4;
   function recordPlace(): void {
-    if (held && held.ekey === ekeyOf()) return;   /* the store holds it: it was restored from there */
+    if (held && held.ekey === ekeyOf()) return;   /* the store holds it: it was restored from there (pin: places › Back again) */
     if (mdView && source) { writePlace(ekeyOf(), { pos: -1, y: window.scrollY }); return; }
     if (!view) return;
     const box = view.dom.getBoundingClientRect();
     const hit = view.posAtCoords({ left: box.left + 24, top: Math.max(underMasthead(), box.top + 1) });
     writePlace(ekeyOf(), { pos: hit ? hit.pos : 0, y: window.scrollY });
   }
-  /* the place set: by its text position in the rendered view, by offset
-     in the source view. A position inside a closed section opens it: a
-     hidden block has no box, and the window went to an arbitrary offset
-     (the review at high, 2026-09-28) */
+  /* a position inside a closed section opens it: a hidden block has no box
+     (pin: places › back to a place in a closed section) */
   function applyPlace(p: Place): void {
     /* left at the top, back at the top: the text position under the
-       masthead lies below the page's top padding, and set there it opened
-       the entry 57px down — MEASURED 2026-09-28 in headless Helium */
+       masthead lies below the page's top padding (pin: places › Horace followed) */
     if (mdView || !view || p.pos < 0 || p.y <= 0) { window.scrollTo(0, Math.max(0, p.y)); return; }
     const pos = Math.min(p.pos, view.state.doc.content.size);
     openFoldAt(pos)(view.state, view.dispatch);
@@ -277,7 +222,6 @@ export function startSession(opts: SessionOptions): Session {
   window.addEventListener("pagehide", () => recordPlace());
   function mountEditor(doc: import("prosemirror-model").Node, date: string, tag: string | null): void {
     teardown();
-    const dir = entryFile(date, tag).dir;
     const ekey = entryKey(date, tag);
     const folding = foldsContents(Object.keys(layer.cache), date, tag);
     const page = folding ? readFolds(ekey) : null;
@@ -285,25 +229,22 @@ export function startSession(opts: SessionOptions): Session {
       interval,
       onChange: () => { scheduleSave(); show(); opts.onEdit?.(); },
       onSelect: () => opts.onSelect?.(),
-      nodeViews: { image: imageView(resolver(dir)) },
-      /* always given, off where the page does not fold: a page opened from
-         its one primed row, before the warm, cannot yet see its sub-entries
-         and is switched on when the warm lands (refreshFolds) */
+      nodeViews: { image: imageView(resolver(date, tag)) },
+      /* given even off: refreshFolds switches it on */
       folds: { on: folding, open: page ? page.open : [], onChange: (open) => writeFolds(ekey, { open }) },
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
     });
   }
-  /* held on the way OUT: how many flat characters precede the caret, the
-     text as the staleness test, whether anything follows, whether the
-     reader was looking at it. A MOVED caret retires the other view's hold. */
+  /* a MOVED caret retires the other view's hold
+     (pin: source view › the caret moved in the source, ⌃⌘M back) */
   function holdViewCaret(): void {
     let hold: Hold | null = null;
     if (mdView && source) {
       const flat = flattenText(source.value);
       const at = countBefore(flat, source.selectionStart);
-      hold = { at, text: flat.text, tail: at >= flat.text.length, seen: true };
+      hold = { at, text: flat.text, tail: at >= flat.text.length, seen: sourceCaretSeen(source) };
     } else if (view) {
       const flat = flattenDoc(view.state.doc);
       const pos = view.state.selection.from;
@@ -315,6 +256,22 @@ export function startSession(opts: SessionOptions): Session {
     if (hold && hold.at !== placedAt) carets[mdView ? "rendered" : "source"] = null;
     carets[mdView ? "source" : "rendered"] = hold;
   }
+  /* whether the textarea's caret is on screen, measured on a hidden twin
+     that wraps as it does: reported seen always, the switch back jumped to
+     a caret the reader had scrolled away from
+     (pin: source view › ⌃⌘M back, still scrolled away) */
+  function sourceCaretSeen(ta: HTMLTextAreaElement): boolean {
+    const cs = getComputedStyle(ta), twin = document.createElement("div");
+    for (const p of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const) twin.style[p] = cs[p];
+    Object.assign(twin.style, { position: "absolute", visibility: "hidden", top: "0", left: "-9999px", whiteSpace: "pre-wrap", width: ta.getBoundingClientRect().width + "px" });
+    twin.textContent = ta.value.slice(0, ta.selectionStart);
+    const mark = twin.appendChild(document.createElement("span"));
+    mark.textContent = "\u200b";
+    document.body.appendChild(twin);
+    const top = ta.getBoundingClientRect().top + mark.offsetTop - ta.scrollTop, height = mark.offsetHeight;
+    twin.remove();
+    return top + height >= 0 && top <= document.documentElement.clientHeight;
+  }
   function putViewCaret(): void {
     const here = mdView ? "source" : "rendered", other = mdView ? "rendered" : "source";
     if (mdView && source) {
@@ -323,13 +280,11 @@ export function startSession(opts: SessionOptions): Session {
       const pos = arriving ? (positionAt(flat, arriving.at) ?? source.value.length) : source.value.length;
       placedAt = arriving ? arriving.at : null;
       /* the caret BEFORE the focus: a fresh textarea's selection sits at
-         its end, and focusing scrolls that into view — MEASURED 2026-09-07
-         in Helium, a toggle from the top landed the window at the end */
+         its end, and focusing scrolls that into view (pin: source view › ⌃⌘M from the top) */
       source.setSelectionRange(pos, pos);
-      /* KEEP THE CARET AS VISIBLE AS IT WAS, a weaker promise than always
-         visible: a reader who scrolled away from the caret stays where
-         they scrolled — the current app's rule, asked for again by hand
-         2026-09-07; the miss scrolls, having no bit to follow */
+      /* KEEP THE CARET AS VISIBLE AS IT WAS: a reader who scrolled away from
+         the caret stays where they scrolled; a miss scrolls, having no bit to
+         follow (pin: source view › ⌃⌘M scrolled away from the caret) */
       source.focus({ preventScroll: !!arriving && !arriving.seen });
     } else if (view) {
       const flat = flattenDoc(view.state.doc);
@@ -345,14 +300,13 @@ export function startSession(opts: SessionOptions): Session {
   function setView(md: boolean): void {
     if (md === mdView) return;
     const wasForced = forced;
-    forced = false;   /* the reader's choice from here — unless the switch back is refused below */
+    forced = false;
     holdViewCaret();
     /* THE SCROLL SURVIVES THE SWAP: the teardown empties the page for an
-       instant and the window's scroll clamps to the top before the new
-       surface is tall again — MEASURED 2026-09-07, a reader scrolled to
-       the bottom arrived at the top of the source. Put back before the
-       caret is placed, so a caret that was seen still scrolls into view
-       and one that was not leaves the reader where they scrolled. */
+       instant and the scroll clamps to the top before the new surface is
+       tall again. Put back before the caret is placed, so a caret that was
+       seen still scrolls into view and one that was not leaves the reader
+       where they scrolled. (pin: source view › ⌃⌘M scrolled away from the caret) */
     const y = window.scrollY;
     if (md) {
       const text = currentMd();
@@ -362,18 +316,17 @@ export function startSession(opts: SessionOptions): Session {
       let doc;
       try { doc = parseMarkdown(source ? source.value : ""); }
       catch (err) {
-        /* PINNED, in the open path's words (2026-09-22): the writer stays
-           in source to fix the line the message quotes, and a whisper had
-           faded before a slow reader found it; released by the clean parse
-           below, as a fence refusal's pin is */
+        /* PINNED, in the open path's words: the writer stays in source to fix
+           the line the message quotes, and a whisper faded before a slow
+           reader found it; released by the clean parse below
+           (pin: grid › a stray line in a grid, switched back) */
         if (fencePin) opts.releasePin?.(fencePin);
         fencePin = opts.pin?.("cannot render " + ekeyOf() + " — " + (err as Error).message + "; shown as source") || 0;
-        forced = wasForced;   /* a forced source view stays forced, so the next open renders (the 2026-09-22 review: every later entry opened in source) */
+        forced = wasForced;   /* a forced source view stays forced, so the next open renders (pin: grid › the next entry after a refused switch) */
         return;
       }
       mdView = false;
       mountEditor(doc, current.date, current.tag);
-      /* a clean parse OF THE PAGE releases the pin; a refusal renews it */
       const refused = fenceRefusals(doc);
       if (fencePin) { opts.releasePin?.(fencePin); fencePin = 0; }
       if (refused.length) fencePin = opts.pin?.(refusalsText(refused)) || 0;
@@ -384,10 +337,8 @@ export function startSession(opts: SessionOptions): Session {
     show();
     putViewCaret();
   }
-  /* a relative src resolves in the entry's OWN export folder, which is
-     where the import filed it */
-  const resolver = (dir: string) => (src: string): Promise<string | null> =>
-    images.get(dir + src).then((row) => {
+  const resolver = (date: string, tag: string | null) => (src: string): Promise<string | null> =>
+    images.get(pictureKey(date, tag, src)).then((row) => {
       if (!row) return null;
       const ext = (src.split(".").pop() || "").toLowerCase();
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
@@ -395,18 +346,17 @@ export function startSession(opts: SessionOptions): Session {
   function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
     cancelSave();
     suspended = false;
-    /* recorded BEFORE a forced source view is released: released first,
-       the source's place read as a rendered one with no view and was lost
-       (the review at high, 2026-09-28) */
+    /* recorded BEFORE a forced source view is released: released first, the
+       source's place read as a rendered one with no view and was lost
+       (pin: places › a forced entry left scrolled, returned to) */
     if (view || source) recordPlace();
-    if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (read 2026-09-22 by the grid step) */
+    if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (pin: grid › the next entry after a refused switch) */
     current = { date, tag };
     const ekey = ekeyOf();
     if (held && held.ekey !== ekey) held = null;
     const md = layer.entryMd(ekey);
-    /* the open view stays the open view: a navigation in the source view
-       paints the next entry's source; the holds belong to the entry left,
-       and so does a pinned fence refusal (the data pins stay) */
+    /* the open view stays the open view across a navigation; the carets and
+       a pinned fence refusal belong to the entry left (pin: walk › ⌃⌘M, then ⌃⌘.) */
     carets.rendered = carets.source = null; placedAt = null;
     if (fencePin) { opts.releasePin?.(fencePin); fencePin = 0; }
     if (mdView) { mountSource(md); place(ekey, how); }
@@ -414,12 +364,12 @@ export function startSession(opts: SessionOptions): Session {
       let doc;
       try { doc = parseMarkdown(md); }
       catch (err) {
-        /* a stored text the model refuses is not edited as a document — an
-           editor over a lossy parse would save the loss — but it IS edited
-           as source: the switch back parses it again */
-        console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build in the Helium tools' console (2026-09-22) */
-        /* PINNED (2026-09-22), released by the next open above: a whisper
-           was covered by the warm's count before it was read */
+        /* not edited as a document — an editor over a lossy parse would save
+           the loss — but as source: the switch back parses it again
+           (pin: grid › the faulty entry opened) */
+        console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render page/Gridded) */
+        /* PINNED, released by the next open: a whisper was covered by the
+           warm's count before it was read (pin: grid › the faulty entry opened) */
         fencePin = opts.pin?.("cannot render " + ekey + " — " + (err as Error).message + "; shown as source") || 0;
         readerView = mdView; forced = true;
         mdView = true;
@@ -437,20 +387,16 @@ export function startSession(opts: SessionOptions): Session {
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
   }
-  /* the window's place for an open, by its kind: arriving returns to where
-     the entry was left, or the top on a first visit — and the top when a
-     highlight is owed: the highlight is what the reader asked to see */
+  /* a highlight owed wins over the remembered place: it is what the reader
+     asked to see (pin: reference paste › the reference link followed) */
   function place(ekey: string, how: OpenHow): void {
     if (how !== "arrive") return;
     const p = pending && pending.gen === navGen ? null : placeOf(places.read(), ekey);
     held = p ? { ekey, place: p } : null;
     if (p) applyPlace(p); else window.scrollTo(0, 0);
   }
-  /* THE WARM LANDED: whether the open page folds is asked again, now the
-     cache holds every key. After a refresh the page opens from its one
-     primed row (main.ts), when a work's contents cannot see its sub-entries
-     and draws unfolded, and the warm reopens only an entry it deferred —
-     read 2026-09-28, after the reader's contents page stayed unfolded */
+  /* a page opened before the warm drew unfolded, its sub-entries not yet in
+     the cache (pin: places › the warm landed) */
   function refreshFolds(): void {
     if (!view || mdView) return;
     const st = foldsKey.getState(view.state);
@@ -459,7 +405,7 @@ export function startSession(opts: SessionOptions): Session {
     const page = on ? readFolds(ekeyOf()) : null;
     setFolds(on, page ? page.open : [])(view.state, view.dispatch);
     /* the folds moved the text under a held place: set again now, not a
-       frame later when the size is observed */
+       frame later when the size is observed (pin: places › the warm landed) */
     if (held && held.ekey === ekeyOf()) applyPlace(held.place);
   }
   function insertText(text: string): boolean {
@@ -481,24 +427,24 @@ export function startSession(opts: SessionOptions): Session {
     return did;
   }
   function jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void {
+    /* the open entry at once: a hash set to its own value fires no hashchange
+       (pin: search › a jump to a hit in the entry already open) */
     if (date === current.date && (tag || null) === current.tag) { navGen++; highlight(hl.q || "", hl.nth || 0, honorMarkers); return; }
     pending = { hl, honor: honorMarkers, gen: ++navGen };
     goto(entryHash(date, tag));
   }
-  /* the address → the entry it opens. A namespace that does not mint on
-     visit refuses an unknown key and the refusal lands on the entry already
-     open — at boot that is today — with the address put back. */
+  /* a namespace that does not mint on visit refuses an unknown key; the
+     refusal lands on the entry already open — at boot, today — with the
+     address put back (pin: bridge › an unknown book is refused) */
   let hashDeferred = false;
   function openHash(): void {
     hashDeferred = false;
     const h = hashParts(location.hash.slice(1));
     const keys = Object.keys(layer.cache);
     if (unmintedKey(keys, h.date, h.tag)) {
-      /* BEFORE THE WARM the cache holds the primed row alone, so an
-         address it lacks is not yet refused: its own row is primed, and
-         failing that the warm answers (the page reopens the hash when it
-         lands). The 2026-09-08 review: a contents link clicked in the two
-         seconds after a refresh said "no such author". */
+      /* BEFORE THE WARM an address the cache lacks is not yet refused: its
+         own row is primed, and failing that the warm answers
+         (pin: places › a contents link clicked before the warm) */
       if (!layer.warmed) {
         hashDeferred = true;
         const want = entryKey(h.date, h.tag);
@@ -506,8 +452,8 @@ export function startSession(opts: SessionOptions): Session {
         return;
       }
       /* the noun for what is MISSING: when the root is gone every segment
-         under it reads unregistered too, so the depth asked for would call
-         a vanished author a book — name the root, unless the root is there */
+         under it reads unregistered too, so the depth asked for would call a
+         vanished author a book (pin: bridge › an unknown book under a known author) */
       const pp = pageParts(h.tag!);
       const ns = nsOf(h.date)!;
       say("no such " + (pp.sub && registered(keys, h.date, pp.name) ? ns.subNoun : ns.noun));
@@ -516,7 +462,8 @@ export function startSession(opts: SessionOptions): Session {
       return;
     }
     /* a "?h=" payload replays LITERALLY: the passage is text, and an old
-       link's nth, counted under substring rules, still lands */
+       link's nth, counted under substring rules, still lands
+       (pin: reference paste › the reference link followed) */
     if (h.hl) pending = { hl: h.hl, honor: false, gen: ++navGen };
     open(h.date, h.tag, "arrive");
   }
@@ -525,37 +472,34 @@ export function startSession(opts: SessionOptions): Session {
     if ((!view && !source) || layer.storeReadFailed) return Promise.resolve(false);
     const ekey = ekeyOf();
     const md = currentMd();
-    const stored = layer.entryMd(ekey);
-    if (md === stored) return Promise.resolve(true);
-    if (!md.trim() && !stored) return Promise.resolve(true);   /* an empty document mints nothing */
+    const inStore = layer.entryMd(ekey);
+    if (md === inStore) return Promise.resolve(true);
+    if (!md.trim() && !inStore) return Promise.resolve(true);   /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
     return layer.setEntry(ekey, md).then((landed) => { if (landed) say("saved", SAVED_MS); show(); return landed; });
   }
-  /* SUSPENDED while a rename moves the entry between keys: a debounce
-     firing then wrote the surface back under the OLD key, just removed,
-     and the entry stood under both (the confirmation pass, 2026-09-08).
-     What is typed meanwhile is carried to the new key by the rename;
-     the next open() lifts the suspension. */
+  /* SUSPENDED while a rename moves the entry between keys: a debounce firing
+     then wrote the surface back under the old key, and the entry stood under
+     both; the next open() lifts it. Unpinned: a race no step can hold open */
   let suspended = false;
   function suspendSaves(): void { cancelSave(); suspended = true; }
   function scheduleSave(): void { if (suspended) return; cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
   function cancelSave(): void { if (saveTimer) clearTimeout(saveTimer); saveTimer = null; }
   function flushSave(): Promise<boolean> { return saveTimer ? saveNow() : Promise.resolve(true); }
-  /* the open entry repainted from the store ONLY where the store moved
-     under it, after what the debounce holds has landed: open() cancels
-     the pending save and repaints, and a reopen after an async write —
-     a delete's retarget, an import's overwrite — threw away keystrokes
-     typed in the window (the 2026-09-08 review) */
+  /* repainted from the store ONLY where the store moved under it, after the
+     debounce has landed: a reopen after an async write threw away keystrokes
+     typed in the window. Unpinned: a race no step can hold open */
   function refresh(): Promise<void> {
     return flushSave().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) open(current.date, current.tag); });
   }
   /* a navigation that lands where it already is SAYS so, when given the
-     words: silence there reads as a dead control */
+     words: silence reads as a dead control
+     (pin: launch, panels, the corner, links › a link to itself) */
   function goto(hash: string, sameMsg?: string): void {
     if (location.hash === hash) { if (sameMsg) say(sameMsg, 1500); return; }
     location.hash = hash;
   }
-  /* the walk follows the parent's index where it states one, as the go-to
-     row does; the contents parse is memoised on the parent's text */
+  /* the walk follows the parent's index where it states one
+     (pin: walk › ⌃⌘. from 3pr1) */
   const orderMemo = new Map<string, { md: string; links: ContentsLink[] }>();
   function step(dir: "prev" | "next"): void {
     if (!layer.warmed) { say("still loading — try that again in a moment", 2500); return; }
@@ -565,21 +509,19 @@ export function startSession(opts: SessionOptions): Session {
     goto(entryHash(nb[0], nb[1]));
   }
   function today(): void { goto(entryHash(todayKey()), "already on today"); }
-  /* ⌃⌘R copies a reference to the selected passage, ⌃⌘C a link to the
-     entry, in TWO flavours: the markdown as text, and the HTML beside it
-     for the applications that take one (richCopy.ts), through the writer
-     with the textarea fallback. A failed write is logged with the
-     markdown, which lives nowhere else. */
+  /* a failed write is an error, pinned to be clicked into a bug report;
+     the markdown, which lives nowhere else, goes to the console
+     (pin: entries left and renamed › ⌃⌘C with the clipboard refused) */
   function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
     writeClipboard(payload).then((ok) => {
       if (ok) { say(okText); return; }
       console.error(failText, payload.text);
-      say(failText);
+      opts.stick ? opts.stick(failText) : say(failText);
     });
   }
-  /* ⌃⌘W and the bar's Words: the selection's count, else the whole
-     entry's; in the source view the markdown is parsed first so syntax
-     never counts as words and both views report one number */
+  /* in the source view the markdown is parsed first, so syntax never counts
+     as words and both views report one number
+     (pin: source view › ⌃⌘W in the source view) */
   function showWordCount(): void {
     let n = 0;
     if (mdView && source) {
@@ -606,20 +548,15 @@ export function startSession(opts: SessionOptions): Session {
     const p = entryLinkParts(current.date, current.tag, journal);
     copy({ text: "[" + p.label + "](" + p.url + ")", html: citationAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }
-  /* the flush on leave: a navigation saves the entry being left; a hidden
-     tab and an unload land what the debounce still holds */
   window.addEventListener("hashchange", () => { flushSave().then(openHash); });
   /* the window's place is the page's alone: the browser's own restore on
-     Back and Forward ran BEFORE hashchange, against the entry being left,
-     and the place recorded for it was the target's offset — MEASURED
-     2026-09-28 in headless Helium, Pippa left at 1200, Horace, Back,
-     Forward, Back: Pippa at its top and Horace at 670 */
+     Back and Forward ran before hashchange, against the entry being left
+     (pin: places › Forward) (pin: places › Back again) */
   history.scrollRestoration = "manual";
   window.addEventListener("beforeunload", () => { saveNow(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
-  /* ⌃⌘, and ⌃⌘. walk, ⌃⌘T is today, ⌃⌘M the view — the current app's
-     chords (measured there 2026-07-24 as silent in Helium); both
-     modifiers, ⇧ and ⌥ excluded */
+  /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
+     excluded (pin: walk › ⌃⌘. from 3pr1) (pin: source view › ⌃⌘W rendered) */
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
     if (e.key === ",") { e.preventDefault(); step("prev"); }

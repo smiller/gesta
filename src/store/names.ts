@@ -141,6 +141,9 @@ export function importTarget(path: string): Target | null {
    `base` the bare stem the markdown's relative links want, `flatBase` the
    stem carrying the whole key (the sidecar's stem, and the collision check's),
    `root` which ARCHIVE the entry belongs to. */
+/* a picture's key: its relative src in its entry's own folder
+   (pin: importFiles.test › a picture the import files is found where the entry looks) */
+export function pictureKey(date: string, tag: string | null, src: string): string { return entryFile(date, tag).dir + src; }
 export interface EntryFile { dir: string; base: string; flatBase: string; root: string }
 export function entryFile(date: string, tag?: string | null): EntryFile {
   const safe = (s: string): string => s.replace(FILE_UNSAFE_RE, "-");

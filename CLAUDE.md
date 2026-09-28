@@ -25,8 +25,27 @@ here NOW, and what is not yet:
 - IN FORCE — the whole "Reporting" section of ../writer/CLAUDE.md, verbatim:
   every factual sentence tagged MEASURED / READ / INFERRED, no connective
   tissue, hand over the artifact not the claim, report who found what.
-- IN FORCE — comments record a DECISION, a MEASUREMENT or a past FAILURE; a
-  claim about what another function does is an assertion, not a comment.
+- IN FORCE from 2026-09-28 — THE COMMENT STANDARD, replacing "comments
+  record a decision, a measurement or a past failure" after the review
+  passes found comments asserting another module's mechanism five times
+  (the record: docs/plans/2026-09-28-chore-comment-standard-plan.md):
+  - NO COMMENT BY DEFAULT. One stays only if someone changing this code
+    would get it wrong without it, in a way the code, its names, types and
+    tests cannot prevent: a DECISION, a MEASUREMENT, a past FAILURE.
+  - It speaks only of the code it sits on. Nothing about what another
+    module does; a CONTRACT between modules is a test, written when it is
+    found.
+  - No provenance: dates, "the reader", "the review", "asked" live in the
+    plan's record alone.
+  - A failure or decision a test can check is PINNED, and the comment names
+    its pin in a fixed trailing form, one group per pin:
+    `(pin: <section> › <reading label>)` for a Helium step,
+    `(pin: <file>.test › <title prefix>)` for a Vitest test. A checker will
+    verify every pin resolves (owed, with the rest of the plan).
+  - No module header where the layout below says what the file is; an
+    interface member's comment only where its name and type cannot say it.
+  - The standing stock is audited against this directory by directory,
+    the pins and contract tests it needs written as it goes.
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.
@@ -187,7 +206,8 @@ is in the plan's record, under the phase named):
   in headless Helium over a fresh profile, a 19-line driver since
   2026-09-12: the steps and their readings are `tools/helium-steps.mjs`'s
   (above); this prints each reading and the console, and screenshots
-  when given a path.
+  when given a path. `STEPS=a,b` runs the first section and the named
+  ones, a development run only (2026-09-28).
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.
@@ -229,7 +249,7 @@ is in the plan's record, under the phase named):
 - `src/store/` — storage, no DOM: `keys.ts` (what an entry key IS: the day
   and namespace vocabulary, the hash and its highlight payload, `byName`),
   `names.ts` (what a name may be on DISK: `pageName`, the byte budgets,
-  `entryFile` and its inverse `importTarget`, `collidingFile`), `store.ts`
+  `entryFile` and its inverse `importTarget`, `collidingFile`, `pictureKey`), `store.ts`
   (the keyed-store adapter contract, the memory adapter, the entry store
   with its stale-write refusal, the image and backup-handle stores),
   `entries.ts` (the entry layer: the cache, the one write path, the per-key
@@ -241,6 +261,7 @@ is in the plan's record, under the phase named):
   the entry it names, an href to the link minted for it), `lists.ts` (the
   derived lists and the neighbour walks, over the cache's keys),
   `fsa.ts` (the directory and file handle types the fakes are shaped to),
+  `local.ts` (one localStorage key, read and written inside try),
   `plans.ts` (the backup's pure decisions: the dedup, the reconcile, the
   archive plan, the day's census), `zip.ts` (the zip byte format),
   `io.ts` (the disk edge: the tolerant writer, the listing, the zip walk,

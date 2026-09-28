@@ -93,6 +93,7 @@ export const read = {
   clipboardText: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).slice(0, 40); } catch (e) { return String(e); } }),
   selectCards: (page) => page.evaluate(() => { const cards = document.querySelectorAll("#editor [class^='card-']"); const r = document.createRange(); r.setStart(cards[1], 0);   /* the grid's cards: the first card on the page is the one above the grid */ r.setEnd(cards[cards.length - 1], cards[cards.length - 1].childNodes.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }),
   setSource: (page, text) => page.fill("textarea.source", text),
+  sourceCaretTo: (page, text) => page.evaluate((t) => { const a = document.querySelector("textarea.source"); const i = a.value.indexOf(t); a.focus(); a.setSelectionRange(i, i); }, text),
   inSource: (page) => page.evaluate(() => !!document.querySelector("textarea.source")),
   gridCorner: (page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),
   cardsAndPairs: (page) => page.evaluate(() => ({ cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length })),

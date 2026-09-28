@@ -9,7 +9,8 @@
    `?store=write` writes one probe row; `?store=seed` writes the four
    fixtures as entries, for a headless look at the bridge over a profile no
    picker can fill; `?store=seed-stanza` writes the stanza step's Faerie
-   Queene alone (2026-09-28); `?corner=pill` draws the paused pill. */
+   Queene alone (2026-09-28); `?corner=pill` draws the paused pill;
+   `?warm=slow` holds the warm two seconds. */
 import "./editor/editor.css";
 import "./chrome/chrome.css";
 import { mount } from "svelte";
@@ -1008,7 +1009,9 @@ if (fixture && fixtures[fixture]) {
   const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
     if (found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date)) { session.openHash(); opened = true; stage("primed"); }
   }, () => {});
-  primed.then(() => layer.warm()).then(() => {
+  /* the one way a step opens a page before the warm lands (pin: places › before the warm) */
+  const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeout(r, 2000)) : () => undefined;
+  primed.then(held).then(() => layer.warm()).then(() => {
     /* an unreadable journal is an error, not a status: it sticks, the
        caught failure copyable */
     if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); return; }
