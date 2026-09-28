@@ -470,5 +470,17 @@ decisions table.
   A checker counting stanzas with a non-greedy fence match read III.xii
   as 49 — the note's nested fences (docs/source-to-bookshelf.md §4's
   landmine); a depth-aware count reads 45.
-- Left as both sources print it: II.vii.55.6 `th’*Idæan*`, closed up as
-  all 402 of the text's `th’` elisions are; the reader to check the print.
+- The reader, after the first 24 in reading order: a space after EVERY
+  elided `th’` — the print's closing-up is its typesetting (II.vii.55.6
+  `th’*Idæan*` first raised it). 406 spaced (an earlier count, 402, missed
+  `Th’` and `th’` before an italic); 29 elisions inside a word (`bath’d`,
+  `Nath’lesse`) and `t’` (`T’embrace`) left as printed.
+- Found reading the front matter for that list: three of the Raleigh
+  page's poems ran their stanzas together (`…mounting singes.  Thy louely
+  Rosolinde…`) — its stanzas are `<p>`s, split now, a blank line for the
+  gap (36, 24 and 24 lines). No check had covered the front matter's
+  lines; the witness counts the poem's stanzas only.
+- MEASURED after both: corpus clean 85/85, import 85/85, the witness in
+  all 81 poem entries, hygiene clean; headless Helium over the Desktop
+  folder: "Import 85 entries", no refused file (NOTES.txt, not .md), the
+  contents 84/84 links, every canto read as before.
