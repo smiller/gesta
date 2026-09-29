@@ -42,9 +42,6 @@ export function fenceLineReason(l: string): string | null {
     : /^card(?:[\s-]|$)/.test(m[1]) ? "card blocks must include a colour, like card-light-green"
     : "not a block Gesta knows";
 }
-/* every refusal on a line of its own, so a second is not hidden behind a
-   count (pin: fenceRefusals.test › the pin's text: one line with its tail,
-   several one per line with the count) */
 export function refusalsText(r: FenceRefusal[]): string {
   const lines = r.map((x) => x.line + " — " + x.reason);
   return r.length === 1 ? lines[0] + ", so it stayed a paragraph" : lines.join("\n") + "\n" + r.length + " fences stayed paragraphs";

@@ -10,18 +10,10 @@ export const FENCE_LINE = /^```/;
 export const FENCE_TICKS = /^(`{3,})/;
 export const FENCE_CLOSE = /^(`{3,})\s*$/;
 export const QUOTE_LINE = /^>\s?/;
-/* LEVELS UNCAPPED: "#" is level one (pin: parse.test › headings take every
-   level) */
 export const HEADING_LINE = /^(#{1,6})\s+(.*)$/;
-/* the ::: family. EVERY FENCE LINE TOLERATES LEADING WHITESPACE, opener and
-   closer alike, and they move together. The card opener REQUIRES the
-   hyphenated colour word; the other words are exact (pin: parse.test › a
-   ::: line may be indented, opener and closer alike) */
 export const CARD_OPEN = /^\s*:::\s*(card-[\w-]+)\s*$/;
 export const CARD_CLOSE = /^\s*:::\s*$/;
 export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*)?\s*$/;
-/* the stanza number is REQUIRED — a bare `::: stanza` names nothing (pin:
-   parse.test › the stanza opener requires its number) */
 export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
@@ -46,8 +38,6 @@ export const FOLIO_NUM_SRC = `(?:${FOLIO_ARABIC_SRC}+|${FOLIO_ROMAN_SRC}+)`;
    folio.test › folioToken and FOLIO_TOKEN agree on the brackets) */
 export const FOLIO_TOKEN = new RegExp(`⟨(${FOLIO_NUM_SRC})⟩`, "g");
 export const FOLIO_ONE = new RegExp(`^${FOLIO_NUM_SRC}$`);
-/* only the arabic half elides (pin: folio.test › FOLIO_ARABIC: the arabic
-   half alone) */
 export const FOLIO_ARABIC = new RegExp(`^${FOLIO_ARABIC_SRC}+$`);
 export function folioToken(label: string): string {
   return `⟨${label}⟩`;
@@ -147,8 +137,6 @@ export function fenceBody(lines: string[], from: number): { body: string[]; next
 }
 
 /* ---------- rows ---------- */
-/* the first pipe not itself escaped, or -1 (pin: parse.test › the split is
-   at the FIRST pipe, and an escaped one stays in its cell) */
 export function verseSplit(line: string): number {
   for (let k = 0; k < line.length; k++) {
     if (line.charAt(k) === "\\") { k++; continue; }
@@ -193,9 +181,6 @@ export function unescapeProse(l: string): string {
   const bare = l.slice(1);
   return /^\s/.test(bare) || readsAsBlock(bare) || unescapeProse(bare) !== bare ? bare : l;
 }
-/* the content column of the item still open at the end of the markdown
-   written so far, or -1 (pin: parse.test › the escaping helpers: the mark
-   escapes itself, and the indent is read backwards) */
 export function openItemCol(md: string): number {
   const lines = md.split("\n");
   for (let i = lines.length - 1; i >= 0; i--) {

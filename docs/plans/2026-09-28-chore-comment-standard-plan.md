@@ -503,3 +503,31 @@ pinned (a performance choice), 2 pinned with a neighbour.
   move a reader makes, a scroll included.
 - MEASURED: verify exit 0, 149 steps, 0 open.
 - MEASURED on the final code: the whole Helium verdict ok in 4 runs of 4.
+
+### 2026-09-28 — the second pass: restatement cut
+
+- ASKED by the reader, after the audit came to 14% of comment lines net:
+  measure what a harder cut would take, then do it, directory by
+  directory, one commit each, unattended overnight.
+- MEASURED before: 384 pinned blocks (1,757 lines) — by word overlap with
+  the pinned test's title, 18 at ≥0.6 and 32 at 0.4–0.6, nearly all
+  restating by reading; a sample of 30 below 0.4, 5 wholly and 4 partly
+  restating. 355 unpinned blocks in app code (827 lines) — a sample of 30,
+  13 saying what the next line or its name says. Estimate ~550 lines,
+  range ~350–750.
+- THE RULE for this pass: a comment goes when it only restates what its
+  pinned test's title says, or what the code, its names or its types
+  already say; a sentence goes when the rest of its block carries the
+  reason. A comment stays when it holds a MEASUREMENT, a FAILURE, or a
+  reason the test and the code cannot hold — why a rule exists, what a
+  plausible "simplification" would break. Comments in tests explaining
+  their own setup stay; svelte-ignore directives stay.
+- src/model, MEASURED: 93 blocks → 65, 262 comment lines → 190 (28
+  blocks gone, one trimmed); the stripped-of-comments diff empty. Gone:
+  the comments saying what their test's title says (a note is a row, the
+  stanza number is required, no backtick in a lang, the other marker kind
+  opens a sibling list, …) or what the code says (the first pipe or -1,
+  the content column or -1). Kept: every measurement, every failure, and
+  the reasons a test cannot carry (why ⟨line⟩ rides on the row, why the
+  escaping rules may not change, why fenceStart must not read a stanza).
+  Section dividers kept, like the svelte-ignore directives.

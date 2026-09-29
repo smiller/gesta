@@ -32,8 +32,6 @@ function wrapMark(mark: Mark, inner: string): string {
     case "code": return inner && "`" + inner + "`";
     case "link": {
       const href = String(mark.attrs.href);
-      /* an autolinked URL is written bare, not [url](url) (pin:
-         roundtrip.test › round trips: every form survives) */
       if (inner === href || href === "https://" + inner || href === "http://" + inner) return inner;
       return inner && "[" + inner + "](" + destination(href) + ")";
     }
@@ -201,8 +199,6 @@ function tableMd(table: Node): string {
 function cellMd(node: Node): string {
   return escapeCell(oneLineMd(node));
 }
-/* the separator carries its spaces, EXCEPT before an empty translation
-   (pin: roundtrip.test › round trips: every form survives) */
 function pairMd(a: string, b: string): string {
   return b ? a + " | " + b : a + " |";
 }
@@ -214,24 +210,14 @@ function rowsMd(block: Node, word: string): string {
   block.forEach((row) => {
     if (row.type === N.gap) rows.push("");
     else if (row.type === N.note) rows.push(blockMd(row, true));
-    /* a pair with one cell — a cut that dropped the other — is its one
-       cell's line (pin: roundtrip.test › a pair cut down to one cell
-       serializes as that cell's line, never a throw) */
     else if (row.type === N.pair) rows.push(rowHead(row) + (row.childCount > 1 ? pairMd(cellMd(row.child(0)), cellMd(row.child(1))) : cellMd(row.child(0))));
     else rows.push(rowHead(row) + cellMd(row));
   });
   const start = block.attrs.start as number, stanza = block.attrs.stanza as number | null | undefined;
-  /* cut from its middle, a stanza has a start `::: stanza N` has no room
-     for, and is written as the plain verse fence it now is (pin:
-     roundtrip.test › a stanza block starting past its first line is written
-     as a verse fence) */
   const open = (stanza != null && start === 1 ? "::: stanza " + stanza : "::: " + word + (start > 1 ? " " + start : "")) + "\n";
   return rows.length ? open + rows.join("\n") + "\n:::" : open + ":::";
 }
 
-/* the continuation indent CLEARS THE ITEM'S CONTENT COLUMN, read off the
-   line as written, never below the floor (pin: roundtrip.test › round
-   trips: every form survives) */
 function listMd(list: Node, depth: number): string[] {
   const ordered = list.type === N.ordered_list;
   const pad = "  ".repeat(depth);

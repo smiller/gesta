@@ -94,7 +94,6 @@ function emitHeading(sink: Sink, line: string): void {
 
 function emitFence(sink: Sink, lines: string[], from: number): number {
   const open = FENCE_TICKS.exec(lines[from])!;
-  /* no backtick in a lang (pin: parse.test › a fence's lang drops its backticks) */
   const lang = lines[from].slice(open[1].length).trim().split(/\s+/)[0].toLowerCase().replace(/`/g, "");
   from++;
   const code: string[] = [];
@@ -109,8 +108,6 @@ function emitFence(sink: Sink, lines: string[], from: number): number {
   return from + 1;
 }
 
-/* a card's or note's body recurses at the top-level grammar: blank lines
-   separate (pin: parse.test › a nested note's body recurses) */
 function emitBody(sink: Sink, name: string, meta: Record<string, unknown> | null, body: string[]): void {
   const open = sink.push(name + "_open", "div", 1);
   if (meta) open.meta = meta;
@@ -160,8 +157,6 @@ function emitReference(sink: Sink, lines: string[], from: number): number {
   return from + 1;
 }
 
-/* in prose an all-empty pair is a gap too (pin: parse.test › verse rows:
-   paired, full-width, and the stanza gap; prose gaps on an empty pair) */
 function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "prose"): number {
   const stanza = stanzaNumber(lines[from]);
   const start = stanza === null ? fenceStart(lines[from]) : 1;
@@ -173,9 +168,6 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
     const line = lines[from];
     if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from); continue; }
     const raw = line.trim();
-    /* the declared kind comes off the head before the pipe is looked for;
-       a declared row is a row even with nothing after the token (pin:
-       parse.test › a ⟨line⟩ token at a row's head is the row's declared kind) */
     const declared = ROW_LINE_AT.test(raw);
     const body = declared ? raw.replace(ROW_LINE_AT, "") : raw;
     const meta = declared ? { kind: "line" } : undefined;
@@ -203,9 +195,6 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
 
 interface Item { indent: number; ordered: boolean; num: number; text: string; cont: string[]; blocks: string[][] }
 
-/* lines indented to AT LEAST the item's content column hang under it:
-   straight under the marker as soft breaks, after a blank line as a block
-   (pin: parse.test › a hanging block joins its item) */
 function takeItemBlocks(item: Item, lines: string[], from: number, col: number): number {
   const indentOf = (l: string): number => l.match(/^\s*/)![0].length;
   const continues = (j: number): boolean =>
@@ -243,8 +232,6 @@ function emitList(sink: Sink, lines: string[], from: number): number {
   return from;
 }
 
-/* RELATIVE indent, so 2- or 3-space steps both nest (pin: parse.test › a
-   nested list sits inside the item above it, by relative indent) */
 function buildList(sink: Sink, items: Item[]): void {
   let pos = 0;
   function level(): void {
@@ -254,9 +241,6 @@ function buildList(sink: Sink, items: Item[]): void {
     let want = ordered ? items[pos].num : 0;
     while (pos < items.length && items[pos].indent >= L) {
       const it = items[pos];
-      /* the other marker kind at this indent closes the list (pin:
-         parse.test › a same-indent line of the other marker kind opens a
-         sibling list) */
       if (it.ordered !== ordered) break;
       const li = sink.push("list_item_open", "li", 1);
       if (ordered && it.num !== want) li.meta = { value: it.num };
@@ -409,9 +393,6 @@ function autolink(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-/* after the code-span rule, so a token in backticks stays literal (pin:
-   parse.test › inline: code spans keep markers literal, ⟩ is a word
-   boundary, a folio in an href stays a token) */
 const FOLIO_AT = new RegExp(`^⟨(${FOLIO_NUM_SRC})⟩`);
 function folio(state: StateInline, silent: boolean): boolean {
   if (state.src.charCodeAt(state.pos) !== 0x27e8) return false;

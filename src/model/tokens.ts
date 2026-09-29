@@ -1,6 +1,3 @@
-/* ONE alternation pass, comments | strings | numbers | keywords, the first
-   group to match winning (pin: tokens.test › javascript: comments, strings,
-   numbers and keywords, in one pass) */
 export const LANG_ALIAS: Record<string, string> = {
   rb: "ruby", js: "javascript", mjs: "javascript", ts: "javascript",
   tsx: "javascript", jsx: "javascript", py: "python", bash: "shell",

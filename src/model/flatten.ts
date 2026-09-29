@@ -32,8 +32,6 @@ export function flatRange(flat: Flat, at: number, len: number): { from: number; 
   if (s == null || e == null) return null;
   return { from: s, to: e + 1 };
 }
-/* flattenDoc's fold, over a plain text (pin: flatten.test › folds a plain
-   text as flattenDoc does) */
 export function flattenText(s: string): Flat {
   const chars: string[] = [], pos: (number | null)[] = [];
   for (let i = 0; i < s.length; i++) {
@@ -44,7 +42,6 @@ export function flattenText(s: string): Flat {
   }
   return { text: chars.join(""), pos };
 }
-/* a block edge is a character with no position under it */
 export function lastMapped(flat: Flat, before: number): number {
   for (let i = Math.min(before, flat.pos.length) - 1; i >= 0; i--) if (flat.pos[i] != null) return i;
   return -1;

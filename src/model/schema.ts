@@ -55,9 +55,6 @@ const nodes: Record<string, NodeSpec> = {
     content: "list_item+", group: "block",
     parseDOM: [{ tag: "ul" }], toDOM: () => ["ul", 0],
   },
-  /* start records where the run OPENS; an item whose own number breaks the
-     count carries it as list_item's value — the only way a countdown is
-     expressible (pin: parse.test › an ordered countdown keeps its own numbers) */
   ordered_list: {
     attrs: { start: { default: 1 } }, content: "list_item+", group: "block",
     parseDOM: [{ tag: "ol", getAttrs: (dom) => ({ start: dom.hasAttribute("start") ? +dom.getAttribute("start")! : 1 }) }],
@@ -76,7 +73,6 @@ const nodes: Record<string, NodeSpec> = {
   },
   table: { content: "table_row+", group: "block", parseDOM: [{ tag: "table" }], toDOM: () => ["table", ["tbody", 0]] },
   table_row: { content: "table_cell+", parseDOM: [{ tag: "tr" }], toDOM: () => ["tr", 0] },
-  /* inline, never blocks: a markdown table row has no room for a block */
   table_cell: {
     attrs: { header: { default: false } }, content: "inline*",
     parseDOM: [{ tag: "td" }, { tag: "th", attrs: { header: true } }],
@@ -90,12 +86,10 @@ const nodes: Record<string, NodeSpec> = {
     parseDOM: [{ tag: "div[class^='card-'][data-card]", getAttrs: (dom) => ({ colour: dom.className.split(/\s+/).find((c) => /^card-/.test(c)) }) }],
     toDOM: (n) => ["div", { class: n.attrs.colour, "data-card": "" }, 0],
   },
-  /* `n` is null when the count was not typed, drawn as 3, so a bare opener
-     stays bare (pin: parse.test › a grid holds cards and remembers whether
-     its count was typed). Isolating, so no lift or join crosses the grid's
-     edge. `card*`, not `card+`: a card's colour has no default, and
-     prosemirror-model refuses a required node it cannot generate (pin:
-     schema.test › a grid cannot require a card) */
+  /* isolating, so no lift or join crosses the grid's edge. `card*`, not
+     `card+`: a card's colour has no default, and prosemirror-model refuses a
+     required node it cannot generate (pin: schema.test › a grid cannot
+     require a card) */
   grid: {
     attrs: { n: { default: null } }, content: "card*", group: "block", defining: true, isolating: true,
     /* only the editor's own copies, which carry data-n: a web page's
@@ -104,9 +98,6 @@ const nodes: Record<string, NodeSpec> = {
     parseDOM: [{ tag: "div.grid", getAttrs: (dom) => dom.hasAttribute("data-n") ? { n: dom.dataset.n ? +dom.dataset.n : null } : false }],
     toDOM: (n) => ["div", { class: "grid", "data-n": n.attrs.n ?? "", style: "--n: " + (n.attrs.n ?? 3) }, 0],
   },
-  /* the one block form that may also be a ROW of a verse or prose block:
-     a footnote interrupts a text without closing its count (pin: parse.test
-     › a ::: note inside a row fence is a row, and does not close it) */
   note: { content: "block+", group: "block", defining: true, parseDOM: [{ tag: "div.note" }], toDOM: () => ["div", { class: "note" }, 0] },
   reference: {
     content: "text*", marks: "", group: "block", code: true, defining: true,
@@ -115,13 +106,7 @@ const nodes: Record<string, NodeSpec> = {
   },
   verse: rowBlock("verse", true),
   prose: rowBlock("prose"),
-  /* `kind` is what the row DECLARES, null when it declares nothing — never
-     read off its marks (pin: parse.test › a ⟨line⟩ token at a row's head is
-     the row's declared kind, not its text) */
   line: { attrs: { kind: { default: null } }, content: "inline*", parseDOM: [{ tag: "div.vrow:not(.vpair)", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
-  /* an original beside its translation, told apart by position; an empty
-     translation is still a pair (pin: roundtrip.test › round trips: every
-     form survives) */
   pair: { attrs: { kind: { default: null } }, content: "cell cell", parseDOM: [{ tag: "div.vrow.vpair", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
   cell: { content: "inline*", parseDOM: [{ tag: "div.vcell" }], toDOM: () => ["div", { class: "vcell" }, 0] },
   gap: { parseDOM: [{ tag: "div.vgap" }], toDOM: () => ["div", { class: "vgap" }] },
