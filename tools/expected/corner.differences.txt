@@ -101,7 +101,7 @@ a closed section's text switched to · * · a work's contents folding is success
 ⌃⌘C again, the clipboard back · corner · a copy that lands releases a failed copy's pin here (the review at high, 2026-09-28); the current app's pin stays and silences the success
 a page opened with localStorage refused · * · the current app does not boot with localStorage refused: its run stops at this reading, the adapter finding no app
 the switch's place remembered · * · an entry's remembered place is the successor's (2026-09-28): the current app keeps none
-a glossed passage at 1500px · * · a margin-note is successor-only (2026-09-29, the margin-note plan): the current app has no `::: margin-note` word and reads the fence as text
-typed into the margin gloss · * · the same: the current app has no gloss to click, and the typing lands at its caret's start
+margin-notes in verse at 1500px · * · a margin-note is successor-only (2026-09-29, the margin-note plan): the current app has no `::: margin-note` word and reads the fence as text
+typed into a margin-note in the margin · * · the same: the current app has no margin-note to click, and the typing lands at its caret's start
 narrowed to 1000px, typed on · * · the same
-a gloss between paragraphs at 1500px · * · the same
+margin-notes between paragraphs and in a grid at 1500px · * · the same

@@ -603,7 +603,7 @@ faults, so it is COUNTED, per review round, until five rounds have run.
 | round | range | (a) seen / unseen | (b) | (c) | (d) |
 |---|---|---|---|---|---|
 | 1 | 0491c70..bf81178 (margin-note, 145,243 tokens) | 0 / 1 | 1 (missed; the rule now takes "the plan") | 0 | 0 |
-| 2 | | | | | |
+| 2 | bf81178..28badc3 (margin-note confirmation, 107,473 tokens) | 1 (a path, in tools/, outside the checker) / 1 | 1 (a date, tools/) | 0 | 1 |
 | 3 | | | | | |
 | 4 | | | | | |
 | 5 | | | | | |

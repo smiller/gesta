@@ -32,7 +32,7 @@ export const STANZA_SEEDS = {
    from the same files src/main.ts's `?store=seed-margin` imports */
 const fixture = (name) => readFileSync(new URL("../fixtures/" + name, import.meta.url), "utf8");
 export const MARGIN_SEEDS = {
-  "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-glossed.md"),
+  "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
   "page/Margins": fixture("margins-prose.md"),
 };
 export async function runSteps(page, ctx, A, opts = {}) {
@@ -929,15 +929,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await blocked.close();
     }],
     ["margin-note", async () => {
-  /* a gloss set in the left margin beside the line after it (2026-09-29, successor-only): 15em in a 1500px window, pushed below a two-line gloss a line above it, back in the text at the tools' 1000px; the caret typed into it at both widths */
+  /* a margin-note set in the left margin beside the line after it (2026-09-29, successor-only): 15em in a 1500px window, pushed below a two-line margin-note a line above it, back in the text at the tools' 1000px; the caret typed into it at both widths */
   await A.seedMargin(page, MARGIN_SEEDS);
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("bookshelf/Donne%2C%20John/Anniversaries/The%20First%20Anniversarie");
   await R.settle(page);
-  await log("a glossed passage at 1500px", await R.margins(page));
+  await log("margin-notes in verse at 1500px", await R.margins(page));
   await R.clickMargin(page, "What life");
   await page.keyboard.type(" X");
-  await log("typed into the margin gloss", { lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
+  await log("typed into a margin-note in the margin", { lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1000, height: 600 });
   await page.waitForTimeout(300);
   await page.keyboard.type("Y");
@@ -945,7 +945,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("page/Margins");
   await R.settle(page);
-  await log("a gloss between paragraphs at 1500px", await R.margins(page));
+  await log("margin-notes between paragraphs and in a grid at 1500px", await R.margins(page));
   await page.setViewportSize({ width: 1000, height: 600 });
     }],
     ["pill", async () => {

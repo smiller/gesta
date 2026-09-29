@@ -183,13 +183,27 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
    under the opener (pin: reference.test › the number on the right block at
    every depth, the nested box trimmed, an edge gap off) */
 const CONTAINERS = new Set(["blockquote", "note", "card", "grid"]);
-/* a margin-note is a gloss on the text, not the text (pin: reference.test ›
+/* a margin-note is a note on the text, not the text (pin: reference.test ›
    a margin-note is left out of a passage in loose prose too) */
 const keep = (b: Node): boolean => b.type !== N.margin_note && (b.type === N.gap || drawsInk(b));
+/* one gap stands where a margin-note stood between two (pin: reference.test ›
+   a margin-note left out between two stanza gaps leaves one gap) */
+function withoutMarginNotes(rows: Node[]): Node[] {
+  const out: Node[] = [];
+  let dropped = false;
+  for (const row of rows) {
+    if (row.type === N.margin_note) { dropped = true; continue; }
+    const doubled = dropped && row.type === N.gap && out[out.length - 1]?.type === N.gap;
+    dropped = false;
+    if (!doubled) out.push(row);
+  }
+  return out;
+}
 function trimmed(b: Node): Node {
   if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); }); return b.copy(Fragment.from(inner)); }
   if (b.type === N.verse || b.type === N.prose) {
-    const rows: Node[] = []; b.forEach((row) => { if (row.type !== N.margin_note) rows.push(row); });
+    const all: Node[] = []; b.forEach((row) => { all.push(row); });
+    const rows = withoutMarginNotes(all);
     while (rows.length && rows[0].type === N.gap) rows.shift();
     while (rows.length && rows[rows.length - 1].type === N.gap) rows.pop();
     return b.copy(Fragment.from(rows));
@@ -280,15 +294,16 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
   };
   first = widened(first, -1);
   last = widened(last, 1);
-  const kept: Node[] = [];
+  const run: Node[] = [];
   for (let i = first; i <= last; i++) {
     const row = rows[i].node;
-    if (row.type === N.note || row.type === N.margin_note) continue;
+    if (row.type === N.note) continue;
     let turn = false;
     if (!drawsInk(row)) row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
     if (turn) continue;
-    kept.push(row);
+    run.push(row);
   }
+  const kept = withoutMarginNotes(run);
   if (paired) {
     /* the block's own count at the first kept row, whatever the row is: a
        direction alone as the block's last row was numbered 1 (pin:
@@ -308,10 +323,11 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
 export function entryLinkUrl(date: string, tag: string | null, hl?: Highlight | null): string {
   return entryHash(date, tag, hl || undefined).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
-export type Refusal = "select" | "code" | "two-blocks";
+export type Refusal = "select" | "code" | "margin-note" | "two-blocks";
 export const REFUSAL_TEXT: Record<Refusal, string> = {
   select: "Select a passage to reference first",
   code: "A code block can't be referenced",
+  "margin-note": "A margin-note can't be referenced — select the text beside it",
   "two-blocks": "That spans two verse blocks — reference them one at a time",
 };
 /* the whole clipboard text: the heading line as the link, a colon outside
@@ -332,6 +348,8 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   let inCode = false;
   doc.nodesBetween(from, to, (n) => { if (n.type === N.code_block) inCode = true; return !inCode; });
   if (inCode) return { refused: "code" };
+  const $from = doc.resolve(from);
+  for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return { refused: "margin-note" };
   const stanzas = romanWorkKey(date, tag, journal) !== null;
   if (spansTwoBlocks(doc, from, to, stanzas)) return { refused: "two-blocks" };
   const hl = selectionLink(doc, from, to);

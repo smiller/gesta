@@ -199,14 +199,14 @@ test("Enter inside a nested note is the note's; the second Enter on its empty la
 });
 
 test("a margin-note row is left the way a note row is: Enter is its own, the second Enter exits to a row", () => {
-  const s = at("::: verse\nalpha\n::: margin-note\ngloss\n:::\nbeta\n:::", "gloss");
+  const s = at("::: verse\nalpha\n::: margin-note\nthe note\n:::\nbeta\n:::", "the note");
   expect(refuses(enterInRow, s)).toBe(true);
   expect(refuses(toggleDeclaredLine, s)).toBe(true);
   const out = run(exitNoteRow, run(baseKeymap.Enter, s));
-  expect(md(out)).toBe("::: verse\nalpha\n::: margin-note\ngloss\n:::\n\nbeta\n:::");
+  expect(md(out)).toBe("::: verse\nalpha\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
   expect(caret(out)).toBe("line:|");
   /* between paragraphs, the base keymap's lift */
-  const lifted = run(baseKeymap.Enter, run(baseKeymap.Enter, at("::: margin-note\ngloss\n:::\n\nafter", "gloss")));
+  const lifted = run(baseKeymap.Enter, run(baseKeymap.Enter, at("::: margin-note\nthe note\n:::\n\nafter", "the note")));
   expect(lifted.doc.content.content.map((n) => n.type.name)).toEqual(["margin_note", "paragraph", "paragraph"]);
   expect(lifted.selection.$from.parent.type.name).toBe("paragraph");
   expect(lifted.selection.$from.depth).toBe(1);

@@ -63,7 +63,7 @@ import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
 import williams from "../fixtures/williams-witchcraft-3.md?raw";
-import donneGlossed from "../fixtures/donne-anniversarie-glossed.md?raw";
+import donneMarginNotes from "../fixtures/donne-anniversarie-margin-notes.md?raw";
 import marginsProse from "../fixtures/margins-prose.md?raw";
 
 const fixtures: Record<string, string> = { horace, pippa, twelfth, williams };
@@ -984,7 +984,7 @@ if (fixture && fixtures[fixture]) {
   };
   /* the margin-note step's own seed, written only when that step asks */
   const marginSeeds: Record<string, string> = {
-    "bookshelf/Donne, John/Anniversaries/The First Anniversarie": donneGlossed, "page/Margins": marginsProse,
+    "bookshelf/Donne, John/Anniversaries/The First Anniversarie": donneMarginNotes, "page/Margins": marginsProse,
   };
   const wrote = q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
     : q.get("store") === "seed" ? Promise.all(Object.keys(seeds).map((k) => layer.setEntry(k, seeds[k]))).then(() => stage("seed"))

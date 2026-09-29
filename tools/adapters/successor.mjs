@@ -70,10 +70,10 @@ export const read = {
   clickFoldTriangle: async (page, text) => { const at = await page.evaluate((t) => { const h = [...document.querySelectorAll("#editor h2")].find((x) => x.textContent.startsWith(t)); if (!h) return null; const r = h.getBoundingClientRect(); return { x: r.left - 12, y: r.top + 14 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(200); } },
   /* the places step (2026-09-28): the line just under the masthead, and whether the window is at the top */
   place: (page) => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
-  /* the margin-note step (2026-09-29): each gloss's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which gloss holds the caret */
+  /* the margin-note step (2026-09-29): each margin-note's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which margin-note holds the caret */
   margins: (page) => page.waitForFunction(() => [...document.querySelectorAll("#editor .margin-note")].every((n) => n.classList.contains("in-margin") === (n.style.getPropertyValue("--mn-w") !== "")), null, { timeout: 3000 }).catch(() => {}).then(() => page.evaluate(() => {
     const caret = getSelection().anchorNode;
-    return { glosses: [...document.querySelectorAll("#editor .margin-note")].map((n) => {
+    return { marginNotes: [...document.querySelectorAll("#editor .margin-note")].map((n) => {
       const r = n.getBoundingClientRect(), row = n.nextElementSibling, rr = row?.getBoundingClientRect();
       const line = rr ? rr.top + parseFloat(getComputedStyle(row).lineHeight) / 2 : 0;
       return { text: n.textContent.slice(0, 20), form: n.classList.contains("in-margin") ? "margin " + n.style.getPropertyValue("--mn-w") : "text", beside: row?.textContent.slice(0, 16) ?? null,

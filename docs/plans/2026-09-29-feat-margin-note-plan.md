@@ -184,3 +184,38 @@ After the fixes, decided by the reader: a confirmation pass over the fix
 commit, its findings listed by significance before any is fixed; the
 comment checker's plain-English blind spot left to the five-round count;
 the Donne folder rebuilt only once the fence is finished.
+
+## Record: the confirmation pass, 2026-09-29
+
+`/code-review` at high over bf81178..28badc3 (the fix commit), on the
+reader's word. COST, MEASURED from its transcript's last message: 3,692
+cache creation + 100,126 cache read + 2 input + 3,653 output = 107,473
+tokens. Nine findings, READ as holding, listed by significance before
+any was fixed; the reader chose:
+
+- FIXED: a selection wholly inside a margin-note copied an empty
+  quotation (a regression of the first fix): now refused, "A margin-note
+  can't be referenced — select the text beside it". A margin-note left
+  out between two stanza gaps left two; now one (two the text holds stay
+  two). The CSS comment was false ("keeps its place in the flow") and
+  described the pass. The pass read a block's style and place once per
+  margin-note; now once per block. Each red first where it could be.
+- DECIDED, option A: a margin-note in a grid's card stays in the text,
+  the leftmost card too; the help card now says so. Over B (the leftmost
+  card's goes to the margin) and C (in the text in any boxed block). No
+  other layout can hold a margin-note side by side (READ, the schema).
+- NOT FIXED, the reader's choice: a margin-note directly in a bordered
+  block sits the border's width further out (1–3px, unmeasured); the
+  tools comment's date; "the plan" matching a future backup-plan comment;
+  the two fixture readers.
+- THE NAME: the reader asked for "margin-note" everywhere, never "gloss"
+  (the 1621 book's printed glosses excepted, as the source). Renamed in
+  the help card, the tests, the step's labels and reading, the fixtures;
+  the verdict run's diff was the renames alone.
+- The current app's run, regenerated for the labels, read a fading
+  corner as gone in an untouched list step once in two runs (a timing
+  flake in the old app); the second run matched.
+
+DECIDED after it, by the reader: no further review round for this work
+unless a problem is really significant; next, the Donne folder rebuilt to
+write `::: margin-note`, imported, and looked at.

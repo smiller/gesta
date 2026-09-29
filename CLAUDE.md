@@ -372,9 +372,10 @@ is in the plan's record, under the phase named):
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
   direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
   and directions), and Williams's Witchcraft chapter 3 (a prose book with
-  leaves); and the margin-note step's two seeds, a glossed passage of
-  Donne's First Anniversarie (one gloss moved up from 30 lines on, so it
-  is pushed) and a prose page with a glossed grid card.
+  leaves); and the margin-note step's two seeds, a passage of Donne's
+  First Anniversarie with its margin-notes (one moved up from 30 lines on,
+  so it is pushed) and a prose page with margin-notes between paragraphs
+  and in a grid card.
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything): `<main>` holding the editor,
   and main.ts the wiring — the layer, the backup, the session, the

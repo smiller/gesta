@@ -50,16 +50,23 @@ function write(n: HTMLElement, name: string, value: string): void {
 function place(root: HTMLElement): void {
   const notes = Array.from(root.querySelectorAll<HTMLElement>("div.margin-note"));
   if (!notes.length) return;
+  const hosts = new Map<HTMLElement, { left: number; font: number; inset: number }>();
+  const hostOf = (el: HTMLElement) => {
+    let h = hosts.get(el);
+    if (!h) {
+      const cs = getComputedStyle(el);
+      h = { left: el.getBoundingClientRect().left, font: parseFloat(cs.fontSize), inset: parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) };
+      hosts.set(el, h);
+    }
+    return h;
+  };
   const forms = notes.map((n) => {
     /* a card in a grid can have a neighbour to its left (pin: margin-note ›
-       a gloss between paragraphs at 1500px) */
+       margin-notes between paragraphs and in a grid at 1500px) */
     if (n.closest(".grid")) return null;
-    const host = n.parentElement!, hs = getComputedStyle(host);
-    const hostFont = parseFloat(hs.fontSize), noteFont = parseFloat(getComputedStyle(n).fontSize);
-    const w = marginWidth(host.getBoundingClientRect().left, hostFont, noteFont);
-    if (w == null) return null;
-    const inset = parseFloat(hs.paddingLeft) + parseFloat(hs.borderLeftWidth);
-    return { w: w + "em", x: marginShift(w, hostFont, noteFont, inset) + "px" };
+    const host = hostOf(n.parentElement!), noteFont = parseFloat(getComputedStyle(n).fontSize);
+    const w = marginWidth(host.left, host.font, noteFont);
+    return w == null ? null : { w: w + "em", x: marginShift(w, host.font, noteFont, host.inset) + "px" };
   });
   notes.forEach((n, i) => {
     const f = forms[i];

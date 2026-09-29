@@ -143,7 +143,7 @@ test("a ::: margin-note is its own block, at the top level and as a row in a ver
   expect(v.childCount).toBe(1);
   expect(v.firstChild!.content.content.map((n) => n.type.name)).toEqual(["line", "margin_note", "line"]);
   expect(v.firstChild!.child(1).textContent).toBe("The sickenesse of the worldImpossibility of health.");
-  const p = parseMarkdown("::: prose\na | b\n::: margin-note\ngloss\n:::\nc | d\n:::").firstChild!;
+  const p = parseMarkdown("::: prose\na | b\n::: margin-note\nthe note\n:::\nc | d\n:::").firstChild!;
   expect(p.content.content.map((n) => n.type.name)).toEqual(["pair", "margin_note", "pair"]);
   expect(kinds("::: stanza 2\na\n::: margin-note\ng\n:::\nb\n:::")).toEqual(["verse"]);
   expect(kinds("::: margin-notes\nx\n:::")).toEqual(["paragraph"]);

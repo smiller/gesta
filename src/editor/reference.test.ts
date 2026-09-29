@@ -177,10 +177,10 @@ test("the number on the right block at every depth, the nested box trimmed, an e
   [a, b] = span(behind, "alpha", "beta");
   expect(coversProse(behind, a, b)).toBe(false);
   expect(passageMd(behind, a, b)).toBe("> alpha\n> beta");
-  const glossed = parseMarkdown("::: verse\nalpha\n::: margin-note\ngloss\n:::\nbeta\n:::");
-  [a, b] = span(glossed, "alpha", "beta");
-  expect(coversProse(glossed, a, b)).toBe(false);
-  expect(passageMd(glossed, a, b)).toBe("> alpha\n> beta");
+  const noted = parseMarkdown("::: verse\nalpha\n::: margin-note\nthe note\n:::\nbeta\n:::");
+  [a, b] = span(noted, "alpha", "beta");
+  expect(coversProse(noted, a, b)).toBe(false);
+  expect(passageMd(noted, a, b)).toBe("> alpha\n> beta");
 });
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
@@ -189,12 +189,25 @@ test("loose prose quotes the selection itself, paragraph breaks kept", () => {
 });
 
 test("a margin-note is left out of a passage in loose prose too, between paragraphs or in a block it runs into", () => {
-  const between = parseMarkdown("First paragraph here.\n\n::: margin-note\nthe gloss\n:::\n\nSecond one follows.");
+  const between = parseMarkdown("First paragraph here.\n\n::: margin-note\nthe note\n:::\n\nSecond one follows.");
   let [a, b] = span(between, "paragraph", "Second");
   expect(passageMd(between, a, b)).toBe("> paragraph here.\n> \n> Second");
-  const into = parseMarkdown("Intro.\n\n::: verse\nalpha\n::: margin-note\nthe gloss\n:::\nbeta\n:::");
+  const into = parseMarkdown("Intro.\n\n::: verse\nalpha\n::: margin-note\nthe note\n:::\nbeta\n:::");
   [a, b] = span(into, "Intro", "beta");
   expect(passageMd(into, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> beta\n> :::");
+});
+
+test("a margin-note left out between two stanza gaps leaves one gap, not two", () => {
+  const verse = parseMarkdown("::: verse\nalpha\n\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
+  let [a, b] = span(verse, "alpha", "beta");
+  expect(passageMd(verse, a, b)).toBe("> alpha\n> \n> beta");
+  const loose = parseMarkdown("Intro.\n\n::: verse\nalpha\n\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
+  [a, b] = span(loose, "Intro", "beta");
+  expect(passageMd(loose, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> \n> beta\n> :::");
+  /* two gaps the text itself holds stay two */
+  const twice = parseMarkdown("::: verse\nalpha\n\n\nbeta\n:::");
+  [a, b] = span(twice, "alpha", "beta");
+  expect(passageMd(twice, a, b)).toBe("> alpha\n> \n> \n> beta");
 });
 
 test("two verse blocks are a refusal", () => {
@@ -208,9 +221,9 @@ test("the leaf range is read from the page the selection is on; a leaf inside a 
   const doc = parseMarkdown("⟨61⟩ Opening words of the leaf.\n\n::: note\n⟨99⟩ a note's own marker\n:::\n\nMore of it ⟨62⟩ and on it goes to the end.");
   const [a, b] = span(doc, "words", "More");
   expect(folioRange(doc, a, b)).toEqual({ from: "61", to: "61" });
-  const glossed = parseMarkdown("⟨61⟩ Opening words.\n\n::: margin-note\n⟨99⟩ a gloss's marker\n:::\n\nMore of it.");
-  const [g, h] = span(glossed, "words", "More");
-  expect(folioRange(glossed, g, h)).toEqual({ from: "61", to: "61" });
+  const noted = parseMarkdown("⟨61⟩ Opening words.\n\n::: margin-note\n⟨99⟩ a margin-note's marker\n:::\n\nMore of it.");
+  const [g, h] = span(noted, "words", "More");
+  expect(folioRange(noted, g, h)).toEqual({ from: "61", to: "61" });
   const [c, d] = span(doc, "words", "goes");
   expect(folioRange(doc, c, d)).toEqual({ from: "61", to: "62" });
   const [e, f] = span(doc, "and on");
@@ -235,6 +248,18 @@ test("referencePayload: the link line with the range and the highlight, the pass
   /* the parts the rich flavour is built from ride beside the text */
   expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe," });
   expect(referencePayload(state(verse, a, a), "bookshelf", "x", journal)).toEqual({ refused: "select" });
+});
+
+test("a selection wholly inside a margin-note is refused, between paragraphs or in a verse block", () => {
+  const between = parseMarkdown("First.\n\n::: margin-note\nthe note beside\n:::\n\nSecond.");
+  let [a, b] = span(between, "the note", "beside");
+  expect(referencePayload(state(between, a, b), "bookshelf", "x", journal)).toEqual({ refused: "margin-note" });
+  const inVerse = parseMarkdown("::: verse\nalpha\n::: margin-note\nthe note beside\n:::\nbeta\n:::");
+  [a, b] = span(inVerse, "the note", "beside");
+  expect(referencePayload(state(inVerse, a, b), "bookshelf", "x", journal)).toEqual({ refused: "margin-note" });
+  /* a selection reaching out of it quotes the text around it, the margin-note left out */
+  [a, b] = span(inVerse, "beside", "beta");
+  expect(referencePayload(state(inVerse, a, b), "bookshelf", "x", journal)).toMatchObject({ passage: "> beta" });
 });
 
 test("a leaf stands in for a prose book's titled chapter; entryLink names the entry the same way", () => {
