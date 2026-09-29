@@ -33,12 +33,10 @@ export function reachableBookmarks(list: Bookmark[], keys: string[]): Bookmark[]
     return !!nsOf(p.date) && registered(keys, p.date, p.tag);
   });
 }
-/* the row's words: a shelf position, each name bounded on its own */
 export function bookmarkLabel(key: string, journal: Journal): string {
   const p = bookmarkParts(key);
   return resultLabel({ date: p.date, tag: p.tag, nth: 0, snippet: "" }, SCOPE_EVERYTHING, journal);
 }
-/* the link's label is what the entry is CALLED, not where it sits */
 export function bookmarkLinkLabel(key: string, journal: Journal): string {
   const p = bookmarkParts(key);
   if (isDayKey(p.date)) return p.tag ? p.date + " · " + p.tag : p.date;
@@ -52,21 +50,16 @@ export function bookmarkRows(list: Bookmark[], here: string, journal: Journal): 
   numberedBookmarks(list).forEach((b, i) => rows.push({ key: b.key, trigger: String(i + 1), label: bookmarkLabel(b.key, journal), keyed: false, here: b.key === here, cut: i === 0 && keyed.length > 0 }));
   return rows;
 }
-/* the foot line, null when the open entry is already a row */
 export function bookmarkFoot(list: Bookmark[], here: string, journal: Journal): { full: true } | { full: false; name: string } | null {
   if (bookmarkIndex(list, here) !== -1) return null;
   if (bookmarksFull(list)) return { full: true };
   return { full: false, name: trimLabel(bookmarkLabel(here, journal), LABEL_CAP) };
 }
 export const alreadyOn = (key: string, journal: Journal): string => "already on " + trimLabel(bookmarkLabel(key, journal), ECHO_CAP);
-/* the rows a held prefix could still reach */
 export function aliasCandidates(list: Bookmark[], buf: string): Bookmark[] {
   return aliasedBookmarks(list).filter((b) => b.alias.indexOf(buf) === 0);
 }
 export type Resolved = { buf: string; jump?: Bookmark; say?: string };
-/* Enter, or a press that cannot grow: the exact holder, else the sole
-   candidate, else "finish the key" with the prefix KEPT, else no bookmark
-   (pin: bookmarksModel.test › Enter takes the exact key) */
 export function resolveAlias(list: Bookmark[], buf: string): Resolved {
   let b = aliasHolder(list, buf);
   const left = aliasCandidates(list, buf);

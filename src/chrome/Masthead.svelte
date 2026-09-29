@@ -210,12 +210,10 @@
   .pages a, .pages button, .pages .panel-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
   .pages a, .pages button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
   .pages a:hover, .pages button:hover { background: var(--aside-bg); }
-  /* a long name ellipsizes instead of widening the panel */
   .pages a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pages .panel-new { color: var(--bar-link); }
   .pages .panel-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
-  /* the mode pill: the one sign the page is showing its source */
   .mode {
     font-family: var(--sans);
     font-size: 0.7em;

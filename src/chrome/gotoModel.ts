@@ -54,7 +54,6 @@ export function destinationRows(w: GotoWorld, date: string, tag: string | null):
   }
   return dest;
 }
-/* the journal shape at FULL preselect depth on the given day */
 export function journalLevels(w: GotoWorld, cd: string, tag: string | null): Level[] {
   const days = daysOf(w, cd);
   const years = Array.from(new Set(days.map((d) => d.slice(0, 4)))).sort().reverse();
@@ -103,7 +102,6 @@ export function subLevel(w: GotoWorld, ns: string, path: string, sub: string | n
   const pp = pageParts(path);
   return { took, level: { level, aria: capitalized(KEYED_NS[ns].subNoun), rows, value, sentinel: pp.sub ? "← " + pp.leaf : "← the " + KEYED_NS[ns].noun, path } };
 }
-/* the whole line for the open entry */
 export function gotoLevels(w: GotoWorld, date: string, tag: string | null): Level[] {
   const today = w.today || todayKey();
   const pp = nsOf(date) && tag ? pageParts(tag) : null;
@@ -119,7 +117,6 @@ export function gotoLevels(w: GotoWorld, date: string, tag: string | null): Leve
   }
   return out;
 }
-/* the namespace the line works in: the destination row's, read live */
 function gotoNs(levels: Level[], date: string): string {
   const d = levels[0];
   const row = d.rows.find((r) => r.v === d.value && (!d.valueNs || r.ns === d.valueNs));
@@ -127,7 +124,6 @@ function gotoNs(levels: Level[], date: string): string {
 }
 const val = (levels: Level[], level: number): string | null => levels.find((l) => l.level === level)?.value ?? null;
 const below = (levels: Level[], level: number): Level[] => levels.filter((l) => l.level < level);
-/* a pick at `level` of `value`: the levels afterwards, or the jump */
 export function gotoPick(w: GotoWorld, date: string, tag: string | null, levels: Level[], level: number, value: string, valueNs?: string): Pick {
   const today = w.today || todayKey();
   const picked = levels.find((l) => l.level === level);

@@ -113,9 +113,6 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
     idleStick = null;
     stick(d[0], d[1]);
   }
-  /* only while the notice is still the owner's: any newer notice moved the
-     generation, and the release stands down (pin: notices.test › releasePin
-     releases only while the notice is still the owner's) */
   function releasePin(g: number): void {
     if (!g || g !== gen) return;
     stuckCopy = "";

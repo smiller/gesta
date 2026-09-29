@@ -28,8 +28,6 @@ export interface MastheadModel {
   showToday: boolean;
   buttons: SubButtons;
 }
-/* the heading of its own entry where the namespace titles its roots, else
-   the name (pin: mastheadModel.test › a root reads as its own heading) */
 export function rootLabel(ns: string, name: string, journal: Journal): string {
   return (titlesRoots(ns) && journal.heading(entryKey(ns, name))) || name;
 }
@@ -46,9 +44,6 @@ export function mastheadModel(date: string, tag: string | null, keys: string[], 
         const label = i ? name : rootLabel(date, name, journal);
         crumbs.push({ text: label, href: entryHash(date, path.slice(0, i + 1).join("/")), title: "Back to " + label });
       });
-      /* a work citing book and canto in Roman shows its keys the way its
-         citations spell them: `I.i`, not `1.1` (pin: mastheadModel.test › the
-         leaf is the key respelled as the citation spells it) */
       leaf = romanWorkKey(date, tag, journal) ? romanKey(pp.leaf!) : pp.leaf;
       title = journal.heading(entryKey(date, tag));
     } else {
@@ -84,8 +79,6 @@ export function trimLabel(s: string, max: number): string {
   if (/[\uD800-\uDBFF]/.test(s.charAt(cut - 1))) cut--;
   return s.slice(0, cut) + "…";
 }
-/* each root labelled the one way a root is labelled everywhere, in name
-   order of the KEYS (pin: mastheadModel.test › a namespace's roots as rows) */
 export function panelRows(ns: string, keys: string[], journal: Journal): Link[] {
   return childrenOf(keys, ns).map((name) => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name) }));
 }

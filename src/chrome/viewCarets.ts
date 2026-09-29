@@ -16,9 +16,6 @@
 import { type Flat, lastMapped } from "../model/flatten.ts";
 
 export interface Hold { at: number; text: string; tail: boolean; seen: boolean }
-/* the count of flat characters before a position of the view's own
-   (a document position, or a raw index into the source text) (pin:
-   viewCarets.test › counts the flat characters before a document position) */
 export function countBefore(flat: Flat, pos: number): number {
   for (let i = 0; i < flat.pos.length; i++) {
     const p = flat.pos[i];
@@ -68,9 +65,6 @@ export function crossViewOffset(from: string, to: string, at: number, toSource: 
   }
   return /\s/.test(sup.slice(j, after)) ? after : j;
 }
-/* the count to land on in a view being entered: the hold when it still
-   describes this text, else the place the view just left was held at,
-   carried across; null with nothing to go on */
 /* THE VISIBILITY BIT IS THE LEAVING VIEW'S, whichever count is used: an
    exact hold remembers where this view's caret WAS, but whether a reader
    was looking at the caret is a fact about the view just left, written on

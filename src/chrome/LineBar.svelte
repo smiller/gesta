@@ -13,7 +13,6 @@
   } = $props();
   let lineInput: HTMLInputElement | undefined = $state();
   let pageInput: HTMLInputElement | undefined = $state();
-  /* the box the entry offers first: the Line box where it stands */
   export function focusAsk(): void {
     const el = lineBar.kind === "page" ? pageInput : lineInput;
     el?.focus(); el?.select();
@@ -29,8 +28,6 @@
   };
 </script>
 
-<!-- the mousedown is swallowed everywhere but the boxes and their
-     labels, so a press on the bar's padding cannot blur the box -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="linebar" hidden={!lineBar.open} onmousedown={press} role="search">
   <span class="ask" hidden={lineBar.kind === "page"}>

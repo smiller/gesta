@@ -547,3 +547,10 @@ pinned (a performance choice), 2 pinned with a neighbour.
   (wrapIn, BOUND, "ceil each column, then add", the side box). Kept: the
   fit's measurements, the focus-before-scroll rule, the reference cut's
   failures, the stylesheet's measured reasons.
+- src/chrome, MEASURED: 133 blocks → 108, 414 comment lines → 371 (25
+  blocks gone); the stripped diff empty. One deletion was put back:
+  clipboard.ts's `catch { /* refused: ok stays false */ }` — without it
+  the catch reads as a swallowed error, the comment being the reason it
+  is swallowed. Gone: the sub-entry rules, the bookmark lookups, the
+  masthead model's label helpers, the goto helpers — each its test's
+  title or its signature.

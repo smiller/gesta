@@ -11,7 +11,6 @@ import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_PAGES, bookScope, type Scope, ty
 import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
 
 export interface ScopeOption { label: string; scope: Scope; group: string | null }
-/* the open book on a page or a book page, else the dated journal */
 export function defaultScope(date: string, tag: string | null): Scope {
   return nsOf(date) && tag ? bookScope(date, pageParts(tag).name) : SCOPE_JOURNAL;
 }

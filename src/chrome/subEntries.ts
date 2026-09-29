@@ -20,8 +20,6 @@ export function subEntrySpec(date: string, tag: string | null, typed: string): S
   const full = ns ? tag + "/" + name : name;
   return { tag: name, full, listKey: ns ? entryKey(date, tag) : date, href: entryHash(date, full) };
 }
-/* the alert when a name is already registered under the list key: the
-   first slot says which of the three lists this is */
 export function takenText(listKey: string, tag: string): string {
   const cut = listKey.indexOf("/");
   const head = cut === -1 ? listKey : listKey.slice(0, cut);
@@ -33,14 +31,11 @@ export const bearing = (cache: Record<string, string>, key: string): boolean => 
 export function subTreeHasContent(keys: string[], cache: Record<string, string>, listKey: string): boolean {
   return childrenOf(keys, listKey).some((s) => { const k = entryKey(listKey, s); return bearing(cache, k) || subTreeHasContent(keys, cache, k); });
 }
-/* deepest first (pin: subEntries.test › the blank subtree lists every
-   descendant, deepest first) */
 export function blankSubTree(keys: string[], listKey: string): string[] {
   const out: string[] = [];
   for (const s of childrenOf(keys, listKey)) { const k = entryKey(listKey, s); out.push(...blankSubTree(keys, k)); out.push(k); }
   return out;
 }
-/* the button wording per namespace: a page hosts and is a sub-entry both */
 export interface SubButtons { create: string; createTitle: string; canCreate: boolean; canEdit: boolean; renameTitle: string; deleteTitle: string }
 export function subButtons(date: string, tag: string | null): SubButtons {
   const ns = nsOf(date);
@@ -64,17 +59,12 @@ export function renamePrompt(date: string, tag: string, shownLabel: string): str
 export function deleteConfirm(date: string, tag: string, shown: string): string {
   return nsOf(date) ? "Delete the " + entryNoun(date, tag) + ' "' + shown + '"?' : 'Delete the entry "' + shown + '" for this day?';
 }
-/* a root on today, a sub-page on its immediate parent, a day's tagged entry
-   on the day (pin: subEntries.test › a delete lands on the day, the parent,
-   or today) */
 export function deleteLanding(date: string, tag: string): { date: string; tag: string | null } {
   const ns = nsOf(date);
   if (!ns) return { date, tag: null };
   const pp = pageParts(tag);
   return pp.sub ? { date, tag: pp.parent } : { date: todayKey(), tag: null };
 }
-/* the host whose links point at a sub-entry: the day, or a sub-page's
-   parent; a top-level page has none */
 export function hostKey(date: string, tag: string): string | null {
   const ns = nsOf(date);
   if (!ns) return date;
