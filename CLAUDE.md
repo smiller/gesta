@@ -94,6 +94,10 @@ here NOW, and what is not yet:
   run that returns in the foreground reports none, and it is read from
   the session's `subagents/agent-*.jsonl` transcript (the last message's
   input + cache_creation + cache_read + output tokens), never estimated.
+  UNTIL FIVE ROUNDS ARE COUNTED (from 2026-09-29), each review's findings
+  about comments are also counted by class into the table "Was it worth
+  it — the measure owed" in docs/plans/2026-09-28-chore-comment-standard-
+  plan.md: the measure of whether the comment checker and audit paid.
   No cheap reviewer tier: in the running app it cost 750k–985k tokens a
   round against 101k–154k for the medium pass, which found more
   (MEASURED there 2026-09-01). A

@@ -406,3 +406,7 @@ judged real and fixed in one commit:
   layer's remove and move; (9) the last-written skip trusts this tab over
   another window's write; (10) `wheelTo` swallows its timeout, against
   the steps' rule.
+- (1) and (2) FIXED 2026-09-28 in f352e3f, found again through the flaky
+  Helium verdict (the comment-standard plan's record): scroll anchoring is
+  off while a place is held, and any scroll the code did not make lets the
+  hold go. Eight remain.

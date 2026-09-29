@@ -566,3 +566,44 @@ pinned (a performance choice), 2 pinned with a neighbour.
   comments were rarer outside the chrome models than the sample of 30
   suggested. The whole day, from 1b15de3: 1,050 blocks → 787 (−25%),
   3,287 comment lines → 2,516 (−23%). The sweep: 0 and 0.
+
+## Was it worth it — the measure owed
+
+ASKED by the reader the morning after (2026-09-29). The day's answer was
+partly: the checker and the held-place fix clearly (a real 27px misplace,
+a 40%-flaky verdict), the cuts doubtfully — length was never the fault,
+wrong claims were. The real test is whether reviews stop finding comment
+faults, so it is COUNTED, per review round, until five rounds have run.
+
+- WHAT IS COUNTED, per round, the findings about a comment, by class:
+  (a) asserting another module's mechanism — split into a shape the
+  checker can see (an identifier, a path, a role possessive) and one it
+  cannot (a module named by a plain-English role); (b) provenance; (c) a
+  pin's form or resolution; (d) a comment false about its own code.
+- THE BASELINE (READ, this plan's and the contents-folds plan's records),
+  the seven rounds of 2026-09-28 before the checker:
+
+  | round | (a) | other comment findings |
+  |---|---|---|
+  | folds review, 04435e9..d1deeb7 | 2 | — |
+  | folds confirmation, d1deeb7..7539133 | yes | — |
+  | folds third pass, 7539133..016c951 | yes | — |
+  | remembered place, 1a8a616..bdeb1c6 | 1 | — |
+  | remembered place fifth pass, bdeb1c6..cb1b26c | 0 | none |
+  | the switch, a31427a..054af51 | 0 | (c) 2 unpinned, (b) 3 dated (tools/) |
+  | its confirmation, 054af51..972dc9d | 1 | — |
+
+  Class (a) in 5 of 7 rounds. After the checker: the held-place review
+  (f352e3f's) found (c) 1 — a pin mid-comment — and no (a) or (b).
+- THE VERDICT RULE, proposed: over the next five rounds, class (a) in at
+  most one round and the checker earned the day; in three or more, the
+  plain-English blind spot dominates and the review prompt needs a line
+  of its own for the class. Recorded here with each round's cost.
+
+| round | range | (a) seen / unseen | (b) | (c) | (d) |
+|---|---|---|---|---|---|
+| 1 | | | | | |
+| 2 | | | | | |
+| 3 | | | | | |
+| 4 | | | | | |
+| 5 | | | | | |
