@@ -1,14 +1,6 @@
-/* The editing surface's stylesheet, ported 2026-09-07 from
-   ../writer/src/style.css — the page measure, the verse and prose blocks,
-   the gutter and the number — under the successor's own class names: the
-   ProseMirror root is `.page`, a paired row is `.vpair` (the schema
-   guarantees its two cells, so nothing asks `:has(> .vb)` any more), and
-   `.versepage` sits on the root rather than on body, set by the plugin
-   exactly where the document numbers its own lines. The measurements the
-   original's comments carry (the 4ch + 1em gutter, the 54px column, the
-   2.3 line-height that baselines the number) are kept as measured. The
-   520px track is the fallback for a detached parse; fit.ts writes the
-   measured --par-w and --vb-col on the root. */
+/* MEASURED: the 4ch + 1em gutter, the 54px column, the 2.3 line-height that
+   baselines the number. The 520px track is the fallback before the root
+   carries a fitted measure. */
 :root {
   --bg: #f4f7ec;
   --ink: #1a2418;
@@ -38,17 +30,13 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   caret-color: var(--accent);
 }
 .page p { margin: 0 0 1em; }
-/* a selection is painted in the flash, the current app's colour for a
-   found passage and a chosen one alike; left out of the port and seen by
-   hand 2026-09-07 as the browser's blue */
+/* a selection is painted in the flash, as a found passage is */
 .page ::selection { background: var(--flash); }
 /* THE LANDING MARK, ⌃⌘G's: the row in the flash; a leaf marker is a
    zero-width span, so a spread shadow gives the flash a body at the exact
    turn and moves no character */
 .page .landed { background: var(--flash); }
 .page .folio.landed { box-shadow: 0 0 0 3px var(--flash); }
-/* the current app's rule, left out of the 2026-09-07 port and noticed the
-   day the first pictures rendered: a photo fills its column, never more */
 .page img { max-width: 100%; height: auto; display: block; margin: 0.8em 0; border: 1px solid var(--rule); border-radius: 3px; }
 .page h1 { font-size: 1.5em; font-weight: 600; line-height: 1.3; margin: 1.3em 0 0.5em; }
 .page h2 { font-size: 1.2em; font-weight: 600; line-height: 1.35; margin: 1.2em 0 0.4em; }
@@ -61,32 +49,26 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   border-left: var(--quote-rule) solid var(--rule);
 }
 .page blockquote blockquote { margin: 0.6em 0; background: rgba(30, 51, 32, 0.05); }
-/* the last block in a quotation drops its bottom margin: a paragraph's
-   em sat inside the box's own padding, so every quotation had more room
-   below its text than above (asked 2026-09-12 by hand, over a nested
-   citation where the box is small enough to show it; the current app's
-   quotations carry the asymmetry). The note, card and reference rules
-   below outweigh the plain form by source order, so they are named
-   (MEASURED in headless Helium by the block's closing review: a note
-   ending a quotation kept 17px) */
+/* the last block in a quotation drops its bottom margin: a paragraph's em
+   sat inside the box's own padding, so every quotation had more room below
+   its text than above. The note, card and reference rules below outweigh
+   the plain form by source order, so they are named (MEASURED in headless
+   Helium: a note ending a quotation kept 17px) */
 .page blockquote > :last-child,
 .page blockquote > :is(div.note, div[class^="card-"], div.reference):last-child { margin-bottom: 0; }
 .page ul, .page ol { margin: 0 0 1em; padding-left: 1.6em; }
 .page li { margin: 0.15em 0; }
-/* the item's OWN LINE is its first paragraph, and takes no margin: the
-   current app set that line as bare text in the li, and only a
-   continuation block hanging under an item was a paragraph. Those keep
-   the gap on BOTH edges — .page p carries its margin only on the bottom,
+/* the item's OWN LINE is its first paragraph, and takes no margin: two
+   bullets sat a paragraph apart (pin: list › the gap between the two outer
+   items, and a line's height). A continuation block keeps the gap on BOTH
+   edges — .page p carries its margin only on the bottom,
    which never draws the space owed between the item's line and its first
    block, and top-only left the last block hard against the next item.
-   Adjacent margins collapse, so blocks stay one gap apart. Noticed by
-   hand 2026-09-07: two bullets sat a paragraph apart. */
+   Adjacent margins collapse, so blocks stay one gap apart. */
 .page li > p { margin: 1em 0; }
 .page li > p:first-child { margin: 0; }
 .page li::marker { color: var(--accent); }
-/* a link in the text is the accent, visited or not, the current app's one
-   rule; left out of the 2026-09-07 port and seen by hand 2026-09-09 as
-   the browser's blue and purple */
+/* visited or not */
 .page a { color: var(--accent); }
 .page pre { position: relative; font-family: var(--mono); font-size: 0.85em; background: var(--aside-bg); border: 1px solid var(--rule); border-radius: 3px; padding: 0.7em 1em; margin: 1em 0; white-space: pre-wrap; overflow-wrap: break-word; }
 /* the corner language label, off the block's data-lang; it yields its
@@ -119,8 +101,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 /* the Making Verity cards: the fence word is the class, the colour per
    class. A CARD'S TEXT IS READ AGAINST ITS FILL: it takes the ink whatever
    container it sits in — inside a note the muted grey vanished on
-   card-red. Left out of the 2026-09-07 port and noticed by hand the same
-   day. */
+   card-red. */
 .page div[class^="card-"] { border-radius: 4px; color: var(--ink); }
 .page div.card-bright-yellow { background: #f5c96e; }
 .page div.card-brighter-yellow { background: #e5d35f; }
@@ -133,26 +114,25 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page div.card-pink { background: #ed9892; }
 .page div.card-light-purple { background: #b39daf; }
 .page div.card-orange { background: #ffa500; }
-/* THE GRID (2026-09-22): cards --n across, the count from the node. A
+/* THE GRID: cards --n across, the count from the node. A
    grid that is the page's own child breaks out of the measure the way
    .page.fitted pulls the whole entry (the margins at the paired measure):
    to the window less the gutter, capped so a card never passes 650px, and
    centred — so a count of 1 or 2 on a wide window is a centred card or
    pair, not a card at the window's left edge. Below a 240px card the count
-   steps down. Measured on the mockup (docs/brainstorms/2026-09-22-card-
-   grid-mockup.html): a 1493px window drew 3 across at 1445px, a 760px
-   window 2 across at 712px (--client-w is main's measured layout width,
-   set on the root, since 100vw counts a classic scrollbar — the
-   2026-09-22 review); 0.8em was the first step at which the longest
+   steps down. MEASURED on the mockup: a 1493px window drew 3 across at
+   1445px, a 760px window 2 across at 712px (--client-w is the <main>
+   element's measured layout width, set on the root, since 100vw counts a
+   classic scrollbar); 0.8em was the first step at which the longest
    title sat on one line at 3 across. Inside a quote, a note or a card the
    grid keeps its container's width, or it would ride over the quote's
    rule. A card's own margin would not collapse inside a track. THE BOX
-   IS SIZED BY THE CARDS WHEN THEY ARE FEWER THAN THE COUNT (by hand
-   2026-09-22: two cards pasted under a count of three grew to 715px each,
-   filling the three-card box), read with :has — Helium is Chromium 150.
-   The cap cannot be the track's: a definite maximum makes auto-fit count
-   its repetitions by the maximum, and three cards at 1445px wrapped to
-   two tracks of 650px (MEASURED headless the same day). */
+   IS SIZED BY THE CARDS WHEN THEY ARE FEWER THAN THE COUNT (found by hand:
+   two cards pasted under a count of three grew to 715px each, filling the
+   three-card box), read with :has — Helium is Chromium 150. The cap cannot
+   be the track's: a definite maximum makes auto-fit count its repetitions
+   by the maximum, and three cards at 1445px wrapped to two tracks of 650px
+   (MEASURED headless) (pin: grid › a grid pasted) */
 .page div.grid {
   display: grid; gap: 1em;
   grid-template-columns: repeat(auto-fit, minmax(max(240px, calc((100% - (var(--n) - 1) * 1em) / var(--n))), 1fr));
@@ -174,16 +154,14 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 /* A ::: reference block is SETTINGS, not reading, so it draws as a quiet
    aside rather than as part of the text — and LABELLED, or a bare
    directive line on an author's entry reads as a stray note nobody can
-   place. Ported whole from the current app 2026-09-08, asked for by hand
-   over the monospace stand-in that was here. */
+   place. */
 .page div.reference { margin: 1.2em 0; padding: 0.4em 0 0.4em 0.9em; border-left: 3px solid var(--rule); color: var(--muted); font-size: 0.85em; white-space: pre-wrap; }
 .page div.reference::before { content: "Reference style"; display: block; font-variant: small-caps; letter-spacing: 0.06em; opacity: 0.75; }
 /* THE LEAF MARKER draws nothing in the text: its tick and its label are
    its own pseudo-elements, absolutely positioned, and both take the
    marker's STATIC position — the visual line it sits in — so nothing is
-   measured. The current app measured every marker into an overlay because
-   its ::after sat in the text flow and could move a line break; taken out
-   of the flow it moves nothing. The label is LEFT-ALIGNED in the gutter
+   measured: a marker in the text flow could move a line break; out of the
+   flow it moves nothing. The label is LEFT-ALIGNED in the gutter
    where a line number is right-aligned against the text, deliberately: a
    line number is essential and hugs its line, a folio is ambient and sits
    further out. A marker inside a note draws neither: a note is not the
@@ -218,10 +196,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 /* ---------- the verse block: a run of lines, paired or not ---------- */
 .page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }
 /* a verse block outside a book is quoted matter, and reads as such.
-   SCOPED ON BOTH CLASSES, as the current app's rule is: in a book the
-   verse or the paired prose IS the text, and the port scoped on versepage
-   alone, so a book's paired prose — Boethius 3pr1 — drew as a blockquote
-   (by hand 2026-09-12). A pipe-less prose block takes no dress anywhere. */
+   SCOPED ON BOTH CLASSES: in a book the verse or the paired prose IS the
+   text, and scoped on versepage alone a book's paired prose — Boethius
+   3pr1 — drew as a blockquote. A pipe-less prose block takes no dress
+   anywhere. */
 .page:not(.versepage):not(.prosepage) > .verse,
 .page:not(.versepage):not(.prosepage) > .prose:has(> .vpair) {
   background: var(--aside-bg);
@@ -229,11 +207,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   padding: 0.4em 1.1em;
 }
 /* the width and the pull are one number, and the whole entry takes the
-   block's measure: the entry pulls on the class the fit writes (fit.ts
-   writeFit), wherever the pair it measured stands — a quotation, a
+   block's measure, wherever the pair it measured stands — a quotation, a
    quotation in a quotation — and its blocks fill it. A block-level pull
-   beside it was a no-op when fitted and an overflow when not (the
-   2026-09-12 confirmation pass). */
+   beside it was a no-op when fitted and an overflow when not (pin:
+   reference paste › a paired citation pasted) */
 .page.fitted {
   margin-left: calc(50% - var(--par-w) / 2);
   margin-right: calc(50% - var(--par-w) / 2);
@@ -243,7 +220,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   grid-template-columns: minmax(0, var(--vb-col, 520px)) 1fr;
   gap: 0 2.4em;
 }
-/* THE MEASURING PASS (fit.ts): nothing is pulled and every track is
+/* THE MEASURING PASS: nothing is pulled and every track is
    intrinsic, so each cell reports the width it would take unwrapped and the
    entry's own box reports the prose measure it would have with no block on
    it. Applied and removed inside one synchronous call. */
@@ -263,15 +240,15 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .prose > .vgap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(26, 36, 24, 0.16); }
 /* rows in an inset box sit on equal halves at a narrower gap */
 .page :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: 1fr 1fr; gap: 0 1.6em; }
-/* A PAIRED CITATION: a quoted pair is fitted with the entry (the pull
-   above, the frame in fit.ts) and stands at the quoted text's edge with
-   a quoted paragraph's margins (by hand 2026-09-12: pulled, it stood
-   21px out of the box; as an inset box, equal halves wrapped its
-   English). A single-column quoted fence keeps a verse block's margins. */
+/* A PAIRED CITATION: a quoted pair is fitted with the entry and stands at
+   the quoted text's edge with a quoted paragraph's margins (found by hand:
+   pulled, it stood 21px out of the box; as an inset box, equal halves
+   wrapped its English). A single-column quoted fence keeps a verse block's
+   margins. */
 .page blockquote > :is(.verse, .prose):has(> .vpair) { margin: 0 0 1em; }
 /* and as the quotation's last block it drops that margin like any other:
-   the rule above outweighs the general one (by hand 2026-09-12, the
-   pair alone still sat high in its box) */
+   the rule above outweighs the general one (found by hand: the pair alone
+   still sat high in its box) */
 .page blockquote > :is(.verse, .prose):has(> .vpair):last-child { margin-bottom: 0; }
 
 /* ---------- the verse gutter ----------
@@ -293,9 +270,8 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page.versepage > p, .page.foliopage > p { padding-left: var(--ln-gutter); }
 .page.versepage > blockquote, .page.foliopage > blockquote { padding-left: calc(var(--ln-gutter) - var(--quote-rule)); }
 /* a code block's box starts where the paragraph's text does, its own
-   padding inside that, as the current app draws it on a plain page: the
-   whole box pays the gutter, not its text. A first cut padded the text
-   alone, the quotation's shape, and was refused by hand 2026-09-12 */
+   padding inside that: the whole box pays the gutter, not its text.
+   Padding the text alone, the quotation's shape, was refused by hand */
 .page.versepage > pre, .page.foliopage > pre { margin-left: var(--ln-gutter); }
 .page.versepage > :is(ul, ol), .page.foliopage > :is(ul, ol) { padding-left: calc(var(--ln-gutter) + 1.6em); }
 /* the prose block pays the folio gutter like every other top-level block:
@@ -318,14 +294,12 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   pointer-events: none;
 }
 .page.versepage .ln.shown::before { content: attr(data-line); }
-/* THE STANZA'S NUMBER (2026-09-27, the Faerie Queene): bold, ink, in a
-   column of its own left of the line numbers, beside the stanza's first
-   line, and drawn whatever the interval — "none" included — since it is
-   how a citation is followed. Variant D of the mockup, which was drawn
-   over this stylesheet; the column fits inside the gutter's reserve, so
-   no line moves. */
-/* a stanza inside a note, a quote or a card draws its number too
-   (2026-09-28: III.xii's 1590 stanzas stand in a note after the canto),
+/* THE STANZA'S NUMBER: bold, ink, in a column of its own left of the line
+   numbers, beside the stanza's first line, and drawn whatever the interval
+   — "none" included — since it is how a citation is followed. The column
+   fits inside the reserved number column, so no line moves. */
+/* a stanza inside a note, a quote or a card draws its number too — III.xii's
+   1590 stanzas stand in a note after the canto —
    in a narrow column of its own at the container's edge — there is no
    gutter there — in the container's own colour */
 .page :is(div.note, blockquote, div[class^="card-"]) .verse[data-stanza] {
@@ -364,12 +338,9 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   pointer-events: none;
 }
 .page.versepage .ln.stage { color: var(--muted); }
-/* the line ⌃⌘G landed on — the jump is phase 3's; the class is named now */
-.page .landed { background: var(--flash); }
 
-/* THE SOURCE VIEW: the markdown in a textarea sized to its text, set in
-   the current app's source face (body.mdview .page: mono, 0.85em, 1.8),
-   on the page's own ground with no box of its own */
+/* THE SOURCE VIEW: the markdown in a textarea sized to its text, on the
+   page's own ground with no box of its own */
 .source {
   display: block;
   width: 100%;
@@ -391,16 +362,15 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 
 
 /* ---------- a work's contents, folding under its headings ----------
-   (2026-09-28, the contents-folds plan; the look is the mockup's, drawn
-   over this stylesheet with the reader). A triangle in the margin before
+   A triangle in the margin before
    each `##` heading — only it toggles, the words stay editable — pointing
    down when the section is open; a closed heading shows its count beside
    it and sits closer to the next. */
 .page h2.fold { position: relative; }
-/* the triangle takes a box 1.2em square, so a mouse can hit it — drawn as
-   a border trick it was a box ten pixels wide, and the shared Helium step's
-   click missed it (2026-09-28); the shape is a mask, so it takes the
-   page's colours in either theme */
+/* the triangle takes a box 1.2em square, so a mouse can hit it: drawn as a
+   border trick it was a box ten pixels wide, and a click missed it (pin:
+   contents folds › the triangle clicked). The shape is a mask, so it takes
+   the page's colours in either theme. */
 .page h2.fold::before {
   content: "";
   position: absolute;

@@ -1,14 +1,5 @@
-/* Markdown as you type: the transforms the current app runs off its input
-   listener (../writer/src/js/08-markdown-as-you-type.js, whose comments
-   hold the cases), as ProseMirror input rules over the document. Inline
-   marks close on their closing marker; block markers open a block on the
-   space after them at a line's start; `--` between spaces is an em-dash;
-   straight quotes curl, and a second quote steps the curl; a bare URL
-   links on the space or the Enter after it; `[title](url)` links on its
-   `)`; a ``` line and Enter opens a code block. The ::: family has no
-   as-you-type arm here, as it has none in the current app. Backspace
-   straight after any rule undoes it (prosemirror-inputrules' own
-   undoInputRule) — the successor's spelling of "type the quote again". */
+/* The ::: family has no as-you-type arm. Backspace straight after any rule
+   undoes it (pin: typing.test › Backspace straight after a rule undoes it) */
 import { InputRule, inputRules, undoInputRule } from "prosemirror-inputrules";
 import { type Command, type EditorState, type Transaction, Selection, Plugin } from "prosemirror-state";
 import { findWrapping, canJoin } from "prosemirror-transform";
@@ -20,9 +11,8 @@ import { trimUrl, URL_START } from "../model/parse.ts";
 const N = schema.nodes, M = schema.marks;
 type Handler = (state: EditorState, match: RegExpMatchArray, start: number, end: number) => Transaction | null;
 
-/* the parents a block marker may open a block in: the document, a quote, a
-   card, a note — not an item's paragraph and never a row, as the current
-   app refuses a caret nested deeper than a top-level block */
+/* not an item's paragraph and never a row (pin: typing.test › a marker
+   inside an item, a row or mid-line is text) */
 const BLOCK_HOSTS = new Set([N.doc, N.blockquote, N.card, N.note]);
 function inParagraph(state: EditorState): boolean {
   const $f = state.selection.$from;
@@ -39,8 +29,8 @@ const prose = (s: EditorState): boolean => !inCode(s);
 
 /* ---------- block markers ---------- */
 /* A MARKER OPENS THE CARET'S LINE, not only its paragraph: a quote's lines
-   are one paragraph with breaks, and the README's rule is that a `-` or a
-   `#` on a fresh line inside a quote starts a list or a heading within it.
+   are one paragraph with breaks, and a `-` or a `#` on a fresh line inside
+   a quote starts a list or a heading within it.
    The text before the caret shows a break as ￼, so the rule is anchored at
    the start or at one, and a match behind a break first peels that line
    into its own paragraph. The handler then works on the peeled paragraph. */
@@ -110,11 +100,11 @@ const code = markRule("(`)([^`]+?)\\2$", M.code);
 
 /* ---------- dashes and quotes ---------- */
 const dash = guarded(/(\s)--(\s)$/, prose, (state, m, start, end) => state.tr.insertText(m[1] + "—" + m[2], start, end));
-/* the smart-quote form of a straight quote given the character before it
-   (md.mjs, curlChar): a quote opens after the start, whitespace, an opening
+/* a quote opens after the start, whitespace, an opening
    bracket, a dash or another opening quote, and closes otherwise — so an
    in-word apostrophe is a right single quote. A leaf node before it (the
-   ￼ a folio or a picture reads as) opens. */
+   ￼ a folio or a picture reads as) opens (pin: typing.test › quotes curl as
+   typed, and a second quote steps the curl) */
 export function curlChar(q: string, prev: string): string {
   const open = !prev || /[\s([{—–“‘\-￼]/.test(prev);
   return q === "\"" ? (open ? "“" : "”") : (open ? "‘" : "’");
@@ -194,9 +184,9 @@ export const fenceEnter: Command = (state, dispatch) => {
 };
 /* a URL finished with Enter links first, then Enter does what it does
    THERE: the handler links and returns false, so the key goes on down the
-   chain to the list, quote, grid or base Enter. Until 2026-09-27 it was a
-   command that called the base Enter itself, and a bare URL ending a list
-   item split the paragraph inside the item instead of making the next one. */
+   chain. A command calling the base Enter itself split a bare URL's list
+   item inside the item instead of making the next one (pin: editor.test ›
+   Enter after a bare URL links it, then does what Enter does there) */
 export const autolinkEnter = new Plugin({
   props: {
     handleKeyDown(view, event) {

@@ -1,7 +1,5 @@
-/* The highlighting drawn: inline decorations over every code block's
-   text from the tokenizer, recomputed when the document changes — never
-   in the document, never stored. The corner language label and the
-   colours are the stylesheet's, off the block's data-lang. */
+/* never in the document, never stored (pin: codeHighlight.test › a fenced
+   block with a language gets a decoration per token) */
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { Node } from "prosemirror-model";

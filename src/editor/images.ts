@@ -1,8 +1,6 @@
-/* The image node view: a relative src — a sidecar's name, as the markdown
-   wrote it — is resolved through the store to a blob URL, asynchronously,
-   so the document keeps the path and the screen gets the picture. A data:
-   or http(s) src is left to the browser. Decided 2026-09-07 with the
-   store's rule that a picture is its bytes under its export path. */
+/* a relative src is resolved through the store to a blob URL, so the
+   document keeps the path and the screen gets the picture (pin: picture › a
+   picture pasted) */
 import type { NodeViewConstructor } from "prosemirror-view";
 import { RELATIVE_SRC } from "../store/names.ts";
 
@@ -25,11 +23,9 @@ export function imageView(resolve: ImageResolver): NodeViewConstructor {
   };
 }
 
-/* A PASTED PICTURE'S BYTES: decoded, downscaled to 1400 across, drawn on
-   white (the jpeg fallback has no alpha) and recompressed as webp at 0.85
-   — the current app's placeImage, re-asked of bytes for the store rather
-   than a data URL for the text. Rejects when the engine cannot decode the
-   file, which the caller says out loud: a lost picture is not a whisper. */
+/* decoded, downscaled to 1400 across, drawn on white (the jpeg fallback has
+   no alpha) and recompressed as webp at 0.85. Rejects when the engine cannot
+   decode the file. */
 export const PASTE_MAX = 1400;
 export function pastedPictureBytes(file: File): Promise<Uint8Array> {
   return createImageBitmap(file).then((bmp) => {
@@ -45,7 +41,6 @@ export function pastedPictureBytes(file: File): Promise<Uint8Array> {
     return new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("no webp"))), "image/webp", 0.85));
   }).then((blob) => blob.arrayBuffer()).then((buf) => new Uint8Array(buf));
 }
-/* the image file among the clipboard's items, or null */
 export function pastedImageFile(data: DataTransfer | null): File | null {
   if (!data) return null;
   for (const item of Array.from(data.items)) if (item.type && item.type.indexOf("image/") === 0) return item.getAsFile();

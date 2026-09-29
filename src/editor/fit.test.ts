@@ -1,5 +1,4 @@
-// The fit's arithmetic, pinned with the numbers the current app's comments
-// measured (2026-08-09, 03-the-fitted-measure.js). The measuring pass and
+// The fit's arithmetic, pinned with measured numbers. The measuring pass and
 // the scheduling are DOM and are looked at in Helium.
 import { test, expect } from "vitest";
 import { fitWidth, sideBox, MIN_COL, FIT_SLACK } from "./fit.ts";

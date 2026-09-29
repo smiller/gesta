@@ -1,14 +1,11 @@
-/* The gestures under a verse or prose fence. THE ROW IS THE UNIT a poem or a
-   parallel edition is written in, so that is what every key here makes,
-   joins or leaves — never a cell, never the block. Ported in intent from
-   ../writer/src/js/11b-the-fence-family.js (fenceBlockEnter, newRowIn) and
-   tests.html's "Enter on a verse page"; what the model adds is the pair
-   made and unmade in place: a typed pipe splits a line at the caret, and
-   Backspace at the translation's start joins the two cells back.
-   THESE RUN BEFORE THE BASE KEYMAP, and inside a row they always claim the
-   key: prosemirror-commands' liftEmptyBlock would split the fence at an
-   empty row, and joinBackward would join the block's first line into the
-   heading above it (both have inline content, so the join is legal). */
+/* THE ROW IS THE UNIT a poem or a parallel edition is written in, so that is
+   what every key here makes, joins or leaves — never a cell, never the
+   block. THESE RUN BEFORE THE BASE KEYMAP, and inside a row they always
+   claim the key: prosemirror-commands' liftEmptyBlock would split the fence
+   at an empty row, and joinBackward would join the block's first line into
+   the heading above it (both have inline content, so the join is legal)
+   (pin: rowKeys.test › Backspace at a row's start: a gap above comes out, a
+   line above joins, another shape only takes the caret) */
 import { type Command, TextSelection, NodeSelection, Selection, type Transaction } from "prosemirror-state";
 import { chainCommands } from "prosemirror-commands";
 import { Fragment, type Node, type ResolvedPos } from "prosemirror-model";
@@ -26,8 +23,9 @@ interface Row {
   cell: -1 | 0 | 1;
 }
 
-/* the row a position is in, or null: a paragraph in a note inside the
-   fence is the note's, not the row's */
+/* a paragraph in a note inside the fence is the note's, not the row's (pin:
+   rowKeys.test › Enter is not the row's outside a fence, or in a note's
+   paragraph inside one) */
 function rowOf($pos: ResolvedPos): Row | null {
   for (let d = $pos.depth; d > 0; d--) {
     const n = $pos.node(d);
@@ -63,7 +61,8 @@ function unpair(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
 
 export const enterInRow: Command = (state, dispatch) => {
   const sel = state.selection;
-  /* a stanza gap selected: a line after it */
+  /* a stanza gap selected: a line after it (pin: rowKeys.test › Enter with a
+     stanza gap selected) */
   if (sel instanceof NodeSelection && sel.node.type === N.gap) {
     if (dispatch) dispatch(caretAt(state.tr.insert(sel.to, N.line.create()), sel.to + 1));
     return true;
@@ -80,7 +79,8 @@ export const enterInRow: Command = (state, dispatch) => {
     if (idx === block.childCount - 1) {
       /* THE WAY OUT: an empty last row is taken away and the caret steps
          into a paragraph below the block, so a block ending an entry is
-         never a trap */
+         never a trap (pin: rowKeys.test › Enter at the end of the last line
+         makes an empty line) */
       const after = tr.mapping.map($c.after(r.blockDepth));
       tr.delete(start, end);
       const at = after - (end - start);
@@ -89,15 +89,17 @@ export const enterInRow: Command = (state, dispatch) => {
       return true;
     }
     /* mid-block an empty row twice over is a stanza break, then a fresh
-       row of the same shape — as two Enters in prose make a blank line */
+       row of the same shape (pin: rowKeys.test › Enter on an empty line
+       mid-block makes a stanza break) */
     const fresh = r.row.type === N.pair ? pair(null, Fragment.empty, Fragment.empty) : N.line.create();
     tr.replaceWith(start, end, [N.gap.create(), fresh]);
     if (dispatch) dispatch(caretAt(tr, start + 2 + (r.cell < 0 ? 0 : 1)));
     return true;
   }
   if (r.cell < 0) {
-    /* a line splits where the caret is; made at its end, the new line is a
-       plain one, so a ⟨line⟩ row hands its declaration only to its own tail */
+    /* made at its end, the new line is a plain one, so a ⟨line⟩ row hands its
+       declaration only to its own tail (pin: rowKeys.test › a ⟨line⟩ row
+       keeps its kind on a mid-split) */
     const atEnd = $c.parentOffset === r.row.content.size;
     tr.split($c.pos, 1, atEnd ? [{ type: N.line }] : undefined);
     if (dispatch) dispatch(caretAt(tr, $c.pos + 2));
@@ -105,7 +107,8 @@ export const enterInRow: Command = (state, dispatch) => {
   }
   /* a pair splits the caret's CELL: the text after the caret goes to a new
      row beneath, the other cell stays whole with the row above. At a cell's
-     end nothing moves and the new row is empty, the caret in its original. */
+     end nothing moves and the new row is empty, the caret in its original
+     (pin: rowKeys.test › Enter in a paired row splits the caret's cell) */
   const k = $c.parentOffset, a = r.row.child(0).content, b = r.row.child(1).content;
   const own = r.cell === 0 ? a : b;
   const moved = own.size > k;
@@ -128,7 +131,8 @@ export const enterInRow: Command = (state, dispatch) => {
    full-width row, and which a pipe-less block would take as two empty
    cells and go wide). A note left with nothing in it goes with the exit.
    Elsewhere a note's exit is the base keymap's lift, which lands a
-   paragraph after the note. */
+   paragraph after the note (pin: rowKeys.test › Enter inside a nested note
+   is the note's) */
 export const exitNoteRow: Command = (state, dispatch) => {
   const sel = state.selection;
   if (!sel.empty) return false;
@@ -149,9 +153,9 @@ export const exitNoteRow: Command = (state, dispatch) => {
   return true;
 };
 
-/* a typed pipe in a line: the text after the caret becomes its translation.
-   In a cell a pipe is a pipe (the serializer escapes it), and in prose it
-   is not this command's. */
+/* the text after the caret becomes its translation. In a cell a pipe is a
+   pipe, and in prose it is not this command's (pin: rowKeys.test › a typed
+   pipe in a line) */
 export const pipeInLine: Command = (state, dispatch) => {
   const sel = state.selection;
   const r = rowOf(sel.$from);
@@ -206,8 +210,9 @@ export const deleteInRow: Command = (state, dispatch) => {
   return true;
 };
 
-/* Tab crosses the pipe: original to translation, Shift-Tab back. In a line
-   both are consumed, so the key never leaves the editor from inside a fence. */
+/* in a line both are consumed, so the key never leaves the editor from
+   inside a fence (pin: rowKeys.test › Tab moves from the original to its
+   translation and Shift-Tab back) */
 export const tabInRow: Command = (state, dispatch) => {
   const $c = state.selection.$from, r = rowOf($c);
   if (!r) return false;
@@ -221,9 +226,9 @@ export const shiftTabInRow: Command = (state, dispatch) => {
   return true;
 };
 
-/* THE ROW SAYS WHAT IT IS (grammar.ts, ROW_LINE_TOKEN): every row the
-   selection touches is declared a line, or — when every one of them
-   already is — returned to the convention. Over the selection rather than
+/* every row the selection touches is declared a line, or — when every one
+   of them already is — returned to the convention (pin: rowKeys.test › ⌃⌘I
+   declares the selection's rows lines). Over the selection rather than
    the caret's row alone because a song is several lines, and marking it
    is one gesture. Rows in the selection that are gaps or notes are passed
    over; outside a fence the command is not this editor's. */
@@ -247,8 +252,7 @@ export const toggleDeclaredLine: Command = (state, dispatch) => {
   return true;
 };
 
-/* ⌃⌘I, "italic, but a line" — chosen 2026-09-07. ⌃⌘N, bound here
-   for an hour that day, is reserved for "new" in the phase 3 chrome. */
+/* ⌃⌘I, "italic, but a line"; not ⌃⌘N, which is "new" */
 export const rowKeymap = keymap({
   "Ctrl-Mod-i": toggleDeclaredLine,
   Enter: chainCommands(enterInRow, exitNoteRow),

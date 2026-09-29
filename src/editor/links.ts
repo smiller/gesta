@@ -1,18 +1,13 @@
-/* A click on a link in the editor, ported 2026-09-07 from the current
-   app's 07c-link-clicks.js: a contenteditable places the caret on a click
-   and follows nothing, so the editor decides. The modifier wins for EVERY
-   link, internal ones included — ⌘-click is the one way to open the
-   journal side by side in a second tab; a plain click on an internal link
-   (a bare fragment, or a full URL that points at this document) routes in
-   this tab, and a link can point at the entry it is printed on, which is
-   the router's cell to answer; a plain click on an external link keeps
-   placing the caret. The decision is pure; the handler applies it.
-   THE MODIFIED PRESS IS TAKEN ON MOUSEDOWN: a ⌘-mousedown is ProseMirror's
-   own "select this node" gesture, and a handler on click ran after it
-   had selected the whole paragraph and raised the format bar — FOUND by
-   hand 2026-09-09 on an external link; the headless step had asked only
-   whether a new tab appeared. The plain click stays a click, so a drag
-   that starts on a link routes nothing. */
+/* The modifier wins for EVERY link, internal ones included: ⌘-click is the
+   one way to open the journal side by side in a second tab (pin: links.test
+   › the modifier opens EVERY link in a new tab). A plain click on an
+   external link keeps placing the caret (pin: links.test › a plain click on
+   an external link does nothing). THE MODIFIED PRESS IS TAKEN ON MOUSEDOWN:
+   a ⌘-mousedown is ProseMirror's own "select this node" gesture, and a
+   handler on click ran after it had selected the whole paragraph and raised
+   the format bar (pin: launch, panels, the corner, links › ⌘-click on an
+   external link). The plain click stays a click, so a drag that starts on
+   a link routes nothing. */
 import type { EditorView } from "prosemirror-view";
 import { internalHash } from "../store/nav.ts";
 

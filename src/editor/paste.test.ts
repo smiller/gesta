@@ -14,8 +14,8 @@ const paste = (s: EditorState, text: string): string => serializeMarkdown(s.appl
 
 test("several lines render as the markdown they spell; a single line stays as typed", () => {
   expect(paste(at("start here", "here"), "\n\n# Title\n\n- one\n- two")).toBe("start here\n\n# Title\n\n- one\n- two");
-  /* the characters as typed: what the serializer then makes of a literal
-     asterisk is the serializer's question, not the paste's */
+  /* the characters as typed: what a literal asterisk becomes on save is not
+     the paste's question */
   const one = at("start here", "start");
   expect(one.apply(one.tr.replaceSelection(pasteSlice(" 2*3*4 and [x](y)", one.selection.$from))).doc.textContent).toBe("start 2*3*4 and [x](y) here");
 });
@@ -28,9 +28,9 @@ test("a single quote or heading line renders; a single entry link becomes a link
   expect(paste(at("see  now", "see "), "[Ideas](#2026-09-07/Ideas)")).toBe("see [Ideas](#2026-09-07/Ideas) now");
 });
 test("inside a list item, a cell or a verse row the lines arrive as breaks; in a code block every character is literal", () => {
-  /* plain lines: a continuation line that READS as a block is the
-     serializer's to make a block of (its own decision, phase 0) */
-  expect(paste(at("- item", "item"), " one\nplain two")).toBe("- item one\n    plain two");   /* the serializer's continuation indent */
+  /* plain lines: a continuation line that READS as a block is left for the
+     save to make a block of */
+  expect(paste(at("- item", "item"), " one\nplain two")).toBe("- item one\n    plain two");   /* the continuation indent as written */
   const row = at("::: verse\nline\n:::", "line");
   expect(row.apply(row.tr.replaceSelection(pasteSlice(" a\nb", row.selection.$from))).doc.firstChild!.firstChild!.childCount).toBe(3);
   expect(paste(at("```\ncode\n```", "code"), "\n# not a heading\n- nor a list")).toBe("```\ncode\n# not a heading\n- nor a list\n```");
@@ -75,8 +75,7 @@ test("inside a reference block every character is literal, as in a code block: t
   expect(paste(s, "one\n\ntwo\n")).toBe("::: reference\nfrom one\n\ntwo\nthe last title\n:::\n\npara");
 });
 
-/* THE SLICE THE CLIPBOARD SEES (2026-09-22, the review's finding): a
-   selection's content() keeps its parents, so a drag across two cards of
+/* THE SLICE THE CLIPBOARD SEES: a selection's content() keeps its parents, so a drag across two cards of
    a grid slices to the GRID, open three deep — never to open cards */
 function across(md: string, from: string, to: string): EditorState {
   const doc = parseMarkdown(md);
@@ -100,7 +99,7 @@ test("a plain card is not a row: a drag from a card into the prose after it, or 
   const twoCards = closeRowSlice(across("::: card-red\nalpha beta\n:::\n\n::: card-pink\ngamma delta\n:::", "beta", "gamma").selection.content());
   expect(pasteAt(at("one two three", "two"), twoCards)).toBe("one twobeta\n\n::: card-pink\ngamma three\n:::");
 });
-test("a drag that stays inside ONE card of a grid is prose, not the grid (the confirmation pass, 2026-09-22)", () => {
+test("a drag that stays inside ONE card of a grid is prose, not the grid", () => {
   const inOne = closeRowSlice(across("::: grid 2\n::: card-red\nalpha beta\n\ngamma delta\n:::\n\n::: card-pink\nother\n:::\n:::", "beta", "gamma").selection.content());
   expect(inOne.openStart).toBe(3);
   expect(pasteAt(at("one two three", "two"), inOne)).toBe("one twobeta\n\ngamma three");

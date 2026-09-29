@@ -1,14 +1,11 @@
-/* A WORK'S CONTENTS FOLD under its `##` headings (2026-09-28, the
-   contents-folds plan, its look settled over a mockup with the reader):
-   the page closes to its headings, a closed one showing its count. Drawn
-   as decorations — the text is never touched, the source view shows it
-   whole. The section is the heading and everything under it down to the
-   next heading of level 1 or 2; content before the first `##` never
-   folds. Only the triangle in the margin toggles, so a heading's words
-   stay editable. A section is FOLLOWED BY POSITION while the page is
-   edited and REMEMBERED BY ITS HEADING'S TEXT between visits, twins
-   numbered: keyed by live text alone, typing in an open heading closed it
-   and twin headings toggled together (the review at high, 2026-09-28). */
+/* Drawn as decorations: the text is never touched. Only the triangle in the
+   margin toggles, so a heading's words stay editable. A section is FOLLOWED
+   BY POSITION while the page is edited and REMEMBERED BY ITS HEADING'S TEXT
+   between visits, twins numbered: keyed by live text alone, typing in an
+   open heading closed it and twin headings toggled together (pin:
+   folds.test › typing in an open heading keeps its section open) (pin:
+   folds.test › twin headings are two sections, toggled apart and remembered
+   apart) */
 import { Plugin, PluginKey, TextSelection, type Command, type EditorState, type Transaction } from "prosemirror-state";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
@@ -16,15 +13,13 @@ import { schema } from "../model/schema.ts";
 import { linkRuns } from "../store/links.ts";
 
 export interface FoldSection {
-  /* the heading's position, and its body's range after it */
   heading: number;
   from: number;
   to: number;
-  /* what a visit remembers: the heading's text, a twin's with its number
-     after a U+0001 (a visible "Notes (2)" collided with a heading of that
-     text: the confirmation pass at high) */
+  /* a twin's number after a U+0001: a visible "Notes (2)" collided with a
+     heading of that text (pin: folds.test › a twin's key never collides with
+     a heading that reads like one) */
   key: string;
-  /* `N entries`, the links under the heading */
   count: string;
 }
 export function foldSections(doc: Node): FoldSection[] {
@@ -45,10 +40,10 @@ export function foldSections(doc: Node): FoldSection[] {
   });
   return out;
 }
-/* the section whose BODY holds pos, or null. The boundary right after the
-   heading is not the body: a heading selected whole (Escape's parent
-   selection) ends there, and read as inside it reopened a section as it
-   closed (the third pass at high) */
+/* the boundary right after the heading is not the body: a heading selected
+   whole (Escape's parent selection) ends there, and read as inside it
+   reopened a section as it closed (pin: folds.test › a heading selected
+   whole (Escape) is not inside its section) */
 export function sectionAt(sections: FoldSection[], pos: number): FoldSection | null {
   return sections.find((s) => pos > s.from && pos < s.to) || null;
 }
@@ -67,14 +62,13 @@ export function foldDecorations(doc: Node, sections: FoldSection[], openHeadings
   return DecorationSet.create(doc, decos);
 }
 
-/* the plugin's state: the sections, recomputed only when the text changes
-   (the review: per keystroke and per caret move they walked every link),
-   and the open sections as HEADING POSITIONS, mapped through each edit */
+/* the sections recomputed only when the text changes: per keystroke and per
+   caret move they walked every link. The open sections as HEADING
+   POSITIONS, mapped through each edit */
 export interface FoldState { on: boolean; open: Set<number>; sections: FoldSection[]; decorations: DecorationSet }
 export const foldsKey = new PluginKey<FoldState>("folds");
 type FoldMeta = { toggle: number } | { set: { on: boolean; open: string[] } };
 const keysOf = (sections: FoldSection[], open: Set<number>): string[] => sections.filter((s) => open.has(s.heading)).map((s) => s.key);
-/* the open sections' keys, what a visit keeps */
 export function openKeys(state: EditorState): string[] {
   const st = foldsKey.getState(state);
   return st ? keysOf(st.sections, st.open) : [];
@@ -85,10 +79,11 @@ function draw(doc: Node, on: boolean, open: Set<number>, sections: FoldSection[]
 const positionsOf = (sections: FoldSection[], keys: string[]): Set<number> =>
   new Set(sections.filter((s) => keys.includes(s.key)).map((s) => s.heading));
 
-/* a toggle; CLOSING a section a selection reaches into, from either end,
-   collapses it onto the heading's end, where it can be seen (the review:
-   a caret stayed in the hidden blocks, and the confirmation pass: so did a
-   range anchored there, and the next keys edited what no one could see) */
+/* CLOSING a section a selection reaches into, from either end, collapses it
+   onto the heading's end, where it can be seen: a caret, then a range
+   anchored there, stayed in the hidden blocks, and the next keys edited
+   what no one could see (pin: folds.test › closing a section collapses a
+   selection that reaches into it from anywhere) */
 function toggleAt(state: EditorState, s: FoldSection, dispatch?: (tr: Transaction) => void): boolean {
   const st = foldsKey.getState(state);
   if (!st) return false;
@@ -105,8 +100,8 @@ export function toggleFold(key: string): Command {
     return s ? toggleAt(state, s, dispatch) : false;
   };
 }
-/* open the section a position is in: ⌃⌘G's landing stayed hidden inside
-   a closed section (the review at high) */
+/* a landing stayed hidden inside a closed section (pin: folds.test ›
+   openFoldAt opens the section a position is in) */
 export function openFoldAt(pos: number): Command {
   return (state, dispatch) => {
     const st = foldsKey.getState(state);
@@ -129,9 +124,9 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
   return new Plugin<FoldState>({
     key: foldsKey,
     state: {
-      /* OFF, nothing is computed: the plugin sits on every entry, and
-         the sections walked every link per keystroke on pages that never
-         fold (the confirmation pass at high) */
+      /* OFF, nothing is computed: the plugin sits on every entry, and the
+         sections walked every link per keystroke on pages that never fold
+         (pin: folds.test › with folding off an edit computes no sections) */
       init: (_config, state) => {
         const sections = opts.on ? foldSections(state.doc) : [];
         return draw(state.doc, opts.on, positionsOf(sections, opts.open), sections);
@@ -144,8 +139,9 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
           const heads = new Set(sections.map((s) => s.heading));
           /* a heading SURVIVES an edit while its mapped start stays before
              its mapped end; a deleted one collapses, and mapped by its start
-             alone it landed on the next heading and opened it (the
-             confirmation pass at high) */
+             alone it landed on the next heading and opened it (pin:
+             folds.test › deleting an open section does not open the one after
+             it) */
           const moved = new Map<number, number>();
           for (const s of prev.sections) {
             const a = tr.mapping.map(s.heading, 1), b = tr.mapping.map(s.from, -1);
@@ -163,9 +159,10 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
           open = positionsOf(sections, meta.set.open);
         }
         else if (meta && "toggle" in meta) { open = new Set(open); if (open.has(meta.toggle)) open.delete(meta.toggle); else open.add(meta.toggle); }
-        /* a caret or selection inside a closed section opens it: a search
-           result's highlight, a link's payload, a caret moved there, an
-           edit that carried it in, or folding switched on over it */
+        /* a caret or selection inside a closed section opens it (pin:
+           folds.test › a selection landing inside a closed section opens it)
+           (pin: folds.test › switching folding on opens the section holding
+           the selection) */
         if (on && (tr.selectionSet || tr.docChanged || meta)) {
           const s = sectionAt(sections, next.selection.head);
           if (s && !open.has(s.heading)) { open = new Set(open); open.add(s.heading); }
@@ -193,8 +190,8 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
     },
     view: () => ({
       update(view, prevState) {
-        /* apply returns the same state object when nothing changed: no
-           keys are built on a keystroke that folds nothing (the third pass) */
+        /* apply returns the same state object when nothing changed: no keys
+           are built on a keystroke that folds nothing */
         if (foldsKey.getState(prevState) === foldsKey.getState(view.state)) return;
         const a = openKeys(prevState), b = openKeys(view.state);
         if (foldsKey.getState(view.state)!.on && a.join("\u0000") !== b.join("\u0000")) opts.onChange?.(b);

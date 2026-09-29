@@ -63,7 +63,7 @@ describe("the refusals", () => {
   });
 });
 
-// The Faerie Queene (2026-09-27): in a work citing by stanza the Line box
+// The Faerie Queene: in a work citing by stanza the Line box
 // takes `stanza.line` — `2` is stanza 2, `2.1` its first line. A stanza
 // number names one place, so there is no cycle.
 describe("stanza.line", () => {
@@ -90,8 +90,7 @@ describe("stanza.line", () => {
   });
 });
 
-// The review of 2026-09-28: the stanza ask was taken on every entry under
-// a work citing by stanza, so a plain verse page there — the commendatory
+// The stanza ask was taken on every entry under a work citing by stanza, so a plain verse page there — the commendatory
 // verses — could not be reached by line. The page decides, not the key.
 describe("hasStanzas", () => {
   it("a page holding a top-level stanza asks by stanza; plain verse, a stanza only inside a note, or prose does not", () => {

@@ -1,9 +1,6 @@
-/* Enter in a code block: a newline, as the base keymap types it — except
-   on an EMPTY LAST LINE, where the second Enter is the way out, to a
-   paragraph below the block (the README's rule for a quote, a code
-   block, a card, a verse block and a note; the others fall to the base
-   keymap's lift or the row keys, the code block alone needed an arm —
-   found by hand 2026-09-07). The empty line is taken with it. */
+/* on an EMPTY LAST LINE the second Enter is the way out, to a paragraph
+   below the block, the empty line taken with it (pin: codeKeys.test › Enter
+   on an empty last line steps out of the code block into a paragraph) */
 import type { Command } from "prosemirror-state";
 import { TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";

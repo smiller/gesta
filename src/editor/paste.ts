@@ -1,16 +1,11 @@
-/* What pasted text becomes, and what copied text says. Ported 2026-09-07
-   from 13c-paste-and-source-copy.js, re-asked of the document model:
-   several pasted lines render as the markdown they spell — a copied card,
-   heading, list or table arrives as that block; a single line stays as
-   typed unless it is an unambiguous quote or heading line, or a pasted
-   entry link; inside a list item, a table cell or a verse row the lines
-   arrive as line breaks; inside a code block every character is literal.
-   The in-app copy needs no flavour of its own: the editor's HTML carries
-   its structure, and this parser is asked only of PLAIN text — a foreign
-   page's HTML parses through the schema's own rules. The copied text is
-   the selection's markdown, so a list or a heading pasted into another
-   entry arrives as itself. The source view is a textarea and pastes
-   literally by nature. */
+/* Several pasted lines render as the markdown they spell; a single line
+   stays as typed unless it is an unambiguous quote or heading line, or an
+   entry link (pin: paste.test › several lines render as the markdown they
+   spell; a single line stays as typed); inside a list item, a table cell or
+   a verse row the lines arrive as line breaks (pin: paste.test › inside a
+   list item, a cell or a verse row the lines arrive as breaks). Only PLAIN
+   text is asked of this parser: the editor's own HTML carries its
+   structure. */
 import { Fragment, Slice, type ResolvedPos, type Node } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
@@ -19,7 +14,6 @@ import { serializeMarkdown } from "../model/serialize.ts";
 
 const N = schema.nodes;
 const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
-/* heading levels are uncapped here (decision 5) */
 const ONE_HEADING_LINE = /^#{1,6} \S/;
 const ONE_QUOTE_LINE = /^>+ \S/;
 const INTERNAL_LINK_RE = /^\[[^\]]+\]\(#[^)\s]+\)$/;
@@ -28,19 +22,16 @@ function inAny($ctx: ResolvedPos, types: Set<unknown>): boolean {
   for (let d = $ctx.depth; d >= 0; d--) if (types.has($ctx.node(d).type)) return true;
   return false;
 }
-/* the lines as text and breaks, one paragraph's worth of inline content */
 function flat(lines: string[]): Slice {
   const nodes: Node[] = [];
   lines.forEach((l, i) => { if (i) nodes.push(N.hard_break.create()); if (l) nodes.push(schema.text(l)); });
   return new Slice(Fragment.from(nodes), 0, 0);
 }
-/* the blocks a block-shaped text paste spells, or null where the text
-   is not block-shaped or the host takes it flat */
 export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
   const body = raw.replace(LINE_BREAK_RE, "\n").replace(/\n$/, "");
   /* every code-shaped textblock is literal — the reference block too: a
-     split there cut the one directive the citation reads into two
-     (FOUND by the 2026-09-08 review) */
+     split there cut the one directive into two (pin: paste.test › inside a
+     reference block every character is literal) */
   if ($context.parent.type.spec.code || inAny($context, FLAT_HOSTS)) return null;
   const lines = body.split("\n");
   if (!(lines.length > 1 || ONE_HEADING_LINE.test(body) || ONE_QUOTE_LINE.test(body))) return null;
@@ -53,12 +44,11 @@ export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
     return blocks;
   } catch { return null; }
 }
-/* the blocks SET DOWN, never fitted: the editor's replace opens a block
-   slice up to fit the paragraph it lands in and peels the first cell's
-   text into it (measured 2026-09-08: a pasted verse fence lost its
-   first original line to the paragraph above). An empty paragraph is
-   replaced; a caret mid-paragraph splits it and the blocks go between;
-   the caret lands after them. */
+/* SET DOWN, never fitted: a replace opens a block slice up to fit the
+   paragraph it lands in and peels the first cell's text into it (MEASURED:
+   a pasted verse fence lost its first original line to the paragraph
+   above) (pin: paste.test › a verse fence pasted as text is set down
+   whole) */
 export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   const tr = state.tr.deleteSelection();
   const $at = tr.selection.$from;
@@ -93,7 +83,7 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   }
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
-/* the copied selection as markdown: inline content is a paragraph's */
+/* inline content is a paragraph's (pin: paste.test › copyMd) */
 export function copyMd(slice: Slice): string {
   let content = slice.content;
   if (content.childCount && content.firstChild!.isInline) content = Fragment.from(N.paragraph.create(null, content));
@@ -103,25 +93,22 @@ export function copyMd(slice: Slice): string {
   try { return serializeMarkdown(N.doc.create(null, blocks)); } catch { return slice.content.textBetween(0, slice.content.size, "\n"); }
 }
 /* A DRAG FROM INSIDE ONE ROW, CELL OR ITEM INTO THE NEXT COPIES AS THE
-   BLOCK THOSE PARTS CAME FROM — the README's rule, the current app's
-   rebuildParts: a slice open inside a verse or prose row, a list or a
-   table is CLOSED, so the paste lands the block whole rather than
-   merging the first cell's text into the paragraph it lands in
-   (measured 2026-09-08: the first line of a copied canto pasted as a
-   paragraph before the fence). A slice open inside ordinary prose keeps
-   its openness, which is what lets a copied phrase land inline. */
-/* the blocks, AND their rows: a selection inside one block slices to
-   its rows with the block itself left out (measured: a drag across two
-   pairs slices to pairs, open two deep), and rows pasted as rows are
-   wrapped back into their block by the schema. The GRID joined the set
-   2026-09-22: MEASURED under node (the review of that day), a selection's
-   content() keeps its parents, so a drag across two cards slices to the
-   grid itself, open three deep — a first cut had put the CARD here, which
-   never fired for a grid and changed how a loose card pasted (found by
-   the same review, pinned in the tests). The card is not a row. */
+   BLOCK THOSE PARTS CAME FROM: a slice open inside a verse or prose row, a
+   list or a table is CLOSED, so the paste lands the block whole (MEASURED:
+   the first line of a copied canto pasted as a paragraph before the
+   fence). A slice open inside ordinary prose keeps its openness, which is
+   what lets a copied phrase land inline (pin: paste.test › a slice open
+   inside a verse row is closed) */
+/* the blocks, AND their rows: a selection inside one block slices to its
+   rows with the block left out (MEASURED: a drag across two pairs slices to
+   pairs, open two deep). A drag across two cards slices to the GRID itself,
+   open three deep (MEASURED: a selection's content() keeps its parents)
+   (pin: paste.test › a drag across two cards of a grid is closed at the
+   grid). The card is not a row (pin: paste.test › a plain card is not a
+   row) */
 const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row, N.grid]);
-/* a grid is a row block only when the drag CROSSES a card: a slice of one
-   card with two paragraphs is prose (the confirmation pass, 2026-09-22) */
+/* a grid is a row block only when the drag CROSSES a card (pin: paste.test ›
+   a drag that stays inside ONE card of a grid is prose, not the grid) */
 const rowish = (n: Node): boolean => ROW_BLOCKS.has(n.type) && !(n.type === N.grid && n.childCount < 2);
 export function closeRowSlice(slice: Slice): Slice {
   const first = slice.content.firstChild, last = slice.content.lastChild;

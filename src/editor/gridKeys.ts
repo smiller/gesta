@@ -1,11 +1,10 @@
-/* The gestures at a grid's edges (2026-09-22). A grid is isolating, so the
-   base keymap lifts and joins nothing ACROSS its edge; what it would still
-   do inside — join two cards under Backspace at a card's start or Delete at
-   its end — is refused here with a whisper, because a grid's shape is the
-   source view's. The one way out: Enter on the empty last line of the LAST
-   card places a paragraph after the grid, there being no gap cursor; on any
-   other card's empty last line the command declines and the base keymap
-   adds a line, since the lift it would try finds no target past the grid. */
+/* Joining two cards under Backspace at a card's start or Delete at its end
+   is refused with a whisper: a grid's shape is the source view's (pin:
+   gridKeys.test › Backspace at a card's start and Delete at its end inside
+   a grid are the refused edges). The one way out: Enter on the empty last
+   line of the LAST card places a paragraph after the grid, there being no
+   gap cursor; on any other card the command declines and a line is added
+   (pin: gridKeys.test › the way out is the LAST card's) */
 import { type Command, type EditorState, type Plugin, TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import type { ResolvedPos } from "prosemirror-model";

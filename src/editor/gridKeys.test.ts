@@ -1,7 +1,5 @@
-// The gestures at a grid's edges (2026-09-22): the one way out, the two
-// refusals, and the base keymap's own behaviour inside a grid pinned as
-// it was found under node — the shape the plan's "keys, measured not
-// built" asked for. A key's reach in Helium is the hand's reading.
+// The base keymap's own behaviour inside a grid is pinned as it was found
+// under node; a key's reach in Helium is the hand's reading.
 import { test, expect } from "vitest";
 import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { baseKeymap, splitBlock } from "prosemirror-commands";

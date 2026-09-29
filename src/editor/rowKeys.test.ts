@@ -1,8 +1,7 @@
 // The gestures under a verse or prose fence, as commands over an editor
 // state: Enter, Backspace, Delete, Tab and the typed pipe. Each case is
 // markdown in, a caret placed by a needle, the command, and the markdown and
-// caret out. The behaviour list is tests.html's "Enter on a verse page"
-// (2026-09-07) plus what the pipe and the pair's Backspace add.
+// caret out.
 import { test, expect } from "vitest";
 import { EditorState, TextSelection, NodeSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
@@ -159,7 +158,7 @@ test("Tab moves from the original to its translation and Shift-Tab back; in a li
   expect(refuses(tabInRow, at("plain", "pl"))).toBe(true);
 });
 
-test("⌃⌘N declares the selection's rows lines, and returns them to the convention when all are", () => {
+test("⌃⌘I declares the selection's rows lines, and returns them to the convention when all are", () => {
   const one = run(toggleDeclaredLine, at("::: verse\n*Exit*\n*Flower o’ the broom,*\n:::", "Flower"));
   expect(md(one)).toBe("::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n:::");
   expect(md(run(toggleDeclaredLine, one))).toBe("::: verse\n*Exit*\n*Flower o’ the broom,*\n:::");

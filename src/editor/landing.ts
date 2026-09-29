@@ -1,9 +1,7 @@
-/* THE LANDING MARK: the row or the leaf marker ⌃⌘G landed on, held as a
-   position in a plugin and drawn as a node decoration — never in the
-   document, never stored, gone when the bar closes. The position maps
-   through every edit, so the mark survives typing and a deleted row
-   simply has no mark; the bar's cycle asks where the mark stands rather
-   than carrying an index of its own (the current app's lesson, 2026-08). */
+/* a POSITION, never an index: it maps through every edit, so the mark
+   survives typing and a deleted row simply has no mark (pin: landing.test ›
+   the mark is set by meta, maps through an edit above it, and goes with a
+   deleted row) */
 import { Plugin, PluginKey, type EditorState } from "prosemirror-state";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 

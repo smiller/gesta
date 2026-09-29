@@ -1,7 +1,6 @@
 // The gestures in a list, as commands over an editor state, in the row
 // tests' shape: markdown in, a caret placed by a needle, the command, the
-// markdown and caret out. The behaviour list is the README's "Enter" and
-// "Tab" sections for lists (2026-09-07).
+// markdown and caret out.
 import { test, expect } from "vitest";
 import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";

@@ -1,11 +1,9 @@
-/* The jump: the nth occurrence of a query in the open document, selected
-   and scrolled to — non-destructive, never in the saved text. Ported
-   2026-09-07 from highlightMatch (23-search.js), re-asked of positions:
-   the document is flattened the SAME way the index flattened the stored
-   text and the query parsed the same way, so nth lines up. honorMarkers
-   distinguishes a live search-box jump (an edge "_" is a boundary marker)
-   from a deep-link replay (the passage is LITERAL text, and an old link's
-   nth, counted under substring rules, still lands). */
+/* the document flattened and the query parsed as the index's were, so nth
+   lines up (pin: highlight.test › what selectionLink minted, findHit lands
+   on). honorMarkers tells a live search-box jump (an edge "_" is a boundary
+   marker) from a deep-link replay (the passage is LITERAL text, and an old
+   link's nth, counted under substring rules, still lands) (pin:
+   highlight.test › a deep link replays literally) */
 import type { Node } from "prosemirror-model";
 import { TextSelection } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
@@ -20,13 +18,10 @@ export function findHit(doc: Node, query: string, nth: number, honorMarkers: boo
   if (nth >= hits.length) return null;
   return flatRange(flat, hits[nth], p.needle.length);
 }
-/* the passage selected and the editor focused. NO SCROLL HERE: the
-   selection's box is not yet where it will be — the fit's first pass
-   (fit.ts) re-wraps a paired entry a frame after the mount — so the
-   caller brings the selection into view a frame later, centred as ⌃⌘G's
-   landing is (main.ts). Until 2026-09-12 a `scrollIntoView()` here ran
-   before the focus, and a reference link into Paradise Lost 1.254 landed
-   at the top of the book; editor.ts's dispatch has the rule. */
+/* NO SCROLL HERE: the selection's box is not yet where it will be a frame
+   after the mount, and a scroll here landed a reference link into Paradise
+   Lost 1.254 at the top of the book (pin: reference paste › a link deep
+   into a long entry followed) */
 export function highlightIn(view: EditorView, query: string, nth: number, honorMarkers: boolean): boolean {
   const hit = findHit(view.state.doc, query, nth, honorMarkers);
   if (!hit) return false;

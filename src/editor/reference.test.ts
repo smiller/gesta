@@ -51,18 +51,18 @@ test("a paired block copies as its own fence inside the quotation, numbered from
 });
 
 test("a paired citation referenced again: the quoted block walked whole, the number from its own start", () => {
-  /* the 2026-09-12 review: the units walk numbers top-level blocks alone, and the loose-prose arm cut one cell out of the pair, which the serializer refused */
+  /* a paired citation inside a quotation: a cut through one cell of the pair could not be written */
   const doc = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::");
   const [a, b] = span(doc, "alph", "alph");
   expect(passageMd(doc, a, b + 4)).toBe("> ::: verse 13\n> alpha beta | one two\n> :::");
   const [c, d] = span(doc, "gamma", "four");
   expect(passageMd(doc, c, d)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::");
 });
-test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pair, one quote level, a note kept, the block's own count", () => {
+test("no cut through a pair, one quote level, a note kept, the block's own count", () => {
   const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
-  /* one end outside the quoted pair: whole rows, no throw, and the quotation holding only that end STAYS, as the source had it (asked 2026-09-12) */
+  /* one end outside the quoted pair: whole rows, no throw, and the quotation holding only that end STAYS, as the source had it */
   let [a, b] = span(q, "four", "After");
-  expect(passageMd(q, a, b)).toBe(">> ::: verse 14\n>> gamma delta | three four\n>> :::\n> After");   /* numbered from the row the cut opens on (the block's closing review) */
+  expect(passageMd(q, a, b)).toBe(">> ::: verse 14\n>> gamma delta | three four\n>> :::\n> After");   /* numbered from the row the cut opens on */
   [a, b] = span(q, "Horace", "alph");
   expect(passageMd(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
   /* a note inside a quoted verse block: its text, as before */
@@ -90,7 +90,7 @@ test("the shapes the 2026-09-12 confirmation pass measured: no cut through a pai
   [a, b] = span(top, "one", "After");
   expect(passageMd(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> After");
 });
-test("the shapes the second confirmation pass measured: a block inside a note, the label's top level, an end resting on a row, blanks, depth, the count before", () => {
+test("a block inside a note, the label's top level, an end resting on a row, blanks, depth, the count before", () => {
   /* a verse block inside a note inside a verse block is walked whole (Satires 1.10's shape) */
   const satires = parseMarkdown("::: verse\nLucili, quam sis mendosus, teste Catone,\n::: note\n::: verse\nquam sis mendosus, teste Catone,\ndefensore tuo, pervincam\n:::\n:::\n:::");
   let [a, b] = span(satires, "defensore", "pervincam");
@@ -110,7 +110,7 @@ test("the shapes the second confirmation pass measured: a block inside a note, t
   /* a quote body's blank line stays one blank once lifted */
   const blanks = parseMarkdown("> The mind\n>\n> ::: verse 13\n> a | b\n> :::\n> \n> After.");
   [a, b] = span(blanks, "mind", "After");
-  expect(passageMd(blanks, a, b)).toBe("> mind\n> ::: verse 13\n> a | b\n> :::\n> After");   /* no blank at a fence's edge: it painted an empty line (asked 2026-09-12) */
+  expect(passageMd(blanks, a, b)).toBe("> mind\n> ::: verse 13\n> a | b\n> :::\n> After");   /* no blank at a fence's edge: it painted an empty line */
   /* two quotations deep, or inside a note: one level out */
   const deep = parseMarkdown("> > ::: verse 13\n> > alpha beta | one two\n> > gamma delta | three four\n> > :::\n> >\n> > After the quote.");
   [a, b] = span(deep, "four", "After");
@@ -126,7 +126,7 @@ test("the shapes the second confirmation pass measured: a block inside a note, t
   [a, b] = span(last, "exit", "exit");
   expect(passageMd(last, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
 });
-test("the shapes the block's closing review measured: the passage as a quotation node the serializer spells", () => {
+test("the passage is a quotation node, serialized", () => {
   /* a stanza gap beside a note inside the fence is a row, kept through the cut arm */
   const gapped = parseMarkdown("Intro.\n\n::: verse\na | b\n\n::: note\nfoot\n:::\n\nc | d\n:::");
   let [a, b] = span(gapped, "Intro", "d");
@@ -147,7 +147,7 @@ test("the shapes the block's closing review measured: the passage as a quotation
   [a, b] = span(top, "three", "After");
   expect(passageMd(top, a, b)).toBe("> ::: verse 14\n> gamma | three\n> :::\n> After");
 });
-test("the shapes the block's last pass measured: the number on the right block at every depth, the nested box trimmed, an edge gap off, a note's paragraph kept", () => {
+test("the number on the right block at every depth, the nested box trimmed, an edge gap off, a note's paragraph kept", () => {
   /* the count lands on the block the cut opens in, not on the next block once an ink-less remainder is dropped */
   const two = parseMarkdown("::: verse 13\nalpha | one\n:::\n\n::: verse 40\nbeta | two\n:::\n\nAfter.");
   let [a, b] = span(two, "one", "After");
@@ -235,7 +235,7 @@ test("citationAnchorHTML: the label's italics as em, everything else escaped, th
 });
 
 
-test("a passage in a grid's card cites as it does in a plain card: the grid is a container the trim looks through (2026-09-22)", () => {
+test("a passage in a grid's card cites as it does in a plain card: the grid is a container the trim looks through", () => {
   const plain = parseMarkdown("::: card-red\nsome words here\n:::");
   const grid = parseMarkdown("::: grid\n::: card-red\nsome words here\n:::\n\n::: card-pink\nother words\n:::\n:::");
   const [a, b] = span(plain, "words");
@@ -245,7 +245,7 @@ test("a passage in a grid's card cites as it does in a plain card: the grid is a
   expect(passageMd(grid, e, f)).toBe("> ::: card-red\n> words here\n> :::\n> ::: card-pink\n> other\n> :::");
 });
 
-// The Faerie Queene (2026-09-27): under the work's `roman book and canto`
+// The Faerie Queene: under the work's `roman book and canto`
 // directive a citation names the stanza — I.i.2.1 — and a selection may run
 // across stanzas, which a plain verse fence refuses.
 const fqJournal = journalOf({

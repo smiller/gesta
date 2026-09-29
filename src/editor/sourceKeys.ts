@@ -1,7 +1,5 @@
-/* Tab and Shift-Tab in the source view, over a text and a selection,
-   pure. Ported 2026-09-07 from the code-block and source-view arm of
-   13e-enter-and-tab-dispatch.js: a collapsed Tab inserts two spaces;
-   with text selected both work on WHOLE LINES — every line the
+/* A collapsed Tab inserts two spaces; with text selected both work on
+   WHOLE LINES — every line the
    selection touches shifts together and stays selected so the press can
    repeat; an end at a line's start does not touch that line (the shape a
    mouse produces); an empty line gains nothing, since spaces on a blank
@@ -9,7 +7,10 @@
    to two spaces back off — small, and honest about being small — and
    with none to take is LEFT ALONE rather than swallowed: there the press
    is plausibly "get me out of here", and focus moving is a real answer.
-   A selection that moved nothing says why. */
+   A selection that moved nothing says why (pin: sourceKeys.test › a
+   collapsed Tab inserts two spaces) (pin: sourceKeys.test › a selection
+   shifts every line it touches) (pin: sourceKeys.test › an empty line gains
+   nothing) */
 export interface Edit { value: string; start: number; end: number }
 export type TabResult = Edit | { refuse: string } | null;
 export function sourceTab(value: string, start: number, end: number, shift: boolean): TabResult {

@@ -1,7 +1,3 @@
-/* The editor: a ProseMirror view over the document model, with the row node
-   views, the line-number decoration, the row gestures (rowKeys.ts) and the
-   list gestures (listKeys.ts) ahead of the base keymap, and markdown as
-   you type (typing.ts). */
 import { EditorState, type Transaction, type Command } from "prosemirror-state";
 import { EditorView, type NodeViewConstructor } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
@@ -31,18 +27,16 @@ import { folds, type FoldOptions } from "./folds.ts";
 export interface EditorOptions {
   interval: number;
   onChange?: (view: EditorView) => void;
-  /* the selection moved, by a gesture or a command: what places the bar */
+  /* the selection moved, by a gesture or a command */
   onSelect?: (view: EditorView) => void;
-  /* node views beyond the rows' — the image view the session supplies */
   nodeViews?: Record<string, NodeViewConstructor>;
   /* a plain click on an internal link: the fragment to route to */
   onRoute?: (frag: string) => void;
   /* a swallowed press that changed nothing SAYS why */
   onRefuse?: (why: string) => void;
-  /* a picture on the clipboard: the session files it and places it */
+  /* a picture on the clipboard, to be filed and placed */
   onPasteFile?: (file: File) => void;
-  /* a work's contents page folds under its headings (folds.ts): whether,
-     the sections open, and who keeps them */
+  /* whether a contents page folds, the sections open, and who keeps them */
   folds?: FoldOptions;
 }
 
@@ -81,11 +75,10 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
 export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions): EditorView {
   const base = DOMSerializer.fromSchema(schema);
   const view: EditorView = new EditorView(mount, {
-    /* ⌘C's HTML flavour with the look swept inline (richCopy.ts): parked
-       under the surface for the length of the sweep, since a detached
-       node's computed style is empty. Without it a card copied by
-       selection arrives in Mail as uncoloured lines, as the hover copy
-       did until 2026-09-08. */
+    /* ⌘C's HTML flavour with the look swept inline, parked under the surface
+       for the length of the sweep, since a detached node's computed style is
+       empty. Without it a card copied by selection arrived in Mail as
+       uncoloured lines (pin: card copy › a card ⌘C'd) */
     clipboardSerializer: {
       serializeFragment: (frag, options) => {
         const out = base.serializeFragment(frag, options);
@@ -105,17 +98,14 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     state: editorState(doc, opts.interval, opts.onRefuse, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     attributes: { class: "page", spellcheck: "false" },
-    /* the typed pipe, before the character lands: in a line it makes the
-       pair; anywhere else it is the character */
+    /* the typed pipe, before the character lands (pin: rowKeys.test › a typed
+       pipe in a line) */
     handleTextInput: (view, _from, _to, text) => text === "|" && pipeInLine(view.state, view.dispatch),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
-    /* plain text pasted renders the markdown it spells; the copied text is
-       the selection's markdown (paste.ts) */
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);
       if (file) { opts.onPasteFile?.(file); return true; }
-      /* plain text spelling blocks is SET DOWN, not fitted (paste.ts);
-         text carrying the editor's own HTML keeps the editor's paste */
+      /* text carrying the editor's own HTML keeps the editor's paste */
       const data = event.clipboardData;
       if (!data || data.types.includes("text/html")) return false;
       const blocks = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
@@ -127,18 +117,17 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     clipboardTextSerializer: (slice) => copyMd(closeRowSlice(slice)),
     transformCopied: (slice) => closeRowSlice(slice),
     dispatchTransaction(this: EditorView, tr: Transaction) {
-      /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to
-         the DOM only while the editor has focus, and skips its
+      /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the
+         DOM only while the editor has focus, and skips its
          scroll-to-selection when the DOM selection is not in the editor
          (READ in prosemirror-view 1.42.3, selectionToDOM and
-         scrollToSelection) — so a `scrollIntoView()` dispatched at an
-         unfocused view, a freshly mounted one above all, never scrolled:
-         a reference link into Paradise Lost 1.254 landed at the top of
-         the book (found by hand 2026-09-12). Taken here, once, rather
-         than at each site — the review of the same day found the rule
-         applied by hand at five and the next site missing it. Gated on
-         the scroll: an unconditional focus would take it from a panel's
-         input on a background dispatch, a refresh after a rename. */
+         scrollToSelection) — so a `scrollIntoView()` at an unfocused view,
+         a freshly mounted one above all, never scrolled: a reference link
+         into Paradise Lost 1.254 landed at the top of the book (pin:
+         reference paste › a link deep into a long entry followed). Taken
+         here, once, rather than at each site: the rule applied by hand at
+         five sites missed the sixth. Gated on the scroll: an unconditional
+         focus would take it from a panel's input on a background dispatch. */
       if (tr.scrolledIntoView && !this.hasFocus()) this.focus();
       this.updateState(this.state.apply(tr));
       if (tr.docChanged) opts.onChange?.(this);

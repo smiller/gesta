@@ -1,7 +1,3 @@
-// The unit walk, re-asked of the document: what is a line, what is
-// apparatus, what a note, a gap, a prose pair or a declared row counts for.
-// The cases are ../writer/src/js/numbering.test.mjs's (2026-09-07), minus the
-// DOM marking they also pinned — here the marking is a decoration.
 import { test, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
@@ -36,7 +32,7 @@ test("a ⟨line⟩ row is a line whatever it is set in", () => {
   expect(kinds("::: verse\n⟨line⟩\n:::")).toBe("");
 });
 
-// a stanza has no apparatus (2026-09-27): a row set wholly in italics is an
+// a stanza has no apparatus: a row set wholly in italics is an
 // inscription or a song in the Faerie Queene, never a stage direction, and
 // nine such rows in Books I–VI must each keep their line number
 test("every inked row of a stanza is a line, whatever it is set in", () => {

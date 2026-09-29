@@ -1,8 +1,7 @@
-/* A link placed in the body at the caret — a just-minted sub-entry's, or
-   a bookmark's — after the selection, never replacing it, and NOTHING IS
-   APPENDED AT THE END (decided 2026-09-03 and 2026-09-05 in the current
-   app). The rendered view refuses a code block, where a link is bare
-   text, and an existing link, where a link in a link re-parses split. */
+/* after the selection, never replacing it, and NOTHING IS APPENDED AT THE
+   END. A code block refuses, where a link is bare text, and an existing
+   link, where a link in a link re-parses split (pin: insertLink.test ›
+   linkRefusal: a code block and a link refuse) */
 import type { EditorState } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { schema } from "../model/schema.ts";

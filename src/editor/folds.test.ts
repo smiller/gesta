@@ -1,6 +1,3 @@
-// A work's contents folding under its `##` headings (2026-09-28, the
-// contents-folds plan): the sections, their counts, the decorations, and
-// the plugin state that opens a section the selection lands in.
 import { test, expect } from "vitest";
 import { EditorState, TextSelection, NodeSelection } from "prosemirror-state";
 import type { Decoration } from "prosemirror-view";
@@ -69,9 +66,8 @@ test("a selection landing inside a closed section opens it (a search result, a h
   expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight"]);
 });
 
-// The review of 2026-09-28 (one /code-review at high, three of its findings
-// also medium's): a section is followed by POSITION while the page is
-// edited and remembered by its heading's text, twins numbered.
+// A section is followed by POSITION while the page is edited and remembered
+// by its heading's text, twins numbered.
 const at = (d: typeof doc, text: string, offset = 0): number => {
   let pos = -1;
   d.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.includes(text)) pos = p + n.text!.indexOf(text) + offset; return pos < 0; });
@@ -122,7 +118,6 @@ test("openFoldAt opens the section a position is in (⌃⌘G's landing), and doe
   expect(openFoldAt(3)(s)).toBe(false);
 });
 
-// The confirmation pass at high, 2026-09-28.
 test("a twin's key never collides with a heading that reads like one", () => {
   const d = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)\n\n## Notes (2)\n\n- [c](#c)");
   const keys = foldSections(d).map((x) => x.key);
@@ -155,7 +150,6 @@ test("with folding off an edit computes no sections; switching on computes them"
   expect(foldsKey.getState(s)!.sections.length).toBe(3);
 });
 
-// The third pass at high, 2026-09-28.
 test("a heading selected whole (Escape) is not inside its section: the triangle closes it and it stays closed", () => {
   let s = stateWith({ on: true, open: ["Dedications"] });
   const secs = foldSections(s.doc);

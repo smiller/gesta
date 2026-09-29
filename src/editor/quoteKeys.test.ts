@@ -14,8 +14,8 @@ const run = (cmd: Command, s: EditorState): EditorState => { let n = s; if (!cmd
 const refuses = (cmd: Command, s: EditorState): boolean => !cmd(s);
 const md = (s: EditorState): string => serializeMarkdown(s.doc);
 
-/* the serializer's own spellings: a nested quote as ">>", a quote's
-   blocks with no blank quote line between; the round trip is what holds */
+/* the written spellings: a nested quote as ">>", a quote's blocks with no
+   blank quote line between; the round trip is what holds */
 const roundTrips = (s: EditorState): boolean => parseMarkdown(md(s)).eq(s.doc);
 test("Tab pushes the run one level deeper; Shift-Tab lifts it back; the other run stays", () => {
   const s = run(tabInQuote, at("> first\n>\n> second", "second"));

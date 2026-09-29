@@ -1,9 +1,6 @@
-/* The fitted measure: AN ENTRY TAKES THE MEASURE ITS WIDEST PAIRED LINE
-   NEEDS. Ported 2026-09-07 from ../writer/src/js/03-the-fitted-measure.js,
-   whose comments hold every measurement behind the numbers here; what is
-   kept is the rule, split in two — the arithmetic (fitWidth, pure, pinned
-   in fit.test.ts) and the measuring pass with its scheduling (the plugin
-   view). ONE COLUMN EDGE PER ENTRY, written as two custom properties on the
+/* AN ENTRY TAKES THE MEASURE ITS WIDEST PAIRED LINE NEEDS (pin: fit.test ›
+   an entry takes the measure its widest paired line needs). ONE COLUMN EDGE
+   PER ENTRY, written as two custom properties on the
    editor root, which is outside the document: nothing can carry it into a
    save. THE MEASUREMENT IS ONE WRITE, THEN EVERY READ: the fitting class
    goes on, the floor and every cell are read against it, and it comes off
@@ -13,13 +10,14 @@ import type { EditorView } from "prosemirror-view";
 
 /* px. The narrowest original the fit will ask for — a caret target rather
    than a reading measure — so a block whose translations are typed before
-   its originals is not laid out on a 1px track. */
+   its originals is not laid out on a 1px track (pin: fit.test › the
+   original is never measured below a column a caret can land in) */
 export const MIN_COL = 48;
 /* px per column: a track laid out at the exact measured width still wrapped
    on the sub-pixel a rect reports */
 export const FIT_SLACK = 1;
 export const CAP = 1285;
-/* main's own padding plus a classic scrollbar: 100vw counts the scrollbar,
+/* the <main> element's own padding plus a classic scrollbar: 100vw counts the scrollbar,
    documentElement.clientWidth does not */
 export const WINDOW_MARGIN = 64;
 
@@ -39,10 +37,12 @@ export interface Fit { width: number; col: number | null }
 /* the entry's width and its original column from one measurement. A grow
    (the typing side) may only widen: a line being written widens the entry
    so it never wraps under the caret, while narrowing waits for the settle,
-   so a deletion cannot yank the column in mid-keystroke. */
+   so a deletion cannot yank the column in mid-keystroke (pin: fit.test › a
+   grow only widens) */
 export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit | null {
   /* an entry the layout cannot place measures 0 at every level; the last
-     good answer is left standing */
+     good answer is left standing (pin: fit.test › a settle narrows again, and
+     an entry the layout cannot place is no answer) */
   if (!m.floor) return null;
   /* ceil each column, then add; the original never below a caret's column */
   const c1 = Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK;
@@ -55,7 +55,8 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
   let col = c1;
   /* past the cap the two give way in proportion, and the original takes no
      more than two thirds however lopsided the proportion — one over-wide
-     line (a URL) must not set the split for every row */
+     line (a URL) must not set the split for every row (pin: fit.test › past
+     the cap the two give way in proportion) */
   if (c1 + c2 > room) col = Math.min(Math.round(room * c1 / (c1 + c2)), Math.round(room * 2 / 3));
   /* the remembered column, and what this room affords: never less than the
      root carries, never more than the room holds — and the room holds more
@@ -72,8 +73,8 @@ export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderL
 }
 /* ---------- the DOM side ---------- */
 
-/* NOT a quotation: a paired citation is fitted with the entry (tried as
-   an inset box 2026-09-12 — equal halves wrapped its English column) */
+/* NOT a quotation: a paired citation is fitted with the entry (tried as an
+   inset box, equal halves wrapped its English column) */
 const INSET = "div.note, div[class^=\"card-\"]";
 
 /* every paired block the width rule governs for one form: a descendant
@@ -94,10 +95,9 @@ function readFit(host: HTMLElement): Fit | null {
   const col = parseFloat(host.style.getPropertyValue("--vb-col"));
   return { width: w, col: col || null };
 }
-/* the answer as ONE class beside the two properties: `fitted` is what
-   the stylesheet pulls the entry on, so the containers a pair may stand
-   in are not enumerated there as well (the 2026-09-12 review: a pair two
-   quotes deep was measured and never widened) */
+/* the answer as ONE class beside the two properties, so the containers a
+   pair may stand in are never enumerated: enumerated, a pair two quotes
+   deep was measured and never widened */
 function writeFit(host: HTMLElement, fit: Fit | null): void {
   host.classList.toggle("fitted", !!fit);
   if (!fit) { host.style.removeProperty("--par-w"); host.style.removeProperty("--vb-col"); return; }
@@ -110,9 +110,9 @@ export function fitCap(): number { return Math.min(CAP, window.innerWidth - WIND
 /* the measuring pass. The bracket is the invariant: one throw between the
    class going on and coming off would leave every entry with no side
    margins and every paired block at max-content, with nothing on screen
-   naming the cause. And the reader's place is held across it: under the
+   naming the cause. And a reader's place is held across it: under the
    class rows un-wrap, the document collapses and the engine clamps
-   scrollTop — 22,313px of jump on a 400-row block, measured. */
+   scrollTop — MEASURED, 22,313px of jump on a 400-row block. */
 export function measure(host: HTMLElement): Measured | "prose" | null {
   const verse = pairedBlocksIn(host, "div.verse");
   if (!verse.length) return pairedBlocksIn(host, "div.prose").length ? "prose" : null;
@@ -128,7 +128,7 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
          gutter, so a four-digit number sits inside the fitted width; and
          a quoted block pays its quotation's padding and rule: the columns
          have the entry's measure less that box, and a citation's English
-         column wrapped by exactly it (by hand 2026-09-12) */
+         column wrapped by exactly it (found by hand) */
       let own = sideBox(getComputedStyle(b));
       for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
         if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
@@ -192,8 +192,6 @@ function caretRow(view: EditorView): HTMLElement | null {
   return row && row.closest(".page") === view.dom && !row.parentElement?.closest(INSET) ? row : null;
 }
 
-/* the settle's delay after typing stops — the current app settles at the
-   autosave, 500ms after a keystroke */
 const SETTLE_MS = 500;
 
 class FitView implements PluginView {
@@ -212,7 +210,8 @@ class FitView implements PluginView {
     /* THE GROW SIDE, gated on the caret being in a row the fit measures
        and on that row having spilled: a grow can only raise the width,
        only this row can raise it, and asking it is cheap where the pass
-       is not. Unfitted, there is nothing to compare and the pass must run. */
+       is not. Unfitted, there is nothing to compare and the pass must run
+       (pin: reference paste › typed into the quoted pair) */
     const row = caretRow(view);
     if (row && (!readFit(view.dom) || rowSpills(row))) this.schedule(true);
     clearTimeout(this.settle);

@@ -1,11 +1,3 @@
-/* Copying a reference: the selection half. Which rows the selection
-   covers, the line range they span, the leaf range they sit on, the
-   highlight payload the link carries, and the quoted passage. Ported
-   2026-09-07 from ../writer/src/js/24-copying-a-reference.js and the
-   leaf-range half of 13-folios.js, re-asked of positions in a ProseMirror
-   document in place of DOM ranges: "covers" is an overlap that holds ink,
-   and a passage is rows or a cut of the document serialized back to
-   markdown. The label itself is store/reference.ts's. */
 import { Fragment, type Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
@@ -16,8 +8,6 @@ import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 
 const N = schema.nodes;
-/* does [a, b] of the document hold ink: text that is not whitespace, or a
-   picture */
 export function inkBetween(doc: Node, a: number, b: number): boolean {
   if (b <= a) return false;
   let ink = false;
@@ -31,15 +21,13 @@ export function inkBetween(doc: Node, a: number, b: number): boolean {
   });
   return ink;
 }
-/* the units the selection covers — an overlap holding ink, so a drag
-   ending just past a row's edge does not pull that row in */
-/* every verse or prose block a reference may quote from, AT ANY DEPTH:
-   a citation inside a quotation is a block like any other, and so is a
-   verse block inside a note (Satires 1.10 opens one inside a note inside
-   its verse; stopped at the note, the 2026-09-12 second confirmation
-   pass measured its rows cut and fenced three deep). The first pass:
-   walked at the top level alone, a quoted pair fell to the cut arm and a
-   selection across two quoted fences was not refused. */
+/* an overlap holding ink, so a drag ending just past a row's edge does not
+   pull that row in (pin: reference.test › a block inside a note, the
+   label's top level, an end resting on a row) */
+/* AT ANY DEPTH: a citation inside a quotation is a block like any other,
+   and so is a verse block inside a note — Satires 1.10 opens one inside a
+   note inside its verse, and stopped at the note its rows came out cut and
+   fenced three deep (pin: reference.test › a block inside a note) */
 function rowBlocks(doc: Node, topOnly = false): { node: Node; pos: number }[] {
   const out: { node: Node; pos: number }[] = [];
   doc.descendants((n, pos) => {
@@ -58,14 +46,14 @@ export function coveredUnits(doc: Node, from: number, to: number, topOnly = fals
   }
   return out;
 }
-/* the line range, "" when no numbered unit is covered — a selection
-   opening on a speaker label takes the line under it */
+/* a selection opening on a speaker label takes the line under it (pin:
+   reference.test › referenceRange over covered lines) */
 export function referenceRange(doc: Node, from: number, to: number): string {
   let lo = 0, hi = 0;
-  /* THE TOP LEVEL ALONE: the label locates the passage in the entry the
-     gutter numbers; a pasted citation's own fence numbers are not the
-     host's (the 2026-09-12 second confirmation pass: a quoted Horace pair
-     in Paradise Lost labelled the reference "1.13-14") */
+  /* THE TOP LEVEL ALONE: a pasted citation's own fence numbers are not the
+     host's — a quoted Horace pair in Paradise Lost labelled the reference
+     "1.13-14" (pin: reference.test › a block inside a note, the label's top
+     level) */
   for (const u of coveredUnits(doc, from, to, true)) {
     if (!u.line) continue;
     if (!lo || u.line < lo) lo = u.line;
@@ -73,12 +61,11 @@ export function referenceRange(doc: Node, from: number, to: number): string {
   }
   return lo ? elideRange(lo, hi) : "";
 }
-/* THE STANZA RANGE (2026-09-27, the Faerie Queene): where every covered
-   numbered line stands in a top-level stanza, the range names stanza and
-   line — `2.1`, `2.1-4` (lines within a stanza keep the app's hyphen),
-   `2` for one whole stanza, `2–3` for whole stanzas, `2.8–3.2` for a run
-   across them (the en dash the reader chose); "" when a covered line
-   stands outside a stanza, or none is covered */
+/* where every covered numbered line stands in a top-level stanza, the range
+   names stanza and line — `2.1`, `2.1-4` (lines within a stanza keep the
+   app's hyphen), `2` for one whole stanza, `2–3` for whole stanzas,
+   `2.8–3.2` for a run across them, en dashes; "" when a covered line stands
+   outside a stanza (pin: reference.test › stanzaRange) */
 export function stanzaRange(doc: Node, from: number, to: number): string {
   const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
   if (!lines.length) return "";
@@ -95,9 +82,10 @@ export function stanzaRange(doc: Node, from: number, to: number): string {
   if (sa === sb) return whole ? String(sa) : sa + "." + elideRange(a.line, b.line);
   return whole ? sa + "–" + sb : sa + "." + a.line + "–" + sb + "." + b.line;
 }
-/* TWO BLOCKS IS A REFUSAL: every block numbers from 1 — except a run of
-   top-level stanzas in a work that cites by stanza, whose range names
-   each end's stanza */
+/* TWO BLOCKS IS A REFUSAL: every block numbers from 1 (pin: reference.test ›
+   two verse blocks are a refusal) — except a run of top-level stanzas in a
+   work that cites by stanza, whose range names each end's stanza (pin:
+   reference.test › referencePayload under the directive) */
 export function spansTwoBlocks(doc: Node, from: number, to: number, stanzas = false): boolean {
   const units = coveredUnits(doc, from, to);
   const blocks = new Set(units.map((u) => u.blockPos));
@@ -106,7 +94,8 @@ export function spansTwoBlocks(doc: Node, from: number, to: number, stanzas = fa
   const top = new Set(coveredUnits(doc, from, to, true).map((u) => u.blockPos));
   return [...blocks].some((p) => !top.has(p) || doc.nodeAt(p)!.attrs.stanza == null);
 }
-/* the leaves that are THE TEXT'S — a folio inside a note turns no page */
+/* the leaves that are THE TEXT'S — a folio inside a note turns no page (pin:
+   reference.test › the leaf range is read from the page the selection is on) */
 export function folioLeaves(doc: Node): { pos: number; label: string }[] {
   const out: { pos: number; label: string }[] = [];
   doc.descendants((n, pos) => {
@@ -138,8 +127,7 @@ export function folioRange(doc: Node, from: number, to: number): FolioRange | nu
   }
   return { from: at.label, to: (through || at).label };
 }
-/* the "?h=…&n=…" payload: the selected text, and which occurrence of it
-   the selection is, counted as a literal substring */
+/* counted as a literal substring (pin: reference.test › selectionLink) */
 export function selectionLink(doc: Node, from: number, to: number): Highlight | null {
   const q = doc.textBetween(from, to, " ", " ").replace(/\s+/g, " ").trim();
   if (!q) return null;
@@ -148,20 +136,19 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
   while ((i = before.indexOf(q, i + 1)) !== -1) nth++;
   return { q, nth };
 }
-/* THE PASSAGE IS A QUOTATION NODE and the serializer spells it, asked
-   once (DECIDED 2026-09-12: a textual filter over serialized lines stood
-   here for a day and misread a note's fence lines inside a verse block,
-   a refused `:::` paragraph and a gap at a fence's edge — the block's
-   closing review; the shapes are pinned in reference.test.ts). */
+/* THE PASSAGE IS A QUOTATION NODE, serialized once: a textual filter over
+   serialized lines misread a note's fence lines inside a verse block, a
+   refused `:::` paragraph and a gap at a fence's edge (pin: reference.test
+   › the passage is a quotation node) */
 function quoted(blocks: Node[]): string {
   return serializeMarkdown(schema.nodes.doc.create(null, [N.blockquote.create(null, blocks)])).trim();
 }
 /* does the selection reach ink the row arms cannot carry — loose prose,
    a pipe-less prose fence, a note's own paragraph outside a nested block:
-   ink outside the blocks whose units the selection covers. (The block's
-   closing review, 2026-09-12: skipping every row block's whole span hid
-   a note's paragraph inside an outer block, and a drag from a nested
-   pair into it dropped the paragraph from the passage.) */
+   ink outside the blocks whose units the selection covers: skipping every
+   row block's whole span hid a note's paragraph inside an outer block, and
+   a drag from a nested pair into it dropped the paragraph (pin:
+   reference.test › the number on the right block at every depth) */
 export function coversProse(doc: Node, from: number, to: number): boolean {
   const blocks = new Set(coveredUnits(doc, from, to).map((u) => u.blockPos));
   let at = from;
@@ -175,10 +162,10 @@ export function coversProse(doc: Node, from: number, to: number): boolean {
 }
 /* the selection's ends moved off a pair's cells: out to the whole row
    where the selection covers ink in it, off the row where it does not
-   (a citation quotes rows, never a cell; a drag from a pair's last cell
-   into the paragraph after it cut a cell out until 2026-09-12, and an
-   end merely resting at a row's edge widened to the whole row the
-   reader never selected — the two confirmation passes) */
+   (a citation quotes rows, never a cell: a drag from a pair's last cell
+   into the paragraph after it cut a cell out, and an end merely resting at
+   a row's edge widened to a whole row no one selected) (pin: reference.test
+   › no cut through a pair) */
 function wholeRows(doc: Node, from: number, to: number): [number, number] {
   const $from = doc.resolve(from), $to = doc.resolve(to);
   let a = from, b = to;
@@ -192,21 +179,18 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
   }
   return [a, b];
 }
-/* the cut with the containers around THE WHOLE of it unwrapped: a
-   citation cited again is quoted ONE level deep, as the current app's
-   copy of the selected content was, carrying no container that holds
-   the whole selection — however many quotations, notes or cards deep it
-   stood (DECIDED 2026-09-12, the confirmation passes: a quoted pair
-   re-cited came out at one level, a quoted paragraph at two, one under
-   `> >` at two). A container holding only ONE END stays: a drag from a
+/* the cut with the containers around THE WHOLE of it unwrapped: a citation
+   cited again is quoted ONE level deep, however many quotations, notes or
+   cards deep it stood — a quoted pair re-cited came out at one level, a
+   quoted paragraph at two (pin: reference.test › no cut through a pair, one
+   quote level). A container holding only ONE END stays: a drag from a
    citation into the line after it keeps the pair quoted beside the line
-   that was not, as the source had them (asked 2026-09-12 by hand, after
-   a version flattened it; INFERRED from the current app's copy, which
-   clones a partly selected ancestor). Every edge break comes off a
-   paragraph, a gap row off a cut block's edge, and a block with no ink
-   goes — inside a retained container as well (the block's closing
-   review: one break of two stayed, an empty paragraph stood in the
-   nested box, and an edge gap painted an empty row under the opener). */
+   that was not, as the source had them. Every edge break comes off a
+   paragraph, a gap row off a cut block's edge, and a block with no ink goes
+   — inside a retained container as well: one break of two stayed, an empty
+   paragraph stood in the nested box, and an edge gap painted an empty row
+   under the opener (pin: reference.test › the number on the right block at
+   every depth, the nested box trimmed, an edge gap off) */
 const CONTAINERS = new Set(["blockquote", "note", "card", "grid"]);
 const keep = (b: Node): boolean => b.type === N.gap || drawsInk(b);
 function trimmed(b: Node): Node {
@@ -231,11 +215,10 @@ function unquoted(cut: Node): Node[] {
   return blocks;
 }
 /* the cut's opening chain renumbered BEFORE anything is unwrapped or
-   dropped: a fence keeps its block's start through a cut, and a passage
-   cut from a fence's second row kept the start (the block's closing
-   review's predecessor); then the number landed on the wrong block once
-   a truncated remainder had been dropped, and on the outer block of a
-   verse inside a note inside a verse (the closing review). On the raw
+   dropped: after, the number landed on the wrong block once a truncated
+   remainder had been dropped, and on the outer block of a verse inside a
+   note inside a verse (pin: reference.test › the number on the right block
+   at every depth). On the raw
    cut the first-child chain IS the selection start's ancestor chain, so
    each verse or prose ancestor is stamped at its own depth with its own
    count at the row the cut opens on. */
@@ -257,9 +240,9 @@ function renumbered(doc: Node, at: number, cut: Node): Node {
 /* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
    with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
    numbered from its first quoted line, keeping the two columns — INSIDE
-   the quotation, DECIDED 2026-09-12 (the current app pasted the fence
-   bare, and beside a single-column citation it read as the entry's own
-   verse). In a row block the ROW is the unit and whole rows are quoted,
+   the quotation: bare beside a single-column citation, it read as the
+   entry's own verse (pin: reference.test › a paired block copies as its
+   own fence inside the quotation). In a row block the ROW is the unit and whole rows are quoted,
    the contiguous run carrying the stanza gaps between them; a nested
    note stays behind and a page-turn row is dropped. In loose prose the
    unit is the selection, widened to whole pair rows. */
@@ -272,7 +255,9 @@ export function passageMd(doc: Node, from: number, to: number): string {
   }
   /* a run across stanzas (allowed only where the work cites by stanza):
      each stanza's rows quoted as one block's are, a blank quoted line
-     between them, as the stanza gap stands in print */
+     between them, as the stanza gap stands in print (pin: reference.test ›
+   referencePayload under the directive: I.i.2.1, a run across a stanza gap
+   allowed and quoted whole) */
   const byBlock: Unit[][] = [];
   for (const u of units) {
     const last = byBlock[byBlock.length - 1];
@@ -281,7 +266,6 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group)).join("\n" + quotePrefix("") + "\n");
   return blockPassage(doc, from, to, units);
 }
-/* one block's passage: its covered run of rows, quoted */
 function blockPassage(doc: Node, from: number, to: number, units: Unit[]): string {
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
@@ -313,10 +297,10 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
     kept.push(row);
   }
   if (paired) {
-    /* the number is the block's own count at the first kept row: one
-       past the last counted line before it, whatever the row is (a
-       direction alone as the block's last row numbered 1 — the
-       2026-09-12 second confirmation pass) */
+    /* the block's own count at the first kept row, whatever the row is: a
+       direction alone as the block's last row was numbered 1 (pin:
+       reference.test › a block inside a note, the label's top level, an end
+       resting on a row, blanks, depth, the count before) */
     const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, kept);
     return quoted([fence]);
   }
@@ -339,9 +323,8 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
 };
 /* the whole clipboard text: the heading line as the link, a colon outside
    it, the passage quoted under it — or the refusal */
-/* the *italics* of a citation label as HTML, for the rich flavour: the
-   label is BUILT here, so its only markdown is the emphasis this puts
-   back; the anchor is spelled once for the reference and the entry link */
+/* the label is BUILT here, so its only markdown is the emphasis this puts
+   back (pin: reference.test › citationAnchorHTML) */
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -366,8 +349,9 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   const passage = passageMd(doc, from, to);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
-/* ⌃⌘C: a link to the entry — the citation's heading line with nothing
-   quoted under it, named the same way */
+/* ⌃⌘C: the citation's heading line with nothing quoted under it (pin:
+   reference.test › a leaf stands in for a prose book's titled chapter;
+   entryLink names the entry the same way) */
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
   return { label: mdLabel(referenceLabel(date, tag, "", null, journal), "entry"), url: entryLinkUrl(date, tag) };
 }

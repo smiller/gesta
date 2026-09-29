@@ -375,3 +375,34 @@ pinned (a performance choice), 2 pinned with a neighbour.
   backup factory's decisions (backup.ts has no test file), WRITE_BYTES'
   Chromium measurement, zip's host byte and mode, the export's yield
   size.
+
+### 2026-09-28 — src/editor audited
+
+- MEASURED: 322 comment blocks → 293, 993 comment lines → 831, 118 pins,
+  many of them Helium readings (reference paste, grid, card copy, list,
+  contents folds, launch) where the behaviour is only on a screen. The
+  sweep lists nothing in src/editor (it listed 52 blocks there).
+- Out, as before: headers the layout covers, port history (the old app's
+  file names, "the README's rule", "the current app's …"), dates and
+  "(the review)", and clauses about another file — fit.ts, main.ts,
+  paste.ts, richCopy.ts, the stylesheet, the router — each either cut or
+  said as this code's own decision. Four of the audit's rewordings named
+  another module and the checker caught each ("the schema's list_item",
+  "the gutter's reserve"; fit.ts's "main's own padding", the <main>
+  element, reworded to say so; and three "the serializer's" in tests).
+- FOUND by the audit (READ), fixed without a behaviour change:
+  editor.css declared `.page .landed { background: var(--flash); }`
+  twice, the second under an obsolete comment ("the jump is phase 3's;
+  the class is named now") — the second copy is gone; rowKeys.test's
+  title said ⌃⌘N for the command bound to ⌃⌘I (⌃⌘N is "new") — the title
+  now says ⌃⌘I. Test titles lost their provenance: five in
+  reference.test ("the shapes the 2026-09-12 confirmation pass
+  measured: …"), one in paste.test.
+- MEASURED: the stripped-of-comments diff of src/editor against HEAD is
+  the one CSS line and the test titles, nothing else.
+- FOUND, FLAKY, not the audit's (MEASURED): the reading "a forced entry
+  left scrolled, returned to" read stayed:false once in three runs of
+  the Helium verdict on this tree (the other two, and the verify after,
+  true). The tree's code is unchanged but for a rendered-view CSS rule;
+  the reading is in the source view. Owed: a look at why the source
+  view's held place can miss, with the run that caught it.

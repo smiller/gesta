@@ -1,8 +1,8 @@
 // A key through the editor's WHOLE plugin chain, in its real order, the way
 // the view's someProp walks handleKeyDown: the first handler to return true
-// takes the key. Written 2026-09-27 after a bare URL at the end of a list
-// item turned Enter into a paragraph split inside the item — the autolink's
-// Enter arm ran ahead of the list keymap and called the base Enter itself.
+// takes the key: a bare URL at the end of a list item turned Enter into a
+// paragraph split inside the item, the autolink's Enter arm running ahead of
+// the list keymap and calling the base Enter itself.
 import { test, expect } from "vitest";
 import { TextSelection, type EditorState, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";

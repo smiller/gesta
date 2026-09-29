@@ -1,14 +1,13 @@
-/* Tab and Shift-Tab in a quote: the paragraph the caret is in goes one
-   level deeper, or lifts back out — a heading, a table or a card inside
-   a quote moving as the one thing it is, a list inside a quote taking the
-   list arm first (the innermost thing the caret is in wins, by keymap
-   order). Ported 2026-09-08 from the quote arm of 13e-enter-and-tab-
-   dispatch.js. A selection reaching outside the outermost quote has no
-   single container to act on and says so; Shift-Tab on an outermost
-   quote does nothing and says so — leaving a quote altogether is the
-   source view's job; a quote with nothing in it has no depth to change.
-   A held Tab must not go on nesting: a quote has no ceiling, so the
-   press acts once per press where Shift-Tab may repeat, having a floor. */
+/* A heading, a table or a card inside a quote moves as the one thing it is;
+   a list inside a quote takes the list arm first, the innermost thing the
+   caret is in winning by keymap order. A selection reaching outside the
+   outermost quote has no single container and says so (pin: quoteKeys.test
+   › a selection reaching outside the quote has no single container);
+   Shift-Tab on an outermost quote does nothing and says so — leaving a
+   quote altogether is the source view's job (pin: quoteKeys.test ›
+   Shift-Tab at the outermost level refuses and says so). A held Tab must
+   not go on nesting: a quote has no ceiling, so the press acts once per
+   press where Shift-Tab may repeat, having a floor. */
 import { type Command, type EditorState, TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { lift } from "prosemirror-commands";
@@ -18,13 +17,12 @@ import { schema } from "../model/schema.ts";
 
 const Q = schema.nodes.blockquote, P = schema.nodes.paragraph, BR = schema.nodes.hard_break;
 /* THE UNIT IS THE RUN: a quote's body is ONE paragraph of lines with
-   breaks, a blank line being two breaks (the grammar's line run, phase
-   0), so what Tab moves is the run of lines between the blank lines
-   around the selection — several runs when the selection crosses a
-   blank line — cut out of the paragraph and wrapped in a quote of its
-   own, the lines before and after staying as paragraphs. The serializer
-   writes a quote's paragraphs and its blank-line runs alike, so the
-   round trip holds. */
+   breaks, a blank line being two breaks, so what Tab moves is the run of
+   lines between the blank lines around the selection — several runs when
+   the selection crosses a blank line — cut out of the paragraph and wrapped
+   in a quote of its own (pin: quoteKeys.test › Tab pushes the run one level
+   deeper) (pin: quoteKeys.test › a selection across two runs of one quote
+   moves both) */
 function runsOf(para: Node): { from: number; to: number }[] {
   const runs: { from: number; to: number }[] = [];
   let start = 0, offset = 0, prevBreak = false;
@@ -37,7 +35,6 @@ function runsOf(para: Node): { from: number; to: number }[] {
   runs.push({ from: start, to: offset });
   return runs;
 }
-/* the depth of the innermost quote around the selection's start, 0 for none */
 function quoteDepth(state: EditorState): number {
   const $from = state.selection.$from;
   for (let d = $from.depth; d >= 1; d--) if ($from.node(d).type === Q) return d;
@@ -78,10 +75,9 @@ export const tabInQuote: Command = (state, dispatch) => {
   return true;
 };
 /* the inverse: the inner quote's lines spliced back into the outer's flat
-   run, a blank line either side, joined with the paragraphs beside it —
-   two paragraphs left adjacent would be written with no blank quote line
-   and read back as one run. An inner quote holding anything but
-   paragraphs takes the library's lift instead. */
+   run, a blank line either side, joined with the paragraphs beside it:
+   two paragraphs left adjacent read back as one run. An inner quote
+   holding anything but paragraphs takes the library's lift instead. */
 export const shiftTabInQuote: Command = (state, dispatch) => {
   if (!quoteDepth(state) || spills(state)) return false;
   const d = quoteDepth(state);

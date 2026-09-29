@@ -1,7 +1,6 @@
 // Markdown as you type, driven the way the view drives it: each character
 // through the input-rules plugin's own text-input handler, so a rule fires
-// exactly where it would under a keyboard. Cases from the README's
-// "Markdown as you type" and 08-markdown-as-you-type.js (2026-09-07).
+// exactly where it would under a keyboard.
 import { test, expect } from "vitest";
 import { EditorState, TextSelection, type Command, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";

@@ -1,11 +1,5 @@
-/* The toolbar's acts, as commands over an editor state: the four marks,
-   the heading, quote and code-block toggles, the curl over a selection,
-   the word count, and the extract of a selection into a link. Ported
-   2026-09-07 from 14-floating-format-toolbar.js, 25-word-count-on-
-   demand.js, md.mjs's curlQuotes and extractToTag (15-…js), re-asked of
-   the document model: the marks and blocks are prosemirror-commands'
-   own, the rest is this module's. Inside a code block the toolbar offers
-   ONE thing, the toggle back out: the block commands corrupt code. */
+/* inside a code block only the toggle back out is offered: the block
+   commands corrupt code */
 import { type Command, type EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { toggleMark, setBlockType, wrapIn, lift } from "prosemirror-commands";
@@ -27,20 +21,21 @@ export function inBlock(state: EditorState, type: Node["type"]): boolean {
 }
 export const inCode = (state: EditorState): boolean => state.selection.$from.parent.type === N.code_block;
 const isHeading = (state: EditorState): boolean => state.selection.$from.parent.type === N.heading && state.selection.$from.parent.attrs.level === 1;
-/* the current app's H is its `#`, level 1 here */
+/* H is a level-one heading (pin: format.test › H makes a level-one heading
+   of the block and takes it back) */
 export const heading: Command = (state, dispatch) =>
   (isHeading(state) ? setBlockType(N.paragraph) : setBlockType(N.heading, { level: 1 }))(state, dispatch);
 export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote) ? lift : wrapIn(N.blockquote))(state, dispatch);
 export const codeBlock: Command = (state, dispatch) => (inCode(state) ? setBlockType(N.paragraph) : setBlockType(N.code_block))(state, dispatch);
-/* what is ON at the selection, for the bar's lit buttons */
 export function formatState(state: EditorState): Record<string, boolean> {
   const { from, $from, to, empty } = state.selection;
   const has = (m: typeof M.strong): boolean => empty ? !!m.isInSet(state.storedMarks || $from.marks()) : state.doc.rangeHasMark(from, to, m);
   return { bold: has(M.strong), italic: has(M.em), underline: has(M.underline), strike: has(M.strike), heading: isHeading(state), quote: inBlock(state, N.blockquote), code: inCode(state) };
 }
-/* the curl over a run of text: `--` to an em dash, every straight quote
-   curled by what precedes it, a quote that ends speech after a dash
-   closed, a leading elision right-singled */
+/* every straight quote curled by what precedes it, a quote that ends speech
+   after a dash closed, a leading elision right-singled (pin: format.test ›
+   curlQuotes: dashes, quotes by what precedes them, the closed dash, the
+   elision) */
 const EM_DASH_RE = /([^-])--(?!-)/g;
 const DASH_CLOSE_RE = /([—–])([“‘]+)(?=[\s,;:!?)]|\.(?!\.)|$)/g;
 const ELISION_RE = /‘(?=(?:t(?:is|was|were|will|would)|gainst|neath|twixt|em|mid|midst|round|cause)\b)/gi;
@@ -58,7 +53,8 @@ export function curlQuotes(text: string, prev: string): string {
 }
 /* every text node the selection touches, outside code, curled in place;
    the previous character carries across nodes within a block and resets
-   at a block's edge; the selection survives through the mapping */
+   at a block's edge (pin: format.test › curlSelection curls what is
+   selected, across nodes, leaving code alone, keeping the selection) */
 export const curlSelection: Command = (state, dispatch) => {
   const { from, to, empty } = state.selection;
   if (empty) return false;
@@ -87,8 +83,9 @@ export const curlSelection: Command = (state, dispatch) => {
   }
   return true;
 };
-/* the word count: the selection's, or the whole document's, over the
-   flat stream whose edge spaces keep adjacent blocks' words apart */
+/* over the flat stream, whose edge spaces keep adjacent blocks' words
+   apart (pin: format.test › the word count over the selection or the whole
+   document, blocks kept apart) */
 export function wordsOf(text: string): number {
   const m = text.trim().match(/\S+/g);
   return m ? m.length : 0;
@@ -96,10 +93,9 @@ export function wordsOf(text: string): number {
 export function wordCount(doc: Node, from: number, to: number): number {
   return wordsOf(flattenDoc(from === to ? doc : doc.cut(from, to)).text);
 }
-/* the selection as an entry of its own: a run inside ONE textblock is a
-   paragraph of it (the current app's blockNormalize: loose inline runs
-   become paragraphs — a word cut from a verse line is not a one-line
-   fence); across blocks, the covered structure cut and serialized */
+/* a run inside ONE textblock is a paragraph of it — a word cut from a verse
+   line is not a one-line fence; across blocks, the covered structure cut
+   (pin: format.test › cutMd and replaceWithLink) */
 export function cutMd(doc: Node, from: number, to: number): string {
   const $from = doc.resolve(from), $to = doc.resolve(to);
   if ($from.sameParent($to) && $from.parent.isTextblock && $from.parent.type !== N.code_block) {
@@ -128,6 +124,5 @@ export function replaceWithLink(state: EditorState, from: number, to: number, hr
   }
   return tr;
 }
-/* ⌘B, ⌘I, ⌘U are the marks; ⌘' curls the selection */
 export const formatKeymap = keymap({ "Mod-b": bold, "Mod-i": italic, "Mod-u": underline, "Mod-'": curlSelection });
 

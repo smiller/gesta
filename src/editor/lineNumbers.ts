@@ -1,27 +1,24 @@
-/* The line-number decoration: the unit walk's answer drawn on the rows as
-   node decorations — a class, and the number as an attribute the stylesheet
-   paints in the gutter (editor.css, `.ln::before`). THE PAINT MARKS, IT
-   NEVER WRAPS, and it is never in the document: a decoration adds no node
-   and no text, so a save, a copy and a search see none of it. Recomputed
-   whole on every change to the document, from position: a row inserted
-   above line 40 makes it 41 on the next paint with nothing to migrate. */
+/* THE PAINT MARKS, IT NEVER WRAPS, and it is never in the document: a
+   decoration adds no node and no text, so a save, a copy and a search see
+   none of it (pin: lineNumbers.test › setLineInterval repaints without
+   touching the document). Recomputed whole on every change, from position:
+   a row inserted above line 40 makes it 41 with nothing to migrate (pin:
+   lineNumbers.test › the numbers are computed from position) */
 import { Plugin, PluginKey, type Command } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { lineUnits, paintsLines, countsSentences } from "./numbering.ts";
 
 export interface LineNumbersState {
-  /* every nth line carries a drawn number; 0 draws none. The gutter is
-     reserved whatever the interval, so changing it can never move a word. */
+  /* every nth line carries a drawn number; 0 draws none */
   interval: number;
   decorations: DecorationSet;
 }
 
 export const lineNumbersKey = new PluginKey<LineNumbersState>("lineNumbers");
 
-/* one decoration per verse row that is a unit. A sentence never paints, so
-   the prose block's units are left out here; they still count, for the jump
-   and the citation to come. */
+/* a sentence never paints (pin: lineNumbers.test › a prose block's sentences
+   never paint) */
 export function rowDecorations(doc: Node, interval: number): Decoration[] {
   const out: Decoration[] = [];
   for (const u of lineUnits(doc, interval)) {
@@ -53,9 +50,10 @@ export function lineNumbers(interval: number): Plugin<LineNumbersState> {
     },
     props: {
       decorations: (state) => lineNumbersKey.getState(state)!.decorations,
-      /* the classes the stylesheet hangs on: `versepage` exactly where the
-         document numbers its own lines (the gutter), `prosepage` where it
-         counts sentences (no gutter, but the text is the text) */
+      /* `versepage` exactly where the document numbers its own lines, `prosepage`
+         where it counts sentences (pin: lineNumbers.test › the gutter class is
+         set exactly where a top-level verse block is) (pin: lineNumbers.test ›
+         a top-level prose block holding a pair marks the root prosepage) */
       attributes: (state): Record<string, string> => {
         const cls = [paintsLines(state.doc) ? "versepage" : "", countsSentences(state.doc) ? "prosepage" : ""].filter(Boolean).join(" ");
         return cls ? { class: cls } : {};
