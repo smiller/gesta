@@ -23,6 +23,11 @@ export async function seedStanza(page) {
   await page.goto(url("page/Horace", "store=seed-stanza"));
   await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 }
+/* the margin-note step's seed, written by the page under ?store=seed-margin */
+export async function seedMargin(page) {
+  await page.goto(url("page/Horace", "store=seed-margin"));
+  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
+}
 export const entry = (page) => page.evaluate(() => document.documentElement.dataset.entry);
 export const waitEntry = (page, key, ms = 15000) => page.waitForFunction((k) => document.documentElement.dataset.entry === k, key, { timeout: ms });
 export const waitWarm = (page) => page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
@@ -65,6 +70,19 @@ export const read = {
   clickFoldTriangle: async (page, text) => { const at = await page.evaluate((t) => { const h = [...document.querySelectorAll("#editor h2")].find((x) => x.textContent.startsWith(t)); if (!h) return null; const r = h.getBoundingClientRect(); return { x: r.left - 12, y: r.top + 14 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(200); } },
   /* the places step (2026-09-28): the line just under the masthead, and whether the window is at the top */
   place: (page) => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
+  /* the margin-note step (2026-09-29): each gloss's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which gloss holds the caret */
+  margins: (page) => page.waitForFunction(() => [...document.querySelectorAll("#editor .margin-note")].every((n) => n.classList.contains("in-margin") === (n.style.getPropertyValue("--mn-w") !== "")), null, { timeout: 3000 }).catch(() => {}).then(() => page.evaluate(() => {
+    const caret = getSelection().anchorNode;
+    return { glosses: [...document.querySelectorAll("#editor .margin-note")].map((n) => {
+      const r = n.getBoundingClientRect(), row = n.nextElementSibling, rr = row?.getBoundingClientRect();
+      const line = rr ? rr.top + parseFloat(getComputedStyle(row).lineHeight) / 2 : 0;
+      return { text: n.textContent.slice(0, 20), form: n.classList.contains("in-margin") ? "margin " + n.style.getPropertyValue("--mn-w") : "text", beside: row?.textContent.slice(0, 16) ?? null,
+        offCentre: n.classList.contains("in-margin") && !n.style.getPropertyValue("--mn-push") ? Math.round(r.top + parseFloat(getComputedStyle(n).lineHeight) / 2 - line) : null,
+        clear: n.classList.contains("in-margin") ? Math.round(r.right - (n.parentElement.getBoundingClientRect().left)) : Math.round(r.left - (rr?.left ?? r.left)),
+        pushed: !!n.style.getPropertyValue("--mn-push"), caret: !!caret && n.contains(caret) };
+    }), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) };
+  })),
+  clickMargin: async (page, text) => { const at = await page.evaluate((t) => { const n = [...document.querySelectorAll("#editor .margin-note")].find((x) => x.textContent.startsWith(t)); if (!n) return null; const r = n.getBoundingClientRect(); return { x: r.right - 2, y: r.top + 8 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(150); } },
   /* the stanza step (2026-09-28): the number each stanza DRAWS (its ::before), and the line numbers shown */
   stanzas: (page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
   selectBetween: (page, a, b) => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),

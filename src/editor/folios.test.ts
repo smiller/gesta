@@ -11,6 +11,8 @@ test("hasFolios: a marker in the text, not one inside a note", () => {
   expect(hasFolios(parseMarkdown("::: verse\na ⟨8⟩ b\n:::"))).toBe(true);
   expect(hasFolios(parseMarkdown("::: note\na ⟨8⟩ b\n:::"))).toBe(false);
   expect(hasFolios(parseMarkdown("::: verse\na\n::: note\n⟨8⟩\n:::\n:::"))).toBe(false);
+  expect(hasFolios(parseMarkdown("::: margin-note\na ⟨8⟩ b\n:::"))).toBe(false);
+  expect(hasFolios(parseMarkdown("::: verse\na\n::: margin-note\n⟨8⟩\n:::\n:::"))).toBe(false);
   expect(hasFolios(parseMarkdown("no leaf"))).toBe(false);
 });
 

@@ -77,7 +77,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
   if (!prose && block.type !== N.verse) return out;
   let line = (block.attrs.start as number) - 1;
   block.forEach((row, offset) => {
-    if (row.type === N.gap || row.type === N.note) return;
+    if (row.type === N.gap || row.type === N.note || row.type === N.margin_note) return;
     if (prose && row.type !== N.pair) return;
     if (!drawsInk(row)) return;
     /* a stanza has no apparatus: in the Faerie Queene a row wholly in

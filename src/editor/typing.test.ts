@@ -91,6 +91,11 @@ test("two hyphens between spaces are an em-dash", () => {
   expect(typed("--- ")).toBe("--- ");
 });
 
+test("a block marker opens a block inside a margin-note, as inside a note", () => {
+  expect(md(type(state("::: margin-note\ngloss\n:::", "gloss", 0), "# "))).toBe("::: margin-note\n# gloss\n:::");
+  expect(md(type(state("::: note\ngloss\n:::", "gloss", 0), "# "))).toBe("::: note\n# gloss\n:::");
+});
+
 test("quotes curl as typed, and a second quote steps the curl", () => {
   expect(typed("\"hello\" it's")).toBe("“hello” it’s");
   expect(typed("(\"a\")")).toBe("(“a”)");

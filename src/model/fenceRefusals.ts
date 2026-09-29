@@ -32,7 +32,7 @@ export function fenceLineReason(l: string): string | null {
   const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
   if (!m || opensFence(l)) return null;
   const tok = m[1].match(/^(verse|prose)\s+(.+)$/);
-  const tail = m[1].match(/^(note|reference|card-[\w-]+)\s+\S/);
+  const tail = m[1].match(/^(note|margin-note|reference|card-[\w-]+)\s+\S/);
   const count = m[1].match(/^grid\s+(.+)$/);
   const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
   return tok ? tok[2] + " is not a starting " + (tok[1] === "verse" ? "line" : "sentence")

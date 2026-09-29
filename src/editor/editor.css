@@ -190,7 +190,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   -webkit-user-select: none;
   pointer-events: none;
 }
-.page div.note .folio::before, .page div.note .folio::after { content: none; }
+.page :is(div.note, div.margin-note) .folio::before, .page :is(div.note, div.margin-note) .folio::after { content: none; }
 
 /* ---------- the verse block: a run of lines, paired or not ---------- */
 .page .verse { margin-top: 1.2em; margin-bottom: 1.2em; }
@@ -394,3 +394,21 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 }
 .page h2.fold[aria-expanded="false"] { margin-bottom: 0.2em; }
 .page .folded { display: none; }
+
+/* ---------- the ::: margin-note ----------
+   In the text unless `in-margin` says there is room. In the margin its
+   right edge stands 4.6em of its block's text left of the block, 5.75 of
+   its own; the 0.32em centres its first line on the line beside it (pin:
+   margin-note › a glossed passage at 1500px) */
+.page div.margin-note { color: var(--muted); font-size: 0.8em; font-style: italic; margin: 0.65em 0; }
+.page div.margin-note p { margin: 0; }
+.page.versepage > div.margin-note:not(.in-margin), .page.foliopage > div.margin-note:not(.in-margin) { padding-left: var(--ln-gutter); }
+.page :has(> div.margin-note.in-margin) { position: relative; }
+.page div.margin-note.in-margin {
+  position: absolute;
+  right: calc(100% + 5.75em);
+  width: var(--mn-w);
+  margin: calc(0.32em + var(--mn-push, 0px)) 0 0;
+  line-height: 1.3;
+  text-align: right;
+}

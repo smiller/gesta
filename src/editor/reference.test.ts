@@ -177,6 +177,10 @@ test("the number on the right block at every depth, the nested box trimmed, an e
   [a, b] = span(behind, "alpha", "beta");
   expect(coversProse(behind, a, b)).toBe(false);
   expect(passageMd(behind, a, b)).toBe("> alpha\n> beta");
+  const glossed = parseMarkdown("::: verse\nalpha\n::: margin-note\ngloss\n:::\nbeta\n:::");
+  [a, b] = span(glossed, "alpha", "beta");
+  expect(coversProse(glossed, a, b)).toBe(false);
+  expect(passageMd(glossed, a, b)).toBe("> alpha\n> beta");
 });
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
@@ -195,6 +199,9 @@ test("the leaf range is read from the page the selection is on; a leaf inside a 
   const doc = parseMarkdown("⟨61⟩ Opening words of the leaf.\n\n::: note\n⟨99⟩ a note's own marker\n:::\n\nMore of it ⟨62⟩ and on it goes to the end.");
   const [a, b] = span(doc, "words", "More");
   expect(folioRange(doc, a, b)).toEqual({ from: "61", to: "61" });
+  const glossed = parseMarkdown("⟨61⟩ Opening words.\n\n::: margin-note\n⟨99⟩ a gloss's marker\n:::\n\nMore of it.");
+  const [g, h] = span(glossed, "words", "More");
+  expect(folioRange(glossed, g, h)).toEqual({ from: "61", to: "61" });
   const [c, d] = span(doc, "words", "goes");
   expect(folioRange(doc, c, d)).toEqual({ from: "61", to: "62" });
   const [e, f] = span(doc, "and on");

@@ -18,6 +18,7 @@ export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
+export const MARGIN_NOTE_OPEN = /^\s*:::\s*margin-note\s*$/;
 export const GRID_OPEN = /^\s*:::\s*grid(?:\s+0*[1-9]\d*)?\s*$/;
 export const TABLE_ROW = /^\s*\|.*\|\s*$/;
 export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
@@ -75,11 +76,14 @@ export function stanzaNumber(line: string): number | null {
 }
 export function opensFence(line: string): boolean {
   return CARD_OPEN.test(line) || VERSE_OPEN.test(line) || STANZA_OPEN.test(line) ||
-    REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
+    REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || MARGIN_NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
 }
 /* the openers whose body is NOT blocks */
 export function flatFence(line: string): boolean {
   return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || REFERENCE_OPEN.test(line) || PROSE_OPEN.test(line);
+}
+export function opensNoteRow(line: string): boolean {
+  return NOTE_OPEN.test(line) || MARGIN_NOTE_OPEN.test(line);
 }
 /* the openers whose body is ROWS — narrower than flatFence by the reference
    block, whose one directive admits no nested note */
@@ -116,7 +120,7 @@ export function fenceBody(lines: string[], from: number): { body: string[]; next
       const nests = rowFence(line);
       while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
         body.push(lines[from]);
-        if (!nests || !NOTE_OPEN.test(lines[from])) { from++; continue; }
+        if (!nests || !opensNoteRow(lines[from])) { from++; continue; }
         const note = fenceBody(lines, from + 1);
         body.push(...lines.slice(from + 1, note.next));
         from = note.next;

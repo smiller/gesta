@@ -47,6 +47,12 @@ test("a paired row is one unit whichever column; a note row takes no number", ()
   expect(kinds("::: verse\na | b\n::: note\nfoot\n:::\nc | d\n:::")).toBe("line:1 line:2");
 });
 
+test("a margin-note row takes no number, in verse, a stanza or prose", () => {
+  expect(kinds("::: verse\na\n::: margin-note\ngloss\n:::\nb\n:::")).toBe("line:1 line:2");
+  expect(kinds("::: stanza 1\na\n::: margin-note\ngloss\n:::\nb\n:::")).toBe("line:1 line:2");
+  expect(kinds("::: prose\na | b\n::: margin-note\ngloss\n:::\nc | d\n:::")).toBe("sentence:1 sentence:2");
+});
+
 test("a prose block numbers its PAIRED rows as sentences, full-width rows not at all", () => {
   expect(kinds("::: prose\nHeading\nfirst | its translation\nsecond | second's\n:::")).toBe("sentence:1 sentence:2");
   expect(kinds("::: prose\n*all italic* | *tout en italique*\n:::")).toBe("sentence:1");

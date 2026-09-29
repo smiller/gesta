@@ -34,6 +34,10 @@ export async function launch(page, seeds) {
 export async function seedStanza(page, seeds) {
   await page.evaluate(async (bodies) => { const G = window.gesta; for (const k of Object.keys(bodies)) await G.setEntry(k, G.mdToHtml(bodies[k])); G.reindex(); }, seeds);
 }
+/* the margin-note step's seed, the same way */
+export async function seedMargin(page, seeds) {
+  await page.evaluate(async (bodies) => { const G = window.gesta; for (const k of Object.keys(bodies)) await G.setEntry(k, G.mdToHtml(bodies[k])); G.reindex(); }, seeds);
+}
 const KEY = () => { const G = window.gesta, s = G.state(); return G.entryKey(s.date, s.tag); };
 export const entry = (page) => page.evaluate(KEY);
 /* the key AND the paint: the current app sets its state before the body
@@ -152,6 +156,8 @@ export const read = {
   searchOpen: (page) => page.evaluate(() => document.getElementById("pagesearch")?.open),
   selectionText: (page) => page.evaluate(() => document.getSelection()?.toString()),
   lastStanzaShowing: () => NA("a stanza fence is the successor's (2026-09-28)"),
+  margins: () => NA("a margin-note is the successor's (2026-09-29)"),
+  clickMargin: () => NA("a margin-note is the successor's (2026-09-29)"),
   topStanza: () => NA("a stanza fence is the successor's (2026-09-28)"),
   place: () => NA("an entry's remembered place is the successor's (2026-09-28)"),
   pill: () => NA("the paused pill is drawn by ?corner=pill in the successor only"),

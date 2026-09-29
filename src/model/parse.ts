@@ -11,7 +11,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
   fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -55,7 +55,8 @@ function emitBlocks(sink: Sink, lines: string[], quote: boolean): void {
     else if (VERSE_OPEN.test(line) || STANZA_OPEN.test(line)) i = emitRows(sink, lines, i, "verse");
     else if (PROSE_OPEN.test(line)) i = emitRows(sink, lines, i, "prose");
     else if (REFERENCE_OPEN.test(line)) i = emitReference(sink, lines, i);
-    else if (NOTE_OPEN.test(line)) i = emitNote(sink, lines, i);
+    else if (NOTE_OPEN.test(line)) i = emitNote(sink, lines, i, "note");
+    else if (MARGIN_NOTE_OPEN.test(line)) i = emitNote(sink, lines, i, "margin_note");
     else if (GRID_OPEN.test(line)) i = emitGrid(sink, lines, i);
     else if (HEADING_LINE.test(line)) { emitHeading(sink, line); i++; }
     else if (QUOTE_LINE.test(line)) {
@@ -142,9 +143,9 @@ function emitGrid(sink: Sink, lines: string[], from: number): number {
   return box.next;
 }
 
-function emitNote(sink: Sink, lines: string[], from: number): number {
+function emitNote(sink: Sink, lines: string[], from: number, name: "note" | "margin_note"): number {
   const box = fenceBody(lines, from + 1);
-  emitBody(sink, "note", null, box.body);
+  emitBody(sink, name, null, box.body);
   return box.next;
 }
 
@@ -166,7 +167,8 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
   const emptyPairGaps = cls === "prose";
   while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
     const line = lines[from];
-    if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from); continue; }
+    if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from, "note"); continue; }
+    if (MARGIN_NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from, "margin_note"); continue; }
     const raw = line.trim();
     const declared = ROW_LINE_AT.test(raw);
     const body = declared ? raw.replace(ROW_LINE_AT, "") : raw;
@@ -478,6 +480,7 @@ function buildDoc(tokens: Token[]): Node {
         case "table_cell_open": open(schema.nodes.table_cell, { header: !!t.meta?.header }); break;
         case "card_open": open(schema.nodes.card, { colour: t.meta!.colour }); break;
         case "note_open": open(schema.nodes.note); break;
+        case "margin_note_open": open(schema.nodes.margin_note); break;
         case "grid_open": open(schema.nodes.grid, { n: t.meta!.n }); break;
         case "verse_open": open(schema.nodes.verse, { start: t.meta!.start, stanza: t.meta!.stanza ?? null }); break;
         case "prose_open": open(schema.nodes.prose, { start: t.meta!.start }); break;
@@ -490,7 +493,7 @@ function buildDoc(tokens: Token[]): Node {
         case "paragraph_close": case "heading_close": case "blockquote_close":
         case "bullet_list_close": case "ordered_list_close": case "list_item_close":
         case "table_close": case "table_row_close": case "table_cell_close":
-        case "card_close": case "note_close": case "grid_close": case "verse_close": case "prose_close":
+        case "card_close": case "note_close": case "margin_note_close": case "grid_close": case "verse_close": case "prose_close":
         case "line_close": case "pair_close": case "cell_close":
           close(); break;
         default:

@@ -157,6 +157,7 @@ function blockMd(node: Node, escaping: boolean): string {
     case N.table: return tableMd(node);
     case N.card: return "::: " + String(node.attrs.colour) + "\n" + blocksMd(node) + "\n:::";
     case N.note: return "::: note\n" + blocksMd(node) + "\n:::";
+    case N.margin_note: return "::: margin-note\n" + blocksMd(node) + "\n:::";
     /* a bare opener stays bare: a normalised count would respell every such
        entry. An empty grid, which the parse refuses, is written as nothing
        (pin: roundtrip.test › an empty grid serializes to nothing) */
@@ -209,7 +210,7 @@ function rowsMd(block: Node, word: string): string {
   const rows: string[] = [];
   block.forEach((row) => {
     if (row.type === N.gap) rows.push("");
-    else if (row.type === N.note) rows.push(blockMd(row, true));
+    else if (row.type === N.note || row.type === N.margin_note) rows.push(blockMd(row, true));
     else if (row.type === N.pair) rows.push(rowHead(row) + (row.childCount > 1 ? pairMd(cellMd(row.child(0)), cellMd(row.child(1))) : cellMd(row.child(0))));
     else rows.push(rowHead(row) + cellMd(row));
   });

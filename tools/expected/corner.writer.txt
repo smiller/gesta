@@ -137,10 +137,16 @@ the warm landed: {"folds":0,"open":[],"fillerInView":null,"screen":"bookshelf/Bo
 a contents link clicked before the warm: {"entry":"bookshelf/Boethius/Consolatio","refused":false,"screen":"bookshelf/Boethius/Consolatio · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a closed section's text switched to: {"open":[],"fillerInView":false,"screen":"bookshelf/Boethius/Consolatio · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a forced entry left scrolled, returned to: {"source":false,"stayed":false,"screen":"page/Forced Long · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a held place, the masthead shrinking under it: {"stayed":false,"screen":"page/Forced Long · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+SECTION FAILED (places): Error: page.evaluate: TypeError: Cannot read properties of null (reading 'getBoundingClientRect')
 an unknown page visited and left untouched: {"stored":null,"screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a long entry renamed, scrolled: {"entry":"2026-09-05/Longer","stayed":true,"screen":"2026-09-05/Longer · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 deleted scrolled: its place dropped: {"entry":"2026-09-05","placeKept":false,"screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘C with the clipboard refused: {"corner":"Couldn't copy the link (click to copy)","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘C again, the clipboard back: {"corner":"Couldn't copy the link (click to copy)","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 SECTION FAILED (entries left and renamed): Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 'state')
+a glossed passage at 1500px: {"unavailable":"a margin-note is the successor's (2026-09-29)","screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed into the margin gloss: {"lines":["#  XThe First Anniversarie"],"screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+narrowed to 1000px, typed on: {"unavailable":"a margin-note is the successor's (2026-09-29)","lines":["#  XYThe First Anniversarie"],"screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a gloss between paragraphs at 1500px: {"unavailable":"a margin-note is the successor's (2026-09-29)","screen":"page/Margins · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

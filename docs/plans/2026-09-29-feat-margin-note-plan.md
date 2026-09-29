@@ -1,7 +1,7 @@
 ---
 title: "feat: ::: margin-note, a note drawn in the left margin beside its line"
 type: feat
-status: design settled over a mockup; not built
+status: built 2026-09-29, uncommitted, awaiting the reader's look
 date: 2026-09-29
 origin: the Donne import (~/Desktop/gesta-bookshelf-import-donne), whose Anniversaries carry 17 marginal glosses from the 1621 book
 ---
@@ -86,3 +86,51 @@ stand 21 lines apart, MEASURED over the built entries).
 - Nothing is decided for a phone or tablet beyond the in-text form: not
   needed until a portable version is.
 - The old app reads the fence as text; it is not maintained.
+
+## Record: the build, 2026-09-29
+
+Built test-first from this plan. Every "Open, for the build" item above
+was built as its initial assumption; none was decided anew.
+
+- THE MODEL. `margin_note` is its own node (`block+`, like `note`), a
+  block at the top level and a row in a verse or prose fence;
+  `MARGIN_NOTE_OPEN` in the grammar, a `::: margin-note 2` refused as
+  "margin-note takes nothing after it". Round trips at the top level, in
+  verse, a stanza and a paired prose fence, and quoted (MEASURED, the
+  suite). Wherever the editor passes over a note row it passes over a
+  margin-note row: no number, no leaf, left out of a quoted passage,
+  Enter's exit to a row; markdown as you type opens blocks inside one.
+- THE FORM is a class on the note's own node (`in-margin`, with `--mn-w`
+  and `--mn-push`), written by a plugin view (`src/editor/margins.ts`),
+  not a decoration: the caret stays in the same node across a change of
+  form. The node view ignores its own attribute mutations. The margin
+  form is absolutely positioned at its static place, so it stands beside
+  the row after it with no measuring of rows; the pass measures only the
+  host block's left edge (the width) and the notes' boxes (the push).
+- FAILURE, MEASURED in headless Helium: the pass ran on the root's size
+  alone, and a window widened or narrowed past 760px moved the page's
+  left edge without changing its size — at 900px the glosses stood at
+  x = −205, still in the margin. The window's resize now schedules it too.
+- MEASURED in headless Helium over the seeded Donne passage (18px text),
+  the plan's table reproduced in the app: 1500px → margin, 15em;
+  1300px → 14.6em; 1150px and 900px → in the text. In the margin the
+  gloss's middle is 0px off its line's first line, its right edge 83px
+  (4.6em) left of its block; a gloss a line under a two-line gloss is
+  pushed to 4px below it (605 → 609). In the text, left edge on the
+  text's, 9px (0.65em of 14.4px) above the next row.
+- THE CARET, MEASURED in headless Helium (the plan's open item): a click
+  lands in a margin gloss and typing is stored in its fence; ArrowRight
+  at the end of the line before enters it, ArrowRight at its end and
+  ArrowDown leave to the line after, ArrowUp from the line after enters
+  it; a resize to 900px and back with the caret inside kept the caret,
+  and the characters typed at each width were stored. A synthetic key is
+  not a hand: the reader's own keys in Helium are the answer.
+- THE STEP. `margin-note` in `tools/helium-steps.mjs`, seeded by
+  `?store=seed-margin` (the passage, with "Shortnesse of life." moved up
+  from 30 lines on so that it is pushed, and a prose page); its four
+  readings are successor-only, listed in `corner.differences.txt`.
+  Approved after reading the diff: the four readings added, no earlier
+  reading moved. The current app's run was regenerated; it also gained
+  two lines in its `places` section, READ as the steps' change in
+  f352e3f, made after that run was last regenerated (573fcff).
+- NOT DONE: the Donne folder's rebuild to write `::: margin-note`.

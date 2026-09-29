@@ -137,6 +137,19 @@ test("a ::: note inside a row fence is a row, and does not close it", () => {
   expect(parseMarkdown("::: verse\none\n::: note\nfoot\n:::\ntwo\n:::").childCount).toBe(1);
 });
 
+test("a ::: margin-note is its own block, at the top level and as a row in a verse or prose fence, and does not close the fence", () => {
+  expect(kinds("before\n\n::: margin-note\nThe entrance.\n:::\n\nafter")).toEqual(["paragraph", "margin_note", "paragraph"]);
+  const v = parseMarkdown("::: verse\nThis new world may be safer, being told.\n::: margin-note\nThe sickenesse of the world\nImpossibility of health.\n:::\nThe dangers and diseases of the old:\n:::");
+  expect(v.childCount).toBe(1);
+  expect(v.firstChild!.content.content.map((n) => n.type.name)).toEqual(["line", "margin_note", "line"]);
+  expect(v.firstChild!.child(1).textContent).toBe("The sickenesse of the worldImpossibility of health.");
+  const p = parseMarkdown("::: prose\na | b\n::: margin-note\ngloss\n:::\nc | d\n:::").firstChild!;
+  expect(p.content.content.map((n) => n.type.name)).toEqual(["pair", "margin_note", "pair"]);
+  expect(kinds("::: stanza 2\na\n::: margin-note\ng\n:::\nb\n:::")).toEqual(["verse"]);
+  expect(kinds("::: margin-notes\nx\n:::")).toEqual(["paragraph"]);
+  expect(kinds("  ::: margin-note\n  x\n  :::")).toEqual(["margin_note"]);
+});
+
 test("a nested note's body recurses, so it can hold a verse, and its fences do not end the block around it", () => {
   const d = parseMarkdown("::: card-red\n::: note\n::: verse\nx | y\n:::\n\n```\n:::\n```\n:::\n\nstill in the card\n:::\n\noutside");
   expect(d.childCount).toBe(2);

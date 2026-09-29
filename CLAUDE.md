@@ -242,10 +242,12 @@ is in the plan's record, under the phase named):
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
-  `rows.ts` (the line, pair, gap and note node views), `rowKeys.ts` (the
+  `rows.ts` (the line, pair, gap, note and margin-note node views), `rowKeys.ts` (the
   gestures under a fence, as commands: Enter, Backspace, Delete, Tab, the
   typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
-  measuring pass and its scheduling as a plugin view), `folios.ts` (the
+  measuring pass and its scheduling as a plugin view), `margins.ts` (a
+  `::: margin-note`'s form: the width and the push pure, the placing pass
+  as a plugin view writing a class on the note's own node), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's),
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the

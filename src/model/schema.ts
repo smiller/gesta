@@ -14,7 +14,7 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    that draws itself reads itself back) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
   attrs: stanzas ? { start: { default: 1 }, stanza: { default: null } } : { start: { default: 1 } },
-  content: "(line | pair | gap | note)*",
+  content: "(line | pair | gap | note | margin_note)*",
   group: "block",
   defining: true,
   parseDOM: [{
@@ -99,6 +99,7 @@ const nodes: Record<string, NodeSpec> = {
     toDOM: (n) => ["div", { class: "grid", "data-n": n.attrs.n ?? "", style: "--n: " + (n.attrs.n ?? 3) }, 0],
   },
   note: { content: "block+", group: "block", defining: true, parseDOM: [{ tag: "div.note" }], toDOM: () => ["div", { class: "note" }, 0] },
+  margin_note: { content: "block+", group: "block", defining: true, parseDOM: [{ tag: "div.margin-note" }], toDOM: () => ["div", { class: "margin-note" }, 0] },
   reference: {
     content: "text*", marks: "", group: "block", code: true, defining: true,
     parseDOM: [{ tag: "div.reference", preserveWhitespace: "full" }],

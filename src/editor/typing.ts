@@ -11,7 +11,7 @@ import { trimUrl, URL_START } from "../model/parse.ts";
 const N = schema.nodes, M = schema.marks;
 type Handler = (state: EditorState, match: RegExpMatchArray, start: number, end: number) => Transaction | null;
 
-const BLOCK_HOSTS = new Set([N.doc, N.blockquote, N.card, N.note]);
+const BLOCK_HOSTS = new Set([N.doc, N.blockquote, N.card, N.note, N.margin_note]);
 function inParagraph(state: EditorState): boolean {
   const $f = state.selection.$from;
   return $f.parent.type === N.paragraph && BLOCK_HOSTS.has($f.node(-1).type);

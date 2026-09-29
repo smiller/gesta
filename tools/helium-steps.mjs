@@ -27,6 +27,12 @@ export const STANZA_SEEDS = {
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
 };
+/* the margin-note step's seeds (2026-09-29): written by that step alone;
+   src/main.ts's `?store=seed-margin` holds the same text for the successor */
+export const MARGIN_SEEDS = {
+    "bookshelf/Donne, John/Anniversaries/The First Anniversarie": "# The First Anniversarie\n\n::: verse 60\nThe worlds infirmities, since there is none\nAlive to study this dissection;\n::: margin-note\nWhat life the world hath stil.\n:::\nFor there’s a kind of world remaining still,\nThough shee which did inanimate and fill\nThe world, begone, yet in this last long night,\nHer Ghost doth walke, that is, a glimmering light,\nA faint weake love of vertue and of good\nReflects from her, on them which understood\nYet, because outward stormes the strongest breake,\nAnd strength it selfe by confidence growes weake,\nThis new world may be safer, being told.\n::: margin-note\nThe sickenesse of the world\nImpossibility of health.\n:::\nThe dangers and diseases of the old:\n::: margin-note\nShortnesse of life.\n:::\nFor with due temper men doe then forgoe,\nOr covet things, when they their true worth know.\n:::\n",
+    "page/Margins": "# Margins\n\nA paragraph of prose before the gloss.\n\n::: margin-note\nA gloss on the paragraph after it.\n:::\n\nThe paragraph the gloss stands beside.\n",
+};
 export async function runSteps(page, ctx, A, opts = {}) {
   const shot = opts.screenshot;
   const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, screen: await A.screen(page) })); };
@@ -919,6 +925,26 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* localStorage alone refused: the profile's IndexedDB still answers, so the store's own failure path is not what this reads */
   await log("a page opened with localStorage refused", { entry: (await A.entry(blocked)) ?? null, blockedScreen: ((await A.screen(blocked).catch(() => "")) || "").split(" · corner")[0] });
   await blocked.close();
+    }],
+    ["margin-note", async () => {
+  /* a gloss set in the left margin beside the line after it (2026-09-29, successor-only): 15em in a 1500px window, pushed below a two-line gloss a line above it, back in the text at the tools' 1000px; the caret typed into it at both widths */
+  await A.seedMargin(page, MARGIN_SEEDS);
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await go("bookshelf/Donne%2C%20John/Anniversaries/The%20First%20Anniversarie");
+  await R.settle(page);
+  await log("a glossed passage at 1500px", await R.margins(page));
+  await R.clickMargin(page, "What life");
+  await page.keyboard.type(" X");
+  await log("typed into the margin gloss", { lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
+  await page.setViewportSize({ width: 1000, height: 600 });
+  await page.waitForTimeout(300);
+  await page.keyboard.type("Y");
+  await log("narrowed to 1000px, typed on", { ...(await R.margins(page)), lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
+  await page.setViewportSize({ width: 1500, height: 900 });
+  await go("page/Margins");
+  await R.settle(page);
+  await log("a gloss between paragraphs at 1500px", await R.margins(page));
+  await page.setViewportSize({ width: 1000, height: 600 });
     }],
     ["pill", async () => {
   if (A.pill) {

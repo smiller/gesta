@@ -8,7 +8,7 @@ export function hasFolios(doc: Node): boolean {
   let found = false;
   const walk = (node: Node): void => {
     node.forEach((child) => {
-      if (found || child.type === N.note) return;
+      if (found || child.type === N.note || child.type === N.margin_note) return;
       if (child.type === N.folio) found = true;
       else walk(child);
     });

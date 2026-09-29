@@ -90,7 +90,7 @@ export function spansTwoBlocks(doc: Node, from: number, to: number, stanzas = fa
 export function folioLeaves(doc: Node): { pos: number; label: string }[] {
   const out: { pos: number; label: string }[] = [];
   doc.descendants((n, pos) => {
-    if (n.type === N.note) return false;
+    if (n.type === N.note || n.type === N.margin_note) return false;
     if (n.type === N.folio) out.push({ pos, label: String(n.attrs.label) });
     return true;
   });
@@ -182,7 +182,7 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
    paragraph stood in the nested box, and an edge gap painted an empty row
    under the opener (pin: reference.test › the number on the right block at
    every depth, the nested box trimmed, an edge gap off) */
-const CONTAINERS = new Set(["blockquote", "note", "card", "grid"]);
+const CONTAINERS = new Set(["blockquote", "note", "margin_note", "card", "grid"]);
 const keep = (b: Node): boolean => b.type === N.gap || drawsInk(b);
 function trimmed(b: Node): Node {
   if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); }); return b.copy(Fragment.from(inner)); }
@@ -281,7 +281,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
   const kept: Node[] = [];
   for (let i = first; i <= last; i++) {
     const row = rows[i].node;
-    if (row.type === N.note) continue;
+    if (row.type === N.note || row.type === N.margin_note) continue;
     let turn = false;
     if (!drawsInk(row)) row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
     if (turn) continue;

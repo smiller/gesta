@@ -8,6 +8,7 @@ const BOX = ["background-color", "color", "border", "border-radius", "padding"];
 const STYLED: { sel: string; props: string[] }[] = [
   { sel: "div[class^='card-']", props: BOX },
   { sel: "div.note", props: BOX.concat(["font-size"]) },
+  { sel: "div.margin-note", props: ["color", "font-size", "font-style"] },
   /* the pairing lives on the row, and only a row that holds a translation */
   { sel: "div.vrow.vpair", props: ["display", "grid-template-columns", "column-gap"] },
   /* so a copied grid arrives as one (pin: grid › the grid copied) */

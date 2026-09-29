@@ -1,7 +1,7 @@
 /* each view draws exactly what its toDOM would: a copy travels as this DOM
    and must read back as rows (pin: schema.test › every node that draws
    itself reads itself back) */
-import type { NodeView } from "prosemirror-view";
+import type { NodeView, ViewMutationRecord } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 
 class RowView implements NodeView {
@@ -45,9 +45,23 @@ class NoteView implements NodeView {
   update(node: Node): boolean { return node.type.name === "note"; }
 }
 
+/* an attribute of this node is never the document's: read back as a
+   change, a class written on it would redraw it */
+class MarginNoteView implements NodeView {
+  dom: HTMLElement;
+  contentDOM: HTMLElement;
+  constructor() {
+    this.dom = this.contentDOM = document.createElement("div");
+    this.dom.className = "margin-note";
+  }
+  update(node: Node): boolean { return node.type.name === "margin_note"; }
+  ignoreMutation(m: ViewMutationRecord): boolean { return m.type === "attributes" && m.target === this.dom; }
+}
+
 export const rowNodeViews = {
   line: (node: Node): NodeView => new RowView(node),
   pair: (node: Node): NodeView => new RowView(node),
   gap: (): NodeView => new GapView(),
   note: (): NodeView => new NoteView(),
+  margin_note: (): NodeView => new MarginNoteView(),
 };

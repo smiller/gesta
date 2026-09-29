@@ -124,7 +124,7 @@ export const exitNoteRow: Command = (state, dispatch) => {
   const $c = sel.$from;
   if ($c.depth < 2 || $c.parent.type !== N.paragraph || $c.parent.content.size) return false;
   const note = $c.node(-1), block = $c.node(-2);
-  if (note.type !== N.note || (block.type !== N.verse && block.type !== N.prose)) return false;
+  if ((note.type !== N.note && note.type !== N.margin_note) || (block.type !== N.verse && block.type !== N.prose)) return false;
   if ($c.index(-1) !== note.childCount - 1) return false;
   const tr = state.tr;
   const after = $c.after(-1);

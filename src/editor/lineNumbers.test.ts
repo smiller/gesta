@@ -25,6 +25,7 @@ test("every verse row that is a unit is marked; the number is an attribute, the 
 test("a prose block's sentences never paint; a gap and a note row carry nothing", () => {
   expect(marks(state("::: prose\na | b\n:::"))).toEqual([]);
   expect(marks(state("::: verse\na\n\n::: note\nn\n:::\nb\n:::", 1))).toEqual(["ln shown=1", "ln shown=2"]);
+  expect(marks(state("::: verse\na\n::: margin-note\nn\n:::\nb\n:::", 1))).toEqual(["ln shown=1", "ln shown=2"]);
 });
 
 test("the numbers are computed from position: a row inserted above renumbers what follows", () => {

@@ -6,6 +6,7 @@ import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
 import { rowKeymap, pipeInLine } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
+import { marginNotes } from "./margins.ts";
 import { folios } from "./folios.ts";
 import { typing, typingKeymap, autolinkEnter } from "./typing.ts";
 import { DOMSerializer, type Node } from "prosemirror-model";
@@ -61,6 +62,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       typing(),
       lineNumbers(interval),
       fittedMeasure(),
+      marginNotes(),
       folios(),
       landing(),
       codeHighlight(),
