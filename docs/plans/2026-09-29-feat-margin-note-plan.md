@@ -219,3 +219,27 @@ any was fixed; the reader chose:
 DECIDED after it, by the reader: no further review round for this work
 unless a problem is really significant; next, the Donne folder rebuilt to
 write `::: margin-note`, imported, and looked at.
+
+## Record: the Donne folder rebuilt, 2026-09-29
+
+`converter/poems.py` writes `::: margin-note` where it wrote `::: note`
+for a gloss row; the folder was rebuilt into a scratch directory first.
+MEASURED: the rebuild differs from the folder as it stood in 17 lines
+alone (`::: note` → `::: margin-note`, 8 in The First Anniversarie, 9 in
+The Second), no file added or lost; `tools/importCorpus.ts` imports all
+216, 0 failed; `tools/corpus.ts` round trips all 216 (0 changed, 0
+threw), and the two Anniversaries join the files the old app's parser
+reads differently (29 → 31), as it reads the fence as text. NOTES.txt
+beside the folder says so.
+
+The same day, looking at the import, the reader asked for no folio
+numbers in Donne: the "p. 52" label ran into the line number in the
+gutter ("p. 5213", a screenshot of A Valediction: Forbidding Mourning).
+The converter's folio tokens are off (`poems.FOLIOS`); MEASURED, the
+rebuild differs by the 146 tokens alone, in 95 files, 216 entries import
+and round trip. The overlap itself is the app's, where a verse book
+carries both a folio and a line number on one line; DECIDED by the
+reader not to fix: in numbered verse the line number is the canonical
+reference and a folio is never wanted beside it, and folios earn their
+place only where one edition is canonical (Williams's The Figure of
+Beatrice; the imported Four Loves paginates unlike the reader's copy).
