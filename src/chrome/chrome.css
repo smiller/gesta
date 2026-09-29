@@ -1,6 +1,4 @@
-/* The chrome's tokens, global where the components' own styles are scoped:
-   the sticky bar's palette and the two heights every masthead row shares.
-   Ported 2026-09-07 from ../writer/src/style.css's :root. */
+/* global where the components' own styles are scoped */
 :root {
   --bar-bg: #1e3320;
   --bar-ink: #eef1e0;

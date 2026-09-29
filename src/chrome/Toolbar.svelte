@@ -1,9 +1,6 @@
-<!-- The floating format bar, ported 2026-09-07 from the current app's
-     .fmt (body.html, style.css, 14-floating-format-toolbar.js): a fixed
-     bar floating over the selection, placed by the page on every
-     selection change and scroll and clamped under the masthead. Inside a
-     code block it offers ONE thing, the toggle back out. A mousedown on
-     the bar is swallowed so the editor's selection survives the click. -->
+<!-- A mousedown on the bar is swallowed so the editor's selection survives
+     the click (pin: toolbar › B clicked). Inside a code block it offers ONE
+     thing, the toggle back out. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   let { bar, onAct }: { bar: Screen["bar"]; onAct: (act: string) => void } = $props();

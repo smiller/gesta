@@ -46,8 +46,10 @@ here NOW, and what is not yet:
     checker verifies every pin resolves (below).
   - No module header where the layout below says what the file is; an
     interface member's comment only where its name and type cannot say it.
-  - The standing stock is audited against this directory by directory,
-    the pins and contract tests it needs written as it goes.
+  - The standing stock was audited against it directory by directory on
+    2026-09-28 (the plan's record); the checker's sweep reads 0 blocks
+    naming another module and 0 carrying provenance, and a new comment
+    is held to the same by the checker.
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.

@@ -1,17 +1,17 @@
-/* What the Go to row READS and how a pick ROUTES, pure. Ported 2026-09-07
-   from 19-the-consolidated-go-to-line-the-build-half.js. The line is a run
-   of selects: a Destination (Journal, then every root grouped by
+/* The line is a run of selects: a Destination (Journal, then every root grouped by
    namespace), then the picked scope's shape — Year, Month, Day and, only
    when that day has tagged entries, a Tagged entry select with "← the
    day"; or ONE SELECT PER LEVEL of a page's chain, each with a "← the
    parent" sentinel and its own path, so a pick knows what it is a child
    of. A terminal pick is a jump; a non-terminal one rebuilds
    strictly-downstream levels, placeholder-led, since a preselected option
-   can never be re-picked. A page with no content-bearing subs is terminal
-   on the scope pick itself. A SOLE CHILD THAT IS ITSELF A PARENT IS NOT
+   can never be re-picked (pin: gotoModel.test › a day pick jumps; a year
+   pick refills the months placeholder-led). A page with no content-bearing
+   subs is terminal on the scope pick itself. A SOLE CHILD THAT IS ITSELF A PARENT IS NOT
    WORTH A CLICK: its children stand in its place under its name as a
    section, with the work's own row first, reading "Index" — one hop, not
-   a walk. A book's sections and its order come from one reading of the
+   a walk (pin: gotoModel.test › a sole child that is itself a parent
+   collapses). A book's sections and its order come from one reading of the
    parent's contents. */
 import { isDayKey, nsOf, pageParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, PAGE_KEY } from "../store/keys.ts";
 import { dayKeys, childrenOf } from "../store/lists.ts";

@@ -1,8 +1,3 @@
-/* The chrome's shared state: what the masthead reads, the gutter switch,
-   the backups button's label, the line-numbering interval. ONE rune
-   object made by a factory, written by the page's wiring and read by the
-   components' templates; the "every opener closes the others" rule will
-   live here when the panels arrive. */
 import type { MastheadModel, Link } from "./mastheadModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
 import type { Level } from "./gotoModel.ts";
@@ -30,11 +25,10 @@ export interface SearchState {
 
 export interface Screen {
   masthead: MastheadModel;
-  /* THE ONE SLOT the overlay panels share under the masthead: the pages
-     list, the bookshelf, and later the help, backups, bookmarks and
-     shortcuts panels. Every opener sets it, so opening one closes the
-     others by construction; null is none. The in-flow rows (Line
-     numbering) compete for no spot and are not in it. */
+  /* THE ONE SLOT the overlay panels share: every opener sets it, so opening
+     one closes the others by construction (pin: launch, panels, the corner,
+     links › books panel, displacing it). The in-flow rows compete for no
+     spot and are not in it. */
   panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
   panelRows: Link[];
   /* an empty panel's one explanatory line, "" for none */
@@ -43,21 +37,11 @@ export interface Screen {
   /* the Go to row: open, and its run of selects; the body is EMPTY when
      closed, so a dismissed control is a dead mechanism */
   goto: { open: boolean; levels: Level[] };
-  /* the bookmarks card: its rows, the foot line, the editor's row and
-     draft, the held prefix, and the latch for an unreadable store */
   bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
-  /* the shortcuts popup: the query, the rows it filters to, the active
-     one, the editor's visibility and its text, whether it has unsaved lines */
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
-  /* the backups panel's reading: a folder picker at all, a folder set,
-     the last run's trouble, and whether the journal is in */
   backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed" };
-  /* ⌃⌘G's bar: open, which boxes the entry can answer, what each holds */
   lineBar: { open: boolean; kind: AskKind; line: string; page: string };
-  /* the hover copy button over a code block, a quote, a card, a verse or
-     prose block, a note or a reference: where it sits, what it says */
   copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
-  /* the floating format bar over a selection: where it sits, what is lit */
   bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean };
   /* the open entry draws a gutter: the Line numbering row shows; and
      whether the row stands open (⌃⌘L, the summary) */

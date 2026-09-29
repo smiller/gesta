@@ -1,11 +1,4 @@
-<!-- The help panel: an overlay card, not a route — entries keep sole
-     ownership of the hash. Ported 2026-09-08 from the current app's
-     .helppanel (body.html, style.css, 16-help-panel.js). The text is
-     help.html beside this file, the current app's help section carried
-     whole: it is phase 3's acceptance list, and what it promises that is
-     not yet built is recorded in CLAUDE.md. ⌃⌘H and the button toggle
-     it; it takes the one panel slot, so opening it closes every other
-     overlay and any of them opening closes it. -->
+<!-- An overlay card, not a route: entries keep sole ownership of the hash. -->
 <script lang="ts">
   import text from "./help.html?raw";
   let { open }: { open: boolean } = $props();

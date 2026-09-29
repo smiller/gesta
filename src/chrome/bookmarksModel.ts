@@ -1,16 +1,19 @@
-/* What the bookmarks card READS and how a press at it resolves, pure.
-   Ported 2026-09-08 from 22-bookmarks-b.js. The rows: keyed first sorted
+/* The rows: keyed first sorted
    by trigger, then the numbered ones, each labelled LIVE from the entry
    (a renamed page keeps its bookmark right with no invalidation hook),
-   the open entry's own row marked. The foot line asks one question — can
+   the open entry's own row marked (pin: bookmarksModel.test › labels read
+   live). The foot line asks one question — can
    the open entry be added, and if not why — and is omitted when the entry
    is already a row. A ROW THAT LEADS NOWHERE is swept at the open: a day
    is reachable whatever was written there, anything else must be
-   registered. THE TYPED KEY: a prefix that could still grow WAITS — not
+   registered (pin: bookmarksModel.test › a day is reachable whatever was
+   written). THE TYPED KEY: a prefix that could still grow WAITS — not
    for a clock, but until it is finished, abandoned or completed; a press
    nothing else extends resolves at once; Enter takes the sole candidate
    left, or asks for the rest; a is the add key and a digit the numbered
-   jump only while nothing is held, which is what leaves scr12 reachable. */
+   jump only while nothing is held, which is what leaves scr12 reachable
+   (pin: bookmarksModel.test › a key nothing else starts with goes on the
+   press; one that could grow waits) */
 import { isDayKey, nsOf, pageParts, entryKey } from "../store/keys.ts";
 import { registered } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
@@ -62,7 +65,8 @@ export function aliasCandidates(list: Bookmark[], buf: string): Bookmark[] {
 }
 export type Resolved = { buf: string; jump?: Bookmark; say?: string };
 /* Enter, or a press that cannot grow: the exact holder, else the sole
-   candidate, else "finish the key" with the prefix KEPT, else no bookmark */
+   candidate, else "finish the key" with the prefix KEPT, else no bookmark
+   (pin: bookmarksModel.test › Enter takes the exact key) */
 export function resolveAlias(list: Bookmark[], buf: string): Resolved {
   let b = aliasHolder(list, buf);
   const left = aliasCandidates(list, buf);

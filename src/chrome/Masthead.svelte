@@ -1,20 +1,10 @@
-<!-- The masthead: the sticky dark bar, ported 2026-09-07 from the current
-     app's .site-head (body.html, style.css) with the measurements its
-     comments carry. BUILT: the three icons — the bookshelf and the pages
-     lists, each a dropdown panel in the one slot the overlays share, and
-     the journal icon that goes to today — the date line as a breadcrumb
-     with the tag bar under it, the tools, the title row and the Line
-     numbering row. The create, rename and delete of a tagged entry and a
-     sub-page are the tools' first three buttons, worded per namespace.
-     The mode pill leads the tools while the source view is on. The ⌃⌘G bar hangs off the bar's
-     bottom edge at the right gutter, its own component; the help card is
-     the panel slot's third value. The Go to and Search
-     rows are their own components, drawn between the title row and the
-     Line numbering row in the current app's order. A panel's rows are anchors, so ⌘-click and middle-click work; a
-     row click closes the panel itself, since a click on the open entry's
-     own row moves no hash. Attention leaving a panel (a Tab out) dismisses
-     it like a click outside; relatedTarget, not activeElement, which is
-     mid-flight during focusout. -->
+<!-- A panel's rows are anchors, so ⌘-click and middle-click work; a row
+     click closes the panel itself, since a click on the open entry's own
+     row moves no hash (pin: launch, panels, the corner, links › after a row
+     click). Attention leaving a panel (a Tab out) dismisses it like a click
+     outside (pin: launch, panels, the corner, links › after a click
+     outside); relatedTarget, not activeElement, which is mid-flight during
+     focusout. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   import Search from "./Search.svelte";
@@ -27,10 +17,8 @@
   let { screen, onToday, onExport, onImport, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void;
-    /* the sub-entry gestures: create under the open entry, rename and delete the open one */
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
-    /* the opener's click: the page's wiring toggles the slot and fills the rows */
     onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
@@ -56,8 +44,6 @@
     const panel = e.currentTarget as HTMLElement;
     if (!(e.relatedTarget instanceof Node && panel.contains(e.relatedTarget))) onClosePanel();
   };
-  /* HOW OFTEN A LINE NUMBER IS DRAWN — the reader's choice, the current
-     app's seven */
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
   export function focusLines(): void { linesSelect?.focus(); }
@@ -181,8 +167,8 @@
      day tag has no length rule, and an uncapped nowrap leaf ran off the bar */
   .tag-current { display: inline-block; width: max-content; max-width: 60vw; overflow-wrap: anywhere; white-space: normal; }
   .site-home a.datelink { color: inherit; font: inherit; }
-  /* THE WHOLE CRUMB READS AT THE TITLE'S WEIGHT (measured 2026-08-04 in
-     the current app: the play read as the least important thing) */
+  /* THE WHOLE CRUMB READS AT THE TITLE'S WEIGHT (MEASURED: the play read as
+     the least important thing) */
   .datelabel .date-unit { font-weight: 600; }
   .datelabel a:hover { text-decoration: underline; }
   .datelabel { white-space: nowrap; }

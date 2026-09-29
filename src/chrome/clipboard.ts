@@ -1,13 +1,11 @@
-/* The clipboard writer, ported 2026-09-07 from the current app's
-   writeClipboard (11-copy-a-code-block…js): the async API first, and on
-   its refusal an off-screen textarea plus execCommand("copy") that gives
+/* The async API first, and on its refusal an off-screen textarea plus execCommand("copy") that gives
    back the selection AND the focus it displaced. Three rungs, the MIDDLE
    one lossy by construction: a ClipboardItem carries both flavours, plain
    writeText only one, the textarea both again by taking the copy event
-   over. Both engines have ClipboardItem from file:// (measured 2026-07-31
-   in the current app), so a two-flavour write never stands on the lossy
-   rung; a plain string lands on it by design. DOM-facing: the fallback is
-   measured in Helium, not under node. Resolves whether the copy landed. */
+   over. Both engines have ClipboardItem from file:// (MEASURED), so a
+   two-flavour write never stands on the lossy rung; a plain string lands
+   on it by design. Resolves whether the copy landed (pin: entries left and
+   renamed › ⌃⌘C with the clipboard refused). */
 export interface Flavours { text: string; html: string }
 export function writeClipboard(payload: string | Flavours): Promise<boolean> {
   const { text, html } = typeof payload === "string" ? { text: payload, html: "" } : payload;
@@ -59,7 +57,7 @@ export function writeClipboard(payload: string | Flavours): Promise<boolean> {
   if (cb?.writeText) return cb.writeText(text).then(() => true, fallback);
   return Promise.resolve(fallback());
 }
-/* the ledger's shape: a promise that REJECTS when nothing landed */
+/* REJECTS when nothing landed */
 export function copyText(text: string): Promise<void> {
   return writeClipboard(text).then((ok) => { if (!ok) throw new Error("the clipboard refused the write"); });
 }

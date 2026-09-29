@@ -1,11 +1,7 @@
-<!-- The backups panel, ported 2026-09-08 from the current app's
-     #backuppanel (body.html, 17-backups-panel.js): the setup or Change
-     button, Resume when the last run stalled, and the status line — an
-     unloaded journal outranking every other status, since a run declines
-     on it and "Automatic backups are on." would be false exactly when the
-     reader most needs it true. Recovery is unzipping an archive and
-     importing the folder it makes into a fresh Gesta; there is no in-app
-     restore. -->
+<!-- An unloaded journal outranks every other status: a run declines on it,
+     and "Automatic backups are on." would be false exactly when a reader
+     most needs it true. Recovery is unzipping an archive and importing the
+     folder it makes into a fresh Gesta; there is no in-app restore. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   let { backups, onSetup, onResume }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void } = $props();

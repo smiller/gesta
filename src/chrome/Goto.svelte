@@ -1,12 +1,9 @@
-<!-- The masthead's Go to row, ported 2026-09-07 from the current app's
-     .page-goto (body.html, style.css, 19-the-consolidated-go-to-line…js):
-     a native <details> whose summary is the toggle and whose body is a
-     run of native selects — the browser owns each open list. A level with
+<!-- A run of native selects, the browser owning each open list. A level with
      no preselect leads with a disabled placeholder, which under terminal
      navigation is SAFETY: a rebuilt select preselecting a real value would
      navigate on the first closed-select arrow-press. A sentinel is the
-     pickable "← the thing itself" row, value "". Groups are minted on
-     first use, so the ungrouped rows above keep their place. -->
+     pickable "← the thing itself" row, value "". Groups are minted on first
+     use, so the ungrouped rows above keep their place. -->
 <script lang="ts">
   import type { Level } from "./gotoModel.ts";
   let { goto, onToggle, onPick }: {

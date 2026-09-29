@@ -1,16 +1,13 @@
-<!-- The corner: the one indicator the ledger writes, and the backup's
-     paused pill. Ported 2026-09-07 from the current app's #saved span and
-     .backup-paused button with their stylesheet (style.css, "saved
-     whisper"): the indicator is transparent to the mouse while hidden and a
-     click target only when shown; the pill sits bottom-right so it never
-     covers the indicator. The white-space rule is what lets a pinned list
-     (one refusal per line) render as lines. -->
+<!-- The indicator is transparent to the mouse while hidden and a click
+     target only when shown; the pill sits bottom-right so it never covers
+     the indicator. The white-space rule is what lets a pinned list (one
+     refusal per line) render as lines. -->
 <script lang="ts">
   import type { Notices } from "./notices.svelte.ts";
   let { notices, onResume }: { notices: Notices; onResume: () => void } = $props();
 </script>
 
-<!-- the indicator stays a span, as in the current app: a status line whose
+<!-- the indicator stays a span: a status line whose
      click is a mouse's convenience, never in the tab order — a button here
      would take focus from the editor on a Tab. -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->

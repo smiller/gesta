@@ -1,12 +1,6 @@
-<!-- The bookmarks card, ported 2026-09-08 from the current app's
-     #bookmarkspanel (body.html, style.css, 22-bookmarks-b.js). The section
-     holds focus itself so the bare keys — A, 1-9, a typed trigger — reach
-     the page's handler while the card is up; the row editor is the one
-     field here. Keyed rows first, then the numbered ones with whitespace
-     between; the open entry's row says so, and the foot line then has
-     nothing to ask. The keyed rows' column is MEASURED off a probe in a
-     row, since a character count is not a width in a proportional face,
-     with the floor and the ceiling stated in the cell's own rule. -->
+<!-- The keyed rows' column is MEASURED off a probe in a row, since a
+     character count is not a width in a proportional face, with the floor
+     and the ceiling stated in the cell's own rule. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   let { bookmarks, onKey, onAct, onDraft, onCommit }: {

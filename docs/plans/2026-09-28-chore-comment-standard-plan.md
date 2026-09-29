@@ -406,3 +406,38 @@ pinned (a performance choice), 2 pinned with a neighbour.
   true). The tree's code is unchanged but for a rendered-view CSS rule;
   the reading is in the source view. Owed: a look at why the source
   view's held place can miss, with the run that caught it.
+
+### 2026-09-28 — src/chrome, main.ts and session.ts audited: the audit's end
+
+- src/chrome, MEASURED: 147 comment blocks → 133, 493 comment lines → 414.
+  The component headers were port history round a decision or two (the
+  old app's file names, which the other-module rule reads as paths);
+  the decisions stay, the history goes. screen.svelte.ts's header said
+  the "every opener closes the others" rule "will live here when the
+  panels arrive" — they arrived; the rule is on the panel field, pinned.
+  Interface-member comments that restated their type went. One describe
+  title lost "(2026-09-27)".
+- main.ts, never audited before (the sample took session.ts): 64 blocks
+  kept 64, 229 lines → 221 — the wiring's comments speak of its own
+  code; the header's phase history, the dates, "(the review)", "the
+  reader" and four role possessives went ("the landing's typed text"
+  meant the entry landed on after a delete, not the landing mark).
+  session.ts: its five "the reader" became "a reader", and "the warm's
+  count" the entry count.
+- THE WHOLE TREE, MEASURED: 1,050 comment blocks → 924, 3,288 comment
+  lines → 2,824, 436 pins, all resolving. The sweep: 0 blocks name
+  another module, 0 carry provenance (138 and 245 before the audit).
+  What the sweep cannot see is still there where it was: a module named
+  only by a role in plain English ("the units walk", "the view") — four
+  of the nine known-bad blocks were that shape, and the review stays the
+  net for it.
+- FOUND: THE HELIUM VERDICT IS FLAKY (MEASURED). On the final tree, 4 of
+  10 runs differed from the approved copy — "a forced entry left
+  scrolled, returned to" read stayed:false three times, and "with
+  ?corner=pill" drew no pill once; 3 runs on HEAD (2cd89d4) all passed.
+  The two trees build a BYTE-IDENTICAL dist/index.html (sha256
+  a72c16cd…, MEASURED), so the page under test is the same and the flips
+  are timing. The forced entry's reading had flipped once on the
+  src/editor batch too. OWED: why the source view's held place can miss,
+  and whether the pill's step waits on the launch run; until then a
+  commit's pre-commit may need a second run of verify.

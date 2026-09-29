@@ -1,11 +1,8 @@
-<!-- ⌃⌘G's find bar, ported 2026-09-07 from the current app's .linebar
-     (body.html, style.css, 20-g-go-to-a-line.js): top right under the
-     masthead, hung off its bottom edge like the panels. ONE PAIR PER KIND
-     OF NUMBER, label and box together so the entry can hide either as a
-     unit — a box with a fixed label cannot lie about what it wants — and
-     an "or" between them where there are two, so the pair reads as a
-     choice. No press on the bar may move focus except into a box: a
-     mousedown anywhere but an input or its label is swallowed. -->
+<!-- ONE PAIR PER KIND OF NUMBER, label and box together so the entry can
+     hide either as a unit — a box with a fixed label cannot lie about what
+     it wants — and an "or" between them where there are two. No press on
+     the bar may move focus except into a box: a mousedown anywhere but an
+     input or its label is swallowed. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   let { lineBar, onInput, onEnter, onClose }: {

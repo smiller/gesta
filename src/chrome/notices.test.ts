@@ -1,10 +1,4 @@
-/* The notice ledger's decisions, re-pinned from the current app's
-   06-save-load.js: the whisper that times out, the pin that yields to
-   nothing but a click, the progress line an op owns, the deferred one-shot
-   and the keyed save-failure family. Timers are faked; the clipboard is a
-   fake that can refuse. FAILURE 2026-09-07: this file was overwritten by
-   a `Notices.test.ts` on the case-insensitive disk and lost with the
-   rename; a component's file never shares a stem with a module's again. */
+/* Timers are faked; the clipboard is a fake that can refuse. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { noticeLedger, IDLE_TEXT, WHISPER_MS, type Notices } from "./notices.svelte.ts";
 

@@ -1,10 +1,4 @@
-<!-- The custom shortcuts popup, ported 2026-09-08 from the current app's
-     #shortcutspanel (body.html, style.css, 21-custom-shortcuts-text-
-     expander.js): a code box that filters the table by prefix, the rows
-     with the first highlighted, Enter or a mousedown inserting the
-     highlighted expansion, and the editor beneath — one shortcut per
-     line as code: expansion. A row takes the MOUSEDOWN, not the click,
-     so focus never leaves the box. -->
+<!-- A row takes the MOUSEDOWN, not the click, so focus never leaves the box. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   let { shortcuts, onQuery, onPick, onWalk, onEnter, onEdit, onDraft, onSave, onEscape }: {

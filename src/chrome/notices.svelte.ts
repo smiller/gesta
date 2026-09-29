@@ -1,14 +1,3 @@
-/* The notice ledger: the corner's ONE indicator and its states — a whisper
-   that times out, a pin that stays until clicked and copies its detail, a
-   progress line a running op owns, the deferred one-shot, and the keyed
-   save-failure family that releases itself when every owed entry lands —
-   plus the paused pill's text, the corner's other element. Ported
-   2026-09-07 from ../writer/src/js/06-save-load.js as a factory over the
-   clipboard writer; the state is a rune the Notices component reads, and
-   every other module reaches it through the calls below. What the port
-   drops: the index-debt shape and its `lesser` rank. The successor's lists
-   are derived from the cache (lists.ts), so a save owes ONE write and the
-   two vocabularies the current app had to rank are one. */
 import type { EntryNotices } from "../store/entries.ts";
 import { errText } from "../store/files.ts";
 
@@ -68,15 +57,17 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
     if (timer) clearTimeout(timer);
     timer = null;
   }
-  /* the text STAYS as the notice fades: the current app's hide reset it
-     to "saved" for the fade, so a refusal went out reading as a save.
-     Changed 2026-09-07. */
+  /* the text STAYS as the notice fades: reset to "saved" for the fade, a
+     refusal went out reading as a save (pin: notices.test › shows the text
+     and hides after its time, the text staying for the fade) */
   function hide(): void { state.shown = false; }
   /* a stuck failure is PINNED and a live progress line holds the indicator
      too: a routine whisper (an autosave "saved", a word count) must not
      wipe either or drop the pin; only a click, or the handle's own terminal
-     call, clears it. A save failure that fires under a busy pin is the
-     keyed family's, and it latches to replay when the op ends. */
+     call, clears it (pin: notices.test › pins with the copy affordance in its
+     own text, and a whisper yields to it). A save failure that fires under a
+     busy pin is the keyed family's, and it latches to replay when the op
+     ends. */
   function whisper(text: string, ms = WHISPER_MS): void {
     if (stuckCopy || state.busy) return;
     show(text);
@@ -84,8 +75,8 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
   }
   /* a swallowed press that changed nothing SAYS why: an action the app
      quietly ignores cannot be told apart from a key that does nothing at
-     all. App-wide, so it lives beside the other states. Once per PRESS: a
-     held key would otherwise stamp its line at key-repeat rate. */
+     all. Once per PRESS: a held key would otherwise stamp its line at
+     key-repeat rate (pin: notices.test › refuse says why once per press) */
   function refuse(e: { repeat: boolean }, why: string, ms?: number): void {
     if (!e.repeat) whisper(why, ms);
   }
@@ -106,8 +97,10 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
   /* stickErr DEFERRED while a progress line owns the indicator: the trace
      always lands, the notice waits in ONE slot (a newer deflected failure
      supersedes an older unseen one; the console holds both) to resurface
-     when the op ends or a pin is dismissed. Returns 0 when deferred: a
-     deferred notice has no owner-release and clears by click once shown. */
+     when the op ends or a pin is dismissed (pin: notices.test › one slot: a
+     newer deferred failure supersedes an older unseen one). Returns 0 when
+     deferred: a deferred notice has no owner-release and clears by click
+     once shown. */
   let idleStick: [string, string] | null = null;
   function stickErrIdle(text: string, err: unknown, copy?: string): number {
     console.error(text, err);
@@ -120,8 +113,9 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
     idleStick = null;
     stick(d[0], d[1]);
   }
-  /* release an OWNED pin: only while the notice is still the owner's — any
-     newer notice moved the generation, and the release stands down */
+  /* only while the notice is still the owner's: any newer notice moved the
+     generation, and the release stands down (pin: notices.test › releasePin
+     releases only while the notice is still the owner's) */
   function releasePin(g: number): void {
     if (!g || g !== gen) return;
     stuckCopy = "";
@@ -136,7 +130,9 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
      alone. The latch holds the last failure that spoke, not only under a
      busy pin: progress() wipes a pre-op pin for its own display, so the
      op's end must be able to resurface a failure whose keys are still
-     owed; it dies only when they all land. */
+     owed; it dies only when they all land (pin: notices.test › the pin
+     stands until the LAST owed key lands) (pin: notices.test › the latch
+     stays armed across a later op until the key lands) */
   const owed: Record<string, true> = Object.create(null);
   let saveFailGen = 0;
   let saveFailLatch: [string, unknown, string | undefined] | null = null;
@@ -164,7 +160,9 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
      stale one, and a later click cannot copy the previous payload. With
      BOTH latches armed at the end, only the save failure shows (data loss
      outranks) and the one-shot waits for that pin's dismiss click:
-     replaying both would flash the one-shot for zero frames. */
+     replaying both would flash the one-shot for zero frames (pin:
+     notices.test › a user-driven op drops a prior unclicked pin) (pin:
+     notices.test › with both latches armed only the save failure shows) */
   function progress(text: string): Progress {
     const mine = ++busyGen;
     state.busy = true;
@@ -184,7 +182,8 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
      lose the only signal); a whisper dismisses; a pin copies its payload,
      releases, and the outcome whispers unless a newer notice moved in.
      Dismissing one pin surfaces the next deferred one-shot, never the
-     save-fail latch, which would make its own pin undismissable. */
+     save-fail latch, which would make its own pin undismissable (pin:
+     notices.test › resurfaces on the dismiss click of another pin) */
   function click(): void {
     if (state.busy) return;
     gen++;

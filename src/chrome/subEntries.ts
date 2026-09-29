@@ -1,18 +1,17 @@
-/* The sub-entry rules, pure: where a new one of the open entry would
-   live, what blocks a rename or a delete, and where a delete lands.
-   Ported 2026-09-07 from 15-tagged-sub-entries-create-rename-delete.js.
-   EVERY page hosts, at every depth; the one leaf left is a day's TAGGED
+/* EVERY page hosts, at every depth; the one leaf left is a day's TAGGED
    entry. A page's name is part of every key beneath it and there is no
    cascade, so content-bearing DESCENDANTS block its rename and delete at
    every depth; registered-but-blank ones never block, and are swept only
-   AFTER the user confirms. */
+   AFTER the user confirms (pin: subEntries.test › content-bearing
+   descendants at any depth block; blanks never do) */
 import { nsOf, pageParts, entryKey, entryHash, entryNoun, todayKey } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
 import { pageName } from "../store/names.ts";
 
 export interface SubSpec { tag: string; full: string; listKey: string; href: string }
-/* the spec for a typed name, or the refusal; null when the open entry
-   cannot host (a day's tagged entry — silent, since no route in shows) */
+/* null when the open entry cannot host (a day's tagged entry — silent, since
+   no route in shows) (pin: subEntries.test › a day's tagged entry cannot
+   host) */
 export function subEntrySpec(date: string, tag: string | null, typed: string): SubSpec | { refuse: string } | null {
   const ns = nsOf(date);
   if (!ns && tag) return null;
@@ -34,8 +33,8 @@ export const bearing = (cache: Record<string, string>, key: string): boolean => 
 export function subTreeHasContent(keys: string[], cache: Record<string, string>, listKey: string): boolean {
   return childrenOf(keys, listKey).some((s) => { const k = entryKey(listKey, s); return bearing(cache, k) || subTreeHasContent(keys, cache, k); });
 }
-/* the whole blank subtree under a key, deepest first — what a confirmed
-   rename or delete sweeps */
+/* deepest first (pin: subEntries.test › the blank subtree lists every
+   descendant, deepest first) */
 export function blankSubTree(keys: string[], listKey: string): string[] {
   const out: string[] = [];
   for (const s of childrenOf(keys, listKey)) { const k = entryKey(listKey, s); out.push(...blankSubTree(keys, k)); out.push(k); }
@@ -55,9 +54,9 @@ export function subButtons(date: string, tag: string | null): SubButtons {
     deleteTitle: ns ? "Delete this " + level : "Delete this tagged entry",
   };
 }
-/* the prompt and confirm texts: the noun leads the name, the reading not
-   the key, and the prefill stays the key since that is what a rename
-   changes */
+/* the noun leads the name, the reading not the key, and the prefill stays
+   the key since that is what a rename changes (pin: subEntries.test › the
+   prompt and the confirm lead with the noun) */
 export function renamePrompt(date: string, tag: string, shownLabel: string): string {
   const ns = nsOf(date);
   return "Rename the " + (ns ? entryNoun(date, tag) : "tag") + ' "' + shownLabel + '" to:';
@@ -65,8 +64,9 @@ export function renamePrompt(date: string, tag: string, shownLabel: string): str
 export function deleteConfirm(date: string, tag: string, shown: string): string {
   return nsOf(date) ? "Delete the " + entryNoun(date, tag) + ' "' + shown + '"?' : 'Delete the entry "' + shown + '" for this day?';
 }
-/* where a delete lands: a root on today, a sub-page on its immediate
-   parent, a day's tagged entry on the day */
+/* a root on today, a sub-page on its immediate parent, a day's tagged entry
+   on the day (pin: subEntries.test › a delete lands on the day, the parent,
+   or today) */
 export function deleteLanding(date: string, tag: string): { date: string; tag: string | null } {
   const ns = nsOf(date);
   if (!ns) return { date, tag: null };

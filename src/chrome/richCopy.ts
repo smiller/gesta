@@ -1,8 +1,7 @@
 /* The rich flavour: the HTML beside the markdown on the clipboard, so a
    card pasted into an email arrives as its coloured box, a footnote as
    its smaller ruled note, a paired canto with its two columns rather than
-   interleaved. Ported 2026-09-08 from 12-block-clipboard.js and the
-   staging in 24-copying-a-reference.js. Anything whose LOOK is
+   interleaved (pin: card copy › a card ⌘C'd). Anything whose LOOK is
    class-driven CSS is written inline, read off the LIVE twin's computed
    style — nothing carries a stylesheet across a paste, and reading it
    off the element keeps the palette spelled once. A quote and a

@@ -1,9 +1,6 @@
 /* What the masthead READS for the open entry, as data: the date line as a
    breadcrumb, the bold leaf, the title row, the day's sibling tags, and
-   whether today is worth reaching for. Ported 2026-09-07 from the current
-   app's showDateLabel (06-save-load.js) and rootLabel (18-pages-panel.js),
-   pure over the cache's keys and the journal's headings, so the component
-   only draws. The rules kept: the date line is a BREADCRUMB — on any
+   whether today is worth reaching for. The date line is a BREADCRUMB — on any
    sub-entry the parent crumbs link back up, every ancestor its own link,
    and the leaf, the entry's own NAME, reads bold; a top-level page is its
    bold label alone; a day's main entry is "Era — date". Only a ROOT reads
@@ -11,13 +8,14 @@
    its roots. The tag bar lists DESTINATIONS only: a day's sibling tags,
    never the open one. The title row is for TITLES, never names: a
    sub-page's first heading, or a day's — a headingless sub-page already
-   names itself in the crumb. */
+   names itself in the crumb (pin: mastheadModel.test › a sub-page: the parent
+   crumb links back) (pin: mastheadModel.test › deeper down every ancestor is
+   its own link) */
 import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
 import { romanKey, romanWorkKey, type Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
 
-/* a unit of the date line: a link back up, or the plain date */
 export interface Crumb { text: string; href: string | null; title: string }
 export interface Link { text: string; href: string }
 export interface MastheadModel {
@@ -28,11 +26,10 @@ export interface MastheadModel {
   title: string;
   tags: Link[];
   showToday: boolean;
-  /* the create, rename and delete buttons: wording and presence per namespace */
   buttons: SubButtons;
 }
-/* a root's display name: the heading of its own entry where the
-   namespace titles its roots, else the name */
+/* the heading of its own entry where the namespace titles its roots, else
+   the name (pin: mastheadModel.test › a root reads as its own heading) */
 export function rootLabel(ns: string, name: string, journal: Journal): string {
   return (titlesRoots(ns) && journal.heading(entryKey(ns, name))) || name;
 }
@@ -50,7 +47,8 @@ export function mastheadModel(date: string, tag: string | null, keys: string[], 
         crumbs.push({ text: label, href: entryHash(date, path.slice(0, i + 1).join("/")), title: "Back to " + label });
       });
       /* a work citing book and canto in Roman shows its keys the way its
-         citations spell them: `I.i`, not `1.1` (2026-09-27) */
+         citations spell them: `I.i`, not `1.1` (pin: mastheadModel.test › the
+         leaf is the key respelled as the citation spells it) */
       leaf = romanWorkKey(date, tag, journal) ? romanKey(pp.leaf!) : pp.leaf;
       title = journal.heading(entryKey(date, tag));
     } else {
@@ -75,8 +73,9 @@ export function mastheadModel(date: string, tag: string | null, keys: string[], 
 }
 
 /* the row-label cap every list surface shares, so their truncation of an
-   untrusted name cannot drift apart; and how much of what the reader
-   TYPED a refusal may quote back, shorter because it lands mid-sentence */
+   untrusted name cannot drift apart (pin: mastheadModel.test › trimLabel);
+   and how much of what was TYPED a refusal may quote back, shorter because
+   it lands mid-sentence */
 export const LABEL_CAP = 60;
 export const ECHO_CAP = 24;
 export function trimLabel(s: string, max: number): string {
@@ -85,8 +84,8 @@ export function trimLabel(s: string, max: number): string {
   if (/[\uD800-\uDBFF]/.test(s.charAt(cut - 1))) cut--;
   return s.slice(0, cut) + "…";
 }
-/* one namespace's roots as panel rows, each labelled the one way a root is
-   labelled everywhere (rootLabel), in byName order of the KEYS */
+/* each root labelled the one way a root is labelled everywhere, in name
+   order of the KEYS (pin: mastheadModel.test › a namespace's roots as rows) */
 export function panelRows(ns: string, keys: string[], journal: Journal): Link[] {
   return childrenOf(keys, ns).map((name) => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name) }));
 }

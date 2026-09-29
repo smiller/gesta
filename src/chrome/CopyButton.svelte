@@ -1,7 +1,5 @@
-<!-- ONE fixed button over whichever block the mouse is nearest inside,
-     ported 2026-09-08 from the current app's #copybtn (body.html,
-     style.css, 11-copy-a-code-block…js). Its mousedown is swallowed so the
-     editor's selection stays; the page places it and names what it copies. -->
+<!-- ONE fixed button over whichever block the mouse is nearest inside. Its
+     mousedown is swallowed so the editor's selection stays. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   let { copy, onCopy }: { copy: Screen["copy"]; onCopy: () => void } = $props();

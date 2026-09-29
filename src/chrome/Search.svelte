@@ -1,15 +1,12 @@
-<!-- The masthead's Search row, ported 2026-09-07 from the current app's
-     .page-search (body.html, style.css, 27-the-masthead-search-line.js):
-     a native <details> whose summary is the toggle, a scope select and the
-     input side by side, and the results hanging BELOW the whole bar as an
-     overlay — out of flow, so a long match set cannot grow the sticky bar
-     until it swallows the viewport; its height is the window less the
-     bar, in the containing block's own coordinates, so there is no moment
-     at which it is measured and none at which it goes stale. The keys
-     live on the INPUT: the arrows belong to whatever else has focus, and
-     the select's arrows open its own list. A modified arrow is not a walk.
-     The row ↑↓ landed on carries an inset bar a hover never paints, since
-     the overlay drops onto wherever the pointer already rests. -->
+<!-- The results hang BELOW the whole bar as an overlay — out of flow, so a
+     long match set cannot grow the sticky bar until it swallows the
+     viewport; its height is the window less the bar, in the containing
+     block's own coordinates, so it is never measured and never stale. The
+     keys live on the INPUT: the arrows belong to whatever else has focus,
+     and the select's arrows open its own list. A modified arrow is not a
+     walk. The row ↑↓ landed on carries an inset bar a hover never paints,
+     since the overlay drops onto wherever the pointer already rests (pin:
+     search › after ↓). -->
 <script lang="ts">
   import type { SearchState } from "./screen.svelte.ts";
   import { SEARCH_CAP } from "../store/search.ts";

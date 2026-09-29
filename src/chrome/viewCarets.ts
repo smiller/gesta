@@ -1,5 +1,4 @@
-/* WHERE THE VIEW TOGGLE PUTS YOU BACK, pure. Ported 2026-09-07 from
-   13b-the-view-switch-and-its-carets.js. The two views are different
+/* The two views are different
    documents — the source differs from the rendered text by every syntax
    character — so a held position cannot survive the flip. What survives
    is a COUNT: how many flat characters precede the caret, held per view
@@ -12,12 +11,14 @@
    subsequence of the source stream, and one greedy walk aligns them in
    either direction. A hold is exact; the map is the fallback, and a
    MOVED caret retires the other view's hold, or a reader who moved on in
-   one view arrives back where the other's older hold pointed. */
+   one view arrives back where the other's older hold pointed (pin:
+   viewCarets.test › an exact hold wins while the text matches) */
 import { type Flat, lastMapped } from "../model/flatten.ts";
 
 export interface Hold { at: number; text: string; tail: boolean; seen: boolean }
 /* the count of flat characters before a position of the view's own
-   (a document position, or a raw index into the source text) */
+   (a document position, or a raw index into the source text) (pin:
+   viewCarets.test › counts the flat characters before a document position) */
 export function countBefore(flat: Flat, pos: number): number {
   for (let i = 0; i < flat.pos.length; i++) {
     const p = flat.pos[i];
@@ -41,13 +42,15 @@ export function positionAt(flat: Flat, at: number): number | null {
    extra characters simply never advance the count. Going to the source,
    everything the source has and the rendered does not sits between the
    boundary after the last match and the caret's own character, and which
-   side the reader belongs on depends on the run: a picture's marker or a
+   side a reader belongs on depends on the run: a picture's marker or a
    table's divider are separate TOKENS and the caret goes after them; a
    link's `[` or bold's `**` is glued to the word and the caret belongs
    before it, or typing corrupts markup. Crossing WHITESPACE tells the two
    apart. The probe is several characters, since a run can CONTAIN the
-   one the caret sits on. Past the last rendered character the rest is
-   source-only, and belongs behind a reader who was below it all. */
+   one the caret sits on (pin: viewCarets.test › to the source, glued syntax
+   stays ahead of the caret). Past the last rendered character the rest is
+   source-only, and belongs behind a reader who was below it all (pin:
+   viewCarets.test › past the last rendered character) */
 export function crossViewOffset(from: string, to: string, at: number, toSource: boolean, pastTail: boolean): number {
   const sub = toSource ? from : to, sup = toSource ? to : from;
   let i = 0, j = 0;
@@ -69,11 +72,11 @@ export function crossViewOffset(from: string, to: string, at: number, toSource: 
    describes this text, else the place the view just left was held at,
    carried across; null with nothing to go on */
 /* THE VISIBILITY BIT IS THE LEAVING VIEW'S, whichever count is used: an
-   exact hold remembers where this view's caret WAS, but whether the
-   reader was looking at the caret is a fact about the view just left,
-   written on every toggle — MEASURED 2026-09-07, a reader scrolled to
-   the bottom was pulled back to the top by a hold whose own bit was
-   older than the scroll. */
+   exact hold remembers where this view's caret WAS, but whether a reader
+   was looking at the caret is a fact about the view just left, written on
+   every toggle — MEASURED, a reader scrolled to the bottom was pulled back
+   to the top by a hold whose own bit was older than the scroll (pin: source
+   view › ⌃⌘M back, still scrolled away) */
 export function arrivingCount(held: Hold | null, left: Hold | null, text: string, toSource: boolean): { at: number; tail: boolean; seen: boolean } | null {
   if (held && held.text === text) return { at: held.at, tail: held.tail, seen: left ? left.seen : held.seen };
   if (left) return { at: crossViewOffset(left.text, text, left.at, toSource, left.tail), tail: left.tail, seen: left.seen };

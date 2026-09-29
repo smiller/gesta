@@ -101,7 +101,7 @@ export function startSession(opts: SessionOptions): Session {
   let navGen = 0;
   let mdView = false;
   /* a stored text the model refuses FORCES the source view for that entry
-     only; the reader's own choice is put back on the next open
+     only; a reader's own choice is put back on the next open
      (pin: grid › the next entry after a refused switch) */
   let forced = false, readerView = false;
   let source: HTMLTextAreaElement | null = null;
@@ -186,7 +186,7 @@ export function startSession(opts: SessionOptions): Session {
     lastWritten = null;
   }
   /* the restored place is HELD, and set again whenever the page under it
-     changes size, until the reader's own wheel, key, pointer or touch. Read
+     changes size, until a reader's own wheel, key, pointer or touch. Read
      back from the scroll instead, the place drifted up with every picture
      above it. (pin: places › 400px grown above the held place) */
   let held: { ekey: string; place: Place } | null = null;
@@ -280,7 +280,7 @@ export function startSession(opts: SessionOptions): Session {
     };
     return { topOf, indexAt, done: () => twin.remove() };
   }
-  /* reported seen always, the switch back jumped to a caret the reader had
+  /* reported seen always, the switch back jumped to a caret a reader had
      scrolled away from (pin: source view › ⌃⌘M back, still scrolled away) */
   function sourceCaretSeen(ta: HTMLTextAreaElement): boolean {
     const t = sourceTwin(ta), top = t.topOf(ta.selectionStart);
@@ -385,7 +385,7 @@ export function startSession(opts: SessionOptions): Session {
        there (stanza 55 came up as 45). Set after the new surface is built —
        the teardown clamps the scroll to the top — and before the caret is
        placed, so a caret that was seen still scrolls into view and one that
-       was not leaves the reader where they were reading.
+       was not leaves a reader where they were reading.
        (pin: the switch carries the text › a long canto switched at its middle)
        (pin: source view › ⌃⌘M scrolled away from the caret) */
     const y = window.scrollY, top = y > 0 ? topCount() : null;
@@ -451,7 +451,7 @@ export function startSession(opts: SessionOptions): Session {
            (pin: grid › the faulty entry opened) */
         console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render page/Gridded) */
         /* PINNED, released by the next open: a whisper was covered by the
-           warm's count before it was read (pin: grid › the faulty entry opened) */
+           entry count before it was read (pin: grid › the faulty entry opened) */
         fencePin = opts.pin?.("cannot render " + ekey + " — " + (err as Error).message + "; shown as source") || 0;
         readerView = mdView; forced = true;
         mdView = true;
@@ -469,7 +469,7 @@ export function startSession(opts: SessionOptions): Session {
     show();
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
   }
-  /* a highlight owed wins over the remembered place: it is what the reader
+  /* a highlight owed wins over the remembered place: it is what a reader
      asked to see (pin: reference paste › the reference link followed) */
   function place(ekey: string, how: OpenHow): void {
     if (how !== "arrive") return;

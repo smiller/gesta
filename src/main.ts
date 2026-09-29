@@ -1,16 +1,9 @@
-/* The page: the editor over the journal in the store, under the MASTHEAD
-   and beside the CORNER — phase 3's components over the shared screen
-   state. Phase 2's scaffolding, the clear button and the markdown pane
-   under the entry, came out 2026-09-08; the headless tools read the
-   store itself. This file is the wiring: the
-   layer, the backup, the session and the ledger meet here, and the
-   masthead's buttons call what each arm binds. `?fixture=pippa&interval=1` opens a fixture in SCRATCH — no
-   store, no save — for a headless look as much as for a hand;
-   `?store=write` writes one probe row; `?store=seed` writes the four
-   fixtures as entries, for a headless look at the bridge over a profile no
-   picker can fill; `?store=seed-stanza` writes the stanza step's Faerie
-   Queene alone (2026-09-28); `?corner=pill` draws the paused pill;
-   `?warm=slow` holds the warm two seconds. */
+/* `?fixture=pippa&interval=1` opens a fixture in SCRATCH — no store, no
+   save; `?store=write` writes one probe row; `?store=seed` writes the four
+   fixtures as entries, for a profile no picker can fill;
+   `?store=seed-stanza` writes the stanza step's Faerie Queene alone;
+   `?corner=pill` draws the paused pill; `?warm=slow` holds the warm two
+   seconds. */
 import "./editor/editor.css";
 import "./chrome/chrome.css";
 import { mount } from "svelte";
@@ -131,8 +124,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); acts.lineBar.close(); if (screen.linesOpen) acts.lines(false); }
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
-  /* ⌃⌘K toggles the Search row, the current app's chord; ⌃⌘N is "new" —
-     a tagged entry, a sub-page, a book — reserved for it in phase 1 */
+  /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
   else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
   else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
@@ -163,9 +155,9 @@ if (fixture && fixtures[fixture]) {
 } else {
   const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
   /* the backup's status line is a whisper, each step restarting the clock:
-     an autosave "saved" may overwrite "backing up…", as the current app
-     let it (a background backup must not suppress the user's own save
-     feedback), and a pin outranks both */
+     an autosave "saved" may overwrite "backing up…" (a background backup
+     must not suppress the user's own save feedback), and a pin outranks
+     both */
   /* the backups panel reads the runner's state at its open and again on
      every trouble change while it stands */
   const readBackups = (): void => {
@@ -207,8 +199,8 @@ if (fixture && fixtures[fixture]) {
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
-  /* leaving the tab with a backup still pending writes it at once, after
-     the session's own flush (registered first, so it runs first) */
+  /* leaving the tab with a backup still pending writes it at once, after the
+     entry's own flush, registered first so it runs first */
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   acts.interval = (n) => session.setInterval(n);
   acts.today = () => session.today();
@@ -331,7 +323,7 @@ if (fixture && fixtures[fixture]) {
      hidden→shown transition and never while dirty, so a reopen after a
      close cannot wipe lines typed but not yet saved; only a landed Save
      makes it read as storage again. */
-  /* read through readRaw: reaching localStorage throws where it is refused,
+  /* read inside try: reaching localStorage throws where it is refused,
      and read bare at boot it stopped the page before it drew
      (pin: entries left and renamed › a page opened with localStorage refused) */
   const SHORTCUTS_KEY = NS + "shortcuts";
@@ -380,8 +372,8 @@ if (fixture && fixtures[fixture]) {
      device-local, an accepted loss, the list being small and re-made in a
      minute. THE LATCH is where the cache and the store disagree on
      purpose: empty here, unreadable text there that somebody could still
-     recover by hand, so writes are refused until a clean read. The two
-     pages the current app pinned are seeded ONCE, when the key is absent;
+     recover by hand, so writes are refused until a clean read. Two pages
+     are seeded ONCE, when the key is absent;
      emptying the list writes "[]", which is present. */
   const BOOKMARKS_KEY = NS + "bookmarks";
   const bm = screen.bookmarks;
@@ -534,8 +526,9 @@ if (fixture && fixtures[fixture]) {
      re-wrap under it — centred at once, a passage in Horace sat exactly
      mid-band, then the fit shrank the page from 6611px to 2065px, the
      scroll clamped and the passage sat 304px above centre, under the
-     masthead (MEASURED in headless Helium by the 2026-09-12 review). A
-     frame queued after the fit's measures the settled box. */
+     masthead (MEASURED in headless Helium). A frame queued after the fit's
+     measures the settled box (pin: reference paste › the reference link
+     followed) */
   function centreSelection(): void {
     const view = session.view;
     if (!view || session.mdView || view.state.selection.empty) return;
@@ -545,9 +538,9 @@ if (fixture && fixtures[fixture]) {
   }
   const landOn = (pos: number): void => {
     const view = session.view!;
-    /* a landing inside a closed contents section opens it first: it
-       stayed hidden and scrolled to nothing (the review at high,
-       2026-09-28) */
+    /* a landing inside a closed contents section opens it first: it stayed
+       hidden and scrolled to nothing (pin: folds.test › openFoldAt opens the
+       section a position is in) */
     openFoldAt(pos)(view.state, view.dispatch);
     setLanding(view, pos);
     const node = view.state.doc.nodeAt(pos)!;
@@ -609,10 +602,9 @@ if (fixture && fixtures[fixture]) {
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
     if (repeat || session.mdView || !session.view) return;
-    /* a work citing by stanza (the Faerie Queene, 2026-09-27): on a page
-       holding stanzas the Line box takes `N` or `N.M`, stanza and line, one
-       place each; a plain verse page of the same work keeps the line ask
-       (the review of 2026-09-28) */
+    /* a work citing by stanza: on a page holding stanzas the Line box takes
+       `N` or `N.M`, stanza and line, one place each; a plain verse page of
+       the same work keeps the line ask (pin: stanza › ⌃⌘G 2.1) */
     const c = session.current;
     if (kind === "line" && romanWorkKey(c.date, c.tag, journal) && hasStanzas(session.view.state.doc)) {
       const bad = stanzaAskCheck(v);
@@ -644,14 +636,14 @@ if (fixture && fixtures[fixture]) {
   const cp = screen.copy;
   let copyTarget: HTMLElement | null = null, copySeq = 0, copyReset: ReturnType<typeof setTimeout> | null = null;
   const BLOCKS = "pre, blockquote, div.note, div.reference, div[class^='card-'], div.verse, div.prose, div.grid";
-  /* THE GRID'S BUTTON (asked 2026-09-22): a card wins while the mouse is
+  /* THE GRID'S BUTTON: a card wins while the mouse is
      over it, so the grid's own corner is a card's. Its button is drawn
      ABOVE the top-right corner, and appears when the mouse comes to the
      band just above that corner — the way every block's appears at its
-     corner — or is in a gap between the cards; asked by hand the same
-     day, when a button drawn inside the corner could not be reached from
-     a gap without crossing the card, which took it over. Its idle label
-     says which one it is. */
+     corner — or is in a gap between the cards: drawn inside the corner it
+     could not be reached from a gap without crossing the card, which took
+     it over. Its idle label says which one it is (pin: grid › hovered above
+     its corner). */
   const idle = (t: HTMLElement | null): string => t?.classList.contains("grid") ? "copy grid" : "copy";
   const hideCopy = (): void => { copyTarget = null; cp.show = false; if (copyReset) clearTimeout(copyReset); cp.label = "copy"; };
   const showCopy = (target: HTMLElement): void => {
@@ -675,12 +667,11 @@ if (fixture && fixtures[fixture]) {
     cp.show = true;
   };
   /* the band above a grid's top-right corner: 26px tall, the rightmost
-     140px. DECIDED 2026-09-22 (the review and its confirmation): the band
-     is asked first, on mouseover and on mousemove alike, because a card
+     140px. The band is asked first, on mouseover and on mousemove alike, because a card
      directly above a grid covers most of it and the band wins there; and
      leaving the band falls back to the block under the mouse, so the card
      above keeps its own button. The grid list is read afresh each time:
-     MEASURED the same day in headless Helium, 1,000 synthetic moves over
+     MEASURED in headless Helium, 1,000 synthetic moves over
      an entry with one grid: 0.012 ms per move over a clean tree, 0.028 ms
      with the tree dirtied before each. */
   const GRID_BAND = { above: 26, wide: 140 };
@@ -712,11 +703,10 @@ if (fixture && fixtures[fixture]) {
     if (!t?.closest || t.closest(".copybtn")) return;
     if (session.view && !session.mdView && session.view.dom.getElementsByClassName("grid").length) point(e, t);
   });
-  /* the layout viewport's width on the root, for the grid's break-out:
-     100vw counts a classic scrollbar's width and overflowed by it (the
-     2026-09-22 review); observed on the root element, not the window's
-     resize, because a scrollbar's arrival changes the width and fires no
-     resize (the confirmation pass) */
+  /* the layout viewport's width on the root, for the grid's break-out: 100vw
+     counts a classic scrollbar's width and overflowed by it; observed on the
+     root element, not the window's resize, because a scrollbar's arrival
+     changes the width and fires no resize */
   const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
   clientW();
   new ResizeObserver(clientW).observe(document.documentElement);
@@ -744,15 +734,16 @@ if (fixture && fixtures[fixture]) {
     const node = blockAt(copyTarget);
     if (!node) { done(false); say("Copy failed", 3000); return; }
     const payload = node.type === schema.nodes.code_block ? node.textContent.replace(/\n$/, "")
-      /* the swept HTML, not the raw: the raw outerHTML went out here until
-         2026-09-08, when a card pasted into Mail arrived as plain lines */
+      /* the swept HTML, not the raw: with the raw outerHTML a card pasted into
+         Mail arrived as plain lines (pin: card copy › a card hover-copied) */
       : { text: serializeMarkdown(schema.nodes.doc.create(null, [node])), html: richBlockHtml(copyTarget) };
     writeClipboard(payload).then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
   };
   /* THE FLOATING BAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
-     source view and over a search jump's selection until the reader next
-     touches the page — the bar is for text the reader chose to format. */
+     source view and over a search jump's selection until a reader next
+     touches the page — the bar is for text a reader chose to format (pin:
+     toolbar › a word double-clicked) */
   let barSuppressed = false;
   const placeBar = (): void => {
     const view = session.view;
@@ -806,7 +797,7 @@ if (fixture && fixtures[fixture]) {
     layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
       if (!landed) { say("couldn't create the entry — see the corner", 3000); return; }
       /* the positions were taken before the write: a document that moved
-         under them keeps its text, the new entry standing (the review) */
+         under them keeps its text, the new entry standing */
       if (view !== session.view || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { say("the text moved while the entry was made — the link was not placed", 3000); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
       screen.bar.show = false;
@@ -890,8 +881,7 @@ if (fixture && fixtures[fixture]) {
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
       const sweptKeys = ns ? blankSubTree(keysNow(), oldKey) : [];
       const sweep = sweptKeys.map((k) => layer.removeEntry(k));
-      /* an EMPTY body moves too: the row is the registration here, where
-         the current app re-listed the name in its index whatever the body */
+      /* an EMPTY body moves too: the row is the registration */
       const moved = layer.setEntry(entryKey(date, full), md);
       return Promise.all([moved, ...sweep]).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
         /* typed into the surface while the writes ran: carried to the new key */
@@ -921,8 +911,9 @@ if (fixture && fixtures[fixture]) {
     history.replaceState(null, "", entryHash(back.date, back.tag));
     session.open(back.date, back.tag, "arrive");
     for (const k of [key, ...sweptKeys]) session.movePlace(k, null);
-    /* the landing's typed text lands BEFORE the retarget reads the host,
-       and the repaint comes only where the store moved (a lost link) */
+    /* the text typed on the entry landed on is saved BEFORE the retarget
+       reads the host, and the repaint comes only where the store moved (a
+       lost link) */
     Promise.all([layer.removeEntry(key), ...sweep]).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
       refreshMasthead();
       session.view?.focus();
@@ -989,10 +980,10 @@ if (fixture && fixtures[fixture]) {
     "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
     "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
   };
-  /* the stanza step's own seed (2026-09-28): a Faerie Queene work under
-     its directive, written only when that step asks, so the entries every
-     earlier step reads — the books panel, search, Go to — stay as they were;
-     tools/helium-steps.mjs's STANZA_SEEDS holds the same text */
+  /* the stanza step's own seed: a Faerie Queene work under its directive,
+     written only when that step asks, so the entries every earlier step
+     reads — the books panel, search, Go to — stay as they were; the steps
+     hold the same text */
   const stanzaSeeds: Record<string, string> = {
     "bookshelf/Spenser, Edmund": "# Edmund Spenser\n\n- [The Faerie Queene](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
@@ -1003,12 +994,12 @@ if (fixture && fixtures[fixture]) {
     : q.get("store") === "seed-stanza" ? Promise.all(Object.keys(stanzaSeeds).map((k) => layer.setEntry(k, stanzaSeeds[k]))).then(() => stage("seed"))
     : Promise.resolve();
   /* THE OPEN ENTRY FIRST, from ONE store row, before the warm reads the
-     whole journal — the current app's primeOpenEntry: by hand 2026-09-08
-     the entry took two seconds to appear after a refresh, the warm's time
-     over 13,565 rows. A day opens whether or not its row exists; a keyed
-     entry opens once its row is in the cache, and an absent one waits
-     for the warm to answer whether it is refused. The masthead's lists
-     read the whole cache, so they are redrawn when the warm lands. */
+     whole journal: without it the entry took two seconds to appear after a
+     refresh, the time a full read takes over 13,565 rows (pin: places ›
+     before the warm). A day opens whether or not its row exists; a keyed
+     entry opens once its row is in the cache, and an absent one waits for
+     the warm to answer whether it is refused. The masthead lists read the
+     whole cache, so they are redrawn when the warm lands. */
   let opened = false;
   const h0 = hashParts(location.hash.slice(1));
   const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
@@ -1023,7 +1014,8 @@ if (fixture && fixtures[fixture]) {
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
     /* an entry opened from its primed row is redrawn only where the warm
-       changes it: the masthead's lists, and whether a contents page folds */
+       changes it: the masthead lists, and whether a contents page folds (pin:
+       places › the warm landed) */
     if (!opened || session.hashDeferred) session.openHash(); else { refreshMasthead(); session.refreshFolds(); }
     buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
