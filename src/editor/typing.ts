@@ -11,8 +11,6 @@ import { trimUrl, URL_START } from "../model/parse.ts";
 const N = schema.nodes, M = schema.marks;
 type Handler = (state: EditorState, match: RegExpMatchArray, start: number, end: number) => Transaction | null;
 
-/* not an item's paragraph and never a row (pin: typing.test › a marker
-   inside an item, a row or mid-line is text) */
 const BLOCK_HOSTS = new Set([N.doc, N.blockquote, N.card, N.note]);
 function inParagraph(state: EditorState): boolean {
   const $f = state.selection.$from;
@@ -47,15 +45,12 @@ function blockRule(re: RegExp, handler: LineHandler): InputRule {
     return handler(tr, m, start, end);
   });
 }
-/* the paragraph at `pos` wrapped in `type`, joined to a block of that type
-   directly above when `joins` says the two are one */
 function wrapIn(tr: Transaction, pos: number, type: NodeType, attrs: Attrs | null, joins?: (before: Node) => boolean): Transaction | null {
   const range = tr.doc.resolve(pos).blockRange();
   if (!range) return null;
   const wrapping = findWrapping(range, type, attrs);
   if (!wrapping) return null;
   tr.wrap(range, wrapping);
-  /* the block above sits before the wrapper's own start */
   const before = range.start > 0 ? tr.doc.resolve(range.start).nodeBefore : null;
   if (before && before.type === type && canJoin(tr.doc, range.start) && (!joins || joins(before))) tr.join(range.start);
   return tr;
@@ -76,8 +71,6 @@ const numbers = blockRule(/^(\d+)[.)]\s$/, (tr, m, start, end) =>
     (before) => before.childCount + (before.attrs.start as number) === +m[1]));
 
 /* ---------- inline marks, on the closing marker ---------- */
-/* a boundary before the opening marker: the line's start, whitespace, an
-   opening bracket, a quote, a dash */
 const BOUND = "(^|[\\s\\u200B([{\"'“”‘’—–-])";
 function markRule(source: string, mark: MarkType): InputRule {
   return guarded(new RegExp(BOUND + source), prose, (state, m, start, end) => {
@@ -120,7 +113,6 @@ const curl = guarded(/([^]?)(["'])$/, prose, (state, m, _start, end) => state.tr
 /* ---------- links ---------- */
 const URL_HEAD = /^(https?:\/\/|www\.)\S/i;
 function href(url: string): string { return /^www\./i.test(url) ? "https://" + url : url; }
-/* the bare URL the caret has just finished, linked; null when there is none */
 export function autolinkTr(state: EditorState): Transaction | null {
   const $f = state.selection.$from;
   if (!state.selection.empty || !$f.parent.isTextblock || $f.parent.type.spec.code || inCode(state)) return null;
@@ -138,7 +130,6 @@ const autolink = new InputRule(/\S\s$/, (state, _m, _start, end) => {
   const tr = autolinkTr(state);
   return tr && tr.insertText(" ", end, end);
 });
-/* [title](url) becomes a link the moment its ) lands; the label keeps its marks */
 const mdLink = guarded(/\[([^\]\n]+)\]\(([^)\s]+)\)$/, prose, (state, m, start, end) => {
   if (M.link.isInSet(state.selection.$from.marks())) return null;
   const labelFrom = start + 1, labelTo = labelFrom + m[1].length;
@@ -160,8 +151,6 @@ export const typingRules = [
 export function typing() { return inputRules({ rules: typingRules }); }
 
 /* ---------- the Enter arms ---------- */
-/* a ``` line (with an optional language) and Enter opens a code block on
-   the caret's own line: earlier lines of the paragraph stay a paragraph */
 export const fenceEnter: Command = (state, dispatch) => {
   const { $from, empty } = state.selection;
   if (!empty || $from.parent.type !== N.paragraph || $from.parentOffset !== $from.parent.content.size) return false;

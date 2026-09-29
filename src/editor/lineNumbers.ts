@@ -17,8 +17,6 @@ export interface LineNumbersState {
 
 export const lineNumbersKey = new PluginKey<LineNumbersState>("lineNumbers");
 
-/* a sentence never paints (pin: lineNumbers.test › a prose block's sentences
-   never paint) */
 export function rowDecorations(doc: Node, interval: number): Decoration[] {
   const out: Decoration[] = [];
   for (const u of lineUnits(doc, interval)) {
@@ -50,10 +48,6 @@ export function lineNumbers(interval: number): Plugin<LineNumbersState> {
     },
     props: {
       decorations: (state) => lineNumbersKey.getState(state)!.decorations,
-      /* `versepage` exactly where the document numbers its own lines, `prosepage`
-         where it counts sentences (pin: lineNumbers.test › the gutter class is
-         set exactly where a top-level verse block is) (pin: lineNumbers.test ›
-         a top-level prose block holding a pair marks the root prosepage) */
       attributes: (state): Record<string, string> => {
         const cls = [paintsLines(state.doc) ? "versepage" : "", countsSentences(state.doc) ? "prosepage" : ""].filter(Boolean).join(" ");
         return cls ? { class: cls } : {};

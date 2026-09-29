@@ -45,10 +45,6 @@ export function lineRefusal(blocks: Unit[][], n: number): string {
   if (blocks.length > 1) return "no " + unitNoun(longBlock) + " " + n + " — the longest " + formNoun(longBlock) + (lowest > 1 ? " ends at " : " has ") + longest;
   return lowest === longest ? "the only " + unitNoun(longBlock) + " here is " + longest : "the " + unitNoun(longBlock) + "s here are " + lowest + "–" + longest;
 }
-/* the marked row is re-found among the live hits, so an edit between
- presses cannot drift the cycle (pin: goto.test › a line in two blocks is
- two hits; Enter again cycles and wraps; an edit between presses keeps the
- standing row) */
 export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);
   return hits[sameAsk && was !== -1 ? (was + 1) % hits.length : 0];
@@ -59,7 +55,6 @@ export function landingWord(hit: Hit, blocks: Unit[][], n: number): string | nul
   const oneForm = blocks.every((rows) => prose(rows) === prose(hit.block));
   return unitNoun(hit.block) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
 }
-/* a leaf by its token, case-blind both ways, digits exact */
 export function folioHit(doc: Node, tok: string): { pos: number } | null {
   const want = tok.toLowerCase();
   const leaf = folioLeaves(doc).find((l) => l.label.toLowerCase() === want);
@@ -68,8 +63,6 @@ export function folioHit(doc: Node, tok: string): { pos: number } | null {
 export function folioRefusal(doc: Node, tok: string): string {
   return !folioLeaves(doc).length ? "no page numbers here" : "no page " + trimLabel(tok, ECHO_CAP) + " here";
 }
-/* what is wrong with the ask, or null: a leaf is arabic or roman, a line
-   arabic; everything else is named back AS TYPED */
 export function askCheck(ask: string, kind: "line" | "page"): string | null {
   const a = ask.trim();
   if (!a) return "type a " + kind + " number";
@@ -95,7 +88,6 @@ export function hasStanzas(doc: Node): boolean {
   doc.forEach((block) => { if (block.attrs.stanza != null) yes = true; });
   return yes;
 }
-/* the row to land on, or the refusal in words */
 export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
   let last = 0, found: { node: Node; pos: number } | null = null;

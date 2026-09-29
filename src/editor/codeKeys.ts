@@ -1,6 +1,3 @@
-/* on an EMPTY LAST LINE the second Enter is the way out, to a paragraph
-   below the block, the empty line taken with it (pin: codeKeys.test › Enter
-   on an empty last line steps out of the code block into a paragraph) */
 import type { Command } from "prosemirror-state";
 import { TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";

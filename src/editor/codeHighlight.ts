@@ -1,5 +1,3 @@
-/* never in the document, never stored (pin: codeHighlight.test › a fenced
-   block with a language gets a decoration per token) */
 import { Plugin, PluginKey } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { Node } from "prosemirror-model";

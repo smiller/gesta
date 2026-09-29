@@ -40,7 +40,6 @@ function quoteDepth(state: EditorState): number {
   for (let d = $from.depth; d >= 1; d--) if ($from.node(d).type === Q) return d;
   return 0;
 }
-/* the selection stays inside ONE outermost quote */
 function outermost(state: EditorState): number {
   const $from = state.selection.$from;
   for (let d = 1; d <= $from.depth; d++) if ($from.node(d).type === Q) return d;

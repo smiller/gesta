@@ -1,11 +1,5 @@
-/* Several pasted lines render as the markdown they spell; a single line
-   stays as typed unless it is an unambiguous quote or heading line, or an
-   entry link (pin: paste.test › several lines render as the markdown they
-   spell; a single line stays as typed); inside a list item, a table cell or
-   a verse row the lines arrive as line breaks (pin: paste.test › inside a
-   list item, a cell or a verse row the lines arrive as breaks). Only PLAIN
-   text is asked of this parser: the editor's own HTML carries its
-   structure. */
+/* only PLAIN text is asked of this parser: the editor's own HTML carries its
+   structure */
 import { Fragment, Slice, type ResolvedPos, type Node } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
@@ -83,7 +77,6 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   }
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
-/* inline content is a paragraph's (pin: paste.test › copyMd) */
 export function copyMd(slice: Slice): string {
   let content = slice.content;
   if (content.childCount && content.firstChild!.isInline) content = Fragment.from(N.paragraph.create(null, content));
@@ -107,8 +100,6 @@ export function copyMd(slice: Slice): string {
    grid). The card is not a row (pin: paste.test › a plain card is not a
    row) */
 const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row, N.grid]);
-/* a grid is a row block only when the drag CROSSES a card (pin: paste.test ›
-   a drag that stays inside ONE card of a grid is prose, not the grid) */
 const rowish = (n: Node): boolean => ROW_BLOCKS.has(n.type) && !(n.type === N.grid && n.childCount < 2);
 export function closeRowSlice(slice: Slice): Slice {
   const first = slice.content.firstChild, last = slice.content.lastChild;

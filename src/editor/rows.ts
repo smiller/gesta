@@ -35,8 +35,6 @@ class GapView implements NodeView {
   ignoreMutation(): boolean { return true; }
 }
 
-/* one view for a note as a block and as a ROW of a verse or prose fence: the
-   row shape is the block's own */
 class NoteView implements NodeView {
   dom: HTMLElement;
   contentDOM: HTMLElement;

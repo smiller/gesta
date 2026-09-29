@@ -44,7 +44,6 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
      good answer is left standing (pin: fit.test › a settle narrows again, and
      an entry the layout cannot place is no answer) */
   if (!m.floor) return null;
-  /* ceil each column, then add; the original never below a caret's column */
   const c1 = Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK;
   const c2 = Math.ceil(m.c2) + FIT_SLACK;
   const extra = m.gap + m.frame;
@@ -67,7 +66,6 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
   return { width, col };
 }
 
-/* the horizontal box a style reserves: padding and border, both sides */
 export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderLeftWidth: string; borderRightWidth: string }): number {
   return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
 }
@@ -183,8 +181,6 @@ export function rowSpills(row: HTMLElement): boolean {
   return false;
 }
 
-/* the paired verse row the caret is in — top-level or quoted, never in
-   an inset box — or null */
 function caretRow(view: EditorView): HTMLElement | null {
   const { node } = view.domAtPos(view.state.selection.from);
   const el = node instanceof Element ? node : node.parentElement;

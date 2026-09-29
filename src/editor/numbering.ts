@@ -49,8 +49,6 @@ export function whollyIn(row: Node, mark: MarkType): boolean {
   return ok && drew;
 }
 
-/* THE ROW'S DECLARED KIND DECIDES BEFORE ITS MARKS DO (pin: numbering.test
-   › a ⟨line⟩ row is a line whatever it is set in) */
 function rowKind(row: Node): UnitKind {
   if (row.attrs.kind === "line") return "line";
   if (whollyIn(row, schema.marks.em)) return "stage";
@@ -58,15 +56,6 @@ function rowKind(row: Node): UnitKind {
   return "line";
 }
 
-/* the units of `doc`, in order. Only a TOP-LEVEL verse or prose block is
-   walked: a block nested in a quote, a card or a note is numbered nowhere.
-   A verse block's rows are its lines, each block counting from its own
-   start; a note row and a stanza gap emit nothing, and neither does a row
-   drawing nothing. A prose block's PAIRED rows are its sentences, whatever
-   their marks — prose has no apparatus convention — and a sentence number
-   counts but never paints (pin: numbering.test › only a top-level block is
-   walked) (pin: numbering.test › a prose block numbers its PAIRED rows as
-   sentences) */
 export function lineUnits(doc: Node, interval: number): Unit[] {
   const out: Unit[] = [];
   doc.forEach((block, blockPos) => { for (const u of blockUnits(block, blockPos, interval)) out.push(u); });
@@ -104,8 +93,6 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
   return out;
 }
 
-/* a top-level verse block is what makes it, and nothing else does (pin:
-   numbering.test › paintsLines: a top-level verse block, and nothing else) */
 export function paintsLines(doc: Node): boolean {
   let yes = false;
   doc.forEach((block) => { if (block.type === N.verse) yes = true; });
@@ -124,8 +111,6 @@ export function countsSentences(doc: Node): boolean {
   return yes;
 }
 
-/* a block registers on its first NUMBERED line, so a fence holding nothing
-   but apparatus is no block at all (pin: numbering.test › blocksOf) */
 export function blocksOf(units: Unit[]): Unit[][] {
   const blocks: Unit[][] = [], seen: number[] = [];
   for (const u of units) {

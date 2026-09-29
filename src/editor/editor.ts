@@ -27,16 +27,13 @@ import { folds, type FoldOptions } from "./folds.ts";
 export interface EditorOptions {
   interval: number;
   onChange?: (view: EditorView) => void;
-  /* the selection moved, by a gesture or a command */
   onSelect?: (view: EditorView) => void;
   nodeViews?: Record<string, NodeViewConstructor>;
   /* a plain click on an internal link: the fragment to route to */
   onRoute?: (frag: string) => void;
   /* a swallowed press that changed nothing SAYS why */
   onRefuse?: (why: string) => void;
-  /* a picture on the clipboard, to be filed and placed */
   onPasteFile?: (file: File) => void;
-  /* whether a contents page folds, the sections open, and who keeps them */
   folds?: FoldOptions;
 }
 
@@ -98,8 +95,6 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     state: editorState(doc, opts.interval, opts.onRefuse, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     attributes: { class: "page", spellcheck: "false" },
-    /* the typed pipe, before the character lands (pin: rowKeys.test › a typed
-       pipe in a line) */
     handleTextInput: (view, _from, _to, text) => text === "|" && pipeInLine(view.state, view.dispatch),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
     handlePaste: (view, event) => {

@@ -117,7 +117,6 @@ export function setFolds(on: boolean, open: string[]): Command {
 export interface FoldOptions {
   on: boolean;
   open: string[];
-  /* told the open sections' keys whenever they change */
   onChange?: (open: string[]) => void;
 }
 export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldState> {
@@ -159,10 +158,6 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
           open = positionsOf(sections, meta.set.open);
         }
         else if (meta && "toggle" in meta) { open = new Set(open); if (open.has(meta.toggle)) open.delete(meta.toggle); else open.add(meta.toggle); }
-        /* a caret or selection inside a closed section opens it (pin:
-           folds.test › a selection landing inside a closed section opens it)
-           (pin: folds.test › switching folding on opens the section holding
-           the selection) */
         if (on && (tr.selectionSet || tr.docChanged || meta)) {
           const s = sectionAt(sections, next.selection.head);
           if (s && !open.has(s.heading)) { open = new Set(open); open.add(s.heading); }

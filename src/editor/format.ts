@@ -21,8 +21,6 @@ export function inBlock(state: EditorState, type: Node["type"]): boolean {
 }
 export const inCode = (state: EditorState): boolean => state.selection.$from.parent.type === N.code_block;
 const isHeading = (state: EditorState): boolean => state.selection.$from.parent.type === N.heading && state.selection.$from.parent.attrs.level === 1;
-/* H is a level-one heading (pin: format.test › H makes a level-one heading
-   of the block and takes it back) */
 export const heading: Command = (state, dispatch) =>
   (isHeading(state) ? setBlockType(N.paragraph) : setBlockType(N.heading, { level: 1 }))(state, dispatch);
 export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote) ? lift : wrapIn(N.blockquote))(state, dispatch);
@@ -32,10 +30,6 @@ export function formatState(state: EditorState): Record<string, boolean> {
   const has = (m: typeof M.strong): boolean => empty ? !!m.isInSet(state.storedMarks || $from.marks()) : state.doc.rangeHasMark(from, to, m);
   return { bold: has(M.strong), italic: has(M.em), underline: has(M.underline), strike: has(M.strike), heading: isHeading(state), quote: inBlock(state, N.blockquote), code: inCode(state) };
 }
-/* every straight quote curled by what precedes it, a quote that ends speech
-   after a dash closed, a leading elision right-singled (pin: format.test ›
-   curlQuotes: dashes, quotes by what precedes them, the closed dash, the
-   elision) */
 const EM_DASH_RE = /([^-])--(?!-)/g;
 const DASH_CLOSE_RE = /([—–])([“‘]+)(?=[\s,;:!?)]|\.(?!\.)|$)/g;
 const ELISION_RE = /‘(?=(?:t(?:is|was|were|will|would)|gainst|neath|twixt|em|mid|midst|round|cause)\b)/gi;
@@ -51,10 +45,6 @@ export function curlQuotes(text: string, prev: string): string {
   out = out.replace(DASH_CLOSE_RE, (_, dash: string, quotes: string) => dash + quotes.replace(/“/g, "”").replace(/‘/g, "’"));
   return out.replace(ELISION_RE, "’");
 }
-/* every text node the selection touches, outside code, curled in place;
-   the previous character carries across nodes within a block and resets
-   at a block's edge (pin: format.test › curlSelection curls what is
-   selected, across nodes, leaving code alone, keeping the selection) */
 export const curlSelection: Command = (state, dispatch) => {
   const { from, to, empty } = state.selection;
   if (empty) return false;
@@ -83,9 +73,6 @@ export const curlSelection: Command = (state, dispatch) => {
   }
   return true;
 };
-/* over the flat stream, whose edge spaces keep adjacent blocks' words
-   apart (pin: format.test › the word count over the selection or the whole
-   document, blocks kept apart) */
 export function wordsOf(text: string): number {
   const m = text.trim().match(/\S+/g);
   return m ? m.length : 0;
@@ -104,10 +91,6 @@ export function cutMd(doc: Node, from: number, to: number): string {
   }
   return serializeMarkdown(doc.cut(from, to)).trim();
 }
-/* the selection replaced by a link to what it became: in a textblock the
-   link takes the selection's place; where the deletion leaves no
-   textblock the link gets a paragraph of its own; an emptied heading
-   shell around the link becomes a paragraph */
 export function replaceWithLink(state: EditorState, from: number, to: number, href: string, label: string): EditorState["tr"] {
   const tr = state.tr;
   const link = schema.text(label, [M.link.create({ href })]);

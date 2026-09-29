@@ -23,9 +23,6 @@ interface Row {
   cell: -1 | 0 | 1;
 }
 
-/* a paragraph in a note inside the fence is the note's, not the row's (pin:
-   rowKeys.test › Enter is not the row's outside a fence, or in a note's
-   paragraph inside one) */
 function rowOf($pos: ResolvedPos): Row | null {
   for (let d = $pos.depth; d > 0; d--) {
     const n = $pos.node(d);
@@ -61,8 +58,6 @@ function unpair(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
 
 export const enterInRow: Command = (state, dispatch) => {
   const sel = state.selection;
-  /* a stanza gap selected: a line after it (pin: rowKeys.test › Enter with a
-     stanza gap selected) */
   if (sel instanceof NodeSelection && sel.node.type === N.gap) {
     if (dispatch) dispatch(caretAt(state.tr.insert(sel.to, N.line.create()), sel.to + 1));
     return true;
@@ -88,27 +83,17 @@ export const enterInRow: Command = (state, dispatch) => {
       if (dispatch) dispatch(caretAt(tr, at + 1));
       return true;
     }
-    /* mid-block an empty row twice over is a stanza break, then a fresh
-       row of the same shape (pin: rowKeys.test › Enter on an empty line
-       mid-block makes a stanza break) */
     const fresh = r.row.type === N.pair ? pair(null, Fragment.empty, Fragment.empty) : N.line.create();
     tr.replaceWith(start, end, [N.gap.create(), fresh]);
     if (dispatch) dispatch(caretAt(tr, start + 2 + (r.cell < 0 ? 0 : 1)));
     return true;
   }
   if (r.cell < 0) {
-    /* made at its end, the new line is a plain one, so a ⟨line⟩ row hands its
-       declaration only to its own tail (pin: rowKeys.test › a ⟨line⟩ row
-       keeps its kind on a mid-split) */
     const atEnd = $c.parentOffset === r.row.content.size;
     tr.split($c.pos, 1, atEnd ? [{ type: N.line }] : undefined);
     if (dispatch) dispatch(caretAt(tr, $c.pos + 2));
     return true;
   }
-  /* a pair splits the caret's CELL: the text after the caret goes to a new
-     row beneath, the other cell stays whole with the row above. At a cell's
-     end nothing moves and the new row is empty, the caret in its original
-     (pin: rowKeys.test › Enter in a paired row splits the caret's cell) */
   const k = $c.parentOffset, a = r.row.child(0).content, b = r.row.child(1).content;
   const own = r.cell === 0 ? a : b;
   const moved = own.size > k;
@@ -153,9 +138,6 @@ export const exitNoteRow: Command = (state, dispatch) => {
   return true;
 };
 
-/* the text after the caret becomes its translation. In a cell a pipe is a
-   pipe, and in prose it is not this command's (pin: rowKeys.test › a typed
-   pipe in a line) */
 export const pipeInLine: Command = (state, dispatch) => {
   const sel = state.selection;
   const r = rowOf(sel.$from);

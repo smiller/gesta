@@ -46,8 +46,6 @@ export function coveredUnits(doc: Node, from: number, to: number, topOnly = fals
   }
   return out;
 }
-/* a selection opening on a speaker label takes the line under it (pin:
-   reference.test › referenceRange over covered lines) */
 export function referenceRange(doc: Node, from: number, to: number): string {
   let lo = 0, hi = 0;
   /* THE TOP LEVEL ALONE: a pasted citation's own fence numbers are not the
@@ -61,11 +59,6 @@ export function referenceRange(doc: Node, from: number, to: number): string {
   }
   return lo ? elideRange(lo, hi) : "";
 }
-/* where every covered numbered line stands in a top-level stanza, the range
-   names stanza and line — `2.1`, `2.1-4` (lines within a stanza keep the
-   app's hyphen), `2` for one whole stanza, `2–3` for whole stanzas,
-   `2.8–3.2` for a run across them, en dashes; "" when a covered line stands
-   outside a stanza (pin: reference.test › stanzaRange) */
 export function stanzaRange(doc: Node, from: number, to: number): string {
   const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
   if (!lines.length) return "";
@@ -94,8 +87,6 @@ export function spansTwoBlocks(doc: Node, from: number, to: number, stanzas = fa
   const top = new Set(coveredUnits(doc, from, to, true).map((u) => u.blockPos));
   return [...blocks].some((p) => !top.has(p) || doc.nodeAt(p)!.attrs.stanza == null);
 }
-/* the leaves that are THE TEXT'S — a folio inside a note turns no page (pin:
-   reference.test › the leaf range is read from the page the selection is on) */
 export function folioLeaves(doc: Node): { pos: number; label: string }[] {
   const out: { pos: number; label: string }[] = [];
   doc.descendants((n, pos) => {
@@ -349,9 +340,6 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   const passage = passageMd(doc, from, to);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
-/* ⌃⌘C: the citation's heading line with nothing quoted under it (pin:
-   reference.test › a leaf stands in for a prose book's titled chapter;
-   entryLink names the entry the same way) */
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
   return { label: mdLabel(referenceLabel(date, tag, "", null, journal), "entry"), url: entryLinkUrl(date, tag) };
 }

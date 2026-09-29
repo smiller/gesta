@@ -1,6 +1,3 @@
-/* `foliopage` exactly where the document holds a leaf marker that is THE
-   TEXT'S: a marker inside a note turns no page (pin: folios.test ›
-   hasFolios: a marker in the text, not one inside a note) */
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { schema } from "../model/schema.ts";

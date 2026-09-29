@@ -539,3 +539,11 @@ pinned (a performance choice), 2 pinned with a neighbour.
   (the folio label, a rename carrying a place, the relabel of a minted
   link, the neighbour walks) and of the code (a label as link text, the
   unanchored date source).
+- src/editor, MEASURED: 293 blocks → 242, 831 comment lines → 703 (51
+  blocks gone, two trimmed to their reason); the stripped diff empty.
+  Gone: the row keys' Enter cases, the stanza range's spellings, the
+  folio switch, the lineNumbers classes, the format acts and the goto
+  helpers — each what its test's title says — and code restatements
+  (wrapIn, BOUND, "ceil each column, then add", the side box). Kept: the
+  fit's measurements, the focus-before-scroll rule, the reference cut's
+  failures, the stylesheet's measured reasons.
