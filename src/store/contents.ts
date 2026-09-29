@@ -27,8 +27,6 @@ export interface ContentsLink { href: string; group: string | null }
 export function contentsLinks(md: string): ContentsLink[] {
   let doc: Node;
   try { doc = parseMarkdown(md); } catch { return []; }
-  /* headings and link runs in document order, a link inside a heading
-     marked as such */
   const items: { pos: number; heading?: string; link?: { href: string; inHead: boolean } }[] = [];
   const heads: { from: number; to: number; text: string }[] = [];
   doc.descendants((n, pos) => {
@@ -70,9 +68,6 @@ export function subPageOrder(keys: string[], parentKey: string, parentMd: string
   return { names: rows.map((r) => r.name), rows, stated: true };
 }
 const DATED_SUB_RE = new RegExp("^" + DATE_KEY_SRC + "(-|$)");
-/* an `extra` (the open unregistered sub) joins the END of a stated order and
-   is sorted into an alphabetical one (pin: contents.test › the extra joins
-   the end of a stated order) */
 export function subPageDisplayList(order: SubOrder, parentKey: string, bearing: Bearing, extra: string | null): string[] {
   const subs = order.names.slice();
   const voters = subs.filter((s) => bearing(entryKey(parentKey, s)));
@@ -82,11 +77,6 @@ export function subPageDisplayList(order: SubOrder, parentKey: string, bearing: 
   return subs;
 }
 
-/* a WORK's contents folds — a bookshelf entry below its author that has
-   sub-entries; an author page's grouped works are searched whole, and
-   nothing outside the bookshelf folds (pin: contents.test › a work with
-   sub-entries folds) (pin: contents.test › an author page, a leaf, a page
-   or a day does not) */
 export function foldsContents(keys: string[], date: string, tag: string | null): boolean {
   if (date !== NS_BOOK.key || !tag || tag.split("/").length < 2) return false;
   return childrenOf(keys, entryKey(date, tag)).length > 0;

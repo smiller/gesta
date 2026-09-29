@@ -21,8 +21,6 @@ export function yieldToTaskQueue(): Promise<void> {
     mc.port2.postMessage(0);
   });
 }
-/* returns its own remover, so a test cannot leave one armed (pin: io.test ›
-   setYieldWatch arms the watch, and a remover removes only its own) */
 export function setYieldWatch(fn: () => void): () => void {
   yieldWatch = fn;
   return () => { if (yieldWatch === fn) yieldWatch = null; };
@@ -85,9 +83,6 @@ export const ZIP_MAX_BYTES = 0xFFFFFFFF;
 export function zipBytes(files: ExportFile[], day: string): Promise<Uint8Array> {
   if (files.length > ZIP_MAX_ENTRIES)
     return Promise.reject(new Error("too many files for one archive (" + files.length + ")"));
-  /* the archive's OWN DATE as every member's timestamp, so the same content
-     on the same day is byte-identical wherever it is built (pin: io.test ›
-     zipBytes is byte-identical for the same files and day) */
   const stamp = ((+day.slice(0, 4) - 1980) << 9) | (+day.slice(5, 7) << 5) | +day.slice(8, 10);
   const parts: Uint8Array[] = [], central: Uint8Array[] = [];
   let at = 0, since = 0;

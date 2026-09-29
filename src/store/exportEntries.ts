@@ -7,8 +7,6 @@ export function splitKey(ekey: string): [string, string | null] {
   const slash = ekey.indexOf("/");
   return slash === -1 ? [ekey, null] : [ekey.slice(0, slash), ekey.slice(slash + 1)];
 }
-/* relative refs only: the rest is the browser's to load (pin:
-   exportEntries.test › imageRefs: relative refs, bare or <bracketed>) */
 export function imageRefs(md: string): string[] {
   const out: string[] = [], seen: Record<string, true> = Object.create(null);
   if (md.indexOf("![") === -1) return out;
@@ -69,8 +67,6 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
     Promise.all(group.map(oneJob)).then((lists) => { for (const l of lists) all.push(...l); return yieldToTaskQueue(); })),
     Promise.resolve()).then(() => all);
 }
-/* from KEYS alone, never from the exported files (pin: exportEntries.test ›
-   splitKey and archiveRoots read the key alone) */
 export function archiveRoots(keys: string[]): string[] {
   return keys.map((key) => { const [date, tag] = splitKey(key); return entryFile(date, tag).root; });
 }

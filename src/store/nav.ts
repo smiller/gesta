@@ -17,7 +17,7 @@ export function hashParts(raw: string): HashParts {
     try {
       const m = query.match(/(?:^|&)h=([^&]*)(?:&n=(\d+))?/);
       if (m && m[1]) hl = { q: decodeURIComponent(m[1]), nth: parseInt(m[2], 10) || 0 };
-    } catch { hl = null; }   /* a mangled payload loses only the highlight (pin: nav.test › hashParts: the ?h=…&n=… highlight payload) */
+    } catch { hl = null; }
     raw = hashTarget(raw);
   }
   const slash = raw.indexOf("/");

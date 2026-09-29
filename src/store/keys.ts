@@ -1,7 +1,7 @@
 /* the ONE spelling of "is this a day key": a key one site accepts and another
    rejects is a silently unroutable or unexportable entry (pin: keys.test ›
    isDayKey accepts the date shape and nothing else) */
-export const DATE_KEY_SRC = "\\d{4}-\\d{2}-\\d{2}";   /* unanchored, for embedding */
+export const DATE_KEY_SRC = "\\d{4}-\\d{2}-\\d{2}";
 export const DATE_KEY_RE = new RegExp("^" + DATE_KEY_SRC + "$");
 export function isDayKey(key: string): boolean { return DATE_KEY_RE.test(key); }
 /* the reserved word in the date slot that holds the named, non-dated pages —
@@ -19,9 +19,6 @@ export const NS = "gesta.v1.";
    moment a second row exists. Only what DIFFERS earns a column. */
 export interface Namespace {
   key: string;
-  /* what each level is called in the words the user reads: two nouns because
-     the two levels genuinely differ (pin: keys.test › entryNoun reads the row
-     and the level) */
   noun: string;
   subNoun: string;
   /* an unknown key opens, and registers on its first save (pin: bridge › an
@@ -113,9 +110,6 @@ export function encPart(s: string): string {
   return encodeURIComponent(s).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
 export interface Highlight { q?: string; nth?: number }
-/* a KEYED tag's slash is STRUCTURE, one canonical spelling; a day tag's slash
-   is content and stays whole-encoded (pin: keys.test › entryHash: a keyed
-   tag's slash is structure, a day tag's is content) */
 export function entryHash(date: string, tag?: string | null, hl?: Highlight): string {
   const enc = !tag ? "" : nsOf(date)
     ? tag.split("/").map(encPart).join("/")

@@ -21,8 +21,6 @@ export async function walkFolder(dir: Dir): Promise<Found[]> {
   await walk(dir, "");
   return found;
 }
-/* opening a file and reading it can each fail, and both become the same
-   marked record (pin: pick.test › pickImportFiles reads a .md as text) */
 export function readFound(e: Found): Promise<ImportFile> {
   const md = /\.md$/i.test(e.name);
   return e.handle.getFile()

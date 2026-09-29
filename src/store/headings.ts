@@ -31,8 +31,6 @@ export function directsFromLastTitle(md: string): boolean {
   doc.forEach((block) => { if (block.type === N.reference && /last title/i.test(block.textContent)) yes = true; });
   return yes;
 }
-/* read off the WORK's page, top level only (pin: reference.test › the
-   directive is read off the work's page, top level only) */
 export function directsRomanBookCanto(md: string): boolean {
   if (!/^::: reference/m.test(md)) return false;
   let doc: Node;

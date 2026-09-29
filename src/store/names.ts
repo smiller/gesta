@@ -168,8 +168,6 @@ export function entryFile(date: string, tag?: string | null): EntryFile {
   const year = isDayKey(date) ? dayDir(date) : "";
   return { dir: year && year + "/", base, flatBase: base, root: year };
 }
-/* a picture's key: its relative src in its entry's own folder
-   (pin: importFiles.test › a picture the import files is found where the entry looks) */
 export function pictureKey(date: string, tag: string | null, src: string): string { return pictureIn(entryFile(date, tag), src); }
 export function pictureIn(at: EntryFile, src: string): string { return at.dir + src; }
 export interface FileJob { at: EntryFile; key: string }

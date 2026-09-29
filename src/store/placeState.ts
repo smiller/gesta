@@ -21,9 +21,6 @@ export function placeOf(store: PlaceRecord[], key: string): Place | null {
   const r = store.find((x) => x.key === key);
   return r ? { pos: r.pos, y: r.y } : null;
 }
-/* a rename carries a place to its new key; a delete, to null, drops it.
-   A record already under the new key is a deleted entry's, and goes (pin:
-   placeState.test › a rename carries the place to the new key) */
 export function movedPlace(store: PlaceRecord[], from: string, to: string | null): PlaceRecord[] {
   const r = store.find((x) => x.key === from);
   const rest = store.filter((x) => x.key !== from && x.key !== to);

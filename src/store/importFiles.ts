@@ -30,8 +30,7 @@ export function sidecarRefs(path: string, text: string, sidecars: Sidecars): { r
   for (const s of Object.keys(sidecars)) {
     if (s.slice(0, dir.length) !== dir) continue;
     const rel = s.slice(dir.length);
-    if (rel.indexOf("/") !== -1) continue;   /* deeper down — some other entry's (pin: importFiles.test › sidecarRefs: an
-     imageless text scans nothing; a deeper file is another entry's) */
+    if (rel.indexOf("/") !== -1) continue;
     if (text.indexOf("](" + rel + ")") === -1 && text.indexOf("](<" + rel + ">)") === -1) continue;
     if (sidecars[s] === null) { blocked = true; continue; }
     refs.push(s);

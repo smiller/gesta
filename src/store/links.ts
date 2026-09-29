@@ -63,10 +63,6 @@ export function retargetLinks(md: string, oldHref: string, newHref: string | nul
     return { href: newHref, text: run.text === oldLabel ? newLabel! : run.text };
   });
 }
-/* the parent's index link re-labelled to the sub-page's new heading —
-   only a label the app itself minted, the bare name or the previous
-   heading; a removed heading relabels back to the bare name (pin:
-   links.test › relabels a minted label to the new heading) */
 export function relabelLinks(md: string, href: string, sub: string, oldHeading: string, heading: string): string | null {
   if (oldHeading === heading) return null;
   const bare = mdLabel(sub, "entry");

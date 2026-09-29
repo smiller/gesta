@@ -57,8 +57,6 @@ export function elideRange(from: number, to: number): string {
   if (a.slice(0, -2) !== b.slice(0, -2)) return whole;
   return a + "-" + b.slice(-2);
 }
-/* THE ONE SPELLING OF A LEAF LABEL: arabic elides, roman and zero-padded
-   never (pin: reference.test › folioLabel) */
 export function folioLabel(from: string, to?: string | null): string {
   if (!to || from === to) return "p. " + from;
   const pair = FOLIO_ARABIC.test(from) && FOLIO_ARABIC.test(to) && String(+from) === from && String(+to) === to;
@@ -85,7 +83,6 @@ export function roman(n: number, lower = false): string {
   for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
   return lower ? out : out.toUpperCase();
 }
-/* a book.canto key respelled; anything else as it stands */
 export function romanKey(seg: string): string {
   const m = seg.match(/^(\d+)(?:\.(\d+|pr))?$/);
   if (!m) return seg;
@@ -191,7 +188,6 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
     return p.n + (p.after ? ": *" + p.after + "*" : "");
   }).join(", ");
 }
-/* a label as a markdown LINK TEXT (pin: reference.test › mdLabel) */
 export function mdLabel(text: string, fallback: string): string {
   return (text || "").replace(/[\]\n]/g, " ").replace(/\s+/g, " ").trim() || fallback;
 }

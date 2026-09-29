@@ -8,7 +8,6 @@
    unkeyed row goes back as the bare string) */
 import { byName } from "./keys.ts";
 
-/* the most NUMBERED rows, one per trigger digit 1-9; keyed rows have no cap */
 export const BOOKMARK_CAP = 9;
 /* a trigger's first character is neither a (add) nor a digit (the jump)
    (pin: bookmarks.test › aliasRefusal: the pattern) */
@@ -44,7 +43,6 @@ export function serializeBookmarks(list: Bookmark[]): (string | Bookmark)[] {
 export function bookmarkIndex(list: Bookmark[], key: string): number {
   return list.findIndex((b) => b.key === key);
 }
-/* the row already answering to a trigger, or null; a blank answers for nobody */
 export function aliasHolder(list: Bookmark[], alias: string): Bookmark | null {
   if (!alias) return null;
   return list.find((b) => b.alias === alias) || null;

@@ -531,3 +531,11 @@ pinned (a performance choice), 2 pinned with a neighbour.
   the reasons a test cannot carry (why ⟨line⟩ rides on the row, why the
   escaping rules may not change, why fenceStart must not read a stanza).
   Section dividers kept, like the svelte-ignore directives.
+- src/store, MEASURED: 284 blocks → 258, 943 comment lines → 884 (26
+  blocks gone); the stripped diff empty. Fewer than the estimate's share:
+  the store's comments are mostly the old app's measurements and the
+  backup's reasons (why the archive goes first, why a delete needs the
+  shared signature), and those stay. Gone: restatements of a test's title
+  (the folio label, a rename carrying a place, the relabel of a minted
+  link, the neighbour walks) and of the code (a label as link text, the
+  unanchored date source).
