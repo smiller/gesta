@@ -1,21 +1,14 @@
-/* Every stored entry as the files an export folder holds: the markdown AS
-   STORED under the entry's path, and beside it the sidecars its text names,
-   read back from the image store by the path each ref resolves to. Ported
-   2026-09-07 from exportEntries in ../writer/src/js/28-export.js, without
-   the half that peeled data URLs out of HTML: the store already holds
-   markdown and bytes, so an export is a walk and a write. */
 import { entryFile, collidingFile, pictureIn, RELATIVE_SRC } from "./names.ts";
 import { yieldToTaskQueue } from "./io.ts";
 import type { ExportFile } from "./files.ts";
 import type { ImageStore } from "./store.ts";
 
-/* an entry key split at its first slash: the date slot and the tag */
 export function splitKey(ekey: string): [string, string | null] {
   const slash = ekey.indexOf("/");
   return slash === -1 ? [ekey, null] : [ekey.slice(0, slash), ekey.slice(slash + 1)];
 }
-/* the RELATIVE picture refs a text names, bare or in CommonMark's <…>
-   form, unwrapped and deduplicated — the sidecars that ride with the doc */
+/* relative refs only: the rest is the browser's to load (pin:
+   exportEntries.test › imageRefs: relative refs, bare or <bracketed>) */
 export function imageRefs(md: string): string[] {
   const out: string[] = [], seen: Record<string, true> = Object.create(null);
   if (md.indexOf("![") === -1) return out;
@@ -29,17 +22,17 @@ export function imageRefs(md: string): string[] {
   }
   return out;
 }
-/* how much text the walk handles between one yield and the next (the
-   current app measured 128 KB of HTML at a 5.8 ms mean batch) */
+/* MEASURED on HTML: 128 KB a batch ran a 5.8 ms mean */
 export const EXPORT_YIELD_BYTES = 128 * 1024;
 export interface Collision extends Error { collision: true }
 /* the export: one doc per non-blank entry, its sidecars after it, the
    whole list in key order. TWO ENTRIES CLAIMING ONE FILE refuse the run
-   before anything is written. A picture the text names that the store
-   lacks marks the doc `picsLost` (its entry target, for the reconcile to
-   spare); a read that THREW marks it `picsFaulted` (a fault heals next
-   run, a missing picture never will, and only one may withhold a
-   signature). */
+   before anything is written (pin: exportEntries.test › exportEntries
+   refuses two entries that would write one file). A picture the store
+   lacks marks the doc `picsLost`; a read that THREW marks it `picsFaulted`:
+   a fault heals next run, a missing picture never will, and only one may
+   withhold a signature (pin: exportEntries.test › exportEntries: a picture
+   read that throws marks the doc faulted) */
 export function exportEntries(cache: Record<string, string>, images: ImageStore): Promise<ExportFile[]> {
   const jobs = Object.keys(cache).sort()
     .filter((key) => cache[key].trim())
@@ -76,9 +69,8 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
     Promise.all(group.map(oneJob)).then((lists) => { for (const l of lists) all.push(...l); return yieldToTaskQueue(); })),
     Promise.resolve()).then(() => all);
 }
-/* every root the journal knows, from KEYS alone — the census is built from
-   this and never from the exported files, for the reason recorded at
-   rootManifest */
+/* from KEYS alone, never from the exported files (pin: exportEntries.test ›
+   splitKey and archiveRoots read the key alone) */
 export function archiveRoots(keys: string[]): string[] {
   return keys.map((key) => { const [date, tag] = splitKey(key); return entryFile(date, tag).root; });
 }

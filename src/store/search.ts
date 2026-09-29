@@ -1,11 +1,9 @@
-/* Search: the query grammar, the scope filter and the scan over an index.
-   Ported 2026-09-07 from ../writer/src/js/search.mjs and the string half
-   of 23-search.js. Every function takes strings or plain rows and returns
-   the same; the index rows are built by searchIndex.ts, the jump by the
-   editor. THE FOLD is 1:1 in code units, so offsets found on the folded
-   string stay valid against the original: U+0130 İ — the one char whose
-   toLowerCase expands — is pre-folded to I. Every occurrence-counting site
-   folds through searchFold, or their nth indices drift apart. */
+/* THE FOLD is 1:1 in code units, so offsets found on the folded string stay
+   valid against the original: U+0130 İ — the one char whose toLowerCase
+   expands — is pre-folded to I (pin: search.test › lower-cases, straightens
+   curly apostrophes, stays 1:1 in code units). Every occurrence-counting
+   site folds through searchFold, or their nth indices drift apart (pin:
+   highlight.test › what selectionLink minted, findHit lands on) */
 import { isDayKey, PAGE_KEY, pageParts } from "./keys.ts";
 
 export function searchFold(s: string): string {
@@ -20,14 +18,16 @@ export function bookScope(ns: string, book: string): Scope { return { kind: "boo
 /* a row's book: the same keyed namespace and the same root name — the
    parent's own body and every sub-page share it, while "Sean" cannot
    swallow "Sean's Books". The namespace is half the question: a page and
-   a book may both be called "Shakespeare". */
+   a book may both be called "Shakespeare" (pin: search.test › a book scope
+   carries its namespace) */
 export function inBook(row: { date: string; tag: string | null }, ns: string, root: string): boolean {
   return row.date === ns && pageParts(row.tag || "").name === root;
 }
 /* the ONE spelling of the filter; every arm positive, an unknown kind
    STATED false rather than riding a fall-through. The PAGES kind stays
    page's alone: "All Pages" is a named surface, and a bookshelf reached
-   through it would silently widen what that row promises. */
+   through it would silently widen what that row promises (pin: search.test
+   › the ONE filter) */
 export function inScope(row: { date: string; tag: string | null }, scope: Scope): boolean {
   if (scope.kind === "everything") return true;
   if (scope.kind === "journal") return isDayKey(row.date);
@@ -38,7 +38,8 @@ export function inScope(row: { date: string; tag: string | null }, scope: Scope)
 export interface Query { needle: string; left: boolean; right: boolean }
 /* substring by DEFAULT; an edge "_" requires a word boundary on that end,
    so "_sister_" is the whole word; a doubled edge underscore searches the
-   literal one; an only-underscores query is a literal search */
+   literal one; an only-underscores query is a literal search (pin:
+   search.test › substring by default) */
 export function parseSearchQuery(raw: string | null | undefined): Query {
   const t = (raw || "").trim();
   const left = t.charAt(0) === "_";
@@ -49,15 +50,16 @@ export function parseSearchQuery(raw: string | null | undefined): Query {
   if (!core) return { needle: searchFold(t), left: false, right: false };
   return { needle: searchFold(core), left, right };
 }
-/* letters and digits only — the apostrophe at a word's edge is quote
-   punctuation, not word glue */
+/* the apostrophe at a word's edge is quote punctuation, not word glue (pin:
+   search.test › letters and digits only) */
 export function isWordChar(text: string, i: number): boolean {
   return /[\p{L}\p{N}]/u.test(text.charAt(i));
 }
 /* every occurrence as flat offsets, keeping the ones whose boundaries
    hold. Unbounded, the scan steps by the needle's length (the stride nth
    has always used); bounded, by 1, so a valid hit overlapping a rejected
-   one is kept ("ana_" in "banana"). */
+   one is kept ("ana_" in "banana") (pin: search.test › boundaries, the
+   stride, and the limit) */
 export function searchHits(hay: string, needle: string, left: boolean, right: boolean, limit?: number): number[] {
   const out: number[] = [];
   if (!needle) return out;
@@ -76,8 +78,9 @@ export const SEARCH_CAP = 200;
 export interface Result { date: string; tag: string | null; nth: number; snippet: string }
 /* query in, matches out: one per occurrence with its index, so the jump
    lands on THAT occurrence; a snippet windowed 30 either side in the
-   original case. ONE past the cap is collected so the renderer can tell
-   "exactly the cap" from "more, clipped". */
+   original case. ONE past the cap is collected, to tell "exactly the cap"
+   from "more, clipped" (pin: search.test › the snippet elides on both
+   sides, and the scan collects one past the cap) */
 export function searchEntries(index: IndexRow[], query: string, scope: Scope): Result[] {
   const p = parseSearchQuery(query);
   const results: Result[] = [];
@@ -95,7 +98,8 @@ export function searchEntries(index: IndexRow[], query: string, scope: Scope): R
   return results;
 }
 /* a snippet cut into plain and marked runs under the SAME parse the row
-   was built under — best-effort at the "…" edges, cosmetic, never nth */
+   was built under — best-effort at the "…" edges, cosmetic, never nth (pin:
+   search.test › snippetRuns) */
 export function snippetRuns(snippet: string, query: string): { text: string; mark: boolean }[] {
   const p = parseSearchQuery(query);
   if (!p.needle) return [{ text: snippet, mark: false }];

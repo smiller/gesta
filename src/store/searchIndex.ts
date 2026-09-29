@@ -1,25 +1,19 @@
-/* The search index over the cache: one row per non-blank entry, the
-   entry's flat text and its fold, memoised on the exact stored markdown so
-   a rebuild re-flattens only what moved and needs no invalidation hook.
-   Ported 2026-09-07 from buildSearchIndex (23-search.js), re-asked of a
-   cache that holds markdown: the flatten is a PARSE, MEASURED at 4.4 s
-   over the whole mirror under node (123 MB, 13,565 files) against 0.15 s
-   to lowercase the raw text — so the first build is CHUNKED, each step
-   working until its deadline and reporting where it is, and the page
-   decides when to run it. After that a rows() call is a walk over the
-   keys with memo hits, a few milliseconds. ORDER: the keyed namespaces
-   first, then the days newest first, a day's tagged entries after its
-   main — the README's "pages listed before the dated journal". */
+/* Memoised on the exact stored markdown, so a rebuild re-flattens only what
+   moved and needs no invalidation hook. The flatten is a PARSE, MEASURED at
+   4.4 s over the whole mirror under node (123 MB, 13,565 files) against
+   0.15 s to lowercase the raw text, so the first build is CHUNKED, each
+   step working until its deadline (pin: searchIndex.test › the chunked
+   build stops at its deadline and resumes) */
 import { searchFold, type IndexRow } from "./search.ts";
 import { isDayKey, byName, NS_KEYS } from "./keys.ts";
 
-/* ONE PASS over the keys, bucketed by their first segment. The first
-   spelling filtered the whole key list once per day — O(days × keys),
-   MEASURED 2026-09-08 by the review at 500–708 ms a call over 13,600
-   keys, paid on every scan; this one is 13,600 keys in under 100 ms
-   (pinned in the test). A day with no main entry of its own stands in
-   date order among the days, where the first spelling appended its
-   tagged entries at the end. */
+/* ONE PASS over the keys, bucketed by their first segment: filtering the
+   whole key list once per day, O(days × keys), MEASURED 500–708 ms a call
+   over 13,600 keys, paid on every scan; this is under 100 ms (pin:
+   searchIndex.test › orders 13,600 keys in one pass). A day with no main
+   entry of its own stands in date order among the days (pin:
+   searchIndex.test › keyed namespaces first by name, then the days newest
+   first) */
 export function indexOrder(keys: string[]): string[] {
   const ns: Record<string, string[]> = Object.create(null);
   for (const n of NS_KEYS) ns[n] = [];
@@ -42,8 +36,9 @@ export interface SearchIndex {
   /* flatten until the deadline; how far it got. Repeated until done. */
   step(deadlineMs: number): { done: number; total: number };
   readonly complete: boolean;
-  /* the rows, current to the cache: any entry whose text moved is
-     re-flattened here, so a search after an edit needs no invalidation */
+  /* any entry whose text moved is re-flattened here, so a search after an
+     edit needs no invalidation (pin: searchIndex.test › rows over the
+     non-blank entries, flattened once and reused until the text moves) */
   rows(): IndexRow[];
 }
 export function searchIndex(cache: Record<string, string>, flatten: (md: string) => string, now: () => number = () => performance.now()): SearchIndex {
@@ -54,9 +49,10 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     if (!md || !md.trim()) return null;
     const m = memo[key];
     if (m && m.md === md) return m;
-    /* a text the model refuses (a grid holding a stray line, 2026-09-22)
-       is indexed as its source: the build never stops on one entry, and
-       the entry is still found by its words */
+    /* a text the model refuses is indexed as its source: the build never
+       stops on one entry, and the entry is still found by its words (pin:
+       searchIndex.test › an entry whose flatten throws is indexed as its
+       raw source) */
     let text: string;
     try { text = flatten(md); } catch { text = md; }
     const fresh = { md, text, lower: searchFold(text) };
@@ -67,8 +63,9 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     const cut = key.indexOf("/");
     return cut === -1 ? { date: key, tag: null } : { date: key.slice(0, cut), tag: key.slice(cut + 1) };
   };
-  /* the order is kept while the KEY SET stands — a scan per keystroke
-     re-ordered 13,600 keys before it read a byte (the review, 2026-09-08) */
+  /* the order is kept while the KEY SET stands: a scan per keystroke
+     re-ordered 13,600 keys before it read a byte (pin: searchIndex.test ›
+     orders 13,600 keys in one pass, and rows() reuses the order) */
   let orderSig = "", ordered: string[] = [];
   const currentOrder = (): string[] => {
     const keys = Object.keys(cache), sig = JSON.stringify(keys);   /* a key may hold any character; the join is unambiguous */

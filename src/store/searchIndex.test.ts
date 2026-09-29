@@ -26,7 +26,7 @@ describe("searchIndex", () => {
     delete cache["2020-01-02"];
     expect(idx.rows().length).toBe(2);
   });
-  it("an entry whose flatten throws is indexed as its raw source, and the build carries on (2026-09-22)", () => {
+  it("an entry whose flatten throws is indexed as its raw source, and the build carries on", () => {
     const cache: Record<string, string> = { "2020-01-01": "fine", "page/Bad": "::: grid\nbad\n:::" };
     const idx = searchIndex(cache, (md) => { if (md.includes("bad")) throw new Error("a grid holds only cards"); return md; });
     expect(idx.rows().map((r) => r.text)).toEqual(["::: grid\nbad\n:::", "fine"]);

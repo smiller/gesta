@@ -1,4 +1,3 @@
-// The backup's pure decisions, ported 2026-09-07 from ../writer/src/js/plans.test.mjs.
 import { test, expect } from "vitest";
 import { utf8 } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, errText, failMsg, fsaFatal, type ExportFile } from "./files.ts";

@@ -1,6 +1,3 @@
-// The citation grammar, ported 2026-09-07 from ../writer/src/js/reference.test.mjs,
-// and the label over a journal of headings — the corpus cases the current
-// app's referenceParts documents.
 import { test, expect } from "vitest";
 import {
   REFERENCE_DATED, REFERENCE_TOKEN, REFERENCE_DIVISION, referenceNumeral,
@@ -78,7 +75,7 @@ test("referenceAuthor: a book's surname off the key, Gesta for a day, nothing fo
   expect(referenceAuthor(NS_PAGE.key, "Sean's Books")).toBe("");
 });
 
-// the corpus cases referenceParts documents, over a journal of headings
+// the corpus cases, over a journal of headings
 const journal: Journal = journalOf({
   "bookshelf/Milton, John/Paradise Lost": "# Paradise Lost\n",
   "bookshelf/Milton, John/Paradise Lost/Book 1": "# Book 1\n\n::: verse\nOf man's first\n:::",
@@ -111,7 +108,7 @@ test("referenceLabel: the corpus table, author then pieces", () => {
 test("referenceLabel: the line range dots onto a numeral run and commas after a title; a leaf stands in only for a titled division", () => {
   expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", "254-55", null, journal)).toBe("Milton, *Paradise Lost*, 1.254-55");
   expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", "1-4", null, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*, 1-4");
-  // a numbered division stands and the leaf drops (Screwtape, 2026-08-16)
+  // a numbered division stands and the leaf drops (Screwtape)
   expect(referenceLabel(NS_BOOK.key, "Lewis, C. S/The Screwtape Letters/Letter 12", "", { from: "60", to: "62" }, journal)).toBe("Lewis, *The Screwtape Letters*, 12");
   // a titled division drops, with any numbered level above it, and the leaf stands in
   expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", "", { from: "22", to: "25" }, journal)).toBe("Blake, *Songs of Innocence*, pp. 22-25");
@@ -146,10 +143,10 @@ test("mdLabel: no ] and no newline in a link text", () => {
   expect(mdLabel("", "entry")).toBe("entry");
 });
 
-// The Faerie Queene's citation (2026-09-27): a directive on the WORK's page,
-// `roman book and canto`, respells the key's numerals — the book upper-case
-// Roman, the canto lower-case, the proem's `pr` kept — and the line range
-// arrives from the editor already stanza-shaped ("2.1", "2", "2–3").
+// The Faerie Queene's citation: a directive on the WORK's page, `roman book
+// and canto`, respells the key's numerals — the book upper-case Roman, the
+// canto lower-case, the proem's `pr` kept; the line range comes in already
+// stanza-shaped ("2.1", "2", "2–3").
 const fq = journalOf({
   "bookshelf/Spenser, Edmund": "# Edmund Spenser",
   "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n",

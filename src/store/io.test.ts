@@ -1,5 +1,5 @@
-// The disk edge over fake directory handles — the same parameter seam the
-// browser fills with real ones. Ported 2026-09-07 from ../writer/src/js/io.test.mjs.
+// Over fake directory handles: the same parameter seam the browser fills
+// with real ones.
 import { test, expect } from "vitest";
 import {
   yieldToTaskQueue, setYieldWatch, folderNames, writeFilesTo, zipBytes,
@@ -51,8 +51,7 @@ function fakeDir(tree: Tree, log?: string[] | null, refuse?: Refuse | null, at =
     },
   } as unknown as Dir;
 }
-// an export-shaped record minted through entryFile, the helper the real
-// export derives its targets from
+// an export-shaped record, its targets minted as an export's are
 function docFor(date: string, text: string): ExportFile {
   const t = entryFile(date, null);
   return { name: t.base + ".md", flat: t.flatBase + ".md", text, dir: t.dir, entry: t.flatBase, root: t.root };

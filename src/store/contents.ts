@@ -1,19 +1,21 @@
-/* A BOOK'S OWN ORDER, read off the parent's CONTENTS. Ported 2026-09-07
-   from contentsLinks, subPageOrder and subPageDisplayList
-   (18-pages-panel.js), re-asked of the document model. The alphabet is
+/* A BOOK'S OWN ORDER, read off the parent's CONTENTS. The alphabet is
    wrong for a book — Dante's canticles read Inferno, Paradiso, Purgatorio
    — and what decides instead is the parent's own entry, which already
    lists its children as links in the book's order: no second place to
    store an order, nothing outside the text for a backup to lose. ALL OR
    NOTHING, over the subs a reader can see: the contents decides only
    when it links every CONTENT-BEARING sub, so a page mentioning one sub
-   mid-sentence reorders nothing, and a blank registration gets no vote.
+   mid-sentence reorders nothing, and a blank registration gets no vote
+   (pin: contents.test › a page mentioning one sub mid-sentence keeps the
+   alphabet).
    The links' section headings (levels 1–3, in document order) are the
    sections a picker groups by; a heading that is itself a link names the
    section AND is a child, so its own row belongs where the heading
-   stands, not inside the section it opens. Memoised on the parent's
-   markdown. A book whose every sub name opens with a date reads as a
-   feed and lists NEWEST FIRST — unless it states its own order. */
+   stands, not inside the section it opens (pin: contents.test › links in
+   document order with the section heading in force). Memoised on the
+   parent's markdown. A book whose every sub name opens with a date reads
+   as a feed and lists NEWEST FIRST — unless it states its own order (pin:
+   contents.test › a feed of dated names lists newest first) */
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
@@ -68,10 +70,9 @@ export function subPageOrder(keys: string[], parentKey: string, parentMd: string
   return { names: rows.map((r) => r.name), rows, stated: true };
 }
 const DATED_SUB_RE = new RegExp("^" + DATE_KEY_SRC + "(-|$)");
-/* the display order of a book's picker rows: a stated order as stated;
-   else byName, a feed of dated names newest first; an `extra` (the open
-   unregistered sub) joins the END of a stated order and is sorted into an
-   alphabetical one */
+/* an `extra` (the open unregistered sub) joins the END of a stated order and
+   is sorted into an alphabetical one (pin: contents.test › the extra joins
+   the end of a stated order) */
 export function subPageDisplayList(order: SubOrder, parentKey: string, bearing: Bearing, extra: string | null): string[] {
   const subs = order.names.slice();
   const voters = subs.filter((s) => bearing(entryKey(parentKey, s)));
@@ -81,10 +82,11 @@ export function subPageDisplayList(order: SubOrder, parentKey: string, bearing: 
   return subs;
 }
 
-/* DOES THIS ENTRY FOLD (2026-09-28, the contents-folds plan): a WORK's
-   contents — a bookshelf entry below its author that has sub-entries. An
-   author page's grouped works are searched whole (the reader), and
-   nothing outside the bookshelf folds. */
+/* a WORK's contents folds — a bookshelf entry below its author that has
+   sub-entries; an author page's grouped works are searched whole, and
+   nothing outside the bookshelf folds (pin: contents.test › a work with
+   sub-entries folds) (pin: contents.test › an author page, a leaf, a page
+   or a day does not) */
 export function foldsContents(keys: string[], date: string, tag: string | null): boolean {
   if (date !== NS_BOOK.key || !tag || tag.split("/").length < 2) return false;
   return childrenOf(keys, entryKey(date, tag)).length > 0;

@@ -1,9 +1,7 @@
-/* What the label reads off the journal: an entry's title and a root's
-   directive, from the cache's markdown. AN ENTRY'S TITLE IS ITS FIRST
-   LEVEL-ONE HEADING, everywhere (decision 5 of the plan, 2026-09-07); the
-   current app read a sub-page's first heading of either level, and the one
-   shelf that leaned on it was corrected in the data. Memoised on the text,
-   so a book-sized list re-parses nothing that has not changed. */
+/* AN ENTRY'S TITLE IS ITS FIRST LEVEL-ONE HEADING, everywhere (pin:
+   reference.test › headings: the first level-one heading is the title).
+   Memoised on the text, so a book-sized list re-parses nothing that has not
+   changed. */
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
@@ -22,9 +20,9 @@ export function firstHeading(md: string): string {
   });
   return found;
 }
-/* does the entry carry a top-level `::: reference` directive saying "from
-   the last title" — top-level only, since a descendant scan found a
-   directive an entry merely QUOTED as an example */
+/* top-level only: a descendant scan found a directive an entry merely
+   QUOTED as an example (pin: reference.test › headings: the first level-one
+   heading is the title; a ## is a section; the directive is top-level only) */
 export function directsFromLastTitle(md: string): boolean {
   if (!/^::: reference/m.test(md)) return false;
   let doc: Node;
@@ -33,8 +31,8 @@ export function directsFromLastTitle(md: string): boolean {
   doc.forEach((block) => { if (block.type === N.reference && /last title/i.test(block.textContent)) yes = true; });
   return yes;
 }
-/* does the WORK's page carry a top-level `::: reference` directive saying
-   "roman book and canto" (2026-09-27) — top level only, as above */
+/* read off the WORK's page, top level only (pin: reference.test › the
+   directive is read off the work's page, top level only) */
 export function directsRomanBookCanto(md: string): boolean {
   if (!/^::: reference/m.test(md)) return false;
   let doc: Node;

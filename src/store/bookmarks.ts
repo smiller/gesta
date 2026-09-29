@@ -1,19 +1,17 @@
-/* Bookmarks: the list's rules, pure. Ported 2026-09-08 from
-   ../writer/src/js/bookmarks.mjs with its tests re-spelled. What the
-   stored text parses to and what it REFUSES — anything this app would not
-   have written reads as null, not as an empty list, so the next add
-   cannot write over rows still recoverable by hand — the two views of one
-   array (a number is a row's place among the UNKEYED rows, the keyed rows
-   sort by trigger), and the refusals a trigger can meet. TWO MEMBER
-   SHAPES AND NO THIRD: a bare string is a row with no key of its own, an
-   object one with; an unkeyed row serializes back as the bare string, so a
-   store never touched by keys stays byte for byte — the whole migration. */
+/* Anything this app would not have written reads as null, not as an empty
+   list, so the next add cannot write over rows still recoverable by hand
+   (pin: bookmarks.test › parseBookmarks: an empty store is a list, anything
+   this app would not have written is null). TWO MEMBER SHAPES AND NO THIRD:
+   a bare string is a row with no key of its own, an object one with; an
+   unkeyed row serializes back as the bare string, so a store never touched
+   by keys stays byte for byte (pin: bookmarks.test › serializeBookmarks: an
+   unkeyed row goes back as the bare string) */
 import { byName } from "./keys.ts";
 
 /* the most NUMBERED rows, one per trigger digit 1-9; keyed rows have no cap */
 export const BOOKMARK_CAP = 9;
-/* a trigger's first character is neither a (add) nor a digit (the jump);
-   folded to lower case; letters or digits after, at any length */
+/* a trigger's first character is neither a (add) nor a digit (the jump)
+   (pin: bookmarks.test › aliasRefusal: the pattern) */
 export const ALIAS_RE = /^[b-z][a-z0-9]*$/;
 export interface Bookmark { key: string; alias: string }
 export function parseBookmarks(text: string | null | undefined): Bookmark[] | null {
@@ -62,7 +60,9 @@ export function aliasRefusal(alias: string): string {
 }
 /* a NEW list with the row's trigger set or cleared, or null when the list
    has not got the key: a refused write must leave the cache agreeing with
-   the store, and an in-place edit would already have moved */
+   the store, and an in-place edit would already have moved (pin:
+   bookmarks.test › bookmarksFull counts the numbered rows only; set and add
+   return a NEW list or null) */
 export function setBookmarkAlias(list: Bookmark[], key: string, alias: string): Bookmark[] | null {
   const i = bookmarkIndex(list, key);
   if (i === -1) return null;

@@ -1,4 +1,3 @@
-// The disk-name decisions, ported 2026-09-07 from ../writer/src/js/names.test.mjs.
 import { test, expect } from "vitest";
 import {
   dayDir, pageName, trimToBytes, nameFromUrl,

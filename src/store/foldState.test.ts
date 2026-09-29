@@ -1,5 +1,3 @@
-// What a folding contents page remembers between visits, in this browser
-// (2026-09-28, the contents-folds plan): its open sections.
 import { test, expect } from "vitest";
 import { parseFoldStore, foldPage, withFoldPage } from "./foldState.ts";
 

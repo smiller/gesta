@@ -2,7 +2,7 @@ type Storage_ = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const browser = (): Storage_ => localStorage;
 /* UNREADABLE is not EMPTY: undefined when the storage cannot be reached,
    null for a key it does not hold — a blocked read taken for an absent key
-   would seed a first run's defaults over what the reader has
+   would seed a first run's defaults over what a reader has
    (pin: local.test › readRaw: an absent key is null) */
 export function readRaw(key: string, storage: () => Pick<Storage, "getItem"> = browser): string | null | undefined {
   try { return storage().getItem(key); } catch { return undefined; }

@@ -1,19 +1,15 @@
-/* The export run backwards: a folder of entry files read back into the
-   journal. Ported 2026-09-07 from ../writer/src/js/29-import.js, re-asked
-   of a store that holds markdown: the file's text is stored AS WRITTEN,
-   and a sidecar is filed under the path its ref resolves to instead of
-   being rewritten into a data URL. Two gates the current app did not have:
-   the text is PARSED before it is stored, so a form the schema refuses is a
-   counted failure and never a blind row; and the write reports whether it
-   landed, so the tally is what the store holds. An imported file
-   overwrites that entry whatever it held. */
+/* The text is stored AS WRITTEN. Two gates: it is PARSED before it is
+   stored, so a form the schema refuses is a counted failure and never a
+   blind row (pin: importFiles.test › an unreadable .md is counted, never
+   attempted; a form the schema refuses is counted with its error); and the
+   write reports whether it landed, so the tally is what the store holds
+   (pin: importFiles.test › a write that does not land is a failure). An
+   imported file overwrites that entry whatever it held. */
 import { parseMarkdown } from "../model/parse.ts";
 import { entryKey } from "./keys.ts";
 import { importTarget } from "./names.ts";
 import { entryDocs, filePath, type ImportFile } from "./files.ts";
 
-/* what the import writes through: the entry layer's landed-or-not write,
-   and the image store keyed by path */
 export interface ImportSink {
   setEntry(ekey: string, md: string): Promise<boolean>;
   setImage(path: string, bytes: Uint8Array): Promise<void>;
@@ -24,7 +20,8 @@ export type Outcome = "imported" | "skipped" | "failed";
    pick holds, not a src character class — an ordinary "Trip Log" page's
    ref holds a space and a "(2026)" name a ")" no class can parse — in
    BOTH spellings, bare and CommonMark's <name> form. A ref is RELATIVE, so
-   it resolves in its entry's OWN folder and the map is keyed by path. */
+   it resolves in its entry's OWN folder and the map is keyed by path (pin:
+   importFiles.test › a sidecar is filed under the path its ref resolves to) */
 export function sidecarRefs(path: string, text: string, sidecars: Sidecars): { refs: string[]; blocked: boolean } {
   const dir = path.slice(0, path.lastIndexOf("/") + 1);
   const refs: string[] = [];
@@ -33,7 +30,8 @@ export function sidecarRefs(path: string, text: string, sidecars: Sidecars): { r
   for (const s of Object.keys(sidecars)) {
     if (s.slice(0, dir.length) !== dir) continue;
     const rel = s.slice(dir.length);
-    if (rel.indexOf("/") !== -1) continue;   /* deeper down — some other entry's */
+    if (rel.indexOf("/") !== -1) continue;   /* deeper down — some other entry's (pin: importFiles.test › sidecarRefs: an
+     imageless text scans nothing; a deeper file is another entry's) */
     if (text.indexOf("](" + rel + ")") === -1 && text.indexOf("](<" + rel + ">)") === -1) continue;
     if (sidecars[s] === null) { blocked = true; continue; }
     refs.push(s);
@@ -45,19 +43,17 @@ export function importEntry(path: string, text: string, sidecars: Sidecars, sink
   if (!target) return Promise.resolve("skipped");
   const ekey = entryKey(target.date, target.tag);
   const { refs, blocked } = sidecarRefs(path, text, sidecars);
-  /* stop rather than write: this entry needs a picture the pick could not
-     read, and the entry it would replace may well be the one that has it */
+  /* stop rather than write: the entry it would replace may well be the one
+     that has the picture (pin: importFiles.test › an entry whose picture
+     could not be read is refused and counted) */
   if (blocked) return Promise.reject(new Error("a picture this entry needs could not be read"));
   return Promise.resolve().then(() => {
-    parseMarkdown(text);   /* the gate: a refused form throws here, and is counted */
-    return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)), Promise.resolve());
+    parseMarkdown(text);     return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)), Promise.resolve());
   }).then(() => sink.setEntry(ekey, text)).then((landed) => landed ? "imported" : "failed");
 }
 export interface Tally { imported: number; failed: number; attempted: number; failures: { path: string; error: string }[] }
-/* sequential over the pick's entry docs. A single file's failure is
-   COUNTED, not thrown — one bad file must not abort the rest of the folder
-   — and named in the tally, so the report can say which. An unreadable .md
-   is counted, never attempted. Progress reports after each doc settles. */
+/* A single file's failure is COUNTED, not thrown — one bad file must not
+   abort the rest of the folder — and named in the tally */
 export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: (done: number, total: number) => void): Promise<Tally> {
   const sidecars: Sidecars = Object.create(null);
   for (const f of files) if ("bytes" in f) sidecars[filePath(f)] = f.bytes;

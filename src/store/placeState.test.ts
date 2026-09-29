@@ -1,6 +1,3 @@
-// Where each entry was left, remembered in this browser across reloads
-// (2026-09-28, the reader: back on Book I, Canto vi, the reading should
-// stand at stanza 7, where it was left).
 import { test, expect } from "vitest";
 import { parsePlaces, placeOf, withPlace, movedPlace, PLACES_CAP } from "./placeState.ts";
 

@@ -1,43 +1,35 @@
-/* The entry layer over the entry store: the synchronous cache, the one
-   read/write/delete path, the per-key write chain and the warm. Ported
-   2026-09-07 from ../writer/src/js/entries.mjs, POST-CUTOVER HALF ONLY: the
-   successor has no localStorage era, so the dual-write, the cutover, the
-   reclaim and the flag are not carried — the store is authoritative from the
-   first write. The names that module reached for as bare globals (the
-   store, the save-failure notices, the save counter) are handed in here. */
 import { type EntryStore, isStale } from "./store.ts";
 
-/* what the layer tells the chrome. Keyed notices stick until the key lands
-   again; an entry removed owes nothing, body or index. */
 export interface EntryNotices {
   /* a durable landing under ekey: release any pin owed under it */
   landed(ekey: string): void;
   /* the entry is gone: clear every debt under it — the body's AND the
      derived index's — or a failed-then-deleted entry's stale key would
-     block every future release forever */
+     block every future release forever (pin: entries.test › removeEntry
+     clears the cache, bumps the counter, and clears every debt) */
   removed(ekey: string): void;
   /* a write that did not land, keyed so a later landing releases it;
      `rescue` is the refused text, offered for copying */
   stuck(text: string, err: unknown, ekey: string, rescue?: string): void;
   /* a delete that failed for a reason other than staleness: UNKEYED, since
      the removed key can never land a future write, and deferred past any
-     busy pin — the entry resurrects from the store next launch */
+     busy pin — the entry resurrects from the store next launch (pin:
+     entries.test › a plain rejected delete reports unkeyed and idle-deferred) */
   stuckIdle(text: string, err: unknown): void;
 }
 export interface EntryLayer {
-  /* the synchronous source of truth fronting the store; the export and the
-     backup enumerate it, so it must be complete once `warmed` */
+  /* complete once `warmed`: everything written out is enumerated from it */
   cache: Record<string, string>;
   /* per key, bumped by removal: a save caught in an async gap commits only
-     while still the latest issued */
+     while still the latest issued (pin: entries.test › a stale restore is
+     guarded by the counter) */
   saveSeq: Record<string, number>;
   entryMd(ekey: string): string;
-  /* resolves whether the write LANDED: the notices carry the failure, and
-     the promise never rejects, but a tally (the import's) needs the answer */
+  /* resolves whether the write LANDED, never rejects: the notices carry the
+     failure, but a tally needs the answer */
   setEntry(ekey: string, md: string): Promise<boolean>;
   removeEntry(ekey: string): Promise<boolean>;
   persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel?: boolean): Promise<boolean>;
-  /* every entry gone, cache and store — the import's clean slate */
   clear(): Promise<void>;
   primeEntry(ekey: string): Promise<boolean>;
   warm(): Promise<void>;
@@ -53,8 +45,9 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
      export a blank journal over the mirror */
   let warmed = false;
   /* set when the warm cannot read the store (blocked IndexedDB, a second tab
-     on a newer version): the journal is unreadable this launch and the cache
-     is left EMPTY rather than blanked; init surfaces it with the REAL error */
+     on a newer version): the cache is left EMPTY rather than blanked, and the
+     REAL error kept (pin: entries.test › warm: a read failure leaves the
+     cache empty and holds the real error) */
   let storeReadFailed = false;
   let storeReadError: unknown = null;
 
@@ -72,7 +65,8 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
   /* serialize the async store writes for one key: two quick saves of one
      entry could otherwise land stale-last and lose the edit (the cache,
      written synchronously, is already last-wins). Both arms advance the
-     tail so one failure does not wedge the key. The returned promise is
+     tail so one failure does not wedge the key (pin: entries.test ›
+    persistEntry serializes one key's ops). The returned promise is
      SEALED — every caller discards it, so a rejected op would otherwise
      float unhandled. The store is the only durable copy, so a failed write
      is real data loss: stick it, keyed; a success is the durable landing
@@ -84,12 +78,13 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     return tail.then(
       () => { notices.landed(ekey); return true; },
       (err: unknown) => {
-        /* PUT THE CACHE BACK: the mirror and the export are written from
-           the cache, so a refused write left there goes out over the backup
-           folder at the next run. Guarded by the counter — a delete mutates
-           the cache synchronously and queues its own op, and an unguarded
-           restore would land the row again after the entry was retired. A
-           REFUSED DELETE restores it too: its row survives in the store. */
+        /* PUT THE CACHE BACK: a refused write left there would go out over the
+           backup folder at the next run (pin: entries.test › a stale write
+           restores the cache). Guarded by the counter — a delete mutates the
+           cache synchronously and queues its own op, and an unguarded restore
+           would land the row again after the entry was retired. A REFUSED DELETE
+           restores it too: its row survives in the store (pin: entries.test › a
+           stale delete restores the cache) */
         if (isStale(err)) {
           if (saveSeq[ekey] === seqAt) cache[ekey] = err.stored;
           if (isDel) notices.stuck("not deleted — changed in another tab, reload", err, ekey);
@@ -105,10 +100,10 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     for (const k of Object.keys(cache)) delete cache[k];
     return store.clear();
   }
-  /* seed the cache with ONE entry from its store row, ahead of the warm.
-     Additive and idempotent: a key already held is left untouched, so the
-     seed and the warm cannot disagree. Resolves true only when THIS call
-     seeded the key; a store hiccup rejects. */
+  /* ahead of the warm. Additive and idempotent: a key already held is left
+     untouched, so the seed and the warm cannot disagree. Resolves true only
+     when THIS call seeded the key (pin: entries.test › primeEntry loses the
+     race to warm) */
   function primeEntry(ekey: string): Promise<boolean> {
     if (ekey in cache) return Promise.resolve(false);
     return store.get(ekey).then((row) => {
@@ -117,8 +112,6 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
       return true;
     });
   }
-  /* load the store into the cache before the first reads need it. A read
-     failure leaves the cache as it was and flags the launch. */
   function warm(): Promise<void> {
     storeReadFailed = false;
     storeReadError = null;

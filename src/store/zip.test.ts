@@ -1,4 +1,3 @@
-// The zip byte format an unpacker sees, ported 2026-09-07 from ../writer/src/js/zip.test.mjs.
 import { test, expect } from "vitest";
 import { utf8 } from "./names.ts";
 import { crc32, emitZipEntry, deflateRaw } from "./zip.ts";

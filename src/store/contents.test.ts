@@ -51,9 +51,6 @@ describe("subPageDisplayList", () => {
   });
 });
 
-// Which entries fold (2026-09-28, the contents-folds plan): a WORK's
-// contents — a bookshelf entry below its author with sub-entries. An author
-// page's grouped works are searched whole, so it does not fold.
 describe("foldsContents", () => {
   const keys = ["bookshelf/Spenser, Edmund", "bookshelf/Spenser, Edmund/The Faerie Queene", "bookshelf/Spenser, Edmund/The Faerie Queene/1.1",
     "bookshelf/Milton, John/Lycidas", "bookshelf/Dante/Commedia/Inferno", "bookshelf/Dante/Commedia/Inferno/1", "page/Notes", "page/Notes/Sub", "2026-09-28", "2026-09-28/Tag"];

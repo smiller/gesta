@@ -1,10 +1,4 @@
-/* The automated durable export: the whole journal written to the
-   remembered folder, on launch and on a long idle, split into the mirror
-   and the day's archives by writeBackup. Ported 2026-09-07 from
-   ../writer/src/js/35-automated-durable-export-the-i-o-orchestration.js
-   as a factory over the layer, the stores and two callbacks — the status
-   line and the trouble affordance — in place of the notice ledger. Restore
-   is not new code: point the import at an archive you have unzipped. */
+/* Restore is not new code: the import, pointed at an unzipped archive */
 import { NS, todayKey } from "./keys.ts";
 import { readRaw, writeRaw } from "./local.ts";
 import { imgHash } from "./names.ts";
@@ -42,7 +36,6 @@ export interface BackupOptions {
   /* the ONE writer of the trouble state: "" is healthy, else the reason the
      last run did not complete, click-to-resume */
   onTrouble: (msg: string) => void;
-  /* a failure worth keeping on screen, with the text to copy */
   stick: (text: string, err: unknown, copy?: string) => void;
 }
 export interface Backup {
@@ -62,7 +55,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   let committedSig: string | null = null;
   /* a synchronous "a folder is configured" mirror for the edit hot path,
      seeded from the durable hint; the run's store read corrects it */
-  let configured = !!readRaw(BACKUP_ON);   /* every hint through readRaw and writeRaw: reaching localStorage throws where it is refused (pin: entries left and renamed › a page opened with localStorage refused) */
+  let configured = !!readRaw(BACKUP_ON);   /* every hint read and written inside try: reaching localStorage throws where it is refused (pin: entries left and renamed › a page opened with localStorage refused) */
   let handle: Dir | null = null;   /* cached so a resume can requestPermission SYNCHRONOUSLY in the click */
   let running: Promise<void> | null = null;   /* the single-flight latch */
   let trouble = "";

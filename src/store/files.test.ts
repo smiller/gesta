@@ -1,4 +1,3 @@
-// oneEach and entryDocs, ported 2026-09-07 from ../writer/src/js/io.test.mjs.
 import { test, expect } from "vitest";
 import { oneEach, entryDocs, isDoc, unreadFile, failMsg, type ImportFile } from "./files.ts";
 
@@ -16,7 +15,7 @@ test("oneEach and entryDocs: one file per ENTRY, and only a .md carries a key at
   // two pages under different parents share a basename and are two entries
   expect(oneEach([f("page/A/", "Notes.md", "a"), f("page/B/", "Notes.md", "b")]).length).toBe(2);
   expect(oneEach([f("page/A/", "Notes-img-1.png", "a"), f("page/B/", "Notes-img-1.png", "b")]).length).toBe(2);
-  // only a .md carries a key: two sidecars pageName would fold alike are two files
+  // only a .md carries a key: two sidecars that fold alike are two files
   expect(oneEach([f("page/A/", "Trip--1-img-1.png", "a"), f("page/A/", "Trip-1-img-1.png", "b")]).length).toBe(2);
   // an entry key and a file path never collide — different namespaces
   expect(oneEach([f("journal/1997/", "1997-01-01.md", "doc"), f("journal/1997/", "1997-01-01", "stray")]).length).toBe(2);

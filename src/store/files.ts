@@ -1,6 +1,3 @@
-/* The file records an import pick and an export run pass around, and the
-   two pure decisions over a pick. Ported 2026-09-07 from
-   ../writer/src/js/plans.mjs (the records) and io.mjs (oneEach, entryDocs). */
 import { entryKey } from "./keys.ts";
 import { importTarget, type EntryFile } from "./names.ts";
 
@@ -11,17 +8,17 @@ import { importTarget, type EntryFile } from "./names.ts";
    for, COUNTED as a failure rather than dropped, or a browning-out drive
    would shrink the set and report a green partial restore; an unreadable
    picture is present-but-null, so the entry needing it is refused instead
-   of being written picture-less over a live one that has it. */
+   of being written picture-less over a live one that has it (pin:
+   files.test › the records: a doc has text, a sidecar bytes, an unreadable
+   file is kept and marked) */
 export interface DocFile { dir: string; name: string; text: string; unread?: false }
 export interface UnreadDoc { dir: string; name: string; unread: true }
 export interface SidecarFile { dir: string; name: string; bytes: Uint8Array | null; unread?: boolean }
 export type ImportFile = DocFile | UnreadDoc | SidecarFile;
-/* an EXPORT record: a doc's text or a sidecar's bytes, and what the backup
-   needs to know about it — `flat` the stem it had before folders existed
-   (the relayout sweep's name), `entry` the entry it belongs to (the sweep's
-   unit of safety), `root` the archive it belongs to, `sig` its content
-   hash once asked for, `picsLost` the entry target when a picture the text
-   names had no bytes, `picsFaulted` when a picture read threw */
+/* `flat` the stem it had before folders existed, `entry` the entry it
+   belongs to, `root` its archive, `sig` its content hash once asked for,
+   `picsLost` the entry target when a picture the text names had no bytes,
+   `picsFaulted` when a picture read threw */
 export interface ExportFile {
   dir: string; name: string;
   text?: string; bytes?: Uint8Array | null;
@@ -30,9 +27,8 @@ export interface ExportFile {
 }
 export function isDoc(f: object): boolean { return !("bytes" in f); }
 export function fileBody(f: ExportFile): string | Uint8Array { return isDoc(f) ? f.text! : f.bytes!; }
-/* where a file sits — the ONE spelling of the join */
+/* the ONE spelling of the join */
 export function filePath(f: { dir?: string; name: string }): string { return (f.dir || "") + f.name; }
-/* the name a file carries where there are no folders at all */
 export function flatName(f: ExportFile): string { return f.flat || f.name; }
 export function unreadFile(name: string, dir: string): ImportFile {
   return /\.md$/i.test(name) ? { dir, name, unread: true } : { dir, name, unread: true, bytes: null };
@@ -41,13 +37,12 @@ export function errText(err: unknown): string {
   const e = err as { name?: string; message?: string } | null;
   return e && e.name ? e.name + ": " + e.message : "";
 }
-/* op + the error's name and detail, else "see console" — the ONE message
-   shape every sticky failure text shares */
+/* the ONE shape of a failure's message */
 export function failMsg(op: string, err: unknown): string { return op + " — " + (errText(err) || "see console"); }
 
-/* the entry docs of a pick — the .md files importTarget accepts — the ONE
-   spelling of "counts as an entry on import" the loop, the progress total
-   and the consent share, so no count can drift from another */
+/* the ONE spelling of "counts as an entry on import", so no count can
+   drift from another (pin: files.test › oneEach and entryDocs: one file per
+   ENTRY) */
 export function entryDocs(files: ImportFile[]): (DocFile | UnreadDoc)[] {
   return files.filter((f): f is DocFile | UnreadDoc => isDoc(f) && importTarget(filePath(f)) !== null);
 }
@@ -63,8 +58,9 @@ export interface Merged extends Error { merged: string }
    when pages nested: page/A/Notes.md and page/B/Notes.md are two entries.
    A KEY CLAIMED TWICE IS A REFUSAL with nothing to choose between — one
    shape is written and one read, so what brings two paths to one key is
-   normalization (pageName folding a "--" run or an edge dash), and the
-   message says so rather than "several backups". It throws before a byte
+   normalization (a "--" run or an edge dash folded), and the message says
+   so rather than "several backups" (pin: files.test › oneEach:
+   normalization refuses with what to do). It throws before a byte
    is read, reading a large folder being what exhausts the tab. An entry key
    and a path are both bare strings of one shape, so they are PREFIXED
    apart. Returns the input, in its order: nothing is dropped or preferred. */

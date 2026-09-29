@@ -1,6 +1,3 @@
-// The entry layer's contract, ported 2026-09-07 from
-// ../writer/src/js/entries.test.mjs — the post-cutover cases, over the
-// memory store and recording notices.
 import { test, expect } from "vitest";
 import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } from "./store.ts";
 import { entryLayer, type EntryNotices } from "./entries.ts";

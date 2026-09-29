@@ -1,15 +1,11 @@
-/* The keyed stores as one module: ONE adapter contract, the in-memory
-   adapter, and the domain stores, each spelled ONCE over whichever adapter it
-   is handed — so the fake the suite runs is the same domain code as the
-   store the app ships. Ported 2026-09-07 from ../writer/src/js/store.mjs.
-   The IndexedDB adapter is Dexie's (the plan's inventory) in place of the
-   hand-rolled one: the cached handle, the reopen after a close, the blocked
-   open and the versionchange from another tab were four measured failures
-   there, and Dexie 4 answers each (auto-open, a close on versionchange, a
-   reopen on the next access). Not ported: the cutover flag store — the
-   successor has no localStorage era to cut over from. Names sit OUTSIDE
-   page750.* — every file:// page shares one storage origin (MEASURED
-   2026-09-07 in Helium). */
+/* Each domain store is spelled ONCE over whichever adapter it is handed, so
+   the fake the suite runs is the same domain code as the store the app
+   ships. The IndexedDB adapter is Dexie's, not hand-rolled: a cached handle,
+   the reopen after a close, the blocked open and a versionchange from
+   another tab were four measured failures of a hand-rolled one, and Dexie 4
+   answers each (auto-open, a close on versionchange, a reopen on the next
+   access). Names sit OUTSIDE page750.* (pin: store.test › the database names
+   sit outside page750.*) */
 import Dexie, { type Table } from "dexie";
 
 /* THE ADAPTER CONTRACT, five calls every adapter answers identically:
@@ -23,8 +19,7 @@ import Dexie, { type Table } from "dexie";
    DataError, as keyPath semantics demand. The promise resolves only once the
    write has LANDED. Records cross the boundary as one-level copies, so a
    NESTED value rides as a shared reference — a wrapper that hands one out
-   takes its own copy. `clear()` empties the store (added 2026-09-07 for the
-   import: probe rows and a failed import are swept before a real one). */
+   takes its own copy (pin: store.test › keyed store over) */
 export interface Verdict<R> { put?: R; del?: boolean; [k: string]: unknown }
 export type Decide<R> = (row: R | null) => Verdict<R> | null;
 export interface KeyedStore<R extends object> {
@@ -37,14 +32,16 @@ export interface KeyedStore<R extends object> {
 }
 export function memKeyedStore<R extends object>(keyField: keyof R & string): KeyedStore<R> {
   const rows: Record<string, R> = Object.create(null);
-  /* the contract's boundary copies — one level, not deep: the suite's fake
-     directory handles carry methods, which structured clone refuses */
+  /* one level, not deep: the suite's fake directory handles carry methods,
+     which structured clone refuses (pin: store.test › records cross the
+     boundary as copies, both directions) */
   function copyOf(rec: R | undefined | null): R | null {
     if (!rec) return null;
     return { ...rec };
   }
-  /* refused like keyPath evaluation when the field is missing — so a
-     malformed record cannot be green here and a DataError live */
+  /* refused as keyPath refuses it, so a malformed record cannot be green here
+     and a DataError live (pin: store.test › a record without its key field is
+     refused) */
   function keyOf(record: R): string {
     const k = record[keyField];
     if (k === undefined) {
@@ -61,8 +58,9 @@ export function memKeyedStore<R extends object>(keyField: keyof R & string): Key
       return Promise.resolve();
     },
     del: (key) => { delete rows[key]; return Promise.resolve(); },
-    /* ascending-key order matches IndexedDB getAll, so a warm test cannot
-       pass here and order differently live */
+    /* ascending-key order, as IndexedDB's getAll, so a warm test cannot pass
+       here and order differently live (pin: store.test › all() is
+       ascending-key copies) */
     all: () => Promise.resolve(Object.keys(rows).sort().map((k) => ({ ...rows[k] }))),
     update: (key, decide) => {
       let verdict: Verdict<R> | null;
@@ -77,12 +75,11 @@ export function memKeyedStore<R extends object>(keyField: keyof R & string): Key
   };
 }
 
-/* the same contract over IndexedDB, one Dexie database per store as the
-   current app keeps one database per store. `update` is one readwrite
-   transaction holding the read and the write: the engine serializes
-   overlapping readwrite transactions on a store, so a second tab's decide
-   reads the winner's record. A decide's own throw aborts the transaction
-   and rejects with that error, nothing written. */
+/* `update` is one readwrite transaction holding the read and the write: the
+   engine serializes overlapping readwrite transactions on a store, so a
+   second tab's decide reads the winner's record. A decide's own throw aborts
+   the transaction, nothing written (pin: store.test › a throwing decide
+   becomes a rejection carrying the thrown error) */
 export function dexieKeyedStore<R extends object>(dbName: string, storeName: string, keyField: keyof R & string): KeyedStore<R> {
   const db = new Dexie(dbName);
   db.version(1).stores({ [storeName]: keyField });
@@ -106,10 +103,8 @@ export const IMG_DB = "gesta.images";
 export const IMG_STORE = "images";
 /* a picture is its BYTES under the path its entry's markdown names it by —
    `page/Trip Log/Trip Log-img-1.webp` — so the ref in the text stays as
-   written (phase 0), the import files the sidecar under the path the ref
-   resolves to, and the export writes it back to the same path (decided
-   2026-09-07). The current app kept data URLs under a content hash and
-   rewrote every ref both ways. */
+   written (pin: importFiles.test › a picture the import files is found where
+   the entry looks) */
 export interface ImageRow { id: string; bytes: Uint8Array }
 export interface ImageStore {
   get(id: string): Promise<ImageRow | null>;
@@ -128,17 +123,15 @@ export function memImageStore(): ImageStore { return imageStoreOver(memKeyedStor
 
 export const ENTRY_DB = "gesta.entries";
 export const ENTRY_STORE = "entries";
-/* the stored text is MARKDOWN, the model's own form (decided 2026-09-07):
-   export is then a file write, and the corpus round trip is the storage
-   format. The current app stores its editor's HTML. */
+/* the stored text is MARKDOWN: export is then a file write, and the corpus
+   round trip is the storage format */
 export interface EntryRow { key: string; md: string }
-/* THE REFUSAL A STALE TAB GETS — the one 2026-08-15 lacked, when an entry
-   standing at 21,144 characters was replaced by a 6,920-character copy from
-   another tab and edited forward from it all day. MARKED rather than left to
-   its message: a quota or a dead handle is worth retrying, and this one is
-   not — only a reload clears it. It carries the text the store holds, which
-   the cache is put back to, and the text refused, which the notice offers
-   for copying. */
+/* THE REFUSAL A STALE TAB GETS: without it, an entry standing at 21,144
+   characters was replaced by a 6,920-character copy from another tab and
+   edited forward from it all day. MARKED rather than left to its message: a
+   quota or a dead handle is worth retrying, and this one is not — only a
+   reload clears it (pin: store.test › staleWriteErr is a marked refusal
+   carrying both texts) */
 export interface StaleWriteError extends Error { stale: true; stored: string; refused: string }
 export function staleWriteErr(stored: string, refused: string): StaleWriteError {
   const err = new Error("entry changed in another tab") as StaleWriteError;
@@ -159,7 +152,8 @@ export function isStale(err: unknown): err is StaleWriteError {
    and the next write is rebuilt from the screen — seeded last-wins, a warm
    and a prime read racing a foreign write leave the cache on the old text
    and the base on the new, and a write built on the old one lands. Sharing
-   the cache's strings also holds the memory flat. */
+   the cache's strings also holds the memory flat (pin: store.test ›
+   baseLedger: saw is first-wins) */
 export interface BaseLedger {
   saw(key: string, text: string): void;
   sawAll(): void;
@@ -187,8 +181,9 @@ export interface EntryStore {
 }
 export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
   let bases = baseLedger();
-  /* the judged write or delete — one spelling for both, since both destroy
-     what they land on. With NO base the read is skipped entirely. The ledger
+  /* one spelling for a write and a delete, since both destroy what they land
+     on. With NO base the read is skipped entirely (pin: store.test › a write
+     with no base lands unjudged). The ledger
      is only touched after the verdict settles: a base recorded ahead of the
      store refuses every later write to that key for the session, turning one
      transient failure into a permanent notice blaming a tab that does not
@@ -214,15 +209,17 @@ export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
     set: (key, md) => judged(key, { key, md }).then(() => { bases.wrote(key, md); }),
     /* A DELETE IS JUDGED LIKE A WRITE, because it destroys more: a rename
        writes the entry under its new name and clears the old key, so an
-       unguarded delete there drops text this tab never saw */
+       unguarded delete there drops text this tab never saw (pin: store.test ›
+       del is judged like a write) */
     del: (key) => judged(key, null).then(() => { bases.forget(key); }),
     all: () => store.all().then((rows) => {
       for (const row of rows) bases.saw(row.key, row.md);
       bases.sawAll();
       return rows;
     }),
-    /* the store emptied is a store KNOWN empty: a fresh ledger with every
-       key based at "", or the old bases would refuse the first write after */
+    /* a store emptied is KNOWN empty: every key based at "", or the old bases
+       would refuse the first write after (pin: store.test › clear empties the
+       store and the ledger) */
     clear: () => store.clear().then(() => { bases = baseLedger(); bases.sawAll(); }),
   };
 }
@@ -236,11 +233,8 @@ export function memEntryStore(): MemEntryStore {
   return { ...entryStoreOver(adapter), foreignSet: (key, md) => adapter.put({ key, md }) };
 }
 
-/* The one durable thing the backup feature must remember across launches:
-   the FileSystemDirectoryHandle the user picked once (handles are
-   structured-cloneable, so IndexedDB can hold them). It carries no
-   permission — every launch re-checks queryPermission — so this answers
-   "which folder", never "may I write". */
+/* The folder handle carries no permission — every launch re-checks
+   queryPermission — so this answers "which folder", never "may I write" */
 export const BACKUP_DB = "gesta.backup";
 export const BACKUP_STORE = "handle";
 export const BACKUP_KEY = "dir";
@@ -255,8 +249,8 @@ export interface BackupStore {
   setArchives(a: Slot | null): Promise<void>;
 }
 export function backupStoreOver(store: KeyedStore<BackupRow>): BackupStore {
-  /* a one-level copy of a handed-out slot, so an abandoned run cannot mutate
-     the store through what it was handed */
+  /* a copy, so an abandoned run cannot mutate the store through what it was
+     handed (pin: store.test › memBackupStore: reads hand out copies) */
   function slot(field: "manifest" | "archives"): Promise<Slot | null> {
     return store.get(BACKUP_KEY).then((row) => {
       const v = row && row[field];
@@ -264,9 +258,11 @@ export function backupStoreOver(store: KeyedStore<BackupRow>): BackupStore {
     });
   }
   /* the manifest and the archived-root signatures ride in the HANDLE'S OWN
-     RECORD, which is why they need no clearing anywhere: each describes one
-     folder, and pointing the backup somewhere new writes this record fresh,
-     taking both with it. A slot written with no record to ride on is dropped. */
+     RECORD, so they need no clearing anywhere: each describes one folder, and
+     a new folder writes this record fresh (pin: store.test › memBackupStore:
+     repointing the handle drops manifest and archives). A slot with no record
+     to ride on is dropped (pin: store.test › memBackupStore: a slot with no
+     record to ride on is dropped) */
   function setSlot(field: "manifest" | "archives", v: Slot | null): Promise<void> {
     return store.update(BACKUP_KEY, (row) => {
       if (!row) return null;

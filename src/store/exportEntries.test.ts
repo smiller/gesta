@@ -1,4 +1,3 @@
-// The export walk over the cache and the image store.
 import { test, expect } from "vitest";
 import { exportEntries, imageRefs, archiveRoots, splitKey } from "./exportEntries.ts";
 import { memImageStore } from "./store.ts";
@@ -38,7 +37,7 @@ test("exportEntries: a doc per non-blank entry under its path, sidecars beside i
   expect(doc.entry).toBe("page--Trip Log");
   expect(doc.root).toBe("page/Trip Log");
   expect(files[4]).toMatchObject({ bytes: new Uint8Array([1]), entry: "page--Trip Log", root: "page/Trip Log" });
-  // the second ref had no bytes: the doc is marked, so the reconcile spares its files
+  // the second ref had no bytes: the doc is marked
   expect(doc.picsLost).toMatchObject({ dir: "page/", base: "Trip Log" });
   expect(doc.picsFaulted).toBeUndefined();
   expect(files[0]).toMatchObject({ root: "journal/2026", entry: "2026-01-05" });

@@ -1,4 +1,3 @@
-// The folio token grammar, ported 2026-09-07 from ../writer/src/js/folio.test.mjs.
 import { test, expect } from "vitest";
 import { FOLIO_CHARS_RE, FOLIO_TOKEN, FOLIO_ONE, FOLIO_ARABIC, folioToken } from "./folio.ts";
 

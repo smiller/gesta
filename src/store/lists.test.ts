@@ -1,5 +1,3 @@
-// The derived lists over a key list; the neighbour cases are
-// ../writer's entryNeighbors and subPageNeighbors, re-asked of keys.
 import { test, expect } from "vitest";
 import { dayKeys, entryNeighbors, childrenOf, registered, unmintedKey, subPageNeighbors, navNeighbors } from "./lists.ts";
 
@@ -50,7 +48,7 @@ test("subPageNeighbors walks the order it is given — a book's index order, pro
   expect(subPageNeighbors(keys, parent, "3m2", () => true, order)).toEqual({ prev: "3pr2", next: null });
   /* a blank in the order is skipped as before */
   expect(subPageNeighbors(keys, parent, "3pr1", (k) => k !== parent + "/3m1", order)).toEqual({ prev: null, next: "3pr2" });
-  /* a sub the stated order lacks — open, not yet saved — stands at its end, as the picker shows it */
+  /* a sub the stated order lacks — open, not yet saved — stands at its end */
   expect(subPageNeighbors(keys, parent, "3m1a", () => true, order)).toEqual({ prev: "3m2", next: null });
   /* by name, the same keys walk 3m1, 3m2, 3pr1, 3pr2 */
   expect(subPageNeighbors(keys, parent, "3pr1", () => true)).toEqual({ prev: "3m2", next: "3pr2" });

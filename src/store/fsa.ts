@@ -1,6 +1,4 @@
-/* The File System Access handles as this app uses them, declared here
-   because lib.dom does not yet carry the directory iteration. The suites
-   supply fakes shaped to these; the browser supplies the real ones. */
+/* declared here because lib.dom does not yet carry the directory iteration */
 export interface WritableFile {
   write(body: string | Uint8Array): Promise<void>;
   close(): Promise<void>;

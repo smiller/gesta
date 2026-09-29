@@ -1,9 +1,8 @@
-/* The folder pick: the walk over directory handles, names first, then the
-   read. Ported 2026-09-07 from pickImportFiles in
-   ../writer/src/js/29-import.js. PHASE ONE IS NAMES ONLY: the duplicate-key
-   refusal is decidable from names, and reading costs a getFile per file
-   over a folder that may hold tens of thousands — deciding is free, reading
-   is not, so nothing is opened until the decision is made. */
+/* PHASE ONE IS NAMES ONLY: the duplicate-key refusal is decidable from names,
+   and reading costs a getFile per file over a folder that may hold tens of
+   thousands, so nothing is opened until the decision is made (pin:
+   pick.test › pickImportFiles refuses two files spelling one entry before
+   reading anything) */
 import { oneEach, unreadFile, type ImportFile } from "./files.ts";
 
 import type { Dir, FileH } from "./fsa.ts";
@@ -22,8 +21,8 @@ export async function walkFolder(dir: Dir): Promise<Found[]> {
   await walk(dir, "");
   return found;
 }
-/* either opening a file or reading it can fail, and both become the same
-   marked record */
+/* opening a file and reading it can each fail, and both become the same
+   marked record (pin: pick.test › pickImportFiles reads a .md as text) */
 export function readFound(e: Found): Promise<ImportFile> {
   const md = /\.md$/i.test(e.name);
   return e.handle.getFile()
@@ -32,7 +31,7 @@ export function readFound(e: Found): Promise<ImportFile> {
       : file.arrayBuffer().then((buf): ImportFile => ({ dir: e.dir, name: e.name, bytes: new Uint8Array(buf) })))
     .catch(() => unreadFile(e.name, e.dir));
 }
-/* PHASE TWO — read, once the names have passed oneEach, which drops nothing */
+/* PHASE TWO — read, once the names have passed, nothing dropped */
 export function pickImportFiles(dir: Dir): Promise<ImportFile[]> {
   return walkFolder(dir).then((found) => Promise.all(oneEach(found).map(readFound)));
 }

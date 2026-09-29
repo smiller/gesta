@@ -1,5 +1,3 @@
-// The import over a file list: which files target what, how a sidecar is
-// filed, what is refused, what the tally says.
 import { test, expect } from "vitest";
 import { importFiles, importEntry, sidecarRefs, type ImportSink } from "./importFiles.ts";
 import type { ImportFile } from "./files.ts";

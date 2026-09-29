@@ -1,12 +1,9 @@
-/* WHERE EACH ENTRY WAS LEFT (2026-09-28, the reader: back on Book I,
-   Canto vi, the reading should stand at stanza 7, where it was left, and
-   across reloads). One localStorage key, NS + "places": a list, the most
-   recently left first, capped so it never grows past PLACES_CAP. A place
-   is the text position at the top of the window in the rendered view —
-   a pixel offset drifts with the window's width and with edits above —
-   and the scroll offset for the source view. Parsing forgives anything: a
-   damaged store is an empty one. A per-browser convenience, never in the
-   text or a backup. */
+/* A place is the TEXT POSITION at the top of the window in the rendered
+   view — a pixel offset drifts with the window's width and with edits above
+   — and the scroll offset for the source view (pin: placeState.test › a
+   place round-trips). Parsing forgives anything: a damaged store is an
+   empty one (pin: placeState.test › an absent or damaged store reads as
+   empty). A per-browser convenience, never in the text or a backup. */
 export interface Place { pos: number; y: number }
 export interface PlaceRecord extends Place { key: string }
 export const PLACES_CAP = 300;
@@ -25,7 +22,8 @@ export function placeOf(store: PlaceRecord[], key: string): Place | null {
   return r ? { pos: r.pos, y: r.y } : null;
 }
 /* a rename carries a place to its new key; a delete, to null, drops it.
-   A record already under the new key is a deleted entry's, and goes */
+   A record already under the new key is a deleted entry's, and goes (pin:
+   placeState.test › a rename carries the place to the new key) */
 export function movedPlace(store: PlaceRecord[], from: string, to: string | null): PlaceRecord[] {
   const r = store.find((x) => x.key === from);
   const rest = store.filter((x) => x.key !== from && x.key !== to);

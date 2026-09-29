@@ -1,5 +1,3 @@
-// The memory adapter, the wrappers and the entry ledger, ported 2026-09-07
-// from ../writer/src/js/store.test.mjs; the stored text is markdown here.
 // The adapter contract and the entry store run over BOTH adapters — the
 // memory one and Dexie over fake-indexeddb — so the fake cannot be green
 // where the shipped store is not.

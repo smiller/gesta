@@ -31,15 +31,23 @@ export const TABLE_ROW = /^\s*\|.*\|\s*$/;
 export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
 
 /* ---------- folios ---------- */
+/* THE TWO ALPHABETS, spelled once and spliced into everything below: written
+   out at each reader, a widened numeral system would reach some and not
+   others. EITHER CASE for roman: a book printing XXIV is as ordinary as one
+   printing xxiv (pin: folio.test › FOLIO_ONE: arabic or roman, either case) */
 export const FOLIO_ARABIC_SRC = "[0-9]";
-/* either case: a book printing XXIV is as ordinary as one printing xxiv
-   (pin: folio.test › FOLIO_ONE: arabic or roman, either case) */
 export const FOLIO_ROMAN_SRC = "[ivxlcdmIVXLCDM]";
+/* non-capturing, so a splice that is not itself parenthesized cannot
+   silently mean ^arabic OR roman$ */
 export const FOLIO_NUM_SRC = `(?:${FOLIO_ARABIC_SRC}+|${FOLIO_ROMAN_SRC}+)`;
-/* ⟨8⟩ — U+27E8/9, MEASURED over the corpus to appear nowhere else. .replace
-   ONLY: /g under .test() carries lastIndex */
+/* ⟨8⟩ — U+27E8/9, MEASURED over the corpus and not chosen: `<8>` and `<<8>>`
+   were in use as shorthand, `« »` as quotation marks, and ⟨ ⟩ appeared
+   nowhere. .replace ONLY: /g under .test() carries lastIndex (pin:
+   folio.test › folioToken and FOLIO_TOKEN agree on the brackets) */
 export const FOLIO_TOKEN = new RegExp(`⟨(${FOLIO_NUM_SRC})⟩`, "g");
 export const FOLIO_ONE = new RegExp(`^${FOLIO_NUM_SRC}$`);
+/* only the arabic half elides (pin: folio.test › FOLIO_ARABIC: the arabic
+   half alone) */
 export const FOLIO_ARABIC = new RegExp(`^${FOLIO_ARABIC_SRC}+$`);
 export function folioToken(label: string): string {
   return `⟨${label}⟩`;

@@ -339,3 +339,39 @@ pinned (a performance choice), 2 pinned with a neighbour.
   never resolved here, the folio as content, the block-shaped list line
   left unindented, flatRange's fail-safe, the marker parsing to NaN, the
   table's two skipped lines.
+
+### 2026-09-28 — src/store audited
+
+- MEASURED: 330 comment blocks → 284, 1,061 comment lines → 943, 154
+  pins (the kept blocks carry most of the old app's measurements, so the
+  lines fell less than the model's; each gained its pin). The sweep lists
+  nothing in src/store (it listed 70 blocks there). The whole tree's
+  sweep: 138 naming another module → 74, 245 carrying provenance → 138.
+- Out, as in the model: module headers the layout covers, port history
+  ("ported … from ../writer/…", "the current app …"), dates and "(the
+  review)", and every clause about another module — the masthead, the
+  pages dropdown, the import walk, the reconcile, the picker, the
+  notices, "for byName's sake". Kept: every measurement (tagged MEASURED,
+  its date dropped) and every decision a later change could break.
+- FOUND by the audit and fixed, behaviour-neutral (READ, then the suite):
+  the folio alphabets were spelled TWICE, in src/model/grammar.ts and
+  src/store/folio.ts, whose own comment said "spelled once" — folio.ts now
+  re-exports grammar's, keeping FOLIO_CHARS_RE, and grammar's spelling
+  carries the decisions both held; the pin given grammar.ts in the model
+  batch named folio.test, which then tested the other copy, and is true
+  now. src/store/shortcuts.ts declared its own LINE_BREAK_RE beside
+  grammar's "ONE spelling of what counts as a line break": it imports
+  grammar's.
+- The checker caught two of the audit's own rewordings (a comment naming
+  FOLIO_ONE after the move, one saying "for byName's sake") and two old
+  trailing comments naming readRaw/writeRaw and oneEach.
+- Pins to another directory's test where the contract lives there:
+  search.ts's shared fold (highlight.test › what selectionLink minted,
+  findHit lands on), names.ts's importTarget and the backup's deletes
+  (plans.test › reconcilePlan: … a stranger's files stay), store.ts's
+  picture path (importFiles.test). One test title lost its date
+  (searchIndex.test).
+- Kept UNPINNED: the numeralDivisions measurement ("Books 1–25"), the
+  backup factory's decisions (backup.ts has no test file), WRITE_BYTES'
+  Chromium measurement, zip's host byte and mode, the export's yield
+  size.

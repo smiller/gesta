@@ -1,5 +1,3 @@
-// The key vocabulary's contract, ported 2026-09-07 from
-// ../writer/src/js/keys.test.mjs; the storage namespace is the one change.
 import { test, expect } from "vitest";
 import {
   isDayKey, PAGE_KEY, NS, NS_PAGE, NS_BOOK, NS_KEYS, nsOf,

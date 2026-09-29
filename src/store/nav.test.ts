@@ -1,4 +1,3 @@
-// The address grammar, ported 2026-09-07 from ../writer/src/js/nav.test.mjs.
 import { test, expect } from "vitest";
 import { hashParts, internalHash, makeHref } from "./nav.ts";
 import { todayKey } from "./keys.ts";

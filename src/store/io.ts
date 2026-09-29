@@ -1,10 +1,5 @@
-/* The disk edge of export and backup: the per-file-tolerant writer every
-   disk-bound path pays, the backup orchestrator over it (archives, the
-   day's census, the mirror with its relayout sweep and its reconcile), the
-   zip walk over zip.ts's byte format, the metadata-only listing, and the
-   macrotask boundary long runs breathe through. Ported 2026-09-07 from
-   ../writer/src/js/io.mjs; every function takes its directory handle as an
-   argument, so the suites pass fakes. */
+/* every function takes its directory handle as an argument, so the suites
+   pass fakes */
 import { utf8, type EntryFile } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, fsaFatal, type ExportFile } from "./files.ts";
 import { fileSig, fileSize, MIRROR_DIR, ARCHIVE_DIR, MANIFESTS_DIR, dedupFiles, reconcilePlan, archivePlan, rootManifest, type Manifest, type Archived, type BackupPlan, type ArchiveGroup } from "./plans.ts";
@@ -13,9 +8,10 @@ import type { Dir } from "./fsa.ts";
 
 /* A LONG RUN MUST NOT FREEZE THE SCREEN: a promise chain resolves entirely
    through microtasks, so no keystroke, timer or frame is serviced for the
-   whole of it. MEASURED 2026-08-18 in Helium, zipping: 18.8 MB ran 238 ms
-   with ZERO macrotasks serviced. A MessageChannel, not setTimeout: the
-   clamp made it 7% slower and still left a 29 ms gap. */
+   whole of it. MEASURED in Helium, zipping: 18.8 MB ran 238 ms with ZERO
+   macrotasks serviced. A MessageChannel, not setTimeout: the clamp made it
+   7% slower and still left a 29 ms gap (pin: io.test › yieldToTaskQueue
+   drains the whole microtask queue before resolving) */
 let yieldWatch: (() => void) | null = null;
 export function yieldToTaskQueue(): Promise<void> {
   if (yieldWatch) yieldWatch();
@@ -25,8 +21,8 @@ export function yieldToTaskQueue(): Promise<void> {
     mc.port2.postMessage(0);
   });
 }
-/* the yield, watchable — a yield is invisible from outside. Returns its own
-   remover so a test cannot leave one armed. */
+/* returns its own remover, so a test cannot leave one armed (pin: io.test ›
+   setYieldWatch arms the watch, and a remover removes only its own) */
 export function setYieldWatch(fn: () => void): () => void {
   yieldWatch = fn;
   return () => { if (yieldWatch === fn) yieldWatch = null; };
@@ -38,8 +34,7 @@ export let lastRun: LastRun | null = null;
 /* every file under a tier, as path → size, depth-first. METADATA ONLY:
    getFile() answers a handle's size without reading its bytes, and a
    backup folder gets evicted to cloud placeholders whose hydration costs a
-   download apiece — measured 2026-08-17 at 24 KB/min over 10,210 dataless
-   files. */
+   download apiece: MEASURED at 24 KB/min over 10,210 dataless files */
 export function folderNames(dir: Dir): Promise<Record<string, number>> {
   const out: Record<string, number> = Object.create(null);
   function walk(d: Dir, at: string): Promise<void> {
@@ -61,7 +56,8 @@ export function folderNames(dir: Dir): Promise<Record<string, number>> {
    missing segments (the writer's mode). `retry` drops a REJECTED chain from
    the memo (the delete sweep's mode): without it one transient refusal is
    inherited by every later path under that folder. Left off, a rejection
-   CACHES — one unmakeable folder failing its files once each. */
+   CACHES — one unmakeable folder failing its files once each (pin: io.test
+   › folderMemo caches a rejection by default and drops it under retry) */
 export function folderMemo(root: Dir, opts?: { create?: boolean; retry?: boolean }): (at: string) => Promise<Dir> {
   const dirs: Record<string, Promise<Dir> | undefined> = Object.create(null);
   const mk = opts && opts.create ? { create: true } : undefined;
@@ -82,14 +78,16 @@ export const ZIP_YIELD_BYTES = 512 * 1024;
    one, so extracting rebuilds the tree an import reads. THE CEILING IS
    REFUSED RATHER THAN OVERRUN: classic zip counts members in 16 bits and
    offsets in 32, and past either the fields wrap into an archive that
-   opens and lies. */
+   opens and lies (pin: io.test › zipBytes refuses a member count past the
+   classic-zip ceiling) */
 export const ZIP_MAX_ENTRIES = 0xFFFF;
 export const ZIP_MAX_BYTES = 0xFFFFFFFF;
 export function zipBytes(files: ExportFile[], day: string): Promise<Uint8Array> {
   if (files.length > ZIP_MAX_ENTRIES)
     return Promise.reject(new Error("too many files for one archive (" + files.length + ")"));
   /* the archive's OWN DATE as every member's timestamp, so the same content
-     on the same day is byte-identical wherever it is built */
+     on the same day is byte-identical wherever it is built (pin: io.test ›
+     zipBytes is byte-identical for the same files and day) */
   const stamp = ((+day.slice(0, 4) - 1980) << 9) | (+day.slice(5, 7) << 5) | +day.slice(8, 10);
   const parts: Uint8Array[] = [], central: Uint8Array[] = [];
   let at = 0, since = 0;
@@ -133,7 +131,8 @@ export interface Failure { name: string; error: unknown; doc: boolean; sweep?: b
    delete their files, silently and irreversibly, under a green report. A
    root file goes ONLY when this run just wrote the same name into a
    FOLDER and that write SUCCEEDED; the ENTRY is the unit — a doc whose
-   nested write failed keeps its flat copy AND its flat sidecars. */
+   nested write failed keeps its flat copy AND its flat sidecars (pin:
+   io.test › writeBackup: the sweep's unit of safety is the ENTRY) */
 export function sweepFlatCopies(dir: Dir, files: ExportFile[], failures: Failure[]): Promise<void> {
   const lost: Record<string, true> = Object.create(null), nested: Record<string, true> = Object.create(null);
   const lostEntry: Record<string, true> = Object.create(null);
@@ -156,7 +155,8 @@ export function sweepFlatCopies(dir: Dir, files: ExportFile[], failures: Failure
        FOLDER went between the writes landing and the scan — a lost write
        in everything but the error's origin; any other name means the
        folder is there and merely would not enumerate, so only the sweep is
-       unknown: `blind`. */
+       unknown: `blind` (pin: io.test › writeBackup: a non-fatal listing
+       failure is collected and the landed writes stand) */
     if (fsaFatal(err)) throw err;
     failures.push({ name: "(listing)", error: err, doc: false, blind: !(err && (err as { name?: string }).name === "NotFoundError") });
     doomed.length = 0;
@@ -165,7 +165,9 @@ export function sweepFlatCopies(dir: Dir, files: ExportFile[], failures: Failure
       /* the scan SAW this file, so NotFound means something else removed
          it — the goal, reached by other means. Anything else is a real
          refusal (a sync client holding the file open), reported under the
-         `sweep` mark that keeps it distinguishable from a lost write. */
+         `sweep` mark that keeps it distinguishable from a lost write (pin:
+         io.test › writeBackup: a sweep delete that genuinely fails is
+         collected) */
       if (err && (err as { name?: string }).name === "NotFoundError") return;
       if (fsaFatal(err)) throw err;
       failures.push({ name: n, error: err, doc: false, sweep: true });
@@ -182,7 +184,8 @@ interface Tier { name: string; files: ExportFile[]; dedup: boolean; reconcile: b
    permission loss part way through must not have spent the run on the
    copy that can simply be made again — then the day's census, then the
    mirror, prepared IMMEDIATELY before it writes, since listing it is the
-   longest thing a run does (a getFile over ~14,600 files). */
+   longest thing a run does (a getFile over ~14,600 files) (pin: io.test ›
+   writeBackup, dated: the archive is written before the mirror is LISTED) */
 export function writeBackup(run: BackupRun): Promise<Failure[]> {
   const { dir, files, plan, onProgress, manifest, unread, roots } = run;
   const sigs: Archived = run.archived || Object.create(null);
@@ -228,7 +231,9 @@ export function writeBackup(run: BackupRun): Promise<Failure[]> {
   }
   /* ONE CUMULATIVE COUNT across the run: an archive is one unit, a doc one
      unit, so the notice never holds still through the archives and reads
-     as a stall (measured 2026-08-18: a whole-corpus first run is ~3.6 s) */
+     as a stall (MEASURED: a whole-corpus first run is ~3.6 s) (pin: io.test ›
+    writeBackup: one cumulative progress count spans the archives and the
+    mirror) */
   let total = 0, done = 0;
   function plot(t: Tier): void { t.base = total; total += t.files.filter(isDoc).length; }
   function tier(t: Tier): Promise<Failure[]> {
@@ -281,8 +286,7 @@ export function writeBackup(run: BackupRun): Promise<Failure[]> {
         });
     }), Promise.resolve());
   }
-  /* what the mirror now holds, for the next run to skip against; a file
-     that FAILED to write is left out, so a lost write is retried */
+  /* a file that FAILED to write is left out, so a lost write is retried */
   function recordWritten(t: Tier, failures: Failure[]): void {
     const lost: Record<string, true> = Object.create(null);
     for (const x of failures) lost[x.name] = true;
@@ -300,7 +304,9 @@ export function writeBackup(run: BackupRun): Promise<Failure[]> {
         return writeFilesTo(dir, [rec]);
       }).then((lost) => {
         /* A SIGNATURE COMMITS ONLY ON A CLEAN WRITE, the path beside the
-           hash so the next run can ASK the folder whether the file is there */
+           hash so the next run can ASK the folder whether the file is there
+           (pin: io.test › writeBackup, dated: a failed archive withholds its
+           signature and the day's census) */
         if (!lost.length) { sigs[g.root] = { sig: g.sig, at }; seen.archives.push(at); }
         return lost;
       }, (err: unknown) => {
@@ -335,7 +341,9 @@ export function writeBackup(run: BackupRun): Promise<Failure[]> {
 }
 /* write every file into the directory, one at a time, COLLECTING a single
    file's failure instead of rejecting the chain, so one bad name cannot
-   sink a 7000-file export; a SESSION-fatal error rethrows. Progress counts
+   sink a 7000-file export (pin: io.test › writeFilesTo collects one refused
+   file and still writes the rest); a SESSION-fatal error rethrows (pin:
+   io.test › writeFilesTo rethrows a session-fatal refusal). Progress counts
    ENTRY docs, not files: a doc's sidecars ride along but are not entries. */
 export function writeFilesTo(dir: Dir, files: ExportFile[], onProgress?: (done: number, total: number) => void): Promise<Failure[]> {
   const failures: Failure[] = [];
