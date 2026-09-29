@@ -69,9 +69,6 @@ const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
 const q = new URLSearchParams(location.search);
 
-/* the chrome: the ledger over the clipboard writer, the corner at the
-   body's end, the masthead before <main>, both over the shared screen
-   state. The handlers the masthead calls are bound below, per arm. */
 const notices = noticeLedger(copyText);
 const say = notices.whisper;
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
@@ -158,8 +155,6 @@ if (fixture && fixtures[fixture]) {
      an autosave "saved" may overwrite "backing up…" (a background backup
      must not suppress the user's own save feedback), and a pin outranks
      both */
-  /* the backups panel reads the runner's state at its open and again on
-     every trouble change while it stands */
   const readBackups = (): void => {
     screen.backups.canPick = !!win.showDirectoryPicker;
     screen.backups.configured = backup.configured;
@@ -195,7 +190,7 @@ if (fixture && fixtures[fixture]) {
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
-    onView: (md) => { screen.mdView = md; if (md) closeLineBar(); },   /* the bar's acts dereference the editor's view */
+    onView: (md) => { screen.mdView = md; if (md) closeLineBar(); },
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
@@ -204,8 +199,6 @@ if (fixture && fixtures[fixture]) {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   acts.interval = (n) => session.setInterval(n);
   acts.today = () => session.today();
-  /* ⌃⌘L: the Line numbering row opens with its select focused, closes
-     with the caret back in the editor; refused where nothing is numbered */
   acts.lines = (open) => {
     if (open && !screen.gutter) { say("no line numbers here", 2000); return; }
     screen.linesOpen = open;
@@ -711,7 +704,6 @@ if (fixture && fixtures[fixture]) {
   clientW();
   new ResizeObserver(clientW).observe(document.documentElement);
   window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
-  /* the block the DOM element draws, found through the view */
   const blockAt = (el: HTMLElement): import("prosemirror-model").Node | null => {
     const view = session.view;
     if (!view) return null;
@@ -821,8 +813,6 @@ if (fixture && fixtures[fixture]) {
     const ns = nsOf(date), pp = pageParts(tag);
     return ns && !pp.sub ? rootLabel(date, tag, journal) : ns ? pp.leaf : tag;
   };
-  /* the host's links to a moved or deleted sub-entry, rewritten in the
-     store; the open host is re-rendered from the store afterwards */
   const retargetHost = (date: string, oldTag: string, newTag: string | null): Promise<unknown> => {
     const host = hostKey(date, oldTag);
     if (!host) return Promise.resolve();

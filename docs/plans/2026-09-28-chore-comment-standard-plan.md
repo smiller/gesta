@@ -554,3 +554,15 @@ pinned (a performance choice), 2 pinned with a neighbour.
   is swallowed. Gone: the sub-entry rules, the bookmark lookups, the
   masthead model's label helpers, the goto helpers — each its test's
   title or its signature.
+- main.ts and session.ts, MEASURED: main 64 → 58 blocks (the wiring's
+  own summaries of what the next lines do), session 56 → 55 (the sample's
+  file, nearly every comment already a pinned failure or decision).
+- THE PASS, MEASURED over the whole tree: 924 blocks → 787, 2,830
+  comment lines → 2,516 (−314, 11%); the stripped-of-comments diff empty
+  in every commit. BELOW the estimate's range (~350–750): the samples
+  counted "partly restating" blocks as trims, and on reading most of
+  those carried a reason in the same sentence as the restatement, which
+  a trim would have split; and the unpinned sample's one-line "what"
+  comments were rarer outside the chrome models than the sample of 30
+  suggested. The whole day, from 1b15de3: 1,050 blocks → 787 (−25%),
+  3,287 comment lines → 2,516 (−23%). The sweep: 0 and 0.

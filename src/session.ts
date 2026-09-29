@@ -287,7 +287,6 @@ export function startSession(opts: SessionOptions): Session {
       const r = range.getClientRects()[0] || range.getBoundingClientRect();
       return origin + r.top;
     };
-    /* the first character whose line starts at or below y */
     const indexAt = (y: number): number => {
       let lo = 0, hi = ta.value.length;
       while (lo < hi) { const mid = (lo + hi) >> 1; if (topOf(mid) < y - 1) lo = mid + 1; else hi = mid; }
