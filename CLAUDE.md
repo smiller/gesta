@@ -136,7 +136,7 @@ here NOW, and what is not yet:
   names another module — an identifier another file declares at its top
   level, a file path, a role noun's possessive ("the session's") — or
   carries PROVENANCE — a date outside quotes, "the reader", "the review",
-  "the reviewer", a confirmation pass — with no waiver (the app's user,
+  "the reviewer", a confirmation pass, "the plan" (from 2026-09-29) — with no waiver (the app's user,
   in a sentence about behaviour, is "a reader"; "asked" is not checked,
   being mostly prose); and prints THE LEDGER, every block the diff added or
   changed. `--commit R` reads one commit; `--sweep` lists every block
@@ -372,7 +372,9 @@ is in the plan's record, under the phase named):
   mirror: Horace, Odes 1.1 (paired), the Introduction of Pippa Passes (a
   direction, then songs declared `⟨line⟩`), Twelfth Night 1.1 (speakers
   and directions), and Williams's Witchcraft chapter 3 (a prose book with
-  leaves).
+  leaves); and the margin-note step's two seeds, a glossed passage of
+  Donne's First Anniversarie (one gloss moved up from 30 lines on, so it
+  is pushed) and a prose page with a glossed grid card.
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything): `<main>` holding the editor,
   and main.ts the wiring — the layer, the backup, the session, the

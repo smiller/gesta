@@ -11,6 +11,7 @@
    the day number until 2026-09-22, when a run on a day whose number a
    seeded day shares (the 5th, the 6th) would have read one option fewer
    and no scrub could say so. Never a seeded day. */
+import { readFileSync } from "node:fs";
 export const TODAY = "2026-09-12";
 export const SEEDS = {
   "2026-09-06": "twelfth", "2026-09-05": "williams", "page/Horace": "horace", "page/Williams/Witchcraft 3": "williams",
@@ -27,11 +28,12 @@ export const STANZA_SEEDS = {
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
 };
-/* the margin-note step's seeds (2026-09-29): written by that step alone;
-   src/main.ts's `?store=seed-margin` holds the same text for the successor */
+/* the margin-note step's seeds (2026-09-29): written by that step alone,
+   from the same files src/main.ts's `?store=seed-margin` imports */
+const fixture = (name) => readFileSync(new URL("../fixtures/" + name, import.meta.url), "utf8");
 export const MARGIN_SEEDS = {
-    "bookshelf/Donne, John/Anniversaries/The First Anniversarie": "# The First Anniversarie\n\n::: verse 60\nThe worlds infirmities, since there is none\nAlive to study this dissection;\n::: margin-note\nWhat life the world hath stil.\n:::\nFor there’s a kind of world remaining still,\nThough shee which did inanimate and fill\nThe world, begone, yet in this last long night,\nHer Ghost doth walke, that is, a glimmering light,\nA faint weake love of vertue and of good\nReflects from her, on them which understood\nYet, because outward stormes the strongest breake,\nAnd strength it selfe by confidence growes weake,\nThis new world may be safer, being told.\n::: margin-note\nThe sickenesse of the world\nImpossibility of health.\n:::\nThe dangers and diseases of the old:\n::: margin-note\nShortnesse of life.\n:::\nFor with due temper men doe then forgoe,\nOr covet things, when they their true worth know.\n:::\n",
-    "page/Margins": "# Margins\n\nA paragraph of prose before the gloss.\n\n::: margin-note\nA gloss on the paragraph after it.\n:::\n\nThe paragraph the gloss stands beside.\n",
+  "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-glossed.md"),
+  "page/Margins": fixture("margins-prose.md"),
 };
 export async function runSteps(page, ctx, A, opts = {}) {
   const shot = opts.screenshot;

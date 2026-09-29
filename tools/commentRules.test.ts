@@ -187,6 +187,7 @@ describe("provenance", () => {
     expect(prov("/* (the en dash the reader chose) */")).toEqual(["the reader"]);
     expect(prov("/* THE SLICE THE CLIPBOARD SEES (2026-09-22, the review's finding): a selection's */")).toEqual(["2026-09-22", "the review"]);
     expect(prov("/* the row the reader never selected — the two confirmation passes */")).toEqual(["the reader", "confirmation passes"]);
+    expect(prov("/* the plan's table, MEASURED over the mockup at 18px */")).toEqual(["the plan's"]);
   });
   test("the app's user is a reader; a date inside quotes is an example", () => {
     expect(prov("/* a reader who scrolled away from the caret stays where they were */")).toEqual([]);

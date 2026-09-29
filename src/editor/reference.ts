@@ -182,12 +182,14 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
    paragraph stood in the nested box, and an edge gap painted an empty row
    under the opener (pin: reference.test › the number on the right block at
    every depth, the nested box trimmed, an edge gap off) */
-const CONTAINERS = new Set(["blockquote", "note", "margin_note", "card", "grid"]);
-const keep = (b: Node): boolean => b.type === N.gap || drawsInk(b);
+const CONTAINERS = new Set(["blockquote", "note", "card", "grid"]);
+/* a margin-note is a gloss on the text, not the text (pin: reference.test ›
+   a margin-note is left out of a passage in loose prose too) */
+const keep = (b: Node): boolean => b.type !== N.margin_note && (b.type === N.gap || drawsInk(b));
 function trimmed(b: Node): Node {
   if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); }); return b.copy(Fragment.from(inner)); }
   if (b.type === N.verse || b.type === N.prose) {
-    const rows: Node[] = []; b.forEach((row) => rows.push(row));
+    const rows: Node[] = []; b.forEach((row) => { if (row.type !== N.margin_note) rows.push(row); });
     while (rows.length && rows[0].type === N.gap) rows.shift();
     while (rows.length && rows[rows.length - 1].type === N.gap) rows.pop();
     return b.copy(Fragment.from(rows));

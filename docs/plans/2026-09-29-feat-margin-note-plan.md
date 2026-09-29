@@ -1,7 +1,7 @@
 ---
 title: "feat: ::: margin-note, a note drawn in the left margin beside its line"
 type: feat
-status: built 2026-09-29, uncommitted, awaiting the reader's look
+status: built 2026-09-29 (bf81178), reviewed at high; the fix commit follows
 date: 2026-09-29
 origin: the Donne import (~/Desktop/gesta-bookshelf-import-donne), whose Anniversaries carry 17 marginal glosses from the 1621 book
 ---
@@ -134,3 +134,53 @@ was built as its initial assumption; none was decided anew.
   two lines in its `places` section, READ as the steps' change in
   f352e3f, made after that run was last regenerated (573fcff).
 - NOT DONE: the Donne folder's rebuild to write `::: margin-note`.
+
+## Record: the review, 2026-09-29
+
+ONE `/code-review` at high over 0491c70..bf81178 (the build, one commit),
+due because the batch touches main.ts and editor.ts. COST, MEASURED from
+its transcript's last message: 6,172 cache creation + 136,538 cache read
++ 2 input + 2,531 output = 145,243 tokens. Ten findings, all READ as
+holding against the code; all fixed in one commit:
+
+1. The room was the host's left edge from the window, so a gloss in a
+   grid's second card was set over the first card. A gloss inside a grid
+   is now always in the text (pinned by the step's prose page, which
+   gained a grid).
+2. A gloss between paragraphs, or in a block a loose-prose passage runs
+   into, was quoted into a reference, fences and all, against the help
+   card's word. Now left out there too (MEASURED red, then green).
+   DECIDED by the reader the same day, asked with the note's opposite
+   rule beside it: left out, for now.
+3. A gloss in a folded section (display: none) measured as a box at 0
+   and set the push floor, so a gloss scrolled above the window was
+   pushed ~300px off its line (MEASURED red in the unit test: 304).
+   A box of no height now neither moves nor moves the next.
+4. `.page :has(> .in-margin) { position: relative }` changed the
+   containing block of every absolutely placed label in the host (a
+   folio's page number in a quoted verse). The margin form now keeps its
+   static place on both axes and is moved left by a shift the pass
+   writes (`--mn-x`); no host is made a positioned container. The step's
+   readings are unchanged under it (MEASURED: 0px off centre, 83px).
+5. Every keystroke rewrote every note's properties, forcing a second
+   layout. The pass now writes only a value that differs, and reads each
+   note's push-free top by subtracting its own push.
+6. The reach lived twice (4.6em in the pass, 5.75em in the CSS). It is
+   now the pass's alone, and the note's size is read off the note.
+7. A comment asserted another module's behaviour (the fitted measure
+   moving the root's size); rewritten to this code's own failure.
+8. A test comment carried provenance ("the plan's table … the mockup").
+   The checker missed it: its provenance rule now takes "the plan", with
+   the block verbatim in its self-test; the sweep finds no other.
+9. Seven exports nothing imported; now module-private.
+10. The seed text lived twice (main.ts and the steps). Now two files in
+    `fixtures/`, imported by the page and read by the steps.
+
+The fix's only change to the verdict run: the prose page's reading
+gained the grid card's gloss, in the text (read, then approved); the
+current app's run was regenerated and did not change.
+
+After the fixes, decided by the reader: a confirmation pass over the fix
+commit, its findings listed by significance before any is fixed; the
+comment checker's plain-English blind spot left to the five-round count;
+the Donne folder rebuilt only once the fence is finished.

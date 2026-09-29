@@ -63,6 +63,8 @@ import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
 import williams from "../fixtures/williams-witchcraft-3.md?raw";
+import donneGlossed from "../fixtures/donne-anniversarie-glossed.md?raw";
+import marginsProse from "../fixtures/margins-prose.md?raw";
 
 const fixtures: Record<string, string> = { horace, pippa, twelfth, williams };
 const mountEl = document.getElementById("editor") as HTMLElement;
@@ -980,12 +982,9 @@ if (fixture && fixtures[fixture]) {
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
   };
-  /* the margin-note step's own seed, written only when that step asks.
-     "Shortnesse of life." stands 30 lines further on in the book, set here a
-     line under a two-line gloss so that it is pushed below it */
+  /* the margin-note step's own seed, written only when that step asks */
   const marginSeeds: Record<string, string> = {
-    "bookshelf/Donne, John/Anniversaries/The First Anniversarie": "# The First Anniversarie\n\n::: verse 60\nThe worlds infirmities, since there is none\nAlive to study this dissection;\n::: margin-note\nWhat life the world hath stil.\n:::\nFor there’s a kind of world remaining still,\nThough shee which did inanimate and fill\nThe world, begone, yet in this last long night,\nHer Ghost doth walke, that is, a glimmering light,\nA faint weake love of vertue and of good\nReflects from her, on them which understood\nYet, because outward stormes the strongest breake,\nAnd strength it selfe by confidence growes weake,\nThis new world may be safer, being told.\n::: margin-note\nThe sickenesse of the world\nImpossibility of health.\n:::\nThe dangers and diseases of the old:\n::: margin-note\nShortnesse of life.\n:::\nFor with due temper men doe then forgoe,\nOr covet things, when they their true worth know.\n:::\n",
-    "page/Margins": "# Margins\n\nA paragraph of prose before the gloss.\n\n::: margin-note\nA gloss on the paragraph after it.\n:::\n\nThe paragraph the gloss stands beside.\n",
+    "bookshelf/Donne, John/Anniversaries/The First Anniversarie": donneGlossed, "page/Margins": marginsProse,
   };
   const wrote = q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
     : q.get("store") === "seed" ? Promise.all(Object.keys(seeds).map((k) => layer.setEntry(k, seeds[k]))).then(() => stage("seed"))

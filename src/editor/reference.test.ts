@@ -188,6 +188,15 @@ test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   expect(passageMd(doc, a, b)).toBe("> paragraph here.\n> \n> Second");
 });
 
+test("a margin-note is left out of a passage in loose prose too, between paragraphs or in a block it runs into", () => {
+  const between = parseMarkdown("First paragraph here.\n\n::: margin-note\nthe gloss\n:::\n\nSecond one follows.");
+  let [a, b] = span(between, "paragraph", "Second");
+  expect(passageMd(between, a, b)).toBe("> paragraph here.\n> \n> Second");
+  const into = parseMarkdown("Intro.\n\n::: verse\nalpha\n::: margin-note\nthe gloss\n:::\nbeta\n:::");
+  [a, b] = span(into, "Intro", "beta");
+  expect(passageMd(into, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> beta\n> :::");
+});
+
 test("two verse blocks are a refusal", () => {
   const doc = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse\nc\n:::");
   const [a, b] = span(doc, "b", "c");

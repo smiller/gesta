@@ -286,8 +286,9 @@ export function namesOther(block: Block, index: NameIndex): string[] {
 /* ---- provenance: the plan's record alone ---- */
 
 /* "asked" is left out: nearly every "asked" in a comment is prose ("the
-   depth asked for"), and each one recording provenance carried a date */
-const PROVENANCE = /\b\d{4}-\d\d-\d\d\b|\bthe reader\b|\bthe review(?:er)?\b|\bconfirmation pass(?:es)?\b/gi;
+   depth asked for"), and each one recording provenance carried a date.
+   "the plan" hits nothing else in the tree (MEASURED by grep over src) */
+const PROVENANCE = /\b\d{4}-\d\d-\d\d\b|\bthe reader\b|\bthe review(?:er)?\b|\bconfirmation pass(?:es)?\b|\bthe plan(?:'s)?\b/gi;
 
 export function provenance(block: Block): string[] {
   const text = block.body.replace(/\(pin:[^()]*\)/g, " ").replace(/"[^"]*"|`[^`]*`/g, " ");
