@@ -89,6 +89,9 @@ before the warm · * · `?warm=slow` is the successor's seam (2026-09-28); the c
 the warm landed · * · the same, and the current app draws no folds
 a contents link clicked before the warm · * · the same: the current app's page holds no such link at that place to click
 a forced entry left scrolled, returned to · * · the refusal is the grid's, successor-only, and the remembered place is the successor's: the current app renders the entry and keeps no place
+a held place, the masthead shrinking under it · * · the held place is the successor's: the current app keeps no place
+a held place in the rendered view, the masthead shrinking under it · * · the held place is the successor's: the current app keeps no place
+a held place, then a scroll no hand made · * · the held place is the successor's: the current app keeps no place
 ⌃⌘M back, still scrolled away · stayed · both directions keep a reader who scrolled away from the caret where they scrolled (the reader, 2026-09-28): the textarea's caret is measured, where the current app jumps back to it
 a long canto switched at its middle · * · a stanza fence is the successor's (2026-09-28): the current app has no stanza to read at the window's top
 a long canto switched at its end · * · the same

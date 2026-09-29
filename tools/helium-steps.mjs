@@ -841,6 +841,39 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Forced%20Long");
   await page.waitForTimeout(300);
   await log("a forced entry left scrolled, returned to", { source: await R.inSource(page), stayed: Math.abs((await winY()) - leftAt) < 3 });
+  /* the masthead changing height under a held place, as it does when the
+     entry arrived from had a taller one: the place is set again, in the
+     source view by its offset and in the rendered one by its text */
+  const shrunk = async (fn) => {
+    await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = "50px"; h.style.overflow = "hidden"; });
+    try { await page.waitForTimeout(300); return await fn(); }
+    finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await page.waitForTimeout(300); }
+  };
+  await log("a held place, the masthead shrinking under it", await shrunk(async () => ({ stayed: Math.abs((await winY()) - leftAt) < 3 })));
+  await go("page/Horace");
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+  await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
+  await page.waitForTimeout(300);
+  await wheelTo(2600);
+  await page.waitForTimeout(700);
+  await go("page/Horace");
+  await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
+  await page.waitForTimeout(300);
+  /* the row under the masthead, read mid-column: 40px in is the gutter */
+  const rowUnderHead = () => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
+  const heldLine = await rowUnderHead();
+  await log("a held place in the rendered view, the masthead shrinking under it", await shrunk(async () => { const line = await rowUnderHead(); return { sameText: line === heldLine, line }; }));
+  /* a scroll the page did not make and no hand did — the browser's find —
+     is the reader moving: the hold lets go */
+  await page.evaluate(() => window.scrollTo(0, window.scrollY + 400));
+  await page.waitForTimeout(500);
+  const foundLine = await rowUnderHead();
+  /* then the editor grows below, as a picture loading does */
+  await page.evaluate(() => { document.querySelector("#editor .ProseMirror").style.paddingBottom = "300px"; });
+  await page.waitForTimeout(300);
+  const afterGrow = await rowUnderHead();
+  await page.evaluate(() => { document.querySelector("#editor .ProseMirror").style.paddingBottom = ""; });
+  await log("a held place, then a scroll no hand made", { kept: afterGrow === foundLine, line: afterGrow });
   await go("page/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
     }],
@@ -891,6 +924,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   if (A.pill) {
     await page.goto(A.url("page/Horace", "corner=pill"));
     await A.waitWarm(page);
+    /* the pill is set after the launch's backup run, which ends after the
+       warm: read on the warm alone, it was missed 1 run in 10 */
+    await page.waitForFunction(() => document.querySelector(".backup-paused")?.hidden === false, null, { timeout: 5000 }).catch(() => {});
     await log("with ?corner=pill", await R.pill(page));
     if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
   }

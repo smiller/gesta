@@ -137,6 +137,9 @@ the warm landed: {"folds":6,"open":["Book 5"],"fillerInView":true,"screen":"book
 a contents link clicked before the warm: {"entry":"bookshelf/Boethius/Consolatio/3pr1","refused":false,"screen":"bookshelf/Boethius/Consolatio/3pr1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a closed section's text switched to: {"open":["Book 3"],"fillerInView":true,"screen":"bookshelf/Boethius/Consolatio · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a forced entry left scrolled, returned to: {"source":true,"stayed":true,"screen":"page/Forced Long · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+a held place, the masthead shrinking under it: {"stayed":true,"screen":"page/Forced Long · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+a held place in the rendered view, the masthead shrinking under it: {"sameText":true,"line":"Meantime, what lights my sunbeam","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a held place, then a scroll no hand made: {"kept":true,"line":"—From weevil and chafer?","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 an unknown page visited and left untouched: {"stored":null,"screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a long entry renamed, scrolled: {"entry":"2026-09-05/Longer","stayed":true,"screen":"2026-09-05/Longer · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 deleted scrolled: its place dropped: {"entry":"2026-09-05","placeKept":false,"screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

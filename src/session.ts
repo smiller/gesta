@@ -185,12 +185,20 @@ export function startSession(opts: SessionOptions): Session {
     places.write((s) => movedPlace(s, from, to));
     lastWritten = null;
   }
-  /* the restored place is HELD, and set again whenever the page under it
-     changes size, until a reader's own wheel, key, pointer or touch. Read
-     back from the scroll instead, the place drifted up with every picture
-     above it. (pin: places › 400px grown above the held place) */
+  /* the restored place is HELD, and set again whenever the editor changes
+     size, until a reader moves: a wheel, key, pointer or touch, or any
+     scroll landing where this code did not put the window, the browser's
+     find among them. Read back from the scroll instead, the place drifted
+     up with every picture above it. While held, the browser's scroll
+     anchoring is OFF: a masthead shrinking after the restore let anchoring
+     move the window 27px (pin: places › 400px grown above the held place)
+     (pin: places › a held place, then a scroll no hand made) (pin: places ›
+     a held place, the masthead shrinking under it) (pin: places › a forced
+     entry left scrolled, returned to) */
   let held: { ekey: string; place: Place } | null = null;
-  const release = (): void => { held = null; };
+  const setHeld = (h: typeof held): void => { held = h; document.documentElement.style.overflowAnchor = h ? "none" : ""; };
+  const release = (): void => { if (held) setHeld(null); };
+  let placedY = 0;
   for (const t of ["wheel", "keydown", "pointerdown", "touchstart"]) window.addEventListener(t, release, { capture: true, passive: true });
   new ResizeObserver(() => { if (held && held.ekey === ekeyOf()) applyPlace(held.place); }).observe(mount);
   /* the masthead is sticky over the page's top: a place is read, and set,
@@ -209,16 +217,23 @@ export function startSession(opts: SessionOptions): Session {
   function applyPlace(p: Place): void {
     /* left at the top, back at the top: the text position under the
        masthead lies below the page's top padding (pin: places › Horace followed) */
-    if (mdView || !view || p.pos < 0 || p.y <= 0) { window.scrollTo(0, Math.max(0, p.y)); return; }
-    const pos = Math.min(p.pos, view.state.doc.content.size);
-    openFoldAt(pos)(view.state, view.dispatch);
-    try {
-      const c = view.coordsAtPos(pos);
-      window.scrollTo(0, window.scrollY + c.top - underMasthead());
-    } catch { window.scrollTo(0, p.y); }
+    if (mdView || !view || p.pos < 0 || p.y <= 0) window.scrollTo(0, Math.max(0, p.y));
+    else {
+      const pos = Math.min(p.pos, view.state.doc.content.size);
+      openFoldAt(pos)(view.state, view.dispatch);
+      try {
+        const c = view.coordsAtPos(pos);
+        window.scrollTo(0, window.scrollY + c.top - underMasthead());
+      } catch { window.scrollTo(0, p.y); }
+    }
+    placedY = window.scrollY;
   }
   let placeTimer: ReturnType<typeof setTimeout> | null = null;
-  window.addEventListener("scroll", () => { if (placeTimer) clearTimeout(placeTimer); placeTimer = setTimeout(recordPlace, 400); }, { passive: true });
+  window.addEventListener("scroll", () => {
+    if (held && Math.abs(window.scrollY - placedY) > 1) release();
+    if (placeTimer) clearTimeout(placeTimer);
+    placeTimer = setTimeout(recordPlace, 400);
+  }, { passive: true });
   window.addEventListener("pagehide", () => recordPlace());
   function mountEditor(doc: import("prosemirror-model").Node, date: string, tag: string | null): void {
     teardown();
@@ -338,7 +353,7 @@ export function startSession(opts: SessionOptions): Session {
        again (pin: the switch carries the text › ⌃⌘M back, then 400px grown above)
        (pin: places › a closed section's text switched to) */
     const place = { pos, y: 1 };
-    held = { ekey: ekeyOf(), place };
+    setHeld({ ekey: ekeyOf(), place });
     applyPlace(place);
     /* the offset remembered is the rendered view's, after the place is set:
        the source's beside a rendered position misled the fallback
@@ -367,10 +382,10 @@ export function startSession(opts: SessionOptions): Session {
       placedAt = arriving ? arriving.at : null;
       const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(Math.min(pos, view.state.doc.content.size))));
       /* a caret that was seen is brought into view and wins over the switch's
-         held place, which the mount's resize re-applies a frame later.
+         held place, which the page's resize re-applies a frame later.
          Unpinned: no step's page has shown the re-apply taking the caret out
          of view — a canto, headings and pictures tried */
-      if (!arriving || arriving.seen) { tr.scrollIntoView(); held = null; }
+      if (!arriving || arriving.seen) { tr.scrollIntoView(); setHeld(null); }
       view.dispatch(tr);
       view.focus();
     }
@@ -435,7 +450,7 @@ export function startSession(opts: SessionOptions): Session {
     if (forced) { mdView = readerView; forced = false; opts.onView?.(mdView); }   /* the chrome's pill followed the forced view but not its release (pin: grid › the next entry after a refused switch) */
     current = { date, tag };
     const ekey = ekeyOf();
-    if (held && held.ekey !== ekey) held = null;
+    if (held && held.ekey !== ekey) setHeld(null);
     const md = layer.entryMd(ekey);
     /* the open view stays the open view across a navigation; the carets and
        a pinned fence refusal belong to the entry left (pin: walk › ⌃⌘M, then ⌃⌘.) */
@@ -474,7 +489,7 @@ export function startSession(opts: SessionOptions): Session {
   function place(ekey: string, how: OpenHow): void {
     if (how !== "arrive") return;
     const p = pending && pending.gen === navGen ? null : placeOf(places.read(), ekey);
-    held = p ? { ekey, place: p } : null;
+    setHeld(p ? { ekey, place: p } : null);
     if (p) applyPlace(p); else window.scrollTo(0, 0);
   }
   /* a page opened before the warm drew unfolded, its sub-entries not yet in

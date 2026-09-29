@@ -441,3 +441,65 @@ pinned (a performance choice), 2 pinned with a neighbour.
   src/editor batch too. OWED: why the source view's held place can miss,
   and whether the pill's step waits on the launch run; until then a
   commit's pre-commit may need a second run of verify.
+
+### 2026-09-28 — the flaky Helium verdict, found and fixed
+
+- "a forced entry left scrolled, returned to" (MEASURED, traced frame by
+  frame in the places section alone): the place left is y 900; the
+  failing arrivals landed at 873 and stayed. 873 is 900 less 27, and 27
+  is Horace's masthead (111px) less the forced entry's (84px): the place
+  was restored under the masthead of the entry arrived FROM, the masthead
+  then shrank, and the browser's scroll anchoring moved the window with
+  the text. The held place's ResizeObserver watched the editor mount
+  alone, so nothing set it again. A step that shrinks the masthead under
+  a held place reproduced it EVERY time (stayed:false, 3 of 3) — the new
+  reading "a held place, the masthead shrinking under it".
+- FIX, session.ts, two parts, each measured: the observer watches the
+  whole page (document.documentElement), which the held place's own rule
+  ("set again whenever the page under it changes size") already said —
+  the new reading green, the forced entry 1 in 10 still false; and the
+  browser's scroll anchoring is OFF while a place is held
+  (overflow-anchor: none on the root, back on release) — 12 of 12 true.
+  Held, the app owns the window's position; anchoring could only fight
+  it.
+- "with ?corner=pill" was the STEP's race, not the app's (READ): the pill
+  is set after the launch's backup run, which ends after the warm the
+  step waited on. The step now waits for the pill, its timeout swallowed
+  so a missing pill still reads as missing.
+- The new reading is the successor's alone, listed in
+  corner.differences.txt ("the current app keeps no place").
+- MEASURED after both fixes: the whole Helium verdict ok in 8 runs of 8
+  (4 flips in 10 before). The stripped-of-comments diff: session.ts's
+  held place (setHeld, the observer on the page), the pill step's wait,
+  the new reading.
+
+### The review — 2026-09-28, /code-review at HIGH over the held-place fix
+
+- COST: 94,721 tokens (MEASURED from the transcript's last message: 2
+  input, 969 cache creation, 87,650 cache read, 6,100 output), 3 min
+  52 s, 12 tool uses. Seven findings.
+- FIXED, each reading red on the code before it (MEASURED):
+  - the hold let go only on a wheel, key, pointer or touch, so a scroll
+    no hand made — the browser's find — stayed held and snapped back on
+    the next resize: the hold now lets go on any scroll landing where the
+    code did not put the window. New reading "a held place, then a scroll
+    no hand made": kept:false 10 of 10 before, true after.
+  - the masthead reading could not tell the page-wide observer from
+    anchoring off: a rendered-view reading was added ("a held place in the
+    rendered view, the masthead shrinking under it", the row under the
+    masthead read mid-column — the place reading's 40px-in sample falls in
+    a verse page's gutter and names the block's first row wherever the
+    window is). Then MEASURED: with the observer back on the editor mount
+    and anchoring off, every reading held, the forced entry 10 of 10 — so
+    the page-wide observer came OUT: anchoring off is the whole fix, and
+    with it the reviewer's two-observers-on-the-root finding goes.
+  - a pin mid-comment: the pins are trailing again.
+  - the step's masthead clamp is undone in a finally.
+- NOT FIXED, with the reason: the restore running before the masthead
+  settles (root cause) — with anchoring off a masthead changing height
+  moves the text and its own bottom edge together, so the row under it
+  stands (MEASURED, the rendered reading with the mount observer); the
+  hold bounding anchoring-off indefinitely — the hold now ends on any
+  move a reader makes, a scroll included.
+- MEASURED: verify exit 0, 149 steps, 0 open.
+- MEASURED on the final code: the whole Helium verdict ok in 4 runs of 4.
