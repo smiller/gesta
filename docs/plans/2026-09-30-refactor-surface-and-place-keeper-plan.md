@@ -1,0 +1,140 @@
+# The surface, then the place keeper
+
+Opened 2026-09-30. Two deepenings of `src/session.ts`, chosen from an
+architecture scan (Matt Pocock's improve-codebase-architecture skill,
+dry run, the report in the session's scratchpad, not the repo). This is
+the plan and THE RECORD: the scan's measurements, the decisions as the
+grilling settles them, one dated section per batch.
+
+## Why
+
+- `src/main.ts` 20 commits and `src/session.ts` 17 since 2026-09-15; the
+  next file 11 (MEASURED, git log). 1,091 and 686 lines (MEASURED, wc).
+  Neither has a Vitest file; the suite runs under node, no DOM (READ,
+  vite.config.ts).
+- Seven fix commits on 2026-09-28 went through `session.ts`,
+  `placeState.ts` and `viewCarets.ts` (MEASURED): cb1b26c, 1a8a616,
+  016c951, 054af51, 972dc9d, 573fcff, f352e3f. Their subjects name rules
+  of the window's place and the view switch, testable today only in
+  Helium (READ).
+- `session.ts` asks which surface is open at 14 sites — `mdView &&
+  source` / `else if (view)` (MEASURED, grep), each arm hand-written; the
+  textarea's geometry twin sits among the navigation code.
+- `main.ts` reaches into `session.view` 29 times and `session.mdView` 7
+  (MEASURED, grep). Left alone this pass (below).
+- The source view records its place as a pixel offset only, `pos: -1`
+  (READ, session.ts recordPlace).
+
+## Decided (the reader, 2026-09-30, grilling round 1)
+
+1. STRICTLY BEHAVIOUR-PRESERVING: `corner.approved.txt` comes out
+   byte-identical. What the seam makes possible (the source view's place
+   as a text position) is listed under "Later", never folded in.
+2. The surface interface is the SESSION's alone this pass; `main.ts`'s
+   reach into `session.view` and `session.mdView` is a later candidate.
+3. Vitest gains the view switch: code written against the surface
+   interface, tested over two fake adapters — the order hold → mount the
+   other → align the top → place the caret; a forced source view stays
+   forced; a seen caret drops the hold; a refused parse keeps the fence
+   pin. The tests are written first and fail until the extraction lands.
+4. No design-it-twice for the surface: the 14 call sites fix most of its
+   interface. Reconsidered for the place keeper, whose interface is open.
+5. The word: THE SURFACE, what both views share; its adapters THE
+   RENDERED VIEW and THE SOURCE VIEW. No GLOSSARY.md: the term goes into
+   CLAUDE.md's layout, the decisions here.
+6. Two commits, one batch: the surface, the reader's look and accept;
+   the place keeper, look and accept; then ONE /code-review at high over
+   both, its cost recorded here.
+
+Numbering below runs on from round 1's; the grilling's question numbers
+(Q7, Q8, Q10) are not kept.
+
+## Decided (the reader, 2026-09-30, grilling round 2)
+
+Found for it: both views already fold to one stream type, `Flat`
+(`flattenDoc`, `flattenText`; READ, flatten.ts), so the counting rules
+(`countBefore`, `positionAt`, `crossViewOffset`, `arrivingCount`) can be
+written once over either. The switch treats the views differently at two
+points, both the window's place (READ): the rendered view's alignment
+opens a closed section, holds and remembers the place, the source view's
+only scrolls; a seen caret releases the hold in the rendered view only. A
+hold set by an arrival never reaches a switch, but only because ⌃⌘M's own
+keydown releases it first through the capture listener (INFERRED,
+session.ts) — a rule kept by listener order, owed to the place keeper.
+
+7. SMALL QUESTIONS: each view answers only what differs — its text, its
+   stream, its caret and whether the caret is seen, the position under a
+   height, the scroll to a position, the caret placed, an insert, the
+   words, the teardown. The switch's rules are written once above them.
+8. THE MODULE OWNS which view is mounted, the reader's chosen view, the
+   forced source view (`forced`, `readerView`), the carets held per view
+   (`carets`, `placedAt`) and the fence-refusal pin; its operations are
+   `show(md)` — the open path, its source fallback included — `switchTo`
+   (⌃⌘M) and `current`. The session keeps the keys, the saves, the
+   navigation, the picture's aim, copy and reference, and the window's
+   place until the place keeper.
+9. THE WINDOW AS A PORT, `{ y(), scrollTo(y), under() }`: the browser
+   window and a Vitest fake. The place keeper inherits it.
+
+## Decided (the reader, 2026-09-30, grilling round 3)
+
+10. The two differences stay IN THE OPEN in the switch, `if (!to.source)`
+    at the two points, calling a place port the session supplies until
+    the place keeper: `{ hold(place), release(), remember(place) }`.
+11. The session hands the module its builders, `{ rendered(doc),
+    source(md) }` — the rendered view needs the entry's folds, picture
+    resolver and link routing — and Vitest hands it fakes the same way.
+    `session.view` keeps working from the rendered adapter the session
+    built; the interface carries no `EditorView`. The module calls
+    `onView(md)` and `switched()` (the session's save and redraw) at the
+    point they are called today: after the alignment, before the caret.
+12. Files: `src/editor/surface.ts` (the interface, the window port, the
+    switch; no DOM), `src/editor/renderedView.ts`,
+    `src/editor/sourceView.ts` (the textarea, its twin, its listeners),
+    `src/editor/surface.test.ts`.
+13. The tests written first, over fake views and a fake window: the
+    switch's order; near the top stays at the top; the top carried by the
+    crossing, not an equal count; a moved caret retires the other view's
+    hold; a seen caret scrolls and releases, an unseen one leaves the
+    window; a refused switch back keeps the source view, pinned, a forced
+    view forced; a clean parse releases the pin, refusals pin anew; an
+    unparseable entry shown forces the source view and the next show puts
+    the reader's view back; a show clears both carets and the fence pin.
+    A comment that moves keeps its Helium pin and gains the Vitest one.
+
+## Batch 1 — the surface (2026-09-30)
+
+- Tests first: `src/editor/surface.test.ts`, nine, run red with the
+  module absent (MEASURED), green once it landed (MEASURED).
+- `session.ts` 686 → 427 lines; `surface.ts` 205, `renderedView.ts` 65,
+  `sourceView.ts` 98 (MEASURED, wc). The 14 branch sites on the open view
+  are 0 in `session.ts` (MEASURED, grep); the switch names the two
+  differences at two branches on `source`, as decided (10).
+- `npm run check` clean; the suite 73 files, 620 tests (MEASURED). The
+  comment checker FAILED once, on a new block naming another module's
+  function (`crossViewOffset` in the interface's comment), reworded;
+  passes (MEASURED). Hooks 44/44 (MEASURED).
+- THE NET: `npm run test:helium` — corner ok, bridge ok, 153 steps, 0
+  open against `corner.writer.txt` (MEASURED): the approved run came out
+  unchanged.
+- TWO ORDERS MOVED on the open path, both inside one task, neither read
+  by any step (INFERRED harmless, the approved run unchanged): the
+  release of a forced source view now tells the chrome (`onView`) after
+  the entry key is set rather than before, and on an entry forced to
+  source the chrome is told before the place is set rather than after.
+  Neither callee reads the other's state (READ, main.ts's onView and
+  session's place).
+- FOUND, KEPT: on an entry forced to source, a highlight owed is not
+  consumed — the open returns before it (READ, the old open). Kept as
+  `if (surface.forced) return;`, uncommented: whether it is a decision
+  or an accident is not recorded anywhere.
+- Caret reset on show is observable through the interface only where a
+  hold and the map disagree on one text; the Vitest test covers the fence
+  pin's release, and `walk › ⌃⌘M, then ⌃⌘.` in Helium stays the carets' pin.
+
+## Later
+
+- The source view's place as a text position, now that its adapter can
+  say which text stands at the top.
+- `main.ts`'s 29 reaches into `session.view` and 7 into `session.mdView`
+  through the surface interface.

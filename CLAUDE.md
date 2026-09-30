@@ -254,7 +254,14 @@ is in the plan's record, under the phase named):
   handler), `highlight.ts` (the jump: the nth occurrence of a query
   selected; the scroll is main's, a frame later), `insertLink.ts` (a link placed after the
   caret, and what refuses one), `sourceKeys.ts` (Tab and Shift-Tab in
-  the source view, over a text and a selection), `format.ts` (the
+  the source view, over a text and a selection), `surface.ts` (THE
+  SURFACE, what the rendered and the source view share: the interface
+  each view answers, the window as a port, and the switch between them,
+  ⌃⌘M — the carets held per view, the text at the top carried across,
+  the forced source view and the fence pin; no DOM, tested over fake
+  views), `renderedView.ts` (the rendered view: the surface over
+  `createEditor`), `sourceView.ts` (the source view: the textarea, its
+  hidden twin for geometry, its input, paste and Tab), `format.ts` (the
   toolbar's acts as commands: the marks and their chords, the heading,
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code
@@ -356,7 +363,8 @@ is in the plan's record, under the phase named):
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —
   open by hash, the debounced save through the layer, the flush on leave,
   the refusal of an unknown book, the walk and today, the reference and
-  the entry link to the clipboard, the source view and its switch. `src/editor/images.ts` is the image node
+  the entry link to the clipboard, the builders of the two views the
+  surface switches between (`src/editor/surface.ts`). `src/editor/images.ts` is the image node
   view it supplies, resolving a relative src from the store;
   `src/editor/reference.ts` the selection half of a reference — the rows
   covered, the line and leaf ranges, the highlight payload, the passage.
