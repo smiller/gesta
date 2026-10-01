@@ -1,26 +1,27 @@
 export type Closer = "panel" | "search" | "goto" | "lineBar" | "lineBarCaret" | "lines";
 export type Opening = "search" | "goto" | "lineBar" | "lines" | "help" | "bookmarks" | "shortcuts" | "backups" | "pages" | "navigated" | "sourceView" | "escape";
 
-/* what each opening closes, IN ORDER: the closers are not independent —
-   one may move the focus that a later one reads — so a row's order is part
-   of it. Escape's caret hand-back comes before search and Go to: after
-   them, it found the focus gone from the line bar and handed nothing back
-   (pin: overlays.test › Escape closes everything). Go to, opened, closes
-   only the panel, which would cover it
-   (pin: overlays.test › search and Go to close only the panel) */
+/* ONE THING OPEN AT A TIME: each opening closes every other open thing —
+   a panel every header row, a header row the panel and the other rows —
+   and a navigation all of them, drawn as they were for the entry left
+   (pin: overlays.test › a header row, opened) (pin: overlays.test › a panel, opened).
+   A row's ORDER is part of it: the closers are not independent, one may
+   move the focus that a later one reads. Escape's caret hand-back comes
+   before search and Go to: after them, it found the focus gone from the
+   line bar and handed nothing back (pin: overlays.test › Escape closes everything) */
+const ROWS: readonly Closer[] = ["search", "goto", "lineBar", "lines"];
+const others = (self: Closer | null): Closer[] => ["panel", ...ROWS].filter((c) => c !== self) as Closer[];
 export const CLOSES: Record<Opening, readonly Closer[]> = {
-  search: ["panel"],
-  goto: ["panel"],
-  lineBar: ["panel", "search", "goto"],
-  lines: ["panel", "lineBar"],
-  help: ["search", "lineBar"],
-  backups: ["search", "lineBar"],
-  bookmarks: ["search", "goto", "lineBar"],
-  shortcuts: ["search", "goto", "lineBar"],
-  pages: [],
-  /* an overlay drawn for another entry goes: Go to's selects were
-     preselected for the entry left */
-  navigated: ["panel", "search", "goto", "lineBar"],
+  search: others("search"),
+  goto: others("goto"),
+  lineBar: others("lineBar"),
+  lines: others("lines"),
+  help: ROWS,
+  backups: ROWS,
+  bookmarks: ROWS,
+  shortcuts: ROWS,
+  pages: ROWS,
+  navigated: others(null),
   sourceView: ["lineBar"],
   escape: ["panel", "lineBarCaret", "search", "goto", "lines"],
 };

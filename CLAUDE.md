@@ -376,10 +376,10 @@ is in the plan's record, under the phase named):
   entries — create, extract, rename, delete, a new root, a parent's links
   following a sub-page's heading — in their order of writes, over the
   entry layer and ports for the session, the editor, the dialogs and the
-  UI; no DOM, tested on the memory store), `overlays.ts` (which overlay
-  closes which: one table of what each opening closes, in order — the
-  panel, search, Go to, the line bar, ⌃⌘L's lines — over closers main.ts
-  hands it), `viewCarets.ts` (where the view
+  UI; no DOM, tested on the memory store), `overlays.ts` (one thing open at
+  a time: each opening closes every other — the panel, search, Go to, the
+  line bar, ⌃⌘L's lines — in an order Escape's caret hand-back depends
+  on, over closers main.ts hands it), `viewCarets.ts` (where the view
   toggle puts you back: the count held per view, the alignment between
   the two streams), `Toolbar.svelte` (the floating format bar over a
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),

@@ -137,3 +137,25 @@ review's price; put to the reader.
 - The comment count's remedy chosen: the moved-comment re-read (the
   comment-standard plan's verdict). CANDIDATE 4 CLOSED; the blanks above
   stay open questions.
+
+## The blanks decided (the reader, 2026-10-01)
+
+- Q52: "opening a new popup / dropdown should close everything else" —
+  every panel closes every open header row (search, Go to, the line bar,
+  ⌃⌘L's lines).
+- Q53: the same reaches the header rows — ONE THING OPEN AT A TIME: a
+  row, opened, closes the panel and every other row.
+- Q54: a navigation closes ⌃⌘L's lines too. The source view still closes
+  only the line bar: switching views opens nothing.
+- Q55: tests first, verify, the hand-check played first, no /code-review
+  (one table).
+
+Done: the four table tests rewritten and run red (MEASURED: 3 of 4
+failing), then green; the table now built as "every other" from one
+list; the suite 76 files, 673 tests; tsc clean; the checker passes;
+Helium 0 open — the approved run did not move, no step opening one
+overlay over another (MEASURED). The hand-check played first in headless
+Helium (a scratch probe, `tools/out/`): Go to then search, search then Go
+to, ⌃⌘L then Go to, Go to then help, Go to then the pages icon — each
+leaving only the second open; ⌃⌘L then ⌃⌘T — nothing open (MEASURED).
+The questions above are answered; CANDIDATE 4 has no open blanks.

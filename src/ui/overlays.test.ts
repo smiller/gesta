@@ -12,24 +12,18 @@ const world = () => {
 };
 const closes = (row: Opening): Closer[] => { const w = world(); w.o.open(row); return w.log; };
 
-describe("which overlay closes which", () => {
-  it("search and Go to close only the panel", () => {
-    expect(closes("search")).toEqual(["panel"]);
-    expect(closes("goto")).toEqual(["panel"]);
+describe("one thing open at a time", () => {
+  it("a header row, opened, closes the panel and every other header row", () => {
+    expect(closes("search")).toEqual(["panel", "goto", "lineBar", "lines"]);
+    expect(closes("goto")).toEqual(["panel", "search", "lineBar", "lines"]);
+    expect(closes("lineBar")).toEqual(["panel", "search", "goto", "lines"]);
+    expect(closes("lines")).toEqual(["panel", "search", "goto", "lineBar"]);
   });
-  it("the line bar closes the panel, search and Go to; ⌃⌘L's lines close the panel and the line bar", () => {
-    expect(closes("lineBar")).toEqual(["panel", "search", "goto"]);
-    expect(closes("lines")).toEqual(["panel", "lineBar"]);
+  it("a panel, opened, closes every header row; it replaces any other panel by itself", () => {
+    for (const p of ["help", "backups", "bookmarks", "shortcuts", "pages"] as const) expect(closes(p)).toEqual(["search", "goto", "lineBar", "lines"]);
   });
-  it("help and backups close search and the line bar; bookmarks and shortcuts Go to as well; pages and bookshelf nothing", () => {
-    expect(closes("help")).toEqual(["search", "lineBar"]);
-    expect(closes("backups")).toEqual(["search", "lineBar"]);
-    expect(closes("bookmarks")).toEqual(["search", "goto", "lineBar"]);
-    expect(closes("shortcuts")).toEqual(["search", "goto", "lineBar"]);
-    expect(closes("pages")).toEqual([]);
-  });
-  it("a navigation closes all but ⌃⌘L's lines; the source view closes the line bar", () => {
-    expect(closes("navigated")).toEqual(["panel", "search", "goto", "lineBar"]);
+  it("a navigation closes everything; the source view closes the line bar", () => {
+    expect(closes("navigated")).toEqual(["panel", "search", "goto", "lineBar", "lines"]);
     expect(closes("sourceView")).toEqual(["lineBar"]);
   });
   it("Escape closes everything, the line bar handing its caret back BEFORE search or Go to moves the focus", () => {
