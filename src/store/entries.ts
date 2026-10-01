@@ -35,13 +35,25 @@ export interface EntryLayer {
   warm(): Promise<void>;
   /* the store's keys, read without touching the cache: what other tabs wrote is included */
   storedKeys(): Promise<string[]>;
+  /* another tab landed a write under ekey: its row read into the cache and
+     the base, where `accept` takes it; resolves whether the cache moved */
+  takeNotice(ekey: string, accept?: (md: string | null) => boolean): Promise<boolean>;
   readonly warmed: boolean;
   readonly storeReadFailed: boolean;
   readonly storeReadError: unknown;
 }
-export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer {
+export interface LayerOptions {
+  /* a landed write or delete, told to the other tabs */
+  announce?(ekey: string): void;
+}
+export function entryLayer(store: EntryStore, notices: EntryNotices, opts: LayerOptions = {}): EntryLayer {
   const cache: Record<string, string> = Object.create(null);
   const saveSeq: Record<string, number> = Object.create(null);
+  const writeSeq: Record<string, number> = Object.create(null);
+  /* keys whose last write here failed for a reason other than another tab:
+     the cache holds the only copy of that text
+     (pin: entries.test › a notice is skipped for a key whose own write has not landed) */
+  const unlanded = new Set<string>();
   const chain: Record<string, Promise<unknown>> = Object.create(null);
   /* false until the warm has filled the cache: a backup run before it would
      export a blank journal over the mirror */
@@ -55,12 +67,14 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
 
   function entryMd(ekey: string): string { return cache[ekey] || ""; }
   function setEntry(ekey: string, md: string): Promise<boolean> {
+    writeSeq[ekey] = (writeSeq[ekey] || 0) + 1;
     cache[ekey] = md;
     return persistEntry(ekey, () => store.set(ekey, md));
   }
   function removeEntry(ekey: string): Promise<boolean> {
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
     delete cache[ekey];
+    unlanded.delete(ekey);
     notices.removed(ekey);
     return persistEntry(ekey, () => store.del(ekey), true);
   }
@@ -78,7 +92,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     const tail = (chain[ekey] || Promise.resolve()).then(op, op);
     chain[ekey] = tail;
     return tail.then(
-      () => { notices.landed(ekey); return true; },
+      () => { unlanded.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); return true; },
       (err: unknown) => {
         /* PUT THE CACHE BACK: a refused write left there would go out over the
            backup folder at the next run (pin: entries.test › a stale write
@@ -93,7 +107,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
           else notices.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
         }
         else if (isDel) notices.stuckIdle("couldn't delete — reload", err);
-        else notices.stuck("not saved", err, ekey);
+        else { unlanded.add(ekey); notices.stuck("not saved", err, ekey); }
         return false;
       },
     );
@@ -118,6 +132,30 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     });
     return (chain[ekey] || Promise.resolve()).then(read, read);
   }
+  /* read after the key's queued ops; dropped when this tab wrote or
+     removed the key while the read was out, its own write being the newer
+     (pin: entries.test › a notice waits for the key's queued ops). Before
+     the warm a notice waits for it (pin: entries.test › a notice before
+     the warm). A delete taken clears the key's debts, as removeEntry does */
+  let warmLanded: () => void = () => {};
+  const afterWarm = new Promise<void>((r) => { warmLanded = r; });
+  function takeNotice(ekey: string, accept: (md: string | null) => boolean = () => true): Promise<boolean> {
+    if (!warmed) return afterWarm.then(() => takeNotice(ekey, accept));
+    const seqAt = saveSeq[ekey], writeAt = writeSeq[ekey];
+    const read = (): Promise<boolean> => store.peek(ekey).then((row) => {
+      if (saveSeq[ekey] !== seqAt || writeSeq[ekey] !== writeAt || unlanded.has(ekey)) return false;
+      const md = row ? row.md : null, held = ekey in cache ? cache[ekey] : null;
+      if (md === held) return false;
+      if (!accept(md)) return false;
+      store.rebase(ekey, md);
+      if (md !== null) { cache[ekey] = md; return true; }
+      saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
+      delete cache[ekey];
+      notices.removed(ekey);
+      return true;
+    });
+    return (chain[ekey] || Promise.resolve()).then(read, read);
+  }
   function warm(): Promise<void> {
     storeReadFailed = false;
     storeReadError = null;
@@ -126,11 +164,11 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     }, (err: unknown) => {
       storeReadFailed = true;
       storeReadError = err;
-    }).then(() => { warmed = !storeReadFailed; });
+    }).then(() => { warmed = !storeReadFailed; if (warmed) warmLanded(); });
   }
   return {
     cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm, clear,
-    storedKeys: () => store.keys(),
+    storedKeys: () => store.keys(), takeNotice,
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },
     get storeReadError() { return storeReadError; },

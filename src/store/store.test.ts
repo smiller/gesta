@@ -188,6 +188,26 @@ test("keys() bases nothing: a key another tab filled after the whole read still 
   await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
 });
 
+test("peek() bases nothing: a key another tab filled after the whole read still refuses a blank write", async () => {
+  const { s, foreign } = open();
+  await s.all();
+  await foreign("k", "theirs");
+  expect((await s.peek("k"))!.md).toBe("theirs");
+  await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
+});
+
+test("rebase() moves the base: a write after it lands over the text it was given", async () => {
+  const { s, foreign } = open();
+  await s.set("k", "mine");
+  await foreign("k", "theirs");
+  s.rebase("k", "theirs");
+  await s.set("k", "theirs, then mine");
+  expect((await s.get("k"))!.md).toBe("theirs, then mine");
+  await foreign("gone", "x");
+  s.rebase("gone", null);
+  await expect(s.set("gone", "y")).rejects.toSatisfy(stale);
+});
+
 test("del is judged like a write", async () => {
   const { s, foreign } = open();
   await s.set("k", "mine");

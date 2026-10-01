@@ -2,17 +2,17 @@ import { test, expect } from "vitest";
 import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } from "./store.ts";
 import { entryLayer, type EntryNotices } from "./entries.ts";
 
-interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckIdle: unknown[][] }
+interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckIdle: unknown[][]; announced: string[] }
 function fresh(over?: (s: MemEntryStore) => EntryStore) {
   const mem = memEntryStore();
-  const calls: Calls = { landed: [], removed: [], stuck: [], stuckIdle: [] };
+  const calls: Calls = { landed: [], removed: [], stuck: [], stuckIdle: [], announced: [] };
   const notices: EntryNotices = {
     landed: (k) => calls.landed.push(k),
     removed: (k) => calls.removed.push(k),
     stuck: (...a) => calls.stuck.push(a),
     stuckIdle: (...a) => calls.stuckIdle.push(a),
   };
-  const layer = entryLayer(over ? over(mem) : mem, notices);
+  const layer = entryLayer(over ? over(mem) : mem, notices, { announce: (k) => calls.announced.push(k) });
   return { layer, mem, calls };
 }
 
@@ -203,4 +203,87 @@ test("primeEntry waits for the key's pending ops: an entry removed here is not r
   await removed;
   expect("page/Gone" in layer.cache).toBe(false);
   expect(await mem.get("page/Gone")).toBe(null);
+});
+
+test("a landed write and a landed delete are announced to the other tabs; a refused one is not", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "a");
+  await layer.removeEntry("page/A");
+  await mem.foreignSet("page/B", "theirs");
+  await layer.setEntry("page/B", "mine");
+  expect(calls.announced).toEqual(["page/A", "page/A"]);
+});
+
+test("a notice takes the stored row into the cache and the base: a save after it lands", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "mine");
+  await mem.foreignSet("page/A", "theirs");
+  expect(await layer.takeNotice("page/A")).toBe(true);
+  expect(layer.cache["page/A"]).toBe("theirs");
+  expect(await layer.setEntry("page/A", "theirs, then mine")).toBe(true);
+  await mem.foreignSet("page/New", "made there");
+  expect(await layer.takeNotice("page/New")).toBe(true);
+  expect(layer.cache["page/New"]).toBe("made there");
+});
+
+test("a notice of a delete takes the key out of the cache; an empty row stays, a registration", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/Gone", "old");
+  await layer.setEntry("2026-09-06/Ideas", "");
+  await mem.del("page/Gone");
+  expect(await layer.takeNotice("page/Gone")).toBe(true);
+  expect("page/Gone" in layer.cache).toBe(false);
+  expect(await layer.takeNotice("2026-09-06/Ideas")).toBe(false);
+  expect("2026-09-06/Ideas" in layer.cache).toBe(true);
+});
+
+test("a notice is skipped for a key whose own write has not landed: its text is the only copy", async () => {
+  let fail = true;
+  const { layer, mem } = fresh((m) => ({ ...m, set: (k, md) => fail ? Promise.reject(new Error("QuotaExceededError")) : m.set(k, md) }));
+  await layer.warm();
+  await layer.setEntry("page/A", "unsaved");
+  await mem.foreignSet("page/A", "theirs");
+  expect(await layer.takeNotice("page/A")).toBe(false);
+  expect(layer.cache["page/A"]).toBe("unsaved");
+  fail = false;
+});
+
+test("a notice waits for the key's queued ops, and is skipped when this tab wrote or removed the key meanwhile", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "one");
+  await mem.foreignSet("page/A", "theirs");
+  const taken = layer.takeNotice("page/A");
+  layer.setEntry("page/A", "mine, newer");
+  expect(await taken).toBe(false);
+  expect(layer.cache["page/A"]).toBe("mine, newer");
+  await layer.setEntry("page/B", "b");
+  const removed = layer.removeEntry("page/B");
+  expect(await layer.takeNotice("page/B")).toBe(false);
+  await removed;
+  expect("page/B" in layer.cache).toBe(false);
+});
+
+test("a notice the caller declines leaves the cache and the base: a save after it is refused", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "mine");
+  await mem.foreignSet("page/A", "theirs");
+  let offered: string | null | undefined;
+  expect(await layer.takeNotice("page/A", (md) => { offered = md; return false; })).toBe(false);
+  expect(offered).toBe("theirs");
+  expect(layer.cache["page/A"]).toBe("mine");
+  expect(await layer.setEntry("page/A", "mine, edited")).toBe(false);
+});
+
+test("a notice before the warm is taken once the warm lands", async () => {
+  const { layer, mem } = fresh();
+  const taken = layer.takeNotice("page/A");
+  await mem.foreignSet("page/A", "theirs");
+  await layer.warm();
+  expect(await taken).toBe(false);
+  expect(layer.cache["page/A"]).toBe("theirs");
 });

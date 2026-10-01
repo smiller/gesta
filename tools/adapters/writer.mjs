@@ -40,6 +40,8 @@ export async function seedMargin(page, seeds) {
   await page.evaluate(async (bodies) => { const G = window.gesta; for (const k of Object.keys(bodies)) await G.setEntry(k, G.mdToHtml(bodies[k])); G.reindex(); }, seeds);
 }
 const KEY = () => { const G = window.gesta, s = G.state(); return G.entryKey(s.date, s.tag); };
+/* another tab's write or delete, made in `page` through the current app's seam */
+export const foreignWrite = (page, key, md) => page.evaluate(async ([k, md]) => { const G = window.gesta; if (md === null) await G.removeEntry(k); else await G.setEntry(k, G.mdToHtml(md)); }, [key, md]);
 export const entry = (page) => page.evaluate(KEY);
 /* the key AND the paint: the current app sets its state before the body
    is painted, and a reader that ran between found an empty #page */

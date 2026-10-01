@@ -35,6 +35,8 @@ export const waitWarm = (page) => page.waitForFunction(() => document.documentEl
 /* the markdown the store holds, read straight from IndexedDB after the
    save's debounce */
 export const stored = async (page, which) => { await page.waitForTimeout(800); return page.evaluate((which) => new Promise((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction("entries").objectStore("entries").get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), which); };
+/* another tab's write or delete, made in `page` straight to the store and announced as a landing is */
+export const foreignWrite = (page, key, md) => page.evaluate(([k, md]) => new Promise((res, rej) => { const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const t = db.transaction("entries", "readwrite"); const st = t.objectStore("entries"); if (md === null) st.delete(k); else st.put({ key: k, md }); t.onerror = () => rej(t.error); t.oncomplete = () => { db.close(); new BroadcastChannel("gesta.v1.entries").postMessage(k); res(); }; }; }), [key, md]);
 export const act = {
   create: async (page) => { await page.keyboard.press("Control+Meta+n"); },
   createOnLeaf: async (page) => { await page.keyboard.press("Control+Meta+n"); await page.waitForTimeout(100); return null; },

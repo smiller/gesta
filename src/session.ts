@@ -24,6 +24,7 @@ import { surfaces, type Viewport } from "./editor/surface.ts";
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
+import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
 
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
@@ -49,6 +50,8 @@ export interface Session {
   readonly view: EditorView | null;
   open(date: string, tag: string | null, how?: OpenHow): void;
   openHash(): void;
+  /* another tab landed a write under ekey */
+  takeNotice(ekey: string): Promise<void>;
   saveNow(): Promise<boolean>;
   flushSave(): Promise<boolean>;
   refresh(): Promise<void>;
@@ -268,6 +271,20 @@ export function startSession(opts: SessionOptions): Session {
     if (h.hl) pending = { hl: h.hl, honor: false, gen: ++navGen };
     open(h.date, h.tag, "arrive");
   }
+  /* the entry on screen redrawn where it was, or left to its unsaved
+     typing, or said deleted (pin: tabNotice.test › the entry on screen)
+     (pin: bookmarks from another window › the page open in the first, saved in the second) */
+  function takeNotice(ekey: string): Promise<void> {
+    let verdict: ScreenNotice = "take";
+    return layer.takeNotice(ekey, (md) => {
+      const onScreen = !!surface.current && ekey === ekeyOf();
+      verdict = screenNotice(onScreen, !!saveTimer || currentMd() !== layer.entryMd(ekey), md);
+      return verdict === "take";
+    }).then((moved) => {
+      if (verdict === "deleted") opts.stick?.("deleted in another tab");
+      else if (moved && surface.current && ekey === ekeyOf()) open(current.date, current.tag);
+    });
+  }
   function saveNow(): Promise<boolean> {
     cancelSave();
     if (!surface.current || layer.storeReadFailed) return Promise.resolve(false);
@@ -367,7 +384,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return live(); },
-    open, openHash, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
+    open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },
     refreshFolds,

@@ -318,7 +318,7 @@ is in the plan's record, under the phase named):
   (the keyed-store adapter contract, the memory adapter, the entry store
   with its stale-write refusal, the image and backup-handle stores),
   `entries.ts` (the entry layer: the cache, the one write path, the per-key
-  chain, the warm — a factory over an injected store and notices),
+  chain, the warm, a landing announced to the other tabs and theirs taken — a factory over an injected store and notices),
   `files.ts` (the pick's file records, `oneEach` and `entryDocs`),
   `importFiles.ts` (the import over a file list: the sidecar refs, the
   parse gate, the tally), `pick.ts` (the walk over directory handles,
@@ -383,7 +383,8 @@ is in the plan's record, under the phase named):
   UI; no DOM, tested on the memory store), `overlays.ts` (one thing open at
   a time: each opening closes every other — the panel, search, Go to, the
   line bar, ⌃⌘L's lines — in an order Escape's caret hand-back depends
-  on, over closers main.ts hands it), `viewCarets.ts` (where the view
+  on, over closers main.ts hands it), `tabNotice.ts` (what another tab's landed write does to the entry on
+  screen: redrawn, left to unsaved typing, or said deleted), `viewCarets.ts` (where the view
   toggle puts you back: the count held per view, the alignment between
   the two streams), `Toolbar.svelte` (the floating format bar over a
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),

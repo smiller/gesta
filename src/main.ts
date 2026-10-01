@@ -144,7 +144,8 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
-const layer = entryLayer(idbEntryStore(), notices.entry);
+const tabs = typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
+const layer = entryLayer(idbEntryStore(), notices.entry, { announce: (ekey) => tabs?.postMessage(ekey) });
 const images = idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
@@ -203,6 +204,7 @@ if (fixture && fixtures[fixture]) {
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
+  if (tabs) tabs.onmessage = (e: MessageEvent) => { if (typeof e.data === "string") session.takeNotice(e.data).then(() => { refreshMasthead(); count(); }); };
   /* leaving the tab with a backup still pending writes it at once, after the
      entry's own flush, registered first so it runs first */
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
