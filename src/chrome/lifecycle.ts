@@ -51,6 +51,13 @@ export function coldRefusal(layer: Pick<EntryLayer, "warmed" | "storeReadFailed"
   return layer.storeReadFailed ? "couldn’t load entries — reload first" : "still loading — try that again in a moment";
 }
 
+/* says the refusal and answers whether it refused (pin: lifecycle.test › says loading while the warm runs) */
+export function refuseCold(layer: Pick<EntryLayer, "warmed" | "storeReadFailed">, say: (text: string, ms?: number) => void): boolean {
+  const why = coldRefusal(layer);
+  if (why) say(why, 2500);
+  return !!why;
+}
+
 export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const { layer, journal, session, dialogs, chrome } = deps;
   const done = Promise.resolve();
@@ -62,11 +69,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      appended at the end; a caret with nowhere to land refuses before
      anything is minted (pin: lifecycle.test › refuses every operation)
      (pin: lifecycle.test › refuses with no editor) */
-  const cold = (): boolean => {
-    const why = coldRefusal(layer);
-    if (why) chrome.say(why, 2500);
-    return !!why;
-  };
+  const cold = (): boolean => refuseCold(layer, chrome.say);
   const keysNow = (): string[] => Object.keys(layer.cache);
   const shownName = (date: string, tag: string): string => {
     const ns = nsOf(date), pp = pageParts(tag);
@@ -86,7 +89,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (cold()) return done;
     const c = session.current;
     const ns = nsOf(c.date);
-    /* the one leaf: the button is hidden there, but ⌃⌘N is a press */
+    /* the one leaf: a day's tagged entry hosts nothing, and ⌃⌘N reaches it all the same */
     if (!ns && c.tag) { chrome.say("a tagged entry holds no entries of its own", 2500); return done; }
     const typed = typedName(dialogs.prompt(newName(ns)));
     if (!typed) return done;
@@ -162,7 +165,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     renaming = true;
     return session.flushSave().then(() => {
       if (session.current.date !== date || session.current.tag !== old) return;
-      session.suspendSaves();   /* nothing lands under the old key from here; open(new) lifts it */
+      session.suspendSaves();   /* nothing lands under the old key from here on */
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
       const sweptKeys = ns ? blankSubTree(keysNow(), oldKey) : [];
       const sweep = sweptKeys.map((k) => layer.removeEntry(k));
@@ -192,8 +195,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const sweptKeys = ns ? blankSubTree(keysNow(), key) : [];
     const sweep = sweptKeys.map((k) => layer.removeEntry(k));
     const back = deleteLanding(date, tag);
-    /* the landing FIRST: opening another entry cancels the pending save
-       that would otherwise resurrect this one
+    /* the landing FIRST, the remove after: a save still owed to the deleted
+       entry, landing after its remove, resurrected it
        (pin: lifecycle.test › opens the landing and drops the places BEFORE removing) */
     chrome.replaceHash(entryHash(back.date, back.tag));
     session.open(back.date, back.tag, "arrive");
@@ -209,24 +212,27 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
 
   /* create a namespace ROOT: prompt → the naming rule → register → go. An
      existing name just opens; a new one is stored with an empty body at
-     once so the list holds it while it is empty — and in the bookshelf,
-     whose unknown keys are refused, that registration is what lets the
-     address open at all. The echo is the LABEL, where the key is what was
-     typed (pin: lifecycle.test › goes to a name already there). A name
-     typed as the dropdown SHOWS a root — a bookshelf author keyed "Last,
-     First" and shown by its heading — is that root: matched by key alone,
-     it registered an empty twin (pin: lifecycle.test › goes to the author whose label was typed) */
+     once so the list holds it while it is empty, and the address opens. The
+     echo is the LABEL, where the key is what was typed (pin: lifecycle.test ›
+     goes to a name already there). A name typed as the dropdown SHOWS a
+     root — a bookshelf author keyed "Last, First" and shown by its heading —
+     is that root, matched as typed and as the naming rule rewrote it:
+     matched by key alone, it registered an empty twin (pin: lifecycle.test ›
+     goes to the author whose label was typed) (pin: lifecycle.test › matches
+     the label as typed) */
   function newRoot(ns: string): Promise<void> {
     const noun = KEYED_NS[ns].noun;
-    const typed = typedName(dialogs.prompt("Name for the new " + noun + ":"));
+    const raw = dialogs.prompt("Name for the new " + noun + ":");
+    const typed = typedName(raw);
     if (!typed) return done;
     if ("refuse" in typed) { chrome.say(typed.refuse); return done; }
     const name = typed.name;
+    const asTyped = [(raw || "").trim().toLowerCase(), name.toLowerCase()];
     const go = (root: string): void => session.goto(entryHash(ns, root), "already on " + trimLabel(rootLabel(ns, root, journal), ECHO_CAP));
     if (cold()) return done;   /* a name checked against one primed row could store an empty body over a real one */
     if (registered(keysNow(), ns, name)) { go(name); return done; }
-    const shown = childrenOf(keysNow(), ns).find((root) => rootLabel(ns, root, journal).toLowerCase() === name.toLowerCase());
-    if (shown !== undefined) { go(shown); return done; }
+    const labelled = childrenOf(keysNow(), ns).find((root) => asTyped.includes(rootLabel(ns, root, journal).toLowerCase()));
+    if (labelled !== undefined) { go(labelled); return done; }
     return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(name); });
   }
 

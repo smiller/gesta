@@ -125,6 +125,42 @@ them, one dated section per batch.
   11 written but unbuilt; 13 re-armed the gate, so both are looked at
   before the one review.
 
+## The review — one /code-review at high, 5a0e8dc..44db87e (2026-09-30)
+
+COST 92,368 tokens (MEASURED: the final message's input 2 + cache
+creation 2,119 + cache read 87,750 + output 2,497, from the transcript).
+Nine findings, all checked against the code; five fixed in one commit,
+four declined:
+
+1. FIXED: the label match compared the label against the name AFTER the
+   naming rule rewrote it — `pageName` turns ": " into " — " and strips a
+   trailing dot (READ, names.ts) — so "Gerard Manley Hopkins, S.J." or
+   "Anonymous: Pearl" typed as shown still made a twin. It now matches the
+   text as typed or as rewritten; a test of both, red first (MEASURED).
+2. DECLINED here, put to the reader: create goes to the new entry whether
+   or not its registration landed, its link already saved into the host —
+   the oddity kept and pinned in round 3, which the review calls a bug: on
+   a reload after a failed write the link is dead.
+3. DECLINED: a failed extract leaves the cut in the cache. That is the
+   entry layer's model for every write that sticks (written to the cache
+   at once, the failure pinned and keyed), not this module's.
+4. DECLINED: rename's taken check by key alone. A bookshelf author is
+   shown by its heading, which a rename leaves alone, and a page's label
+   is its key, so the key check already covers what the list shows.
+5. DECLINED: two roots sharing a heading, the first in key order wins.
+   Rare, and the shown name is ambiguous to the reader as well.
+6. FIXED: four moved comments told another module's mechanism — the
+   button hidden, `open` lifting the suspension, opening cancelling a
+   pending save, unknown keys refused — reworded to this module's own
+   rules or dropped.
+7. FIXED: main.ts's `warmBlock` repeated the module's cold refusal; both
+   now call `refuseCold(layer, say)`, exported and tested.
+8. FIXED: `const shown` in `newRoot` shadowed the module's `shown`;
+   renamed `labelled`.
+9. FIXED: the prompt adapter's branch on an absent value — the dialog's
+   default fills it either way.
+
+
 ## Later
 
 - OPEN QUESTION (the reader, 2026-09-30, on the look: surprised twice, at

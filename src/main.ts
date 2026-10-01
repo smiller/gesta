@@ -27,7 +27,7 @@ import { noticeLedger, type Progress } from "./chrome/notices.svelte.ts";
 import { copyText } from "./chrome/clipboard.ts";
 import { screenState, EMPTY_MASTHEAD } from "./chrome/screen.svelte.ts";
 import { mastheadModel, panelRows, trimLabel, ECHO_CAP } from "./chrome/mastheadModel.ts";
-import { lifecycle, coldRefusal } from "./chrome/lifecycle.ts";
+import { lifecycle, refuseCold } from "./chrome/lifecycle.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./chrome/searchModel.ts";
 import { searchIndex } from "./store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
@@ -766,16 +766,12 @@ if (fixture && fixtures[fixture]) {
     view.focus();
     placeBar();
   };
-  const warmBlock = (): boolean => {
-    const why = coldRefusal(layer);
-    if (why) say(why, 2500);
-    return !!why;
-  };
+  const warmBlock = (): boolean => refuseCold(layer, say);
   const keysNow = (): string[] => Object.keys(layer.cache);
   const life = lifecycle({
     layer, journal, session,
     view: () => session.view,
-    dialogs: { prompt: (text, value) => value === undefined ? prompt(text) : prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
+    dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
     chrome: { say, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.view?.focus() },
   });
   acts.create = () => { life.create(); };

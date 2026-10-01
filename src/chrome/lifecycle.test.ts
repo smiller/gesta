@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
-import { lifecycle, coldRefusal } from "./lifecycle.ts";
+import { lifecycle, coldRefusal, refuseCold } from "./lifecycle.ts";
 import { entryLayer } from "../store/entries.ts";
 import { memEntryStore, type EntryStore } from "../store/store.ts";
 import { journalOf } from "../store/headings.ts";
@@ -113,6 +113,10 @@ describe("the cold cache", () => {
     expect(coldRefusal(cold.layer)).toBe(LOADING);
     const failed = await world({ at: ["page", "A"], warm: "failed" });
     expect(coldRefusal(failed.layer)).toBe("couldn’t load entries — reload first");
+    const said: string[] = [];
+    expect(refuseCold(failed.layer, (t) => { said.push(t); })).toBe(true);
+    expect(refuseCold((await world({ at: ["page", "A"] })).layer, (t) => { said.push(t); })).toBe(false);
+    expect(said).toEqual(["couldn’t load entries — reload first"]);
     const warm = await world({ at: ["page", "A"] });
     expect(coldRefusal(warm.layer)).toBeNull();
   });
@@ -324,6 +328,13 @@ describe("a new root named as the dropdown shows an existing one", () => {
     await w.life.newRoot("bookshelf");
     expect(w.log).toEqual(Array(2).fill("goto #bookshelf/Donne%2C%20John | already on John Donne"));
     expect(w.md("bookshelf/John Donne")).toBeNull();
+  });
+  it("matches the label as typed, before the naming rule rewrites a trailing dot or a colon", async () => {
+    const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Hopkins, Gerard Manley": "# Gerard Manley Hopkins, S.J.\n", "bookshelf/Pearl Poet": "# Anonymous: Pearl\n" } });
+    w.answer("Gerard Manley Hopkins, S.J.", "Anonymous: Pearl");
+    await w.life.newRoot("bookshelf");
+    await w.life.newRoot("bookshelf");
+    expect(w.log).toEqual(["goto #bookshelf/Hopkins%2C%20Gerard%20Manley | already on Gerard Manley Hopkins, …", "goto #bookshelf/Pearl%20Poet | already on Anonymous: Pearl"]);
   });
   it("still registers a name no root carries as key or label", async () => {
     const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Donne, John": "# John Donne\n" } });
