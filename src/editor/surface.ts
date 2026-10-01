@@ -2,7 +2,7 @@ import type { Node } from "prosemirror-model";
 import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
-import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../chrome/viewCarets.ts";
+import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
 
 export interface Surface {
   /* the source stream holds every fence line the rendered one lacks: a count

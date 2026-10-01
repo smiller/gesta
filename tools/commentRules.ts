@@ -256,15 +256,15 @@ const ROLES: [RegExp, string[]][] = [
   [/\bthe schema['’]s\b/, ["src/model/schema"]],
   [/\bthe layer['’]s\b/, ["src/store/entries"]],
   [/\bthe warm['’]s\b/, ["src/store/entries"]],
-  [/\bthe ledger['’]s\b/, ["src/chrome/notices"]],
+  [/\bthe ledger['’]s\b/, ["src/ui/notices"]],
   [/\bthe gutter['’]s\b/, ["src/editor/linenumbers"]],
-  [/\bthe masthead['’]s\b/, ["src/chrome/masthead", "src/chrome/mastheadmodel"]],
+  [/\bthe masthead['’]s\b/, ["src/ui/masthead", "src/ui/mastheadmodel"]],
   [/\bthe landing['’]s\b/, ["src/editor/landing"]],
-  [/\bthe clipboard['’]s\b/, ["src/chrome/clipboard"]],
+  [/\bthe clipboard['’]s\b/, ["src/ui/clipboard"]],
   [/\bthe source['’]s\b/, ["src/editor/sourceview"]],
   [/\bthe surface['’]s\b/, ["src/editor/surface"]],
   [/\bthe keeper['’]s\b/, ["src/editor/placekeeper"]],
-  [/\bthe chrome['’]s\b/, ["src/chrome/"]],
+  [/\bthe chrome['’]s\b/, ["src/ui/"]],
 ];
 /* an owner ending in a slash is a directory: every file under it owns the noun */
 const owns = (owner: string, own: string): boolean => owner.endsWith("/") ? own.startsWith(owner) : own === owner;

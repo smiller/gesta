@@ -15,7 +15,7 @@ import { lineUnits, blocksOf, paintsLines, blockUnits, type Unit } from "./numbe
 import { hasFolios } from "./folios.ts";
 import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
-import { trimLabel, ECHO_CAP } from "../chrome/mastheadModel.ts";
+import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 
 export type AskKind = "none" | "line" | "page" | "both";
 const prose = (block: Unit[]): boolean => block[0].kind === "sentence";

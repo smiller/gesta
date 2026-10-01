@@ -175,7 +175,7 @@ const QUIET: { file: string; raw: string }[] = [
   { file: "src/session.ts", raw: `      /* the noun for what is MISSING: when the root is gone every segment
          under it reads unregistered too, so the depth asked for would call a
          vanished author a book (pin: bridge › an unknown book under a known author) */` },
-  { file: "src/chrome/clipboard.ts", raw: "    catch { /* refused: ok stays false */ }" },
+  { file: "src/ui/clipboard.ts", raw: "    catch { /* refused: ok stays false */ }" },
   { file: "src/editor/typing.test.ts", raw: '  expect(() => run(typingBindings.Enter, type(state(), "see https://x.test/p"))).toThrow();   /* fenceEnter alone now */' },
 ];
 
@@ -197,8 +197,8 @@ describe("another module named", () => {
   });
   test("a directory's role noun is every file's under it, and names it from outside", () => {
     const raw = "/* the chrome's pill follows */";
-    expect(named("src/chrome/mastheadModel.ts", raw)).toEqual([]);
-    expect(named("src/chrome/notices.svelte.ts", raw)).toEqual([]);
+    expect(named("src/ui/mastheadModel.ts", raw)).toEqual([]);
+    expect(named("src/ui/notices.svelte.ts", raw)).toEqual([]);
     expect(named("src/editor/surface.ts", raw)).toEqual(["the chrome's"]);
   });
   test("a name its own file declares, however deep, is its own", () => {

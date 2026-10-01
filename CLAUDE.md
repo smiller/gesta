@@ -327,7 +327,8 @@ is in the plan's record, under the phase named):
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
   them, ported from the current app's node suites where they had one.
-- `src/chrome/` — the chrome, Svelte 5: `notices.svelte.ts` (the notice
+- `src/ui/` — the UI chrome, Svelte 5 (`src/chrome/` until 2026-09-30,
+  renamed because the word read as the browser): `notices.svelte.ts` (the notice
   ledger: the whisper, the pin, the progress line, the deferred one-shot,
   the keyed save-failure family and the pill's text — a factory over the
   clipboard writer, its state a rune), `Corner.svelte` (the indicator and
@@ -365,7 +366,7 @@ is in the plan's record, under the phase named):
   one hover copy button over a block), `richCopy.ts` (the HTML flavour:
   the staged passage, over `editor/inlineStyles.ts`, the inline-style
   sweep over a live twin that ⌘C and the hover copy share),
-  `Masthead.svelte` (the sticky bar drawing it), `chrome.css` (the bar's
+  `Masthead.svelte` (the sticky bar drawing it), `ui.css` (the bar's
   tokens, global). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
   component never shares a stem with a module (the disk is

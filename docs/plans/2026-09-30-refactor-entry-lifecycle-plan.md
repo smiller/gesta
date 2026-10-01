@@ -194,10 +194,11 @@ four declined:
   row, the extract's label, the relabel, Go to's and search's names, and
   the seven journal tagged entries that open with `##`. Kept as is for
   ff1daea and its fix.
-- `src/chrome/` renamed `src/ui/`, the word read as the browser's
-  (the reader, 2026-09-30: "leave it for now, I'll come back to it"). A
-  mechanical commit of its own: the imports, CLAUDE.md, the checker's
-  "the chrome's" role.
+- DONE 2026-09-30, the reader's word: `src/chrome/` renamed `src/ui/`,
+  and `chrome.css` `ui.css`, a commit of its own — the imports in four
+  files, the checker's owner paths (the role noun "the chrome's" kept,
+  the word still naming the UI in prose), CLAUDE.md. The `ChromePort`
+  and `chrome` names inside the code left as they are.
 
 ## Decided (the reader, 2026-09-30, grilling round 3)
 
