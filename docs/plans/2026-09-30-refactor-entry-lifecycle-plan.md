@@ -172,6 +172,17 @@ four declined:
     standing and says the link was not placed. The link now appears a
     moment after the prompt, not at once. Its own commit, test first.
 
+- 15 committed as 7b022a2: three tests red first, then green; the suite
+  669, Helium 0 open (MEASURED). Looked at and accepted by the reader the
+  same day (accept.sh, f7be1b76b759…): the link stands on the parent
+  after the caret. CANDIDATE 3 CLOSED.
+- A FLAKE, recorded: the pre-commit of this docs-only change failed in
+  Helium's "reference copy" section — ⌃⌘R's clipboard wait timed out at
+  5 s — with src/ unchanged since 7b022a2 passed; the next two runs
+  passed (MEASURED: 1 failure in 3 runs). The headless run and the
+  reader's live Helium share the system clipboard, a likely cause, not
+  tested (INFERRED). Watched for: a second occurrence is a fix owed.
+
 ## Later
 
 - OPEN QUESTION (the reader, 2026-09-30, on the look: surprised twice, at
