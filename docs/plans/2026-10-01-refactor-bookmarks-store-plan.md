@@ -280,5 +280,8 @@ in Helium can pass one (not yet measured).
   the second fired a `storage` event in the first. A scratch page with a
   "Send a message" button played the same: the other window's box showed
   both, the sender's nothing (MEASURED).
-- In the reader's own Helium: handed over as the scratch page, not yet
-  answered.
+- In the reader's own Helium, the scratch page in two windows: the
+  first window's box read "Received by channel: hello 1 from window VWWU"
+  and "Received by storage: hello 1 from window VWWU", the sender's
+  "Nothing received yet." (the reader's sighting, 2026-10-01). Both ways
+  carry a notice between real file:// windows.
