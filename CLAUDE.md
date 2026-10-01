@@ -46,6 +46,12 @@ here NOW, and what is not yet:
     checker verifies every pin resolves (below).
   - No module header where the layout below says what the file is; an
     interface member's comment only where its name and type cannot say it.
+  - A comment MOVED with its code into another module is re-read against
+    this standard before the commit: what was the module's own mechanism
+    where it stood may be another module's where it lands. Adopted
+    2026-10-01 as the remedy for the count below — the plain-English
+    other-module class in all five rounds, most of it in comments moved
+    whole (the comment-standard plan's verdict).
   - The standing stock was audited against it directory by directory on
     2026-09-28 (the plan's record); the checker's sweep reads 0 blocks
     naming another module and 0 carrying provenance, and a new comment
@@ -94,10 +100,11 @@ here NOW, and what is not yet:
   run that returns in the foreground reports none, and it is read from
   the session's `subagents/agent-*.jsonl` transcript (the last message's
   input + cache_creation + cache_read + output tokens), never estimated.
-  UNTIL FIVE ROUNDS ARE COUNTED (from 2026-09-29), each review's findings
-  about comments are also counted by class into the table "Was it worth
-  it — the measure owed" in docs/plans/2026-09-28-chore-comment-standard-
-  plan.md: the measure of whether the comment checker and audit paid.
+  FIVE ROUNDS WERE COUNTED (2026-09-29 → 2026-10-01): each review's
+  comment findings by class, in the table "Was it worth it — the measure
+  owed" in docs/plans/2026-09-28-chore-comment-standard-plan.md, with its
+  verdict and the remedy chosen (the moved-comment re-read, above); the
+  count is no longer owed.
   No cheap reviewer tier: in the running app it cost 750k–985k tokens a
   round against 101k–154k for the medium pass, which found more
   (MEASURED there 2026-09-01). A

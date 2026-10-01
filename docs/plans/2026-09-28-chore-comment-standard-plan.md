@@ -617,3 +617,10 @@ and every one was found by a review asked nothing special about it.
 So by its own rule the plain-English blind spot dominates; what the rule
 prescribes — a line of its own for the class in the review's prompt — is
 put to the reader, not done.
+
+DECIDED (the reader, 2026-10-01): not the prompt line — the reviews
+found all ten unprompted — but a step at the source: a comment moved with
+its code into another module is re-read against the standard before the
+commit (4 of round 4's 4, and some of rounds 3 and 5, were moved whole;
+READ, the rounds' records). In CLAUDE.md's comment standard. The count
+is closed.

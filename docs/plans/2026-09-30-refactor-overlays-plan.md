@@ -125,3 +125,15 @@ Eight findings, all checked against the code, all fixed in one commit:
 
 Finding 1 changed behaviour, so a confirmation pass is owed at about the
 review's price; put to the reader.
+
+## Decided (the reader, 2026-10-01, after the review)
+
+- NO CONFIRMATION PASS. Finding 1 checked instead: by a scratch probe in
+  headless Helium (Horace, ⌃⌘G 30, Enter, ⌃⌘J, a click back into the
+  line box, Escape) — the caret on line 30 at HEAD, on the title at
+  9a99502, the window at line 30 in both (MEASURED); and by hand in
+  Helium (Purgatorio 19, line 41), after a first try that failed on MY
+  instructions, which left out the Enter that lands the line.
+- The comment count's remedy chosen: the moved-comment re-read (the
+  comment-standard plan's verdict). CANDIDATE 4 CLOSED; the blanks above
+  stay open questions.
