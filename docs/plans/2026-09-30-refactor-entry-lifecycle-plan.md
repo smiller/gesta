@@ -112,6 +112,19 @@ them, one dated section per batch.
     LABEL too, case aside, and goes there on a match; no "First Last" ↔
     "Last, First" guessing.
 
+## The look's two fixes (2026-09-30)
+
+- 11 committed as c5d3d31: `format.test › cutMd: a whole heading
+  selected alone` run red first with the look's own failure (MEASURED:
+  "Testing with a heading 3" without its `#`), then green; the suite 665;
+  Helium 0 open (MEASURED).
+- 13: two tests in `lifecycle.test` — the Donne case red first (MEASURED),
+  the name no root carries green before and after (it pins what must not
+  change); then green; the suite 667, tsc clean, the checker passes
+  (MEASURED). The reader's accept (c66fec7a93b7…) recorded the tree with
+  11 written but unbuilt; 13 re-armed the gate, so both are looked at
+  before the one review.
+
 ## Later
 
 - OPEN QUESTION (the reader, 2026-09-30, on the look: surprised twice, at

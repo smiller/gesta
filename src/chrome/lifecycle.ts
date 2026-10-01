@@ -212,17 +212,22 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      once so the list holds it while it is empty — and in the bookshelf,
      whose unknown keys are refused, that registration is what lets the
      address open at all. The echo is the LABEL, where the key is what was
-     typed (pin: lifecycle.test › goes to a name already there) */
+     typed (pin: lifecycle.test › goes to a name already there). A name
+     typed as the dropdown SHOWS a root — a bookshelf author keyed "Last,
+     First" and shown by its heading — is that root: matched by key alone,
+     it registered an empty twin (pin: lifecycle.test › goes to the author whose label was typed) */
   function newRoot(ns: string): Promise<void> {
     const noun = KEYED_NS[ns].noun;
     const typed = typedName(dialogs.prompt("Name for the new " + noun + ":"));
     if (!typed) return done;
     if ("refuse" in typed) { chrome.say(typed.refuse); return done; }
     const name = typed.name;
-    const go = (): void => session.goto(entryHash(ns, name), "already on " + trimLabel(rootLabel(ns, name, journal), ECHO_CAP));
+    const go = (root: string): void => session.goto(entryHash(ns, root), "already on " + trimLabel(rootLabel(ns, root, journal), ECHO_CAP));
     if (cold()) return done;   /* a name checked against one primed row could store an empty body over a real one */
-    if (registered(keysNow(), ns, name)) { go(); return done; }
-    return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(); });
+    if (registered(keysNow(), ns, name)) { go(name); return done; }
+    const shown = childrenOf(keysNow(), ns).find((root) => rootLabel(ns, root, journal).toLowerCase() === name.toLowerCase());
+    if (shown !== undefined) { go(shown); return done; }
+    return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(name); });
   }
 
   /* the parent's index link reads as a sub-page's TITLE: when a landed

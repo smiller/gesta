@@ -316,6 +316,23 @@ describe("a new root", () => {
   });
 });
 
+describe("a new root named as the dropdown shows an existing one", () => {
+  it("goes to the author whose label was typed, case aside, writing nothing", async () => {
+    const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Donne, John": "# John Donne\n" } });
+    w.answer("John Donne", "john donne");
+    await w.life.newRoot("bookshelf");
+    await w.life.newRoot("bookshelf");
+    expect(w.log).toEqual(Array(2).fill("goto #bookshelf/Donne%2C%20John | already on John Donne"));
+    expect(w.md("bookshelf/John Donne")).toBeNull();
+  });
+  it("still registers a name no root carries as key or label", async () => {
+    const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Donne, John": "# John Donne\n" } });
+    w.answer("Ann Donne");
+    await w.life.newRoot("bookshelf");
+    expect(w.log).toEqual(["set bookshelf/Ann Donne", "goto #bookshelf/Ann%20Donne | already on Ann Donne"]);
+  });
+});
+
 describe("the parent's links follow a sub-page's heading", () => {
   it("remembers the heading at first sight, and relabels the parent's minted link when it changes", async () => {
     const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "# Bee\n" } });
