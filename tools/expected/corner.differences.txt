@@ -110,3 +110,4 @@ A over the list repaired · * · the same: the current app's latch still refuses
 A in a second window · card · the list the second window adds to differs by the step before: the current app's latch refused Horace's add over the repaired list
 ⌃⌘B back in the first · * · ⌃⌘B re-reads the list at every open here, so a row added in another window shows, and the sweep keeps it while the shared store holds its page (asked 2026-10-01, the bookmarks-store plan); the current app shows the list it read at launch
 × on its first row · * · the same: the current app's × writes the list it read at launch, dropping the other window's row
+its row's page typed into from the first · * · the current app's first window shows no row for the other window's page (its ⌃⌘B keeps the list it read at launch), so the click finds nothing and it stays on the day; the successor opens the page and refuses the write over the other window's text

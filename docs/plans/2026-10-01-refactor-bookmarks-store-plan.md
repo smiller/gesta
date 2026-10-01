@@ -95,3 +95,46 @@ draft rule is screen state, so the deletion test fails there.
 - The successor's first window kept the made page's row and stored it
   after its × (MEASURED); the current app's dropped it, writing `[]`
   (MEASURED).
+
+### 2026-10-01 — the review at high over b3bfd91^..095ecd0
+
+One `/code-review` at high, after the look and the accept. COST 88,959
+tokens (MEASURED: the run's last message, input 2 + cache creation 1,509
++ cache read 85,140 + output 2,308, from its subagent transcript). Eight
+findings, unverified by the run, each read against the code here:
+
+1. FIXED, DATA LOSS, introduced by 095ecd0: the sweep's store read went
+   through `entryStore.all()`, which bases every row it returns; a page
+   another window made after this one's warm, based at "" until then
+   (a blank write from here refused), was based at its stored text, and a
+   write from here over it landed. MEASURED on 095ecd0 in the
+   two-window step extended to open the row's page from the first window
+   and type: the stored text became "typed in the first". Fixed with
+   `keys()` on the keyed store (Dexie's primary keys), the entry store
+   (no ledger touch) and the layer (`storedKeys`); the sweep reads that.
+   MEASURED after: the write refused, "not saved — changed in another
+   tab, copy your text then reload", the other window's text kept.
+2. FIXED: the keys were a snapshot at the open; a page made and
+   bookmarked during the store read could be dropped. `open` takes the
+   keys as a function, asked again after the read.
+3. FIXED with 1: the full read carried every entry's text to take keys.
+4. NOT TAKEN, PUT TO THE READER: every other reader of this window's keys
+   (Go to, search, the walk, the open of an address) is blind to entries
+   another window made since the warm — the general gap the two-window
+   step found (decision 5's record). Opening such a page from here shows
+   it blank and refuses the write, as measured in 1.
+5. FIXED with 1: main.ts no longer holds the raw entry store.
+6. FIXED: a late render after the sweep clears the key editor when its
+   row was dropped, rather than leave the edit pointing at nothing.
+7. FIXED: a test for a sweep that reads the store and drops nothing.
+8. NOT TAKEN: `bookmarkParts` is one more spelling of the key split six
+   other modules re-spell; folding them into `keys.ts` is its own
+   refactor, not this batch's.
+
+No mechanical class among them, so no checker is owed.
+
+- A FLAKE, the second: the first full Helium run of this fix failed in
+  "reference copy" — ⌃⌘R's clipboard wait timed out at 5 s — and the
+  re-run passed (MEASURED). The first was 2026-09-30
+  (`2026-09-30-refactor-entry-lifecycle-plan.md`, 1 in 3 runs); by that
+  record a fix is now owed. Not in this commit.

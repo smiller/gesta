@@ -27,6 +27,7 @@ export interface KeyedStore<R extends object> {
   put(record: R): Promise<void>;
   del(key: string): Promise<void>;
   all(): Promise<R[]>;
+  keys(): Promise<string[]>;
   update(key: string, decide: Decide<R>): Promise<Verdict<R> | null>;
   clear(): Promise<void>;
 }
@@ -62,6 +63,7 @@ export function memKeyedStore<R extends object>(keyField: keyof R & string): Key
        here and order differently live (pin: store.test › all() is
        ascending-key copies) */
     all: () => Promise.resolve(Object.keys(rows).sort().map((k) => ({ ...rows[k] }))),
+    keys: () => Promise.resolve(Object.keys(rows).sort()),
     update: (key, decide) => {
       let verdict: Verdict<R> | null;
       try {
@@ -89,6 +91,7 @@ export function dexieKeyedStore<R extends object>(dbName: string, storeName: str
     put: (record) => table.put(record).then(() => {}),
     del: (key) => table.delete(key),
     all: () => table.toArray(),
+    keys: () => table.toCollection().primaryKeys(),
     update: (key, decide) => db.transaction("rw", table, async () => {
       const verdict = decide((await table.get(key)) ?? null);
       if (verdict && verdict.put) await table.put(verdict.put);
@@ -177,6 +180,7 @@ export interface EntryStore {
   set(key: string, md: string): Promise<void>;
   del(key: string): Promise<void>;
   all(): Promise<EntryRow[]>;
+  keys(): Promise<string[]>;
   clear(): Promise<void>;
 }
 export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
@@ -217,6 +221,10 @@ export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
       bases.sawAll();
       return rows;
     }),
+    /* the keys alone BASE NOTHING: a key another tab filled after the whole
+       read stays based at "", so a blank write from here over it is still
+       refused (pin: store.test › keys() bases nothing) */
+    keys: () => store.keys(),
     /* a store emptied is KNOWN empty: every key based at "", or the old bases
        would refuse the first write after (pin: store.test › clear empties the
        store and the ledger) */

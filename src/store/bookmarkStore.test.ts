@@ -75,7 +75,7 @@ describe("the latch", () => {
   it("the open over a list still damaged keeps the latch", () => {
     const w = world("not json");
     const s = w.store();
-    s.open(["page/C"]);
+    s.open(() => ["page/C"]);
     expect(s.unreadable()).toBe(true);
     expect(w.box[KEY]).toBe("not json");
     expect(w.pins).toEqual([]);
@@ -131,7 +131,7 @@ describe("the sweep at the open", () => {
     const s = w.store();
     expect(await s.open(null)).toBe(false);
     expect(s.list().length).toBe(3);
-    expect(await s.open(["page/Here"])).toBe(true);
+    expect(await s.open(() => ["page/Here"])).toBe(true);
     expect(s.list()).toEqual([row("2020-01-01"), row("page/Here")]);
     expect(JSON.parse(w.box[KEY])).toEqual(["2020-01-01", "page/Here"]);
   });
@@ -140,7 +140,7 @@ describe("the sweep at the open", () => {
     const s = w.store();
     w.box[KEY] = '["page/Here", "page/X/Y"]';
     w.held.keys = ["page/Here", "page/X", "page/X/Y"];
-    expect(await s.open(["page/Here"])).toBe(false);
+    expect(await s.open(() => ["page/Here"])).toBe(false);
     expect(s.list()).toEqual([row("page/Here"), row("page/X/Y")]);
     expect(JSON.parse(w.box[KEY])).toEqual(["page/Here", "page/X/Y"]);
   });
@@ -148,23 +148,34 @@ describe("the sweep at the open", () => {
     const w = world('["page/Gone"]');
     const s = w.store();
     w.held.unreadable = true;
-    expect(await s.open([])).toBe(false);
+    expect(await s.open(() => [])).toBe(false);
     expect(s.list()).toEqual([row("page/Gone")]);
     expect(w.box[KEY]).toBe('["page/Gone"]');
   });
-  it("the drop is judged on the list as it stands when the store answers: a row added meanwhile is kept", async () => {
+  it("the drop is judged on the list and the keys as they stand when the store answers: a page made and bookmarked meanwhile is kept", async () => {
     const w = world('["page/Gone"]');
     const s = w.store();
-    const swept = s.open(["page/New"]);
+    const cache: string[] = [];
+    const swept = s.open(() => cache);
+    cache.push("page/New");
     s.write([row("page/Gone"), row("page/New")]);
     expect(await swept).toBe(true);
     expect(s.list()).toEqual([row("page/New")]);
+  });
+  it("a sweep that reads the store and drops nothing writes nothing", async () => {
+    const w = world('["page/X/Y"]');
+    const s = w.store();
+    w.held.keys = ["page/X/Y"];
+    w.fill(true);
+    expect(await s.open(() => [])).toBe(false);
+    expect(w.held.reads).toBe(1);
+    expect(w.pins).toEqual([]);
   });
   it("the shared store is not read when every row leads somewhere, and a sweep that drops nothing writes nothing", async () => {
     const w = world('["page/Here"]');
     const s = w.store();
     w.fill(true);
-    expect(await s.open(["page/Here"])).toBe(false);
+    expect(await s.open(() => ["page/Here"])).toBe(false);
     expect(w.held.reads).toBe(0);
     expect(w.pins).toEqual([]);
   });

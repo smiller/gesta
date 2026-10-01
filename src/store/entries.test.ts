@@ -185,3 +185,11 @@ test("primeEntry loses the race to warm: the warm value stays, and the caller he
   expect(await p).toBe(false);
   expect(layer.cache["2026-01-01"]).toBe("warm won");
 });
+
+test("storedKeys reads the store's keys, the cache untouched", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await mem.foreignSet("page/Elsewhere", "theirs");
+  expect(await layer.storedKeys()).toEqual(["page/Elsewhere"]);
+  expect("page/Elsewhere" in layer.cache).toBe(false);
+});

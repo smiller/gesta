@@ -17,7 +17,7 @@ export interface BookmarkStore {
   unreadable(): boolean;
   write(list: Bookmark[]): boolean;
   /* null keys: the journal not yet warm; resolves whether the sweep wrote */
-  open(keys: string[] | null): Promise<boolean>;
+  open(keys: (() => string[]) | null): Promise<boolean>;
 }
 
 /* ONE localStorage key, device-local: an accepted loss, the list being small
@@ -65,7 +65,7 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
       /* an absence and a deletion read the same before the warm, and only
          a deletion should cost rows
          (pin: bookmarkStore.test › rows that lead nowhere are dropped) */
-      if (!keys || reachableBookmarks(list, keys).length === list.length) return false;
+      if (!keys || reachableBookmarks(list, keys()).length === list.length) return false;
       /* this window's keys miss an entry another window made since it
          warmed: a row is dropped only when the shared store lacks it too,
          and kept when the store cannot be read
@@ -73,7 +73,9 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
          (pin: bookmarkStore.test › a shared store that cannot be read drops nothing) */
       let stored: string[];
       try { stored = await opts.storedKeys(); } catch { return false; }
-      const live = reachableBookmarks(list, keys.concat(stored));
+      /* the keys asked again: a page made and bookmarked during the read
+         (pin: bookmarkStore.test › the drop is judged on the list and the keys as they stand) */
+      const live = reachableBookmarks(list, keys().concat(stored));
       return live.length !== list.length && write(live);
     },
   };

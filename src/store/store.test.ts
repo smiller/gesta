@@ -57,6 +57,13 @@ test("all() is ascending-key copies", async () => {
   expect((await s.get("a"))!.x).toBe(undefined);
 });
 
+test("keys() is the keys alone, ascending", async () => {
+  const s = make<Row>("k");
+  await s.put({ k: "b", n: 1 });
+  await s.put({ k: "a", n: 2 });
+  expect(await s.keys()).toEqual(["a", "b"]);
+});
+
 test("a rekeyed put lands under the record's own key, as keyPath files it", async () => {
   const s = make<Row>("k");
   await s.put({ k: "a", n: 1 });
@@ -170,6 +177,14 @@ test("all() bases every key, known-absent included", async () => {
   const { s, foreign } = open();
   await s.all();
   await foreign("k", "theirs");
+  await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
+});
+
+test("keys() bases nothing: a key another tab filled after the whole read still refuses a blank write", async () => {
+  const { s, foreign } = open();
+  await s.all();
+  await foreign("k", "theirs");
+  expect(await s.keys()).toEqual(["k"]);
   await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
 });
 

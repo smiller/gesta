@@ -155,6 +155,7 @@ narrowed to 1000px, typed on: {"unavailable":"a margin-note is the successor's (
 margin-notes between paragraphs and in a grid at 1500px: {"unavailable":"a margin-note is the successor's (2026-09-29)","screen":"page/Margins · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 A in a second window: {"card":{"rows":["1 2026-09-06 key link ×","2 Made Elsewhere you are here key link ×"],"focused":"helppanel"},"screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘B back in the first: {"card":{"rows":["1 2026-09-06 you are here key link ×"],"focused":"helppanel"},"stored":"[\"2026-09-06\",\"page/Made Elsewhere\"]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+its row's page typed into from the first: {"entry":"2026-09-06","stored":null,"corner":"Couldn't copy the link (click to copy)","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 × on its first row: {"card":{"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel"},"stored":"[]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable

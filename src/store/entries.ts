@@ -33,6 +33,8 @@ export interface EntryLayer {
   clear(): Promise<void>;
   primeEntry(ekey: string): Promise<boolean>;
   warm(): Promise<void>;
+  /* the store's keys, read without touching the cache: what other tabs wrote is included */
+  storedKeys(): Promise<string[]>;
   readonly warmed: boolean;
   readonly storeReadFailed: boolean;
   readonly storeReadError: unknown;
@@ -124,6 +126,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
   }
   return {
     cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm, clear,
+    storedKeys: () => store.keys(),
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },
     get storeReadError() { return storeReadError; },

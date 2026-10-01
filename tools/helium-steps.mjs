@@ -976,7 +976,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.setViewportSize({ width: 1000, height: 600 });
     }],
     ["bookmarks from another window", async () => {
-  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
+  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row and typed into there, refuses the write rather than land it over the second window's text, and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
   await go("2026-09-06");
   const other = await page.context().newPage();
   await other.goto(A.url("page/Made%20Elsewhere"));
@@ -995,6 +995,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+b");
   await page.waitForTimeout(500);
   await log("⌃⌘B back in the first", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await page.click(".bookmarks .bookmark-label:text-is('Made Elsewhere')", { timeout: 1000 }).catch(() => {});
+  await A.waitEntry(page, "page/Made Elsewhere", 5000).catch(() => {});
+  await page.waitForTimeout(200);
+  await page.click(S.editor);
+  await page.keyboard.type("typed in the first");
+  await page.waitForTimeout(2500);
+  await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
+  await go("2026-09-06");
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(300);
   await page.click(S.bookmarkDel);
   await page.waitForTimeout(150);
   await log("× on its first row", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });

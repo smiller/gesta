@@ -144,8 +144,7 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
-const entryStore = idbEntryStore();
-const layer = entryLayer(entryStore, notices.entry);
+const layer = entryLayer(idbEntryStore(), notices.entry);
 const images = idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
@@ -374,7 +373,7 @@ if (fixture && fixtures[fixture]) {
     seed: [{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }],
     pin: (text, err) => notices.stickErrIdle(text, err),
     release: (gen) => notices.releasePin(gen),
-    storedKeys: () => entryStore.all().then((rows) => rows.map((r) => r.key)),
+    storedKeys: () => layer.storedKeys(),
   });
   const hereKey = (): string => entryKey(session.current.date, session.current.tag);
   /* every render hands focus back: a delete removes the row its own
@@ -382,6 +381,7 @@ if (fixture && fixtures[fixture]) {
   const renderBookmarks = (): void => {
     const bookmarks = marks.list();
     bm.unreadable = marks.unreadable();
+    if (bm.editing && bookmarkIndex(bookmarks, bm.editing) === -1) { bm.editing = ""; bm.draft = ""; }
     bm.rows = bookmarkRows(bookmarks, hereKey(), journal);
     bm.foot = bookmarkFoot(bookmarks, hereKey(), journal);
     if (bm.buf && !aliasCandidates(bookmarks, bm.buf).length) bm.buf = "";
@@ -389,7 +389,7 @@ if (fixture && fixtures[fixture]) {
   };
   const openBookmarks = (): void => {
     overlay.open("bookmarks");
-    marks.open(layer.warmed ? keysNow() : null).then((wrote) => { if (wrote && screen.panel === "bookmarks") renderBookmarks(); });
+    marks.open(layer.warmed ? keysNow : null).then((wrote) => { if (wrote && screen.panel === "bookmarks") renderBookmarks(); });
     bm.editing = ""; bm.draft = ""; bm.buf = "";
     screen.panel = "bookmarks";
     renderBookmarks();
