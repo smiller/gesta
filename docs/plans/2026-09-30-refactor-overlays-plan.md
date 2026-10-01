@@ -159,3 +159,5 @@ Helium (a scratch probe, `tools/out/`): Go to then search, search then Go
 to, ⌃⌘L then Go to, Go to then help, Go to then the pages icon — each
 leaving only the second open; ⌃⌘L then ⌃⌘T — nothing open (MEASURED).
 The questions above are answered; CANDIDATE 4 has no open blanks.
+
+- Looked at and accepted by the reader, 2026-10-01 (accept.sh, f7815e9334c3…). THE OVERLAY WORK CLOSED.
