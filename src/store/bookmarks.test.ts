@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { BOOKMARK_CAP, ALIAS_RE, parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, numberedBookmarks, aliasedBookmarks, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull } from "./bookmarks.ts";
+import { BOOKMARK_CAP, ALIAS_RE, parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, numberedBookmarks, aliasedBookmarks, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, reachableBookmarks } from "./bookmarks.ts";
 
 const row = (key: string, alias = "") => ({ key, alias });
 const keys = (n: number, prefix = "k") => Array.from({ length: n }, (_, i) => prefix + i);
@@ -72,4 +72,9 @@ test("aliasRefusal: the pattern and nothing about the list; the old shape still 
   expect(parseBookmarks('["page/A","2026-01-01","bookshelf/M/P"]')!.map((b) => b.key)).toEqual(["page/A", "2026-01-01", "bookshelf/M/P"]);
   expect(parseBookmarks('[{"alias":"c"}]')).toBeNull();
   expect(parseBookmarks('[{"key":"page/A","alias":"ab"}]')).toBeNull();
+});
+test("reachableBookmarks: a day is reachable whatever was written; a page or a book only when registered", () => {
+  const keys = ["2026-09-07", "page/Books", "page/Books/Essay", "bookshelf/Milton, John", "bookshelf/Milton, John/PL"];
+  const list = [row("2020-01-01"), row("page/Books"), row("page/Gone"), row("bookshelf/Milton, John/PL"), row("bookshelf/Nobody")];
+  expect(reachableBookmarks(list, keys).map((b) => b.key)).toEqual(["2020-01-01", "page/Books", "bookshelf/Milton, John/PL"]);
 });

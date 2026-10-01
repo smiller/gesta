@@ -4,35 +4,20 @@
    the open entry's own row marked (pin: bookmarksModel.test › labels read
    live). The foot line asks one question — can
    the open entry be added, and if not why — and is omitted when the entry
-   is already a row. A ROW THAT LEADS NOWHERE is swept at the open: a day
-   is reachable whatever was written there, anything else must be
-   registered (pin: bookmarksModel.test › a day is reachable whatever was
-   written). THE TYPED KEY: a prefix that could still grow WAITS — not
+   is already a row. THE TYPED KEY: a prefix that could still grow WAITS — not
    for a clock, but until it is finished, abandoned or completed; a press
    nothing else extends resolves at once; Enter takes the sole candidate
    left, or asks for the rest; a is the add key and a digit the numbered
    jump only while nothing is held, which is what leaves scr12 reachable
    (pin: bookmarksModel.test › a key nothing else starts with goes on the
    press; one that could grow waits) */
-import { isDayKey, nsOf, pageParts, entryKey } from "../store/keys.ts";
-import { registered } from "../store/lists.ts";
+import { isDayKey, pageParts, entryKey } from "../store/keys.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING } from "../store/search.ts";
 import { resultLabel } from "./searchModel.ts";
 import { trimLabel, LABEL_CAP, ECHO_CAP } from "./mastheadModel.ts";
-import { type Bookmark, ALIAS_RE, aliasedBookmarks, numberedBookmarks, aliasHolder, bookmarkIndex, bookmarksFull } from "../store/bookmarks.ts";
+import { type Bookmark, bookmarkParts, ALIAS_RE, aliasedBookmarks, numberedBookmarks, aliasHolder, bookmarkIndex, bookmarksFull } from "../store/bookmarks.ts";
 
-export function bookmarkParts(key: string): { date: string; tag: string | null } {
-  const slash = key.indexOf("/");
-  return slash === -1 ? { date: key, tag: null } : { date: key.slice(0, slash), tag: key.slice(slash + 1) };
-}
-export function reachableBookmarks(list: Bookmark[], keys: string[]): Bookmark[] {
-  return list.filter((b) => {
-    const p = bookmarkParts(b.key);
-    if (isDayKey(p.date)) return true;
-    return !!nsOf(p.date) && registered(keys, p.date, p.tag);
-  });
-}
 export function bookmarkLabel(key: string, journal: Journal): string {
   const p = bookmarkParts(key);
   return resultLabel({ date: p.date, tag: p.tag, nth: 0, snippet: "" }, SCOPE_EVERYTHING, journal);

@@ -23,6 +23,7 @@ import { importFiles } from "./store/importFiles.ts";
 import { entryDocs, isDoc, failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
 import { readRaw } from "./store/local.ts";
+import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { noticeLedger, type Progress } from "./ui/notices.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
 import { screenState, EMPTY_MASTHEAD } from "./ui/screen.svelte.ts";
@@ -40,8 +41,8 @@ import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRe
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
-import { parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
-import { reachableBookmarks, bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, bookmarkParts, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
+import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
+import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
 import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -367,42 +368,18 @@ if (fixture && fixtures[fixture]) {
     say("shortcuts saved", 2000);
   };
   acts.shortcuts.escape = () => { closePanel(); session.view?.focus(); };
-  /* BOOKMARKS (⌃⌘B): a list of pinned entries in ONE localStorage key —
-     device-local, an accepted loss, the list being small and re-made in a
-     minute. THE LATCH is where the cache and the store disagree on
-     purpose: empty here, unreadable text there that somebody could still
-     recover by hand, so writes are refused until a clean read. Two pages
-     are seeded ONCE, when the key is absent;
-     emptying the list writes "[]", which is present. */
-  const BOOKMARKS_KEY = NS + "bookmarks";
   const bm = screen.bookmarks;
-  let bookmarks: Bookmark[] = [];
-  let bookmarksFailGen = 0;
-  const loadBookmarks = (): void => {
-    const raw = readRaw(BOOKMARKS_KEY);
-    const read = raw === undefined ? null : parseBookmarks(raw);
-    bm.unreadable = read === null;
-    bookmarks = read || [];
-  };
-  const saveBookmarks = (list: Bookmark[]): Error | null => {
-    if (bm.unreadable) return new Error("bookmarks unreadable");
-    try { localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(serializeBookmarks(list))); } catch (e) { return (e as Error) || new Error("setItem failed"); }
-    loadBookmarks();
-    return null;
-  };
-  const writeBookmarks = (list: Bookmark[]): boolean => {
-    const err = saveBookmarks(list);
-    if (err) { bookmarksFailGen = notices.stickErrIdle("bookmarks not saved", err); return false; }
-    notices.releasePin(bookmarksFailGen);
-    bookmarksFailGen = 0;
-    return true;
-  };
-  loadBookmarks();
-  if (readRaw(BOOKMARKS_KEY) === null) saveBookmarks([{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }]);
+  const marks = bookmarkStore({
+    seed: [{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }],
+    pin: (text, err) => notices.stickErrIdle(text, err),
+    release: (gen) => notices.releasePin(gen),
+  });
   const hereKey = (): string => entryKey(session.current.date, session.current.tag);
   /* every render hands focus back: a delete removes the row its own
      button sits in, and "open" and "listening" must not disagree */
   const renderBookmarks = (): void => {
+    const bookmarks = marks.list();
+    bm.unreadable = marks.unreadable();
     bm.rows = bookmarkRows(bookmarks, hereKey(), journal);
     bm.foot = bookmarkFoot(bookmarks, hereKey(), journal);
     if (bm.buf && !aliasCandidates(bookmarks, bm.buf).length) bm.buf = "";
@@ -410,12 +387,7 @@ if (fixture && fixtures[fixture]) {
   };
   const openBookmarks = (): void => {
     overlay.open("bookmarks");
-    /* the sweep and its write together, gated on the warm: an absence and
-       a deletion read the same, and only one should cost rows */
-    if (layer.warmed) {
-      const live = reachableBookmarks(bookmarks, keysNow());
-      if (live.length !== bookmarks.length) writeBookmarks(live);
-    }
+    marks.open(layer.warmed ? keysNow() : null);
     bm.editing = ""; bm.draft = ""; bm.buf = "";
     screen.panel = "bookmarks";
     renderBookmarks();
@@ -432,13 +404,13 @@ if (fixture && fixtures[fixture]) {
   };
   const addOpenBookmark = (): void => {
     const here = hereKey();
-    if (bookmarkIndex(bookmarks, here) !== -1) { say("already bookmarked", 2000); return; }
-    if (bookmarksFull(bookmarks)) { say("bookmarks full — delete one, or give one its own key", 3000); return; }
+    if (bookmarkIndex(marks.list(), here) !== -1) { say("already bookmarked", 2000); return; }
+    if (bookmarksFull(marks.list())) { say("bookmarks full — delete one, or give one its own key", 3000); return; }
     session.flushSave().then(() => {
       if (screen.panel !== "bookmarks") return;
       if (!reachableBookmarks([{ key: here, alias: "" }], keysNow()).length) { if (!warmBlock()) say("nothing to bookmark here yet", 2500); return; }
-      const next = addBookmark(bookmarks, here);
-      if (next && writeBookmarks(next)) renderBookmarks();
+      const next = addBookmark(marks.list(), here);
+      if (next && marks.write(next)) renderBookmarks();
     });
   };
   acts.bookmarks.key = (e) => {
@@ -449,40 +421,40 @@ if (fixture && fixtures[fixture]) {
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (bm.editing) return;   /* the editor keeps every other key; its Enter is its own */
-    if (e.key === "Enter" && bm.buf) { e.preventDefault(); resolved(resolveAlias(bookmarks, bm.buf)); return; }
+    if (e.key === "Enter" && bm.buf) { e.preventDefault(); resolved(resolveAlias(marks.list(), bm.buf)); return; }
     if (!bm.buf && (e.key === "a" || e.key === "A")) { e.preventDefault(); addOpenBookmark(); return; }
     if (!bm.buf && e.key >= "1" && e.key <= "9" && e.key.length === 1) {
       e.preventDefault();
-      const b = numberedBookmarks(bookmarks)[+e.key - 1];
+      const b = numberedBookmarks(marks.list())[+e.key - 1];
       if (!b) say("no bookmark " + e.key, 2000); else jumpBookmark(b);
       return;
     }
     const ch = e.key.length === 1 ? e.key.toLowerCase() : "";
-    const r = ch ? typeAlias(bookmarks, bm.buf, ch) : null;
+    const r = ch ? typeAlias(marks.list(), bm.buf, ch) : null;
     if (r) { e.preventDefault(); resolved(r); }
   };
   acts.bookmarks.draft = (v) => { bm.draft = v; };
   acts.bookmarks.commit = (typed) => {
     const key = bm.editing, alias = typed.trim().toLowerCase();
     if (!key) return;
-    const holder = aliasHolder(bookmarks, alias);
+    const holder = aliasHolder(marks.list(), alias);
     if (holder && holder.key !== key) { say("“" + alias + "” already goes to " + trimLabel(bookmarkLabel(holder.key, journal), ECHO_CAP), 2500); return; }
     const why = aliasRefusal(alias);
     if (why) { say(why, 2500); return; }
-    const next = setBookmarkAlias(bookmarks, key, alias);
+    const next = setBookmarkAlias(marks.list(), key, alias);
     if (!next) { bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
-    if (!writeBookmarks(next)) { renderBookmarks(); return; }
+    if (!marks.write(next)) { renderBookmarks(); return; }
     bm.editing = ""; bm.draft = "";
     renderBookmarks();
   };
   acts.bookmarks.act = (key, what) => {
-    const i = bookmarkIndex(bookmarks, key);
+    const i = bookmarkIndex(marks.list(), key);
     if (i === -1) return;
-    const b = bookmarks[i];
+    const b = marks.list()[i];
     if (what === "del") {
       const wasEditing = bm.editing === key;
-      const next = bookmarks.slice(); next.splice(i, 1);
-      if (!writeBookmarks(next)) return;
+      const next = marks.list().slice(); next.splice(i, 1);
+      if (!marks.write(next)) return;
       if (wasEditing) { bm.editing = ""; bm.draft = ""; }
       renderBookmarks();
     } else if (what === "key") {

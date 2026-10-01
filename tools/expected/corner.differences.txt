@@ -105,3 +105,5 @@ margin-notes in verse at 1500px · * · a margin-note is successor-only (2026-09
 typed into a margin-note in the margin · * · the same: the current app has no margin-note to click, and the typing lands at its caret's start
 narrowed to 1000px, typed on · * · the same
 margin-notes between paragraphs and in a grid at 1500px · * · the same
+⌃⌘B over the list repaired · * · ⌃⌘B re-reads a damaged list here, so a list repaired by hand shows without a reload (asked 2026-10-01, the bookmarks-store plan); the current app keeps the latch until a reload
+A over the list repaired · * · the same: the current app's latch still refuses the add, its pin standing

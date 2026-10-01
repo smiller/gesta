@@ -33,7 +33,10 @@ function scrub(text) {
     /* the corner's text in the screen line is a whisper's clock against
        the tool's waits: the steps that care read the corner themselves */
     .replace(/· corner \\"(?:[^"\\]|\\.)*\\"/g, "· corner [whatever stood]")
-    .replace(/file:\/\/\/[^"\\ ]*\/(dist|writer)\/index\.html/g, "file:///[app]/index.html");
+    .replace(/file:\/\/\/[^"\\ ]*\/(dist|writer)\/index\.html/g, "file:///[app]/index.html")
+    /* a logged Error's frames are the minified build's line and column,
+       moved by any change elsewhere in the bundle */
+    .replace(/^ +at .*\n/gm, "");
 }
 const env = { ...process.env, NODE_OPTIONS: "" };
 if (args.includes("--writer")) {

@@ -48,7 +48,10 @@ session.ts, the two hottest files) named five deepenings:
    is unreadable), the seed once when the key is absent, the fail-pin
    generations, now in main.ts and reached only by Helium. Speculative:
    their pure halves are tested already, and what stays in main.ts is
-   mostly wiring — the deletion test half passes. NOT STARTED; ask first.
+   mostly wiring — the deletion test half passes. BOOKMARKS DONE
+   2026-10-01 (`2026-10-01-refactor-bookmarks-store-plan.md`), with ⌃⌘B
+   re-reading a damaged list; shortcuts left in main.ts, the deletion test
+   failing there.
 
 Considered and not listed: the copy button's and the floating bar's
 geometry, moved out of main.ts, would gather no rule a test could read.

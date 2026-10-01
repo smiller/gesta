@@ -363,6 +363,33 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("× pressed", await R.bookmarks(page));
   await page.keyboard.press("Escape");
     }],
+    ["bookmarks damaged", async () => {
+  /* a damaged list (2026-10-01): ⌃⌘B says so and A is refused with its pin; repaired by hand, the next ⌃⌘B shows its rows without a reload — the current app keeps the latch until one — and A lands, releasing the pin; a reload ends the step so neither app carries the pin on, back on the day the next step reads */
+  await go("page/Horace", 5000);
+  await page.evaluate((k) => localStorage.setItem(k, "not json"), A.bookmarksKey);
+  await page.reload();
+  await A.waitEntry(page, "page/Horace").catch(() => {});
+  await A.waitWarm(page).catch(() => {});
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  await log("⌃⌘B over a damaged list", await R.bookmarks(page));
+  await page.keyboard.press("a");
+  await page.waitForTimeout(300);
+  await log("A over a damaged list", { card: await R.bookmarks(page), corner: await R.cornerText(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await page.keyboard.press("Escape");
+  await page.evaluate((k) => localStorage.setItem(k, '["2026-09-06"]'), A.bookmarksKey);
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  await log("⌃⌘B over the list repaired", await R.bookmarks(page));
+  await page.keyboard.press("a");
+  await page.waitForTimeout(300);
+  await log("A over the list repaired", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
+  await page.keyboard.press("Escape");
+  await page.reload();
+  await A.waitEntry(page, "page/Horace").catch(() => {});
+  await A.waitWarm(page).catch(() => {});
+  await go("2026-09-06");
+    }],
     ["backups", async () => {
   /* the backups panel: the button opens the card; unconfigured, the setup button alone; Escape closes */
   await page.click(S.backupsButton);

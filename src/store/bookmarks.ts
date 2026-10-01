@@ -6,7 +6,8 @@
    unkeyed row serializes back as the bare string, so a store never touched
    by keys stays byte for byte (pin: bookmarks.test › serializeBookmarks: an
    unkeyed row goes back as the bare string) */
-import { byName } from "./keys.ts";
+import { byName, isDayKey, nsOf } from "./keys.ts";
+import { registered } from "./lists.ts";
 
 export const BOOKMARK_CAP = 9;
 /* a trigger's first character is neither a (add) nor a digit (the jump)
@@ -70,4 +71,15 @@ export function addBookmark(list: Bookmark[], key: string): Bookmark[] | null {
   if (bookmarksFull(list)) return null;
   if (bookmarkIndex(list, key) !== -1) return null;
   return list.concat([{ key, alias: "" }]);
+}
+export function bookmarkParts(key: string): { date: string; tag: string | null } {
+  const slash = key.indexOf("/");
+  return slash === -1 ? { date: key, tag: null } : { date: key.slice(0, slash), tag: key.slice(slash + 1) };
+}
+export function reachableBookmarks(list: Bookmark[], keys: string[]): Bookmark[] {
+  return list.filter((b) => {
+    const p = bookmarkParts(b.key);
+    if (isDayKey(p.date)) return true;
+    return !!nsOf(p.date) && registered(keys, p.date, p.tag);
+  });
 }

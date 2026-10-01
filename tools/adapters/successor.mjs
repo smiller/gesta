@@ -11,6 +11,7 @@ export const name = "successor";
    three (measured 2026-09-12) */
 export const profile = resolve(tmpdir(), "gesta-helium-corner-profile");
 const PAGE = "file://" + resolve("dist/index.html");
+export const bookmarksKey = "gesta.v1.bookmarks";
 export const url = (hash, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
 /* the seeds are written by the page itself under ?store=seed (main.ts) */
 export async function launch(page, seeds) {

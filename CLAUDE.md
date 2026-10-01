@@ -340,7 +340,10 @@ is in the plan's record, under the phase named):
   scope filter, the scan over an index with its snippets),
   `searchIndex.ts` (the index over the cache: memoised per entry on its
   text, built in chunks), `bookmarks.ts` (the list's rules: what the
-  store parses to and refuses, the two views, the trigger's grammar),
+  store parses to and refuses, the two views, the trigger's grammar, the
+  rows that still lead somewhere), `bookmarkStore.ts` (the list in its one
+  localStorage key: the latch, the seed once, the failure pin, the re-read
+  and the sweep at ⌃⌘B — a factory over an injected storage),
   `shortcuts.ts` (the text expander's table grammar and the prefix
   filter), `contents.ts` (a book's own order and sections
   read off its parent's contents, the feed flip), `foldState.ts` (what a folding contents page remembers in this browser:

@@ -1,16 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { reachableBookmarks, bookmarkLabel, bookmarkLinkLabel, bookmarkRows, bookmarkFoot, typeAlias, resolveAlias, aliasCandidates } from "./bookmarksModel.ts";
+import { bookmarkLabel, bookmarkLinkLabel, bookmarkRows, bookmarkFoot, typeAlias, resolveAlias, aliasCandidates } from "./bookmarksModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache = { "2026-09-07": "d", "page/Books": "b", "page/Books/Essay": "# The essay", "bookshelf/Milton, John": "# John Milton", "bookshelf/Milton, John/PL": "# Paradise Lost" };
-const keys = Object.keys(cache), journal = journalOf(cache);
+const journal = journalOf(cache);
 const row = (key: string, alias = "") => ({ key, alias });
 
 describe("the rows", () => {
-  it("a day is reachable whatever was written; a page or a book only when registered", () => {
-    const list = [row("2020-01-01"), row("page/Books"), row("page/Gone"), row("bookshelf/Milton, John/PL"), row("bookshelf/Nobody")];
-    expect(reachableBookmarks(list, keys).map((b) => b.key)).toEqual(["2020-01-01", "page/Books", "bookshelf/Milton, John/PL"]);
-  });
   it("labels read live: the shelf position for the row, the entry's own name for a link", () => {
     expect(bookmarkLabel("page/Books/Essay", journal)).toBe("Books › The essay");
     expect(bookmarkLabel("2026-09-07/Ideas", journal)).toBe("2026-09-07 · Ideas");
