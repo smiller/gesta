@@ -138,3 +138,20 @@ No mechanical class among them, so no checker is owed.
   re-run passed (MEASURED). The first was 2026-09-30
   (`2026-09-30-refactor-entry-lifecycle-plan.md`, 1 in 3 runs); by that
   record a fix is now owed. Not in this commit.
+
+### 2026-10-01 — an address another window wrote, read from the store (decision 6)
+
+6. ASKED, after the review's finding 4 was put: a window opening an
+   address its cache lacks, after the warm, reads that entry from the
+   store first (`primeEntry`, which bases it at the stored text), then
+   opens it. Before the warm the path is unchanged. Go to and search
+   still list only what this window has loaded or opened.
+
+- The test is the two-window step: before the change its first window
+  opened the other window's page blank and refused the typing (MEASURED,
+  the review's fix run); after, it opened with "made in the second
+  window" and the typing landed after it (MEASURED). Every other reading,
+  the bridge's unknown-book refusal included, unchanged (MEASURED).
+- The current app's run, regenerated: one difference in "a list typed"
+  (its corner not showing) on the first run, gone on the second
+  (MEASURED, 1 in 2), outside this change.

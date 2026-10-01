@@ -221,9 +221,21 @@ export function startSession(opts: SessionOptions): Session {
      refusal lands on the entry already open — at boot, today — with the
      address put back (pin: bridge › an unknown book is refused) */
   let hashDeferred = false;
-  function openHash(): void {
+  function openHash(): void { openAddress(false); }
+  function openAddress(primed: boolean): void {
     hashDeferred = false;
     const h = hashParts(location.hash.slice(1));
+    /* AFTER THE WARM an address the cache lacks is read from the store
+       first: another window may have written it since, and opened blank
+       here it would refuse every write
+       (pin: bookmarks from another window › its row's page typed into from the first) */
+    const want = entryKey(h.date, h.tag);
+    if (!primed && layer.warmed && !(want in layer.cache)) {
+      hashDeferred = true;
+      const then = (): void => { if (hashDeferred) openAddress(true); };
+      layer.primeEntry(want).then(then, then);
+      return;
+    }
     const keys = Object.keys(layer.cache);
     if (unmintedKey(keys, h.date, h.tag)) {
       /* BEFORE THE WARM an address the cache lacks is not yet refused: its
@@ -231,7 +243,6 @@ export function startSession(opts: SessionOptions): Session {
          (pin: places › a contents link clicked before the warm) */
       if (!layer.warmed) {
         hashDeferred = true;
-        const want = entryKey(h.date, h.tag);
         layer.primeEntry(want).then(() => { if (hashDeferred && (layer.warmed || want in layer.cache)) openHash(); }, () => {});
         return;
       }
