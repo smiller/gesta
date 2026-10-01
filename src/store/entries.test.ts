@@ -204,3 +204,47 @@ test("primeEntry waits for the key's pending ops: an entry removed here is not r
   expect("page/Gone" in layer.cache).toBe(false);
   expect(await mem.get("page/Gone")).toBe(null);
 });
+
+test("refreshEntry takes another tab's edit into the cache, and a save after it lands", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "mine");
+  await mem.foreignSet("page/A", "theirs");
+  expect(await layer.refreshEntry("page/A")).toBe(true);
+  expect(layer.cache["page/A"]).toBe("theirs");
+  expect(await layer.setEntry("page/A", "theirs, then mine")).toBe(true);
+  expect((await mem.get("page/A"))!.md).toBe("theirs, then mine");
+});
+
+test("refreshEntry: an entry unchanged is left, one another tab removed leaves the cache, one it made arrives", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/Same", "same");
+  await layer.setEntry("page/Gone", "old");
+  await mem.del("page/Gone");
+  await mem.foreignSet("page/New", "made there");
+  expect(await layer.refreshEntry("page/Same")).toBe(false);
+  expect(await layer.refreshEntry("page/Gone")).toBe(true);
+  expect("page/Gone" in layer.cache).toBe(false);
+  expect(await layer.refreshEntry("page/New")).toBe(true);
+  expect(layer.cache["page/New"]).toBe("made there");
+});
+
+test("refreshEntry waits for the key's pending ops: an entry removed here is not read back", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/Gone", "old text");
+  const removed = layer.removeEntry("page/Gone");
+  expect(await layer.refreshEntry("page/Gone")).toBe(false);
+  await removed;
+  expect("page/Gone" in layer.cache).toBe(false);
+  expect(await mem.get("page/Gone")).toBe(null);
+});
+
+test("refreshEntry keeps an empty row: a registration, not an absence", async () => {
+  const { layer } = fresh();
+  await layer.warm();
+  await layer.setEntry("2026-09-06/Ideas", "");
+  expect(await layer.refreshEntry("2026-09-06/Ideas")).toBe(false);
+  expect("2026-09-06/Ideas" in layer.cache).toBe(true);
+});

@@ -157,7 +157,11 @@ A in a second window: {"card":{"rows":["1 2026-09-06 key link ×","2 Made Elsewh
 ⌃⌘B back in the first: {"card":{"rows":["1 2026-09-06 you are here key link ×"],"focused":"helppanel"},"stored":"[\"2026-09-06\",\"page/Made Elsewhere\"]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 its row's page opened from the first: {"entry":"2026-09-06","text":"Act 1, Scene 1. DUKE ORSINO’s ","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 its row's page typed into from the first: {"entry":"2026-09-06","stored":null,"corner":"Couldn't copy the link (click to copy)","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+its page opened again in the first: {"textEnd":"","screen":"page/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed into again from the first: {"stored":"made in the second window, the second again","corner":"not saved — changed in another tab, copy your text then reload (click to copy)","screen":"page/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 × on its first row: {"card":{"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel"},"stored":"[]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)
+error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab
+error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab

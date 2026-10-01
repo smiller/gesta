@@ -217,3 +217,27 @@ findings, each read against the code:
 
 No mechanical class in src/, so no checker is owed. The Helium verdict
 read unchanged, 0 open, no miss logged (MEASURED).
+
+### 2026-10-01 — every entry re-read at its open (decision 7)
+
+7. ASKED, after the second review's finding 3 was put: after the warm,
+   EVERY address opened is read again from the store first, held or not
+   (`refreshEntry`), so an entry another window edited since opens with
+   that edit. The re-read replaces the stale-write base with the text it
+   read (`reread` on the entry store): get's first-wins kept the first
+   text seen, and a save after a re-read was refused against it. Opens
+   by create, rename and delete stay on the cache, this window's copy
+   being the latest there.
+
+- Tests first: two store tests over both adapters, four layer tests,
+  red then green (MEASURED).
+- The first full run broke "sub-entries": the day's tag bar lost Ideas
+  (MEASURED). An empty stored row is a registration (a created tagged
+  entry is stored empty), and the re-read had dropped it as absent; a
+  test pinned it red, then the fix (MEASURED).
+- The two-window step goes on: the page edited again in a second window
+  while the first holds its older copy, then opened and typed into in
+  the first. On 2bbf4c3's code the first opened its old copy and the
+  typing was refused; after, it opened with the edit and the typing
+  landed (MEASURED). The current app's first window opens its own copy
+  and refuses the typing (MEASURED); two differences listed.

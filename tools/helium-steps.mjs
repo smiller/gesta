@@ -987,7 +987,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.setViewportSize({ width: 1000, height: 600 });
     }],
     ["bookmarks from another window", async () => {
-  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it, and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
+  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; edited again in a second window while the first still holds its older copy, it opens in the first with that edit and takes the typing, and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
   await go("2026-09-06");
   const other = await page.context().newPage();
   await other.goto(A.url("page/Made%20Elsewhere"));
@@ -1014,6 +1014,23 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("typed in the first");
   await page.waitForTimeout(2500);
   await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
+  await go("2026-09-06");
+  const again = await page.context().newPage();
+  await again.goto(A.url("page/Made%20Elsewhere"));
+  await A.waitEntry(again, "page/Made Elsewhere").catch(() => {});
+  await A.waitWarm(again).catch(() => {});
+  await again.click(S.editor);
+  await again.keyboard.type(", the second again");
+  await again.waitForTimeout(2500);
+  await again.close();
+  await page.bringToFront();
+  await go("page/Made%20Elsewhere");
+  await page.waitForTimeout(200);
+  await log("its page opened again in the first", { textEnd: await page.evaluate((s) => document.querySelector(s)?.textContent.slice(-30), S.editor) });
+  await page.click(S.editor);
+  await page.keyboard.type(", the first again");
+  await page.waitForTimeout(2500);
+  await log("typed into again from the first", { stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+b");
   await page.waitForTimeout(300);
