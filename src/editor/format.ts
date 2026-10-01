@@ -81,13 +81,17 @@ export function wordCount(doc: Node, from: number, to: number): number {
   return wordsOf(flattenDoc(from === to ? doc : doc.cut(from, to)).text);
 }
 /* a run inside ONE textblock is a paragraph of it — a word cut from a verse
-   line is not a one-line fence; across blocks, the covered structure cut
-   (pin: format.test › cutMd and replaceWithLink) */
+   line is not a one-line fence; but a WHOLE heading stays a heading: cut as
+   a paragraph, a tagged heading lost its "#"; across blocks, the covered
+   structure cut (pin: format.test › cutMd and replaceWithLink)
+   (pin: format.test › cutMd: a whole heading selected alone) */
 export function cutMd(doc: Node, from: number, to: number): string {
   const $from = doc.resolve(from), $to = doc.resolve(to);
   if ($from.sameParent($to) && $from.parent.isTextblock && $from.parent.type !== N.code_block) {
-    const para = N.paragraph.create(null, $from.parent.slice($from.parentOffset, $to.parentOffset).content);
-    return serializeMarkdown(N.doc.create(null, [para])).trim();
+    const block = $from.parent, content = block.slice($from.parentOffset, $to.parentOffset).content;
+    const whole = $from.parentOffset === 0 && $to.parentOffset === block.content.size;
+    const piece = whole && block.type === N.heading ? block.copy(content) : N.paragraph.create(null, content);
+    return serializeMarkdown(N.doc.create(null, [piece])).trim();
   }
   return serializeMarkdown(doc.cut(from, to)).trim();
 }

@@ -80,8 +80,49 @@ them, one dated section per batch.
 - THE NET: `npm run test:helium` — corner ok, bridge ok, 153 steps, 0
   open (MEASURED).
 
+## Found on the look (the reader, 2026-09-30)
+
+- A `#` line on a journal day, selected within the line and tagged: the
+  new entry held the text with NO heading, the day's link read as the
+  tag. The same on bef23be and HEAD (MEASURED, a scratch probe in
+  headless Helium): older than this work. The cause (READ, format.ts
+  `cutMd`): a cut inside one block is always wrapped as a paragraph, so
+  a phrase from a paragraph comes out as its own — and a whole heading
+  is flattened with it. The tag as a day's label is by design
+  (lifecycle.ts: only a namespace labels by the cut's heading).
+
+11. FIXED, as a commit of its own, test first, before the accept so the
+    one review covers it: a selection covering a WHOLE heading cuts it as
+    the heading; a phrase from inside a block stays a paragraph. On a page
+    or a book the link then reads as that heading.
+12. A day's tagged-entry link stays its tag: the masthead row lists and
+    finds a day's tagged entries by tag, and the link matches it.
+
+- "New author" with the name the dropdown SHOWS for an existing author
+  ("John Donne") opened a new, empty author of that name, where the
+  dropdown's own link opens the populated one. Older than this work: the
+  check moved line for line (READ, bef23be main.ts against lifecycle.ts).
+  The cause: the check reads the KEYS; a bookshelf author is keyed "Last,
+  First" and shown by its `#` heading (the seed's Spenser, READ; Donne's
+  own key INFERRED, the reader's journal not read). The empty "John
+  Donne" stands in the reader's journal, a blank the export skips.
+
+13. FIXED, after the look's last step, as a commit of its own, test
+    first: a new root's name is checked against every existing root's
+    LABEL too, case aside, and goes there on a match; no "First Last" ↔
+    "Last, First" guessing.
+
 ## Later
 
+- OPEN QUESTION (the reader, 2026-09-30, on the look: surprised twice, at
+  the extract's label and the heading's relabel): should a day's tagged
+  entries take their titles from their first level-one heading, as pages
+  and books do? Today they are their tags everywhere — carried from the
+  old app (the successor plan's decision row 5, 2026-09-07), not chosen
+  here. A feature with its own plan, likely a mockup: the masthead's tag
+  row, the extract's label, the relabel, Go to's and search's names, and
+  the seven journal tagged entries that open with `##`. Kept as is for
+  ff1daea and its fix.
 - `src/chrome/` renamed `src/ui/`, the word read as the browser's
   (the reader, 2026-09-30: "leave it for now, I'll come back to it"). A
   mechanical commit of its own: the imports, CLAUDE.md, the checker's

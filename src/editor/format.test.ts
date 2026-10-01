@@ -54,6 +54,16 @@ test("the word count over the selection or the whole document, blocks kept apart
   expect(wordCount(s.doc, s.selection.from, s.selection.to)).toBe(2);
   expect(wordCount(s.doc, 0, 0)).toBe(4);
 });
+test("cutMd: a whole heading selected alone is cut as the heading; a phrase from it is a paragraph", () => {
+  const whole = sel("links above\n\n# Testing with a heading 3", "Testing with a heading 3");
+  expect(cutMd(whole.doc, whole.selection.from, whole.selection.to)).toBe("# Testing with a heading 3");
+  const deep = sel("## Part two", "Part two");
+  expect(cutMd(deep.doc, deep.selection.from, deep.selection.to)).toBe("## Part two");
+  const phrase = sel("# Testing with a heading 3", "with a heading");
+  expect(cutMd(phrase.doc, phrase.selection.from, phrase.selection.to)).toBe("with a heading");
+  const para = sel("a whole paragraph", "a whole paragraph");
+  expect(cutMd(para.doc, para.selection.from, para.selection.to)).toBe("a whole paragraph");
+});
 test("cutMd and replaceWithLink: mid-paragraph, whole blocks, and an emptied heading", () => {
   const mid = sel("before middle after", "middle");
   expect(cutMd(mid.doc, mid.selection.from, mid.selection.to)).toBe("middle");
