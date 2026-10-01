@@ -49,8 +49,12 @@ opening leaves it alone").
 - Help and backups leave Go to open; bookmarks and shortcuts close it.
 - Search and Go to open over each other, each closing only the panel.
 - ⌃⌘L's lines row is closed by Escape alone — no panel, no navigation.
-- Pages and bookshelf, opened, close nothing; the other panels close
-  search and the line bar.
+- Pages and bookshelf, opened, close none of the OTHER overlays —
+  search, Go to, the line bar, ⌃⌘L's lines — while help and backups close
+  search and the line bar. (Every panel replaces whichever panel is open:
+  one slot holds them all, so help gives way to pages or the bookshelf.
+  The reader saw that on the look, 2026-10-01, and it is as it should be;
+  the question is the other overlays only.)
 
 ## Batch 1 — the table (2026-09-30, overnight)
 
