@@ -34,7 +34,7 @@ export interface SessionOptions {
   interval: number;
   say: (text: string, ms?: number) => void;
   stick?: (text: string, copy?: string) => void;
-  pin?: (text: string) => number;
+  pin?: (text: string, copy?: string) => number;
   pinned?: () => boolean;
   releasePin?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
@@ -178,7 +178,8 @@ export function startSession(opts: SessionOptions): Session {
   function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
     cancelSave();
     suspended = false;
-    if (deletedPin) { opts.releasePin?.(deletedPin); deletedPin = 0; }
+    for (const g of detachedPins) opts.releasePin?.(g);
+    detachedPins = [];
     detached = null;
     current = { date, tag };
     const ekey = ekeyOf();
@@ -281,7 +282,9 @@ export function startSession(opts: SessionOptions): Session {
      (pin: bookmarks from another window › the page open in the first, saved in the second)
      (pin: bookmarks from another window › typed into the page deleted in the second) */
   let detached: { ekey: string; md: string } | null = null;
-  let deletedPin = 0;
+  /* the notices of a deleted entry on screen last while it is on screen
+     (pin: bookmarks from another window › the deleted page left for the day) */
+  let detachedPins: number[] = [];
   function takeNotice(ekey: string): Promise<void> {
     let verdict: ScreenNotice = "take";
     return layer.takeNotice(ekey, (md) => {
@@ -290,7 +293,7 @@ export function startSession(opts: SessionOptions): Session {
       if (verdict === "deleted") detached = { ekey, md: currentMd() };
       return verdict !== "leave";
     }).then((moved) => {
-      if (verdict === "deleted") { if (moved && !opts.pinned?.()) deletedPin = opts.pin?.("deleted in another tab") || 0; }
+      if (verdict === "deleted" && moved && !opts.pinned?.()) detachedPins.push(opts.pin?.("deleted in another tab") || 0);
       else if (moved && surface.current && ekey === ekeyOf()) redraw();
     });
   }
@@ -308,7 +311,7 @@ export function startSession(opts: SessionOptions): Session {
     const ekey = ekeyOf();
     const md = currentMd();
     if (detached && detached.ekey === ekey) {
-      if (md !== detached.md) opts.stick?.("not saved — deleted in another tab, copy your text", md);
+      if (md !== detached.md) detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0);
       return Promise.resolve(false);
     }
     const inStore = layer.entryMd(ekey);

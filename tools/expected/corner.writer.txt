@@ -161,6 +161,7 @@ the page open in the first, saved in the second: {"textEnd":"en canopied with bo
 typed in the first as the second saves: {"textEnd":"en canopied with bowers.Exeunt","stored":null,"corner":"Couldn't copy the link (click to copy)","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the page open in the first, deleted in the second: {"entry":"page/Deleted Elsewhere","textEnd":"to be deleted in the second","screen":"page/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 typed into the page deleted in the second: {"stored":"to be deleted in the second, typed after","screen":"page/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the deleted page left for the day: {"corner":"saved","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 SECTION FAILED (bookmarks from another window): TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable

@@ -117,3 +117,18 @@ read against the code:
 The current app's run now stops at reopening the deleted page (its wait
 times out); the reading listed. Its two older section failures (places,
 entries left and renamed) predate this.
+
+### 2026-10-01 — the deleted entry's notices last while it is on screen
+
+- THE READER'S SIGHTING in Helium: after typing into a page deleted in
+  another tab, the refusal "not saved — deleted in another tab, copy your
+  text" stayed in the corner on the day he went to next. ASKED: it lasts
+  only while the deleted entry is on screen.
+- READ: leaving released only "deleted in another tab"; the refusal was
+  an unkeyed stick. Both are now pins the next open releases; leaving
+  drops the refused typing's copy with them.
+- A new reading, "the deleted page left for the day", red first (the
+  refusal still in the corner, MEASURED), then green (no corner,
+  MEASURED); every other reading unchanged. The current app's corner
+  there says "saved", its typing into the deleted page landing on the way
+  out (MEASURED); listed.

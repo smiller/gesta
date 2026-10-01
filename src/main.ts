@@ -193,7 +193,7 @@ if (fixture && fixtures[fixture]) {
   const session = startSession({
     mount: mountEl, layer, images, interval: screen.interval, say,
     stick: (text, copy) => { notices.stick(text, copy); },
-    pin: (text) => notices.stick(text), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
+    pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
       if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */

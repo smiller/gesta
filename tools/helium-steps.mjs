@@ -1044,6 +1044,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(1500);
   await log("typed into the page deleted in the second", { stored: await A.stored(page, "page/Deleted Elsewhere"), corner: await R.cornerText(page) });
   await go("2026-09-06");
+  await log("the deleted page left for the day", { corner: await R.cornerText(page) });
   await go("page/Deleted%20Elsewhere");
   await log("the deleted page opened again in the first", { textEnd: await textEnd() });
   await again.close();
