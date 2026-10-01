@@ -178,3 +178,42 @@ No mechanical class among them, so no checker is owed.
   forced miss: logged, re-selected, the reading unchanged (MEASURED).
   OWED: read `tools/out/flakes.log` when it has entries; they name the
   state the cause left.
+
+### 2026-10-01 — the second review at high, over 095ecd0..d87d66b
+
+One `/code-review` at high over everything after the first review: its
+fixes, decision 6 and the flake work; it stands as the confirmation
+pass. COST 90,698 tokens (MEASURED: input 2 + cache creation 2,862 +
+cache read 83,418 + output 4,416, from its subagent transcript). Ten
+findings, each read against the code:
+
+1. FIXED, a race (READ): a read after the warm that resolved late opened
+   whatever address was current, unread. Its continuation now opens only
+   while the address it read is still the one asked for. Unpinned.
+2. FIXED, data back from a delete (READ, then a test red first):
+   `primeEntry` read the store outside the key's queue, so an entry
+   removed here and opened again at once read back its row before the
+   delete landed. It now reads after the key's queued ops and refuses
+   when a removal came between.
+3. NOT TAKEN, put to the reader: an entry this window already holds,
+   edited in another window since, still opens with this window's text
+   and its first save is refused ("changed in another tab") — the
+   older multi-window gap, not this batch's.
+4. FIXED: `waitBar` throws again on its timeout, now with what the page
+   held in the message; only "reference copy" catches it.
+5. FIXED: the two listed reasons for the current app's readings said
+   what was never read; they now say what its run shows.
+6. NOT TAKEN: one store read per open of an address the cache lacks,
+   after the warm. Its cost was not measured; an open is one
+   IndexedDB get.
+7. NOT TAKEN, INFERRED: a row read in after the warm is not announced to
+   the count or the search index; Go to reads the cache's keys and so
+   lists it once opened. Not measured.
+8. FIXED: the session comment named the store's refusal; reworded.
+9. FIXED with 4: the date left the tools comment (tools/ is outside the
+   comment standard's src/ scope, so no checker is owed).
+10. FIXED: the × branch's own clear of the key editor, a copy of the
+    render's.
+
+No mechanical class in src/, so no checker is owed. The Helium verdict
+read unchanged, 0 open, no miss logged (MEASURED).

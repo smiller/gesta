@@ -102,17 +102,21 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     for (const k of Object.keys(cache)) delete cache[k];
     return store.clear();
   }
-  /* ahead of the warm. Additive and idempotent: a key already held is left
-     untouched, so the seed and the warm cannot disagree. Resolves true only
-     when THIS call seeded the key (pin: entries.test › primeEntry loses the
-     race to warm) */
+  /* one row into the cache. Additive and idempotent: a key already held is
+     left untouched, so the seed and the warm cannot disagree. Resolves true
+     only when THIS call seeded the key (pin: entries.test › primeEntry loses
+     the race to warm). Read after the key's queued ops, and refused when a
+     removal came between: a delete in flight read back its own row
+     (pin: entries.test › primeEntry waits for the key's pending ops) */
   function primeEntry(ekey: string): Promise<boolean> {
     if (ekey in cache) return Promise.resolve(false);
-    return store.get(ekey).then((row) => {
-      if (!row || !row.md || (ekey in cache)) return false;
+    const seqAt = saveSeq[ekey];
+    const read = (): Promise<boolean> => store.get(ekey).then((row) => {
+      if (!row || !row.md || (ekey in cache) || saveSeq[ekey] !== seqAt) return false;
       cache[ekey] = row.md;
       return true;
     });
+    return (chain[ekey] || Promise.resolve()).then(read, read);
   }
   function warm(): Promise<void> {
     storeReadFailed = false;

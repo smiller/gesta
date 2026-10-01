@@ -226,13 +226,16 @@ export function startSession(opts: SessionOptions): Session {
     hashDeferred = false;
     const h = hashParts(location.hash.slice(1));
     /* AFTER THE WARM an address the cache lacks is read from the store
-       first: another window may have written it since, and opened blank
-       here it would refuse every write
-       (pin: bookmarks from another window › its row's page typed into from the first) */
+       first: another window may have written it since
+       (pin: bookmarks from another window › its row's page opened from the first).
+       A read answers only while its own address is still the one asked
+       for: a later address opened by an earlier read went unread.
+       Unpinned: a race no step can hold open */
     const want = entryKey(h.date, h.tag);
     if (!primed && layer.warmed && !(want in layer.cache)) {
       hashDeferred = true;
-      const then = (): void => { if (hashDeferred) openAddress(true); };
+      const asked = location.hash;
+      const then = (): void => { if (hashDeferred && location.hash === asked) openAddress(true); };
       layer.primeEntry(want).then(then, then);
       return;
     }

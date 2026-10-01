@@ -454,10 +454,8 @@ if (fixture && fixtures[fixture]) {
     if (i === -1) return;
     const b = marks.list()[i];
     if (what === "del") {
-      const wasEditing = bm.editing === key;
       const next = marks.list().slice(); next.splice(i, 1);
       if (!marks.write(next)) return;
-      if (wasEditing) { bm.editing = ""; bm.draft = ""; }
       renderBookmarks();
     } else if (what === "key") {
       bm.buf = ""; bm.editing = key; bm.draft = b.alias; bm.opening = 1;

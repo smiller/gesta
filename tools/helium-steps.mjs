@@ -188,16 +188,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Horace");
   await R.selectAll(page, S.editorCell);
   /* the bar, not 100ms: it shows after the selectionchange the editor takes the selection on */
-  /* the bar missed 1 full run in ~15 and never in 52 runs of this step and
-     those before it (measured 2026-10-01): its cause not found, a miss is
-     selected again once and appended to tools/out/flakes.log, outside the
-     verdict, for the record to count; a second miss reads as itself */
-  let barMissed = await R.waitBar(page);
+  /* the bar has missed about 1 full run in 15 and never in this step's
+     replays: its cause unknown, a miss is selected again once and appended
+     to tools/out/flakes.log, outside the verdict; a second miss reads as
+     itself */
+  const barMiss = () => R.waitBar(page).then(() => null, (e) => e.message);
+  let barMissed = await barMiss();
   if (barMissed) {
     mkdirSync(new URL("out/", import.meta.url), { recursive: true });
-    appendFileSync(new URL("out/flakes.log", import.meta.url), new Date().toISOString() + " " + A.name + " reference copy: the bar missed " + JSON.stringify(barMissed) + "\n");
+    appendFileSync(new URL("out/flakes.log", import.meta.url), new Date().toISOString() + " " + A.name + " reference copy: " + barMissed + "\n");
     await R.selectAll(page, S.editorCell);
-    barMissed = await R.waitBar(page);
+    barMissed = await barMiss();
   }
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   await log("⌃⌘R", { ...(barMissed ? { barMissed } : {}), said, ...await R.clipboardReference(page) });

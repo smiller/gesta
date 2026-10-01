@@ -193,3 +193,14 @@ test("storedKeys reads the store's keys, the cache untouched", async () => {
   expect(await layer.storedKeys()).toEqual(["page/Elsewhere"]);
   expect("page/Elsewhere" in layer.cache).toBe(false);
 });
+
+test("primeEntry waits for the key's pending ops: an entry removed here is not read back while its delete is in flight", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/Gone", "old text");
+  const removed = layer.removeEntry("page/Gone");
+  expect(await layer.primeEntry("page/Gone")).toBe(false);
+  await removed;
+  expect("page/Gone" in layer.cache).toBe(false);
+  expect(await mem.get("page/Gone")).toBe(null);
+});
