@@ -28,6 +28,7 @@ import { copyText } from "./ui/clipboard.ts";
 import { screenState, EMPTY_MASTHEAD } from "./ui/screen.svelte.ts";
 import { mastheadModel, panelRows, trimLabel, ECHO_CAP } from "./ui/mastheadModel.ts";
 import { lifecycle, refuseCold } from "./ui/lifecycle.ts";
+import { overlays } from "./ui/overlays.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./ui/searchModel.ts";
 import { searchIndex } from "./store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
@@ -84,10 +85,19 @@ const acts = {
   lines: (_open: boolean) => {},
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
-  lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {} },
-  search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
+  lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
+  search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {}, drop: () => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
+const overlay = overlays({
+  panel: closePanel,
+  search: () => acts.search.toggle(false),
+  searchDropped: () => acts.search.drop(),
+  goto: () => acts.goto.toggle(false),
+  lineBar: () => acts.lineBar.dismiss(),
+  lineBarCaret: () => acts.lineBar.close(),
+  lines: () => { if (screen.linesOpen) acts.lines(false); },
+});
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
 mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
 mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
@@ -118,7 +128,7 @@ document.addEventListener("click", (e) => {
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") { closePanel(); acts.search.toggle(false); acts.goto.toggle(false); acts.lineBar.close(); if (screen.linesOpen) acts.lines(false); }
+  if (e.key === "Escape") overlay.open("escape");
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
   /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
@@ -185,11 +195,11 @@ if (fixture && fixtures[fixture]) {
     pin: (text) => notices.stick(text), releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
-      if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); gotoRow(false); closeLineBar(); }   /* a navigation dismisses an overlay drawn for another entry, the search with its query, and the go-to line whose preselects it made stale */
+      if (ekey !== shown.ekey) overlay.open("navigated");
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
-    onView: (md) => { screen.mdView = md; if (md) closeLineBar(); },
+    onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); },
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
@@ -201,7 +211,7 @@ if (fixture && fixtures[fixture]) {
   acts.lines = (open) => {
     if (open && !screen.gutter) { say("no line numbers here", 2000); return; }
     screen.linesOpen = open;
-    if (open) { closePanel(); closeLineBar(); setTimeout(() => masthead.focusLines(), 0); }
+    if (open) { overlay.open("lines"); setTimeout(() => masthead.focusLines(), 0); }
     else session.view?.focus();
   };
   /* SEARCH. The index is built from the parsed text, once per session:
@@ -257,7 +267,7 @@ if (fixture && fixtures[fixture]) {
     cancelScan();
     sr.open = open;
     if (!open) { session.view?.focus(); return; }
-    closePanel();
+    overlay.open("search");
     session.flushSave();
     const c = session.current;
     sr.options = scopeOptions(c.date, c.tag, Object.keys(layer.cache), journal);
@@ -267,6 +277,7 @@ if (fixture && fixtures[fixture]) {
     renderSearch();
   };
   acts.search.toggle = openRow;
+  acts.search.drop = () => { sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); };
   acts.search.query = (q) => { sr.query = q; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
   acts.search.scope = (at) => { sr.scopeAt = at; cancelScan(); renderSearch(); };
   acts.search.walk = (dir) => {
@@ -286,16 +297,14 @@ if (fixture && fixtures[fixture]) {
   /* THE GO TO ROW: built fresh on every open — the lazy fill that keeps
      the list walks off the navigation hot path — with the first select
      focused; emptied on close. A terminal pick closes the row BEFORE the
-     hash write, since a pick of the open entry moves no hash. Opening
-     dismisses the overlays, which would cover the row just asked for;
-     the row itself covers nothing, so an overlay opening leaves it alone.
-     No save flush: it would rewrite an untouched entry. */
+     hash write, since a pick of the open entry moves no hash. No save
+     flush: it would rewrite an untouched entry. */
   const gotoWorld = () => ({ keys: keysNow(), cache: layer.cache, journal });
   const gotoRow = (open: boolean): void => {
     if (screen.goto.open === open) return;
     screen.goto.open = open;
     if (!open) { screen.goto.levels = []; session.view?.focus(); return; }
-    closePanel();
+    overlay.open("goto");
     const c = session.current;
     screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
     setTimeout(() => masthead.focusGoto(), 0);
@@ -333,7 +342,7 @@ if (fixture && fixtures[fixture]) {
     sc.editing = on;
   };
   const openShortcuts = (): void => {
-    openRow(false); gotoRow(false); closeLineBar();
+    overlay.open("shortcuts");
     sc.query = "";
     sc.editing = false;
     renderShortcuts();
@@ -402,7 +411,7 @@ if (fixture && fixtures[fixture]) {
     setTimeout(() => { masthead.focusBookmarks(); bm.opening = 0; }, 0);
   };
   const openBookmarks = (): void => {
-    openRow(false); gotoRow(false); closeLineBar();
+    overlay.open("bookmarks");
     /* the sweep and its write together, gated on the warm: an absence and
        a deletion read the same, and only one should cost rows */
     if (layer.warmed) {
@@ -560,6 +569,7 @@ if (fixture && fixtures[fixture]) {
     if (session.view) setLanding(session.view, null);
     lb.open = false;
   };
+  acts.lineBar.dismiss = closeLineBar;
   /* the caret hand-back: only the routes aimed at the bar */
   const putLineCaret = (): void => {
     if (!lb.open) return;
@@ -586,7 +596,7 @@ if (fixture && fixtures[fixture]) {
     if (kind === "none") { say("no line or page numbers here", 2000); return; }
     const c = session.current, askKey = entryKey(c.date, c.tag);
     if (askKey !== lastAskKey) { lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0; }
-    closePanel(); openRow(false); gotoRow(false);
+    overlay.open("lineBar");
     lb.kind = kind;
     lb.open = true;
     setTimeout(() => masthead.focusLineBar(), 0);
@@ -783,10 +793,11 @@ if (fixture && fixtures[fixture]) {
      not made before the warm has read it. */
   acts.panel = (ns) => {
     if (screen.panel === ns) { closePanel(); return; }
-    if (ns === "help") { openRow(false); closeLineBar(); screen.panel = "help"; return; }
+    if (ns === "help") { overlay.open("help"); screen.panel = "help"; return; }
     if (ns === "bookmarks") { openBookmarks(); return; }
     if (ns === "shortcuts") { openShortcuts(); return; }
-    if (ns === "backups") { openRow(false); closeLineBar(); readBackups(); screen.panel = "backups"; return; }
+    if (ns === "backups") { overlay.open("backups"); readBackups(); screen.panel = "backups"; return; }
+    overlay.open("pages");
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
