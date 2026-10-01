@@ -26,14 +26,12 @@ import { readRaw } from "./store/local.ts";
 import { noticeLedger, type Progress } from "./chrome/notices.svelte.ts";
 import { copyText } from "./chrome/clipboard.ts";
 import { screenState, EMPTY_MASTHEAD } from "./chrome/screen.svelte.ts";
-import { mastheadModel, panelRows, rootLabel, trimLabel, ECHO_CAP } from "./chrome/mastheadModel.ts";
-import { typedName } from "./chrome/naming.ts";
+import { mastheadModel, panelRows, trimLabel, ECHO_CAP } from "./chrome/mastheadModel.ts";
+import { lifecycle, coldRefusal } from "./chrome/lifecycle.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./chrome/searchModel.ts";
 import { searchIndex } from "./store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
 import { flattenDoc } from "./model/flatten.ts";
-import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, deleteConfirm, deleteLanding, hostKey } from "./chrome/subEntries.ts";
-import { retargetLinks, relabelLinks } from "./store/links.ts";
 import { linkRefusal, insertLinkAfter } from "./editor/insertLink.ts";
 import { mdLabel, romanWorkKey } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./chrome/gotoModel.ts";
@@ -45,10 +43,9 @@ import { parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, aliasRe
 import { reachableBookmarks, bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, bookmarkParts, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./chrome/bookmarksModel.ts";
 import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
-import { pageParts, nsOf } from "./store/keys.ts";
+import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
-import { todayKey, entryKey, entryHash, KEYED_NS } from "./store/keys.ts";
-import { registered, childrenOf } from "./store/lists.ts";
+import { todayKey, entryKey, entryHash } from "./store/keys.ts";
 import { hashParts } from "./store/nav.ts";
 import Corner from "./chrome/Corner.svelte";
 import Masthead from "./chrome/Masthead.svelte";
@@ -57,8 +54,7 @@ import CopyButton from "./chrome/CopyButton.svelte";
 import { writeClipboard } from "./chrome/clipboard.ts";
 import { richBlockHtml } from "./chrome/richCopy.ts";
 import { schema } from "./model/schema.ts";
-import { bold, italic, underline, strike, heading, quote, codeBlock, curlSelection, inCode, formatState, cutMd, replaceWithLink } from "./editor/format.ts";
-import { firstHeading } from "./store/headings.ts";
+import { bold, italic, underline, strike, heading, quote, codeBlock, curlSelection, inCode, formatState } from "./editor/format.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -190,7 +186,7 @@ if (fixture && fixtures[fixture]) {
     onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
       if (ekey !== shown.ekey) { closePanel(); sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); gotoRow(false); closeLineBar(); }   /* a navigation dismisses an overlay drawn for another entry, the search with its query, and the go-to line whose preselects it made stale */
-      if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); relabelParent(ekey, stored); }
+      if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
     onView: (md) => { screen.mdView = md; if (md) closeLineBar(); },
@@ -764,173 +760,27 @@ if (fixture && fixtures[fixture]) {
     if (!view) return;
     if (act === "reference") { session.copyReference(); return; }
     if (act === "words") { session.showWordCount(); return; }
-    if (act === "tag") { extractToTag(); return; }
+    if (act === "tag") { life.extract(); return; }
     const cmd = { bold, italic, underline, strike, heading, quote, code: codeBlock, curl: curlSelection }[act];
     if (cmd && !cmd(view.state, view.dispatch)) say("nothing to change there", 2000);
     view.focus();
     placeBar();
   };
-  /* the selection into a new sub-entry, the link left in its place: the
-     new entry is born WITH its heading, so the link is labelled by it at
-     birth where a later relabel would never see the change */
-  const extractToTag = (): void => {
-    const view = session.view;
-    if (!view || view.state.selection.empty || warmBlock()) return;
-    const { from, to } = view.state.selection;
-    const c = session.current;
-    const ns = nsOf(c.date);
-    const typedRaw = typedName(prompt(ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:"));
-    if (!typedRaw) return;
-    if ("refuse" in typedRaw) { say(typedRaw.refuse); return; }
-    const spec = subEntrySpec(c.date, c.tag, typedRaw.name);
-    if (!spec) return;
-    if ("refuse" in spec) { say(spec.refuse); return; }
-    if (childrenOf(keysNow(), spec.listKey).indexOf(spec.tag) !== -1) { alert(takenText(spec.listKey, spec.tag)); return; }
-    const md = cutMd(view.state.doc, from, to);
-    const cutText = view.state.doc.textBetween(from, to, " ", " ");
-    const label = ns ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
-    layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
-      if (!landed) { say("couldn't create the entry — see the corner", 3000); return; }
-      /* the positions were taken before the write: a document that moved
-         under them keeps its text, the new entry standing */
-      if (view !== session.view || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { say("the text moved while the entry was made — the link was not placed", 3000); return; }
-      view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
-      screen.bar.show = false;
-      return session.saveNow().then(() => { refreshMasthead(); session.goto(spec.href); });
-    });
-  };
-  /* THE SUB-ENTRIES. Every gate over "what exists" refuses on a cold
-     cache: a create would write into a blank painted over a real entry.
-     A new name REGISTERS at once (an empty body, as a root does) so the
-     lists hold it while it is empty; an existing name just opens. The
-     link lands after the caret, never replacing a selection and never
-     appended at the end; a caret with nowhere to land refuses before
-     anything is minted. */
   const warmBlock = (): boolean => {
-    if (layer.warmed) return false;
-    say(layer.storeReadFailed ? "couldn’t load entries — reload first" : "still loading — try that again in a moment", 2500);
-    return true;
+    const why = coldRefusal(layer);
+    if (why) say(why, 2500);
+    return !!why;
   };
   const keysNow = (): string[] => Object.keys(layer.cache);
-  const shownName = (date: string, tag: string): string => {
-    const ns = nsOf(date), pp = pageParts(tag);
-    return ns && !pp.sub ? rootLabel(date, tag, journal) : ns ? pp.leaf : tag;
-  };
-  const retargetHost = (date: string, oldTag: string, newTag: string | null): Promise<unknown> => {
-    const host = hostKey(date, oldTag);
-    if (!host) return Promise.resolve();
-    const oldLabel = nsOf(date) ? pageParts(oldTag).leaf : oldTag;
-    const newLabel = newTag ? (nsOf(date) ? pageParts(newTag).leaf : newTag) : null;
-    const out = retargetLinks(layer.entryMd(host), entryHash(date, oldTag), newTag ? entryHash(date, newTag) : null, oldLabel, newLabel);
-    return out === null ? Promise.resolve() : layer.setEntry(host, out);
-  };
-  acts.create = () => {
-    if (warmBlock()) return;
-    const c = session.current;
-    const ns = nsOf(c.date);
-    /* the one leaf: the button is hidden there, but ⌃⌘N is a press */
-    if (!ns && c.tag) { say("a tagged entry holds no entries of its own", 2500); return; }
-    const typedRaw = typedName(prompt(ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:"));
-    if (!typedRaw) return;
-    if ("refuse" in typedRaw) { say(typedRaw.refuse); return; }
-    const spec = subEntrySpec(c.date, c.tag, typedRaw.name);
-    if (!spec) return;
-    if ("refuse" in spec) { say(spec.refuse); return; }
-    const key = entryKey(c.date, spec.full);
-    if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return; }
-    const view = session.view;
-    if (!view) { say("place your cursor in the entry", 2000); return; }
-    const why = linkRefusal(view.state);
-    if (why) { say(why, 2000); return; }
-    insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
-    layer.setEntry(key, "").then(() => session.saveNow()).then(() => { refreshMasthead(); session.goto(spec.href); });
-  };
-  /* a rename is in flight from the prompt until its writes land: a second
-     click replayed against the renamed state would move nothing yet still
-     retarget the address to a name that holds nothing. The new key lands
-     BEFORE the old one clears, so a crash between leaves a transient
-     duplicate, never a lost entry. A sub-page renames by its leaf, within
-     its parent; content-bearing descendants block, blanks are swept only
-     past the prompt. */
-  let renaming = false;
-  acts.rename = () => {
-    const c = session.current;
-    if (!c.tag || renaming || warmBlock()) return;
-    const date = c.date, old = c.tag, ns = nsOf(date), pp = ns ? pageParts(old) : null;
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old))) { say("rename after the " + ns.subNoun + "s are deleted", 2500); return; }
-    const oldLeaf = pp ? pp.leaf : old;
-    const typedRaw = typedName(prompt(renamePrompt(date, old, shownName(date, old)), oldLeaf));
-    if (!typedRaw) return;
-    if ("refuse" in typedRaw) { say(typedRaw.refuse); return; }
-    const leaf = typedRaw.name;
-    if (leaf === oldLeaf) return;
-    const listKey = pp && pp.sub ? entryKey(date, pp.parent) : date;
-    if (childrenOf(keysNow(), listKey).indexOf(leaf) !== -1) { alert(takenText(listKey, leaf)); return; }
-    const full = pp && pp.sub ? pp.parent + "/" + leaf : leaf;
-    renaming = true;
-    session.flushSave().then(() => {
-      if (session.current.date !== date || session.current.tag !== old) return;
-      session.suspendSaves();   /* nothing lands under the old key from here; open(new) lifts it */
-      const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
-      const sweptKeys = ns ? blankSubTree(keysNow(), oldKey) : [];
-      const sweep = sweptKeys.map((k) => layer.removeEntry(k));
-      /* an EMPTY body moves too: the row is the registration */
-      const moved = layer.setEntry(entryKey(date, full), md);
-      return Promise.all([moved, ...sweep]).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
-        /* typed into the surface while the writes ran: carried to the new key */
-        const live = session.surfaceMd();
-        return live !== md ? layer.setEntry(entryKey(date, full), live) : true;
-      }).then(() => {
-        history.replaceState(null, "", entryHash(date, full));
-        session.open(date, full);
-        session.movePlace(oldKey, entryKey(date, full));
-        for (const k of sweptKeys) session.movePlace(k, null);
-        refreshMasthead();
-      });
-    }).finally(() => { renaming = false; });
-  };
-  acts.delete = () => {
-    const c = session.current;
-    if (!c.tag || warmBlock()) return;
-    const date = c.date, tag = c.tag, ns = nsOf(date);
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) { say("delete the " + ns.subNoun + "s first", 2500); return; }
-    if (!confirm(deleteConfirm(date, tag, shownName(date, tag)))) return;
-    const key = entryKey(date, tag);
-    const sweptKeys = ns ? blankSubTree(keysNow(), key) : [];
-    const sweep = sweptKeys.map((k) => layer.removeEntry(k));
-    const back = deleteLanding(date, tag);
-    /* the landing FIRST: opening another entry cancels the pending save
-       that would otherwise resurrect this one */
-    history.replaceState(null, "", entryHash(back.date, back.tag));
-    session.open(back.date, back.tag, "arrive");
-    for (const k of [key, ...sweptKeys]) session.movePlace(k, null);
-    /* the text typed on the entry landed on is saved BEFORE the retarget
-       reads the host, and the repaint comes only where the store moved (a
-       lost link) */
-    Promise.all([layer.removeEntry(key), ...sweep]).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
-      refreshMasthead();
-      session.view?.focus();
-    });
-  };
-  /* the parent's index link reads as a sub-page's TITLE: when a landed
-     save moves a sub-page's first heading, the parent's minted labels
-     follow — the bare name or the previous heading; a hand-written label
-     stays. The previous heading is remembered per key from the last look. */
-  const headingSeen: Record<string, string> = Object.create(null);
-  const relabelParent = (ekey: string, stored: string): void => {
-    const cut = ekey.indexOf("/");
-    if (cut === -1) return;
-    const date = ekey.slice(0, cut), tag = ekey.slice(cut + 1);
-    if (!nsOf(date)) return;
-    const pp = pageParts(tag);
-    const heading = journal.heading(ekey);
-    const before = ekey in headingSeen ? headingSeen[ekey] : heading;
-    headingSeen[ekey] = heading;
-    if (!pp.sub || before === heading || !stored) return;
-    const parent = entryKey(date, pp.parent);
-    const out = relabelLinks(layer.entryMd(parent), entryHash(date, tag), pp.leaf, before, heading);
-    if (out !== null) layer.setEntry(parent, out);
-  };
+  const life = lifecycle({
+    layer, journal, session,
+    view: () => session.view,
+    dialogs: { prompt: (text, value) => value === undefined ? prompt(text) : prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
+    chrome: { say, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.view?.focus() },
+  });
+  acts.create = () => { life.create(); };
+  acts.rename = () => { life.rename(); };
+  acts.delete = () => { life.remove(); };
   /* an opener TOGGLES its own panel and displaces any other: the rows are
      built per open and never rebuilt while open — a live rebuild would
      detach a mid-click target. "No authors" is a claim about the journal,
@@ -947,23 +797,9 @@ if (fixture && fixtures[fixture]) {
       : "No authors yet — import a folder, or start one below.";
     screen.panel = ns;
   };
-  /* create a namespace ROOT: prompt → the naming rule → register → go. An
-     existing name just opens; a new one is stored with an empty body at
-     once so the list holds it while it is empty (the export skips a blank,
-     so nothing lands on disk) — and in the bookshelf, whose unknown keys
-     are refused, that registration is what lets the address open at all.
-     The echo is the LABEL, where the key is what was typed. */
   acts.newRoot = (ns) => {
     closePanel();
-    const noun = KEYED_NS[ns].noun;
-    const typed = typedName(prompt("Name for the new " + noun + ":"));
-    if (!typed) return;
-    if ("refuse" in typed) { say(typed.refuse); return; }
-    const name = typed.name;
-    const go = (): void => session.goto(entryHash(ns, name), "already on " + trimLabel(rootLabel(ns, name, journal), ECHO_CAP));
-    if (warmBlock()) return;   /* a name checked against one primed row could store an empty body over a real one */
-    if (registered(Object.keys(layer.cache), ns, name)) { go(); return; }
-    layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(); });
+    life.newRoot(ns);
   };
   stage("start");
   const seeds: Record<string, string> = {

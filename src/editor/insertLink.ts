@@ -12,7 +12,7 @@ export function linkRefusal(state: EditorState): string {
   if (schema.marks.link.isInSet($to.marks())) return "no link inside a link";
   return "";
 }
-export function insertLinkAfter(view: EditorView, href: string, label: string): void {
+export function insertLinkAfter(view: Pick<EditorView, "state" | "dispatch">, href: string, label: string): void {
   const { $to } = view.state.selection;
   const text = schema.text(label, [schema.marks.link.create({ href })]);
   view.dispatch(view.state.tr.insert($to.pos, text).scrollIntoView());

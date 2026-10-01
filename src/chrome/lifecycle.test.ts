@@ -1,0 +1,336 @@
+import { describe, it, expect } from "vitest";
+import type { Node } from "prosemirror-model";
+import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
+import { lifecycle, coldRefusal } from "./lifecycle.ts";
+import { entryLayer } from "../store/entries.ts";
+import { memEntryStore, type EntryStore } from "../store/store.ts";
+import { journalOf } from "../store/headings.ts";
+import { parseMarkdown } from "../model/parse.ts";
+import { serializeMarkdown } from "../model/serialize.ts";
+import { entryKey } from "../store/keys.ts";
+
+interface Opts {
+  at: [string, string | null];
+  entries?: Record<string, string>;
+  md?: string;
+  warm?: "no" | "failed";
+  failSet?: string;
+  noView?: boolean;
+}
+async function world(o: Opts) {
+  const log: string[] = [];
+  const mem = memEntryStore();
+  for (const [k, v] of Object.entries(o.entries ?? {})) await mem.set(k, v);
+  let onSet: ((key: string) => void) | null = null;
+  const store: EntryStore = {
+    ...mem,
+    set: (k, md) => { log.push("set " + k); onSet?.(k); return k === o.failSet ? Promise.reject(new Error("blocked")) : mem.set(k, md); },
+    del: (k) => { log.push("del " + k); return mem.del(k); },
+    all: () => o.warm === "failed" ? Promise.reject(new Error("blocked")) : mem.all(),
+  };
+  const layer = entryLayer(store, { landed() {}, removed() {}, stuck() {}, stuckIdle() {} });
+  if (o.warm !== "no") await layer.warm();
+  let current = { date: o.at[0], tag: o.at[1] };
+  const here = (): string => entryKey(current.date, current.tag);
+  let st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here()] ?? "") });
+  const view = {
+    get state() { return st; },
+    dispatch: (tr: Transaction) => { log.push("edit"); st = st.apply(tr); },
+  };
+  const answers: (string | null | boolean)[] = [];
+  const asked: string[] = [];
+  let onFlush: (() => void) | null = null;
+  let typed: string | null = null;
+  const life = lifecycle({
+    layer,
+    journal: journalOf(layer.cache),
+    view: () => o.noView ? null : view,
+    session: {
+      get current() { return current; },
+      flushSave: () => { log.push("flush"); onFlush?.(); return Promise.resolve(true); },
+      suspendSaves: () => { log.push("suspend"); },
+      surfaceMd: () => typed ?? serializeMarkdown(st.doc),
+      open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); current = { date, tag }; },
+      movePlace: (from, to) => { log.push("move " + from + " → " + to); },
+      refresh: () => { log.push("refresh"); return Promise.resolve(); },
+      goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
+      saveNow: () => { log.push("save"); return layer.setEntry(here(), serializeMarkdown(st.doc)); },
+    },
+    dialogs: {
+      prompt: (text, value) => { asked.push(text + (value !== undefined ? " [" + value + "]" : "")); return answers.shift() as string | null; },
+      confirm: (text) => { asked.push(text); return answers.shift() as boolean; },
+      alert: (text) => { log.push("alert " + text); },
+    },
+    chrome: {
+      say: (text) => { log.push("say " + text); },
+      redraw: () => { log.push("redraw"); },
+      replaceHash: (hash) => { log.push("hash " + hash); },
+      hideBar: () => { log.push("hideBar"); },
+      focus: () => { log.push("focus"); },
+    },
+  });
+  return {
+    life, layer, log, asked,
+    answer: (...a: (string | null | boolean)[]) => { answers.push(...a); },
+    md: (k: string) => k in layer.cache ? layer.cache[k] : null,
+    doc: () => st.doc,
+    select: (from: number, to = from) => { st = st.apply(st.tr.setSelection(TextSelection.create(st.doc, from, to))); },
+    typeMeanwhile: (md: string) => { typed = md; },
+    onFlush: (f: () => void) => { onFlush = f; },
+    onSet: (f: (key: string) => void) => { onSet = f; },
+    edit: (f: (s: EditorState) => Transaction) => { st = st.apply(f(st)); },
+    leave: (date: string, tag: string | null) => { current = { date, tag }; },
+  };
+}
+/* the position just before the first occurrence of `text` in a textblock */
+const pos = (doc: Node, text: string, after = false): number => {
+  let at = -1;
+  doc.descendants((n, p) => {
+    if (at === -1 && n.isText && n.text!.includes(text)) at = p + n.text!.indexOf(text) + (after ? text.length : 0);
+    return at === -1;
+  });
+  return at;
+};
+const LOADING = "still loading — try that again in a moment";
+const before = (log: string[], a: string, b: string): boolean => log.indexOf(a) !== -1 && log.indexOf(a) < log.indexOf(b);
+
+describe("the cold cache", () => {
+  it("refuses every operation, writing nothing; a new root asks before it refuses", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "# A\n\nhello\n" }, warm: "no" });
+    w.select(pos(w.doc(), "hello"), pos(w.doc(), "hello", true));
+    await w.life.create();
+    await w.life.extract();
+    await w.life.rename();
+    await w.life.remove();
+    expect(w.asked).toEqual([]);
+    w.answer("Z");
+    await w.life.newRoot("page");
+    expect(w.asked).toEqual(["Name for the new page:"]);
+    expect(w.log).toEqual(Array(5).fill("say " + LOADING));
+  });
+  it("says loading while the warm runs, and that the read failed once it has", async () => {
+    const cold = await world({ at: ["page", "A"], warm: "no" });
+    expect(coldRefusal(cold.layer)).toBe(LOADING);
+    const failed = await world({ at: ["page", "A"], warm: "failed" });
+    expect(coldRefusal(failed.layer)).toBe("couldn’t load entries — reload first");
+    const warm = await world({ at: ["page", "A"] });
+    expect(coldRefusal(warm.layer)).toBeNull();
+  });
+});
+
+describe("create", () => {
+  it("refuses on a day's tagged entry without asking", async () => {
+    const w = await world({ at: ["2026-09-30", "x"] });
+    await w.life.create();
+    expect(w.asked).toEqual([]);
+    expect(w.log).toEqual(["say a tagged entry holds no entries of its own"]);
+  });
+  it("does nothing when the prompt is cancelled, and says a name the naming rule refuses", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" } });
+    w.answer(null, "?");
+    await w.life.create();
+    await w.life.create();
+    expect(w.asked).toEqual(["Name for the new sub-page:", "Name for the new sub-page:"]);
+    expect(w.log).toEqual(["say that name leaves nothing a filename can keep"]);
+  });
+  it("goes to a name already there, writing nothing", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n", "page/A/B": "b\n" } });
+    w.answer("B");
+    await w.life.create();
+    expect(w.log).toEqual(["goto #page/A/B | already here"]);
+  });
+  it("refuses with no editor, or a caret where no link may go, before anything is minted", async () => {
+    const none = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" }, noView: true });
+    none.answer("B");
+    await none.life.create();
+    expect(none.log).toEqual(["say place your cursor in the entry"]);
+    const code = await world({ at: ["page", "A"], entries: { "page/A": "```\ncode\n```\n" } });
+    code.select(pos(code.doc(), "code", true));
+    code.answer("B");
+    await code.life.create();
+    expect(code.log).toEqual(["say no link inside a code block"]);
+    expect(code.md("page/A/B")).toBeNull();
+  });
+  it("puts the link after the caret, registers the name empty, saves, redraws, goes", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" } });
+    w.select(pos(w.doc(), "hello", true));
+    w.answer("B");
+    await w.life.create();
+    expect(w.log).toEqual(["edit", "set page/A/B", "save", "set page/A", "redraw", "goto #page/A/B"]);
+    expect(w.md("page/A")).toBe("hello[B](#page/A/B)");
+    expect(w.md("page/A/B")).toBe("");
+  });
+  it("goes even when the registration did not land", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" }, failSet: "page/A/B" });
+    w.select(pos(w.doc(), "hello", true));
+    w.answer("B");
+    await w.life.create();
+    expect(w.log[w.log.length - 1]).toBe("goto #page/A/B");
+  });
+});
+
+describe("extract", () => {
+  const HOST = "# A\n\n# Part\n\nbody text\n\nkeep";
+  it("does nothing with no editor or nothing selected", async () => {
+    const none = await world({ at: ["page", "A"], entries: { "page/A": HOST }, noView: true });
+    await none.life.extract();
+    const empty = await world({ at: ["page", "A"], entries: { "page/A": HOST } });
+    await empty.life.extract();
+    expect([...none.asked, ...empty.asked, ...none.log, ...empty.log]).toEqual([]);
+  });
+  it("alerts a name already taken, writing nothing", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": HOST, "page/A/P": "p\n" } });
+    w.select(pos(w.doc(), "body"), pos(w.doc(), "text", true));
+    w.answer("P");
+    await w.life.extract();
+    expect(w.log).toEqual(['alert A "P" sub-page already exists.']);
+  });
+  it("moves the selection into the new entry, leaves a link labelled by its heading, hides the bar, saves, goes", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": HOST } });
+    w.select(pos(w.doc(), "Part"), pos(w.doc(), "body text", true));
+    w.answer("P");
+    await w.life.extract();
+    expect(w.log).toEqual(["set page/A/P", "edit", "hideBar", "save", "set page/A", "redraw", "goto #page/A/P"]);
+    expect(w.md("page/A/P")).toBe("# Part\n\nbody text");
+    expect(w.md("page/A")).toBe("# A\n\n[Part](#page/A/P)\n\nkeep");
+  });
+  it("labels the link by its tag outside a namespace", async () => {
+    const w = await world({ at: ["2026-09-30", null], entries: { "2026-09-30": "one two three\n" } });
+    w.select(pos(w.doc(), "two"), pos(w.doc(), "two", true));
+    w.answer("t");
+    await w.life.extract();
+    expect(w.md("2026-09-30")).toBe("one [t](#2026-09-30/t) three");
+  });
+  it("says a write that did not land, and leaves the text", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": HOST }, failSet: "page/A/P" });
+    w.select(pos(w.doc(), "Part"), pos(w.doc(), "body text", true));
+    w.answer("P");
+    await w.life.extract();
+    expect(w.log).toEqual(["set page/A/P", "say couldn't create the entry — see the corner"]);
+    expect(serializeMarkdown(w.doc())).toBe(HOST);
+  });
+  it("places no link when the text moved during the write; the new entry stands", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": HOST } });
+    w.select(pos(w.doc(), "Part"), pos(w.doc(), "body text", true));
+    w.onSet((k) => { if (k === "page/A/P") w.edit((s) => s.tr.insertText("moved ", 1)); });
+    w.answer("P");
+    await w.life.extract();
+    expect(w.log).toEqual(["set page/A/P", "say the text moved while the entry was made — the link was not placed"]);
+    expect(w.md("page/A/P")).toBe("# Part\n\nbody text");
+    expect(serializeMarkdown(w.doc())).not.toContain("#page/A/P");
+  });
+});
+
+describe("rename", () => {
+  it("refuses with no tag, over sub-pages holding text, on the same name, and on a taken one", async () => {
+    const root = await world({ at: ["page", null] });
+    await root.life.rename();
+    expect([...root.asked, ...root.log]).toEqual([]);
+    const full = await world({ at: ["page", "A"], entries: { "page/A": "a\n", "page/A/B": "text\n" } });
+    await full.life.rename();
+    expect(full.log).toEqual(["say rename after the sub-pages are deleted"]);
+    const same = await world({ at: ["page", "A/B"], entries: { "page/A/B": "b\n", "page/A/C": "c\n" } });
+    same.answer("B", "C");
+    await same.life.rename();
+    expect(same.asked).toEqual(['Rename the sub-page "B" to: [B]']);
+    expect(same.log).toEqual([]);
+    await same.life.rename();
+    expect(same.log).toEqual(['alert A "C" sub-page already exists.']);
+  });
+  it("flushes, suspends, writes the new key before clearing the old, retargets the host, carries what was typed meanwhile, then opens and moves the places", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "body\n", "page/A/B/x": "" } });
+    w.typeMeanwhile("body more\n");
+    w.answer("C");
+    await w.life.rename();
+    const l = w.log;
+    expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
+    expect(before(l, "set page/A/C", "del page/A/B")).toBe(true);
+    expect(l).toContain("del page/A/B/x");
+    expect(l.slice(l.indexOf("del page/A/B") + 1)).toEqual([
+      "set page/A", "set page/A/C", "hash #page/A/C", "open page/A/C",
+      "move page/A/B → page/A/C", "move page/A/B/x → null", "redraw",
+    ]);
+    expect(w.md("page/A/C")).toBe("body more\n");
+    expect(w.md("page/A/B")).toBeNull();
+    expect(w.md("page/A/B/x")).toBeNull();
+    expect(w.md("page/A")).toBe("- [C](#page/A/C)");
+  });
+  it("ignores a second rename while one is in flight", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A/B": "b\n" } });
+    w.answer("C", "D");
+    const first = w.life.rename();
+    await w.life.rename();
+    await first;
+    expect(w.asked).toHaveLength(1);
+  });
+  it("writes nothing when the entry was left during the flush", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A/B": "b\n", "page/Q": "q\n" } });
+    w.onFlush(() => { w.leave("page", "Q"); });
+    w.answer("C");
+    await w.life.rename();
+    expect(w.log).toEqual(["flush"]);
+    expect(w.md("page/A/B")).toBe("b\n");
+  });
+});
+
+describe("delete", () => {
+  it("refuses over sub-pages holding text, and does nothing when the confirm is declined", async () => {
+    const full = await world({ at: ["page", "A"], entries: { "page/A": "a\n", "page/A/B": "text\n" } });
+    await full.life.remove();
+    expect(full.log).toEqual(["say delete the sub-pages first"]);
+    const no = await world({ at: ["page", "A/B"], entries: { "page/A/B": "b\n" } });
+    no.answer(false);
+    await no.life.remove();
+    expect(no.asked).toEqual(['Delete the sub-page "B"?']);
+    expect(no.log).toEqual([]);
+  });
+  it("opens the landing and drops the places BEFORE removing, then flushes, unlinks the host, refreshes, redraws, focuses", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "body\n", "page/A/B/x": "" } });
+    w.answer(true);
+    await w.life.remove();
+    const l = w.log;
+    expect(l.slice(0, 4)).toEqual(["hash #page/A", "open page/A arrive", "move page/A/B → null", "move page/A/B/x → null"]);
+    expect(l.slice(4, 6).sort()).toEqual(["del page/A/B", "del page/A/B/x"]);
+    expect(l.slice(l.indexOf("flush"))).toEqual(["flush", "set page/A", "refresh", "redraw", "focus"]);
+    expect(w.md("page/A/B")).toBeNull();
+    expect(w.md("page/A/B/x")).toBeNull();
+    expect(w.md("page/A")).not.toContain("#page/A/B");
+  });
+});
+
+describe("a new root", () => {
+  it("goes to a name already there; registers a new one empty, then goes; goes nowhere when the write did not land", async () => {
+    const there = await world({ at: ["page", null], entries: { "page/Z": "z\n" } });
+    there.answer("Z");
+    await there.life.newRoot("page");
+    expect(there.log).toEqual(["goto #page/Z | already on Z"]);
+    const fresh = await world({ at: ["page", null] });
+    fresh.answer("Y");
+    await fresh.life.newRoot("page");
+    expect(fresh.log).toEqual(["set page/Y", "goto #page/Y | already on Y"]);
+    expect(fresh.md("page/Y")).toBe("");
+    const failed = await world({ at: ["page", null], failSet: "page/Y" });
+    failed.answer("Y");
+    await failed.life.newRoot("page");
+    expect(failed.log).toEqual(["set page/Y"]);
+  });
+});
+
+describe("the parent's links follow a sub-page's heading", () => {
+  it("remembers the heading at first sight, and relabels the parent's minted link when it changes", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "# Bee\n" } });
+    w.life.shown("page/A/B", "# Bee\n");
+    expect(w.log).toEqual([]);
+    await w.layer.setEntry("page/A/B", "# Bumble\n");
+    w.log.length = 0;
+    w.life.shown("page/A/B", "# Bumble\n");
+    await new Promise((r) => setTimeout(r, 0));
+    expect(w.log).toEqual(["set page/A"]);
+    expect(w.md("page/A")).toBe("- [Bumble](#page/A/B)");
+  });
+  it("writes nothing for a day, a root, or an entry with nothing stored", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "# A\n", "page/A/B": "", "2026-09-30/t": "# T\n" } });
+    for (const [k, md] of [["2026-09-30/t", "# T\n"], ["page/A", "# A\n"], ["page/A/B", ""]]) { w.life.shown(k, md); w.life.shown(k, md + "x"); }
+    expect(w.log).toEqual([]);
+  });
+});

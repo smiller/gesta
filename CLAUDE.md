@@ -348,7 +348,11 @@ is in the plan's record, under the phase named):
   selects), `subEntries.ts` (the sub-entry rules, pure: where
   a new one lives, what blocks a rename or delete, the blank subtree the
   confirm sweeps, the buttons' wording, the dialogs' texts, where a delete
-  lands, the host of a sub-entry), `viewCarets.ts` (where the view
+  lands, the host of a sub-entry), `lifecycle.ts` (the six acts over
+  entries — create, extract, rename, delete, a new root, a parent's links
+  following a sub-page's heading — in their order of writes, over the
+  entry layer and ports for the session, the editor, the dialogs and the
+  chrome; no DOM, tested on the memory store), `viewCarets.ts` (where the view
   toggle puts you back: the count held per view, the alignment between
   the two streams), `Toolbar.svelte` (the floating format bar over a
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),
