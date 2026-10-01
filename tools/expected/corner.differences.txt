@@ -108,5 +108,5 @@ margin-notes between paragraphs and in a grid at 1500px · * · the same
 ⌃⌘B over the list repaired · * · ⌃⌘B re-reads a damaged list here, so a list repaired by hand shows without a reload (asked 2026-10-01, the bookmarks-store plan); the current app keeps the latch until a reload
 A over the list repaired · * · the same: the current app's latch still refuses the add, its pin standing
 A in a second window · card · the list the second window adds to differs by the step before: the current app's latch refused Horace's add over the repaired list
-⌃⌘B back in the first · rows · ⌃⌘B re-reads the list at every open here, so a row added in another window shows (asked 2026-10-01, the bookmarks-store plan); the current app shows the list it read at launch
+⌃⌘B back in the first · * · ⌃⌘B re-reads the list at every open here, so a row added in another window shows, and the sweep keeps it while the shared store holds its page (asked 2026-10-01, the bookmarks-store plan); the current app shows the list it read at launch
 × on its first row · * · the same: the current app's × writes the list it read at launch, dropping the other window's row

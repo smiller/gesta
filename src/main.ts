@@ -144,7 +144,8 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
 });
 
-const layer = entryLayer(idbEntryStore(), notices.entry);
+const entryStore = idbEntryStore();
+const layer = entryLayer(entryStore, notices.entry);
 const images = idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
@@ -373,6 +374,7 @@ if (fixture && fixtures[fixture]) {
     seed: [{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }],
     pin: (text, err) => notices.stickErrIdle(text, err),
     release: (gen) => notices.releasePin(gen),
+    storedKeys: () => entryStore.all().then((rows) => rows.map((r) => r.key)),
   });
   const hereKey = (): string => entryKey(session.current.date, session.current.tag);
   /* every render hands focus back: a delete removes the row its own
@@ -387,7 +389,7 @@ if (fixture && fixtures[fixture]) {
   };
   const openBookmarks = (): void => {
     overlay.open("bookmarks");
-    marks.open(layer.warmed ? keysNow() : null);
+    marks.open(layer.warmed ? keysNow() : null).then((wrote) => { if (wrote && screen.panel === "bookmarks") renderBookmarks(); });
     bm.editing = ""; bm.draft = ""; bm.buf = "";
     screen.panel = "bookmarks";
     renderBookmarks();

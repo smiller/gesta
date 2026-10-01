@@ -32,7 +32,12 @@ draft rule is screen state, so the deletion test fails there.
    other, which wrote the list it read at launch. Left open: both cards
    open at once, written in turn without a reopen, still lose the first
    write; a `storage` event listener would close that and was not asked.
-5. Everything else is preserved: `corner.approved.txt` unchanged by the
+5. THE SWEEP ASKS THE SHARED STORE before it drops a row (asked the same
+   day, after the hand-check of decision 4 found the loss below): a row
+   leading nowhere by this window's keys is dropped only when the entry
+   store, which every window shares, lacks it too, and is kept when that
+   store cannot be read.
+6. Everything else is preserved: `corner.approved.txt` unchanged by the
    move; a new Helium step pins the re-read.
 
 ## Record
@@ -66,3 +71,27 @@ draft rule is screen state, so the deletion test fails there.
   (MEASURED). The current app's showed only the row it read at launch,
   and its × wrote `[]`, dropping Pippa (MEASURED): the loss this decision
   fixes, seen. Three differences listed.
+
+### 2026-10-01 — the look at decision 4, and the sweep against the shared store (decision 5)
+
+- The hand-check of `0e0ed97` in two Helium windows: a page made and
+  bookmarked in window 2 was missing from window 1's ⌃⌘B. A headless probe
+  played it: window 1's ⌃⌘B re-read the list with the row, then the sweep,
+  judging by window 1's keys, which miss an entry made after its warm,
+  dropped the row and wrote `[]` (MEASURED). Before `0e0ed97` the same row
+  was lost at window 1's next write instead; the re-read moved the loss to
+  the mere open. With window 1 reloaded first, the row showed and stayed
+  (MEASURED).
+- Tests first: five sweep tests over a fake shared store, four failing
+  before the change (the open now resolving whether the sweep wrote), then
+  14 green (MEASURED).
+- The `bookmarks from another window` step now makes its page in the
+  second window, and stands last of the steps that read the page lists:
+  the current app's first window learns of a page made in another (its
+  lists live in localStorage, which every window shares), the successor's
+  does not, and placed before them it changed five readings of ⌃⌘J and
+  ⌃⌘K (MEASURED). That gap is older than this work and is put to the
+  reader, not listed as decided.
+- The successor's first window kept the made page's row and stored it
+  after its × (MEASURED); the current app's dropped it, writing `[]`
+  (MEASURED).

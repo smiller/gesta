@@ -58,9 +58,6 @@ b typed, already here: {"card":null,"corner":"already on 2026-09-06","screen":"2
 A over a damaged list: {"card":{"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel"},"corner":"bookmarks not saved (click to copy)","stored":"not json","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 ⌃⌘B over the list repaired: {"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 A over the list repaired: {"card":{"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel"},"corner":"bookmarks not saved (click to copy)","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-A in a second window: {"card":{"rows":["1 2026-09-06 key link ×","2 Browning, Robert › Pippa Passes, Intro"],"focused":"helppanel"},"screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘B back in the first: {"rows":["1 2026-09-06 you are here key link ×"],"focused":"helppanel","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-× on its first row: {"card":{"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel"},"stored":"[]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 backups: {"buttons":["Set up automatic backups…"],"status":null,"screen":"2026-09-06 · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
 Escape: {"card":false,"screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘H over an open pages panel: {"help":true,"pages":false,"heading":"Custom keys","screen":"2026-09-06 · sel none · bar off · panel help · rows none · rendered · corner [whatever stood]"}
@@ -156,6 +153,9 @@ margin-notes in verse at 1500px: {"unavailable":"a margin-note is the successor'
 typed into a margin-note in the margin: {"lines":["#  XThe First Anniversarie"],"screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 narrowed to 1000px, typed on: {"unavailable":"a margin-note is the successor's (2026-09-29)","lines":["#  XYThe First Anniversarie"],"screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 margin-notes between paragraphs and in a grid at 1500px: {"unavailable":"a margin-note is the successor's (2026-09-29)","screen":"page/Margins · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+A in a second window: {"card":{"rows":["1 2026-09-06 key link ×","2 Made Elsewhere you are here key link ×"],"focused":"helppanel"},"screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘B back in the first: {"card":{"rows":["1 2026-09-06 you are here key link ×"],"focused":"helppanel"},"stored":"[\"2026-09-06\",\"page/Made Elsewhere\"]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+× on its first row: {"card":{"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel"},"stored":"[]","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

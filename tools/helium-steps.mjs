@@ -390,28 +390,6 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.waitWarm(page).catch(() => {});
   await go("2026-09-06");
     }],
-    ["bookmarks from another window", async () => {
-  /* two windows (2026-10-01): Pippa added in a second one; ⌃⌘B in the first shows its row, and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
-  const pippa = "bookshelf/Browning, Robert/Pippa Passes";
-  const other = await page.context().newPage();
-  await other.goto(A.url("bookshelf/Browning%2C%20Robert/Pippa%20Passes"));
-  await A.waitEntry(other, pippa).catch(() => {});
-  await A.waitWarm(other).catch(() => {});
-  await other.keyboard.press("Control+Meta+b");
-  await other.waitForTimeout(150);
-  await other.keyboard.press("a");
-  await other.waitForTimeout(300);
-  await log("A in a second window", { card: await R.bookmarks(other) });
-  await other.close();
-  await page.bringToFront();
-  await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
-  await log("⌃⌘B back in the first", await R.bookmarks(page));
-  await page.click(S.bookmarkDel);
-  await page.waitForTimeout(150);
-  await log("× on its first row", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
-  await page.keyboard.press("Escape");
-    }],
     ["backups", async () => {
   /* the backups panel: the button opens the card; unconfigured, the setup button alone; Escape closes */
   await page.click(S.backupsButton);
@@ -996,6 +974,31 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.settle(page);
   await log("margin-notes between paragraphs and in a grid at 1500px", await R.margins(page));
   await page.setViewportSize({ width: 1000, height: 600 });
+    }],
+    ["bookmarks from another window", async () => {
+  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
+  await go("2026-09-06");
+  const other = await page.context().newPage();
+  await other.goto(A.url("page/Made%20Elsewhere"));
+  await A.waitEntry(other, "page/Made Elsewhere").catch(() => {});
+  await A.waitWarm(other).catch(() => {});
+  await other.click(S.editor);
+  await other.keyboard.type("made in the second window");
+  await other.waitForTimeout(2500);
+  await other.keyboard.press("Control+Meta+b");
+  await other.waitForTimeout(150);
+  await other.keyboard.press("a");
+  await other.waitForTimeout(500);
+  await log("A in a second window", { card: await R.bookmarks(other) });
+  await other.close();
+  await page.bringToFront();
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(500);
+  await log("⌃⌘B back in the first", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await page.click(S.bookmarkDel);
+  await page.waitForTimeout(150);
+  await log("× on its first row", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await page.keyboard.press("Escape");
     }],
     ["pill", async () => {
   if (A.pill) {

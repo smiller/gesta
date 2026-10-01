@@ -9,13 +9,15 @@ export interface BookmarkStoreOptions {
   pin(text: string, err: unknown): number;
   release(gen: number): void;
   storage?: () => Pick<Storage, "getItem" | "setItem">;
+  /* the keys in the entry store every window shares */
+  storedKeys(): Promise<string[]>;
 }
 export interface BookmarkStore {
   list(): Bookmark[];
   unreadable(): boolean;
   write(list: Bookmark[]): boolean;
-  /* null keys: the journal not yet warm */
-  open(keys: string[] | null): void;
+  /* null keys: the journal not yet warm; resolves whether the sweep wrote */
+  open(keys: string[] | null): Promise<boolean>;
 }
 
 /* ONE localStorage key, device-local: an accepted loss, the list being small
@@ -55,7 +57,7 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
     list: () => list,
     unreadable: () => unreadable,
     write,
-    open(keys) {
+    async open(keys) {
       /* another window may have written the key since: a write from the
          list read before would drop its rows
          (pin: bookmarkStore.test › re-reads the list) */
@@ -63,9 +65,16 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
       /* an absence and a deletion read the same before the warm, and only
          a deletion should cost rows
          (pin: bookmarkStore.test › rows that lead nowhere are dropped) */
-      if (!keys) return;
-      const live = reachableBookmarks(list, keys);
-      if (live.length !== list.length) write(live);
+      if (!keys || reachableBookmarks(list, keys).length === list.length) return false;
+      /* this window's keys miss an entry another window made since it
+         warmed: a row is dropped only when the shared store lacks it too,
+         and kept when the store cannot be read
+         (pin: bookmarkStore.test › a row this window has not loaded but the shared store holds is kept)
+         (pin: bookmarkStore.test › a shared store that cannot be read drops nothing) */
+      let stored: string[];
+      try { stored = await opts.storedKeys(); } catch { return false; }
+      const live = reachableBookmarks(list, keys.concat(stored));
+      return live.length !== list.length && write(live);
     },
   };
 }
