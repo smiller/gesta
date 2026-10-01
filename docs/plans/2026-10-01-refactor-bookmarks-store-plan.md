@@ -155,3 +155,26 @@ No mechanical class among them, so no checker is owed.
 - The current app's run, regenerated: one difference in "a list typed"
   (its corner not showing) on the first run, gone on the second
   (MEASURED, 1 in 2), outside this change.
+
+### 2026-10-01 — the "clipboard flake", owed a fix at its second sighting
+
+- MISNAMED (READ): the wait that timed out is `waitBar`, the floating
+  bar's, the step's only `waitForFunction` without a catch (cornerAfter
+  catches; the clipboard read waits on nothing). The 2026-09-30 record's
+  "⌃⌘R's clipboard wait" and its shared-clipboard guess do not hold.
+- NOT REPRODUCED (MEASURED): 0 misses in 52 runs of the first section and
+  the four steps before "reference copy" (12, then 40 with the diagnosis
+  in place); 0 in 30 probe loops of the same gesture after ⌃⌘L and
+  Escape; 0 in 80 probes of a selection made 0–50 ms after the editor
+  takes focus (prosemirror-view's 20 ms focus timer, which restores its
+  own selection over a DOM one it has not read: the candidate, READ, not
+  shown). Full runs: 2 misses in about 17 over two days.
+- THE FIX, the step's, its cause unknown: `waitBar` no longer throws — on
+  its timeout it answers what the page held (the selection's length,
+  whether it sits in the editor, the active element, the editor's focus
+  class). "reference copy" selects again once on a miss and appends the
+  first miss to `tools/out/flakes.log`, outside the verdict; a second miss
+  reads as `barMissed` in the ⌃⌘R reading. The retry path played with a
+  forced miss: logged, re-selected, the reading unchanged (MEASURED).
+  OWED: read `tools/out/flakes.log` when it has entries; they name the
+  state the cause left.

@@ -11,7 +11,7 @@
    the day number until 2026-09-22, when a run on a day whose number a
    seeded day shares (the 5th, the 6th) would have read one option fewer
    and no scrub could say so. Never a seeded day. */
-import { readFileSync } from "node:fs";
+import { readFileSync, appendFileSync, mkdirSync } from "node:fs";
 export const TODAY = "2026-09-12";
 export const SEEDS = {
   "2026-09-06": "twelfth", "2026-09-05": "williams", "page/Horace": "horace", "page/Williams/Witchcraft 3": "williams",
@@ -188,9 +188,19 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Horace");
   await R.selectAll(page, S.editorCell);
   /* the bar, not 100ms: it shows after the selectionchange the editor takes the selection on */
-  await R.waitBar(page);
+  /* the bar missed 1 full run in ~15 and never in 52 runs of this step and
+     those before it (measured 2026-10-01): its cause not found, a miss is
+     selected again once and appended to tools/out/flakes.log, outside the
+     verdict, for the record to count; a second miss reads as itself */
+  let barMissed = await R.waitBar(page);
+  if (barMissed) {
+    mkdirSync(new URL("out/", import.meta.url), { recursive: true });
+    appendFileSync(new URL("out/flakes.log", import.meta.url), new Date().toISOString() + " " + A.name + " reference copy: the bar missed " + JSON.stringify(barMissed) + "\n");
+    await R.selectAll(page, S.editorCell);
+    barMissed = await R.waitBar(page);
+  }
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
-  await log("⌃⌘R", { said, ...await R.clipboardReference(page) });
+  await log("⌃⌘R", { ...(barMissed ? { barMissed } : {}), said, ...await R.clipboardReference(page) });
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
