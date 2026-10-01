@@ -261,7 +261,13 @@ const ROLES: [RegExp, string[]][] = [
   [/\bthe masthead['’]s\b/, ["src/chrome/masthead", "src/chrome/mastheadmodel"]],
   [/\bthe landing['’]s\b/, ["src/editor/landing"]],
   [/\bthe clipboard['’]s\b/, ["src/chrome/clipboard"]],
+  [/\bthe source['’]s\b/, ["src/editor/sourceview"]],
+  [/\bthe surface['’]s\b/, ["src/editor/surface"]],
+  [/\bthe keeper['’]s\b/, ["src/editor/placekeeper"]],
+  [/\bthe chrome['’]s\b/, ["src/chrome/"]],
 ];
+/* an owner ending in a slash is a directory: every file under it owns the noun */
+const owns = (owner: string, own: string): boolean => owner.endsWith("/") ? own.startsWith(owner) : own === owner;
 
 export function namesOther(block: Block, index: NameIndex): string[] {
   const own = unit(block.file);
@@ -278,7 +284,7 @@ export function namesOther(block: Block, index: NameIndex): string[] {
   }
   for (const [re, owners] of ROLES) {
     const m = text.match(re);
-    if (m && !owners.includes(own.toLowerCase())) hits.add(m[0]);
+    if (m && !owners.some((o) => owns(o, own.toLowerCase()))) hits.add(m[0]);
   }
   return [...hits];
 }

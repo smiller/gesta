@@ -22,9 +22,9 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
     caretSeen: () => {
       try { const box = view.coordsAtPos(view.state.selection.from); return box.bottom >= 0 && box.top <= document.documentElement.clientHeight; } catch { return true; }
     },
-    /* the first line whose top is at or below the masthead, as the source's
-       twin reads it: a point in the gap between stanzas resolved to the end
-       of the stanza above, one stanza early
+    /* the first line whose top is at or below `under`, stepping down: a
+       point in the gap between stanzas resolved to the end of the stanza
+       above, one stanza early
        (pin: the switch carries the text › a long canto switched at its middle) */
     topAt: (under) => {
       const box = view.dom.getBoundingClientRect();

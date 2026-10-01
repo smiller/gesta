@@ -3,10 +3,12 @@ import { parsePlaces, placeOf, withPlace, movedPlace, type Place } from "../stor
 import { stored } from "../store/local.ts";
 import { NS } from "../store/keys.ts";
 
-/* ARRIVING at an entry returns to where it was last left, or the top on a
-   first visit; a highlight owed goes to the top, where the highlight
-   scrolls itself; KEEP moves nothing
-   (pin: places › Back again) (pin: placeKeeper.test › an arrival holds its stored place) */
+/* ARRIVING at an entry — a link, a walk, a pick, Back or Forward, a
+   reload — returns to where it was last left, or the top on a first visit;
+   one with a highlight owed goes to the top and holds nothing; KEEP (a
+   refresh, a rename) moves nothing
+   (pin: places › Back again) (pin: entries left and renamed › a long entry renamed, scrolled)
+   (pin: placeKeeper.test › an arrival holds its stored place) */
 export type Arrival = "arrive" | "owed" | "keep";
 export type PageEvent = "hand" | "scroll" | "resize" | "leave";
 export interface Page {
@@ -30,10 +32,10 @@ export interface PlaceKeeper extends PlacePort {
 
 export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   const { window: win, page } = opts;
-  const places = opts.storage ? stored(NS + "places", parsePlaces, opts.storage) : stored(NS + "places", parsePlaces);
+  const places = stored(NS + "places", parsePlaces, opts.storage);
   let key = "";
   /* a place the same as the last one written is not written: every scroll
-     pause rewrote the whole list. Unpinned: a performance choice
+     pause rewrote the whole list
      (pin: placeKeeper.test › skips a write the same as the last) */
   let lastWritten: (Place & { key: string }) | null = null;
   const write = (k: string, place: Place): void => {
@@ -49,10 +51,9 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     places.write((s) => movedPlace(s, from, to));
     lastWritten = null;
   }
-  /* the restored place is HELD, and set again whenever the editor changes
-     size, until a reader moves: a wheel, key, pointer or touch, or any
-     scroll landing where this code did not put the window, the browser's
-     find among them. Read back from the scroll instead, the place drifted
+  /* the restored place is HELD, and set again on every resize, until a
+     reader moves: a hand, or any scroll landing where this code did not put
+     the window, a find among them. Read back from the scroll instead, the place drifted
      up with every picture above it. While held, the browser's scroll
      anchoring is OFF: a masthead shrinking after the restore let anchoring
      move the window 27px (pin: places › 400px grown above the held place)
@@ -97,7 +98,7 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   });
   page.on("leave", record);
   /* recorded BEFORE the next view is shown: shown first, a forced source
-     view released, the source's place read as a rendered one with no view
+     view released, the source view's place read as a rendered one with no view
      and was lost (pin: places › a forced entry left scrolled, returned to)
      (pin: placeKeeper.test › records the entry left) */
   function open(ekey: string, how: Arrival, show: () => void): void {

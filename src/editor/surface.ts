@@ -68,7 +68,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   };
   const refusedPin = (err: unknown): number => opts.pin("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
   function show(md: string, key: string): void {
-    /* the chrome's pill followed the forced view but not its release (pin: grid › the next entry after a refused switch) */
+    /* the release is told, as the force was: told only of the force, a
+       view shown forced stayed shown after it ended (pin: grid › the next entry after a refused switch) */
     if (forced) { mdView = readerView; forced = false; opts.onView(mdView); }
     ekey = key;
     /* the open view stays the open view across a navigation; the carets and

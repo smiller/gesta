@@ -25,10 +25,6 @@ import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 
-/* ARRIVING at an entry — a link, a walk, a pick, Back or Forward, a
-   reload — returns to where it was last left, or the top on a first visit;
-   KEEP (a refresh, a rename) moves nothing.
-   (pin: places › Back again) (pin: entries left and renamed › a long entry renamed, scrolled) */
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
   mount: HTMLElement;
@@ -87,6 +83,7 @@ export function startSession(opts: SessionOptions): Session {
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
   let rendered: RenderedView | null = null;
+  const live = (): EditorView | null => rendered && surface.current === rendered ? rendered.view : null;
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   /* the highlight owed to the next paint, and the navigation it belongs
      to: a later navigation drops it, or it would select against the wrong
@@ -139,7 +136,6 @@ export function startSession(opts: SessionOptions): Session {
   }
   const keeper = placeKeeper({ surface: () => surface.current, window: viewport, page: browserPage() });
   function mountEditor(doc: Node, date: string, tag: string | null): RenderedView {
-    rendered = null;
     mount.replaceChildren();
     const ekey = entryKey(date, tag);
     const folding = foldsContents(Object.keys(layer.cache), date, tag);
@@ -160,7 +156,7 @@ export function startSession(opts: SessionOptions): Session {
   const surface = surfaces({
     build: {
       rendered: (doc) => mountEditor(doc, current.date, current.tag),
-      source: (md) => { rendered = null; mount.replaceChildren(); return sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => say(why) }); },
+      source: (md) => { mount.replaceChildren(); return sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => say(why) }); },
     },
     window: viewport,
     places: keeper,
@@ -192,8 +188,8 @@ export function startSession(opts: SessionOptions): Session {
   /* a page opened before the warm drew unfolded, its sub-entries not yet in
      the cache (pin: places › the warm landed) */
   function refreshFolds(): void {
-    const view = rendered?.view;
-    if (!view || surface.md) return;
+    const view = live();
+    if (!view) return;
     const st = foldsKey.getState(view.state);
     const on = foldsContents(Object.keys(layer.cache), current.date, current.tag);
     if (!st || st.on === on) return;
@@ -209,7 +205,8 @@ export function startSession(opts: SessionOptions): Session {
     return true;
   }
   function highlight(q: string, nth: number, honorMarkers: boolean): boolean {
-    const did = !!rendered && highlightIn(rendered.view, q, nth, honorMarkers);
+    const view = live();
+    const did = !!view && highlightIn(view, q, nth, honorMarkers);
     if (did) opts.onHighlight?.();
     return did;
   }
@@ -321,7 +318,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function copyReference(): void {
     if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
-    const view = rendered?.view;
+    const view = live();
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, current.date, current.tag, journal);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
@@ -352,12 +349,12 @@ export function startSession(opts: SessionOptions): Session {
   });
   return {
     get current() { return current; },
-    get view() { return rendered ? rendered.view : null; },
+    get view() { return live(); },
     open, openHash, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },
     refreshFolds,
     movePlace: keeper.move,
-    setInterval: (n) => { interval = n; if (rendered) setLineInterval(n)(rendered.view.state, rendered.view.dispatch); },
+    setInterval: (n) => { interval = n; const v = live(); if (v) setLineInterval(n)(v.state, v.dispatch); },
   };
 }

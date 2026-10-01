@@ -604,6 +604,6 @@ faults, so it is COUNTED, per review round, until five rounds have run.
 |---|---|---|---|---|---|
 | 1 | 0491c70..bf81178 (margin-note, 145,243 tokens) | 0 / 1 | 1 (missed; the rule now takes "the plan") | 0 | 0 |
 | 2 | bf81178..28badc3 (margin-note confirmation, 107,473 tokens) | 1 (a path, in tools/, outside the checker) / 1 | 1 (a date, tools/) | 0 | 1 |
-| 3 | | | | | |
+| 3 | bef23be..fabb19b (surface and place keeper, 133,205 tokens) | 2 (role possessives the list lacked; listed since) / 3 | 0 | 1 ("Unpinned" beside a pin) | 0 |
 | 4 | | | | | |
 | 5 | | | | | |

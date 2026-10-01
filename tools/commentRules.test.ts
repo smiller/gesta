@@ -135,6 +135,30 @@ const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] =
    map from entry key to a page record — a per-browser convenience, never
    in the text or a backup. Parsing forgives anything:
    a damaged store is an empty one. */` },
+  { at: "fabb19b:25", file: "src/editor/renderedView.ts", caught: ["the source's"], raw: `    /* the first line whose top is at or below the masthead, as the source's
+       twin reads it: a point in the gap between stanzas resolved to the end
+       of the stanza above, one stanza early
+       (pin: the switch carries the text › a long canto switched at its middle) */` },
+  { at: "fabb19b:71", file: "src/editor/surface.ts", caught: ["the chrome's"], raw: "    /* the chrome's pill followed the forced view but not its release (pin: grid › the next entry after a refused switch) */" },
+  { at: "fabb19b:6", file: "src/editor/placeKeeper.ts", caught: [], raw: `/* ARRIVING at an entry returns to where it was last left, or the top on a
+   first visit; a highlight owed goes to the top, where the highlight
+   scrolls itself; KEEP moves nothing
+   (pin: places › Back again) (pin: placeKeeper.test › an arrival holds its stored place) */` },
+  { at: "fabb19b:52", file: "src/editor/placeKeeper.ts", caught: [], raw: `  /* the restored place is HELD, and set again whenever the editor changes
+     size, until a reader moves: a wheel, key, pointer or touch, or any
+     scroll landing where this code did not put the window, the browser's
+     find among them. Read back from the scroll instead, the place drifted
+     up with every picture above it. While held, the browser's scroll
+     anchoring is OFF: a masthead shrinking after the restore let anchoring
+     move the window 27px (pin: places › 400px grown above the held place)
+     (pin: places › a held place, then a scroll no hand made) (pin: places ›
+     a held place, the masthead shrinking under it) (pin: places › a forced
+     entry left scrolled, returned to) (pin: placeKeeper.test › is set again on every resize)
+     (pin: placeKeeper.test › survives a scroll landing 1px) */` },
+  { at: "fabb19b:28", file: "src/session.ts", caught: [], raw: `/* ARRIVING at an entry — a link, a walk, a pick, Back or Forward, a
+   reload — returns to where it was last left, or the top on a first visit;
+   KEEP (a refresh, a rename) moves nothing.
+   (pin: places › Back again) (pin: entries left and renamed › a long entry renamed, scrolled) */` },
 ];
 
 /* comments in today's tree that must stay quiet, verbatim */
@@ -159,8 +183,9 @@ describe("another module named", () => {
   test.each(KNOWN_BAD)("known bad, $file at $at", ({ file, raw, caught }) => {
     expect(named(file, raw).sort()).toEqual([...caught].sort());
   });
-  test("five of the nine caught", () => {
-    expect(KNOWN_BAD.filter((k) => k.caught.length).length).toBe(5);
+  test("seven of the fourteen caught", () => {
+    expect(KNOWN_BAD.length).toBe(14);
+    expect(KNOWN_BAD.filter((k) => k.caught.length).length).toBe(7);
   });
   test.each(QUIET)("quiet, $file", ({ file, raw }) => {
     expect(named(file, raw)).toEqual([]);
@@ -169,6 +194,12 @@ describe("another module named", () => {
     const raw = "/* the session's place wins */";
     expect(named("src/session.ts", raw)).toEqual([]);
     expect(named("src/main.ts", raw)).toEqual(["the session's"]);
+  });
+  test("a directory's role noun is every file's under it, and names it from outside", () => {
+    const raw = "/* the chrome's pill follows */";
+    expect(named("src/chrome/mastheadModel.ts", raw)).toEqual([]);
+    expect(named("src/chrome/notices.svelte.ts", raw)).toEqual([]);
+    expect(named("src/editor/surface.ts", raw)).toEqual(["the chrome's"]);
   });
   test("a name its own file declares, however deep, is its own", () => {
     expect(named("src/session.ts", "/* scrollToLeft reads foldsContents once */")).toEqual(["foldsContents"]);

@@ -232,6 +232,52 @@ is carried.
   comment ("the masthead's"), reworded; passes. Hooks 44/44 (MEASURED).
 - THE NET: `npm run test:helium` — corner ok, bridge ok, 153 steps, 0
   open (MEASURED).
+- Committed fabb19b; looked at and accepted by the reader the same day
+  (accept.sh, signature 39553bdfdb83…). On the look: ↓ at the bottom of a
+  long entry snaps to the top when the text has focus with the caret
+  above — the same in bef23be and HEAD (MEASURED, a scratch probe in
+  headless Helium); an editor's convention, left as it is (the reader).
+  The fold step by hand: reached through ⌃⌘M, the same reveal; the
+  arrival form needs the fold memory deleted, which the Helium step does.
+
+## The review — one /code-review at high, bef23be..fabb19b (2026-09-30)
+
+COST 133,205 tokens (MEASURED: the final message's input 2 + cache
+creation 7,413 + cache read 121,527 + output 4,263, from the transcript;
+the harness's `subagent_tokens` said the same). Ten findings, all checked
+against the code; eight fixed in one commit, two declined:
+
+1. renderedView's `topAt` comment named the source view's twin — reworded
+   to its own stepping.
+2. surface's forced-release comment named the chrome's pill — reworded to
+   the module's own rule.
+3. the keeper's arrival comment said the highlight scrolls itself —
+   reworded to what the keeper does; the rename pin moved in with it (8).
+4. the hold comment described the adapter's wiring ("whenever the editor
+   changes size", "the browser's find") — reworded to the keeper's events.
+5. "Unpinned" beside a pin, left over from the move — dropped. Mine.
+6. DECLINED: the source view's `placeAt`/`reveal` unused behind the
+   keeper's `source` check, and a null that means two things. The failure
+   named — the check dropped, the source view recording pos 0 — fails
+   `placeKeeper.test › is skipped while held` today (READ): it is guarded.
+7. `rendered` a second truth beside `surface.current`, cleared by hand —
+   now `live()`, the rendered view only while it IS the surface's current
+   one; the builders no longer clear it.
+8. session.ts's OpenHow comment duplicated the keeper's — dropped, its
+   second pin moved to the keeper's.
+9. DECLINED for this commit: each switch flattens each view twice. The
+   old session did the same (READ, bef23be), nothing measured it slow,
+   and this pass is behaviour-preserving; listed under Later.
+10. a redundant ternary over `stored()`'s default — one call.
+
+THE CHECKER OWED (the mechanical class, 1 and 2): the role list gained
+"the source's", "the surface's", "the keeper's", and "the chrome's" as a
+directory's noun (an owner ending in "/"). Hits in src/ before choosing:
+the source's 2 (renderedView's, now gone; the keeper's own, reworded),
+the chrome's 1, the surface's 0, the keeper's 0; "the editor's" 8, left
+out as ambiguous (MEASURED, grep). The self-test gained the five blocks
+verbatim from fabb19b — seven of fourteen caught now — and a directory
+test.
 
 ## Later
 
@@ -239,3 +285,5 @@ is carried.
   say which text stands at the top.
 - `main.ts`'s 29 reaches into `session.view` and 7 into `session.mdView`
   through the surface interface.
+- The switch flattens each view once instead of twice (review finding 9),
+  if a long canto's ⌃⌘M ever measures slow.

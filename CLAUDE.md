@@ -142,9 +142,11 @@ here NOW, and what is not yet:
   changed. `--commit R` reads one commit; `--sweep` lists every block
   that names another module or carries provenance, a reading list for
   the audit. It catches
-  five of the nine known-bad blocks; the other four name a module only
-  by a role in plain English, and the review stays the net for them
-  (MEASURED, the plan's record).
+  seven of the fourteen known-bad blocks; the other seven name a module
+  only by a role in plain English, and the review stays the net for them
+  (MEASURED, the plan's record; the role list gained "the source's",
+  "the surface's", "the keeper's" and "the chrome's", a directory's,
+  from the surface and place keeper review, 2026-09-30).
 - NOT YET — the other prose checkers (`tools/*.sh` in ../writer),
   re-aimed at this tree's comments and the plan's record as each class
   first shows up in a review; each keeps its self-test and has its hit
