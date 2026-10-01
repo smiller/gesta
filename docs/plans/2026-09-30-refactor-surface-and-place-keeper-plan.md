@@ -25,6 +25,34 @@ grilling settles them, one dated section per batch.
 - The source view records its place as a pixel offset only, `pos: -1`
   (READ, session.ts recordPlace).
 
+## The scan's five candidates and where they stand (kept here: the scan's
+## report was an HTML page in a session's scratchpad, not in the repo)
+
+The architecture scan of 2026-09-30 (Matt Pocock's
+improve-codebase-architecture skill, a dry run over main.ts and
+session.ts, the two hottest files) named five deepenings:
+
+1. THE PLACE KEEPER — the window's place in one module. Strong. DONE:
+   fabb19b, reviewed (this plan).
+2. THE SURFACE — the rendered and source views behind one interface.
+   Strong. DONE: 98469d1, reviewed (this plan).
+3. THE ENTRY LIFECYCLE — create, extract, rename, delete, a new root, the
+   parent's relabel. Worth exploring. DONE: ff1daea, reviewed, with three
+   older bugs fixed on the look
+   (`2026-09-30-refactor-entry-lifecycle-plan.md`).
+4. THE OVERLAYS — which overlay closes which. Worth exploring. DONE:
+   9a99502, reviewed (`2026-09-30-refactor-overlays-plan.md`); its odd
+   blanks open questions there.
+5. BOOKMARKS AND SHORTCUTS — each a module over the local-storage seam in
+   `local.ts`: the bookmarks' latch (writes refused while the stored text
+   is unreadable), the seed once when the key is absent, the fail-pin
+   generations, now in main.ts and reached only by Helium. Speculative:
+   their pure halves are tested already, and what stays in main.ts is
+   mostly wiring — the deletion test half passes. NOT STARTED; ask first.
+
+Considered and not listed: the copy button's and the floating bar's
+geometry, moved out of main.ts, would gather no rule a test could read.
+
 ## Decided (the reader, 2026-09-30, grilling round 1)
 
 1. STRICTLY BEHAVIOUR-PRESERVING: `corner.approved.txt` comes out
