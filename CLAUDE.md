@@ -261,7 +261,11 @@ is in the plan's record, under the phase named):
   the forced source view and the fence pin; no DOM, tested over fake
   views), `renderedView.ts` (the rendered view: the surface over
   `createEditor`), `sourceView.ts` (the source view: the textarea, its
-  hidden twin for geometry, its input, paste and Tab), `format.ts` (the
+  hidden twin for geometry, its input, paste and Tab), `placeKeeper.ts`
+  (THE WINDOW'S PLACE: an arrival back to where an entry was left, the
+  hold until a hand moves, the record on a scroll's pause and on leaving,
+  a rename's carry and a delete's drop, the switch's carry; no DOM, over
+  a page port whose browser adapter is the session's), `format.ts` (the
   toolbar's acts as commands: the marks and their chords, the heading,
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code

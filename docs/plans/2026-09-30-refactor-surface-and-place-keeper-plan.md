@@ -131,6 +131,107 @@ session.ts) — a rule kept by listener order, owed to the place keeper.
 - Caret reset on show is observable through the interface only where a
   hold and the map disagree on one text; the Vitest test covers the fence
   pin's release, and `walk › ⌃⌘M, then ⌃⌘.` in Helium stays the carets' pin.
+- Committed 98469d1; looked at and accepted by the reader the same day
+  (accept.sh, signature 91ef715e588c…, the margin-note work with it).
+
+## Decided (the reader, 2026-09-30, grilling round 4 — the place keeper)
+
+Found for it (READ, session.ts after 98469d1): five variables of state,
+five listeners and a ResizeObserver, six functions through the session,
+the surface's place port, three `movePlace` calls in main.ts. The
+rendered view records the text position at the masthead's edge 24px in;
+the source view a pixel offset; the surface's `topAt` reads a third
+point, the middle, stepping down.
+
+14. DESIGN IT TWICE: three sub-agents in parallel — the smallest
+    interface, the common caller's default made trivial, ports and
+    adapters with the node test as first-class caller — compared, one
+    recommended. Its cost read from the transcripts and recorded here.
+15. THE KEEPER OWNS THE LISTENERS, through an events port, `on("hand" |
+    "scroll" | "resize" | "leave", fn)`: the browser adapter wires the
+    real events, Vitest fires them by hand.
+16. GEOMETRY THROUGH THE SURFACE: it gains `placeAt(under)` (the rendered
+    view's position at the masthead's edge; null in the source view,
+    meaning a pixel place) and `reveal(pos)` (the rendered view opens a
+    closed section; the source view nothing); the keeper scrolls with
+    `scrollToPos`. `placeAt` stays apart from `topAt`: unifying their
+    points would change behaviour (1).
+17. THE LISTENER-ORDER RULE MADE A RULE: the switch calls `release()` at
+    its start, pinned by a Vitest test; unobservable today, the hold being
+    gone already by ⌃⌘M's own keydown.
+
+## Design it twice — the run (2026-09-30)
+
+Three read-only Plan agents in parallel over one brief: A the smallest
+interface, B the common caller, C ports first with the node test as
+first-class caller. COST, by the review rule (the last message's input +
+cache_creation + cache_read + output, read from each
+`subagents/agent-*.jsonl`): A 57,336, B 52,322, C 57,836; 167,494 in all
+(MEASURED). The harness's own `subagent_tokens` said 60,978, 55,496,
+63,165; 179,639 (MEASURED) — a different figure, both kept.
+
+All three arrived at the same spine unprompted: `open(ekey, how, show)`
+running record → key → drop another entry's hold → show → arrival
+inside the keeper; the keeper keeping its own entry key; the hold kept
+by reference; the listeners through the events port in today's order.
+They differed on the highlight owed, the switch's port, where rename and
+delete go, and the small ports. C caught that decision 17's release must
+come AFTER the switch's no-op guard, or a switch to the view already open
+would drop an arrival's hold. Checked for A and C: main.ts's rename calls
+`open` then `movePlace` (READ, main.ts), so the place recorded on leaving
+is carried.
+
+## Decided (the reader, 2026-09-30, grilling round 5)
+
+18. THE HIGHLIGHT OWED rides in the arrival: `open(ekey, "arrive" |
+    "owed" | "keep", show)` — A's; B's hidden read rejected.
+19. THE SWITCH'S PORT is `{ carry(pos), release() }`: the keeper holds
+    `{pos, y: 1}`, applies it, sets `y` to the window's (at least 1) and
+    remembers it. The switch keeps no place rule.
+20. RENAME AND DELETE through a separate `move(from, to)`; main.ts
+    unchanged (2).
+21. ONE `Page` PORT, `{ on(event, fn), anchoring(on) }`, its browser
+    adapter also setting `scrollRestoration`; timers are Vitest's fakes,
+    no clock port.
+22. Decision 17 AMENDED: the switch's release comes after its guard on the
+    view already open.
+
+## Decided (the reader, 2026-09-30, grilling round 6)
+
+23. Files: `src/editor/placeKeeper.ts` (no DOM) and its test; the
+    browser `Page` adapter in session.ts where the listeners are
+    registered today; the surface gains `placeAt` and `reveal`;
+    `OpenHow` stays the session's, which turns an arrival with a
+    highlight owed into `"owed"`.
+24. The tests written first over fakes (a surface, the window, the page,
+    the storage): arriving; the highlight owed; the hold (resize, hand,
+    the 1px and 2px scrolls); another entry; recording (held, the two
+    views, no surface, the last scroll's 400ms, leaving, before `show`);
+    the write memo and `move`; applying (the pixel cases, the clamp,
+    `reveal` first, the fallback); `reapply`; rename and delete; `carry`;
+    and in surface.test the release after the guard and `carry`.
+
+## Batch 2 — the place keeper (2026-09-30)
+
+- Tests: `src/editor/placeKeeper.test.ts`, fourteen. THE MODULE WAS
+  WRITTEN BEFORE THEY WERE RUN: red was shown after the fact, with the
+  module moved aside (MEASURED: "Cannot find module"), not before it was
+  written — the order decision 24 set was not kept.
+- `surface.test.ts`: the place port is `{ carry, release }`; a switch
+  releases first and a switch to the view already open lets nothing go
+  (decision 22). One edit of mine asserted "no release at all" for an
+  unseen caret, contradicting 22; corrected to "none for the caret".
+- `session.ts` 427 → 363 lines; `placeKeeper.ts` 129 (MEASURED, wc). No
+  place state is left in the session: `held`, `placedY`, `lastWritten`,
+  the timer, the listeners and the ResizeObserver are the keeper's
+  (MEASURED, grep). The listeners are registered in today's order, from
+  the same point in `startSession`; `scrollRestoration` is set a few
+  statements earlier than before, inside the same synchronous start.
+- `npm run check` clean; the suite 74 files, 635 tests (MEASURED). The
+  comment checker FAILED once, on a role noun's possessive in a new
+  comment ("the masthead's"), reworded; passes. Hooks 44/44 (MEASURED).
+- THE NET: `npm run test:helium` — corner ok, bridge ok, 153 steps, 0
+  open (MEASURED).
 
 ## Later
 

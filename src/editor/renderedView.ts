@@ -6,6 +6,7 @@ import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc } from "../model/flatten.ts";
 import { schema } from "../model/schema.ts";
 import { wordCount } from "./format.ts";
+import { openFoldAt } from "./folds.ts";
 import type { Surface } from "./surface.ts";
 
 export interface RenderedView extends Surface { readonly view: EditorView }
@@ -34,6 +35,12 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
       }
       return null;
     },
+    placeAt: (under) => {
+      const box = view.dom.getBoundingClientRect();
+      const hit = view.posAtCoords({ left: box.left + 24, top: Math.max(under, box.top + 1) });
+      return hit ? hit.pos : null;
+    },
+    reveal: (pos) => { openFoldAt(pos)(view.state, view.dispatch); },
     end: () => view.state.doc.content.size,
     scrollToPos: (pos, under) => { window.scrollTo(0, window.scrollY + view.coordsAtPos(pos).top - under); },
     placeCaret: (pos, scroll) => {

@@ -3,7 +3,6 @@ import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../chrome/viewCarets.ts";
-import type { Place } from "../store/placeState.ts";
 
 export interface Surface {
   /* the source stream holds every fence line the rendered one lacks: a count
@@ -15,6 +14,10 @@ export interface Surface {
   caretSeen(): boolean;
   /* the first line at or below `under`, the window's height under the masthead */
   topAt(under: number): number | null;
+  /* the position at the height `under`; null where there is none */
+  placeAt(under: number): number | null;
+  /* a position inside a closed section opens it */
+  reveal(pos: number): void;
   end(): number;
   scrollToPos(pos: number, under: number): void;
   /* null: a fresh caret, where the view puts one */
@@ -25,7 +28,7 @@ export interface Surface {
   destroy(): void;
 }
 export interface Viewport { y(): number; scrollTo(y: number): void; under(): number }
-export interface PlacePort { hold(place: Place): void; release(): void; remember(place: Place): void }
+export interface PlacePort { carry(pos: number): void; release(): void }
 export interface SurfaceOptions {
   build: { rendered(doc: Node): Surface; source(md: string): Surface };
   window: Viewport;
@@ -124,17 +127,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     const flat = cur.flat(), count = crossViewOffset(from.text, flat.text, from.at, cur.source, false);
     if (count === 0) { win.scrollTo(0); return; }
     const pos = Math.min(positionAt(flat, count) ?? cur.end(), cur.end());
-    if (cur.source) { cur.scrollToPos(pos, win.under()); return; }
-    /* HELD like an arrival's place, and remembered: a closed section opens,
-       and a page that grows above it — pictures, the fitted measure — sets it
-       again (pin: the switch carries the text › ⌃⌘M back, then 400px grown above)
-       (pin: places › a closed section's text switched to). The offset
-       remembered is the rendered view's, after the place is set
-       (pin: the switch carries the text › the switch's place remembered) */
-    const place = { pos, y: 1 };
-    places.hold(place);
-    place.y = Math.max(1, win.y());
-    places.remember(place);
+    if (cur.source) cur.scrollToPos(pos, win.under());
+    else places.carry(pos);
   }
   function placeCaret(): void {
     if (!cur) return;
@@ -154,6 +148,9 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   }
   function switchTo(md: boolean): void {
     if (md === mdView) return;
+    /* an arrival's hold is let go here, not left to the gesture that asked
+       for the switch (pin: surface.test › a switch to the view already open) */
+    places.release();
     const wasForced = forced;
     forced = false;
     holdCaret();

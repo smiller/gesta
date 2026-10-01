@@ -71,6 +71,8 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       return top + parseFloat(getComputedStyle(ta).lineHeight) >= 0 && top <= document.documentElement.clientHeight;
     },
     topAt: (under) => { const t = twin(), i = t.indexAt(under); t.done(); return i; },
+    placeAt: () => null,
+    reveal: () => {},
     end: () => ta.value.length,
     scrollToPos: (i, under) => {
       const t = twin(), top = t.topOf(i);

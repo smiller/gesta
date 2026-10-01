@@ -10,9 +10,8 @@ import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
 import { parseFoldStore, foldPage, withFoldPage, type FoldPage } from "./store/foldState.ts";
-import { parsePlaces, placeOf, withPlace, movedPlace, type Place } from "./store/placeState.ts";
 import { stored } from "./store/local.ts";
-import { foldsKey, setFolds, openFoldAt } from "./editor/folds.ts";
+import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
 import { writeClipboard } from "./chrome/clipboard.ts";
@@ -21,7 +20,8 @@ import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
 import { highlightIn } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
-import { surfaces } from "./editor/surface.ts";
+import { surfaces, type Viewport } from "./editor/surface.ts";
+import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 
@@ -118,71 +118,26 @@ export function startSession(opts: SessionOptions): Session {
   const folds = stored(NS + "folds", parseFoldStore);
   const readFolds = (ekey: string): FoldPage => foldPage(folds.read(), ekey);
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => folds.write((s) => withFoldPage(s, ekey, patch));
-  /* a place the same as the last one written is not written: every scroll
-     pause rewrote the whole list. Unpinned: a performance choice */
-  const places = stored(NS + "places", parsePlaces);
-  let lastWritten: (Place & { key: string }) | null = null;
-  const writePlace = (ekey: string, place: Place): void => {
-    if (lastWritten && lastWritten.key === ekey && lastWritten.pos === place.pos && lastWritten.y === place.y) return;
-    places.write((s) => withPlace(s, ekey, place));
-    lastWritten = { key: ekey, ...place };
-  };
-  /* a rename carries the place to the new key, a delete drops it: a new
-     entry under a deleted one's name opened where the deleted one was left
-     (pin: entries left and renamed › deleted scrolled: its place dropped) */
-  function movePlace(from: string, to: string | null): void {
-    places.write((s) => movedPlace(s, from, to));
-    lastWritten = null;
-  }
-  /* the restored place is HELD, and set again whenever the editor changes
-     size, until a reader moves: a wheel, key, pointer or touch, or any
-     scroll landing where this code did not put the window, the browser's
-     find among them. Read back from the scroll instead, the place drifted
-     up with every picture above it. While held, the browser's scroll
-     anchoring is OFF: a masthead shrinking after the restore let anchoring
-     move the window 27px (pin: places › 400px grown above the held place)
-     (pin: places › a held place, then a scroll no hand made) (pin: places ›
-     a held place, the masthead shrinking under it) (pin: places › a forced
-     entry left scrolled, returned to) */
-  let held: { ekey: string; place: Place } | null = null;
-  const setHeld = (h: typeof held): void => { held = h; document.documentElement.style.overflowAnchor = h ? "none" : ""; };
-  const release = (): void => { if (held) setHeld(null); };
-  let placedY = 0;
-  for (const t of ["wheel", "keydown", "pointerdown", "touchstart"]) window.addEventListener(t, release, { capture: true, passive: true });
-  new ResizeObserver(() => { if (held && held.ekey === ekeyOf()) applyPlace(held.place); }).observe(mount);
   /* the masthead is sticky over the page's top: a place is read, and set,
      just under it (pin: places › Back) */
   const underMasthead = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0) + 4;
-  function recordPlace(): void {
-    if (held && held.ekey === ekeyOf()) return;   /* the store holds it: it was restored from there (pin: places › Back again) */
-    if (surface.md && surface.current) { writePlace(ekeyOf(), { pos: -1, y: window.scrollY }); return; }
-    const view = rendered?.view;
-    if (!view) return;
-    const box = view.dom.getBoundingClientRect();
-    const hit = view.posAtCoords({ left: box.left + 24, top: Math.max(underMasthead(), box.top + 1) });
-    writePlace(ekeyOf(), { pos: hit ? hit.pos : 0, y: window.scrollY });
+  const viewport: Viewport = { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead };
+  function browserPage(): Page {
+    /* the window's place is the page's alone: the browser's own restore on
+       Back and Forward ran before hashchange, against the entry being left
+       (pin: places › Forward) (pin: places › Back again) */
+    history.scrollRestoration = "manual";
+    return {
+      on: (event, fn) => {
+        if (event === "hand") for (const t of ["wheel", "keydown", "pointerdown", "touchstart"]) window.addEventListener(t, fn, { capture: true, passive: true });
+        else if (event === "resize") new ResizeObserver(fn).observe(mount);
+        else if (event === "scroll") window.addEventListener("scroll", fn, { passive: true });
+        else window.addEventListener("pagehide", fn);
+      },
+      anchoring: (on) => { document.documentElement.style.overflowAnchor = on ? "" : "none"; },
+    };
   }
-  /* a position inside a closed section opens it: a hidden block has no box
-     (pin: places › back to a place in a closed section) */
-  function applyPlace(p: Place): void {
-    /* left at the top, back at the top: the text position under the
-       masthead lies below the page's top padding (pin: places › Horace followed) */
-    if (surface.md || !rendered || p.pos < 0 || p.y <= 0) window.scrollTo(0, Math.max(0, p.y));
-    else {
-      const view = rendered.view;
-      const pos = Math.min(p.pos, view.state.doc.content.size);
-      openFoldAt(pos)(view.state, view.dispatch);
-      try { rendered.scrollToPos(pos, underMasthead()); } catch { window.scrollTo(0, p.y); }
-    }
-    placedY = window.scrollY;
-  }
-  let placeTimer: ReturnType<typeof setTimeout> | null = null;
-  window.addEventListener("scroll", () => {
-    if (held && Math.abs(window.scrollY - placedY) > 1) release();
-    if (placeTimer) clearTimeout(placeTimer);
-    placeTimer = setTimeout(recordPlace, 400);
-  }, { passive: true });
-  window.addEventListener("pagehide", () => recordPlace());
+  const keeper = placeKeeper({ surface: () => surface.current, window: viewport, page: browserPage() });
   function mountEditor(doc: Node, date: string, tag: string | null): RenderedView {
     rendered = null;
     mount.replaceChildren();
@@ -207,12 +162,8 @@ export function startSession(opts: SessionOptions): Session {
       rendered: (doc) => mountEditor(doc, current.date, current.tag),
       source: (md) => { rendered = null; mount.replaceChildren(); return sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => say(why) }); },
     },
-    window: { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead },
-    places: {
-      hold: (place) => { setHeld({ ekey: ekeyOf(), place }); applyPlace(place); },
-      release: () => setHeld(null),
-      remember: (place) => writePlace(ekeyOf(), place),
-    },
+    window: viewport,
+    places: keeper,
     pin: (text) => opts.pin?.(text) || 0,
     releasePin: (gen) => opts.releasePin?.(gen),
     onView: (md) => opts.onView?.(md),
@@ -227,27 +178,16 @@ export function startSession(opts: SessionOptions): Session {
   function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
     cancelSave();
     suspended = false;
-    /* recorded BEFORE a forced source view is released: released first, the
-       source's place read as a rendered one with no view and was lost
-       (pin: places › a forced entry left scrolled, returned to) */
-    if (surface.current) recordPlace();
     current = { date, tag };
     const ekey = ekeyOf();
-    if (held && held.ekey !== ekey) setHeld(null);
-    surface.show(layer.entryMd(ekey), ekey);
-    place(ekey, how);
+    /* a highlight owed wins over the remembered place: it is what a reader
+       asked to see (pin: reference paste › the reference link followed) */
+    const owed = how === "arrive" && !!pending && pending.gen === navGen;
+    keeper.open(ekey, owed ? "owed" : how, () => surface.show(layer.entryMd(ekey), ekey));
     document.documentElement.dataset.entry = ekey;
     show();
     if (surface.forced) return;
     if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
-  }
-  /* a highlight owed wins over the remembered place: it is what a reader
-     asked to see (pin: reference paste › the reference link followed) */
-  function place(ekey: string, how: OpenHow): void {
-    if (how !== "arrive") return;
-    const p = pending && pending.gen === navGen ? null : placeOf(places.read(), ekey);
-    setHeld(p ? { ekey, place: p } : null);
-    if (p) applyPlace(p); else window.scrollTo(0, 0);
   }
   /* a page opened before the warm drew unfolded, its sub-entries not yet in
      the cache (pin: places › the warm landed) */
@@ -261,7 +201,7 @@ export function startSession(opts: SessionOptions): Session {
     setFolds(on, page ? page.open : [])(view.state, view.dispatch);
     /* the folds moved the text under a held place: set again now, not a
        frame later when the size is observed (pin: places › the warm landed) */
-    if (held && held.ekey === ekeyOf()) applyPlace(held.place);
+    keeper.reapply();
   }
   function insertText(text: string): boolean {
     if (!surface.current) return false;
@@ -395,10 +335,6 @@ export function startSession(opts: SessionOptions): Session {
     copy({ text: "[" + p.label + "](" + p.url + ")", html: citationAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }
   window.addEventListener("hashchange", () => { flushSave().then(openHash); });
-  /* the window's place is the page's alone: the browser's own restore on
-     Back and Forward ran before hashchange, against the entry being left
-     (pin: places › Forward) (pin: places › Back again) */
-  history.scrollRestoration = "manual";
   window.addEventListener("beforeunload", () => { saveNow(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
   /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
@@ -421,7 +357,7 @@ export function startSession(opts: SessionOptions): Session {
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },
     refreshFolds,
-    movePlace,
+    movePlace: keeper.move,
     setInterval: (n) => { interval = n; if (rendered) setLineInterval(n)(rendered.view.state, rendered.view.dispatch); },
   };
 }

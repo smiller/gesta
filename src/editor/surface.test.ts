@@ -21,6 +21,7 @@ function world(y = 0) {
       caret: () => { log.push("read caret"); return f.caretAt; },
       caretSeen: () => f.seen,
       topAt: () => { log.push("read top"); return f.top; },
+      placeAt: () => null, reveal: () => {},
       end: () => source ? f.text.length : doc!.content.size,
       scrollToPos: (pos) => { log.push("align " + pos); },
       placeCaret: (pos, scroll) => { f.caretAt = pos ?? (source ? f.text.length : 0); log.push("caret " + pos + (scroll ? " scroll" : " still")); },
@@ -37,9 +38,8 @@ function world(y = 0) {
     },
     window: win,
     places: {
-      hold: (p) => { log.push("hold " + p.pos); },
+      carry: (pos) => { log.push("carry " + pos); },
       release: () => { log.push("release"); },
-      remember: (p) => { log.push("remember " + p.pos); },
     },
     pin: (text) => { pins.push(text); return pins.length; },
     releasePin: (gen) => { released.push(gen); },
@@ -59,7 +59,7 @@ describe("the switch", () => {
     w.log.length = 0;
     w.s.switchTo(true);
     const src = w.last().text;
-    expect(w.log).toEqual(["read caret", "read top", "destroy rendered", "build source", "scroll 300", "align " + src.indexOf("C"), "view true", "switched", "caret 0 scroll"]);
+    expect(w.log).toEqual(["release", "read caret", "read top", "destroy rendered", "build source", "scroll 300", "align " + src.indexOf("C"), "view true", "switched", "caret 0 scroll"]);
     expect(w.s.md).toBe(true);
   });
   it("reads no top at the window's top, and a top at the first character stays at the top", () => {
@@ -84,12 +84,24 @@ describe("the switch", () => {
     w.s.switchTo(true);
     const src = w.last();
     expect(w.log).toContain("align " + src.text.indexOf("C"));
-    /* back: the rendered view's alignment holds and remembers the place */
+    /* back: the rendered view's alignment carries the place */
     src.top = src.text.indexOf("D");
     w.log.length = 0;
     w.s.switchTo(false);
     const back = posOf(parseMarkdown(src.text), "D");
-    expect(w.log.slice(w.log.indexOf("scroll 400") + 1, w.log.indexOf("view false"))).toEqual(["hold " + back, "remember " + back]);
+    expect(w.log.slice(w.log.indexOf("scroll 400") + 1, w.log.indexOf("view false"))).toEqual(["carry " + back]);
+  });
+});
+
+describe("the hold across the switch", () => {
+  it("a switch to the view already open lets nothing go; a real switch lets go first", () => {
+    const w = world();
+    w.s.show("AB", "page/A");
+    w.log.length = 0;
+    w.s.switchTo(false);
+    expect(w.log).toEqual([]);
+    w.s.switchTo(true);
+    expect(w.log[0]).toBe("release");
   });
 });
 
@@ -116,6 +128,7 @@ describe("the caret across the switch", () => {
     seen.log.length = 0;
     seen.s.switchTo(false);
     expect(seen.log.slice(-2)).toEqual(["release", "caret 1 scroll"]);
+    expect(seen.log[0]).toBe("release");
     const unseen = world();
     unseen.s.show("AB\n\nCD", "page/A");
     unseen.last().seen = false;
@@ -124,7 +137,7 @@ describe("the caret across the switch", () => {
     unseen.last().seen = false;
     unseen.log.length = 0;
     unseen.s.switchTo(false);
-    expect(unseen.log).not.toContain("release");
+    expect(unseen.log.filter((l) => l === "release")).toEqual(["release"]);   /* the switch's own, none for the caret */
     expect(unseen.log[unseen.log.length - 1]).toBe("caret 1 still");
   });
 });
@@ -153,7 +166,7 @@ describe("a text the model refuses", () => {
     w.s.show(BAD, "page/Gridded");
     w.log.length = 0;
     w.s.switchTo(false);
-    expect(w.log).toEqual(["read caret"]);
+    expect(w.log).toEqual(["release", "read caret"]);
     expect(w.pins[1]).toBe("cannot render page/Gridded — " + WHY + "; shown as source");
     expect(w.released).toEqual([1]);
     expect(w.s.md).toBe(true);
