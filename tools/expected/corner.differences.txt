@@ -116,3 +116,4 @@ the page open in the first, saved in the second · * · the successor's tabs kee
 typed in the first as the second saves · * · the successor leaves typing not yet saved alone and refuses its save over the second's (asked 2026-10-01, the tabs-in-step plan); the current app's first window is still on the entry it stayed on
 the page open in the first, deleted in the second · corner · the successor says the deletion in the corner (asked 2026-10-01, the tabs-in-step plan); the current app's corner holds an older notice
 typed into the page deleted in the second · * · the successor refuses typing into a page another tab deleted; the current app saves it, bringing the page back
+the deleted page opened again in the first · * · the successor's tab dropped the page another tab deleted, so it opens blank; the current app saved typing into it, bringing it back, and its run stops at this open, the wait for the entry timing out

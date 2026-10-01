@@ -33,8 +33,9 @@ export interface SessionOptions {
   images: ImageStore;
   interval: number;
   say: (text: string, ms?: number) => void;
-  stick?: (text: string) => void;
+  stick?: (text: string, copy?: string) => void;
   pin?: (text: string) => number;
+  pinned?: () => boolean;
   releasePin?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onEdit?: () => void;
@@ -177,6 +178,8 @@ export function startSession(opts: SessionOptions): Session {
   function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
     cancelSave();
     suspended = false;
+    if (deletedPin) { opts.releasePin?.(deletedPin); deletedPin = 0; }
+    detached = null;
     current = { date, tag };
     const ekey = ekeyOf();
     /* a highlight owed wins over the remembered place: it is what a reader
@@ -272,24 +275,42 @@ export function startSession(opts: SessionOptions): Session {
     open(h.date, h.tag, "arrive");
   }
   /* the entry on screen redrawn where it was, or left to its unsaved
-     typing, or said deleted (pin: tabNotice.test › the entry on screen)
-     (pin: bookmarks from another window › the page open in the first, saved in the second) */
+     typing (a rename's suspension counted as such), or, deleted, kept on
+     screen with its saves refused
+     (pin: tabNotice.test › the entry on screen)
+     (pin: bookmarks from another window › the page open in the first, saved in the second)
+     (pin: bookmarks from another window › typed into the page deleted in the second) */
+  let detached: { ekey: string; md: string } | null = null;
+  let deletedPin = 0;
   function takeNotice(ekey: string): Promise<void> {
     let verdict: ScreenNotice = "take";
     return layer.takeNotice(ekey, (md) => {
       const onScreen = !!surface.current && ekey === ekeyOf();
-      verdict = screenNotice(onScreen, !!saveTimer || currentMd() !== layer.entryMd(ekey), md);
-      return verdict === "take";
+      verdict = screenNotice(onScreen, !!saveTimer || suspended || currentMd() !== layer.entryMd(ekey), md);
+      if (verdict === "deleted") detached = { ekey, md: currentMd() };
+      return verdict !== "leave";
     }).then((moved) => {
-      if (verdict === "deleted") opts.stick?.("deleted in another tab");
-      else if (moved && surface.current && ekey === ekeyOf()) open(current.date, current.tag);
+      if (verdict === "deleted") { if (moved && !opts.pinned?.()) deletedPin = opts.pin?.("deleted in another tab") || 0; }
+      else if (moved && surface.current && ekey === ekeyOf()) redraw();
     });
+  }
+  /* the open entry drawn again from the cache, the caret where it was and
+     the focus kept: a reader may be mid-sentence */
+  function redraw(): void {
+    const view = surface.current;
+    const at = view ? view.caret() : null, focused = !!view && opts.mount.contains(document.activeElement);
+    open(current.date, current.tag);
+    if (focused && at !== null && surface.current) surface.current.placeCaret(Math.min(at, surface.current.end()), false);
   }
   function saveNow(): Promise<boolean> {
     cancelSave();
     if (!surface.current || layer.storeReadFailed) return Promise.resolve(false);
     const ekey = ekeyOf();
     const md = currentMd();
+    if (detached && detached.ekey === ekey) {
+      if (md !== detached.md) opts.stick?.("not saved — deleted in another tab, copy your text", md);
+      return Promise.resolve(false);
+    }
     const inStore = layer.entryMd(ekey);
     if (md === inStore) return Promise.resolve(true);
     if (!md.trim() && !inStore) return Promise.resolve(true);   /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
@@ -307,7 +328,7 @@ export function startSession(opts: SessionOptions): Session {
      debounce has landed: a reopen after an async write threw away keystrokes
      typed in the window. Unpinned: a race no step can hold open */
   function refresh(): Promise<void> {
-    return flushSave().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) open(current.date, current.tag); });
+    return flushSave().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) redraw(); });
   }
   /* a navigation that lands where it already is SAYS so, when given the
      words: silence reads as a dead control

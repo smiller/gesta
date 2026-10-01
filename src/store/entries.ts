@@ -50,9 +50,11 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   const cache: Record<string, string> = Object.create(null);
   const saveSeq: Record<string, number> = Object.create(null);
   const writeSeq: Record<string, number> = Object.create(null);
-  /* keys whose last write here failed for a reason other than another tab:
-     the cache holds the only copy of that text
-     (pin: entries.test › a notice is skipped for a key whose own write has not landed) */
+  /* keys whose last write here did not land: the text lives only in the
+     cache, or in a stale refusal's notice, and another tab's notice for
+     the key is skipped until a write lands
+     (pin: entries.test › a notice is skipped for a key whose own write has not landed)
+     (pin: entries.test › a save refused as stale makes the key owed) */
   const unlanded = new Set<string>();
   const chain: Record<string, Promise<unknown>> = Object.create(null);
   /* false until the warm has filled the cache: a backup run before it would
@@ -103,6 +105,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
            stale delete restores the cache) */
         if (isStale(err)) {
           if (saveSeq[ekey] === seqAt) cache[ekey] = err.stored;
+          if (!isDel) unlanded.add(ekey);
           if (isDel) notices.stuck("not deleted — changed in another tab, reload", err, ekey);
           else notices.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
         }
@@ -135,12 +138,14 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   /* read after the key's queued ops; dropped when this tab wrote or
      removed the key while the read was out, its own write being the newer
      (pin: entries.test › a notice waits for the key's queued ops). Before
-     the warm a notice waits for it (pin: entries.test › a notice before
-     the warm). A delete taken clears the key's debts, as removeEntry does */
+     the warm a notice waits for it, and a warm that failed answers false
+     (pin: entries.test › a notice before the warm)
+     (pin: entries.test › a notice when the warm could not read the store).
+     A delete taken clears the key's debts, as removeEntry does */
   let warmLanded: () => void = () => {};
   const afterWarm = new Promise<void>((r) => { warmLanded = r; });
   function takeNotice(ekey: string, accept: (md: string | null) => boolean = () => true): Promise<boolean> {
-    if (!warmed) return afterWarm.then(() => takeNotice(ekey, accept));
+    if (!warmed) return storeReadFailed ? Promise.resolve(false) : afterWarm.then(() => warmed ? takeNotice(ekey, accept) : false);
     const seqAt = saveSeq[ekey], writeAt = writeSeq[ekey];
     const read = (): Promise<boolean> => store.peek(ekey).then((row) => {
       if (saveSeq[ekey] !== seqAt || writeSeq[ekey] !== writeAt || unlanded.has(ekey)) return false;
@@ -164,7 +169,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     }, (err: unknown) => {
       storeReadFailed = true;
       storeReadError = err;
-    }).then(() => { warmed = !storeReadFailed; if (warmed) warmLanded(); });
+    }).then(() => { warmed = !storeReadFailed; warmLanded(); });
   }
   return {
     cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm, clear,

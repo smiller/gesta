@@ -743,7 +743,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
     if (where < 1) {
-      await log("the switch's place remembered", { matches: await page.evaluate(() => { try { const r = JSON.parse(localStorage.getItem("gesta.v1.places") || "[]").find((x) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }) });
+      await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
       /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
       await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);
       await page.waitForTimeout(300);
@@ -836,7 +836,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.mouse.wheel(0, toFiller);
   await page.waitForTimeout(700);
   await go("page/Horace");
-  await page.evaluate(() => { try { localStorage.removeItem("gesta.v1.folds"); } catch { /* none */ } });
+  await page.evaluate((k) => { try { localStorage.removeItem(k); } catch { /* none */ } }, A.ns + "folds");
   await go("bookshelf/Boethius/Consolatio");
   await page.waitForTimeout(300);
   await log("back to a place in a closed section", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
@@ -948,7 +948,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.deleteButton);
   await A.waitEntry(page, "2026-09-05", 5000).catch(() => {});
   await page.waitForTimeout(300);
-  await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate(() => { try { return JSON.parse(localStorage.getItem("gesta.v1.places") || "[]").some((r) => r.key === "2026-09-05/Longer"); } catch { return null; } }) });
+  await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) || "[]").some((r) => r.key === "2026-09-05/Longer"); } catch { return null; } }, A.ns + "places") });
   answer = null;
   await page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
   await page.keyboard.press("Control+Meta+c");
@@ -987,7 +987,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.setViewportSize({ width: 1000, height: 600 });
     }],
     ["bookmarks from another window", async () => {
-  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen and the corner says so; and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
+  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
   await go("2026-09-06");
   const other = await page.context().newPage();
   await other.goto(A.url("page/Made%20Elsewhere"));
@@ -1019,16 +1019,19 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await again.goto(A.url("page/Made%20Elsewhere"));
   await A.waitEntry(again, "page/Made Elsewhere").catch(() => {});
   await A.waitWarm(again).catch(() => {});
+  await page.bringToFront();
+  await page.click(S.editor);
   await again.click(S.editor);
   await again.keyboard.type(", the second again");
   await again.waitForTimeout(2500);
-  await page.bringToFront();
-  await log("the page open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "page/Made Elsewhere") });
+  await log("the page open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "page/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
   await page.click(S.editor);
   await page.keyboard.type(", the first unsaved");
   await A.foreignWrite(again, "page/Made Elsewhere", "rewritten in the second");
   await page.waitForTimeout(2500);
   await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
+  await page.click(S.corner);
+  await page.waitForTimeout(200);
   await go("page/Deleted%20Elsewhere");
   await page.click(S.editor);
   await page.keyboard.type("to be deleted in the second");
@@ -1040,6 +1043,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type(", typed after");
   await page.waitForTimeout(1500);
   await log("typed into the page deleted in the second", { stored: await A.stored(page, "page/Deleted Elsewhere"), corner: await R.cornerText(page) });
+  await go("2026-09-06");
+  await go("page/Deleted%20Elsewhere");
+  await log("the deleted page opened again in the first", { textEnd: await textEnd() });
   await again.close();
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+b");

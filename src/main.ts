@@ -192,8 +192,8 @@ if (fixture && fixtures[fixture]) {
   };
   const session = startSession({
     mount: mountEl, layer, images, interval: screen.interval, say,
-    stick: (text) => { notices.stick(text); },
-    pin: (text) => notices.stick(text), releasePin: (gen) => notices.releasePin(gen),
+    stick: (text, copy) => { notices.stick(text, copy); },
+    pin: (text) => notices.stick(text), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
       if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
@@ -204,7 +204,20 @@ if (fixture && fixtures[fixture]) {
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
-  if (tabs) tabs.onmessage = (e: MessageEvent) => { if (typeof e.data === "string") session.takeNotice(e.data).then(() => { refreshMasthead(); count(); }); };
+  /* gathered for a beat and the masthead redrawn once: an import in
+     another tab announces every entry it writes */
+  const heard = new Set<string>();
+  let hearing: ReturnType<typeof setTimeout> | null = null;
+  if (tabs) tabs.onmessage = (e: MessageEvent) => {
+    if (typeof e.data !== "string") return;
+    heard.add(e.data);
+    hearing ??= setTimeout(() => {
+      hearing = null;
+      const keys = [...heard];
+      heard.clear();
+      Promise.all(keys.map((k) => session.takeNotice(k))).then(() => { refreshMasthead(); count(); });
+    }, 50);
+  };
   /* leaving the tab with a backup still pending writes it at once, after the
      entry's own flush, registered first so it runs first */
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });

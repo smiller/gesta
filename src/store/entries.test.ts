@@ -287,3 +287,21 @@ test("a notice before the warm is taken once the warm lands", async () => {
   expect(await taken).toBe(false);
   expect(layer.cache["page/A"]).toBe("theirs");
 });
+
+test("a save refused as stale makes the key owed: another tab's notice is skipped and its debts kept, the refused text living in the pin", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "mine");
+  await mem.foreignSet("page/A", "theirs");
+  expect(await layer.setEntry("page/A", "mine, edited")).toBe(false);
+  await mem.foreignSet("page/A", "theirs again");
+  expect(await layer.takeNotice("page/A")).toBe(false);
+  expect(calls.removed).toEqual([]);
+});
+
+test("a notice when the warm could not read the store resolves false, not never", async () => {
+  const { layer } = fresh((m) => ({ ...m, all: () => Promise.reject(new Error("blocked")) }));
+  const taken = layer.takeNotice("page/A");
+  await layer.warm();
+  expect(await taken).toBe(false);
+});

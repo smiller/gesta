@@ -4,6 +4,8 @@
 // the current app, so one step list drives both and the two outputs diff.
 // Split out of helium-corner.mjs 2026-09-12.
 import { resolve } from "node:path";
+import { NS } from "../../src/store/keys.ts";
+import { ENTRY_DB, ENTRY_STORE } from "../../src/store/store.ts";
 import { tmpdir } from "node:os";
 export const name = "successor";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
@@ -11,7 +13,8 @@ export const name = "successor";
    three (measured 2026-09-12) */
 export const profile = resolve(tmpdir(), "gesta-helium-corner-profile");
 const PAGE = "file://" + resolve("dist/index.html");
-export const bookmarksKey = "gesta.v1.bookmarks";
+export const ns = NS;
+export const bookmarksKey = NS + "bookmarks";
 export const url = (hash, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
 /* the seeds are written by the page itself under ?store=seed (main.ts) */
 export async function launch(page, seeds) {
@@ -34,9 +37,9 @@ export const waitEntry = (page, key, ms = 15000) => page.waitForFunction((k) => 
 export const waitWarm = (page) => page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 /* the markdown the store holds, read straight from IndexedDB after the
    save's debounce */
-export const stored = async (page, which) => { await page.waitForTimeout(800); return page.evaluate((which) => new Promise((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction("entries").objectStore("entries").get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), which); };
+export const stored = async (page, which) => { await page.waitForTimeout(800); return page.evaluate(([which, dbName, storeName]) => new Promise((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [which, ENTRY_DB, ENTRY_STORE]); };
 /* another tab's write or delete, made in `page` straight to the store and announced as a landing is */
-export const foreignWrite = (page, key, md) => page.evaluate(([k, md]) => new Promise((res, rej) => { const r = indexedDB.open("gesta.entries"); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const t = db.transaction("entries", "readwrite"); const st = t.objectStore("entries"); if (md === null) st.delete(k); else st.put({ key: k, md }); t.onerror = () => rej(t.error); t.oncomplete = () => { db.close(); new BroadcastChannel("gesta.v1.entries").postMessage(k); res(); }; }; }), [key, md]);
+export const foreignWrite = (page, key, md) => page.evaluate(([k, md, dbName, storeName, channel]) => new Promise((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const t = db.transaction(storeName, "readwrite"); const st = t.objectStore(storeName); if (md === null) st.delete(k); else st.put({ key: k, md }); t.onerror = () => rej(t.error); t.oncomplete = () => { db.close(); new BroadcastChannel(channel).postMessage(k); res(); }; }; }), [key, md, ENTRY_DB, ENTRY_STORE, NS + "entries"]);
 export const act = {
   create: async (page) => { await page.keyboard.press("Control+Meta+n"); },
   createOnLeaf: async (page) => { await page.keyboard.press("Control+Meta+n"); await page.waitForTimeout(100); return null; },

@@ -76,3 +76,44 @@ at once, with no wait at an open.
   the first two (the row missing earlier in the step); typing into a page
   another tab deleted is saved there, bringing the page back. Four
   differences listed.
+
+### 2026-10-01 — the review at high over a060c89..84c3a0b
+
+COST 98,636 tokens (MEASURED: input 2 + cache creation 1,323 + cache read
+90,563 + output 6,748, from its subagent transcript). Ten findings, each
+read against the code:
+
+1. FIXED, refused text lost (READ): a save refused as stale keeps its
+   text only in the pin; a delete notice from another tab cleared the
+   key's debts, the pin with it. A stale refusal now makes the key owed,
+   as an unlanded write does, and notices for it are skipped until a
+   write lands (a test, red then green).
+2. FIXED, a deleted page brought back (READ): the entry on screen
+   deleted elsewhere stayed in this tab's cache, and the backup walks the
+   cache. The delete is now taken into the cache; the screen keeps the
+   text, and its saves are refused, "not saved — deleted in another tab,
+   copy your text", the typing the copy. Opened again it is blank
+   (MEASURED).
+3. FIXED: the redraw kept neither caret nor focus. `redraw` puts the
+   caret back where it was and keeps the focus (focus MEASURED kept; the
+   caret's place not read). `refresh` shares it (finding 9).
+4. FIXED: "deleted in another tab" was an unkeyed stick over any pin,
+   a refusal's rescue copy included, never released. It now defers to a
+   pin already up (MEASURED: held back under the refusal of the reading
+   before) and is released at the next open.
+5. BY DESIGN with 1: a key refused as stale keeps its old base; the
+   refusal tells the reader to copy and reload.
+6. FIXED: notices gathered for 50 ms and the masthead redrawn once; each
+   key is still one store read.
+7. FIXED: a rename's suspension counts as unsaved typing, so a notice
+   mid-rename leaves the screen.
+8. FIXED: a notice after a failed warm answers false (a test, red then
+   green).
+9. FIXED with 3.
+10. FIXED, a literal: the successor adapter and the shared steps take the
+    storage and channel names from src/; THE CHECKER OWED is
+    `tools/appNames.test.ts`, failing on a spelled one in those files.
+
+The current app's run now stops at reopening the deleted page (its wait
+times out); the reading listed. Its two older section failures (places,
+entries left and renamed) predate this.

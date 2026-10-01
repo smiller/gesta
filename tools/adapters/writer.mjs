@@ -12,7 +12,8 @@ import { TODAY } from "../helium-steps.mjs";
 export const name = "writer";
 export const profile = resolve(tmpdir(), "gesta-helium-writer-profile");
 const PAGE = "file://" + resolve("../writer/index.html");
-export const bookmarksKey = "page750.v1.bookmarks";
+export const ns = "page750.v1.";
+export const bookmarksKey = ns + "bookmarks";
 export const url = (hash, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
 const FIX = { horace: "fixtures/horace-odes-1.1.md", pippa: "fixtures/pippa-passes-intro.md", twelfth: "fixtures/twelfth-night-1.1.md", williams: "fixtures/williams-witchcraft-3.md" };
 /* the seeds written through the seam as the current app's HTML, its own
