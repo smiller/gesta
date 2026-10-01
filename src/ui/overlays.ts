@@ -1,12 +1,13 @@
-export type Closer = "panel" | "search" | "searchDropped" | "goto" | "lineBar" | "lineBarCaret" | "lines";
+export type Closer = "panel" | "search" | "goto" | "lineBar" | "lineBarCaret" | "lines";
 export type Opening = "search" | "goto" | "lineBar" | "lines" | "help" | "bookmarks" | "shortcuts" | "backups" | "pages" | "navigated" | "sourceView" | "escape";
 
-/* what each opening closes, IN ORDER: closing search or Go to hands focus
-   back to the editor, and Escape's line-bar close hands the caret back.
-   Go to's row closes only the panel: the row itself covers nothing, so an
-   overlay opening leaves it alone, and it dismisses only what would cover
-   the row just asked for (pin: overlays.test › search and Go to close only the panel)
-   (pin: overlays.test › Escape closes everything) */
+/* what each opening closes, IN ORDER: the closers are not independent —
+   one may move the focus that a later one reads — so a row's order is part
+   of it. Escape's caret hand-back comes before search and Go to: after
+   them, it found the focus gone from the line bar and handed nothing back
+   (pin: overlays.test › Escape closes everything). Go to, opened, closes
+   only the panel, which would cover it
+   (pin: overlays.test › search and Go to close only the panel) */
 export const CLOSES: Record<Opening, readonly Closer[]> = {
   search: ["panel"],
   goto: ["panel"],
@@ -17,11 +18,11 @@ export const CLOSES: Record<Opening, readonly Closer[]> = {
   bookmarks: ["search", "goto", "lineBar"],
   shortcuts: ["search", "goto", "lineBar"],
   pages: [],
-  /* an overlay drawn for another entry goes, the search with its query, and
-     the line bar whose preselects it made stale */
-  navigated: ["panel", "searchDropped", "goto", "lineBar"],
+  /* an overlay drawn for another entry goes: Go to's selects were
+     preselected for the entry left */
+  navigated: ["panel", "search", "goto", "lineBar"],
   sourceView: ["lineBar"],
-  escape: ["panel", "search", "goto", "lineBarCaret", "lines"],
+  escape: ["panel", "lineBarCaret", "search", "goto", "lines"],
 };
 
 export function overlays(closers: Record<Closer, () => void>): { open(opening: Opening): void } {

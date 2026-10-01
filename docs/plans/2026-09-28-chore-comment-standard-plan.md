@@ -606,4 +606,14 @@ faults, so it is COUNTED, per review round, until five rounds have run.
 | 2 | bf81178..28badc3 (margin-note confirmation, 107,473 tokens) | 1 (a path, in tools/, outside the checker) / 1 | 1 (a date, tools/) | 0 | 1 |
 | 3 | bef23be..fabb19b (surface and place keeper, 133,205 tokens) | 2 (role possessives the list lacked; listed since) / 3 | 0 | 1 ("Unpinned" beside a pin) | 0 |
 | 4 | 5a0e8dc..44db87e (entry lifecycle and two fixes, 92,368 tokens) | 0 / 4 (all in comments moved whole from main.ts) | 0 | 0 | 0 |
-| 5 | | | | | |
+| 5 | b672058..9a99502 (the two renames and the overlay table, 98,996 tokens) | 0 / 1 | 0 | 0 | 2 (a reason its own table contradicted; a moved comment's noun changed, mine) |
+
+THE VERDICT, by the rule above (2026-10-01): class (a) in 5 of the 5
+rounds — over the threshold of three. The seen shape came up in rounds 2
+and 3, each time a shape the checker did not yet cover (a path in tools/,
+possessives not in the list), each closed by widening it; the unseen,
+plain-English shape in every round, 10 findings in all (1, 1, 3, 4, 1),
+and every one was found by a review asked nothing special about it.
+So by its own rule the plain-English blind spot dominates; what the rule
+prescribes — a line of its own for the class in the review's prompt — is
+put to the reader, not done.

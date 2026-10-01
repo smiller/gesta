@@ -84,3 +84,44 @@ opening leaves it alone").
   (MEASURED).
 - AWAITING the reader's look and accept, then one /code-review at high
   over b672058..HEAD (the two renames ride in it).
+
+## The review — one /code-review at high, b672058..9a99502 (2026-10-01)
+
+COST 98,996 tokens (MEASURED: the final message's input 2 + cache
+creation 2,800 + cache read 92,135 + output 4,059, from the transcript).
+Eight findings, all checked against the code, all fixed in one commit:
+
+1. ESCAPE'S ORDER: search and Go to closed before the line bar's caret
+   hand-back, and both move the focus to the editor, so with Go to (or
+   search) open over the line bar and the focus in the bar, Escape found
+   the focus gone and handed no caret back (READ, main.ts: `putLineCaret`
+   reads whether the focus is in `.linebar`). Older than the table — the
+   order was carried over — and the table had fixed it in place. Now the
+   hand-back comes first; the test changed red first (MEASURED). A
+   CHANGE IN BEHAVIOUR, in a state no Helium step plays (the run unchanged).
+2. The table's comment said "an overlay opening leaves" Go to alone; the
+   rows below close it in five. Reworded to what holds: Go to, opened,
+   closes only the panel.
+3. My moved comment said the navigation closes "the line bar whose
+   preselects it made stale"; the original said "the go-to line" — Go
+   to's selects, preselected for the entry left (READ, bef23be main.ts).
+   Corrected.
+4. The comment told main.ts's closers' focus and caret mechanism;
+   reworded to the table's own rule: the closers are not independent, so
+   a row's order is part of it.
+5. THE CHECKER: role nouns matched in lower case only, so "The UI's" at a
+   sentence's start passed. Every role now matches in any case — 0 hits
+   in src/ change (MEASURED, git grep over every role); the self-test
+   gains a capitalised case.
+6. THE CHECKER: "the chrome's" still named src/ui/, though the word now
+   reads as the browser — 0 hits in src/ (MEASURED). Dropped; the known-
+   bad block that used it now reads uncaught, six of fourteen caught,
+   CLAUDE.md's figure moved.
+7. "names every opening" repeated what the table's `Record<Opening, …>`
+   type already makes tsc check. Removed.
+8. A navigation's query drop was a closer of its own (`searchDropped`,
+   `acts.search.drop`); it is back at its site, before the table's
+   `navigated` row, which now closes search plainly. Six closers.
+
+Finding 1 changed behaviour, so a confirmation pass is owed at about the
+review's price; put to the reader.

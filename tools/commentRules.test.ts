@@ -139,7 +139,7 @@ const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] =
        twin reads it: a point in the gap between stanzas resolved to the end
        of the stanza above, one stanza early
        (pin: the switch carries the text › a long canto switched at its middle) */` },
-  { at: "fabb19b:71", file: "src/editor/surface.ts", caught: ["the chrome's"], raw: "    /* the chrome's pill followed the forced view but not its release (pin: grid › the next entry after a refused switch) */" },
+  { at: "fabb19b:71", file: "src/editor/surface.ts", caught: [], raw: "    /* the chrome's pill followed the forced view but not its release (pin: grid › the next entry after a refused switch) */" },
   { at: "fabb19b:6", file: "src/editor/placeKeeper.ts", caught: [], raw: `/* ARRIVING at an entry returns to where it was last left, or the top on a
    first visit; a highlight owed goes to the top, where the highlight
    scrolls itself; KEEP moves nothing
@@ -183,9 +183,9 @@ describe("another module named", () => {
   test.each(KNOWN_BAD)("known bad, $file at $at", ({ file, raw, caught }) => {
     expect(named(file, raw).sort()).toEqual([...caught].sort());
   });
-  test("seven of the fourteen caught", () => {
+  test("six of the fourteen caught", () => {
     expect(KNOWN_BAD.length).toBe(14);
-    expect(KNOWN_BAD.filter((k) => k.caught.length).length).toBe(7);
+    expect(KNOWN_BAD.filter((k) => k.caught.length).length).toBe(6);
   });
   test.each(QUIET)("quiet, $file", ({ file, raw }) => {
     expect(named(file, raw)).toEqual([]);
@@ -196,12 +196,13 @@ describe("another module named", () => {
     expect(named("src/main.ts", raw)).toEqual(["the session's"]);
   });
   test("a directory's role noun is every file's under it, and names it from outside", () => {
-    const raw = "/* the chrome's pill follows */";
+    const raw = "/* the UI's pill follows */";
     expect(named("src/ui/mastheadModel.ts", raw)).toEqual([]);
     expect(named("src/ui/notices.svelte.ts", raw)).toEqual([]);
-    expect(named("src/editor/surface.ts", raw)).toEqual(["the chrome's"]);
-    expect(named("src/editor/surface.ts", "/* the UI's pill follows */")).toEqual(["the UI's"]);
-    expect(named("src/ui/mastheadModel.ts", "/* the UI's pill follows */")).toEqual([]);
+    expect(named("src/editor/surface.ts", raw)).toEqual(["the UI's"]);
+    expect(named("src/editor/surface.ts", "/* The UI's pill follows */")).toEqual(["The UI's"]);
+    expect(named("src/editor/surface.ts", "/* The session's place wins */")).toEqual(["The session's"]);
+    expect(named("src/editor/surface.ts", "/* the chrome's find bar */")).toEqual([]);
   });
   test("a name its own file declares, however deep, is its own", () => {
     expect(named("src/session.ts", "/* scrollToLeft reads foldsContents once */")).toEqual(["foldsContents"]);

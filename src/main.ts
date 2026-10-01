@@ -86,13 +86,12 @@ const acts = {
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
-  search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {}, drop: () => {} },
+  search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
 const overlay = overlays({
   panel: closePanel,
   search: () => acts.search.toggle(false),
-  searchDropped: () => acts.search.drop(),
   goto: () => acts.goto.toggle(false),
   lineBar: () => acts.lineBar.dismiss(),
   lineBarCaret: () => acts.lineBar.close(),
@@ -195,7 +194,7 @@ if (fixture && fixtures[fixture]) {
     pin: (text) => notices.stick(text), releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
-      if (ekey !== shown.ekey) overlay.open("navigated");
+      if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
@@ -277,7 +276,6 @@ if (fixture && fixtures[fixture]) {
     renderSearch();
   };
   acts.search.toggle = openRow;
-  acts.search.drop = () => { sr.query = ""; sr.rows = []; sr.empty = ""; openRow(false); };
   acts.search.query = (q) => { sr.query = q; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
   acts.search.scope = (at) => { sr.scopeAt = at; cancelScan(); renderSearch(); };
   acts.search.walk = (dir) => {

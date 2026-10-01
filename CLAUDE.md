@@ -142,12 +142,14 @@ here NOW, and what is not yet:
   changed. `--commit R` reads one commit; `--sweep` lists every block
   that names another module or carries provenance, a reading list for
   the audit. It catches
-  seven of the fourteen known-bad blocks; the other seven name a module
+  six of the fourteen known-bad blocks; the other eight name a module
   only by a role in plain English, and the review stays the net for them
   (MEASURED, the plan's record; the role list gained "the source's",
-  "the surface's", "the keeper's" and "the chrome's", a directory's,
-  from the surface and place keeper review, 2026-09-30; "the UI's",
-  the same directory's, with the word's rename the same day).
+  "the surface's" and "the keeper's" from the surface and place keeper
+  review, 2026-09-30, and "the UI's", a directory's, with the word's
+  rename; "the chrome's" was added and dropped again, the word now
+  reading as the browser; role nouns match in any case since the
+  overlays review, 2026-10-01).
 - NOT YET — the other prose checkers (`tools/*.sh` in ../writer),
   re-aimed at this tree's comments and the plan's record as each class
   first shows up in a review; each keeps its self-test and has its hit

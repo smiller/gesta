@@ -264,7 +264,6 @@ const ROLES: [RegExp, string[]][] = [
   [/\bthe source['’]s\b/, ["src/editor/sourceview"]],
   [/\bthe surface['’]s\b/, ["src/editor/surface"]],
   [/\bthe keeper['’]s\b/, ["src/editor/placekeeper"]],
-  [/\bthe chrome['’]s\b/, ["src/ui/"]],
   [/\bthe UI['’]s\b/, ["src/ui/"]],
 ];
 /* an owner ending in a slash is a directory: every file under it owns the noun */
@@ -284,7 +283,7 @@ export function namesOther(block: Block, index: NameIndex): string[] {
     if (!self) hits.add(m[0]);
   }
   for (const [re, owners] of ROLES) {
-    const m = text.match(re);
+    const m = text.match(new RegExp(re.source, "i"));
     if (m && !owners.some((o) => owns(o, own.toLowerCase()))) hits.add(m[0]);
   }
   return [...hits];
