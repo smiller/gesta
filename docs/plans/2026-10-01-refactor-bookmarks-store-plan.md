@@ -25,9 +25,14 @@ draft rule is screen state, so the deletion test fails there.
    `reachableBookmarks`, moves from `ui/bookmarksModel.ts` to
    `store/bookmarks.ts` so the store does not import the UI.
 2. ONE BEHAVIOUR CHANGE, asked: opening ⌃⌘B re-reads the stored list when
-   it is damaged, so a list repaired by hand shows without a reload. A
-   list that reads clean is not re-read at the open (unchanged).
-3. Everything else is preserved: `corner.approved.txt` unchanged by the
+   it is damaged, so a list repaired by hand shows without a reload.
+   Widened the same day, asked after the look (decision 4).
+4. ⌃⌘B re-reads the list at EVERY open, not only a damaged one: with two
+   windows open, a row added in one was dropped by the next write in the
+   other, which wrote the list it read at launch. Left open: both cards
+   open at once, written in turn without a reopen, still lose the first
+   write; a `storage` event listener would close that and was not asked.
+5. Everything else is preserved: `corner.approved.txt` unchanged by the
    move; a new Helium step pins the re-read.
 
 ## Record
@@ -48,3 +53,16 @@ draft rule is screen state, so the deletion test fails there.
   the repaired one (MEASURED); two differences listed.
 - The approve tool's scrub drops a logged Error's stack frames: the
   minified line and column move with any change to the bundle.
+
+### 2026-10-01 — the re-read at every open (decision 4)
+
+- Tests first: "re-reads the list: a row another window added shows" and
+  "a list damaged since it read clean latches at the open" failed, then
+  passed with `load()` at every open (MEASURED); the test that a clean
+  list was not re-read was removed with the rule it pinned.
+- The new Helium step `bookmarks from another window`: Pippa added in a
+  second page of the same profile, ⌃⌘B in the first, × on its first row.
+  The successor's first window showed the row and stored it after the ×
+  (MEASURED). The current app's showed only the row it read at launch,
+  and its × wrote `[]`, dropping Pippa (MEASURED): the loss this decision
+  fixes, seen. Three differences listed.

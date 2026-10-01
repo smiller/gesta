@@ -56,7 +56,10 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
     unreadable: () => unreadable,
     write,
     open(keys) {
-      if (unreadable) load();
+      /* another window may have written the key since: a write from the
+         list read before would drop its rows
+         (pin: bookmarkStore.test › re-reads the list) */
+      load();
       /* an absence and a deletion read the same before the warm, and only
          a deletion should cost rows
          (pin: bookmarkStore.test › rows that lead nowhere are dropped) */

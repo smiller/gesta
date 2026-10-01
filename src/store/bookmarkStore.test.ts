@@ -78,12 +78,26 @@ describe("the latch", () => {
     expect(w.box[KEY]).toBe("not json");
     expect(w.pins).toEqual([]);
   });
-  it("a list that read clean is not re-read at the open", () => {
+});
+
+describe("the open", () => {
+  it("re-reads the list: a row another window added shows, and the next write keeps it", () => {
     const w = world('["page/C"]');
     const s = w.store();
-    w.box[KEY] = '["page/D"]';
+    w.box[KEY] = '["page/C", "page/D"]';
     s.open(null);
-    expect(s.list()).toEqual([row("page/C")]);
+    expect(s.list()).toEqual([row("page/C"), row("page/D")]);
+    expect(s.write([...s.list(), row("page/E")])).toBe(true);
+    expect(JSON.parse(w.box[KEY])).toEqual(["page/C", "page/D", "page/E"]);
+  });
+  it("a list damaged since it read clean latches at the open", () => {
+    const w = world('["page/C"]');
+    const s = w.store();
+    w.box[KEY] = "not json";
+    s.open(null);
+    expect(s.unreadable()).toBe(true);
+    expect(s.write([row("page/C")])).toBe(false);
+    expect(w.box[KEY]).toBe("not json");
   });
 });
 
