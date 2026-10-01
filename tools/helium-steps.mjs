@@ -986,6 +986,38 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("margin-notes between paragraphs and in a grid at 1500px", await R.margins(page));
   await page.setViewportSize({ width: 1000, height: 600 });
     }],
+    ["footnote marks", async () => {
+  /* a footnote mark, a space and superscript digits after a word, is no break in a phrase search (2026-10-01): "Pedenteria in comparison" finds "Pedenteria ¹ in comparison", and Enter selects it, the mark inside; "m²" stays text */
+  await go("page/Footnoted");
+  /* the box holding the whole query (it keeps the last one while the entry stays open, so a new one is typed over ⌘A), then the scan's pause: a row from the query before can stand until it runs */
+  const searched = async (q) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(400); };
+  await page.click(S.editor);
+  await page.keyboard.type("Skill of government was but a Pedenteria ¹ in comparison, so as Amphion, ³ was said; an area of 4 m² here.");
+  await page.waitForTimeout(1500);
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForTimeout(100);
+  await page.selectOption(S.searchScope, { label: "Everything" });
+  await page.keyboard.type("Pedenteria in comparison");
+  await searched("Pedenteria in comparison");
+  await log("typed Pedenteria in comparison", await R.search(page));
+  await page.keyboard.press("Enter");
+  await R.waitSelection(page, "pedenteria ¹ in comparison");
+  await log("Enter on the footnoted phrase", { entry: await A.entry(page), selected: await R.selectionText(page) });
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForTimeout(100);
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("Amphion, was");
+  await searched("Amphion, was");
+  await log("typed Amphion, was", await R.search(page));
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForTimeout(100);
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("4 m²");
+  await searched("4 m²");
+  await log("typed 4 m²", await R.search(page));
+  await page.keyboard.press("Escape");
+    }],
     ["bookmarks from another window", async () => {
   /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
   await go("2026-09-06");

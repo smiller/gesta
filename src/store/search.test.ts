@@ -10,6 +10,10 @@ describe("searchFold", () => {
   });
 });
 describe("parseSearchQuery", () => {
+  it("a footnote mark typed or pasted into the query is skipped, as the text's are", () => {
+    expect(parseSearchQuery("Pedenteria ¹ in comparison").needle).toBe("pedenteria in comparison");
+    expect(parseSearchQuery("m²").needle).toBe("m²");
+  });
   it("substring by default, an edge underscore bounds that end, a doubled one is literal", () => {
     expect(parseSearchQuery("_sister_")).toEqual({ needle: "sister", left: true, right: true });
     expect(parseSearchQuery("sister")).toEqual({ needle: "sister", left: false, right: false });

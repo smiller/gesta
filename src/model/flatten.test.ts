@@ -36,3 +36,27 @@ describe("flattenText", () => {
     expect(flat.pos).toEqual([0, 1, 2, 6, 7, 8, 9]);
   });
 });
+describe("footnote marks", () => {
+  it("a space and superscript digits after a word are skipped: the text reads on, each kept character at its own position", () => {
+    const doc = parseMarkdown("was but a Pedenteria ¹ in comparison, So as Amphion, ³ was said");
+    const flat = flattenDoc(doc);
+    expect(flat.text).toBe("was but a Pedenteria in comparison, So as Amphion, was said");
+    expect(flat.pos.length).toBe(flat.text.length);
+    const at = flat.text.indexOf("Pedenteria in");
+    const r = flatRange(flat, at, "Pedenteria in".length)!;
+    expect(doc.textBetween(r.from, r.to)).toBe("Pedenteria ¹ in");
+  });
+  it("two marks on one word are both skipped, a mark of two digits too", () => {
+    expect(flattenDoc(parseMarkdown("a word ¹ ² next, and ¹⁹ last")).text).toBe("a word next, and last");
+  });
+  it("a superscript joined to its word stays: m² and 10³ are text", () => {
+    expect(flattenDoc(parseMarkdown("an area of 4 m² and 10³ more")).text).toBe("an area of 4 m² and 10³ more");
+  });
+  it("a superscript opening a block is not a mark: it stays, and so does the space between the blocks", () => {
+    expect(flattenDoc(parseMarkdown("end.\n\n¹ start")).text).toBe("end. ¹ start");
+  });
+  it("flattenText skips the same marks, so the two views count alike", () => {
+    const md = "was but a Pedenteria ¹ in comparison\n\n¹ start, m² and a word ¹ ² next";
+    expect(flattenText(md).text).toBe(flattenDoc(parseMarkdown(md)).text);
+  });
+});

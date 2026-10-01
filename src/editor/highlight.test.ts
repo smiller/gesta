@@ -6,6 +6,11 @@ import { selectionLink } from "./reference.ts";
 /* the underscores sit in a code span: bare, they would be emphasis */
 const doc = parseMarkdown("Her sister’s book.\n\n::: verse\nA sister | une sœur\nresisters\n:::\n\n`_private_` text\n");
 describe("findHit", () => {
+  it("a phrase across a footnote mark is found, the selection taking the mark inside it", () => {
+    const d = parseMarkdown("Skill of government was but a Pedenteria ¹ in comparison, then.");
+    const hit = findHit(d, "Pedenteria in comparison", 0, true)!;
+    expect(d.textBetween(hit.from, hit.to)).toBe("Pedenteria ¹ in comparison");
+  });
   it("the nth occurrence under the search parse, folded, across blocks", () => {
     const first = findHit(doc, "Sister", 0, true)!;
     expect(doc.textBetween(first.from, first.to)).toBe("sister");

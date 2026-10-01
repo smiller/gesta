@@ -118,3 +118,7 @@ the page open in the first, deleted in the second · corner · the successor say
 typed into the page deleted in the second · * · the successor refuses typing into a page another tab deleted; the current app saves it, bringing the page back
 the deleted page opened again in the first · * · the successor's tab dropped the page another tab deleted, so it opens blank; the current app saved typing into it, bringing it back, and its run stops at this open, the wait for the entry timing out
 the deleted page left for the day · corner · the successor's notices for a page deleted in another tab last while it is on screen (asked 2026-10-01, the tabs-in-step plan); the current app's corner says "saved", the typing it took into the deleted page landing on the way out
+typed Pedenteria in comparison · rows · a footnote mark, a space and superscript digits after a word, is skipped by the successor's search, so a phrase reads across it (asked 2026-10-01, with the Sidney import's notes); the current app's search reads the mark as text and finds nothing
+Enter on the footnoted phrase · selected · the same: the successor selects the phrase with its mark inside; the current app had no row to jump to
+typed Amphion, was · * · the same, across a mark after a comma; the current app's row and box follow from its misses before
+typed 4 m² · rows · the successor finds a superscript joined to its word as typed; the current app finds nothing here, its box following from its misses before
