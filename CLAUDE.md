@@ -59,6 +59,18 @@ here NOW, and what is not yet:
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.
+- IN FORCE from 2026-10-01 — HAND-CHECK STEPS ARE ACCURATE BEFORE THEY
+  ARE HANDED OVER (the reader: "Getting hand-check instructions to be
+  accurate and clear is important", after seven wrong or unclear steps on
+  2026-09-30 and 10-01, every one his correct sighting against my wrong
+  claim). Each step: the entry to use and its kind (a page, a book, a
+  journal day); every control BY ITS LABEL ON SCREEN; every key, Enter
+  and Escape included; the expected result as what is SEEN, nothing the
+  eye cannot catch ("a moment later"); and what each step does NOT cover.
+  Every step a scratch probe can play is played first in headless Helium
+  and its expectation is MEASURED; a step not played says so. A step
+  the code cannot reach by hand (a forgotten store, a failed write) is
+  named as the tests' and not handed over.
 - IN FORCE — new behaviour is built test-first (`npm test`, Vitest), and
   `npm run verify` — tsc, the suite, then the headless tools under their
   verdict — passes before work is called done. THE HEADLESS TOOLS HAVE A
