@@ -271,3 +271,14 @@ the open. Unpinned, a race no step holds open. The expected files are
 byte for byte 2bbf4c3's (MEASURED). LATER, the reader's to call: the
 notice between windows, its first question whether two file:// windows
 in Helium can pass one (not yet measured).
+
+### 2026-10-01 — can two file:// windows pass a notice? (the Later's first question)
+
+- In headless Helium, two pages of dist/index.html in one profile
+  (MEASURED): `location.origin` reads `file://`; a `BroadcastChannel`
+  message posted in the second reached the first; a localStorage write in
+  the second fired a `storage` event in the first. A scratch page with a
+  "Send a message" button played the same: the other window's box showed
+  both, the sender's nothing (MEASURED).
+- In the reader's own Helium: handed over as the scratch page, not yet
+  answered.
