@@ -318,7 +318,7 @@ is in the plan's record, under the phase named):
   (the keyed-store adapter contract, the memory adapter, the entry store
   with its stale-write refusal, the image and backup-handle stores),
   `entries.ts` (the entry layer: the cache, the one write path, the per-key
-  chain, the warm, the re-read of one entry at an open — a factory over an injected store and notices),
+  chain, the warm — a factory over an injected store and notices),
   `files.ts` (the pick's file records, `oneEach` and `entryDocs`),
   `importFiles.ts` (the import over a file list: the sidecar refs, the
   parse gate, the tally), `pick.ts` (the walk over directory handles,

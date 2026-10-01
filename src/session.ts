@@ -225,19 +225,21 @@ export function startSession(opts: SessionOptions): Session {
   function openAddress(primed: boolean): void {
     hashDeferred = false;
     const h = hashParts(location.hash.slice(1));
-    /* AFTER THE WARM every address is read again from the store first:
-       another window may have written it since
-       (pin: bookmarks from another window › its row's page opened from the first)
-       (pin: bookmarks from another window › its page opened again in the first).
+    /* AFTER THE WARM an address the cache lacks is read from the store
+       first: another window may have written it since
+       (pin: bookmarks from another window › its row's page opened from the first).
        A read answers only while its own address is still the one asked
-       for: a later address opened by an earlier read went unread.
-       Unpinned: a race no step can hold open */
+       for: a later address opened by an earlier read went unread. What was
+       typed into the entry still on screen during the read is saved
+       before the open, whose first act cancels a pending save.
+       Unpinned: races no step can hold open */
     const want = entryKey(h.date, h.tag);
-    if (!primed && layer.warmed) {
+    if (!primed && layer.warmed && !(want in layer.cache)) {
       hashDeferred = true;
       const asked = location.hash;
-      const then = (): void => { if (hashDeferred && location.hash === asked) openAddress(true); };
-      layer.refreshEntry(want).then(then, then);
+      const still = (): boolean => hashDeferred && location.hash === asked;
+      const then = (): void => { if (still()) flushSave().then(() => { if (still()) openAddress(true); }); };
+      layer.primeEntry(want).then(then, then);
       return;
     }
     const keys = Object.keys(layer.cache);

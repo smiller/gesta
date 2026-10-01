@@ -241,3 +241,33 @@ read unchanged, 0 open, no miss logged (MEASURED).
   typing was refused; after, it opened with the edit and the typing
   landed (MEASURED). The current app's first window opens its own copy
   and refuses the typing (MEASURED); two differences listed.
+
+### 2026-10-01 — the review of decision 7, and its revert
+
+One `/code-review` at high over 2bbf4c3..4298653. COST 86,741 tokens
+(MEASURED: input 2 + cache creation 5,005 + cache read 77,104 + output
+4,630, from its subagent transcript). Ten findings, against decision 7
+itself; two read against the code and holding (READ):
+
+- A save that failed for a reason other than another tab (storage full)
+  leaves the cache ahead of the store, its only copy; the re-read at the
+  next open put the older row back over it.
+- Every navigation waited on a store read with the old entry still on
+  screen and editable; the open's `cancelSave` then dropped what was
+  typed in that gap. 4298653 widened to every navigation a gap that
+  c5f3b4d's read of an uncached address already had.
+
+and four races the deferral made (a double walk moving once, a save
+undone by a read in flight, A→B→A opening the older read, the base moved
+under a screen not redrawn). Its altitude finding: staying in step with
+other windows belongs to a notice of each landed write between windows,
+not a read at every open.
+
+DECIDED (asked): decision 7 REVERTED — an entry another window edited
+opens with this window's copy and its save is refused, as accepted at
+2bbf4c3; the typing gap closed on the read that stays (an uncached
+address after the warm): what was typed during the read is saved before
+the open. Unpinned, a race no step holds open. The expected files are
+byte for byte 2bbf4c3's (MEASURED). LATER, the reader's to call: the
+notice between windows, its first question whether two file:// windows
+in Helium can pass one (not yet measured).

@@ -32,8 +32,6 @@ export interface EntryLayer {
   persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel?: boolean): Promise<boolean>;
   clear(): Promise<void>;
   primeEntry(ekey: string): Promise<boolean>;
-  /* the cache's copy of one entry made the store's; resolves whether it moved */
-  refreshEntry(ekey: string): Promise<boolean>;
   warm(): Promise<void>;
   /* the store's keys, read without touching the cache: what other tabs wrote is included */
   storedKeys(): Promise<string[]>;
@@ -120,25 +118,6 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     });
     return (chain[ekey] || Promise.resolve()).then(read, read);
   }
-  /* after the key's queued ops, and refused when a removal came between, as
-     primeEntry (pin: entries.test › refreshEntry waits for the key's pending ops) */
-  function refreshEntry(ekey: string): Promise<boolean> {
-    const seqAt = saveSeq[ekey];
-    const read = (): Promise<boolean> => store.reread(ekey).then((row) => {
-      if (saveSeq[ekey] !== seqAt) return false;
-      /* an empty row is a registration, kept
-         (pin: entries.test › refreshEntry keeps an empty row) */
-      if (row) {
-        if (ekey in cache && cache[ekey] === row.md) return false;
-        cache[ekey] = row.md;
-        return true;
-      }
-      if (!(ekey in cache)) return false;
-      delete cache[ekey];
-      return true;
-    });
-    return (chain[ekey] || Promise.resolve()).then(read, read);
-  }
   function warm(): Promise<void> {
     storeReadFailed = false;
     storeReadError = null;
@@ -150,7 +129,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices): EntryLayer
     }).then(() => { warmed = !storeReadFailed; });
   }
   return {
-    cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, refreshEntry, warm, clear,
+    cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm, clear,
     storedKeys: () => store.keys(),
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },

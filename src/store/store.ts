@@ -181,7 +181,6 @@ export interface EntryStore {
   del(key: string): Promise<void>;
   all(): Promise<EntryRow[]>;
   keys(): Promise<string[]>;
-  reread(key: string): Promise<EntryRow | null>;
   clear(): Promise<void>;
 }
 export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
@@ -226,13 +225,6 @@ export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
        read stays based at "", so a blank write from here over it is still
        refused (pin: store.test › keys() bases nothing) */
     keys: () => store.keys(),
-    /* get's first-wins kept the text this handle first saw; a reread
-       replaces it, the caller's copy being replaced by the same text
-       (pin: store.test › reread() takes the stored text as the new base) */
-    reread: (key) => store.get(key).then((row) => {
-      bases.wrote(key, row ? row.md : "");
-      return row;
-    }),
     /* a store emptied is KNOWN empty: every key based at "", or the old bases
        would refuse the first write after (pin: store.test › clear empties the
        store and the ledger) */

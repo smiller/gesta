@@ -188,23 +188,6 @@ test("keys() bases nothing: a key another tab filled after the whole read still 
   await expect(s.set("k", "mine")).rejects.toSatisfy(stale);
 });
 
-test("reread() takes the stored text as the new base: a write after it lands over another tab's edit it saw", async () => {
-  const { s, foreign } = open();
-  await s.set("k", "mine");
-  await foreign("k", "theirs");
-  expect((await s.reread("k"))!.md).toBe("theirs");
-  await s.set("k", "theirs, then mine");
-  expect((await s.get("k"))!.md).toBe("theirs, then mine");
-});
-
-test("reread() of a key another tab removed bases it absent: a write after it lands", async () => {
-  const { s } = open();
-  await s.all();
-  expect(await s.reread("gone")).toBe(null);
-  await s.set("gone", "new");
-  expect((await s.get("gone"))!.md).toBe("new");
-});
-
 test("del is judged like a write", async () => {
   const { s, foreign } = open();
   await s.set("k", "mine");
