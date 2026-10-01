@@ -54,7 +54,12 @@ opening leaves it alone").
   search and the line bar. (Every panel replaces whichever panel is open:
   one slot holds them all, so help gives way to pages or the bookshelf.
   The reader saw that on the look, 2026-10-01, and it is as it should be;
-  the question is the other overlays only.)
+  the question is the other overlays only.) As used, search closes too:
+  pages and bookshelf have no chord, so they open only by a click, and a
+  click outside the search row closes it (main.ts's document click
+  handler, outside the table by 4) — Go to, with no such handler, stays
+  (the reader's look, 2026-10-01). So the effective difference from help
+  and backups is Go to, the line bar and ⌃⌘L's lines.
 
 ## Batch 1 — the table (2026-09-30, overnight)
 
