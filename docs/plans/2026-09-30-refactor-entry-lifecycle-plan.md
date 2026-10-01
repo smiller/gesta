@@ -161,6 +161,17 @@ four declined:
    default fills it either way.
 
 
+## Decided (the reader, 2026-09-30, after the review)
+
+14. No confirmation pass: finding 1's change is a few lines under two
+    tests; a pass would cost about the review's 92k again.
+15. CREATE DOES AS EXTRACT DOES (finding 2, Q40): the new entry is
+    registered FIRST; only once that lands is the link put at the caret,
+    the host saved, the entry opened. A write that fails says so and
+    changes nothing; the editor gone during the write leaves the entry
+    standing and says the link was not placed. The link now appears a
+    moment after the prompt, not at once. Its own commit, test first.
+
 ## Later
 
 - OPEN QUESTION (the reader, 2026-09-30, on the look: surprised twice, at

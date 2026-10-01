@@ -41,10 +41,11 @@ async function world(o: Opts) {
   const asked: string[] = [];
   let onFlush: (() => void) | null = null;
   let typed: string | null = null;
+  let dropped = false;
   const life = lifecycle({
     layer,
     journal: journalOf(layer.cache),
-    view: () => o.noView ? null : view,
+    view: () => o.noView || dropped ? null : view,
     session: {
       get current() { return current; },
       flushSave: () => { log.push("flush"); onFlush?.(); return Promise.resolve(true); },
@@ -80,6 +81,7 @@ async function world(o: Opts) {
     onSet: (f: (key: string) => void) => { onSet = f; },
     edit: (f: (s: EditorState) => Transaction) => { st = st.apply(f(st)); },
     leave: (date: string, tag: string | null) => { current = { date, tag }; },
+    dropView: () => { dropped = true; },
   };
 }
 /* the position just before the first occurrence of `text` in a textblock */
@@ -155,21 +157,31 @@ describe("create", () => {
     expect(code.log).toEqual(["say no link inside a code block"]);
     expect(code.md("page/A/B")).toBeNull();
   });
-  it("puts the link after the caret, registers the name empty, saves, redraws, goes", async () => {
+  it("registers the name empty, then puts the link after the caret, saves, redraws, goes", async () => {
     const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" } });
     w.select(pos(w.doc(), "hello", true));
     w.answer("B");
     await w.life.create();
-    expect(w.log).toEqual(["edit", "set page/A/B", "save", "set page/A", "redraw", "goto #page/A/B"]);
+    expect(w.log).toEqual(["set page/A/B", "edit", "save", "set page/A", "redraw", "goto #page/A/B"]);
     expect(w.md("page/A")).toBe("hello[B](#page/A/B)");
     expect(w.md("page/A/B")).toBe("");
   });
-  it("goes even when the registration did not land", async () => {
+  it("says a registration that did not land, and places no link", async () => {
     const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" }, failSet: "page/A/B" });
     w.select(pos(w.doc(), "hello", true));
     w.answer("B");
     await w.life.create();
-    expect(w.log[w.log.length - 1]).toBe("goto #page/A/B");
+    expect(w.log).toEqual(["set page/A/B", "say couldn't create the entry — see the corner"]);
+    expect(serializeMarkdown(w.doc())).toBe("hello");
+  });
+  it("leaves the new entry standing and says so when the editor went away during the write", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" } });
+    w.select(pos(w.doc(), "hello", true));
+    w.onSet((k) => { if (k === "page/A/B") w.dropView(); });
+    w.answer("B");
+    await w.life.create();
+    expect(w.log).toEqual(["set page/A/B", "say the entry was made — the link was not placed"]);
+    expect(w.md("page/A/B")).toBe("");
   });
 });
 

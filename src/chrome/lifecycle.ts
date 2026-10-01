@@ -103,8 +103,15 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!view) { chrome.say("place your cursor in the entry", 2000); return done; }
     const why = linkRefusal(view.state);
     if (why) { chrome.say(why, 2000); return done; }
-    insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
-    return layer.setEntry(key, "").then(() => session.saveNow()).then(() => { chrome.redraw(); session.goto(spec.href); });
+    /* the entry FIRST, the link once it has landed: linked first, a write
+       that failed left the host saved with a link to nothing
+       (pin: lifecycle.test › says a registration that did not land) */
+    return layer.setEntry(key, "").then((landed) => {
+      if (!landed) { chrome.say("couldn't create the entry — see the corner", 3000); return; }
+      if (view !== deps.view()) { chrome.say("the entry was made — the link was not placed", 3000); return; }
+      insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
+      return session.saveNow().then(() => { chrome.redraw(); session.goto(spec.href); });
+    });
   }
 
   /* the selection into a new sub-entry, the link left in its place: the
