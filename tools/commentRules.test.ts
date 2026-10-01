@@ -200,6 +200,8 @@ describe("another module named", () => {
     expect(named("src/ui/mastheadModel.ts", raw)).toEqual([]);
     expect(named("src/ui/notices.svelte.ts", raw)).toEqual([]);
     expect(named("src/editor/surface.ts", raw)).toEqual(["the chrome's"]);
+    expect(named("src/editor/surface.ts", "/* the UI's pill follows */")).toEqual(["the UI's"]);
+    expect(named("src/ui/mastheadModel.ts", "/* the UI's pill follows */")).toEqual([]);
   });
   test("a name its own file declares, however deep, is its own", () => {
     expect(named("src/session.ts", "/* scrollToLeft reads foldsContents once */")).toEqual(["foldsContents"]);

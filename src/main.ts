@@ -772,7 +772,7 @@ if (fixture && fixtures[fixture]) {
     layer, journal, session,
     view: () => session.view,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
-    chrome: { say, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.view?.focus() },
+    ui: { say, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.view?.focus() },
   });
   acts.create = () => { life.create(); };
   acts.rename = () => { life.rename(); };

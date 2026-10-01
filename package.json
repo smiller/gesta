@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Gesta, rebuilt: a ProseMirror editor and Svelte chrome in one index.html that opens from file://",
+  "description": "Gesta, rebuilt: a ProseMirror editor and a Svelte UI in one index.html that opens from file://",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

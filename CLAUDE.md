@@ -1,7 +1,7 @@
 # Gesta (the successor)
 
 Gesta rebuilt as a project with a build step: the editor on ProseMirror, the
-chrome on Svelte 5, the output still ONE `index.html` that opens from
+UI on Svelte 5, the output still ONE `index.html` that opens from
 `file://`. The plan and phase 0's record are
 `docs/plans/2026-09-07-feat-successor-app-prosemirror-svelte-plan.md`
 (moved here 2026-09-07; the copy in ../writer/docs/plans is marked
@@ -146,7 +146,8 @@ here NOW, and what is not yet:
   only by a role in plain English, and the review stays the net for them
   (MEASURED, the plan's record; the role list gained "the source's",
   "the surface's", "the keeper's" and "the chrome's", a directory's,
-  from the surface and place keeper review, 2026-09-30).
+  from the surface and place keeper review, 2026-09-30; "the UI's",
+  the same directory's, with the word's rename the same day).
 - NOT YET — the other prose checkers (`tools/*.sh` in ../writer),
   re-aimed at this tree's comments and the plan's record as each class
   first shows up in a review; each keeps its self-test and has its hit
@@ -327,8 +328,9 @@ is in the plan's record, under the phase named):
   rewritten over the document model: the host's retarget on a rename or
   a delete, the parent's relabel to a sub-page's heading). Tests beside
   them, ported from the current app's node suites where they had one.
-- `src/ui/` — the UI chrome, Svelte 5 (`src/chrome/` until 2026-09-30,
-  renamed because the word read as the browser): `notices.svelte.ts` (the notice
+- `src/ui/` — the UI, Svelte 5 (`src/chrome/` until 2026-09-30, and
+  "chrome" its word for the UI in code and prose, both renamed because the
+  word read as the browser): `notices.svelte.ts` (the notice
   ledger: the whisper, the pin, the progress line, the deferred one-shot,
   the keyed save-failure family and the pill's text — a factory over the
   clipboard writer, its state a rune), `Corner.svelte` (the indicator and
@@ -353,7 +355,7 @@ is in the plan's record, under the phase named):
   entries — create, extract, rename, delete, a new root, a parent's links
   following a sub-page's heading — in their order of writes, over the
   entry layer and ports for the session, the editor, the dialogs and the
-  chrome; no DOM, tested on the memory store), `viewCarets.ts` (where the view
+  UI; no DOM, tested on the memory store), `viewCarets.ts` (where the view
   toggle puts you back: the count held per view, the alignment between
   the two streams), `Toolbar.svelte` (the floating format bar over a
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),

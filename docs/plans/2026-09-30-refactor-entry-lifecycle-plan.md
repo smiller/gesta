@@ -199,6 +199,15 @@ four declined:
   files, the checker's owner paths (the role noun "the chrome's" kept,
   the word still naming the UI in prose), CLAUDE.md. The `ChromePort`
   and `chrome` names inside the code left as they are.
+- DONE 2026-09-30, the reader's word ("still confused by the word chrome
+  as UI"): the word's UI sense renamed too, scoped first by kind (READ,
+  git grep): `ChromePort` → `UiPort` and the lifecycle's `chrome` port →
+  `ui` (29 lines in three files); "chrome" → "UI" in CLAUDE.md, the
+  package description and a vite.config comment; the checker gains "the
+  UI's" beside "the chrome's", which its self-test quotes from git. Left:
+  16 lines meaning the browser (Chromium, Chrome, playwright's
+  `chromium`) and the plans' 61, history. The approved runs name it
+  nowhere (MEASURED), so no reading could move.
 
 ## Decided (the reader, 2026-09-30, grilling round 3)
 

@@ -62,7 +62,7 @@ async function world(o: Opts) {
       confirm: (text) => { asked.push(text); return answers.shift() as boolean; },
       alert: (text) => { log.push("alert " + text); },
     },
-    chrome: {
+    ui: {
       say: (text) => { log.push("say " + text); },
       redraw: () => { log.push("redraw"); },
       replaceHash: (hash) => { log.push("hash " + hash); },

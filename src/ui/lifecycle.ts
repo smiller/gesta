@@ -20,7 +20,7 @@ export interface Dialogs {
   confirm(text: string): boolean;
   alert(text: string): void;
 }
-export interface ChromePort {
+export interface UiPort {
   say(text: string, ms?: number): void;
   redraw(): void;
   replaceHash(hash: string): void;
@@ -33,7 +33,7 @@ export interface LifecycleDeps {
   view(): EditorPort | null;
   session: SessionPort;
   dialogs: Dialogs;
-  chrome: ChromePort;
+  ui: UiPort;
 }
 /* each settles once its writes have landed */
 export interface Lifecycle {
@@ -59,7 +59,7 @@ export function refuseCold(layer: Pick<EntryLayer, "warmed" | "storeReadFailed">
 }
 
 export function lifecycle(deps: LifecycleDeps): Lifecycle {
-  const { layer, journal, session, dialogs, chrome } = deps;
+  const { layer, journal, session, dialogs, ui } = deps;
   const done = Promise.resolve();
   /* THE SUB-ENTRIES. Every gate over "what exists" refuses on a cold
      cache: a create would write into a blank painted over a real entry.
@@ -69,7 +69,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      appended at the end; a caret with nowhere to land refuses before
      anything is minted (pin: lifecycle.test › refuses every operation)
      (pin: lifecycle.test › refuses with no editor) */
-  const cold = (): boolean => refuseCold(layer, chrome.say);
+  const cold = (): boolean => refuseCold(layer, ui.say);
   const keysNow = (): string[] => Object.keys(layer.cache);
   const shownName = (date: string, tag: string): string => {
     const ns = nsOf(date), pp = pageParts(tag);
@@ -90,27 +90,27 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     const ns = nsOf(c.date);
     /* the one leaf: a day's tagged entry hosts nothing, and ⌃⌘N reaches it all the same */
-    if (!ns && c.tag) { chrome.say("a tagged entry holds no entries of its own", 2500); return done; }
+    if (!ns && c.tag) { ui.say("a tagged entry holds no entries of its own", 2500); return done; }
     const typed = typedName(dialogs.prompt(newName(ns)));
     if (!typed) return done;
-    if ("refuse" in typed) { chrome.say(typed.refuse); return done; }
+    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
     const spec = subEntrySpec(c.date, c.tag, typed.name);
     if (!spec) return done;
-    if ("refuse" in spec) { chrome.say(spec.refuse); return done; }
+    if ("refuse" in spec) { ui.say(spec.refuse); return done; }
     const key = entryKey(c.date, spec.full);
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return done; }
     const view = deps.view();
-    if (!view) { chrome.say("place your cursor in the entry", 2000); return done; }
+    if (!view) { ui.say("place your cursor in the entry", 2000); return done; }
     const why = linkRefusal(view.state);
-    if (why) { chrome.say(why, 2000); return done; }
+    if (why) { ui.say(why, 2000); return done; }
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
        (pin: lifecycle.test › says a registration that did not land) */
     return layer.setEntry(key, "").then((landed) => {
-      if (!landed) { chrome.say("couldn't create the entry — see the corner", 3000); return; }
-      if (view !== deps.view()) { chrome.say("the entry was made — the link was not placed", 3000); return; }
+      if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
+      if (view !== deps.view()) { ui.say("the entry was made — the link was not placed", 3000); return; }
       insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
-      return session.saveNow().then(() => { chrome.redraw(); session.goto(spec.href); });
+      return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
     });
   }
 
@@ -126,23 +126,23 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const ns = nsOf(c.date);
     const typed = typedName(dialogs.prompt(newName(ns)));
     if (!typed) return done;
-    if ("refuse" in typed) { chrome.say(typed.refuse); return done; }
+    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
     const spec = subEntrySpec(c.date, c.tag, typed.name);
     if (!spec) return done;
-    if ("refuse" in spec) { chrome.say(spec.refuse); return done; }
+    if ("refuse" in spec) { ui.say(spec.refuse); return done; }
     if (childrenOf(keysNow(), spec.listKey).indexOf(spec.tag) !== -1) { dialogs.alert(takenText(spec.listKey, spec.tag)); return done; }
     const md = cutMd(view.state.doc, from, to);
     const cutText = view.state.doc.textBetween(from, to, " ", " ");
     const label = ns ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
     return layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
-      if (!landed) { chrome.say("couldn't create the entry — see the corner", 3000); return; }
+      if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
       /* the positions were taken before the write: a document that moved
          under them keeps its text, the new entry standing
          (pin: lifecycle.test › places no link when the text moved) */
-      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { chrome.say("the text moved while the entry was made — the link was not placed", 3000); return; }
+      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.say("the text moved while the entry was made — the link was not placed", 3000); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
-      chrome.hideBar();
-      return session.saveNow().then(() => { chrome.redraw(); session.goto(spec.href); });
+      ui.hideBar();
+      return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
     });
   }
 
@@ -159,11 +159,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     if (!c.tag || renaming || cold()) return done;
     const date = c.date, old = c.tag, ns = nsOf(date), pp = ns ? pageParts(old) : null;
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old))) { chrome.say("rename after the " + ns.subNoun + "s are deleted", 2500); return done; }
+    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old))) { ui.say("rename after the " + ns.subNoun + "s are deleted", 2500); return done; }
     const oldLeaf = pp ? pp.leaf : old;
     const typed = typedName(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), oldLeaf));
     if (!typed) return done;
-    if ("refuse" in typed) { chrome.say(typed.refuse); return done; }
+    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
     const leaf = typed.name;
     if (leaf === oldLeaf) return done;
     const listKey = pp && pp.sub ? entryKey(date, pp.parent) : date;
@@ -183,11 +183,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
         const live = session.surfaceMd();
         return live !== md ? layer.setEntry(entryKey(date, full), live) : true;
       }).then(() => {
-        chrome.replaceHash(entryHash(date, full));
+        ui.replaceHash(entryHash(date, full));
         session.open(date, full);
         session.movePlace(oldKey, entryKey(date, full));
         for (const k of sweptKeys) session.movePlace(k, null);
-        chrome.redraw();
+        ui.redraw();
       });
     }).finally(() => { renaming = false; });
   }
@@ -196,7 +196,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     if (!c.tag || cold()) return done;
     const date = c.date, tag = c.tag, ns = nsOf(date);
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) { chrome.say("delete the " + ns.subNoun + "s first", 2500); return done; }
+    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) { ui.say("delete the " + ns.subNoun + "s first", 2500); return done; }
     if (!dialogs.confirm(deleteConfirm(date, tag, shownName(date, tag)))) return done;
     const key = entryKey(date, tag);
     const sweptKeys = ns ? blankSubTree(keysNow(), key) : [];
@@ -205,15 +205,15 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     /* the landing FIRST, the remove after: a save still owed to the deleted
        entry, landing after its remove, resurrected it
        (pin: lifecycle.test › opens the landing and drops the places BEFORE removing) */
-    chrome.replaceHash(entryHash(back.date, back.tag));
+    ui.replaceHash(entryHash(back.date, back.tag));
     session.open(back.date, back.tag, "arrive");
     for (const k of [key, ...sweptKeys]) session.movePlace(k, null);
     /* the text typed on the entry landed on is saved BEFORE the retarget
        reads the host, and the repaint comes only where the store moved (a
        lost link) */
     return Promise.all([layer.removeEntry(key), ...sweep]).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
-      chrome.redraw();
-      chrome.focus();
+      ui.redraw();
+      ui.focus();
     });
   }
 
@@ -232,7 +232,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const raw = dialogs.prompt("Name for the new " + noun + ":");
     const typed = typedName(raw);
     if (!typed) return done;
-    if ("refuse" in typed) { chrome.say(typed.refuse); return done; }
+    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
     const name = typed.name;
     const asTyped = [(raw || "").trim().toLowerCase(), name.toLowerCase()];
     const go = (root: string): void => session.goto(entryHash(ns, root), "already on " + trimLabel(rootLabel(ns, root, journal), ECHO_CAP));

@@ -265,6 +265,7 @@ const ROLES: [RegExp, string[]][] = [
   [/\bthe surface['’]s\b/, ["src/editor/surface"]],
   [/\bthe keeper['’]s\b/, ["src/editor/placekeeper"]],
   [/\bthe chrome['’]s\b/, ["src/ui/"]],
+  [/\bthe UI['’]s\b/, ["src/ui/"]],
 ];
 /* an owner ending in a slash is a directory: every file under it owns the noun */
 const owns = (owner: string, own: string): boolean => owner.endsWith("/") ? own.startsWith(owner) : own === owner;
