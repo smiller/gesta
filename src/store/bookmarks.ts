@@ -83,3 +83,6 @@ export function reachableBookmarks(list: Bookmark[], keys: string[]): Bookmark[]
     return !!nsOf(p.date) && registered(keys, p.date, p.tag);
   });
 }
+export function movedBookmarks(list: Bookmark[], moves: Record<string, string>): Bookmark[] {
+  return list.map((b) => (b.key in moves ? { key: moves[b.key], alias: b.alias } : b));
+}

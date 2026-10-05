@@ -54,9 +54,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.mouse.wheel(0, y - (await page.evaluate(() => scrollY)));
     await page.waitForFunction((y) => Math.abs(scrollY - Math.min(y, document.documentElement.scrollHeight - innerHeight)) < 2, y, { timeout: 3000 }).catch(() => {});
   };
-  /* the dialogs, answered by the harness: `answer` is what a prompt gets, a confirm is accepted */
+  /* the dialogs, answered by the harness: `answer` is what a prompt gets
+     (a list: one per prompt, in turn), a confirm is accepted; `prompts`
+     keeps each prompt's text and what it held */
   let answer = null;
-  page.on("dialog", (d) => { if (d.type() === "confirm") d.accept(); else if (answer !== null) d.accept(answer); else d.dismiss(); });
+  const prompts = [];
+  page.on("dialog", (d) => {
+    if (d.type() === "confirm") { d.accept(); return; }
+    prompts.push(d.message() + " [" + d.defaultValue() + "]");
+    const a = Array.isArray(answer) ? (answer.length ? answer.shift() : null) : answer;
+    if (a !== null) d.accept(a); else d.dismiss();
+  });
   /* ONE SECTION PER FEATURE, each opening its own entry, run in order and
      each in its own try: a selector the app lacks fails that section's
      remaining steps as one line and the run goes on, so a whole
@@ -1086,6 +1094,42 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.bookmarkDel);
   await page.waitForTimeout(150);
   await log("× on its first row", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await page.keyboard.press("Escape");
+    }],
+    ["author filing", async () => {
+  /* (2026-10-05) "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so; the current app asks once and files the name as typed, and refuses to rename an author with books */
+  await page.bringToFront();
+  await go("2026-09-06");
+  await page.click(S.booksOpener);
+  answer = ["Harley Price", "Price, Harley"];
+  prompts.length = 0;
+  await page.click(S.newAuthor);
+  await A.waitEntry(page, "bookshelf/Price, Harley", 5000).catch(() => {});
+  await log("New author…, Harley Price, Enter twice", { prompts: prompts.slice(), entry: await A.entry(page), stored: await A.stored(page, "bookshelf/Price, Harley") });
+  await page.click(S.booksOpener);
+  await log("the bookshelf lists it by its heading", await R.panel(page));
+  await page.keyboard.press("Escape");
+  /* a click just past the heading's last letter, the caret at its end */
+  const end = await page.evaluate((s) => { const h = document.querySelector(s); const r = document.createRange(); r.selectNodeContents(h); const b = r.getBoundingClientRect(); return { x: b.right + 3, y: b.top + b.height / 2 }; }, S.editorFirst);
+  await page.mouse.click(end.x, end.y);
+  /* the editor takes a click's caret on the selection's change, a tick later than the click */
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Enter");
+  answer = "Odes";
+  await A.act.create(page);
+  await A.waitEntry(page, "bookshelf/Price, Harley/Odes", 5000).catch(() => {});
+  await page.click(S.editor);
+  await page.keyboard.type("A book.");
+  await page.waitForTimeout(1500);
+  await go("bookshelf/Price%2C%20Harley", 5000);
+  answer = "Harley Price";
+  prompts.length = 0;
+  await page.click(S.renameAuthor);
+  await A.waitEntry(page, "bookshelf/Harley Price", 5000).catch(() => {});
+  await page.waitForFunction((s) => /filed under/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
+  await log("Rename, Harley Price typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await cornerText(), author: await A.stored(page, "bookshelf/Harley Price"), book: await A.stored(page, "bookshelf/Harley Price/Odes"), oldAuthor: await A.stored(page, "bookshelf/Price, Harley"), oldBook: await A.stored(page, "bookshelf/Price, Harley/Odes") });
+  await page.click(S.booksOpener);
+  await log("the bookshelf after the re-file", await R.panel(page));
   await page.keyboard.press("Escape");
     }],
     ["pill", async () => {

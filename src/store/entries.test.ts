@@ -305,3 +305,48 @@ test("a notice when the warm could not read the store resolves false, not never"
   await layer.warm();
   expect(await taken).toBe(false);
 });
+
+const retarget = (md: string): string | null => md.includes("#old") ? md.replace(/#old/g, "#new") : null;
+test("rewriteEntry lands an edit over the cache's text, and writes nothing when the edit changes nothing", async () => {
+  const { layer, mem } = fresh();
+  await layer.setEntry("k", "a [x](#old)");
+  expect(await layer.rewriteEntry("k", retarget)).toBe("landed");
+  expect((await mem.get("k"))!.md).toBe("a [x](#new)");
+  expect(await layer.rewriteEntry("k", retarget)).toBe("unchanged");
+});
+
+test("rewriteEntry refused as stale is redone ONCE over the stored text, with no notice stuck", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.setEntry("k", "a [x](#old)");
+  await mem.foreignSet("k", "theirs [x](#old)");
+  expect(await layer.rewriteEntry("k", retarget)).toBe("landed");
+  expect(layer.cache.k).toBe("theirs [x](#new)");
+  expect((await mem.get("k"))!.md).toBe("theirs [x](#new)");
+  expect(calls.stuck).toEqual([]);
+  expect(await layer.rewriteEntry("k", retarget)).toBe("unchanged");
+});
+
+test("rewriteEntry over a stored text the edit leaves alone is unchanged, the cache on the stored text", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.setEntry("k", "a [x](#old)");
+  await mem.foreignSet("k", "theirs, the link gone");
+  expect(await layer.rewriteEntry("k", retarget)).toBe("unchanged");
+  expect(layer.cache.k).toBe("theirs, the link gone");
+  expect(calls.stuck).toEqual([]);
+  await layer.setEntry("k", "mine after");
+  expect((await mem.get("k"))!.md).toBe("mine after");
+});
+
+test("rewriteEntry refused twice, or failing outright, answers failed and says so", async () => {
+  let n = 0;
+  const twice = fresh((mem) => ({ ...mem, set: async (k, md) => { await mem.foreignSet(k, "theirs " + ++n + " [x](#old)"); return mem.set(k, md); } }));
+  await twice.mem.foreignSet("k", "a [x](#old)");
+  await twice.layer.warm();
+  expect(await twice.layer.rewriteEntry("k", retarget)).toBe("failed");
+  expect(twice.layer.cache.k).toBe("theirs 2 [x](#old)");
+  expect(twice.calls.stuck[0][0]).toMatch(/not saved — changed in another tab/);
+  const broken = fresh((mem) => ({ ...mem, set: () => Promise.reject(new Error("quota")) }));
+  await broken.mem.foreignSet("k", "a [x](#old)");
+  await broken.layer.warm();
+  expect(await broken.layer.rewriteEntry("k", retarget)).toBe("failed");
+});

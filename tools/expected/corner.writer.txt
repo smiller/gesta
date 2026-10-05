@@ -167,6 +167,9 @@ the page open in the first, deleted in the second: {"entry":"page/Deleted Elsewh
 typed into the page deleted in the second: {"stored":"to be deleted in the second, typed after","screen":"page/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the deleted page left for the day: {"corner":"saved","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 SECTION FAILED (bookmarks from another window): TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.
+New author…, Harley Price, Enter twice: {"prompts":["Name for the new author: []"],"entry":"bookshelf/Harley Price","stored":null,"screen":"bookshelf/Harley Price · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the bookshelf lists it by its heading: {"rows":["Boethius","Browning, Robert","Donne, John","Harley Price","Edmund Spenser"],"create":"New author…","screen":"bookshelf/Harley Price · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
+SECTION FAILED (author filing): Error: page.evaluate: TypeError: Failed to execute 'selectNodeContents' on 'Range': parameter 1 is not of type 'Node'.
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

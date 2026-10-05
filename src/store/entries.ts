@@ -29,6 +29,8 @@ export interface EntryLayer {
      failure, but a tally needs the answer */
   setEntry(ekey: string, md: string): Promise<boolean>;
   removeEntry(ekey: string): Promise<boolean>;
+  /* `edit` answers null when it changes nothing */
+  rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite>;
   persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel?: boolean): Promise<boolean>;
   clear(): Promise<void>;
   primeEntry(ekey: string): Promise<boolean>;
@@ -42,6 +44,7 @@ export interface EntryLayer {
   readonly storeReadFailed: boolean;
   readonly storeReadError: unknown;
 }
+export type Rewrite = "landed" | "unchanged" | "failed";
 export interface LayerOptions {
   /* a landed write or delete, told to the other tabs */
   announce?(ekey: string): void;
@@ -72,6 +75,28 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     writeSeq[ekey] = (writeSeq[ekey] || 0) + 1;
     cache[ekey] = md;
     return persistEntry(ekey, () => store.set(ekey, md));
+  }
+  /* a stale refusal is answered ONCE by redoing the edit over the text the
+     refusal carries, rebased on it: the edit is this tab's own, so the other
+     tab's text is kept, where a plain retry would write over it (pin:
+     entries.test › rewriteEntry refused as stale is redone ONCE). A second
+     refusal is a plain stale write's */
+  function rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite> {
+    const first = edit(entryMd(ekey));
+    if (first === null) return Promise.resolve("unchanged");
+    const seqAt = saveSeq[ekey], writeAt = (writeSeq[ekey] || 0) + 1;
+    writeSeq[ekey] = writeAt;
+    cache[ekey] = first;
+    let unchanged = false;
+    const op = (): Promise<void> => store.set(ekey, first).catch((err: unknown) => {
+      if (!isStale(err)) throw err;
+      store.rebase(ekey, err.stored);
+      const again = edit(err.stored);
+      if (saveSeq[ekey] === seqAt && writeSeq[ekey] === writeAt) cache[ekey] = again ?? err.stored;
+      if (again === null) { unchanged = true; return; }
+      return store.set(ekey, again);
+    });
+    return persistEntry(ekey, op).then((ok) => !ok ? "failed" : unchanged ? "unchanged" : "landed");
   }
   function removeEntry(ekey: string): Promise<boolean> {
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
@@ -172,7 +197,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     }).then(() => { warmed = !storeReadFailed; warmLanded(); });
   }
   return {
-    cache, saveSeq, entryMd, setEntry, removeEntry, persistEntry, primeEntry, warm, clear,
+    cache, saveSeq, entryMd, setEntry, removeEntry, rewriteEntry, persistEntry, primeEntry, warm, clear,
     storedKeys: () => store.keys(), takeNotice,
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },

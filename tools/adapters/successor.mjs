@@ -52,7 +52,7 @@ export const sel = {
   source: "textarea.source", copybtn: ".copybtn", fmtB: ".fmt .b", fmtTag: ".fmt .t",
   shortcutsEditor: ".shortcuts .shortcut-edit", shortcutsSave: ".shortcuts .editbox .toolbtn", shortcutsInput: ".shortcuts .search-input",
   bookmarkKey: ".bookmarks .bookmark-setalias", bookmarkDel: ".bookmarks .bookmark-del",
-  tagbarLink: (href) => ".tagbar a[href='" + href + "']", renameButton: ".toolbtn[title=\"Rename this entry's tag\"]", deleteButton: ".toolbtn[title='Delete this tagged entry']",
+  tagbarLink: (href) => ".tagbar a[href='" + href + "']", renameButton: ".toolbtn[title=\"Rename this entry's tag\"]", renameAuthor: ".toolbtn[title='Rename this author']", newAuthor: ".pages .panel-new", deleteButton: ".toolbtn[title='Delete this tagged entry']",
   gotoDay: ".page-goto select[aria-label='Day']", gotoDestination: ".page-goto select[aria-label='Destination']", searchScope: ".page-search select", searchRows: ".search-results li",
   editorLink: (href) => "#editor a[href='" + href + "']", editorImg: "#editor img", editorPre: "#editor pre", editorVerse: "#editor .verse", editorCard: "#editor .card-light-blue", editorCell: "#editor .vpair .vcell",
 };

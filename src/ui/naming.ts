@@ -19,3 +19,18 @@ export function typedName(raw: string | null | undefined): Typed {
   const name = pageName(derived || s.replace(/\//g, "-"));
   return name ? { name } : { refuse: REFUSE_EMPTY };
 }
+
+const words = (s: string): string => s.trim().replace(/\s+/g, " ");
+/* deliberately simple: "Bingen, Hildegard of" is wrong and stays wrong
+   (pin: naming.test › the filing form puts the last word first) */
+export function filingForm(name: string): string {
+  const s = words(name);
+  if (s.includes(",")) return s.split(",").map(words).join(", ");
+  const cut = s.lastIndexOf(" ");
+  return cut === -1 ? s : s.slice(cut + 1) + ", " + s.slice(0, cut);
+}
+export function shownForm(typed: string): string {
+  const s = words(typed);
+  const cut = s.indexOf(",");
+  return cut === -1 ? s : words(words(s.slice(cut + 1)) + " " + s.slice(0, cut));
+}

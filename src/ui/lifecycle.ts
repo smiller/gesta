@@ -3,8 +3,9 @@ import type { EntryLayer } from "../store/entries.ts";
 import type { Session } from "../session.ts";
 import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
-import { typedName } from "./naming.ts";
-import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, deleteConfirm, deleteLanding, hostKey } from "./subEntries.ts";
+import { typedName, filingForm, shownForm } from "./naming.ts";
+import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, deleteConfirm, deleteLanding, hostKey, refiledText } from "./subEntries.ts";
+import { refileKeys, refileLinks, pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
 import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, insertLinkAfter } from "../editor/insertLink.ts";
@@ -22,6 +23,7 @@ export interface Dialogs {
 }
 export interface UiPort {
   say(text: string, ms?: number): void;
+  pin(text: string): void;
   redraw(): void;
   replaceHash(hash: string): void;
   hideBar(): void;
@@ -34,6 +36,8 @@ export interface LifecycleDeps {
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
+  /* the folded sections and the bookmarks of each moved key */
+  moveKept(moves: Record<string, string>): void;
 }
 /* each settles once its writes have landed */
 export interface Lifecycle {
@@ -159,6 +163,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     if (!c.tag || renaming || cold()) return done;
     const date = c.date, old = c.tag, ns = nsOf(date), pp = ns ? pageParts(old) : null;
+    if (ns && ns.titledRoots && !pp!.sub) return refile(date, old);
     if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old))) { ui.say("rename after the " + ns.subNoun + "s are deleted", 2500); return done; }
     const oldLeaf = pp ? pp.leaf : old;
     const typed = typedName(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), oldLeaf));
@@ -188,6 +193,68 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
         session.movePlace(oldKey, entryKey(date, full));
         for (const k of sweptKeys) session.movePlace(k, null);
         ui.redraw();
+      });
+    }).finally(() => { renaming = false; });
+  }
+
+  /* AN AUTHOR RE-FILED, its books with it: every copy lands before any
+     old key is cleared, and a copy that fails takes the others back, the
+     old author standing whole (pin: lifecycle.test › a failed move removes
+     the copies made). The other entries' links are rewritten after the
+     copies land, and one that cannot be is NAMED in a pin rather than
+     undone: the undo is more writes that can fail the same way (pin:
+     lifecycle.test › a link refused once as stale is rewritten on the
+     retry) */
+  function refile(date: string, old: string): Promise<void> {
+    const typed = typedName(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), old));
+    if (!typed) return done;
+    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
+    const root = typed.name;
+    if (root === old) return done;
+    if (childrenOf(keysNow(), date).indexOf(root) !== -1) { dialogs.alert(takenText(date, root)); return done; }
+    renaming = true;
+    return session.flushSave().then(() => {
+      if (session.current.date !== date || session.current.tag !== old) return;
+      session.suspendSaves();
+      const oldKey = entryKey(date, old), newKey = entryKey(date, root);
+      const rewrite = (md: string): string => refileLinks(md, date, old, root) ?? md;
+      const headed = (md: string): string => withHeading(md, old) ?? md;
+      const flushed = layer.entryMd(oldKey);
+      const moves = refileKeys(keysNow(), date, old, root);
+      /* an author whose books arrived without its own page gets one, or it
+         would read as the new filed name (pin: lifecycle.test › an author
+         with no page of its own) */
+      const pageless = !(oldKey in moves);
+      if (pageless) moves[oldKey] = newKey;
+      const moved = Object.keys(moves).map((from) => ({ from, to: moves[from], md: from === oldKey ? headed(rewrite(layer.entryMd(from))) : rewrite(layer.entryMd(from)) }));
+      return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
+        if (landed.includes(false)) {
+          return Promise.all(moved.map((m) => layer.removeEntry(m.to))).then(() => {
+            session.open(date, old);
+            ui.pin("couldn't re-file — nothing was moved");
+          });
+        }
+        const linking = linkingKeys(layer.cache, date, moves);
+        return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => refileLinks(md, date, old, root)))).then((results) => {
+          const left = [
+            ...moved.filter((m) => pointsInto(m.md, date, old)).map((m) => m.to),
+            ...linking.filter((k, i) => results[i] === "failed" || pointsInto(layer.entryMd(k), date, old)),
+          ];
+          const updated = linking.filter((k, i) => results[i] === "landed" && left.indexOf(k) === -1).length;
+          return Promise.all(Object.keys(moves).map((k) => layer.removeEntry(k))).then(() => {
+            /* typed into the surface while the writes ran: carried to the new key */
+            const live = session.surfaceMd();
+            return live !== flushed ? layer.setEntry(newKey, headed(rewrite(live))) : true;
+          }).then(() => {
+            ui.replaceHash(entryHash(date, root));
+            session.open(date, root);
+            for (const from of Object.keys(moves)) session.movePlace(from, moves[from]);
+            deps.moveKept(moves);
+            ui.redraw();
+            const text = refiledText(root, moved.length - (pageless ? 1 : 0), updated, left);
+            if (left.length) ui.pin(text); else ui.say(text);
+          });
+        });
       });
     }).finally(() => { renaming = false; });
   }
@@ -228,8 +295,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      goes to the author whose label was typed) (pin: lifecycle.test › matches
      the label as typed) */
   function newRoot(ns: string): Promise<void> {
-    const noun = KEYED_NS[ns].noun;
-    const raw = dialogs.prompt("Name for the new " + noun + ":");
+    const desc = KEYED_NS[ns];
+    const raw = dialogs.prompt("Name for the new " + desc.noun + ":");
     const typed = typedName(raw);
     if (!typed) return done;
     if ("refuse" in typed) { ui.say(typed.refuse); return done; }
@@ -240,7 +307,14 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (registered(keysNow(), ns, name)) { go(name); return done; }
     const labelled = childrenOf(keysNow(), ns).find((root) => asTyped.includes(rootLabel(ns, root, journal).toLowerCase()));
     if (labelled !== undefined) { go(labelled); return done; }
-    return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(name); });
+    if (!desc.titledRoots) return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(name); });
+    /* a root whose label is its heading is asked a second name, the one it
+       is filed under (pin: lifecycle.test › asks the name, then where it sorts) */
+    const filed = typedName(dialogs.prompt("Sorted under:", filingForm(raw!)));
+    if (!filed) return done;
+    if ("refuse" in filed) { ui.say(filed.refuse); return done; }
+    if (registered(keysNow(), ns, filed.name)) { go(filed.name); return done; }
+    return layer.setEntry(entryKey(ns, filed.name), "# " + shownForm(raw!) + "\n").then((landed) => { if (landed) go(filed.name); });
   }
 
   /* the parent's index link reads as a sub-page's TITLE: when a landed

@@ -9,7 +9,7 @@ import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
-import { parseFoldStore, foldPage, withFoldPage, type FoldPage } from "./store/foldState.ts";
+import { parseFoldStore, foldPage, withFoldPage, movedFolds, type FoldPage } from "./store/foldState.ts";
 import { stored } from "./store/local.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
@@ -62,6 +62,7 @@ export interface Session {
   refreshFolds(): void;
   /* to null: deleted (pin: placeState.test › a rename carries the place) */
   movePlace(from: string, to: string | null): void;
+  moveFolds(moves: Record<string, string>): void;
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
@@ -413,6 +414,7 @@ export function startSession(opts: SessionOptions): Session {
     get hashDeferred() { return hashDeferred; },
     refreshFolds,
     movePlace: keeper.move,
+    moveFolds: (moves) => { folds.write((s) => movedFolds(s, moves)); },
     setInterval: (n) => { interval = n; const v = live(); if (v) setLineInterval(n)(v.state, v.dispatch); },
   };
 }

@@ -41,9 +41,14 @@ describe("the buttons and the dialogs", () => {
   });
   it("the prompt and the confirm lead with the noun", () => {
     expect(renamePrompt("2026-09-07", "Ideas", "Ideas")).toBe('Rename the tag "Ideas" to:');
-    expect(renamePrompt("bookshelf", "Milton, John", "John Milton")).toBe('Rename the author "John Milton" to:');
+    expect(renamePrompt("bookshelf", "Dante/Inferno", "Inferno")).toBe('Rename the book "Inferno" to:');
+    expect(renamePrompt("page", "Books", "Books")).toBe('Rename the page "Books" to:');
     expect(deleteConfirm("2026-09-07", "Ideas", "Ideas")).toBe('Delete the entry "Ideas" for this day?');
     expect(deleteConfirm("page", "Books/E", "E")).toBe('Delete the sub-page "E"?');
+  });
+  it("an author is re-filed: the prompt says it files and sorts", () => {
+    expect(renamePrompt("bookshelf", "C. P. Cavafy", "C. P. Cavafy")).toBe("File and sort “C. P. Cavafy” under:");
+    expect(renamePrompt("bookshelf", "Milton, John", "John Milton")).toBe("File and sort “John Milton” under:");
   });
   it("a delete lands on the day, the parent, or today; the host is the day or the parent", () => {
     expect(deleteLanding("2026-09-07", "Ideas")).toEqual({ date: "2026-09-07", tag: null });

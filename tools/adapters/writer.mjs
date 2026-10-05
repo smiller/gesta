@@ -65,7 +65,7 @@ export const sel = {
   source: "body.mdview #page", copybtn: "#copybtn", fmtB: ".fmt .b", fmtTag: ".fmt .t",
   shortcutsEditor: "#shortcutedit", shortcutsSave: "#shortcutsave", shortcutsInput: "#shortcutinput",
   bookmarkKey: "#bookmarkspanel .bookmark-setalias", bookmarkDel: "#bookmarkspanel .bookmark-del",
-  tagbarLink: (href) => "#tagbar a[href='" + href + "']", renameButton: "#renamebtn", deleteButton: "#delbtn",
+  tagbarLink: (href) => "#tagbar a[href='" + href + "']", renameButton: "#renamebtn", renameAuthor: "#renamebtn", newAuthor: "#bookspanel .panel-new", deleteButton: "#delbtn",
   gotoDay: "#pagegoto select[aria-label='Day']", gotoDestination: "#pagegoto select[aria-label='Destination']", searchScope: "#pagesearchscope", searchRows: "#pagesearchresults li",
   editorLink: (href) => "#page a[href='" + href + "']", editorImg: "#page img", editorPre: "#page pre", editorVerse: "#page .verse", editorCard: "#page .card-light-blue", editorCell: "#page .vrow .va",
 };

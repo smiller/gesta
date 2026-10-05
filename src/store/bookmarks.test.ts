@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { BOOKMARK_CAP, ALIAS_RE, parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, numberedBookmarks, aliasedBookmarks, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, reachableBookmarks } from "./bookmarks.ts";
+import { BOOKMARK_CAP, ALIAS_RE, parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, numberedBookmarks, aliasedBookmarks, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, reachableBookmarks, movedBookmarks } from "./bookmarks.ts";
 
 const row = (key: string, alias = "") => ({ key, alias });
 const keys = (n: number, prefix = "k") => Array.from({ length: n }, (_, i) => prefix + i);
@@ -77,4 +77,9 @@ test("reachableBookmarks: a day is reachable whatever was written; a page or a b
   const keys = ["2026-09-07", "page/Books", "page/Books/Essay", "bookshelf/Milton, John", "bookshelf/Milton, John/PL"];
   const list = [row("2020-01-01"), row("page/Books"), row("page/Gone"), row("bookshelf/Milton, John/PL"), row("bookshelf/Nobody")];
   expect(reachableBookmarks(list, keys).map((b) => b.key)).toEqual(["2020-01-01", "page/Books", "bookshelf/Milton, John/PL"]);
+});
+
+test("movedBookmarks: each moved key's bookmark follows it, alias and place in the list kept", () => {
+  const list = [{ key: "page/A", alias: "" }, { key: "bookshelf/C. P. Cavafy/Walls", alias: "w" }];
+  expect(movedBookmarks(list, { "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls" })).toEqual([{ key: "page/A", alias: "" }, { key: "bookshelf/Cavafy, C. P/Walls", alias: "w" }]);
 });

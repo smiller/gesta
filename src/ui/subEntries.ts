@@ -54,6 +54,7 @@ export function subButtons(date: string, tag: string | null): SubButtons {
    prompt and the confirm lead with the noun) */
 export function renamePrompt(date: string, tag: string, shownLabel: string): string {
   const ns = nsOf(date);
+  if (ns && ns.titledRoots && !pageParts(tag).sub) return "File and sort “" + shownLabel + "” under:";
   return "Rename the " + (ns ? entryNoun(date, tag) : "tag") + ' "' + shownLabel + '" to:';
 }
 export function deleteConfirm(date: string, tag: string, shown: string): string {
@@ -70,4 +71,11 @@ export function hostKey(date: string, tag: string): string | null {
   if (!ns) return date;
   const pp = pageParts(tag);
   return pp.sub ? entryKey(date, pp.parent) : null;
+}
+export function refiledText(root: string, moved: number, updated: number, left: string[]): string {
+  let text = "filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved";
+  if (updated) text += ", links updated in " + updated + (updated === 1 ? " other" : " others");
+  if (left.length === 1) text += "; 1 link not updated: " + left[0];
+  else if (left.length) text += "; links not updated in " + left.length + " entries: " + left.join(", ");
+  return text;
 }

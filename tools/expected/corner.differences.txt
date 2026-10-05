@@ -122,3 +122,6 @@ typed Pedenteria in comparison · rows · a footnote mark, a space and superscri
 Enter on the footnoted phrase · selected · the same: the successor selects the phrase with its mark inside; the current app had no row to jump to
 typed Amphion, was · * · the same, across a mark after a comma; the current app's row and box follow from its misses before
 typed 4 m² · rows · the successor finds a superscript joined to its word as typed; the current app finds nothing here, its box following from its misses before
+New author…, Harley Price, Enter twice · * · "New author…" asks a second name, the one the author is filed and sorted under, filled with the surname first, and heads the new page with the name (asked 2026-10-05, the author-filing plan); the current app asks once and files the name as typed, and its run stops after the bookshelf reading, its new author's empty page holding no heading for the step's click
+Rename, Harley Price typed, Enter · * · Rename on an author with books re-files it, its books and every link into it following, the heading kept, the corner saying what moved (asked 2026-10-05, the author-filing plan); the current app has no reading here, its run having stopped at the step before
+the bookshelf after the re-file · * · the same

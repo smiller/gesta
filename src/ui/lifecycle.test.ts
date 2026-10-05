@@ -14,7 +14,7 @@ interface Opts {
   entries?: Record<string, string>;
   md?: string;
   warm?: "no" | "failed";
-  failSet?: string;
+  failSet?: string | string[];
   noView?: boolean;
 }
 async function world(o: Opts) {
@@ -24,7 +24,7 @@ async function world(o: Opts) {
   let onSet: ((key: string) => void) | null = null;
   const store: EntryStore = {
     ...mem,
-    set: (k, md) => { log.push("set " + k); onSet?.(k); return k === o.failSet ? Promise.reject(new Error("blocked")) : mem.set(k, md); },
+    set: (k, md) => { log.push("set " + k); onSet?.(k); return [o.failSet].flat().includes(k) ? Promise.reject(new Error("blocked")) : mem.set(k, md); },
     del: (k) => { log.push("del " + k); return mem.del(k); },
     all: () => o.warm === "failed" ? Promise.reject(new Error("blocked")) : mem.all(),
   };
@@ -62,8 +62,10 @@ async function world(o: Opts) {
       confirm: (text) => { asked.push(text); return answers.shift() as boolean; },
       alert: (text) => { log.push("alert " + text); },
     },
+    moveKept: (moves) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
     ui: {
       say: (text) => { log.push("say " + text); },
+      pin: (text) => { log.push("pin " + text); },
       redraw: () => { log.push("redraw"); },
       replaceHash: (hash) => { log.push("hash " + hash); },
       hideBar: () => { log.push("hideBar"); },
@@ -72,6 +74,7 @@ async function world(o: Opts) {
   });
   return {
     life, layer, log, asked,
+    foreign: (k: string, md: string) => mem.foreignSet(k, md),
     answer: (...a: (string | null | boolean)[]) => { answers.push(...a); },
     md: (k: string) => k in layer.cache ? layer.cache[k] : null,
     doc: () => st.doc,
@@ -350,9 +353,148 @@ describe("a new root named as the dropdown shows an existing one", () => {
   });
   it("still registers a name no root carries as key or label", async () => {
     const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Donne, John": "# John Donne\n" } });
-    w.answer("Ann Donne");
+    w.answer("Ann Donne", "Donne, Ann");
     await w.life.newRoot("bookshelf");
-    expect(w.log).toEqual(["set bookshelf/Ann Donne", "goto #bookshelf/Ann%20Donne | already on Ann Donne"]);
+    expect(w.log).toEqual(["set bookshelf/Donne, Ann", "goto #bookshelf/Donne%2C%20Ann | already on Ann Donne"]);
+  });
+});
+
+describe("a new author asks where it sorts", () => {
+  it("asks the name, then where it sorts with the filing form filled in; files it there, headed by the name", async () => {
+    const w = await world({ at: ["bookshelf", null] });
+    w.answer("Harley Price", "Price, Harley");
+    await w.life.newRoot("bookshelf");
+    expect(w.asked).toEqual(["Name for the new author:", "Sorted under: [Price, Harley]"]);
+    expect(w.md("bookshelf/Price, Harley")).toBe("# Harley Price\n");
+    expect(w.log).toEqual(["set bookshelf/Price, Harley", "goto #bookshelf/Price%2C%20Harley | already on Harley Price"]);
+  });
+  it("files under what the second box holds, through the naming rule", async () => {
+    const w = await world({ at: ["bookshelf", null] });
+    w.answer("Doctor Who", "Doctor Who", "C. P. Cavafy", "Cavafy, C. P.");
+    await w.life.newRoot("bookshelf");
+    await w.life.newRoot("bookshelf");
+    expect(w.asked).toEqual(["Name for the new author:", "Sorted under: [Who, Doctor]", "Name for the new author:", "Sorted under: [Cavafy, C. P.]"]);
+    expect(w.md("bookshelf/Doctor Who")).toBe("# Doctor Who\n");
+    expect(w.md("bookshelf/Cavafy, C. P")).toBe("# C. P. Cavafy\n");
+  });
+  it("a name typed with a comma is the filing form, the heading turned round", async () => {
+    const w = await world({ at: ["bookshelf", null] });
+    w.answer("Price, Harley", "Price, Harley");
+    await w.life.newRoot("bookshelf");
+    expect(w.asked[1]).toBe("Sorted under: [Price, Harley]");
+    expect(w.md("bookshelf/Price, Harley")).toBe("# Harley Price\n");
+  });
+  it("escape on either box makes nothing", async () => {
+    const w = await world({ at: ["bookshelf", null] });
+    w.answer(null, "Harley Price", null);
+    await w.life.newRoot("bookshelf");
+    await w.life.newRoot("bookshelf");
+    expect(w.asked).toEqual(["Name for the new author:", "Name for the new author:", "Sorted under: [Price, Harley]"]);
+    expect(w.log).toEqual([]);
+  });
+  it("a filing name already on the shelf opens that author, writing nothing", async () => {
+    const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Price, Harley": "# H. Price\n" } });
+    w.answer("Harley Price", "Price, Harley");
+    await w.life.newRoot("bookshelf");
+    expect(w.log).toEqual(["goto #bookshelf/Price%2C%20Harley | already on H. Price"]);
+  });
+  it("a new page still asks once", async () => {
+    const w = await world({ at: ["page", null] });
+    w.answer("Harley Price");
+    await w.life.newRoot("page");
+    expect(w.asked).toEqual(["Name for the new page:"]);
+    expect(w.md("page/Harley Price")).toBe("");
+  });
+});
+
+const CAVAFY = {
+  "bookshelf/C. P. Cavafy": "# C. P. Cavafy\n\n- [Walls](#bookshelf/C.%20P.%20Cavafy/Walls)\n- [Candles](#bookshelf/C.%20P.%20Cavafy/Candles)\n",
+  "bookshelf/C. P. Cavafy/Walls": "With no consideration, no pity. See [Candles](#bookshelf/C.%20P.%20Cavafy/Candles).\n",
+  "bookshelf/C. P. Cavafy/Candles": "The days of our future.\n",
+  "bookshelf/Carroll, Lewis": "# Lewis Carroll\n",
+  "2026-09-14": "Read [the walls](#bookshelf/C.%20P.%20Cavafy/Walls?h=no%20pity) today; and [Carroll](#bookshelf/Carroll%2C%20Lewis).\n",
+  "page/Poets": "[Cavafy](#bookshelf/C.%20P.%20Cavafy)\n",
+};
+describe("rename re-files an author with books", () => {
+  it("asks where it files and sorts, filled with the filed name; same name or Escape does nothing; a taken one alerts", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY });
+    w.answer(null, "C. P. Cavafy", "Carroll, Lewis");
+    await w.life.rename();
+    await w.life.rename();
+    await w.life.rename();
+    expect(w.asked).toEqual(Array(3).fill("File and sort “C. P. Cavafy” under: [C. P. Cavafy]"));
+    expect(w.log).toEqual(['alert A "Carroll, Lewis" author already exists.']);
+  });
+  it("moves every entry, rewrites every link into it, removes the old only after, carries the places, folds and bookmarks, opens it, says so", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    const l = w.log;
+    expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
+    for (const k of ["", "/Walls", "/Candles"]) {
+      expect(w.md("bookshelf/C. P. Cavafy" + k)).toBeNull();
+      expect(before(l, "set bookshelf/Cavafy, C. P" + k, "del bookshelf/C. P. Cavafy")).toBe(true);
+    }
+    expect(before(l, "set 2026-09-14", "del bookshelf/C. P. Cavafy")).toBe(true);
+    expect(w.md("bookshelf/Cavafy, C. P")).toBe("# C. P. Cavafy\n\n- [Walls](#bookshelf/Cavafy%2C%20C.%20P/Walls)\n- [Candles](#bookshelf/Cavafy%2C%20C.%20P/Candles)");
+    expect(w.md("bookshelf/Cavafy, C. P/Walls")).toBe("With no consideration, no pity. See [Candles](#bookshelf/Cavafy%2C%20C.%20P/Candles).");
+    expect(w.md("bookshelf/Cavafy, C. P/Candles")).toBe("The days of our future.\n");
+    expect(w.md("2026-09-14")).toBe("Read [the walls](#bookshelf/Cavafy%2C%20C.%20P/Walls?h=no%20pity) today; and [Carroll](#bookshelf/Carroll%2C%20Lewis).");
+    expect(w.md("page/Poets")).toBe("[Cavafy](#bookshelf/Cavafy%2C%20C.%20P)");
+    expect(w.md("bookshelf/Carroll, Lewis")).toBe("# Lewis Carroll\n");
+    expect(l.slice(l.indexOf("hash #bookshelf/Cavafy%2C%20C.%20P"))).toEqual([
+      "hash #bookshelf/Cavafy%2C%20C.%20P", "open bookshelf/Cavafy, C. P",
+      "move bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P", "move bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles", "move bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls",
+      "kept bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P, bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles, bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls",
+      "redraw", "say filed under Cavafy, C. P — 3 entries moved, links updated in 2 others",
+    ]);
+  });
+  it("writes the old name as the heading of a page that had none, and carries what was typed meanwhile", async () => {
+    const w = await world({ at: ["bookshelf", "Harley Price"], entries: { "bookshelf/Harley Price": "- [Book](#bookshelf/Harley%20Price/Book)\n", "bookshelf/Harley Price/Book": "text\n" } });
+    w.typeMeanwhile("- [Book](#bookshelf/Harley%20Price/Book)\n\nmore\n");
+    w.answer("Price, Harley");
+    await w.life.rename();
+    expect(w.md("bookshelf/Price, Harley")).toBe("# Harley Price\n\n- [Book](#bookshelf/Price%2C%20Harley/Book)\n\nmore");
+    expect(w.log[w.log.length - 1]).toBe("say filed under Price, Harley — 2 entries moved");
+  });
+  it("a failed move removes the copies made and leaves the old author whole, opened again", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    for (const k of Object.keys(CAVAFY)) expect(w.md(k)).toBe(CAVAFY[k as keyof typeof CAVAFY]);
+    for (const k of ["", "/Walls", "/Candles"]) expect(w.md("bookshelf/Cavafy, C. P" + k)).toBeNull();
+    expect(w.log).not.toContain("del bookshelf/C. P. Cavafy");
+    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn't re-file — nothing was moved"]);
+  });
+  it("a link refused once as stale is rewritten on the retry; one whose write fails, or that the rewrite cannot reach, is named in a pin", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-15": "[x](file:///g/index.html#bookshelf/C.%20P.%20Cavafy)\n", "page/Broken": "[y](#bookshelf/C.%20P.%20Cavafy/Walls)\n" }, failSet: "page/Broken" });
+    await w.foreign("2026-09-14", "Theirs: [the walls](#bookshelf/C.%20P.%20Cavafy/Walls)\n");
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.md("2026-09-14")).toBe("Theirs: [the walls](#bookshelf/Cavafy%2C%20C.%20P/Walls)");
+    expect(w.log[w.log.length - 1]).toBe("pin filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; links not updated in 2 entries: 2026-09-15, page/Broken");
+  });
+  it("an author with no page of its own is given one, headed by the old name, so it reads the same", async () => {
+    const w = await world({ at: ["bookshelf", "Boethius"], entries: { "bookshelf/Boethius/Consolatio": "- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n", "bookshelf/Boethius/Consolatio/3pr1": "Iam cantum.\n" }, md: "" });
+    w.answer("Boethius, Anicius");
+    await w.life.rename();
+    expect(w.md("bookshelf/Boethius, Anicius")).toBe("# Boethius\n");
+    expect(w.md("bookshelf/Boethius, Anicius/Consolatio")).toBe("- [3pr1](#bookshelf/Boethius%2C%20Anicius/Consolatio/3pr1)");
+    expect(Object.keys(w.layer.cache).filter((k) => k.startsWith("bookshelf/Boethius/"))).toEqual([]);
+    expect(w.log[w.log.length - 1]).toBe("say filed under Boethius, Anicius — 2 entries moved");
+  });
+  it("a book with books under it still refuses, as a page does", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy/Walls"], entries: { ...CAVAFY, "bookshelf/C. P. Cavafy/Walls/1": "one\n" } });
+    await w.life.rename();
+    expect(w.log).toEqual(["say rename after the books are deleted"]);
+  });
+  it("ignores a second rename while a re-file is in flight", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY });
+    w.answer("Cavafy, C. P.", "Other");
+    const first = w.life.rename();
+    await w.life.rename();
+    await first;
+    expect(w.asked).toHaveLength(1);
   });
 });
 

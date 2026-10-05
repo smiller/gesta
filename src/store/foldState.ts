@@ -22,3 +22,8 @@ export function foldPage(store: FoldStore, ekey: string): FoldPage {
 export function withFoldPage(store: FoldStore, ekey: string, patch: Partial<FoldPage>): FoldStore {
   return { ...store, [ekey]: { ...foldPage(store, ekey), ...patch } };
 }
+export function movedFolds(store: FoldStore, moves: Record<string, string>): FoldStore {
+  const out: FoldStore = Object.create(null);
+  for (const [k, v] of Object.entries(store)) out[k in moves ? moves[k] : k] = v;
+  return out;
+}
