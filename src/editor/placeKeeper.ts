@@ -1,5 +1,5 @@
 import type { Surface, Viewport, PlacePort } from "./surface.ts";
-import { parsePlaces, placeOf, withPlace, movedPlace, type Place } from "../store/placeState.ts";
+import { parsePlaces, placeOf, withPlace, movedPlace, movedPlaces, type Place } from "../store/placeState.ts";
 import { stored } from "../store/local.ts";
 import { NS } from "../store/keys.ts";
 
@@ -28,6 +28,7 @@ export interface PlaceKeeper extends PlacePort {
   reapply(): void;
   /* to null: deleted */
   move(from: string, to: string | null): void;
+  moveAll(moves: Record<string, string>): void;
 }
 
 export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
@@ -49,6 +50,10 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
      (pin: placeKeeper.test › a rename carries the place) */
   function move(from: string, to: string | null): void {
     places.write((s) => movedPlace(s, from, to));
+    lastWritten = null;
+  }
+  function moveAll(moves: Record<string, string>): void {
+    places.write((s) => movedPlaces(s, moves));
     lastWritten = null;
   }
   /* the restored place is HELD, and set again on every resize, until a
@@ -126,5 +131,5 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     place.y = Math.max(1, win.y());
     write(key, place);
   }
-  return { open, reapply, move, carry, release };
+  return { open, reapply, move, moveAll, carry, release };
 }

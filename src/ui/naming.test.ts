@@ -39,4 +39,8 @@ describe("an author's two names", () => {
     expect(shownForm("Price,")).toBe("Price");
     expect(shownForm(", Harley")).toBe("Harley");
   });
+  it("two commas or more are kept as typed; a pasted article link reads as the name derived from it", () => {
+    expect(shownForm("King, Martin Luther, Jr.")).toBe("King, Martin Luther, Jr.");
+    expect(shownForm("https://x.org/2023/11/12/the-title/")).toBe("2023-11-12-the-title");
+  });
 });

@@ -350,3 +350,24 @@ test("rewriteEntry refused twice, or failing outright, answers failed and says s
   await broken.layer.warm();
   expect(await broken.layer.rewriteEntry("k", retarget)).toBe("failed");
 });
+
+test("rewriteEntry leaves a key whose own save was refused, its rescue pin standing", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.setEntry("k", "mine");
+  await mem.foreignSet("k", "theirs [x](#old)");
+  await layer.setEntry("k", "mine edited");
+  const landed = calls.landed.length;
+  expect(await layer.rewriteEntry("k", retarget)).toBe("failed");
+  expect((await mem.get("k"))!.md).toBe("theirs [x](#old)");
+  expect(calls.landed.length).toBe(landed);
+});
+
+test("rewriteEntry refused over a row deleted elsewhere drops the key from the cache, as a delete taken does", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.setEntry("k", "a [x](#old)");
+  await mem.foreignDel("k");
+  expect(await layer.rewriteEntry("k", retarget)).toBe("unchanged");
+  expect("k" in layer.cache).toBe(false);
+  expect(calls.removed).toContain("k");
+  expect(await mem.get("k")).toBeNull();
+});

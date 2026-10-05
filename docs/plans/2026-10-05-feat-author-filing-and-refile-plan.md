@@ -245,3 +245,54 @@ Not covered by hand: a failed write mid-re-file (the tests' alone).
   31 round-trip with other changes; none of Cavafy's is among them.
 - Not played: hand-check step 2 (Cavafy, 10 entries) — the reader's
   data; the headless section plays the same gesture over 2 entries.
+
+### 2026-10-05 — the review at high
+
+- One `/code-review` at high over `2c6a3ea..1723ef8`, after the accept:
+  137,994 tokens (MEASURED, the transcript's last message: 2 input +
+  871 cache creation + 133,448 cache read + 3,673 output), 10 findings.
+  Above the last five at high (86,741–98,996): it ran as a fork of the
+  building session, carrying its context (INFERRED from the cache read).
+- The findings: a link rewrite over a key whose own save was refused
+  releases that save's rescue pin; a failed copy's rollback drops typing
+  made meanwhile; the old keys' removals unread, so a refused delete
+  leaves the old key and the whisper still says moved; the bookmark move
+  writes a list read before another window's adds; a rewrite refused over
+  a row deleted elsewhere puts it back in the cache, empty; two commas,
+  and a URL, give a wrong heading; places moved one key at a time; every
+  linking entry parsed where a text test could filter; a third regex
+  escape; plain rename moves no bookmarks or folds.
+
+### 2026-10-05 — review cycle 1, fixed (all 10, asked)
+
+REVIEW CYCLES FOR THIS WORK: 1 (the count kept from here, asked
+2026-10-05).
+
+- Each fix test-first, red then green (MEASURED, 14 new or changed tests
+  red before, 760 green after; verify green, Helium 0 open):
+  1. `rewriteEntry` leaves a key whose own last write did not land,
+     answering failed, so the re-file names it and its rescue pin stands.
+  2. A failed copy saves what was typed meanwhile under the old name
+     before the reopen.
+  3. Every removal is read: an old key left is named, `…; old copy kept:
+     <key>`, the notice a pin; a rollback that cannot take a copy back
+     pins `couldn't re-file — copies left: <keys>`.
+  4. The bookmark move re-reads the stored list first
+     (`bookmarkStore.move`).
+  5. A stale refusal over a row gone from the store is taken as a delete:
+     the key leaves the cache, its debts cleared.
+  6. Exactly one comma turns a name round; two or more keep it as typed. A
+     pasted article link heads the page with the name derived from it,
+     and the second box is filled from the shown form.
+  7. Places move in one write (`movedPlaces`, the keeper's `moveAll`),
+     with folds and bookmarks behind the one `moveKept` port.
+  8. The text test (`pointsAt`, one RegExp per re-file) filters both the
+     moved entries and the linking ones before any parse.
+  9. The regex escape is `reference.ts`'s, exported; `refileKeys` uses
+     the module's `under`.
+  10. Plain rename moves its key's place, folds and bookmark through the
+     same port; routing every rename through the re-file stays out of
+     scope.
+- Not played by hand or headless: the failure paths (1–5) are the tests'
+  alone; a bookmark following a rename is reachable by hand but not yet
+  played.

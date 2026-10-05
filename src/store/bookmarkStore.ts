@@ -1,4 +1,4 @@
-import { type Bookmark, parseBookmarks, serializeBookmarks, reachableBookmarks } from "./bookmarks.ts";
+import { type Bookmark, parseBookmarks, serializeBookmarks, reachableBookmarks, movedBookmarks } from "./bookmarks.ts";
 import { readRaw } from "./local.ts";
 import { NS } from "./keys.ts";
 
@@ -18,6 +18,7 @@ export interface BookmarkStore {
   write(list: Bookmark[]): boolean;
   /* null keys: the journal not yet warm; resolves whether the sweep wrote */
   open(keys: (() => string[]) | null): Promise<boolean>;
+  move(moves: Record<string, string>): void;
 }
 
 /* ONE localStorage key, device-local: an accepted loss, the list being small
@@ -57,6 +58,11 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
     list: () => list,
     unreadable: () => unreadable,
     write,
+    /* re-read first, as the open is (pin: bookmarkStore.test › re-reads the list before it writes) */
+    move(moves) {
+      load();
+      if (list.some((b) => Object.hasOwn(moves, b.key))) write(movedBookmarks(list, moves));
+    },
     async open(keys) {
       /* another window may have written the key since: a write from the
          list read before would drop its rows

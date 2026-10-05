@@ -29,8 +29,12 @@ export function filingForm(name: string): string {
   const cut = s.lastIndexOf(" ");
   return cut === -1 ? s : s.slice(cut + 1) + ", " + s.slice(0, cut);
 }
+/* one comma only: "King, Martin Luther, Jr." turned at its first read
+   "Martin Luther, Jr. King" (pin: naming.test › two commas or more are kept as typed) */
 export function shownForm(typed: string): string {
   const s = words(typed);
-  const cut = s.indexOf(",");
-  return cut === -1 ? s : words(words(s.slice(cut + 1)) + " " + s.slice(0, cut));
+  const derived = nameFromUrl(s);
+  if (derived) return derived;
+  const parts = s.split(",");
+  return parts.length !== 2 ? s : words(words(parts[1]) + " " + parts[0]);
 }

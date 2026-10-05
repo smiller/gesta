@@ -180,3 +180,20 @@ describe("the sweep at the open", () => {
     expect(w.pins).toEqual([]);
   });
 });
+
+describe("a move", () => {
+  it("re-reads the list before it writes: another window's rows are kept, the moved key's row follows", () => {
+    const w = world(JSON.stringify(["page/A", "bookshelf/C. P. Cavafy/Walls"]));
+    const s = w.store();
+    w.box[KEY] = JSON.stringify(["page/A", "bookshelf/C. P. Cavafy/Walls", "page/Elsewhere"]);
+    s.move({ "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls" });
+    expect(JSON.parse(w.box[KEY])).toEqual(["page/A", "bookshelf/Cavafy, C. P/Walls", "page/Elsewhere"]);
+  });
+  it("writes nothing when no row moves", () => {
+    const w = world(JSON.stringify(["page/A"]));
+    const s = w.store();
+    w.box[KEY] = "unchanged on purpose";
+    s.move({ "page/B": "page/C" });
+    expect(w.box[KEY]).toBe("unchanged on purpose");
+  });
+});

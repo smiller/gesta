@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { refileKeys, refileHref, refileLinks, pointsInto, withHeading, linkingKeys } from "./refile.ts";
+import { refileKeys, refileHref, refileLinks, pointsAt, withHeading, linkingKeys } from "./refile.ts";
 
 describe("refileKeys", () => {
   it("the root and every key under it, each to the same place under the new name; nothing else", () => {
@@ -36,13 +36,13 @@ describe("refileLinks", () => {
   });
 });
 
-describe("pointsInto", () => {
+describe("pointsAt", () => {
   it("finds an address into the old name in any spelling, and not a longer name's", () => {
-    expect(pointsInto("[x](#bookshelf/C.%20P.%20Cavafy/Walls)", "bookshelf", "C. P. Cavafy")).toBe(true);
-    expect(pointsInto("[x](#bookshelf/C.%20P.%20Cavafy)", "bookshelf", "C. P. Cavafy")).toBe(true);
-    expect(pointsInto("<a href=\"file:///g/index.html#bookshelf/C. P. Cavafy\">", "bookshelf", "C. P. Cavafy")).toBe(true);
-    expect(pointsInto("[x](#bookshelf/C.%20P.%20Cavafy%20Jr)", "bookshelf", "C. P. Cavafy")).toBe(false);
-    expect(pointsInto("C. P. Cavafy wrote it", "bookshelf", "C. P. Cavafy")).toBe(false);
+    expect(pointsAt("bookshelf", "C. P. Cavafy")("[x](#bookshelf/C.%20P.%20Cavafy/Walls)")).toBe(true);
+    expect(pointsAt("bookshelf", "C. P. Cavafy")("[x](#bookshelf/C.%20P.%20Cavafy)")).toBe(true);
+    expect(pointsAt("bookshelf", "C. P. Cavafy")("<a href=\"file:///g/index.html#bookshelf/C. P. Cavafy\">")).toBe(true);
+    expect(pointsAt("bookshelf", "C. P. Cavafy")("[x](#bookshelf/C.%20P.%20Cavafy%20Jr)")).toBe(false);
+    expect(pointsAt("bookshelf", "C. P. Cavafy")("C. P. Cavafy wrote it")).toBe(false);
   });
 });
 
@@ -56,8 +56,8 @@ describe("withHeading", () => {
 });
 
 describe("linkingKeys", () => {
-  it("the entries outside the moved set and its copies whose text names the namespace at all", () => {
-    const cache = { "2026-09-14": "a [x](#bookshelf/C.%20P.%20Cavafy)", "2026-09-15": "plain", "page/Links": "[y](#bookshelf/Horace)", "bookshelf/C. P. Cavafy": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)", "bookshelf/Cavafy, C. P": "[z](#bookshelf/Cavafy%2C%20C.%20P/Walls)" };
-    expect(linkingKeys(cache, "bookshelf", { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" })).toEqual(["2026-09-14", "page/Links"]);
+  it("the entries outside the moved set and its copies whose text points into the old name", () => {
+    const cache = { "2026-09-14": "a [x](#bookshelf/C.%20P.%20Cavafy)", "2026-09-15": "plain", "page/Links": "[y](#bookshelf/Horace)", "bookshelf/C. P. Cavafy": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)", "bookshelf/Cavafy, C. P": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)" };
+    expect(linkingKeys(cache, { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" }, pointsAt("bookshelf", "C. P. Cavafy"))).toEqual(["2026-09-14"]);
   });
 });

@@ -41,7 +41,7 @@ import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRe
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
-import { bookmarkIndex, bookmarkParts, reachableBookmarks, movedBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
+import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
 import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
@@ -768,9 +768,9 @@ if (fixture && fixtures[fixture]) {
     view: () => session.view,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
     moveKept: (moves) => {
+      session.movePlaces(moves);
       session.moveFolds(moves);
-      const next = movedBookmarks(marks.list(), moves);
-      if (next.some((b, i) => b !== marks.list()[i])) marks.write(next);
+      marks.move(moves);
     },
     ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.view?.focus() },
   });

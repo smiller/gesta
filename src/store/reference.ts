@@ -100,7 +100,7 @@ export function romanWorkKey(date: string, tag: string | null, journal: Journal)
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null }
 /* the "<key><separator> " an entry's own heading opens with when it repeats
    the number it is keyed by */
-const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 export function referenceHeadPrefix(seg: string): RegExp {
   return new RegExp("^" + escapeRe(seg) + "\\s*[:.\u2014-]\\s*");
 }

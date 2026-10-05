@@ -72,10 +72,11 @@ export function hostKey(date: string, tag: string): string | null {
   const pp = pageParts(tag);
   return pp.sub ? entryKey(date, pp.parent) : null;
 }
-export function refiledText(root: string, moved: number, updated: number, left: string[]): string {
+export function refiledText(root: string, moved: number, updated: number, left: string[], stayed: string[] = []): string {
   let text = "filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved";
   if (updated) text += ", links updated in " + updated + (updated === 1 ? " other" : " others");
   if (left.length === 1) text += "; 1 link not updated: " + left[0];
   else if (left.length) text += "; links not updated in " + left.length + " entries: " + left.join(", ");
+  if (stayed.length) text += "; old " + (stayed.length === 1 ? "copy" : "copies") + " kept: " + stayed.join(", ");
   return text;
 }

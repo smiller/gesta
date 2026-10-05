@@ -242,11 +242,12 @@ export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
 export interface MemEntryStore extends EntryStore {
   /* a second tab's write: it lands in the rows without this handle seeing it */
   foreignSet(key: string, md: string): Promise<void>;
+  foreignDel(key: string): Promise<void>;
 }
 export function idbEntryStore(): EntryStore { return entryStoreOver(dexieKeyedStore<EntryRow>(ENTRY_DB, ENTRY_STORE, "key")); }
 export function memEntryStore(): MemEntryStore {
   const adapter = memKeyedStore<EntryRow>("key");
-  return { ...entryStoreOver(adapter), foreignSet: (key, md) => adapter.put({ key, md }) };
+  return { ...entryStoreOver(adapter), foreignSet: (key, md) => adapter.put({ key, md }), foreignDel: (key) => adapter.del(key) };
 }
 
 /* The folder handle carries no permission — every launch re-checks

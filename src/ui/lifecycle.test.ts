@@ -15,6 +15,7 @@ interface Opts {
   md?: string;
   warm?: "no" | "failed";
   failSet?: string | string[];
+  failDel?: string | string[];
   noView?: boolean;
 }
 async function world(o: Opts) {
@@ -25,7 +26,7 @@ async function world(o: Opts) {
   const store: EntryStore = {
     ...mem,
     set: (k, md) => { log.push("set " + k); onSet?.(k); return [o.failSet].flat().includes(k) ? Promise.reject(new Error("blocked")) : mem.set(k, md); },
-    del: (k) => { log.push("del " + k); return mem.del(k); },
+    del: (k) => { log.push("del " + k); return [o.failDel].flat().includes(k) ? Promise.reject(new Error("blocked")) : mem.del(k); },
     all: () => o.warm === "failed" ? Promise.reject(new Error("blocked")) : mem.all(),
   };
   const layer = entryLayer(store, { landed() {}, removed() {}, stuck() {}, stuckIdle() {} });
@@ -267,7 +268,7 @@ describe("rename", () => {
     expect(l).toContain("del page/A/B/x");
     expect(l.slice(l.indexOf("del page/A/B") + 1)).toEqual([
       "set page/A", "set page/A/C", "hash #page/A/C", "open page/A/C",
-      "move page/A/B → page/A/C", "move page/A/B/x → null", "redraw",
+      "kept page/A/B → page/A/C", "move page/A/B/x → null", "redraw",
     ]);
     expect(w.md("page/A/C")).toBe("body more\n");
     expect(w.md("page/A/B")).toBeNull();
@@ -398,6 +399,16 @@ describe("a new author asks where it sorts", () => {
     await w.life.newRoot("bookshelf");
     expect(w.log).toEqual(["goto #bookshelf/Price%2C%20Harley | already on H. Price"]);
   });
+  it("two commas are kept as typed in the heading; a pasted article link heads the page with the name derived from it", async () => {
+    const w = await world({ at: ["bookshelf", null] });
+    w.answer("King, Martin Luther, Jr.", "King, Martin Luther, Jr.", "https://x.org/2023/11/12/the-title/", "2023-11-12-the-title");
+    await w.life.newRoot("bookshelf");
+    await w.life.newRoot("bookshelf");
+    expect(w.asked[1]).toBe("Sorted under: [King, Martin Luther, Jr.]");
+    expect(w.md("bookshelf/King, Martin Luther, Jr")).toBe("# King, Martin Luther, Jr.\n");
+    expect(w.asked[3]).toBe("Sorted under: [2023-11-12-the-title]");
+    expect(w.md("bookshelf/2023-11-12-the-title")).toBe("# 2023-11-12-the-title\n");
+  });
   it("a new page still asks once", async () => {
     const w = await world({ at: ["page", null] });
     w.answer("Harley Price");
@@ -408,7 +419,8 @@ describe("a new author asks where it sorts", () => {
 });
 
 const CAVAFY = {
-  "bookshelf/C. P. Cavafy": "# C. P. Cavafy\n\n- [Walls](#bookshelf/C.%20P.%20Cavafy/Walls)\n- [Candles](#bookshelf/C.%20P.%20Cavafy/Candles)\n",
+  /* as the surface serializes it, so nothing reads as typed meanwhile */
+  "bookshelf/C. P. Cavafy": "# C. P. Cavafy\n\n- [Walls](#bookshelf/C.%20P.%20Cavafy/Walls)\n- [Candles](#bookshelf/C.%20P.%20Cavafy/Candles)",
   "bookshelf/C. P. Cavafy/Walls": "With no consideration, no pity. See [Candles](#bookshelf/C.%20P.%20Cavafy/Candles).\n",
   "bookshelf/C. P. Cavafy/Candles": "The days of our future.\n",
   "bookshelf/Carroll, Lewis": "# Lewis Carroll\n",
@@ -444,7 +456,6 @@ describe("rename re-files an author with books", () => {
     expect(w.md("bookshelf/Carroll, Lewis")).toBe("# Lewis Carroll\n");
     expect(l.slice(l.indexOf("hash #bookshelf/Cavafy%2C%20C.%20P"))).toEqual([
       "hash #bookshelf/Cavafy%2C%20C.%20P", "open bookshelf/Cavafy, C. P",
-      "move bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P", "move bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles", "move bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls",
       "kept bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P, bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles, bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls",
       "redraw", "say filed under Cavafy, C. P — 3 entries moved, links updated in 2 others",
     ]);
@@ -465,6 +476,27 @@ describe("rename re-files an author with books", () => {
     for (const k of ["", "/Walls", "/Candles"]) expect(w.md("bookshelf/Cavafy, C. P" + k)).toBeNull();
     expect(w.log).not.toContain("del bookshelf/C. P. Cavafy");
     expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn't re-file — nothing was moved"]);
+  });
+  it("a failed move keeps what was typed meanwhile, under the old name", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
+    w.typeMeanwhile("# C. P. Cavafy\n\nTyped while it ran.\n");
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.md("bookshelf/C. P. Cavafy")).toBe("# C. P. Cavafy\n\nTyped while it ran.\n");
+    expect(before(w.log, "set bookshelf/C. P. Cavafy", "open bookshelf/C. P. Cavafy")).toBe(true);
+  });
+  it("a failed move whose copies cannot all be taken back names those left", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles", failDel: "bookshelf/Cavafy, C. P/Walls" });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.log[w.log.length - 1]).toBe("pin couldn't re-file — copies left: bookshelf/Cavafy, C. P/Walls");
+  });
+  it("an old entry whose removal is refused is named in a pin, the rest moved", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failDel: "bookshelf/C. P. Cavafy/Walls" });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.md("bookshelf/C. P. Cavafy")).toBeNull();
+    expect(w.log[w.log.length - 1]).toBe("pin filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; old copy kept: bookshelf/C. P. Cavafy/Walls");
   });
   it("a link refused once as stale is rewritten on the retry; one whose write fails, or that the rewrite cannot reach, is named in a pin", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-15": "[x](file:///g/index.html#bookshelf/C.%20P.%20Cavafy)\n", "page/Broken": "[y](#bookshelf/C.%20P.%20Cavafy/Walls)\n" }, failSet: "page/Broken" });

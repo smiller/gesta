@@ -62,6 +62,7 @@ export interface Session {
   refreshFolds(): void;
   /* to null: deleted (pin: placeState.test › a rename carries the place) */
   movePlace(from: string, to: string | null): void;
+  movePlaces(moves: Record<string, string>): void;
   moveFolds(moves: Record<string, string>): void;
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
@@ -414,6 +415,7 @@ export function startSession(opts: SessionOptions): Session {
     get hashDeferred() { return hashDeferred; },
     refreshFolds,
     movePlace: keeper.move,
+    movePlaces: keeper.moveAll,
     moveFolds: (moves) => { folds.write((s) => movedFolds(s, moves)); },
     setInterval: (n) => { interval = n; const v = live(); if (v) setLineInterval(n)(v.state, v.dispatch); },
   };

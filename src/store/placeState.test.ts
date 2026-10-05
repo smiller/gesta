@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { parsePlaces, placeOf, withPlace, movedPlace, PLACES_CAP } from "./placeState.ts";
+import { parsePlaces, placeOf, withPlace, movedPlace, movedPlaces, PLACES_CAP } from "./placeState.ts";
 
 test("an absent or damaged store reads as empty; an entry never left has no place", () => {
   for (const raw of [null, "", "nope", "{}", '[{"k": 3}]']) expect(placeOf(parsePlaces(raw), "bookshelf/S/W/1.6")).toBe(null);
@@ -33,4 +33,9 @@ test("a rename carries the place to the new key; a delete drops it; a stale reco
 test("a malformed record is dropped, the rest kept", () => {
   const s = parsePlaces('[{"key":"a","pos":3,"y":4},{"key":"b","pos":"x"},{"pos":1,"y":2},{"key":"c","pos":5,"y":6}]');
   expect(s.map((x) => x.key)).toEqual(["a", "c"]);
+});
+
+test("movedPlaces: every moved key's place goes with it in one pass, the order kept", () => {
+  const store = [{ key: "a", pos: 1, y: 10 }, { key: "page/X", pos: 2, y: 20 }, { key: "b", pos: 3, y: 30 }];
+  expect(movedPlaces(store, { a: "a2", b: "b2" })).toEqual([{ key: "a2", pos: 1, y: 10 }, { key: "page/X", pos: 2, y: 20 }, { key: "b2", pos: 3, y: 30 }]);
 });

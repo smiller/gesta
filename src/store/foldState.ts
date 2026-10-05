@@ -24,6 +24,6 @@ export function withFoldPage(store: FoldStore, ekey: string, patch: Partial<Fold
 }
 export function movedFolds(store: FoldStore, moves: Record<string, string>): FoldStore {
   const out: FoldStore = Object.create(null);
-  for (const [k, v] of Object.entries(store)) out[k in moves ? moves[k] : k] = v;
+  for (const [k, v] of Object.entries(store)) out[Object.hasOwn(moves, k) ? moves[k] : k] = v;
   return out;
 }

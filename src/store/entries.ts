@@ -76,27 +76,44 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     cache[ekey] = md;
     return persistEntry(ekey, () => store.set(ekey, md));
   }
-  /* a stale refusal is answered ONCE by redoing the edit over the text the
-     refusal carries, rebased on it: the edit is this tab's own, so the other
-     tab's text is kept, where a plain retry would write over it (pin:
-     entries.test › rewriteEntry refused as stale is redone ONCE). A second
-     refusal is a plain stale write's */
+  /* a stale refusal is answered ONCE by redoing the edit over the stored
+     text, rebased on it: the edit is this tab's own, so the other tab's text
+     is kept, where a plain retry would write over it (pin: entries.test ›
+     rewriteEntry refused as stale is redone ONCE). A second refusal is a
+     plain stale write's. A key whose own last write did not land is left:
+     a landing would release the pin holding that write's text (pin:
+     entries.test › rewriteEntry leaves a key whose own save was refused).
+     A row gone from the store is taken as a delete (pin: entries.test ›
+     rewriteEntry refused over a row deleted elsewhere) */
   function rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite> {
-    const first = edit(entryMd(ekey));
-    if (first === null) return Promise.resolve("unchanged");
-    const seqAt = saveSeq[ekey], writeAt = (writeSeq[ekey] || 0) + 1;
-    writeSeq[ekey] = writeAt;
-    cache[ekey] = first;
-    let unchanged = false;
-    const op = (): Promise<void> => store.set(ekey, first).catch((err: unknown) => {
-      if (!isStale(err)) throw err;
-      store.rebase(ekey, err.stored);
-      const again = edit(err.stored);
-      if (saveSeq[ekey] === seqAt && writeSeq[ekey] === writeAt) cache[ekey] = again ?? err.stored;
-      if (again === null) { unchanged = true; return; }
-      return store.set(ekey, again);
-    });
-    return persistEntry(ekey, op).then((ok) => !ok ? "failed" : unchanged ? "unchanged" : "landed");
+    const run = (): Promise<Rewrite> => {
+      if (unlanded.has(ekey)) return Promise.resolve("failed");
+      const first = edit(entryMd(ekey));
+      if (first === null) return Promise.resolve("unchanged");
+      const seqAt = saveSeq[ekey], writeAt = (writeSeq[ekey] || 0) + 1;
+      writeSeq[ekey] = writeAt;
+      cache[ekey] = first;
+      let unchanged = false;
+      const op = (): Promise<void> => store.set(ekey, first).catch((err: unknown) => {
+        if (!isStale(err)) throw err;
+        return store.peek(ekey).then((row) => {
+          const ours = saveSeq[ekey] === seqAt && writeSeq[ekey] === writeAt;
+          if (!row) {
+            unchanged = true;
+            store.rebase(ekey, null);
+            if (ours) { saveSeq[ekey] = (saveSeq[ekey] || 0) + 1; delete cache[ekey]; notices.removed(ekey); }
+            return;
+          }
+          store.rebase(ekey, row.md);
+          const again = edit(row.md);
+          if (ours) cache[ekey] = again ?? row.md;
+          if (again === null) { unchanged = true; return; }
+          return store.set(ekey, again);
+        });
+      });
+      return persistEntry(ekey, op).then((ok) => !ok ? "failed" : unchanged ? "unchanged" : "landed");
+    };
+    return (chain[ekey] || Promise.resolve()).then(run, run);
   }
   function removeEntry(ekey: string): Promise<boolean> {
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
