@@ -338,3 +338,23 @@ REVIEW CYCLES FOR THIS WORK: 2.
   8. Empty comma parts are dropped before the count.
   9–10. The fixture's comment removed; the rewrite's comment speaks of
      `landed`, this module's own port.
+
+### 2026-10-05 — the Helium tools' isolation (asked)
+
+The step's three wrong first drafts (above) were asked about: two of the
+causes were the tools'. Built, in `tools/` only:
+
+- (a) `helium-corner.mjs` empties its own profile at start, as the
+  verdict does (a profile passed in is left). Two development runs of
+  `STEPS="author filing"` back to back read right; before, the second
+  found the first's author and timed out (MEASURED).
+- (b) `runSteps` starts every section from the one window, in front,
+  Escape pressed: other pages closed, the page brought to the front. The
+  author-filing section's own `bringToFront` is gone; played after the
+  two-window section it reads right (MEASURED). Full isolation per
+  section was not built: sections seed for later ones by design, and the
+  current app's driver plays the same steps.
+- The verdict unchanged: corner ok, bridge ok (MEASURED). The current
+  app's run read one field differently once — the list section's corner
+  `show` false, against true — and true on the two runs after (MEASURED,
+  1 in 3): the current app's "saved" whisper timing, not the change.

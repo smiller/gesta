@@ -6,8 +6,18 @@
 import { chromium } from "playwright-core";
 import * as A from "./adapters/successor.mjs";
 import { runSteps, TODAY } from "./helium-steps.mjs";
+import { rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { basename } from "node:path";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = process.argv[2] || A.profile;
+/* the tool's own profile starts empty, as the verdict's does: a development
+   run found the last run's entries still stored (2026-10-05, the
+   author-filing record); a profile passed in is the caller's to keep */
+if (PROFILE === A.profile) {
+  spawnSync("pkill", ["-f", basename(PROFILE)]);
+  for (let i = 0; i < 20; i++) { try { rmSync(PROFILE, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
+}
 const logs = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});

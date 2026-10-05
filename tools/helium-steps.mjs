@@ -1098,7 +1098,6 @@ export async function runSteps(page, ctx, A, opts = {}) {
     }],
     ["author filing", async () => {
   /* (2026-10-05) "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so; the current app asks once and files the name as typed, and refuses to rename an author with books */
-  await page.bringToFront();
   await go("2026-09-06");
   await page.click(S.booksOpener);
   answer = ["Harley Price", "Price, Harley"];
@@ -1144,8 +1143,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
   }
     }],
   ];
+  /* each section starts from the one window, in front, nothing open over
+     it: windows a section left open held the focus, and a click in the
+     next section moved no caret (2026-10-05, the author-filing record) */
+  const settle = async () => {
+    for (const p of page.context().pages()) if (p !== page) await p.close().catch(() => {});
+    await page.bringToFront();
+    await page.keyboard.press("Escape").catch(() => {});
+  };
   for (const [name, fn] of sections) {
     if (opts.only && name !== sections[0][0] && !opts.only.includes(name)) continue;
+    await settle();
     try { await fn(); }
     catch (e) { console.log("SECTION FAILED (" + name + "): " + String(e).split("\n")[0].slice(0, 200)); }
   }
