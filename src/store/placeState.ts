@@ -29,7 +29,14 @@ export function movedPlace(store: PlaceRecord[], from: string, to: string | null
 export function withPlace(store: PlaceRecord[], key: string, place: Place): PlaceRecord[] {
   return [{ key, pos: place.pos, y: place.y }, ...store.filter((x) => x.key !== key)].slice(0, PLACES_CAP);
 }
+/* as movedPlace: a record already under a new key goes, so the moved one wins
+   (pin: placeState.test › movedPlaces: the moved record wins) */
 export function movedPlaces(store: PlaceRecord[], moves: Record<string, string>): PlaceRecord[] {
-  const out = store.map((r) => (Object.hasOwn(moves, r.key) ? { key: moves[r.key], pos: r.pos, y: r.y } : r));
-  return out.filter((r, i) => out.findIndex((x) => x.key === r.key) === i);
+  const targets = new Set(Object.values(moves));
+  const out: PlaceRecord[] = [];
+  for (const r of store) {
+    if (Object.hasOwn(moves, r.key)) out.push({ key: moves[r.key], pos: r.pos, y: r.y });
+    else if (!targets.has(r.key)) out.push(r);
+  }
+  return out;
 }

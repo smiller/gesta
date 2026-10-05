@@ -293,3 +293,14 @@ test("memBackupStore: reads hand out copies, not the stored object", async () =>
   m["a.md"] = 999;
   expect(await s.getManifest()).toEqual({ "a.md": 1 });
 });
+
+test("a write refused over a row gone from the store says the row is absent; over a row, that it is not", async () => {
+  const mem = memEntryStore();
+  await mem.set("k", "mine");
+  await mem.foreignDel("k");
+  const gone = await mem.set("k", "again").catch((e) => e);
+  expect(isStale(gone) && gone.absent).toBe(true);
+  await mem.foreignSet("k", "theirs");
+  const there = await mem.set("k", "again").catch((e) => e);
+  expect(isStale(there) && there.absent).toBe(false);
+});

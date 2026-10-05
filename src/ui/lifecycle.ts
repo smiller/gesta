@@ -5,7 +5,7 @@ import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
 import { typedName, filingForm, shownForm } from "./naming.ts";
 import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, deleteConfirm, deleteLanding, hostKey, refiledText } from "./subEntries.ts";
-import { refileKeys, refileLinks, pointsAt, withHeading, linkingKeys } from "../store/refile.ts";
+import { refileKeys, refileLinks, pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
 import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, insertLinkAfter } from "../editor/insertLink.ts";
@@ -15,7 +15,7 @@ import { nsOf, pageParts, entryKey, entryHash, KEYED_NS } from "../store/keys.ts
 import { registered, childrenOf } from "../store/lists.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
-export type SessionPort = Pick<Session, "current" | "flushSave" | "suspendSaves" | "surfaceMd" | "open" | "movePlace" | "refresh" | "goto" | "saveNow">;
+export type SessionPort = Pick<Session, "current" | "flushSave" | "suspendSaves" | "surfaceMd" | "open" | "movePlace" | "movePlaces" | "refresh" | "goto" | "saveNow">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
   confirm(text: string): boolean;
@@ -36,7 +36,7 @@ export interface LifecycleDeps {
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
-  /* the places, folded sections and bookmarks of each moved key */
+  /* the folded sections and bookmarks of each moved key */
   moveKept(moves: Record<string, string>): void;
 }
 /* each settles once its writes have landed */
@@ -188,9 +188,12 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
         const live = session.surfaceMd();
         return live !== md ? layer.setEntry(entryKey(date, full), live) : true;
       }).then(() => {
+        /* the kept state before the open, the place after it (pin:
+           lifecycle.test › flushes, suspends, writes the new key) */
+        deps.moveKept({ [oldKey]: entryKey(date, full) });
         ui.replaceHash(entryHash(date, full));
         session.open(date, full);
-        deps.moveKept({ [oldKey]: entryKey(date, full) });
+        session.movePlace(oldKey, entryKey(date, full));
         for (const k of sweptKeys) session.movePlace(k, null);
         ui.redraw();
       });
@@ -217,8 +220,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       if (session.current.date !== date || session.current.tag !== old) return;
       session.suspendSaves();
       const oldKey = entryKey(date, old), newKey = entryKey(date, root);
-      const points = pointsAt(date, old);
-      const rewrite = (md: string): string => (points(md) && refileLinks(md, date, old, root)) || md;
+      const points = pointsInto(date, old);
+      const rewrite = (md: string): string => (md.includes("#" + date + "/") && refileLinks(md, date, old, root)) || md;
       const headed = (md: string): string => withHeading(md, old) ?? md;
       const flushed = layer.entryMd(oldKey);
       const moves = refileKeys(keysNow(), date, old, root);
@@ -231,18 +234,17 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
       return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
         if (landed.includes(false)) {
-          const copies = moved.filter((_, i) => landed[i]).map((m) => m.to);
           /* typed while the copies ran: kept under the old name, which the
              reopen reads (pin: lifecycle.test › a failed move keeps what was typed) */
           const live = session.surfaceMd();
           const kept = live !== flushed ? layer.setEntry(oldKey, live) : Promise.resolve(true);
           return kept.then(() => Promise.all(moved.map((m) => layer.removeEntry(m.to)))).then((removed) => {
-            const left = copies.filter((k) => !removed[moved.findIndex((m) => m.to === k)]);
+            const left = failed(moved.map((m) => m.to), removed).filter((_, i) => landed[i]);
             session.open(date, old);
             ui.pin(left.length ? "couldn't re-file — copies left: " + left.join(", ") : "couldn't re-file — nothing was moved");
           });
         }
-        const linking = linkingKeys(layer.cache, moves, points);
+        const linking = linkingKeys(layer.cache, date, moves);
         return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => refileLinks(md, date, old, root)))).then((results) => {
           const left = [
             ...moved.filter((m) => points(m.md)).map((m) => m.to),
@@ -256,9 +258,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
             const live = session.surfaceMd();
             return (live !== flushed ? layer.setEntry(newKey, headed(rewrite(live))) : Promise.resolve(true)).then(() => stayed);
           }).then((stayed) => {
+            deps.moveKept(moves);
             ui.replaceHash(entryHash(date, root));
             session.open(date, root);
-            deps.moveKept(moves);
+            session.movePlaces(moves);
             ui.redraw();
             const text = refiledText(root, moved.length - (pageless ? 1 : 0), updated, left, stayed);
             if (left.length || stayed.length) ui.pin(text); else ui.say(text);

@@ -39,3 +39,9 @@ test("movedPlaces: every moved key's place goes with it in one pass, the order k
   const store = [{ key: "a", pos: 1, y: 10 }, { key: "page/X", pos: 2, y: 20 }, { key: "b", pos: 3, y: 30 }];
   expect(movedPlaces(store, { a: "a2", b: "b2" })).toEqual([{ key: "a2", pos: 1, y: 10 }, { key: "page/X", pos: 2, y: 20 }, { key: "b2", pos: 3, y: 30 }]);
 });
+
+test("movedPlaces: the moved record wins over a stale one under its new key, which goes even when nothing moves onto it", () => {
+  const stale = { key: "page/C", pos: 9, y: 90 }, mine = { key: "page/B", pos: 2, y: 20 };
+  expect(movedPlaces([stale, mine], { "page/B": "page/C" })).toEqual([{ key: "page/C", pos: 2, y: 20 }]);
+  expect(movedPlaces([stale, mine], { "page/Z": "page/C" })).toEqual([mine]);
+});

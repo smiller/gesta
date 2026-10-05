@@ -296,3 +296,45 @@ REVIEW CYCLES FOR THIS WORK: 1 (the count kept from here, asked
 - Not played by hand or headless: the failure paths (1–5) are the tests'
   alone; a bookmark following a rename is reachable by hand but not yet
   played.
+
+### 2026-10-05 — review cycle 2 (asked: "and review it")
+
+REVIEW CYCLES FOR THIS WORK: 2.
+
+- One `/code-review` at high over the fix commit, `1723ef8..bc34531`:
+  113,118 tokens (MEASURED, the transcript's last message: 2 input +
+  3,713 cache creation + 105,176 cache read + 4,227 output), 10 findings.
+- The findings: the text test now gating the rewrite skips spellings the
+  parse-based match moves (`%2F`, a `<…>` destination, lowercase hex) and
+  leaves them out of the not-updated list — a regression of cycle 1's
+  fix 8; the same as an altitude finding, the comment above `pointsAt`
+  now wrong; folds moved after the open has drawn the new key; the batch
+  place move keeps a stale record under the target; the deleted-row
+  branch announces a landing; an extra store read where the refusal
+  could carry the answer; the failure path re-rolling the `failed`
+  helper; a trailing comma kept in a three-part name; two comments
+  naming another module's behaviour.
+
+### 2026-10-05 — review cycle 2, fixed (all 10, asked)
+
+REVIEW CYCLES FOR THIS WORK: 2.
+
+- Each fix test-first (MEASURED: 6 red before; 766 green after; verify
+  green, Helium 0 open). The regression's test — three entries, one link
+  each, spelled with `%2F`, `<…>` and a lowercase escape — fails on
+  `bc34531` and passes here (MEASURED, a throwaway worktree at HEAD).
+  1–2. The linking filter is wide again (`#bookshelf/` anywhere), the
+     parse-based match deciding; "not updated" is `pointsInto`: the links
+     read by the key they name, then a case-insensitive text test that
+     also ends at `%2F` and `>`. Its comment rewritten.
+  3. Folds and bookmarks move before the open; places after it, the open
+     recording where the old key was left.
+  4. `movedPlaces` drops a record already under a new key; a Set, no
+     `findIndex`.
+  5. A row gone from the store answers with a sentinel: no `landed`, no
+     announce.
+  6. The stale refusal carries `absent`; no extra read.
+  7. The failure path uses `failed`.
+  8. Empty comma parts are dropped before the count.
+  9–10. The fixture's comment removed; the rewrite's comment speaks of
+     `landed`, this module's own port.

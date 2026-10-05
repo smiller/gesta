@@ -135,12 +135,17 @@ export interface EntryRow { key: string; md: string }
    quota or a dead handle is worth retrying, and this one is not — only a
    reload clears it (pin: store.test › staleWriteErr is a marked refusal
    carrying both texts) */
-export interface StaleWriteError extends Error { stale: true; stored: string; refused: string }
-export function staleWriteErr(stored: string, refused: string): StaleWriteError {
+export interface StaleWriteError extends Error {
+  stale: true; stored: string; refused: string;
+  /* no row at all: `stored` is "" either way */
+  absent: boolean;
+}
+export function staleWriteErr(stored: string, refused: string, absent = false): StaleWriteError {
   const err = new Error("entry changed in another tab") as StaleWriteError;
   err.stale = true;
   err.stored = stored;
   err.refused = refused;
+  err.absent = absent;
   return err;
 }
 export function isStale(err: unknown): err is StaleWriteError {
@@ -203,7 +208,7 @@ export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
     if (base === null) return record ? store.put(record) : store.del(key);
     return store.update(key, (row) => {
       const stored = row ? row.md : "";
-      if (stored !== base) return { refuse: staleWriteErr(stored, record ? record.md : "") };
+      if (stored !== base) return { refuse: staleWriteErr(stored, record ? record.md : "", !row) };
       return record ? { put: record } : { del: true };
     }).then((verdict) => {
       if (verdict && verdict.refuse) throw verdict.refuse;

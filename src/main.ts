@@ -768,7 +768,6 @@ if (fixture && fixtures[fixture]) {
     view: () => session.view,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
     moveKept: (moves) => {
-      session.movePlaces(moves);
       session.moveFolds(moves);
       marks.move(moves);
     },

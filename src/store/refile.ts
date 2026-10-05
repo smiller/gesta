@@ -1,6 +1,7 @@
 import { entryKey, entryHash, encPart } from "./keys.ts";
 import { hashParts } from "./nav.ts";
-import { rewriteLinks } from "./links.ts";
+import { rewriteLinks, linkRuns } from "./links.ts";
+import { parseMarkdown } from "../model/parse.ts";
 import { firstHeading } from "./headings.ts";
 import { escapeRe } from "./reference.ts";
 
@@ -27,19 +28,25 @@ export function refileLinks(md: string, ns: string, oldRoot: string, newRoot: st
     return href === null ? null : { href };
   });
 }
-/* the text test, read where the rewrite could not: a text that does not
-   parse, or a link written as a full URL, still answers */
-export function pointsAt(ns: string, root: string): (md: string) => boolean {
+/* the links read by the key they name, as refileHref reads them; then a
+   text test for what is no link — a full URL, a text that does not parse
+   (pin: refile.test › reads a link by the key it names, whatever its escapes) */
+export function pointsInto(ns: string, root: string): (md: string) => boolean {
   const spellings = Array.from(new Set([root, encPart(root), encodeURIComponent(root)])).map(escapeRe);
-  const re = new RegExp("#" + escapeRe(ns) + "/(?:" + spellings.join("|") + ")(?=[/?)\"'\\s<]|$)", "m");
-  return (md) => re.test(md);
+  const re = new RegExp("#" + escapeRe(ns) + "/(?:" + spellings.join("|") + ")(?=[/?)>\"'\\s<]|%2F|$)", "im");
+  return (md) => {
+    if (re.test(md)) return true;
+    try { return linkRuns(parseMarkdown(md)).some((r) => refileHref(r.href, ns, root, root) !== null); } catch { return false; }
+  };
 }
 /* null when the page already has its title */
 export function withHeading(md: string, name: string): string | null {
   if (firstHeading(md)) return null;
   return "# " + name + "\n" + (md.trim() ? "\n" + md : "");
 }
-export function linkingKeys(cache: Record<string, string>, moves: Record<string, string>, points: (md: string) => boolean): string[] {
+/* wide on purpose: refileHref decides; a narrower text test skipped links it moves
+   (pin: lifecycle.test › a link spelled with an encoded slash) */
+export function linkingKeys(cache: Record<string, string>, ns: string, moves: Record<string, string>): string[] {
   const copies = new Set(Object.values(moves));
-  return Object.keys(cache).filter((k) => !(k in moves) && !copies.has(k) && points(cache[k]));
+  return Object.keys(cache).filter((k) => !(k in moves) && !copies.has(k) && cache[k].includes("#" + ns + "/"));
 }

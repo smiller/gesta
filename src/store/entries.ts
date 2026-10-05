@@ -49,6 +49,8 @@ export interface LayerOptions {
   /* a landed write or delete, told to the other tabs */
   announce?(ekey: string): void;
 }
+/* an op's answer that nothing landed: the row was already gone */
+const GONE = Symbol("gone");
 export function entryLayer(store: EntryStore, notices: EntryNotices, opts: LayerOptions = {}): EntryLayer {
   const cache: Record<string, string> = Object.create(null);
   const saveSeq: Record<string, number> = Object.create(null);
@@ -80,11 +82,11 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
      text, rebased on it: the edit is this tab's own, so the other tab's text
      is kept, where a plain retry would write over it (pin: entries.test ›
      rewriteEntry refused as stale is redone ONCE). A second refusal is a
-     plain stale write's. A key whose own last write did not land is left:
-     a landing would release the pin holding that write's text (pin:
+     plain stale write's. A key whose own last write did not land is left,
+     or the rewrite's landing would answer `landed` for that write (pin:
      entries.test › rewriteEntry leaves a key whose own save was refused).
-     A row gone from the store is taken as a delete (pin: entries.test ›
-     rewriteEntry refused over a row deleted elsewhere) */
+     A row gone from the store is taken as a delete, with no landing told
+     (pin: entries.test › rewriteEntry refused over a row deleted elsewhere) */
   function rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite> {
     const run = (): Promise<Rewrite> => {
       if (unlanded.has(ekey)) return Promise.resolve("failed");
@@ -94,22 +96,20 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
       writeSeq[ekey] = writeAt;
       cache[ekey] = first;
       let unchanged = false;
-      const op = (): Promise<void> => store.set(ekey, first).catch((err: unknown) => {
+      const op = (): Promise<unknown> => store.set(ekey, first).catch((err: unknown): unknown => {
         if (!isStale(err)) throw err;
-        return store.peek(ekey).then((row) => {
-          const ours = saveSeq[ekey] === seqAt && writeSeq[ekey] === writeAt;
-          if (!row) {
-            unchanged = true;
-            store.rebase(ekey, null);
-            if (ours) { saveSeq[ekey] = (saveSeq[ekey] || 0) + 1; delete cache[ekey]; notices.removed(ekey); }
-            return;
-          }
-          store.rebase(ekey, row.md);
-          const again = edit(row.md);
-          if (ours) cache[ekey] = again ?? row.md;
-          if (again === null) { unchanged = true; return; }
-          return store.set(ekey, again);
-        });
+        const ours = saveSeq[ekey] === seqAt && writeSeq[ekey] === writeAt;
+        if (err.absent) {
+          unchanged = true;
+          store.rebase(ekey, null);
+          if (ours) { saveSeq[ekey] = (saveSeq[ekey] || 0) + 1; delete cache[ekey]; unlanded.delete(ekey); notices.removed(ekey); }
+          return GONE;
+        }
+        store.rebase(ekey, err.stored);
+        const again = edit(err.stored);
+        if (ours) cache[ekey] = again ?? err.stored;
+        if (again === null) { unchanged = true; return; }
+        return store.set(ekey, again);
       });
       return persistEntry(ekey, op).then((ok) => !ok ? "failed" : unchanged ? "unchanged" : "landed");
     };
@@ -136,7 +136,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     const tail = (chain[ekey] || Promise.resolve()).then(op, op);
     chain[ekey] = tail;
     return tail.then(
-      () => { unlanded.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); return true; },
+      (v) => { if (v === GONE) return true; unlanded.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); return true; },
       (err: unknown) => {
         /* PUT THE CACHE BACK: a refused write left there would go out over the
            backup folder at the next run (pin: entries.test › a stale write

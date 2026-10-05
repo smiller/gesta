@@ -43,4 +43,9 @@ describe("an author's two names", () => {
     expect(shownForm("King, Martin Luther, Jr.")).toBe("King, Martin Luther, Jr.");
     expect(shownForm("https://x.org/2023/11/12/the-title/")).toBe("2023-11-12-the-title");
   });
+  it("an empty part is not a part: a stray comma is dropped before the count", () => {
+    expect(shownForm("Price, Harley,")).toBe("Harley Price");
+    expect(filingForm("Price, Harley,")).toBe("Price, Harley");
+    expect(shownForm("King,, Martin Luther, Jr.")).toBe("King, Martin Luther, Jr.");
+  });
 });

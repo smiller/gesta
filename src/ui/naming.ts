@@ -23,9 +23,10 @@ export function typedName(raw: string | null | undefined): Typed {
 const words = (s: string): string => s.trim().replace(/\s+/g, " ");
 /* deliberately simple: "Bingen, Hildegard of" is wrong and stays wrong
    (pin: naming.test › the filing form puts the last word first) */
+const parts = (s: string): string[] => s.split(",").map(words).filter(Boolean);
 export function filingForm(name: string): string {
   const s = words(name);
-  if (s.includes(",")) return s.split(",").map(words).join(", ");
+  if (s.includes(",")) return parts(s).join(", ");
   const cut = s.lastIndexOf(" ");
   return cut === -1 ? s : s.slice(cut + 1) + ", " + s.slice(0, cut);
 }
@@ -35,6 +36,6 @@ export function shownForm(typed: string): string {
   const s = words(typed);
   const derived = nameFromUrl(s);
   if (derived) return derived;
-  const parts = s.split(",");
-  return parts.length !== 2 ? s : words(words(parts[1]) + " " + parts[0]);
+  const p = parts(s);
+  return p.length === 2 ? p[1] + " " + p[0] : p.join(", ");
 }

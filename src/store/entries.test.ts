@@ -370,4 +370,6 @@ test("rewriteEntry refused over a row deleted elsewhere drops the key from the c
   expect("k" in layer.cache).toBe(false);
   expect(calls.removed).toContain("k");
   expect(await mem.get("k")).toBeNull();
+  expect(calls.landed.filter((k) => k === "k").length).toBe(1);
+  expect(calls.announced.filter((k) => k === "k").length).toBe(1);
 });

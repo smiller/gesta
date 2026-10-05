@@ -54,6 +54,7 @@ async function world(o: Opts) {
       surfaceMd: () => typed ?? serializeMarkdown(st.doc),
       open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); current = { date, tag }; },
       movePlace: (from, to) => { log.push("move " + from + " → " + to); },
+      movePlaces: (moves) => { log.push("places " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
       refresh: () => { log.push("refresh"); return Promise.resolve(); },
       goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
       saveNow: () => { log.push("save"); return layer.setEntry(here(), serializeMarkdown(st.doc)); },
@@ -267,8 +268,8 @@ describe("rename", () => {
     expect(before(l, "set page/A/C", "del page/A/B")).toBe(true);
     expect(l).toContain("del page/A/B/x");
     expect(l.slice(l.indexOf("del page/A/B") + 1)).toEqual([
-      "set page/A", "set page/A/C", "hash #page/A/C", "open page/A/C",
-      "kept page/A/B → page/A/C", "move page/A/B/x → null", "redraw",
+      "set page/A", "set page/A/C", "kept page/A/B → page/A/C", "hash #page/A/C", "open page/A/C",
+      "move page/A/B → page/A/C", "move page/A/B/x → null", "redraw",
     ]);
     expect(w.md("page/A/C")).toBe("body more\n");
     expect(w.md("page/A/B")).toBeNull();
@@ -419,7 +420,6 @@ describe("a new author asks where it sorts", () => {
 });
 
 const CAVAFY = {
-  /* as the surface serializes it, so nothing reads as typed meanwhile */
   "bookshelf/C. P. Cavafy": "# C. P. Cavafy\n\n- [Walls](#bookshelf/C.%20P.%20Cavafy/Walls)\n- [Candles](#bookshelf/C.%20P.%20Cavafy/Candles)",
   "bookshelf/C. P. Cavafy/Walls": "With no consideration, no pity. See [Candles](#bookshelf/C.%20P.%20Cavafy/Candles).\n",
   "bookshelf/C. P. Cavafy/Candles": "The days of our future.\n",
@@ -454,9 +454,9 @@ describe("rename re-files an author with books", () => {
     expect(w.md("2026-09-14")).toBe("Read [the walls](#bookshelf/Cavafy%2C%20C.%20P/Walls?h=no%20pity) today; and [Carroll](#bookshelf/Carroll%2C%20Lewis).");
     expect(w.md("page/Poets")).toBe("[Cavafy](#bookshelf/Cavafy%2C%20C.%20P)");
     expect(w.md("bookshelf/Carroll, Lewis")).toBe("# Lewis Carroll\n");
-    expect(l.slice(l.indexOf("hash #bookshelf/Cavafy%2C%20C.%20P"))).toEqual([
-      "hash #bookshelf/Cavafy%2C%20C.%20P", "open bookshelf/Cavafy, C. P",
-      "kept bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P, bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles, bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls",
+    const moved = "bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P, bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles, bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls";
+    expect(l.slice(l.indexOf("kept " + moved))).toEqual([
+      "kept " + moved, "hash #bookshelf/Cavafy%2C%20C.%20P", "open bookshelf/Cavafy, C. P", "places " + moved,
       "redraw", "say filed under Cavafy, C. P — 3 entries moved, links updated in 2 others",
     ]);
   });
@@ -476,6 +476,15 @@ describe("rename re-files an author with books", () => {
     for (const k of ["", "/Walls", "/Candles"]) expect(w.md("bookshelf/Cavafy, C. P" + k)).toBeNull();
     expect(w.log).not.toContain("del bookshelf/C. P. Cavafy");
     expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn't re-file — nothing was moved"]);
+  });
+  it("a link spelled with an encoded slash, lowercase hex or angle brackets moves too", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-16": "[a](#bookshelf/C.%20P.%20Cavafy%2FWalls)\n", "2026-09-17": "[b](<#bookshelf/C. P. Cavafy/Candles>)\n", "2026-09-18": "[c](#bookshelf/C.%20P.%20Cav%61fy)\n" } });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.md("2026-09-16")).toBe("[a](#bookshelf/Cavafy%2C%20C.%20P/Walls)");
+    expect(w.md("2026-09-17")).toBe("[b](#bookshelf/Cavafy%2C%20C.%20P/Candles)");
+    expect(w.md("2026-09-18")).toBe("[c](#bookshelf/Cavafy%2C%20C.%20P)");
+    expect(w.log[w.log.length - 1]).toBe("say filed under Cavafy, C. P — 3 entries moved, links updated in 5 others");
   });
   it("a failed move keeps what was typed meanwhile, under the old name", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
