@@ -228,6 +228,11 @@ is in the plan's record, under the phase named):
   here reading as a difference there. THE CORPUS is `~/Library/CloudStorage/Dropbox/gesta-backups/current`,
   this app's backup, the default of all three corpus tools;
   `gesta-snapshots` is the old app's and is never read (2026-10-08).
+  `tools/stageDirections.ts` — a play's stage directions made one
+  italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
+  runs it over the fourteen plays of Tey and Williams in the backup and
+  writes the changed entries as an import folder with a before-and-after
+  page.
   `tools/corpusRules.ts` its decided differences from the old parser,
   pure: a `###`–`######` heading here, text there; emphasis across a
   line break here, its delimiters text there.

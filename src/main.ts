@@ -153,7 +153,11 @@ document.addEventListener("keydown", (e) => {
 });
 
 const tabs = typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
-const layer = entryLayer(idbEntryStore(), notices.entry, { announce: (ekey) => tabs?.postMessage(ekey) });
+/* every landed write or delete arms the folder backup, not typing alone:
+   an import, a rename or a delete waited for the next launch
+   (pin: entries.test › a landed write and a landed delete are announced) */
+let armBackup = (): void => {};
+const layer = entryLayer(idbEntryStore(), notices.entry, { announce: (ekey) => { tabs?.postMessage(ekey); armBackup(); } });
 const images = idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
@@ -186,6 +190,7 @@ if (fixture && fixtures[fixture]) {
     onTrouble: (msg) => { notices.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
     stick: (text, err, copy) => { notices.stickErr(text, err, copy); },
   });
+  armBackup = () => backup.scheduleBackup();
   acts.backups = () => { backup.setupBackupFolder().then(readBackups); };
   acts.resume = () => { backup.resumeBackups().then(readBackups); };
   /* the masthead reads the open entry: recomputed when the entry or the
@@ -1039,7 +1044,7 @@ if (fixture && fixtures[fixture]) {
       if (!confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
           " from this folder? Each one overwrites that entry in this journal, and there is no undo.")) return;
       p = notices.progress("importing…");
-      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, landed: () => backup.scheduleBackup() }, p.step).then((tally) => {
+      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set }, p.step).then((tally) => {
         count();
         let msg = "imported " + tally.imported;
         if (tally.failed) {

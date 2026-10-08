@@ -1953,3 +1953,23 @@ at the head is kept current per phase.
   folder imported, the tab left, the page in the backup the same minute.
   No review run for the one connecting line in main.ts; offered for the
   next batch touching it.
+- 2026-10-08, REVIEW CYCLE 1 over `56a9736..82c35d8` (the code-block
+  fix, the stage-direction tool, the import's backup), one
+  `/code-review` at high, asked. COST 111,284 tokens (2 input + 3,933
+  cache creation + 104,614 cache read + 2,735 output). Ten findings:
+  the tool took a link or a note marker for a direction, a joined row's
+  closing ] lost what followed it, a join crossed a quote marker or a
+  bracket, a name growing in capitals overran (all four with tests, and
+  none had touched the imported plays — READ there: no link-, note- or
+  stray-] shape); the backup armed by an import alone, where a rename, a
+  delete or a create waited too — now every announced write or delete
+  arms it, the import's own port gone; the runner cleared any folder
+  named to it — now only one named gesta-stage-directions…; its
+  exceptions matched by line numbers a join moves — now by text, split
+  once; --writer's summary printed zeros when ../writer would not load;
+  comments with provenance or another module's doing. FOUND alongside:
+  Tey's scenes described in italic paragraphs without brackets kept
+  their names in lower case — the tool takes them now (87 paragraphs
+  counted, 157 places rewritten), and Cranmer's "A BISHOP]*" closed a
+  row early — joined. A second import folder of 56 entries, `importCorpus`
+  56 of 56.

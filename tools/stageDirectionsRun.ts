@@ -2,7 +2,7 @@
    the backup, the changed entries written under out-dir/bookshelf/… for an
    import, a before-and-after page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { join, dirname, basename } from "node:path";
 import { fixPlay, type Change, type Left } from "./stageDirections.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -17,12 +17,13 @@ const PLAYS: { author: string; books: string[]; capitals: boolean; join: (book: 
   { author: "Williams, Charles", capitals: false, join: (b) => b === "The House of the Octopus", books: ["A Myth of Shakespeare", "Judgement at Chelmsford", "The House of the Octopus", "Thomas Cranmer of Canterbury"] },
 ];
 
-/* READ, each, in the review of the first run: words the source left
-   roman by a slip, or a shout, or a stress, not a name — put back */
+/* words the source left roman by a slip, or a shout, or a stress, not a
+   name — put back; and a direction closed a row early */
 const CORRECT: { book: string; from: string; to: string }[] = [
   { book: "Dickon", from: "QUEEN COMES IN, FOLLOWED BY THE PRINCESS ELIZABETH", to: "QUEEN comes in, followed by the PRINCESS ELIZABETH" },
   { book: "The Little Dry Thorn", from: "“to ME”; nor even “ever SPOKEN”", to: "“to me”; nor even “ever spoken”" },
   { book: "Valerius", from: ": THE EAGLES!  THE EAGLES!]", to: ": The Eagles!  The Eagles!]" },
+  { book: "Thomas Cranmer of Canterbury", from: "A BISHOP]*\n*accompanies her.]*", to: "A BISHOP accompanies her.]*" },
 ];
 /* directions the rule leaves, each READ and decided: a title or a
    connective set roman inside the italics, a name in lower case — made
@@ -35,8 +36,8 @@ const FORCE: { book: string; starts: string; names?: string[]; close?: true }[] 
   { book: "Thomas Cranmer of Canterbury", starts: "> [*They fetch* CRANMER *to the centre of the stage.  The* bishop", names: ["bishop"] },
   { book: "A Myth of Shakespeare", starts: "[Kisses him *Thy lips are warm!*", close: true },
 ];
-function force(md: string, book: string): string {
-  return md.split("\n").map((line) => {
+function force(lines: string[], book: string): string[] {
+  return lines.map((line) => {
     const f = FORCE.find((x) => x.book === book && line.startsWith(x.starts));
     if (!f) return line;
     if (f.close) return line.replace("[Kisses him *", "[Kisses him] *");
@@ -44,7 +45,7 @@ function force(md: string, book: string): string {
     let plain = line.slice(prefix.length).replace(/\*/g, "").replace(/^\s*\[/, "").replace(/\]\s*$/, "").trim();
     for (const n of f.names ?? []) plain = plain.replace(new RegExp(`\\b${n}\\b`), n.toUpperCase());
     return prefix + "*[" + plain + "]*";
-  }).join("\n");
+  });
 }
 
 /* direction rows a verse block counts as lines */
@@ -61,6 +62,8 @@ function countedDirections(md: string): number {
 const words = (s: string): string => s.replace(/[*[\]\s]/g, "").replace(/“s/g, "’s").toLowerCase();
 
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+/* only a folder of this run's own naming is cleared before writing */
+if (!/^gesta-stage-directions/.test(basename(OUT))) throw new Error(`refusing to clear ${OUT}: name the folder gesta-stage-directions…`);
 rmSync(OUT, { recursive: true, force: true });
 let html = "";
 const totals = { files: 0, changed: 0, lines: 0, left: 0 };
@@ -72,12 +75,15 @@ for (const p of PLAYS) for (const book of p.books) {
     totals.files++;
     const md = readFileSync(join(dir, f), "utf8");
     const r = fixPlay(md, { capitals: p.capitals, join: p.join(book) });
-    const forced = force(r.md, book);
-    if (forced !== r.md) for (const [k, l] of forced.split("\n").entries()) if (l !== r.md.split("\n")[k]) { r.changes.push({ line: k + 1, before: md.split("\n")[k], after: l }); r.left = r.left.filter((x) => x.line !== k + 1); }
-    r.md = forced;
+    const fixed = r.md.split("\n"), forced = force(fixed, book);
+    for (const [k, l] of forced.entries()) if (l !== fixed[k]) { r.changes.push({ line: k + 1, before: fixed[k], after: l }); r.left = r.left.filter((x) => x.text !== fixed[k]); }
+    r.md = forced.join("\n");
     for (const c of CORRECT.filter((x) => x.book === book && r.md.includes(x.from))) {
+      const at = r.md.slice(0, r.md.indexOf(c.from)).split("\n").length;
       r.md = r.md.replace(c.from, c.to);
-      for (const ch of r.changes) if (ch.after.includes(c.from)) ch.after = ch.after.replace(c.from, c.to);
+      const hit = r.changes.find((ch) => ch.after.includes(c.from.split("\n")[0]));
+      if (hit) hit.after = hit.after.replace(c.from.split("\n")[0], c.to.split("\n")[0]);
+      else r.changes.push({ line: at, before: c.from, after: c.to });
     }
     for (const l of r.left) lefts.push({ file: f, l });
     if (r.md === md) continue;

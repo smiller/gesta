@@ -31,18 +31,14 @@ const WORD = /(?<![’'\p{L}])\p{L}[\p{L}.\-]*/gu;
 
 /* the roman runs' words in capitals, a possessive's s left small */
 function capitalise(cs: Ch[]): Ch[] {
-  const out = cs.map((x) => ({ ...x }));
+  const out: Ch[] = [];
   let i = 0;
-  while (i < out.length) {
-    if (out[i].it) { i++; continue; }
+  while (i < cs.length) {
+    if (cs[i].it) { out.push(cs[i++]); continue; }
     let j = i;
-    while (j < out.length && !out[j].it) j++;
-    const run = out.slice(i, j).map((x) => x.c).join("");
-    for (const m of run.matchAll(WORD)) {
-      if (KEEP.has(m[0])) continue;
-      const up = m[0].toUpperCase();
-      for (let k = 0; k < up.length; k++) out[i + m.index! + k].c = up[k];
-    }
+    while (j < cs.length && !cs[j].it) j++;
+    const run = cs.slice(i, j).map((x) => x.c).join("").replace(WORD, (w) => (KEEP.has(w) ? w : w.toUpperCase()));
+    for (const c of run) out.push({ c, it: false });
     i = j;
   }
   return out;
@@ -56,6 +52,8 @@ const tidy = (s: string): string => s
 const PREFIX = /^((?:>\s?)*)/;
 const OPENS = /^\*?\s*\[/;
 const NOTE = /^\*?\[\*?(?:The end|End) of\b/;
+/* a link's text or a note marker, not a direction */
+const NOT_A_DIRECTION = /^\*?\[[^\]]*\]\(|^\*?\[\d+\]/;
 
 export function fixPlay(md: string, opts: Options): { md: string; changes: Change[]; left: Left[] } {
   const lines = md.split("\n");
@@ -64,25 +62,26 @@ export function fixPlay(md: string, opts: Options): { md: string; changes: Chang
   for (let n = 0; n < lines.length; n++) {
     const line = lines[n];
     const prefix = PREFIX.exec(line)![1], body = line.slice(prefix.length);
-    if (OPENS.test(body) && !NOTE.test(body) && !body.includes("**")) {
+    if (OPENS.test(body) && !NOTE.test(body) && !NOT_A_DIRECTION.test(body) && !body.includes("**")) {
       let cs = chars(body);
       const plain = text(cs);
       const open = plain.indexOf("[");
-      let close = plain.indexOf("]", open);
+      const close = plain.indexOf("]", open);
       let dir = cs.slice(open + 1, close < 0 ? cs.length : close);
-      const trail = close < 0 ? [] : cs.slice(close + 1);
+      let trail = close < 0 ? [] : cs.slice(close + 1);
       let used = n;
       if (close < 0 && opts.join) {
         /* the rows after an open bracket that are italic, their roman ink
            names in capitals, up to a blank line */
         for (let k = n + 1; k < lines.length; k++) {
-          const b = lines[k].slice(PREFIX.exec(lines[k])![1].length);
-          if (!b.trim() || !b.startsWith("*") || OPENS.test(b)) break;
-          const more = chars(b);
-          if (inkIn(more, false).some((x) => /\p{Ll}/u.test(x.c))) break;
-          dir = dir.concat([{ c: " ", it: true }], more);
+          const p = PREFIX.exec(lines[k])![1], b = lines[k].slice(p.length);
+          if (p !== prefix || !b.trim() || !b.startsWith("*") || b.includes("[")) break;
+          const more = chars(b), at = text(more).indexOf("]");
+          const head = at < 0 ? more : more.slice(0, at);
+          if (inkIn(head, false).some((x) => /\p{Ll}/u.test(x.c))) break;
+          dir = dir.concat([{ c: " ", it: true }], head);
           used = k;
-          if (text(more).includes("]")) { const at = text(dir).lastIndexOf("]"); dir = dir.slice(0, at); close = 0; break; }
+          if (at >= 0) { trail = more.slice(at + 1); break; }
         }
       }
       const romanLower = inkIn(dir, false).some((x) => /\p{Ll}/u.test(x.c));
@@ -96,6 +95,17 @@ export function fixPlay(md: string, opts: Options): { md: string; changes: Chang
       out.push(after);
       n = used;
       continue;
+    }
+    /* a scene set out in italic paragraphs, without brackets: Tey's, its
+       names left roman in lower case like a bracketed direction's */
+    if (opts.capitals && body.startsWith("*") && !body.startsWith("**") && !body.startsWith("*[")) {
+      const cs = chars(body);
+      if (inkIn(cs, false).length && !body.includes("**")) {
+        const after = prefix + "*" + tidy(text(capitalise(cs))) + "*";
+        changes.push({ line: n + 1, before: line, after });
+        out.push(after);
+        continue;
+      }
     }
     if (opts.capitals) {
       const after = line.replace(/\(\*([^()]*)\)/g, (whole, inner: string) => {

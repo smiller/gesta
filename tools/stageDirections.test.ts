@@ -88,3 +88,43 @@ describe("what is not a direction", () => {
     expect(williams(md, true).md).toBe(md);
   });
 });
+
+describe("what the review found", () => {
+  it("a row that is a link or a note marker is not a direction", () => {
+    for (const row of ["[Act II](#page/A/B)", "[1] A note on the text."]) {
+      const r = williams(row, true);
+      expect(r.md).toBe(row);
+      expect(r.changes).toHaveLength(0);
+    }
+  });
+  it("a joined row that closes the direction keeps what follows the ], and speech in italics there is left", () => {
+    expect(williams("*[He runs*\n*round the stage]* So will you.", true).md).toBe("*[He runs round the stage]* So will you.");
+    const r = williams("*[He runs*\n*round the stage]* *So will you.*", true);
+    expect(r.md).toBe("*[He runs*\n*round the stage]* *So will you.*");
+    expect(r.left).toHaveLength(1);
+  });
+  it("a join stops at a row quoted differently, or one opening a bracket of its own", () => {
+    expect(williams("*[He runs*\n> *round the stage*", true).md).toBe("*[He runs]*\n> *round the stage*");
+    expect(williams("*[He runs*\n*round* [*the stage]*", true).md).toBe("*[He runs]*\n*round* [*the stage]*");
+  });
+  it("a name that grows in capitals is set in full", () => {
+    expect(tey("[*Enter* straße.]").md).toBe("*[Enter STRASSE.]*");
+  });
+});
+
+describe("a scene described in italic paragraphs, without brackets", () => {
+  it("Tey: one italic run, the names in capitals", () => {
+    expect(tey("*A small room in the* king’s *palace of Westminster, on a night early in January, 1483.*").md)
+      .toBe("*A small room in the KING’s palace of Westminster, on a night early in January, 1483.*");
+    expect(tey("*L. of the table, his father*, edward iv, *is sitting, his chair turned a little front.*").md)
+      .toBe("*L. of the table, his father, EDWARD IV, is sitting, his chair turned a little front.*");
+  });
+  it("its trailing full stop goes inside", () => {
+    expect(tey("*Having worked through a document*, richard *signs it*.").md).toBe("*Having worked through a document, RICHARD signs it.*");
+  });
+  it("a paragraph already wholly italic, a speaker's line and a Williams paragraph are left", () => {
+    expect(tey("*The Scene is the same.*").changes).toHaveLength(0);
+    expect(tey("**Andrew**  You *are* careful.").changes).toHaveLength(0);
+    expect(williams("*A street* in London").changes).toHaveLength(0);
+  });
+});

@@ -13,8 +13,8 @@
         file holding a `::: grid` or a `::: stanza`, blocks the current app
         does not have (2026-09-22, 2026-09-27); and a `###`–`######` heading
         here, text there, and emphasis across a line break, are decided
-        differences, counted apart (2026-10-08). Off by default since
-        2026-10-08: every form new here reads as a difference there, and
+        differences, counted apart. Off by default: every form new here
+        reads as a difference there, and
         the question it answered, that nothing was lost at the cutover, was
         settled then; kept for a question about something ported.
    Usage: node tools/corpus.ts [dir] [--writer] [--limit N] [--only substring] [--report file]
@@ -186,7 +186,7 @@ for (const path of walk(dir)) {
 const summary = [
   `corpus: ${dir}`,
   `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, threw ${counts.threw}` +
-    (writer ? `; with the current parser: text differs ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, emphasis across a line ${counts.spanningEmphasis}` : ""),
+    (currentMdToHtml ? `; with the current parser: text differs ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, emphasis across a line ${counts.spanningEmphasis}` : ""),
   `${((Date.now() - t0) / 1000).toFixed(1)}s`,
 ];
 mkdirSync(dirname(reportPath), { recursive: true });
