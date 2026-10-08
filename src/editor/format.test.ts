@@ -76,3 +76,8 @@ test("cutMd and replaceWithLink: mid-paragraph, whole blocks, and an emptied hea
   const t2 = whole.apply(replaceWithLink(whole, whole.selection.from, whole.selection.to, "#page/P/Title", "Title"));
   expect(md(t2)).toBe("keep\n\n[Title](#page/P/Title)\n\nrest");
 });
+test("code over lines broken by Enter keeps each line, and back again", () => {
+  const c = run(codeBlock, sel("if matches.any?\n  matches[0][0]\nelse", "matches.any"));
+  expect(md(c)).toBe("```\nif matches.any?\n  matches[0][0]\nelse\n```");
+  expect(md(run(codeBlock, c))).toBe("if matches.any?\n  matches[0][0]\nelse");
+});

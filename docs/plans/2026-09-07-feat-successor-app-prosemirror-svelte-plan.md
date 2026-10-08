@@ -1912,3 +1912,15 @@ at the head is kept current per phase.
   counts 0; with --writer, text differs 42 as before. The fence over this
   app's own reading of an unchanged file, offered as its replacement,
   was not wanted.
+- 2026-10-08, CODE OVER BROKEN LINES KEPT THEM. FOUND BY HAND: the
+  journal day 2023-03-22's Ruby, made code blocks with the toolbar's
+  </> over lines joined by single newlines, came out with every line
+  run into one (`if matches.any?  matches[0][0]else  puts …end`): the
+  lines are hard_break nodes, a code block holds none, and setBlockType
+  dropped them. READ: format.ts's codeBlock is `setBlockType`. DECIDED:
+  `linebreakReplacement: true` on hard_break, so a break becomes a
+  newline in a code block and a newline a break on the way back. Pinned
+  by format.test (seen failing with the same joined line first); played
+  in headless Helium over five typed lines. NOT a fault, and not
+  changed: the italics over `*…*` in that Ruby were marks, not text, so
+  the code kept the words and lost the asterisks.

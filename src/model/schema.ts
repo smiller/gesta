@@ -112,7 +112,9 @@ const nodes: Record<string, NodeSpec> = {
   cell: { content: "inline*", parseDOM: [{ tag: "div.vcell" }], toDOM: () => ["div", { class: "vcell" }, 0] },
   gap: { parseDOM: [{ tag: "div.vgap" }], toDOM: () => ["div", { class: "vgap" }] },
   text: { group: "inline" },
-  hard_break: { inline: true, group: "inline", selectable: false, parseDOM: [{ tag: "br" }], toDOM: () => ["br"] },
+  /* a newline where a block holds no breaks: code over broken lines kept
+     each line, where it ran them into one (pin: format.test › code over lines broken by Enter) */
+  hard_break: { inline: true, group: "inline", selectable: false, linebreakReplacement: true, parseDOM: [{ tag: "br" }], toDOM: () => ["br"] },
   /* src is the path as the markdown wrote it, never resolved here */
   image: {
     inline: true, group: "inline", draggable: true,
