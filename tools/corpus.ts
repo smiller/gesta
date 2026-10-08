@@ -10,7 +10,9 @@
         is invisible to a byte diff), and the parsed text matches what the
         CURRENT app's parser reads from the same source, whitespace aside —
         except over a file holding a `::: grid` or a `::: stanza`, blocks
-        the current app does not have (2026-09-22, 2026-09-27).
+        the current app does not have (2026-09-22, 2026-09-27); and a
+        `###`–`######` heading here, text there, is a decided difference,
+        counted apart (2026-10-08).
    Usage: node tools/corpus.ts [dir] [--limit N] [--only substring] [--report file]
    The report lists every file that fails any question, with the first
    differing lines; the summary counts failures by question. Read-only. */
@@ -18,6 +20,8 @@ import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from "n
 import { join, relative, dirname } from "node:path";
 import { parseMarkdown, visibleText } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
+import { deeperHeadings, type Heading } from "./corpusRules.ts";
+import type { Node } from "prosemirror-model";
 
 const args = process.argv.slice(2);
 const flag = (name: string): string | undefined => { const i = args.indexOf(name); return i < 0 ? undefined : args[i + 1]; };
@@ -41,6 +45,11 @@ function norm(s: string): string {
 }
 const collapse = (s: string): string => s.replace(/\s+/g, " ").trim();
 const stars = (s: string): number => (s.match(/\*/g) || []).length;
+function deepHeadings(doc: Node): Heading[] {
+  const out: Heading[] = [];
+  doc.descendants((n) => { if (n.type.name === "heading" && n.attrs.level >= 3) out.push({ level: n.attrs.level, text: n.textContent }); });
+  return out;
+}
 
 /* the current app's parse arm, for the text comparison; skipped when the
    sibling repository is not there */
@@ -87,7 +96,7 @@ function firstTextDiff(a: string, b: string): string {
   return `  at ${k}: ${JSON.stringify(a.slice(from, k + 40))}\n  read as: ${JSON.stringify(b.slice(from, k + 40))}`;
 }
 
-const counts = { files: 0, ok: 0, fixedPoint: 0, docChanged: 0, roundTrip: 0, stars: 0, text: 0, textStarsMore: 0, textStarsFewer: 0, threw: 0 };
+const counts = { files: 0, ok: 0, fixedPoint: 0, docChanged: 0, roundTrip: 0, stars: 0, text: 0, deeperHeadings: 0, textStarsMore: 0, textStarsFewer: 0, threw: 0 };
 const lines: string[] = [];
 const t0 = Date.now();
 for (const path of walk(dir)) {
@@ -122,8 +131,13 @@ for (const path of walk(dir)) {
        `::: stanza` as text, so question 3's parity half would name every
        such file for ever; the other questions still run over it */
     if (currentMdToHtml && !/^\s*:::\s*(?:grid|stanza)(?:\s|$)/m.test(src)) {
-      const cur = collapse(htmlText(currentMdToHtml(src)));
+      let cur = collapse(htmlText(currentMdToHtml(src)));
       const mine = collapse(t1);
+      if (cur !== mine) {
+        const deeper = deeperHeadings(cur, deepHeadings(doc));
+        if (deeper.n && deeper.text === mine) counts.deeperHeadings++;
+        cur = deeper.text;
+      }
       if (cur !== mine) {
         counts.text++;
         /* the asterisk delta names the class: more here than the current app
@@ -144,7 +158,7 @@ for (const path of walk(dir)) {
 }
 const summary = [
   `corpus: ${dir}`,
-  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, text differs from the current parser ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), threw ${counts.threw}`,
+  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, text differs from the current parser ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, threw ${counts.threw}`,
   `${((Date.now() - t0) / 1000).toFixed(1)}s`,
 ];
 mkdirSync(dirname(reportPath), { recursive: true });

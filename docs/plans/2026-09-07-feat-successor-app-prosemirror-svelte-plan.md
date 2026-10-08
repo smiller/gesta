@@ -1871,3 +1871,17 @@ at the head is kept current per phase.
   gesta-snapshots copy, 2 changed since, 35 are not in it (Donne 31,
   Price 2, the 2026 journal 2), the old parser never having read them.
   The 35 are not yet read.
+- 2026-10-08, A DEEPER HEADING IS A DECIDED DIFFERENCE IN THE CORPUS
+  RUN. The old parser reads only `#` and `##` as headings (READ:
+  ../writer/src/js/md.mjs:413); this app makes `###`–`######` headings
+  at the top level, in a quote and in a note, not in a verse row, a list
+  item or code (MEASURED over `parseMarkdown`). Most of the 35 new
+  parser differences above were that (asked: "something the comparison
+  should be able to figure out"). DECIDED: `tools/corpus.ts` takes the
+  headings of level 3 and deeper from this app's own parse and drops
+  their marker from the old parser's text, in document order, each once
+  (`tools/corpusRules.ts`, its test beside it); a file that then agrees
+  is counted apart, "decided: a ### heading here". MEASURED the same
+  day: text differs from the current parser 54, decided 28 — 27 of them
+  Donne, 1 a 2026 journal day; two files written in the minutes between
+  the runs (journal 2006-06-01, 2026-10-08) are among the 54.
