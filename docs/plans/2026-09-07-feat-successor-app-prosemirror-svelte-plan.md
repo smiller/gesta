@@ -1830,3 +1830,18 @@ at the head is kept current per phase.
   chord time in one replay was one whisper per LOAD — the launch URL
   carries `?store=seed` and the first hash-only navigation drops the
   query, a full load; later hash navigations load nothing. Not a fault.
+- 2026-10-08, THE CARD FILLS. Text on the dark cards was hard to read.
+  MEASURED (WCAG ratio of the ink, #1a2418, against the fill): bright-blue
+  3.24, red 3.57, bright-green 3.95, against 14.79 on the page's ground;
+  a light ink was no remedy (bright-green 3.88, red 4.29, bright-blue
+  4.74). A mockup with seven treatments, contrast read live on every card,
+  `docs/brainstorms/2026-10-08-card-fill-mockup.html`, opened in Helium.
+  DECIDED (asked, on the mockup): G — the colour at 35% over the ground
+  as the fill, the full colour as an 8px border all round; the lowest
+  ratio now 9.18 (bright-blue). The fills are hex in editor.css, not
+  color-mix: Helium reports a mixed colour as `color(srgb …)` and a
+  relative one as `oklch(…)` (MEASURED), and the copy's inline sweep
+  would carry that form into an email. Pinned by `cardFills.test`; the
+  card copy step's background readings re-approved and listed as decided
+  differences from the old app. Played over the live `page/3x3` (54
+  cards, six grids) in headless Helium, then looked at by hand.

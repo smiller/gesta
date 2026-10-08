@@ -4,6 +4,8 @@
 # line here is a decision with its record, not a way to quiet a diff.
 the launch's stages · value · the probes differ: the successor stages its launch, the current app is seeded through its seam
 with ?corner=pill · * · the paused pill under ?corner=pill is the successor's probe alone
+a card hover-copied · live · a card's fill is its colour at 35% over the ground, the colour its 8px edge (2026-10-08, the dark cards unreadable); the current app keeps the full colour as the fill
+a card hover-copied · bg · the same fill, swept inline
 a card ⌘C'd · bg · ⌘C sweeps the look inline here (2026-09-08, the copied card's colour); the current app's ⌘C did not
 a card ⌘C'd · card · the same sweep
 a card ⌘C'd · raw · the same sweep
@@ -44,6 +46,7 @@ hovered above its corner · title · the same
 the grid copied · label · nothing was clicked there — the button never showed — so the label is the idle one
 the grid copied · text · the current app's clipboard still holds the card step's ⌘C; the successor's holds the grid copied whole
 two cards ⌘C'd · grid · the successor's HTML flavour carries the grid's columns; the current app has no grid around its cards
+two cards ⌘C'd · bg · the pale fill of the card hover-copied, swept inline
 a stray line in a grid, switched back · corner · the current app pins its own refusal of the unknown word and renders the rest as paragraphs and cards; the successor refuses the grid at the parse, quotes the line, and stays in source
 the line made a card, switched back · corner · the current app's pin stands (the word is still unknown to it); the successor's clean parse released its pin
 the line made a card, switched back · grid · the successor drew the grid; the current app never does

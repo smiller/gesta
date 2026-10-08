@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Card fill mockup</title>
+<link rel="stylesheet" href="../../src/editor/editor.css">
+<style>
+/* the palette as editor.css spells it, as a variable each option reads */
+.page div.card-bright-yellow { --c: #f5c96e; }
+.page div.card-brighter-yellow { --c: #e5d35f; }
+.page div.card-light-yellow { --c: #eddc8d; }
+.page div.card-light-green { --c: #94ae6b; }
+.page div.card-bright-green { --c: #628673; }
+.page div.card-light-blue { --c: #81b1a9; }
+.page div.card-bright-blue { --c: #127a94; }
+.page div.card-red { --c: #bc5858; }
+.page div.card-pink { --c: #ed9892; }
+.page div.card-light-purple { --c: #b39daf; }
+.page div.card-orange { --c: #ffa500; }
+
+:root { --k: 35%; --L: 0.88; --edge: 1px; --band: 8px; }
+.page div[class^="card-"] { position: relative; }
+
+/* A — as now */
+.opt-now .page div[class^="card-"] { background: var(--c); }
+/* B — the fill mixed with the page's ground */
+.opt-tint .page div[class^="card-"] { background: color-mix(in srgb, var(--c) var(--k), var(--bg)); border: var(--edge) solid var(--c); }
+/* C — the same hue, lifted to one lightness */
+.opt-light .page div[class^="card-"] { background: oklch(from var(--c) var(--L) calc(c * 0.7) h); border: var(--edge) solid var(--c); }
+/* D — a pale fill, the colour as a rule down the left, like a quote's */
+.opt-rule .page div[class^="card-"] { background: color-mix(in srgb, var(--c) var(--k), var(--bg)); border: none; border-left: var(--band) solid var(--c); border-radius: 0 4px 4px 0; }
+/* E — a pale fill, the colour as a band across the top */
+.opt-band .page div[class^="card-"] { background: color-mix(in srgb, var(--c) var(--k), var(--bg)); border: 1px solid var(--c); border-top: var(--band) solid var(--c); }
+/* G — a pale fill, the band's thickness all round */
+.opt-frame .page div[class^="card-"] { background: color-mix(in srgb, var(--c) var(--k), var(--bg)); border: var(--band) solid var(--c); }
+/* F — the ground, the colour as a heavy edge */
+.opt-outline .page div[class^="card-"] { background: color-mix(in srgb, var(--c) calc(var(--k) / 3), var(--bg)); border: 3px solid var(--c); }
+
+/* the contrast badge, not part of the design */
+.cr { position: absolute; top: 3px; right: 4px; font: 10px/1.3 var(--mono); color: #333; background: rgba(255,255,255,0.85); border-radius: 2px; padding: 0 3px; pointer-events: none; }
+.cr.low { color: #fff; background: #a33; }
+body.nocr .cr { display: none; }
+.page div[class^="card-"] > .cr + * { margin-top: 0; }
+
+/* the control strip, not part of the design */
+#ctl { position: fixed; top: 8px; right: 8px; font: 12px var(--sans); background: #fff; border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px; display: grid; gap: 6px; z-index: 9; width: 250px; }
+#ctl .opts { display: grid; gap: 2px; }
+#ctl label { display: flex; gap: 6px; align-items: center; }
+#ctl .row { justify-content: space-between; }
+#ctl input[type=range] { width: 120px; }
+#ctl .note { color: var(--muted); font-size: 11px; line-height: 1.35; }
+#w { font: 11px var(--mono); color: var(--muted); }
+h2.sec { font: 600 13px var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 3em 0 0.6em; }
+/* the side-by-side table */
+.cmp { padding: 0 284px 60px 24px; }
+.cmp .line { display: grid; grid-template-columns: 7em repeat(5, 1fr); gap: 0.8em; align-items: stretch; margin-bottom: 0.8em; font-size: 0.8em; }
+.cmp .line > .lab { font: 12px var(--sans); color: var(--muted); padding-top: 0.6em; }
+.cmp .page { min-height: 0; }
+.cmp .page div[class^="card-"] { margin: 0; height: 100%; }
+</style>
+</head>
+<body>
+<div id="ctl">
+  <div class="opts">
+    <label><input type="radio" name="o" value="now" checked> A · as now</label>
+    <label><input type="radio" name="o" value="tint"> B · tint toward the page</label>
+    <label><input type="radio" name="o" value="light"> C · same hue, lighter</label>
+    <label><input type="radio" name="o" value="rule"> D · pale fill, rule at left</label>
+    <label><input type="radio" name="o" value="band"> E · pale fill, band at top</label>
+    <label><input type="radio" name="o" value="outline"> F · ground, heavy edge</label>
+    <label><input type="radio" name="o" value="frame"> G · pale fill, band all round</label>
+  </div>
+  <label class="row">colour strength <input type="range" id="k" min="10" max="70" step="5" value="35"> <span id="kv">35%</span></label>
+  <label class="row">band (D, E, G) <input type="range" id="band" min="2" max="12" step="1" value="8"> <span id="bandv">8px</span></label>
+  <label class="row">lightness (C) <input type="range" id="L" min="0.78" max="0.96" step="0.02" value="0.88"> <span id="Lv">0.88</span></label>
+  <label><input type="checkbox" id="edge" checked> edge in the full colour (B, C)</label>
+  <label><input type="checkbox" id="cr" checked> contrast badges (red under 4.5)</label>
+  <div class="note">The strength slider moves B, D, E, F and G (F at a third of it); the band slider moves D, E and G; the lightness slider moves C. The side-by-side at the foot follows the sliders too.</div>
+  <span id="w"></span>
+</div>
+<div id="top" class="opt-now">
+<main><div class="page ProseMirror">
+<h1>Cards on a page</h1>
+<p>The prose above a card is the page's own ink on the page's ground. The cards below are the ones that are hard to read now: bright-green, red and bright-blue, each with a line or two of the kind a journal day holds.</p>
+<div class="card-bright-green"><p><strong>2 August 2025</strong></p><p>Remember this.<br>Don’t let them take this away from you.</p></div>
+<div class="card-red"><p><strong>19 December 2007</strong></p><p>Just saw this year's Handel's Messiah. And if anyone were to ask me any question, my answer would simply be "love". Or "Caia". Same thing, really.</p></div>
+<div class="card-bright-blue"><ul><li>I’m doing my best.</li><li>Of course you are. I couldn’t imagine you doing anything else.</li></ul></div>
+<blockquote><p>A card can sit inside a quote:</p><div class="card-bright-green"><p>quand' una donna apparve, santa e presta<br>When a lady appeared, holy and alert.</p></div></blockquote>
+<p>Below, the grid from the card-grid mockup, then all eleven colours.</p>
+<div class="grid" style="--n:3">
+<div class="card-bright-green"><p><strong>Finding Verity</strong></p><p>tu mi fai rimembrar dove e qual era<br>Proserpina nel tempo che perdette<br>la madre lei, ed ella primavera</p><p>You make me recall where and what Proserpina was<br>at the time her mother lost her, and she the spring.</p></div>
+<div class="card-pink"><p><strong>'Ware Snakes of Tenedos</strong></p><p>Remember, when the self-criticizing Dragon comes knocking, full of frustration and bile and seductive darkness</p><p>ardentisque oculos suffecti sanguine et igni<br>sibila lambebant linguis vibrantibus ora</p></div>
+<div class="card-bright-green"><p><strong>Mary Oliver, When I Am Among the Trees</strong></p><p>Around me the trees stir in their leaves<br>and call out, "Stay awhile."</p><p>The light flows from their branches.</p></div>
+<div class="card-red"><p>O brother! Don't come without a tambourine,<br>as the sad can't join in God's celebration.</p><p>—Rumi</p></div>
+<div class="card-light-green"><p>Retrace our steps, escape above,<br>That is the task and that the strife.<br>(So said the Sibyl: she should know.)<br>How do we mend our work and life?</p></div>
+<div class="card-light-yellow"><p><strong>The Twelfth Doctor's Farewell</strong></p><p>Never be cruel, never be cowardly</p><p>Hate is foolish, and love is wise</p></div>
+<div class="card-bright-blue"><p><strong>George Saunders</strong></p><p>Find out what makes you kinder, what opens you up and brings out the most loving, generous, and unafraid version of you.</p></div>
+<div class="card-orange"><p><strong>Orange</strong></p><p>Laugh hard, run fast, be kind.</p></div>
+<div class="card-light-purple"><p><strong>Light purple</strong></p><p>Doctor, I let you go.</p></div>
+</div>
+<div class="grid" style="--n:4">
+<div class="card-light-green"><p><strong>light-green</strong> · 143</p></div>
+<div class="card-bright-green"><p><strong>bright-green</strong> · 103</p></div>
+<div class="card-light-yellow"><p><strong>light-yellow</strong> · 85</p></div>
+<div class="card-pink"><p><strong>pink</strong> · 73</p></div>
+<div class="card-light-blue"><p><strong>light-blue</strong> · 70</p></div>
+<div class="card-orange"><p><strong>orange</strong> · 50</p></div>
+<div class="card-red"><p><strong>red</strong> · 47</p></div>
+<div class="card-bright-yellow"><p><strong>bright-yellow</strong> · 41</p></div>
+<div class="card-brighter-yellow"><p><strong>brighter-yellow</strong> · 31</p></div>
+<div class="card-bright-blue"><p><strong>bright-blue</strong> · 27</p></div>
+<div class="card-light-purple"><p><strong>light-purple</strong> · 25</p></div>
+</div>
+<p>The number after each colour is how many cards of it the backup mirror holds.</p>
+
+</div></main>
+</div>
+<div class="cmp" id="cmp"><h2 class="sec">All options side by side (the radio buttons do not move these; the sliders do)</h2></div>
+<script>
+const OPTS = [["now","A · as now"],["tint","B · tint"],["light","C · lighter"],["rule","D · rule"],["band","E · band"],["outline","F · edge"],["frame","G · frame"]];
+const COLS = ["bright-green","red","bright-blue","light-green","pink"];
+const TEXT = "<p><strong>A heading line</strong></p><p>Around me the trees stir in their leaves and call out, “Stay awhile.”</p>";
+const cmp = document.getElementById("cmp");
+for (const [o, lab] of OPTS) {
+  const line = document.createElement("div");
+  line.className = "line";
+  line.innerHTML = `<div class="lab">${lab}</div>` + COLS.map(c => `<div class="opt-${o}"><div class="page"><div class="card-${c}">${TEXT}</div></div></div>`).join("");
+  cmp.append(line);
+}
+const shown = document.getElementById("top");
+const set = o => { shown.className = "opt-" + o; badges(); };
+for (const r of document.querySelectorAll("input[name=o]")) r.addEventListener("change", () => set(r.value));
+const root = document.documentElement.style;
+document.getElementById("k").addEventListener("input", e => { root.setProperty("--k", e.target.value + "%"); document.getElementById("kv").textContent = e.target.value + "%"; badges(); });
+document.getElementById("L").addEventListener("input", e => { root.setProperty("--L", e.target.value); document.getElementById("Lv").textContent = e.target.value; badges(); });
+document.getElementById("band").addEventListener("input", e => { root.setProperty("--band", e.target.value + "px"); document.getElementById("bandv").textContent = e.target.value + "px"; });
+document.getElementById("edge").addEventListener("change", e => root.setProperty("--edge", e.target.checked ? "1px" : "0px"));
+document.getElementById("cr").addEventListener("change", e => document.body.classList.toggle("nocr", !e.target.checked));
+// contrast of the computed ink against the computed fill, both read through a canvas so any CSS colour form resolves to sRGB
+const cx = Object.assign(document.createElement("canvas"), { width: 1, height: 1 }).getContext("2d", { willReadFrequently: true });
+const rgb = s => { cx.clearRect(0, 0, 1, 1); cx.fillStyle = "#f4f7ec"; cx.fillRect(0, 0, 1, 1); cx.fillStyle = s; cx.fillRect(0, 0, 1, 1); return [...cx.getImageData(0, 0, 1, 1).data].slice(0, 3); };
+const lum = c => { const [r, g, b] = c.map(v => v / 255).map(v => v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+function badges() {
+  for (const card of document.querySelectorAll('.page div[class^="card-"]')) {
+    const cs = getComputedStyle(card);
+    const a = lum(rgb(cs.backgroundColor)), b = lum(rgb(cs.color));
+    const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    let el = card.querySelector(":scope > .cr");
+    if (!el) { el = document.createElement("span"); el.className = "cr"; card.prepend(el); }
+    el.textContent = ratio.toFixed(1);
+    el.classList.toggle("low", ratio < 4.5);
+  }
+}
+const w = document.getElementById("w");
+const size = () => { document.documentElement.style.setProperty("--client-w", document.querySelector("main").clientWidth + "px"); w.textContent = `window ${innerWidth}px`; };
+addEventListener("resize", size); size(); badges();
+</script>
+</body>
+</html>

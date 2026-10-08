@@ -28,13 +28,13 @@ Escape: {"open":false,"screen":"page/Horace · sel none · bar off · panel none
 a js block typed: {"lang":"js","label":"\"js\"","tokens":["tok-k:const","tok-n:42","tok-c:// answer"],"screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 hovered: {"show":true,"title":"Copy this code block","insideBlock":true,"labelHidden":"0","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 clicked: {"value":"copied","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a card hover-copied: {"label":"copied","live":"rgb(129, 177, 169)","bg":"rgb(129, 177, 169)","grid":true,"card":true,"screen":"page/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a card ⌘C'd: {"bg":"rgb(129, 177, 169)","grid":true,"card":true,"screen":"page/Carded · sel 63 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a card hover-copied: {"label":"copied","live":"rgb(204, 223, 213)","bg":"rgb(204, 223, 213)","grid":true,"card":true,"screen":"page/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a card ⌘C'd: {"bg":"rgb(204, 223, 213)","grid":true,"card":true,"screen":"page/Carded · sel 63 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 pasted on a fresh page: {"fence":true,"lines":7,"cards":1,"pairs":1}
 a grid pasted: {"grid":true,"columns":2,"cards":2,"wider":true,"type":"14.4px","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 hovered above its corner: {"show":true,"label":"copy grid","title":"Copy this grid","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the grid copied: {"label":"copied","text":"::: grid 2\n::: card-light-blue\nalpha\n:::","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-two cards ⌘C'd: {"bg":"rgb(129, 177, 169)","grid":true,"card":true,"screen":"page/Gridded · sel 11 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+two cards ⌘C'd: {"bg":"rgb(204, 223, 213)","grid":true,"card":true,"screen":"page/Gridded · sel 11 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 two cards pasted mid-paragraph: {"grid":true,"columns":2,"cards":2,"wider":true,"type":"14.4px","screen":"page/Pasted Grid · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a stray line in a grid, switched back: {"corner":"cannot render page/Gridded — a grid holds only cards; \"loose\" is not a card; shown as source (click to copy)","screen":"page/Gridded · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 the faulty entry opened: {"source":true,"corner":"cannot render page/Gridded — a grid holds only cards; \"loose\" is not a card; shown as source (click to copy)","screen":"page/Gridded · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
