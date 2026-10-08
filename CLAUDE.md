@@ -227,7 +227,8 @@ is in the plan's record, under the phase named):
   this app's backup, the default of all three corpus tools;
   `gesta-snapshots` is the old app's and is never read (2026-10-08).
   `tools/corpusRules.ts` its decided differences from the old parser,
-  pure: a `###`–`######` heading here, text there.
+  pure: a `###`–`######` heading here, text there; emphasis across a
+  line break here, its delimiters text there.
   Phase 0's gate: nothing in later phases is worth building until it is
   green over the corpus.
 - `tools/helium-probe.mjs` — the built page opened in headless Helium by

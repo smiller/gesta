@@ -11,8 +11,8 @@
         CURRENT app's parser reads from the same source, whitespace aside —
         except over a file holding a `::: grid` or a `::: stanza`, blocks
         the current app does not have (2026-09-22, 2026-09-27); and a
-        `###`–`######` heading here, text there, is a decided difference,
-        counted apart (2026-10-08).
+        `###`–`######` heading here, text there, and emphasis across a
+        line break, are decided differences, counted apart (2026-10-08).
    Usage: node tools/corpus.ts [dir] [--limit N] [--only substring] [--report file]
    The report lists every file that fails any question, with the first
    differing lines; the summary counts failures by question. Read-only. */
@@ -20,7 +20,7 @@ import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from "n
 import { join, relative, dirname } from "node:path";
 import { parseMarkdown, visibleText } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
-import { deeperHeadings, type Heading } from "./corpusRules.ts";
+import { deeperHeadings, spanningEmphasis, type Heading, type Run } from "./corpusRules.ts";
 import type { Node } from "prosemirror-model";
 
 const args = process.argv.slice(2);
@@ -49,6 +49,24 @@ function deepHeadings(doc: Node): Heading[] {
   const out: Heading[] = [];
   doc.descendants((n) => { if (n.type.name === "heading" && n.attrs.level >= 3) out.push({ level: n.attrs.level, text: n.textContent }); });
   return out;
+}
+function spanningRuns(doc: Node): Run[] {
+  const found: { at: number; run: Run }[] = [];
+  doc.descendants((block, pos) => {
+    if (!block.isTextblock) return true;
+    for (const mark of ["em", "strong"] as const) {
+      let start = -1, text = "", crosses = false;
+      const close = () => { if (start >= 0 && crosses) found.push({ at: start, run: { mark, text } }); start = -1; text = ""; crosses = false; };
+      block.forEach((n, off) => {
+        if (!n.marks.some((m) => m.type.name === mark)) return close();
+        if (start < 0) start = pos + off;
+        if (n.type.name === "hard_break") { crosses = true; text += "\n"; } else text += n.textContent;
+      });
+      close();
+    }
+    return false;
+  });
+  return found.sort((a, b) => a.at - b.at).map((f) => f.run);
 }
 
 /* the current app's parse arm, for the text comparison; skipped when the
@@ -96,7 +114,7 @@ function firstTextDiff(a: string, b: string): string {
   return `  at ${k}: ${JSON.stringify(a.slice(from, k + 40))}\n  read as: ${JSON.stringify(b.slice(from, k + 40))}`;
 }
 
-const counts = { files: 0, ok: 0, fixedPoint: 0, docChanged: 0, roundTrip: 0, stars: 0, text: 0, deeperHeadings: 0, textStarsMore: 0, textStarsFewer: 0, threw: 0 };
+const counts = { files: 0, ok: 0, fixedPoint: 0, docChanged: 0, roundTrip: 0, stars: 0, text: 0, deeperHeadings: 0, spanningEmphasis: 0, textStarsMore: 0, textStarsFewer: 0, threw: 0 };
 const lines: string[] = [];
 const t0 = Date.now();
 for (const path of walk(dir)) {
@@ -135,8 +153,12 @@ for (const path of walk(dir)) {
       const mine = collapse(t1);
       if (cur !== mine) {
         const deeper = deeperHeadings(cur, deepHeadings(doc));
-        if (deeper.n && deeper.text === mine) counts.deeperHeadings++;
-        cur = deeper.text;
+        const spanning = spanningEmphasis(deeper.text, spanningRuns(doc));
+        if (spanning.text === mine) {
+          if (deeper.n) counts.deeperHeadings++;
+          if (spanning.n) counts.spanningEmphasis++;
+        }
+        cur = spanning.text;
       }
       if (cur !== mine) {
         counts.text++;
@@ -158,7 +180,7 @@ for (const path of walk(dir)) {
 }
 const summary = [
   `corpus: ${dir}`,
-  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, text differs from the current parser ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, threw ${counts.threw}`,
+  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, text differs from the current parser ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, emphasis across a line ${counts.spanningEmphasis}, threw ${counts.threw}`,
   `${((Date.now() - t0) / 1000).toFixed(1)}s`,
 ];
 mkdirSync(dirname(reportPath), { recursive: true });

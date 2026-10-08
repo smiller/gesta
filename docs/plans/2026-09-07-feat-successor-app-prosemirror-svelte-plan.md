@@ -1885,3 +1885,16 @@ at the head is kept current per phase.
   day: text differs from the current parser 54, decided 28 — 27 of them
   Donne, 1 a 2026 journal day; two files written in the minutes between
   the runs (journal 2006-06-01, 2026-10-08) are among the 54.
+- 2026-10-08, EMPHASIS ACROSS A LINE BREAK IS A DECIDED DIFFERENCE TOO.
+  MEASURED on ../writer's `mdToHtml`: emphasis is matched within one
+  line only — `> *All my love,\n> Caia*`, `**bold\nacross**` and
+  `_a\nb_` all come out with their delimiters as text, `*one line*` as
+  <em>. This app reads them as emphasis across the break, the break
+  carrying the mark. DECIDED (asked: the two-line italic is right here):
+  `tools/corpus.ts` collects each em or strong run that crosses a
+  hard_break from this app's parse and drops the run's own delimiters
+  (`*`/`_`, `**`/`__`) from the old parser's text; a file that then
+  agrees is counted "emphasis across a line". MEASURED the same day:
+  text differs from the current parser 42, decided 28 headings and 12
+  emphasis — the 12 are ten journal days (2006-06-01 and today's among
+  them) and two pages, and no file joined the list.
