@@ -1924,3 +1924,22 @@ at the head is kept current per phase.
   in headless Helium over five typed lines. NOT a fault, and not
   changed: the italics over `*…*` in that Ruby were marks, not text, so
   the code kept the words and lost the asterisks.
+- 2026-10-08, THE STAGE DIRECTIONS OF TEY'S AND WILLIAMS'S PLAYS. Asked:
+  every direction one italic run — "switching out of italics for names
+  stops the stage directions from being formatted as stage directions
+  and not counted as lines"; Tey's names, lower case where the print had
+  small capitals, in capitals (asked: capitals over the speaker labels'
+  spelling); a missing ] added (asked). `tools/stageDirections.ts` (pure,
+  18 tests from the plays' own lines) and `tools/stageDirectionsRun.ts`
+  over the backup: 98 entries of 14 plays read, 88 changed, 1,345
+  directions rewritten, Octopus's 21 continuation rows joined, every
+  changed line's words checked unchanged and every entry a fixed point.
+  MEASURED direction rows counted as lines: Octopus 11 → 0, Chelmsford
+  1 → 0; A Myth of Shakespeare's 21 and Cranmer's 1 left are spoken or
+  sung rows beside a roman direction, where the quoted Shakespeare is the
+  italic. READ in the review: the words outside the italics are names in
+  all but three places (a slip in Dickon, a stress in The Little Dry
+  Thorn, a shout in Valerius), put back by name in the runner; four
+  directions with a title or a connective in roman made italic by name.
+  Delivered as an import folder of the 88 entries (`importCorpus`: 88 of
+  88) with a before-and-after page beside it.
