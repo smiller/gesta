@@ -41,7 +41,7 @@ import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRe
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
-import { matches, nearest, replaceAt, replaceEvery, countLabel } from "./editor/replace.ts";
+import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "./editor/replace.ts";
 import type { ReplacePort } from "./editor/surface.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
@@ -662,10 +662,14 @@ if (fixture && fixtures[fixture]) {
     return null;
   };
   acts.replace.dismiss = () => { dismissReplace(); fromRendered = false; };
+  /* a rebuilt view's caret sits at its end: put back at the match the bar
+     stood on (pin: replace › the entry saved in another window, the bar open) */
   acts.replace.check = () => {
-    if (!rb.open || port()) return;
+    if (!rb.open) return;
+    const was = at >= 0 ? hits[at] : 0;
+    if (port()) return;
     const a = document.activeElement;
-    if (session.mdView && (!a || a === document.body || a.closest(".replacebar"))) session.replacer()?.focus();
+    if (session.mdView && (!a || a === document.body || a.closest(".replacebar"))) session.replacer()?.place(was);
   };
   /* every close switches back to the view the bar was opened from, but a
      navigation or a rebuilt view, which only closes it
@@ -673,8 +677,7 @@ if (fixture && fixtures[fixture]) {
      leaves the source view open and the cursor in its text, not in the
      hidden Find box (pin: replace › Escape, the switch back refused) */
   const closeBack = (focus: boolean): void => {
-    if (!rb.open) return;
-    if (session.replacer() !== barPort) { acts.replace.dismiss(); return; }
+    if (!port()) return;
     const back = fromRendered;
     acts.replace.dismiss();
     const inBar = !!document.activeElement?.closest(".replacebar");
@@ -728,7 +731,10 @@ if (fixture && fixtures[fixture]) {
   acts.replace.one = () => {
     const p = port();
     if (!p || !hits.length) return;
-    if (at < 0) { seek(p, p.start(headFoot())); return; }
+    /* a keystroke not yet recounted moves the text under the offsets: the
+       match sought again rather than written at the old place
+       (pin: replace.test › whether the text still has the find) */
+    if (at < 0 || !holds(p.text(), hits[at], rb.find)) { seek(p, at < 0 ? p.start(headFoot()) : hits[at]); return; }
     const r = replaceAt(p.text(), hits[at], rb.find, rb.with);
     edit(p, hits[at], hits[at] + rb.find.length, rb.with, r.caret);
     seek(p, r.caret);

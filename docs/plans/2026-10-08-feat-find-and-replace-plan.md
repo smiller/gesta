@@ -83,8 +83,35 @@ every hand step played first in headless Helium.
   9. the port found by duck-typing — declared on `Surface`;
   10. a comment restating its code — gone.
 
+- 2026-10-08, REVIEW CYCLE 2, the confirmation pass, asked for: one
+  `/code-review` at high over `237852f..475a5ec`. COST 113,702 tokens (2
+  input + 4,058 cache creation + 107,265 cache read + 2,377 output). Nine
+  findings:
+  1. after another window's save closed the bar, the rebuilt text's caret
+     sat at its end — now at the match the bar stood on (reading: caret
+     25 with the old call, 3 with the fix);
+  2. the once-a-frame recount left the offsets a keystroke behind for up
+     to a frame, and Replace wrote at them — Replace now checks the text
+     still holds the find at the match, else seeks it again (`holds`,
+     replace.test);
+  3. the same, at its altitude: a check at write time — taken as 2's fix,
+     the view held as well, since a rebuilt view must still close the bar;
+  4. the section's last ⌃⌘M was left over, toggling back to source and
+     waiting out 5s each run — removed;
+  5. closeBack spelled out port()'s test again — it calls port();
+  6. two comments moved into surface.ts spoke of other modules — one
+     removed, one reworded to its own parameter;
+  7. MIRROR's comment restated the constant — removed;
+  8. a recount still lays the whole text out — MEASURED in Paradise Lost
+     (232 KB): 17–37 ms a keystroke with the bar open, mostly about 24,
+     against 16.7 with it closed; left as it is;
+  9. the 1px-rule test read one selector shape only — it now reads every
+     rule naming a card, and fails on an `:is(…)` rule setting a border
+     (seen failing, then the stylesheet restored).
+  No further round (2 cycles).
+
 ## Status
 
 Built 2026-10-08.
 
-REVIEW CYCLES: 1
+REVIEW CYCLES: 2

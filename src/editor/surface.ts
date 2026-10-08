@@ -25,14 +25,13 @@ export interface Surface {
   insertText(text: string): void;
   insertPicture(name: string): void;
   words(): number;
-  /* the source view's alone */
   replace?: ReplacePort;
   destroy(): void;
 }
 /* `under`: the window's height above which no text shows */
 export interface ReplacePort {
   text(): string;
-  /* the caret where it is on screen, else the first character under the masthead */
+  /* the caret where it is on screen, else the first character below `under` */
   start(under: number): number;
   /* `now` -1: every match marked, none current, nothing moved */
   show(hits: number[], len: number, now: number, under: number): void;
@@ -40,6 +39,8 @@ export interface ReplacePort {
   edit(from: number, to: number, text: string, caret: number): void;
   watch(fn: () => void): () => void;
   focus(): void;
+  /* the caret at `pos`, clamped to the text, the window left where it is */
+  place(pos: number): void;
 }
 
 export interface Viewport { y(): number; scrollTo(y: number): void; under(): number }

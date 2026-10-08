@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matches, nearest, replaceAt, replaceEvery, countLabel } from "./replace.ts";
+import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "./replace.ts";
 
 describe("matches", () => {
   it("every place the characters stand, exactly, case counting", () => {
@@ -50,5 +50,13 @@ describe("countLabel", () => {
     expect(countLabel("*-*", 0, -1)).toBe("none");
     expect(countLabel("*-*", 7, 1)).toBe("2 of 7");
     expect(countLabel("*-*", 7, -1)).toBe("7 found");
+  });
+});
+
+describe("holds", () => {
+  it("whether the text still has the find at a match's offset: a keystroke not yet recounted moves it", () => {
+    expect(holds("a*-*b", 1, "*-*")).toBe(true);
+    expect(holds("xa*-*b", 1, "*-*")).toBe(false);
+    expect(holds("a*-", 1, "*-*")).toBe(false);
   });
 });

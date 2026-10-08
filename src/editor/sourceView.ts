@@ -11,7 +11,6 @@ export interface SourceOptions {
   onRefuse: (why: string) => void;
 }
 
-/* the textarea's type and wrap, copied to every layer that must lay its text out as it does */
 const MIRROR = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const;
 const mirror = (from: HTMLElement, to: HTMLElement): void => { const cs = getComputedStyle(from); for (const p of MIRROR) to.style[p] = cs[p]; };
 
@@ -116,6 +115,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     },
     watch: (fn) => { ta.addEventListener("input", fn); return () => ta.removeEventListener("input", fn); },
     focus: () => ta.focus({ preventScroll: true }),
+    place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
   const insertText = (text: string): void => {
     ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, "end");

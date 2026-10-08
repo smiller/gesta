@@ -1221,8 +1221,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘H over the bar", { ...(await R.replaceBar(page)), help: (await R.helpOpen(page)).help });
   await page.keyboard.press("Escape");
   await page.waitForTimeout(100);
-  /* the same entry saved in another window rebuilds the source view under the bar: the bar closes, its offsets belonging to the text it was opened on */
+  /* the same entry saved in another window rebuilds the source view under the bar: the bar closes, its offsets belonging to the text it was opened on, and the caret goes back to the match it stood on, not to the text's end */
   await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(150);
+  await page.fill("#replacefind", "*-*").catch(() => {});
   /* the switch's own save lands first, or the other window's write is refused as stale */
   await page.waitForTimeout(1500);
   { const other = await page.context().newPage();
@@ -1232,12 +1234,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
     /* the landed write reaches this window by its notice: waited for, so a reading never races it */
     await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
     await page.waitForTimeout(100);
-    await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null) });
+    await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
     await other.close(); }
   await page.keyboard.press("Escape");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {}); }
-  await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
     }],
     ["pill", async () => {
   if (A.pill) {

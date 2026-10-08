@@ -40,9 +40,13 @@ describe("card fills", () => {
     }
   });
 
-  it("a colour outside the eleven keeps the quiet 1px rule: no rule for every card sets another border", () => {
-    const rules = [...css.matchAll(/\.page div\[class\^="card-"\] \{([^}]*)\}/g)].map((m) => m[1]);
-    expect(rules.length).toBeGreaterThan(0);
-    for (const r of rules) for (const b of r.match(/border(-color|-width)?:[^;]*/g) ?? []) expect(b).toBe("border: 1px solid var(--rule)");
+  it("a colour outside the eleven keeps the quiet 1px rule: only the eleven's own rules set another border", () => {
+    const own = new RegExp(`^\\.page div\\.card-(${COLOURS.join("|")})$`);
+    const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)].filter((m) => /card-/.test(m[1]));
+    expect(rules.length).toBeGreaterThan(COLOURS.length);
+    for (const [, sel, body] of rules) {
+      if (own.test(sel.trim())) continue;
+      for (const b of body.match(/border(-[a-z]+)*\s*:[^;]*/g) ?? []) expect(b, sel.trim()).toMatch(/^border(-bottom)?: 1px solid var\(--rule\)$|^border-radius:|^border-(top|bottom)-(left|right)-radius:/);
+    }
   });
 });

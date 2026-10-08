@@ -11,6 +11,10 @@ export function nearest(hits: number[], pos: number): number {
   return k < 0 ? 0 : k;
 }
 
+export function holds(text: string, hit: number, q: string): boolean {
+  return text.startsWith(q, hit);
+}
+
 export function replaceAt(text: string, hit: number, q: string, w: string): { text: string; caret: number } {
   return { text: text.slice(0, hit) + w + text.slice(hit + q.length), caret: hit + w.length };
 }
