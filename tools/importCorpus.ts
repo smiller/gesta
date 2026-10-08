@@ -10,7 +10,7 @@ import { entryLayer } from "../src/store/entries.ts";
 import { memEntryStore, memImageStore } from "../src/store/store.ts";
 import type { ImportFile } from "../src/store/files.ts";
 
-const dir = process.argv[2] ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-snapshots/current");
+const dir = process.argv[2] ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const files: ImportFile[] = [];
 function walk(d: string): void {
   for (const name of readdirSync(d).sort()) {

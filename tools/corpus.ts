@@ -22,7 +22,7 @@ import { serializeMarkdown } from "../src/model/serialize.ts";
 const args = process.argv.slice(2);
 const flag = (name: string): string | undefined => { const i = args.indexOf(name); return i < 0 ? undefined : args[i + 1]; };
 const dir = args.find((a, i) => !a.startsWith("--") && (i === 0 || !args[i - 1].startsWith("--")))
-  ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-snapshots/current");
+  ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const limit = flag("--limit") ? +flag("--limit")! : Infinity;
 const only = flag("--only");
 const reportPath = flag("--report") ?? join(dirname(new URL(import.meta.url).pathname), "out", "corpus-report.txt");

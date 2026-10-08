@@ -1845,3 +1845,18 @@ at the head is kept current per phase.
   card copy step's background readings re-approved and listed as decided
   differences from the old app. Played over the live `page/3x3` (54
   cards, six grids) in headless Helium, then looked at by hand.
+- 2026-10-08, THE CORPUS IS GESTA'S OWN BACKUP. The corpus tools
+  (`tools/corpus.ts`, `tools/importCorpus.ts`, `tools/referenceCorpus.ts`)
+  defaulted to `~/Library/CloudStorage/Dropbox/gesta-snapshots/current`,
+  the old app's backup mirror, which stopped on 2026-09-07 (READ: its
+  newest file, 13,565 entry docs). Found when a card count quoted from it
+  was a month stale. DECIDED (asked): they default to
+  `~/Library/CloudStorage/Dropbox/gesta-backups/current`, this app's
+  backup (MEASURED: 14,269 files, its newest written the same morning),
+  and no live reference to gesta-snapshots is left; it is the old app's.
+  Every earlier mention of it in this record and in the plans and
+  brainstorms beside it records what was measured over it on its day and
+  stands as written. MEASURED the same day: 4,815 of gesta-backups'
+  14,269 files are Dropbox online-only placeholders (no local blocks;
+  gesta-snapshots had none), so a corpus run reads at Dropbox's download
+  pace until the folder is kept offline.

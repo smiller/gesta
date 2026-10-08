@@ -13,7 +13,7 @@ import { referenceLabel } from "../src/store/reference.ts";
 import { splitKey } from "../src/store/exportEntries.ts";
 
 const args = process.argv.slice(2);
-const dir = args[0] && !args[0].includes("/") || !args[0] ? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-snapshots/current") : args.shift()!;
+const dir = args[0] && !args[0].includes("/") || !args[0] ? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current") : args.shift()!;
 const cache: Record<string, string> = Object.create(null);
 function walk(d: string): void {
   for (const name of readdirSync(d).sort()) {
