@@ -223,7 +223,9 @@ is in the plan's record, under the phase named):
   the view switch). Tests sit beside them as `*.test.ts`.
 - `tools/corpus.ts` — the whole-corpus round trip over an export folder,
   `node tools/corpus.ts [dir]`; writes `tools/out/corpus-report.txt`.
-  THE CORPUS is `~/Library/CloudStorage/Dropbox/gesta-backups/current`,
+  It checks the round trip alone; `--writer` adds the comparison with
+  the old app's parser, off by default since 2026-10-08, every form new
+  here reading as a difference there. THE CORPUS is `~/Library/CloudStorage/Dropbox/gesta-backups/current`,
   this app's backup, the default of all three corpus tools;
   `gesta-snapshots` is the old app's and is never read (2026-10-08).
   `tools/corpusRules.ts` its decided differences from the old parser,

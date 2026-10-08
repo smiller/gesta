@@ -7,13 +7,17 @@
         newline counts, and a www. link target gaining https://).
      3. NO FILE MADE WORSE — the literal asterisks in the parsed text of out
         do not outnumber those in the parsed text of src (a text-stable loss
-        is invisible to a byte diff), and the parsed text matches what the
-        CURRENT app's parser reads from the same source, whitespace aside —
-        except over a file holding a `::: grid` or a `::: stanza`, blocks
-        the current app does not have (2026-09-22, 2026-09-27); and a
-        `###`–`######` heading here, text there, and emphasis across a
-        line break, are decided differences, counted apart (2026-10-08).
-   Usage: node tools/corpus.ts [dir] [--limit N] [--only substring] [--report file]
+        is invisible to a byte diff).
+     4. With --writer only: the parsed text matches what the CURRENT app's
+        parser reads from the same source, whitespace aside — except over a
+        file holding a `::: grid` or a `::: stanza`, blocks the current app
+        does not have (2026-09-22, 2026-09-27); and a `###`–`######` heading
+        here, text there, and emphasis across a line break, are decided
+        differences, counted apart (2026-10-08). Off by default since
+        2026-10-08: every form new here reads as a difference there, and
+        the question it answered, that nothing was lost at the cutover, was
+        settled then; kept for a question about something ported.
+   Usage: node tools/corpus.ts [dir] [--writer] [--limit N] [--only substring] [--report file]
    The report lists every file that fails any question, with the first
    differing lines; the summary counts failures by question. Read-only. */
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from "node:fs";
@@ -25,7 +29,8 @@ import type { Node } from "prosemirror-model";
 
 const args = process.argv.slice(2);
 const flag = (name: string): string | undefined => { const i = args.indexOf(name); return i < 0 ? undefined : args[i + 1]; };
-const dir = args.find((a, i) => !a.startsWith("--") && (i === 0 || !args[i - 1].startsWith("--")))
+const writer = args.includes("--writer");
+const dir = args.find((a, i) => !a.startsWith("--") && (i === 0 || !args[i - 1].startsWith("--") || args[i - 1] === "--writer"))
   ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const limit = flag("--limit") ? +flag("--limit")! : Infinity;
 const only = flag("--only");
@@ -69,10 +74,10 @@ function spanningRuns(doc: Node): Run[] {
   return found.sort((a, b) => a.at - b.at).map((f) => f.run);
 }
 
-/* the current app's parse arm, for the text comparison; skipped when the
-   sibling repository is not there */
+/* the current app's parse arm, for question 4, under --writer; skipped
+   when the sibling repository is not there */
 let currentMdToHtml: ((md: string) => string) | null = null;
-try {
+if (writer) try {
   const mod = await import(new URL("../../writer/src/js/md.mjs", import.meta.url).href) as { mdToHtml: (md: string) => string };
   currentMdToHtml = mod.mdToHtml;
 } catch (e) {
@@ -180,7 +185,8 @@ for (const path of walk(dir)) {
 }
 const summary = [
   `corpus: ${dir}`,
-  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, text differs from the current parser ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, emphasis across a line ${counts.spanningEmphasis}, threw ${counts.threw}`,
+  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, threw ${counts.threw}` +
+    (writer ? `; with the current parser: text differs ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, emphasis across a line ${counts.spanningEmphasis}` : ""),
   `${((Date.now() - t0) / 1000).toFixed(1)}s`,
 ];
 mkdirSync(dirname(reportPath), { recursive: true });

@@ -1898,3 +1898,17 @@ at the head is kept current per phase.
   text differs from the current parser 42, decided 28 headings and 12
   emphasis — the 12 are ten journal days (2006-06-01 and today's among
   them) and two pages, and no file joined the list.
+- 2026-10-08, THE OLD PARSER'S COMPARISON OFF BY DEFAULT. Read once over
+  the live corpus the same day: 42 files, 16 slips in the source (the
+  reader fixing them, the lines written out), 26 where this app reads
+  right — forms the old app never had, italics nested or across a line,
+  links it ended short. DECIDED (asked: "move it behind --writer"):
+  `node tools/corpus.ts` asks the round trip's questions alone; `--writer`
+  adds the comparison with ../writer's parser and its two decided rules,
+  for a question about something ported. The question it answered, that
+  nothing was lost at the cutover, was settled on 2026-09-22; every form
+  new here would have needed a rule of its own. MEASURED: by default
+  13,930 files, 13,900 clean, round trip differs 30, the gate's four
+  counts 0; with --writer, text differs 42 as before. The fence over this
+  app's own reading of an unchanged file, offered as its replacement,
+  was not wanted.
