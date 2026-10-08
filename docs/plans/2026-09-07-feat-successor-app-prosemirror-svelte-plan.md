@@ -1857,6 +1857,17 @@ at the head is kept current per phase.
   Every earlier mention of it in this record and in the plans and
   brainstorms beside it records what was measured over it on its day and
   stands as written. MEASURED the same day: 4,815 of gesta-backups'
-  14,269 files are Dropbox online-only placeholders (no local blocks;
-  gesta-snapshots had none), so a corpus run reads at Dropbox's download
-  pace until the folder is kept offline.
+  14,269 files were Dropbox online-only placeholders (no local blocks;
+  gesta-snapshots had none), and an import run over it sat idle on
+  Dropbox's downloads, about 135 files in 3 minutes, and was stopped.
+  The folder was marked "Make available offline" the same day; its last
+  placeholder came down 16 minutes later. THE FIRST RUNS OVER IT, the
+  same day: `node tools/importCorpus.ts` read 14,269 files, 13,930 entry
+  docs attempted, 13,930 imported, 0 failed, 338 pictures filed, 4.1 s;
+  `node tools/corpus.ts`, 13,930 files, 20 s: not a fixed point 0,
+  document changed 0, asterisks grew 0, threw 0; round trip differs 30
+  (31 over gesta-snapshots); text differs from the current parser 80
+  (44 there) — of the 80 files, 43 are byte-identical to their
+  gesta-snapshots copy, 2 changed since, 35 are not in it (Donne 31,
+  Price 2, the 2026 journal 2), the old parser never having read them.
+  The 35 are not yet read.
