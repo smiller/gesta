@@ -99,3 +99,15 @@ test("a picture the import files is found where the entry looks, for every kind 
     expect(Object.keys(images)).toEqual([pictureKey(date, tag, "pic.webp")]);
   }
 });
+test("an import that wrote anything tells the sink once it is done, so a backup is scheduled; one that wrote nothing does not", async () => {
+  let told = 0;
+  const { s } = sink();
+  s.landed = () => { told++; };
+  await importFiles([{ dir: "journal/2026/", name: "2026-01-05.md", text: "a" }, { dir: "journal/2026/", name: "2026-01-06.md", text: "b" }], s);
+  expect(told).toBe(1);
+  const none = sink(false);
+  let toldNone = 0;
+  none.s.landed = () => { toldNone++; };
+  await importFiles([{ dir: "journal/2026/", name: "2026-01-05.md", text: "a" }], none.s);
+  expect(toldNone).toBe(0);
+});

@@ -1039,7 +1039,7 @@ if (fixture && fixtures[fixture]) {
       if (!confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
           " from this folder? Each one overwrites that entry in this journal, and there is no undo.")) return;
       p = notices.progress("importing…");
-      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set }, p.step).then((tally) => {
+      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, landed: () => backup.scheduleBackup() }, p.step).then((tally) => {
         count();
         let msg = "imported " + tally.imported;
         if (tally.failed) {

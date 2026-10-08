@@ -13,6 +13,10 @@ import { entryDocs, filePath, type ImportFile } from "./files.ts";
 export interface ImportSink {
   setEntry(ekey: string, md: string): Promise<boolean>;
   setImage(path: string, bytes: Uint8Array): Promise<void>;
+  /* once, after an import that wrote anything: an import is no edit, and
+     its entries waited for the next launch's backup
+     (pin: importFiles.test › an import that wrote anything tells the sink) */
+  landed?(): void;
 }
 export type Sidecars = Record<string, Uint8Array | null>;
 export type Outcome = "imported" | "skipped" | "failed";
@@ -69,5 +73,8 @@ export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: 
       },
       (err: unknown) => { tally.failed++; tally.failures.push({ path, error: String((err as Error)?.message ?? err) }); },
     );
-  }).then(() => { if (onProgress) onProgress(++done, docs.length); }), Promise.resolve()).then(() => tally);
+  }).then(() => { if (onProgress) onProgress(++done, docs.length); }), Promise.resolve()).then(() => {
+    if (tally.imported) sink.landed?.();
+    return tally;
+  });
 }

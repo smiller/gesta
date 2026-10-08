@@ -1943,3 +1943,13 @@ at the head is kept current per phase.
   directions with a title or a connective in roman made italic by name.
   Delivered as an import folder of the 88 entries (`importCorpus`: 88 of
   88) with a before-and-after page beside it.
+- 2026-10-08, AN IMPORT SCHEDULES A BACKUP. FOUND after the stage
+  directions' import: 88 entries imported, the tab left, and the backup
+  copy unchanged (READ: main.ts's import path scheduled none; an edit
+  schedules one through the session's onEdit). DECIDED (asked): the
+  import tells its sink once it has written anything (`landed`,
+  importFiles.test), and main.ts schedules the backup there — written
+  ten minutes later or on leaving the tab. Checked by hand: a one-page
+  folder imported, the tab left, the page in the backup the same minute.
+  No review run for the one connecting line in main.ts; offered for the
+  next batch touching it.
