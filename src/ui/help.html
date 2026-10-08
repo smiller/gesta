@@ -17,6 +17,7 @@
 <tr><td>⌃⌘R</td><td>copy a reference to the selected passage</td></tr>
 <tr><td>⌃⌘C</td><td>copy a link to this entry</td></tr>
 <tr><td>⌃⌘M</td><td>switch between rendered text and markdown source</td></tr>
+<tr><td>⌃⌘E</td><td>find and replace in this entry’s markdown</td></tr>
 <tr><td>⌃⌘H</td><td>help — open this panel</td></tr>
 </table>
 <h3>Writing &amp; saving</h3>
@@ -98,6 +99,7 @@
 <h3>Markdown source view</h3>
 <ul>
 <li>⌃⌘M toggles the page between rendered text and its markdown source; both views are editable. Inline images appear in the source as <code>![](name.webp)</code> references to the pictures filed beside the entry, and can be moved, duplicated, or deleted.</li>
+<li>⌃⌘E opens find and replace. ⌃⌘R is already used for references, so ⌃⌘E (for exchange) is used for replace. It works on the markdown, so from the rendered view it switches to the source first — “Source view, to replace” whispers in the corner — and closing the bar (Escape, or the ×) switches back. Type into Find and the count shows which match is outlined, “2 of 7”; Enter goes to the next, Shift+Enter the previous. Type the new text into Replace with: Skip leaves the outlined match as it is and goes on to the next; Enter in Replace with, or the Replace button, replaces it and goes on; Replace All replaces every one in the entry. The match is exact — the same characters, capitals counting. ⌘Z in the text undoes one replacement, or the whole of a Replace All at once. Replacing works on the open entry only.</li>
 <li>The toggle keeps your place. Switching there and back puts the caret where you left it. A first switch into a view, or one taken after editing in the other, matches the two texts up and carries your place across instead — close, but not always to the character, wherever the markdown and what it renders differ most.</li>
 <li>A table written in the source — a header row, a <code>| --- | --- |</code> divider, then the body rows — renders as a table when you switch back, and imported entries carry their tables in. A table can also sit inside a quote — keep the <code>&gt;</code> on each row.</li>
 <li>A bullet (<code>-</code>) or numbered (<code>1.</code>) list nests: indent an item two spaces per level in the source, and the sub-list survives the switch back to rendered text. A list can also sit inside a quote — keep the <code>&gt;</code> on each item line.</li>

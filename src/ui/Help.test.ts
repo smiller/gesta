@@ -9,5 +9,6 @@ describe("Help", () => {
     expect(html).not.toMatch(/<section class="helppanel[^"]*" hidden/);
     expect(html).toContain("Custom keys");
     expect(html).toContain("⌃⌘G");
+    expect(html).toContain("⌃⌘R is already used for references, so ⌃⌘E (for exchange) is used for replace");
   });
 });

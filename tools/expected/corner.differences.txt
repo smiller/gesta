@@ -128,3 +128,14 @@ typed 4 m² · rows · the successor finds a superscript joined to its word as t
 New author…, Harley Price, Enter twice · * · "New author…" asks a second name, the one the author is filed and sorted under, filled with the surname first, and heads the new page with the name (asked 2026-10-05, the author-filing plan); the current app asks once and files the name as typed, and its run stops after the bookshelf reading, its new author's empty page holding no heading for the step's click
 Rename, Harley Price typed, Enter · * · Rename on an author with books re-files it, its books and every link into it following, the heading kept, the corner saying what moved (asked 2026-10-05, the author-filing plan); the current app has no reading here, its run having stopped at the step before
 the bookshelf after the re-file · * · the same
+⌃⌘E in the rendered view · * · find and replace is successor-only (2026-10-08, the find-and-replace plan): the current app has no ⌃⌘E and no bar
+*-* typed into Find · * · the same
+Enter in Find · * · the same
+Enter in Replace with · * · the same
+Replace All, the rest replaced · * · the same
+⌘Z in the text · * · the same
+Escape, opened in the rendered view · * · the same
+⌃⌘E in the source view · * · the same
+Escape, opened in the source view · * · the same
+a long entry's matches · * · the same
+Skip · * · the same

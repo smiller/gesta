@@ -1131,6 +1131,61 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("the bookshelf after the re-file", await R.panel(page));
   await page.keyboard.press("Escape");
     }],
+    ["replace", async () => {
+  /* find and replace (2026-10-08, successor-only): ⌃⌘E in the rendered view switches to the source view and opens the bar, the corner whispering; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
+  await go("page/Replaced");
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.setSource(page, "One*-*two *-*three, and *,* four.\n\nFive*-*six.\n");
+  await R.waitCorner(page, "saved");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(200);
+  await log("⌃⌘E in the rendered view", { ...(await R.replaceBar(page)), corner: await R.cornerTextOrEmpty(page) });
+  await page.keyboard.type("*-*");
+  await page.waitForTimeout(100);
+  await log("*-* typed into Find", await R.replaceBar(page));
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(100);
+  await log("Enter in Find", await R.replaceBar(page));
+  await page.click(S.replaceWith, { timeout: 2000 }).catch(() => {});
+  await page.keyboard.type("-");
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(100);
+  await log("Enter in Replace with", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await page.click(S.replaceSkip, { timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(100);
+  await log("Skip", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(100);
+  await log("Replace All, the rest replaced", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await page.click(S.source, { timeout: 2000 }).catch(() => {});
+  await page.keyboard.press("Meta+z");
+  await page.waitForTimeout(100);
+  await log("⌘Z in the text", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  await log("Escape, opened in the rendered view", await R.replaceBar(page));
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(200);
+  await log("⌃⌘E in the source view", await R.replaceBar(page));
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  await log("Escape, opened in the source view", await R.replaceBar(page));
+  /* a long entry: the layer the matches are drawn on keeps the text's line pitch to its last line, where 27.54px set it 79px low over 2,706 lines of Paradise Lost (2026-10-08) */
+  await R.setSource(page, Array.from({ length: 1500 }, (_, i) => "Line " + i + " of a long entry, with *-* in it and more words after it to wrap.").join("\n\n"));
+  await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(200);
+  await log("a long entry's matches", await R.replaceDrift(page));
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+    }],
     ["pill", async () => {
   if (A.pill) {
     await page.goto(A.url("page/Horace", "corner=pill"));

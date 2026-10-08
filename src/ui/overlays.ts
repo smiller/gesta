@@ -1,5 +1,5 @@
-export type Closer = "panel" | "search" | "goto" | "lineBar" | "lineBarCaret" | "lines";
-export type Opening = "search" | "goto" | "lineBar" | "lines" | "help" | "bookmarks" | "shortcuts" | "backups" | "pages" | "navigated" | "sourceView" | "escape";
+export type Closer = "panel" | "search" | "goto" | "lineBar" | "lineBarCaret" | "lines" | "replace" | "replaceBack";
+export type Opening = "search" | "goto" | "lineBar" | "lines" | "replace" | "help" | "bookmarks" | "shortcuts" | "backups" | "pages" | "navigated" | "sourceView" | "escape";
 
 /* ONE THING OPEN AT A TIME: each opening closes every other open thing —
    a panel every header row, a header row the panel and the other rows —
@@ -9,13 +9,14 @@ export type Opening = "search" | "goto" | "lineBar" | "lines" | "help" | "bookma
    move the focus that a later one reads. Escape's caret hand-back comes
    before search and Go to: after them, it found the focus gone from the
    line bar and handed nothing back (pin: overlays.test › Escape closes everything) */
-const ROWS: readonly Closer[] = ["search", "goto", "lineBar", "lines"];
+const ROWS: readonly Closer[] = ["search", "goto", "lineBar", "lines", "replace"];
 const others = (self: Closer | null): Closer[] => ["panel", ...ROWS].filter((c) => c !== self) as Closer[];
 export const CLOSES: Record<Opening, readonly Closer[]> = {
   search: others("search"),
   goto: others("goto"),
   lineBar: others("lineBar"),
   lines: others("lines"),
+  replace: others("replace"),
   help: ROWS,
   backups: ROWS,
   bookmarks: ROWS,
@@ -23,7 +24,7 @@ export const CLOSES: Record<Opening, readonly Closer[]> = {
   pages: ROWS,
   navigated: others(null),
   sourceView: ["lineBar"],
-  escape: ["panel", "lineBarCaret", "search", "goto", "lines"],
+  escape: ["panel", "lineBarCaret", "search", "goto", "lines", "replaceBack"],
 };
 
 export function overlays(closers: Record<Closer, () => void>): { open(opening: Opening): void } {

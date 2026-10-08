@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Replace bar mockup</title>
+<link rel="stylesheet" href="../../src/editor/editor.css">
+<link rel="stylesheet" href="../../src/ui/ui.css">
+<style>
+/* a stand-in for the masthead, enough to place the bar under it */
+.mast { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; justify-content: space-between; min-height: var(--masthead-h); --head-gutter: 32px; padding: 0 var(--head-gutter); background: var(--bar-bg); color: var(--bar-ink); border-bottom: 1px solid var(--bar-shadow); box-shadow: 0 2px 0 var(--rule); font-family: var(--serif); font-size: 0.9em; }
+.mast nav { font-family: var(--sans); font-size: 0.85em; display: flex; gap: 14px; color: var(--bar-link); }
+
+/* THE BAR, the line bar's look: dark, under the masthead at its right */
+.rbar { position: absolute; top: calc(100% + 8px); right: var(--head-gutter); z-index: 70; display: flex; align-items: center; gap: 8px; background: var(--bar-bg); color: var(--bar-ink); border-radius: 6px; box-shadow: 0 6px 24px -6px rgba(0,0,0,0.45); padding: 4px 4px 4px 12px; font-family: var(--sans); font-size: 0.72em; font-weight: 600; letter-spacing: 0.06em; }
+.rbar[hidden] { display: none; }
+/* one grid for both rows, so the two boxes share their left and right edges */
+.rbar .rows { display: grid; grid-template-columns: auto 13rem auto; align-items: center; gap: 4px 8px; }
+.rbar .row { display: contents; }
+.rbar .after { display: flex; align-items: center; gap: 8px; }
+.rbar input { width: 100%; box-sizing: border-box; font: 13px var(--mono); letter-spacing: normal; color: var(--bar-ink); background: var(--bar-input-bg); border: 1px solid var(--bar-input-border); border-radius: 4px; padding: 4px 6px; }
+.rbar input:focus { outline: none; border-color: var(--accent); }
+.rbar .count { min-width: 5.5em; font-weight: 400; color: var(--bar-link); white-space: nowrap; }
+.rbar .count.none { color: #e9a3a3; }
+.rbar button { font: inherit; background: none; border: none; color: inherit; height: 2rem; padding: 0 8px; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+.rbar button:hover:not(:disabled) { background: var(--bar-input-bg); }
+.rbar button:disabled { opacity: 0.4; cursor: default; }
+.rbar button.x { width: 2rem; padding: 0; }
+.rbar button.word { border: 1px solid var(--bar-input-border); }
+
+/* the matches painted on a twin behind the textarea, in the textarea's own type and wrap */
+.wrap { position: relative; }
+.twin { position: absolute; inset: 0; pointer-events: none; color: transparent; font-family: var(--mono); font-size: 0.85em; line-height: 1.8; white-space: pre-wrap; overflow-wrap: break-word; }
+.twin mark { color: transparent; background: rgba(245, 215, 110, 0.35); border-radius: 2px; }
+.twin mark.now { background: var(--flash); box-shadow: 0 0 0 2px #d9a400; }
+.source { position: relative; }
+/* the corner whisper, Corner.svelte's look */
+.saved { position: fixed; left: 1.4rem; bottom: 1.2rem; font-family: var(--sans); font-size: 0.7em; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); opacity: 0; transition: opacity .4s ease; pointer-events: none; }
+.saved.show { opacity: 0.85; }
+.wrap[hidden], #rendered[hidden] { display: none; }
+/* room below the text, so a short sample scrolls the way a long entry does */
+main { padding-bottom: 80vh; }
+#ctl fieldset { border: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+#ctl legend { font-weight: 600; padding: 0; margin-bottom: 2px; }
+/* the control strip, not part of the design */
+#ctl { position: fixed; bottom: 8px; right: 8px; font: 12px var(--sans); background: #fff; border: 1px solid var(--rule); border-radius: 4px; padding: 6px 8px; display: grid; gap: 4px; z-index: 99; }
+#ctl label { display: flex; gap: 6px; align-items: center; }
+#said { font: 11px var(--mono); color: var(--muted); max-width: 260px; }
+</style>
+</head>
+<body>
+<header class="mast">
+  <span>Price, Harley › Milton, Paradise Lost</span>
+  <nav><span>today</span><span>rename</span><span>delete</span><span>export</span><span>import</span><span>help</span></nav>
+  <div class="rbar" id="bar" hidden>
+    <div class="rows">
+      <div class="row"><label for="find">Find</label><input id="find" autocomplete="off" spellcheck="false"><span class="after"><span class="count" id="count"></span></span></div>
+      <div class="row"><label for="with">Replace with</label><input id="with" autocomplete="off" spellcheck="false"><span class="after">
+        <button type="button" class="word" id="one" title="Replace this one and find the next (Enter in this box)">Replace</button>
+        <button type="button" class="word" id="all" title="Replace every one in this entry">All</button></span></div>
+    </div>
+    <button type="button" class="x" id="close" title="Close (Esc)">×</button>
+  </div>
+</header>
+<main><div class="page" id="rendered"></div><div class="wrap" hidden><div class="twin" id="twin"></div><textarea class="source" id="src" spellcheck="false">## Book I
+
+The opening of the poem is, for a first reader, more than usually daunting*-*since PL represents the synthesis and culmination of a whole tradition, and Milton expects his reader to hear it all at once.
+
+The invocation runs for twenty-six lines*,* and only then does the narrative begin*.* Notice the delay*-*it is part of the argument.
+
+Satan's first speech (I.84*-*124) is the first of many*,* and its rhetoric is magnificent*-*which is exactly the danger.
+
+### The catalogue of devils
+
+The catalogue (I.376*-*521) imitates Homer's catalogue of ships*,* but every name in it is a name of something that will be worshipped*-*and every worship a fall.
+
+Pandemonium rises "like an exhalation" (I.711)*-*built, like so much in Hell, out of the very materials of Heaven*.*
+
+## Book II
+
+The council in Hell is a parliament*,* and its speeches are a lesson in persuasion*-*Moloch for open war, Belial for ignoble ease, Mammon for making the best of it.
+
+Beelzebub's speech settles it*-*but the plan was Satan's all along (II.379*-*380)*.*
+
+Satan's journey to the gates brings him to Sin and Death*,* the poem's most grotesque allegory*-*and its most closely argued.
+
+Chaos is the last obstacle*-*a realm without form, where "the wary fiend" must pick his way (II.917*-*1009)*.*
+</textarea></div></main>
+<div class="saved" id="corner"></div>
+<div id="ctl">
+  <fieldset><legend>Closing the bar, after ⌃⌘E in the rendered view</legend>
+    <label><input type="radio" name="back" value="back" checked> goes back to the rendered view</label>
+    <label><input type="radio" name="back" value="stay"> stays in the source view</label></fieldset>
+  <fieldset><legend>The switch to the source view</legend>
+    <label><input type="radio" name="whisper" value="on" checked> whispers "Source view, to replace"</label>
+    <label><input type="radio" name="whisper" value="off"> says nothing</label></fieldset>
+  <span id="said"></span>
+</div>
+<script>
+const src = document.getElementById("src"), bar = document.getElementById("bar");
+const find = document.getElementById("find"), withBox = document.getElementById("with");
+const count = document.getElementById("count"), said = document.getElementById("said");
+let at = -1;
+const twin = document.getElementById("twin");
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function paint() {
+  const q = find.value, h = q && !bar.hidden ? hits() : [];
+  let html = "", from = 0;
+  h.forEach((p, k) => { html += esc(src.value.slice(from, p)) + `<mark${k === at ? ' class="now"' : ""}>` + esc(q) + "</mark>"; from = p + q.length; });
+  twin.innerHTML = html + esc(src.value.slice(from)) + "\n";
+}
+const hits = () => { const q = find.value, out = []; if (!q) return out; for (let i = src.value.indexOf(q); i >= 0; i = src.value.indexOf(q, i + q.length)) out.push(i); return out; };
+function show(i) {
+  queueMicrotask(paint);
+  const h = hits(), q = find.value;
+  document.getElementById("one").disabled = document.getElementById("all").disabled = !h.length;
+  if (!q) { count.textContent = ""; count.className = "count"; at = -1; return; }
+  if (!h.length) { count.textContent = "none"; count.className = "count none"; at = -1; return; }
+  at = i == null ? h.findIndex((p) => p >= src.selectionStart) : i;
+  if (at < 0) at = 0;
+  count.className = "count"; count.textContent = `${at + 1} of ${h.length}`;
+  src.setSelectionRange(h[at], h[at] + q.length);
+  const before = src.value.slice(0, h[at]).split("\n").length;
+  window.scrollTo({ top: Math.max(0, before * 26 - innerHeight / 3), behavior: "instant" });
+}
+function next() { const h = hits(); if (h.length) show((at + 1) % h.length); }
+function replaceOne() {
+  const h = hits(); if (!h.length) return;
+  if (at < 0) return show();
+  const after = h[at] + withBox.value.length;
+  src.focus(); src.setSelectionRange(h[at], h[at] + find.value.length);
+  document.execCommand("insertText", false, withBox.value);   /* the textarea's own undo takes it */
+  const left = hits();
+  said.textContent = `replaced 1 — ${left.length} left; ⌘Z in the text undoes it`;
+  withBox.focus();
+  const k = left.findIndex((p) => p >= after);
+  show(left.length ? (k < 0 ? 0 : k) : undefined);
+}
+function replaceAll() {
+  const h = hits(); if (!h.length) return;
+  src.focus(); src.select();
+  const keep = h[Math.max(at, 0)], shift = h.filter((p) => p < keep).length * (withBox.value.length - find.value.length);
+  document.execCommand("insertText", false, src.value.split(find.value).join(withBox.value));   /* one step for ⌘Z */
+  src.setSelectionRange(keep + shift, keep + shift);   /* the place kept, not the text's end */
+  said.textContent = `replaced ${h.length} — ⌘Z in the text undoes all ${h.length}`;
+  withBox.focus(); show();
+}
+find.addEventListener("input", () => show());
+/* typing or ⌘Z in the text recounts, the selection left where the hand put it */
+src.addEventListener("input", () => { const n = hits().length; count.textContent = !find.value ? "" : n ? `${n} found` : "none"; count.className = n || !find.value ? "count" : "count none"; at = -1; paint(); });
+find.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); e.shiftKey ? show((at - 1 + hits().length) % hits().length) : next(); } });
+withBox.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); replaceOne(); } });
+document.getElementById("one").addEventListener("click", replaceOne);
+document.getElementById("all").addEventListener("click", replaceAll);
+const rendered = document.getElementById("rendered"), wrap = document.querySelector(".wrap"), corner = document.getElementById("corner");
+let fromRendered = false, fade;
+const picked = (name) => document.querySelector(`input[name=${name}]:checked`).value;
+const whisper = (t) => { corner.textContent = t; corner.classList.add("show"); clearTimeout(fade); fade = setTimeout(() => corner.classList.remove("show"), 3000); };
+const blocks = () => src.value.split(/\n{2,}/);
+function render() {
+  rendered.innerHTML = blocks().filter((b) => b.trim()).map((b) => { const h = /^(#{2,3}) (.*)/.exec(b); return h ? `<h${h[1].length}>${esc(h[2])}</h${h[1].length}>` : `<p>${esc(b)}</p>`; }).join("");
+}
+const inSource = () => rendered.hidden;
+/* the text at the top of the screen carried across the switch: the first block whose foot is below the masthead */
+function toSource() {
+  const top = document.querySelector(".mast").getBoundingClientRect().bottom;
+  const k = [...rendered.children].findIndex((el) => el.getBoundingClientRect().bottom > top);
+  const bs = blocks(); let off = 0; for (let i = 0, seen = -1; i < bs.length; i++) { if (bs[i].trim()) seen++; if (seen === k) break; off += bs[i].length + 2; }
+  rendered.hidden = true; wrap.hidden = false; paint();
+  src.setSelectionRange(off, off);
+  window.scrollTo({ top: Math.max(0, src.value.slice(0, off).split("\n").length * 26 - 40), behavior: "instant" });
+}
+function toRendered() {
+  const k = src.value.slice(0, src.selectionStart).split(/\n{2,}/).filter((b) => b.trim()).length - 1;
+  render(); wrap.hidden = true; rendered.hidden = false;
+  /* the cursor's paragraph lands just under the masthead, a line of what came before above it */
+  const el = rendered.children[Math.max(0, k - 1)];
+  if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 70, behavior: "instant" });
+}
+function openBar() {
+  if (!inSource()) { fromRendered = true; toSource(); if (picked("whisper") === "on") whisper("Source view, to replace"); }
+  else if (bar.hidden) fromRendered = false;
+  bar.hidden = false; find.focus(); find.select(); show();
+}
+const close = () => {
+  bar.hidden = true; paint();
+  if (fromRendered && picked("back") === "back") { toRendered(); fromRendered = false; } else src.focus();
+};
+document.getElementById("close").addEventListener("click", close);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !bar.hidden) { e.preventDefault(); close(); }
+  if (!(e.ctrlKey && e.metaKey && !e.altKey && !e.shiftKey)) return;
+  if (e.key === "e") { e.preventDefault(); openBar(); }
+  /* ⌃⌘M, the view switch, as in the app */
+  else if (e.key === "m") { e.preventDefault(); bar.hidden = true; fromRendered = false; if (inSource()) toRendered(); else toSource(); }
+});
+bar.addEventListener("mousedown", (e) => { if (!["INPUT", "LABEL", "BUTTON"].includes(e.target.tagName)) e.preventDefault(); });
+find.value = "*-*"; withBox.value = "-"; render();
+said.textContent = "Opens in the rendered view: press ⌃⌘E";
+</script>
+</body>
+</html>

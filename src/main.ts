@@ -41,6 +41,8 @@ import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRe
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
+import { matches, nearest, replaceAt, replaceEvery, countLabel } from "./editor/replace.ts";
+import type { ReplacePort } from "./editor/sourceView.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
 import { NS } from "./store/keys.ts";
@@ -87,6 +89,7 @@ const acts = {
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
+  replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, dismiss: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
@@ -97,6 +100,8 @@ const overlay = overlays({
   lineBar: () => acts.lineBar.dismiss(),
   lineBarCaret: () => acts.lineBar.close(),
   lines: () => { if (screen.linesOpen) acts.lines(false); },
+  replace: () => acts.replace.dismiss(),
+  replaceBack: () => acts.replace.close(),
 });
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
 mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
@@ -108,6 +113,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
+  replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
   shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
   backups: { onSetup: () => acts.backups(), onResume: () => acts.resume() },
   bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
@@ -142,6 +148,8 @@ document.addEventListener("keydown", (e) => {
      chord of its own */
   else if (e.key === "l") { e.preventDefault(); acts.lines(!screen.linesOpen); }
   else if (e.key === "n") { e.preventDefault(); acts.create(); }
+  /* ⌃⌘R is the reference, so replace is ⌃⌘E, for exchange */
+  else if (e.key === "e") { e.preventDefault(); acts.replace.open(); }
 });
 
 const tabs = typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
@@ -200,7 +208,7 @@ if (fixture && fixtures[fixture]) {
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
-    onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); },
+    onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
@@ -611,6 +619,96 @@ if (fixture && fixtures[fixture]) {
     if ((e.target as Element).closest(".linebar")) return;
     closeLineBar();
   });
+  /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
+     to the source view first, and closing the bar switches back */
+  const rb = screen.replace;
+  let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false;
+  const headFoot = (): number => document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
+  const draw = (port: ReplacePort): void => {
+    rb.count = countLabel(rb.find, hits.length, at);
+    rb.any = hits.length > 0;
+    port.show(hits, rb.find.length, at, headFoot());
+  };
+  const seek = (port: ReplacePort, from: number): void => {
+    hits = matches(port.text(), rb.find);
+    at = nearest(hits, from);
+    draw(port);
+  };
+  /* typing in the text, or ⌘Z there: the matches recounted, none current */
+  const recount = (): void => {
+    const port = session.replacer();
+    if (editing || !port) return;
+    hits = matches(port.text(), rb.find);
+    at = -1;
+    draw(port);
+  };
+  const dismissReplace = (): void => {
+    if (!rb.open) return;
+    rb.open = false;
+    unwatch?.(); unwatch = null;
+    session.replacer()?.clear();
+    hits = []; at = -1;
+  };
+  acts.replace.dismiss = () => { dismissReplace(); fromRendered = false; };
+  acts.replace.close = () => {
+    if (!rb.open) return;
+    const back = fromRendered;
+    acts.replace.dismiss();
+    if (back && session.mdView) session.setView(false);
+    else session.replacer()?.focus();
+  };
+  acts.replace.open = () => {
+    if (rb.open) { masthead.focusReplace(); return; }
+    overlay.open("replace");
+    let switched = false;
+    if (!session.mdView) {
+      session.setView(true);
+      if (!session.mdView) return;
+      switched = true;
+      say("Source view, to replace", 3000);
+    }
+    const port = session.replacer();
+    if (!port) return;
+    rb.open = true;
+    fromRendered = switched;
+    unwatch = port.watch(recount);
+    seek(port, port.start(headFoot()));
+    setTimeout(() => masthead.focusReplace(), 0);
+  };
+  acts.replace.find = (v) => {
+    rb.find = v;
+    const port = session.replacer();
+    if (port) seek(port, at >= 0 ? hits[at] : port.start(headFoot()));
+  };
+  acts.replace.with = (v) => { rb.with = v; };
+  acts.replace.next = (back) => {
+    const port = session.replacer();
+    if (!port || !hits.length) return;
+    if (at < 0) { seek(port, port.start(headFoot())); return; }
+    at = (at + (back ? hits.length - 1 : 1)) % hits.length;
+    draw(port);
+  };
+  const edit = (port: ReplacePort, from: number, to: number, text: string, caret: number): void => {
+    editing = true;
+    try { port.edit(from, to, text, caret); } finally { editing = false; }
+  };
+  acts.replace.one = () => {
+    const port = session.replacer();
+    if (!port || !hits.length) return;
+    if (at < 0) { seek(port, port.start(headFoot())); return; }
+    const r = replaceAt(port.text(), hits[at], rb.find, rb.with);
+    edit(port, hits[at], hits[at] + rb.find.length, rb.with, r.caret);
+    seek(port, r.caret);
+  };
+  acts.replace.all = () => {
+    const port = session.replacer();
+    if (!port || !hits.length) return;
+    const text = port.text();
+    const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : port.start(headFoot()));
+    edit(port, 0, text.length, r.text, r.caret);
+    hits = []; at = -1;
+    draw(port);
+  };
   /* THE COPY BUTTON: over whichever code block, quote, card, verse or
      prose block, note or reference the mouse is nearest inside; a quote
      inside a quote is ONE block with levels, so the copy is the whole

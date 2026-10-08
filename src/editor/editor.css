@@ -349,7 +349,11 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   field-sizing: content;
   font-family: var(--mono);
   font-size: 0.85em;
-  line-height: 1.8;
+  /* A PITCH LAYOUT CAN HOLD EXACTLY: at 1.8 (27.54px) a textarea and a
+     block laid the same text out 79px apart over 2,706 lines, the
+     matches' layer drawn a line low (MEASURED in headless Helium); at
+     1/64 px they part by 1/64 px (pin: replace › a long entry's matches) */
+  line-height: round(1.8em, 1px / 64);
   white-space: pre-wrap;
   color: var(--ink);
   background: transparent;
@@ -360,6 +364,11 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   margin: 0;
   caret-color: var(--accent);
 }
+.source { position: relative; z-index: 1; }
+.source-marks { position: absolute; z-index: 0; pointer-events: none; color: transparent; white-space: pre-wrap; }
+.source-marks[hidden] { display: none; }
+.source-marks mark { color: transparent; background: rgba(245, 215, 110, 0.35); border-radius: 2px; }
+.source-marks mark.now { background: var(--flash); box-shadow: 0 0 0 2px #d9a400; }
 
 
 /* ---------- a work's contents, folding under its headings ---------- */

@@ -41,6 +41,8 @@ export interface Screen {
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed" };
   lineBar: { open: boolean; kind: AskKind; line: string; page: string };
+  /* ⌃⌘E's bar: `count` the line after Find, `any` whether there is a match to replace */
+  replace: { open: boolean; find: string; with: string; count: string; any: boolean };
   copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
   bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean };
   /* the open entry draws a gutter: the Line numbering row shows; and
@@ -60,6 +62,7 @@ export function screenState(interval: number): Screen {
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false },
     copy: { show: false, top: 0, right: 0, minWidth: 0, title: "", label: "copy" },
     lineBar: { open: false, kind: "none", line: "", page: "" },
+    replace: { open: false, find: "", with: "", count: "", any: false },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
     backups: { canPick: true, configured: false, trouble: "", warm: "loading" },

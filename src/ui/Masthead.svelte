@@ -10,11 +10,12 @@
   import Search from "./Search.svelte";
   import Goto from "./Goto.svelte";
   import LineBar from "./LineBar.svelte";
+  import ReplaceBar from "./ReplaceBar.svelte";
   import Help from "./Help.svelte";
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
+  let { screen, onToday, onExport, onImport, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void;
     onCreate: () => void; onRename: () => void; onDelete: () => void;
@@ -25,6 +26,7 @@
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
     lineBar: { onInput: (kind: "line" | "page", value: string) => void; onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void; onClose: () => void };
+    replace: { onFind: (value: string) => void; onWith: (value: string) => void; onNext: (back: boolean) => void; onOne: () => void; onAll: () => void; onClose: () => void };
     bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
     shortcuts: { onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void };
     backups: { onSetup: () => void; onResume: () => void };
@@ -35,6 +37,8 @@
   export function focusBookmarks(): void { bookmarksCard?.focusCard(); }
   let lineBarEl: { focusAsk(): void } | undefined = $state();
   export function focusLineBar(): void { lineBarEl?.focusAsk(); }
+  let replaceEl: { focusFind(): void; focusWith(): void } | undefined = $state();
+  export function focusReplace(): void { replaceEl?.focusFind(); }
   let gotoRow: { focusFirst(): void } | undefined = $state();
   export function focusGoto(): void { gotoRow?.focusFirst(); }
   let searchRow: { focusInput(): void } | undefined = $state();
@@ -106,6 +110,7 @@
     </nav>
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
+  <ReplaceBar bind:this={replaceEl} replace={screen.replace} {...replace} />
   <details class="page-lines" hidden={!screen.gutter} open={screen.linesOpen} ontoggle={(e) => { screen.linesOpen = (e.currentTarget as HTMLDetailsElement).open; }}>
     <summary>Line numbering</summary>
     <span class="page-lines-body">
