@@ -17,7 +17,7 @@ const contrast = (a: string, b: string) => {
 };
 const token = (name: string) => new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`).exec(css)![1];
 const rule = (colour: string) => {
-  const m = new RegExp(`\\.page div\\.card-${colour} \\{ background: (#[0-9a-f]{6}); border-color: (#[0-9a-f]{6}); \\}`).exec(css);
+  const m = new RegExp(`\\.page div\\.card-${colour} \\{ background: (#[0-9a-f]{6}); border: 8px solid (#[0-9a-f]{6}); \\}`).exec(css);
   if (!m) throw new Error(`no fill and edge for card-${colour}`);
   return { fill: m[1], edge: m[2] };
 };
@@ -40,7 +40,9 @@ describe("card fills", () => {
     }
   });
 
-  it("the edge is the band, 8px all round", () => {
-    expect(css).toMatch(/\.page div\[class\^="card-"\] \{[^}]*border: 8px solid;/);
+  it("a colour outside the eleven keeps the quiet 1px rule: no rule for every card sets another border", () => {
+    const rules = [...css.matchAll(/\.page div\[class\^="card-"\] \{([^}]*)\}/g)].map((m) => m[1]);
+    expect(rules.length).toBeGreaterThan(0);
+    for (const r of rules) for (const b of r.match(/border(-color|-width)?:[^;]*/g) ?? []) expect(b).toBe("border: 1px solid var(--rule)");
   });
 });

@@ -25,8 +25,23 @@ export interface Surface {
   insertText(text: string): void;
   insertPicture(name: string): void;
   words(): number;
+  /* the source view's alone */
+  replace?: ReplacePort;
   destroy(): void;
 }
+/* `under`: the window's height above which no text shows */
+export interface ReplacePort {
+  text(): string;
+  /* the caret where it is on screen, else the first character under the masthead */
+  start(under: number): number;
+  /* `now` -1: every match marked, none current, nothing moved */
+  show(hits: number[], len: number, now: number, under: number): void;
+  clear(): void;
+  edit(from: number, to: number, text: string, caret: number): void;
+  watch(fn: () => void): () => void;
+  focus(): void;
+}
+
 export interface Viewport { y(): number; scrollTo(y: number): void; under(): number }
 export interface PlacePort { carry(pos: number): void; release(): void }
 export interface SurfaceOptions {

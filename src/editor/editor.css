@@ -101,22 +101,25 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    class. A CARD'S TEXT IS READ AGAINST ITS FILL: it takes the ink whatever
    container it sits in — inside a note the muted grey vanished on
    card-red. THE COLOUR IS THE EDGE, the fill that colour at 35% over the
-   ground, spelled in hex so a copied card's inline style is plain sRGB:
-   on the full colour the ink read 3.2:1 on bright-blue, 3.6 on red and
-   4.0 on bright-green; on the fill, 9.2 at the least (MEASURED in
-   headless Helium) (pin: cardFills.test › every colour) */
-.page div[class^="card-"] { border-radius: 4px; color: var(--ink); border: 8px solid; }
-.page div.card-bright-yellow { background: #f4e7c0; border-color: #f5c96e; }
-.page div.card-brighter-yellow { background: #efeabb; border-color: #e5d35f; }
-.page div.card-light-yellow { background: #f2eecb; border-color: #eddc8d; }
-.page div.card-light-green { background: #d2ddbf; border-color: #94ae6b; }
-.page div.card-bright-green { background: #c1cfc2; border-color: #628673; }
-.page div.card-light-blue { background: #ccdfd5; border-color: #81b1a9; }
-.page div.card-bright-blue { background: #a5cbcd; border-color: #127a94; }
-.page div.card-red { background: #e0bfb8; border-color: #bc5858; }
-.page div.card-pink { background: #f2d6cd; border-color: #ed9892; }
-.page div.card-light-purple { background: #ddd8d7; border-color: #b39daf; }
-.page div.card-orange { background: #f8da99; border-color: #ffa500; }
+   ground: on the full colour the ink read 3.2:1 on bright-blue, 3.6 on
+   red and 4.0 on bright-green; on the fill, 9.2 at the least (MEASURED in
+   headless Helium) (pin: cardFills.test › every colour). Spelled in hex,
+   so a copied card's inline style is plain sRGB; set per colour, so a
+   word outside the eleven keeps the 1px rule, where a shared
+   `border: 8px solid` drew it a frame in the ink
+   (pin: cardFills.test › a colour outside the eleven) */
+.page div[class^="card-"] { border-radius: 4px; color: var(--ink); }
+.page div.card-bright-yellow { background: #f4e7c0; border: 8px solid #f5c96e; }
+.page div.card-brighter-yellow { background: #efeabb; border: 8px solid #e5d35f; }
+.page div.card-light-yellow { background: #f2eecb; border: 8px solid #eddc8d; }
+.page div.card-light-green { background: #d2ddbf; border: 8px solid #94ae6b; }
+.page div.card-bright-green { background: #c1cfc2; border: 8px solid #628673; }
+.page div.card-light-blue { background: #ccdfd5; border: 8px solid #81b1a9; }
+.page div.card-bright-blue { background: #a5cbcd; border: 8px solid #127a94; }
+.page div.card-red { background: #e0bfb8; border: 8px solid #bc5858; }
+.page div.card-pink { background: #f2d6cd; border: 8px solid #ed9892; }
+.page div.card-light-purple { background: #ddd8d7; border: 8px solid #b39daf; }
+.page div.card-orange { background: #f8da99; border: 8px solid #ffa500; }
 /* THE GRID: cards --n across, the count from the node. A
    grid that is the page's own child breaks out of the measure the way
    .page.fitted pulls the whole entry (the margins at the paired measure):

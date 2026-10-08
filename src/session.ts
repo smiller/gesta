@@ -20,10 +20,10 @@ import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
 import { highlightIn } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
-import { surfaces, type Viewport, type Surface } from "./editor/surface.ts";
+import { surfaces, type Viewport, type ReplacePort } from "./editor/surface.ts";
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
-import { sourceView, type ReplacePort } from "./editor/sourceView.ts";
+import { sourceView } from "./editor/sourceView.ts";
 import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
 
 export type OpenHow = "arrive" | "keep";
@@ -413,7 +413,7 @@ export function startSession(opts: SessionOptions): Session {
     get current() { return current; },
     get view() { return live(); },
     open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
-    replacer: () => { const c = surface.current; return c && "replace" in c ? (c as Surface & { replace: ReplacePort }).replace : null; },
+    replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },
     refreshFolds,

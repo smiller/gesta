@@ -1182,7 +1182,60 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+e");
   await page.waitForTimeout(200);
   await log("a long entry's matches", await R.replaceDrift(page));
+  /* Replace All far from the end keeps the window where it was: the whole-text edit put the caret, and the window, at the entry's last line */
+  { const y = await winY(); await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(200); await log("Replace All in a long entry", { count: (await R.replaceBar(page)).count, kept: Math.abs((await winY()) - y) < 60 }); }
   await page.keyboard.press("Escape");
+  /* a replacement holding the find: the rest are counted, not "none" */
+  await R.setSource(page, "cat and cat\n");
+  await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(150);
+  await page.fill("#replacefind", "cat").catch(() => {});
+  await page.fill("#replacewith", "cats").catch(() => {});
+  await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  await log("Replace All, the replacement holding the find", await R.replaceBar(page));
+  await page.keyboard.press("Escape");
+  /* a switch back the parse refuses: the cursor goes back to the text, not into the hidden Find box */
+  await R.setSource(page, "::: grid 2\n::: card-red\nx\n:::\n:::\n");
+  await R.waitCorner(page, "saved");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(200);
+  await page.fill("#replacefind", "::: card-red").catch(() => {});
+  await page.fill("#replacewith", "zz").catch(() => {});
+  await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  await log("Escape, the switch back refused", await R.replaceBar(page));
+  await R.setSource(page, "One*-*two.\n");
+  await R.waitCorner(page, "saved");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  /* another panel opened over the bar closes it, and switches back as Escape does */
+  await page.keyboard.press("Control+Meta+e");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Control+Meta+h");
+  await page.waitForTimeout(200);
+  await log("⌃⌘H over the bar", { ...(await R.replaceBar(page)), help: (await R.helpOpen(page)).help });
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(100);
+  /* the same entry saved in another window rebuilds the source view under the bar: the bar closes, its offsets belonging to the text it was opened on */
+  await page.keyboard.press("Control+Meta+e");
+  /* the switch's own save lands first, or the other window's write is refused as stale */
+  await page.waitForTimeout(1500);
+  { const other = await page.context().newPage();
+    await other.goto(A.url("page/Replaced")); await A.waitEntry(other, "page/Replaced");
+    await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
+    await R.waitCorner(other, "saved");
+    /* the landed write reaches this window by its notice: waited for, so a reading never races it */
+    await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+    await page.waitForTimeout(100);
+    await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null) });
+    await other.close(); }
+  await page.keyboard.press("Escape");
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {}); }
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
     }],

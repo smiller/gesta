@@ -42,7 +42,7 @@ import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
 import { matches, nearest, replaceAt, replaceEvery, countLabel } from "./editor/replace.ts";
-import type { ReplacePort } from "./editor/sourceView.ts";
+import type { ReplacePort } from "./editor/surface.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
 import { NS } from "./store/keys.ts";
@@ -89,7 +89,7 @@ const acts = {
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
-  replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, dismiss: () => {} },
+  replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, closeOver: () => {}, dismiss: () => {}, check: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
 const closePanel = (): void => { screen.panel = null; };
@@ -100,7 +100,7 @@ const overlay = overlays({
   lineBar: () => acts.lineBar.dismiss(),
   lineBarCaret: () => acts.lineBar.close(),
   lines: () => { if (screen.linesOpen) acts.lines(false); },
-  replace: () => acts.replace.dismiss(),
+  replace: () => acts.replace.closeOver(),
   replaceBack: () => acts.replace.close(),
 });
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
@@ -205,6 +205,7 @@ if (fixture && fixtures[fixture]) {
     onShow: (stored, ekey) => {
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
       if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
+      else acts.replace.check();
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
     onEdit: () => backup.scheduleBackup(),
@@ -622,7 +623,12 @@ if (fixture && fixtures[fixture]) {
   /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
      to the source view first, and closing the bar switches back */
   const rb = screen.replace;
-  let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false;
+  let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
+  /* THE BAR HOLDS THE VIEW IT OPENED ON: the offsets are that text's, and
+     a save from another window rebuilt the view under them, so a Replace
+     wrote at the old offsets into the new text
+     (pin: replace › the entry saved in another window, the bar open) */
+  let barPort: ReplacePort | null = null;
   const headFoot = (): number => document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
   const draw = (port: ReplacePort): void => {
     rb.count = countLabel(rb.find, hits.length, at);
@@ -634,10 +640,7 @@ if (fixture && fixtures[fixture]) {
     at = nearest(hits, from);
     draw(port);
   };
-  /* typing in the text, or ⌘Z there: the matches recounted, none current */
-  const recount = (): void => {
-    const port = session.replacer();
-    if (editing || !port) return;
+  const recount = (port: ReplacePort): void => {
     hits = matches(port.text(), rb.find);
     at = -1;
     draw(port);
@@ -646,19 +649,42 @@ if (fixture && fixtures[fixture]) {
     if (!rb.open) return;
     rb.open = false;
     unwatch?.(); unwatch = null;
-    session.replacer()?.clear();
+    cancelAnimationFrame(counting);
+    barPort?.clear();
+    barPort = null;
     hits = []; at = -1;
   };
+  /* the port the bar opened on, or null with the bar closed when the view was replaced */
+  const port = (): ReplacePort | null => {
+    if (!rb.open) return null;
+    if (session.replacer() === barPort) return barPort;
+    acts.replace.dismiss();
+    return null;
+  };
   acts.replace.dismiss = () => { dismissReplace(); fromRendered = false; };
-  acts.replace.close = () => {
+  acts.replace.check = () => {
+    if (!rb.open || port()) return;
+    const a = document.activeElement;
+    if (session.mdView && (!a || a === document.body || a.closest(".replacebar"))) session.replacer()?.focus();
+  };
+  /* every close switches back to the view the bar was opened from, but a
+     navigation or a rebuilt view, which only closes it
+     (pin: replace › ⌃⌘H over the bar). A switch back the parse refuses
+     leaves the source view open and the cursor in its text, not in the
+     hidden Find box (pin: replace › Escape, the switch back refused) */
+  const closeBack = (focus: boolean): void => {
     if (!rb.open) return;
+    if (session.replacer() !== barPort) { acts.replace.dismiss(); return; }
     const back = fromRendered;
     acts.replace.dismiss();
-    if (back && session.mdView) session.setView(false);
-    else session.replacer()?.focus();
+    const inBar = !!document.activeElement?.closest(".replacebar");
+    if (back) session.setView(false);
+    if (session.mdView && (focus || inBar)) session.replacer()?.focus();
   };
+  acts.replace.close = () => closeBack(true);
+  acts.replace.closeOver = () => closeBack(false);
   acts.replace.open = () => {
-    if (rb.open) { masthead.focusReplace(); return; }
+    if (rb.open && port()) { masthead.focusReplace(); return; }
     overlay.open("replace");
     let switched = false;
     if (!session.mdView) {
@@ -667,47 +693,55 @@ if (fixture && fixtures[fixture]) {
       switched = true;
       say("Source view, to replace", 3000);
     }
-    const port = session.replacer();
-    if (!port) return;
+    const p = session.replacer();
+    if (!p) return;
     rb.open = true;
+    barPort = p;
     fromRendered = switched;
-    unwatch = port.watch(recount);
-    seek(port, port.start(headFoot()));
+    /* typing in the text recounts once a frame, a recount being the whole
+       text matched and laid out again */
+    unwatch = p.watch(() => {
+      if (editing) return;
+      cancelAnimationFrame(counting);
+      counting = requestAnimationFrame(() => { const q = port(); if (q) recount(q); });
+    });
+    seek(p, p.start(headFoot()));
     setTimeout(() => masthead.focusReplace(), 0);
   };
   acts.replace.find = (v) => {
     rb.find = v;
-    const port = session.replacer();
-    if (port) seek(port, at >= 0 ? hits[at] : port.start(headFoot()));
+    const p = port();
+    if (p) seek(p, at >= 0 ? hits[at] : p.start(headFoot()));
   };
   acts.replace.with = (v) => { rb.with = v; };
   acts.replace.next = (back) => {
-    const port = session.replacer();
-    if (!port || !hits.length) return;
-    if (at < 0) { seek(port, port.start(headFoot())); return; }
+    const p = port();
+    if (!p || !hits.length) return;
+    if (at < 0) { seek(p, p.start(headFoot())); return; }
     at = (at + (back ? hits.length - 1 : 1)) % hits.length;
-    draw(port);
+    draw(p);
   };
-  const edit = (port: ReplacePort, from: number, to: number, text: string, caret: number): void => {
+  const edit = (p: ReplacePort, from: number, to: number, text: string, caret: number): void => {
     editing = true;
-    try { port.edit(from, to, text, caret); } finally { editing = false; }
+    try { p.edit(from, to, text, caret); } finally { editing = false; }
   };
   acts.replace.one = () => {
-    const port = session.replacer();
-    if (!port || !hits.length) return;
-    if (at < 0) { seek(port, port.start(headFoot())); return; }
-    const r = replaceAt(port.text(), hits[at], rb.find, rb.with);
-    edit(port, hits[at], hits[at] + rb.find.length, rb.with, r.caret);
-    seek(port, r.caret);
+    const p = port();
+    if (!p || !hits.length) return;
+    if (at < 0) { seek(p, p.start(headFoot())); return; }
+    const r = replaceAt(p.text(), hits[at], rb.find, rb.with);
+    edit(p, hits[at], hits[at] + rb.find.length, rb.with, r.caret);
+    seek(p, r.caret);
   };
+  /* recounted after: a replacement holding the find leaves matches, and
+     "none" disabled the buttons over them (pin: replace › Replace All, the replacement holding the find) */
   acts.replace.all = () => {
-    const port = session.replacer();
-    if (!port || !hits.length) return;
-    const text = port.text();
-    const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : port.start(headFoot()));
-    edit(port, 0, text.length, r.text, r.caret);
-    hits = []; at = -1;
-    draw(port);
+    const p = port();
+    if (!p || !hits.length) return;
+    const text = p.text();
+    const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : p.start(headFoot()));
+    edit(p, 0, text.length, r.text, r.caret);
+    recount(p);
   };
   /* THE COPY BUTTON: over whichever code block, quote, card, verse or
      prose block, note or reference the mouse is nearest inside; a quote

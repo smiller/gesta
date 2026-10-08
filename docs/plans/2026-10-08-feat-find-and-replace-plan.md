@@ -54,8 +54,37 @@ every hand step played first in headless Helium.
   paragraphs: 47px apart before, 0 after); no other reading of the run
   moved.
 
+- 2026-10-08, REVIEW CYCLE 1: one `/code-review` at high over
+  `d45885c..237852f` (the card fills, the corpus tools, find and replace),
+  after the accept. COST 118,398 tokens (its transcript's last message: 2
+  input + 1,805 cache creation + 114,021 cache read + 2,570 output). Ten
+  findings, each read against the code; the behaviour ones given a Helium
+  reading first, seen failing, then fixed:
+  1. a save from another window rebuilt the source view under the open
+     bar, its offsets the old text's — the bar now holds the view it
+     opened on and closes when it is replaced, the cursor to the text
+     (reading: the bar open after the save, before; closed, after);
+  2. `border: 8px solid` on every card drew a word outside the eleven a
+     frame in the ink — the edge is set per colour, the 1px rule kept
+     (cardFills.test);
+  3. Replace All with a replacement holding the find said "none" over
+     matches — recounted ("2 found");
+  4. Replace All said to throw the window to the entry's end — NOT
+     REPRODUCED: in 1,500 paragraphs the window stayed within 60px; kept
+     as a reading, no change;
+  5. a refused switch back left the cursor on the page — now the text;
+  6. other closes (a panel, Search) left the source view open — they
+     switch back as Escape does; a navigation, or a view rebuilt, only
+     closes the bar, the view staying as views do across a navigation;
+  7. two or three whole-text layouts per keystroke — the current match is
+     read off the layer just drawn, not a twin, and typing recounts once a
+     frame (not measured);
+  8. the copied style list twice over — one `MIRROR`;
+  9. the port found by duck-typing — declared on `Surface`;
+  10. a comment restating its code — gone.
+
 ## Status
 
 Built 2026-10-08.
 
-REVIEW CYCLES: 0
+REVIEW CYCLES: 1

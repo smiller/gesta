@@ -139,3 +139,8 @@ Escape, opened in the rendered view · * · the same
 Escape, opened in the source view · * · the same
 a long entry's matches · * · the same
 Skip · * · the same
+Replace All in a long entry · * · the same
+Replace All, the replacement holding the find · * · the same
+Escape, the switch back refused · * · the same
+⌃⌘H over the bar · * · the same
+the entry saved in another window, the bar open · * · the same

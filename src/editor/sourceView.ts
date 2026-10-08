@@ -3,7 +3,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { pastedImageFile } from "./images.ts";
 import { sourceTab } from "./sourceKeys.ts";
 import { wordCount, wordsOf } from "./format.ts";
-import type { Surface } from "./surface.ts";
+import type { Surface, ReplacePort } from "./surface.ts";
 
 export interface SourceOptions {
   onChange: () => void;
@@ -11,20 +11,11 @@ export interface SourceOptions {
   onRefuse: (why: string) => void;
 }
 
-/* `under`: the window's height above which no text shows */
-export interface ReplacePort {
-  text(): string;
-  /* the caret where it is on screen, else the first character under the masthead */
-  start(under: number): number;
-  /* `now` -1: every match marked, none current, nothing moved */
-  show(hits: number[], len: number, now: number, under: number): void;
-  clear(): void;
-  edit(from: number, to: number, text: string, caret: number): void;
-  watch(fn: () => void): () => void;
-  focus(): void;
-}
+/* the textarea's type and wrap, copied to every layer that must lay its text out as it does */
+const MIRROR = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const;
+const mirror = (from: HTMLElement, to: HTMLElement): void => { const cs = getComputedStyle(from); for (const p of MIRROR) to.style[p] = cs[p]; };
 
-export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions): Surface & { replace: ReplacePort } {
+export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions): Surface {
   const ta = document.createElement("textarea");
   ta.className = "source";
   ta.spellcheck = false;
@@ -51,8 +42,8 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
      hidden twin that wraps as it does: a textarea reports no geometry for
      its text. Built once per question, removed with done(). */
   function twin(): { topOf(i: number): number; indexAt(y: number): number; done(): void } {
-    const cs = getComputedStyle(ta), el = document.createElement("div");
-    for (const p of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const) el.style[p] = cs[p];
+    const el = document.createElement("div");
+    mirror(ta, el);
     Object.assign(el.style, { position: "absolute", visibility: "hidden", top: "0", left: "-9999px", whiteSpace: "pre-wrap", width: ta.getBoundingClientRect().width + "px" });
     const text = el.appendChild(document.createTextNode(ta.value + "​"));
     document.body.appendChild(el);
@@ -73,8 +64,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   let shown: { hits: number[]; len: number; now: number } | null = null;
   function paint(): void {
     if (!shown) { marks.hidden = true; marks.replaceChildren(); return; }
-    const cs = getComputedStyle(ta);
-    for (const p of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const) marks.style[p] = cs[p];
+    mirror(ta, marks);
     Object.assign(marks.style, { top: ta.offsetTop + "px", left: ta.offsetLeft + "px", width: ta.offsetWidth + "px" });
     const v = ta.value, out: Node[] = [];
     let from = 0;
@@ -109,8 +99,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       paint();
       if (now < 0) return;
       ta.setSelectionRange(hits[now], hits[now] + len);
-      const t = twin(), top = t.topOf(hits[now]);
-      t.done();
+      const top = marks.querySelector("mark.now")!.getBoundingClientRect().top;
       const lh = parseFloat(getComputedStyle(ta).lineHeight), foot = document.documentElement.clientHeight;
       if (top < under + lh || top > foot - 2 * lh) window.scrollBy(0, top - (under + (foot - under) / 2));
     },
