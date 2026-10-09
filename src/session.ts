@@ -49,6 +49,9 @@ export interface SessionOptions {
 export interface Session {
   readonly current: { date: string; tag: string | null };
   readonly view: EditorView | null;
+  /* the focus back to the text in either view, its selection as it stands
+     (pin: source view › ⌃⌘K, then Escape, in the source view) */
+  focusText(): void;
   open(date: string, tag: string | null, how?: OpenHow): void;
   openHash(): void;
   /* another tab landed a write under ekey */
@@ -426,6 +429,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return live(); },
+    focusText: () => { surface.current?.focus(); },
     open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },

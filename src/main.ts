@@ -240,7 +240,7 @@ if (fixture && fixtures[fixture]) {
     if (open && !screen.gutter) { say("no line numbers here", 2000); return; }
     screen.linesOpen = open;
     if (open) { overlay.open("lines"); setTimeout(() => masthead.focusLines(), 0); }
-    else session.view?.focus();
+    else session.focusText();
   };
   /* SEARCH. The index is built from the parsed text, once per session:
      MEASURED 4.4 s over the whole mirror under node, so it is built in
@@ -294,7 +294,7 @@ if (fixture && fixtures[fixture]) {
     if (sr.open === open) return;
     cancelScan();
     sr.open = open;
-    if (!open) { session.view?.focus(); return; }
+    if (!open) { session.focusText(); return; }
     overlay.open("search");
     session.flushSave();
     const c = session.current;
@@ -330,7 +330,7 @@ if (fixture && fixtures[fixture]) {
   const gotoRow = (open: boolean): void => {
     if (screen.goto.open === open) return;
     screen.goto.open = open;
-    if (!open) { screen.goto.levels = []; session.view?.focus(); return; }
+    if (!open) { screen.goto.levels = []; session.focusText(); return; }
     overlay.open("goto");
     const c = session.current;
     screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
@@ -395,7 +395,7 @@ if (fixture && fixtures[fixture]) {
     renderShortcuts();
     say("shortcuts saved", 2000);
   };
-  acts.shortcuts.escape = () => { closePanel(); session.view?.focus(); };
+  acts.shortcuts.escape = () => { closePanel(); session.focusText(); };
   const bm = screen.bookmarks;
   const marks = bookmarkStore({
     seed: [{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }],
@@ -447,7 +447,7 @@ if (fixture && fixtures[fixture]) {
     if (e.key === "Escape") {
       if (bm.editing) { e.stopPropagation(); bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
       if (bm.buf) { e.stopPropagation(); bm.buf = ""; return; }
-      closePanel(); session.view?.focus(); return;
+      closePanel(); session.focusText(); return;
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (bm.editing) return;   /* the editor keeps every other key; its Enter is its own */
@@ -913,7 +913,7 @@ if (fixture && fixtures[fixture]) {
       session.moveFolds(moves);
       marks.move(moves);
     },
-    ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.view?.focus() },
+    ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
   });
   acts.create = () => { life.create(); };
   acts.rename = () => { life.rename(); };

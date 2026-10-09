@@ -644,6 +644,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+w");
   await page.waitForTimeout(200);
   await log("⌃⌘W in the source view", { corner: await cornerText() });
+  /* the search row closed in the source view: the keys go back to the text */
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(150);
+  await log("⌃⌘K, then Escape, in the source view", {});
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
     }],
@@ -1030,9 +1036,20 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Long%20Paragraph");
   await page.waitForTimeout(300);
   const before = await winY();
+  /* the caret's line on screen, from a twin of the textarea: a markdown line's start is a paragraph's, and a held index unmoved stands mid-line, neither shown by "stayed" alone */
+  const onScreenStart = await page.evaluate((src) => {
+    const ta = document.querySelector(src); if (!ta) return null;
+    const cs = getComputedStyle(ta), d = document.createElement("div");
+    for (const k of ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth", "boxSizing", "tabSize"]) d.style[k] = cs[k];
+    Object.assign(d.style, { position: "absolute", visibility: "hidden", left: "-9999px", top: "0", whiteSpace: "pre-wrap", overflowWrap: "break-word", width: ta.getBoundingClientRect().width + "px" });
+    const t = d.appendChild(document.createTextNode(ta.value + "\u200b")); document.body.append(d);
+    const top = (k) => { const r = document.createRange(); r.setStart(t, k); r.setEnd(t, k + 1); return r.getBoundingClientRect().top; };
+    const i = ta.selectionStart, at = i === 0 || top(i - 1) < top(i) - 2;
+    d.remove(); return at;
+  }, S.source);
   await page.keyboard.type("Z");
   await page.waitForTimeout(300);
-  await log("typed at the place in a long paragraph's source", { source: await R.inSource(page), stayed: Math.abs((await winY()) - before) < 3 });
+  await log("typed at the place in a long paragraph's source", { source: await R.inSource(page), lineOnScreen: onScreenStart, stayed: Math.abs((await winY()) - before) < 3 });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(300);
     }],

@@ -169,18 +169,20 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
    measuring class goes on the root, as the entry's does. */
 function insetBlocks(view: EditorView): { pos: number; dom: HTMLElement }[] {
   const out: { pos: number; dom: HTMLElement }[] = [];
-  /* a block outside a box is walked into: a note can stand among its rows */
   view.state.doc.descendants((n, pos) => {
+    if (n.isTextblock) return false;
     if (n.type.name !== "verse" && n.type.name !== "prose") return true;
+    let notes = false;
+    n.forEach((c) => { if (c.type.name === "note") notes = true; });
     const $pos = view.state.doc.resolve(pos);
     for (let d = $pos.depth; d > 0; d--) {
       const t = $pos.node(d).type.name;
       if (t !== "card" && t !== "note") continue;
       const dom = view.nodeDOM(pos);
       if (dom instanceof HTMLElement && dom.querySelector(":scope > .vpair")) out.push({ pos, dom });
-      return false;
+      break;
     }
-    return true;
+    return notes;
   });
   return out;
 }
@@ -267,10 +269,22 @@ class FitView implements PluginView {
   private settle = 0;
   private window = 0;
   private readonly onResize = (): void => { if (window.innerWidth !== this.window) this.schedule(false); };
-  /* the boxes again when the root's size has settled: at the window's
-     resize event a card in a grid still had the last width, and each
-     split was one resize behind (MEASURED, page/3x3 from 1280 to 1700px) */
-  private readonly observer = new ResizeObserver(() => this.scheduleInsets());
+  /* the boxes again when a box's WIDTH has settled, the root's and each
+     box's own: at the window's resize event a card in a grid still had
+     the last width, each split one resize behind (MEASURED, page/3x3 from
+     1280 to 1700px); past the cap the root stays 712px while the card
+     grows from 541 to 650 (MEASURED, 1700 to 2400px). A height alone
+     changes no split, and a first sighting is no change */
+  private readonly widths = new WeakMap<Element, number>();
+  private readonly observer = new ResizeObserver((entries) => {
+    let moved = false;
+    for (const e of entries) {
+      const w = e.contentRect.width, was = this.widths.get(e.target);
+      if (was !== undefined && was !== w) moved = true;
+      this.widths.set(e.target, w);
+    }
+    if (moved) this.scheduleInsets();
+  });
   private insetFrame = 0;
   constructor(view: EditorView) {
     this.view = view;
@@ -285,11 +299,11 @@ class FitView implements PluginView {
        only this row can raise it, and asking it is cheap where the pass
        is not. Unfitted, there is nothing to compare and the pass must run
        (pin: reference paste › typed into the quoted pair) */
-    /* a box's row asks only for the boxes: its rows may wrap by design,
-       and the entry's pass on every keystroke is what the gate is for */
+    /* a box's rows ask nothing of a keystroke: they may wrap by design,
+       and the settle measures the boxes
+       (pin: paired card › typed on in the note's last row) */
     const row = caretRow(view);
-    if (row?.parentElement!.closest(INSET)) { if (rowSpills(row)) this.scheduleInsets(); }
-    else if (row?.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row))) this.schedule(true);
+    if (row && !row.parentElement!.closest(INSET) && row.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row))) this.schedule(true);
     clearTimeout(this.settle);
     this.settle = window.setTimeout(() => this.schedule(false), SETTLE_MS);
   }
@@ -323,8 +337,6 @@ class FitView implements PluginView {
   private watched = new Set<Element>();
   private fitInsets(): void {
     if (this.destroyed) return;
-    /* each box watched itself: a card in a full-width grid takes its width
-       from the window, and the root's size need not change with it */
     const boxes = new Set(Array.from(this.view.dom.querySelectorAll(INSET)));
     for (const b of this.watched) if (!boxes.has(b)) { this.observer.unobserve(b); this.watched.delete(b); }
     for (const b of boxes) if (!this.watched.has(b)) { this.observer.observe(b); this.watched.add(b); }

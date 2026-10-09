@@ -38,15 +38,16 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
     lineStart: (pos) => {
       const $pos = view.state.doc.resolve(Math.min(pos, view.state.doc.content.size));
       if (!$pos.parent.isTextblock) return $pos.pos;
-      /* one line by overlap, not by an equal top: inline code sits a few
-         px off its line and stopped the walk before it
+      /* one line where either box holds the other's middle, not by an
+         equal top: inline code sits a few px off its line and stopped the
+         walk before it, and a taller run must not reach into the line above
          (pin: places › back to lines opening on inline code) */
       try {
-        const line = view.coordsAtPos($pos.pos);
+        const line = view.coordsAtPos($pos.pos), mid = (line.top + line.bottom) / 2;
         let p = $pos.pos;
         while (p > $pos.start()) {
-          const c = view.coordsAtPos(p - 1);
-          if (c.bottom <= line.top + 1 || c.top >= line.bottom - 1) break;
+          const c = view.coordsAtPos(p - 1), cMid = (c.top + c.bottom) / 2;
+          if (!(cMid > line.top && cMid < line.bottom) && !(mid > c.top && mid < c.bottom)) break;
           p--;
         }
         return p;

@@ -125,7 +125,8 @@ the caret moved in the source, ⌃⌘M back: {"pill":false,"text":true,"caretBef
 ⌃⌘M back, still scrolled away: {"stayed":false,"cursor":"inside a line","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘W rendered: {"corner":"351 words","cursor":"inside a line","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘W in the source view: {"corner":"351 words","cursor":"inside a line","screen":"2026-09-06 · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-go to: arrived at 2026-09-06: {"cursor":"inside a line"}
+⌃⌘K, then Escape, in the source view: {"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+go to: arrived at 2026-09-06: {"cursor":"at a line's start"}
 ⌃⌘J on a day: {"open":true,"focused":"Destination","selects":["Destination= [Journal|Carded|Coded|Expanded|Fenced|Gridded|Horace|Links|Paired Card|Pasted|Pasted Card|Pasted Fence|Pasted Grid|Pasted Pair|Pasted Verse|Pictured|Pictured Away|Pictured End|Quoted|Williams|Boethius|Browning, Robert]","Year=2026 [2026]","Month=09 [September]","Day=06 [5 — 3. The Dark Ages|6 — Act 1, Scene 1. DUKE ORSINO’s palace.]","Tagged entry=— [— go to —|← the day|Music]"],"cursor":"on select","screen":"2026-09-06 · sel none · bar off · panel none · rows goto · rendered · corner [whatever stood]"}
 a day picked: {"entry":"2026-09-05","open":false,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 go to: arrived at bookshelf/Browning, Robert/Pippa Passes: {"cursor":"at a line's start"}
