@@ -331,7 +331,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("the next entry after a refused switch", { source: await R.inSource(page) });
   await go("page/Gridded");
   await page.waitForTimeout(200);
-  /* the line fixed and the view restored: the pin released, the grid drawn — and the source view is the reader's choice until switched back, so a step that left it would run every later section in source */
+  /* the line fixed and the view restored: the pin released, the grid drawn */
   if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(200); }   /* the current app rendered the stray line as a paragraph and came back */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
@@ -1023,12 +1023,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Coded%20Lines");
   await page.waitForTimeout(300);
   await log("back to lines opening on inline code", { source: await R.inSource(page) });
-  /* a place held in the source mid-way down one long paragraph: the caret on the line on screen, so a key typed leaves the window where it is */
+  /* a place held in the source mid-way down one long paragraph, the entry forced into the source by a stray line in a grid (another entry otherwise opens rendered): the caret on the line on screen, so a key typed leaves the window where it is */
   await go("page/Long%20Paragraph");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-  await R.setSource(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" "));
+  await R.setSource(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" ") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
+  await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(1500);
   await wheelTo(1200);
   await page.waitForTimeout(700);
@@ -1050,8 +1051,6 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("Z");
   await page.waitForTimeout(300);
   await log("typed at the place in a long paragraph's source", { source: await R.inSource(page), lineOnScreen: onScreenStart, stayed: Math.abs((await winY()) - before) < 3 });
-  await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(300);
     }],
     ["entries left and renamed", async () => {
   /* what leaving, renaming and deleting do to an entry, a clipboard that refuses, and a page whose site data is blocked */

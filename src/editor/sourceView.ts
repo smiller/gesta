@@ -135,8 +135,6 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       return top + parseFloat(getComputedStyle(ta).lineHeight) >= 0 && top <= document.documentElement.clientHeight;
     },
     topAt: (under) => { const t = twin(), i = t.indexAt(under); t.done(); return i; },
-    /* the line on screen, not the markdown line: a paragraph is one line
-       here, wrapped over many (pin: places › typed at the place in a long paragraph's source) */
     lineStart: (pos) => { const t = twin(), i = t.indexAt(t.topOf(pos)); t.done(); return i; },
     placeAt: () => null,
     reveal: () => {},

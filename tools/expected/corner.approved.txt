@@ -157,7 +157,7 @@ walk: arrived at bookshelf/Boethius/Consolatio/3pr1: {"cursor":"at a line's star
 ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2: {"entry":"bookshelf/Boethius/Consolatio/3m1","cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3m1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘. again: {"entry":"bookshelf/Boethius/Consolatio/3pr2","cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘, back: {"entry":"bookshelf/Boethius/Consolatio/3m1","cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3m1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘M, then ⌃⌘.: {"entry":"bookshelf/Boethius/Consolatio/3pr2","source":true,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+⌃⌘M, then ⌃⌘.: {"entry":"bookshelf/Boethius/Consolatio/3pr2","source":false,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 stanza: arrived at bookshelf/Spenser, Edmund/The Faerie Queene/1.1: {"cursor":"at a line's start"}
 a canto opened: {"drawn":["1","2","3"],"shown":[],"crumb":"Edmund Spenser/The Faerie Queene › I.i","title":"Book I, Canto i","cursor":"at a line's start","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘R on a line: {"lines":["[Spenser, *The Faerie Queene*, I.i.2.1](…):","","> But on his brest a bloudie Crosse he bore,"],"cursor":"selected 14","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel 14 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
@@ -285,5 +285,6 @@ error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: bookmarks not saved Error: bookmarks unreadable
 error: cannot render page/Forced Long a grid holds only cards; "loose" is not a card
 error: cannot render page/Forced Long a grid holds only cards; "loose" is not a card
+error: cannot render page/Long Paragraph a grid holds only cards; "loose" is not a card
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)
 error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab

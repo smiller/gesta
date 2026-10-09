@@ -171,3 +171,4 @@ places: arrived at page/Long Paragraph (2) · * · the same
 typed at the place in a long paragraph's source · * · the same
 ⌃⌘K, then Escape, in the source view · cursor · the caret given back where it stood (2026-10-09, review cycle 2); the current app's focus came back at a line's start, not where it was left
 go to: arrived at 2026-09-06 · cursor · the same caret, carried: the section opens the day it is already on, so no arrival moves it
+⌃⌘M, then ⌃⌘. · source · the rendered view is the default: another entry opens rendered (2026-10-09, asked); the current app's markdown view carries across every navigation

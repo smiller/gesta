@@ -190,6 +190,19 @@ describe("a text the model refuses", () => {
     expect(w.released).toEqual([1]);
     expect(w.pins).toHaveLength(1);
   });
+  it("a show of another entry is in the rendered view; the same entry shown again keeps the view chosen", () => {
+    const w = world();
+    w.s.show("fine", "page/A");
+    w.s.switchTo(true);
+    w.log.length = 0;
+    w.s.show("fine", "page/A");
+    expect(w.s.md).toBe(true);
+    expect(w.log).toEqual(["destroy source", "build source"]);
+    w.log.length = 0;
+    w.s.show("other", "page/B");
+    expect(w.s.md).toBe(false);
+    expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
+  });
   it("a show releases the entry left's fence pin", () => {
     const w = world();
     w.s.show("fine", "page/A");

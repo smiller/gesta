@@ -91,9 +91,12 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     /* the release is told, as the force was: told only of the force, a
        view shown forced stayed shown after it ended (pin: grid › the next entry after a refused switch) */
     if (forced) { mdView = readerView; forced = false; opts.onView(mdView); }
+    /* the rendered view is the default: another entry opens in it, the same
+       entry drawn again keeps the view chosen
+       (pin: surface.test › a show of another entry is in the rendered view) */
+    if (key !== ekey && mdView) { mdView = false; opts.onView(false); }
     ekey = key;
-    /* the open view stays the open view across a navigation; the carets and
-       a pinned fence refusal belong to the entry left (pin: walk › ⌃⌘M, then ⌃⌘.)
+    /* the carets and a pinned fence refusal belong to the entry left
        (pin: surface.test › a show releases the entry left's fence pin) */
     carets.rendered = carets.source = null; placedAt = null;
     if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
