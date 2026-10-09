@@ -1997,5 +1997,24 @@ at the head is kept current per phase.
   sourceView.ts (the textarea and its twin) touch the DOM directly;
   surface.ts, placeKeeper.ts and overlays.ts are tested over fakes.
   DECIDED (asked): the two views join the list in CLAUDE.md. The wider
-  rule, every file touching the DOM (19 of 84 non-test files by a rough
-  grep, MEASURED), was not taken.
+  rule, every file touching the DOM, was measured and not taken. The
+  first count, 19 of 84 non-test files, was a rough grep that took in
+  five files already listed and type-only imports of EditorView;
+  counted by browser calls in code, the rule adds ten .ts files (fit,
+  rows, margins, folds, links, images, inlineStyles, clipboard,
+  richCopy, schema — schema's one call a getAttribute in parseDOM),
+  three storage files (local, bookmarkStore, backup) and the twelve
+  Svelte components (MEASURED). Since the cutover, 52 of the 71
+  commits touching src/ touched a listed file, main.ts 39 and
+  session.ts 31; 8 touched a candidate and no listed file, 4 of them
+  inside a reviewed range anyway (59a61de, 893986b, 76a4433, 0e0ed97),
+  4 the comment-only audit and restatement passes of 2026-09-28
+  (67100dd, 945cb5f, d262cb6, dd16186), reviewed by no rule (MEASURED,
+  git log against the ranges this record names as reviewed). So the
+  wider rule would have qualified no batch not already reviewed
+  (INFERRED); a review's cost is its commit range's, 89k–155k tokens
+  here, never its trigger list's. The case it would catch, a change of
+  behaviour inside a candidate file alone, came once (76a4433,
+  schema.ts, a code block's line breaks, reviewed in its batch); if it
+  comes again, fit.ts, margins.ts and rows.ts, which measure and place
+  on screen where no test sees, are the ones to add.
