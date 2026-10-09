@@ -57,7 +57,7 @@ the faulty entry opened: {"source":true,"corner":"cannot render page/Gridded —
 grid: arrived at page/Carded: {"cursor":"at a line's start"}
 the next entry after a refused switch: {"source":false,"cursor":"at a line's start","screen":"page/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 grid: arrived at page/Gridded: {"cursor":"at a line's start"}
-the line made a card, switched back: {"corner":"","grid":true,"columns":3,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the line made a card, switched back: {"corner":"saved","grid":true,"columns":3,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 paired card: arrived at page/Paired Card: {"cursor":"at a line's start"}
 a card and a note of paired verse: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"page/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 typed on in the note's last row: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"page/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -279,6 +279,16 @@ Replace All, the replacement holding the find: {"open":true,"view":"source","cou
 Escape, the switch back refused: {"open":false,"view":"source","count":"none","find":"::: card-red","with":"zz","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"cursor":"at a line's start","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 ⌃⌘H over the bar: {"open":false,"view":"rendered","count":"none","find":"::: card-red","with":"zz","focus":"DIV","boxes":"aligned","marks":0,"outlined":null,"help":true,"cursor":"at the end","screen":"page/Replaced · sel none · bar off · panel help · rows none · rendered · corner [whatever stood]"}
 the entry saved in another window, the bar open: {"open":false,"view":"source","count":"1 of 1","find":"*-*","with":"zz","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"text":"One*-*two. Seven*-*eight.","caret":3,"cursor":"inside a line","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+losing nothing: arrived at page/Kept: {"cursor":"at a line's start"}
+a fence's words after the language, through both views: {"fence":"```not code","cursor":"at the end","screen":"page/Kept · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+the code button over a picture: {"corner":"can't make a code block from that","kept":true,"cursor":"selected 9","screen":"page/Kept · sel 9 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+line breaks pasted over a selection: {"kept":true,"cursor":"selected 3","screen":"page/Kept · sel 3 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+⌘C over a page marker: {"text":"::: note\nin her degree and on\n:::","cursor":"selected 21","screen":"page/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a note with a page marker hover-copied: {"text":"::: note\nin her degree and on\n:::","cursor":"selected 21","screen":"page/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+export pressed again while one runs: {"corner":"exporting…","pickers":1,"cursor":"selected 21","screen":"page/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+losing nothing: arrived at page/Typed: {"cursor":"at a line's start"}
+typed into an entry an import overwrites: {"afterButton":"none","text":"IMPORTED TEXT","corner":"not saved — changed in another tab, copy your text then reload (click to copy)","cursor":"at a line's start","screen":"page/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a store that never answers: {"corner":"couldn't load entries — reload (click to copy)","persistAsked":true,"cursor":"at a line's start","screen":"page/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
@@ -287,4 +297,6 @@ error: cannot render page/Forced Long a grid holds only cards; "loose" is not a 
 error: cannot render page/Forced Long a grid holds only cards; "loose" is not a card
 error: cannot render page/Long Paragraph a grid holds only cards; "loose" is not a card
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)
+error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab
+error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab
 error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab

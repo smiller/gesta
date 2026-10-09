@@ -180,7 +180,7 @@ function fenceMd(node: Node): string {
   });
   const fence = "`".repeat(n);
   const lang = String(node.attrs.lang).replace(/`/g, "");
-  return fence + lang + "\n" + text + "\n" + fence;
+  return fence + lang + String(node.attrs.rest ?? "").replace(/`/g, "") + "\n" + text + "\n" + fence;
 }
 
 function tableMd(table: Node): string {

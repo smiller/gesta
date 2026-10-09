@@ -172,3 +172,12 @@ typed at the place in a long paragraph's source · * · the same
 ⌃⌘K, then Escape, in the source view · cursor · the caret given back where it stood (2026-10-09, review cycle 2); the current app's focus came back at a line's start, not where it was left
 go to: arrived at 2026-09-06 · cursor · the same caret, carried: the section opens the day it is already on, so no arrival moves it
 ⌃⌘M, then ⌃⌘. · source · the rendered view is the default: another entry opens rendered (2026-10-09, asked); the current app's markdown view carries across every navigation
+a fence's words after the language, through both views · * · the current app's run of the section stops at reading the markdown view, which is no text box there; the words are kept here (2026-10-09, group 1)
+the code button over a picture · * · the same section: refused here, the picture kept (2026-10-09, group 1, asked)
+line breaks pasted over a selection · * · the same section: nothing pasted here, the selection kept (2026-10-09, group 1)
+⌘C over a page marker · * · the same section: no page marker in a copy (2026-10-09, group 1, asked)
+a note with a page marker hover-copied · * · the same
+export pressed again while one runs · * · the same section: one export at a time (2026-10-09, group 1, asked)
+a store that never answers · * · the same section: pinned after 8s, persistent storage asked for (2026-10-09, group 1)
+losing nothing: arrived at page/Typed · * · the current app's run of the section stops before this arrival
+typed into an entry an import overwrites · * · the same section: an entry an import writes takes no typing until it ends (2026-10-09, group 1, asked)

@@ -145,6 +145,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       window.scrollTo(0, window.scrollY + top - under);
     },
     focus: () => { ta.focus({ preventScroll: true }); },
+    lock: (on) => { ta.readOnly = on; },
     placeCaret: (pos, scroll) => {
       const at = pos ?? ta.value.length;
       /* the caret BEFORE the focus: a fresh textarea's selection sits at

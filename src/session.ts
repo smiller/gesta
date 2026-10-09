@@ -20,7 +20,7 @@ import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
 import { highlightIn } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
-import { surfaces, type Viewport, type ReplacePort } from "./editor/surface.ts";
+import { surfaces, type Surface, type Viewport, type ReplacePort } from "./editor/surface.ts";
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
@@ -52,6 +52,8 @@ export interface Session {
   /* the focus back to the text in either view, its selection as it stands
      (pin: source view › ⌃⌘K, then Escape, in the source view) */
   focusText(): void;
+  /* null: every entry takes typing again */
+  lockEntries(keys: Set<string> | null): void;
   open(date: string, tag: string | null, how?: OpenHow): void;
   openHash(): void;
   /* another tab landed a write under ekey */
@@ -164,10 +166,15 @@ export function startSession(opts: SessionOptions): Session {
     });
     return rendered;
   }
+  /* the entries an import is writing take no typing until it ends: typed
+     into, the open one kept the typing and lost the import's text unsaid
+     (pin: losing nothing › typed into an entry an import overwrites) */
+  let locked: Set<string> | null = null;
+  const lockedNow = <S extends Surface>(s: S): S => { s.lock(!!locked?.has(ekeyOf())); return s; };
   const surface = surfaces({
     build: {
-      rendered: (doc) => mountEditor(doc, current.date, current.tag),
-      source: (md) => { mount.replaceChildren(); return sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => say(why) }); },
+      rendered: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
+      source: (md) => { mount.replaceChildren(); return lockedNow(sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => say(why) })); },
     },
     window: viewport,
     places: keeper,
@@ -430,6 +437,7 @@ export function startSession(opts: SessionOptions): Session {
     get current() { return current; },
     get view() { return live(); },
     focusText: () => { surface.current?.focus(); },
+    lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
     open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },

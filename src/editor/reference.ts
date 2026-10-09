@@ -6,6 +6,7 @@ import { blockUnits, countAt, drawsInk, type Unit } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, romanWorkKey, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
+import { withoutFolios } from "./paste.ts";
 
 const N = schema.nodes;
 export function inkBetween(doc: Node, a: number, b: number): boolean {
@@ -253,7 +254,12 @@ function renumbered(doc: Node, at: number, cut: Node): Node {
    the contiguous run carrying the stanza gaps between them; a nested
    note stays behind and a page-turn row is dropped. In loose prose the
    unit is the selection, widened to whole pair rows. */
+/* the passage carries no page marker (pin: reference.test › the quoted passage sheds its page markers) */
 export function passageMd(doc: Node, from: number, to: number): string {
+  const bare = withoutFolios(doc);
+  return passageOf(bare.doc, bare.map(from), bare.map(to));
+}
+function passageOf(doc: Node, from: number, to: number): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {

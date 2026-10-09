@@ -383,3 +383,14 @@ test("rewriteEntry refused over a row deleted elsewhere drops the key from the c
   expect(calls.landed.filter((k) => k === "k").length).toBe(1);
   expect(calls.announced.filter((k) => k === "k").length).toBe(1);
 });
+
+test("a write that did not land keeps its error for the caller; a landing clears it", async () => {
+  let fail = true;
+  const full = new DOMException("full", "QuotaExceededError");
+  const { layer } = fresh((m) => ({ ...m, set: (k, md) => fail ? Promise.reject(full) : m.set(k, md) }));
+  expect(await layer.setEntry("page/A", "a")).toBe(false);
+  expect(layer.writeError("page/A")).toBe(full);
+  fail = false;
+  expect(await layer.setEntry("page/A", "a")).toBe(true);
+  expect(layer.writeError("page/A")).toBeUndefined();
+});

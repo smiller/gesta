@@ -87,6 +87,8 @@ const ROUND_TRIPS = [
   "![](<bookshelf--Popova, Maria--x-img-1.webp>) and [t](<a b>)",
   "*an italic sentence holding [a link](https://x.test) and more*",
   "[**bold** and plain](https://x.test) and *a **bold** word inside*",
+  "```not code\nx = 1\n```",
+  "```js  title=a.js\nlet a\n```",
 ];
 
 test("round trips: every form survives md -> document -> md", () => {

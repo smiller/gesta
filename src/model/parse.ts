@@ -95,7 +95,10 @@ function emitHeading(sink: Sink, line: string): void {
 
 function emitFence(sink: Sink, lines: string[], from: number): number {
   const open = FENCE_TICKS.exec(lines[from])!;
-  const lang = lines[from].slice(open[1].length).trim().split(/\s+/)[0].toLowerCase().replace(/`/g, "");
+  /* the words after the language are kept as written: "```not code" saved
+     as "```not" (pin: roundtrip.test › round trips) */
+  const [, first, rest] = lines[from].slice(open[1].length).trim().match(/^(\S*)(.*)$/)!;
+  const lang = first.toLowerCase().replace(/`/g, "");
   from++;
   const code: string[] = [];
   while (from < lines.length) {
@@ -105,6 +108,7 @@ function emitFence(sink: Sink, lines: string[], from: number): number {
   }
   const t = sink.push("fence", "code", 0);
   t.info = lang;
+  t.meta = { rest: rest.replace(/`/g, "") };
   t.content = code.join("\n");
   return from + 1;
 }
@@ -488,7 +492,7 @@ function buildDoc(tokens: Token[]): Node {
         case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null }); break;
         case "cell_open": open(schema.nodes.cell); break;
         case "gap": add(schema.nodes.gap.create()); break;
-        case "fence": add(schema.nodes.code_block.create({ lang: t.info }, t.content ? schema.text(t.content) : null)); break;
+        case "fence": add(schema.nodes.code_block.create({ lang: t.info, rest: (t.meta?.rest as string) ?? "" }, t.content ? schema.text(t.content) : null)); break;
         case "reference": add(schema.nodes.reference.create(null, t.content ? schema.text(t.content) : null)); break;
         case "paragraph_close": case "heading_close": case "blockquote_close":
         case "bullet_list_close": case "ordered_list_close": case "list_item_close":

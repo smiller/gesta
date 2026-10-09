@@ -26,6 +26,8 @@ export interface Surface {
   placeCaret(pos: number | null, scroll: boolean): void;
   /* the focus back, the selection as it stands */
   focus(): void;
+  /* on: nothing typed reaches the text */
+  lock(on: boolean): void;
   insertText(text: string): void;
   insertPicture(name: string): void;
   words(): number;

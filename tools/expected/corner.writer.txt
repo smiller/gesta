@@ -263,6 +263,8 @@ Replace All in a long entry: {"kept":true,"cursor":"inside a line","screen":"pag
 Replace All, the replacement holding the find: {"bar":"none","view":"rendered","cursor":"at the end","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 Escape, the switch back refused: {"bar":"none","view":"rendered","cursor":"at the end","screen":"page/Replaced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 SECTION FAILED (replace): TimeoutError: page.fill: Timeout 30000ms exceeded.
+losing nothing: arrived at page/Kept: {"cursor":"at a line's start"}
+SECTION FAILED (losing nothing): Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 'split')
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

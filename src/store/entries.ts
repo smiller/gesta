@@ -28,6 +28,8 @@ export interface EntryLayer {
   /* resolves whether the write LANDED, never rejects: the notices carry the
      failure, but a tally needs the answer */
   setEntry(ekey: string, md: string): Promise<boolean>;
+  /* why the key's last write did not land; nothing once one lands */
+  writeError(ekey: string): unknown;
   removeEntry(ekey: string): Promise<boolean>;
   /* `edit` answers null when it changes nothing */
   rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite>;
@@ -63,6 +65,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
      (pin: entries.test › a notice is skipped for a key whose own write has not landed)
      (pin: entries.test › a save refused as stale makes the key owed) */
   const unlanded = new Set<string>();
+  const writeErrors = new Map<string, unknown>();
   const chain: Record<string, Promise<unknown>> = Object.create(null);
   /* false until the warm has filled the cache: a backup run before it would
      export a blank journal over the mirror */
@@ -138,8 +141,9 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     const tail = (chain[ekey] || Promise.resolve()).then(op, op);
     chain[ekey] = tail;
     return tail.then(
-      (v) => { if (v === GONE) return true; unlanded.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); opts.onLanded?.(ekey); return true; },
+      (v) => { if (v === GONE) return true; unlanded.delete(ekey); writeErrors.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); opts.onLanded?.(ekey); return true; },
       (err: unknown) => {
+        writeErrors.set(ekey, err);
         /* PUT THE CACHE BACK: a refused write left there would go out over the
            backup folder at the next run (pin: entries.test › a stale write
            restores the cache). Guarded by the counter — a delete mutates the
@@ -216,7 +220,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     }).then(() => { warmed = !storeReadFailed; warmLanded(); });
   }
   return {
-    cache, saveSeq, entryMd, setEntry, removeEntry, rewriteEntry, persistEntry, primeEntry, warm, clear,
+    cache, saveSeq, entryMd, setEntry, writeError: (ekey: string) => writeErrors.get(ekey), removeEntry, rewriteEntry, persistEntry, primeEntry, warm, clear,
     storedKeys: () => store.keys(), takeNotice,
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },

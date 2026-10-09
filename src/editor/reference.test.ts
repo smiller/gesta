@@ -331,3 +331,9 @@ test("under the directive a run reaching a plain verse block is still refused", 
   const [a, b] = span(mixed, "b", "c");
   expect(referencePayload(state(mixed, a, b), "bookshelf", FQ1, fqJournal)).toEqual({ refused: "two-blocks" });
 });
+
+test("the quoted passage sheds its page markers and keeps its words", () => {
+  const doc = parseMarkdown("::: prose\n⟨30⟩Beatrice ⟨31⟩was, in her degree ⟨32⟩ and on.\n:::");
+  expect(passageMd(doc, 3, doc.content.size - 3)).not.toMatch(/⟨/);
+  expect(passageMd(doc, 3, doc.content.size - 3)).toContain("Beatrice was, in her degree and on");
+});

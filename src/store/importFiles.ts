@@ -13,7 +13,14 @@ import { entryDocs, filePath, type ImportFile } from "./files.ts";
 export interface ImportSink {
   setEntry(ekey: string, md: string): Promise<boolean>;
   setImage(path: string, bytes: Uint8Array): Promise<void>;
+  /* why the entry's last write did not land */
+  writeError?(ekey: string): unknown;
 }
+class StorageFull extends Error {}
+const isQuota = (err: unknown): boolean => {
+  const e = err as { name?: string; inner?: { name?: string } } | null;
+  return e?.name === "QuotaExceededError" || e?.inner?.name === "QuotaExceededError";
+};
 export type Sidecars = Record<string, Uint8Array | null>;
 export type Outcome = "imported" | "skipped" | "failed";
 /* the sidecars one entry's text names: matched by the sidecar NAMES this
@@ -48,11 +55,24 @@ export function importEntry(path: string, text: string, sidecars: Sidecars, sink
   if (blocked) return Promise.reject(new Error("a picture this entry needs could not be read"));
   return Promise.resolve().then(() => {
     parseMarkdown(text);     return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)), Promise.resolve());
-  }).then(() => sink.setEntry(ekey, text)).then((landed) => landed ? "imported" : "failed");
+  }).then(() => sink.setEntry(ekey, text)).then((landed) => {
+    if (!landed && isQuota(sink.writeError?.(ekey))) throw new StorageFull("storage full");
+    return landed ? "imported" : "failed";
+  });
 }
-export interface Tally { imported: number; failed: number; attempted: number; failures: { path: string; error: string }[] }
+export function importKeys(files: ImportFile[]): Set<string> {
+  const keys = new Set<string>();
+  for (const f of entryDocs(files)) {
+    const t = importTarget(filePath(f));
+    if (t) keys.add(entryKey(t.date, t.tag));
+  }
+  return keys;
+}
+export interface Tally { imported: number; failed: number; attempted: number; failures: { path: string; error: string }[]; full?: true }
 /* A single file's failure is COUNTED, not thrown — one bad file must not
-   abort the rest of the folder — and named in the tally */
+   abort the rest of the folder — and named in the tally. A full store
+   stops it: every write after would fail the same way, each its own pin
+   (pin: importFiles.test › storage full stops the import) */
 export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: (done: number, total: number) => void): Promise<Tally> {
   const sidecars: Sidecars = Object.create(null);
   for (const f of files) if ("bytes" in f) sidecars[filePath(f)] = f.bytes;
@@ -60,6 +80,7 @@ export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: 
   const tally: Tally = { imported: 0, failed: 0, attempted: docs.length, failures: [] };
   let done = 0;
   return docs.reduce((chain, f) => chain.then(() => {
+    if (tally.full) return;
     const path = filePath(f);
     if (f.unread) { tally.failed++; tally.failures.push({ path, error: "could not be read" }); return; }
     return importEntry(path, f.text, sidecars, sink).then(
@@ -67,7 +88,7 @@ export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: 
         if (outcome === "imported") tally.imported++;
         else if (outcome === "failed") { tally.failed++; tally.failures.push({ path, error: "the write did not land" }); }
       },
-      (err: unknown) => { tally.failed++; tally.failures.push({ path, error: String((err as Error)?.message ?? err) }); },
+      (err: unknown) => { tally.failed++; tally.failures.push({ path, error: String((err as Error)?.message ?? err) }); if (err instanceof StorageFull) tally.full = true; },
     );
   }).then(() => { if (onProgress) onProgress(++done, docs.length); }), Promise.resolve()).then(() => tally);
 }

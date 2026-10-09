@@ -24,7 +24,17 @@ const isHeading = (state: EditorState): boolean => state.selection.$from.parent.
 export const heading: Command = (state, dispatch) =>
   (isHeading(state) ? setBlockType(N.paragraph) : setBlockType(N.heading, { level: 1 }))(state, dispatch);
 export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote) ? lift : wrapIn(N.blockquote))(state, dispatch);
-export const codeBlock: Command = (state, dispatch) => (inCode(state) ? setBlockType(N.paragraph) : setBlockType(N.code_block))(state, dispatch);
+/* a code block holds text alone: a picture or a page marker in the range
+   was dropped by the change (pin: format.test › code refuses a paragraph holding a picture) */
+export function codeBlockRefusal(state: EditorState): string | null {
+  if (inCode(state)) return null;
+  const { from, to } = state.selection;
+  let atom = false;
+  state.doc.nodesBetween(from, to, (n) => { if (n.isInline && n.isLeaf && !n.isText && n.type !== N.hard_break) atom = true; return !atom; });
+  return atom ? "can't make a code block from that" : null;
+}
+export const codeBlock: Command = (state, dispatch) =>
+  codeBlockRefusal(state) ? false : (inCode(state) ? setBlockType(N.paragraph) : setBlockType(N.code_block))(state, dispatch);
 export function formatState(state: EditorState): Record<string, boolean> {
   const { from, $from, to, empty } = state.selection;
   const has = (m: typeof M.strong): boolean => empty ? !!m.isInSet(state.storedMarks || $from.marks()) : state.doc.rangeHasMark(from, to, m);

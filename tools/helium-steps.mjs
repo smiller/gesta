@@ -336,6 +336,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
+  await R.waitCorner(page, "saved");   /* read after the switch's save: at 400ms alone it was there one run in two */
   await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await R.gridLayout(page)) });
     }],
     ["paired card", async () => {
@@ -1359,6 +1360,78 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await other.close(); }
   await page.keyboard.press("Escape");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {}); }
+    }],
+    ["losing nothing", async () => {
+  /* what was lost and is kept now: a fence's words after its language, a picture under the code button, a selection under a paste of line breaks, page markers in a copy, a second export's report, a store that never answers */
+  await go("page/Kept");
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.setSource(page, "```not code\nx = 1\n```\n\ncap ![](x.png) tion\n\n::: note\nin her degree ⟨8⟩ and on\n:::\n");
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(300);
+  await R.waitCorner(page, "saved");   /* the source's save landed first: its whisper would stand over the refusal's */
+  await R.selectBetween(page, "cap", "tion");
+  await page.waitForTimeout(150);
+  await page.click(".fmt .code");
+  await page.waitForTimeout(200);
+  await log("the code button over a picture", { corner: await cornerText(), kept: ((await A.stored(page)) || "").includes("cap ![](x.png) tion") });
+  await R.selectBetween(page, "cap", "cap");
+  await R.pasteText(page, "\n\n");
+  await page.waitForTimeout(200);
+  await log("line breaks pasted over a selection", { kept: ((await A.stored(page)) || "").includes("cap ![](x.png) tion") });
+  await R.selectBetween(page, "in her", "and on");
+  await page.keyboard.press("Meta+c");
+  await page.waitForTimeout(200);
+  await log("⌘C over a page marker", { text: await R.clipboardText(page) });
+  await page.hover(S.editor + " div.note");
+  await page.waitForTimeout(150);
+  await page.click(S.copybtn);
+  await page.waitForTimeout(300);
+  await log("a note with a page marker hover-copied", { text: await R.clipboardText(page) });
+  /* a folder picker that answers only when told: the export stays running */
+  await page.evaluate(() => { window.__pickers = 0; window.showDirectoryPicker = () => new Promise((_, reject) => { window.__pickers++; window.__pickerAbort = () => reject(new DOMException("dismissed", "AbortError")); }); });
+  await page.click(".toolbtn[title^='Export every entry']");
+  await page.waitForTimeout(200);
+  await page.click(".toolbtn[title^='Export every entry']");
+  await page.waitForTimeout(200);
+  await log("export pressed again while one runs", { corner: await cornerText(), pickers: await page.evaluate(() => window.__pickers) });
+  await page.evaluate(() => window.__pickerAbort?.());
+  await page.waitForTimeout(300);
+  /* an import over the entry open, typed into while it runs: the import's text stands and its tally shows; the keys go back to the text after the button */
+  await go("page/Typed");
+  await page.click(S.editor);
+  await page.keyboard.type("before the import. ");
+  await page.waitForTimeout(1200);
+  await page.evaluate(() => {
+    const file = (name, text) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
+    const dir = (name, kids) => ({ kind: "directory", name, values: async function* () { for (const k of kids) yield k; } });
+    const fillers = Array.from({ length: 1500 }, (_, i) => file("Filler " + String(i).padStart(4, "0") + ".md", "# Filler " + i + "\n"));
+    window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("page", [...fillers, file("Typed.md", "IMPORTED TEXT\n")])]));
+  });
+  await page.click(".toolbtn[title^='Import']");
+  await page.waitForTimeout(100);
+  const afterButton = await cursor();
+  await page.waitForFunction((c) => /^importing/.test(document.querySelector(c)?.textContent || ""), S.corner, { timeout: 10000 }).catch(() => {});
+  await page.click(S.editor);
+  await page.keyboard.type("T0 T1 T2 ");
+  /* the import's end: its tally, or a failure still owed from an earlier section, which every operation's end puts back */
+  await page.waitForFunction((c) => !/^importing/.test(document.querySelector(c)?.textContent || ""), S.corner, { timeout: 30000 }).catch(() => {});
+  const tallied = await cornerText();
+  await page.waitForTimeout(1000);
+  await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate((e) => (document.querySelector(e)?.textContent || "").slice(0, 40), S.editor), corner: tallied });
+  /* a page of its own, the persist call watched from before the app's first line */
+  const hung = await page.context().newPage();
+  await hung.addInitScript(() => { const s = navigator.storage; const own = s.persist.bind(s); s.persist = () => { window.__persistAsked = true; return own(); }; });
+  await hung.goto(A.url("page/Horace", "warm=hang"));
+  await hung.waitForTimeout(8500);
+  await log("a store that never answers", await hung.evaluate((c) => ({ corner: document.querySelector(c)?.textContent || "", persistAsked: !!window.__persistAsked }), S.corner));
+  await hung.close();
     }],
     ["pill", async () => {
   if (A.pill) {

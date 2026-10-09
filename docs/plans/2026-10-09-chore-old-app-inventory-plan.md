@@ -181,3 +181,43 @@ comment (B39, B100, T165, T395) are owed a line in corner.differences.txt.
 Rows 14, 22, 23, 24, 25, 26, 46 above, and help.html:70 (the legacy
 `<a name="#p…">` conversion, absent: T87 — no file in the corpus needs it,
 INFERRED). Either the app or the sentence changes, item by item.
+
+## Group 1, done (2026-10-09)
+
+Each item played before its fix — under node against this app's modules, or
+in headless Helium — and pinned after, the readings in the section "losing
+nothing" of the shared steps failing on the code before (MEASURED, one run of
+that section against the committed tree):
+
+1. A fence's words after its language are kept (`rest` on the code block;
+   roundtrip.test). Before: "```not code" saved as "```not".
+2. The code button refuses a paragraph holding a picture or a page marker,
+   "can't make a code block from that" (asked, the old app's words).
+   Before: the picture deleted.
+3. A paste of line breaks alone is nothing (paste.test). Before: the
+   selection replaced by an empty paragraph.
+4. No page marker leaves in any copy — ⌘C and ⌘X in both flavours, the hover
+   copy, ⌃⌘R's passage (asked: always, as the old app did; cutting a
+   paragraph within a book loses its marker too).
+5. One export or import at a time. The whisper "an export is still running"
+   cannot show while the export's own progress line holds the corner, by
+   the ledger's rule; the second press opens no second picker (pickers 1,
+   before 2 — INFERRED from the old code). An import pressed again while the
+   first is at its picker or confirm does whisper.
+6. A full store stops an import at the first refusal, "storage full —
+   imported N of M" (asked), the layer now keeping each key's last write
+   error (`writeError`, entries.test; importFiles.test).
+7. Typing during an import: MEASURED before, the typing won and the open
+   entry's imported text was lost, the tally whispered over by "saved".
+   DECIDED (asked, option 1): an entry the import writes takes no typing
+   until it ends (`Surface.lock`), then shows the imported text; other
+   entries stay typeable. The import's keys from `importKeys` (tested).
+8. A store that never answers pins "couldn't load entries — reload" after
+   8 seconds, released if it answers after all (`?warm=hang` drives it).
+9. Persistent storage is asked for at launch (watched in the step).
+
+Found alongside: after "import" or "export" the focus stayed on the button,
+so a space typed next pressed it again — the keys go back to the text
+(asked), and after an import over the open entry the text has the focus
+back. A reading that raced the save in the grid section ("the line made a
+card, switched back") now waits for it.

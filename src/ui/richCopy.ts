@@ -23,6 +23,8 @@ export { inlineBlockStyles };
 export function richBlockHtml(el: Element): string {
   const clone = el.cloneNode(true) as Element;
   inlineBlockStyles(el, clone);
+  /* no page marker leaves in a copy (pin: losing nothing › a note with a page marker hover-copied) */
+  clone.querySelectorAll(".folio").forEach((f) => f.remove());
   return clone.outerHTML.replace(/​/g, "");
 }
 /* the reference's HTML: the citation line, then the quoted passage

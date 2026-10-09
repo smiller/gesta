@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice } from "./paste.ts";
 
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
@@ -103,4 +103,20 @@ test("a drag that stays inside ONE card of a grid is prose, not the grid", () =>
   const inOne = closeRowSlice(across("::: grid 2\n::: card-red\nalpha beta\n\ngamma delta\n:::\n\n::: card-pink\nother\n:::\n:::", "beta", "gamma").selection.content());
   expect(inOne.openStart).toBe(3);
   expect(pasteAt(at("one two three", "two"), inOne)).toBe("one twobeta\n\ngamma three");
+});
+
+test("a paste of line breaks alone is nothing: it never replaces a selection", () => {
+  expect(onlyLineBreaks("\n\n")).toBe(true);
+  expect(onlyLineBreaks("\r\n")).toBe(true);
+  expect(onlyLineBreaks("  \n ")).toBe(true);
+  expect(onlyLineBreaks("a\n")).toBe(false);
+  expect(onlyLineBreaks("")).toBe(false);
+  expect(onlyLineBreaks(" ")).toBe(false);
+});
+
+test("a copy carries no page marker out, and loses none of its words", () => {
+  const doc = parseMarkdown("in her degree ⟨8⟩ and on");
+  expect(copyMd(copiedSlice(doc.slice(0, doc.content.size)))).toBe("in her degree and on");
+  const tight = parseMarkdown("⟨30⟩Beatrice ⟨31⟩was, in her degree.");
+  expect(copyMd(copiedSlice(tight.slice(0, tight.content.size)))).toBe("Beatrice was, in her degree.");
 });

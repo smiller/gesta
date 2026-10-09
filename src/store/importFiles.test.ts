@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { importFiles, importEntry, sidecarRefs, type ImportSink } from "./importFiles.ts";
+import { importFiles, importEntry, importKeys, sidecarRefs, type ImportSink } from "./importFiles.ts";
 import type { ImportFile } from "./files.ts";
 import { entryFile, pictureKey } from "./names.ts";
 
@@ -98,4 +98,26 @@ test("a picture the import files is found where the entry looks, for every kind 
     await importFiles([{ dir: at.dir, name: at.base + ".md", text: "![](pic.webp)" }, { dir: at.dir, name: "pic.webp", bytes: bytes(7) }], s);
     expect(Object.keys(images)).toEqual([pictureKey(date, tag, "pic.webp")]);
   }
+});
+
+test("storage full stops the import: the rest are not tried, and the tally says so", async () => {
+  const tried: string[] = [];
+  const s: ImportSink = {
+    setEntry: (k) => { tried.push(k); return Promise.resolve(tried.length < 2); },
+    setImage: () => Promise.resolve(),
+    writeError: () => new DOMException("full", "QuotaExceededError"),
+  };
+  const files: ImportFile[] = ["A", "B", "C"].map((n) => ({ dir: "page/", name: n + ".md", text: "# " + n }));
+  const tally = await importFiles(files, s);
+  expect(tried).toEqual(["page/A", "page/B"]);
+  expect(tally).toMatchObject({ imported: 1, failed: 1, attempted: 3, full: true });
+});
+
+test("the entries an import will write, by key, before it runs", () => {
+  const files: ImportFile[] = [
+    { dir: "journal/2026/", name: "2026-01-05.md", text: "a day" },
+    { dir: "page/", name: "Typed.md", text: "IMPORTED TEXT" },
+    { dir: "", name: "README.md", text: "not an entry" },
+  ];
+  expect([...importKeys(files)].sort()).toEqual(["2026-01-05", "page/Typed"]);
 });

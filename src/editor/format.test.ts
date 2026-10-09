@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { bold, heading, quote, codeBlock, curlQuotes, curlSelection, wordCount, cutMd, replaceWithLink, formatState } from "./format.ts";
+import { bold, heading, quote, codeBlock, codeBlockRefusal, curlQuotes, curlSelection, wordCount, cutMd, replaceWithLink, formatState } from "./format.ts";
 
 function sel(md: string, a: string, b?: string): EditorState {
   const doc = parseMarkdown(md);
@@ -80,4 +80,11 @@ test("code over lines broken by Enter keeps each line, and back again", () => {
   const c = run(codeBlock, sel("if matches.any?\n  matches[0][0]\nelse", "matches.any"));
   expect(md(c)).toBe("```\nif matches.any?\n  matches[0][0]\nelse\n```");
   expect(md(run(codeBlock, c))).toBe("if matches.any?\n  matches[0][0]\nelse");
+});
+test("code refuses a paragraph holding a picture or a page marker, and says so; the picture stays", () => {
+  const s = sel("cap ![](x.png) tion", "cap", "tion");
+  expect(codeBlock(s, () => {})).toBe(false);
+  expect(codeBlockRefusal(s)).toBe("can't make a code block from that");
+  expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toBe("can't make a code block from that");
+  expect(codeBlockRefusal(sel("plain words", "plain"))).toBeNull();
 });

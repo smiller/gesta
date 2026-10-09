@@ -19,7 +19,7 @@ import { backupRunner, PAUSED_MSG } from "./store/backup.ts";
 import { entryLayer } from "./store/entries.ts";
 import { pickImportFiles } from "./store/pick.ts";
 import type { Dir } from "./store/fsa.ts";
-import { importFiles } from "./store/importFiles.ts";
+import { importFiles, importKeys } from "./store/importFiles.ts";
 import { entryDocs, isDoc, failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
 import { readRaw } from "./store/local.ts";
@@ -41,6 +41,8 @@ import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRe
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { TextSelection } from "prosemirror-state";
+import { Fragment } from "prosemirror-model";
+import { dropFolios } from "./editor/paste.ts";
 import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "./editor/replace.ts";
 import type { ReplacePort } from "./editor/surface.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
@@ -58,7 +60,7 @@ import CopyButton from "./ui/CopyButton.svelte";
 import { writeClipboard } from "./ui/clipboard.ts";
 import { richBlockHtml } from "./ui/richCopy.ts";
 import { schema } from "./model/schema.ts";
-import { bold, italic, underline, strike, heading, quote, codeBlock, curlSelection, inCode, formatState } from "./editor/format.ts";
+import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "./editor/format.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -71,6 +73,8 @@ const mountEl = document.getElementById("editor") as HTMLElement;
 const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
 const q = new URLSearchParams(location.search);
+/* ms before a store that has not answered is said not to have loaded */
+const LOAD_PATIENCE_MS = 8000;
 
 const notices = noticeLedger(copyText);
 const say = notices.whisper;
@@ -864,7 +868,7 @@ if (fixture && fixtures[fixture]) {
     const payload = node.type === schema.nodes.code_block ? node.textContent.replace(/\n$/, "")
       /* the swept HTML, not the raw: with the raw outerHTML a card pasted into
          Mail arrived as plain lines (pin: card copy › a card hover-copied) */
-      : { text: serializeMarkdown(schema.nodes.doc.create(null, [node])), html: richBlockHtml(copyTarget) };
+      : { text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html: richBlockHtml(copyTarget) };
     writeClipboard(payload).then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
   };
   /* THE FLOATING BAR: placed over the selection on every selection change
@@ -899,7 +903,7 @@ if (fixture && fixtures[fixture]) {
     if (act === "words") { session.showWordCount(); return; }
     if (act === "tag") { life.extract(); return; }
     const cmd = { bold, italic, underline, strike, heading, quote, code: codeBlock, curl: curlSelection }[act];
-    if (cmd && !cmd(view.state, view.dispatch)) say("nothing to change there", 2000);
+    if (cmd && !cmd(view.state, view.dispatch)) say((act === "code" && codeBlockRefusal(view.state)) || "nothing to change there", 2000);
     view.focus();
     placeBar();
   };
@@ -977,9 +981,19 @@ if (fixture && fixtures[fixture]) {
   const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
     if (found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date)) { session.openHash(); opened = true; stage("primed"); }
   }, () => {});
-  /* the one way a step opens a page before the warm lands (pin: places › before the warm) */
-  const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeout(r, 2000)) : () => undefined;
+  /* the one way a step opens a page before the warm lands (pin: places › before the warm),
+     and one where it never does (pin: losing nothing › a store that never answers) */
+  const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeout(r, 2000))
+    : q.get("warm") === "hang" ? () => new Promise<void>(() => {}) : () => undefined;
+  /* a store that never answers left a blank page saying nothing */
+  /* asked once: an unpersisted store may be evicted under storage pressure
+     (pin: losing nothing › a store that never answers) */
+  navigator.storage?.persist?.().catch(() => {});
+  let slowPin = 0;
+  const slowLoad = setTimeout(() => { slowPin = notices.stick("couldn't load entries — reload"); }, LOAD_PATIENCE_MS);
   primed.then(held).then(() => layer.warm()).then(() => {
+    clearTimeout(slowLoad);
+    if (slowPin) notices.releasePin(slowPin);
     /* an unreadable journal is an error, not a status: it sticks, the
        caught failure copyable */
     if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); return; }
@@ -1000,9 +1014,19 @@ if (fixture && fixtures[fixture]) {
      progress line; the flush and the walk run alongside. Nothing here
      deletes: the sweep belongs to the backup tiers, whose names this app
      reserves. A dismissed picker cancels the line silently. */
+  /* one export or import at a time: a second one's progress line retired
+     the first's, and its report was lost
+     (pin: losing nothing › export pressed again while one runs) */
+  let longRun: "an export" | "an import" | null = null;
+  const stillRunning = (): boolean => { if (longRun) say(longRun + " is still running", 2000); return !!longRun; };
   acts.export = () => {
+    /* the keys go back to the text: left on the button, a space pressed it
+       again (pin: losing nothing › export pressed again while one runs) */
+    session.focusText();
     if (!win.showDirectoryPicker) { say("export needs a browser that can open a folder to write into"); return; }
     if (!layer.warmed) { say("still loading — try that again in a moment"); return; }
+    if (stillRunning()) return;
+    longRun = "an export";
     const dirPicked = win.showDirectoryPicker({ mode: "readwrite" });
     dirPicked.catch(() => {});
     const p = notices.progress("exporting…");
@@ -1022,7 +1046,7 @@ if (fixture && fixtures[fixture]) {
       console.error("export failed", err);
       const msg = (err as { collision?: boolean })?.collision ? "export failed — " + (err as Error).message : failMsg("export failed", err);
       p.fail(msg, msg);
-    });
+    }).finally(() => { longRun = null; });
   };
   /* the picker opens synchronously in the click, then: names, the refusal,
      the read, the count-then-confirm gate, the progress line, the
@@ -1030,7 +1054,10 @@ if (fixture && fixtures[fixture]) {
      entry by entry and deletes nothing, so a subset folder lands only its
      own entries. */
   acts.import = () => {
+    session.focusText();
     if (!win.showDirectoryPicker) { say("import needs a folder picker"); return; }
+    if (stillRunning()) return;
+    longRun = "an import";
     session.flushSave();
     let p: Progress | null = null;
     win.showDirectoryPicker().then(pickImportFiles).then((files) => {
@@ -1043,23 +1070,31 @@ if (fixture && fixtures[fixture]) {
       if (!confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
           " from this folder? Each one overwrites that entry in this journal, and there is no undo.")) return;
       p = notices.progress("importing…");
-      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set }, p.step).then((tally) => {
+      session.lockEntries(importKeys(files));
+      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, writeError: layer.writeError }, p.step).then((tally) => {
+        session.lockEntries(null);
         count();
         let msg = "imported " + tally.imported;
-        if (tally.failed) {
+        if (tally.full) {
+          console.error("import stopped, storage full", tally.failures);
+          p!.fail("storage full — imported " + tally.imported + " of " + tally.attempted, tally.failures.map((x) => x.path + ": " + x.error).join("\n"));
+        } else if (tally.failed) {
           msg += ", " + tally.failed + " failed";
           console.error("import failures", tally.failures);
           p!.fail(msg, tally.failures.map((x) => x.path + ": " + x.error).join("\n"));
         } else p!.ok(msg + " entries");
         /* the open entry may have been overwritten: repainted only where
            the store differs from the surface, what was typed landing first */
-        return session.refresh().then(() => refreshMasthead());   /* the key list moved under the tag bar */
+        /* a locked entry let its focus go: given back where nothing holds it
+           (pin: losing nothing › typed into an entry an import overwrites) */
+        return session.refresh().then(() => { refreshMasthead(); if (document.activeElement === document.body) session.focusText(); });   /* the key list moved under the tag bar */
       });
     }).catch((err: unknown) => {
+      session.lockEntries(null);
       if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
       console.error("import failed", err);
       const msg = failMsg("import failed", err);
       if (p) p.fail(msg, msg); else notices.stickErr("import failed", err);
-    });
+    }).finally(() => { longRun = null; });
   };
 }

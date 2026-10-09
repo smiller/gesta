@@ -2,6 +2,7 @@
    structure */
 import { Fragment, Slice, type ResolvedPos, type Node } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection } from "prosemirror-state";
+import { Transform } from "prosemirror-transform";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -20,6 +21,10 @@ function flat(lines: string[]): Slice {
   const nodes: Node[] = [];
   lines.forEach((l, i) => { if (i) nodes.push(N.hard_break.create()); if (l) nodes.push(schema.text(l)); });
   return new Slice(Fragment.from(nodes), 0, 0);
+}
+export function onlyLineBreaks(raw: string): boolean {
+  const txt = raw.replace(LINE_BREAK_RE, "\n");
+  return txt.includes("\n") && !txt.trim();
 }
 export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
   const body = raw.replace(LINE_BREAK_RE, "\n").replace(/\n$/, "");
@@ -76,6 +81,38 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
     } catch { /* a form the schema refuses stays as typed */ }
   }
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
+}
+/* NO PAGE MARKER LEAVES IN A COPY: pasted into a journal entry it made a
+   page number with no book behind it. Where one stood between two spaces,
+   one space goes with it (pin: paste.test › a copy carries no page marker out) */
+export function dropFolios(frag: Fragment): Fragment {
+  const out: Node[] = [];
+  let dropped = false;
+  frag.forEach((n) => {
+    if (n.type === N.folio) { dropped = true; return; }
+    let kept: Node | null = n.isLeaf ? n : n.copy(dropFolios(n.content));
+    const prev = out[out.length - 1];
+    if (dropped && kept.isText && prev?.isText && prev.text!.endsWith(" ") && kept.text!.startsWith(" ")) kept = kept.text!.length > 1 ? kept.cut(1) : null;
+    if (kept) out.push(kept);
+    dropped = false;
+  });
+  return Fragment.fromArray(out);
+}
+export function copiedSlice(slice: Slice): Slice {
+  return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
+}
+/* the same for a whole document, its positions mapped across the removal */
+export function withoutFolios(doc: Node): { doc: Node; map(pos: number): number } {
+  const tr = new Transform(doc);
+  const cuts: [number, number][] = [];
+  doc.descendants((n, pos) => {
+    if (n.type !== N.folio) return true;
+    const both = doc.textBetween(Math.max(0, pos - 1), pos) === " " && doc.textBetween(pos + 1, Math.min(doc.content.size, pos + 2)) === " ";
+    cuts.push([pos, pos + (both ? 2 : 1)]);
+    return false;
+  });
+  for (const [a, b] of cuts.reverse()) tr.delete(a, b);
+  return { doc: tr.doc, map: (pos) => tr.mapping.map(pos) };
 }
 export function copyMd(slice: Slice): string {
   let content = slice.content;

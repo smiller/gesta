@@ -67,9 +67,9 @@ const nodes: Record<string, NodeSpec> = {
     toDOM: (n) => ["li", n.attrs.value == null ? {} : { value: n.attrs.value }, 0],
   },
   code_block: {
-    attrs: { lang: { default: "" } }, content: "text*", marks: "", group: "block", code: true, defining: true,
-    parseDOM: [{ tag: "pre", preserveWhitespace: "full", getAttrs: (dom) => ({ lang: dom.getAttribute("data-lang") || "" }) }],
-    toDOM: (n) => ["pre", n.attrs.lang ? { "data-lang": n.attrs.lang } : {}, ["code", 0]],
+    attrs: { lang: { default: "" }, rest: { default: "" } }, content: "text*", marks: "", group: "block", code: true, defining: true,
+    parseDOM: [{ tag: "pre", preserveWhitespace: "full", getAttrs: (dom) => ({ lang: dom.getAttribute("data-lang") || "", rest: dom.getAttribute("data-rest") || "" }) }],
+    toDOM: (n) => ["pre", { ...(n.attrs.lang ? { "data-lang": n.attrs.lang } : {}), ...(n.attrs.rest ? { "data-rest": n.attrs.rest } : {}) }, ["code", 0]],
   },
   table: { content: "table_row+", group: "block", parseDOM: [{ tag: "table" }], toDOM: () => ["table", ["tbody", 0]] },
   table_row: { content: "table_cell+", parseDOM: [{ tag: "tr" }], toDOM: () => ["tr", 0] },

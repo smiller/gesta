@@ -19,7 +19,7 @@ import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -102,6 +102,9 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);
       if (file) { opts.onPasteFile?.(file); return true; }
+      /* line breaks alone are nothing to paste: they replaced a selection
+         with an empty paragraph (pin: paste.test › a paste of line breaks alone) */
+      if (event.clipboardData && onlyLineBreaks(event.clipboardData.getData("text/plain"))) return true;
       /* text carrying the editor's own HTML keeps the editor's paste */
       const data = event.clipboardData;
       if (!data || data.types.includes("text/html")) return false;
@@ -111,8 +114,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       return true;
     },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
-    clipboardTextSerializer: (slice) => copyMd(closeRowSlice(slice)),
-    transformCopied: (slice) => closeRowSlice(slice),
+    clipboardTextSerializer: (slice) => copyMd(copiedSlice(slice)),
+    transformCopied: (slice) => copiedSlice(slice),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the
          DOM only while the editor has focus, and skips its

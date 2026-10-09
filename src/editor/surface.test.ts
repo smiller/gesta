@@ -23,6 +23,7 @@ function world(y = 0) {
       topAt: () => { log.push("read top"); return f.top; },
       lineStart: (p) => p,
       focus: () => {},
+      lock: () => {},
       placeAt: () => null, reveal: () => {},
       end: () => source ? f.text.length : doc!.content.size,
       scrollToPos: (pos) => { log.push("align " + pos); },
