@@ -985,10 +985,11 @@ if (fixture && fixtures[fixture]) {
      and one where it never does (pin: losing nothing › a store that never answers) */
   const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeout(r, 2000))
     : q.get("warm") === "hang" ? () => new Promise<void>(() => {}) : () => undefined;
-  /* a store that never answers left a blank page saying nothing */
   /* asked once: an unpersisted store may be evicted under storage pressure
      (pin: losing nothing › a store that never answers) */
   navigator.storage?.persist?.().catch(() => {});
+  /* a store that never answers left a blank page saying nothing
+     (pin: losing nothing › a store that never answers) */
   let slowPin = 0;
   const slowLoad = setTimeout(() => { slowPin = notices.stick("couldn't load entries — reload"); }, LOAD_PATIENCE_MS);
   primed.then(held).then(() => layer.warm()).then(() => {

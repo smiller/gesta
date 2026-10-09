@@ -204,6 +204,13 @@ describe("a text the model refuses", () => {
     expect(w.s.md).toBe(false);
     expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
   });
+  it("a renamed entry, shown under its new key with the view kept, stays in the view chosen", () => {
+    const w = world();
+    w.s.show("fine", "page/A");
+    w.s.switchTo(true);
+    w.s.show("fine", "page/B", true);
+    expect(w.s.md).toBe(true);
+  });
   it("a show releases the entry left's fence pin", () => {
     const w = world();
     w.s.show("fine", "page/A");

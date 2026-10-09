@@ -81,10 +81,11 @@ test("code over lines broken by Enter keeps each line, and back again", () => {
   expect(md(c)).toBe("```\nif matches.any?\n  matches[0][0]\nelse\n```");
   expect(md(run(codeBlock, c))).toBe("if matches.any?\n  matches[0][0]\nelse");
 });
-test("code refuses a paragraph holding a picture or a page marker, and says so; the picture stays", () => {
+test("code refuses a paragraph holding a picture or a page marker anywhere in it, and says so; the picture stays", () => {
   const s = sel("cap ![](x.png) tion", "cap", "tion");
   expect(codeBlock(s, () => {})).toBe(false);
   expect(codeBlockRefusal(s)).toBe("can't make a code block from that");
   expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toBe("can't make a code block from that");
+  expect(codeBlockRefusal(sel("cap ![](x.png) tion", "cap"))).toBe("can't make a code block from that");
   expect(codeBlockRefusal(sel("plain words", "plain"))).toBeNull();
 });

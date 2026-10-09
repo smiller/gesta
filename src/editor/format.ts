@@ -25,12 +25,13 @@ export const heading: Command = (state, dispatch) =>
   (isHeading(state) ? setBlockType(N.paragraph) : setBlockType(N.heading, { level: 1 }))(state, dispatch);
 export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote) ? lift : wrapIn(N.blockquote))(state, dispatch);
 /* a code block holds text alone: a picture or a page marker in the range
-   was dropped by the change (pin: format.test › code refuses a paragraph holding a picture) */
+   was dropped by the change (pin: format.test › code refuses a paragraph holding a picture or a page marker anywhere in it) */
 export function codeBlockRefusal(state: EditorState): string | null {
   if (inCode(state)) return null;
-  const { from, to } = state.selection;
+  const { $from, $to } = state.selection;
+  const range = $from.blockRange($to);
   let atom = false;
-  state.doc.nodesBetween(from, to, (n) => { if (n.isInline && n.isLeaf && !n.isText && n.type !== N.hard_break) atom = true; return !atom; });
+  state.doc.nodesBetween(range ? range.start : $from.start(), range ? range.end : $to.end(), (n) => { if (n.isInline && n.isLeaf && !n.isText && n.type !== N.hard_break) atom = true; return !atom; });
   return atom ? "can't make a code block from that" : null;
 }
 export const codeBlock: Command = (state, dispatch) =>

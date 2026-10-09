@@ -121,3 +121,19 @@ test("the entries an import will write, by key, before it runs", () => {
   ];
   expect([...importKeys(files)].sort()).toEqual(["2026-01-05", "page/Typed"]);
 });
+
+test("storage full on a picture stops the import the same way", async () => {
+  const tried: string[] = [];
+  const s: ImportSink = {
+    setEntry: (k) => { tried.push(k); return Promise.resolve(true); },
+    setImage: () => Promise.reject(new DOMException("full", "QuotaExceededError")),
+  };
+  const files: ImportFile[] = [
+    { dir: "page/", name: "A.md", text: "![](A-img-1.webp)" },
+    { dir: "page/", name: "A-img-1.webp", bytes: new Uint8Array([1]) },
+    { dir: "page/", name: "B.md", text: "# B" },
+  ];
+  const tally = await importFiles(files, s);
+  expect(tried).toEqual([]);
+  expect(tally).toMatchObject({ imported: 0, failed: 1, full: true });
+});

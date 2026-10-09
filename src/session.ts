@@ -200,7 +200,7 @@ export function startSession(opts: SessionOptions): Session {
     /* a highlight owed wins over the remembered place: it is what a reader
        asked to see (pin: reference paste › the reference link followed) */
     const owed = how === "arrive" && !!pending && pending.gen === navGen;
-    keeper.open(ekey, owed ? "owed" : how, () => surface.show(layer.entryMd(ekey), ekey));
+    keeper.open(ekey, owed ? "owed" : how, () => surface.show(layer.entryMd(ekey), ekey, how === "keep"));
     document.documentElement.dataset.entry = ekey;
     show();
     if (surface.forced) return;

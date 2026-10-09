@@ -1,4 +1,4 @@
-import { EditorState, type Transaction, type Command } from "prosemirror-state";
+import { EditorState, Plugin, PluginKey, type Transaction, type Command } from "prosemirror-state";
 import { EditorView, type NodeViewConstructor } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
@@ -43,10 +43,20 @@ const hardBreak: Command = (state, dispatch) => {
   return true;
 };
 
+/* locked, no change lands from anywhere — a key, the toolbar, an insert
+   from outside: the editable prop alone stops only the keys
+   (pin: editor.test › a locked entry takes no change from anywhere) */
+export const lockKey = new PluginKey<boolean>("lock");
+const lock = new Plugin<boolean>({
+  key: lockKey,
+  state: { init: () => false, apply: (tr, on) => (tr.getMeta(lockKey) as boolean | undefined) ?? on },
+  filterTransaction: (tr, state) => !tr.docChanged || !lockKey.getState(state),
+});
 export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
   return EditorState.create({
     doc,
     plugins: [
+      lock,
       history(),
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo }),
       rowKeymap,
@@ -102,12 +112,12 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);
       if (file) { opts.onPasteFile?.(file); return true; }
-      /* line breaks alone are nothing to paste: they replaced a selection
-         with an empty paragraph (pin: paste.test › a paste of line breaks alone) */
-      if (event.clipboardData && onlyLineBreaks(event.clipboardData.getData("text/plain"))) return true;
       /* text carrying the editor's own HTML keeps the editor's paste */
       const data = event.clipboardData;
       if (!data || data.types.includes("text/html")) return false;
+      /* line breaks alone are nothing to paste: they replaced a selection
+         with an empty paragraph (pin: paste.test › a paste of line breaks alone) */
+      if (onlyLineBreaks(data.getData("text/plain"), view.state.selection.$from)) return true;
       const blocks = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
       if (!blocks) return false;
       view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());

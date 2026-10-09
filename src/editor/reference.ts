@@ -6,7 +6,7 @@ import { blockUnits, countAt, drawsInk, type Unit } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, romanWorkKey, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
-import { withoutFolios } from "./paste.ts";
+import { dropFolios } from "./paste.ts";
 
 const N = schema.nodes;
 export function inkBetween(doc: Node, a: number, b: number): boolean {
@@ -254,17 +254,17 @@ function renumbered(doc: Node, at: number, cut: Node): Node {
    the contiguous run carrying the stanza gaps between them; a nested
    note stays behind and a page-turn row is dropped. In loose prose the
    unit is the selection, widened to whole pair rows. */
-/* the passage carries no page marker (pin: reference.test › the quoted passage sheds its page markers) */
+/* the passage carries no page marker, dropped as its rows are written:
+   dropped before, a page-turn row was quoted as a blank line
+   (pin: reference.test › the quoted passage sheds its page markers)
+   (pin: reference.test › a page-turn row in a quoted run is left out) */
 export function passageMd(doc: Node, from: number, to: number): string {
-  const bare = withoutFolios(doc);
-  return passageOf(bare.doc, bare.map(from), bare.map(to));
-}
-function passageOf(doc: Node, from: number, to: number): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {
     const [a, b] = wholeRows(doc, from, to);
-    return quoted(unquoted(renumbered(doc, a, doc.cut(a, b))));
+    const cut = doc.cut(a, b);
+    return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(cut.content)))));
   }
   /* a run across stanzas (allowed only where the work cites by stanza):
      each stanza's rows quoted as one block's are, a blank quoted line
@@ -307,7 +307,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
     let turn = false;
     if (!drawsInk(row)) row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
     if (turn) continue;
-    run.push(row);
+    run.push(row.copy(dropFolios(row.content)));
   }
   const kept = withoutMarginNotes(run);
   if (paired) {

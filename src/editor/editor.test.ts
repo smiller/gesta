@@ -8,7 +8,7 @@ import { TextSelection, type EditorState, type Transaction } from "prosemirror-s
 import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { editorState } from "./editor.ts";
+import { editorState, lockKey } from "./editor.ts";
 
 function at(md: string, needle: string): EditorState {
   const s = editorState(parseMarkdown(md), 5);
@@ -39,4 +39,14 @@ test("Enter after a bare URL lands as Enter after a word does, in every context"
     expect(serializeMarkdown(url.doc), shape).toBe(serializeMarkdown(word.doc).replace("word", URL));
     expect(linked(url), shape).toBe(true);
   }
+});
+
+test("a locked entry takes no change from anywhere — a command, an insert — and takes them again unlocked", () => {
+  let s = editorState(parseMarkdown("some words"), 5);
+  s = s.apply(s.tr.setMeta(lockKey, true));
+  s = s.apply(s.tr.insertText("x", 1));
+  expect(serializeMarkdown(s.doc)).toBe("some words");
+  s = s.apply(s.tr.setMeta(lockKey, false));
+  s = s.apply(s.tr.insertText("x", 1));
+  expect(serializeMarkdown(s.doc)).toBe("xsome words");
 });

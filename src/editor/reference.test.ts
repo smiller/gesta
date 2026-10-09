@@ -337,3 +337,8 @@ test("the quoted passage sheds its page markers and keeps its words", () => {
   expect(passageMd(doc, 3, doc.content.size - 3)).not.toMatch(/⟨/);
   expect(passageMd(doc, 3, doc.content.size - 3)).toContain("Beatrice was, in her degree and on");
 });
+test("a page-turn row in a quoted run is left out, its marker with it, no blank line in its place", () => {
+  const doc = parseMarkdown("::: verse\nline one\n⟨32⟩\nline two\n:::");
+  const [a, b] = span(doc, "line one", "line two");
+  expect(passageMd(doc, a, b)).toBe("> line one\n> line two");
+});

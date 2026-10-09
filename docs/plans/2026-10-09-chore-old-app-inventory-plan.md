@@ -221,3 +221,24 @@ so a space typed next pressed it again — the keys go back to the text
 (asked), and after an import over the open entry the text has the focus
 back. A reading that raced the save in the grid section ("the line made a
 card, switched back") now waits for it.
+
+### Review cycle 1 over `6021553..6ad3260` (c1509f5 and group 1), 2026-10-09
+
+COST 114,218 tokens (2 input + 3,617 cache creation + 107,613 cache read +
+2,986 output). Ten findings. FIXED, each test-first: ⌃⌘R's passage dropped
+its page markers before building, so a page-turn row was quoted as a blank
+line — now dropped as rows are written (reference.test); the code button's
+refusal looked inside the selection only, while the button changes the
+whole paragraph (format.test); the import lock stopped keys only — the
+toolbar, the expander, Tab and Replace in the source still wrote — now a
+lock plugin refuses every change (editor.test) and the source view's own
+writes check it; a full store met on a picture write did not stop the
+import (importFiles.test); a paste of line breaks alone was dropped in
+code and over the editor's own HTML too (paste.test); a rename in the
+markdown view left it — only an arrival opens rendered (surface.test);
+three comments misplaced or speaking of another module. ASKED: page
+markers on ⌘X and drag — KEPT "always removed", as decided. ASKED: the
+8-second "couldn't load entries — reload" on a slow but live store — KEPT:
+MEASURED, the whole backup (13,933 entries, 129 MB) imported into a
+headless store loads in 565–638 ms over three reloads, so eight seconds is
+a store that is not answering. REVIEW CYCLES: 1.

@@ -22,7 +22,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   ta.addEventListener("input", () => opts.onChange());
   ta.addEventListener("paste", (e) => { const f = pastedImageFile(e.clipboardData); if (f) { e.preventDefault(); opts.onPasteFile(f); } });
   ta.addEventListener("keydown", (e) => {
-    if (e.key !== "Tab") return;
+    if (e.key !== "Tab" || ta.readOnly) return;
     if (e.repeat && ta.selectionStart !== ta.selectionEnd) { e.preventDefault(); return; }
     const r = sourceTab(ta.value, ta.selectionStart, ta.selectionEnd, e.shiftKey);
     if (r === null) return;
@@ -106,6 +106,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     /* through the textarea's own editing, so ⌘Z in the text undoes it, a
        whole-text edit in one step (pin: replace › ⌘Z in the text) */
     edit: (from, to, text, caret) => {
+      if (ta.readOnly) return;
       const back = document.activeElement as HTMLElement | null;
       ta.focus({ preventScroll: true });
       ta.setSelectionRange(from, to);
@@ -118,6 +119,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
   const insertText = (text: string): void => {
+    if (ta.readOnly) return;
     ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, "end");
     ta.focus();
     ta.dispatchEvent(new Event("input"));

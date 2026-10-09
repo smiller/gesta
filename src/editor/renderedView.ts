@@ -1,7 +1,7 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { TextSelection } from "prosemirror-state";
-import { createEditor, type EditorOptions } from "./editor.ts";
+import { createEditor, lockKey, type EditorOptions } from "./editor.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc } from "../model/flatten.ts";
 import { schema } from "../model/schema.ts";
@@ -62,7 +62,7 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
     end: () => view.state.doc.content.size,
     scrollToPos: (pos, under) => { window.scrollTo(0, window.scrollY + view.coordsAtPos(pos).top - under); },
     focus: () => { view.focus(); },
-    lock: (on) => { view.setProps({ editable: () => !on }); },
+    lock: (on) => { view.dispatch(view.state.tr.setMeta(lockKey, on)); view.setProps({ editable: () => !on }); },
     placeCaret: (pos, scroll) => {
       const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(Math.min(pos ?? 0, view.state.doc.content.size))));
       if (scroll) tr.scrollIntoView();

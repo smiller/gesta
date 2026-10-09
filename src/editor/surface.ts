@@ -65,7 +65,8 @@ export interface Surfaces {
   readonly current: Surface | null;
   readonly md: boolean;
   readonly forced: boolean;
-  show(md: string, ekey: string): void;
+  /* keepView: the same entry under a new key (a rename), not an arrival */
+  show(md: string, ekey: string, keepView?: boolean): void;
   switchTo(md: boolean): void;
 }
 
@@ -89,14 +90,15 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     cur = make();
   };
   const refusedPin = (err: unknown): number => opts.pin("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
-  function show(md: string, key: string): void {
+  function show(md: string, key: string, keepView = false): void {
     /* the release is told, as the force was: told only of the force, a
        view shown forced stayed shown after it ended (pin: grid › the next entry after a refused switch) */
     if (forced) { mdView = readerView; forced = false; opts.onView(mdView); }
     /* the rendered view is the default: another entry opens in it, the same
-       entry drawn again keeps the view chosen
-       (pin: surface.test › a show of another entry is in the rendered view) */
-    if (key !== ekey && mdView) { mdView = false; opts.onView(false); }
+       entry drawn again or renamed keeps the view chosen
+       (pin: surface.test › a show of another entry is in the rendered view)
+       (pin: surface.test › a renamed entry) */
+    if (key !== ekey && !keepView && mdView) { mdView = false; opts.onView(false); }
     ekey = key;
     /* the carets and a pinned fence refusal belong to the entry left
        (pin: surface.test › a show releases the entry left's fence pin) */

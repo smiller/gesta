@@ -54,7 +54,8 @@ export function importEntry(path: string, text: string, sidecars: Sidecars, sink
      could not be read is refused and counted) */
   if (blocked) return Promise.reject(new Error("a picture this entry needs could not be read"));
   return Promise.resolve().then(() => {
-    parseMarkdown(text);     return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)), Promise.resolve());
+    parseMarkdown(text);     return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)), Promise.resolve())
+      .catch((err: unknown) => { throw isQuota(err) ? new StorageFull("storage full") : err; });
   }).then(() => sink.setEntry(ekey, text)).then((landed) => {
     if (!landed && isQuota(sink.writeError?.(ekey))) throw new StorageFull("storage full");
     return landed ? "imported" : "failed";
@@ -72,7 +73,8 @@ export interface Tally { imported: number; failed: number; attempted: number; fa
 /* A single file's failure is COUNTED, not thrown — one bad file must not
    abort the rest of the folder — and named in the tally. A full store
    stops it: every write after would fail the same way, each its own pin
-   (pin: importFiles.test › storage full stops the import) */
+   (pin: importFiles.test › storage full stops the import)
+   (pin: importFiles.test › storage full on a picture) */
 export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: (done: number, total: number) => void): Promise<Tally> {
   const sidecars: Sidecars = Object.create(null);
   for (const f of files) if ("bytes" in f) sidecars[filePath(f)] = f.bytes;

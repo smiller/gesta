@@ -128,8 +128,7 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     const s = opts.surface();
     if (!s) return;
     if (!p || p.y <= 0) { s.placeCaret(0, false); return; }
-    /* in the source view the top line is taken as it stands: it starts a
-       line on screen already
+    /* in the source view the caret goes to the top line as given
        (pin: places › typed at the place in a long paragraph's source) */
     if (s.source) { s.placeCaret(s.topAt(win.under()) ?? 0, false); return; }
     const pos = p.pos >= 0 ? Math.min(p.pos, s.end()) : s.topAt(win.under());
