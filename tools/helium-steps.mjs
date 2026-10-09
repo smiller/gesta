@@ -37,9 +37,48 @@ export const MARGIN_SEEDS = {
 };
 export async function runSteps(page, ctx, A, opts = {}) {
   const shot = opts.screenshot;
-  const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, screen: await A.screen(page) })); };
-  const go = async (hash, ms = 15000) => { await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms); };
   const R = A.read, S = A.sel;
+  /* where the keys go, read the same way over both apps: a caret by the
+     kind of place it stands, "selected" and a length, "on" the element
+     holding the focus outside the text, or "none". The screen's "sel none"
+     is both a caret and no focus at all, and the compare leaves the screen
+     out. The kind, not the text after it: an arrival's place is where the
+     window last paused, which moves with the run's timing */
+  const cursor = () => page.evaluate(([ed, src]) => {
+    const a = document.activeElement, ta = document.querySelector(src);
+    if (ta && ta.tagName === "TEXTAREA" && a === ta) {
+      const at = ta.selectionStart;
+      if (at !== ta.selectionEnd) return "selected " + (ta.selectionEnd - at);
+      return at === 0 || ta.value[at - 1] === "\n" ? "at a line's start" : at === ta.value.length ? "at the end" : "inside a line";
+    }
+    const root = document.querySelector(ed) || (ta && ta.tagName !== "TEXTAREA" ? ta : null);
+    if (!root || !root.contains(a)) return !a || a === document.body ? "none" : "on " + a.tagName.toLowerCase();
+    const s = getSelection();
+    if (!s.rangeCount || !root.contains(s.anchorNode)) return "focus, no caret";
+    if (!s.isCollapsed) return "selected " + s.toString().length;
+    const caret = s.getRangeAt(0);
+    const box = (t, i) => { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 1); const b = r.getClientRects()[0]; return b && b.height ? b : null; };
+    let prev = null, next = null;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let t = w.nextNode(); t && !next; t = w.nextNode()) for (let i = 0; i < t.data.length; i++) {
+      if (t.data[i] === "\u200b" || t.data[i] === "\n") continue;
+      const b = box(t, i);
+      if (!b) continue;
+      if (caret.comparePoint(t, i) < 0) prev = b; else { next = b; break; }
+    }
+    if (!next) return prev ? "at the end" : "at a line's start";
+    return !prev || prev.bottom - 2 <= next.top ? "at a line's start" : "inside a line";
+  }, [S.editor, S.source]);
+  const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); };
+  /* an arrival is read before the step's own gestures, whose helpers focus
+     the text themselves; a focus that never comes reads as "none" after
+     the wait. No screen: the last section's bar may still be fading */
+  let section = "";
+  const go = async (hash, ms = 15000) => {
+    await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms);
+    await page.waitForFunction(([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source], { timeout: 1000 }).catch(() => {});
+    console.log(section + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
+  };
   /* the window, a paragraph by its first words, the corner's text */
   const winY = () => page.evaluate(() => Math.round(scrollY));
   const inView = (start) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
@@ -546,6 +585,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("the caret moved in the source, ⌃⌘M back", await R.sourceBack(page));
   await wheelTo(0);
   await page.click(S.editorFirst);
+  await page.waitForTimeout(100);   /* the click's caret is read a beat later, as the section's first caret is: a chord at once switched with the caret before the click */
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(150);
@@ -679,6 +719,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("bookshelf/Boethius/Consolatio/3pr1");
   await page.keyboard.press("Control+Meta+.");
   await R.waitEntryNot(page, "bookshelf/Boethius/Consolatio/3pr1");
+  await page.waitForTimeout(100);   /* a selection left on the last entry keeps the bar up one frame into this one (MEASURED, 10 ms) */
   await log("⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+.");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
@@ -1262,6 +1303,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   for (const [name, fn] of sections) {
     if (opts.only && name !== sections[0][0] && !opts.only.includes(name)) continue;
     await settle();
+    section = name;
     try { await fn(); }
     catch (e) { console.log("SECTION FAILED (" + name + "): " + String(e).split("\n")[0].slice(0, 200)); }
   }

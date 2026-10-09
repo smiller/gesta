@@ -15,7 +15,7 @@ export interface Page {
   on(event: PageEvent, fn: () => void): void;
   anchoring(on: boolean): void;
 }
-export type PlaceSurface = Pick<Surface, "source" | "placeAt" | "topAt" | "reveal" | "scrollToPos" | "end" | "placeCaret">;
+export type PlaceSurface = Pick<Surface, "source" | "placeAt" | "topAt" | "lineStart" | "reveal" | "scrollToPos" | "end" | "placeCaret">;
 export interface PlaceKeeperOptions {
   surface(): PlaceSurface | null;
   window: Viewport;
@@ -119,15 +119,17 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   }
   /* an arrival gives the caret, never scrolling: a view mounted fresh had
      none, and a page could not be typed into until clicked. At a place
-     held it is the text at the top of the window, so the first key typed
-     does not jump the window back to the start
-     (pin: placeKeeper.test › goes to the place held) */
+     held it is the start of the line at the top of the window, so the
+     first key typed does not jump the window back to the start; the held
+     position, and the top line's probe, lie a few letters into that line
+     (pin: placeKeeper.test › goes to the place held)
+     (pin: placeKeeper.test › goes to the start of the held place's line, or of the line under the masthead) */
   function caretAt(p: Place | null): void {
     const s = opts.surface();
     if (!s) return;
     if (!p || p.y <= 0) { s.placeCaret(0, false); return; }
     const pos = !s.source && p.pos >= 0 ? Math.min(p.pos, s.end()) : s.topAt(win.under());
-    s.placeCaret(pos ?? 0, false);
+    s.placeCaret(pos === null ? 0 : s.lineStart(pos), false);
   }
   /* HELD like an arrival's place, and remembered: a closed section opens,
      and a page that grows above it — pictures, the fitted measure — sets it

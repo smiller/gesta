@@ -21,6 +21,7 @@ function world(y = 0) {
       caret: () => { log.push("read caret"); return f.caretAt; },
       caretSeen: () => f.seen,
       topAt: () => { log.push("read top"); return f.top; },
+      lineStart: (p) => p,
       placeAt: () => null, reveal: () => {},
       end: () => source ? f.text.length : doc!.content.size,
       scrollToPos: (pos) => { log.push("align " + pos); },

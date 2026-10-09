@@ -25,6 +25,7 @@ import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
+import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
@@ -301,12 +302,19 @@ export function startSession(opts: SessionOptions): Session {
     });
   }
   /* the open entry drawn again from the cache, the caret where it was and
-     the focus kept: a reader may be mid-sentence */
+     the focus kept: a reader may be mid-sentence. Carried by its count
+     across the text that changed: a host page losing a deleted sub-entry's
+     link above the caret put the caret that many letters late
+     (pin: viewCarets.test › keeps a caret before the change)
+     (pin: sub-entries › deleted: back on the day, its link gone, the other tag left) */
   function redraw(): void {
     const view = surface.current;
-    const at = view ? view.caret() : null, focused = !!view && opts.mount.contains(document.activeElement);
+    const was = view ? { flat: view.flat(), at: view.caret() } : null, focused = !!view && opts.mount.contains(document.activeElement);
     open(current.date, current.tag);
-    if (focused && at !== null && surface.current) surface.current.placeCaret(Math.min(at, surface.current.end()), false);
+    const s = surface.current;
+    if (!focused || !was || !s) return;
+    const flat = s.flat();
+    s.placeCaret(positionAt(flat, carriedCount(was.flat.text, flat.text, countBefore(was.flat, was.at))) ?? s.end(), false);
   }
   function saveNow(): Promise<boolean> {
     cancelSave();
@@ -340,7 +348,15 @@ export function startSession(opts: SessionOptions): Session {
      words: silence reads as a dead control
      (pin: launch, panels, the corner, links › a link to itself) */
   function goto(hash: string, sameMsg?: string): void {
-    if (location.hash === hash) { if (sameMsg) say(sameMsg, 1500); return; }
+    /* no hashchange fires for the hash already there, so no arrival gives
+       the caret: it is given back here, where it was left
+       (pin: bookmarks › b typed, already here) */
+    if (location.hash === hash) {
+      if (sameMsg) say(sameMsg, 1500);
+      const s = surface.current;
+      if (s && !opts.mount.contains(document.activeElement)) s.placeCaret(s.caret(), false);
+      return;
+    }
     location.hash = hash;
   }
   /* the walk follows the parent's index where it states one

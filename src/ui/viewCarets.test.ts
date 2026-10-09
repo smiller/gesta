@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { countBefore, positionAt, crossViewOffset, arrivingCount } from "./viewCarets.ts";
+import { countBefore, positionAt, crossViewOffset, arrivingCount, carriedCount } from "./viewCarets.ts";
 import { flattenDoc, flattenText } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 
@@ -54,5 +54,17 @@ describe("arrivingCount", () => {
     const left = { at: 5, text: "Title bold", tail: false, seen: false };
     expect(arrivingCount(held, left, "# Title **bold**", true)).toEqual({ at: 7, tail: false, seen: false });   /* before the space that precedes the glued ** */
     expect(arrivingCount(null, null, "x", true)).toBeNull();
+  });
+});
+
+describe("carriedCount", () => {
+  it("keeps a caret before the change, moves one after it by the change's length", () => {
+    expect(carriedCount("abc def ghi", "abc def ghi", 6)).toBe(6);
+    expect(carriedCount("a Plans b. With eye", "a b. With eye", 11)).toBe(5);
+    expect(carriedCount("a b. With eye", "a Plans b. With eye", 5)).toBe(11);
+    expect(carriedCount("a b. With eye", "a b. With eye, more", 5)).toBe(5);
+  });
+  it("puts a caret inside the text taken out at the change's start", () => {
+    expect(carriedCount("a Plans b", "a b", 4)).toBe(2);
   });
 });

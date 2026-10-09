@@ -76,3 +76,16 @@ export function arrivingCount(held: Hold | null, left: Hold | null, text: string
   if (left) return { at: crossViewOffset(left.text, text, left.at, toSource, left.tail), tail: left.tail, seen: left.seen };
   return null;
 }
+/* one view's count across its own text changed under it: the edit is
+   taken as the one region between the common head and the common tail,
+   so a count before it stays, one after it moves by its length, and one
+   inside it goes to its start */
+export function carriedCount(before: string, after: string, at: number): number {
+  let head = 0;
+  while (head < before.length && head < after.length && before[head] === after[head]) head++;
+  let tail = 0;
+  while (tail < before.length - head && tail < after.length - head && before[before.length - 1 - tail] === after[after.length - 1 - tail]) tail++;
+  if (at <= head) return at;
+  if (at >= before.length - tail) return at + after.length - before.length;
+  return head;
+}

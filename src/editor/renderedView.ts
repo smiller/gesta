@@ -35,6 +35,16 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
       }
       return null;
     },
+    lineStart: (pos) => {
+      const $pos = view.state.doc.resolve(Math.min(pos, view.state.doc.content.size));
+      if (!$pos.parent.isTextblock) return $pos.pos;
+      try {
+        const top = view.coordsAtPos($pos.pos).top;
+        let p = $pos.pos;
+        while (p > $pos.start() && Math.abs(view.coordsAtPos(p - 1).top - top) < 2) p--;
+        return p;
+      } catch { return $pos.start(); }
+    },
     placeAt: (under) => {
       const box = view.dom.getBoundingClientRect();
       const hit = view.posAtCoords({ left: box.left + 24, top: Math.max(under, box.top + 1) });

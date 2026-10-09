@@ -14,6 +14,8 @@ export interface Surface {
   caretSeen(): boolean;
   /* the first line at or below `under`, the window's height under the masthead */
   topAt(under: number): number | null;
+  /* the start of the line on screen holding `pos` */
+  lineStart(pos: number): number;
   /* the position at the height `under`; null where there is none */
   placeAt(under: number): number | null;
   /* a position inside a closed section opens it */

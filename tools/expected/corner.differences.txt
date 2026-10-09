@@ -144,3 +144,16 @@ Replace All, the replacement holding the find · * · the same
 Escape, the switch back refused · * · the same
 ⌃⌘H over the bar · * · the same
 the entry saved in another window, the bar open · * · the same
+# THE CURSOR (2026-10-08): every reading carries where the keys go, by the kind of place; every arrival is read before the step's own gestures. The decided ones:
+after warm · cursor · an arrival gives the caret here (a3f81a2); the current app paints read-only until the warm, the focus refused
+masthead over Horace · cursor · the same
+places: arrived at bookshelf/Boethius/Consolatio (3) · cursor · the same: the current app's contents link clicked before the warm left no focus
+a stray line in a grid, switched back · cursor · the grid is new here: a grid with a stray line stays in the source, the caret at its end; the current app shows the fence as text
+the line made a card, switched back · cursor · the same: the grid drawn here, its fences text there
+⌃⌘R across a stanza gap · cursor · the stanza is new here: the current app selects its fence lines as text
+a caret seen in the source, ⌃⌘M back · cursor · the same click lands on other text: the stanza's fence lines are text in the current app
+Enter on the footnoted phrase · cursor · search skips footnote marks here (2c6a3ea): the current app finds nothing and keeps the input
+places: arrived at page/Horace (8) · * · the current app's places section fails before this arrival
+bookmarks from another window: arrived at page/Deleted Elsewhere (2) · * · the current app's section fails before this arrival
+bookmarks from another window: arrived at 2026-09-06 (3) · * · the same
+author filing: arrived at bookshelf/Price, Harley · * · the current app's author filing section fails before this arrival

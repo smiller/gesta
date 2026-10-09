@@ -135,6 +135,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       return top + parseFloat(getComputedStyle(ta).lineHeight) >= 0 && top <= document.documentElement.clientHeight;
     },
     topAt: (under) => { const t = twin(), i = t.indexAt(under); t.done(); return i; },
+    lineStart: (pos) => ta.value.lastIndexOf("\n", pos - 1) + 1,
     placeAt: () => null,
     reveal: () => {},
     end: () => ta.value.length,

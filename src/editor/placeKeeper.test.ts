@@ -30,6 +30,7 @@ function world(): World {
         source: false, at, size, throws: false, top: 7, carets: [],
         placeAt: () => f.at,
         topAt: () => f.top,
+        lineStart: (p) => p,
         placeCaret: (p, scroll) => { f.carets.push(p + (scroll ? " scrolled" : "")); },
         reveal: (p) => { log.push("reveal " + p); },
         scrollToPos: (p) => { if (f.throws) throw new Error("no box"); win.at = p * 10; log.push("to " + p); },
@@ -38,7 +39,7 @@ function world(): World {
       return f;
     },
     source: (): Fake => {
-      const f: Fake = { source: true, at: null, size: 100, throws: false, top: 7, carets: [], placeAt: () => null, topAt: () => f.top, reveal: () => {}, scrollToPos: () => {}, end: () => 100,
+      const f: Fake = { source: true, at: null, size: 100, throws: false, top: 7, carets: [], placeAt: () => null, topAt: () => f.top, lineStart: (p) => p, reveal: () => {}, scrollToPos: () => {}, end: () => 100,
         placeCaret: (p, scroll) => { f.carets.push(p + (scroll ? " scrolled" : "")); } };
       return f;
     },
@@ -229,6 +230,10 @@ describe("the caret on arrival", () => {
     expect(caret([-1, 400], (w) => w.rendered())).toEqual(["7"]);
     expect(caret([40, 400], (w) => w.source())).toEqual(["7"]);
     expect(caret([40, 400], (w) => { const f = w.source(); f.top = null; return f; })).toEqual(["0"]);
+  });
+  it("goes to the start of the held place's line, or of the line under the masthead, never into its first word", () => {
+    expect(caret([43, 400], (w) => { const f = w.rendered(); f.lineStart = (p) => p - 3; return f; })).toEqual(["40"]);
+    expect(caret([-1, 400], (w) => { const f = w.rendered(); f.lineStart = (p) => p - 3; return f; })).toEqual(["4"]);
   });
   it("goes to the start with a highlight owed; a keep leaves it", () => {
     expect(caret([40, 400], (w) => w.rendered(), "owed")).toEqual(["0"]);
