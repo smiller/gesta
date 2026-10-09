@@ -54,8 +54,12 @@ export function importEntry(path: string, text: string, sidecars: Sidecars, sink
      could not be read is refused and counted) */
   if (blocked) return Promise.reject(new Error("a picture this entry needs could not be read"));
   return Promise.resolve().then(() => {
-    parseMarkdown(text);     return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)), Promise.resolve())
-      .catch((err: unknown) => { throw isQuota(err) ? new StorageFull("storage full") : err; });
+    parseMarkdown(text);
+    /* a full store met mid-way names the pictures it kept, standing with no
+       entry to show them (pin: importFiles.test › storage full on a later picture) */
+    const written: string[] = [];
+    return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)).then(() => { written.push(s); }), Promise.resolve())
+      .catch((err: unknown) => { throw isQuota(err) ? new StorageFull("storage full" + (written.length ? "; pictures written for it: " + written.join(", ") : "")) : err; });
   }).then(() => sink.setEntry(ekey, text)).then((landed) => {
     if (!landed && isQuota(sink.writeError?.(ekey))) throw new StorageFull("storage full");
     return landed ? "imported" : "failed";

@@ -49,6 +49,8 @@ export interface SessionOptions {
 export interface Session {
   readonly current: { date: string; tag: string | null };
   readonly view: EditorView | null;
+  /* the open entry is one an import is writing */
+  readonly locked: boolean;
   /* the focus back to the text in either view, its selection as it stands
      (pin: source view › ⌃⌘K, then Escape, in the source view) */
   focusText(): void;
@@ -115,6 +117,7 @@ export function startSession(opts: SessionOptions): Session {
      the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */
   let decoding = false;
   function pasteFile(file: File): void {
+    if (locked?.has(ekeyOf())) return;
     if (decoding) { say("picture not pasted — one at a time; paste it again", 2600); return; }
     const aimedAt = ekeyOf(), aimedMd = surface.md;
     decoding = true;
@@ -436,6 +439,7 @@ export function startSession(opts: SessionOptions): Session {
   return {
     get current() { return current; },
     get view() { return live(); },
+    get locked() { return !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
     open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,

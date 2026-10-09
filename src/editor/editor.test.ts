@@ -8,7 +8,7 @@ import { TextSelection, type EditorState, type Transaction } from "prosemirror-s
 import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { editorState, lockKey } from "./editor.ts";
+import { editorState, lockKey, landed } from "./editor.ts";
 
 function at(md: string, needle: string): EditorState {
   const s = editorState(parseMarkdown(md), 5);
@@ -49,4 +49,14 @@ test("a locked entry takes no change from anywhere — a command, an insert — 
   s = s.apply(s.tr.setMeta(lockKey, false));
   s = s.apply(s.tr.insertText("x", 1));
   expect(serializeMarkdown(s.doc)).toBe("xsome words");
+});
+
+test("a change refused by the lock is told as nothing that landed: no save is asked for", () => {
+  let s = editorState(parseMarkdown("some words"), 5);
+  s = s.apply(s.tr.setMeta(lockKey, true));
+  const tr = s.tr.insertText("x", 1);
+  expect(tr.docChanged).toBe(true);
+  expect(landed(s, s.apply(tr))).toEqual({ changed: false, selected: false });
+  const open = editorState(parseMarkdown("some words"), 5);
+  expect(landed(open, open.apply(open.tr.insertText("x", 1)))).toEqual({ changed: true, selected: true });
 });

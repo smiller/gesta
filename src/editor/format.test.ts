@@ -88,4 +88,5 @@ test("code refuses a paragraph holding a picture or a page marker anywhere in it
   expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toBe("can't make a code block from that");
   expect(codeBlockRefusal(sel("cap ![](x.png) tion", "cap"))).toBe("can't make a code block from that");
   expect(codeBlockRefusal(sel("plain words", "plain"))).toBeNull();
+  expect(codeBlockRefusal(sel("::: note\ncap ![](x.png) tion\n\nsecond\n:::\n\nafter", "second", "after"))).toBeNull();
 });

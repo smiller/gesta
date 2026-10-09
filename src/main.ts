@@ -738,7 +738,7 @@ if (fixture && fixtures[fixture]) {
   };
   acts.replace.one = () => {
     const p = port();
-    if (!p || !hits.length) return;
+    if (!p || !hits.length || session.locked) return;
     /* a keystroke not yet recounted moves the text under the offsets: the
        match sought again rather than written at the old place
        (pin: replace.test › whether the text still has the find) */
@@ -751,7 +751,7 @@ if (fixture && fixtures[fixture]) {
      "none" disabled the buttons over them (pin: replace › Replace All, the replacement holding the find) */
   acts.replace.all = () => {
     const p = port();
-    if (!p || !hits.length) return;
+    if (!p || !hits.length || session.locked) return;
     const text = p.text();
     const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : p.start(headFoot()));
     edit(p, 0, text.length, r.text, r.caret);

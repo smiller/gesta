@@ -137,3 +137,19 @@ test("storage full on a picture stops the import the same way", async () => {
   expect(tried).toEqual([]);
   expect(tally).toMatchObject({ imported: 0, failed: 1, full: true });
 });
+
+test("storage full on a later picture names the pictures already written for that entry", async () => {
+  let n = 0;
+  const s: ImportSink = {
+    setEntry: () => Promise.resolve(true),
+    setImage: () => ++n === 1 ? Promise.resolve() : Promise.reject(new DOMException("full", "QuotaExceededError")),
+  };
+  const files: ImportFile[] = [
+    { dir: "page/", name: "A.md", text: "![](A-img-1.webp) ![](A-img-2.webp)" },
+    { dir: "page/", name: "A-img-1.webp", bytes: new Uint8Array([1]) },
+    { dir: "page/", name: "A-img-2.webp", bytes: new Uint8Array([2]) },
+  ];
+  const tally = await importFiles(files, s);
+  expect(tally.full).toBe(true);
+  expect(tally.failures[0].error).toContain("page/A-img-1.webp");
+});

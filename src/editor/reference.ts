@@ -257,14 +257,30 @@ function renumbered(doc: Node, at: number, cut: Node): Node {
 /* the passage carries no page marker, dropped as its rows are written:
    dropped before, a page-turn row was quoted as a blank line
    (pin: reference.test › the quoted passage sheds its page markers)
-   (pin: reference.test › a page-turn row in a quoted run is left out) */
+   (pin: reference.test › a page-turn row in a quoted run is left out)
+   (pin: reference.test › a page-turn row is left out of a quoted run that starts in prose) */
+const isTurn = (row: Node): boolean => {
+  if (drawsInk(row)) return false;
+  let turn = false;
+  row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
+  return turn;
+};
+function dropTurns(frag: Fragment): Fragment {
+  const out: Node[] = [];
+  frag.forEach((n) => {
+    if (n.isTextblock || n.isLeaf) out.push(n);
+    else if (n.type === N.verse || n.type === N.prose) { const rows: Node[] = []; n.forEach((r) => { if (!isTurn(r)) rows.push(r); }); out.push(n.copy(Fragment.from(rows))); }
+    else out.push(n.copy(dropTurns(n.content)));
+  });
+  return Fragment.from(out);
+}
 export function passageMd(doc: Node, from: number, to: number): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {
     const [a, b] = wholeRows(doc, from, to);
     const cut = doc.cut(a, b);
-    return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(cut.content)))));
+    return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(dropTurns(cut.content))))));
   }
   /* a run across stanzas (allowed only where the work cites by stanza):
      each stanza's rows quoted as one block's are, a blank quoted line
@@ -304,9 +320,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
   for (let i = first; i <= last; i++) {
     const row = rows[i].node;
     if (row.type === N.note) continue;
-    let turn = false;
-    if (!drawsInk(row)) row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
-    if (turn) continue;
+    if (isTurn(row)) continue;
     run.push(row.copy(dropFolios(row.content)));
   }
   const kept = withoutMarginNotes(run);

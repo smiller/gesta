@@ -342,3 +342,8 @@ test("a page-turn row in a quoted run is left out, its marker with it, no blank 
   const [a, b] = span(doc, "line one", "line two");
   expect(passageMd(doc, a, b)).toBe("> line one\n> line two");
 });
+test("a page-turn row is left out of a quoted run that starts in prose too", () => {
+  const doc = parseMarkdown("a paragraph\n\n::: verse\nline one\n⟨32⟩\nline two\n:::");
+  const [a, b] = span(doc, "a paragraph", "line two");
+  expect(passageMd(doc, a, b)).toContain("> line one\n> line two");
+});

@@ -242,3 +242,26 @@ markers on ⌘X and drag — KEPT "always removed", as decided. ASKED: the
 MEASURED, the whole backup (13,933 entries, 129 MB) imported into a
 headless store loads in 565–638 ms over three reloads, so eight seconds is
 a store that is not answering. REVIEW CYCLES: 1.
+
+### Review cycle 2 over `6ad3260..e75a652`, the confirmation pass, 2026-10-09
+
+COST 103,516 tokens (2 input + 2,178 cache creation + 93,849 cache read +
+7,487 output). Seven findings, all taken. The serious one: a change the
+lock refused still told the session it had changed — `tr.docChanged`, not
+the state — so a toolbar command or an expander insert during an import
+asked for a save of the old text over the imported one; now only a change
+that landed is told (`landed`, editor.test; a headless step could not hold
+a command inside a 0.3 s import, and its ⌘B over a locked view changed no
+document, so it read the same on the code before — dropped). A paste of
+line breaks alone carrying another app's HTML skipped the guard; the guard
+now spares only the editor's own copy, `data-pm-slice` (paste.test). A
+page-turn row in a quote that starts in prose kept a blank line
+(`dropTurns`, reference.test). The code button's refusal looked at a range
+cut at the shared ancestor, so a picture in a box's unselected paragraph
+refused it; now every textblock the change reaches, whole (format.test;
+the first test written was wrong — a quote's lines are one paragraph with
+breaks here, so a picture there IS in the paragraph). A locked entry
+refuses a pasted picture before storing it, and Replace does nothing on
+it. A full store met on a later picture names the pictures already
+written (importFiles.test). The rendered view's editable flag reads the
+lock's own state. REVIEW CYCLES: 2.

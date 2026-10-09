@@ -105,7 +105,7 @@ test("a drag that stays inside ONE card of a grid is prose, not the grid", () =>
   expect(pasteAt(at("one two three", "two"), inOne)).toBe("one twobeta\n\ngamma three");
 });
 
-test("a paste of line breaks alone is nothing: it never replaces a selection; in code it pastes", () => {
+test("a paste of line breaks alone is nothing: it never replaces a selection; in code, or as the editor's own copy, it pastes", () => {
   const prose = parseMarkdown("some words").resolve(2), code = parseMarkdown("```\nx\n```").resolve(2);
   expect(onlyLineBreaks("\n\n", prose)).toBe(true);
   expect(onlyLineBreaks("\r\n", prose)).toBe(true);
@@ -114,6 +114,8 @@ test("a paste of line breaks alone is nothing: it never replaces a selection; in
   expect(onlyLineBreaks("", prose)).toBe(false);
   expect(onlyLineBreaks(" ", prose)).toBe(false);
   expect(onlyLineBreaks("\n\n", code)).toBe(false);
+  expect(onlyLineBreaks("\n\n", prose, "<br><br>")).toBe(true);
+  expect(onlyLineBreaks("\n\n", prose, '<p data-pm-slice="1 1 []"></p><p></p>')).toBe(false);
 });
 
 test("a copy carries no page marker out, and loses none of its words", () => {

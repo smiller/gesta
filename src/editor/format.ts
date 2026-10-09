@@ -28,10 +28,14 @@ export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote)
    was dropped by the change (pin: format.test › code refuses a paragraph holding a picture or a page marker anywhere in it) */
 export function codeBlockRefusal(state: EditorState): string | null {
   if (inCode(state)) return null;
-  const { $from, $to } = state.selection;
-  const range = $from.blockRange($to);
+  const { from, to } = state.selection;
   let atom = false;
-  state.doc.nodesBetween(range ? range.start : $from.start(), range ? range.end : $to.end(), (n) => { if (n.isInline && n.isLeaf && !n.isText && n.type !== N.hard_break) atom = true; return !atom; });
+  /* every textblock the change reaches, whole: it converts them whole */
+  state.doc.nodesBetween(from, to, (n) => {
+    if (!n.isTextblock) return !atom;
+    n.forEach((c) => { if (c.isInline && c.isLeaf && !c.isText && c.type !== N.hard_break) atom = true; });
+    return false;
+  });
   return atom ? "can't make a code block from that" : null;
 }
 export const codeBlock: Command = (state, dispatch) =>

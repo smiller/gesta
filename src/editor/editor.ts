@@ -52,6 +52,13 @@ const lock = new Plugin<boolean>({
   state: { init: () => false, apply: (tr, on) => (tr.getMeta(lockKey) as boolean | undefined) ?? on },
   filterTransaction: (tr, state) => !tr.docChanged || !lockKey.getState(state),
 });
+/* the change that LANDED is told, not the one asked: a locked entry's
+   refused edit still asked for a save of the text an import then wrote
+   over (pin: editor.test › a change refused by the lock is told as nothing that landed) */
+export function landed(before: EditorState, after: EditorState): { changed: boolean; selected: boolean } {
+  const changed = after.doc !== before.doc;
+  return { changed, selected: changed || after.selection !== before.selection };
+}
 export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
   return EditorState.create({
     doc,
@@ -112,12 +119,13 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);
       if (file) { opts.onPasteFile?.(file); return true; }
-      /* text carrying the editor's own HTML keeps the editor's paste */
       const data = event.clipboardData;
-      if (!data || data.types.includes("text/html")) return false;
-      /* line breaks alone are nothing to paste: they replaced a selection
-         with an empty paragraph (pin: paste.test › a paste of line breaks alone) */
-      if (onlyLineBreaks(data.getData("text/plain"), view.state.selection.$from)) return true;
+      if (!data) return false;
+      /* line breaks alone are nothing to paste, from any app: they replaced a
+         selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
+      if (onlyLineBreaks(data.getData("text/plain"), view.state.selection.$from, data.getData("text/html"))) return true;
+      /* text carrying HTML keeps the editor's paste */
+      if (data.types.includes("text/html")) return false;
       const blocks = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
       if (!blocks) return false;
       view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
@@ -139,9 +147,11 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
          five sites missed the sixth. Gated on the scroll: an unconditional
          focus would take it from a panel's input on a background dispatch. */
       if (tr.scrolledIntoView && !this.hasFocus()) this.focus();
+      const before = this.state;
       this.updateState(this.state.apply(tr));
-      if (tr.docChanged) opts.onChange?.(this);
-      if (tr.selectionSet || tr.docChanged) opts.onSelect?.(this);
+      const told = landed(before, this.state);
+      if (told.changed) opts.onChange?.(this);
+      if (told.selected) opts.onSelect?.(this);
     },
   });
   return view;

@@ -13,6 +13,7 @@ export interface RenderedView extends Surface { readonly view: EditorView }
 
 export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions): RenderedView {
   const view = createEditor(mount, doc, opts);
+  view.setProps({ editable: (state) => !lockKey.getState(state) });
   return {
     source: false,
     view,
@@ -62,7 +63,7 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
     end: () => view.state.doc.content.size,
     scrollToPos: (pos, under) => { window.scrollTo(0, window.scrollY + view.coordsAtPos(pos).top - under); },
     focus: () => { view.focus(); },
-    lock: (on) => { view.dispatch(view.state.tr.setMeta(lockKey, on)); view.setProps({ editable: () => !on }); },
+    lock: (on) => { view.dispatch(view.state.tr.setMeta(lockKey, on)); },
     placeCaret: (pos, scroll) => {
       const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(Math.min(pos ?? 0, view.state.doc.content.size))));
       if (scroll) tr.scrollIntoView();

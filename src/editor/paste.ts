@@ -21,8 +21,8 @@ function flat(lines: string[]): Slice {
   lines.forEach((l, i) => { if (i) nodes.push(N.hard_break.create()); if (l) nodes.push(schema.text(l)); });
   return new Slice(Fragment.from(nodes), 0, 0);
 }
-export function onlyLineBreaks(raw: string, $context: ResolvedPos): boolean {
-  if ($context.parent.type.spec.code) return false;
+export function onlyLineBreaks(raw: string, $context: ResolvedPos, html = ""): boolean {
+  if ($context.parent.type.spec.code || html.includes("data-pm-slice")) return false;
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   return txt.includes("\n") && !txt.trim();
 }
