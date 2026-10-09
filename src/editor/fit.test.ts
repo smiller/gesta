@@ -76,3 +76,7 @@ test("an inset block's split: where neither fits in half, equal halves", () => {
 test("an inset block's split: the original is never measured below a column a caret can land in", () => {
   expect(insetCol(408, 0, 131)).toBe(Math.round(MIN_COL + FIT_SLACK + (408 - MIN_COL - FIT_SLACK - 132) / 2));
 });
+test("an inset block's split: the translation is never measured below a column a caret can land in, nor the original pushed below one", () => {
+  expect(insetCol(400, 500, 0)).toBe(400 - MIN_COL - FIT_SLACK);
+  expect(insetCol(400, 0, 500)).toBe(MIN_COL + FIT_SLACK);
+});

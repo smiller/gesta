@@ -438,6 +438,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("b");
   await page.waitForTimeout(150);
   await log("b typed, already here", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
+  /* the same press over a selection: the focus back, the selection as it stood */
+  await R.selectBetween(page, "food", "love");
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  await page.keyboard.type("fb");
+  await page.waitForTimeout(150);
+  await log("fb over a selection, already here", { corner: await R.cornerText(page) });
   await page.keyboard.press("Control+Meta+b");
   await page.waitForTimeout(150);
   await page.click(S.bookmarkDel);
@@ -995,6 +1003,38 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a held place, then a scroll no hand made", { kept: afterGrow === foundLine, line: afterGrow });
   await go("page/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+  /* a place held on lines that open on inline code, one paragraph so the window's top always falls on text: the caret at the line's start, the code run no stop on the way */
+  await go("page/Coded%20Lines");
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.setSource(page, Array.from({ length: 60 }, (_, i) => "I `go` and the sea, line " + (i + 1) + ".").join("\n"));
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(1500);
+  await wheelTo(1200);
+  await page.waitForTimeout(700);
+  await go("page/Horace");
+  await go("page/Coded%20Lines");
+  await page.waitForTimeout(300);
+  await log("back to lines opening on inline code", { source: await R.inSource(page) });
+  /* a place held in the source mid-way down one long paragraph: the caret on the line on screen, so a key typed leaves the window where it is */
+  await go("page/Long%20Paragraph");
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await R.setSource(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" "));
+  await page.waitForTimeout(1500);
+  await wheelTo(1200);
+  await page.waitForTimeout(700);
+  await go("page/Horace");
+  await go("page/Long%20Paragraph");
+  await page.waitForTimeout(300);
+  const before = await winY();
+  await page.keyboard.type("Z");
+  await page.waitForTimeout(300);
+  await log("typed at the place in a long paragraph's source", { source: await R.inSource(page), stayed: Math.abs((await winY()) - before) < 3 });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(300);
     }],
     ["entries left and renamed", async () => {
   /* what leaving, renaming and deleting do to an entry, a clipboard that refuses, and a page whose site data is blocked */

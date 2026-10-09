@@ -80,7 +80,8 @@ bookmarks: arrived at page/Horace: {"cursor":"at a line's start"}
 keyed fb: {"rows":["fb 2026-09-06 you are here key link ×"],"focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 f typed: {"lit":1,"cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 b typed, already here: {"card":null,"corner":"already on 2026-09-06","cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-× pressed: {"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+fb over a selection, already here: {"corner":"already on 2026-09-06","cursor":"selected 12","screen":"2026-09-06 · sel 12 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+× pressed: {"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel 12 chars · bar on · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 bookmarks damaged: arrived at page/Horace: {"cursor":"at a line's start"}
 ⌃⌘B over a damaged list: {"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel","cursor":"on section","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 A over a damaged list: {"card":{"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel"},"corner":"bookmarks not saved (click to copy)","stored":"not json","cursor":"on section","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}

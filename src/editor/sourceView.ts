@@ -135,7 +135,9 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       return top + parseFloat(getComputedStyle(ta).lineHeight) >= 0 && top <= document.documentElement.clientHeight;
     },
     topAt: (under) => { const t = twin(), i = t.indexAt(under); t.done(); return i; },
-    lineStart: (pos) => ta.value.lastIndexOf("\n", pos - 1) + 1,
+    /* the line on screen, not the markdown line: a paragraph is one line
+       here, wrapped over many (pin: places › typed at the place in a long paragraph's source) */
+    lineStart: (pos) => { const t = twin(), i = t.indexAt(t.topOf(pos)); t.done(); return i; },
     placeAt: () => null,
     reveal: () => {},
     end: () => ta.value.length,
@@ -144,6 +146,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       t.done();
       window.scrollTo(0, window.scrollY + top - under);
     },
+    focus: () => { ta.focus({ preventScroll: true }); },
     placeCaret: (pos, scroll) => {
       const at = pos ?? ta.value.length;
       /* the caret BEFORE the focus: a fresh textarea's selection sits at

@@ -159,3 +159,13 @@ bookmarks from another window: arrived at 2026-09-06 (3) · * · the same
 author filing: arrived at bookshelf/Price, Harley · * · the current app's author filing section fails before this arrival
 a card and a note of paired verse · blocks · a card's and a note's paired verse split by their own widest lines here, the spare room shared (2026-10-09, asked); the current app draws no paired rows inside a card or a note
 typed on in the note's last row · blocks · the same
+typed Pedenteria in comparison · options · the current app's places section fails before it makes Coded Lines and Long Paragraph, so its scope list lacks them
+typed 4 m² · options · the same
+places: arrived at page/Coded Lines · * · the current app's places section fails before this arrival
+places: arrived at page/Horace (9) · * · the same
+places: arrived at page/Coded Lines (2) · * · the same
+back to lines opening on inline code · * · the same
+places: arrived at page/Long Paragraph · * · the same
+places: arrived at page/Horace (10) · * · the same
+places: arrived at page/Long Paragraph (2) · * · the same
+typed at the place in a long paragraph's source · * · the same

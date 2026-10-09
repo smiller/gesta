@@ -348,13 +348,12 @@ export function startSession(opts: SessionOptions): Session {
      words: silence reads as a dead control
      (pin: launch, panels, the corner, links › a link to itself) */
   function goto(hash: string, sameMsg?: string): void {
-    /* no hashchange fires for the hash already there, so no arrival gives
-       the caret: it is given back here, where it was left
-       (pin: bookmarks › b typed, already here) */
+    /* the hash already there fires no hashchange: the focus is given back
+       here, the selection as it stood
+       (pin: bookmarks › b typed, already here) (pin: bookmarks › fb over a selection, already here) */
     if (location.hash === hash) {
       if (sameMsg) say(sameMsg, 1500);
-      const s = surface.current;
-      if (s && !opts.mount.contains(document.activeElement)) s.placeCaret(s.caret(), false);
+      if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
       return;
     }
     location.hash = hash;

@@ -24,6 +24,8 @@ export interface Surface {
   scrollToPos(pos: number, under: number): void;
   /* null: a fresh caret, where the view puts one */
   placeCaret(pos: number | null, scroll: boolean): void;
+  /* the focus back, the selection as it stands */
+  focus(): void;
   insertText(text: string): void;
   insertPicture(name: string): void;
   words(): number;

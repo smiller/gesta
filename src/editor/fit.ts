@@ -74,7 +74,7 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
    needed a third of it (pin: fit.test › an inset block's split) */
 export function insetCol(room: number, c1: number, c2: number): number {
   const a = Math.max(Math.ceil(c1), MIN_COL) + FIT_SLACK;
-  const b = Math.ceil(c2) + FIT_SLACK;
+  const b = Math.max(Math.ceil(c2), MIN_COL) + FIT_SLACK;
   if (a + b <= room) return Math.round(a + (room - a - b) / 2);
   if (b <= room / 2) return Math.round(room - b);
   if (a <= room / 2) return a;
@@ -169,6 +169,7 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
    measuring class goes on the root, as the entry's does. */
 function insetBlocks(view: EditorView): { pos: number; dom: HTMLElement }[] {
   const out: { pos: number; dom: HTMLElement }[] = [];
+  /* a block outside a box is walked into: a note can stand among its rows */
   view.state.doc.descendants((n, pos) => {
     if (n.type.name !== "verse" && n.type.name !== "prose") return true;
     const $pos = view.state.doc.resolve(pos);
@@ -177,9 +178,9 @@ function insetBlocks(view: EditorView): { pos: number; dom: HTMLElement }[] {
       if (t !== "card" && t !== "note") continue;
       const dom = view.nodeDOM(pos);
       if (dom instanceof HTMLElement && dom.querySelector(":scope > .vpair")) out.push({ pos, dom });
-      break;
+      return false;
     }
-    return false;
+    return true;
   });
   return out;
 }
@@ -214,7 +215,7 @@ function insetDecorations(doc: EditorView["state"]["doc"], cols: { pos: number; 
   return DecorationSet.create(doc, cols.map(({ pos, col }) => Decoration.node(pos, pos + doc.nodeAt(pos)!.nodeSize, { style: "--inset-col: " + col + "px" }, { col })));
 }
 function sameInsets(set: DecorationSet, cols: { pos: number; col: number }[]): boolean {
-  const now = set.find();
+  const now = set.find().sort((x, y) => x.from - y.from);
   return now.length === cols.length && now.every((d, i) => d.from === cols[i].pos && (d.spec as { col: number }).col === cols[i].col);
 }
 
@@ -251,11 +252,11 @@ export function rowSpills(row: HTMLElement): boolean {
   return false;
 }
 
-function caretRow(view: EditorView, inset: boolean): HTMLElement | null {
+function caretRow(view: EditorView): HTMLElement | null {
   const { node } = view.domAtPos(view.state.selection.from);
   const el = node instanceof Element ? node : node.parentElement;
   const row = el?.closest<HTMLElement>(":is(.verse, .prose) > .vpair") ?? null;
-  return row && row.closest(".page") === view.dom && !!row.parentElement?.closest(INSET) === inset ? row : null;
+  return row && row.closest(".page") === view.dom ? row : null;
 }
 
 const SETTLE_MS = 500;
@@ -284,9 +285,11 @@ class FitView implements PluginView {
        only this row can raise it, and asking it is cheap where the pass
        is not. Unfitted, there is nothing to compare and the pass must run
        (pin: reference paste › typed into the quoted pair) */
-    const row = caretRow(view, false);
-    const inset = caretRow(view, true);
-    if ((row && row.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row))) || (inset && rowSpills(inset))) this.schedule(true);
+    /* a box's row asks only for the boxes: its rows may wrap by design,
+       and the entry's pass on every keystroke is what the gate is for */
+    const row = caretRow(view);
+    if (row?.parentElement!.closest(INSET)) { if (rowSpills(row)) this.scheduleInsets(); }
+    else if (row?.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row))) this.schedule(true);
     clearTimeout(this.settle);
     this.settle = window.setTimeout(() => this.schedule(false), SETTLE_MS);
   }
@@ -317,8 +320,14 @@ class FitView implements PluginView {
     if (this.insetFrame) return;
     this.insetFrame = requestAnimationFrame(() => { this.insetFrame = 0; this.fitInsets(); });
   }
+  private watched = new Set<Element>();
   private fitInsets(): void {
     if (this.destroyed) return;
+    /* each box watched itself: a card in a full-width grid takes its width
+       from the window, and the root's size need not change with it */
+    const boxes = new Set(Array.from(this.view.dom.querySelectorAll(INSET)));
+    for (const b of this.watched) if (!boxes.has(b)) { this.observer.unobserve(b); this.watched.delete(b); }
+    for (const b of boxes) if (!this.watched.has(b)) { this.observer.observe(b); this.watched.add(b); }
     const cols = measureInsets(this.view);
     if (!sameInsets(fitKey.getState(this.view.state)!, cols)) this.view.dispatch(this.view.state.tr.setMeta(fitKey, cols));
   }

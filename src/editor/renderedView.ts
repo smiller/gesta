@@ -38,10 +38,17 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
     lineStart: (pos) => {
       const $pos = view.state.doc.resolve(Math.min(pos, view.state.doc.content.size));
       if (!$pos.parent.isTextblock) return $pos.pos;
+      /* one line by overlap, not by an equal top: inline code sits a few
+         px off its line and stopped the walk before it
+         (pin: places › back to lines opening on inline code) */
       try {
-        const top = view.coordsAtPos($pos.pos).top;
+        const line = view.coordsAtPos($pos.pos);
         let p = $pos.pos;
-        while (p > $pos.start() && Math.abs(view.coordsAtPos(p - 1).top - top) < 2) p--;
+        while (p > $pos.start()) {
+          const c = view.coordsAtPos(p - 1);
+          if (c.bottom <= line.top + 1 || c.top >= line.bottom - 1) break;
+          p--;
+        }
         return p;
       } catch { return $pos.start(); }
     },
@@ -53,6 +60,7 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
     reveal: (pos) => { openFoldAt(pos)(view.state, view.dispatch); },
     end: () => view.state.doc.content.size,
     scrollToPos: (pos, under) => { window.scrollTo(0, window.scrollY + view.coordsAtPos(pos).top - under); },
+    focus: () => { view.focus(); },
     placeCaret: (pos, scroll) => {
       const tr = view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(Math.min(pos ?? 0, view.state.doc.content.size))));
       if (scroll) tr.scrollIntoView();

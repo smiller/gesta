@@ -120,8 +120,8 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   /* an arrival gives the caret, never scrolling: a view mounted fresh had
      none, and a page could not be typed into until clicked. At a place
      held it is the start of the line at the top of the window, so the
-     first key typed does not jump the window back to the start; the held
-     position, and the top line's probe, lie a few letters into that line
+     first key typed does not jump the window back to the start; any
+     position on that line is taken back to its start
      (pin: placeKeeper.test › goes to the place held)
      (pin: placeKeeper.test › goes to the start of the held place's line, or of the line under the masthead) */
   function caretAt(p: Place | null): void {
