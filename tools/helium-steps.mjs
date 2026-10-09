@@ -338,6 +338,30 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(400);
   await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await R.gridLayout(page)) });
     }],
+    ["paired card", async () => {
+  /* a card's and a note's paired verse split by their own widest lines: equal halves wrapped four lines of a card whose translation needed a third of it */
+  await go("page/Paired%20Card");
+  await page.click(S.editor);
+  const pairs = "::: verse\n*This is what was bequeathed us* | Death of the body —\n | How many poems\nNo other shore, only this bank | In the Book\nOn which the living gather. | Urge us\n\nNo meaning but what we find here. |\nNo purpose but what we make. | Death of the heart —\n\nThat, and the beloved’s clear instructions: | Insisting\nTurn me into song; sing me awake. | We'd better not.\n:::";
+  await R.pasteText(page, "::: card-light-blue\n" + pairs + "\n:::\n\n::: note\n" + pairs + "\n:::");
+  await page.waitForTimeout(700);
+  const split = () => page.evaluate((ed) => [...document.querySelectorAll(ed + " :is(div.note, div[class^='card-']) :is(.verse, .prose)")].map((b) => {
+    const rows = [...b.querySelectorAll(":scope > .vpair")];
+    let wrapped = 0;
+    for (const r of rows) for (const c of r.children) {
+      const rg = document.createRange(); rg.selectNodeContents(c);
+      const tops = [...rg.getClientRects()].filter((x) => x.width > 0).map((x) => x.top).sort((p, q) => p - q);
+      if (tops.some((t, k) => k && t - tops[k - 1] > 5)) wrapped++;
+    }
+    const [w1, w2] = rows.length ? getComputedStyle(rows[0]).gridTemplateColumns.split(" ").map(parseFloat) : [0, 0];
+    return { box: b.parentElement.className.split(" ")[0], rows: rows.length, wrapped, wider: w1 > w2 };
+  }), S.editor);
+  await log("a card and a note of paired verse", { blocks: await split() });
+  await page.keyboard.press("End");
+  await page.keyboard.type(" and on, and on, and on");
+  await page.waitForTimeout(900);
+  await log("typed on in the note's last row", { blocks: await split() });
+    }],
     ["picture", async () => {
   /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
   await go("page/Pictured");

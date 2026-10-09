@@ -1,7 +1,7 @@
 // The fit's arithmetic, pinned with measured numbers. The measuring pass and
 // the scheduling are DOM and are looked at in Helium.
 import { test, expect } from "vitest";
-import { fitWidth, sideBox, MIN_COL, FIT_SLACK } from "./fit.ts";
+import { fitWidth, insetCol, sideBox, MIN_COL, FIT_SLACK } from "./fit.ts";
 
 test("the side box is padding and border on both sides, in px, whatever the style spells them as", () => {
   expect(sideBox({ paddingLeft: "19.8px", paddingRight: "19.8px", borderLeftWidth: "3px", borderRightWidth: "0px" })).toBeCloseTo(42.6);
@@ -59,4 +59,20 @@ test("a grow only widens: a deletion cannot yank the column in mid-keystroke", (
 test("a settle narrows again, and an entry the layout cannot place is no answer", () => {
   expect(fitWidth(m(200, 300), { width: 900, col: 400 }, false)!.col).toBe(201);
   expect(fitWidth(m(200, 300, { floor: 0 }), null, false)).toBe(null);
+});
+
+/* the measured card on page/3x3 at a 1520px window: room 408, the widest
+   original 266 and translation 131, as read under max-content */
+test("an inset block's split: where both columns' widest lines fit, the spare room is shared between them", () => {
+  expect(insetCol(408, 266, 131)).toBe(Math.round(267 + (408 - 267 - 132) / 2));
+});
+test("an inset block's split: where they do not fit, the column whose widest line is shorter keeps it", () => {
+  expect(insetCol(381, 266, 131)).toBe(381 - 132);
+  expect(insetCol(381, 131, 266)).toBe(132);
+});
+test("an inset block's split: where neither fits in half, equal halves", () => {
+  expect(insetCol(300, 400, 250)).toBe(150);
+});
+test("an inset block's split: the original is never measured below a column a caret can land in", () => {
+  expect(insetCol(408, 0, 131)).toBe(Math.round(MIN_COL + FIT_SLACK + (408 - MIN_COL - FIT_SLACK - 132) / 2));
 });

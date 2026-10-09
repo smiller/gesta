@@ -157,3 +157,5 @@ places: arrived at page/Horace (8) · * · the current app's places section fail
 bookmarks from another window: arrived at page/Deleted Elsewhere (2) · * · the current app's section fails before this arrival
 bookmarks from another window: arrived at 2026-09-06 (3) · * · the same
 author filing: arrived at bookshelf/Price, Harley · * · the current app's author filing section fails before this arrival
+a card and a note of paired verse · blocks · a card's and a note's paired verse split by their own widest lines here, the spare room shared (2026-10-09, asked); the current app draws no paired rows inside a card or a note
+typed on in the note's last row · blocks · the same

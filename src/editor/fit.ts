@@ -6,7 +6,7 @@
    goes on, the floor and every cell are read against it, and it comes off
    inside one synchronous call, so no frame is painted in that state. */
 import { Plugin, PluginKey, type PluginView } from "prosemirror-state";
-import type { EditorView } from "prosemirror-view";
+import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 
 /* px. The narrowest original the fit will ask for — a caret target rather
    than a reading measure — so a block whose translations are typed before
@@ -64,6 +64,21 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
     col = Math.min(Math.max(col, prev.col), Math.max(col, Math.round(room * 2 / 3), room - c2));
   }
   return { width, col };
+}
+
+/* a card's or a note's own split, its width being the box's and not the
+   entry's: where both columns' widest lines fit, the spare room is shared
+   between them; where they do not, the column whose widest line is the
+   shorter keeps it and the other wraps; where neither fits in half, equal
+   halves. Equal halves wrapped four lines of a card whose translation
+   needed a third of it (pin: fit.test › an inset block's split) */
+export function insetCol(room: number, c1: number, c2: number): number {
+  const a = Math.max(Math.ceil(c1), MIN_COL) + FIT_SLACK;
+  const b = Math.ceil(c2) + FIT_SLACK;
+  if (a + b <= room) return Math.round(a + (room - a - b) / 2);
+  if (b <= room / 2) return Math.round(room - b);
+  if (a <= room / 2) return a;
+  return Math.round(room / 2);
 }
 
 export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderLeftWidth: string; borderRightWidth: string }): number {
@@ -148,6 +163,61 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
   return { floor, c1, c2, gap, frame, cap: fitCap() };
 }
 
+/* a card's and a note's paired blocks, each measured in its own box. The
+   split is a node decoration, the editor's own: a style written straight
+   onto the block was drawn away by the editor's next pass over it. The
+   measuring class goes on the root, as the entry's does. */
+function insetBlocks(view: EditorView): { pos: number; dom: HTMLElement }[] {
+  const out: { pos: number; dom: HTMLElement }[] = [];
+  view.state.doc.descendants((n, pos) => {
+    if (n.type.name !== "verse" && n.type.name !== "prose") return true;
+    const $pos = view.state.doc.resolve(pos);
+    for (let d = $pos.depth; d > 0; d--) {
+      const t = $pos.node(d).type.name;
+      if (t !== "card" && t !== "note") continue;
+      const dom = view.nodeDOM(pos);
+      if (dom instanceof HTMLElement && dom.querySelector(":scope > .vpair")) out.push({ pos, dom });
+      break;
+    }
+    return false;
+  });
+  return out;
+}
+export function measureInsets(view: EditorView): { pos: number; col: number }[] {
+  const blocks = insetBlocks(view);
+  if (!blocks.length) return [];
+  const rooms = blocks.map(({ dom }) => {
+    const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;
+    return r.getBoundingClientRect().width - (parseFloat(getComputedStyle(r).columnGap) || 0);
+  });
+  const scroller = document.scrollingElement || document.documentElement;
+  const held = scroller.scrollTop;
+  const widths: [number, number][] = [];
+  view.dom.classList.add("fitting-insets");
+  try {
+    for (const { dom } of blocks) {
+      let c1 = 0, c2 = 0;
+      dom.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
+        const cells = r.children;
+        if (cells[0]) c1 = Math.max(c1, cells[0].getBoundingClientRect().width);
+        if (cells[1]) c2 = Math.max(c2, cells[1].getBoundingClientRect().width);
+      });
+      widths.push([c1, c2]);
+    }
+  } finally {
+    view.dom.classList.remove("fitting-insets");
+    scroller.scrollTop = held;
+  }
+  return blocks.flatMap((b, i) => rooms[i] > 0 ? [{ pos: b.pos, col: insetCol(rooms[i], widths[i][0], widths[i][1]) }] : []);
+}
+function insetDecorations(doc: EditorView["state"]["doc"], cols: { pos: number; col: number }[]): DecorationSet {
+  return DecorationSet.create(doc, cols.map(({ pos, col }) => Decoration.node(pos, pos + doc.nodeAt(pos)!.nodeSize, { style: "--inset-col: " + col + "px" }, { col })));
+}
+function sameInsets(set: DecorationSet, cols: { pos: number; col: number }[]): boolean {
+  const now = set.find();
+  return now.length === cols.length && now.every((d, i) => d.from === cols[i].pos && (d.spec as { col: number }).col === cols[i].col);
+}
+
 /* has this row spilled to a second line — asked without suspending
    anything, the gate that keeps the full pass off every keystroke. Three
    shapes spill: a cell wrapping, a cell hanging out of its column, the row
@@ -181,11 +251,11 @@ export function rowSpills(row: HTMLElement): boolean {
   return false;
 }
 
-function caretRow(view: EditorView): HTMLElement | null {
+function caretRow(view: EditorView, inset: boolean): HTMLElement | null {
   const { node } = view.domAtPos(view.state.selection.from);
   const el = node instanceof Element ? node : node.parentElement;
-  const row = el?.closest<HTMLElement>(".verse > .vpair") ?? null;
-  return row && row.closest(".page") === view.dom && !row.parentElement?.closest(INSET) ? row : null;
+  const row = el?.closest<HTMLElement>(":is(.verse, .prose) > .vpair") ?? null;
+  return row && row.closest(".page") === view.dom && !!row.parentElement?.closest(INSET) === inset ? row : null;
 }
 
 const SETTLE_MS = 500;
@@ -196,8 +266,14 @@ class FitView implements PluginView {
   private settle = 0;
   private window = 0;
   private readonly onResize = (): void => { if (window.innerWidth !== this.window) this.schedule(false); };
+  /* the boxes again when the root's size has settled: at the window's
+     resize event a card in a grid still had the last width, and each
+     split was one resize behind (MEASURED, page/3x3 from 1280 to 1700px) */
+  private readonly observer = new ResizeObserver(() => this.scheduleInsets());
+  private insetFrame = 0;
   constructor(view: EditorView) {
     this.view = view;
+    this.observer.observe(view.dom);
     window.addEventListener("resize", this.onResize);
     this.schedule(false);
   }
@@ -208,12 +284,17 @@ class FitView implements PluginView {
        only this row can raise it, and asking it is cheap where the pass
        is not. Unfitted, there is nothing to compare and the pass must run
        (pin: reference paste › typed into the quoted pair) */
-    const row = caretRow(view);
-    if (row && (!readFit(view.dom) || rowSpills(row))) this.schedule(true);
+    const row = caretRow(view, false);
+    const inset = caretRow(view, true);
+    if ((row && row.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row))) || (inset && rowSpills(inset))) this.schedule(true);
     clearTimeout(this.settle);
     this.settle = window.setTimeout(() => this.schedule(false), SETTLE_MS);
   }
+  private destroyed = false;
   destroy(): void {
+    this.destroyed = true;
+    this.observer.disconnect();
+    if (this.insetFrame) cancelAnimationFrame(this.insetFrame);
     window.removeEventListener("resize", this.onResize);
     if (this.frame) cancelAnimationFrame(this.frame);
     clearTimeout(this.settle);
@@ -232,8 +313,20 @@ class FitView implements PluginView {
       this.fit(growOnly);
     });
   }
+  private scheduleInsets(): void {
+    if (this.insetFrame) return;
+    this.insetFrame = requestAnimationFrame(() => { this.insetFrame = 0; this.fitInsets(); });
+  }
+  private fitInsets(): void {
+    if (this.destroyed) return;
+    const cols = measureInsets(this.view);
+    if (!sameInsets(fitKey.getState(this.view.state)!, cols)) this.view.dispatch(this.view.state.tr.setMeta(fitKey, cols));
+  }
   private fit(growOnly: boolean): void {
     const host = this.view.dom;
+    /* a card in a grid is as wide as the entry's fit leaves its track, so
+       the boxes are measured after the entry is written */
+    queueMicrotask(() => this.fitInsets());
     const m = measure(host);
     if (m === null) { writeFit(host, null); if (!growOnly) this.window = window.innerWidth; return; }
     /* a paired prose block takes the cap, not a measurement: its cells wrap,
@@ -249,7 +342,18 @@ class FitView implements PluginView {
   }
 }
 
-export const fitKey = new PluginKey("fit");
-export function fittedMeasure(): Plugin {
-  return new Plugin({ key: fitKey, view: (view) => new FitView(view) });
+export const fitKey = new PluginKey<DecorationSet>("fit");
+export function fittedMeasure(): Plugin<DecorationSet> {
+  return new Plugin<DecorationSet>({
+    key: fitKey,
+    state: {
+      init: () => DecorationSet.empty,
+      apply(tr, set) {
+        const cols = tr.getMeta(fitKey) as { pos: number; col: number }[] | undefined;
+        return cols ? insetDecorations(tr.doc, cols) : set.map(tr.mapping, tr.doc);
+      },
+    },
+    props: { decorations: (state) => fitKey.getState(state) },
+    view: (view) => new FitView(view),
+  });
 }

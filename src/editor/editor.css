@@ -243,7 +243,8 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .prose > .vrow { min-height: 1.2em; margin-bottom: 0.2em; }
 .page .prose > .vgap { height: 2.4em; position: relative; }
 .page .prose > .vgap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(26, 36, 24, 0.16); }
-.page :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: 1fr 1fr; gap: 0 1.6em; }
+.page :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: var(--inset-col, 1fr) 1fr; gap: 0 1.6em; }
+.page.fitting-insets :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: max-content max-content; }
 /* A PAIRED CITATION: a quoted pair is fitted with the entry and stands at
    the quoted text's edge with a quoted paragraph's margins (found by hand:
    pulled, it stood 21px out of the box; as an inset box, equal halves
