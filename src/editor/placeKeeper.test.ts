@@ -4,7 +4,7 @@ import { parsePlaces, placeOf, withPlace } from "../store/placeState.ts";
 import { NS } from "../store/keys.ts";
 
 const KEY = NS + "places";
-interface Fake extends PlaceSurface { at: number | null; size: number; throws: boolean }
+interface Fake extends PlaceSurface { at: number | null; size: number; throws: boolean; top: number | null; carets: string[] }
 
 interface World {
   log: string[]; box: Record<string, string>; win: { at: number; y(): number; scrollTo(y: number): void; under(): number };
@@ -27,15 +27,21 @@ function world(): World {
     seed: (k: string, pos: number, y: number) => { box[KEY] = JSON.stringify(withPlace(parsePlaces(box[KEY] ?? null), k, { pos, y })); },
     rendered: (at: number | null = 5, size = 100): Fake => {
       const f: Fake = {
-        source: false, at, size, throws: false,
+        source: false, at, size, throws: false, top: 7, carets: [],
         placeAt: () => f.at,
+        topAt: () => f.top,
+        placeCaret: (p, scroll) => { f.carets.push(p + (scroll ? " scrolled" : "")); },
         reveal: (p) => { log.push("reveal " + p); },
         scrollToPos: (p) => { if (f.throws) throw new Error("no box"); win.at = p * 10; log.push("to " + p); },
         end: () => f.size,
       };
       return f;
     },
-    source: (): Fake => ({ source: true, at: null, size: 100, throws: false, placeAt: () => null, reveal: () => {}, scrollToPos: () => {}, end: () => 100 }),
+    source: (): Fake => {
+      const f: Fake = { source: true, at: null, size: 100, throws: false, top: 7, carets: [], placeAt: () => null, topAt: () => f.top, reveal: () => {}, scrollToPos: () => {}, end: () => 100,
+        placeCaret: (p, scroll) => { f.carets.push(p + (scroll ? " scrolled" : "")); } };
+      return f;
+    },
     keeper: placeKeeper({
       surface: (): PlaceSurface | null => w.surf,
       window: win,
@@ -201,6 +207,32 @@ describe("applying", () => {
   it("clamps the position to the text's end, reveals it, and falls back to the offset when it has no box", () => {
     expect(arrive([999, 250], (w) => w.rendered(5, 50))).toEqual(["reveal 50", "to 50"]);
     expect(arrive([40, 250], (w) => { const f = w.rendered(); f.throws = true; return f; })).toEqual(["reveal 40", "scroll 250"]);
+  });
+});
+
+describe("the caret on arrival", () => {
+  const caret = (seed: [number, number] | null, f: (w: World) => Fake, how: "arrive" | "owed" | "keep" = "arrive"): string[] => {
+    const w = world();
+    if (seed) w.seed("page/A", seed[0], seed[1]);
+    const s = f(w);
+    w.keeper.open("page/A", how, w.show(s));
+    return s.carets;
+  };
+  it("goes to the start of a page never visited, and of one left at the top, the window left where it is", () => {
+    expect(caret(null, (w) => w.rendered())).toEqual(["0"]);
+    expect(caret([40, 0], (w) => w.rendered())).toEqual(["0"]);
+    expect(caret(null, (w) => w.source())).toEqual(["0"]);
+  });
+  it("goes to the place held, clamped; to the first line under the masthead where the place has no position, or 0", () => {
+    expect(caret([40, 400], (w) => w.rendered())).toEqual(["40"]);
+    expect(caret([999, 400], (w) => w.rendered(5, 50))).toEqual(["50"]);
+    expect(caret([-1, 400], (w) => w.rendered())).toEqual(["7"]);
+    expect(caret([40, 400], (w) => w.source())).toEqual(["7"]);
+    expect(caret([40, 400], (w) => { const f = w.source(); f.top = null; return f; })).toEqual(["0"]);
+  });
+  it("goes to the start with a highlight owed; a keep leaves it", () => {
+    expect(caret([40, 400], (w) => w.rendered(), "owed")).toEqual(["0"]);
+    expect(caret([40, 400], (w) => w.rendered(), "keep")).toEqual([]);
   });
 });
 
