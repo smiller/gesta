@@ -99,8 +99,9 @@ here NOW, and what is not yet:
   ported: the free checkers first (tsc with the unused checks on, the
   suite, the corpus tool, the Helium tools), then ONE `/code-review` at
   HIGH over a commit range, by BATCH — when a batch touches a DOM seam
-  (main.ts, session.ts, editor.ts, paste.ts) or closes a phase — never
-  per commit; its findings land in one fix commit; a confirmation pass
+  (main.ts, session.ts, editor.ts, paste.ts, and from 2026-10-08
+  renderedView.ts and sourceView.ts, the two views split out of the
+  session on 2026-09-30) or closes a phase — never per commit; its findings land in one fix commit; a confirmation pass
   is offered at its measured price and runs only on the reader's word,
   and only when a finding changed behaviour. HIGH, NOT MEDIUM, from
   2026-09-28 (the reader, on Opus 5.5): over one diff (the contents

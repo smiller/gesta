@@ -1988,3 +1988,14 @@ at the head is kept current per phase.
   the landed save arming it. The runner's corrections and exceptions now
   report the source's line and whole text. MEASURED after: the runner
   over the imported plays changes 0 of 98. Closed at two cycles.
+- 2026-10-08, THE REVIEW TRIGGERS FOLLOW THE SEAMS. FOUND after the
+  caret fix (a3f81a2, placeKeeper.ts): the trigger list named in Phase 4
+  (main.ts, session.ts, editor.ts, paste.ts) was the DOM seams of
+  2026-09-08, and the 2026-09-30 refactors (98469d1, fabb19b) moved DOM
+  code out of session.ts into modules the list did not name. Of them,
+  renderedView.ts (the ProseMirror view, focus, scroll) and
+  sourceView.ts (the textarea and its twin) touch the DOM directly;
+  surface.ts, placeKeeper.ts and overlays.ts are tested over fakes.
+  DECIDED (asked): the two views join the list in CLAUDE.md. The wider
+  rule, every file touching the DOM (19 of 84 non-test files by a rough
+  grep, MEASURED), was not taken.
