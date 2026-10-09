@@ -38,7 +38,6 @@ export interface SessionOptions {
   pinned?: () => boolean;
   releasePin?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
-  onEdit?: () => void;
   onView?: (md: boolean) => void;
   /* read AFTER the editor has the selection: the DOM's selectionchange
      runs a beat ahead of the state. Unpinned: headless Helium does not
@@ -104,7 +103,7 @@ export function startSession(opts: SessionOptions): Session {
     if (!surface.current || !opts.onShow) return;
     opts.onShow(layer.entryMd(ekeyOf()), ekeyOf());
   };
-  const edited = (): void => { scheduleSave(); show(); opts.onEdit?.(); };
+  const edited = (): void => { scheduleSave(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
      can navigate while the decode runs. Every way it cannot land sticks:
      the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */

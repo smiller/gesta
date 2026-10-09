@@ -75,15 +75,20 @@ for (const p of PLAYS) for (const book of p.books) {
     totals.files++;
     const md = readFileSync(join(dir, f), "utf8");
     const r = fixPlay(md, { capitals: p.capitals, join: p.join(book) });
-    const fixed = r.md.split("\n"), forced = force(fixed, book);
-    for (const [k, l] of forced.entries()) if (l !== fixed[k]) { r.changes.push({ line: k + 1, before: fixed[k], after: l }); r.left = r.left.filter((x) => x.text !== fixed[k]); }
+    /* the exceptions and corrections reported by the source's own lines:
+       a row fixPlay left is the source's row, found by its text */
+    const src = md.split("\n"), fixed = r.md.split("\n"), forced = force(fixed, book);
+    for (const [k, l] of forced.entries()) if (l !== fixed[k]) {
+      r.changes.push({ line: src.indexOf(fixed[k]) + 1, before: fixed[k], after: l });
+      const i = r.left.findIndex((x) => x.text === fixed[k]);
+      if (i >= 0) r.left.splice(i, 1);
+    }
     r.md = forced.join("\n");
     for (const c of CORRECT.filter((x) => x.book === book && r.md.includes(x.from))) {
-      const at = r.md.slice(0, r.md.indexOf(c.from)).split("\n").length;
       r.md = r.md.replace(c.from, c.to);
-      const hit = r.changes.find((ch) => ch.after.includes(c.from.split("\n")[0]));
-      if (hit) hit.after = hit.after.replace(c.from.split("\n")[0], c.to.split("\n")[0]);
-      else r.changes.push({ line: at, before: c.from, after: c.to });
+      const first = c.from.split("\n")[0];
+      r.changes = r.changes.filter((ch) => !ch.after.includes(first));
+      r.changes.push({ line: src.findIndex((l) => l.includes(first)) + 1, before: c.from, after: c.to });
     }
     for (const l of r.left) lefts.push({ file: f, l });
     if (r.md === md) continue;

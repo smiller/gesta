@@ -53,7 +53,7 @@ const PREFIX = /^((?:>\s?)*)/;
 const OPENS = /^\*?\s*\[/;
 const NOTE = /^\*?\[\*?(?:The end|End) of\b/;
 /* a link's text or a note marker, not a direction */
-const NOT_A_DIRECTION = /^\*?\[[^\]]*\]\(|^\*?\[\d+\]/;
+const NOT_A_DIRECTION = /^\*?\s*\[[^\]]*\]\(|^\*?\s*\[\d+\]/;
 
 export function fixPlay(md: string, opts: Options): { md: string; changes: Change[]; left: Left[] } {
   const lines = md.split("\n");
@@ -75,9 +75,10 @@ export function fixPlay(md: string, opts: Options): { md: string; changes: Chang
            names in capitals, up to a blank line */
         for (let k = n + 1; k < lines.length; k++) {
           const p = PREFIX.exec(lines[k])![1], b = lines[k].slice(p.length);
-          if (p !== prefix || !b.trim() || !b.startsWith("*") || b.includes("[")) break;
+          if (p !== prefix || !b.trim() || !b.startsWith("*")) break;
           const more = chars(b), at = text(more).indexOf("]");
           const head = at < 0 ? more : more.slice(0, at);
+          if (text(head).includes("[")) break;
           if (inkIn(head, false).some((x) => /\p{Ll}/u.test(x.c))) break;
           dir = dir.concat([{ c: " ", it: true }], head);
           used = k;
@@ -98,9 +99,14 @@ export function fixPlay(md: string, opts: Options): { md: string; changes: Chang
     }
     /* a scene set out in italic paragraphs, without brackets: Tey's, its
        names left roman in lower case like a bracketed direction's */
-    if (opts.capitals && body.startsWith("*") && !body.startsWith("**") && !body.startsWith("*[")) {
-      const cs = chars(body);
-      if (inkIn(cs, false).length && !body.includes("**")) {
+    /* mostly italic, or roman only in runs short enough to be names, so a
+       speech opening on an emphasised word is not taken; never a bullet or
+       a line holding a link */
+    if (opts.capitals && body.startsWith("*") && !body.startsWith("* ") && !body.startsWith("*[") && !body.includes("**") && !body.includes("](")) {
+      const cs = chars(body), roman = inkIn(cs, false).length;
+      const runs = text(cs.map((x) => (x.it ? { c: "\n", it: true } : x))).split("\n");
+      const short = runs.every((r) => (r.match(WORD) ?? []).length <= 5);
+      if (roman && (inkIn(cs, true).length > 2 * roman || short)) {
         const after = prefix + "*" + tidy(text(capitalise(cs))) + "*";
         changes.push({ line: n + 1, before: line, after });
         out.push(after);

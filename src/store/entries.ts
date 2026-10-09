@@ -48,6 +48,8 @@ export type Rewrite = "landed" | "unchanged" | "failed";
 export interface LayerOptions {
   /* a landed write or delete, told to the other tabs */
   announce?(ekey: string): void;
+  /* the same landing, for what follows any write: the folder backup */
+  onLanded?(ekey: string): void;
 }
 /* an op's answer that nothing landed: the row was already gone */
 const GONE = Symbol("gone");
@@ -136,7 +138,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     const tail = (chain[ekey] || Promise.resolve()).then(op, op);
     chain[ekey] = tail;
     return tail.then(
-      (v) => { if (v === GONE) return true; unlanded.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); return true; },
+      (v) => { if (v === GONE) return true; unlanded.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); opts.onLanded?.(ekey); return true; },
       (err: unknown) => {
         /* PUT THE CACHE BACK: a refused write left there would go out over the
            backup folder at the next run (pin: entries.test › a stale write

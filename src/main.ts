@@ -155,9 +155,9 @@ document.addEventListener("keydown", (e) => {
 const tabs = typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
 /* every landed write or delete arms the folder backup, not typing alone:
    an import, a rename or a delete waited for the next launch
-   (pin: entries.test › a landed write and a landed delete are announced) */
+   (pin: entries.test › a landed write and a landed delete are told to onLanded) */
 let armBackup = (): void => {};
-const layer = entryLayer(idbEntryStore(), notices.entry, { announce: (ekey) => { tabs?.postMessage(ekey); armBackup(); } });
+const layer = entryLayer(idbEntryStore(), notices.entry, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
 const images = idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
@@ -213,7 +213,6 @@ if (fixture && fixtures[fixture]) {
       else acts.replace.check();
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
-    onEdit: () => backup.scheduleBackup(),
     onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },

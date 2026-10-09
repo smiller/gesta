@@ -1973,3 +1973,18 @@ at the head is kept current per phase.
   counted, 157 places rewritten), and Cranmer's "A BISHOP]*" closed a
   row early — joined. A second import folder of 56 entries, `importCorpus`
   56 of 56.
+- 2026-10-08, REVIEW CYCLE 2 over `82c35d8..e11f6c1`, the confirmation
+  pass, asked. COST 94,978 tokens (2 input + 4,030 cache creation +
+  83,502 cache read + 7,444 output). Ten findings. The scene rule took
+  any Tey line opening in italics — a speech on an emphasised word, a
+  bullet, a line with a link; READ over the 156 lines it changed in the
+  import: every one a scene description, so nothing imported was hurt —
+  now it takes a paragraph mostly italic or roman only in runs of five
+  words or fewer (names), never a bullet or a link (tests). A join was
+  stopped by a [ after its row's ], and a link or note marker after a
+  space was a direction (tests). The backup's arming named a pin that
+  did not check it — the layer has its own `onLanded`, pinned in
+  entries.test, and typing's separate arming (session onEdit) is gone,
+  the landed save arming it. The runner's corrections and exceptions now
+  report the source's line and whole text. MEASURED after: the runner
+  over the imported plays changes 0 of 98. Closed at two cycles.

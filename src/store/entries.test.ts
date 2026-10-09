@@ -2,17 +2,17 @@ import { test, expect } from "vitest";
 import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } from "./store.ts";
 import { entryLayer, type EntryNotices } from "./entries.ts";
 
-interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckIdle: unknown[][]; announced: string[] }
+interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckIdle: unknown[][]; announced: string[]; onLanded: string[] }
 function fresh(over?: (s: MemEntryStore) => EntryStore) {
   const mem = memEntryStore();
-  const calls: Calls = { landed: [], removed: [], stuck: [], stuckIdle: [], announced: [] };
+  const calls: Calls = { landed: [], removed: [], stuck: [], stuckIdle: [], announced: [], onLanded: [] };
   const notices: EntryNotices = {
     landed: (k) => calls.landed.push(k),
     removed: (k) => calls.removed.push(k),
     stuck: (...a) => calls.stuck.push(a),
     stuckIdle: (...a) => calls.stuckIdle.push(a),
   };
-  const layer = entryLayer(over ? over(mem) : mem, notices, { announce: (k) => calls.announced.push(k) });
+  const layer = entryLayer(over ? over(mem) : mem, notices, { announce: (k) => calls.announced.push(k), onLanded: (k) => calls.onLanded.push(k) });
   return { layer, mem, calls };
 }
 
@@ -213,6 +213,16 @@ test("a landed write and a landed delete are announced to the other tabs; a refu
   await mem.foreignSet("page/B", "theirs");
   await layer.setEntry("page/B", "mine");
   expect(calls.announced).toEqual(["page/A", "page/A"]);
+});
+
+test("a landed write and a landed delete are told to onLanded, which arms the folder backup; a refused one is not", async () => {
+  const { layer, mem, calls } = fresh();
+  await layer.warm();
+  await layer.setEntry("page/A", "a");
+  await layer.removeEntry("page/A");
+  await mem.foreignSet("page/B", "theirs");
+  await layer.setEntry("page/B", "mine");
+  expect(calls.onLanded).toEqual(["page/A", "page/A"]);
 });
 
 test("a notice takes the stored row into the cache and the base: a save after it lands", async () => {
