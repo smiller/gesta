@@ -289,6 +289,36 @@ export pressed again while one runs: {"corner":"exporting…","pickers":1,"curso
 losing nothing: arrived at page/Typed: {"cursor":"at a line's start"}
 typed into an entry an import overwrites: {"afterButton":"none","text":"IMPORTED TEXT","corner":"not saved — changed in another tab, copy your text then reload (click to copy)","cursor":"at a line's start","screen":"page/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a store that never answers: {"corner":"couldn't load entries — reload (click to copy)","persistAsked":true,"cursor":"at a line's start","screen":"page/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Horace: {"cursor":"at a line's start"}
+⌃⌘S pressed twice: {"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘B pressed twice: {"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Line numbering closed by its label: {"open":false,"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Links: {"cursor":"at a line's start"}
+where the keys go: arrived at page/Horace: {"cursor":"at a line's start"}
+a bookmark's link pressed, Z typed: {"line":"Maecena[Links](#page/Links)Zs atavis edite regibus, | Maecen","cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Keys: {"cursor":"at a line's start"}
+Tab in prose: {"corner":"⌃⌘M toggles markdown","cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab over two paragraphs: {"corner":"Tab indents one list, quote, or code block at a time","cursor":"selected 8","screen":"page/Keys · sel 8 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+Tab in a code block: {"code":"x   = 1\ny = 2","cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌘A in a code block: {"cursor":"selected 13","screen":"page/Keys · sel 13 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a click below a table at the end, z typed: {"last":"P","tail":["","z"],"cursor":"at the end","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Escape after a search jump: {"cursor":"at a line's start","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘M over open search results: {"cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+where the keys go: arrived at 2026-09-12: {"cursor":"at a line's start"}
+⌃⌘T on today from the shortcuts popup: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘T on today from Search: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab twelve times from the bookmarks card: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Shift-Tab from the shortcuts popup: {"cursor":"on summary","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at bookshelf/Boethius/Consolatio/3pr1: {"cursor":"at a line's start"}
+⌃⌘. held from 3pr1: {"walks":1,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Enter held on a search result: {"entry":"bookshelf/Boethius/Consolatio/3pr2","md":"# 3pr2\n\nTum defixo paululum uisu.","cursor":"selected 6","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Held: {"cursor":"at a line's start"}
+Enter held on a shortcut: {"md":"Sean Miller then.","cursor":"at the end","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab held in a quote: {"md":">> quoted","cursor":"inside a line","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at 2026-09-05: {"cursor":"at a line's start"}
+Enter with the caret above the window: {"clear":24,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
+a picture pasted, then Search typed in: {"query":"abc","pictures":2,"md":"![](<Pictured Late-img-1.webp>)","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card

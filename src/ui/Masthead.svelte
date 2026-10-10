@@ -15,11 +15,12 @@
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
+  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void;
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
+    onLines: (open: boolean) => void;
     onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
@@ -47,6 +48,11 @@
   const leave = (e: FocusEvent): void => {
     const panel = e.currentTarget as HTMLElement;
     if (!(e.relatedTarget instanceof Node && panel.contains(e.relatedTarget))) onClosePanel();
+  };
+  /* a card's focus going nowhere is a row deleted under it, not a leaving
+     (pin: where the keys go › Tab twelve times from the bookmarks card) */
+  const leaveCard = (e: FocusEvent): void => {
+    if (e.relatedTarget instanceof Node && !(e.currentTarget as HTMLElement).contains(e.relatedTarget)) onClosePanel();
   };
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
@@ -99,8 +105,8 @@
   <Goto bind:this={gotoRow} goto={screen.goto} {...goto} />
   <Search bind:this={searchRow} search={screen.search} {...search} />
   <Help open={screen.panel === "help"} />
-  {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} />{/if}
-  {#if screen.panel === "shortcuts"}<Shortcuts bind:this={shortcutsCard} shortcuts={screen.shortcuts} {...shortcuts} />{/if}
+  {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} onLeave={leaveCard} />{/if}
+  {#if screen.panel === "shortcuts"}<Shortcuts bind:this={shortcutsCard} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leaveCard} />{/if}
   {#if screen.panel === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
   {#if screen.panel === "page" || screen.panel === "bookshelf"}
     <nav class="pages" onfocusout={leave}>
@@ -111,7 +117,7 @@
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
   <ReplaceBar bind:this={replaceEl} replace={screen.replace} {...replace} />
-  <details class="page-lines" hidden={!screen.gutter} open={screen.linesOpen} ontoggle={(e) => { screen.linesOpen = (e.currentTarget as HTMLDetailsElement).open; }}>
+  <details class="page-lines" hidden={!screen.gutter} open={screen.linesOpen} ontoggle={(e) => { const open = (e.currentTarget as HTMLDetailsElement).open; if (open !== screen.linesOpen) onLines(open); }}>
     <summary>Line numbering</summary>
     <span class="page-lines-body">
       <select aria-label="Line numbering" bind:this={linesSelect} value={screen.interval} onchange={(e) => onInterval(+e.currentTarget.value)}>

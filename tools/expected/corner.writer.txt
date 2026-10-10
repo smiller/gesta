@@ -265,6 +265,36 @@ Escape, the switch back refused: {"bar":"none","view":"rendered","cursor":"at th
 SECTION FAILED (replace): TimeoutError: page.fill: Timeout 30000ms exceeded.
 losing nothing: arrived at page/Kept: {"cursor":"at a line's start"}
 SECTION FAILED (losing nothing): Error: page.evaluate: TypeError: Cannot read properties of undefined (reading 'split')
+where the keys go: arrived at page/Horace: {"cursor":"at a line's start"}
+⌃⌘S pressed twice: {"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘B pressed twice: {"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Line numbering closed by its label: {"open":false,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Links: {"cursor":"at a line's start"}
+where the keys go: arrived at page/Horace: {"cursor":"at a line's start"}
+a bookmark's link pressed, Z typed: {"line":"Maecena[Links](#page/Links)Zs atavis edite regibus, | Maecen","cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Keys: {"cursor":"at a line's start"}
+Tab in prose: {"corner":"⌃⌘M toggles markdown","cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab over two paragraphs: {"corner":"Tab indents one list, quote, or code block at a time","cursor":"selected 8","screen":"page/Keys · sel 8 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+Tab in a code block: {"code":"x   = 1y = 2","cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌘A in a code block: {"cursor":"selected 15","screen":"page/Keys · sel 15 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a click below a table at the end, z typed: {"tail":["","| 1 | 2 |"],"cursor":"at a line's start","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Escape after a search jump: {"cursor":"at a line's start","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘M over open search results: {"cursor":"at the end","screen":"page/Keys · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+where the keys go: arrived at 2026-09-12: {"cursor":"at a line's start"}
+⌃⌘T on today from the shortcuts popup: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘T on today from Search: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab twelve times from the bookmarks card: {"cursor":"on button","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Shift-Tab from the shortcuts popup: {"cursor":"on button","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at bookshelf/Boethius/Consolatio/3pr1: {"cursor":"at a line's start"}
+⌃⌘. held from 3pr1: {"walks":1,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Enter held on a search result: {"entry":"bookshelf/Boethius/Consolatio/3pr2","md":"# 3pr2\n\nTum defixo paululum uisu.","cursor":"selected 6","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Held: {"cursor":"at a line's start"}
+Enter held on a shortcut: {"md":"Sean Miller then.","cursor":"at the end","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab held in a quote: {"md":">> quoted","cursor":"inside a line","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at 2026-09-05: {"cursor":"at a line's start"}
+Enter with the caret above the window: {"clear":24,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
+a picture pasted, then Search typed in: {"query":"abc","pictures":1,"md":"![img-1]","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

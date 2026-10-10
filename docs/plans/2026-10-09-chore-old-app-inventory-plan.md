@@ -265,3 +265,64 @@ refuses a pasted picture before storing it, and Replace does nothing on
 it. A full store met on a later picture names the pictures already
 written (importFiles.test). The rendered view's editable flag reads the
 lock's own state. REVIEW CYCLES: 2.
+
+## Group 2, done (2026-10-09)
+
+Each item played first in headless Helium, over the build before the fix and
+over the old app, in the shared steps' new section "where the keys go"; every
+reading but one differs between the code before and after (MEASURED, one run
+of the section on each), and the old app's run of the same section is in
+corner.writer.txt. Rulings asked item by item, all as recommended:
+
+10. ⌃⌘S, ⌃⌘B or ⌃⌘H pressed again closes the card with the keys back in the
+    text. Before: no focus at all. An opener CLICKED again keeps the focus on
+    the button, as the old app and the approved copy have it.
+11. "Line numbering" clicked to close the row hands the keys back as ⌃⌘L
+    does. Before: the focus stayed on the label.
+12. NO CHANGE NEEDED. The inventory's B79 (INFERRED: no caret after the
+    bookmark card's link) and this record's first reading ("in the link", a
+    DOM boundary read) were both wrong: MEASURED, Z typed after the press
+    lands after the link, outside it, before and after the group's changes
+    (`[Links](#page/Links)Z`); insertLink.test pins it, a test that passed on
+    the code before.
+13. Tab in prose stays in the entry: a bare caret whispers "⌃⌘M toggles
+    markdown", a selection "Tab indents one list, quote, or code block at a
+    time" (asked, the old app's words). Shift-Tab there is left to the
+    browser, as it was in the old app. Before: the focus walked to a
+    masthead button.
+14. In a rendered code block Tab inserts two spaces, Shift-Tab takes up to
+    two back, a selection's lines shift and stay selected — the source
+    view's rules, over the block's text (`codeTab`); ⌘A selects the block,
+    a second ⌘A the page (`selectCodeBlock`). As help.html promised. Before:
+    the focus walked out; ⌘A took the page (151 characters).
+15. Escape after a search jump leaves the caret just after the match
+    (asked); a selection the reader made, or any change since the jump, is
+    not the jump's (`jump` plugin, `escapeJump`). Before: the match stayed
+    selected. The old app removed the selection, no caret.
+16. ⌃⌘M (either way) and an arrival at the entry already open close the
+    panels, Search and the line bar; Go to and Line numbering stay (the
+    old app's closeMastheadPanels). Openings `view` and `here`; `sourceView`
+    retired. Before: Search and the shortcuts popup stood over the entry.
+17. Focus leaving the bookmarks card or the shortcuts popup closes it; a
+    focus going nowhere (a deleted row's button) does not. Before: both
+    stayed open.
+18. A held key acts once: the ⌃⌘ chords ignore auto-repeat (MEASURED by
+    counting hash changes: 2 walks before, 1 after); the Enter that chose a
+    search result or a shortcut is swallowed until its keyup or the
+    window's blur; a repeated Tab in the rendered view is swallowed and a
+    refusal is said once per press, while a held Shift-Tab still unwinds.
+    Before: a held Enter split "defixo" out of 3pr2 and split the line
+    after a shortcut; a held Tab nested a quote three deep.
+19. A caret scrolled into view stops 24px below the masthead (the old
+    app's margin; MEASURED 24 on both apps). Before: 5px from the window's
+    top, under a 113px masthead.
+20. An entry ending in a table is given an empty line below it, which
+    serializes away (editor.test); a click there takes the caret. Before:
+    "z" typed there was lost.
+21. A picture that finishes preparing while the keys are elsewhere lands
+    without taking the focus or scrolling (asked: land it, unlike the old
+    app's refusal, whose insert needed the focus). The step holds the
+    decode 800ms so the picture lands after the keys are in Search.
+    Before: the picture took the focus.
+
+help.html gains Tab in prose and Escape after a jump.

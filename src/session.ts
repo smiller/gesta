@@ -40,6 +40,8 @@ export interface SessionOptions {
   releasePin?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
+  /* a navigation to the entry already open */
+  onHere?: () => void;
   /* read AFTER the editor has the selection: the DOM's selectionchange
      runs a beat ahead of the state. Unpinned: headless Helium does not
      reproduce the beat */
@@ -133,7 +135,8 @@ export function startSession(opts: SessionOptions): Session {
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => folds.write((s) => withFoldPage(s, ekey, patch));
   /* the masthead is sticky over the page's top: a place is read, and set,
      just under it (pin: places › Back) */
-  const underMasthead = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0) + 4;
+  const mastheadBottom = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0);
+  const underMasthead = (): number => mastheadBottom() + 4;
   const viewport: Viewport = { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead };
   function browserPage(): Page {
     /* the window's place is the page's alone: the browser's own restore on
@@ -166,6 +169,7 @@ export function startSession(opts: SessionOptions): Session {
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
+      clearOf: mastheadBottom,
     });
     return rendered;
   }
@@ -361,10 +365,12 @@ export function startSession(opts: SessionOptions): Session {
      words: silence reads as a dead control
      (pin: launch, panels, the corner, links › a link to itself) */
   function goto(hash: string, sameMsg?: string): void {
-    /* the hash already there fires no hashchange: the focus is given back
-       here, the selection as it stood
-       (pin: bookmarks › b typed, already here) (pin: bookmarks › fb over a selection, already here) */
+    /* the hash already there fires no hashchange: what stands over the
+       entry is closed and the focus given back here, the selection as it stood
+       (pin: bookmarks › b typed, already here) (pin: bookmarks › fb over a selection, already here)
+       (pin: where the keys go › ⌃⌘T on today from Search) */
     if (location.hash === hash) {
+      opts.onHere?.();
       if (sameMsg) say(sameMsg, 1500);
       if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
       return;
@@ -425,9 +431,11 @@ export function startSession(opts: SessionOptions): Session {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
   /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
      excluded (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-     (pin: source view › ⌃⌘W rendered) */
+     (pin: source view › ⌃⌘W rendered). A held chord acts once: each repeat
+     of the walk was a whole leave and open (pin: where the keys go › ⌃⌘. held from 3pr1) */
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
+    if (",.trcmw".includes(e.key) && e.repeat) { e.preventDefault(); return; }
     if (e.key === ",") { e.preventDefault(); step("prev"); }
     else if (e.key === ".") { e.preventDefault(); step("next"); }
     else if (e.key === "t") { e.preventDefault(); today(); }

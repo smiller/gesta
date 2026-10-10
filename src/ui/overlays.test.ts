@@ -24,9 +24,10 @@ describe("one thing open at a time", () => {
   it("a panel, opened, closes every header row; it replaces any other panel by itself", () => {
     for (const p of ["help", "backups", "bookmarks", "shortcuts", "pages"] as const) expect(closes(p)).toEqual(["search", "goto", "lineBar", "lines", "replace"]);
   });
-  it("a navigation closes everything; the source view closes the line bar", () => {
+  it("a navigation closes everything; the view switch and an arrival where it already is close what stands over the entry, Go to and Line numbering kept", () => {
     expect(closes("navigated")).toEqual(["panel", "search", "goto", "lineBar", "lines", "replace"]);
-    expect(closes("sourceView")).toEqual(["lineBar"]);
+    expect(closes("view")).toEqual(["panel", "search", "lineBar"]);
+    expect(closes("here")).toEqual(["panel", "search", "lineBar"]);
   });
   it("Escape closes everything, the line bar handing its caret back BEFORE search or Go to moves the focus", () => {
     expect(closes("escape")).toEqual(["panel", "lineBarCaret", "search", "goto", "lines", "replaceBack"]);

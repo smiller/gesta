@@ -1,8 +1,9 @@
 <!-- A row takes the MOUSEDOWN, not the click, so focus never leaves the box. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  let { shortcuts, onQuery, onPick, onWalk, onEnter, onEdit, onDraft, onSave, onEscape }: {
+  let { shortcuts, onQuery, onPick, onWalk, onEnter, onEdit, onDraft, onSave, onEscape, onLeave }: {
     shortcuts: Screen["shortcuts"];
+    onLeave: (e: FocusEvent) => void;
     onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void;
     onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void;
   } = $props();
@@ -21,7 +22,7 @@
 
 <!-- the keys reach the popup through the section; the box is the one field -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions, a11y_no_noninteractive_element_to_interactive_role -->
-<section class="helppanel shortcuts" role="dialog" aria-label="Shortcuts" onkeydown={keydown}>
+<section class="helppanel shortcuts" role="dialog" aria-label="Shortcuts" onkeydown={keydown} onfocusout={onLeave}>
   <input type="search" class="search-input" placeholder="Type a code…" aria-label="Find a shortcut" autocomplete="off" spellcheck="false" bind:this={input} value={shortcuts.query} oninput={(e) => onQuery(e.currentTarget.value)}>
   <ul class="search-results">
     {#if shortcuts.empty}<li class="empty">{shortcuts.empty}</li>{/if}

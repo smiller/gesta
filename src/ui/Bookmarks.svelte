@@ -3,8 +3,9 @@
      and the ceiling stated in the cell's own rule. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  let { bookmarks, onKey, onAct, onDraft, onCommit }: {
+  let { bookmarks, onKey, onAct, onDraft, onCommit, onLeave }: {
     bookmarks: Screen["bookmarks"];
+    onLeave: (e: FocusEvent) => void;
     onKey: (e: KeyboardEvent) => void;
     onAct: (key: string, what: "jump" | "del" | "key" | "link") => void;
     onDraft: (value: string) => void;
@@ -44,7 +45,7 @@
 <!-- the card holds focus itself so the bare keys reach the handler; the
      row editor is the one field -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_to_interactive_role, a11y_no_noninteractive_element_interactions -->
-<section class="helppanel bookmarks" bind:this={card} tabindex="-1" role="dialog" aria-label="Bookmarks" onkeydown={onKey}>
+<section class="helppanel bookmarks" bind:this={card} tabindex="-1" role="dialog" aria-label="Bookmarks" onkeydown={onKey} onfocusout={onLeave}>
   <h3>Bookmarks</h3>
   <ul class="search-results" bind:this={list} style={aliasCol ? "--alias-col: " + aliasCol : ""}>
     {#if bookmarks.unreadable}<li class="empty">your saved bookmarks are damaged — nothing has been changed</li>

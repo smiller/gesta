@@ -5,7 +5,7 @@
    link's nth, counted under substring rules, still lands) (pin:
    highlight.test › a deep link replays literally) */
 import type { Node } from "prosemirror-model";
-import { TextSelection } from "prosemirror-state";
+import { Plugin, PluginKey, TextSelection, type Command, type EditorState, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { flattenDoc, flatRange } from "../model/flatten.ts";
 import { parseSearchQuery, searchFold, searchHits } from "../store/search.ts";
@@ -26,6 +26,25 @@ export function highlightIn(view: EditorView, query: string, nth: number, honorM
   const hit = findHit(view.state.doc, query, nth, honorMarkers);
   if (!hit) return false;
   view.focus();
-  view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, hit.from, hit.to)));
+  view.dispatch(jumpTo(view.state, hit.from, hit.to));
   return true;
 }
+/* the jump's selection, until anything else moves the selection or the text:
+   Escape takes back only a selection a reader did not make */
+const jumpKey = new PluginKey<{ from: number; to: number } | null>("jump");
+export function jumpTo(state: EditorState, from: number, to: number): Transaction {
+  return state.tr.setSelection(TextSelection.create(state.doc, from, to)).setMeta(jumpKey, { from, to });
+}
+export const escapeJump: Command = (state, dispatch) => {
+  const hit = jumpKey.getState(state);
+  if (!hit || state.selection.from !== hit.from || state.selection.to !== hit.to) return false;
+  dispatch?.(state.tr.setSelection(TextSelection.create(state.doc, hit.to)));
+  return true;
+};
+export const jump = new Plugin<{ from: number; to: number } | null>({
+  key: jumpKey,
+  state: {
+    init: () => null,
+    apply: (tr, was) => (tr.getMeta(jumpKey) as { from: number; to: number } | undefined) ?? (tr.docChanged || tr.selectionSet ? null : was),
+  },
+});

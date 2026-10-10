@@ -290,7 +290,7 @@ is in the plan's record, under the phase named):
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the
   handler), `highlight.ts` (the jump: the nth occurrence of a query
-  selected; the scroll is main's, a frame later), `insertLink.ts` (a link placed after the
+  selected, and Escape's hand-back of it; the scroll is main's, a frame later), `insertLink.ts` (a link placed after the
   caret, and what refuses one), `sourceKeys.ts` (Tab and Shift-Tab in
   the source view, over a text and a selection), `surface.ts` (THE
   SURFACE, what the rendered and the source view share: the interface
@@ -307,7 +307,7 @@ is in the plan's record, under the phase named):
   toolbar's acts as commands: the marks and their chords, the heading,
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code
-  block's empty last line, the way out), `paste.ts` (what pasted text
+  block's empty last line, the way out; Tab, Shift-Tab and ⌘A there), `paste.ts` (what pasted text
   becomes and what copied text says), `goto.ts` (⌃⌘G's decisions over a
   document: what the entry can be asked for, the hits and the cycle, the
   refusals), `landing.ts` (the landing mark as a plugin: a position that

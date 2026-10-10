@@ -84,7 +84,7 @@ type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {},
   backupsPanel: () => {},
-  interval: (_n: number) => {}, panel: (_ns: PanelName) => {}, newRoot: (_ns: Ns) => {},
+  interval: (_n: number) => {}, panel: (_ns: PanelName, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
@@ -113,6 +113,9 @@ mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: (
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
+  /* the row closed by its own label hands the keys back as ⌃⌘L does
+     (pin: where the keys go › Line numbering closed by its label) */
+  onLines: (open: boolean) => acts.lines(open),
   onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
@@ -137,16 +140,26 @@ document.addEventListener("click", (e) => {
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
+/* THE ENTER THAT CHOSE a search result or a shortcut, held, does not go on
+   into the text it handed the caret to: every repeat split the paragraph or
+   replaced the match. Until that key's own keyup, or the window lost
+   (pin: where the keys go › Enter held on a search result) */
+let enterChose = false;
+document.addEventListener("keydown", (e) => { if (enterChose && e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+document.addEventListener("keyup", (e) => { if (e.key === "Enter") enterChose = false; });
+window.addEventListener("blur", () => { enterChose = false; });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
+  /* a held chord acts once (pin: where the keys go › ⌃⌘S pressed twice) */
+  if ("kjghbslne".includes(e.key) && e.repeat) { e.preventDefault(); return; }
   /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
   else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
   else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
-  else if (e.key === "h") { e.preventDefault(); acts.panel("help"); }
-  else if (e.key === "b") { e.preventDefault(); acts.panel("bookmarks"); }
-  else if (e.key === "s") { e.preventDefault(); acts.panel("shortcuts"); }
+  else if (e.key === "h") { e.preventDefault(); acts.panel("help", true); }
+  else if (e.key === "b") { e.preventDefault(); acts.panel("bookmarks", true); }
+  else if (e.key === "s") { e.preventDefault(); acts.panel("shortcuts", true); }
   /* ⌃⌘L toggles the Line numbering row — L for lines; Tab belongs to
      indent, so no masthead row is reachable from the editor without a
      chord of its own */
@@ -217,7 +230,8 @@ if (fixture && fixtures[fixture]) {
       else acts.replace.check();
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
-    onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
+    onView: (md) => { screen.mdView = md; overlay.open("view"); if (!md) acts.replace.dismiss(); },
+    onHere: () => overlay.open("here"),
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
   });
@@ -324,7 +338,7 @@ if (fixture && fixtures[fixture]) {
     openRow(false);
     session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
   };
-  acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };
+  acts.search.enter = () => { flushScan(); if (sr.active >= 0) { enterChose = true; acts.search.pick(sr.active); } };
   /* THE GO TO ROW: built fresh on every open — the lazy fill that keeps
      the list walks off the navigation hot path — with the first select
      focused; emptied on close. A terminal pick closes the row BEFORE the
@@ -386,7 +400,7 @@ if (fixture && fixtures[fixture]) {
   };
   acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
   acts.shortcuts.walk = (dir) => { if (sc.rows.length) sc.active = (sc.active + dir + sc.rows.length) % sc.rows.length; };
-  acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) insertShortcut(row.expansion); else say("no shortcut to insert", 2000); };
+  acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) { enterChose = true; insertShortcut(row.expansion); } else say("no shortcut to insert", 2000); };
   acts.shortcuts.pick = (i) => { const row = sc.rows[i]; if (row) insertShortcut(row.expansion); };
   acts.shortcuts.edit = () => showEditor(!sc.editing);
   acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };
@@ -926,8 +940,11 @@ if (fixture && fixtures[fixture]) {
      built per open and never rebuilt while open — a live rebuild would
      detach a mid-click target. "No authors" is a claim about the journal,
      not made before the warm has read it. */
-  acts.panel = (ns) => {
-    if (screen.panel === ns) { closePanel(); return; }
+  /* the chord that opened a card closes it with the keys back in the text;
+     an opener clicked again keeps them (pin: where the keys go › ⌃⌘B pressed twice)
+     (pin: launch, panels, the corner, links › its own opener again) */
+  acts.panel = (ns, byKey = false) => {
+    if (screen.panel === ns) { closePanel(); if (byKey) session.focusText(); return; }
     if (ns === "help") { overlay.open("help"); screen.panel = "help"; return; }
     if (ns === "bookmarks") { openBookmarks(); return; }
     if (ns === "shortcuts") { openShortcuts(); return; }

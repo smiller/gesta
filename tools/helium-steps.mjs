@@ -1433,6 +1433,179 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a store that never answers", await hung.evaluate((c) => ({ corner: document.querySelector(c)?.textContent || "", persistAsked: !!window.__persistAsked }), S.corner));
   await hung.close();
     }],
+    ["where the keys go", async () => {
+  /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
+  /* a control the current app lacks fails its own step, not the section */
+  const tap = (sel) => page.click(sel, { timeout: 3000 }).catch(() => {});
+  /* the view asked for, whichever the arrival brought: the current app's carries across entries */
+  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
+  await go("page/Horace");
+  await view(false);
+  await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's pin, dismissed as a reader does: the whispers below yield to it */
+  await tap(S.editor);
+  const twice = async (chord) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await page.waitForTimeout(150); } };
+  await twice("Control+Meta+s");
+  await log("⌃⌘S pressed twice", {});
+  await twice("Control+Meta+b");
+  await log("⌃⌘B pressed twice", {});
+  await page.keyboard.press("Control+Meta+l");
+  await page.waitForTimeout(150);
+  await tap(".page-lines > summary");
+  await page.waitForTimeout(150);
+  await log("Line numbering closed by its label", await R.linesRowOpen(page));
+  await go("page/Links");
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  await page.keyboard.press("a");
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Escape");
+  await go("page/Horace");
+  const at = await R.wordAt(page, "Maecenas atavis", 8);
+  await page.mouse.click(at.x + 30, at.y);
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  await tap(".bookmark-link[aria-label='Link to Links']");
+  await page.waitForTimeout(300);
+  await page.keyboard.type("Z");
+  await log("a bookmark's link pressed, Z typed", { line: ((await A.stored(page)) || "").split("\n").find((l) => l.includes("](#page/Links)"))?.slice(0, 60) ?? null });
+  await page.keyboard.press("Escape");
+  /* Tab and ⌘A outside a list, in a code block, and the line below a table */
+  await go("page/Keys");
+  await tap(S.editor);
+  await view(true);
+  await R.setSource(page, "one\n\ntwo\n\n```\nx = 1\ny = 2\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n");
+  await view(false);
+  await R.waitCorner(page, "saved");
+  await page.waitForTimeout(1500);   /* every save landed first: a whisper of theirs stood over Tab's */
+  const clickWord = async (w) => { const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await page.waitForTimeout(100); };
+  await clickWord("one");
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(150);
+  await log("Tab in prose", { corner: await cornerText() });
+  await R.selectBetween(page, "one", "two");
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(150);
+  await log("Tab over two paragraphs", { corner: await cornerText() });
+  await clickWord("x = 1");
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(150);
+  await log("Tab in a code block", { code: await page.evaluate((s) => document.querySelector(s)?.textContent ?? null, S.editorPre) });
+  await page.keyboard.press("Meta+a");
+  await page.waitForTimeout(150);
+  await log("⌘A in a code block", {});
+  const below = await page.evaluate((e) => { const t = document.querySelector(e + " table"); if (!t) return null; const r = t.getBoundingClientRect(); return { x: r.left + 20, y: r.bottom + 14, last: document.querySelector(e).lastElementChild?.tagName }; }, S.editor);
+  if (below) await page.mouse.click(below.x, below.y);
+  await page.keyboard.type("z");
+  await log("a click below a table at the end, z typed", { last: below?.last, tail: ((await A.stored(page)) || "").trimEnd().split("\n").slice(-2) });
+  /* Escape after a search jump; ⌃⌘M over open results */
+  await page.keyboard.press("Control+Meta+k");
+  await page.keyboard.type("two");
+  await page.waitForTimeout(600);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(400);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  await log("Escape after a search jump", {});
+  await page.keyboard.press("Control+Meta+k");
+  await page.keyboard.type("one");
+  await page.waitForTimeout(600);
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(300);
+  await log("⌃⌘M over open search results", {});
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Escape");
+  /* an arrival at the entry already open, under the shortcuts popup and the Search row */
+  await go(TODAY);
+  await page.keyboard.press("Control+Meta+s");
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Control+Meta+t");
+  await page.waitForTimeout(300);
+  await log("⌃⌘T on today from the shortcuts popup", {});
+  await page.keyboard.press("Control+Meta+k");
+  await page.keyboard.type("one");
+  await page.waitForTimeout(600);
+  await page.keyboard.press("Control+Meta+t");
+  await page.waitForTimeout(300);
+  await log("⌃⌘T on today from Search", {});
+  await page.keyboard.press("Escape");
+  /* Tab out of a card */
+  await tap(S.editor);
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
+  await page.waitForTimeout(150);
+  await log("Tab twelve times from the bookmarks card", {});
+  await page.keyboard.press("Escape");
+  await tap(S.editor);
+  await page.keyboard.press("Control+Meta+s");
+  await page.waitForTimeout(150);
+  await page.keyboard.press("Shift+Tab");
+  await page.waitForTimeout(150);
+  await log("Shift-Tab from the shortcuts popup", {});
+  await page.keyboard.press("Escape");
+  /* held keys: a key down again before it is up is the browser's auto-repeat */
+  const hold = async (key, times, mods = []) => {
+    for (const m of mods) await page.keyboard.down(m);
+    for (let i = 0; i < times; i++) { await page.keyboard.down(key); await page.waitForTimeout(i ? 50 : 400); }
+    await page.keyboard.up(key);
+    for (const m of mods.reverse()) await page.keyboard.up(m);
+  };
+  await go("bookshelf/Boethius/Consolatio/3pr1");
+  await tap(S.editor);
+  await page.evaluate(() => { window.__walks = 0; addEventListener("hashchange", () => { window.__walks++; }); });
+  await hold(".", 6, ["Control", "Meta"]);
+  await page.waitForTimeout(1200);
+  await log("⌃⌘. held from 3pr1", { walks: await page.evaluate(() => window.__walks) });
+  await page.keyboard.press("Control+Meta+k");
+  await page.keyboard.type("defixo");
+  await page.waitForTimeout(600);
+  await hold("Enter", 3);
+  await page.waitForTimeout(300);
+  await log("Enter held on a search result", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Boethius/Consolatio/3pr2") });
+  await go("page/Held");
+  await tap(S.editor);
+  await page.keyboard.press("Control+Meta+s");
+  await page.waitForTimeout(150);
+  if (await page.isVisible(S.shortcutsEditor)) { await page.fill(S.shortcutsEditor, "sig: Sean Miller"); await tap(S.shortcutsSave); await page.waitForTimeout(150); }
+  await tap(S.shortcutsInput);
+  await page.keyboard.type("sig");
+  await page.waitForTimeout(100);
+  await hold("Enter", 3);
+  await page.waitForTimeout(200);
+  await page.keyboard.type(" then.");
+  await log("Enter held on a shortcut", { md: await A.stored(page) });
+  await view(true);
+  await R.setSource(page, "> quoted\n");
+  await view(false);
+  await clickWord("quoted");
+  await hold("Tab", 3);
+  await page.waitForTimeout(200);
+  await log("Tab held in a quote", { md: await A.stored(page) });
+  /* a caret scrolled back into view stops below the masthead */
+  await go("2026-09-05");
+  await clickWord("The most famous story");
+  await page.mouse.move(500, 400);
+  await page.mouse.wheel(0, 900);
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(300);
+  await log("Enter with the caret above the window", { clear: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect(); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r ? Math.round(r.top - head) : null; }) });
+  await page.keyboard.press("Backspace");
+  /* a picture that finishes preparing while Search is typed in */
+  /* the picture's preparation held 800ms, so it lands after the keys are in Search */
+  await go("page/Pictured%20Late");
+  await tap(S.editor);
+  await page.evaluate(() => { const own = window.createImageBitmap; window.createImageBitmap = (...a) => new Promise((r) => setTimeout(() => r(own(...a)), 800)); });
+  await R.pastePng(page);
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
+  await page.keyboard.type("abc");
+  await page.waitForTimeout(2000);
+  await log("a picture pasted, then Search typed in", { query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null), pictures: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), md: await A.stored(page) });
+  await page.keyboard.press("Escape");
+    }],
     ["pill", async () => {
   if (A.pill) {
     await page.goto(A.url("page/Horace", "corner=pill"));

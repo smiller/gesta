@@ -84,6 +84,11 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
         tr.insert(tr.doc.content.size, schema.nodes.paragraph.create());
         tr.setSelection(TextSelection.create(tr.doc, tr.doc.content.size - 1));
       }
+      /* a picture that finishes preparing while a reader is in another
+         field lands without taking the focus from it, nor scrolling to itself
+         (pin: where the keys go › a picture pasted, then Search typed in) */
+      const at = document.activeElement;
+      if (at && at !== document.body && !view.dom.contains(at)) { view.dispatch(tr); return; }
       view.dispatch(tr.scrollIntoView());
       view.focus();
     },

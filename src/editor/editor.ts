@@ -9,7 +9,7 @@ import { fittedMeasure } from "./fit.ts";
 import { marginNotes } from "./margins.ts";
 import { folios } from "./folios.ts";
 import { typing, typingKeymap, autolinkEnter } from "./typing.ts";
-import { DOMSerializer, type Node } from "prosemirror-model";
+import { DOMSerializer, Fragment, type Node } from "prosemirror-model";
 import { inlineBlockStyles } from "./inlineStyles.ts";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
@@ -17,6 +17,7 @@ import { linkClick } from "./links.ts";
 import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
+import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
 import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks } from "./paste.ts";
@@ -36,6 +37,8 @@ export interface EditorOptions {
   onRefuse?: (why: string) => void;
   onPasteFile?: (file: File) => void;
   folds?: FoldOptions;
+  /* the window's top a caret scrolled into view must stand below */
+  clearOf?: () => number;
 }
 
 const hardBreak: Command = (state, dispatch) => {
@@ -59,23 +62,48 @@ export function landed(before: EditorState, after: EditorState): { changed: bool
   const changed = after.doc !== before.doc;
   return { changed, selected: changed || after.selection !== before.selection };
 }
+/* Tab outside a list, a quote, a row or a code block stays in the entry and
+   says what it does not do here (pin: editor.test › Tab in prose keeps the key) */
+const proseTab = (onRefuse?: (why: string) => void): Command => (state) => {
+  onRefuse?.(state.selection.empty ? "⌃⌘M toggles markdown" : "Tab indents one list, quote, or code block at a time");
+  return true;
+};
+/* a table cannot hold the caret below it: an entry ending in one is given
+   an empty line, which saves as nothing
+   (pin: editor.test › an entry ending in a table has an empty line below it) */
+const endsInTable = (doc: Node): boolean => doc.lastChild?.type === schema.nodes.table;
+const withLineBelow = (doc: Node): Node => endsInTable(doc) ? doc.copy(doc.content.append(Fragment.from(schema.nodes.paragraph.create()))) : doc;
+const lineBelow = new Plugin({
+  appendTransaction: (trs, _was, state) => trs.some((tr) => tr.docChanged) && endsInTable(state.doc)
+    ? state.tr.insert(state.doc.content.size, schema.nodes.paragraph.create()).setMeta("addToHistory", false) : null,
+});
 export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
+  /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a refusal
+     is said once per press, not over its own whisper on every repeat
+     (pin: editor.test › a held key acts once) */
+  let repeating = false;
+  const say = onRefuse && ((why: string): void => { if (!repeating) onRefuse(why); });
+  const held = new Plugin({ props: { handleKeyDown: (_view, e) => { repeating = e.repeat; return e.repeat && e.key === "Tab" && !e.shiftKey; } } });
   return EditorState.create({
-    doc,
+    doc: withLineBelow(doc),
     plugins: [
+      held,
       lock,
       history(),
-      keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo }),
+      keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo, Escape: escapeJump }),
       rowKeymap,
       autolinkEnter,
       typingKeymap,
-      listKeymap(onRefuse),
-      quoteKeymap(onRefuse),
-      gridKeymap(onRefuse),
-      codeKeymap,
+      listKeymap(say),
+      quoteKeymap(say),
+      gridKeymap(say),
+      codeKeymap(say),
       formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
+      keymap({ Tab: proseTab(say) }),
+      jump,
+      lineBelow,
       typing(),
       lineNumbers(interval),
       fittedMeasure(),
@@ -90,7 +118,14 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
 
 export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions): EditorView {
   const base = DOMSerializer.fromSchema(schema);
+  /* A CARET SCROLLED INTO VIEW STOPS 24px CLEAR of what covers the window's
+     top: by the default 5px it stopped under it, hidden (pin: where the keys
+     go › Enter with the caret above the window). Objects the view reads at
+     each scroll, set before it, since setProps copies the props it is given */
+  const threshold = { top: 0, bottom: 0, left: 0, right: 0 }, margin = { top: 5, bottom: 5, left: 5, right: 5 };
   const view: EditorView = new EditorView(mount, {
+    scrollThreshold: threshold,
+    scrollMargin: margin,
     /* ⌘C's HTML flavour with the look swept inline, parked under the surface
        for the length of the sweep, since a detached node's computed style is
        empty. Without it a card copied by selection arrived in Mail as
@@ -147,6 +182,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
          five sites missed the sixth. Gated on the scroll: an unconditional
          focus would take it from a panel's input on a background dispatch. */
       if (tr.scrolledIntoView && !this.hasFocus()) this.focus();
+      if (tr.scrolledIntoView && opts.clearOf) { threshold.top = opts.clearOf(); margin.top = threshold.top + 24; }
       const before = this.state;
       this.updateState(this.state.apply(tr));
       const told = landed(before, this.state);
