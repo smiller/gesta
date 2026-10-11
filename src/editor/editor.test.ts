@@ -10,6 +10,8 @@ import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { editorState, lockKey, landed } from "./editor.ts";
 import { jumpTo } from "./highlight.ts";
+import { codeTab } from "./codeKeys.ts";
+const keymapTab = (s: EditorState, dispatch: (tr: Transaction) => void): boolean => codeTab(false)(s, dispatch);
 
 function at(md: string, needle: string): EditorState {
   const s = editorState(parseMarkdown(md), 5);
@@ -168,4 +170,27 @@ test("an entry ending in a table has an empty line below it, which saves as noth
   const cut = s.apply(s.tr.delete(s.doc.content.size - s.doc.lastChild!.nodeSize, s.doc.content.size));
   expect(cut.doc.lastChild!.type.name).toBe("paragraph");
   expect(editorState(parseMarkdown("just prose"), 5).doc.childCount).toBe(1);
+});
+
+test("a code block in a quote takes Tab and ⌘A as a code block: the innermost thing wins", () => {
+  const said: string[] = [];
+  for (const md of ["> ```\n> x = 1\n> ```"]) {
+    const s = keyed(sel(md, said, "x = 1"), "Tab");
+    expect(s.taken, md).toBe(true);
+    expect(s.state.doc.textContent, md).toContain("  x = 1");
+    const all = keyed(sel(md, said, "x = 1"), "a", { mod: true });
+    expect(all.state.doc.textBetween(all.state.selection.from, all.state.selection.to), md).toBe("x = 1");
+  }
+  expect(said).toEqual([]);
+});
+
+test("Tab in a code block changes only the touched lines: a position on a line below maps along it, one above stays", () => {
+  const said: string[] = [];
+  const s = sel("```\na\nb\nc\nd\n```", said, "b", "c");
+  let tr: Transaction | null = null;
+  keymapTab(s, (t) => { tr = t; });
+  const start = s.selection.$from.start();
+  const onD = start + 6, onA = start;   /* "d" and "a" */
+  expect(tr!.mapping.map(onD)).toBe(onD + 4);
+  expect(tr!.mapping.map(onA)).toBe(onA);
 });

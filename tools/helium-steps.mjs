@@ -1594,6 +1594,27 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("Enter with the caret above the window", { clear: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect(); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r ? Math.round(r.top - head) : null; }) });
   await page.keyboard.press("Backspace");
   /* a picture that finishes preparing while Search is typed in */
+  /* the digit that opens a bookmark, held: nothing typed into the entry it opened */
+  await page.evaluate(() => { window.__typed = 0; document.addEventListener("beforeinput", () => { window.__typed++; }, true); });
+  await page.keyboard.press("Control+Meta+b");
+  await page.waitForTimeout(150);
+  await hold("1", 4);
+  await page.waitForTimeout(800);
+  await log("a digit held on the bookmarks card", { typed: await page.evaluate(() => window.__typed) });
+  /* a refused entry redrawn by another tab's write: Search, open over it, stays */
+  await go("page/Refused");
+  await view(true);
+  await R.setSource(page, "::: grid\nloose\n:::\n");
+  for (let i = 0; i < 12 && !((await A.stored(page)) || "").includes("loose"); i++);
+  await go("page/Held");
+  await go("page/Refused");
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForTimeout(150);
+  await page.keyboard.type("lo");
+  await A.foreignWrite(page, "page/Refused", "::: grid\nloose again\n:::\n");
+  await page.waitForTimeout(800);
+  await log("a refused entry redrawn under Search", { source: await R.inSource(page), query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null) });
+  await page.keyboard.press("Escape");
   /* the picture's preparation held 800ms, so it lands after the keys are in Search */
   await go("page/Pictured%20Late");
   await tap(S.editor);

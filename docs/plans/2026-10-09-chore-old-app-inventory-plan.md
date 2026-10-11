@@ -326,3 +326,29 @@ corner.writer.txt. Rulings asked item by item, all as recommended:
     Before: the picture took the focus.
 
 help.html gains Tab in prose and Escape after a jump.
+
+### Review cycle 1 over `0267d8c..8c3beff` (group 2), 2026-10-10
+
+COST 141,479 tokens (2 input + 920 cache creation + 138,237 cache read +
+2,320 output). Eight findings, seven taken, each test-first or pinned by a
+step that reads differently on the code before (MEASURED, one run each):
+a code block inside a quote never reached its own Tab or ⌘A — the quote's
+keymap took the key and refused it — so the code keymap now runs first
+(editor.test); Tab in a code block replaced the whole block's text, so every
+position in it collapsed to the block's end and the undo step was the
+block — each changed line's own span is replaced now (editor.test); a
+refused entry redrawn by another tab's write closed Search under the reader,
+the surface telling its forced view on every show — only the ⌃⌘M chord
+closes what stands over the entry now (`onSwitch`; the surface's own
+switches close the line bar, as before; step "a refused entry redrawn under
+Search": closed before, open after); a digit or Enter held on the bookmarks
+card typed into the entry it opened (3 characters before, 0 after) — and
+the five held-key guards (two chord lists, the Enter flag) are one capture
+listener: a repeat is swallowed when ⌃⌘ is held, or when the press moved
+the focus elsewhere (a held Tab walking the masthead's controls now walks
+once, INFERRED from the rule); the masthead's bottom was read with a forced
+layout at every keystroke's scroll — its height is cached by a
+ResizeObserver (the 24px reading unchanged); the two focus-out handlers
+are one. NOT TAKEN: the editor's once-per-press flag duplicating the
+notices' refuse — the keymap's commands see no event, so the press is
+known only where the flag is. REVIEW CYCLES: 1.

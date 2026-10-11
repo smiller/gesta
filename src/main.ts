@@ -140,19 +140,22 @@ document.addEventListener("click", (e) => {
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
-/* THE ENTER THAT CHOSE a search result or a shortcut, held, does not go on
-   into the text it handed the caret to: every repeat split the paragraph or
-   replaced the match. Until that key's own keyup, or the window lost
-   (pin: where the keys go › Enter held on a search result) */
-let enterChose = false;
-document.addEventListener("keydown", (e) => { if (enterChose && e.key === "Enter") { e.preventDefault(); e.stopImmediatePropagation(); } }, true);
-document.addEventListener("keyup", (e) => { if (e.key === "Enter") enterChose = false; });
-window.addEventListener("blur", () => { enterChose = false; });
+/* A HELD KEY ACTS ONCE where its press moved the keys elsewhere — the Enter
+   or digit that chose a search result, a shortcut or a bookmark went on
+   into the text it opened, splitting it — and a held ⌃⌘ chord always: a
+   walk went on entry after entry (pin: where the keys go › Enter held on a
+   search result) (pin: where the keys go › a digit held on the bookmarks
+   card) (pin: where the keys go › ⌃⌘. held from 3pr1) */
+const pressedIn = new Map<string, Element | null>();
+document.addEventListener("keydown", (e) => {
+  if (!e.repeat) { pressedIn.set(e.code, document.activeElement); return; }
+  if ((e.ctrlKey && e.metaKey) || (pressedIn.has(e.code) && pressedIn.get(e.code) !== document.activeElement)) { e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
+document.addEventListener("keyup", (e) => { pressedIn.delete(e.code); });
+window.addEventListener("blur", () => { pressedIn.clear(); });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
-  /* a held chord acts once (pin: where the keys go › ⌃⌘S pressed twice) */
-  if ("kjghbslne".includes(e.key) && e.repeat) { e.preventDefault(); return; }
   /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
   if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
   else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
@@ -230,7 +233,8 @@ if (fixture && fixtures[fixture]) {
       else acts.replace.check();
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
-    onView: (md) => { screen.mdView = md; overlay.open("view"); if (!md) acts.replace.dismiss(); },
+    onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
+    onSwitch: () => overlay.open("view"),
     onHere: () => overlay.open("here"),
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
@@ -338,7 +342,7 @@ if (fixture && fixtures[fixture]) {
     openRow(false);
     session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
   };
-  acts.search.enter = () => { flushScan(); if (sr.active >= 0) { enterChose = true; acts.search.pick(sr.active); } };
+  acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };
   /* THE GO TO ROW: built fresh on every open — the lazy fill that keeps
      the list walks off the navigation hot path — with the first select
      focused; emptied on close. A terminal pick closes the row BEFORE the
@@ -400,7 +404,7 @@ if (fixture && fixtures[fixture]) {
   };
   acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
   acts.shortcuts.walk = (dir) => { if (sc.rows.length) sc.active = (sc.active + dir + sc.rows.length) % sc.rows.length; };
-  acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) { enterChose = true; insertShortcut(row.expansion); } else say("no shortcut to insert", 2000); };
+  acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) insertShortcut(row.expansion); else say("no shortcut to insert", 2000); };
   acts.shortcuts.pick = (i) => { const row = sc.rows[i]; if (row) insertShortcut(row.expansion); };
   acts.shortcuts.edit = () => showEditor(!sc.editing);
   acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };

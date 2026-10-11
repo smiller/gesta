@@ -42,6 +42,8 @@ export interface SessionOptions {
   onView?: (md: boolean) => void;
   /* a navigation to the entry already open */
   onHere?: () => void;
+  /* ⌃⌘M pressed, before the switch */
+  onSwitch?: () => void;
   /* read AFTER the editor has the selection: the DOM's selectionchange
      runs a beat ahead of the state. Unpinned: headless Helium does not
      reproduce the beat */
@@ -136,6 +138,11 @@ export function startSession(opts: SessionOptions): Session {
   /* the masthead is sticky over the page's top: a place is read, and set,
      just under it (pin: places › Back) */
   const mastheadBottom = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0);
+  /* read at every scroll to the caret, a keystroke's included: a cached
+     height, not a layout forced on the page the keystroke just changed */
+  let mastheadHeight = 0;
+  const head = document.querySelector(".site-head");
+  if (head && typeof ResizeObserver === "function") new ResizeObserver(() => { mastheadHeight = (head as HTMLElement).offsetHeight; }).observe(head);
   const underMasthead = (): number => mastheadBottom() + 4;
   const viewport: Viewport = { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead };
   function browserPage(): Page {
@@ -169,7 +176,7 @@ export function startSession(opts: SessionOptions): Session {
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
-      clearOf: mastheadBottom,
+      clearOf: () => mastheadHeight,
     });
     return rendered;
   }
@@ -431,17 +438,15 @@ export function startSession(opts: SessionOptions): Session {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
   /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
      excluded (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-     (pin: source view › ⌃⌘W rendered). A held chord acts once: each repeat
-     of the walk was a whole leave and open (pin: where the keys go › ⌃⌘. held from 3pr1) */
+     (pin: source view › ⌃⌘W rendered) */
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
-    if (",.trcmw".includes(e.key) && e.repeat) { e.preventDefault(); return; }
     if (e.key === ",") { e.preventDefault(); step("prev"); }
     else if (e.key === ".") { e.preventDefault(); step("next"); }
     else if (e.key === "t") { e.preventDefault(); today(); }
     else if (e.key === "r") { e.preventDefault(); copyReference(); }
     else if (e.key === "c") { e.preventDefault(); copyEntryLink(); }
-    else if (e.key === "m") { e.preventDefault(); surface.switchTo(!surface.md); }
+    else if (e.key === "m") { e.preventDefault(); opts.onSwitch?.(); surface.switchTo(!surface.md); }
     else if (e.key === "w") { e.preventDefault(); showWordCount(); }
   });
   return {

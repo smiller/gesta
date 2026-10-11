@@ -45,15 +45,14 @@
   let searchRow: { focusInput(): void } | undefined = $state();
   export function focusSearch(): void { searchRow?.focusInput(); }
   const NOUN = { page: "page", bookshelf: "author" } as const;
-  const leave = (e: FocusEvent): void => {
-    const panel = e.currentTarget as HTMLElement;
-    if (!(e.relatedTarget instanceof Node && panel.contains(e.relatedTarget))) onClosePanel();
-  };
   /* a card's focus going nowhere is a row deleted under it, not a leaving
-     (pin: where the keys go › Tab twelve times from the bookmarks card) */
-  const leaveCard = (e: FocusEvent): void => {
-    if (e.relatedTarget instanceof Node && !(e.currentTarget as HTMLElement).contains(e.relatedTarget)) onClosePanel();
+     (pin: where the keys go › Tab twelve times from the bookmarks card);
+     the pages panel's is the window left */
+  const leaving = (nowhere: boolean) => (e: FocusEvent): void => {
+    const to = e.relatedTarget;
+    if (to instanceof Node ? !(e.currentTarget as HTMLElement).contains(to) : nowhere) onClosePanel();
   };
+  const leave = leaving(true), leaveCard = leaving(false);
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
   export function focusLines(): void { linesSelect?.focus(); }

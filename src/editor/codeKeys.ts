@@ -35,7 +35,23 @@ export const codeTab = (shift: boolean, onRefuse?: (why: string) => void): Comma
   if (!out) return false;
   if ("refuse" in out) { onRefuse?.(out.refuse); return true; }
   if (dispatch) {
-    const tr = state.tr.insertText(out.value, block.start, block.start + block.text.length);
+    /* each changed line's own span replaced, last first, so a position
+       elsewhere in the block maps through the change
+       (pin: editor.test › Tab in a code block changes only the touched lines) */
+    const tr = state.tr, was = block.text.split("\n"), now = out.value.split("\n");
+    let at = block.text.length;
+    for (let i = was.length - 1; i >= 0; i--) {
+      at -= was[i].length;
+      if (was[i] !== now[i]) {
+        let p = 0;
+        while (p < was[i].length && p < now[i].length && was[i][p] === now[i][p]) p++;
+        let q = 0;
+        while (q < was[i].length - p && q < now[i].length - p && was[i][was[i].length - 1 - q] === now[i][now[i].length - 1 - q]) q++;
+        const from = block.start + at + p, to = block.start + at + was[i].length - q, text = now[i].slice(p, now[i].length - q);
+        if (text) tr.insertText(text, from, to); else tr.delete(from, to);
+      }
+      at -= 1;
+    }
     dispatch(tr.setSelection(TextSelection.create(tr.doc, block.start + out.start, block.start + out.end)).scrollIntoView());
   }
   return true;

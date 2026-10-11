@@ -293,8 +293,13 @@ Enter held on a shortcut: {"md":"Sean Miller then.","cursor":"at the end","scree
 Tab held in a quote: {"md":">> quoted","cursor":"inside a line","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 where the keys go: arrived at 2026-09-05: {"cursor":"at a line's start"}
 Enter with the caret above the window: {"clear":24,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a digit held on the bookmarks card: {"typed":3,"cursor":"inside a line","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at page/Refused: {"cursor":"at a line's start"}
+where the keys go: arrived at page/Held: {"cursor":"at a line's start"}
+where the keys go: arrived at page/Refused: {"cursor":"at a line's start"}
+a refused entry redrawn under Search: {"source":true,"query":"lo","cursor":"on input","screen":"page/Refused · sel none · bar off · panel none · rows search · source · corner [whatever stood]"}
 where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
-a picture pasted, then Search typed in: {"query":"abc","pictures":1,"md":"![img-1]","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+a picture pasted, then Search typed in: {"query":"abc","pictures":0,"md":"![img-1]","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · source · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)
