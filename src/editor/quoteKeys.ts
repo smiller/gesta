@@ -1,4 +1,5 @@
-/* A heading, a table or a card inside a quote moves as the one thing it is;
+/* A heading, a table or a card inside a quote moves as the one thing it is
+   (pin: quoteKeys.test › a heading or a table in a quote nests alone);
    a list inside a quote takes the list arm first, the innermost thing the
    caret is in winning by keymap order. A selection reaching outside the
    outermost quote has no single container and says so (pin: quoteKeys.test
@@ -12,7 +13,8 @@ import { type Command, type EditorState, TextSelection } from "prosemirror-state
 import { keymap } from "prosemirror-keymap";
 import { lift } from "prosemirror-commands";
 import type { Plugin } from "prosemirror-state";
-import { Fragment, type Node } from "prosemirror-model";
+import { Fragment, NodeRange, type Node } from "prosemirror-model";
+import { liftTarget } from "prosemirror-transform";
 import { schema } from "../model/schema.ts";
 
 const Q = schema.nodes.blockquote, P = schema.nodes.paragraph, BR = schema.nodes.hard_break;
@@ -51,8 +53,21 @@ function spills(state: EditorState): boolean {
   if (!d) return true;
   return $to.pos > $from.end(d) || $to.depth < d || $to.node(d).type !== Q || $to.before(d) !== $from.before(d);
 }
+/* the block the selection sits in, when it is the quote's own child and not
+   a paragraph of lines: the unit Tab moves whole */
+function wholeBlock(state: EditorState): NodeRange | null {
+  const d = quoteDepth(state), { $from, $to } = state.selection;
+  if ($from.depth <= d || $from.node(d + 1).type === P) return null;
+  if ($to.depth <= d || $to.before(d + 1) !== $from.before(d + 1)) return null;
+  return new NodeRange(state.doc.resolve($from.before(d + 1)), state.doc.resolve($from.after(d + 1)), d);
+}
 export const tabInQuote: Command = (state, dispatch) => {
   if (!quoteDepth(state) || spills(state)) return false;
+  const block = wholeBlock(state);
+  if (block) {
+    if (dispatch) dispatch(state.tr.wrap(block, [{ type: Q }]).scrollIntoView());
+    return true;
+  }
   const { $from, $to } = state.selection;
   if ($from.parent.type !== P || !$from.sameParent($to)) return false;
   const para = $from.parent, base = $from.start();
@@ -76,7 +91,8 @@ export const tabInQuote: Command = (state, dispatch) => {
 /* the inverse: the inner quote's lines spliced back into the outer's flat
    run, a blank line either side, joined with the paragraphs beside it:
    two paragraphs left adjacent read back as one run. An inner quote
-   holding anything but paragraphs takes the library's lift instead. */
+   holding anything but paragraphs lifts the block the caret is in, whole,
+   and failing that takes the library's lift. */
 export const shiftTabInQuote: Command = (state, dispatch) => {
   if (!quoteDepth(state) || spills(state)) return false;
   const d = quoteDepth(state);
@@ -85,7 +101,14 @@ export const shiftTabInQuote: Command = (state, dispatch) => {
   const inner = $from.node(d), outerIndex = $from.index(d - 1), outer = $from.node(d - 1);
   let flat = true;
   inner.forEach((c) => { if (c.type !== P) flat = false; });
-  if (!flat) return lift(state, dispatch);
+  if (!flat) {
+    const block = wholeBlock(state), target = block && liftTarget(block);
+    if (block && target != null) {
+      if (dispatch) dispatch(state.tr.lift(block, target).scrollIntoView());
+      return true;
+    }
+    return lift(state, dispatch);
+  }
   if (dispatch) {
     const blank = (): Node[] => [BR.create(), BR.create()];
     const parts: Fragment[] = [];

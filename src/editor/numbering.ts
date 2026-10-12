@@ -1,7 +1,7 @@
 /* Computed from position every time and never stored: nothing writes a
    number into the document (pin: numbering.test › a block starting at a
    number counts its rows from it, by position) */
-import type { Node, MarkType } from "prosemirror-model";
+import { Fragment, type Node, type MarkType } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 
 const N = schema.nodes;
@@ -120,4 +120,24 @@ export function blocksOf(units: Unit[]): Unit[][] {
     blocks[i].push(u);
   }
   return blocks;
+}
+/* a cut from `at` numbered from where it opens: on a raw cut the
+   first-child chain IS the start's ancestor chain, so each verse or prose
+   ancestor is stamped at its own depth with its own count at the row the
+   cut opens on (pin: paste.test › verse lines copied from inside a block
+   keep their numbers) */
+export function renumbered(doc: Node, at: number, cut: Node): Node {
+  const $at = doc.resolve(at);
+  const stamp = (node: Node, d: number): Node => {
+    if (d > $at.depth || !node.firstChild) return node;
+    const child = stamp(node.firstChild, d + 1);
+    const anc = $at.node(d);
+    let out = child;
+    if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
+      const rowPos = $at.depth > d ? $at.before(d + 1) : at;
+      out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos) }, child.content);
+    }
+    return node.copy(Fragment.from([out, ...node.content.content.slice(1)]));
+  };
+  return stamp(cut, 1);
 }

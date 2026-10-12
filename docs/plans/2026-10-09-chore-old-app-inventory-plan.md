@@ -365,3 +365,37 @@ through ten more controls to Go to in about a second (MEASURED headless,
 stays there until Tab is let go and pressed again (MEASURED). Shown that
 example, he preferred held Tab not to repeat. A decided difference from
 the old app, pinned by the step "Tab held from the bookshelf button".
+
+Group 2 CLOSED at 1 cycle: offered the confirmation pass, he started
+group 3 instead (2026-10-12).
+
+## Group 3, done (2026-10-12)
+
+Each item played first in headless Helium over both apps, in the shared
+steps' new section "editing as the help says", seeded by a store write (a
+countdown typed into the old app's source view came back split into one
+list per line, MEASURED). Asked: "22-25 should definitely go back to doing
+what the old app did"; 26, the help sentence deleted. MEASURED before →
+after, the old app's reading the after's in every row:
+
+22. Lines 2–3 of a verse copied with ⌘C: `::: verse` → `::: verse 2`. The
+    copy is numbered from its first copied line by the stamp the Ref
+    button's passage already used, moved to numbering.ts so the copy and
+    the reference share it (paste.test).
+23. Enter after 5, 4: `4.` → `3.`. The old app's rule, READ in
+    ../writer/src/js/08-markdown-as-you-type.js:654: the new item's number
+    is the previous one plus the step between the two above it; a step of
+    one writes no number (listKeys.test).
+24. Enter at the end of an item's second paragraph: a new item `2. next`
+    → a new paragraph in the same item. And, found while checking the help
+    text (help.html:78, "Enter again on the empty block steps out to a new
+    item"): Enter on that empty paragraph made another empty one → steps
+    out to a new item (old app: `next\n2. out`, MEASURED) (listKeys.test).
+25. Tab in a quote with the caret on a heading: nothing → the heading
+    nested alone (`>> ## Quoted head`); in a table: nothing → the table
+    nested whole; Shift-Tab lifts either back (quoteKeys.test). The
+    module's own header already promised it.
+26. help.html's "While you are typing the numbers step aside … when the
+    entry saves" deleted. MEASURED: the old app's numbers vanish while
+    typing (none drawn 60ms after a keystroke) and return on the save;
+    here they stay and renumber at once — a decided difference, listed.

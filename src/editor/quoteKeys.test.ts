@@ -43,3 +43,20 @@ test("a selection across two runs of one quote moves both, the blank line betwee
   expect(md(s)).toBe(">> a\n>> \n>> b\n> c");
   expect(roundTrips(s)).toBe(true);
 });
+test("a heading or a table in a quote nests alone with Tab, the caret where it was, and comes back with Shift-Tab", () => {
+  const h = at("> ## Quoted head\n>\n> quoted text", "Quo");
+  const s = run(tabInQuote, h);
+  expect(s.doc.firstChild!.firstChild!.type.name).toBe("blockquote");
+  expect(s.doc.firstChild!.firstChild!.firstChild!.type.name).toBe("heading");
+  expect(s.doc.firstChild!.lastChild!.textContent).toBe("quoted text");
+  expect(s.selection.$from.parent.textBetween(0, s.selection.$from.parentOffset)).toBe("Quo");
+  expect(roundTrips(s)).toBe(true);
+  expect(run(shiftTabInQuote, s).doc.eq(h.doc)).toBe(true);
+  const t = at("> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |", "1");
+  const u = run(tabInQuote, t);
+  expect(u.doc.firstChild!.lastChild!.type.name).toBe("blockquote");
+  expect(u.doc.firstChild!.lastChild!.firstChild!.type.name).toBe("table");
+  expect(u.doc.firstChild!.firstChild!.textContent).toBe("quoted text");
+  expect(roundTrips(u)).toBe(true);
+  expect(run(shiftTabInQuote, u).doc.eq(t.doc)).toBe(true);
+});

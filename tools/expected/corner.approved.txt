@@ -325,6 +325,18 @@ where the keys go: arrived at page/Refused: {"cursor":"at a line's start"}
 a refused entry redrawn under Search: {"source":true,"query":"lo","cursor":"on input","screen":"page/Refused · sel none · bar off · panel none · rows search · source · corner [whatever stood]"}
 where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
 a picture pasted, then Search typed in: {"query":"abc","pictures":2,"md":"![](<Pictured Late-img-1.webp>)","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Verse Copied: {"cursor":"at a line's start"}
+verse lines 2–3 copied: {"clipboard":["::: verse 2","two line","three line",":::"],"cursor":"selected 19","screen":"page/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a line typed into verse: {"before":"5 10","typing":"5 10","after":"5 10","cursor":"at a line's start","screen":"page/Verse Copied · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Countdown: {"cursor":"at a line's start"}
+Enter in a countdown list: {"md":"5. five\n4. four\n3. next","numbers":"· 4 3 (start 5)","cursor":"at the end","screen":"page/Countdown · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Item Paragraph: {"cursor":"at a line's start"}
+Enter in a list item's second paragraph: {"md":"1. one\n\n    more of one\n\n    next\n\n2. two","cursor":"at a line's start","screen":"page/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Enter twice after it, out typed: {"md":"1. one\n\n    more of one\n\n    next\n2. out\n\n2. two","cursor":"at a line's start","screen":"page/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Quoted Heading: {"cursor":"at a line's start"}
+Tab on a heading in a quote: {"md":">> ## Quoted head\n> \n> quoted text","cursor":"inside a line","screen":"page/Quoted Heading · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Quoted Table: {"cursor":"at a line's start"}
+Tab in a table in a quote: {"md":"> quoted text\n> \n>> | a | b |\n>> | --- | --- |\n>> | 1 | 2 |","cursor":"inside a line","screen":"page/Quoted Table · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card

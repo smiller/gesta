@@ -124,3 +124,22 @@ test("a copy carries no page marker out, and loses none of its words", () => {
   const tight = parseMarkdown("⟨30⟩Beatrice ⟨31⟩was, in her degree.");
   expect(copyMd(copiedSlice(tight.slice(0, tight.content.size)))).toBe("Beatrice was, in her degree.");
 });
+
+const sel = (md: string, a: string, b: string): EditorState => {
+  const doc = parseMarkdown(md);
+  const find = (needle: string, end: boolean): number => {
+    let pos = -1;
+    doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.indexOf(needle) >= 0) pos = p + n.text!.indexOf(needle) + (end ? needle.length : 0); return pos < 0; });
+    return pos;
+  };
+  return EditorState.create({ doc, selection: TextSelection.create(doc, find(a, false), find(b, true)) });
+};
+const copied = (s: EditorState): string => copyMd(copiedSlice(s.selection.content(), s.doc, s.selection.from));
+test("verse lines copied from inside a block keep their numbers", () => {
+  const verse = "::: verse\none line\ntwo line\nthree line\nfour line\n:::";
+  expect(copied(sel(verse, "two line", "three line"))).toBe("::: verse 2\ntwo line\nthree line\n:::");
+  expect(copied(sel(verse, "o line", "three"))).toBe("::: verse 2\no line\nthree\n:::");
+  expect(copied(sel("::: verse 5\none line\ntwo line\nthree line\n:::", "two line", "three line"))).toBe("::: verse 6\ntwo line\nthree line\n:::");
+  /* a selection from the prose above takes the block whole, from its own first line */
+  expect(copied(sel("before\n\n" + verse, "before", "two line"))).toBe("before\n\n::: verse\none line\ntwo line\n:::");
+});

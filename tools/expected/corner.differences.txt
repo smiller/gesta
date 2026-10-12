@@ -196,3 +196,4 @@ a picture pasted, then Search typed in · pictures · a picture at a line's end 
 a picture pasted, then Search typed in · md · a picture is its bytes under its own name, not the current app's `![img-N]` registry (phase 2)
 a digit held on the bookmarks card · typed · a held key acts once wherever its press moved the keys (review cycle 1 of group 2, 2026-10-10, under the held-key ruling of 2026-10-09): the current app typed the digit's repeats into the entry the bookmark opened
 a digit held on the bookmarks card · cursor · the same: the caret stands where the opened entry put it, with nothing typed before it
+a line typed into verse · typing · the numbers stay and renumber as a line is typed here; the current app took them away until the save (help.html's sentence deleted, asked 2026-10-12)

@@ -1631,6 +1631,58 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a picture pasted, then Search typed in", { query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null), pictures: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), md: await A.stored(page) });
   await page.keyboard.press("Escape");
     }],
+    ["editing as the help says", async () => {
+  /* help.html's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
+  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
+  /* an entry stored as another tab would, then opened: typed into the current app's source view, a list came back split at every line */
+  const write = async (key, text) => {
+    await A.foreignWrite(page, key, text);
+    await go(key);
+    await view(false);
+  };
+  const numbers = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln.shown, #page .ln.shown")].filter((r) => getComputedStyle(r, "::before").content.replace(/"/g, "") !== "none").map((r) => r.dataset.line).join(" "));
+  /* the numbers on screen beside a list: each item's own value, else the list's count from its start */
+  const listNumbers = () => page.evaluate(() => [...document.querySelectorAll("#editor ol li, #page ol li")].map((li) => li.getAttribute("value") ?? "·").join(" ") + " (start " + (document.querySelector("#editor ol, #page ol")?.getAttribute("start") ?? "1") + (document.querySelector("#editor ol, #page ol")?.reversed ? ", reversed" : "") + ")");
+  await write("page/Verse Copied", "::: verse\none line\ntwo line\nthree line\nfour line\nfive line\nsix line\nseven line\neight line\nnine line\nten line\neleven line\n:::\n");
+  await R.selectBetween(page, "two line", "three line");
+  await page.keyboard.press("Meta+c");
+  await page.waitForTimeout(300);
+  await log("verse lines 2–3 copied", { clipboard: await R.clipboardLines(page) });
+  await page.keyboard.press("ArrowRight");
+  await R.caretAfter(page, "two line", 8);
+  await page.waitForTimeout(3000);
+  const before = await numbers();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("new line");
+  await page.waitForTimeout(60);
+  const typing = await numbers();
+  await page.waitForTimeout(3000);
+  await log("a line typed into verse", { before, typing, after: await numbers() });
+  await write("page/Countdown", "5. five\n4. four\n");
+  await R.caretAfter(page, "four", 4);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("next");
+  await log("Enter in a countdown list", { md: await A.stored(page), numbers: await listNumbers() });
+  await write("page/Item Paragraph", "1. one\n\n   more of one\n\n2. two\n");
+  await R.caretAfter(page, "more of one", 11);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("next");
+  await log("Enter in a list item's second paragraph", { md: await A.stored(page) });
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("out");
+  await log("Enter twice after it, out typed", { md: await A.stored(page) });
+  await write("page/Quoted Heading", "> ## Quoted head\n>\n> quoted text\n");
+  await R.caretAfter(page, "Quoted head", 3);
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(300);
+  await log("Tab on a heading in a quote", { md: await A.stored(page) });
+  await write("page/Quoted Table", "> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |\n");
+  await R.caretAfter(page, "1", 1);
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(300);
+  await log("Tab in a table in a quote", { md: await A.stored(page) });
+    }],
     ["pill", async () => {
   if (A.pill) {
     await page.goto(A.url("page/Horace", "corner=pill"));

@@ -53,6 +53,33 @@ test("Enter twice at the end of the last item steps out of the list into a parag
   expect(t.doc.lastChild!.type.name).toBe("paragraph");
   expect(caret(t)).toBe("paragraph:|");
 });
+test("Enter in a countdown counts on down; after a lone item, or in an ascending list, the count goes up with no number of its own", () => {
+  const s = run(enterInList, at("5. five\n4. four", "four"));
+  expect(md(s)).toBe("5. five\n4. four\n3. ");
+  expect(caret(s)).toBe("paragraph:|");
+  expect(md(run(enterInList, at("> 5. five\n> 4. four", "four")))).toBe("> 5. five\n> 4. four\n> 3. ");
+  expect(md(run(enterInList, at("5. five\n4. four", "fo")))).toBe("5. five\n4. fo\n3. ur");
+  const lone = run(enterInList, at("5. five", "five"));
+  expect(md(lone)).toBe("5. five\n6. ");
+  expect(lone.doc.firstChild!.lastChild!.attrs.value).toBe(null);
+  expect(run(enterInList, at("1. a\n2. b", "b")).doc.firstChild!.lastChild!.attrs.value).toBe(null);
+});
+test("Enter in an item's second paragraph makes another paragraph in the same item", () => {
+  const s = run(enterInList, at("1. one\n\n    more of one\n\n2. two", "more of one"));
+  expect(s.doc.firstChild!.childCount).toBe(1);
+  expect(s.doc.firstChild!.firstChild!.childCount).toBe(3);
+  expect(caret(s)).toBe("paragraph:|");
+  expect(md(s.apply(s.tr.insertText("next")))).toBe("1. one\n\n    more of one\n\n    next\n\n2. two");
+  const mid = run(enterInList, at("1. one\n\n    more of one\n\n2. two", "more "));
+  expect(mid.doc.firstChild!.firstChild!.childCount).toBe(3);
+  expect(caret(mid)).toBe("paragraph:|of one");
+});
+test("Enter on an empty last paragraph of an item steps out to a new item", () => {
+  const s = run(enterInList, run(enterInList, at("1. one\n\n    more of one\n\n2. two", "more of one")));
+  expect(md(s.apply(s.tr.insertText("out")))).toBe("1. one\n\n    more of one\n2. out\n\n2. two");
+  expect(caret(s)).toBe("paragraph:|");
+  expect(s.selection.$from.index(-1)).toBe(0);
+});
 test("Enter outside a list is not this command's", () => {
   expect(refuses(enterInList, at("plain\n\n- one", "plain"))).toBe(true);
   expect(refuses(enterInList, at("::: verse\nline\n:::", "line"))).toBe(true);

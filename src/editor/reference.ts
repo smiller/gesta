@@ -2,7 +2,7 @@ import { Fragment, type Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, countAt, drawsInk, type Unit } from "./numbering.ts";
+import { blockUnits, countAt, drawsInk, renumbered, type Unit } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, romanWorkKey, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -222,29 +222,6 @@ function unquoted(cut: Node): Node[] {
   n.forEach((b) => { const t = trimmed(b); if (keep(t)) blocks.push(t); });
   return blocks;
 }
-/* the cut's opening chain renumbered BEFORE anything is unwrapped or
-   dropped: after, the number landed on the wrong block once a truncated
-   remainder had been dropped, and on the outer block of a verse inside a
-   note inside a verse (pin: reference.test › the number on the right block
-   at every depth). On the raw
-   cut the first-child chain IS the selection start's ancestor chain, so
-   each verse or prose ancestor is stamped at its own depth with its own
-   count at the row the cut opens on. */
-function renumbered(doc: Node, at: number, cut: Node): Node {
-  const $at = doc.resolve(at);
-  const stamp = (node: Node, d: number): Node => {
-    if (d > $at.depth || !node.firstChild) return node;
-    const child = stamp(node.firstChild, d + 1);
-    const anc = $at.node(d);
-    let out = child;
-    if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
-      const rowPos = $at.depth > d ? $at.before(d + 1) : at;
-      out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos) }, child.content);
-    }
-    return node.copy(Fragment.from([out, ...node.content.content.slice(1)]));
-  };
-  return stamp(cut, 1);
-}
 /* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
    with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
    numbered from its first quoted line, keeping the two columns — INSIDE
@@ -280,6 +257,10 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (!units.length) {
     const [a, b] = wholeRows(doc, from, to);
     const cut = doc.cut(a, b);
+    /* renumbered BEFORE anything is unwrapped or dropped: after, the number
+       landed on the wrong block once a truncated remainder had been
+       dropped, and on the outer block of a verse inside a note inside a
+       verse (pin: reference.test › the number on the right block at every depth) */
     return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(dropTurns(cut.content))))));
   }
   /* a run across stanzas (allowed only where the work cites by stanza):

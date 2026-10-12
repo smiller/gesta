@@ -5,6 +5,7 @@ import { type EditorState, type Transaction, TextSelection } from "prosemirror-s
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
+import { renumbered } from "./numbering.ts";
 
 const N = schema.nodes;
 const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
@@ -98,8 +99,11 @@ export function dropFolios(frag: Fragment): Fragment {
   });
   return Fragment.fromArray(out);
 }
-export function copiedSlice(slice: Slice): Slice {
-  return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
+/* `doc` and `from`: where the selection was cut, so a verse or prose block
+   it opens inside is numbered from its first copied line */
+export function copiedSlice(slice: Slice, doc?: Node, from?: number): Slice {
+  const content = doc && from !== undefined ? renumbered(doc, from, doc.copy(slice.content)).content : slice.content;
+  return closeRowSlice(new Slice(dropFolios(content), slice.openStart, slice.openEnd));
 }
 export function copyMd(slice: Slice): string {
   let content = slice.content;
