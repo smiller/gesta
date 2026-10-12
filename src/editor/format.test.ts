@@ -101,3 +101,11 @@ test("code over several paragraphs makes one block, a line each; a selection gra
   expect(graze.selection.$to.parent.textContent).toBe("prose below");
   expect(md(run(codeBlock, graze))).toBe("```\ncode line\n```\n\nprose below");
 });
+test("code refuses where it changes nothing, and a picture in a paragraph the selection only grazes does not refuse", () => {
+  const verse = sel("::: verse\none\ntwo\n:::", "one");
+  expect(codeBlock(verse)).toBe(false);
+  const s = sel("code line\n\n![](x.png) below", "code line");
+  const graze = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from, s.selection.to + 2) });
+  expect(codeBlockRefusal(graze)).toBe(null);
+  expect(md(run(codeBlock, graze))).toBe("```\ncode line\n```\n\n![](x.png) below");
+});

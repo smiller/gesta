@@ -80,3 +80,9 @@ test("Shift-Tab on one run of a nested quote lifts that run alone, the runs arou
   /* the first run lifted joins the outer paragraph above it */
   expect(shape(run(shiftTabInQuote, at("> intro\n>\n>> a\n>>\n>> b", "a")))).toBe("introa Q(b)");
 });
+test("Shift-Tab on the blank line between two runs of a nested quote lifts nothing and refuses", () => {
+  const s0 = at("> intro\n>\n>> a\n>>\n>> b", "a");
+  const s = s0.apply(s0.tr.setSelection(TextSelection.create(s0.doc, s0.selection.from + 1)));
+  expect(refuses(shiftTabInQuote, s)).toBe(true);
+  expect(quoteRefusal(s, true)).toBe("⌃⌘M toggles markdown");
+});

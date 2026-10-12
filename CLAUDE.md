@@ -285,7 +285,9 @@ is in the plan's record, under the phase named):
   typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
   measuring pass and its scheduling as a plugin view), `margins.ts` (a
   `::: margin-note`'s form: the width and the push pure, the placing pass
-  as a plugin view writing a class on the note's own node), `folios.ts` (the
+  as a plugin view writing a class on the note's own node), `measurePass.ts`
+  (a measuring pass run a frame after a change or a resize, the scheduler
+  the margin-notes and the page labels share), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's, and
   each label's drop to the line its leaf's first word starts on),
   `typing.ts` (markdown as you type: the input rules and the two Enter

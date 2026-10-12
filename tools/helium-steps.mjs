@@ -1805,7 +1805,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await view(true);
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");
-  await page.keyboard.type(' a -- "b" it\'s');
+  await page.keyboard.type(' a -- "b"" it\'s');
   await page.waitForTimeout(300);
   await view(false);
   await log("-- and quotes typed in the markdown view", { md: await stored() });

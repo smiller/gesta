@@ -7,6 +7,7 @@ import { test, expect } from "vitest";
 import { TextSelection, type EditorState, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
+import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { editorState, lockKey, landed } from "./editor.ts";
 import { jumpTo } from "./highlight.ts";
@@ -213,4 +214,18 @@ test("a reference block takes no typing in the rendered view; a click puts the c
   expect(state.selection.empty && state.selection.from).toBe(refPos + 1);
   expect(typedIn(state)).toBe(true);
   expect(typedIn(sel("::: reference\nroman book and canto\n:::\n\nafter", [], "after"))).toBe(false);
+});
+test("no change from outside a reference block reaches into it: a join from either side, a cut, a mark; the whole block still goes with a wider selection", () => {
+  const md = "before\n\n::: reference\nroman book and canto\n:::\n\nafter";
+  const s = sel(md, [], "after");
+  let ref = -1, end = -1;
+  s.doc.forEach((n, p) => { if (n.type.name === "reference") { ref = p; end = p + n.nodeSize; } });
+  const lands = (tr: Transaction): boolean => !s.applyTransaction(tr).state.doc.eq(s.doc);
+  expect(lands(s.tr.delete(end - 1, end + 1))).toBe(false);
+  expect(lands(s.tr.delete(ref - 1, ref + 1))).toBe(false);
+  expect(lands(s.tr.delete(ref + 1, ref + 5))).toBe(false);
+  expect(lands(s.tr.insertText("Q", ref + 3))).toBe(false);
+  expect(lands(s.tr.addMark(ref + 1, ref + 5, schema.marks.strong.create()))).toBe(false);
+  expect(lands(s.tr.delete(ref - 3, end + 2))).toBe(true);
+  expect(lands(s.tr.insertText("Q", end + 1))).toBe(true);
 });

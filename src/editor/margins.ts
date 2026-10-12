@@ -1,8 +1,8 @@
 /* THE FORM IS A CLASS ON THE NOTE'S OWN NODE, never a decoration: the
    margin form is the same editable node, so the caret stays in it across
    a change of form (pin: margin-note › narrowed to 1000px, typed on) */
-import { Plugin, PluginKey, type PluginView } from "prosemirror-state";
-import type { EditorView } from "prosemirror-view";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { measurePass } from "./measurePass.ts";
 
 /* em of the host's text; 2.2 of gap and 2.4 for the line numbers (pin:
    margins.test › the margin form's width) */
@@ -83,37 +83,6 @@ function place(root: HTMLElement): void {
   pushes(boxes).forEach((p, i) => write(inMargin[i], "--mn-push", p ? p + "px" : ""));
 }
 
-class MarginsView implements PluginView {
-  private readonly view: EditorView;
-  private frame = 0;
-  /* a window wider than the page moves the page's left edge and not its
-     size: a pass on the root's size alone left the notes in the margin at
-     900px (pin: margin-note › narrowed to 1000px, typed on) */
-  private readonly observer = new ResizeObserver(() => this.schedule());
-  private readonly onResize = (): void => this.schedule();
-  constructor(view: EditorView) {
-    this.view = view;
-    this.observer.observe(view.dom);
-    window.addEventListener("resize", this.onResize);
-    this.schedule();
-  }
-  update(view: EditorView, prev: { doc: unknown }): void {
-    if (view.state.doc !== prev.doc) this.schedule();
-  }
-  destroy(): void {
-    this.observer.disconnect();
-    window.removeEventListener("resize", this.onResize);
-    if (this.frame) cancelAnimationFrame(this.frame);
-  }
-  private schedule(): void {
-    if (this.frame) return;
-    this.frame = requestAnimationFrame(() => {
-      this.frame = 0;
-      place(this.view.dom);
-    });
-  }
-}
-
 export function marginNotes(): Plugin {
-  return new Plugin({ key: new PluginKey("margins"), view: (view) => new MarginsView(view) });
+  return new Plugin({ key: new PluginKey("margins"), view: measurePass((view) => place(view.dom)) });
 }

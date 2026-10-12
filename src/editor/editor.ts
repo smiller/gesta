@@ -82,14 +82,36 @@ const lineBelow = new Plugin({
 /* A REFERENCE BLOCK IS EDITED IN THE MARKDOWN VIEW ONLY: in the rendered
    view a click puts the caret at its start and says so, and no key or
    paste changes it from within (pin: editor.test › a reference block takes
-   no typing in the rendered view) */
+   no typing in the rendered view); no change reaches into it from outside
+   either, a join, a cut or a drop, while a change taking the block whole
+   lands (pin: editor.test › no change from outside a reference block
+   reaches into it) */
 const REFERENCE_HERE = "Reference style is edited in the markdown view (⌃⌘M)";
 function inReference(state: EditorState): boolean {
   const sel = state.selection;
   if (sel instanceof NodeSelection) return sel.node.type === schema.nodes.reference;
   return sel.$from.parent.type === schema.nodes.reference || sel.$to.parent.type === schema.nodes.reference;
 }
+function reachesIntoReference(tr: Transaction): boolean {
+  return tr.steps.some((step, i) => {
+    const doc = tr.docs[i], ranges: [number, number][] = [];
+    step.getMap().forEach((from, to) => { ranges.push([from, to]); });
+    const marked = step as unknown as { from?: number; to?: number };
+    if (!ranges.length && typeof marked.from === "number" && typeof marked.to === "number") ranges.push([marked.from, marked.to]);
+    return ranges.some(([from, to]) => {
+      let hit = false;
+      doc.nodesBetween(from, Math.min(Math.max(to, from + 1), doc.content.size), (node, pos) => {
+        if (hit || node.type !== schema.nodes.reference) return !hit;
+        const end = pos + node.nodeSize;
+        hit = from < end && to > pos && !(from <= pos && to >= end);
+        return false;
+      });
+      return hit;
+    });
+  });
+}
 const inertReference = (say?: (why: string) => void): Plugin => new Plugin({
+  filterTransaction: (tr) => !tr.docChanged || !reachesIntoReference(tr),
   props: {
     handleClickOn: (view, _pos, node, nodePos) => {
       if (node.type !== schema.nodes.reference) return false;

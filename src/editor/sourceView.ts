@@ -19,17 +19,23 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   ta.className = "source";
   ta.spellcheck = false;
   ta.value = md;
+  let replacing = false;
   ta.addEventListener("input", (e) => {
     const ie = e as InputEvent;
-    if (ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd) {
+    if (!replacing && ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd) {
       const caret = ta.selectionStart, r = sourceTyped(ta.value, caret);
       if (r) {
         ta.setSelectionRange(r.from, r.to);
         /* through the browser's own insert, so ⌘Z takes the curl back first;
            the caret back after the character typed, which the dash's
            replacement stands before (MEASURED: the next letter went in
-           front of the space) */
-        if (!document.execCommand("insertText", false, r.text)) { ta.setRangeText(r.text, r.from, r.to, "end"); ta.dispatchEvent(new Event("input")); }
+           front of the space). That insert raises its own input event,
+           which must not curl the straight quote it puts back (pin:
+           editing as the old app does › -- and quotes typed in the markdown view) */
+        replacing = true;
+        try {
+          if (!document.execCommand("insertText", false, r.text)) { ta.setRangeText(r.text, r.from, r.to, "end"); ta.dispatchEvent(new Event("input")); }
+        } finally { replacing = false; }
         const at = caret - (r.to - r.from) + r.text.length;
         ta.setSelectionRange(at, at);
         return;

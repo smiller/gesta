@@ -1,7 +1,8 @@
-import { Plugin, PluginKey, type PluginView } from "prosemirror-state";
+import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
+import { measurePass } from "./measurePass.ts";
 
 const N = schema.nodes;
 
@@ -55,31 +56,6 @@ function place(view: EditorView): void {
     else dom.style.removeProperty("--folio-drop");
   }
 }
-class FoliosView implements PluginView {
-  private frame = 0;
-  private readonly observer = new ResizeObserver(() => this.schedule());
-  private readonly onResize = (): void => this.schedule();
-  private readonly view: EditorView;
-  constructor(view: EditorView) {
-    this.view = view;
-    this.observer.observe(view.dom);
-    window.addEventListener("resize", this.onResize);
-    this.schedule();
-  }
-  update(view: EditorView, prev: { doc: unknown }): void {
-    if (view.state.doc !== prev.doc) this.schedule();
-  }
-  destroy(): void {
-    this.observer.disconnect();
-    window.removeEventListener("resize", this.onResize);
-    if (this.frame) cancelAnimationFrame(this.frame);
-  }
-  private schedule(): void {
-    if (this.frame) return;
-    this.frame = requestAnimationFrame(() => { this.frame = 0; if (hasFolios(this.view.state.doc)) place(this.view); });
-  }
-}
-
 export const foliosKey = new PluginKey("folios");
 export function folios(): Plugin {
   return new Plugin({
@@ -87,6 +63,6 @@ export function folios(): Plugin {
     props: {
       attributes: (state): Record<string, string> => (hasFolios(state.doc) ? { class: "foliopage" } : {}),
     },
-    view: (view) => new FoliosView(view),
+    view: measurePass(place),
   });
 }

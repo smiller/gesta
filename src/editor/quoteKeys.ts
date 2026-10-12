@@ -109,21 +109,25 @@ export const shiftTabInQuote: Command = (state, dispatch) => {
     }
     return lift(state, dispatch);
   }
+  /* ONE RUN OF A ONE-PARAGRAPH INNER QUOTE LIFTS ALONE, the runs before and
+     after it staying nested, as Tab nests one run (pin: quoteKeys.test ›
+     Shift-Tab on one run of a nested quote lifts that run alone); a blank
+     line between runs lifts nothing (pin: quoteKeys.test › Shift-Tab on the
+     blank line between two runs) */
+  const $to = state.selection.$to, para = inner.firstChild!;
+  let before = Fragment.empty, after = Fragment.empty, lifted: Fragment[] = [], runStart = 0;
+  if (inner.childCount === 1 && $from.sameParent($to)) {
+    const runs = runsOf(para);
+    const first = runs.find((r) => $from.parentOffset <= r.to)!, last = runs.slice().reverse().find((r) => $to.parentOffset >= r.from) || first;
+    const run = para.content.cut(first.from, last.to);
+    if (!run.size || !run.textBetween(0, run.size).trim()) return false;
+    before = para.content.cut(0, Math.max(0, first.from - 2));
+    after = para.content.cut(Math.min(para.content.size, last.to + 2));
+    lifted = [run];
+    runStart = first.from;
+  } else inner.forEach((c) => lifted.push(c.content));
   if (dispatch) {
     const blank = (): Node[] => [BR.create(), BR.create()];
-    /* ONE RUN OF A ONE-PARAGRAPH INNER QUOTE LIFTS ALONE, the runs before and
-       after it staying nested, as Tab nests one run (pin: quoteKeys.test ›
-       Shift-Tab on one run of a nested quote lifts that run alone) */
-    const $to = state.selection.$to, para = inner.firstChild!;
-    let before = Fragment.empty, after = Fragment.empty, lifted: Fragment[] = [], runStart = 0;
-    if (inner.childCount === 1 && $from.sameParent($to)) {
-      const runs = runsOf(para);
-      const first = runs.find((r) => $from.parentOffset <= r.to)!, last = runs.slice().reverse().find((r) => $to.parentOffset >= r.from) || first;
-      before = para.content.cut(0, Math.max(0, first.from - 2));
-      after = para.content.cut(Math.min(para.content.size, last.to + 2));
-      lifted = [para.content.cut(first.from, last.to)];
-      runStart = first.from;
-    } else inner.forEach((c) => lifted.push(c.content));
     const prev = outerIndex > 0 ? outer.child(outerIndex - 1) : null, next = outerIndex + 1 < outer.childCount ? outer.child(outerIndex + 1) : null;
     const joinPrev = !before.size && prev?.type === P, joinNext = !after.size && next?.type === P;
     let from = $from.before(d), to = $from.after(d);
@@ -173,7 +177,7 @@ export function quoteRefusal(state: EditorState, shift: boolean): string {
   if (spills(state)) return "Tab indents one list, quote, or code block at a time";
   const $from = state.selection.$from, d = quoteDepth(state);
   if (d && $from.node(d).textContent === "" && $from.node(d).childCount <= 1) return "⌃⌘M toggles markdown";
-  return shift ? QUOTE_FLOOR : "⌃⌘M toggles markdown";
+  return shift && d === outermost(state) ? QUOTE_FLOOR : "⌃⌘M toggles markdown";
 }
 export function quoteKeymap(onRefuse?: (why: string) => void): Plugin {
   const refusing = (cmd: Command, shift: boolean): Command => (state, dispatch, view) => {

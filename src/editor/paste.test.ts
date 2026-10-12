@@ -152,10 +152,17 @@ test("a copy whose selection opens at the end of a line starts at the next line,
 test("list items copied from the middle keep their own numbers", () => {
   expect(copied(sel("3. x\n4. y\n5. z", "y", "z"))).toBe("4. y\n5. z");
   expect(copied(sel("5. five\n4. four\n3. three", "four", "three"))).toBe("4. four\n3. three");
+  /* opening at an item's end starts at the next item */
+  const s = sel("3. x\n4. y\n5. z", "y", "z");
+  const atEnd = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from + 1, s.selection.to) });
+  expect(copied(atEnd)).toBe("5. z");
 });
 test("a selection inside one code block copies its characters, no fence", () => {
   expect(copied(sel("```js\na = *ptr;\nmore\n```", "a = *ptr;", "mo"))).toBe("a = *ptr;\nmo");
   expect(copied(sel("before\n\n```js\na = 1;\n```", "before", "a = 1;"))).toBe("before\n\n```js\na = 1;\n```");
+  /* the block inside a quote, a note */
+  expect(copied(sel("> ```\n> a = 1;\n> b\n> ```", "a = 1;", "b"))).toBe("a = 1;\nb");
+  expect(copied(sel("::: note\n```\na = 1;\nb\n```\n:::", "a = 1;", "b"))).toBe("a = 1;\nb");
 });
 test("a one-line quote pasted inside a quote is its text; a one-line quote of a picture is a quote", () => {
   const q = at("> quoted line", "quoted");

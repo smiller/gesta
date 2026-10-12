@@ -377,7 +377,7 @@ a bookmark's link pressed in inline code: {"md":"see `code here` now","corner":"
 editing as the old app does: arrived at page/Paste Refused: {"cursor":"at a line's start"}
 a refused fence pasted: {"md":"x\n\n::: verse -1\nline one\n\\:::","corner":"::: verse -1 — -1 is not a starting line, so it stayed a paragraph (click to copy)","cursor":"at the end","screen":"page/Paste Refused · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the old app does: arrived at page/Source Curl: {"cursor":"at a line's start"}
--- and quotes typed in the markdown view: {"md":"x a — “b” it’s","cursor":"at the end","screen":"page/Source Curl · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+-- and quotes typed in the markdown view: {"md":"x a — “b\" it’s","cursor":"at the end","screen":"page/Source Curl · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the old app does: arrived at page/Bold Italic Row: {"cursor":"at a line's start"}
 a wholly bold-italic row: {"king":"as the speaker","cursor":"at a line's start","screen":"page/Bold Italic Row · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the old app does: arrived at page/Note Quote: {"cursor":"at a line's start"}

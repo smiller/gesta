@@ -58,8 +58,8 @@ export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
     return blocks;
   } catch { return null; }
 }
-/* a pasted fence the model refuses says why, as a stored one does on
-   opening (pin: paste.test › a pasted fence the model refuses is named)
+/* a pasted fence the model refuses is named with its reason (pin:
+   paste.test › a pasted fence the model refuses is named)
    (pin: editing as the old app does › a refused fence pasted) */
 export function pastedRefusal(blocks: Node[]): string | null {
   const refused = fenceRefusals(N.doc.create(null, blocks));
@@ -133,11 +133,14 @@ export function dropFolios(frag: Fragment): Fragment {
    block it opens inside is numbered from its first copied line. A cut
    opening at the end of a line starts at the next: the empty row it opened
    with read back as a gap, numbering every line under it one too low (pin:
-   paste.test › a copy whose selection opens at the end of a line) */
+   paste.test › a copy whose selection opens at the end of a line); so does
+   one opening at a list item's end, which copied an empty item (pin:
+   paste.test › list items copied from the middle keep their own numbers) */
 export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number): Slice {
   if (!doc || from === undefined) return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
   const $from = doc.resolve(from);
-  if (to !== undefined && $from.parent.type === N.line && $from.parentOffset === $from.parent.content.size) {
+  const rowEnd = $from.parent.type === N.line || ($from.parent.type === N.paragraph && $from.depth > 1 && $from.node(-1).type === N.list_item);
+  if (to !== undefined && rowEnd && $from.parentOffset === $from.parent.content.size) {
     const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
     if (next && next.from < to) { from = next.from; slice = doc.slice(from, to, true); }
   }
@@ -147,9 +150,18 @@ export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number
 /* a selection open inside one code block copies its characters, as the
    browser would (pin: paste.test › a selection inside one code block copies
    its characters) */
+function openCode(slice: Slice): Node | null {
+  let inner = slice.content;
+  for (let d = 1; inner.childCount === 1 && d <= Math.min(slice.openStart, slice.openEnd); d++) {
+    if (inner.firstChild!.type === N.code_block) return inner.firstChild!;
+    inner = inner.firstChild!.content;
+  }
+  return null;
+}
 export function copyMd(slice: Slice): string {
+  const code = openCode(slice);
+  if (code) return code.textContent;
   let content = slice.content;
-  if (content.childCount === 1 && content.firstChild!.type === N.code_block && slice.openStart > 0 && slice.openEnd > 0) return content.firstChild!.textContent;
   if (content.childCount && content.firstChild!.isInline) content = Fragment.from(N.paragraph.create(null, content));
   const blocks: Node[] = [];
   content.forEach((n) => blocks.push(n));

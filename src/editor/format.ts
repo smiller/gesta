@@ -1,7 +1,7 @@
 /* inside a code block only the toggle back out is offered: the block
    commands corrupt code */
 import { type Command, type EditorState, TextSelection } from "prosemirror-state";
-import type { Node } from "prosemirror-model";
+import type { Node, ResolvedPos } from "prosemirror-model";
 import { toggleMark, setBlockType, wrapIn, lift } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -28,7 +28,7 @@ export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote)
    was dropped by the change (pin: format.test › code refuses a paragraph holding a picture or a page marker anywhere in it) */
 export function codeBlockRefusal(state: EditorState): string | null {
   if (inCode(state)) return null;
-  const { from, to } = state.selection;
+  const from = state.selection.from, to = codeEnd(state).pos;
   let atom = false;
   /* every textblock the change reaches, whole: it converts them whole */
   state.doc.nodesBetween(from, to, (n) => {
@@ -40,17 +40,24 @@ export function codeBlockRefusal(state: EditorState): string | null {
 }
 /* SEVERAL PARAGRAPHS BECOME ONE CODE BLOCK, a line each, and a selection
    ending at the very start of the next paragraph leaves that paragraph be
-   (pin: format.test › code over several paragraphs makes one block) */
+   (pin: format.test › code over several paragraphs makes one block); where
+   nothing would change, the press is refused (pin: format.test › code
+   refuses where it changes nothing) */
+function codeEnd(state: EditorState): ResolvedPos {
+  const $from = state.selection.$from, $to = state.selection.$to;
+  if ($to.parentOffset === 0 && !$to.sameParent($from) && $to.index($to.depth - 1) > 0 && $to.node($to.depth - 1).child($to.index($to.depth - 1) - 1).isTextblock) return state.doc.resolve($to.before() - 1);
+  return $to;
+}
 const toCode: Command = (state, dispatch) => {
-  const { doc } = state, $from = state.selection.$from;
-  let $to = state.selection.$to;
-  if ($to.parentOffset === 0 && !$to.sameParent($from) && $to.index($to.depth - 1) > 0 && $to.node($to.depth - 1).child($to.index($to.depth - 1) - 1).isTextblock) $to = doc.resolve($to.before() - 1);
+  const $from = state.selection.$from, $to = codeEnd(state);
   const range = $from.blockRange($to);
   if (!range) return false;
   const blocks: Node[] = [];
   for (let i = range.startIndex; i < range.endIndex; i++) blocks.push(range.parent.child(i));
   if (blocks.length < 2 || !blocks.every((b) => b.type === N.paragraph)) {
-    if (dispatch) dispatch(state.tr.setBlockType($from.pos, $to.pos, N.code_block).scrollIntoView());
+    const tr = state.tr.setBlockType($from.pos, $to.pos, N.code_block);
+    if (!tr.docChanged) return false;
+    if (dispatch) dispatch(tr.scrollIntoView());
     return true;
   }
   if (dispatch) {

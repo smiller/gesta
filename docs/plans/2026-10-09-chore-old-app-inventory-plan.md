@@ -499,3 +499,41 @@ after, test-first unless named a step:
 
 Decided differences listed: the quote button's caret (stays put here), the
 nested-quote spelling, the list copy's selection count, the page labels.
+
+A hand-check list of 19 steps over one scratch page, every item but 29
+and 40, played headless in its order first (all but the Lewis page labels,
+which hang on the window's width), handed over 2026-10-12; 8e222c2
+accepted 2026-10-12. Review: offered as one cycle at high over
+e1681fe..8e222c2, or none, the reader having called restored behaviour
+less strict for review; asked for, 2026-10-12.
+
+Review cycle 1 (/code-review high, e1681fe..8e222c2): 137,761 tokens
+(MEASURED, the transcript's last message), 10 findings, all taken:
+1. The markdown view's own insert re-entered its input handler and curled
+   the straight quote a second quote puts back: `"b""` read `“b”`, the
+   second quote lost (MEASURED in Helium on the unfixed src; the old app
+   reads `“b"`). A guard around the insert; the step types `"b""`.
+2. Shift-Tab on the blank line between two runs of a nested quote split
+   the inner quote round an empty paragraph: refused, saying "⌃⌘M toggles
+   markdown" as Tab there does.
+3. The reference block took a join from either side, a cut, a mark: a
+   transaction filter refuses any step reaching into one, a change taking
+   it whole still landing.
+4. A code block inside a quote or a note copied fenced: the copy walks
+   down to the innermost block. (A list item cannot hold a code block in
+   the schema, so the finding's list case does not arise.)
+5. The code button where nothing changes (a verse line) swallowed the
+   press: refused again, so the corner says why.
+6. A picture in a paragraph the selection only grazes refused the code
+   button: the refusal reads the same range the change does.
+7. Quotes curled inside a link's address and title and a bare address in
+   the markdown view: left alone there.
+8. A list copy opening at an item's end copied an empty item: it starts at
+   the next item, as a verse copy does.
+9. The page labels' measuring scheduler was the margin-notes' copied: one
+   `measurePass`, and the labels' pass walks the document once, not twice.
+10. Two comments named another module's behaviour: rewritten.
+Seen and not taken (the reviewer's cut list): a "- " typed before a blank
+line in a quote leaves a hard break at the next paragraph's start, the
+saved text unchanged; a pasted refusal's pin replaces any stored fence
+refusals already pinned. REVIEW CYCLES: 1.

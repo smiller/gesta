@@ -44,15 +44,25 @@ export function sourceTab(value: string, start: number, end: number, shift: bool
   if (!moved) return { refuse: shift ? "no spaces to remove" : "nothing to indent — those lines are empty" };
   return { value: value.slice(0, open) + out.join("\n") + value.slice(close), start: open, end: close + moved };
 }
-/* WHAT A CHARACTER JUST TYPED IN THE SOURCE BECOMES, as in the rendered
-   view: a -- between spaces a dash, a straight quote curled, a second quote
-   stepping the curl — never inside a fenced block or an inline code span,
-   where the characters are the code (pin: sourceKeys.test › sourceTyped) */
+/* WHAT A CHARACTER JUST TYPED IN THE SOURCE BECOMES: a -- between spaces
+   a dash, a straight quote curled, a second quote stepping the curl — never
+   inside a fenced block or an inline code span, where the characters are
+   the code, nor inside a link's address and title or a bare address, where
+   a curl changes the target (pin: sourceKeys.test › sourceTyped) */
+const URL_TOKEN = /(?:^|\s)(?:https?:\/\/|www\.)\S*$/i;
+function inAddress(line: string): boolean {
+  const open = line.lastIndexOf("](");
+  if (open >= 0 && line.indexOf(")", open) < 0) return true;
+  const angle = line.lastIndexOf("<");
+  if (angle >= 0 && line.indexOf(">", angle) < 0 && /^<(?:https?:\/\/|www\.|#)/i.test(line.slice(angle))) return true;
+  return URL_TOKEN.test(line.slice(0, -1));
+}
 export function sourceTyped(value: string, caret: number): { from: number; to: number; text: string } | null {
   const ch = value[caret - 1], before = value.slice(0, caret);
   const lineStart = before.lastIndexOf("\n") + 1;
   const fences = before.slice(0, lineStart).split("\n").filter((l) => /^\s*(```|~~~)/.test(l)).length;
   if (fences % 2 || (before.slice(lineStart).match(/`/g) || []).length % 2) return null;
+  if (inAddress(before.slice(lineStart))) return null;
   if (ch === " " && /\s--\s$/.test(before)) return { from: caret - 3, to: caret - 1, text: "—" };
   if (ch !== "\"" && ch !== "'") return null;
   const prev = value[caret - 2] ?? "";
