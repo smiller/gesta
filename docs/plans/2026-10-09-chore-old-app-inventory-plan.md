@@ -352,3 +352,6 @@ ResizeObserver (the 24px reading unchanged); the two focus-out handlers
 are one. NOT TAKEN: the editor's once-per-press flag duplicating the
 notices' refuse — the keymap's commands see no event, so the press is
 known only where the flag is. REVIEW CYCLES: 1.
+Accepted 2026-10-11 (1e50310); the held Tab in the masthead was put to
+him as a question and not answered before the accept. A confirmation pass
+(cycle 2) offered, runs only on his word.
