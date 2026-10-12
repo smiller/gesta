@@ -10,12 +10,12 @@
    is nested the writer can see the parent above it, and what stops the
    press is the level it would skip. */
 import { type Command, type EditorState, type Transaction, TextSelection } from "prosemirror-state";
-import type { Node } from "prosemirror-model";
 import { keymap } from "prosemirror-keymap";
 import { chainCommands, splitBlock } from "prosemirror-commands";
 import { splitListItem, sinkListItem, liftListItem } from "prosemirror-schema-list";
 import type { Plugin } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
+import { itemNumbers } from "../model/serialize.ts";
 
 const item = schema.nodes.list_item;
 function inListItem(state: EditorState): boolean {
@@ -26,17 +26,6 @@ function nested(state: EditorState): boolean {
   const $from = state.selection.$from;
   return $from.depth >= 4 && $from.node(-3).type === item;
 }
-/* the number an item shows: the list's start, one up per item, reset
-   wherever an item carries its own */
-function shown(list: Node, index: number): number {
-  let n = list.attrs.start as number;
-  for (let i = 0; i <= index; i++) {
-    const own = list.child(i).attrs.value as number | null;
-    if (own != null) n = own;
-    if (i < index) n++;
-  }
-  return n;
-}
 /* THE NEW ITEM GOES ON WITH THE STEP THE TWO ITEMS ABOVE IT RUN: the split
    copied the item's own number, so a countdown read 5, 4, 4. A step of one
    writes no number, the list's own count giving it (pin: listKeys.test ›
@@ -46,7 +35,7 @@ const numbered = (tr: Transaction): Transaction => {
   if (d < 1 || $at.node(d).type !== item || $at.node(d - 1).type !== schema.nodes.ordered_list) return tr;
   const list = $at.node(d - 1), i = $at.index(d - 1);
   if (i < 1) return tr;
-  const prev = shown(list, i - 1), step = i >= 2 ? prev - shown(list, i - 2) : 1;
+  const shown = itemNumbers(list), prev = shown[i - 1], step = i >= 2 ? prev - shown[i - 2] : 1;
   return tr.setNodeAttribute($at.before(d), "value", step === 1 ? null : prev + step);
 };
 const splitNumbered: Command = (state, dispatch) =>

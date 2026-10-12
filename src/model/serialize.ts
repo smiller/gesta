@@ -219,16 +219,26 @@ function rowsMd(block: Node, word: string): string {
   return rows.length ? open + rows.join("\n") + "\n:::" : open + ":::";
 }
 
-function listMd(list: Node, depth: number): string[] {
-  const ordered = list.type === N.ordered_list;
-  const pad = "  ".repeat(depth);
+/* the number each item of a list shows: the list's start, one up per item,
+   reset wherever an item carries its own */
+export function itemNumbers(list: Node): number[] {
   let n = ((list.attrs.start as number | undefined) ?? 1) - 1;
-  const lines: string[] = [];
+  const out: number[] = [];
   list.forEach((li) => {
     n++;
     const own = li.attrs.value as number | null;
     if (own != null) n = own;
-    const marker = ordered ? n + ". " : "- ";
+    out.push(n);
+  });
+  return out;
+}
+function listMd(list: Node, depth: number): string[] {
+  const ordered = list.type === N.ordered_list;
+  const pad = "  ".repeat(depth);
+  const numbers = itemNumbers(list);
+  const lines: string[] = [];
+  list.forEach((li, _, i) => {
+    const marker = ordered ? numbers[i] + ". " : "- ";
     const body = inlineMd(li.child(0)).replace(/\n+$/, "").split("\n");
     const head = pad + marker + body[0];
     const hm = head.match(LIST_LINE);

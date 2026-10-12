@@ -1,7 +1,7 @@
 /* only PLAIN text is asked of this parser: the editor's own HTML carries its
    structure */
 import { Fragment, Slice, type ResolvedPos, type Node } from "prosemirror-model";
-import { type EditorState, type Transaction, TextSelection } from "prosemirror-state";
+import { type EditorState, type Transaction, TextSelection, Selection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -99,11 +99,20 @@ export function dropFolios(frag: Fragment): Fragment {
   });
   return Fragment.fromArray(out);
 }
-/* `doc` and `from`: where the selection was cut, so a verse or prose block
-   it opens inside is numbered from its first copied line */
-export function copiedSlice(slice: Slice, doc?: Node, from?: number): Slice {
-  const content = doc && from !== undefined ? renumbered(doc, from, doc.copy(slice.content)).content : slice.content;
-  return closeRowSlice(new Slice(dropFolios(content), slice.openStart, slice.openEnd));
+/* `doc`, `from` and `to`: where the selection was cut, so a verse or prose
+   block it opens inside is numbered from its first copied line. A cut
+   opening at the end of a line starts at the next: the empty row it opened
+   with read back as a gap, numbering every line under it one too low (pin:
+   paste.test › a copy whose selection opens at the end of a line) */
+export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number): Slice {
+  if (!doc || from === undefined) return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
+  const $from = doc.resolve(from);
+  if (to !== undefined && $from.parent.type === N.line && $from.parentOffset === $from.parent.content.size) {
+    const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
+    if (next && next.from < to) { from = next.from; slice = doc.slice(from, to, true); }
+  }
+  const cut = renumbered(doc, from, doc.copy(slice.content));
+  return closeRowSlice(new Slice(dropFolios(cut.content), slice.openStart, slice.openEnd));
 }
 export function copyMd(slice: Slice): string {
   let content = slice.content;

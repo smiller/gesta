@@ -399,3 +399,29 @@ after, the old app's reading the after's in every row:
     entry saves" deleted. MEASURED: the old app's numbers vanish while
     typing (none drawn 60ms after a keystroke) and return on the save;
     here they stay and renumber at once — a decided difference, listed.
+
+### Review cycle 1 over `3bcc9f7..33dfdc2` (group 3), 2026-10-12
+
+COST 120,954 tokens (2 input + 3,467 cache creation + 115,031 cache read +
+2,454 output). Ten findings. TAKEN, five: a copy opening at the end of a
+line carried an empty first row that read back as a gap, every line under
+it numbered one too low — it starts at the next line now (paste.test,
+failing first as the review MEASURED it); the clipboard's text was made
+from a slice already transformed, the renumber and the closing run twice —
+the text serializer takes the transformed slice as it is (READ in
+prosemirror-view, `transformCopied` then `clipboardTextSerializer`);
+numbering.ts's header said nothing writes a number into the document, and
+a copy now writes a fence's start — it says the start is the one number
+held; the step "a line typed into verse" read only the labels, `5 10`
+either way — it reads the line beside each (`5:four line` after a line
+typed above it, here while typing, the old app none until the save); the
+item count was spelled twice, Enter's and the serializer's — one
+`itemNumbers`. NOT TAKEN, two: a copy from inside `::: stanza 12` comes
+out `::: verse 3` — help.html says a passage copied from the middle of a
+stanza is written as plain verse numbered from where it starts; a card in
+a grid in a quote nests the grid — help.html names the grid as moving
+whole, a card directly in a quote moving alone. PUT TO HIM, three, the
+old app's rule ported under his ruling and MEASURED the same in both apps
+by three new steps: Enter after the first item of 5, 4, 3 makes 6; Enter
+after 4 in 5, 4, 3 makes a second 3; Enter after 5 in 1, 5, 6 makes 9.
+REVIEW CYCLES: 1.

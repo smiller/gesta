@@ -327,9 +327,15 @@ where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
 a picture pasted, then Search typed in: {"query":"abc","pictures":2,"md":"![](<Pictured Late-img-1.webp>)","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 editing as the help says: arrived at page/Verse Copied: {"cursor":"at a line's start"}
 verse lines 2–3 copied: {"clipboard":["::: verse 2","two line","three line",":::"],"cursor":"selected 19","screen":"page/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-a line typed into verse: {"before":"5 10","typing":"5 10","after":"5 10","cursor":"at a line's start","screen":"page/Verse Copied · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a line typed into verse: {"before":"5:five line 10:ten line","typing":"5:four line 10:nine line","after":"5:four line 10:nine line","cursor":"at a line's start","screen":"page/Verse Copied · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the help says: arrived at page/Countdown: {"cursor":"at a line's start"}
 Enter in a countdown list: {"md":"5. five\n4. four\n3. next","numbers":"· 4 3 (start 5)","cursor":"at the end","screen":"page/Countdown · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Countdown Three: {"cursor":"at a line's start"}
+Enter after the first item of a countdown: {"md":"5. five\n6. new\n4. four\n3. three","cursor":"at a line's start","screen":"page/Countdown Three · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Countdown Middle: {"cursor":"at a line's start"}
+Enter after the middle item of a countdown: {"md":"5. five\n4. four\n3. new\n3. three","cursor":"at a line's start","screen":"page/Countdown Middle · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at page/Numbers Jump: {"cursor":"at a line's start"}
+Enter after a jump in the numbering: {"md":"1. a\n5. e\n9. new\n10. f","cursor":"at a line's start","screen":"page/Numbers Jump · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the help says: arrived at page/Item Paragraph: {"cursor":"at a line's start"}
 Enter in a list item's second paragraph: {"md":"1. one\n\n    more of one\n\n    next\n\n2. two","cursor":"at a line's start","screen":"page/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Enter twice after it, out typed: {"md":"1. one\n\n    more of one\n\n    next\n2. out\n\n2. two","cursor":"at a line's start","screen":"page/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

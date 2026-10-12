@@ -1633,6 +1633,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
     }],
     ["editing as the help says", async () => {
   /* help.html's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
+  /* a placed selection is read by the editor a moment later: a Tab pressed at once went where the arrival had left the caret */
+  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await page.waitForTimeout(150); };
   const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
   /* an entry stored as another tab would, then opened: typed into the current app's source view, a list came back split at every line */
   const write = async (key, text) => {
@@ -1640,7 +1642,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await go(key);
     await view(false);
   };
-  const numbers = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln.shown, #page .ln.shown")].filter((r) => getComputedStyle(r, "::before").content.replace(/"/g, "") !== "none").map((r) => r.dataset.line).join(" "));
+  const numbers = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln.shown, #page .ln.shown")].filter((r) => getComputedStyle(r, "::before").content.replace(/"/g, "") !== "none").map((r) => r.dataset.line + ":" + r.textContent.trim().slice(0, 10)).join(" "));
   /* the numbers on screen beside a list: each item's own value, else the list's count from its start */
   const listNumbers = () => page.evaluate(() => [...document.querySelectorAll("#editor ol li, #page ol li")].map((li) => li.getAttribute("value") ?? "·").join(" ") + " (start " + (document.querySelector("#editor ol, #page ol")?.getAttribute("start") ?? "1") + (document.querySelector("#editor ol, #page ol")?.reversed ? ", reversed" : "") + ")");
   await write("page/Verse Copied", "::: verse\none line\ntwo line\nthree line\nfour line\nfive line\nsix line\nseven line\neight line\nnine line\nten line\neleven line\n:::\n");
@@ -1649,7 +1651,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(300);
   await log("verse lines 2–3 copied", { clipboard: await R.clipboardLines(page) });
   await page.keyboard.press("ArrowRight");
-  await R.caretAfter(page, "two line", 8);
+  await caretAt("two line", 8);
   await page.waitForTimeout(3000);
   const before = await numbers();
   await page.keyboard.press("Enter");
@@ -1659,12 +1661,27 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(3000);
   await log("a line typed into verse", { before, typing, after: await numbers() });
   await write("page/Countdown", "5. five\n4. four\n");
-  await R.caretAfter(page, "four", 4);
+  await caretAt("four", 4);
   await page.keyboard.press("Enter");
   await page.keyboard.type("next");
   await log("Enter in a countdown list", { md: await A.stored(page), numbers: await listNumbers() });
+  await write("page/Countdown Three", "5. five\n4. four\n3. three\n");
+  await caretAt("five", 4);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("new");
+  await log("Enter after the first item of a countdown", { md: await A.stored(page) });
+  await write("page/Countdown Middle", "5. five\n4. four\n3. three\n");
+  await caretAt("four", 4);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("new");
+  await log("Enter after the middle item of a countdown", { md: await A.stored(page) });
+  await write("page/Numbers Jump", "1. a\n5. e\n6. f\n");
+  await caretAt("e", 1);
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("new");
+  await log("Enter after a jump in the numbering", { md: await A.stored(page) });
   await write("page/Item Paragraph", "1. one\n\n   more of one\n\n2. two\n");
-  await R.caretAfter(page, "more of one", 11);
+  await caretAt("more of one", 11);
   await page.keyboard.press("Enter");
   await page.keyboard.type("next");
   await log("Enter in a list item's second paragraph", { md: await A.stored(page) });
@@ -1673,12 +1690,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("out");
   await log("Enter twice after it, out typed", { md: await A.stored(page) });
   await write("page/Quoted Heading", "> ## Quoted head\n>\n> quoted text\n");
-  await R.caretAfter(page, "Quoted head", 3);
+  await caretAt("Quoted head", 3);
   await page.keyboard.press("Tab");
   await page.waitForTimeout(300);
   await log("Tab on a heading in a quote", { md: await A.stored(page) });
   await write("page/Quoted Table", "> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |\n");
-  await R.caretAfter(page, "1", 1);
+  await caretAt("1", 1);
   await page.keyboard.press("Tab");
   await page.waitForTimeout(300);
   await log("Tab in a table in a quote", { md: await A.stored(page) });

@@ -1,6 +1,7 @@
-/* Computed from position every time and never stored: nothing writes a
-   number into the document (pin: numbering.test › a block starting at a
-   number counts its rows from it, by position) */
+/* The numbers drawn are computed from position every time and never
+   stored: the one number the document holds is a block's own start, on its
+   fence (pin: numbering.test › a block starting at a number counts its rows
+   from it, by position) */
 import { Fragment, type Node, type MarkType } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 

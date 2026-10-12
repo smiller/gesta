@@ -167,8 +167,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       return true;
     },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
-    clipboardTextSerializer: (slice, view) => copyMd(copiedSlice(slice, view.state.doc, view.state.selection.from)),
-    transformCopied: (slice, view) => copiedSlice(slice, view.state.doc, view.state.selection.from),
+    clipboardTextSerializer: (slice) => copyMd(slice),
+    transformCopied: (slice, view) => copiedSlice(slice, view.state.doc, view.state.selection.from, view.state.selection.to),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the
          DOM only while the editor has focus, and skips its

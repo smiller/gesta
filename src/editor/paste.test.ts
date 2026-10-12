@@ -134,7 +134,7 @@ const sel = (md: string, a: string, b: string): EditorState => {
   };
   return EditorState.create({ doc, selection: TextSelection.create(doc, find(a, false), find(b, true)) });
 };
-const copied = (s: EditorState): string => copyMd(copiedSlice(s.selection.content(), s.doc, s.selection.from));
+const copied = (s: EditorState): string => copyMd(copiedSlice(s.selection.content(), s.doc, s.selection.from, s.selection.to));
 test("verse lines copied from inside a block keep their numbers", () => {
   const verse = "::: verse\none line\ntwo line\nthree line\nfour line\n:::";
   expect(copied(sel(verse, "two line", "three line"))).toBe("::: verse 2\ntwo line\nthree line\n:::");
@@ -142,4 +142,10 @@ test("verse lines copied from inside a block keep their numbers", () => {
   expect(copied(sel("::: verse 5\none line\ntwo line\nthree line\n:::", "two line", "three line"))).toBe("::: verse 6\ntwo line\nthree line\n:::");
   /* a selection from the prose above takes the block whole, from its own first line */
   expect(copied(sel("before\n\n" + verse, "before", "two line"))).toBe("before\n\n::: verse\none line\ntwo line\n:::");
+});
+test("a copy whose selection opens at the end of a line starts at the next line, numbered as it", () => {
+  const s = sel("::: verse\none line\ntwo line\nthree line\n:::", "two line", "three line");
+  const atEnd = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from - 2, s.selection.to) });
+  expect(atEnd.selection.$from.parentOffset).toBe(8);
+  expect(copied(atEnd)).toBe("::: verse 2\ntwo line\nthree line\n:::");
 });
