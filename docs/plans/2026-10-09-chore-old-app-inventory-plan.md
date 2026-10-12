@@ -425,3 +425,18 @@ old app's rule ported under his ruling and MEASURED the same in both apps
 by three new steps: Enter after the first item of 5, 4, 3 makes 6; Enter
 after 4 in 5, 4, 3 makes a second 3; Enter after 5 in 1, 5, 6 makes 9.
 REVIEW CYCLES: 1.
+
+THE COUNTDOWN LEFT AS THE OLD APP HAS IT, asked 2026-10-12: "let's leave
+it for now. We can define reverse list behaviour when we next add one."
+His expectation, for then: Enter after 5 in 5, 4, 3 makes 4 and renumbers
+the rest 3, 2; after 4, makes 3 and renumbers the old 3 as 2. Why it can
+wait (MEASURED over the backup's 13,938 files): no list counts down. The
+one real countdown, page/Marginalian/2024-10-22-marginalian-18, 18 to 1 in
+a quote, has a blank quote line between its items, so it is 18 one-item
+lists; a jump like 1, 5, 6 occurs in no tight list.
+
+PARKED, asked 2026-10-12 ("stick a pin in it"): tab-indented text read as
+a code block where it is not code and should read as a quote — found in
+journal/1995/1995-03-26 (the terraces of Purgatory, numbered lines
+indented with tabs, parsed as one code block, MEASURED). Not yet counted
+across the corpus.
