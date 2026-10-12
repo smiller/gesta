@@ -176,6 +176,7 @@ export function startSession(opts: SessionOptions): Session {
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
+      onPasteRefused: (text) => surface.pinRefusal(text),
       clearOf: () => mastheadHeight,
     });
     return rendered;

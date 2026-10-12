@@ -38,8 +38,32 @@ export function codeBlockRefusal(state: EditorState): string | null {
   });
   return atom ? "can't make a code block from that" : null;
 }
+/* SEVERAL PARAGRAPHS BECOME ONE CODE BLOCK, a line each, and a selection
+   ending at the very start of the next paragraph leaves that paragraph be
+   (pin: format.test › code over several paragraphs makes one block) */
+const toCode: Command = (state, dispatch) => {
+  const { doc } = state, $from = state.selection.$from;
+  let $to = state.selection.$to;
+  if ($to.parentOffset === 0 && !$to.sameParent($from) && $to.index($to.depth - 1) > 0 && $to.node($to.depth - 1).child($to.index($to.depth - 1) - 1).isTextblock) $to = doc.resolve($to.before() - 1);
+  const range = $from.blockRange($to);
+  if (!range) return false;
+  const blocks: Node[] = [];
+  for (let i = range.startIndex; i < range.endIndex; i++) blocks.push(range.parent.child(i));
+  if (blocks.length < 2 || !blocks.every((b) => b.type === N.paragraph)) {
+    if (dispatch) dispatch(state.tr.setBlockType($from.pos, $to.pos, N.code_block).scrollIntoView());
+    return true;
+  }
+  if (dispatch) {
+    const text = blocks.map((b) => b.textBetween(0, b.content.size, undefined, "\n")).join("\n");
+    const tr = state.tr.replaceWith(range.start, range.end, N.code_block.create(null, text ? state.schema.text(text) : null));
+    /* the block's text left selected, as the paragraphs were */
+    tr.setSelection(TextSelection.create(tr.doc, range.start + 1, range.start + 1 + text.length));
+    dispatch(tr.scrollIntoView());
+  }
+  return true;
+};
 export const codeBlock: Command = (state, dispatch) =>
-  codeBlockRefusal(state) ? false : (inCode(state) ? setBlockType(N.paragraph) : setBlockType(N.code_block))(state, dispatch);
+  codeBlockRefusal(state) ? false : inCode(state) ? setBlockType(N.paragraph)(state, dispatch) : toCode(state, dispatch);
 export function formatState(state: EditorState): Record<string, boolean> {
   const { from, $from, to, empty } = state.selection;
   const has = (m: typeof M.strong): boolean => empty ? !!m.isInSet(state.storedMarks || $from.marks()) : state.doc.rangeHasMark(from, to, m);

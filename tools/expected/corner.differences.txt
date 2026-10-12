@@ -197,3 +197,7 @@ a picture pasted, then Search typed in · md · a picture is its bytes under its
 a digit held on the bookmarks card · typed · a held key acts once wherever its press moved the keys (review cycle 1 of group 2, 2026-10-10, under the held-key ruling of 2026-10-09): the current app typed the digit's repeats into the entry the bookmark opened
 a digit held on the bookmarks card · cursor · the same: the caret stands where the opened entry put it, with nothing typed before it
 a line typed into verse · typing · the numbers stay and renumber as a line is typed here; the current app took them away until the save (help.html's sentence deleted, asked 2026-10-12)
+the quote button with the caret in a quote's middle paragraph · cursor · the quote taken back to paragraphs on both; the caret stays where it was here, where the current app's unwrap left it at the end
+Shift-Tab on the middle run of a nested quote · md · the same quote on both — intro, a nested, b lifted, c nested; this app writes a quote's blocks with no blank quote line between, as everywhere
+items 4–5 of a list from 3 copied · cursor · the same two items selected on both; the current app counts the item boundary as a character
+page labels beside their leaf's first word · off · the current app's own rule is the label beside the leaf's first word, and its anchor misses where a space follows the marker (9 of 72); this app measures to the first word (0 of 72)

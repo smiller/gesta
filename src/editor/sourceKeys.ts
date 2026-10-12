@@ -11,6 +11,8 @@
    collapsed Tab inserts two spaces) (pin: sourceKeys.test › a selection
    shifts every line it touches) (pin: sourceKeys.test › an empty line gains
    nothing) */
+import { curlChar } from "./typing.ts";
+
 export interface Edit { value: string; start: number; end: number }
 export type TabResult = Edit | { refuse: string } | null;
 export function sourceTab(value: string, start: number, end: number, shift: boolean): TabResult {
@@ -41,4 +43,21 @@ export function sourceTab(value: string, start: number, end: number, shift: bool
   });
   if (!moved) return { refuse: shift ? "no spaces to remove" : "nothing to indent — those lines are empty" };
   return { value: value.slice(0, open) + out.join("\n") + value.slice(close), start: open, end: close + moved };
+}
+/* WHAT A CHARACTER JUST TYPED IN THE SOURCE BECOMES, as in the rendered
+   view: a -- between spaces a dash, a straight quote curled, a second quote
+   stepping the curl — never inside a fenced block or an inline code span,
+   where the characters are the code (pin: sourceKeys.test › sourceTyped) */
+export function sourceTyped(value: string, caret: number): { from: number; to: number; text: string } | null {
+  const ch = value[caret - 1], before = value.slice(0, caret);
+  const lineStart = before.lastIndexOf("\n") + 1;
+  const fences = before.slice(0, lineStart).split("\n").filter((l) => /^\s*(```|~~~)/.test(l)).length;
+  if (fences % 2 || (before.slice(lineStart).match(/`/g) || []).length % 2) return null;
+  if (ch === " " && /\s--\s$/.test(before)) return { from: caret - 3, to: caret - 1, text: "—" };
+  if (ch !== "\"" && ch !== "'") return null;
+  const prev = value[caret - 2] ?? "";
+  if (prev === "”" && ch === "\"") return { from: caret - 2, to: caret, text: "\"" };
+  if (prev === "’" && ch === "'") return { from: caret - 2, to: caret, text: "'" };
+  if (prev === "‘" && ch === "'") return { from: caret - 2, to: caret, text: "’" };
+  return { from: caret - 1, to: caret, text: curlChar(ch, prev) };
 }

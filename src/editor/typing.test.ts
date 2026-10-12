@@ -162,3 +162,22 @@ test("Backspace straight after a rule undoes it", () => {
   expect(back.doc.firstChild!.type.name).toBe("paragraph");
   expect(back.doc.textContent).toBe("# ");
 });
+test("emphasis typed at the start of a line after a line break closes as at a paragraph's start", () => {
+  const s = state("wrote this:", "this:");
+  const broken = s.apply(s.tr.replaceSelectionWith(s.schema.nodes.hard_break.create()));
+  expect(md(type(broken, "_Somnium Scipionis_"))).toBe("wrote this:\n*Somnium Scipionis*");
+  const q = state("> note:", "note:");
+  const qb = q.apply(q.tr.replaceSelectionWith(q.schema.nodes.hard_break.create()));
+  expect(md(type(qb, "_verity_"))).toBe("> note:\n> *verity*");
+});
+test("a marker on a middle line takes that line alone; > on a quote's later line stays text", () => {
+  const s = state("a", "a");
+  const br = (t: EditorState): EditorState => t.apply(t.tr.replaceSelectionWith(t.schema.nodes.hard_break.create()));
+  const three = type(br(type(br(s), "Z")), "b");
+  let at = -1;
+  three.doc.descendants((n, p) => { if (n.isText && n.text === "Z") at = p; return true; });
+  const middle = type(three.apply(three.tr.setSelection(TextSelection.create(three.doc, at))), "- ");
+  expect(md(middle)).toBe("a\n\n- Z\n\nb");
+  const q = state("> a", "a");
+  expect(md(type(br(q), "> b"))).toBe("> a\n> \\> b");
+});

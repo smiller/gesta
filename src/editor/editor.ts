@@ -1,4 +1,4 @@
-import { EditorState, Plugin, PluginKey, type Transaction, type Command } from "prosemirror-state";
+import { EditorState, NodeSelection, Plugin, PluginKey, TextSelection, type Transaction, type Command } from "prosemirror-state";
 import { EditorView, type NodeViewConstructor } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
@@ -20,7 +20,7 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -36,6 +36,8 @@ export interface EditorOptions {
   /* a swallowed press that changed nothing SAYS why */
   onRefuse?: (why: string) => void;
   onPasteFile?: (file: File) => void;
+  /* a pasted fence the model refused, named with its reason */
+  onPasteRefused?: (text: string) => void;
   folds?: FoldOptions;
   /* the window's top a caret scrolled into view must stand below */
   clearOf?: () => number;
@@ -77,6 +79,29 @@ const lineBelow = new Plugin({
   appendTransaction: (trs, _was, state) => trs.some((tr) => tr.docChanged) && endsInTable(state.doc)
     ? state.tr.insert(state.doc.content.size, schema.nodes.paragraph.create()).setMeta("addToHistory", false) : null,
 });
+/* A REFERENCE BLOCK IS EDITED IN THE MARKDOWN VIEW ONLY: in the rendered
+   view a click puts the caret at its start and says so, and no key or
+   paste changes it from within (pin: editor.test › a reference block takes
+   no typing in the rendered view) */
+const REFERENCE_HERE = "Reference style is edited in the markdown view (⌃⌘M)";
+function inReference(state: EditorState): boolean {
+  const sel = state.selection;
+  if (sel instanceof NodeSelection) return sel.node.type === schema.nodes.reference;
+  return sel.$from.parent.type === schema.nodes.reference || sel.$to.parent.type === schema.nodes.reference;
+}
+const inertReference = (say?: (why: string) => void): Plugin => new Plugin({
+  props: {
+    handleClickOn: (view, _pos, node, nodePos) => {
+      if (node.type !== schema.nodes.reference) return false;
+      view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, nodePos + 1)));
+      say?.(REFERENCE_HERE);
+      return true;
+    },
+    handleTextInput: (view) => inReference(view.state),
+    handleKeyDown: (view, e) => (e.key === "Enter" || e.key === "Backspace" || e.key === "Delete") && inReference(view.state),
+    handlePaste: (view) => inReference(view.state),
+  },
+});
 export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
   /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a refusal
      is said once per press, not over its own whisper on every repeat
@@ -89,6 +114,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
     plugins: [
       held,
       lock,
+      inertReference(say),
       history(),
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo, Escape: escapeJump }),
       rowKeymap,
@@ -164,6 +190,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       const blocks = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
       if (!blocks) return false;
       view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
+      const refused = pastedRefusal(blocks);
+      if (refused) opts.onPasteRefused?.(refused);
       return true;
     },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),

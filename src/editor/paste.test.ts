@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal } from "./paste.ts";
 
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
@@ -148,4 +148,43 @@ test("a copy whose selection opens at the end of a line starts at the next line,
   const atEnd = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from - 2, s.selection.to) });
   expect(atEnd.selection.$from.parentOffset).toBe(8);
   expect(copied(atEnd)).toBe("::: verse 2\ntwo line\nthree line\n:::");
+});
+test("list items copied from the middle keep their own numbers", () => {
+  expect(copied(sel("3. x\n4. y\n5. z", "y", "z"))).toBe("4. y\n5. z");
+  expect(copied(sel("5. five\n4. four\n3. three", "four", "three"))).toBe("4. four\n3. three");
+});
+test("a selection inside one code block copies its characters, no fence", () => {
+  expect(copied(sel("```js\na = *ptr;\nmore\n```", "a = *ptr;", "mo"))).toBe("a = *ptr;\nmo");
+  expect(copied(sel("before\n\n```js\na = 1;\n```", "before", "a = 1;"))).toBe("before\n\n```js\na = 1;\n```");
+});
+test("a one-line quote pasted inside a quote is its text; a one-line quote of a picture is a quote", () => {
+  const q = at("> quoted line", "quoted");
+  expect(pasteBlocks("> inner", q.selection.$from)).toBe(null);
+  expect(paste(q, "> inner")).toBe("> quoted> inner line");
+  const p = at("x", "x");
+  expect(pasteBlocks("> ![](a.png)", p.selection.$from)!.map((b) => b.type.name)).toEqual(["blockquote"]);
+});
+test("a pasted link to an address that names no entry stays as typed", () => {
+  const s = at("x", "x");
+  const near = s.apply(s.tr.replaceSelection(pasteSlice(" [near](#pagex)", s.selection.$from))).doc;
+  expect(near.textContent).toBe("x [near](#pagex)");
+  let linked = false;
+  near.descendants((n) => { if (n.marks.some((m) => m.type.name === "link")) linked = true; return true; });
+  expect(linked).toBe(false);
+  for (const miss of ["[a](#page/)", "[a](#shelf/A)"]) expect(pasteSlice(miss, s.selection.$from).content.firstChild!.marks.length).toBe(0);
+  expect(paste(at("see  now", "see "), "[Ideas](#2026-09-07/Ideas)")).toBe("see [Ideas](#2026-09-07/Ideas) now");
+});
+test("a pasted fence the model refuses is named with its reason; a clean paste names nothing", () => {
+  const $ = at("x", "x").selection.$from;
+  expect(pastedRefusal(pasteBlocks("::: verse -1\nline one\n:::", $)!)).toBe("::: verse -1 — -1 is not a starting line, so it stayed a paragraph");
+  expect(pastedRefusal(pasteBlocks("::: verse 2\nline one\n:::", $)!)).toBe(null);
+});
+test("a bare URL pasted alone is a link at once", () => {
+  const s = at("see  now", "see ");
+  const doc = s.apply(s.tr.replaceSelection(pasteSlice("https://example.org/x", s.selection.$from))).doc;
+  let href = "";
+  doc.descendants((n) => { const l = n.marks.find((m) => m.type.name === "link"); if (l) href = l.attrs.href; return true; });
+  expect(href).toBe("https://example.org/x");
+  expect(doc.textContent).toBe("see https://example.org/x now");
+  expect(pasteSlice("see https://example.org/x", s.selection.$from).content.firstChild!.marks.length).toBe(0);
 });

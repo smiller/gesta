@@ -220,4 +220,13 @@ describe("a text the model refuses", () => {
     w.s.show("fine", "page/B");
     expect(w.released).toEqual([1]);
   });
+  it("a refusal pinned for a paste is released by the next show, and by the next one pinned", () => {
+    const w = world();
+    w.s.show("fine", "page/A");
+    w.s.pinRefusal("::: verse -1 — refused");
+    w.s.pinRefusal("::: verse -2 — refused");
+    expect(w.released).toEqual([1]);
+    w.s.show("fine", "page/B");
+    expect(w.released).toEqual([1, 2]);
+  });
 });

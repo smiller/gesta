@@ -31,13 +31,22 @@ const prose = (s: EditorState): boolean => !inCode(s);
    a quote starts a list or a heading within it.
    The text before the caret shows a break as ￼, so the rule is anchored at
    the start or at one, and a match behind a break first peels that line
-   into its own paragraph. The handler then works on the peeled paragraph. */
+   into its own paragraph — the line alone, the lines below it left a
+   paragraph of their own (pin: typing.test › a marker on a middle line
+   takes that line alone). The handler then works on the peeled paragraph.
+   A `>` behind a break inside a quote stays text: it would nest the quote
+   (pin: typing.test › a marker on a middle line takes that line alone). */
 type LineHandler = (tr: Transaction, match: RegExpMatchArray, start: number, end: number) => Transaction | null;
-function blockRule(re: RegExp, handler: LineHandler): InputRule {
+function blockRule(re: RegExp, handler: LineHandler, inQuoteAfterBreak = true): InputRule {
   return new InputRule(new RegExp("(?:^|￼)" + re.source.slice(1)), (state, m, start, end) => {
     if (!inParagraph(state)) return null;
     const tr = state.tr;
     if (m[0].startsWith("￼")) {
+      const $at = state.selection.$from;
+      if (!inQuoteAfterBreak && $at.node(-1).type === N.blockquote) return null;
+      let next = -1;
+      $at.parent.forEach((c, offset) => { if (next < 0 && c.type === N.hard_break && offset >= $at.parentOffset) next = $at.start() + offset; });
+      if (next >= 0) tr.delete(next, next + 1).split(next);
       tr.delete(start, start + 1).split(start);
       start += 2;
       end += 1;
@@ -57,12 +66,12 @@ function wrapIn(tr: Transaction, pos: number, type: NodeType, attrs: Attrs | nul
 }
 const heading = blockRule(/^(#{1,6})\s$/, (tr, m, start, end) =>
   tr.delete(start, end).setBlockType(start, start, N.heading, { level: m[1].length }));
-const quote = blockRule(/^>\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.blockquote, null));
+const quote = blockRule(/^>\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.blockquote, null), false);
 const nestedQuote = blockRule(/^>>\s$/, (tr, _m, start, end) => {
   tr.delete(start, end);
   const range = tr.doc.resolve(start).blockRange()!;
   return tr.wrap(range, [{ type: N.blockquote }, { type: N.blockquote }]);
-});
+}, false);
 const bullets = blockRule(/^([-*])\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.bullet_list, null, () => true));
 /* a numbered marker opens the list AT its number, so a countdown typed
    here reads as typed; it joins the list above only where it continues it */
@@ -71,7 +80,10 @@ const numbers = blockRule(/^(\d+)[.)]\s$/, (tr, m, start, end) =>
     (before) => before.childCount + (before.attrs.start as number) === +m[1]));
 
 /* ---------- inline marks, on the closing marker ---------- */
-const BOUND = "(^|[\\s\\u200B([{\"'“”‘’—–-])";
+/* \ufffc is a line break's stand-in in the text before the caret: a mark
+   typed at the start of a broken line closes as at a paragraph's start
+   (pin: typing.test › emphasis typed at the start of a line after a line break) */
+const BOUND = "(^|[\\s\\u200B\\ufffc([{\"'“”‘’—–-])";
 function markRule(source: string, mark: MarkType): InputRule {
   return guarded(new RegExp(BOUND + source), prose, (state, m, start, end) => {
     const bodyFrom = start + m[1].length + m[2].length, bodyTo = bodyFrom + m[3].length;
@@ -113,6 +125,12 @@ const curl = guarded(/([^]?)(["'])$/, prose, (state, m, _start, end) => state.tr
 /* ---------- links ---------- */
 const URL_HEAD = /^(https?:\/\/|www\.)\S/i;
 function href(url: string): string { return /^www\./i.test(url) ? "https://" + url : url; }
+/* a text that is one URL and nothing more: the address it links to */
+export function bareUrl(text: string): string | null {
+  if (!URL_HEAD.test(text)) return null;
+  const run = URL_START.exec(text);
+  return run && trimUrl(run[0]) === text ? href(text) : null;
+}
 export function autolinkTr(state: EditorState): Transaction | null {
   const $f = state.selection.$from;
   if (!state.selection.empty || !$f.parent.isTextblock || $f.parent.type.spec.code || inCode(state)) return null;

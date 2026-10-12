@@ -514,9 +514,12 @@ if (fixture && fixtures[fixture]) {
       renderBookmarks();
     } else if (what === "link") {
       /* the link at the caret the editor still holds; every way it cannot
-         land says why, nothing is appended at the end */
+         land says why, nothing is appended at the end, and the keys go back
+         to the text either way (pin: editing as the old app does › a
+         bookmark's link pressed in inline code) */
       if (warmBlock()) return;
       closePanel();
+      session.focusText();
       if (key === hereKey()) { say(alreadyOn(key, journal), 2000); return; }
       const view = session.view;
       if (!view) { say("place your cursor in the entry", 2000); return; }

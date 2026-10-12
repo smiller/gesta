@@ -440,3 +440,62 @@ a code block where it is not code and should read as a quote — found in
 journal/1995/1995-03-26 (the terraces of Purgatory, numbered lines
 indented with tabs, parsed as one code block, MEASURED). Not yet counted
 across the corpus.
+
+Cycle 1's fixes accepted 2026-10-12 (53a1547).
+
+Group 3 CLOSED at 1 cycle: he skipped the confirmation pass (2026-10-12).
+
+## Group 4, done (2026-10-12)
+
+Asked: run group 4 "until it meets the criteria of working like the old
+app"; the review lighter, this being the old app's behaviour restored, not
+new UI. Every item played first over both apps in the shared steps' new
+section "editing as the old app does"; after: every reading the old app's,
+or a decided difference listed with its reason (MEASURED, 0 open). Before →
+after, test-first unless named a step:
+
+27. Enter in a quote: a blank quote line → a line break; on the empty last
+    line it leaves the quote (quoteKeys.test).
+28. The code button over two paragraphs: two blocks → one, a line each,
+    its text left selected; a selection grazing the next paragraph's start
+    leaves it (format.test).
+29. Already the same: the quote button lifts the three paragraphs on both.
+30. Shift-Tab on the middle run of a nested quote: the whole inner quote →
+    that run alone (quoteKeys.test). The stored spelling differs (no blank
+    quote line between a quote's blocks here), listed.
+31. `_italic_` at the start of a Shift-Enter line or a quote's later line:
+    literal → italic (typing.test).
+32. `- ` on a middle line: the line below rode into the item → stays its own
+    paragraph; `> ` on a quote's later line: a nested quote → text
+    (typing.test).
+33. Items 4–5 of a list from 3 copied: `3. / 4.` → `4. / 5.` (paste.test).
+34. A selection inside a code block: fenced → its characters (paste.test).
+35. Two lines in an emphasised run: already the same. `> inner` in a quote:
+    nested → text; a one-line `> ![](a.png)`: text → a quote; a bare URL
+    pasted: linked on the next space → linked at once (the inventory had it
+    right; a seed losing its space hid it in the first run) (paste.test).
+36. A bookmark's link in inline code: inserted → "no link inside a code
+    block" (insertLink.test), and every press of a row's link now hands the
+    keys back to the text (step: "none" → "inside a line").
+37. A refused fence pasted: silent → pinned with its reason, released by the
+    next entry as a stored refusal's is (paste.test, surface.test).
+38. ` -- ` and quotes in the markdown view: literal → a dash and curls, never
+    inside a fenced block or a code span (sourceKeys.test; INFERRED that the
+    old app skipped code there too — not played).
+39. A wholly bold-italic row: a stage direction → a speaker (numbering.test).
+40. NOT CHANGED, decided: an entry's title is its first level-one heading
+    everywhere (the successor plan's decision 5, the Horace shelf corrected
+    in the data to it).
+41. A quotation in a note: filled and ruled → neither (the step).
+42. A reference block in the rendered view: editable → inert, a click
+    puts the caret at its start and whispers "Reference style is edited in
+    the markdown view (⌃⌘M)" (editor.test).
+43. A page label where a space follows its marker: a line high (8 of 60,
+    MEASURED) → beside its leaf's first word, measured (folios.test; the
+    step: 0 of 72 here, 9 of 72 in the old app, whose own rule this is —
+    listed). 226 such markers in 103 files of the backup (MEASURED), Lewis's
+    Preface among them.
+44. A near-miss entry link pasted: a dead link → text (paste.test).
+
+Decided differences listed: the quote button's caret (stays put here), the
+nested-quote spelling, the list copy's selection count, the page labels.

@@ -1,7 +1,7 @@
 import { flattenText } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { pastedImageFile } from "./images.ts";
-import { sourceTab } from "./sourceKeys.ts";
+import { sourceTab, sourceTyped } from "./sourceKeys.ts";
 import { wordCount, wordsOf } from "./format.ts";
 import type { Surface, ReplacePort } from "./surface.ts";
 
@@ -19,7 +19,24 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   ta.className = "source";
   ta.spellcheck = false;
   ta.value = md;
-  ta.addEventListener("input", () => opts.onChange());
+  ta.addEventListener("input", (e) => {
+    const ie = e as InputEvent;
+    if (ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd) {
+      const caret = ta.selectionStart, r = sourceTyped(ta.value, caret);
+      if (r) {
+        ta.setSelectionRange(r.from, r.to);
+        /* through the browser's own insert, so ⌘Z takes the curl back first;
+           the caret back after the character typed, which the dash's
+           replacement stands before (MEASURED: the next letter went in
+           front of the space) */
+        if (!document.execCommand("insertText", false, r.text)) { ta.setRangeText(r.text, r.from, r.to, "end"); ta.dispatchEvent(new Event("input")); }
+        const at = caret - (r.to - r.from) + r.text.length;
+        ta.setSelectionRange(at, at);
+        return;
+      }
+    }
+    opts.onChange();
+  });
   ta.addEventListener("paste", (e) => { const f = pastedImageFile(e.clipboardData); if (f) { e.preventDefault(); opts.onPasteFile(f); } });
   ta.addEventListener("keydown", (e) => {
     if (e.key !== "Tab" || ta.readOnly) return;

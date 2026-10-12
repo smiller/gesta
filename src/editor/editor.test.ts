@@ -194,3 +194,23 @@ test("Tab in a code block changes only the touched lines: a position on a line b
   expect(tr!.mapping.map(onD)).toBe(onD + 4);
   expect(tr!.mapping.map(onA)).toBe(onA);
 });
+test("a reference block takes no typing in the rendered view; a click puts the caret at its start and says where it is edited", () => {
+  const said: string[] = [];
+  const s = sel("::: reference\nroman book and canto\n:::\n\nafter", said, "book");
+  const typedIn = (t: EditorState): boolean => t.plugins.some((p) => p.props.handleTextInput?.call(p, { state: t, dispatch: () => {} } as unknown as EditorView, t.selection.from, t.selection.to, "Q", () => t.tr));
+  expect(typedIn(s)).toBe(true);
+  for (const key of ["Enter", "Backspace", "Delete"]) {
+    const k = keyed(s, key);
+    expect(k.taken).toBe(true);
+    expect(k.state.doc.eq(s.doc)).toBe(true);
+  }
+  let state = s, refPos = -1;
+  s.doc.forEach((n, p) => { if (n.type.name === "reference") refPos = p; });
+  const view = { get state() { return state; }, dispatch: (tr: Transaction) => { state = state.apply(tr); } } as unknown as EditorView;
+  const clicked = s.plugins.some((p) => p.props.handleClickOn?.call(p, view, refPos + 3, s.doc.nodeAt(refPos)!, refPos, {} as MouseEvent, true));
+  expect(clicked).toBe(true);
+  expect(said).toEqual(["Reference style is edited in the markdown view (⌃⌘M)"]);
+  expect(state.selection.empty && state.selection.from).toBe(refPos + 1);
+  expect(typedIn(state)).toBe(true);
+  expect(typedIn(sel("::: reference\nroman book and canto\n:::\n\nafter", [], "after"))).toBe(false);
+});

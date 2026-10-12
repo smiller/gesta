@@ -6,16 +6,30 @@ import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { renumbered } from "./numbering.ts";
+import { bareUrl } from "./typing.ts";
+import { namesEntry } from "../store/nav.ts";
+import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
 
 const N = schema.nodes;
 const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
 const ONE_HEADING_LINE = /^#{1,6} \S/;
 const ONE_QUOTE_LINE = /^>+ \S/;
-const INTERNAL_LINK_RE = /^\[[^\]]+\]\(#[^)\s]+\)$/;
+const INTERNAL_LINK_RE = /^\[[^\]]+\]\(#([^)\s]+)\)$/;
 const FLAT_HOSTS = new Set([N.list_item, N.table_cell, N.line, N.cell]);
 function inAny($ctx: ResolvedPos, types: Set<unknown>): boolean {
   for (let d = $ctx.depth; d >= 0; d--) if (types.has($ctx.node(d).type)) return true;
   return false;
+}
+/* A ONE-LINE QUOTE IS A QUOTE only outside one: pasted inside a quote it is
+   that line's text, never a quote nested in it; and a picture is something
+   drawn, so a quote holding one alone is not empty (pin: paste.test › a
+   one-line quote pasted inside a quote is its text) */
+const QUOTES = new Set([N.blockquote]);
+const oneQuoteLine = (body: string, $context: ResolvedPos): boolean => ONE_QUOTE_LINE.test(body) && !inAny($context, QUOTES);
+function draws(doc: Node): boolean {
+  let yes = !!doc.textContent.trim();
+  doc.descendants((n) => { if (n.type === N.image) yes = true; return !yes; });
+  return yes;
 }
 function flat(lines: string[]): Slice {
   const nodes: Node[] = [];
@@ -34,15 +48,22 @@ export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
      reference block every character is literal) */
   if ($context.parent.type.spec.code || inAny($context, FLAT_HOSTS)) return null;
   const lines = body.split("\n");
-  if (!(lines.length > 1 || ONE_HEADING_LINE.test(body) || ONE_QUOTE_LINE.test(body))) return null;
+  if (!(lines.length > 1 || ONE_HEADING_LINE.test(body) || oneQuoteLine(body, $context))) return null;
   if (INTERNAL_LINK_RE.test(body.trim())) return null;
   try {
     const doc = parseMarkdown(body);
-    if (!doc.textContent.trim() && lines.length === 1) return null;
+    if (!draws(doc) && lines.length === 1) return null;
     const blocks: Node[] = [];
     doc.forEach((b) => blocks.push(b));
     return blocks;
   } catch { return null; }
+}
+/* a pasted fence the model refuses says why, as a stored one does on
+   opening (pin: paste.test › a pasted fence the model refuses is named)
+   (pin: editing as the old app does › a refused fence pasted) */
+export function pastedRefusal(blocks: Node[]): string | null {
+  const refused = fenceRefusals(N.doc.create(null, blocks));
+  return refused.length ? refusalsText(refused) : null;
 }
 /* SET DOWN, never fitted: a replace opens a block slice up to fit the
    paragraph it lands in and peels the first cell's text into it (MEASURED:
@@ -71,14 +92,23 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   if ($context.parent.type.spec.code) return new Slice(Fragment.from(schema.text(txt)), 0, 0);
   const lines = body.split("\n");
   const blockShaped = lines.length > 1 || ONE_HEADING_LINE.test(body);
-  if (INTERNAL_LINK_RE.test(body.trim())) {
+  /* a link to an address naming no entry stays as typed: a dead link looked
+     like a live one (pin: paste.test › a pasted link to an address that
+     names no entry stays as typed) */
+  /* a bare URL alone is a link at once, not on the space typed after it
+     (pin: paste.test › a bare URL pasted alone is a link at once) */
+  const url = lines.length === 1 ? bareUrl(body.trim()) : null;
+  if (url) return new Slice(Fragment.from(schema.text(body.trim(), [schema.marks.link.create({ href: url })])), 0, 0);
+  const internal = INTERNAL_LINK_RE.exec(body.trim());
+  if (internal && !namesEntry(internal[1])) return new Slice(Fragment.from(schema.text(body)), 0, 0);
+  if (internal) {
     try { return new Slice(parseMarkdown(body.trim()).firstChild!.content, 0, 0); } catch { /* literal below */ }
   }
-  if (blockShaped || ONE_QUOTE_LINE.test(body)) {
+  if (blockShaped || oneQuoteLine(body, $context)) {
     if (inAny($context, FLAT_HOSTS)) return flat(lines);
     try {
       const doc = parseMarkdown(body);
-      if (doc.textContent.trim() || lines.length > 1) return new Slice(doc.content, 0, 0);
+      if (draws(doc) || lines.length > 1) return new Slice(doc.content, 0, 0);
     } catch { /* a form the schema refuses stays as typed */ }
   }
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
@@ -114,8 +144,12 @@ export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number
   const cut = renumbered(doc, from, doc.copy(slice.content));
   return closeRowSlice(new Slice(dropFolios(cut.content), slice.openStart, slice.openEnd));
 }
+/* a selection open inside one code block copies its characters, as the
+   browser would (pin: paste.test › a selection inside one code block copies
+   its characters) */
 export function copyMd(slice: Slice): string {
   let content = slice.content;
+  if (content.childCount === 1 && content.firstChild!.type === N.code_block && slice.openStart > 0 && slice.openEnd > 0) return content.firstChild!.textContent;
   if (content.childCount && content.firstChild!.isInline) content = Fragment.from(N.paragraph.create(null, content));
   const blocks: Node[] = [];
   content.forEach((n) => blocks.push(n));

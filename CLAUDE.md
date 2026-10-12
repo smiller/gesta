@@ -286,13 +286,15 @@ is in the plan's record, under the phase named):
   measuring pass and its scheduling as a plugin view), `margins.ts` (a
   `::: margin-note`'s form: the width and the push pure, the placing pass
   as a plugin view writing a class on the note's own node), `folios.ts` (the
-  gutter's switch: `foliopage` on the root where a leaf is the text's),
+  gutter's switch: `foliopage` on the root where a leaf is the text's, and
+  each label's drop to the line its leaf's first word starts on),
   `typing.ts` (markdown as you type: the input rules and the two Enter
   arms), `links.ts` (a click on a link: the pure decision and the
   handler), `highlight.ts` (the jump: the nth occurrence of a query
   selected, and Escape's hand-back of it; the scroll is main's, a frame later), `insertLink.ts` (a link placed after the
   caret, and what refuses one), `sourceKeys.ts` (Tab and Shift-Tab in
-  the source view, over a text and a selection), `surface.ts` (THE
+  the source view, over a text and a selection, and what a character typed
+  there becomes: a dash, a curled quote), `surface.ts` (THE
   SURFACE, what the rendered and the source view share: the interface
   each view answers, the window as a port, and the switch between them,
   ⌃⌘M — the carets held per view, the text at the top carried across,

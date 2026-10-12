@@ -24,6 +24,10 @@ test("apparatus inside the fence is a unit but not a line", () => {
   expect(kinds("::: verse\nplain *with* emphasis\n:::")).toBe("line:1");
 });
 
+test("a wholly bold-italic row is a speaker", () => {
+  expect(kinds("::: verse\n***KING JOHN***\nDeath.\n:::")).toBe("speaker line:1");
+});
+
 test("a ⟨line⟩ row is a line whatever it is set in", () => {
   expect(kinds("::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*Take away love, and our earth is a tomb!*\n**PIPPA**\n⟨line⟩**shouted**\n:::"))
     .toBe("stage line:1 line:2 speaker line:3");

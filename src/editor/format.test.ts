@@ -90,3 +90,14 @@ test("code refuses a paragraph holding a picture or a page marker anywhere in it
   expect(codeBlockRefusal(sel("plain words", "plain"))).toBeNull();
   expect(codeBlockRefusal(sel("::: note\ncap ![](x.png) tion\n\nsecond\n:::\n\nafter", "second", "after"))).toBeNull();
 });
+test("code over several paragraphs makes one block, a line each; a selection grazing the next paragraph's start leaves it", () => {
+  const c = run(codeBlock, sel("alpha\n\nbeta\n\ngamma", "alpha", "beta"));
+  expect(md(c)).toBe("```\nalpha\nbeta\n```\n\ngamma");
+  expect(c.selection.from).toBe(1);
+  expect(c.doc.textBetween(c.selection.from, c.selection.to)).toBe("alpha\nbeta");
+  expect(md(run(codeBlock, sel("one\ntwo\n\nthree", "one", "three")))).toBe("```\none\ntwo\nthree\n```");
+  const s = sel("code line\n\nprose below", "code line");
+  const graze = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from, s.selection.to + 2) });
+  expect(graze.selection.$to.parent.textContent).toBe("prose below");
+  expect(md(run(codeBlock, graze))).toBe("```\ncode line\n```\n\nprose below");
+});

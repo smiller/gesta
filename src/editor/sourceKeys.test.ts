@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sourceTab } from "./sourceKeys.ts";
+import { sourceTab, sourceTyped } from "./sourceKeys.ts";
 
 describe("sourceTab", () => {
   it("a collapsed Tab inserts two spaces; Shift-Tab takes up to two back, or is left alone", () => {
@@ -18,5 +18,26 @@ describe("sourceTab", () => {
     expect(sourceTab("a\n\nb", 0, 4, false)).toEqual({ value: "  a\n\n  b", start: 0, end: 8 });
     expect(sourceTab("\n\n", 0, 2, false)).toEqual({ refuse: "nothing to indent — those lines are empty" });
     expect(sourceTab("a\nb", 0, 3, true)).toEqual({ refuse: "no spaces to remove" });
+  });
+});
+
+describe("sourceTyped", () => {
+  /* the text with the character just typed at the caret's left */
+  const typedIn = (before: string, after = ""): string => {
+    const value = before + after, r = sourceTyped(value, before.length);
+    return r ? value.slice(0, r.from) + r.text + value.slice(r.to) : value;
+  };
+  it("a -- between spaces becomes a dash, and straight quotes curl, as in the rendered view", () => {
+    expect(typedIn("a -- ")).toBe("a — ");
+    expect(typedIn("x \"")).toBe("x “");
+    expect(typedIn("x “b\"")).toBe("x “b”");
+    expect(typedIn("it'")).toBe("it’");
+    expect(typedIn("\n'")).toBe("\n‘");
+    expect(typedIn("x ”\"")).toBe("x \"");
+  });
+  it("code is left alone: a fenced block, and an inline code span", () => {
+    expect(typedIn("```\nx \"")).toBe("```\nx \"");
+    expect(typedIn("see `a -- ")).toBe("see `a -- ");
+    expect(typedIn("```\ncode\n```\nx \"")).toBe("```\ncode\n```\nx “");
   });
 });

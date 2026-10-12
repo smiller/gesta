@@ -4,6 +4,7 @@
    from it, by position) */
 import { Fragment, type Node, type MarkType } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
+import { itemNumbers } from "../model/serialize.ts";
 
 const N = schema.nodes;
 
@@ -50,10 +51,12 @@ export function whollyIn(row: Node, mark: MarkType): boolean {
   return ok && drew;
 }
 
+/* bold first: a row bold and italic both is a speaker (pin: numbering.test
+   › a wholly bold-italic row is a speaker) */
 function rowKind(row: Node): UnitKind {
   if (row.attrs.kind === "line") return "line";
-  if (whollyIn(row, schema.marks.em)) return "stage";
   if (whollyIn(row, schema.marks.strong)) return "speaker";
+  if (whollyIn(row, schema.marks.em)) return "stage";
   return "line";
 }
 
@@ -126,7 +129,8 @@ export function blocksOf(units: Unit[]): Unit[][] {
    first-child chain IS the start's ancestor chain, so each verse or prose
    ancestor is stamped at its own depth with its own count at the row the
    cut opens on (pin: paste.test › verse lines copied from inside a block
-   keep their numbers) */
+   keep their numbers), and a numbered list from the item it opens on
+   (pin: paste.test › list items copied from the middle keep their own numbers) */
 export function renumbered(doc: Node, at: number, cut: Node): Node {
   const $at = doc.resolve(at);
   const stamp = (node: Node, d: number): Node => {
@@ -137,6 +141,8 @@ export function renumbered(doc: Node, at: number, cut: Node): Node {
     if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
       const rowPos = $at.depth > d ? $at.before(d + 1) : at;
       out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos) }, child.content);
+    } else if (anc.type === N.ordered_list && child.type === anc.type && $at.depth > d) {
+      out = child.type.create({ ...child.attrs, start: itemNumbers(anc)[$at.index(d)] }, child.content);
     }
     return node.copy(Fragment.from([out, ...node.content.content.slice(1)]));
   };

@@ -22,3 +22,6 @@ test("insertLinkAfter: the caret stands after the link it placed, outside it", (
   expect(s.doc.textBetween(0, s.selection.from)).toBe("some textX");
   expect(schema.marks.link.isInSet(s.selection.$from.marks())).toBeUndefined();
 });
+test("linkRefusal: inline code refuses as a code block does", () => {
+  expect(linkRefusal(at("see `code here` now", "co"))).toBe("no link inside a code block");
+});

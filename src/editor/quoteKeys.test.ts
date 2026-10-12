@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { tabInQuote, shiftTabInQuote, quoteRefusal, QUOTE_FLOOR } from "./quoteKeys.ts";
+import { tabInQuote, shiftTabInQuote, enterInQuote, quoteRefusal, QUOTE_FLOOR } from "./quoteKeys.ts";
 
 function at(md: string, needle: string, to?: string): EditorState {
   const doc = parseMarkdown(md);
@@ -59,4 +59,24 @@ test("a heading or a table in a quote nests alone with Tab, the caret where it w
   expect(u.doc.firstChild!.firstChild!.textContent).toBe("quoted text");
   expect(roundTrips(u)).toBe(true);
   expect(run(shiftTabInQuote, u).doc.eq(t.doc)).toBe(true);
+});
+test("Enter in a quote breaks the line; Enter on the empty last line leaves the quote", () => {
+  const s = run(enterInQuote, at("> one\n> two", "one"));
+  expect(md(s.apply(s.tr.insertText("new")))).toBe("> one\n> new\n> two");
+  const end = run(enterInQuote, at("> one", "one"));
+  expect(end.doc.childCount).toBe(1);
+  const out = run(enterInQuote, end);
+  expect(out.doc.childCount).toBe(2);
+  expect(out.selection.$from.depth).toBe(1);
+  expect(md(out.apply(out.tr.insertText("out")))).toBe("> one\n\nout");
+  expect(refuses(enterInQuote, at("plain", "plain"))).toBe(true);
+});
+test("Shift-Tab on one run of a nested quote lifts that run alone, the runs around it staying nested", () => {
+  const shape = (s: EditorState): string => { const out: string[] = []; s.doc.firstChild!.forEach((c) => out.push(c.type.name === "blockquote" ? "Q(" + c.textContent + ")" : c.textContent)); return out.join(" "); };
+  const s = run(shiftTabInQuote, at("> intro\n>\n>> a\n>>\n>> b\n>>\n>> c", "b"));
+  expect(shape(s)).toBe("intro Q(a) b Q(c)");
+  expect(roundTrips(s)).toBe(true);
+  expect(s.selection.$from.parent.textContent).toBe("b");
+  /* the first run lifted joins the outer paragraph above it */
+  expect(shape(run(shiftTabInQuote, at("> intro\n>\n>> a\n>>\n>> b", "a")))).toBe("introa Q(b)");
 });

@@ -68,6 +68,9 @@ export interface Surfaces {
   /* keepView: the same entry under a new key (a rename), not an arrival */
   show(md: string, ekey: string, keepView?: boolean): void;
   switchTo(md: boolean): void;
+  /* a refusal the entry on screen met, pinned until the next show
+     (pin: surface.test › a refusal pinned for a paste is released by the next show) */
+  pinRefusal(text: string): void;
 }
 
 export function surfaces(opts: SurfaceOptions): Surfaces {
@@ -226,5 +229,9 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     get md() { return mdView; },
     get forced() { return forced; },
     show, switchTo,
+    pinRefusal: (text) => {
+      if (fencePin) opts.releasePin(fencePin);
+      fencePin = opts.pin(text);
+    },
   };
 }

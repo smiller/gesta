@@ -111,19 +111,61 @@ export const shiftTabInQuote: Command = (state, dispatch) => {
   }
   if (dispatch) {
     const blank = (): Node[] => [BR.create(), BR.create()];
-    const parts: Fragment[] = [];
+    /* ONE RUN OF A ONE-PARAGRAPH INNER QUOTE LIFTS ALONE, the runs before and
+       after it staying nested, as Tab nests one run (pin: quoteKeys.test ›
+       Shift-Tab on one run of a nested quote lifts that run alone) */
+    const $to = state.selection.$to, para = inner.firstChild!;
+    let before = Fragment.empty, after = Fragment.empty, lifted: Fragment[] = [], runStart = 0;
+    if (inner.childCount === 1 && $from.sameParent($to)) {
+      const runs = runsOf(para);
+      const first = runs.find((r) => $from.parentOffset <= r.to)!, last = runs.slice().reverse().find((r) => $to.parentOffset >= r.from) || first;
+      before = para.content.cut(0, Math.max(0, first.from - 2));
+      after = para.content.cut(Math.min(para.content.size, last.to + 2));
+      lifted = [para.content.cut(first.from, last.to)];
+      runStart = first.from;
+    } else inner.forEach((c) => lifted.push(c.content));
     const prev = outerIndex > 0 ? outer.child(outerIndex - 1) : null, next = outerIndex + 1 < outer.childCount ? outer.child(outerIndex + 1) : null;
+    const joinPrev = !before.size && prev?.type === P, joinNext = !after.size && next?.type === P;
     let from = $from.before(d), to = $from.after(d);
-    if (prev && prev.type === P) { parts.push(prev.content); from -= prev.nodeSize; }
-    inner.forEach((c) => parts.push(c.content));
-    if (next && next.type === P) { parts.push(next.content); to += next.nodeSize; }
+    const parts: Fragment[] = [];
+    if (joinPrev) { parts.push(prev!.content); from -= prev!.nodeSize; }
+    parts.push(...lifted);
+    if (joinNext) { parts.push(next!.content); to += next!.nodeSize; }
     const joined: Node[] = [];
     parts.forEach((f, i) => { if (i) joined.push(...blank()); f.forEach((n) => joined.push(n)); });
-    const caretOffset = (prev && prev.type === P ? prev.content.size + 2 : 0) + ($from.pos - $from.start());
-    const tr = state.tr.replaceWith(from, to, P.create(null, Fragment.from(joined)));
-    tr.setSelection(TextSelection.create(tr.doc, Math.min(from + 1 + caretOffset, tr.doc.content.size)));
+    const nodes: Node[] = [];
+    if (before.size) nodes.push(Q.create(null, P.create(null, before)));
+    nodes.push(P.create(null, Fragment.from(joined)));
+    if (after.size) nodes.push(Q.create(null, P.create(null, after)));
+    const caretOffset = (joinPrev ? prev!.content.size + 2 : 0) + ($from.pos - $from.start() - runStart);
+    const tr = state.tr.replaceWith(from, to, Fragment.from(nodes));
+    const at = from + (before.size ? nodes[0].nodeSize : 0) + 1 + caretOffset;
+    tr.setSelection(TextSelection.create(tr.doc, Math.min(at, tr.doc.content.size)));
     dispatch(tr.scrollIntoView());
   }
+  return true;
+};
+/* ENTER IN A QUOTE BREAKS THE LINE, the quote's lines being one
+   paragraph's; Enter on its empty last line takes the break back and
+   leaves the quote for a paragraph below it (pin: quoteKeys.test › Enter in
+   a quote breaks the line) */
+export const enterInQuote: Command = (state, dispatch) => {
+  const { $from, empty } = state.selection;
+  if (!quoteDepth(state) || $from.parent.type !== P || $from.node(-1).type !== Q) return false;
+  const para = $from.parent, last = para.lastChild;
+  const atEnd = empty && $from.parentOffset === para.content.size && $from.index(-1) === $from.node(-1).childCount - 1;
+  if (atEnd && last?.type === BR) {
+    if (dispatch) {
+      const tr = state.tr.delete($from.pos - 1, $from.pos);
+      const after = tr.mapping.map($from.after(-1));
+      tr.insert(after, P.create());
+      tr.setSelection(TextSelection.create(tr.doc, after + 1));
+      dispatch(tr.scrollIntoView());
+    }
+    return true;
+  }
+  if (!para.content.size) return false;
+  if (dispatch) dispatch(state.tr.replaceSelectionWith(BR.create()).scrollIntoView());
   return true;
 };
 export const QUOTE_FLOOR = "at the outer level: switch to markdown (⌃⌘M) to remove";
@@ -140,5 +182,5 @@ export function quoteKeymap(onRefuse?: (why: string) => void): Plugin {
     onRefuse?.(quoteRefusal(state, shift));
     return true;
   };
-  return keymap({ Tab: refusing(tabInQuote, false), "Shift-Tab": refusing(shiftTabInQuote, true) });
+  return keymap({ Enter: enterInQuote, Tab: refusing(tabInQuote, false), "Shift-Tab": refusing(shiftTabInQuote, true) });
 }

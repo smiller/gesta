@@ -9,7 +9,13 @@ export interface HashParts { date: string; tag: string | null; hl: Highlight | n
    (pin: nav.test › hashParts: a page routes; anything less falls back)
    (pin: nav.test › hashParts: a page hierarchy at any depth) */
 export function hashParts(raw: string): HashParts {
-  const fallback: HashParts = { date: todayKey(), tag: null, hl: null };
+  return namedBy(raw) ?? { date: todayKey(), tag: null, hl: null };
+}
+/* whether a hash names an entry at all, the fallback's cases being no */
+export function namesEntry(raw: string): boolean {
+  return namedBy(raw) !== null;
+}
+function namedBy(raw: string): HashParts | null {
   let hl: Highlight | null = null;
   const qpos = raw.indexOf("?");
   if (qpos !== -1) {
@@ -24,14 +30,14 @@ export function hashParts(raw: string): HashParts {
   const date = slash === -1 ? raw : raw.slice(0, slash);
   let tag: string | null;
   try { tag = slash === -1 ? null : decodeURIComponent(raw.slice(slash + 1)); }
-  catch { return fallback; }
+  catch { return null; }
   if (nsOf(date)) {
     const parts = (tag || "").split("/").map(pageName);
     while (parts.length > 1 && !parts[parts.length - 1]) parts.pop();
-    if (parts.indexOf("") !== -1) return fallback;
+    if (parts.indexOf("") !== -1) return null;
     return { date, tag: parts.join("/"), hl };
   }
-  if (!isDayKey(date)) return fallback;
+  if (!isDayKey(date)) return null;
   return { date, tag: tag || null, hl };
 }
 /* A full URL copied from the address bar is an internal link in external
