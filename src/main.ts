@@ -143,9 +143,11 @@ document.addEventListener("click", (e) => {
 /* A HELD KEY ACTS ONCE where its press moved the keys elsewhere — the Enter
    or digit that chose a search result, a shortcut or a bookmark went on
    into the text it opened, splitting it — and a held ⌃⌘ chord always: a
-   walk went on entry after entry (pin: where the keys go › Enter held on a
-   search result) (pin: where the keys go › a digit held on the bookmarks
-   card) (pin: where the keys go › ⌃⌘. held from 3pr1) */
+   walk went on entry after entry. A held Tab moves one control, by
+   decision (pin: where the keys go › Enter held on a search result)
+   (pin: where the keys go › a digit held on the bookmarks card)
+   (pin: where the keys go › ⌃⌘. held from 3pr1)
+   (pin: where the keys go › Tab held from the bookshelf button) */
 const pressedIn = new Map<string, Element | null>();
 document.addEventListener("keydown", (e) => {
   if (!e.repeat) { pressedIn.set(e.code, document.activeElement); return; }

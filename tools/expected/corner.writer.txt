@@ -285,6 +285,7 @@ where the keys go: arrived at 2026-09-12: {"cursor":"at a line's start"}
 ⌃⌘T on today from Search: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Tab twelve times from the bookmarks card: {"cursor":"on button","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Shift-Tab from the shortcuts popup: {"cursor":"on button","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab held from the bookshelf button: {"focus":"DIV","cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 where the keys go: arrived at bookshelf/Boethius/Consolatio/3pr1: {"cursor":"at a line's start"}
 ⌃⌘. held from 3pr1: {"walks":1,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Enter held on a search result: {"entry":"bookshelf/Boethius/Consolatio/3pr2","md":"# 3pr2\n\nTum defixo paululum uisu.","cursor":"selected 6","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}

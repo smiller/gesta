@@ -355,3 +355,13 @@ known only where the flag is. REVIEW CYCLES: 1.
 Accepted 2026-10-11 (1e50310); the held Tab in the masthead was put to
 him as a question and not answered before the accept. A confirmation pass
 (cycle 2) offered, runs only on his word.
+
+A HELD TAB MOVES ONE CONTROL, asked 2026-10-12. Separate presses of Tab
+are the same in both apps: each press moves the focus one control. They
+differ only while Tab is HELD DOWN: the old app keeps moving, the
+keyboard's auto-repeat carrying the focus on — from the bookshelf button
+through ten more controls to Go to in about a second (MEASURED headless,
+11 keydowns) — while here the focus moves once, to the pages button, and
+stays there until Tab is let go and pressed again (MEASURED). Shown that
+example, he preferred held Tab not to repeat. A decided difference from
+the old app, pinned by the step "Tab held from the bookshelf button".

@@ -1552,6 +1552,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.keyboard.up(key);
     for (const m of mods.reverse()) await page.keyboard.up(m);
   };
+  await page.focus(S.booksOpener);
+  await hold("Tab", 11);
+  await page.waitForTimeout(150);
+  await log("Tab held from the bookshelf button", { focus: await page.evaluate(() => document.activeElement?.getAttribute("title") ?? document.activeElement?.tagName) });
   await go("bookshelf/Boethius/Consolatio/3pr1");
   await tap(S.editor);
   await page.evaluate(() => { window.__walks = 0; addEventListener("hashchange", () => { window.__walks++; }); });
