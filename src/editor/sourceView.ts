@@ -141,11 +141,14 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     focus: () => ta.focus({ preventScroll: true }),
     place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
-  const insertText = (text: string): void => {
+  /* through the textarea's own editing, so ⌘Z takes it back (pin: notices
+     and surfaces as the old app has them › a bookmark's link in the markdown view) */
+  const insertText = (text: string, after = false): void => {
     if (ta.readOnly) return;
-    ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, "end");
     ta.focus();
-    ta.dispatchEvent(new Event("input"));
+    if (after) ta.setSelectionRange(ta.selectionEnd, ta.selectionEnd);
+    const from = ta.selectionStart, to = ta.selectionEnd;
+    if (!document.execCommand("insertText", false, text)) { ta.setRangeText(text, from, to, "end"); ta.dispatchEvent(new Event("input")); }
   };
   return {
     source: true,

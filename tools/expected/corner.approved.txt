@@ -388,6 +388,34 @@ editing as the old app does: arrived at page/Spaced Leaves: {"cursor":"at a line
 page labels beside their leaf's first word: {"markers":72,"off":0,"cursor":"at a line's start","screen":"page/Spaced Leaves · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the old app does: arrived at page/Near Miss: {"cursor":"at a line's start"}
 a near-miss entry link pasted: {"md":"x [near](#pagex)","links":0,"cursor":"at the end","screen":"page/Near Miss · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Horace: {"cursor":"at a line's start"}
+⌃⌘K with Caps Lock: {"searchOpen":true,"cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+a bare launch: {"hash":"#2026-09-12","cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Horace: {"cursor":"at a line's start"}
+Line numbering kept across a reload: {"interval":"1","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+an import of refused files only: {"corner":"nothing to import here — 1 .md file will NOT be imported. (click to copy)","fourSecondsOn":"nothing to import here — 1 .md file will NOT be imported. (click to copy)","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+an import of two files for one entry: {"corner":"two files here are the same entry (page/Trip--Log.md and page/Trip-Log.md) — remove one and import again (click to copy)","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Pic Fail: {"cursor":"at a line's start"}
+a picture whose write fails: {"corner":"picture not saved — storage full (click to copy)","cursor":"at the end","screen":"page/Pic Fail · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Pic Copy: {"cursor":"at a line's start"}
+a block with a picture hover-copied: {"pictureCarried":true,"cursor":"at the end","screen":"page/Pic Copy · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Horace: {"cursor":"at a line's start"}
+the line bar re-asked when the entry gains a page marker: {"before":{"line":true,"page":false},"after":{"line":true,"page":true},"cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+a drag from the Line box out over the entry: {"barOpen":true,"cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+a result clicked after more typing: {"selected":"atavis","cursor":"selected 6","screen":"page/Horace · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Horace: {"cursor":"selected 6"}
+the format bar after Line numbering opens: {"clearBefore":true,"clearAfter":true,"cursor":"on select","screen":"page/Horace · sel 8 chars · bar on · panel none · rows lines · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Pic Copy: {"cursor":"at a line's start"}
+the copy button after a navigation: {"over":true,"after":false,"cursor":"at a line's start","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a link's tooltip: {"title":"⌘-click to open","cursor":"at a line's start","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the Tag button's tooltip: {"title":"Move selection to a new sub-page","cursor":"selected 4","screen":"page/Links · sel 4 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a failed copy's pin clicked: {"clipboard":"[*Links*](…)","cursor":"none","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the tab's icon: {"icon":true,"cursor":"none","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Horace: {"cursor":"at a line's start"}
+a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in the entry","unchanged":true,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces as the old app has them: arrived at page/Source Link: {"cursor":"at a line's start"}
+a bookmark's link in the markdown view: {"md":"x[Links](…)","cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
@@ -401,3 +429,7 @@ error: not saved — changed in another tab, copy your text then reload Error: e
 error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab
 error: cannot render page/Refused a grid holds only cards; "loose" is not a card
 error: cannot render page/Refused a grid holds only cards; "loose again" is not a card
+error: nothing to import here — 1 .md file will NOT be imported. null
+error: two files here are the same entry (page/Trip--Log.md and page/Trip-Log.md) — remove one and import again null
+error: picture not saved r
+error: Couldn't copy the link [*Links*](#page/Links)

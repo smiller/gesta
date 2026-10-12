@@ -28,7 +28,8 @@ export interface Surface {
   focus(): void;
   /* on: nothing typed reaches the text */
   lock(on: boolean): void;
-  insertText(text: string): void;
+  /* `after`: past the selection, leaving it standing */
+  insertText(text: string, after?: boolean): void;
   insertPicture(name: string): void;
   words(): number;
   replace?: ReplacePort;

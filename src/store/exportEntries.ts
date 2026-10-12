@@ -49,7 +49,7 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
       if (row) files.push({ dir: job.at.dir, name: ref, bytes: row.bytes, entry: job.at.flatBase, root: job.at.root });
       else lost++;
     }, () => { lost++; faulted++; }))).then(() => {
-      if (lost) doc.picsLost = job.at;
+      if (lost) { doc.picsLost = job.at; doc.picsMissing = lost; }
       if (faulted) doc.picsFaulted = true;
       return files;
     });
@@ -66,6 +66,12 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
   return batches.reduce((chain, group) => chain.then(() =>
     Promise.all(group.map(oneJob)).then((lists) => { for (const l of lists) all.push(...l); return yieldToTaskQueue(); })),
     Promise.resolve()).then(() => all);
+}
+/* the pictures an export's text names and could not carry: their names stay
+   in the text for a re-import, and the count is said (pin: exportEntries.test
+   › exportEntries: a doc per non-blank entry) */
+export function missingPictures(files: ExportFile[]): number {
+  return files.reduce((n, f) => n + (f.picsMissing ?? 0), 0);
 }
 export function archiveRoots(keys: string[]): string[] {
   return keys.map((key) => { const [date, tag] = splitKey(key); return entryFile(date, tag).root; });

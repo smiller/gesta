@@ -17,6 +17,8 @@ interface Opts {
   failSet?: string | string[];
   failDel?: string | string[];
   noView?: boolean;
+  noCaret?: boolean;
+  source?: boolean;
 }
 async function world(o: Opts) {
   const log: string[] = [];
@@ -43,10 +45,13 @@ async function world(o: Opts) {
   let onFlush: (() => void) | null = null;
   let typed: string | null = null;
   let dropped = false;
+  const source = { insertAfter: (text: string) => { log.push("type " + text); } };
   const life = lifecycle({
     layer,
     journal: journalOf(layer.cache),
     view: () => o.noView || dropped ? null : view,
+    caretInEntry: () => !o.noCaret,
+    source: () => o.source && !dropped ? source : null,
     session: {
       get current() { return current; },
       flushSave: () => { log.push("flush"); onFlush?.(); return Promise.resolve(true); },
@@ -161,6 +166,22 @@ describe("create", () => {
     await code.life.create();
     expect(code.log).toEqual(["say no link inside a code block"]);
     expect(code.md("page/A/B")).toBeNull();
+  });
+  it("a new name with the caret outside the entry refuses before anything is minted; an existing one still opens", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n", "page/A/C": "c\n" }, noCaret: true });
+    w.answer("B");
+    await w.life.create();
+    expect(w.log).toEqual(["say place your cursor in the entry"]);
+    expect(w.md("page/A/B")).toBeNull();
+    w.answer("C");
+    await w.life.create();
+    expect(w.log.slice(1)).toEqual(["goto #page/A/C | already here"]);
+  });
+  it("in the markdown view the link is typed after the caret, inside code too", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" }, noView: true, source: true });
+    w.answer("B");
+    await w.life.create();
+    expect(w.log).toEqual(["set page/A/B", "type [B](#page/A/B)", "save", "set page/A", "redraw", "goto #page/A/B"]);
   });
   it("registers the name empty, then puts the link after the caret, saves, redraws, goes", async () => {
     const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" } });

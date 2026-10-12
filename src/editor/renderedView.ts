@@ -70,8 +70,8 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
       view.dispatch(tr);
       view.focus();
     },
-    insertText: (text) => {
-      view.dispatch(view.state.tr.insertText(text).scrollIntoView());
+    insertText: (text, after) => {
+      view.dispatch((after ? view.state.tr.insertText(text, view.state.selection.to) : view.state.tr.insertText(text)).scrollIntoView());
       view.focus();
     },
     insertPicture: (name) => {

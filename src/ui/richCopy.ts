@@ -27,6 +27,19 @@ export function richBlockHtml(el: Element): string {
   clone.querySelectorAll(".folio").forEach((f) => f.remove());
   return clone.outerHTML.replace(/​/g, "");
 }
+/* a picture's address on screen is one this tab alone can read: the copy
+   carries its bytes instead, so it survives a paste into another app (pin:
+   notices and surfaces as the old app has them › a block with a picture
+   hover-copied) */
+export function withPictureBytes(html: string): Promise<string> {
+  const t = document.createElement("template");
+  t.innerHTML = html;
+  const imgs = Array.from(t.content.querySelectorAll("img")).filter((i) => i.getAttribute("src")?.startsWith("blob:"));
+  if (!imgs.length) return Promise.resolve(html);
+  const asData = (b: Blob): Promise<string> => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(r.error); r.readAsDataURL(b); });
+  return Promise.all(imgs.map((img) => fetch(img.getAttribute("src")!).then((r) => r.blob()).then(asData)
+    .then((u) => { img.setAttribute("src", u); }, () => {}))).then(() => t.innerHTML);
+}
 /* the reference's HTML: the citation line, then the quoted passage
    rendered from its markdown and swept while parked under the surface */
 export function richReferenceHtml(surface: HTMLElement, url: string, label: string, passageMd: string): string {

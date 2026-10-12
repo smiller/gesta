@@ -36,13 +36,14 @@ export function blankSubTree(keys: string[], listKey: string): string[] {
   for (const s of childrenOf(keys, listKey)) { const k = entryKey(listKey, s); out.push(...blankSubTree(keys, k)); out.push(k); }
   return out;
 }
-export interface SubButtons { create: string; createTitle: string; canCreate: boolean; canEdit: boolean; renameTitle: string; deleteTitle: string }
+export interface SubButtons { create: string; createTitle: string; tagTitle: string; canCreate: boolean; canEdit: boolean; renameTitle: string; deleteTitle: string }
 export function subButtons(date: string, tag: string | null): SubButtons {
   const ns = nsOf(date);
   const level = entryNoun(date, tag) || "";
   return {
     create: ns ? "+ " + ns.subNoun : "+ tagged entry",
     createTitle: ns ? "Create a " + ns.subNoun + " here" : "Create a tagged sub-entry for this day",
+    tagTitle: "Move selection to a new " + (ns ? ns.subNoun : "tagged entry"),
     canCreate: !!ns || !tag,
     canEdit: !!tag,
     renameTitle: ns ? "Rename this " + level : "Rename this entry's tag",

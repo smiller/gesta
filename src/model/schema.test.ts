@@ -32,3 +32,6 @@ test("a grid cannot require a card: a card's colour has no default, so the schem
   const nodes = schema.spec.nodes.update("grid", { ...(schema.spec.nodes.get("grid") as NodeSpec), content: "card+" });
   expect(() => new Schema({ nodes, marks: schema.spec.marks })).toThrow(/non-generatable nodes \(card\)/);
 });
+test("a link says how it opens", () => {
+  expect(schema.marks.link.spec.toDOM!(schema.marks.link.create({ href: "#page/Horace" }), true)).toEqual(["a", { href: "#page/Horace", title: "⌘-click to open" }, 0]);
+});

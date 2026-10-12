@@ -20,7 +20,7 @@
   <button title="Curl straight quotes (⌘')" onclick={() => onAct("curl")}>‘’</button>
   <button class="ct" title="Copy a reference to this passage (⌃⌘R)" onclick={() => onAct("reference")}>Ref</button>
   <button class="wc" title="Word count of the selection (⌃⌘W)" onclick={() => onAct("words")}>Words</button>
-  <button class="t" title="Move selection to a new sub-entry" hidden={!bar.canTag} onclick={() => onAct("tag")}>Tag</button>
+  <button class="t" title={bar.tagTitle} hidden={!bar.canTag} onclick={() => onAct("tag")}>Tag</button>
 </div>
 
 <style>

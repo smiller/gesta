@@ -39,6 +39,11 @@ describe("the buttons and the dialogs", () => {
     expect(subButtons("page", "Books")).toMatchObject({ create: "+ sub-page", canCreate: true, canEdit: true, renameTitle: "Rename this page", deleteTitle: "Delete this page" });
     expect(subButtons("bookshelf", "Dante/Inferno")).toMatchObject({ create: "+ book", renameTitle: "Rename this book" });
   });
+  it("the Tag button's title names what the selection moves to", () => {
+    expect(subButtons("2026-09-07", null).tagTitle).toBe("Move selection to a new tagged entry");
+    expect(subButtons("page", "Books").tagTitle).toBe("Move selection to a new sub-page");
+    expect(subButtons("bookshelf", "Dante").tagTitle).toBe("Move selection to a new book");
+  });
   it("the prompt and the confirm lead with the noun", () => {
     expect(renamePrompt("2026-09-07", "Ideas", "Ideas")).toBe('Rename the tag "Ideas" to:');
     expect(renamePrompt("bookshelf", "Dante/Inferno", "Inferno")).toBe('Rename the book "Inferno" to:');

@@ -18,12 +18,12 @@ export type ImportFile = DocFile | UnreadDoc | SidecarFile;
 /* `flat` the stem it had before folders existed, `entry` the entry it
    belongs to, `root` its archive, `sig` its content hash once asked for,
    `picsLost` the entry target when a picture the text names had no bytes,
-   `picsFaulted` when a picture read threw */
+   `picsMissing` how many, `picsFaulted` when a picture read threw */
 export interface ExportFile {
   dir: string; name: string;
   text?: string; bytes?: Uint8Array | null;
   flat?: string; entry?: string; root?: string; sig?: string;
-  picsLost?: EntryFile; picsFaulted?: boolean;
+  picsLost?: EntryFile; picsMissing?: number; picsFaulted?: boolean;
 }
 export function isDoc(f: object): boolean { return !("bytes" in f); }
 export function fileBody(f: ExportFile): string | Uint8Array { return isDoc(f) ? f.text! : f.bytes!; }

@@ -448,7 +448,9 @@ is in the plan's record, under the phase named):
   so it is pushed) and a prose page with margin-notes between paragraphs
   and in a grid card.
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
-  (vite-plugin-singlefile inlines everything): `<main>` holding the editor,
+  (vite-plugin-singlefile inlines everything; the tab's icon,
+  `src/favicon.ico`, the old app's, is inlined by main.ts itself, a
+  `<link>` in index.html being emitted as a file beside the page): `<main>` holding the editor,
   and main.ts the wiring — the layer, the backup, the session, the
   ledger and the masthead's acts meet there. The query strings are the
   headless tools' (`?store=seed`, `?store=seed-stanza`, `?store=write`,

@@ -83,7 +83,7 @@ export interface Session {
   /* honorMarkers for a search-box jump; a link's payload is literal
      (pin: search › Enter) (pin: reference paste › the reference link followed) */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
-  insertText(text: string): boolean;
+  insertText(text: string, after?: boolean): boolean;
   /* null outside the source view */
   replacer(): ReplacePort | null;
   readonly mdView: boolean;
@@ -129,7 +129,10 @@ export function startSession(opts: SessionOptions): Session {
       decoding = false;
       if (aimedAt !== ekeyOf() || aimedMd !== surface.md) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
       const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
-      return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); });
+      /* a write that fails is not a picture that could not be read (pin:
+         notices and surfaces as the old app has them › a picture whose write fails) */
+      return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); },
+        (err: unknown) => { console.error("picture not saved", err); opts.stick?.("picture not saved — storage full"); });
     }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
   }
   const folds = stored(NS + "folds", parseFoldStore);
@@ -235,9 +238,9 @@ export function startSession(opts: SessionOptions): Session {
        frame later when the size is observed (pin: places › the warm landed) */
     keeper.reapply();
   }
-  function insertText(text: string): boolean {
+  function insertText(text: string, after = false): boolean {
     if (!surface.current) return false;
-    surface.current.insertText(text);
+    surface.current.insertText(text, after);
     return true;
   }
   function highlight(q: string, nth: number, honorMarkers: boolean): boolean {
@@ -396,12 +399,13 @@ export function startSession(opts: SessionOptions): Session {
     goto(entryHash(nb[0], nb[1]));
   }
   function today(): void { goto(entryHash(todayKey()), "already on today"); }
-  /* a failed write is an error, pinned to be clicked into a bug report;
-     the markdown, which lives nowhere else, goes to the console
+  /* a failed write is pinned, and a click on the pin copies the markdown
+     the write was carrying; the console keeps it too. A failure landing
+     after the entry changed is whispered, not pinned over another entry
      (pin: entries left and renamed › ⌃⌘C with the clipboard refused) */
   let copyPin = 0, copyGen = 0;
   function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
-    const gen = ++copyGen;
+    const gen = ++copyGen, from = ekeyOf();
     writeClipboard(payload).then((ok) => {
       /* the LATEST copy's outcome is the corner's: one that lands releases a
          failed one's pin (pin: entries left and renamed › ⌃⌘C again, the
@@ -411,7 +415,8 @@ export function startSession(opts: SessionOptions): Session {
       if (copyPin) { opts.releasePin?.(copyPin); copyPin = 0; }
       if (ok) { say(okText); return; }
       console.error(failText, payload.text);
-      copyPin = opts.pin ? opts.pin(failText) : 0;
+      if (from !== ekeyOf()) { say(failText, 3000); return; }
+      copyPin = opts.pin ? opts.pin(failText, payload.text) : 0;
       if (!copyPin) say(failText);
     });
   }
@@ -442,13 +447,14 @@ export function startSession(opts: SessionOptions): Session {
      (pin: source view › ⌃⌘W rendered) */
   document.addEventListener("keydown", (e) => {
     if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
-    if (e.key === ",") { e.preventDefault(); step("prev"); }
-    else if (e.key === ".") { e.preventDefault(); step("next"); }
-    else if (e.key === "t") { e.preventDefault(); today(); }
-    else if (e.key === "r") { e.preventDefault(); copyReference(); }
-    else if (e.key === "c") { e.preventDefault(); copyEntryLink(); }
-    else if (e.key === "m") { e.preventDefault(); opts.onSwitch?.(); surface.switchTo(!surface.md); }
-    else if (e.key === "w") { e.preventDefault(); showWordCount(); }
+    const k = e.key.toLowerCase();
+    if (k === ",") { e.preventDefault(); step("prev"); }
+    else if (k === ".") { e.preventDefault(); step("next"); }
+    else if (k === "t") { e.preventDefault(); today(); }
+    else if (k === "r") { e.preventDefault(); copyReference(); }
+    else if (k === "c") { e.preventDefault(); copyEntryLink(); }
+    else if (k === "m") { e.preventDefault(); opts.onSwitch?.(); surface.switchTo(!surface.md); }
+    else if (k === "w") { e.preventDefault(); showWordCount(); }
   });
   return {
     get current() { return current; },

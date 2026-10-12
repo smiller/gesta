@@ -13,16 +13,16 @@ import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { idbEntryStore, idbImageStore, idbBackupStore } from "./store/store.ts";
-import { exportEntries } from "./store/exportEntries.ts";
+import { exportEntries, missingPictures } from "./store/exportEntries.ts";
 import { writeFilesTo } from "./store/io.ts";
 import { backupRunner, PAUSED_MSG } from "./store/backup.ts";
 import { entryLayer } from "./store/entries.ts";
 import { pickImportFiles } from "./store/pick.ts";
 import type { Dir } from "./store/fsa.ts";
 import { importFiles, importKeys } from "./store/importFiles.ts";
-import { entryDocs, isDoc, failMsg, errText } from "./store/files.ts";
+import { entryDocs, isDoc, failMsg, errText, filePath, type Merged } from "./store/files.ts";
 import { startSession } from "./session.ts";
-import { readRaw } from "./store/local.ts";
+import { readRaw, writeRaw } from "./store/local.ts";
 import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { noticeLedger, type Progress } from "./ui/notices.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
@@ -58,7 +58,8 @@ import Masthead from "./ui/Masthead.svelte";
 import Toolbar from "./ui/Toolbar.svelte";
 import CopyButton from "./ui/CopyButton.svelte";
 import { writeClipboard } from "./ui/clipboard.ts";
-import { richBlockHtml } from "./ui/richCopy.ts";
+import { richBlockHtml, withPictureBytes } from "./ui/richCopy.ts";
+import icon from "./favicon.ico?inline";
 import { schema } from "./model/schema.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "./editor/format.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
@@ -76,9 +77,17 @@ const q = new URLSearchParams(location.search);
 /* ms before a store that has not answered is said not to have loaded */
 const LOAD_PATIENCE_MS = 8000;
 
+/* the tab's icon, inlined: the page is one file (pin: notices and surfaces
+   as the old app has them › the tab's icon) */
+document.head.append(Object.assign(document.createElement("link"), { rel: "icon", href: icon }));
 const notices = noticeLedger(copyText);
 const say = notices.whisper;
-const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : 5);
+/* the Line numbering choice is kept in this browser, out of the entries, so
+   no backup carries it (pin: notices and surfaces as the old app has them ›
+   Line numbering kept across a reload) */
+const LINES_KEY = NS + "lineinterval";
+const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
+const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : isNaN(keptInterval) || keptInterval < 0 ? 5 : keptInterval);
 type Ns = "page" | "bookshelf";
 type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
@@ -92,7 +101,7 @@ const acts = {
   lines: (_open: boolean) => {},
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
-  lineBar: { toggle: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
+  lineBar: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page", _v: string) => {}, enter: (_kind: "line" | "page", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
   replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, closeOver: () => {}, dismiss: () => {}, check: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
@@ -112,7 +121,10 @@ mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: s
 mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
-  onInterval: (n: number) => { screen.interval = n; acts.interval(n); },
+  onInterval: (n: number) => {
+    if (!q.get("fixture") && !writeRaw(LINES_KEY, String(n))) { notices.stickErrIdle("line numbers not saved — storage full", null); return; }
+    screen.interval = n; acts.interval(n);
+  },
   /* the row closed by its own label hands the keys back as ⌃⌘L does
      (pin: where the keys go › Line numbering closed by its label) */
   onLines: (open: boolean) => acts.lines(open),
@@ -158,20 +170,23 @@ window.addEventListener("blur", () => { pressedIn.clear(); });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
   if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
+  /* a letter is matched in either case: Caps Lock leaves the chord a
+     chord (pin: notices and surfaces as the old app has them › ⌃⌘K with Caps Lock) */
+  const k = e.key.toLowerCase();
   /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
-  if (e.key === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
-  else if (e.key === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
-  else if (e.key === "g") { e.preventDefault(); acts.lineBar.toggle(); }
-  else if (e.key === "h") { e.preventDefault(); acts.panel("help", true); }
-  else if (e.key === "b") { e.preventDefault(); acts.panel("bookmarks", true); }
-  else if (e.key === "s") { e.preventDefault(); acts.panel("shortcuts", true); }
+  if (k === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
+  else if (k === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
+  else if (k === "g") { e.preventDefault(); acts.lineBar.toggle(); }
+  else if (k === "h") { e.preventDefault(); acts.panel("help", true); }
+  else if (k === "b") { e.preventDefault(); acts.panel("bookmarks", true); }
+  else if (k === "s") { e.preventDefault(); acts.panel("shortcuts", true); }
   /* ⌃⌘L toggles the Line numbering row — L for lines; Tab belongs to
      indent, so no masthead row is reachable from the editor without a
      chord of its own */
-  else if (e.key === "l") { e.preventDefault(); acts.lines(!screen.linesOpen); }
-  else if (e.key === "n") { e.preventDefault(); acts.create(); }
+  else if (k === "l") { e.preventDefault(); acts.lines(!screen.linesOpen); }
+  else if (k === "n") { e.preventDefault(); acts.create(); }
   /* ⌃⌘R is the reference, so replace is ⌃⌘E, for exchange */
-  else if (e.key === "e") { e.preventDefault(); acts.replace.open(); }
+  else if (k === "e") { e.preventDefault(); acts.replace.open(); }
 });
 
 const tabs = typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
@@ -221,6 +236,7 @@ if (fixture && fixtures[fixture]) {
      every key. The heading behind the title row is memoised on the text. */
   const journal = journalOf(layer.cache);
   let shown = { ekey: "", stored: "" };
+  let dropStaleCopy = (): void => {};
   const refreshMasthead = (): void => {
     const c = session.current;
     screen.masthead = mastheadModel(c.date, c.tag, Object.keys(layer.cache), journal, todayKey());
@@ -230,12 +246,14 @@ if (fixture && fixtures[fixture]) {
     stick: (text, copy) => { notices.stick(text, copy); },
     pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
+      dropStaleCopy();
       screen.gutter = !!session.view?.dom.classList.contains("versepage");
       if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
       else acts.replace.check();
+      if (screen.lineBar.open) acts.lineBar.reask();
       if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
     },
-    onView: (md) => { screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
+    onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
     onSwitch: () => overlay.open("view"),
     onHere: () => overlay.open("here"),
     onSelect: () => requestAnimationFrame(placeBar),
@@ -291,6 +309,10 @@ if (fixture && fixtures[fixture]) {
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
   const sr = screen.search;
   const scopeNow = () => sr.options[sr.scopeAt]?.scope || defaultScope(session.current.date, session.current.tag);
+  /* the query the rows on screen were built for: a row clicked after the
+     query was typed on highlights what it was found for (pin: notices and
+     surfaces as the old app has them › a result clicked after more typing) */
+  let builtFor = "";
   const renderSearch = (): void => {
     if (!sr.open) return;
     const q = sr.query.trim();
@@ -310,6 +332,7 @@ if (fixture && fixtures[fixture]) {
     sr.capped = results.length > SEARCH_CAP;
     if (sr.capped) results = results.slice(0, SEARCH_CAP);
     sr.rows = results.map((result) => ({ result, where: resultLabel(result, scope, journal), runs: snippetRuns(result.snippet, q) }));
+    builtFor = q;
     sr.active = 0;
   };
   const cancelScan = (): void => { if (searchTimer) clearTimeout(searchTimer); searchTimer = null; };
@@ -340,7 +363,7 @@ if (fixture && fixtures[fixture]) {
   acts.search.pick = (i) => {
     const row = sr.rows[i];
     if (!row) return;
-    const q = sr.query;   /* the query the row was BUILT for */
+    const q = builtFor;
     openRow(false);
     session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
   };
@@ -392,7 +415,16 @@ if (fixture && fixtures[fixture]) {
     if (on && !sc.editing && !sc.dirty) sc.draft = readRaw(SHORTCUTS_KEY) || "";
     sc.editing = on;
   };
+  /* WHERE THE KEYS WERE when a card opened or an act began: the window's
+     selection, which a button's press leaves where it was. A card that
+     inserts reads it at its opening, so a card opened from outside the
+     entry inserts nothing (pin: notices and surfaces as the old app has
+     them › a shortcut chosen with no cursor in the entry) */
+  const caretInEntry = (): boolean => { const a = document.getSelection()?.anchorNode; return !!a && mountEl.contains(a); };
+  const sourcePort = { insertAfter: (text: string) => { session.insertText(text, true); } };
+  let cardCaret = false;
   const openShortcuts = (): void => {
+    cardCaret = caretInEntry();
     overlay.open("shortcuts");
     sc.query = "";
     sc.editing = false;
@@ -402,7 +434,7 @@ if (fixture && fixtures[fixture]) {
   };
   const insertShortcut = (expansion: string): void => {
     closePanel();
-    if (!session.insertText(expansion)) say("place your cursor in the entry", 2000);
+    if (!cardCaret || !session.insertText(expansion)) { say("place your cursor in the entry", 2000); session.focusText(); }
   };
   acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
   acts.shortcuts.walk = (dir) => { if (sc.rows.length) sc.active = (sc.active + dir + sc.rows.length) % sc.rows.length; };
@@ -440,6 +472,7 @@ if (fixture && fixtures[fixture]) {
     setTimeout(() => { masthead.focusBookmarks(); bm.opening = 0; }, 0);
   };
   const openBookmarks = (): void => {
+    cardCaret = caretInEntry();
     overlay.open("bookmarks");
     marks.open(layer.warmed ? keysNow : null).then((wrote) => { if (wrote && screen.panel === "bookmarks") renderBookmarks(); });
     bm.editing = ""; bm.draft = ""; bm.buf = "";
@@ -513,20 +546,22 @@ if (fixture && fixtures[fixture]) {
       bm.buf = ""; bm.editing = key; bm.draft = b.alias; bm.opening = 1;
       renderBookmarks();
     } else if (what === "link") {
-      /* the link at the caret the editor still holds; every way it cannot
+      /* the link after the caret the card opened on; every way it cannot
          land says why, nothing is appended at the end, and the keys go back
          to the text either way (pin: editing as the old app does › a
-         bookmark's link pressed in inline code) */
+         bookmark's link pressed in inline code); in the markdown view it is
+         typed there as markdown (pin: notices and surfaces as the old app
+         has them › a bookmark's link in the markdown view) */
       if (warmBlock()) return;
       closePanel();
       session.focusText();
       if (key === hereKey()) { say(alreadyOn(key, journal), 2000); return; }
       const view = session.view;
-      if (!view) { say("place your cursor in the entry", 2000); return; }
-      const why = linkRefusal(view.state);
+      if (!cardCaret || (!view && !session.mdView)) { say("place your cursor in the entry", 2000); return; }
+      const why = view && linkRefusal(view.state);
       if (why) { say(why, 2000); return; }
-      const p = bookmarkParts(key);
-      insertLinkAfter(view, entryHash(p.date, p.tag), mdLabel(bookmarkLinkLabel(key, journal), "entry"));
+      const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
+      if (view) insertLinkAfter(view, href, label); else session.insertText("[" + label + "](" + href + ")", true);
       session.saveNow();
     } else jumpBookmark(b);
   };
@@ -626,6 +661,19 @@ if (fixture && fixtures[fixture]) {
     lb.open = true;
     setTimeout(() => masthead.focusLineBar(), 0);
   };
+  /* the boxes follow the entry under the open bar, and a box hidden under
+     the focus hands it to the one shown; an entry that answers neither keeps
+     both (pin: notices and surfaces as the old app has them › the line bar
+     re-asked when the entry gains a page marker) */
+  acts.lineBar.reask = () => {
+    const view = session.view;
+    if (!lb.open || !view) return;
+    const asked = askKind(view.state.doc), kind = asked === "none" ? "both" : asked;
+    if (kind === lb.kind) return;
+    const held = document.activeElement?.closest(".linebar") ? document.activeElement : null;
+    lb.kind = kind;
+    if (held) setTimeout(() => { if (held.closest("[hidden]")) masthead.focusLineBar(); }, 0);
+  };
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
     if (repeat || session.mdView || !session.view) return;
@@ -645,8 +693,15 @@ if (fixture && fixtures[fixture]) {
     if (kind === "page") goToFolio(v.trim()); else goToLine(parseInt(v.trim(), 10));
   };
   acts.lineBar.close = putLineCaret;
+  /* a click whose press began in the bar is a drag out of a box, not a
+     click away (pin: notices and surfaces as the old app has them › a drag
+     from the Line box out over the entry) */
+  let pressedInBar = false;
+  document.addEventListener("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".linebar"); }, true);
   document.addEventListener("click", (e) => {
-    if (!lb.open) return;
+    const fromBar = pressedInBar;
+    pressedInBar = false;
+    if (!lb.open || fromBar) return;
     if (e.clientX > document.documentElement.clientWidth || e.clientY > document.documentElement.clientHeight) return;
     if ((e.target as Element).closest(".linebar")) return;
     closeLineBar();
@@ -802,6 +857,10 @@ if (fixture && fixtures[fixture]) {
      its corner). */
   const idle = (t: HTMLElement | null): string => t?.classList.contains("grid") ? "copy grid" : "copy";
   const hideCopy = (): void => { copyTarget = null; cp.show = false; if (copyReset) clearTimeout(copyReset); cp.label = "copy"; };
+  /* a block gone from the screen takes its copy button with it, whether or
+     not the window scrolled (pin: notices and surfaces as the old app has
+     them › the copy button after a navigation) */
+  dropStaleCopy = () => { if (copyTarget && !session.view?.dom.contains(copyTarget)) hideCopy(); };
   const showCopy = (target: HTMLElement): void => {
     if (target !== copyTarget) { if (copyReset) clearTimeout(copyReset); cp.label = idle(target); }
     copyTarget = target;
@@ -888,11 +947,11 @@ if (fixture && fixtures[fixture]) {
     };
     const node = blockAt(copyTarget);
     if (!node) { done(false); say("Copy failed", 3000); return; }
-    const payload = node.type === schema.nodes.code_block ? node.textContent.replace(/\n$/, "")
+    const written = node.type === schema.nodes.code_block ? writeClipboard(node.textContent.replace(/\n$/, ""))
       /* the swept HTML, not the raw: with the raw outerHTML a card pasted into
          Mail arrived as plain lines (pin: card copy › a card hover-copied) */
-      : { text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html: richBlockHtml(copyTarget) };
-    writeClipboard(payload).then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
+      : withPictureBytes(richBlockHtml(copyTarget)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html }));
+    written.then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
   };
   /* THE FLOATING BAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
@@ -912,10 +971,15 @@ if (fixture && fixtures[fixture]) {
     screen.bar.incode = inCode(view.state);
     screen.bar.on = formatState(view.state);
     screen.bar.canTag = screen.masthead.buttons.canCreate;
+    screen.bar.tagTitle = screen.masthead.buttons.tagTitle;
     screen.bar.show = true;
   };
   document.addEventListener("selectionchange", () => requestAnimationFrame(placeBar));
   window.addEventListener("scroll", placeBar, { passive: true });
+  /* a header row opening or closing moves the text under the bar (pin:
+     notices and surfaces as the old app has them › the format bar after
+     Line numbering opens) */
+  new ResizeObserver(() => requestAnimationFrame(placeBar)).observe(document.querySelector(".site-head")!);
   document.addEventListener("mousedown", () => { barSuppressed = false; });
   mountEl.addEventListener("keydown", () => { barSuppressed = false; });
   const suppressBar = (): void => { barSuppressed = true; screen.bar.show = false; };
@@ -935,6 +999,8 @@ if (fixture && fixtures[fixture]) {
   const life = lifecycle({
     layer, journal, session,
     view: () => session.view,
+    caretInEntry,
+    source: () => session.mdView ? sourcePort : null,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
     moveKept: (moves) => {
       session.moveFolds(moves);
@@ -959,11 +1025,31 @@ if (fixture && fixtures[fixture]) {
     if (ns === "shortcuts") { openShortcuts(); return; }
     if (ns === "backups") { overlay.open("backups"); readBackups(); screen.panel = "backups"; return; }
     overlay.open("pages");
+    answerPanel(ns);
+    screen.panel = ns;
+  };
+  function answerPanel(ns: Ns): void {
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
       : "No authors yet — import a folder, or start one below.";
-    screen.panel = ns;
+  }
+  /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
+     read ends, well or badly: the search, the Go to row where no hand is in
+     it, an open panel once the pointer and the keys have left it, so no
+     row is rebuilt under a click, and the backups status (pin: notices and
+     surfaces as the old app has them › Search opened before the warm) */
+  const reanswerOpen = (): void => {
+    if (sr.open) renderSearch();
+    if (screen.goto.open && !document.activeElement?.closest(".page-goto")) { const c = session.current; screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag); }
+    const ns = screen.panel;
+    if (ns === "page" || ns === "bookshelf") {
+      const el = document.querySelector(".pages");
+      const answer = (): void => { if (screen.panel === ns) answerPanel(ns); };
+      if (el && (el.matches(":hover") || el.contains(document.activeElement))) el.addEventListener("mouseleave", answer, { once: true });
+      else answer();
+    }
+    if (ns === "backups") readBackups();
   };
   acts.newRoot = (ns) => {
     closePanel();
@@ -1003,6 +1089,9 @@ if (fixture && fixtures[fixture]) {
      the warm to answer whether it is refused. The masthead lists read the
      whole cache, so they are redrawn when the warm lands. */
   let opened = false;
+  /* a bare launch names the day it opens in the address (pin: notices and
+     surfaces as the old app has them › a bare launch) */
+  if (!location.hash) history.replaceState(null, "", entryHash(todayKey()));
   const h0 = hashParts(location.hash.slice(1));
   const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
     if (found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date)) { session.openHash(); opened = true; stage("primed"); }
@@ -1023,13 +1112,14 @@ if (fixture && fixtures[fixture]) {
     if (slowPin) notices.releasePin(slowPin);
     /* an unreadable journal is an error, not a status: it sticks, the
        caught failure copyable */
-    if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); return; }
+    if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); reanswerOpen(); return; }
     stage("all"); count();
     say(Object.keys(layer.cache).length + " entries stored");
     /* an entry opened from its primed row is redrawn only where the warm
        changes it: the masthead lists, and whether a contents page folds (pin:
        places › the warm landed) */
     if (!opened || session.hashDeferred) session.openHash(); else { refreshMasthead(); session.refreshFolds(); }
+    reanswerOpen();
     buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an
@@ -1051,7 +1141,9 @@ if (fixture && fixtures[fixture]) {
        again (pin: losing nothing › export pressed again while one runs) */
     session.focusText();
     if (!win.showDirectoryPicker) { say("export needs a browser that can open a folder to write into"); return; }
-    if (!layer.warmed) { say("still loading — try that again in a moment"); return; }
+    /* a store that failed to read says so, not "still loading" for the
+       whole session (pin: lifecycle.test › says loading while the warm runs) */
+    if (warmBlock()) return;
     if (stillRunning()) return;
     longRun = "an export";
     const dirPicked = win.showDirectoryPicker({ mode: "readwrite" });
@@ -1059,14 +1151,19 @@ if (fixture && fixtures[fixture]) {
     const p = notices.progress("exporting…");
     session.flushSave().then(() => exportEntries(layer.cache, images)).then((files) => {
       if (!files.length) { p.ok("nothing to export"); return; }
-      const docs = files.filter(isDoc).length;
+      const docs = files.filter(isDoc).length, missing = missingPictures(files);
+      /* a picture the store lacks keeps its name in the text and is counted
+         here (pin: exportEntries.test › exportEntries: a doc per non-blank entry) */
+      const lostNote = missing ? " — " + missing + (missing === 1 ? " picture" : " pictures") + " missing" : "";
+      const lostList = files.filter((f) => f.picsMissing).map((f) => filePath(f) + ": " + f.picsMissing + " missing").join("\n");
       return dirPicked.then((dir) => writeFilesTo(dir, files, p.step)).then((failures) => {
         if (failures.length) {
           const lostDocs = failures.filter((x) => x.doc).length;
           console.error("export: " + failures.length + " file(s) failed", failures);
-          const msg = "exported " + (docs - lostDocs) + " entries; " + failures.length + " file(s) failed";
-          p.fail(msg, failures.map((x) => x.name + ": " + (errText(x.error) || String(x.error))).join("\n"));
-        } else p.ok("exported " + docs + " entries");
+          const msg = "exported " + (docs - lostDocs) + " entries; " + failures.length + " file(s) failed" + lostNote;
+          p.fail(msg, failures.map((x) => x.name + ": " + (errText(x.error) || String(x.error))).join("\n") + (lostList ? "\n" + lostList : ""));
+        } else if (missing) p.fail("exported " + docs + " entries" + lostNote, lostList);
+        else p.ok("exported " + docs + " entries");
       });
     }).catch((err: unknown) => {
       if ((err as Error)?.name === "AbortError") { p.cancel(); return; }
@@ -1092,7 +1189,11 @@ if (fixture && fixtures[fixture]) {
       const n = docs.length;
       const refused = files.filter(isDoc).length - n;
       const refusedNote = refused ? refused + " .md file" + (refused === 1 ? "" : "s") + " will NOT be imported." : "";
-      if (!n) { say(refused ? "nothing to import here — " + refusedNote : "nothing to import"); return; }
+      /* a folder whose every page is refused says so until clicked (pin:
+         notices and surfaces as the old app has them › an import of refused
+         files only) */
+      if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return; }
+      if (!n) { say("nothing to import"); return; }
       const entries = n + (n === 1 ? " entry" : " entries");
       if (!confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
           " from this folder? Each one overwrites that entry in this journal, and there is no undo.")) return;
@@ -1119,9 +1220,14 @@ if (fixture && fixtures[fixture]) {
     }).catch((err: unknown) => {
       session.lockEntries(null);
       if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
-      console.error("import failed", err);
       const msg = failMsg("import failed", err);
-      if (p) p.fail(msg, msg); else notices.stickErr("import failed", err);
+      /* two files spelling one entry say which, on screen; any other
+         failure names its error there too (pin: notices and surfaces as the
+         old app has them › an import of two files for one entry) */
+      const merged = (err as Partial<Merged>)?.merged;
+      if (p) { console.error("import failed", err); p.fail(msg, msg); }
+      else if (merged) notices.stickErrIdle((err as Error).message, null, merged);
+      else notices.stickErrIdle(msg, err);
     }).finally(() => { longRun = null; });
   };
 }

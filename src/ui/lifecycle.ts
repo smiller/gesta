@@ -15,6 +15,7 @@ import { nsOf, pageParts, entryKey, entryHash, KEYED_NS } from "../store/keys.ts
 import { registered, childrenOf } from "../store/lists.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
+export interface SourcePort { insertAfter(text: string): void }
 export type SessionPort = Pick<Session, "current" | "flushSave" | "suspendSaves" | "surfaceMd" | "open" | "movePlace" | "movePlaces" | "refresh" | "goto" | "saveNow">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
@@ -33,6 +34,10 @@ export interface LifecycleDeps {
   layer: EntryLayer;
   journal: Journal;
   view(): EditorPort | null;
+  /* read as an act begins, before a prompt takes the focus */
+  caretInEntry(): boolean;
+  /* the markdown view, where it is the one showing */
+  source(): SourcePort | null;
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
@@ -89,8 +94,14 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   };
   const newName = (ns: ReturnType<typeof nsOf>): string => ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:";
 
+  /* A NEW NAME'S LINK GOES AFTER THE CARET THE ACT BEGAN WITH: none in the
+     entry refuses before anything is minted, and an existing name just
+     opens (pin: lifecycle.test › a new name with the caret outside the
+     entry refuses); in the markdown view it is typed there as markdown,
+     anywhere (pin: lifecycle.test › in the markdown view the link is typed) */
   function create(): Promise<void> {
     if (cold()) return done;
+    const inEntry = deps.caretInEntry();
     const c = session.current;
     const ns = nsOf(c.date);
     /* the one leaf: a day's tagged entry hosts nothing, and ⌃⌘N reaches it all the same */
@@ -103,17 +114,18 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if ("refuse" in spec) { ui.say(spec.refuse); return done; }
     const key = entryKey(c.date, spec.full);
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return done; }
-    const view = deps.view();
-    if (!view) { ui.say("place your cursor in the entry", 2000); return done; }
-    const why = linkRefusal(view.state);
+    const view = deps.view(), source = view ? null : deps.source();
+    if (!inEntry || (!view && !source)) { ui.say("place your cursor in the entry", 2000); return done; }
+    const why = view && linkRefusal(view.state);
     if (why) { ui.say(why, 2000); return done; }
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
        (pin: lifecycle.test › says a registration that did not land) */
     return layer.setEntry(key, "").then((landed) => {
       if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
-      if (view !== deps.view()) { ui.say("the entry was made — the link was not placed", 3000); return; }
-      insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
+      if (view ? view !== deps.view() : source !== deps.source()) { ui.say("the entry was made — the link was not placed", 3000); return; }
+      if (view) insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
+      else source!.insertAfter("[" + mdLabel(spec.tag, "entry") + "](" + spec.href + ")");
       return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
     });
   }

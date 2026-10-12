@@ -201,3 +201,10 @@ the quote button with the caret in a quote's middle paragraph · cursor · the q
 Shift-Tab on the middle run of a nested quote · md · the same quote on both — intro, a nested, b lifted, c nested; this app writes a quote's blocks with no blank quote line between, as everywhere
 items 4–5 of a list from 3 copied · cursor · the same two items selected on both; the current app counts the item boundary as a character
 page labels beside their leaf's first word · off · the current app's own rule is the label beside the leaf's first word, and its anchor misses where a space follows the marker (9 of 72); this app measures to the first word (0 of 72)
+a bare launch · cursor · an arrival gives the caret here (a3f81a2); the current app's bare launch left no focus
+Line numbering kept across a reload · cursor · the same: a reload is an arrival
+an import of refused files only · cursor · the Import button hands the keys back to the text here (losing nothing › typed into an entry an import overwrites); the current app leaves them on the button
+an import of two files for one entry · cursor · the same
+a picture whose write fails · corner · asked 2026-10-12 (the inventory's 56a): a failed picture write says so here; the current app kept the picture inline in the text, so its whole save failed
+the line bar re-asked when the entry gains a page marker · after · the boxes follow every change shown here; the current app re-asks on its own repaint, which another tab's write did not cause in its run (MEASURED)
+Search opened before the warm · loading · ?warm=slow is the successor's probe alone: the current app read its journal at once

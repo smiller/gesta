@@ -537,3 +537,54 @@ Seen and not taken (the reviewer's cut list): a "- " typed before a blank
 line in a quote leaves a hard break at the next paragraph's start, the
 saved text unchanged; a pasted refusal's pin replaces any stored fence
 refusals already pinned. REVIEW CYCLES: 1.
+
+## Groups 5–7, one batch (asked 2026-10-12)
+
+Asked: groups 5–7 built as one batch with one review at the end. Each item
+restored to the old app's behaviour, read from both codes first (two
+research passes, READ), except where noted:
+- 56, asked 2026-10-12, as recommended: (a) a picture whose write fails
+  says "picture not saved — storage full"; (b) an export names its lost
+  pictures in its tally ("exported N entries — 2 pictures missing"), the
+  exported text keeping each picture's name for a re-import; (c) a
+  hover-copied block's pictures travel in the HTML flavour only, the
+  markdown keeping the name, as stored.
+- 60: no action — a folded section is opened before the jump, so no
+  folio is left without a box (INFERRED); recorded, not asked.
+
+Built (2026-10-12), test-first: the pure parts in Vitest (the Tag title,
+the link title, the missing-picture count, the lifecycle's caret and
+markdown-view link), the wiring in a new step section, "notices and
+surfaces as the old app has them", played over both apps and over the
+unfixed src, every step's reading moving with its change (MEASURED):
+45. The bookmark card's link, "+ sub-page" and ⌃⌘N type `[label](href)`
+    after the caret in the markdown view, undoably, as the old app's
+    "+ sub-page" did (it had no ⌃⌘N).
+46. The caret is read when the bookmark or shortcuts card opens and when
+    "+ sub-page" is pressed: none in the entry says "place your cursor in
+    the entry" and inserts nothing.
+47. Search, the Go to row, an open page or bookshelf panel (once the
+    pointer and the keys have left it) and the backups status are
+    answered again when the journal read ends, well or badly.
+48. The open line bar's boxes follow the entry under it; a box hidden
+    under the focus hands it to the one shown.
+49. A result clicked after more typing highlights what it was found for.
+50. The format bar is re-placed when the masthead changes size.
+51. The copy button goes with its block on a navigation or ⌃⌘M.
+52. The Line numbering choice is kept in this browser
+    (gesta.v1.lineinterval); a failed write says "line numbers not saved
+    — storage full".
+53. A failed copy's pin copies the markdown; a failure landing after the
+    entry changed is whispered.
+54. "nothing to import here — …" sticks; two files for one entry say so on
+    screen; any other pick failure names its error.
+55. Export on a store that failed to read says "couldn’t load entries —
+    reload first".
+56. As asked, above.
+57. The Tag button's title names the namespace's noun.
+58. Every link says "⌘-click to open".
+59. The old app's icon, inlined by main.ts (a `<link>` in index.html was
+    emitted as a second file).
+61. A bare launch writes today's #date into the address.
+62. ⌃⌘ letters match in either case.
+63. A drag that began in the line bar does not close it.
