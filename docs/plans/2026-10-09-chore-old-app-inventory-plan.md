@@ -850,3 +850,19 @@ Asked after: 2016-07-25's "the vision after the Florence film" highlights
 the whole two-paragraph passage he gave in 2016-02-22, named by its first
 and last words (a span named so may run any length; a quotation placed
 by its lines may not run four times its own).
+Asked after: the ten links to entries filed anew (Doctor Who's series
+level gone, Sean's Books 68 renamed, the Figure of Beatrice now in
+chapters — its highlight in 7, Scivias Book 1/Vision 4 now 1.4) are
+repointed in the same folder, the address alone rewritten in the text.
+Found doing it: the store's rewriteLinks, which a sub-entry's rename
+uses, rebuilds a link's label with its first piece's marks, so
+`[Doctor Who, *The Zygon Inversion*]` lost its italics (MEASURED, a run
+over 2023-09-17) — put to him, not fixed here. Run: 7 links, 1 quotation
+made a reference, 10 links repointed, 24 drawers, in 31 entries; every
+one of the backup's 240 highlighted links finds its words (MEASURED).
+The sub-entries step ("the day's body ends with the link") flaked again
+under a full verify; it now waits for the click's selectionchange before
+End, as the source-view and bookmark-link steps do, and a full run after
+reads as approved (MEASURED). The rename's label loss confirmed by a
+probe: `[the *Ideas* page]` retargeted reads `[the Ideas page]`; a label
+wholly italic keeps its marks (MEASURED).

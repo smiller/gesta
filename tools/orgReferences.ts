@@ -5,6 +5,8 @@
    orgReferences.test › referOrgLinks: the quotation a link's line
    introduces). Code is left, and so is any link nothing resolves, with its
    reason (pin: orgReferences.test › referOrgLinks: an old link resolved) */
+import { entryLinkUrl } from "../src/editor/reference.ts";
+
 const ORG = /\[\[([^\]\s]+)\](?:\[([^\]]+)\])?\]/g;
 const FENCE = /^\s*(?:>\s*)*(```|~~~)/;
 const CODE = /`+[^`\n]*`+/g;
@@ -97,4 +99,19 @@ export function clearDrawers(md: string): { md: string; anchors: string[] } {
     i = j;
   }
   return { md: out.join("\n"), anchors };
+}
+
+/* LINKS TO AN ENTRY FILED ANEW pointed at its new place: the address
+   alone rewritten in the text, the words, their marks and the highlight
+   untouched (pin: orgReferences.test › repointed) */
+export function repointed(md: string, moved: Map<string, string>): string | null {
+  let changed = false;
+  const out = md.replace(/\]\(#([^)?\s]+)/g, (all: string, path: string) => {
+    const now = moved.get(decodeURIComponent(path));
+    if (!now) return all;
+    changed = true;
+    const [date, ...tag] = now.split("/");
+    return "](" + entryLinkUrl(date, tag.join("/") || null);
+  });
+  return changed ? out : null;
 }

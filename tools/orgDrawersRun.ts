@@ -5,7 +5,7 @@
    import, a review page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { referOrgLinks, anchoredParagraph, clearDrawers, type OrgLink, type Resolved, type Referred } from "./orgReferences.ts";
+import { referOrgLinks, anchoredParagraph, clearDrawers, repointed, type OrgLink, type Resolved, type Referred } from "./orgReferences.ts";
 import { shelfIndex, quotedProse } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -80,6 +80,20 @@ function referred(file: string, md: string): string {
   return [...lines.slice(0, a), ...r.text.split("\n"), ...lines.slice(b)].join("\n");
 }
 
+/* entries filed anew since links to them were made, asked: the old address and the new */
+const MOVED = new Map([
+  ["bookshelf/Doctor Who/Eleventh Doctor/Series 6/32-13 The Wedding of River Song", "bookshelf/Doctor Who/Eleventh Doctor/32-13 The Wedding of River Song"],
+  ["bookshelf/Doctor Who/Twelfth Doctor/Series 9/35-8 The Zygon Inversion", "bookshelf/Doctor Who/Twelfth Doctor/35-8 The Zygon Inversion"],
+  ["page/Sean’s Books/68 — Lulu Miller, Why Fish Don’t Exist", "page/Sean’s Books/68"],
+  ["page/Charles Williams/The Figure of Beatrice", "bookshelf/Williams, Charles/The Figure of Beatrice/7. The Making of the Commedia"],
+  ["bookshelf/Doctor Who/Seventh Doctor/Season 25/25-1 Remembrance of the Daleks", "bookshelf/Doctor Who/Seventh Doctor/25-1 Remembrance of the Daleks"],
+  ["bookshelf/Doctor Who/Eleventh Doctor/Series 5/31-5 Flesh and Stone", "bookshelf/Doctor Who/Eleventh Doctor/31-5 Flesh and Stone"],
+  ["bookshelf/Doctor Who/Twelfth Doctor/Series 10/36-13 Twice Upon A Time", "bookshelf/Doctor Who/Twelfth Doctor/36-13 Twice Upon A Time"],
+  ["bookshelf/Hildegard of Bingen/Scivias/Book 1/Vision 4", "bookshelf/Hildegard of Bingen/Scivias/1.4"],
+  ["bookshelf/Doctor Who/Eleventh Doctor/Series 5/31-13 The Big Bang", "bookshelf/Doctor Who/Eleventh Doctor/31-13 The Big Bang"],
+]);
+const moves: { file: string; before: string[]; after: string[] }[] = [];
+
 rmSync(OUT, { recursive: true, force: true });
 const counts = { entries: 0, changed: 0, links: 0, drawers: 0 };
 const linked: { file: string; l: Referred }[] = [], cleared: { file: string; before: string[]; after: string[] }[] = [];
@@ -90,7 +104,12 @@ for (const path of walk(SRC).sort()) {
   const r = referOrgLinks(md, resolve);
   for (const l of r.links) if (!("why" in l.res)) { counts.links++; linked.push({ file, l }); }
   const c = clearDrawers(r.md);
-  const quoted = referred(file, c.md);
+  const placed = referred(file, c.md);
+  const quoted = repointed(placed, MOVED) ?? placed;
+  if (quoted !== placed) {
+    const a = placed.split("\n"), b = quoted.split("\n");
+    a.forEach((l, i) => { if (l !== b[i]) moves.push({ file: `${file}:${i + 1}`, before: [l], after: [b[i]] }); });
+  }
   if (quoted === md) continue;
   /* nothing but the drawers' own words may go */
   const gone = c.anchors.map((a) => ":PROPERTIES::CUSTOM_ID:" + a + ":END:").join("");
@@ -133,6 +152,8 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em
 ${linked.map(({ file, l }) => `<div class="e"><span>${esc(file)}:${l.line} — ${esc(l.target)}</span>${pair(l.before, l.after)}</div>`).join("")}
 <h2>Quotations made references (${made.length})</h2>
 ${made.map(({ file, before, after }) => `<div class="e"><span>${esc(file)}</span>${pair(before, after)}</div>`).join("")}
+<h2>Links to entries filed anew, repointed (${moves.length} lines)</h2>
+${moves.map(({ file, before, after }) => `<div class="e"><span>${esc(file)}</span>${pair(before, after)}</div>`).join("")}
 <h2>Drawers cleared (${cleared.length})</h2>
 ${cleared.map(({ file, before, after }) => `<div class="e"><span>${esc(file)}</span>${pair(before, after)}</div>`).join("")}`);
 console.log(`${counts.entries} entries read; ${counts.links} links made, ${counts.drawers} drawers cleared, in ${counts.changed} entries; written to ${OUT}, the review beside it`);

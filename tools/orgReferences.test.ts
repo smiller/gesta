@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { referOrgLinks, anchoredParagraph, clearDrawers } from "./orgReferences.ts";
+import { referOrgLinks, anchoredParagraph, clearDrawers, repointed } from "./orgReferences.ts";
 
 test("referOrgLinks: an old link resolved is a markdown link, its words kept; one not resolved is left with its reason", () => {
   const md = "See [[./2017.org::lunch][29 April 2017]] and [[Sue]] there.\n";
@@ -44,4 +44,10 @@ test("clearDrawers: a property drawer is cleared with the blank line after it; o
   expect(clearDrawers("Last words.\n\n> :PROPERTIES:\n> :CUSTOM_ID: e\n> :END:\n").md).toBe("Last words.\n");
   const code = "```\n:PROPERTIES:\n:CUSTOM_ID: c\n:END:\n```\n";
   expect(clearDrawers(code)).toEqual({ md: code, anchors: [] });
+});
+test("repointed: a link to an entry filed anew points at its new place, its words, their marks and its highlight kept; others are left", () => {
+  const md = "See [Doctor Who, *the wedding*](#bookshelf/Doctor%20Who/Eleventh%20Doctor/Series%206/32-13%20The%20Wedding?h=Kill%20me) and [a day](#2016-02-06).\n";
+  const moved = new Map([["bookshelf/Doctor Who/Eleventh Doctor/Series 6/32-13 The Wedding", "bookshelf/Doctor Who/Eleventh Doctor/32-13 The Wedding"]]);
+  expect(repointed(md, moved)).toBe("See [Doctor Who, *the wedding*](#bookshelf/Doctor%20Who/Eleventh%20Doctor/32-13%20The%20Wedding?h=Kill%20me) and [a day](#2016-02-06).\n");
+  expect(repointed("Nothing moved [here](#2016-02-06).\n", moved)).toBeNull();
 });

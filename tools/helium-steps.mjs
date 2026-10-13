@@ -682,8 +682,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the sub-entries: the dialogs answered by the harness (declared above) */
   await go("2026-09-06");
   await log("the masthead over the day after the rows closed", await R.rowsClosed(page));
+  /* the link goes in at the caret: the click's caret is the editor's only
+     once its selectionchange has reached it, else the link landed last */
+  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await page.click(S.editorFirst);
+  await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
   await page.keyboard.press("End");
+  await page.waitForTimeout(100);
   await log("a day's tools", await R.tools(page));
   answer = "Ideas";
   await A.act.create(page);
