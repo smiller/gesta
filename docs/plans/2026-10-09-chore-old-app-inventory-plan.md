@@ -810,3 +810,11 @@ quotes The Dalek Invasion of Earth, before the episode order. Run: 18
 day links, 9 references with their passages, 9 bookshelf links, in 28
 entries; 77 left: names and numbers, texts not on the bookshelf, working
 files, days its label does not name (MEASURED).
+Asked after: 2008-01-28's Brenan link is his own ⌃⌘R reference into
+2016-02-06, given by name. Found with it: the old anchors stand in the
+text still as Org property drawers (`> :CUSTOM_ID: brenans-vision`), so a
+year file's link whose day its label does not name is placed by its
+drawer — under a `##` section, the section's first quotation highlighted
+(else its first paragraph); under none, the entry itself. Run: 25 day
+links, 9 references with their passages, 9 bookshelf links, in 35
+entries; 70 left (MEASURED).

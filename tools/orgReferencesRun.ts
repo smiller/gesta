@@ -4,7 +4,7 @@
    paths for an import, a review page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { referOrgLinks, type OrgLink, type Resolved, type Referred } from "./orgReferences.ts";
+import { referOrgLinks, anchoredParagraph, type OrgLink, type Resolved, type Referred } from "./orgReferences.ts";
 import { shelfIndex, quotedFrom, quotedProse, referenceAt } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -65,15 +65,26 @@ const under = (prefix: string, label = ""): string[] => Object.keys(index.texts)
   .map((k) => ({ k, named: !!squash(label) && squash(k.split("/").pop()!).includes(squash(label)), n: (/^(\d+)-(\d+)/.exec(k.split("/").pop()!) ?? []).slice(1).map(Number) }))
   .sort((a, b) => +b.named - +a.named || (a.n[0] ?? 1e9) - (b.n[0] ?? 1e9) || (a.n[1] ?? 0) - (b.n[1] ?? 0) || a.k.localeCompare(b.k)).map((x) => x.k);
 
+/* links given their place by name, asked: the passage the anchor's section was kept for */
+const NAMED = new Map([["journal/2008/2008-01-28.md:25", "#2016-02-06?h=Brenan%E2%80%99s%20vision%20in%20fact%20has%20more%20in%20common%20with%20Lucius%E2%80%99%20than%20does%20that%20of%20Cleaver%3B%20particularly%20interesting%20is%20the%20suddenness%20of%20his%20%E2%80%9Csense%20of%20some%20enormous%20force%20and%20beauty%20existing%20around%20me%E2%80%9D%2C%20which%20closely%20parallels%20Lucius%E2%80%99%20instant%20conviction%20that%20what%20he%20sees%20is%20a%20manifestation%20of%20the%20goddess%20whose%20power%20controls%20the%20workings%20of%20the%20whole%20universe%20%2811.1%29.%20Even%20more%20interesting%2C%20perhaps%2C%20is%20the%20contrast%20between%20Lucius%E2%80%99%20voluntary%20submission%20to%20the%20dominion%20of%20the%20goddess%20and%20Brenan%E2%80%99s%20stalwart%20refusal%20to%20abdicate%20his%20selfhood."]]);
+let current = "";
 function resolve(l: OrgLink): Resolved {
+  const given = NAMED.get(current + ":" + l.line);
+  if (given) return { href: given };
   const [file, rawAnchor = ""] = l.target.replace(/^file:/, "").split("::");
   const anchor = decodeURIComponent(rawAnchor).replace(/^#/, "");
   if (!/\.org$/.test(file)) return { why: "not a link to a file" };
   const year = /(?:^|\/)(\d{4})\.org$/.exec(file);
   if (year) {
     const named = dayNamed(l.label) ?? dayNamed(anchor);
-    const held = anchor ? Object.keys(cache).find((k) => /^\d{4}-\d{2}-\d{2}/.test(k) && cache[k].includes(`<<${anchor}>>`)) : undefined;
-    const day = named && cache[named] !== undefined ? named : held;
+    const days = Object.keys(cache).filter((k) => /^\d{4}-\d{2}-\d{2}/.test(k));
+    /* the paragraph after the property drawer the anchor stood in, highlighted */
+    const drawn = anchor ? days.find((k) => cache[k].includes(`:CUSTOM_ID: ${anchor}`)) : undefined;
+    const para = drawn ? anchoredParagraph(cache[drawn], anchor) : null;
+    const lit = drawn && para ? quotedProse(index, drawn, para, [drawn]) : null;
+    if (lit) return { href: lit.url };
+    const held = anchor ? days.find((k) => cache[k].includes(`<<${anchor}>>`)) : undefined;
+    const day = named && cache[named] !== undefined ? named : held ?? drawn;
     return day ? { href: linkOf(day) } : { why: "the day it names is not in its label, and its anchor is gone" };
   }
   const shelf = FILES.find(([re]) => re.test(file))?.[1];
@@ -113,6 +124,7 @@ const shown: { file: string; l: Referred }[] = [];
 for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8"), file = relative(SRC, path);
+  current = file;
   const r = referOrgLinks(md, resolve);
   if (!r.links.length) continue;
   for (const l of r.links) {

@@ -52,3 +52,27 @@ export function referOrgLinks(md: string, resolve: (link: OrgLink) => Resolved):
   }
   return { md: out.join("\n"), links };
 }
+
+/* THE PASSAGE AN OLD ANCHOR NAMED: the property drawer carrying its
+   `:CUSTOM_ID:` stands in the text still. Under a heading it named the
+   section, whose first quotation is its substance, else its first
+   paragraph; with no section heading above, the entry's title aside, it
+   named the whole entry, and the
+   lines are none. Null where no drawer names it (pin: orgReferences.test
+   › anchoredParagraph) */
+export function anchoredParagraph(md: string, anchor: string): string[] | null {
+  const raw = md.split("\n"), bare = raw.map((l) => l.replace(/^\s*(?:>\s?)*/, ""));
+  const at = bare.findIndex((l) => l.trim() === `:CUSTOM_ID: ${anchor}`);
+  if (at < 0) return null;
+  if (!raw.slice(0, at).some((l) => /^#{2,6}\s/.test(l))) return [];
+  let i = at + 1;
+  while (i < raw.length && bare[i].trim() !== ":END:") i++;
+  const paras: { quoted: boolean; lines: string[] }[] = [];
+  let cur: { quoted: boolean; lines: string[] } | null = null;
+  for (i++; i < raw.length && !/^#{1,6}\s/.test(raw[i]); i++) {
+    if (!bare[i].trim()) { cur = null; continue; }
+    if (!cur) paras.push(cur = { quoted: /^\s*>/.test(raw[i]), lines: [] });
+    cur.lines.push(bare[i]);
+  }
+  return (paras.find((p) => p.quoted) ?? paras[0])?.lines ?? [];
+}

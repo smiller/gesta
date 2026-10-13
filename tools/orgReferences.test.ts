@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { referOrgLinks } from "./orgReferences.ts";
+import { referOrgLinks, anchoredParagraph } from "./orgReferences.ts";
 
 test("referOrgLinks: an old link resolved is a markdown link, its words kept; one not resolved is left with its reason", () => {
   const md = "See [[./2017.org::lunch][29 April 2017]] and [[Sue]] there.\n";
@@ -25,4 +25,15 @@ test("referOrgLinks: a link introduces the quotation only when nothing but marks
   const md = "the *kwei* of [[./tao.org::60][60]] are part of it, which refracts *Inferno* 30.130-2:\n> Ad ascoltarli\n\nFrom *A Good Man* ([[./dw.org::x][amazing]]):\n> RIVER: Amazing.\n";
   referOrgLinks(md, (l) => { seen.push([l.target, l.quote.length]); return { why: "-" }; });
   expect(seen).toEqual([["./tao.org::60", 0], ["./dw.org::x", 1]]);
+});
+test("anchoredParagraph: under a heading, the section's first quotation after the drawer naming the anchor, else its first paragraph; a drawer under no section, the entry's title aside, names the whole entry", () => {
+  const md = "## Kenney and Brenan’s vision\n\n> :PROPERTIES:\n> :CUSTOM_ID: brenans-vision\n> :END:\n\nReading Kenney in the lounge:\n\n> Brenan’s vision in fact has more\n> in common.\n\n## Next\n\n> Not this.\n";
+  expect(anchoredParagraph(md, "brenans-vision")).toEqual(["Brenan’s vision in fact has more", "in common."]);
+  const close = "## E-from KSB:\n\n> :PROPERTIES:\n> :CUSTOM_ID: ksb-coifi-poem\n> :END:\n> \n> Etymologies impress the mind\n> with lines\n> \n> Next.\n";
+  expect(anchoredParagraph(close, "ksb-coifi-poem")).toEqual(["Etymologies impress the mind", "with lines"]);
+  const plain = "## A section\n\n> :PROPERTIES:\n> :CUSTOM_ID: plain\n> :END:\n\nOnly prose here.\n";
+  expect(anchoredParagraph(plain, "plain")).toEqual(["Only prose here."]);
+  expect(anchoredParagraph("> :PROPERTIES:\n> :CUSTOM_ID: whole\n> :END:\n\nThe day.\n", "whole")).toEqual([]);
+  expect(anchoredParagraph("# 13 July 1998\n\n> :PROPERTIES:\n> :CUSTOM_ID: whole\n> :END:\n\nThe day.\n", "whole")).toEqual([]);
+  expect(anchoredParagraph(md, "other")).toBeNull();
 });

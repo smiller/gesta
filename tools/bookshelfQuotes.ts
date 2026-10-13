@@ -42,7 +42,7 @@ export function shelfIndex(cache: Record<string, string>): ShelfIndex {
     const e = entries.push({ key, doc, units, left }) - 1;
     left.forEach((l, i) => { if (l.length >= DISTINCT) at.set(l, [...(at.get(l) ?? []), { e, i }]); });
   }
-  const texts = Object.fromEntries(Object.entries(cache).filter(([k]) => /^(bookshelf|page)\//.test(k)));
+  const texts = cache;
   return { journal: journalOf(cache), entries, at, texts, docs: new Map() };
 }
 
