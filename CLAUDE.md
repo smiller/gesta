@@ -238,6 +238,12 @@ is in the plan's record, under the phase named):
   to a day of the journal a markdown link, text between slashes italic;
   `tools/oldSpellingsRun.ts` runs it over the backup and writes the changed
   entries as an import folder with a review page.
+  `tools/pipeTables.ts` — a two-column pipe table made a `::: verse` block
+  of pairs, or the reference its lines make when they quote the bookshelf,
+  pure, its test beside it; `tools/bookshelfQuotes.ts` finds the bookshelf
+  passage a quotation's lines are and mints the reference ⌃⌘C would, its
+  test beside it; `tools/pipeTablesRun.ts` runs both over the backup and
+  writes the changed entries as an import folder with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and

@@ -728,3 +728,22 @@ lines in 21 entries, 6 of them in 2026 (the wrangling entries' terminal
 tables among them), 439 lines in 2023-09-18 alone, 36 in page/Tres
 Leones. Not every one pairs a text with a translation (INFERRED); each
 wants reading before a rule is chosen.
+
+THE PIPE TABLES, taken up 2026-10-13 (asked, "with the review preview").
+tools/pipeTables.ts makes a two-column table a `::: verse` block of pairs:
+the divider dropped, an empty row a stanza break, a column of line
+numbers the block's first number, table pieces apart only by blank lines
+read as one (2017-11-24's Inferno 7, broken into scraps on its way in).
+Asked as it was read: a table quoting a text already on the bookshelf is
+the reference ⌃⌘C makes for that passage, the bookshelf's own lines
+(his example, Inferno 7.115-30; the tool's highlight is byte for byte
+his, MEASURED). tools/bookshelfQuotes.ts places the passage — lines
+compared as letters and numerals alone, one line in a passage of three
+or more allowed to differ — and calls the app's referencePayload over a
+selection of those lines. A table after a line ending in an old Emacs
+link and a colon makes that link the reference, its words kept, and is
+the passage alone. Left: a picture, a single row, more than two columns,
+numbers that do not run on, the 2026 entries, 1997-10-24's signature and
+2024-08-27's grid of words (both by reading). Run: 16 references and 30
+verse blocks in 20 entries; 2023-03-16:49 quotes Horace, Odes 1.5 in
+another translation than the bookshelf's, and is made verse (MEASURED).
