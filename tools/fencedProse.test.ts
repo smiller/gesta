@@ -56,6 +56,8 @@ test("quoteFencedProse: prose wrapped at a measure becomes one line a paragraph;
   expect(quoteFencedProse(list).md).toBe("> 15: Canada Geese on the river\n> 16: Alyson at the head of the South Walk\n> 17: A red-leaved tree\n");
   const verse = "```\n    If Saints and Angels spoke of love,\n    Should I not answer from my throne,\n    Have pity upon me, ye my friends,\n```\n";
   expect(quoteFencedProse(verse).md).toBe("> If Saints and Angels spoke of love,\n> Should I not answer from my throne,\n> Have pity upon me, ye my friends,\n");
+  const dashed = "```\n    laid down such a powerful pattern that the few lives of laymen which survive\n    – like Asser’s Life of Alfred, or the Life of Charlemagne – make peculiar\n    attempts.\n```\n";
+  expect(quoteFencedProse(dashed).md).toBe("> laid down such a powerful pattern that the few lives of laymen which survive – like Asser’s Life of Alfred, or the Life of Charlemagne – make peculiar attempts.\n");
   const two = "```\nThe first paragraph of the passage runs on past the measure of a line and\nends here.\n\nThe second paragraph also runs on past the measure of a single line and\nends here too.\n```\n";
   expect(quoteFencedProse(two).md).toBe("> The first paragraph of the passage runs on past the measure of a line and ends here.\n> \n> The second paragraph also runs on past the measure of a single line and ends here too.\n");
 });

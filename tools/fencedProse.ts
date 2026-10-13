@@ -56,7 +56,8 @@ export function fenceKind(lang: string, body: string[]): FenceKind {
    a list and verse keep a line each (pin: fencedProse.test ›
    quoteFencedProse: prose wrapped at a measure) */
 const MEASURE = 55;
-const ITEM = /^(\d+[.):]|[-*•–]|\(?[a-z]\))\s/i;
+/* an en dash opening a line is the prose's own, wrapped there */
+const ITEM = /^(\d+[.):]|[-*•]|\(?[a-z]\))\s/i;
 function unwrapped(lines: string[]): string[] {
   const out: string[] = [];
   let run: string[] = [];
