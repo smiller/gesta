@@ -29,3 +29,13 @@ test("quotedRuns: a run's last line spelled otherwise is carried when it is clos
   const unlike = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> and here my own words follow on\n";
   expect(quotedRuns(unlike, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 3, 4]]);
 });
+test("quotedRuns: a line's closing <br/> is not its verse, and a stray blank line inside a quotation is carried when the passage goes on after it", () => {
+  const md = "the lines,\n\n> sunt quos curriculo pulverem Olympicum  <br/>\n\ncollegisse iuvat metaque fervidis  <br/>\nevitata rotis palmaque nobilis\n\nterrarum dominos evehit ad deos;\n\nand more\n";
+  expect(quotedRuns(md, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[2, 7, 3, 6]]);
+});
+test("quotedRuns: a run's last line that is the start of the passage's next line, a half-line, is carried; a fragment of a word or two is not", () => {
+  const half = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis.\n";
+  expect(quotedRuns(half, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
+  const scrap = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata\n";
+  expect(quotedRuns(scrap, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 3, 4]]);
+});

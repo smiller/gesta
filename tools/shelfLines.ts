@@ -10,10 +10,13 @@ import type { ShelfIndex, Referred } from "./bookshelfQuotes.ts";
 const norm = (s: string): string => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "");
 const FENCE = /^\s*(?:>\s*)*(```|~~~)/;
 const QUOTE = /^\s*>/;
-/* a line as the verse it may hold: its quotation's marks, its indent and a pair's other column off */
-const bare = (l: string): string => l.replace(/^\s*(?:>\s*)*/, "").replace(/(?<!\\)\s\|\s.*$/, "").trim();
+/* a line as the verse it may hold: its quotation's marks, its indent, a
+   pair's other column and a closing line break off */
+const bare = (l: string): string => l.replace(/^\s*(?:>\s*)*/, "").replace(/(?<!\\)\s\|\s.*$/, "").replace(/(?:<br\s*\/?>|\\)\s*$/i, "").trim();
 /* a run this short in letters is too common to be a quotation */
 const ENOUGH = 30;
+/* a half-line ending a run, at least this long in letters */
+const HALF = 10;
 /* a citation line introducing a run, no longer than this */
 const CITATION = 40;
 
@@ -52,15 +55,28 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     let best: Run | null = null;
     for (const { e, i: u } of index.at.get(n) ?? []) {
       const s = index.entries[e];
-      let k = i, letters = 0;
-      const fits = (j: number): boolean => j < lines.length && !skip[j] && u + j - i < s.left.length && !!s.left[u + j - i] && norm(bare(lines[j])) === s.left[u + j - i];
-      const near = (j: number): boolean => j < lines.length && !skip[j] && u + j - i < s.left.length && alike(norm(bare(lines[j])), s.left[u + j - i] ?? "");
+      const fits = (j: number, p: number): boolean => j < lines.length && !skip[j] && p < s.left.length && !!s.left[p] && norm(bare(lines[j])) === s.left[p];
+      const near = (j: number, p: number): boolean => j < lines.length && !skip[j] && p < s.left.length && alike(norm(bare(lines[j])), s.left[p] ?? "");
+      const said = (j: number): boolean => j < lines.length && !skip[j] && !!norm(bare(lines[j]));
+      let k = i, p = u, end = i, last = u, letters = 0;
       /* a line spelled otherwise is carried when the next goes on with the
          passage, or when it is close to the passage's own (pin:
          shelfLines.test › quotedRuns: a run carries through) (pin:
-         shelfLines.test › quotedRuns: a run's last line) */
-      while (fits(k) || k > i && norm(bare(lines[k] ?? "")) && (fits(k + 1) || near(k))) { letters += fits(k) ? s.left[u + k - i].length : 0; k++; }
-      if (letters >= ENOUGH && (!best || k - 1 - i > best.end - best.start)) best = { start: i, end: k - 1, key: s.key, from: s.units[u].line, to: s.units[u + k - 1 - i].line };
+         shelfLines.test › quotedRuns: a run's last line); a blank line is
+         carried when the passage goes on after it (pin: shelfLines.test ›
+         quotedRuns: a line's closing); a half-line ends a run (pin:
+         shelfLines.test › quotedRuns: a run's last line that) */
+      for (;;) {
+        if (!fits(k, p) && !(k > i && said(k) && (fits(k + 1, p + 1) || near(k, p)))) {
+          if (k > i && k < lines.length && !skip[k] && !said(k) && fits(k + 1, p)) { k++; continue; }
+          const n = k > i && said(k) ? norm(bare(lines[k])) : "";
+          if (n.length >= HALF && p < s.left.length && s.left[p].startsWith(n)) { end = k; last = p; }
+          break;
+        }
+        if (fits(k, p)) letters += s.left[p].length;
+        end = k++; last = p++;
+      }
+      if (letters >= ENOUGH && (!best || end - i > best.end - best.start)) best = { start: i, end, key: s.key, from: s.units[u].line, to: s.units[last].line };
     }
     if (best) { runs.push(best); i = best.end; }
   }

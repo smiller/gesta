@@ -900,3 +900,14 @@ Asked after: 1988-04-11 is 3.682-85, not -84 — its last line spelled
 is now carried also when it is close to the passage's own (letter pairs
 shared by Dice's measure ≥ 0.8). Run: 110 references, 587 lines, in 54
 entries (MEASURED).
+Asked after: 1996-10-06 is 12.646-49 (he named 648-49, seeing the review's
+two lines) — a closing `<br/>` kept three lines from matching, and a stray
+blank line split the first from the rest. A line's closing `<br/>` or `\`
+is now off its verse, and a blank line is carried when the passage's next
+line follows it. And 2000-03-18 is 3.681-89 — its last line, "Where no ill
+seems.", half of 689. A run's last line that starts the passage's next
+line, ten letters or more, is now carried: 24 runs gained their closing
+half-line, three read in their entries (2022-11-13, 2006-10-11,
+2002-10-30), each a half-line. Run: 110 references, 615 lines, in 54
+entries; 112 highlighted links in the folder, each finds its words
+(MEASURED).
