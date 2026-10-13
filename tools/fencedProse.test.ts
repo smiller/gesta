@@ -66,3 +66,7 @@ test("quoteFencedProse: text between slashes is italic, and an Emacs link a mark
   expect(quoteFencedProse(md).md).toBe("> The nice thing about the debacle that was *The Timeless Children* is that it ended. Read the [solutions stories](https://www.solutionsjournalism.org/) and https://martinfowler.com/articles/x.html too.\n");
   expect(quoteFencedProse("```\nWe went and/or stayed, said he, on 1/2 of the days in the month.\n```\n").md).toBe("> We went and/or stayed, said he, on 1/2 of the days in the month.\n");
 });
+test("quoteFencedProse: slashes inside brackets are italic too", () => {
+  expect(quoteFencedProse("```\nyou may be stronger” [/Purg/ 31.44-5]) and then [see /Inf./] again.\n```\n").md)
+    .toBe("> you may be stronger” [*Purg* 31.44-5]) and then [see *Inf.*] again.\n");
+});

@@ -75,7 +75,7 @@ function unwrapped(lines: string[]): string[] {
    address or a fraction is text (pin: fencedProse.test › quoteFencedProse:
    text between slashes is italic) */
 const ORG = /\[\[([^\]\s]+)\](?:\[([^\]]+)\])?\]/;
-const ITALIC = /(^|[\s(“‘"'—–-])\/(?=[^\s/])([^/\n]*?[^\s/])\/(?=$|[\s.,;:!?)”’"'—–-])/;
+const ITALIC = /(^|[\s([“‘"'—–-])\/(?=[^\s/])([^/\n]*?[^\s/])\/(?=$|[\s.,;:!?)\]”’"'—–-])/;
 function inline(line: string): Node[] {
   const out: Node[] = [];
   let rest = line;
