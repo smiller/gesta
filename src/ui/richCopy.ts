@@ -23,8 +23,10 @@ export { inlineBlockStyles };
 export function richBlockHtml(el: Element): string {
   const clone = el.cloneNode(true) as Element;
   inlineBlockStyles(el, clone);
-  /* no page marker leaves in a copy (pin: losing nothing › a note with a page marker hover-copied) */
+  /* no page marker leaves in a copy (pin: losing nothing › a note with a page marker hover-copied),
+     nor the editor's hint on a link */
   clone.querySelectorAll(".folio").forEach((f) => f.remove());
+  clone.querySelectorAll("a[title]").forEach((a) => a.removeAttribute("title"));
   return clone.outerHTML.replace(/​/g, "");
 }
 /* a picture's address on screen is one this tab alone can read: the copy
@@ -32,6 +34,7 @@ export function richBlockHtml(el: Element): string {
    notices and surfaces as the old app has them › a block with a picture
    hover-copied) */
 export function withPictureBytes(html: string): Promise<string> {
+  if (!html.includes("blob:")) return Promise.resolve(html);
   const t = document.createElement("template");
   t.innerHTML = html;
   const imgs = Array.from(t.content.querySelectorAll("img")).filter((i) => i.getAttribute("src")?.startsWith("blob:"));

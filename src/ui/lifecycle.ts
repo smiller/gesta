@@ -8,7 +8,7 @@ import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt,
 import { refileKeys, refileLinks, pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
 import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
-import { linkRefusal, insertLinkAfter } from "../editor/insertLink.ts";
+import { linkRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { firstHeading } from "../store/headings.ts";
 import { nsOf, pageParts, entryKey, entryHash, KEYED_NS } from "../store/keys.ts";
@@ -123,9 +123,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
        (pin: lifecycle.test › says a registration that did not land) */
     return layer.setEntry(key, "").then((landed) => {
       if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
-      if (view ? view !== deps.view() : source !== deps.source()) { ui.say("the entry was made — the link was not placed", 3000); return; }
+      const moved = view ? view !== deps.view() : source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(c.date, c.tag);
+      if (moved) { ui.say("the entry was made — the link was not placed", 3000); return; }
       if (view) insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
-      else source!.insertAfter("[" + mdLabel(spec.tag, "entry") + "](" + spec.href + ")");
+      else source!.insertAfter(linkMarkdown(spec.href, mdLabel(spec.tag, "entry")));
       return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
     });
   }

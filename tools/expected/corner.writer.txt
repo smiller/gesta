@@ -392,6 +392,8 @@ a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in t
 notices and surfaces as the old app has them: arrived at page/Source Link: {"cursor":"at a line's start"}
 a bookmark's link in the markdown view: {"md":"x[Links](…)","cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 Search opened before the warm: {"loading":"HoraceOdes, 1.1 MaecenaLinksZs atavis ed","rows":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Go to opened before the warm: {"more":false,"focusInRow":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the bookshelf opened before the warm, the keys on its button: {"before":0,"after":0,"keysOnButton":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

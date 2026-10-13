@@ -11,6 +11,7 @@ import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
 import { parseFoldStore, foldPage, withFoldPage, movedFolds, type FoldPage } from "./store/foldState.ts";
 import { stored } from "./store/local.ts";
+import { errText } from "./store/files.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
 import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
@@ -129,10 +130,14 @@ export function startSession(opts: SessionOptions): Session {
       decoding = false;
       if (aimedAt !== ekeyOf() || aimedMd !== surface.md) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
       const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
-      /* a write that fails is not a picture that could not be read (pin:
-         notices and surfaces as the old app has them › a picture whose write fails) */
+      /* a write that fails is not a picture that could not be read, and only
+         a full store is said to be full; the pin copies the caught error
+         (pin: notices and surfaces as the old app has them › a picture whose write fails) */
       return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); },
-        (err: unknown) => { console.error("picture not saved", err); opts.stick?.("picture not saved — storage full"); });
+        (err: unknown) => {
+          console.error("picture not saved", err);
+          opts.stick?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", errText(err));
+        });
     }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
   }
   const folds = stored(NS + "folds", parseFoldStore);

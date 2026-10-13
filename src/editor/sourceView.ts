@@ -19,13 +19,18 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   ta.className = "source";
   ta.spellcheck = false;
   ta.value = md;
+  /* through the textarea's own editing, so ⌘Z takes it back; where the
+     browser refuses, written directly and announced as typed */
+  const typeInto = (text: string, from: number, to: number): void => {
+    ta.setSelectionRange(from, to);
+    if (!document.execCommand("insertText", false, text)) { ta.setRangeText(text, from, to, "end"); ta.dispatchEvent(new Event("input")); }
+  };
   let replacing = false;
   ta.addEventListener("input", (e) => {
     const ie = e as InputEvent;
     if (!replacing && ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd) {
       const caret = ta.selectionStart, r = sourceTyped(ta.value, caret);
       if (r) {
-        ta.setSelectionRange(r.from, r.to);
         /* through the browser's own insert, so ⌘Z takes the curl back first;
            the caret back after the character typed, which the dash's
            replacement stands before (MEASURED: the next letter went in
@@ -33,9 +38,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
            which must not curl the straight quote it puts back (pin:
            editing as the old app does › -- and quotes typed in the markdown view) */
         replacing = true;
-        try {
-          if (!document.execCommand("insertText", false, r.text)) { ta.setRangeText(r.text, r.from, r.to, "end"); ta.dispatchEvent(new Event("input")); }
-        } finally { replacing = false; }
+        try { typeInto(r.text, r.from, r.to); } finally { replacing = false; }
         const at = caret - (r.to - r.from) + r.text.length;
         ta.setSelectionRange(at, at);
         return;
@@ -132,8 +135,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
       if (ta.readOnly) return;
       const back = document.activeElement as HTMLElement | null;
       ta.focus({ preventScroll: true });
-      ta.setSelectionRange(from, to);
-      if (!document.execCommand("insertText", false, text)) { ta.setRangeText(text, from, to, "end"); ta.dispatchEvent(new Event("input")); }
+      typeInto(text, from, to);
       ta.setSelectionRange(caret, caret);
       back?.focus({ preventScroll: true });
     },
@@ -141,14 +143,13 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     focus: () => ta.focus({ preventScroll: true }),
     place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
-  /* through the textarea's own editing, so ⌘Z takes it back (pin: notices
+  /* `after`: typed at the selection's end, the caret after it (pin: notices
      and surfaces as the old app has them › a bookmark's link in the markdown view) */
   const insertText = (text: string, after = false): void => {
     if (ta.readOnly) return;
-    ta.focus();
-    if (after) ta.setSelectionRange(ta.selectionEnd, ta.selectionEnd);
-    const from = ta.selectionStart, to = ta.selectionEnd;
-    if (!document.execCommand("insertText", false, text)) { ta.setRangeText(text, from, to, "end"); ta.dispatchEvent(new Event("input")); }
+    ta.focus({ preventScroll: true });
+    const end = ta.selectionEnd;
+    typeInto(text, after ? end : ta.selectionStart, end);
   };
   return {
     source: true,

@@ -28,7 +28,7 @@ export interface Surface {
   focus(): void;
   /* on: nothing typed reaches the text */
   lock(on: boolean): void;
-  /* `after`: past the selection, leaving it standing */
+  /* `after`: at the selection's end, the caret after it */
   insertText(text: string, after?: boolean): void;
   insertPicture(name: string): void;
   words(): number;

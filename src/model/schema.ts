@@ -136,7 +136,7 @@ const marks: Record<(typeof MARK_ORDER)[number], MarkSpec> = {
   link: {
     attrs: { href: {} }, inclusive: false,
     parseDOM: [{ tag: "a[href]", getAttrs: (dom) => ({ href: dom.getAttribute("href") }) }],
-    toDOM: (m) => ["a", { href: m.attrs.href, title: "⌘-click to open" }, 0],
+    toDOM: (m) => ["a", { href: m.attrs.href }, 0],
   },
   strong: { parseDOM: [{ tag: "strong" }, { tag: "b" }], toDOM: () => ["strong", 0] },
   em: { parseDOM: [{ tag: "em" }, { tag: "i" }], toDOM: () => ["em", 0] },

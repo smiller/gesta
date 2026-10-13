@@ -208,3 +208,5 @@ an import of two files for one entry · cursor · the same
 a picture whose write fails · corner · asked 2026-10-12 (the inventory's 56a): a failed picture write says so here; the current app kept the picture inline in the text, so its whole save failed
 the line bar re-asked when the entry gains a page marker · after · the boxes follow every change shown here; the current app re-asks on its own repaint, which another tab's write did not cause in its run (MEASURED)
 Search opened before the warm · loading · ?warm=slow is the successor's probe alone: the current app read its journal at once
+Go to opened before the warm · more · ?warm=slow is the successor's probe alone: the current app read its journal at once, so its row had nothing to grow by
+the bookshelf opened before the warm, the keys on its button · after · the rows are keyed here, so a rebuild keeps the keys and waits only for the pointer; the current app's rebuild waits for the keys to leave too, which a focused button never does (the review of groups 5–7, cycle 1)

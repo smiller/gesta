@@ -1,7 +1,8 @@
 import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
-import { linkRefusal, insertLinkAfter } from "./insertLink.ts";
+import { serializeMarkdown } from "../model/serialize.ts";
+import { linkRefusal, insertLinkAfter, linkMarkdown } from "./insertLink.ts";
 import { schema } from "../model/schema.ts";
 
 function at(md: string, needle: string): EditorState {
@@ -24,4 +25,11 @@ test("insertLinkAfter: the caret stands after the link it placed, outside it", (
 });
 test("linkRefusal: inline code refuses as a code block does", () => {
   expect(linkRefusal(at("see `code here` now", "co"))).toBe("no link inside a code block");
+});
+test("linkMarkdown: the link as the rendered view's own link saves, escaped the same way", () => {
+  for (const [label, href] of [["Notes\\", "#page/Notes"], ["a*b_c", "#page/A"], ["a)", "#2026-10-12/a)"], ["plain", "#page/Plain"]]) {
+    const doc = schema.nodes.doc.create(null, schema.nodes.paragraph.create(null, schema.text(label, [schema.marks.link.create({ href })])));
+    expect(linkMarkdown(href, label)).toBe(serializeMarkdown(doc));
+    expect(parseMarkdown(linkMarkdown(href, label)).eq(doc)).toBe(true);
+  }
 });

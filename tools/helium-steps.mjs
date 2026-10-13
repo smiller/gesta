@@ -2024,6 +2024,25 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const loading = await slow.evaluate((s) => [...document.querySelectorAll(s)].map((l) => l.textContent.trim()).join(" | ").slice(0, 40), S.searchRows);
   await slow.waitForTimeout(3500);
   await log("Search opened before the warm", { loading, rows: await slow.evaluate((s) => document.querySelectorAll(s + ".hit, " + s + ":not(.empty)").length > 0, S.searchRows) });
+  /* the Go to row and the bookshelf, each opened on a fresh slow launch with the keys left in it */
+  const options = () => slow.evaluate(() => [...document.querySelectorAll(".page-goto select, #pagegoto select")].reduce((n, s) => n + s.options.length, 0));
+  await slow.goto(A.url("page/Horace", "warm=slow&again=1"));
+  await slow.waitForTimeout(300);
+  await slow.keyboard.press("Control+Meta+j");
+  await slow.waitForTimeout(300);
+  const gotoBefore = await options();
+  await slow.waitForTimeout(3500);
+  await log("Go to opened before the warm", { more: (await options()) > gotoBefore, focusInRow: await slow.evaluate(() => !!document.activeElement?.closest(".page-goto, #pagegoto")) });
+  const shelf = () => slow.evaluate(() => { const p = document.querySelector(".pages, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
+  await slow.goto(A.url("page/Horace", "warm=slow&again=2"));
+  await slow.waitForTimeout(300);
+  await slow.click(S.booksOpener, { timeout: 2000 }).catch(() => {});
+  await slow.waitForTimeout(200);
+  await slow.evaluate(() => document.querySelector(".pages .panel-new, #bookspanel .panel-new")?.focus());
+  await slow.mouse.move(5, 700);
+  const shelfBefore = await shelf();
+  await slow.waitForTimeout(3500);
+  await log("the bookshelf opened before the warm, the keys on its button", { before: shelfBefore, after: await shelf(), keysOnButton: await slow.evaluate(() => !!document.activeElement?.matches(".panel-new")) });
   await slow.close();
     }],
     ["pill", async () => {

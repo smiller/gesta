@@ -182,6 +182,12 @@ describe("create", () => {
     w.answer("B");
     await w.life.create();
     expect(w.log).toEqual(["set page/A/B", "type [B](#page/A/B)", "save", "set page/A", "redraw", "goto #page/A/B"]);
+    /* another entry shown in the markdown view while the write ran takes no link */
+    const moved = await world({ at: ["page", "A"], entries: { "page/A": "hello\n", "page/C": "c\n" }, noView: true, source: true });
+    moved.onSet((k) => { if (k === "page/A/B") moved.leave("page", "C"); });
+    moved.answer("B");
+    await moved.life.create();
+    expect(moved.log).toEqual(["set page/A/B", "say the entry was made — the link was not placed"]);
   });
   it("registers the name empty, then puts the link after the caret, saves, redraws, goes", async () => {
     const w = await world({ at: ["page", "A"], entries: { "page/A": "hello\n" } });

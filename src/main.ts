@@ -34,7 +34,7 @@ import { scopeOptions, defaultScope, sameScope, resultLabel } from "./ui/searchM
 import { searchIndex } from "./store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
 import { flattenDoc } from "./model/flatten.ts";
-import { linkRefusal, insertLinkAfter } from "./editor/insertLink.ts";
+import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
 import { mdLabel, romanWorkKey } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
 import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
@@ -121,8 +121,10 @@ mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: s
 mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
+  /* the choice takes effect whether or not it could be kept: a failed
+     write says so, and the select and the gutter agree */
   onInterval: (n: number) => {
-    if (!q.get("fixture") && !writeRaw(LINES_KEY, String(n))) { notices.stickErrIdle("line numbers not saved — storage full", null); return; }
+    if (!q.get("fixture") && !writeRaw(LINES_KEY, String(n))) notices.stickErrIdle("line numbers not saved — storage full", null);
     screen.interval = n; acts.interval(n);
   },
   /* the row closed by its own label hands the keys back as ⌃⌘L does
@@ -374,10 +376,12 @@ if (fixture && fixtures[fixture]) {
      hash write, since a pick of the open entry moves no hash. No save
      flush: it would rewrite an untouched entry. */
   const gotoWorld = () => ({ keys: keysNow(), cache: layer.cache, journal });
+  let gotoPicked = false;
   const gotoRow = (open: boolean): void => {
     if (screen.goto.open === open) return;
     screen.goto.open = open;
     if (!open) { screen.goto.levels = []; session.focusText(); return; }
+    gotoPicked = false;
     overlay.open("goto");
     const c = session.current;
     screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
@@ -386,6 +390,7 @@ if (fixture && fixtures[fixture]) {
   acts.goto.toggle = gotoRow;
   acts.goto.pick = (level, value, ns) => {
     const c = session.current;
+    gotoPicked = true;
     const out = gotoPick(gotoWorld(), c.date, c.tag, screen.goto.levels, level, value, ns);
     if (!out) return;
     if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
@@ -561,7 +566,7 @@ if (fixture && fixtures[fixture]) {
       const why = view && linkRefusal(view.state);
       if (why) { say(why, 2000); return; }
       const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
-      if (view) insertLinkAfter(view, href, label); else session.insertText("[" + label + "](" + href + ")", true);
+      if (view) insertLinkAfter(view, href, label); else session.insertText(linkMarkdown(href, label), true);
       session.saveNow();
     } else jumpBookmark(b);
   };
@@ -1035,18 +1040,26 @@ if (fixture && fixtures[fixture]) {
       : "No authors yet — import a folder, or start one below.";
   }
   /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
-     read ends, well or badly: the search, the Go to row where no hand is in
-     it, an open panel once the pointer and the keys have left it, so no
-     row is rebuilt under a click, and the backups status (pin: notices and
-     surfaces as the old app has them › Search opened before the warm) */
+     read ends, well or badly: the search; the Go to row while nothing has
+     been picked in it, its focus put back on its first select; an open
+     panel once the pointer has left it, so no row is rebuilt under a
+     click, its rows keyed so the keys stay where they were; and the
+     backups status (pin: notices and surfaces as the old app has them ›
+     Search opened before the warm) (pin: notices and surfaces as the old
+     app has them › Go to opened before the warm) (pin: notices and
+     surfaces as the old app has them › the bookshelf opened before the warm, the keys on its button) */
   const reanswerOpen = (): void => {
     if (sr.open) renderSearch();
-    if (screen.goto.open && !document.activeElement?.closest(".page-goto")) { const c = session.current; screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag); }
+    if (screen.goto.open && !gotoPicked) {
+      const held = !!document.activeElement?.closest(".page-goto"), c = session.current;
+      screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
+      if (held) setTimeout(() => masthead.focusGoto(), 0);
+    }
     const ns = screen.panel;
     if (ns === "page" || ns === "bookshelf") {
       const el = document.querySelector(".pages");
       const answer = (): void => { if (screen.panel === ns) answerPanel(ns); };
-      if (el && (el.matches(":hover") || el.contains(document.activeElement))) el.addEventListener("mouseleave", answer, { once: true });
+      if (el?.matches(":hover")) el.addEventListener("mouseleave", answer, { once: true });
       else answer();
     }
     if (ns === "backups") readBackups();
@@ -1141,8 +1154,6 @@ if (fixture && fixtures[fixture]) {
        again (pin: losing nothing › export pressed again while one runs) */
     session.focusText();
     if (!win.showDirectoryPicker) { say("export needs a browser that can open a folder to write into"); return; }
-    /* a store that failed to read says so, not "still loading" for the
-       whole session (pin: lifecycle.test › says loading while the warm runs) */
     if (warmBlock()) return;
     if (stillRunning()) return;
     longRun = "an export";
@@ -1152,8 +1163,6 @@ if (fixture && fixtures[fixture]) {
     session.flushSave().then(() => exportEntries(layer.cache, images)).then((files) => {
       if (!files.length) { p.ok("nothing to export"); return; }
       const docs = files.filter(isDoc).length, missing = missingPictures(files);
-      /* a picture the store lacks keeps its name in the text and is counted
-         here (pin: exportEntries.test › exportEntries: a doc per non-blank entry) */
       const lostNote = missing ? " — " + missing + (missing === 1 ? " picture" : " pictures") + " missing" : "";
       const lostList = files.filter((f) => f.picsMissing).map((f) => filePath(f) + ": " + f.picsMissing + " missing").join("\n");
       return dirPicked.then((dir) => writeFilesTo(dir, files, p.step)).then((failures) => {

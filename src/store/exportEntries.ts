@@ -67,9 +67,8 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
     Promise.all(group.map(oneJob)).then((lists) => { for (const l of lists) all.push(...l); return yieldToTaskQueue(); })),
     Promise.resolve()).then(() => all);
 }
-/* the pictures an export's text names and could not carry: their names stay
-   in the text for a re-import, and the count is said (pin: exportEntries.test
-   › exportEntries: a doc per non-blank entry) */
+/* the pictures an export's text names and could not carry (pin:
+   exportEntries.test › exportEntries: a doc per non-blank entry) */
 export function missingPictures(files: ExportFile[]): number {
   return files.reduce((n, f) => n + (f.picsMissing ?? 0), 0);
 }

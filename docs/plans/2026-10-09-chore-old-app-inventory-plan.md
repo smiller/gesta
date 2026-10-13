@@ -588,3 +588,44 @@ unfixed src, every step's reading moving with its change (MEASURED):
 61. A bare launch writes today's #date into the address.
 62. ⌃⌘ letters match in either case.
 63. A drag that began in the line bar does not close it.
+Committed f5b97a0. The compare: 419 steps, 0 open; seven differences
+listed with their reasons (two cursor arrivals, the Import button's
+hand-back, 56a as asked, the line bar's re-ask on another tab's write,
+?warm=slow being the successor's probe). One gap the compare found and
+fixed before the commit: a shortcut refused for want of a caret left the
+keys nowhere; they go back to the entry, as the old app's did. Seen in
+the hand-check probe and not taken: the hover copy button can stand over
+the line bar's Line box when a hovered block's top is under the masthead.
+
+068a671 (group 4 review cycle 1) and f5b97a0 (groups 5–7) accepted 2026-10-12.
+
+Review cycle 1 of groups 5–7 (/code-review high, 068a671..f5b97a0):
+127,726 tokens (MEASURED, the transcript's last message), 10 findings, all
+taken:
+1. The Go to row was never re-answered after the warm, opening it putting
+   the focus in it: re-answered while nothing has been picked, the focus
+   put back on its first select (a step, "Go to opened before the warm").
+2. A panel holding the keys but not the pointer waited on a mouseleave
+   that never came: it waits on the pointer alone, its rows keyed by
+   address so the keys stay put (a step, "the bookshelf opened before the
+   warm, the keys on its button").
+3. A Line numbering write that failed blocked the change and left the
+   select and the gutter disagreeing: the change is made and the failure
+   said. (The old app blocked it; not asked — an edge of a full store.)
+4. The markdown view's link went into whatever entry was shown when the
+   write landed: the entry is checked too (lifecycle.test).
+5. The markdown view's link was spelled by hand, unescaped: one
+   `linkMarkdown`, the serializer's spelling (insertLink.test).
+6. "⌘-click to open" rode out in every HTML copy: it is the editor's own
+   drawing of a link, and a hover copy strips it.
+7. `after` promised to leave the selection standing and did not: the
+   contract now says what both views do, as the old app's insert did —
+   typed at the selection's end, the caret after it (keeping the
+   selection left the caret before the link, MEASURED in the full run).
+8. Every failed picture write said "storage full": only a full store
+   says so, and the pin copies the error.
+9. Two comments named another module; the export's warm-refusal comment
+   pinned a test that does not reach it: trimmed, the latter dropped.
+10. The undoable insert was written three times: one `typeInto`; the
+    picture pass skips HTML holding no picture.
+REVIEW CYCLES: 1.
