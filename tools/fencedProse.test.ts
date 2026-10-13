@@ -121,3 +121,17 @@ test("quoteFencedProse: a line of a layout with no letter and a run of underscor
   expect(r.fences.map((f) => f.kind)).toEqual(["prose"]);
   expect(lines(r.md)).toEqual(["The salary scale in each case is set at the start.\n\n/______/\n\nThe first position is on a grant.\n\n/______/"]);
 });
+test("quoteFencedProse: in a layout a paragraph indented whole is a quotation inside the quotation, consecutive indented paragraphs one with their blank line", () => {
+  const md = "```\nGGK tweets https://twitter.com/guygavrielkay/status/1639319708905222149\n\n    Some of us call it brooding and swearing, but done to same (desired) effect.\n\nQTing https://twitter.com/brevitymag/status/1639220903090491394\n\n    \"A lot of writing is walking around the house muttering.\" ~ Abigail Thomas\n\n    with a cartoon of “the life of an artist”.\n```\n";
+  const r = quoteFencedProse(md, () => false, () => "layout");
+  const doc = parseMarkdown(r.md);
+  expect(doc.firstChild!.content.content.map((n) => n.type.name)).toEqual(["paragraph", "blockquote", "paragraph", "blockquote"]);
+  expect(lines(r.md)).toEqual([
+    "GGK tweets https://twitter.com/guygavrielkay/status/1639319708905222149",
+    "Some of us call it brooding and swearing, but done to same (desired) effect.",
+    "QTing https://twitter.com/brevitymag/status/1639220903090491394",
+    "\"A lot of writing is walking around the house muttering.\" ~ Abigail Thomas\n\nwith a cartoon of “the life of an artist”.",
+  ]);
+  const verse = "```\nAlice! A childish story take,\n    And, with a gentle hand,\n\n    relicta tantum est ars geometrarum\nmelos orum et cithararum facta gementium\n```\n";
+  expect(parseMarkdown(quoteFencedProse(verse, () => false, () => "layout").md).firstChild!.content.content.map((n) => n.type.name)).toEqual(["paragraph"]);
+});

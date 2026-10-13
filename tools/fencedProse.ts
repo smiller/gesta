@@ -155,7 +155,29 @@ function shaped(body: string[], shape?: Shape): Node[] {
     }
     return groups.map((g) => /^\s/.test(g[0]) ? schema.nodes.blockquote.create(null, paragraph(rows(g, true))) : paragraph(g));
   }
-  return [paragraph(lines)];
+  return shape === "layout" ? indentedWhole(lines) : [paragraph(lines)];
+}
+/* a layout's paragraph indented whole is a quotation inside it, the
+   indented paragraphs in a row one quotation, their blank lines kept; a
+   paragraph only partly indented is verse, and keeps its indents (pin:
+   fencedProse.test › quoteFencedProse: in a layout a paragraph indented
+   whole) */
+function indentedWhole(lines: string[]): Node[] {
+  const paras: string[][] = [[]];
+  for (const l of lines) { if (l) paras[paras.length - 1].push(l); else if (paras[paras.length - 1].length) paras.push([]); }
+  const out: Node[] = [];
+  let run: string[] = [], inner = false;
+  const flush = (): void => {
+    if (run.length) out.push(inner ? schema.nodes.blockquote.create(null, paragraph(rows(run, true))) : paragraph(run));
+    run = [];
+  };
+  for (const p of paras.filter((p) => p.length)) {
+    const whole = p.every((l) => /^\s/.test(l));
+    if (whole !== inner) { flush(); inner = whole; }
+    run.push(...(run.length ? ["", ...p] : p));
+  }
+  flush();
+  return out;
 }
 function quotation(body: string[], shape?: Shape): string {
   const doc = schema.nodes.doc.create(null, schema.nodes.blockquote.create(null, shaped(body, shape)));

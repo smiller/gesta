@@ -713,7 +713,10 @@ bold (MEASURED). The check now passes a star or underscore only where it
 opens or closes a word, and a quotation whose marks run over a line break
 keeps its fence. 1997-07-29 asked for all the same: a rule line, no letter
 and a run of underscores or stars, is written as code, so its marks stand.
-Slash italics need a letter inside. Result: 41 quotations in 32 entries,
+Slash italics need a letter inside. Asked after: in a layout, a paragraph
+indented whole is a quotation inside the quotation, indented paragraphs in
+a row one, their blank lines kept (2023-03-24's tweets); a paragraph only
+partly indented is verse and keeps its indents. Result: 41 quotations in 32 entries,
 no emphasis running over a line break (MEASURED). The same look over the
 whole backup: 12 entries with emphasis over a line break, all a `*…*` span
 typed over several lines, none made by the two imported passes (READ).
