@@ -70,6 +70,33 @@ function unwrapped(lines: string[]): string[] {
   flush();
   return out;
 }
+/* THE OLD INLINE SPELLINGS, read: text between slashes is italic, and an
+   Emacs link `[[address][label]]` a link; a slash inside a word, an
+   address or a fraction is text (pin: fencedProse.test › quoteFencedProse:
+   text between slashes is italic) */
+const ORG = /\[\[([^\]\s]+)\](?:\[([^\]]+)\])?\]/;
+const ITALIC = /(^|[\s(“‘"'—–-])\/(?=[^\s/])([^/\n]*?[^\s/])\/(?=$|[\s.,;:!?)”’"'—–-])/;
+function inline(line: string): Node[] {
+  const out: Node[] = [];
+  let rest = line;
+  while (rest) {
+    const o = ORG.exec(rest), it = ITALIC.exec(rest);
+    const oAt = o ? o.index : Infinity, iAt = it ? it.index + it[1].length : Infinity;
+    if (oAt === Infinity && iAt === Infinity) { out.push(schema.text(rest)); break; }
+    if (oAt <= iAt) {
+      if (oAt) out.push(schema.text(rest.slice(0, oAt)));
+      out.push(schema.text(o![2] ?? o![1], [schema.marks.link.create({ href: o![1] })]));
+      rest = rest.slice(oAt + o![0].length);
+    } else {
+      if (iAt) out.push(schema.text(rest.slice(0, iAt)));
+      out.push(schema.text(it![2], [schema.marks.em.create()]));
+      rest = rest.slice(iAt + it![2].length + 2);
+    }
+  }
+  return out;
+}
+/* the same line as the words it reads as */
+const plain = (line: string): string => inline(line).map((n) => n.text).join("");
 /* the quotation the model would write: one paragraph of lines, a blank
    line two breaks, spelled by the serializer so nothing in it reads as
    markdown it was not */
@@ -81,7 +108,7 @@ function quotation(body: string[]): string {
   lines = unwrapped(lines);
   lines.forEach((l, i) => {
     if (i) kids.push(schema.nodes.hard_break.create());
-    if (l) kids.push(schema.text(l));
+    if (l) kids.push(...inline(l));
   });
   const doc = schema.nodes.doc.create(null, schema.nodes.blockquote.create(null, schema.nodes.paragraph.create(null, kids)));
   return serializeMarkdown(doc).replace(/\n+$/, "");
@@ -105,7 +132,7 @@ export function quoteFencedProse(md: string, leave: (line: number) => boolean = 
       /* a quotation that would read as other words than the fence held
          keeps the fence (pin: fencedProse.test › quoteFencedProse: a
          quotation that would change the words) */
-      if (letters(body.join("\n")) !== letters(parseMarkdown(fence.quoted).textContent)) { fence.kind = "unsafe"; delete fence.quoted; }
+      if (letters(body.map(plain).join("\n")) !== letters(parseMarkdown(fence.quoted).textContent)) { fence.kind = "unsafe"; delete fence.quoted; }
     }
     if (fence.quoted) out.push(fence.quoted);
     else out.push(...src.slice(i, j + 1));

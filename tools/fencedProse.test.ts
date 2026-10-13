@@ -61,3 +61,8 @@ test("quoteFencedProse: prose wrapped at a measure becomes one line a paragraph;
   const two = "```\nThe first paragraph of the passage runs on past the measure of a line and\nends here.\n\nThe second paragraph also runs on past the measure of a single line and\nends here too.\n```\n";
   expect(quoteFencedProse(two).md).toBe("> The first paragraph of the passage runs on past the measure of a line and ends here.\n> \n> The second paragraph also runs on past the measure of a single line and ends here too.\n");
 });
+test("quoteFencedProse: text between slashes is italic, and an Emacs link a markdown link; an address and a path keep their slashes", () => {
+  const md = "```\nThe nice thing about the debacle that was /The Timeless Children/ is that it ended.\nRead the [[https://www.solutionsjournalism.org/][solutions stories]] and https://martinfowler.com/articles/x.html too.\n```\n";
+  expect(quoteFencedProse(md).md).toBe("> The nice thing about the debacle that was *The Timeless Children* is that it ended. Read the [solutions stories](https://www.solutionsjournalism.org/) and https://martinfowler.com/articles/x.html too.\n");
+  expect(quoteFencedProse("```\nWe went and/or stayed, said he, on 1/2 of the days in the month.\n```\n").md).toBe("> We went and/or stayed, said he, on 1/2 of the days in the month.\n");
+});
