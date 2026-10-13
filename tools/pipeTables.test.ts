@@ -43,7 +43,9 @@ test("versePipeTables: a table quoting the bookshelf is the reference it is give
 test("versePipeTables: a table quoting the bookshelf after a line ending in an old link and a colon makes that link the reference, its words kept, and is the passage alone", () => {
   const refer = () => ({ text: "[Dante, *Paradiso*, 33.95-6](#u):\n\n> ::: verse 95\n> Un punto | One instant\n> :::", key: "k", url: "#u", passage: "> ::: verse 95\n> Un punto | One instant\n> :::" });
   const md = "Though [[./autrui/dante_commedia.org::par-33-95][*Paradiso*, 33.95-6]] also wants its tribute:\n\n| 95 | Un punto | One instant |\n| --- | --- | --- |\n| 96 | che volse | Turned |\n";
-  expect(versePipeTables(md, refer).md).toBe("Though [*Paradiso*, 33.95-6](#u) also wants its tribute:\n\n> ::: verse 95\n> Un punto | One instant\n> :::\n");
+  const r = versePipeTables(md, refer);
+  expect(r.md).toBe("Though [*Paradiso*, 33.95-6](#u) also wants its tribute:\n\n> ::: verse 95\n> Un punto | One instant\n> :::\n");
+  expect(r.tables[0].intro).toEqual({ before: md.split("\n")[0], after: "Though [*Paradiso*, 33.95-6](#u) also wants its tribute:" });
 });
 test("versePipeTables: a first column labelling the lines — an anchor, a numbered place, or nothing — is dropped, a bare number starting the block", () => {
   const md = "> |----------+---------------------------+------------------|\n> | <<eh-1>> | Animula vagula blandula   | Poor little soul |\n> | <<eh-2>> | Hospes comesque corporis  | Guest and companion |\n";

@@ -21,7 +21,7 @@ const cells = (rest: string): string[] =>
 const words = (s: string): string => s.replace(/\s+/g, "");
 
 type Row = { num?: number; left: string; right?: string } | "break";
-export interface Table { line: number; before: string[]; after?: string[]; why?: string; shelf?: string; link?: string }
+export interface Table { line: number; before: string[]; after?: string[]; why?: string; shelf?: string; intro?: { before: string; after: string } }
 const LABEL = /^(?:\d+|<<[^>]*>>|\d+(?:-\d+)+)?$/;
 const OLD_LINK = /\[\[[^\]\s]+\]\[([^\]]+)\]\]/g;
 /* the reference a table's lines make when they quote the bookshelf, null when
@@ -88,11 +88,13 @@ export function versePipeTables(md: string, refer: Refer = () => null): { md: st
     let k = out.length - 1;
     while (k >= 0 && !PREFIX.exec(out[k])![2].trim()) k--;
     const old = v.shelf && k >= 0 && /:\s*$/.test(out[k]) ? [...out[k].matchAll(OLD_LINK)].pop() : undefined;
+    let intro: Table["intro"];
     if (v.shelf && old) {
-      out[k] = out[k].slice(0, old.index) + "[" + old[1] + "](" + v.shelf.url + ")" + out[k].slice(old.index! + old[0].length);
+      intro = { before: out[k], after: out[k].slice(0, old.index) + "[" + old[1] + "](" + v.shelf.url + ")" + out[k].slice(old.index! + old[0].length) };
+      out[k] = intro.after;
       after = v.shelf.passage.split("\n").map((l) => l ? quote(prefix) + l : quote(prefix).trimEnd());
     }
-    tables.push({ line: i + 1, before, after, why: v.why, shelf: v.shelf?.key, link: old ? old[0] : undefined });
+    tables.push({ line: i + 1, before, after, why: v.why, shelf: v.shelf?.key, intro });
     out.push(...(after ?? before));
     i = last;
   }

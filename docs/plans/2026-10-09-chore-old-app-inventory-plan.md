@@ -758,4 +758,10 @@ named is the one placed (MEASURED), but 2022-11-17:198, named
 differing, and is given its passage by name (29-48). A page made verse by
 this run is quoted as it will stand (2022-07-31 refers to Tres Leones);
 an entry never quotes itself; a speaker's row is matched as a row. Run:
-29 references and 30 verse blocks in 31 entries (MEASURED).
+29 references and 30 verse blocks in 31 entries (MEASURED). Asked after:
+2023-04-08 a reference to Cavafy, The First Step 17-24 (the translation
+alone quoted, numbered a line on) and 2023-03-22:33 to Housman, Last
+Poems 25, 9-12, both named. He took ten references for linkless: their
+link is in the sentence before, which the review page did not show; it
+shows it now, and the run stops on a reference with no link. Run: 30
+references and 29 verse blocks in 31 entries (MEASURED).

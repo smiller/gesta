@@ -24,7 +24,12 @@ const LEAVE_TABLE = new Map([["journal/1997/1997-10-24.md:43", "a signature set 
 /* tables made the reference to a passage named, asked, where the
    bookshelf's edition differs from the one quoted in more lines than a
    match allows */
-const REFER = new Map([["journal/2017/2017-11-15.md:100", { key: "bookshelf/Horace/Odes/3.29", from: 29, to: 48 }]]);
+const REFER = new Map([
+  ["journal/2017/2017-11-15.md:100", { key: "bookshelf/Horace/Odes/3.29", from: 29, to: 48 }],
+  /* the translation alone quoted, numbered from the line before the bookshelf's */
+  ["journal/2023/2023-04-08.md:45", { key: "bookshelf/Cavafy, C. P/The First Step", from: 17, to: 24 }],
+  ["journal/2023/2023-03-22.md:33", { key: "bookshelf/Housman, A. E/Last Poems/25. The Oracles", from: 9, to: 12 }],
+]);
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
   const p = join(dir, n);
   return statSync(p).isDirectory() ? walk(p) : n.endsWith(".md") ? [p] : [];
@@ -54,7 +59,11 @@ for (const path of walk(SRC).sort()) {
     const leave = LEAVE_TABLE.get(file + ":" + t.line);
     if (leave || !t.after) { counts.left++; left.push({ file, t: { ...t, why: leave ?? t.why, after: undefined } }); continue; }
     changed = true;
-    if (t.shelf) { counts.referred++; referred.push({ file, t }); } else { counts.made++; made.push({ file, t }); }
+    if (t.shelf) {
+      /* a reference carries its link: on its own line, or in the sentence introducing it */
+      if (!t.intro && !/^(> )*\[[^\]]+\]\(#/.test(t.after[0])) throw new Error(`${file}:${t.line}: a reference without its link`);
+      counts.referred++; referred.push({ file, t });
+    } else { counts.made++; made.push({ file, t }); }
   }
   if (!changed) continue;
   /* the tables left by name are put back as they stood */
@@ -85,7 +94,7 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em
 <h1>Pipe tables: ${counts.referred} made references to the bookshelf, ${counts.made} made verse, in ${counts.changed} entries</h1>
 <p>${counts.entries - counts.skipped} entries read; the ${counts.skipped} entries of 2026 are not read. A two-column table becomes a <code>::: verse</code> block, each row a pair <code>left | right</code>; its divider row goes, an empty row is a stanza break, and a column of line numbers becomes the block's first number. A table quoting verse on the bookshelf becomes the reference a copy of that passage makes (⌃⌘C): its label and link, then the bookshelf's own lines. Red is the table as it stands, green what the import would make. ${counts.left} tables are left as they are, listed last with the reason.</p>
 <h2>Made references to the bookshelf (${referred.length})</h2>
-${referred.map(({ file, t }) => `<div class="e"><span>${esc(file)}:${t.line} — ${esc(t.shelf!)}</span><pre class="before">${esc(t.before.join("\n"))}</pre><pre class="after">${esc(t.after!.join("\n"))}</pre></div>`).join("")}
+${referred.map(({ file, t }) => `<div class="e"><span>${esc(file)}:${t.line} — ${esc(t.shelf!)}${t.intro ? ", its link in the sentence before" : ""}</span><pre class="before">${esc([...(t.intro ? [t.intro.before, ""] : []), ...t.before].join("\n"))}</pre><pre class="after">${esc([...(t.intro ? [t.intro.after, ""] : []), ...t.after!].join("\n"))}</pre></div>`).join("")}
 <h2>Made verse (${made.length})</h2>
 ${made.map(({ file, t }) => `<div class="e"><span>${esc(file)}:${t.line}${t.why ? " — " + esc(t.why) : ""}</span><pre class="before">${esc(t.before.join("\n"))}</pre><pre class="after">${esc(t.after!.join("\n"))}</pre></div>`).join("")}
 <h2>Left as they are (${left.length})</h2>
