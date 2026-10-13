@@ -20,8 +20,8 @@ if (!/^gesta-fenced-prose/.test(basename(OUT))) throw new Error(`refusing to cle
 const LEAVE_ENTRY = /gesta[- ]wrangl|^journal\/2026\//i;
 const LEAVE_FENCE = new Set(["journal/1996/1996-02-08.md:13", "journal/2011/2011-12-01.md:18",
   /* the second run, over the fences emphasis had held back: one rewritten by
-     hand, a comment block, and two left out of the run asked for */
-  "journal/2022/2022-04-19.md:51", "journal/2015/2015-06-29.md:8", "journal/2023/2023-02-17.md:114", "journal/2023/2023-03-09.md:49"]);
+     hand, and a comment block */
+  "journal/2022/2022-04-19.md:51", "journal/2015/2015-06-29.md:8"]);
 const LEAVE_FILE = new Set(["journal/2018/2018-12-29.md"]);
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
   const p = join(dir, n);

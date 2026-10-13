@@ -698,4 +698,4 @@ eleven fences put to him: 11 quotations in 10 entries (MEASURED). Left:
 2022-04-19 (his to rewrite by hand), 2015-06-29:8 (a comment block), and
 2023-02-17:114 and 2023-03-09:49, which I had misread as unsafe from
 their marks and kept out of the eleven; both read back right (MEASURED),
-offered to him. 2015-02-05, 2015-07-18 and 2019-01-11 stay unsafe (code).
+and were added, asked: 13 quotations in 12 entries (MEASURED). 2015-02-05, 2015-07-18 and 2019-01-11 stay unsafe (code).
