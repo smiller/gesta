@@ -995,3 +995,11 @@ mark amber — "it'd be easier to see if any were missing if they weren't
 done individually". Run: 1354 turned in 427 entries, 263 left, 702
 other marks shown in the lines (MEASURED).
 Verify's speed, asked: "we definitely want a faster verify run" — next.
+Asked after: Sayers's "‘You ‘and over that key, … any sense or
+feeling,’" — the closing mark that left ‘and was the quotation's own,
+opened at ‘You. The pass now reads each paragraph keeping whether a
+quotation is open; no single quotation opens inside another, so a clip
+met inside one turns. 22 more turned, each read (MEASURED). And a
+dropped h is now found through a plural or a verb's ending (‘orses,
+‘appened), web2 holding stems only: 29 more, each read. Run: 1405
+turned in 431 entries, 241 left (MEASURED).

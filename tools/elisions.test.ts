@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { elisions, respell } from "./elisions.ts";
 
-const words = new Set(["horse", "hospital", "his", "is", "hold", "old", "the", "it", "hit", "and", "hand"]);
+const words = new Set(["horse", "hospital", "happen", "hurry", "his", "is", "hold", "old", "the", "it", "hit", "and", "hand"]);
 const run = (md: string) => respell(md, elisions(md, words).filter((e) => e.turn));
 
 test("elisions: a clip that is no word of its own turns, quoted or not; a dropped h turns where the word without it is none", () => {
@@ -48,4 +48,14 @@ test("elisions: ‘and for hand and ‘andy for handy turn unclosed; ‘And open
   expect(run("wot my pal ‘ad in ’is ‘and. Wot did yer do\n")).toBe("wot my pal ’ad in ’is ’and. Wot did yer do\n");
   expect(run("a machine-gun like that ‘andy by the bedside\n")).toBe("a machine-gun like that ’andy by the bedside\n");
   expect(run("“‘And the said representative,’ he read.\n")).toBe("“‘And the said representative,’ he read.\n");
+});
+test("elisions: inside a quotation already open a clip that is also a word turns, no quotation opening within another", () => {
+  expect(run("I said to the girl, ‘You ‘and over that key, which you ain’t got, and if you’ve any sense,’ I said, ‘you’ll come.’\n"))
+    .toBe("I said to the girl, ‘You ’and over that key, which you ain’t got, and if you’ve any sense,’ I said, ‘you’ll come.’\n");
+  expect(run("he says, ‘Is your bus fit to go?’ and ‘is it?’\n")).toBe("he says, ‘Is your bus fit to go?’ and ‘is it?’\n");
+  expect(run("‘Now,’ I said, ‘is it so?’\n\n‘is\n")).toBe("‘Now,’ I said, ‘is it so?’\n\n’is\n");
+});
+test("elisions: a dropped h is found through a plural or a verb's ending, the list holding only the stem", () => {
+  expect(run("gallopin’ ‘orses at the roundabouts\n")).toBe("gallopin’ ’orses at the roundabouts\n");
+  expect(run("it ‘appened at sea, ‘urried along\n")).toBe("it ’appened at sea, ’urried along\n");
 });

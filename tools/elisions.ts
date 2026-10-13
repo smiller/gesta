@@ -22,6 +22,9 @@ const CLIPPED_END = /(?:in|^(?:o|th|an|wi|wiv|ha|i|t|e|gi|ne|wo|tha|fro|ol))$/;
 const LETTER = /\p{L}/u;
 const OPENS = /^$|[\s“"(\[—–\-*_]/;
 
+/* a word and the stems a plural or a verb's ending leave: the word list holds only the stem */
+const stems = (w: string): string[] => [w, ...[/s$/, /es$/, /ed$/, /d$/, /ing$/, /ied$/].flatMap((e) => e.test(w) ? [w.replace(e, e.source === "ied$" ? "y" : "")] : [])];
+
 export interface Elision { at: number; word: string; turn: boolean }
 
 export function elisions(md: string, dict: Set<string>): Elision[] {
@@ -35,29 +38,44 @@ export function elisions(md: string, dict: Set<string>): Elision[] {
     pos += line.length + 1;
   }
   const paragraphEnd = (at: number): number => { const m = /\n\s*\n/.exec(md.slice(at)); return m ? at + m.index : md.length; };
+  const closes = (i: number): boolean => {
+    if (md[i] !== "’" || LETTER.test(md[i + 1] ?? "") || /\s/.test(md[i - 1] ?? " ")) return false;
+    const word = /\p{L}*$/u.exec(md.slice(Math.max(0, i - 12), i))![0].toLowerCase();
+    return !word || !CLIPPED_END.test(word);
+  };
   /* a closing mark after at, before the paragraph ends or another opening mark */
   const closed = (at: number): boolean => {
     const end = paragraphEnd(at);
     for (let i = at + 1; i < end; i++) {
       if (md[i] === "‘" && !LETTER.test(md[i - 1] ?? "")) return false;
-      if (md[i] !== "’" || LETTER.test(md[i + 1] ?? "") || /\s/.test(md[i - 1] ?? " ")) continue;
-      const word = /\p{L}*$/u.exec(md.slice(Math.max(0, i - 12), i))![0].toLowerCase();
-      if (!word || !CLIPPED_END.test(word)) return true;
+      if (closes(i)) return true;
     }
     return false;
   };
-  for (const m of md.matchAll(/‘/g)) {
+  /* a quotation open in the paragraph: no single quotation opens inside
+     another, so a clip met inside one is an elision (pin: elisions.test ›
+     elisions: inside a quotation already open) */
+  let open = false;
+  for (const m of md.matchAll(/‘|’|\n\s*\n/g)) {
     const at = m.index!;
+    if (m[0] !== "‘" && m[0] !== "’") { open = false; continue; }
     if (code[at]) continue;
+    if (m[0] === "’") { if (closes(at)) open = false; continue; }
     const before = md[at - 1] ?? "", after = /^\p{L}+/u.exec(md.slice(at + 1))?.[0] ?? "";
-    if (!after) continue;
+    if (!after) { open = true; continue; }
     if (LETTER.test(before)) { found.push({ at, word: after, turn: true }); continue; }
     if (!OPENS.test(before)) continue;
     const w = after.toLowerCase();
     /* ‘D’you, ‘e’: a quotation opening on a word with its own apostrophe */
-    if (md[at + 1 + after.length] === "’" && after.length < 3) continue;
-    if (CLIPS.has(w)) found.push({ at, word: after, turn: true });
-    else if (WORDS.has(w) || w.length > 1 && !dict.has(w) && dict.has("h" + w)) found.push({ at, word: after, turn: !closed(at) });
+    if (md[at + 1 + after.length] === "’" && after.length < 3) { open = true; continue; }
+    if (CLIPS.has(w)) { found.push({ at, word: after, turn: true }); continue; }
+    if (WORDS.has(w) || w.length > 1 && !dict.has(w) && stems(w).some((t) => !dict.has(t) && dict.has("h" + t))) {
+      const turn = open || !closed(at);
+      found.push({ at, word: after, turn });
+      if (!turn) open = true;
+      continue;
+    }
+    open = true;
   }
   return found;
 }
