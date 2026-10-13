@@ -699,3 +699,21 @@ eleven fences put to him: 11 quotations in 10 entries (MEASURED). Left:
 2023-02-17:114 and 2023-03-09:49, which I had misread as unsafe from
 their marks and kept out of the eleven; both read back right (MEASURED),
 and were added, asked: 13 quotations in 12 entries (MEASURED). 2015-02-05, 2015-07-18 and 2019-01-11 stay unsafe (code).
+
+THE KEPT FENCES ASKED FOR AS QUOTATIONS, 2026-10-13: 29 fences named from
+the review's kept list, put into the same folder. A fence named is a
+quotation whatever it reads as, its layout kept: each line's indent past
+the least (a one-space lead is a wrap's, not an indent), its inner
+spacing, wrapped prose joined except an indented line or a table's row.
+Asked shapes: 1995-06-12:35 its four tabbed lines a quotation inside it;
+1995-06-12:88 a list of three with two sub-lists. Found reading the run:
+the words check blind to every star and underscore let 1997-07-29's
+`/____/` rules pair across the quotation's lines, the text between turned
+bold (MEASURED). The check now passes a star or underscore only where it
+opens or closes a word, and a quotation whose marks run over a line break
+keeps its fence. 1997-07-29 asked for all the same: a rule line, no letter
+and a run of underscores or stars, is written as code, so its marks stand.
+Slash italics need a letter inside. Result: 41 quotations in 32 entries,
+no emphasis running over a line break (MEASURED). The same look over the
+whole backup: 12 entries with emphasis over a line break, all a `*…*` span
+typed over several lines, none made by the two imported passes (READ).

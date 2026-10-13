@@ -1,5 +1,6 @@
 import { test, expect } from "vitest";
 import { fenceKind, quoteFencedProse } from "./fencedProse.ts";
+import { parseMarkdown } from "../src/model/parse.ts";
 
 test("fenceKind: a fence naming a language is code", () => {
   expect(fenceKind("js", ["He went out into the rain and did not come back."])).toBe("code");
@@ -73,4 +74,50 @@ test("quoteFencedProse: slashes inside brackets are italic too", () => {
 test("quoteFencedProse: marks of emphasis already in a prose fence are read as emphasis, not as words changed", () => {
   expect(quoteFencedProse("```\nYou are to give *me* a merry Christmas, and _yes_ I mean it **all**.\n```\n").md)
     .toBe("> You are to give *me* a merry Christmas, and *yes* I mean it **all**.\n");
+});
+const lines = (md: string): string[] => {
+  const out: string[] = [];
+  parseMarkdown(md).descendants((n) => { if (n.type.name === "paragraph") { out.push(n.textBetween(0, n.content.size, "", "\n")); return false; } return true; });
+  return out;
+};
+test("quoteFencedProse: a fence asked for as a layout is a quotation keeping each line's indent past the least and its inner spacing; an indented line is never joined", () => {
+  const verse = "```\n    Ne magon þam breahtme   byman ne hornas,\n      ne hearpan hlyn,   ne hæleþa stefn {135}\n```\n";
+  const r = quoteFencedProse(verse, () => false, () => "layout");
+  expect(r.fences.map((f) => f.kind)).toEqual(["prose"]);
+  expect(lines(r.md)).toEqual(["Ne magon þam breahtme   byman ne hornas,\n  ne hearpan hlyn,   ne hæleþa stefn {135}"]);
+  const shared = "```\n                         How now, mad spirit!\nWhat night-reuel now about the haunted grove?\n```\n";
+  expect(lines(quoteFencedProse(shared, () => false, () => "layout").md)).toEqual(["                         How now, mad spirit!\nWhat night-reuel now about the haunted grove?"]);
+  const hanging = "```\nI’ve known rivers ancient as the world and older than the very\n    flow of human blood in human veins.\n\nThe first paragraph of the passage runs on past the measure of a line and\nends here.\n```\n";
+  expect(lines(quoteFencedProse(hanging, () => false, () => "layout").md))
+    .toEqual(["I’ve known rivers ancient as the world and older than the very\n    flow of human blood in human veins.\n\nThe first paragraph of the passage runs on past the measure of a line and ends here."]);
+});
+test("quoteFencedProse: a fence asked to nest is a quotation whose indented lines are a quotation inside it", () => {
+  const md = "```\nKranim/Demons – Fallen Men\nkranim and erina --\n\tkra - vb. - twisted\n\t-m - collective suffix\n```\n";
+  const r = quoteFencedProse(md, () => false, () => "nest");
+  const doc = parseMarkdown(r.md);
+  expect(doc.firstChild!.type.name).toBe("blockquote");
+  expect(doc.firstChild!.content.content.map((n) => n.type.name)).toEqual(["paragraph", "blockquote"]);
+  expect(lines(r.md)).toEqual(["Kranim/Demons – Fallen Men\nkranim and erina --", "kra - vb. - twisted\n-m - collective suffix"]);
+});
+test("quoteFencedProse: a fence asked as an outline is a quotation holding a list, its indented lines sub-items", () => {
+  const md = "```\nThe Beginnings\n\tThe Powers and the World\n\tThe Four Sisters\nBakari and Delason\n\tThe Elves of First Journey\nMelnos and Agelesse\n```\n";
+  const r = quoteFencedProse(md, () => false, () => "outline");
+  expect(r.md).toBe("> - The Beginnings\n>   - The Powers and the World\n>   - The Four Sisters\n> - Bakari and Delason\n>   - The Elves of First Journey\n> - Melnos and Agelesse\n");
+});
+test("quoteFencedProse: in a layout a one-space indent is none, so a line wrapped with a space is joined; a rule of underscores between slashes is not italic", () => {
+  const md = "```\nToday’s unusual / less well-known sonnet is by the Romanian poet Nina Cassian. Thanks to @mimimlu\n for suggesting it.\n\n/______________/\n```\n";
+  expect(quoteFencedProse(md, () => false, () => "layout").md)
+    .toBe("> Today’s unusual / less well-known sonnet is by the Romanian poet Nina Cassian. Thanks to @mimimlu for suggesting it.\n> \n> `/______________/`\n");
+});
+test("quoteFencedProse: marks the quotation would pair across its lines keep the fence", () => {
+  const md = "```\nThe salary scale in each case is set at the *start of the year\n\nand rises* each year to the top of the scale.\n```\n";
+  const r = quoteFencedProse(md, () => false, () => "layout");
+  expect(r.fences.map((f) => f.kind)).toEqual(["unsafe"]);
+  expect(r.md).toBe(md);
+});
+test("quoteFencedProse: a line of a layout with no letter and a run of underscores or stars is code, so its marks stay as they are", () => {
+  const md = "```\nThe salary scale in each case is set at the start.\n\n/______/\n\nThe first position is on a grant.\n\n/______/\n```\n";
+  const r = quoteFencedProse(md, () => false, () => "layout");
+  expect(r.fences.map((f) => f.kind)).toEqual(["prose"]);
+  expect(lines(r.md)).toEqual(["The salary scale in each case is set at the start.\n\n/______/\n\nThe first position is on a grant.\n\n/______/"]);
 });

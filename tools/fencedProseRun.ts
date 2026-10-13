@@ -4,7 +4,7 @@
    beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { quoteFencedProse, type Fence } from "./fencedProse.ts";
+import { quoteFencedProse, type Fence, type Shape } from "./fencedProse.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -23,6 +23,18 @@ const LEAVE_FENCE = new Set(["journal/1996/1996-02-08.md:13", "journal/2011/2011
      hand, and a comment block */
   "journal/2022/2022-04-19.md:51", "journal/2015/2015-06-29.md:8"]);
 const LEAVE_FILE = new Set(["journal/2018/2018-12-29.md"]);
+/* fences kept for their layout and asked for as quotations all the same,
+   the layout kept unless a shape is named */
+const ASKED = new Map<string, Shape>([
+  ["journal/1995/1995-06-12.md:35", "nest"], ["journal/1995/1995-06-12.md:88", "outline"],
+  ...["1996/1996-11-01.md:26", "1996/1996-11-04.md:23", "1997/1997-01-14.md:27", "1997/1997-07-29.md:15",
+    "2021/2021-09-17.md:201", "2022/2022-07-03.md:108", "2022/2022-07-09.md:101", "2022/2022-07-10.md:115",
+    "2022/2022-07-10.md:206", "2022/2022-07-16.md:3", "2022/2022-07-16.md:49", "2022/2022-07-16.md:78",
+    "2022/2022-07-31.md:46", "2022/2022-08-10.md:3", "2022/2022-08-10.md:64", "2022/2022-11-07.md:86",
+    "2022/2022-11-20.md:76", "2022/2022-12-12.md:36", "2022/2022-12-21.md:113", "2023/2023-02-05.md:59",
+    "2023/2023-02-12.md:50", "2023/2023-02-26.md:713", "2023/2023-03-14.md:122", "2023/2023-03-24.md:29",
+    "2023/2023-03-29.md:43", "2023/2023-04-16.md:377"].map((f): [string, Shape] => ["journal/" + f, "layout"]),
+]);
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
   const p = join(dir, n);
   return statSync(p).isDirectory() ? walk(p) : n.endsWith(".md") ? [p] : [];
@@ -36,7 +48,7 @@ for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8"), file = relative(SRC, path);
   if (LEAVE_ENTRY.test(file) || LEAVE_FILE.has(file)) { counts.skipped++; continue; }
-  const r = quoteFencedProse(md, (line) => LEAVE_FENCE.has(file + ":" + line));
+  const r = quoteFencedProse(md, (line) => LEAVE_FENCE.has(file + ":" + line), (line) => ASKED.get(file + ":" + line));
   for (const f of r.fences) {
     counts[f.kind]++;
     if (f.kind === "prose") shown.push({ file, f });
