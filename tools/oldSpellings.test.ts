@@ -41,3 +41,8 @@ test("respell: an Emacs link whose target names a day that exists is a link to t
   const left = "See [[file:1990.org::#19900101][1 Jan]], [[../../autrui/dante/commedia.org][commedia.org]] and [[:digit:]].\n";
   expect(respell(left, days).md).toBe(left);
 });
+test("respell: an Emacs link whose label breaks across a line is respelled whole, each line reported", () => {
+  const r = respell("the daily link: [[http://zenhabits.net/narrative/][Mental Badassery: Becoming\nAware of the Stories]].  Then on.\n");
+  expect(r.md).toBe("the daily link: [Mental Badassery: Becoming\nAware of the Stories](http://zenhabits.net/narrative/).  Then on.\n");
+  expect(r.changes.map((c) => c.line)).toEqual([1, 2]);
+});

@@ -41,29 +41,41 @@ function italics(text: string): string {
   }
   return out + unslashed(text.slice(at), (b) => "*" + b + "*");
 }
-function respellLine(line: string, days: (key: string) => boolean): string {
-  /* code spans first: an Emacs link inside one is code */
+/* the Emacs links of a run of lines between code blocks, read whole, so a
+   label broken across a line is one link; a code span is left */
+function linksIn(text: string, days: (key: string) => boolean): string {
   let out = "", at = 0;
-  for (const m of line.matchAll(/`+[^`]*`+/g)) {
-    out += italics(orgLinks(line.slice(at, m.index), days, "md")) + m[0];
+  for (const m of text.matchAll(/`+[^`\n]*`+/g)) {
+    out += orgLinks(text.slice(at, m.index), days, "md") + m[0];
     at = m.index! + m[0].length;
   }
-  return out + italics(orgLinks(line.slice(at), days, "md"));
+  return out + orgLinks(text.slice(at), days, "md");
+}
+function italicsLine(line: string): string {
+  let out = "", at = 0;
+  for (const m of line.matchAll(/`+[^`]*`+/g)) {
+    out += italics(line.slice(at, m.index)) + m[0];
+    at = m.index! + m[0].length;
+  }
+  return out + italics(line.slice(at));
 }
 
 export interface Respelled { line: number; before: string; after: string }
 /* `days`: whether a journal day exists, for a link naming a date */
 export function respell(md: string, days: (key: string) => boolean = () => false): { md: string; changes: Respelled[] } {
-  const lines = md.split("\n"), changes: Respelled[] = [];
-  let fence: string | null = null;
-  const out = lines.map((line, i) => {
+  const lines = md.split("\n"), out: string[] = [];
+  let fence: string | null = null, run: string[] = [];
+  /* a run between code blocks: its links read whole, its italics a line at a time */
+  const flush = (): void => { if (run.length) out.push(...linksIn(run.join("\n"), days).split("\n").map(italicsLine)); run = []; };
+  for (const line of lines) {
     const bare = line.replace(/^(\s*>\s?)*/, "");
     const mark = /^\s*(```|~~~)/.exec(bare);
-    if (fence) { if (mark && mark[1] === fence) fence = null; return line; }
-    if (mark) { fence = mark[1]; return line; }
-    const after = respellLine(line, days);
-    if (after !== line) changes.push({ line: i + 1, before: line, after });
-    return after;
-  });
+    if (fence) { if (mark && mark[1] === fence) fence = null; out.push(line); continue; }
+    if (mark) { flush(); fence = mark[1]; out.push(line); continue; }
+    run.push(line);
+  }
+  flush();
+  const changes: Respelled[] = [];
+  out.forEach((after, i) => { if (after !== lines[i]) changes.push({ line: i + 1, before: lines[i], after }); });
   return { md: out.join("\n"), changes };
 }
