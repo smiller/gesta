@@ -76,3 +76,25 @@ export function anchoredParagraph(md: string, anchor: string): string[] | null {
   }
   return (paras.find((p) => p.quoted) ?? paras[0])?.lines ?? [];
 }
+
+/* THE PROPERTY DRAWERS cleared once nothing reads them: each with the
+   blank line after it, so no gap is left doubled, or the quotation's own
+   blank line where the drawer opens a quotation that goes on. Code is
+   left (pin:
+   orgReferences.test › clearDrawers) */
+export function clearDrawers(md: string): { md: string; anchors: string[] } {
+  const src = md.split("\n"), out: string[] = [], anchors: string[] = [];
+  const bare = (l: string): string => l.replace(/^\s*(?:>\s*)*/, "").trim();
+  let fence = false;
+  for (let i = 0; i < src.length; i++) {
+    if (FENCE.test(src[i])) fence = !fence;
+    if (fence || bare(src[i]) !== ":PROPERTIES:") { out.push(src[i]); continue; }
+    let j = i;
+    while (j < src.length && bare(src[j]) !== ":END:") { const id = /^:CUSTOM_ID:\s*(\S+)/.exec(bare(src[j])); if (id) anchors.push(id[1]); j++; }
+    if (j >= src.length) { out.push(src[i]); continue; }
+    /* the line after: a blank, or the quotation's blank, goes with it */
+    if (j + 1 < src.length && !bare(src[j + 1])) j++;
+    i = j;
+  }
+  return { md: out.join("\n"), anchors };
+}

@@ -826,3 +826,17 @@ session's transcript, not retyped, and its highlight found in its entry
 (MEASURED). The link keeps his words; the passage is not set under it, the
 link standing mid-sentence. Run: 24 day links, 9 references with their
 passages, 11 bookshelf links, in 36 entries; 69 left (MEASURED).
+
+THE ORG DRAWERS, asked 2026-10-13 ("do the drawers pass with a review
+page"). 24 property drawers in 21 entries, every one `:PROPERTIES:`,
+`:CUSTOM_ID:`, `:END:` (MEASURED). Seven old `[[#anchor][label]]` links
+still pointed at them, so tools/orgDrawersRun.ts first points each at its
+anchor's place by the drawer rules, highlights read against the entries as
+the run leaves them (a target paragraph held an old link of its own,
+whose text the run changes), then clears every drawer with the blank line
+after it (tools/orgReferences.ts, clearDrawers), the words checked to lose
+the drawers' alone. Run: 7 links, 24 drawers, 23 entries (MEASURED). A
+look over every highlighted in-app link in the backup with this folder
+laid over it: 229 of 239 find their words; the 10 others name entries no
+longer filed under those names (Doctor Who's series level, a page moved)
+— links broken before today, put to him (MEASURED).

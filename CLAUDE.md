@@ -249,7 +249,9 @@ is in the plan's record, under the phase named):
   replaced by the passage it is given, pure, its test beside it;
   `tools/orgReferencesRun.ts` resolves each against the backup — a
   journal day, a bookshelf passage placed by its quotation, its line
-  anchor or its words — and writes an import folder with a review page.
+  anchor or its words — and writes an import folder with a review page;
+  `tools/orgDrawersRun.ts` points an old `[[#anchor]]` link at the place
+  its Org property drawer marks, then clears the drawers, the same way.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and

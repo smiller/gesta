@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { referOrgLinks, anchoredParagraph } from "./orgReferences.ts";
+import { referOrgLinks, anchoredParagraph, clearDrawers } from "./orgReferences.ts";
 
 test("referOrgLinks: an old link resolved is a markdown link, its words kept; one not resolved is left with its reason", () => {
   const md = "See [[./2017.org::lunch][29 April 2017]] and [[Sue]] there.\n";
@@ -36,4 +36,12 @@ test("anchoredParagraph: under a heading, the section's first quotation after th
   expect(anchoredParagraph("> :PROPERTIES:\n> :CUSTOM_ID: whole\n> :END:\n\nThe day.\n", "whole")).toEqual([]);
   expect(anchoredParagraph("# 13 July 1998\n\n> :PROPERTIES:\n> :CUSTOM_ID: whole\n> :END:\n\nThe day.\n", "whole")).toEqual([]);
   expect(anchoredParagraph(md, "other")).toBeNull();
+});
+test("clearDrawers: a property drawer is cleared with the blank line after it; one opening a quotation takes the quotation's blank line with it; code is left", () => {
+  expect(clearDrawers("## H\n\n> :PROPERTIES:\n>   :CUSTOM_ID: x\n> :END:\n\nText.\n")).toEqual({ md: "## H\n\nText.\n", anchors: ["x"] });
+  expect(clearDrawers("## E-from KSB:\n\n>  :PROPERTIES:\n>  :CUSTOM_ID: k\n>  :END:\n> \n> Etymologies\n").md).toBe("## E-from KSB:\n\n> Etymologies\n");
+  expect(clearDrawers("> :PROPERTIES:\n> :CUSTOM_ID: d\n> :END:\n\nThe day.\n").md).toBe("The day.\n");
+  expect(clearDrawers("Last words.\n\n> :PROPERTIES:\n> :CUSTOM_ID: e\n> :END:\n").md).toBe("Last words.\n");
+  const code = "```\n:PROPERTIES:\n:CUSTOM_ID: c\n:END:\n```\n";
+  expect(clearDrawers(code)).toEqual({ md: code, anchors: [] });
 });
