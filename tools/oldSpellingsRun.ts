@@ -4,7 +4,7 @@
    import, a review page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { respell, unslashed, ORG, type Respelled } from "./oldSpellings.ts";
+import { respell, unslashed, orgLinks, type Respelled } from "./oldSpellings.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -14,6 +14,7 @@ const OUT = process.argv[3] ?? join(HOME, "Desktop/gesta-imports/gesta-old-spell
 /* only a folder of this run's own naming is cleared before writing */
 if (!/^gesta-old-spellings/.test(basename(OUT))) throw new Error(`refusing to clear ${OUT}: name the folder gesta-old-spellings…`);
 
+const dayExists = (key: string): boolean => { try { return statSync(join(SRC, "journal", key.slice(0, 4), key + ".md")).isFile(); } catch { return false; } };
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
   const p = join(dir, n);
   return statSync(p).isDirectory() ? walk(p) : n.endsWith(".md") ? [p] : [];
@@ -23,7 +24,7 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
 /* the marks of emphasis aside, which the respelling moves and markdown
    reads: every other character must stand */
 const reads = (md: string): string => parseMarkdown(md).textContent.replace(/[\s*_/]+/g, "");
-const readsAsNew = (md: string): string => unslashed(parseMarkdown(md).textContent.replace(ORG, (_, href: string, label?: string) => label ?? href), (b) => b).replace(/[\s*_/]+/g, "");
+const readsAsNew = (md: string): string => unslashed(orgLinks(parseMarkdown(md).textContent, dayExists, "plain"), (b) => b).replace(/[\s*_/]+/g, "");
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 rmSync(OUT, { recursive: true, force: true });
@@ -32,7 +33,7 @@ const shown: { file: string; c: Respelled }[] = [], held: { file: string; why: s
 for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8"), file = relative(SRC, path);
-  const r = respell(md);
+  const r = respell(md, dayExists);
   if (!r.changes.length) continue;
   const doc = parseMarkdown(r.md);
   const why = reads(r.md) !== readsAsNew(md) ? "the words would read differently"
@@ -40,7 +41,7 @@ for (const path of walk(SRC).sort()) {
   if (why) { counts.held++; held.push({ file, why, c: r.changes }); continue; }
   counts.changed++;
   for (const c of r.changes) {
-    counts.links += (c.before.match(ORG) || []).length;
+    counts.links += (c.after.match(/\]\(/g) || []).length - (c.before.match(/\]\(/g) || []).length;
     counts.italics += (c.after.match(/\*/g) || []).length / 2 - (c.before.match(/\*/g) || []).length / 2;
     shown.push({ file, c });
   }

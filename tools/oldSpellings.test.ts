@@ -34,3 +34,10 @@ test("respell: a span opened by one mark and closed by the other is italic; unde
   expect(one("_already italic_ stays, *and this* and **bold** too.\n")).toBe("_already italic_ stays, *and this* and **bold** too.\n");
   expect(one("watch https://youtu.be/a-_HbC/ now\n")).toBe("watch https://youtu.be/a-_HbC/ now\n");
 });
+test("respell: an Emacs link whose target names a day that exists is a link to that day; another file's link is left", () => {
+  const days = (k: string): boolean => k === "1991-06-21" || k === "2022-05-24";
+  expect(respell("See [[file:1991.org::#19910621][21 June 1991]] and [[2022-05-24-tp][previous: 24 May 2022]].\n", days).md)
+    .toBe("See [21 June 1991](#1991-06-21) and [previous: 24 May 2022](#2022-05-24).\n");
+  const left = "See [[file:1990.org::#19900101][1 Jan]], [[../../autrui/dante/commedia.org][commedia.org]] and [[:digit:]].\n";
+  expect(respell(left, days).md).toBe(left);
+});

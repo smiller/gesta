@@ -595,8 +595,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
   await go("2026-09-06");
+  /* the editor reads the DOM selection when the browser's selectionchange
+     reaches it: waited for, not a fixed beat — a 100 ms beat left the caret
+     at the top on one run in three, and again under a busy machine */
+  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await R.caretBefore(page, "food of love");
-  await page.waitForTimeout(100);   /* the editor reads the DOM selection a beat later; without the beat the caret was at the top on one run in three */
+  await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(100);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 });
   await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
