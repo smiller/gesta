@@ -1003,3 +1003,23 @@ met inside one turns. 22 more turned, each read (MEASURED). And a
 dropped h is now found through a plural or a verb's ending (‘orses,
 ‘appened), web2 holding stems only: 29 more, each read. Run: 1405
 turned in 431 entries, 241 left (MEASURED).
+Asked after (Sayers's ‘avin’ and ‘earin’ still wrong: "Beginning to
+wonder if there's a different approach"; then "Go with the better
+approach"): the rules keep only the sure classes — a clip that is no word,
+a mark between letters; every other mark the rules weighed (1277) and
+every other opening mark in a line they touched (692) was read in its
+sentence, 1977 in four batches by reader agents (488k tokens in all,
+MEASURED from their notifications, against an estimate of 150–250k), the
+judgements kept in tools/elisionsRead.json. Reading and the rules
+disagreed on 40 of the 1301 the rules had judged; all 40 and the 26 the
+readers marked unsure were read again here: the rules had turned the
+quotation openers that begin Venus's and Lucrece's speeches (‘And…, ‘Is
+thine own heart…, ‘Art thou…) and left Shakespeare's ’t and ’bout. One
+reading changed: Browning's "probavit.*‘ That" is a closing mark typed
+the wrong way, turned. Two Sayers pairs typed in each other's places
+(’‘Ens, ’‘Twouldn’t) are swapped into ‘’. Left for a hand: four Nine
+Tailors closing marks set after the space ("there? ‘And he"), Merchant of
+Venice 3.5's stray "‘ Then", Donne's Satyre II "‘and they are his
+owne". Run: 1569 turned in 431 entries — 369 by rule, 1200 by reading —
+777 read as openings and left; 49 highlighted links into changed
+entries all still found (MEASURED).

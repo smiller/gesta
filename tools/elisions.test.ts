@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { elisions, respell } from "./elisions.ts";
+import { elisions, respell, readKey } from "./elisions.ts";
 
 const words = new Set(["horse", "hospital", "happen", "hurry", "his", "is", "hold", "old", "the", "it", "hit", "and", "hand"]);
 const run = (md: string) => respell(md, elisions(md, words).filter((e) => e.turn));
@@ -58,4 +58,19 @@ test("elisions: inside a quotation already open a clip that is also a word turns
 test("elisions: a dropped h is found through a plural or a verb's ending, the list holding only the stem", () => {
   expect(run("gallopin’ ‘orses at the roundabouts\n")).toBe("gallopin’ ’orses at the roundabouts\n");
   expect(run("it ‘appened at sea, ‘urried along\n")).toBe("it ’appened at sea, ’urried along\n");
+});
+test("elisions: a dropped h with a dropped g after it, ‘avin’, is found through the word whole", () => {
+  const more = new Set([...words, "have", "hear"]);
+  const go = (md: string) => respell(md, elisions(md, more).filter((e) => e.turn));
+  expect(go("But not ‘avin’ seen ’em, I can only tell from ‘earin’ ’em talk.\n")).toBe("But not ’avin’ seen ’em, I can only tell from ’earin’ ’em talk.\n");
+});
+test("elisions: a mark read in its sentence turns as read, a sure clip as its rule; each says whether it is sure", () => {
+  const md = "the ‘old tongue’ and ‘tis, ‘The end.’\n";
+  const read = { [readKey(md, md.indexOf("‘old"))]: true, [readKey(md, md.indexOf("‘tis"))]: false, [readKey(md, md.indexOf("‘The"))]: true };
+  expect(elisions(md, words, read).map((e) => [e.word, e.turn, e.sure, e.read])).toEqual([["old", true, false, true], ["tis", true, true, false], ["The", true, false, true]]);
+});
+test("respell: an elision's mark typed after the quotation's own, ’‘Ens, swaps the pair into ‘’Ens", () => {
+  const md = "Aggie’s ‘ens. ’‘Ens,’ I said.\n";
+  const at = md.indexOf("’‘") + 1;
+  expect(respell(md, [{ at, word: "Ens", turn: true, sure: false, read: true }])).toBe("Aggie’s ‘ens. ‘’Ens,’ I said.\n");
 });

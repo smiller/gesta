@@ -2,9 +2,9 @@
    read, its elisions' apostrophes turned, the changed entries written under
    out-dir at their own paths for an import, a review page beside out-dir,
    the counts printed */
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync, existsSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { elisions, respell, type Elision } from "./elisions.ts";
+import { elisions, respell, readKey, type Elision } from "./elisions.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -13,6 +13,10 @@ const SRC = process.argv[2] ?? join(HOME, "Library/CloudStorage/Dropbox/gesta-ba
 const OUT = process.argv[3] ?? join(HOME, "Desktop/gesta-imports/gesta-elisions");
 /* only a folder of this run's own naming is cleared before writing */
 if (!/^gesta-elisions/.test(basename(OUT))) throw new Error(`refusing to clear ${OUT}: name the folder gesta-elisions…`);
+/* the marks judged reading each in its sentence, by entry: UNREAD=path writes those not yet read */
+const READ = new URL("./elisionsRead.json", import.meta.url);
+const judged: Record<string, Record<string, boolean>> = existsSync(READ) ? JSON.parse(readFileSync(READ, "utf8")) : {};
+const unread: { file: string; key: string; context: string; rule: boolean | null }[] = [];
 const dict = new Set(readFileSync("/usr/share/dict/words", "utf8").split("\n").map((w) => w.toLowerCase()));
 
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
@@ -38,18 +42,24 @@ for (const path of walk(join(SRC, "bookshelf")).sort()) {
   const file = relative(SRC, path);
   counts.entries++;
   const md = readFileSync(path, "utf8");
-  const found: Elision[] = elisions(md, dict);
+  const found: Elision[] = elisions(md, dict, judged[file]);
   const turn = found.filter((e) => e.turn);
   counts.left += found.length - turn.length;
   const out = respell(md, turn);
   const kinds = new Map<number, string>();
   for (const m of out.matchAll(/‘/g)) kinds.set(m.index!, "other");
-  for (const e of found) kinds.set(e.at, e.turn ? "turned" : "left");
+  for (const e of found) kinds.set(e.at, e.sure ? "turned" : e.read ? (e.turn ? "readturn" : "readleft") : e.turn ? "guessturn" : "left");
   const lines: string[] = [];
   let from = 0;
   for (const l of out.split("\n")) {
     const to = from + l.length, mine = new Map([...kinds].filter(([at]) => at >= from && at < to));
-    if ([...mine.values()].some((k) => k !== "other")) lines.push(shown(out, from, to, mine));
+    if ([...mine.values()].some((k) => k !== "other")) {
+      lines.push(shown(out, from, to, mine));
+      for (const [at, k] of mine) if (k === "other" || k === "left" || k === "guessturn") {
+        const p = Math.max(md.lastIndexOf("\n\n", at) + 2, at - 160), q = Math.min(md.indexOf("\n\n", at) < 0 ? md.length : md.indexOf("\n\n", at), at + 90);
+        unread.push({ file, key: readKey(md, at), context: (md.slice(p, at) + "⟦‘⟧" + md.slice(at + 1, q)).replace(/\n/g, " / "), rule: k === "other" ? null : k === "guessturn" });
+      }
+    }
     from = to + 1;
   }
   if (lines.length) { byFile.push({ file, lines }); counts.lines += lines.length; }
@@ -79,15 +89,17 @@ writeFileSync(OUT + "-review.html", `<!doctype html><meta charset="utf-8"><title
 body{font:15px/1.5 Georgia,serif;max-width:1100px;margin:2em auto;padding:0 16px;background:#f4f7ec;color:#1a2418}
 h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}h3{font:12px ui-monospace,Menlo,monospace;color:#6b7568;margin:1.1em 0 .2em}
 p.l{margin:.25em 0 .25em 1em}b{font-weight:normal;padding:0 3px;border-radius:2px}
-.turned{background:#bfe0a8}.left{background:#f4c1b4}.other{background:#f6e3a1}nav a{margin-right:.7em}
+.turned{background:#bfe0a8}.readturn{background:#b9d4f2}.guessturn{background:#bfe0a8;outline:1px dashed #6b7568}.left{background:#f4c1b4}.readleft{background:#e3dfe8}.other{background:#f6e3a1}nav a{margin-right:.7em}
 .key b{margin:0 .2em}</style>
 <h1>Elisions: ${counts.turned} apostrophes turned in ${counts.changed} bookshelf entries</h1>
 <p>${counts.entries} bookshelf entries read. Every line holding a mark the pass weighed, as it will read:</p>
-<p class="key"><b class="turned">’</b> turned from ‘ — <b class="left">‘</b> weighed and left, a closing mark following it in its paragraph — <b class="other">‘</b> every other opening mark in the line, for a missed one to show.</p>
+<p class="key"><b class="turned">’</b> turned by rule, a clip that is no word or a mark between letters — <b class="readturn">’</b> turned, read in its sentence as an elision — <b class="readleft">‘</b> left, read as a quotation's opening — <b class="guessturn">’</b> turned by rule, not yet read — <b class="left">‘</b> left by rule, not yet read — <b class="other">‘</b> any other opening mark, not yet read.</p>
 <p>${counts.lines} lines in ${byFile.length} entries, ${counts.left} marks left. A clip that is no word of its own always turns (‘tis, ‘scape, ‘mongst); a clip that is also a word (‘is, ‘and, ‘old, ‘t) and a dropped h (‘orse) turn only where no closing mark follows in the paragraph.</p>
 <nav>${[...authors].map(([a, n]) => `<a href="#${esc(a)}">${esc(a)} (${n})</a>`).join("")}</nav>
 ${byFile.map(({ file, lines }, k) => {
   const a = where(file).split("/")[0], first = k === 0 || where(byFile[k - 1].file).split("/")[0] !== a;
   return (first ? `<h2 id="${esc(a)}">${esc(a)}</h2>` : "") + `<h3>${esc(where(file))}</h3>` + lines.map((l) => `<p class="l">${l}</p>`).join("");
 }).join("")}`);
+if (process.env.UNREAD) writeFileSync(process.env.UNREAD, unread.map((u) => JSON.stringify(u)).join("\n") + "\n");
+console.log(`${unread.length} marks in the lines shown not yet read${process.env.UNREAD ? ", written to " + process.env.UNREAD : ""}`);
 console.log(`${counts.entries} bookshelf entries read; ${counts.turned} apostrophes turned in ${counts.changed} entries, ${counts.left} left; written to ${OUT}, the review beside it`);

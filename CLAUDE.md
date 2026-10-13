@@ -259,7 +259,10 @@ is in the plan's record, under the phase named):
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
-  writes the changed entries as an import folder with a review page.
+  writes the changed entries as an import folder with a review page;
+  `tools/elisionsRead.json` the marks judged by reading each in its
+  sentence, by entry and the words either side, standing over the rules
+  but for a sure clip; `UNREAD=path` writes the marks not yet read.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and
