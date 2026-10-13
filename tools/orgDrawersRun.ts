@@ -50,6 +50,25 @@ const first = resolver(cache);
 const linkedTexts = Object.fromEntries(Object.entries(cache).map(([k, md]) => [k, referOrgLinks(md, first).md]));
 const resolve = resolver(linkedTexts);
 
+/* a section's quotation made the reference to its passage, asked: the
+   heading it stands under and the entry it quotes */
+const QUOTED = new Map([["journal/2015/2015-07-20.md", { heading: "## C. S. Lewis, *The Four Loves*, pp. 138-40", key: "bookshelf/Lewis, C. S/The Four Loves/Eros" }]]);
+const shelf = shelfIndex(cache);
+const made: { file: string; before: string[]; after: string[] }[] = [];
+function referred(file: string, md: string): string {
+  const q = QUOTED.get(file);
+  if (!q) return md;
+  const lines = md.split("\n"), h = lines.indexOf(q.heading);
+  let a = h + 1;
+  while (a < lines.length && !lines[a].trim()) a++;
+  let b = a;
+  while (b < lines.length && (/^>/.test(lines[b]) || !lines[b].trim() && /^>/.test(lines[b + 1] ?? ""))) b++;
+  const r = h >= 0 && b > a ? quotedProse(shelf, q.key, lines.slice(a, b), [q.key]) : null;
+  if (!r) throw new Error(`${file}: the quotation under ${q.heading} is not placed in ${q.key}`);
+  made.push({ file, before: [q.heading, "", ...lines.slice(a, b)], after: [q.heading, "", ...r.text.split("\n")] });
+  return [...lines.slice(0, a), ...r.text.split("\n"), ...lines.slice(b)].join("\n");
+}
+
 rmSync(OUT, { recursive: true, force: true });
 const counts = { entries: 0, changed: 0, links: 0, drawers: 0 };
 const linked: { file: string; l: Referred }[] = [], cleared: { file: string; before: string[]; after: string[] }[] = [];
@@ -59,11 +78,12 @@ for (const path of walk(SRC).sort()) {
   const r = referOrgLinks(md, resolve);
   for (const l of r.links) if (!("why" in l.res)) { counts.links++; linked.push({ file, l }); }
   const c = clearDrawers(r.md);
-  if (c.md === md) continue;
+  const quoted = referred(file, c.md);
+  if (quoted === md) continue;
   /* nothing but the drawers' own words may go */
   const gone = c.anchors.map((a) => ":PROPERTIES::CUSTOM_ID:" + a + ":END:").join("");
   if (words(c.md).length + gone.replace(/\s+/g, "").length !== words(r.md).length) throw new Error(`${file}: more than the drawers would go`);
-  const doc = parseMarkdown(c.md);
+  const doc = parseMarkdown(quoted);
   if (serializeMarkdown(parseMarkdown(serializeMarkdown(doc))) !== serializeMarkdown(doc)) throw new Error(`${file}: not a fixed point`);
   /* each drawer shown with the lines around it, before and after */
   const src = r.md.split("\n");
@@ -76,7 +96,7 @@ for (const path of walk(SRC).sort()) {
   counts.changed++;
   const to = join(OUT, file);
   mkdirSync(dirname(to), { recursive: true });
-  writeFileSync(to, c.md);
+  writeFileSync(to, quoted);
 }
 /* a synced Desktop can leave an empty "journal 2" beside a folder cleared
    and written again at once: empty folders are swept */
@@ -99,6 +119,8 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em
 <p>${counts.entries} entries read. An old <code>[[#anchor][label]]</code> link points where its anchor's property drawer stood: under a <code>##</code> section, its first quotation highlighted (else its first paragraph); with no section above, the entry itself. Then every <code>:PROPERTIES:</code> … <code>:END:</code> drawer is cleared, with the blank line after it. Red is the text as it stands, green what the import would make.</p>
 <h2>Links to an anchor's place (${linked.length})</h2>
 ${linked.map(({ file, l }) => `<div class="e"><span>${esc(file)}:${l.line} — ${esc(l.target)}</span>${pair(l.before, l.after)}</div>`).join("")}
+<h2>Quotations made references (${made.length})</h2>
+${made.map(({ file, before, after }) => `<div class="e"><span>${esc(file)}</span>${pair(before, after)}</div>`).join("")}
 <h2>Drawers cleared (${cleared.length})</h2>
 ${cleared.map(({ file, before, after }) => `<div class="e"><span>${esc(file)}</span>${pair(before, after)}</div>`).join("")}`);
 console.log(`${counts.entries} entries read; ${counts.links} links made, ${counts.drawers} drawers cleared, in ${counts.changed} entries; written to ${OUT}, the review beside it`);

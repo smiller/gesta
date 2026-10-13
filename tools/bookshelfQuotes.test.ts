@@ -76,3 +76,8 @@ test("quotedProse: a quotation opening mid-speech starts where its words do", ()
   const r = quotedProse(ix, "bookshelf/Doctor Who", ["> there must be no regrets, no tears, no anxieties."]);
   expect(r && r.passage).toBe("> there must be no regrets, no tears, no anxieties.");
 });
+test("quotedProse: a quotation differing from the entry within a line is placed by its first line's opening and its last line's close", () => {
+  const ix = shelfIndex({ ...cache, "bookshelf/Lewis, C. S/The Four Loves/Eros": "# Eros\n\nCan we be in this selfless liberation for a lifetime?  Hardly for a week.  Between the best possible lovers this high condition is intermittent.\n\nBut these lapses will not destroy a marriage between two decent people, seen from one particular angle.\n" });
+  const r = quotedProse(ix, "bookshelf/Lewis, C. S/The Four Loves/Eros", ["> Can we be in this selfless liberation for a lifetime?  Hardly for a week. Between the best possible lovers the high condition is intermittent.", "", "> But these lapses will not destroy a marriage between two decent people, seen from one particular angle."]);
+  expect(r && r.passage).toBe("> Can we be in this selfless liberation for a lifetime?  Hardly for a week.  Between the best possible lovers this high condition is intermittent.\n> \n> But these lapses will not destroy a marriage between two decent people, seen from one particular angle.");
+});

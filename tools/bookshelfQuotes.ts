@@ -76,11 +76,15 @@ export function quotedFrom(index: ShelfIndex, lines: Quoted[], except?: string):
   return null;
 }
 
+/* the letters of a long line's opening or close that place it */
+const REACH = 60;
 /* a speaker's name opening a line of a script */
 const SPEAKER = /^\s*(?:>\s?)*[A-Z][A-Z0-9 .'’-]*(?:\s*\[[^\]]*\])?:\s*/;
 /* A PROSE QUOTATION OF AN ENTRY under `prefix`, placed by its first and
    last lines, letters and numerals alone and a speaker's name aside: the
-   reference a copy from its first words, or the first speech's start when
+   reference a copy from its first words — a long line placed by its
+   opening and close alone (pin: bookshelfQuotes.test › quotedProse: a
+   quotation differing) — or the first speech's start when
    it opens on a speaker's name, to the last line's end,
    its closing marks with it, makes (pin: bookshelfQuotes.test ›
    quotedProse: a prose quotation) */
@@ -88,7 +92,8 @@ const SPEAKER = /^\s*(?:>\s?)*[A-Z][A-Z0-9 .'’-]*(?:\s*\[[^\]]*\])?:\s*/;
 export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], keys?: string[]): Referred | null {
   const lines = quote.map((l) => l.replace(/^\s*(?:>\s?)*/, "")).filter((l) => norm(l));
   if (!lines.length) return null;
-  const first = norm(lines[0].replace(SPEAKER, "")), last = norm(lines[lines.length - 1].replace(SPEAKER, ""));
+  /* a first line's opening and a last line's close: a word changed inside a long line does not part them */
+  const first = norm(lines[0].replace(SPEAKER, "")).slice(0, REACH), last = norm(lines[lines.length - 1].replace(SPEAKER, "")).slice(-REACH);
   if (first.length < DISTINCT || last.length < DISTINCT) return null;
   for (const key of keys ?? Object.keys(index.texts).filter((k) => k.startsWith(prefix)).sort()) {
     if (!norm(index.texts[key]).includes(first)) continue;

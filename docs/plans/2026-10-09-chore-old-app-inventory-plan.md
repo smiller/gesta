@@ -840,3 +840,9 @@ look over every highlighted in-app link in the backup with this folder
 laid over it: 229 of 239 find their words; the 10 others name entries no
 longer filed under those names (Doctor Who's series level, a page moved)
 — links broken before today, put to him (MEASURED).
+Asked after: 2015-07-20's Four Loves section, its drawer cleared, has its
+quotation made the reference to its passage (Eros); the minted link is
+his own for 2016-02-07, byte for byte (MEASURED), the passage the
+bookshelf's words ("this high condition" where the entry had "the"). The
+prose matcher now places a long line by its opening and close, sixty
+letters each, so a word changed inside does not part it.
