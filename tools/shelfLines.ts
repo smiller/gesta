@@ -17,6 +17,18 @@ const ENOUGH = 30;
 /* a citation line introducing a run, no longer than this */
 const CITATION = 40;
 
+/* two lines close in their letters: their letter pairs shared, by Dice's
+   measure, at least this much — Heav'n against Heaven, a dropped letter */
+const ALIKE = 0.8;
+function alike(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const pairs = (t: string): string[] => [...t].slice(1).map((c, i) => t[i] + c);
+  const pa = pairs(a), pb = pairs(b), left = [...pb];
+  let shared = 0;
+  for (const p of pa) { const at = left.indexOf(p); if (at >= 0) { shared++; left.splice(at, 1); } }
+  return 2 * shared / (pa.length + pb.length) >= ALIKE;
+}
+
 export interface Run { start: number; end: number; key: string; from: number; to: number }
 
 export function quotedRuns(md: string, index: ShelfIndex): Run[] {
@@ -42,8 +54,12 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
       const s = index.entries[e];
       let k = i, letters = 0;
       const fits = (j: number): boolean => j < lines.length && !skip[j] && u + j - i < s.left.length && !!s.left[u + j - i] && norm(bare(lines[j])) === s.left[u + j - i];
-      /* a line spelled otherwise is carried when the next goes on with the passage (pin: shelfLines.test › quotedRuns: a run carries through) */
-      while (fits(k) || k > i && norm(bare(lines[k] ?? "")) && fits(k + 1)) { letters += fits(k) ? s.left[u + k - i].length : 0; k++; }
+      const near = (j: number): boolean => j < lines.length && !skip[j] && u + j - i < s.left.length && alike(norm(bare(lines[j])), s.left[u + j - i] ?? "");
+      /* a line spelled otherwise is carried when the next goes on with the
+         passage, or when it is close to the passage's own (pin:
+         shelfLines.test › quotedRuns: a run carries through) (pin:
+         shelfLines.test › quotedRuns: a run's last line) */
+      while (fits(k) || k > i && norm(bare(lines[k] ?? "")) && (fits(k + 1) || near(k))) { letters += fits(k) ? s.left[u + k - i].length : 0; k++; }
       if (letters >= ENOUGH && (!best || k - 1 - i > best.end - best.start)) best = { start: i, end: k - 1, key: s.key, from: s.units[u].line, to: s.units[u + k - 1 - i].line };
     }
     if (best) { runs.push(best); i = best.end; }

@@ -23,3 +23,9 @@ test("quotedRuns: a run carries through a line spelled otherwise when the next g
   const md = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidiss ed\n> evitata rotis palmaque nobilis\n\n> certat tergeminis tollere honoribus;\n";
   expect(quotedRuns(md, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5], [4, 4, 8, 8]]);
 });
+test("quotedRuns: a run's last line spelled otherwise is carried when it is close to the passage's next line; a line unlike it is not", () => {
+  const close = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaq nobilis\n";
+  expect(quotedRuns(close, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
+  const unlike = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> and here my own words follow on\n";
+  expect(quotedRuns(unlike, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 3, 4]]);
+});

@@ -895,3 +895,8 @@ four entries quoting Paradise Lost 1.254-55 as the reference feature's
 test data (gesta-wrangling, the Verity Cards snapshot and page). Run: 110
 references, 570 lines, in 54 entries; every one of the 350 highlighted
 links then in the backup and folder finds its words (MEASURED).
+Asked after: 1988-04-11 is 3.682-85, not -84 — its last line spelled
+"Heav'n" against the bookshelf's "Heaven" ended the run. A differing line
+is now carried also when it is close to the passage's own (letter pairs
+shared by Dice's measure ≥ 0.8). Run: 110 references, 587 lines, in 54
+entries (MEASURED).
