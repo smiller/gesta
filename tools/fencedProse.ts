@@ -9,8 +9,10 @@ import { serializeMarkdown } from "../src/model/serialize.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import type { Node } from "prosemirror-model";
 
-/* the letters of a text, spacing and the quotation's marks aside */
-const letters = (s: string): string => s.replace(/^\s*>\s?/gm, "").replace(/\s+/g, "");
+/* the letters of a text, spacing, the quotation's marks and the marks of
+   emphasis aside: a star or an underscore in a prose fence was typed as
+   emphasis (pin: fencedProse.test › quoteFencedProse: marks of emphasis) */
+const letters = (s: string): string => s.replace(/^\s*>\s?/gm, "").replace(/[\s*_]+/g, "");
 
 export type FenceKind = "code" | "prose" | "aligned" | "unsafe" | "left";
 
@@ -98,8 +100,8 @@ function inline(line: string): Node[] {
 /* the same line as the words it reads as */
 const plain = (line: string): string => inline(line).map((n) => n.text).join("");
 /* the quotation the model would write: one paragraph of lines, a blank
-   line two breaks, spelled by the serializer so nothing in it reads as
-   markdown it was not */
+   line two breaks, spelled as it reads back, so a mark of emphasis typed in
+   the fence is written as the model writes emphasis */
 function quotation(body: string[]): string {
   const kids: Node[] = [];
   let lines = body.map((l) => l.trim());
@@ -111,7 +113,7 @@ function quotation(body: string[]): string {
     if (l) kids.push(...inline(l));
   });
   const doc = schema.nodes.doc.create(null, schema.nodes.blockquote.create(null, schema.nodes.paragraph.create(null, kids)));
-  return serializeMarkdown(doc).replace(/\n+$/, "");
+  return serializeMarkdown(parseMarkdown(serializeMarkdown(doc))).replace(/\n+$/, "");
 }
 
 export interface Fence { line: number; kind: FenceKind; body: string[]; quoted?: string }

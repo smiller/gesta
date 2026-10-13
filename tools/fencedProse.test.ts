@@ -70,3 +70,7 @@ test("quoteFencedProse: slashes inside brackets are italic too", () => {
   expect(quoteFencedProse("```\nyou may be stronger” [/Purg/ 31.44-5]) and then [see /Inf./] again.\n```\n").md)
     .toBe("> you may be stronger” [*Purg* 31.44-5]) and then [see *Inf.*] again.\n");
 });
+test("quoteFencedProse: marks of emphasis already in a prose fence are read as emphasis, not as words changed", () => {
+  expect(quoteFencedProse("```\nYou are to give *me* a merry Christmas, and _yes_ I mean it **all**.\n```\n").md)
+    .toBe("> You are to give *me* a merry Christmas, and *yes* I mean it **all**.\n");
+});

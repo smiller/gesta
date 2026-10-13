@@ -687,3 +687,15 @@ double-bracketed names in 73 entries — 67 naming .org files, 24 `file:`
 links naming no day, 7 `#` anchors, 26 others (names, the phonetic [[w]] of
 1990-11-30, and 2022-04-26's "previous" link, whose target names 2002-04-19
 under the label Tuesday 19 April 2022) (MEASURED).
+
+THE FENCES EMPHASIS HELD BACK, asked 2026-10-13 after 2022-04-19's
+Jinnee passage was found still fenced: the words check had read a star or
+an underscore typed as emphasis (`*me*`) as words changed, and kept 18
+fences as unsafe (MEASURED). The check is now blind to `*` and `_`, and the
+quotation is spelled as it reads back (`_yes_` → `*yes*`). Run again over
+the backup into ~/Desktop/gesta-imports/gesta-fenced-prose-emphasis, the
+eleven fences put to him: 11 quotations in 10 entries (MEASURED). Left:
+2022-04-19 (his to rewrite by hand), 2015-06-29:8 (a comment block), and
+2023-02-17:114 and 2023-03-09:49, which I had misread as unsafe from
+their marks and kept out of the eleven; both read back right (MEASURED),
+offered to him. 2015-02-05, 2015-07-18 and 2019-01-11 stay unsafe (code).
