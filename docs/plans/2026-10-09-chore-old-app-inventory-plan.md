@@ -657,3 +657,33 @@ after this import, a second pass with its own review over the entries'
 ordinary text — 220 Emacs links in 121 entries, 110 slash spans in 80
 (MEASURED; a code comment `/* … */` among them, so not every pair is
 italic).
+
+THE FENCED PROSE IMPORTED. Asked as the review was read further: every
+entry of 2026 left whole ("almost all gesta-wrangling"), 2018-12-29 too;
+`/x/` italic inside brackets as well, [/Purg/ 31.44-5] → [*Purg* 31.44-5].
+Final run: 752 quotations in 188 entries (MEASURED). Imported; the backup
+afterwards matched 187 of the 188, the 188th, 2022-11-05, carrying a later
+correction typed in the app, uuna → una (MEASURED).
+
+THE OLD SPELLINGS, the second pass, asked: "fixing the Emacs links and
+Emacs italics left over in the text, starting again with the review page
+before making changes". tools/oldSpellings.ts (pure, its test beside it)
+respells an entry's text outside code — a fenced block, a code span, an
+address, a link's destination: an Emacs link to an address
+`[[address][label]]` → `[label](address)`, its label's marks kept, a link
+read whole across a line break; text opened and closed by slashes italic.
+Asked as the review was read: a link whose target names an existing day
+of the journal is a link to that day (`[[file:1991.org::#19910621][21 June
+1991]]` → `[21 June 1991](#1991-06-21)`); a span opened by one mark and
+closed by the other — a slash with an underscore or a star either way
+round — is italic (1987-10-23:3, 1993-01-17:1). Left as they are: a pair
+with no slash, a comment's `/* */`, and any other double-bracketed name.
+tools/oldSpellingsRun.ts writes ~/Desktop/gesta-imports/gesta-old-spellings
+with a review page beside it, holding back an entry whose words would read
+differently. Final run: 96 Emacs links and 162 italics in 185 entries, 0
+held (MEASURED). Imported 2026-10-13: the backup matches all 185, and the
+pass run again over it changes 0 entries (MEASURED). Left in the text: 124
+double-bracketed names in 73 entries — 67 naming .org files, 24 `file:`
+links naming no day, 7 `#` anchors, 26 others (names, the phonetic [[w]] of
+1990-11-30, and 2022-04-26's "previous" link, whose target names 2002-04-19
+under the label Tuesday 19 April 2022) (MEASURED).

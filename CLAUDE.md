@@ -233,6 +233,11 @@ is in the plan's record, under the phase named):
   quotation, pure, its test beside it; `tools/fencedProseRun.ts` runs it
   over the backup and writes the changed entries as an import folder with a
   review page.
+  `tools/oldSpellings.ts` — an entry's old inline spellings respelled
+  outside code, pure, its test beside it: an Emacs link to an address or
+  to a day of the journal a markdown link, text between slashes italic;
+  `tools/oldSpellingsRun.ts` runs it over the backup and writes the changed
+  entries as an import folder with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and
