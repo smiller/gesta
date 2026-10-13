@@ -45,3 +45,11 @@ test("versePipeTables: a table quoting the bookshelf after a line ending in an o
   const md = "Though [[./autrui/dante_commedia.org::par-33-95][*Paradiso*, 33.95-6]] also wants its tribute:\n\n| 95 | Un punto | One instant |\n| --- | --- | --- |\n| 96 | che volse | Turned |\n";
   expect(versePipeTables(md, refer).md).toBe("Though [*Paradiso*, 33.95-6](#u) also wants its tribute:\n\n> ::: verse 95\n> Un punto | One instant\n> :::\n");
 });
+test("versePipeTables: a first column labelling the lines — an anchor, a numbered place, or nothing — is dropped, a bare number starting the block", () => {
+  const md = "> |----------+---------------------------+------------------|\n> | <<eh-1>> | Animula vagula blandula   | Poor little soul |\n> | <<eh-2>> | Hospes comesque corporis  | Guest and companion |\n";
+  expect(one(md)).toBe("> ::: verse\n> Animula vagula blandula | Poor little soul\n> Hospes comesque corporis | Guest and companion\n> :::\n");
+  const seen: { left: string; right?: string }[][] = [];
+  versePipeTables("| 2-19-7 | mi venne in sogno | In dream |\n| --- | --- | --- |\n| 2-19-8 | ne li occhi guercia | Squint-eyed |\n", (lines) => { seen.push(lines); return null; });
+  expect(seen).toEqual([[{ left: "mi venne in sogno", right: "In dream" }, { left: "ne li occhi guercia", right: "Squint-eyed" }]]);
+  expect(one("| 29 | prudens futuri | With wise purpose |\n| --- | --- | --- |\n|  | caliginosa nocte | in the shades |\n")).toBe("::: verse 29\nprudens futuri | With wise purpose\ncaliginosa nocte | in the shades\n:::\n");
+});

@@ -5,7 +5,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
 import { versePipeTables, type Table } from "./pipeTables.ts";
-import { shelfIndex, quotedFrom } from "./bookshelfQuotes.ts";
+import { shelfIndex, quotedFrom, referenceAt } from "./bookshelfQuotes.ts";
 import { importTarget } from "../src/store/names.ts";
 import { entryKey } from "../src/store/keys.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
@@ -21,6 +21,10 @@ if (!/^gesta-pipe-tables/.test(basename(OUT))) throw new Error(`refusing to clea
    tables read and left */
 const LEAVE_ENTRY = /^journal\/2026\//;
 const LEAVE_TABLE = new Map([["journal/1997/1997-10-24.md:43", "a signature set in a table"], ["journal/2024/2024-08-27.md:35", "a grid of words, not a text and its translation"]]);
+/* tables made the reference to a passage named, asked, where the
+   bookshelf's edition differs from the one quoted in more lines than a
+   match allows */
+const REFER = new Map([["journal/2017/2017-11-15.md:100", { key: "bookshelf/Horace/Odes/3.29", from: 29, to: 48 }]]);
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
   const p = join(dir, n);
   return statSync(p).isDirectory() ? walk(p) : n.endsWith(".md") ? [p] : [];
@@ -30,7 +34,8 @@ const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;"
 /* the bookshelf read whole, for the tables that quote it */
 const cache: Record<string, string> = Object.create(null);
 for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if (t) cache[entryKey(t.date, t.tag)] = readFileSync(path, "utf8"); }
-const index = shelfIndex(cache);
+/* a page this run makes verse is quoted as it will stand */
+const index = shelfIndex(Object.fromEntries(Object.entries(cache).map(([k, md]) => [k, /^(bookshelf|page)\//.test(k) ? versePipeTables(md).md : md])));
 
 rmSync(OUT, { recursive: true, force: true });
 const counts = { entries: 0, skipped: 0, changed: 0, made: 0, referred: 0, left: 0 };
@@ -39,7 +44,11 @@ for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8"), file = relative(SRC, path);
   if (LEAVE_ENTRY.test(file)) { counts.skipped++; continue; }
-  const r = versePipeTables(md, (lines) => quotedFrom(index, lines));
+  const self = importTarget(file);
+  const r = versePipeTables(md, (lines, line) => {
+    const named = REFER.get(file + ":" + line);
+    return named ? referenceAt(index, named.key, named.from, named.to) : quotedFrom(index, lines, self ? entryKey(self.date, self.tag) : undefined);
+  });
   let out = md, changed = false;
   for (const t of r.tables) {
     const leave = LEAVE_TABLE.get(file + ":" + t.line);

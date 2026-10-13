@@ -744,6 +744,18 @@ selection of those lines. A table after a line ending in an old Emacs
 link and a colon makes that link the reference, its words kept, and is
 the passage alone. Left: a picture, a single row, more than two columns,
 numbers that do not run on, the 2026 entries, 1997-10-24's signature and
-2024-08-27's grid of words (both by reading). Run: 16 references and 30
-verse blocks in 20 entries; 2023-03-16:49 quotes Horace, Odes 1.5 in
-another translation than the bookshelf's, and is made verse (MEASURED).
+2024-08-27's grid of words (both by reading). First run: 16 references
+and 30 verse blocks in 20 entries.
+Asked as the review was read: a translation in other words than the
+bookshelf's is no bar ("we don't need to preserve that for this
+entry"), so the original alone places a passage; and thirteen tables of
+three columns named as references or verse, their first column labelling
+the lines (`<<par-1-103>>`, `2-19-7`, `<<eh-1>>`, a number, nothing) —
+such a column is dropped, a number starting the block. Every range he
+named is the one placed (MEASURED), but 2022-11-17:198, named
+"Purgatorio 2.58-63", is 19.58-63 by its labels and the bookshelf's text.
+2017-11-15 quotes Odes 3.29 in another edition, seven of its twenty lines
+differing, and is given its passage by name (29-48). A page made verse by
+this run is quoted as it will stand (2022-07-31 refers to Tres Leones);
+an entry never quotes itself; a speaker's row is matched as a row. Run:
+29 references and 30 verse blocks in 31 entries (MEASURED).

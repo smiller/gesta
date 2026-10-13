@@ -22,13 +22,14 @@ const words = (s: string): string => s.replace(/\s+/g, "");
 
 type Row = { num?: number; left: string; right?: string } | "break";
 export interface Table { line: number; before: string[]; after?: string[]; why?: string; shelf?: string; link?: string }
+const LABEL = /^(?:\d+|<<[^>]*>>|\d+(?:-\d+)+)?$/;
 const OLD_LINK = /\[\[[^\]\s]+\]\[([^\]]+)\]\]/g;
 /* the reference a table's lines make when they quote the bookshelf, null when
-   they do not, or why they are not one */
-export type Refer = (lines: Quoted[]) => Referred | { why: string } | null;
+   they do not, or why they are not one; `line`, the table's first */
+export type Refer = (lines: Quoted[], line: number) => Referred | { why: string } | null;
 
 /* the verse a run of table lines reads as, or why it is left */
-function verse(lines: string[], prefix: string, refer: Refer): { out?: string[]; why?: string; shelf?: Referred } {
+function verse(lines: string[], prefix: string, refer: Refer, line: number): { out?: string[]; why?: string; shelf?: Referred } {
   const rows: Row[] = [];
   for (const l of lines.map((l) => PREFIX.exec(l)![2])) {
     /* a blank line only parts the pieces of one table; an empty row is the stanza break */
@@ -36,10 +37,13 @@ function verse(lines: string[], prefix: string, refer: Refer): { out?: string[];
     const c = cells(l);
     if (c.every((x) => !x)) { if (rows.length && rows[rows.length - 1] !== "break") rows.push("break"); continue; }
     if (c.some((x) => /<img\b/i.test(x))) return { why: "a picture" };
-    const num = /^\d+$/.test(c[0]) && c.length > 2 || /^\d+$/.test(c[0]) && c.length === 2 && !/^\d+$/.test(c[1]) ? parseInt(c[0], 10) : undefined;
-    const rest = num === undefined ? c : c.slice(1);
+    /* a third column first is the lines' labels: a number, an anchor, a
+       numbered place, or nothing (pin: pipeTables.test › versePipeTables: a
+       first column labelling the lines) */
+    const labelled = c.length === 3 && LABEL.test(c[0]) || c.length === 2 && /^\d+$/.test(c[0]) && !/^\d+$/.test(c[1]);
+    const rest = labelled ? c.slice(1) : c;
     if (rest.length > 2) return { why: "more than two columns" };
-    rows.push({ num, left: rest[0], right: rest.length === 2 ? rest[1] : undefined });
+    rows.push({ num: labelled && /^\d+$/.test(c[0]) ? parseInt(c[0], 10) : undefined, left: rest[0], right: rest.length === 2 ? rest[1] : undefined });
   }
   while (rows[rows.length - 1] === "break") rows.pop();
   const lines2 = rows.filter((r): r is Exclude<Row, "break"> => r !== "break");
@@ -49,7 +53,7 @@ function verse(lines: string[], prefix: string, refer: Refer): { out?: string[];
   if (starts.size > 1) return { why: "its line numbers do not run on" };
   const start = starts.size ? [...starts][0] : 1;
   const q = quote(prefix);
-  const shelved = refer(lines2.map((r) => ({ left: r.left, right: r.right })));
+  const shelved = refer(lines2.map((r) => ({ left: r.left, right: r.right })), line);
   if (shelved && "text" in shelved) return { out: shelved.text.split("\n").map((l) => l ? q + l : q.trimEnd()), shelf: shelved };
   const body = rows.map((r) => r === "break" ? q.trimEnd() : q + escapeCell(r.left) + (r.right === undefined ? "" : " | " + escapeCell(r.right)));
   const out = [q + "::: verse" + (start > 1 ? " " + start : ""), ...body, q + ":::"];
@@ -75,7 +79,7 @@ export function versePipeTables(md: string, refer: Refer = () => null): { md: st
       j++;
     }
     const before = src.slice(i, last + 1);
-    const v = verse(before, prefix, refer);
+    const v = verse(before, prefix, refer, i + 1);
     let after = v.out;
     /* the old link introducing the quotation becomes the reference, its
        words kept, and the table the passage alone (pin: pipeTables.test ›

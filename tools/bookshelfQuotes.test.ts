@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { shelfIndex, quotedFrom } from "./bookshelfQuotes.ts";
+import { shelfIndex, quotedFrom, referenceAt } from "./bookshelfQuotes.ts";
 
 const cache: Record<string, string> = {
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -19,13 +19,13 @@ test("quotedFrom: lines quoting a passage of the bookshelf, their marks and spac
   expect(text.split("\n")[0]).toMatch(/^\[Horace, \*Odes\*, 1\.1\.3-4\]\(#bookshelf\/Horace\/Odes\/1\.1\?h=sunt%20quos/);
   expect(text.split("\n").slice(1)).toEqual(["", "> ::: verse 3", "> sunt quos curriculo pulverem Olympicum | There are who joy them in the Olympic strife", "> collegisse iuvat metaque fervidis | And love the dust they gather in the course;", "> :::"]);
 });
-test("quotedFrom: lines the bookshelf does not hold are no reference; the same lines with another translation are named, not referred", () => {
+test("quotedFrom: lines the bookshelf does not hold are no reference; the same lines in another translation are still the bookshelf's passage", () => {
   expect(quotedFrom(index, [{ left: "Mes vers fuiraient, doux et frêles,", right: "My verses would flee" }, { left: "Vers votre jardin si beau,", right: "To your garden" }])).toBeNull();
   const other = quotedFrom(index, [
     { left: "sunt quos curriculo pulverem Olympicum", right: "Some delight in the Olympic dust" },
     { left: "collegisse iuvat metaque fervidis", right: "gathered on their chariots" },
   ]);
-  expect(other).toEqual({ why: "the bookshelf's Horace/Odes/1.1 has another translation" });
+  expect(other && "url" in other && other.url).toMatch(/^#bookshelf\/Horace\/Odes\/1\.1\?h=sunt/);
 });
 test("quotedFrom: a line differing from the bookshelf's in a word still places the passage, and a note's mark in the bookshelf's line is not a letter", () => {
   const r = quotedFrom(index, [
@@ -43,4 +43,12 @@ test("quotedFrom: a passage of three lines or more may differ from the bookshelf
   const four = ["Oh sunt quos curriculo pulverem Olympicum", "collegisse iuvat metaque fervidis", "evitata rotis palmaque nobilis", "terrarum dominos evehit ad deos;"].map((left) => ({ left }));
   expect(quotedFrom(index, four)).not.toBeNull();
   expect(quotedFrom(index, [{ left: "Oh sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }])).toBeNull();
+});
+test("referenceAt: a passage named by its entry and lines is the reference a copy of those lines makes, the same quotedFrom finds", () => {
+  const found = quotedFrom(index, [{ left: "sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }]);
+  expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", 3, 4)).toEqual(found);
+  expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", 3, 99)).toEqual({ why: "bookshelf/Horace/Odes/1.1 has no lines 3-99" });
+});
+test("quotedFrom: an entry's own lines are not a quotation of itself", () => {
+  expect(quotedFrom(index, [{ left: "sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }], "bookshelf/Horace/Odes/1.1")).toBeNull();
 });
