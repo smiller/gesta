@@ -940,3 +940,22 @@ the backup took it; 1995-07-29 (9.1016) and 2020-03-28 (5.802) changed,
 the others fall in no reference. Run: 110 references, 646 lines, in 54
 entries; 112 highlighted links, each found by the page's own finder over
 the backup (MEASURED).
+Asked after: 2020-03-28's "His malice …That space the Evil one abstracted
+stood" is 9.459-61 and 9.463-65 — the line joined with an ellipsis closes
+the first run with its words before the ellipsis, a half-line of 461, and
+opens the second with its words after, 463. Such a line now gives way
+only when both its places are the runs' — 2020-03-04's "Authority and
+reason on her wait. … 1 { *Paradise Lost*, 8.546ff }" stays whole, his
+note with it — and inside a quotation the two references share one
+quoted blank between them. Run: 110 references, 648 lines, in 54
+entries; 112 highlighted links, each found by the page's own finder
+(MEASURED).
+Asked after: 2020-03-04 is 8.546-54 — its last line "Authority and
+reason on her wait. … 1 { *Paradise Lost*, 8.546ff }" is 554 with the
+quoted book's footnote after the ellipsis, "the citation, and we've got
+that in the reference link". A joined line's place no run takes is now
+kept beside the reference as written, unless it names the referenced
+work, when it is dropped as the citation the link gives; 2020-03-04 is
+the only entry it touches (MEASURED). Run: 110 references, 649 lines, in
+54 entries; 112 highlighted links, each found by the page's own finder
+(MEASURED).

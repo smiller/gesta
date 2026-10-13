@@ -47,10 +47,10 @@ test("quotedRuns: a run's first line may be the end of the passage's line before
   const own = "and so I said\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
   expect(quotedRuns(own, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 4, 5]]);
 });
-test("quotedRuns: opening lines are carried back one after another, a half-line spelled otherwise among them; a line joining two places with an ellipsis is not", () => {
+test("quotedRuns: opening lines are carried back one after another, a half-line spelled otherwise among them; a joined line whose second place is not the passage's is not", () => {
   const back = "> dulce decus meun\n> sunt quos curiculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
   expect(quotedRuns(back, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 2, 5]]);
-  const splice = "> Maecenas … collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n";
+  const splice = "> Maecenas … and so on in his words\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n";
   expect(quotedRuns(splice, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 5, 6]]);
 });
 test("referRuns: a run quoted inside a quotation keeps the outer quotation, the reference within it and its passage a level in", () => {
@@ -58,4 +58,33 @@ test("referRuns: a run quoted inside a quotation keeps the outer quotation, the 
   const runs = quotedRuns(md, index);
   const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` }));
   expect(out).toBe("> Horace put it so.\n>\n> [Horace, *Odes*, 1.1.3-4](#u):\n>\n>> ::: verse 3\n>> line\n>> :::\n>\n> So that is that.\n");
+});
+test("quotedRuns, referRuns: a line joining two places with an ellipsis closes the run before it and opens the run after it, and gives way to both references", () => {
+  const md = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis … certat tergeminis tollere honoribus;\n> illum, si proprio condidit horreo\n> quicquid de Libycis verritur areis.\n";
+  const runs = quotedRuns(md, index);
+  expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5], [2, 4, 8, 10]]);
+  const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: "" }));
+  expect(out).toBe("[Horace, *Odes*, 1.1.3-5](#u):\n\n> ::: verse 3\n> line\n> :::\n\n[Horace, *Odes*, 1.1.8-10](#u):\n\n> ::: verse 8\n> line\n> :::\n");
+});
+test("quotedRuns: a run at an entry's very end, its last line without a newline", () => {
+  expect(quotedRuns("> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis", index).map((r) => [r.start, r.end])).toEqual([[0, 1]]);
+});
+test("quotedRuns, referRuns: a joined line's place that is not a run's is kept beside the reference as written, unless it cites the work; inside a quotation the two references share one quoted blank", () => {
+  const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: "" });
+  const own = ">> sunt quos curriculo pulverem Olympicum\n>> collegisse iuvat metaque fervidis\n>> evitata rotis palmaque nobilis. … 1 { *Odes*, 1.1.3ff }\n";
+  expect(quotedRuns(own, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
+  const other = own.replace("*Odes*", "*Carmina*");
+  expect(referRuns(other, quotedRuns(other, index), mint)).toBe("> [Horace, *Odes*, 1.1.3-5](#u):\n>\n>> ::: verse 3\n>> line\n>> :::\n>\n>> … 1 { *Carmina*, 1.1.3ff }\n");
+  expect(referRuns(own, quotedRuns(own, index), mint)).toBe("> [Horace, *Odes*, 1.1.3-5](#u):\n>\n>> ::: verse 3\n>> line\n>> :::\n");
+  const lead = "> as he says … collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n";
+  expect(quotedRuns(lead, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 4, 6]]);
+  expect(referRuns(lead, quotedRuns(lead, index), mint)).toBe("> as he says …\n\n[Horace, *Odes*, 1.1.4-6](#u):\n\n> ::: verse 4\n> line\n> :::\n");
+  const md = "> So it goes.\n>> sunt quos curriculo pulverem Olympicum\n>> collegisse iuvat metaque fervidis\n>> evitata rotis … certat tergeminis tollere honoribus;\n>> illum, si proprio condidit horreo\n>> quicquid de Libycis verritur areis.\n";
+  const out = referRuns(md, quotedRuns(md, index), (r) => ({ text: `[${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: "" }));
+  expect(out).toBe("> So it goes.\n>\n> [3-5](#u):\n>\n>> ::: verse 3\n>> line\n>> :::\n>\n> [8-10](#u):\n>\n>> ::: verse 8\n>> line\n>> :::\n");
+});
+test("referRuns: at the top level a quotation's own blank line is not a blank line, so the reference's passage stays apart from the quotation it stood in", () => {
+  const md = "> Odes:\n> \n> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> \n> more notes\n";
+  const out = referRuns(md, quotedRuns(md, index), (r) => ({ text: `[${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: "" }));
+  expect(out).toBe("> Odes:\n> \n\n[3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n\n> \n> more notes\n");
 });
