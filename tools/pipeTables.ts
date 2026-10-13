@@ -9,7 +9,7 @@ import { parseMarkdown } from "../src/model/parse.ts";
 import { escapeCell } from "../src/model/grammar.ts";
 import type { Quoted, Referred } from "./bookshelfQuotes.ts";
 
-const PREFIX = /^(\s*(?:>\s?)*)(.*)$/;
+const PREFIX = /^(\s*(?:>\s?)*)([^]*)$/;
 const DIVIDER = /^\|?\s*:?-{3,}:?\s*(?:[|+]\s*:?-{3,}:?\s*)*\|?\s*$/;
 const NUMBERED = /^\s*\d+\s*\|/;
 const FENCE = /^\s*(?:>\s*)*(```|~~~)/;

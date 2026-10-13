@@ -17,10 +17,13 @@ const OUT = process.argv[3] ?? join(HOME, "Desktop/gesta-imports/gesta-pipe-tabl
 /* only a folder of this run's own naming is cleared before writing */
 if (!/^gesta-pipe-tables/.test(basename(OUT))) throw new Error(`refusing to clear ${OUT}: name the folder gesta-pipe-tables…`);
 
-/* the entries of 2026 record the sessions' work, their tables data; and
-   tables read and left */
-const LEAVE_ENTRY = /^journal\/2026\//;
-const LEAVE_TABLE = new Map([["journal/1997/1997-10-24.md:43", "a signature set in a table"], ["journal/2024/2024-08-27.md:35", "a grid of words, not a text and its translation"]]);
+/* tables read and left */
+const LEAVE_TABLE = new Map([
+  ["journal/1997/1997-10-24.md:43", "a signature set in a table"],
+  ["journal/2024/2024-08-27.md:35", "a grid of words, not a text and its translation"],
+  ["journal/2026/2026-06-26.md:72", "a table of key bindings"],
+  ["journal/2026/2026-07-16--gesta wrangling.md:156", "a table of language codes"],
+]);
 /* tables made the reference to a passage named, asked, where the
    bookshelf's edition differs from the one quoted in more lines than a
    match allows */
@@ -43,12 +46,11 @@ for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if 
 const index = shelfIndex(Object.fromEntries(Object.entries(cache).map(([k, md]) => [k, /^(bookshelf|page)\//.test(k) ? versePipeTables(md).md : md])));
 
 rmSync(OUT, { recursive: true, force: true });
-const counts = { entries: 0, skipped: 0, changed: 0, made: 0, referred: 0, left: 0 };
+const counts = { entries: 0, changed: 0, made: 0, referred: 0, left: 0 };
 const made: { file: string; t: Table }[] = [], referred: { file: string; t: Table }[] = [], left: { file: string; t: Table }[] = [];
 for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8"), file = relative(SRC, path);
-  if (LEAVE_ENTRY.test(file)) { counts.skipped++; continue; }
   const self = importTarget(file);
   const r = versePipeTables(md, (lines, line) => {
     const named = REFER.get(file + ":" + line);
@@ -92,7 +94,7 @@ h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}
 pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em 0;padding:6px 8px}
 .before{background:#fbeee8}.after{background:#e6f0dc}.kept{background:#eef1f6}</style>
 <h1>Pipe tables: ${counts.referred} made references to the bookshelf, ${counts.made} made verse, in ${counts.changed} entries</h1>
-<p>${counts.entries - counts.skipped} entries read; the ${counts.skipped} entries of 2026 are not read. A two-column table becomes a <code>::: verse</code> block, each row a pair <code>left | right</code>; its divider row goes, an empty row is a stanza break, and a column of line numbers becomes the block's first number. A table quoting verse on the bookshelf becomes the reference a copy of that passage makes (⌃⌘C): its label and link, then the bookshelf's own lines. Red is the table as it stands, green what the import would make. ${counts.left} tables are left as they are, listed last with the reason.</p>
+<p>${counts.entries} entries read. A two-column table becomes a <code>::: verse</code> block, each row a pair <code>left | right</code>; its divider row goes, an empty row is a stanza break, and a column of line numbers becomes the block's first number. A table quoting verse on the bookshelf becomes the reference a copy of that passage makes (⌃⌘C): its label and link, then the bookshelf's own lines. Red is the table as it stands, green what the import would make. ${counts.left} tables are left as they are, listed last with the reason.</p>
 <h2>Made references to the bookshelf (${referred.length})</h2>
 ${referred.map(({ file, t }) => `<div class="e"><span>${esc(file)}:${t.line} — ${esc(t.shelf!)}${t.intro ? ", its link in the sentence before" : ""}</span><pre class="before">${esc([...(t.intro ? [t.intro.before, ""] : []), ...t.before].join("\n"))}</pre><pre class="after">${esc([...(t.intro ? [t.intro.after, ""] : []), ...t.after!].join("\n"))}</pre></div>`).join("")}
 <h2>Made verse (${made.length})</h2>

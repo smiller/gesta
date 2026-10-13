@@ -55,3 +55,7 @@ test("versePipeTables: a first column labelling the lines — an anchor, a numbe
   expect(seen).toEqual([[{ left: "mi venne in sogno", right: "In dream" }, { left: "ne li occhi guercia", right: "Squint-eyed" }]]);
   expect(one("| 29 | prudens futuri | With wise purpose |\n| --- | --- | --- |\n|  | caliginosa nocte | in the shades |\n")).toBe("::: verse 29\nprudens futuri | With wise purpose\ncaliginosa nocte | in the shades\n:::\n");
 });
+test("versePipeTables: a line holding a line separator or a carriage return is read like any other", () => {
+  const md = "plain text and a\rreturn\n| a | b |\n| --- | --- |\n| c | d |\n";
+  expect(one(md)).toBe("plain text and a\rreturn\n::: verse\na | b\nc | d\n:::\n");
+});

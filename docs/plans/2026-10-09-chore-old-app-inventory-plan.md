@@ -764,4 +764,9 @@ alone quoted, numbered a line on) and 2023-03-22:33 to Housman, Last
 Poems 25, 9-12, both named. He took ten references for linkless: their
 link is in the sentence before, which the review page did not show; it
 shows it now, and the run stops on a reference with no link. Run: 30
-references and 29 verse blocks in 31 entries (MEASURED).
+references and 29 verse blocks in 31 entries (MEASURED). He asked why
+2026 went unread: the skip was the fenced-prose pass's, carried over
+unasked. Read, 2026 adds one table, Jesu bleibet meine Freude (verse; not
+on the bookshelf); its two data tables, 2026-06-26's key bindings and
+2026-07-16's language codes, are left by name. Run: 30 references and 30
+verse blocks in 32 entries (MEASURED).
