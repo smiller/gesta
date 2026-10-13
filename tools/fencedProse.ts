@@ -51,14 +51,33 @@ export function fenceKind(lang: string, body: string[]): FenceKind {
   return wordy ? "prose" : "code";
 }
 
+/* PROSE WRAPPED AT A MEASURE IS ONE LINE A PARAGRAPH: a run whose every
+   line but the last reaches the measure, none of them an item, is joined;
+   a list and verse keep a line each (pin: fencedProse.test ›
+   quoteFencedProse: prose wrapped at a measure) */
+const MEASURE = 55;
+const ITEM = /^(\d+[.):]|[-*•–]|\(?[a-z]\))\s/i;
+function unwrapped(lines: string[]): string[] {
+  const out: string[] = [];
+  let run: string[] = [];
+  const flush = (): void => {
+    const wrapped = run.length > 1 && run.slice(0, -1).every((l) => l.length >= MEASURE) && !run.some((l) => ITEM.test(l));
+    out.push(...(wrapped ? [run.join(" ")] : run));
+    run = [];
+  };
+  for (const l of lines) { if (l) run.push(l); else { flush(); out.push(""); } }
+  flush();
+  return out;
+}
 /* the quotation the model would write: one paragraph of lines, a blank
    line two breaks, spelled by the serializer so nothing in it reads as
    markdown it was not */
 function quotation(body: string[]): string {
   const kids: Node[] = [];
-  const lines = body.map((l) => l.trim());
+  let lines = body.map((l) => l.trim());
   while (lines.length && !lines[lines.length - 1]) lines.pop();
   while (lines.length && !lines[0]) lines.shift();
+  lines = unwrapped(lines);
   lines.forEach((l, i) => {
     if (i) kids.push(schema.nodes.hard_break.create());
     if (l) kids.push(schema.text(l));

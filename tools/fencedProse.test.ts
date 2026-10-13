@@ -49,3 +49,13 @@ test("quoteFencedProse: a fence named to be left keeps its fence", () => {
   expect(r.fences.map((f) => f.kind)).toEqual(["left", "prose"]);
   expect(r.md).toBe("```\nHe went out into the rain and did not come back.\n```\n\n> She stayed in by the fire and read until morning.\n");
 });
+test("quoteFencedProse: prose wrapped at a measure becomes one line a paragraph; a list and verse keep a line each", () => {
+  const wrapped = "```\n    Never neglect the soft, persistent influence of the Middle Ages in the\n    Modern world.\n```\n";
+  expect(quoteFencedProse(wrapped).md).toBe("> Never neglect the soft, persistent influence of the Middle Ages in the Modern world.\n");
+  const list = "```\n    15: Canada Geese on the river\n    16: Alyson at the head of the South Walk\n    17: A red-leaved tree\n```\n";
+  expect(quoteFencedProse(list).md).toBe("> 15: Canada Geese on the river\n> 16: Alyson at the head of the South Walk\n> 17: A red-leaved tree\n");
+  const verse = "```\n    If Saints and Angels spoke of love,\n    Should I not answer from my throne,\n    Have pity upon me, ye my friends,\n```\n";
+  expect(quoteFencedProse(verse).md).toBe("> If Saints and Angels spoke of love,\n> Should I not answer from my throne,\n> Have pity upon me, ye my friends,\n");
+  const two = "```\nThe first paragraph of the passage runs on past the measure of a line and\nends here.\n\nThe second paragraph also runs on past the measure of a single line and\nends here too.\n```\n";
+  expect(quoteFencedProse(two).md).toBe("> The first paragraph of the passage runs on past the measure of a line and ends here.\n> \n> The second paragraph also runs on past the measure of a single line and ends here too.\n");
+});
