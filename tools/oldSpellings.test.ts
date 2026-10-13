@@ -27,3 +27,10 @@ test("respell: each change is reported with its line", () => {
   const r = respell("plain\n\nsee /this/ and [[https://a.org/][that]]\n");
   expect(r.changes).toEqual([{ line: 3, before: "see /this/ and [[https://a.org/][that]]", after: "see *this* and [that](https://a.org/)" }]);
 });
+test("respell: a span opened by one mark and closed by the other is italic; underscores both sides are markdown already; an address keeps its marks", () => {
+  expect(one("_þa Eald-seaxe, þa Engle 7 þa Eotena/ and /How to Teach Programming (And Other Things)_ too.\n"))
+    .toBe("*þa Eald-seaxe, þa Engle 7 þa Eotena* and *How to Teach Programming (And Other Things)* too.\n");
+  expect(one("*úhreinn andi/ and /orgê* too.\n")).toBe("*úhreinn andi* and *orgê* too.\n");
+  expect(one("_already italic_ stays, *and this* and **bold** too.\n")).toBe("_already italic_ stays, *and this* and **bold** too.\n");
+  expect(one("watch https://youtu.be/a-_HbC/ now\n")).toBe("watch https://youtu.be/a-_HbC/ now\n");
+});

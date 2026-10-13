@@ -4,7 +4,7 @@
    import, a review page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { respell, type Respelled } from "./oldSpellings.ts";
+import { respell, unslashed, ORG, type Respelled } from "./oldSpellings.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -20,11 +20,10 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
 });
 /* the words an entry reads as, the old spellings read the new way: an
    Emacs link its label, slashes around italics gone */
-const ORG = /\[\[((?:https?|ftp|mailto|file):[^\]\s]+|www\.[^\]\s]+)\](?:\[([^\]]+)\])?\]/g;
-const ITALIC = /(^|[\s([“‘"'—–-])\/(?=[^\s/*])([^/\n]*?[^\s/*])\/(?=$|[\s.,;:!?)\]”’"'—–-])/g;
-const reads = (md: string): string => parseMarkdown(md).textContent.replace(/\s+/g, "");
-const readsAsNew = (md: string): string => parseMarkdown(md).textContent.replace(ORG, (_, href: string, label?: string) => label ?? href)
-  .replace(ITALIC, (_, lead: string, body: string) => lead + body).replace(/\s+/g, "");
+/* the marks of emphasis aside, which the respelling moves and markdown
+   reads: every other character must stand */
+const reads = (md: string): string => parseMarkdown(md).textContent.replace(/[\s*_/]+/g, "");
+const readsAsNew = (md: string): string => unslashed(parseMarkdown(md).textContent.replace(ORG, (_, href: string, label?: string) => label ?? href), (b) => b).replace(/[\s*_/]+/g, "");
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
 rmSync(OUT, { recursive: true, force: true });

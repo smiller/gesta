@@ -4,18 +4,23 @@
    name stays — and code is left: a fenced block, a code span, an address,
    a link's own destination. A slash pair hugging a star is a comment's,
    not italics (pin: oldSpellings.test › respell) */
-const ORG = /\[\[((?:https?|ftp|mailto|file):[^\]\s]+|www\.[^\]\s]+)\](?:\[([^\]]+)\])?\]/g;
-const ITALIC = /(^|[\s([“‘"'—–-])\/(?=[^\s/*])([^/\n]*?[^\s/*])\/(?=$|[\s.,;:!?)\]”’"'—–-])/g;
+export const ORG = /\[\[((?:https?|ftp|mailto|file):[^\]\s]+|www\.[^\]\s]+)\](?:\[([^\]]+)\])?\]/g;
+/* opened and closed by a slash, or by a slash and an underscore or a star
+   either way round, the one half respelled long ago: a pair with no slash
+   is markdown already */
+export const ITALIC = /(^|[\s([“‘"'—–-])([/_*])(?=[^\s/_*])([^/_*\n]*?[^\s/_*])([/_*])(?=$|[\s.,;:!?)\]”’"'—–-])/g;
+export const unslashed = (text: string, mark: (body: string) => string): string =>
+  text.replace(ITALIC, (all: string, lead: string, open: string, body: string, close: string) => open !== "/" && close !== "/" ? all : lead + mark(body));
 /* what italics may not reach into: a code span, a link's destination, an autolink, an address */
 const KEEP = /`+[^`]*`+|\]\([^)]*\)|<[^>\s]+>|\b(?:https?|ftp|mailto|file):\/\/\S+|\bwww\.\S+/g;
 
 function italics(text: string): string {
   let out = "", at = 0;
   for (const m of text.matchAll(KEEP)) {
-    out += text.slice(at, m.index).replace(ITALIC, (_, lead: string, body: string) => lead + "*" + body + "*") + m[0];
+    out += unslashed(text.slice(at, m.index), (b) => "*" + b + "*") + m[0];
     at = m.index! + m[0].length;
   }
-  return out + text.slice(at).replace(ITALIC, (_, lead: string, body: string) => lead + "*" + body + "*");
+  return out + unslashed(text.slice(at), (b) => "*" + b + "*");
 }
 function respellLine(line: string): string {
   /* code spans first: an Emacs link inside one is code */
