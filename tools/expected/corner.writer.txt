@@ -395,6 +395,9 @@ a bookmark's link in the markdown view: {"md":"x[Links](…)","cursor":"at the e
 Search opened before the warm: {"loading":"HoraceOdes, 1.1 MaecenaLinksZs atavis ed","rows":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Go to opened before the warm: {"more":false,"focusInRow":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the bookshelf opened before the warm, the keys on its button: {"before":0,"after":0,"keysOnButton":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a rename keeps a label's marks: arrived at page/Rename Host: {"cursor":"at a line's start"}
+a rename keeps a label's marks: arrived at page/Rename Host/Ideas: {"cursor":"at a line's start"}
+renamed under a label part italic: {"entry":"page/Rename Host/Plans","host":"See [the *Ideas* page](#page/Rename%20Host/Plans) here.","cursor":"on button","screen":"page/Rename Host/Plans · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 console: error: bookmarks not saved Error: bookmarks unreadable
 error: bookmarks not saved Error: bookmarks unreadable
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)

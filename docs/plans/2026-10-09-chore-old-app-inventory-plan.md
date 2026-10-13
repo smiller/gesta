@@ -866,3 +866,15 @@ End, as the source-view and bookmark-link steps do, and a full run after
 reads as approved (MEASURED). The rename's label loss confirmed by a
 probe: `[the *Ideas* page]` retargeted reads `[the Ideas page]`; a label
 wholly italic keeps its marks (MEASURED).
+
+A RENAME KEEPS A LINK LABEL'S OWN MARKS, asked 2026-10-13 after the
+import ("I'll import first, then fix the rename bug"). rewriteLinks
+rebuilt a link's label as one text with its first piece's marks, so a
+sub-entry's rename took the italics out of `[the *Ideas* page]`. Where
+the label stays, only the link's mark now moves (links.test, red first).
+A shared step in a last section of its own, "renamed under a label part
+italic", reads the host's link after a sub-page's rename in both apps:
+`[the *Ideas* page](#page/Rename%20Host/Plans)` (MEASURED, 0 open); last,
+because the old app keeps a deleted page in its scope lists. The step
+opens the host first: seeded behind the app's back, a host not yet read
+was not in the cache the rename retargets through.

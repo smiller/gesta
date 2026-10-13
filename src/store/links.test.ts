@@ -23,6 +23,12 @@ describe("retargetLinks", () => {
     expect(retargetLinks("- [1](#page/Book/1)\n- [2](#page/Book/2)", "#page/Book/1", "#page/Book/One", "1", "One")).toBe("- [One](#page/Book/One)\n- [2](#page/Book/2)");
   });
 });
+describe("retargetLinks, a label's own marks", () => {
+  it("keeps the marks inside a hand-written label when only the href moves", () => {
+    expect(retargetLinks("See [the *Ideas* page](#2026-09-06/Ideas) and [**bold** and *it*](#2026-09-06/Ideas).", "#2026-09-06/Ideas", "#2026-09-06/Plans", "Ideas", "Plans"))
+      .toBe("See [the *Ideas* page](#2026-09-06/Plans) and [**bold** and *it*](#2026-09-06/Plans).");
+  });
+});
 describe("relabelLinks", () => {
   it("relabels a minted label to the new heading, leaves a hand-written one, returns to the bare name when the heading goes", () => {
     const href = "#page/Book/1";

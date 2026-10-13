@@ -2075,6 +2075,21 @@ export async function runSteps(page, ctx, A, opts = {}) {
     if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
   }
     }],
+    ["a rename keeps a label's marks", async () => {
+  /* last of all: the old app keeps a deleted page in its scope lists, so
+     the pages seeded here would show in any section after */
+  /* a hand-written label part italic, its entry renamed: the label keeps its marks */
+  await A.foreignWrite(page, "page/Rename Host", "See [the *Ideas* page](#page/Rename%20Host/Ideas) here.\n");
+  await A.foreignWrite(page, "page/Rename Host/Ideas", "ideas\n");
+  await go("page/Rename%20Host");
+  await go("page/Rename%20Host/Ideas");
+  answer = "Plans";
+  await page.click(S.renameSubPage);
+  await A.waitEntry(page, "page/Rename Host/Plans", 5000).catch(() => {});
+  for (let i = 0; i < 30 && !((await A.stored(page, "page/Rename Host")) || "").includes("/Plans"); i++) await page.waitForTimeout(100);
+  await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "page/Rename Host")) || "").split("\n")[0] });
+  answer = null;
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the

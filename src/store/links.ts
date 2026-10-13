@@ -47,6 +47,10 @@ export function rewriteLinks(md: string, visit: Visit): string | null {
     const href = change.href ?? run.href;
     const text = change.text ?? run.text;
     const mark = schema.marks.link.create({ href });
+    /* the words kept, the link's mark alone moved: rebuilt, a label part
+       italic took its first piece's marks throughout (pin: links.test ›
+       keeps the marks inside a hand-written label) */
+    if (text === run.text) { tr.removeMark(run.from, run.to, schema.marks.link).addMark(run.from, run.to, mark); continue; }
     const other = tr.doc.resolve(run.from).nodeAfter?.marks.filter((m) => m.type !== schema.marks.link) || [];
     tr.replaceWith(run.from, run.to, schema.text(text, [...other, mark]));
   }
