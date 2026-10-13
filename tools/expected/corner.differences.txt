@@ -210,3 +210,7 @@ the line bar re-asked when the entry gains a page marker · after · the boxes f
 Search opened before the warm · loading · ?warm=slow is the successor's probe alone: the current app read its journal at once
 Go to opened before the warm · more · ?warm=slow is the successor's probe alone: the current app read its journal at once, so its row had nothing to grow by
 the bookshelf opened before the warm, the keys on its button · after · the rows are keyed here, so a rebuild keeps the keys and waits only for the pointer; the current app's rebuild waits for the keys to leave too, which a focused button never does (the review of groups 5–7, cycle 1)
+# DECIDED WITH NO STEP TO READ THEM, listed so they are not found again as gaps (the old-app inventory, group 8, 2026-10-12):
+#   one thing open at a time — an overlay panel, Search or Go to opening closes an expanded Go to or Line numbering row; the current app left in-flow rows open beside it (the inventory's B39, T165; overlays.ts, pinned by overlays.test)
+#   "backing up…" is a whisper restarted at each step, fading on a stall; the current app's stood untimed with an "N / total" counter (B100; main.ts's backup status comment)
+#   the search index is built in idle chunks right after the warm, by a 4.4 s measurement; the current app built none while navigating (T395; main.ts's index comment)

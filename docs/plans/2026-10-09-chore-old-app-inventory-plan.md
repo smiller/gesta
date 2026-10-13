@@ -180,7 +180,9 @@ comment (B39, B100, T165, T395) are owed a line in corner.differences.txt.
 
 Rows 14, 22, 23, 24, 25, 26, 46 above, and help.html:70 (the legacy
 `<a name="#p…">` conversion, absent: T87 — no file in the corpus needs it,
-INFERRED). Either the app or the sentence changes, item by item.
+MEASURED 2026-10-12: 0 of 13,939; the sentence taken out, asked
+2026-10-12). Group 8's four comment-only decisions are listed as comment
+lines in corner.differences.txt, no step reading them. Either the app or the sentence changes, item by item.
 
 ## Group 1, done (2026-10-09)
 
@@ -629,3 +631,5 @@ taken:
 10. The undoable insert was written three times: one `typeInto`; the
     picture pass skips HTML holding no picture.
 REVIEW CYCLES: 1.
+
+276cfb3 accepted 2026-10-12; no confirmation pass asked for: groups 5–7 closed at REVIEW CYCLES: 1.
