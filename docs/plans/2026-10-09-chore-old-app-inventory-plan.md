@@ -633,3 +633,19 @@ taken:
 REVIEW CYCLES: 1.
 
 276cfb3 accepted 2026-10-12; no confirmation pass asked for: groups 5–7 closed at REVIEW CYCLES: 1.
+
+ffd4596 accepted 2026-10-12. THE INVENTORY IS CLOSED: groups 1–7 built and accepted, group 8 listed, help.html in step.
+
+THE PARKED FENCES, taken up 2026-10-12 (asked): prose read as code is
+prose stored in ``` fences with no language, not indentation read as
+code (1995-03-26's passage is fenced in the stored text, READ). The fix is
+the text's, once: tools/fencedProse.ts (pure, its test beside it) sorts a
+bare fence as prose, code, a layout (columns of tabs, spaces or pipes,
+lines indented apart) or unsafe (a quotation would read as other words),
+and makes the prose a quotation; tools/fencedProseRun.ts runs it over the
+backup into ~/Desktop/gesta-imports/gesta-fenced-prose with a review page
+beside it. Over 13,939 entries (MEASURED): 777 fences made quotations in
+203 entries, 118 kept for their layout (1995-03-26 among them), 811 kept
+as code, 19 kept as unsafe, 71 left as asked — the gesta-wrangling
+entries, which record terminal text, and 1996-02-08:13. The import
+overwrites existing entries: run it from a backup taken just before.
