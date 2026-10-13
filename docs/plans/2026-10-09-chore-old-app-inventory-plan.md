@@ -878,3 +878,5 @@ italic", reads the host's link after a sub-page's rename in both apps:
 because the old app keeps a deleted page in its scope lists. The step
 opens the host first: seeded behind the app's back, a host not yet read
 was not in the cache the rename retargets through.
+c96a959 accepted 2026-10-13 on the headless reading. src/store/links.ts is no DOM
+seam and this closes no phase: no review by the review shape.
