@@ -303,6 +303,7 @@ where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
 a picture pasted, then Search typed in: {"query":"abc","pictures":0,"md":"![img-1]","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · source · corner [whatever stood]"}
 editing as the help says: arrived at page/Verse Copied: {"cursor":"at a line's start"}
 verse lines 2–3 copied: {"clipboard":["::: verse 2","two line","three line",":::"],"cursor":"selected 19","screen":"page/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘R on verse lines 2–3: {"lines":["[*Verse Copied*](…):","","> two line","> three line"],"cursor":"selected 19","screen":"page/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 a line typed into verse: {"before":"5:five line 10:ten line","typing":"","after":"5:four line 10:nine line","cursor":"at a line's start","screen":"page/Verse Copied · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the help says: arrived at page/Countdown: {"cursor":"at a line's start"}
 Enter in a countdown list: {"md":"5. five\n4. four\n3. next","numbers":"· 4 3 (start 5)","cursor":"at the end","screen":"page/Countdown · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

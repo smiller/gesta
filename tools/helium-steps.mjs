@@ -1655,6 +1655,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+c");
   await page.waitForTimeout(300);
   await log("verse lines 2–3 copied", { clipboard: await R.clipboardLines(page) });
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await page.waitForTimeout(300);
+  await log("⌃⌘R on verse lines 2–3", { lines: (await R.clipboardLines(page)).map((l) => l.replace(/\(#[^)]*\)/, "(…)")) });
   await page.keyboard.press("ArrowRight");
   await caretAt("two line", 8);
   await page.waitForTimeout(3000);

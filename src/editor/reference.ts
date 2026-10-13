@@ -222,12 +222,13 @@ function unquoted(cut: Node): Node[] {
   n.forEach((b) => { const t = trimmed(b); if (keep(t)) blocks.push(t); });
   return blocks;
 }
-/* THE QUOTED PASSAGE IS A QUOTATION: single-column verse or prose quotes
-   with "> " markers; a DUAL-LANGUAGE block copies as its own fence,
-   numbered from its first quoted line, keeping the two columns — INSIDE
-   the quotation: bare beside a single-column citation, it read as the
-   entry's own verse (pin: reference.test › a paired block copies as its
-   own fence inside the quotation). In a row block the ROW is the unit and whole rows are quoted,
+/* THE QUOTED PASSAGE IS A QUOTATION: prose and a stanza's lines quote
+   with "> " markers; a verse block copies as its own fence, numbered from
+   its first quoted line, a dual-language one keeping the two columns —
+   INSIDE the quotation: bare beside a citation, it read as the entry's own
+   verse (pin: reference.test › a paired block copies as its own fence
+   inside the quotation) (pin: reference.test › a single-column passage
+   quotes whole rows as its own fence). In a row block the ROW is the unit and whole rows are quoted,
    the contiguous run carrying the stanza gaps between them; a nested
    note stays behind and a page-turn row is dropped. In loose prose the
    unit is the selection, widened to whole pair rows. */
@@ -305,12 +306,14 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
     run.push(row.copy(dropFolios(row.content)));
   }
   const kept = withoutMarginNotes(run);
-  if (paired) {
+  /* a stanza's own count is its stanza's, so a run from inside one quotes as lines */
+  if (paired || block.type === N.verse && block.attrs.stanza == null) {
     /* the block's own count at the first kept row, whatever the row is: a
        direction alone as the block's last row was numbered 1 (pin:
        reference.test › a block inside a note, the label's top level, an end
        resting on a row, blanks, depth, the count before) */
-    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, kept);
+    const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || drawsInk(row) ? row : N.gap.create());
+    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, rowsKept);
     return quoted([fence]);
   }
   return kept.map((row) => {

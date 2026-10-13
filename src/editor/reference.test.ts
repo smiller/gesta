@@ -33,9 +33,9 @@ test("referenceRange over covered lines; a speaker label takes the line under it
   expect(referenceRange(verse, e, f)).toBe("");
 });
 
-test("a single-column passage quotes whole rows with the stanza gap, apparatus and prose left out of the count", () => {
+test("a single-column passage quotes whole rows as its own fence numbered from the first quoted line, the stanza gap kept, apparatus and prose left out of the count", () => {
   const [a, b] = span(verse, "forbidden", "Brought death");
-  expect(passageMd(verse, a, b)).toBe("> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,");
+  expect(passageMd(verse, a, b)).toBe("> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::");
 });
 
 test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
@@ -80,7 +80,7 @@ test("no cut through a pair, one quote level, a note kept, the block's own count
   /* an ink-less pair row between plain lines does not make the passage paired */
   const stray = parseMarkdown("::: verse\nfirst line\n |\nsecond line\n:::");
   [a, b] = span(stray, "first", "second");
-  expect(passageMd(stray, a, b)).toBe("> first line\n> \n> second line");
+  expect(passageMd(stray, a, b)).toBe("> ::: verse\n> first line\n> \n> second line\n> :::");
   /* a quoted paragraph cited again: one level */
   const para = parseMarkdown("[*M*](#x):\n\n> The mind is its own place\n\n[*H*](#y):\n\n> ::: verse 13\n> a | b\n> :::");
   [a, b] = span(para, "mind", "own");
@@ -94,7 +94,7 @@ test("a block inside a note, the label's top level, an end resting on a row, bla
   /* a verse block inside a note inside a verse block is walked whole (Satires 1.10's shape) */
   const satires = parseMarkdown("::: verse\nLucili, quam sis mendosus, teste Catone,\n::: note\n::: verse\nquam sis mendosus, teste Catone,\ndefensore tuo, pervincam\n:::\n:::\n:::");
   let [a, b] = span(satires, "defensore", "pervincam");
-  expect(passageMd(satires, a, b)).toBe("> defensore tuo, pervincam");
+  expect(passageMd(satires, a, b)).toBe("> ::: verse 2\n> defensore tuo, pervincam\n> :::");
   /* the label counts the entry's own lines, never a pasted citation's */
   const host = parseMarkdown("::: verse\nline one\nline two\n:::\n\n> ::: verse 13\n> a | b\n> c | d\n> :::");
   [a, b] = span(host, "a", "d");
@@ -176,11 +176,11 @@ test("the number on the right block at every depth, the nested box trimmed, an e
   const behind = parseMarkdown("::: verse\nalpha\n::: note\nfoot\n:::\nbeta\n:::");
   [a, b] = span(behind, "alpha", "beta");
   expect(coversProse(behind, a, b)).toBe(false);
-  expect(passageMd(behind, a, b)).toBe("> alpha\n> beta");
+  expect(passageMd(behind, a, b)).toBe("> ::: verse\n> alpha\n> beta\n> :::");
   const noted = parseMarkdown("::: verse\nalpha\n::: margin-note\nthe note\n:::\nbeta\n:::");
   [a, b] = span(noted, "alpha", "beta");
   expect(coversProse(noted, a, b)).toBe(false);
-  expect(passageMd(noted, a, b)).toBe("> alpha\n> beta");
+  expect(passageMd(noted, a, b)).toBe("> ::: verse\n> alpha\n> beta\n> :::");
 });
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
@@ -200,14 +200,14 @@ test("a margin-note is left out of a passage in loose prose too, between paragra
 test("a margin-note left out between two stanza gaps leaves one gap, not two", () => {
   const verse = parseMarkdown("::: verse\nalpha\n\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
   let [a, b] = span(verse, "alpha", "beta");
-  expect(passageMd(verse, a, b)).toBe("> alpha\n> \n> beta");
+  expect(passageMd(verse, a, b)).toBe("> ::: verse\n> alpha\n> \n> beta\n> :::");
   const loose = parseMarkdown("Intro.\n\n::: verse\nalpha\n\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
   [a, b] = span(loose, "Intro", "beta");
   expect(passageMd(loose, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> \n> beta\n> :::");
   /* two gaps the text itself holds stay two */
   const twice = parseMarkdown("::: verse\nalpha\n\n\nbeta\n:::");
   [a, b] = span(twice, "alpha", "beta");
-  expect(passageMd(twice, a, b)).toBe("> alpha\n> \n> \n> beta");
+  expect(passageMd(twice, a, b)).toBe("> ::: verse\n> alpha\n> \n> \n> beta\n> :::");
 });
 
 test("two verse blocks are a refusal", () => {
@@ -244,9 +244,9 @@ test("referencePayload: the link line with the range and the highlight, the pass
   const out = referencePayload(state(verse, a, b), "bookshelf", "Milton, John/Paradise Lost/Book 1", journal);
   expect(out).toMatchObject({ text:
     "[Milton, *Paradise Lost*, 1.2-3](#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death):\n\n" +
-    "> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe," });
+    "> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::" });
   /* the parts the rich flavour is built from ride beside the text */
-  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe," });
+  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::" });
   expect(referencePayload(state(verse, a, a), "bookshelf", "x", journal)).toEqual({ refused: "select" });
 });
 
@@ -259,7 +259,7 @@ test("a selection wholly inside a margin-note is refused, between paragraphs or 
   expect(referencePayload(state(inVerse, a, b), "bookshelf", "x", journal)).toEqual({ refused: "margin-note" });
   /* a selection reaching out of it quotes the text around it, the margin-note left out */
   [a, b] = span(inVerse, "beside", "beta");
-  expect(referencePayload(state(inVerse, a, b), "bookshelf", "x", journal)).toMatchObject({ passage: "> beta" });
+  expect(referencePayload(state(inVerse, a, b), "bookshelf", "x", journal)).toMatchObject({ passage: "> ::: verse 2\n> beta\n> :::" });
 });
 
 test("a leaf stands in for a prose book's titled chapter; entryLink names the entry the same way", () => {
@@ -340,7 +340,7 @@ test("the quoted passage sheds its page markers and keeps its words", () => {
 test("a page-turn row in a quoted run is left out, its marker with it, no blank line in its place", () => {
   const doc = parseMarkdown("::: verse\nline one\n⟨32⟩\nline two\n:::");
   const [a, b] = span(doc, "line one", "line two");
-  expect(passageMd(doc, a, b)).toBe("> line one\n> line two");
+  expect(passageMd(doc, a, b)).toBe("> ::: verse\n> line one\n> line two\n> :::");
 });
 test("a page-turn row is left out of a quoted run that starts in prose too", () => {
   const doc = parseMarkdown("a paragraph\n\n::: verse\nline one\n⟨32⟩\nline two\n:::");

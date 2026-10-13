@@ -773,3 +773,16 @@ verse blocks in 32 entries (MEASURED). Asked after: a single-column
 passage (the Housman, the Cavafy) is quoted as a verse block numbered
 from its first line, where ⌃⌘C quotes it as bare lines by a pinned
 decision; the tool wraps it, the app is unchanged (asked of him).
+
+⌃⌘R QUOTES SINGLE-COLUMN VERSE AS A NUMBERED VERSE BLOCK, asked
+2026-10-13 ("⌃⌘R for creating a reference should probably do the
+numbered `::: verse` block"; ⌃⌘C, the entry link, quotes nothing and is
+unchanged). A plain verse block's passage now copies as its own fence
+numbered from its first quoted line, as a dual-language block's did; an
+ink-less row in it is a gap. Prose and a stanza's lines keep their bare
+quoted lines: a stanza counts from its own first line, so a run from
+inside one would be numbered wrong. Reversed a pinned decision; the unit
+tests changed first (reference.test), the help card says how each kind is
+quoted, and a new shared step, "⌃⌘R on verse lines 2–3", reads it in
+headless Helium (MEASURED), its difference from the old app's bare lines
+listed. Awaiting his look.
