@@ -47,6 +47,15 @@ for (const path of walk(SRC).sort()) {
   mkdirSync(dirname(to), { recursive: true });
   writeFileSync(to, r.md);
 }
+/* a synced Desktop can leave an empty "journal 2" beside a folder cleared
+   and written again at once: empty folders are swept */
+const sweep = (dir: string): boolean => {
+  const kids = readdirSync(dir).filter((n) => statSync(join(dir, n)).isDirectory() ? !sweep(join(dir, n)) : n !== ".DS_Store");
+  if (kids.length || dir === OUT) return false;
+  rmSync(dir, { recursive: true, force: true });
+  return true;
+};
+sweep(OUT);
 const block = (lines: string[]): string => `<pre>${esc(lines.join("\n"))}</pre>`;
 writeFileSync(OUT + "-review.html", `<!doctype html><meta charset="utf-8"><title>Fenced prose review</title><style>
 body{font:15px/1.5 Georgia,serif;max-width:900px;margin:2em auto;padding:0 16px;background:#f4f7ec;color:#1a2418}
