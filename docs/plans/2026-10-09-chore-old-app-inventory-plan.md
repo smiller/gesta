@@ -785,4 +785,7 @@ inside one would be numbered wrong. Reversed a pinned decision; the unit
 tests changed first (reference.test), the help card says how each kind is
 quoted, and a new shared step, "⌃⌘R on verse lines 2–3", reads it in
 headless Helium (MEASURED), its difference from the old app's bare lines
-listed. Awaiting his look.
+listed. Hand-checked in his Helium on Housman, Last Poems 25.9-12: the
+clipboard held the reference minted by the same code, byte for byte
+(MEASURED). 8df275e accepted 2026-10-13. src/editor/reference.ts is no
+DOM seam and this closes no phase: no review by the review shape.
