@@ -14,10 +14,10 @@ const OUT = process.argv[3] ?? join(HOME, "Desktop/gesta-imports/gesta-fenced-pr
 /* only a folder of this run's own naming is cleared before writing */
 if (!/^gesta-fenced-prose/.test(basename(OUT))) throw new Error(`refusing to clear ${OUT}: name the folder gesta-fenced-prose…`);
 
-/* left as they stand, asked: the sessions' wrangling entries, whose fences
-   record what was typed to and from a terminal, and one fence read and
-   kept */
-const LEAVE_ENTRY = /gesta[- ]wrangl/i;
+/* left as they stand, asked: the sessions' wrangling entries and every
+   entry of 2026, whose fences record what was typed to and from a
+   terminal, or are code; and fences read and kept */
+const LEAVE_ENTRY = /gesta[- ]wrangl|^journal\/2026\//i;
 const LEAVE_FENCE = new Set(["journal/1996/1996-02-08.md:13", "journal/2011/2011-12-01.md:18"]);
 const LEAVE_FILE = new Set(["journal/2018/2018-12-29.md"]);
 const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
@@ -55,7 +55,7 @@ h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}
 pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em 0;padding:6px 8px}
 .before{background:#fbeee8}.after{background:#e6f0dc}.kept{background:#eef1f6}</style>
 <h1>Fenced prose: ${counts.prose} fences made quotations in ${counts.changed} entries</h1>
-<p>${counts.entries - counts.skipped} entries read. Of the fences that name no language, ${counts.prose} read as prose and become quotations; ${counts.aligned} are laid out in columns or indented apart and keep their fence; ${counts.code} read as commands or code and keep theirs; ${counts.unsafe} would read as other words in a quotation and keep theirs; ${counts.left} read as prose and are left as you asked (1996-02-08:13, 2011-12-01:18). The ${counts.skipped - 1} gesta-wrangling entries, and 2018-12-29, are not read at all. Red is the fence as it stands, green the quotation the import would make. The fences kept for their layout are listed last.</p>
+<p>${counts.entries - counts.skipped} entries read. Of the fences that name no language, ${counts.prose} read as prose and become quotations; ${counts.aligned} are laid out in columns or indented apart and keep their fence; ${counts.code} read as commands or code and keep theirs; ${counts.unsafe} would read as other words in a quotation and keep theirs; ${counts.left} read as prose and are left as you asked (1996-02-08:13, 2011-12-01:18). The ${counts.skipped - LEAVE_FILE.size} entries of 2026, the gesta-wrangling entries among them, and 2018-12-29 are not read at all. Red is the fence as it stands, green the quotation the import would make. The fences kept for their layout are listed last.</p>
 <h2>Made quotations (${shown.length})</h2>
 ${shown.map(({ file, f }) => `<div class="e"><span>${esc(file)}:${f.line}</span><pre class="before">${esc(f.body.join("\n"))}</pre><pre class="after">${esc(f.quoted!)}</pre></div>`).join("")}
 <h2>Kept for their layout, or because a quotation would change their words (${kept.length})</h2>

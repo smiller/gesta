@@ -649,3 +649,11 @@ beside it. Over 13,939 entries (MEASURED): 777 fences made quotations in
 as code, 19 kept as unsafe, 71 left as asked — the gesta-wrangling
 entries, which record terminal text, and 1996-02-08:13. The import
 overwrites existing entries: run it from a backup taken just before.
+Asked 2026-10-12 as the review was read: wrapped prose joined a line a
+paragraph, lists and verse a line each; /text/ italic and Emacs
+[[address][label]] links read inside the quotations; 2011-12-01:18 and
+2018-12-29 kept as code. Run: 774 quotations in 201 entries. Next, asked:
+after this import, a second pass with its own review over the entries'
+ordinary text — 220 Emacs links in 121 entries, 110 slash spans in 80
+(MEASURED; a code comment `/* … */` among them, so not every pair is
+italic).
