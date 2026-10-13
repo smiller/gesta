@@ -988,3 +988,10 @@ other work. The steps hold 349 fixed waits, about 151 s at their face
 value: 31 of a second or more (about 69 s), 273 of 100–300 ms (about
 60 s) (MEASURED, counted in the step files). Waiting for the thing itself
 instead is proposed, not yet asked.
+Asked after: ‘and for hand and ‘andy for handy turn (unclosed, ‘And
+opening a quotation staying); and the review shows each line once with
+all its marks — turned green, weighed and left red, every other opening
+mark amber — "it'd be easier to see if any were missing if they weren't
+done individually". Run: 1354 turned in 427 entries, 263 left, 702
+other marks shown in the lines (MEASURED).
+Verify's speed, asked: "we definitely want a faster verify run" — next.

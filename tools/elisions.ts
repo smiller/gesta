@@ -14,7 +14,7 @@ const CLIPS = new Set(("tis twas twere twill twould twixt tween tisn twasn twere
   "bove pon prentice prentices prenticed pothecary larum larums cos til scuse tec em uns ee oman omans " +
   "adn im stroy havior nointed tother taters smorning scutcheon stablish paritors casion").split(" "));
 /* clips that are also words, here or in Latin or French, or letters, or open a quotation as often as they clip */
-const WORDS = new Set(("t s d ll n m ad ave un is e er ere ow old ear eat art arm ell alf course morning afternoon faith fore long " +
+const WORDS = new Set(("t s d ll n m ad ave un and andy is e er ere ow old ear eat art arm ell alf course morning afternoon faith fore long " +
   "longs plane phone phoned bus buses flu varsity cause bout tide lack las gree shun").split(" "));
 /* words a dialect ends with an apostrophe, which close nothing */
 const CLIPPED_END = /(?:in|^(?:o|th|an|wi|wiv|ha|i|t|e|gi|ne|wo|tha|fro|ol))$/;

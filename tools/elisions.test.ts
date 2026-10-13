@@ -44,3 +44,8 @@ test("elisions: a dialect's own clipped ending, ha’ or wiv’, closes nothing"
   expect(run("I am glad on ‘t: then we shall ha’ means to vent\n")).toBe("I am glad on ’t: then we shall ha’ means to vent\n");
   expect(run("you’ll ‘ave ’im steppin’ aht ter meet me wiv’ a\n")).toBe("you’ll ’ave ’im steppin’ aht ter meet me wiv’ a\n");
 });
+test("elisions: ‘and for hand and ‘andy for handy turn unclosed; ‘And opening a quotation is left", () => {
+  expect(run("wot my pal ‘ad in ’is ‘and. Wot did yer do\n")).toBe("wot my pal ’ad in ’is ’and. Wot did yer do\n");
+  expect(run("a machine-gun like that ‘andy by the bedside\n")).toBe("a machine-gun like that ’andy by the bedside\n");
+  expect(run("“‘And the said representative,’ he read.\n")).toBe("“‘And the said representative,’ he read.\n");
+});
