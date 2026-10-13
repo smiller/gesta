@@ -22,6 +22,19 @@ const logs = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
 await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
+/* the last edit's time and the store writes still open, for a read of the
+   stored text to wait on rather than sleep (adapters/successor.mjs, stored) */
+await ctx.addInitScript(() => {
+  window.__lastEdit = 0; window.__writes = 0;
+  for (const t of ["keydown", "input", "paste", "drop", "cut", "pointerdown", "click"]) addEventListener(t, () => { window.__lastEdit = performance.now(); }, true);
+  const put = IDBObjectStore.prototype.put;
+  IDBObjectStore.prototype.put = function (...args) {
+    window.__writes++;
+    const tx = this.transaction, done = () => { window.__writes--; tx.removeEventListener("complete", done); tx.removeEventListener("error", done); tx.removeEventListener("abort", done); };
+    tx.addEventListener("complete", done); tx.addEventListener("error", done); tx.addEventListener("abort", done);
+    return put.apply(this, args);
+  };
+});
 const page = await ctx.newPage();
 page.on("console", (m) => logs.push(m.type() + ": " + m.text()));
 page.on("pageerror", (e) => logs.push("pageerror: " + e.message));

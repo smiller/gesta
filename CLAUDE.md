@@ -307,7 +307,13 @@ is in the plan's record, under the phase named):
   2026-09-12: the steps and their readings are `tools/helium-steps.mjs`'s
   (above); this prints each reading and the console, and screenshots
   when given a path. `STEPS=a,b` runs the first section and the named
-  ones, a development run only (2026-09-28).
+  ones, a development run only (2026-09-28). `TIMING=1` prints to stderr
+  each section's time, the fixed sleeps by call site and the condition
+  waits that ran out (2026-10-13). A pause after a gesture is `rest()`,
+  two frames; a read of the stored text waits on the page's watcher of
+  the last edit and the open store writes, which this driver installs;
+  a fixed sleep stays only where it times the app's own clock (a fade,
+  the hang warning, a slow launch, the place keeper's scroll pause).
 - `tools/referenceCorpus.ts` — the citation label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.

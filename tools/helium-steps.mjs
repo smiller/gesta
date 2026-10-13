@@ -35,6 +35,20 @@ export const MARGIN_SEEDS = {
   "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
   "page/Margins": fixture("margins-prose.md"),
 };
+/* a pause for the page to answer a gesture: two frames, ProseMirror and
+   Svelte drawing within them, where a fixed sleep of up to 300 ms stood;
+   a window not in front may have its frames slowed, so 100 ms at most */
+/* a pause for the save after typing: 650 ms past the last edit and no
+   store write open, where the page carries the watcher the corner driver
+   installs; else the sleep it replaced */
+async function landed(p, ms) {
+  if (!(await p.evaluate(() => "__writes" in window).catch(() => false))) return p.waitForTimeout(ms);
+  await p.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: ms + 2000, polling: 25 }).catch(() => {});
+}
+async function rest(p) {
+  await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
+}
+
 export async function runSteps(page, ctx, A, opts = {}) {
   const shot = opts.screenshot;
   const R = A.read, S = A.sel;
@@ -143,22 +157,22 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.corner);
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("after ⌃⌘, on the first entry", await R.corner(page));
   await go("page/Links");
   await page.click(S.editorLink("#page/Links"));
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a link to itself", { entry: await A.entry(page), ...(await R.corner(page)) });
   await page.click(S.editorLink("https://example.org/"));
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a plain click on an external link", { entry: await A.entry(page), url: page.url().split("#")[1] });
   const popup = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
   await page.click(S.editorLink("#page/Horace"), { modifiers: ["Meta"] });
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌘-click on an internal link", { newTab: (await popup).split("#")[1], ...(await R.afterModClick(page)) });
   const popup2 = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
   await page.click(S.editorLink("https://example.org/"), { modifiers: ["Meta"] });
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌘-click on an external link", { newTab: (await popup2) !== "(no new tab)", ...(await R.afterModClick(page)) });   /* headless has no network: whether a tab opened, not where it got */
   await page.click(S.editorLink("#page/Horace"));
   await A.waitEntry(page, "page/Horace", 5000);
@@ -172,23 +186,23 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* THE CARET PLACED THROUGH THE DOM SELECTION, not the keys: Home and the
      arrows moved it on some runs and not others (measured 2026-09-12, three
      runs), and the paste then landed at the paragraph's end */
-  await page.waitForTimeout(100);
+  await rest(page);
   await R.caretAfter(page, "start end", 5);
-  await page.waitForTimeout(100);
+  await rest(page);
   await R.pasteText(page, "::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a fence pasted as text mid-paragraph", { md: await A.stored(page) });
     }],
     ["verse copy", async () => {
   /* a verse block copied inside the rendered view with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
   await go("page/Horace");
   await R.selectAll(page, S.editorVerse);
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Meta+c");
   await go("page/Pasted%20Verse");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
-  await page.waitForTimeout(300);
+  await rest(page);
   { const md = await A.stored(page); console.log("a verse block copied and pasted:", JSON.stringify({ fence: md.startsWith("::: verse"), pairs: await R.pairs(page), head: md.split("\n").slice(0, 3) })); }
     }],
     ["refused fence", async () => {
@@ -200,7 +214,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("::: versey\nline\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("a refused fence", await R.refusedFence(page));
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source);
@@ -208,7 +222,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("::: verse\nline\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("a clean switch", await R.cleanSwitch(page));
     }],
     ["quote tab", async () => {
@@ -217,15 +231,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.editor);
   await page.keyboard.type("> quoted words");
   await page.keyboard.press("Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Tab in a quote", { md: await A.stored(page) });
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Shift-Tab twice", { md: await A.stored(page), corner: await R.cornerText(page) });
   await go("page/Horace");
   await page.keyboard.press("Control+Meta+l");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘L over Horace", await R.linesRow(page));
   await page.keyboard.press("Escape");
   await log("Escape", await R.linesRowOpen(page));
@@ -257,13 +271,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("```js");
   await page.keyboard.press("Enter");
   await page.keyboard.type("const n = 42 // answer");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("a js block typed", await R.codeBlock(page));
   await page.hover(S.editorPre);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("hovered", await R.copyHover(page));
   await page.click(S.copybtn);
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("clicked", await R.copyLabel(page));
     }],
     ["card copy", async () => {
@@ -271,21 +285,21 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Carded");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-blue\n*Purgatorio* 19.26\n\n::: verse\nquand’ una donna apparve | When a lady appeared\n:::\n:::");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.hover(S.editorCard);
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.click(S.copybtn);
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a card hover-copied", { label: await R.copyLabel(page), live: await R.cardLive(page), ...(await R.clipboardCard(page)) });
   await R.selectAll(page, S.editorCard);
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Meta+c");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a card ⌘C'd", await R.clipboardCard(page));
   await go("page/Pasted%20Card");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
-  await page.waitForTimeout(300);
+  await rest(page);
   { const md = await A.stored(page); console.log("pasted on a fresh page:", JSON.stringify({ fence: md.startsWith("::: card-light-blue"), lines: md.split("\n").length, ...(await R.cardsAndPairs(page)) })); }
     }],
     ["grid", async () => {
@@ -293,26 +307,26 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Gridded");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid (the 2026-09-22 review) */
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a grid pasted", await R.gridLayout(page));
   const hover = await R.gridHover(page);
   await log("hovered above its corner", hover);
-  if (hover.show) { await page.click(S.copybtn); await page.waitForTimeout(300); }
+  if (hover.show) { await page.click(S.copybtn); await rest(page); }
   await log("the grid copied", { label: await R.copyLabel(page), text: await R.clipboardText(page) });
   await R.selectCards(page);
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Meta+c");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("two cards ⌘C'd", await R.clipboardCard(page));
   await go("page/Pasted%20Grid");
   await page.click(S.editor);
   await page.keyboard.type("prose first ");
   await page.keyboard.press("Meta+v");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("two cards pasted mid-paragraph", await R.gridLayout(page));
   await go("page/Gridded");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(200);
+  await rest(page);
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
@@ -321,18 +335,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse (the confirmation pass) */
   await go("page/Carded");
   await page.keyboard.press("Control+Meta+m");   /* back to the rendered view on a sound entry, so the faulty one is opened from it */
-  await page.waitForTimeout(300);
+  await rest(page);
   await go("page/Gridded");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("the faulty entry opened", { source: await R.inSource(page), corner: await R.gridCorner(page) });
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(300);
+  await rest(page);
   await go("page/Carded");
   await log("the next entry after a refused switch", { source: await R.inSource(page) });
   await go("page/Gridded");
-  await page.waitForTimeout(200);
+  await rest(page);
   /* the line fixed and the view restored: the pin released, the grid drawn */
-  if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(200); }   /* the current app rendered the stray line as a paragraph and came back */
+  if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await rest(page); }   /* the current app rendered the stray line as a paragraph and came back */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
@@ -360,7 +374,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a card and a note of paired verse", { blocks: await split() });
   await page.keyboard.press("End");
   await page.keyboard.type(" and on, and on, and on");
-  await page.waitForTimeout(900);
+  await landed(page, 900);
   await log("typed on in the note's last row", { blocks: await split() });
     }],
     ["picture", async () => {
@@ -395,62 +409,62 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Expanded");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+s");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘S, no table yet", await R.shortcuts(page));
   await page.fill(S.shortcutsEditor, "sig: Sean Miller\nmd: markdown");
   await page.click(S.shortcutsSave);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("saved", { ...(await R.shortcuts(page)), corner: await R.cornerText(page) });
   await page.click(S.shortcutsInput);
   await page.keyboard.type("m");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("m typed", (await R.shortcuts(page)).rows);
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Enter", { card: await R.shortcuts(page), text: await R.editorTextHead(page) });
     }],
     ["bookmarks", async () => {
   /* bookmarks: ⌃⌘B on a day, A adds it, 1 jumps to it from elsewhere, a key given and typed, × deletes */
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘B on a day", await R.bookmarks(page));
   await page.keyboard.press("a");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("A pressed", await R.bookmarks(page));
   await page.keyboard.press("Escape");
   await go("page/Horace", 5000);
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("1");
   await A.waitEntry(page, "2026-09-06", 5000);
   await log("1 from Horace", { entry: await A.entry(page), card: await R.bookmarks(page) });
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.click(S.bookmarkKey);
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.type("fb");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("keyed fb", await R.bookmarks(page));
   await page.keyboard.press("f");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("f typed", { lit: await R.bookmarksLit(page) });
   await page.keyboard.press("b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("b typed, already here", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
   /* the same press over a selection: the focus back, the selection as it stood */
   await R.selectBetween(page, "food", "love");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.type("fb");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("fb over a selection, already here", { corner: await R.cornerText(page) });
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.click(S.bookmarkDel);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("× pressed", await R.bookmarks(page));
   await page.keyboard.press("Escape");
     }],
@@ -462,18 +476,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.waitEntry(page, "page/Horace").catch(() => {});
   await A.waitWarm(page).catch(() => {});
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘B over a damaged list", await R.bookmarks(page));
   await page.keyboard.press("a");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("A over a damaged list", { card: await R.bookmarks(page), corner: await R.cornerText(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.keyboard.press("Escape");
   await page.evaluate((k) => localStorage.setItem(k, '["2026-09-06"]'), A.bookmarksKey);
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘B over the list repaired", await R.bookmarks(page));
   await page.keyboard.press("a");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("A over the list repaired", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
   await page.keyboard.press("Escape");
   await page.reload();
@@ -484,7 +498,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["backups", async () => {
   /* the backups panel: the button opens the card; unconfigured, the setup button alone; Escape closes */
   await page.click(S.backupsButton);
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("backups", await R.backups(page));
   await page.keyboard.press("Escape");
   await log("Escape", { card: await R.backupsOpen(page) });
@@ -493,7 +507,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* help: ⌃⌘H opens the card over the entry and closes the pages panel; Escape closes it */
   await page.click(S.pagesOpener);
   await page.keyboard.press("Control+Meta+h");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘H over an open pages panel", await R.help(page));
   await page.keyboard.press("Escape");
   await log("Escape", await R.helpOpen(page));
@@ -503,31 +517,31 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Horace");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘G over Horace", await R.linebar(page));
   await page.keyboard.type("3");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("3, Enter", await R.linebar(page));
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Enter again on one block", await R.linebar(page));
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("Escape", { ...(await R.linebar(page)), caretRow: await R.caretRow(page) });
   await go("page/Williams/Witchcraft%203");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘G over Witchcraft", await R.linebar(page));
   await page.keyboard.type("9z");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("9z, Enter", await R.linebar(page));
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("61");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("61, Enter", await R.linebar(page));
   await page.keyboard.press("Escape");
     }],
@@ -536,13 +550,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a reference pasted", { md: await A.stored(page), ...(await R.pastedReference(page)) });
   await R.pasteText(page, "[*Gesta*](#2026-09-06?h=food%20of%20love)");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.click(S.editorLink("#2026-09-06?h=food%20of%20love"));
   await R.waitEntryAndSelection(page, "2026-09-06", "food of love");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("the reference link followed", await R.highlightFollowed(page));
   /* the link's passage is deep in a long entry: the jump must SCROLL to it,
      not only select it — the one-line case above never needed a scroll,
@@ -551,10 +565,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Pippa*](#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed)");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.click(S.editorLink("#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed"));
   await R.waitEntryAndSelection(page, "bookshelf/Browning, Robert/Pippa Passes", "Power shall fall short in or exceed");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a link deep into a long entry followed", await R.highlightFollowed(page));
   /* a paired citation is a fence inside the quotation (2026-09-12): its
      pair stands where a quoted paragraph's text does, its cells unwrapped */
@@ -579,10 +593,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const word = await R.wordAt(page, "music", 5);
   await page.mouse.dblclick(word.x, word.y);
   await R.waitBar(page);
-  await page.waitForTimeout(100);   /* the editor's own selection lands a beat after the DOM's */
+  await rest(page);   /* the editor's own selection lands a beat after the DOM's */
   await log("a word double-clicked", await R.bar(page));
   await page.click(S.fmtB);
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("B clicked", { ...(await R.bar(page)), md: (await A.stored(page)).includes("**music**") });
   answer = "Music";
   await page.click(S.fmtTag);
@@ -601,7 +615,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await R.caretBefore(page, "food of love");
   await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 });
   await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
@@ -619,14 +633,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("ArrowLeft");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("the caret moved in the source, ⌃⌘M back", await R.sourceBack(page));
   await wheelTo(0);
   await page.click(S.editorFirst);
-  await page.waitForTimeout(100);   /* the click's caret is read a beat later, as the section's first caret is: a chord at once switched with the caret before the click */
+  await rest(page);   /* the click's caret is read a beat later, as the section's first caret is: a chord at once switched with the caret before the click */
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘M from the top", { y: await winY() });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
@@ -635,26 +649,26 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const away = await winY();
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await rest(page);
   /* within two lines, not to the top or to the caret: the switch carries the text at the window's top, and the pixel offset follows the other view's layout */
   await log("⌃⌘M scrolled away from the caret", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘M back, still scrolled away", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+w");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘W rendered", { corner: await cornerText() });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+w");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘W in the source view", { corner: await cornerText() });
   /* the search row closed in the source view: the keys go back to the text */
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘K, then Escape, in the source view", {});
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
@@ -663,17 +677,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+j");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘J on a day", await R.goto(page));
   await page.selectOption(S.gotoDay, "05");
   await A.waitEntry(page, "2026-09-05", 5000);
   await log("a day picked", { entry: await A.entry(page), open: await R.gotoOpen(page) });
   await go("bookshelf/Browning,%20Robert/Pippa%20Passes");
   await page.keyboard.press("Control+Meta+j");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘J on a book", await R.goto(page));
   await page.selectOption(S.gotoDestination, "");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("Journal picked from the book", (await R.goto(page)).selects);
   await page.keyboard.press("Escape");
   await log("Escape", await R.goto(page));
@@ -688,7 +702,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.editorFirst);
   await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
   await page.keyboard.press("End");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("a day's tools", await R.tools(page));
   answer = "Ideas";
   await A.act.create(page);
@@ -703,7 +717,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   answer = "Plans";
   await page.click(S.renameButton);
   await A.waitEntry(page, "2026-09-06/Plans", 5000);
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("renamed to Plans", { entry: await A.entry(page), hash: page.url().split("#")[1], hostLink: /\[Plans\]\(#2026-09-06\/Plans\)/.test(await A.stored(page, "2026-09-06")) });
   await page.goto(A.url("2026-09-06"));
   await R.waitLink(page, "#2026-09-06/Plans");
@@ -726,7 +740,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("three");
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await page.keyboard.type("```");
@@ -735,7 +749,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await page.keyboard.type("after the block");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a code block typed, Enter twice out of it", { md: await A.stored(page) });
   await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), ...(await R.corner(page)) });
   await log("the gap between the two outer items, and a line's height", await R.listGaps(page));
@@ -743,7 +757,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["search", async () => {
   await go("page/Links");
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌃⌘K", await R.search(page));
   await page.selectOption(S.searchScope, { label: "Everything" });
   await page.keyboard.type("sister");
@@ -755,7 +769,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitSelection(page, "sister");
   await log("Enter", { entry: await A.entry(page), selected: await R.selectionText(page), open: await R.searchOpen(page) });
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.selectOption(S.searchScope, { label: "Journal" });
   await page.keyboard.type("blackamoor");
   await R.waitSearchRows(page);
@@ -768,7 +782,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("bookshelf/Boethius/Consolatio/3pr1");
   await page.keyboard.press("Control+Meta+.");
   await R.waitEntryNot(page, "bookshelf/Boethius/Consolatio/3pr1");
-  await page.waitForTimeout(100);   /* a selection left on the last entry keeps the bar up one frame into this one (MEASURED, 10 ms) */
+  await rest(page);   /* a selection left on the last entry keeps the bar up one frame into this one (MEASURED, 10 ms) */
   await log("⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+.");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
@@ -780,7 +794,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+.");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘M, then ⌃⌘.", { entry: await A.entry(page), source: await R.inSource(page) });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
@@ -794,24 +808,24 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.selectBetween(page, "bloudie Crosse", "bloudie Crosse");
   await R.waitBar(page);
   await page.keyboard.press("Control+Meta+r");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘R on a line", { lines: await R.clipboardLines(page) });
   await R.selectBetween(page, "deepe wounds", "bloudie Crosse");
   await R.waitBar(page);
   await page.keyboard.press("Control+Meta+r");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘R across a stanza gap", { lines: await R.clipboardLines(page) });
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+g");
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.type("2.1");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘G 2.1", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("2.9");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌃⌘G 2.9", await R.linebar(page));
   await page.keyboard.press("Escape");
     }],
@@ -833,37 +847,37 @@ export async function runSteps(page, ctx, A, opts = {}) {
     const rendered = await R.topStanza(page), renderedEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
     await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-    await page.waitForTimeout(300);
+    await rest(page);
     const source = await R.topStanza(page), sourceEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
     await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
-    await page.waitForTimeout(300);
+    await rest(page);
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
     if (where < 1) {
       await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
       /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
       await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);
-      await page.waitForTimeout(300);
+      await rest(page);
       await log("⌃⌘M back, then 400px grown above", { top: await R.topStanza(page) });
       await page.evaluate((s) => { document.querySelector(s).style.paddingTop = ""; }, S.editor);
-      await page.waitForTimeout(300);
+      await rest(page);
     }
   }
   await wheelTo(20);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   const nearTop = await winY();
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘M from 20px down", { source: nearTop, back: await winY() });
   /* a caret placed low in the source's window, then back: it is still in view */
   await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.mouse.click(400, (await page.evaluate(() => innerHeight)) - 30);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
@@ -882,7 +896,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("its canto followed", { entry: await A.entry(page) });
   await wheelTo(0);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("back on the contents", await R.folds(page));
     }],
     ["places", async () => {
@@ -893,32 +907,32 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(700);
   await log("Pippa scrolled down", await R.place(page));
   await go("page/Horace");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Horace followed", await R.place(page));
   await page.goBack();
   await A.waitEntry(page, pippa, 5000).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Back", await R.place(page));
   await page.goForward();
   await A.waitEntry(page, "page/Horace", 5000).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Forward", await R.place(page));
   await page.goBack();
   await A.waitEntry(page, pippa, 5000).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Back again", await R.place(page));
   await page.reload();
   await A.waitEntry(page, pippa).catch(() => {});
   await A.waitWarm(page).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("reloaded", await R.place(page));
   await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);   /* the page grows above the held place, as a picture resolving does */
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("400px grown above the held place", await R.place(page));
   await page.waitForTimeout(500);
   await go("page/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Pippa after the growth", await R.place(page));
   /* a place inside a section closed on the way back: Consolatio grown to six Books, left in Book 5, its fold state forgotten, returned to */
   let consolatio = "# De consolatione philosophiae\n\n";
@@ -936,15 +950,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Horace");
   await page.evaluate((k) => { try { localStorage.removeItem(k); } catch { /* none */ } }, A.ns + "folds");
   await go("bookshelf/Boethius/Consolatio");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("back to a place in a closed section", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
   /* the same page reloaded with the warm held back: drawn unfolded from its one row, then folded when the warm lands, the place set again */
   await page.goto(A.url("bookshelf/Boethius/Consolatio", "warm=slow"));
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("before the warm", { folds: (await R.folds(page)).folds, fillerInView: await inView("Filler 5.4") });
   await A.waitWarm(page).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("the warm landed", { folds: (await R.folds(page)).folds, open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
   await page.goto(A.url("bookshelf/Boethius/Consolatio", "warm=slow"));
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000).catch(() => {});
@@ -955,12 +969,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.waitWarm(page).catch(() => {});
   /* the source read down to text a closed section hides, then back to the rendered view: the section opens */
   await go("bookshelf/Boethius/Consolatio");
-  await page.waitForTimeout(300);
+  await rest(page);
   for (const b of (await R.folds(page)).open) await R.clickFoldTriangle(page, b.trim().split(":")[0]);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await R.sourceScrollTo(page, "Filler 3.4");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   await page.waitForTimeout(400);
@@ -975,34 +989,34 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(400);
   for (let i = 0; i < 12 && !((await A.stored(page, "page/Forced Long")) || "").includes("loose"); i++);
   await go("page/Horace");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   await go("page/Forced%20Long");
-  await page.waitForTimeout(300);
+  await rest(page);
   await wheelTo(900);
   const leftAt = await winY();
   await page.waitForTimeout(700);
   await go("page/Horace");
   await go("page/Forced%20Long");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a forced entry left scrolled, returned to", { source: await R.inSource(page), stayed: Math.abs((await winY()) - leftAt) < 3 });
   /* the masthead changing height under a held place, as it does when the
      entry arrived from had a taller one: the place is set again, in the
      source view by its offset and in the rendered one by its text */
   const shrunk = async (fn) => {
     await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = "50px"; h.style.overflow = "hidden"; });
-    try { await page.waitForTimeout(300); return await fn(); }
-    finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await page.waitForTimeout(300); }
+    try { await rest(page); return await fn(); }
+    finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await rest(page); }
   };
   await log("a held place, the masthead shrinking under it", await shrunk(async () => ({ stayed: Math.abs((await winY()) - leftAt) < 3 })));
   await go("page/Horace");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
-  await page.waitForTimeout(300);
+  await rest(page);
   await wheelTo(2600);
   await page.waitForTimeout(700);
   await go("page/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
-  await page.waitForTimeout(300);
+  await rest(page);
   /* the row under the masthead, read mid-column: 40px in is the gutter */
   const rowUnderHead = () => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
   const heldLine = await rowUnderHead();
@@ -1014,12 +1028,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const foundLine = await rowUnderHead();
   /* then the editor grows below, as a picture loading does */
   await page.evaluate(() => { document.querySelector("#editor .ProseMirror").style.paddingBottom = "300px"; });
-  await page.waitForTimeout(300);
+  await rest(page);
   const afterGrow = await rowUnderHead();
   await page.evaluate(() => { document.querySelector("#editor .ProseMirror").style.paddingBottom = ""; });
   await log("a held place, then a scroll no hand made", { kept: afterGrow === foundLine, line: afterGrow });
   await go("page/Horace");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); }
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   /* a place held on lines that open on inline code, one paragraph so the window's top always falls on text: the caret at the line's start, the code run no stop on the way */
   await go("page/Coded%20Lines");
   await page.click(S.editor);
@@ -1032,7 +1046,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(700);
   await go("page/Horace");
   await go("page/Coded%20Lines");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("back to lines opening on inline code", { source: await R.inSource(page) });
   /* a place held in the source mid-way down one long paragraph, the entry forced into the source by a stray line in a grid (another entry otherwise opens rendered): the caret on the line on screen, so a key typed leaves the window where it is */
   await go("page/Long%20Paragraph");
@@ -1046,7 +1060,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(700);
   await go("page/Horace");
   await go("page/Long%20Paragraph");
-  await page.waitForTimeout(300);
+  await rest(page);
   const before = await winY();
   /* the caret's line on screen, from a twin of the textarea: a markdown line's start is a paragraph's, and a held index unmoved stands mid-line, neither shown by "stayed" alone */
   const onScreenStart = await page.evaluate((src) => {
@@ -1060,7 +1074,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     d.remove(); return at;
   }, S.source);
   await page.keyboard.type("Z");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("typed at the place in a long paragraph's source", { source: await R.inSource(page), lineOnScreen: onScreenStart, stayed: Math.abs((await winY()) - before) < 3 });
     }],
     ["entries left and renamed", async () => {
@@ -1081,22 +1095,22 @@ export async function runSteps(page, ctx, A, opts = {}) {
   answer = "Longer";
   await page.click(S.renameButton);
   await A.waitEntry(page, "2026-09-05/Longer", 5000).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a long entry renamed, scrolled", { entry: await A.entry(page), stayed: Math.abs((await winY()) - before) < 3 });
   await wheelTo(600);
   await page.waitForTimeout(700);
   await page.click(S.deleteButton);
   await A.waitEntry(page, "2026-09-05", 5000).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) || "[]").some((r) => r.key === "2026-09-05/Longer"); } catch { return null; } }, A.ns + "places") });
   answer = null;
   await page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
   await page.keyboard.press("Control+Meta+c");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘C with the clipboard refused", { corner: await cornerText() });
   await page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
   await page.keyboard.press("Control+Meta+c");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘C again, the clipboard back", { corner: await cornerText() });
   const blocked = await ctx.newPage();
   await blocked.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new DOMException("site data blocked", "SecurityError"); } }); });
@@ -1117,7 +1131,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type(" X");
   await log("typed into a margin-note in the margin", { lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1000, height: 600 });
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.type("Y");
   await log("narrowed to 1000px, typed on", { ...(await R.margins(page)), lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1500, height: 900 });
@@ -1135,7 +1149,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("Skill of government was but a Pedenteria ¹ in comparison, so as Amphion, ³ was said; an area of 4 m² here.");
   await page.waitForTimeout(1500);
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.selectOption(S.searchScope, { label: "Everything" });
   await page.keyboard.type("Pedenteria in comparison");
   await searched("Pedenteria in comparison");
@@ -1144,14 +1158,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitSelection(page, "pedenteria ¹ in comparison");
   await log("Enter on the footnoted phrase", { entry: await A.entry(page), selected: await R.selectionText(page) });
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("Amphion, was");
   await searched("Amphion, was");
   await log("typed Amphion, was", await R.search(page));
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("4 m²");
   await searched("4 m²");
@@ -1169,7 +1183,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await other.keyboard.type("made in the second window");
   await other.waitForTimeout(2500);
   await other.keyboard.press("Control+Meta+b");
-  await other.waitForTimeout(150);
+  await rest(other);
   await other.keyboard.press("a");
   await other.waitForTimeout(500);
   await log("A in a second window", { card: await R.bookmarks(other) });
@@ -1180,7 +1194,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘B back in the first", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.click(".bookmarks .bookmark-label:text-is('Made Elsewhere')", { timeout: 1000 }).catch(() => {});
   await A.waitEntry(page, "page/Made Elsewhere", 5000).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("its row's page opened from the first", { entry: await A.entry(page), text: await R.editorTextHead(page) });
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
@@ -1203,7 +1217,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(2500);
   await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
   await page.click(S.corner);
-  await page.waitForTimeout(200);
+  await rest(page);
   await go("page/Deleted%20Elsewhere");
   await page.click(S.editor);
   await page.keyboard.type("to be deleted in the second");
@@ -1222,9 +1236,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await again.close();
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.click(S.bookmarkDel);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("× on its first row", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.keyboard.press("Escape");
     }],
@@ -1244,7 +1258,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const end = await page.evaluate((s) => { const h = document.querySelector(s); const r = document.createRange(); r.selectNodeContents(h); const b = r.getBoundingClientRect(); return { x: b.right + 3, y: b.top + b.height / 2 }; }, S.editorFirst);
   await page.mouse.click(end.x, end.y);
   /* the editor takes a click's caret on the selection's change, a tick later than the click */
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Enter");
   answer = "Odes";
   await A.act.create(page);
@@ -1273,58 +1287,58 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitCorner(page, "saved");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘E in the rendered view", { ...(await R.replaceBar(page)), corner: await R.cornerTextOrEmpty(page) });
   await page.keyboard.type("*-*");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("*-* typed into Find", await R.replaceBar(page));
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("Enter in Find", await R.replaceBar(page));
   await page.click(S.replaceWith, { timeout: 2000 }).catch(() => {});
   await page.keyboard.type("-");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("Enter in Replace with", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
   await page.click(S.replaceSkip, { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("Skip", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
   await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("Replace All, the rest replaced", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
   await page.click(S.source, { timeout: 2000 }).catch(() => {});
   await page.keyboard.press("Meta+z");
-  await page.waitForTimeout(100);
+  await rest(page);
   await log("⌘Z in the text", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Escape, opened in the rendered view", await R.replaceBar(page));
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘E in the source view", await R.replaceBar(page));
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Escape, opened in the source view", await R.replaceBar(page));
   /* a long entry: the layer the matches are drawn on keeps the text's line pitch to its last line, where 27.54px set it 79px low over 2,706 lines of Paradise Lost (2026-10-08) */
   await R.setSource(page, Array.from({ length: 1500 }, (_, i) => "Line " + i + " of a long entry, with *-* in it and more words after it to wrap.").join("\n\n"));
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("a long entry's matches", await R.replaceDrift(page));
   /* Replace All far from the end keeps the window where it was: the whole-text edit put the caret, and the window, at the entry's last line */
-  { const y = await winY(); await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {}); await page.waitForTimeout(200); await log("Replace All in a long entry", { count: (await R.replaceBar(page)).count, kept: Math.abs((await winY()) - y) < 60 }); }
+  { const y = await winY(); await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {}); await rest(page); await log("Replace All in a long entry", { count: (await R.replaceBar(page)).count, kept: Math.abs((await winY()) - y) < 60 }); }
   await page.keyboard.press("Escape");
   /* a replacement holding the find: the rest are counted, not "none" */
   await R.setSource(page, "cat and cat\n");
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.fill("#replacefind", "cat").catch(() => {});
   await page.fill("#replacewith", "cats").catch(() => {});
   await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Replace All, the replacement holding the find", await R.replaceBar(page));
   await page.keyboard.press("Escape");
   /* a switch back the parse refuses: the cursor goes back to the text, not into the hidden Find box */
@@ -1333,13 +1347,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.fill("#replacefind", "::: card-red").catch(() => {});
   await page.fill("#replacewith", "zz").catch(() => {});
   await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Escape, the switch back refused", await R.replaceBar(page));
   await R.setSource(page, "One*-*two.\n");
   await R.waitCorner(page, "saved");
@@ -1347,25 +1361,25 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   /* another panel opened over the bar closes it, and switches back as Escape does */
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.keyboard.press("Control+Meta+h");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘H over the bar", { ...(await R.replaceBar(page)), help: (await R.helpOpen(page)).help });
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(100);
+  await rest(page);
   /* the same entry saved in another window rebuilds the source view under the bar: the bar closes, its offsets belonging to the text it was opened on, and the caret goes back to the match it stood on, not to the text's end */
   await page.keyboard.press("Control+Meta+e");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.fill("#replacefind", "*-*").catch(() => {});
   /* the switch's own save lands first, or the other window's write is refused as stale */
-  await page.waitForTimeout(1500);
+  await landed(page, 1500);
   { const other = await page.context().newPage();
     await other.goto(A.url("page/Replaced")); await A.waitEntry(other, "page/Replaced");
     await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
     await R.waitCorner(other, "saved");
     /* the landed write reaches this window by its notice: waited for, so a reading never races it */
     await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
-    await page.waitForTimeout(100);
+    await rest(page);
     await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
     await other.close(); }
   await page.keyboard.press("Escape");
@@ -1379,45 +1393,45 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await R.setSource(page, "```not code\nx = 1\n```\n\ncap ![](x.png) tion\n\n::: note\nin her degree ⟨8⟩ and on\n:::\n");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(300);
+  await rest(page);
   await R.waitCorner(page, "saved");   /* the source's save landed first: its whisper would stand over the refusal's */
   await R.selectBetween(page, "cap", "tion");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.click(".fmt .code");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("the code button over a picture", { corner: await cornerText(), kept: ((await A.stored(page)) || "").includes("cap ![](x.png) tion") });
   await R.selectBetween(page, "cap", "cap");
   await R.pasteText(page, "\n\n");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("line breaks pasted over a selection", { kept: ((await A.stored(page)) || "").includes("cap ![](x.png) tion") });
   await R.selectBetween(page, "in her", "and on");
   await page.keyboard.press("Meta+c");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌘C over a page marker", { text: await R.clipboardText(page) });
   await page.hover(S.editor + " div.note");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.click(S.copybtn);
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a note with a page marker hover-copied", { text: await R.clipboardText(page) });
   /* a folder picker that answers only when told: the export stays running */
   await page.evaluate(() => { window.__pickers = 0; window.showDirectoryPicker = () => new Promise((_, reject) => { window.__pickers++; window.__pickerAbort = () => reject(new DOMException("dismissed", "AbortError")); }); });
   await page.click(".toolbtn[title^='Export every entry']");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.click(".toolbtn[title^='Export every entry']");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("export pressed again while one runs", { corner: await cornerText(), pickers: await page.evaluate(() => window.__pickers) });
   await page.evaluate(() => window.__pickerAbort?.());
-  await page.waitForTimeout(300);
+  await rest(page);
   /* an import over the entry open, typed into while it runs: the import's text stands and its tally shows; the keys go back to the text after the button */
   await go("page/Typed");
   await page.click(S.editor);
   await page.keyboard.type("before the import. ");
-  await page.waitForTimeout(1200);
+  await landed(page, 1200);
   await page.evaluate(() => {
     const file = (name, text) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
     const dir = (name, kids) => ({ kind: "directory", name, values: async function* () { for (const k of kids) yield k; } });
@@ -1425,7 +1439,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("page", [...fillers, file("Typed.md", "IMPORTED TEXT\n")])]));
   });
   await page.click(".toolbtn[title^='Import']");
-  await page.waitForTimeout(100);
+  await rest(page);
   const afterButton = await cursor();
   await page.waitForFunction((c) => /^importing/.test(document.querySelector(c)?.textContent || ""), S.corner, { timeout: 10000 }).catch(() => {});
   await page.click(S.editor);
@@ -1448,39 +1462,43 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* a control the current app lacks fails its own step, not the section */
   const tap = (sel) => page.click(sel, { timeout: 3000 }).catch(() => {});
   /* the view asked for, whichever the arrival brought: the current app's carries across entries */
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
+  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
   await go("page/Horace");
   await view(false);
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's pin, dismissed as a reader does: the whispers below yield to it */
   await tap(S.editor);
-  const twice = async (chord) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await page.waitForTimeout(150); } };
+  const twice = async (chord) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await rest(page); } };
   await twice("Control+Meta+s");
   await log("⌃⌘S pressed twice", {});
   await twice("Control+Meta+b");
   await log("⌃⌘B pressed twice", {});
   await page.keyboard.press("Control+Meta+l");
-  await page.waitForTimeout(150);
+  await rest(page);
   await tap(".page-lines > summary");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Line numbering closed by its label", await R.linesRowOpen(page));
   await go("page/Links");
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("a");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.press("Escape");
   await go("page/Horace");
-  const at = await R.wordAt(page, "Maecenas atavis", 8);
+  /* the line's place once the measuring passes after an arrival are done:
+     two readings a frame apart agree. Measured at once, a full run's click
+     landed a word later as often as not */
+  let at = await R.wordAt(page, "Maecenas atavis", 8);
+  for (let i = 0; i < 20; i++) { await rest(page); const again = await R.wordAt(page, "Maecenas atavis", 8); if (again.x === at.x && again.y === at.y) break; at = again; }
   /* the click's caret is the editor's only once its selectionchange has
      reached it: under a full run's load the link landed at the caret before */
   await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await page.mouse.click(at.x + 30, at.y);
   await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(100);
+  await rest(page);
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await tap(".bookmark-link[aria-label='Link to Links']");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.type("Z");
   await log("a bookmark's link pressed, Z typed", { line: ((await A.stored(page)) || "").split("\n").find((l) => l.includes("](#page/Links)"))?.slice(0, 60) ?? null });
   await page.keyboard.press("Escape");
@@ -1492,22 +1510,22 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await view(false);
   await R.waitCorner(page, "saved");
   await page.waitForTimeout(1500);   /* every save landed first: a whisper of theirs stood over Tab's */
-  const clickWord = async (w) => { const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await page.waitForTimeout(100); };
+  const clickWord = async (w) => { const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await rest(page); };
   await clickWord("one");
   await page.keyboard.press("Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Tab in prose", { corner: await cornerText() });
   await R.selectBetween(page, "one", "two");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Tab over two paragraphs", { corner: await cornerText() });
   await clickWord("x = 1");
   await page.keyboard.press("Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Tab in a code block", { code: await page.evaluate((s) => document.querySelector(s)?.textContent ?? null, S.editorPre) });
   await page.keyboard.press("Meta+a");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("⌘A in a code block", {});
   const below = await page.evaluate((e) => { const t = document.querySelector(e + " table"); if (!t) return null; const r = t.getBoundingClientRect(); return { x: r.left + 20, y: r.bottom + 14, last: document.querySelector(e).lastElementChild?.tagName }; }, S.editor);
   if (below) await page.mouse.click(below.x, below.y);
@@ -1516,48 +1534,48 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* Escape after a search jump; ⌃⌘M over open results */
   await page.keyboard.press("Control+Meta+k");
   await page.keyboard.type("two");
-  await page.waitForTimeout(600);
+  await landed(page, 600);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(400);
   await page.keyboard.press("Escape");
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Escape after a search jump", {});
   await page.keyboard.press("Control+Meta+k");
   await page.keyboard.type("one");
-  await page.waitForTimeout(600);
+  await landed(page, 600);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘M over open search results", {});
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.press("Escape");
   /* an arrival at the entry already open, under the shortcuts popup and the Search row */
   await go(TODAY);
   await page.keyboard.press("Control+Meta+s");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Control+Meta+t");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘T on today from the shortcuts popup", {});
   await page.keyboard.press("Control+Meta+k");
   await page.keyboard.type("one");
-  await page.waitForTimeout(600);
+  await landed(page, 600);
   await page.keyboard.press("Control+Meta+t");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘T on today from Search", {});
   await page.keyboard.press("Escape");
   /* Tab out of a card */
   await tap(S.editor);
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Tab twelve times from the bookmarks card", {});
   await page.keyboard.press("Escape");
   await tap(S.editor);
   await page.keyboard.press("Control+Meta+s");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("Shift+Tab");
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Shift-Tab from the shortcuts popup", {});
   await page.keyboard.press("Escape");
   /* held keys: a key down again before it is up is the browser's auto-repeat */
@@ -1569,7 +1587,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   };
   await page.focus(S.booksOpener);
   await hold("Tab", 11);
-  await page.waitForTimeout(150);
+  await rest(page);
   await log("Tab held from the bookshelf button", { focus: await page.evaluate(() => document.activeElement?.getAttribute("title") ?? document.activeElement?.tagName) });
   await go("bookshelf/Boethius/Consolatio/3pr1");
   await tap(S.editor);
@@ -1579,20 +1597,20 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘. held from 3pr1", { walks: await page.evaluate(() => window.__walks) });
   await page.keyboard.press("Control+Meta+k");
   await page.keyboard.type("defixo");
-  await page.waitForTimeout(600);
+  await landed(page, 600);
   await hold("Enter", 3);
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("Enter held on a search result", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Boethius/Consolatio/3pr2") });
   await go("page/Held");
   await tap(S.editor);
   await page.keyboard.press("Control+Meta+s");
-  await page.waitForTimeout(150);
-  if (await page.isVisible(S.shortcutsEditor)) { await page.fill(S.shortcutsEditor, "sig: Sean Miller"); await tap(S.shortcutsSave); await page.waitForTimeout(150); }
+  await rest(page);
+  if (await page.isVisible(S.shortcutsEditor)) { await page.fill(S.shortcutsEditor, "sig: Sean Miller"); await tap(S.shortcutsSave); await rest(page); }
   await tap(S.shortcutsInput);
   await page.keyboard.type("sig");
-  await page.waitForTimeout(100);
+  await rest(page);
   await hold("Enter", 3);
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.keyboard.type(" then.");
   await log("Enter held on a shortcut", { md: await A.stored(page) });
   await view(true);
@@ -1600,23 +1618,23 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await view(false);
   await clickWord("quoted");
   await hold("Tab", 3);
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("Tab held in a quote", { md: await A.stored(page) });
   /* a caret scrolled back into view stops below the masthead */
   await go("2026-09-05");
   await clickWord("The most famous story");
   await page.mouse.move(500, 400);
   await page.mouse.wheel(0, 900);
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("Enter with the caret above the window", { clear: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect(); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r ? Math.round(r.top - head) : null; }) });
   await page.keyboard.press("Backspace");
   /* a picture that finishes preparing while Search is typed in */
   /* the digit that opens a bookmark, held: nothing typed into the entry it opened */
   await page.evaluate(() => { window.__typed = 0; document.addEventListener("beforeinput", () => { window.__typed++; }, true); });
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await hold("1", 4);
   await page.waitForTimeout(800);
   await log("a digit held on the bookmarks card", { typed: await page.evaluate(() => window.__typed) });
@@ -1628,7 +1646,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Held");
   await go("page/Refused");
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.type("lo");
   await A.foreignWrite(page, "page/Refused", "::: grid\nloose again\n:::\n");
   await page.waitForTimeout(800);
@@ -1649,8 +1667,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["editing as the help says", async () => {
   /* help.html's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
   /* a placed selection is read by the editor a moment later: a Tab pressed at once went where the arrival had left the caret */
-  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await page.waitForTimeout(150); };
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
+  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await rest(page); };
+  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
   /* an entry stored as another tab would, then opened: typed into the current app's source view, a list came back split at every line */
   const write = async (key, text) => {
     await A.foreignWrite(page, key, text);
@@ -1663,11 +1681,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await write("page/Verse Copied", "::: verse\none line\ntwo line\nthree line\nfour line\nfive line\nsix line\nseven line\neight line\nnine line\nten line\neleven line\n:::\n");
   await R.selectBetween(page, "two line", "three line");
   await page.keyboard.press("Meta+c");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("verse lines 2–3 copied", { clipboard: await R.clipboardLines(page) });
   await R.waitBar(page);
   await page.keyboard.press("Control+Meta+r");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("⌃⌘R on verse lines 2–3", { lines: (await R.clipboardLines(page)).map((l) => l.replace(/\(#[^)]*\)/, "(…)")) });
   await page.keyboard.press("ArrowRight");
   await caretAt("two line", 8);
@@ -1675,7 +1693,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const before = await numbers();
   await page.keyboard.press("Enter");
   await page.keyboard.type("new line");
-  await page.waitForTimeout(60);
+  await rest(page);
   const typing = await numbers();
   await page.waitForTimeout(3000);
   await log("a line typed into verse", { before, typing, after: await numbers() });
@@ -1711,24 +1729,24 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await write("page/Quoted Heading", "> ## Quoted head\n>\n> quoted text\n");
   await caretAt("Quoted head", 3);
   await page.keyboard.press("Tab");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("Tab on a heading in a quote", { md: await A.stored(page) });
   await write("page/Quoted Table", "> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |\n");
   await caretAt("1", 1);
   await page.keyboard.press("Tab");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("Tab in a table in a quote", { md: await A.stored(page) });
     }],
     ["editing as the old app does", async () => {
   /* the inventory's group 4, where nothing promised either way: each gesture read over both apps, the old app's reading the one to match */
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
+  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
   const write = async (key, text) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
   /* a placed selection is read by the editor a moment later */
-  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await page.waitForTimeout(150); };
-  const between = async (a, b) => { await R.selectBetween(page, a, b); await page.waitForTimeout(150); };
+  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await rest(page); };
+  const between = async (a, b) => { await R.selectBetween(page, a, b); await rest(page); };
   /* the toolbar's button pressed as a click on it, shown or not: the selection is made by script */
-  const button = async (title) => { await page.evaluate((t) => document.querySelector(".fmt button[title='" + t + "']")?.click(), title); await page.waitForTimeout(300); };
-  const copied = async () => { await page.keyboard.press("Meta+c"); await page.waitForTimeout(300); return R.clipboardLines(page); };
+  const button = async (title) => { await page.evaluate((t) => document.querySelector(".fmt button[title='" + t + "']")?.click(), title); await rest(page); };
+  const copied = async () => { await page.keyboard.press("Meta+c"); await rest(page); return R.clipboardLines(page); };
   /* the stored text without its last line end: a seed left unedited keeps the one it was written with */
   const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
   const corner = () => page.evaluate(() => document.querySelector(".saved.show")?.textContent || "");
@@ -1748,7 +1766,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await write("page/Nested Runs", "> intro\n>\n>> a\n>>\n>> b\n>>\n>> c\n");
   await caretAt("b", 1);
   await page.keyboard.press("Shift+Tab");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("Shift-Tab on the middle run of a nested quote", { md: await stored() });
   await write("page/Soft Italic", "wrote this:\n");
   await caretAt("wrote this:", 11);
@@ -1783,36 +1801,36 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await write("page/Paste In Run", "x *the best* of times\n");
   await caretAt("the be", 6);
   await R.pasteText(page, "L1\nL2");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("two lines pasted inside an emphasised run", { md: await stored() });
   await write("page/Paste Quote", "> quoted line\n");
   await caretAt("quoted", 6);
   await R.pasteText(page, "> inner");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("> inner pasted inside a quote", { md: await stored() });
   await write("page/Paste Picture Quote", "x\n");
   await caretAt("x", 1);
   await R.pasteText(page, "> ![](a.png)");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a one-line quote of a picture pasted", { md: await stored() });
   await write("page/Paste Url", "see it now\n");
   await caretAt("see ", 4);
   await R.pasteText(page, "https://example.org/x");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a bare URL pasted", { md: await stored(), links: await page.evaluate(() => document.querySelectorAll("#editor a, #page a").length) });
   /* a bookmark to press: Links, added from its own card */
   await go("page/Links");
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.keyboard.press("a");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.press("Escape");
   await write("page/Inline Code Link", "see `code here` now\n");
   await caretAt("code", 2);
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a bookmark's link pressed in inline code", { md: await stored(), corner: await corner() });
   await page.keyboard.press("Escape");
   await write("page/Paste Refused", "x\n");
@@ -1825,7 +1843,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");
   await page.keyboard.type(' a -- "b"" it\'s');
-  await page.waitForTimeout(300);
+  await rest(page);
   await view(false);
   await log("-- and quotes typed in the markdown view", { md: await stored() });
   await write("page/Bold Italic Row", "::: verse\n**SPEAKER**\n*Stage direction*\n***KING JOHN***\nDeath.\n:::\n");
@@ -1838,9 +1856,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a quotation inside a note", await page.evaluate(() => { const q = document.querySelector("#editor .note blockquote, #page .note blockquote"); if (!q) return { quote: null }; const cs = getComputedStyle(q); return { fill: cs.backgroundColor !== "rgba(0, 0, 0, 0)", rule: parseFloat(cs.borderLeftWidth) > 0 || getComputedStyle(q, "::before").content !== "none" }; }));
   await write("page/Reference Block", "::: reference\nroman book and canto\n:::\n\nafter\n");
   await page.click("#editor .reference, #page .reference", { timeout: 2000 }).catch(() => {});
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.keyboard.type("Q");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a reference block clicked, Q typed", { md: await stored(), corner: await corner() });
   const greek = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega".split(" ");
   await write("page/Spaced Leaves", greek.concat(greek, greek).map((w, i) => w + "word⟨" + (i + 1) + "⟩").join(" ") + "\n");
@@ -1868,12 +1886,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await write("page/Near Miss", "x\n");
   await caretAt("x", 1);
   await R.pasteText(page, " [near](#pagex)");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a near-miss entry link pasted", { md: await stored(), links: await page.evaluate(() => document.querySelectorAll("#editor a, #page a").length) });
     }],
     ["notices and surfaces as the old app has them", async () => {
   /* the inventory's groups 5–7, each gesture read over both apps, the old app's reading the one to match */
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await page.waitForTimeout(300); } };
+  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
   const write = async (key, text) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
   const corner = () => page.evaluate(() => document.querySelector(".saved.show, #saved.show")?.textContent || "");
   const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
@@ -1885,7 +1903,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.editor);
   /* the key as Caps Lock spells it: a press with ⌘ held reaches the page lower-cased */
   await page.evaluate(() => (document.activeElement || document.body).dispatchEvent(new KeyboardEvent("keydown", { key: "K", code: "KeyK", ctrlKey: true, metaKey: true, bubbles: true, cancelable: true })));
-  await page.waitForTimeout(200);
+  await rest(page);
   await log("⌃⌘K with Caps Lock", { searchOpen: await page.evaluate(() => { const d = document.querySelector(".page-search, #pagesearch"); return !!d && (d.tagName === "DETAILS" ? d.open : !d.hidden); }) });
   await page.keyboard.press("Escape");
   await page.goto(A.url("").replace(/#$/, ""));
@@ -1896,19 +1914,19 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const setLines = (v) => page.evaluate(([s, v]) => { const e = document.querySelector(s); if (!e) return; e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); }, [LINES, v]);
   /* picked with the row open, as a hand picks it */
   await page.keyboard.press("Control+Meta+l");
-  await page.waitForTimeout(200);
+  await rest(page);
   await setLines("1");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.reload();
   await A.waitEntry(page, "page/Horace").catch(() => {});
   await page.waitForTimeout(500);
   await log("Line numbering kept across a reload", { interval: await page.evaluate((s) => document.querySelector(s)?.value ?? null, LINES) });
   await page.keyboard.press("Control+Meta+l");
-  await page.waitForTimeout(200);
+  await rest(page);
   await setLines("5");
-  await page.waitForTimeout(300);
+  await rest(page);
   await page.keyboard.press("Control+Meta+l");
-  await page.waitForTimeout(200);
+  await rest(page);
   /* a folder picker answering with what each import reads */
   const picked = (tree) => page.evaluate((tree) => {
     const file = (name, text) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
@@ -1931,7 +1949,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await dismiss();
   await write("page/Pic Fail", "x\n");
   await R.caretAfter(page, "x", 1);
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.evaluate(() => { const P = IDBObjectStore.prototype; window.__idb = [P.put, P.add]; const full = () => { throw new DOMException("full", "QuotaExceededError"); }; P.put = full; P.add = full; });
   await R.pastePng(page);
   await page.waitForTimeout(1500);
@@ -1940,11 +1958,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await dismiss();
   await write("page/Pic Copy", "::: note\nx\n:::\n");
   await R.caretAfter(page, "x", 1);
-  await page.waitForTimeout(150);
+  await rest(page);
   await R.pastePng(page);
   await page.waitForTimeout(1500);
   await page.hover(S.editor + " div.note");
-  await page.waitForTimeout(150);
+  await rest(page);
   await page.click(S.copybtn, { timeout: 2000 }).catch(() => {});
   await page.waitForTimeout(500);
   await log("a block with a picture hover-copied", { pictureCarried: await page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; return /<img[^>]+src="data:image\//.test(html); } catch (e) { return String(e); } }) });
@@ -1952,7 +1970,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await view(false);
   const before = await A.stored(page, "page/Horace");
   await page.keyboard.press("Control+Meta+g");
-  await page.waitForTimeout(300);
+  await rest(page);
   const boxes = () => page.evaluate(() => { const v = (s) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; }; return { line: v("#lineinput"), page: v("#folioinput") }; });
   const asked = await boxes();
   await A.foreignWrite(page, "page/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
@@ -1961,14 +1979,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const lineBox = await page.evaluate(() => { const r = document.querySelector("#lineinput")?.getBoundingClientRect(); return r ? { x: r.left + 5, y: r.top + r.height / 2 } : null; });
   const into = await page.evaluate((s) => { const r = document.querySelector(s)?.getBoundingClientRect(); return r ? { x: r.left + 60, y: r.top + 120 } : null; }, S.editor);
   if (lineBox && into) { await page.mouse.move(lineBox.x, lineBox.y); await page.mouse.down(); await page.mouse.move(into.x, into.y, { steps: 6 }); await page.mouse.up(); }
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a drag from the Line box out over the entry", { barOpen: (await boxes()).line });
   await page.keyboard.press("Escape");
   await A.foreignWrite(page, "page/Horace", before);
   await page.waitForTimeout(1200);
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.keyboard.type("atavis");
   await page.waitForTimeout(800);
   await page.keyboard.type(" zzz", { delay: 10 });
@@ -1979,7 +1997,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await view(false);
   await page.keyboard.press("Escape");
   await R.selectBetween(page, "Maecenas", "Maecenas");
-  await page.waitForTimeout(300);
+  await rest(page);
   /* the bar over the first line, under the masthead: a row opening grows the masthead down over it */
   const underHeader = () => page.evaluate(() => { const b = document.querySelector(".fmt")?.getBoundingClientRect(), h = document.querySelector(".site-head, header")?.getBoundingClientRect(); return b && h ? b.top >= h.bottom - 1 : null; });
   const was = await underHeader();
@@ -1987,28 +2005,28 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(400);
   await log("the format bar after Line numbering opens", { clearBefore: was, clearAfter: await underHeader() });
   await page.keyboard.press("Control+Meta+l");
-  await page.waitForTimeout(200);
+  await rest(page);
   await go("page/Pic Copy");
   await view(false);
   await page.hover(S.editor + " div.note");
-  await page.waitForTimeout(200);
+  await rest(page);
   const over = await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn);
   await page.evaluate(() => { location.hash = "#page/Links"; });
   await page.waitForTimeout(800);
   await log("the copy button after a navigation", { over, after: await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn) });
   await log("a link's tooltip", { title: await page.evaluate((s) => document.querySelector(s + " a")?.title ?? null, S.editor) });
   await R.selectBetween(page, "link", "link");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("the Tag button's tooltip", { title: await page.evaluate((s) => document.querySelector(s)?.title ?? null, S.fmtTag) });
   await page.click(S.editor);
   const refuse = () => page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
   const restore = () => page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
   await refuse();
   await page.keyboard.press("Control+Meta+c");
-  await page.waitForTimeout(300);
+  await rest(page);
   await restore();
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a failed copy's pin clicked", { clipboard: (await R.clipboardText(page)).replace(/\(#[^)]*\)/, "(…)") });
   await log("the tab's icon", { icon: await page.evaluate(() => !!document.querySelector("link[rel~='icon']")?.getAttribute("href")) });
   await go("page/Horace");
@@ -2016,11 +2034,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(".page-title, #pagetitle, .site-head, header", { timeout: 1000 }).catch(() => {});
   await page.evaluate(() => { const h = document.querySelector(".site-head, header"); if (h) { const r = document.createRange(); r.selectNodeContents(h); r.collapse(true); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); } });
   await page.keyboard.press("Control+Meta+s");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.click(S.shortcutsInput, { timeout: 1000 }).catch(() => {});
   await page.keyboard.type("md");
   await page.keyboard.press("Enter");
-  await page.waitForTimeout(300);
+  await rest(page);
   await log("a shortcut chosen with no cursor in the entry", { corner: await corner(), unchanged: (await A.stored(page, "page/Horace")) === before });
   await page.keyboard.press("Escape");
   await write("page/Source Link", "x\n");
@@ -2028,16 +2046,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");
   await page.keyboard.press("Control+Meta+b");
-  await page.waitForTimeout(200);
+  await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
   await page.waitForTimeout(400);
   await log("a bookmark's link in the markdown view", { md: (await stored()).replace(/\(#[^)]*\)/, "(…)") });
   await view(false);
   const slow = await ctx.newPage();
   await slow.goto(A.url("page/Horace", "warm=slow"));
-  await slow.waitForTimeout(300);
+  await rest(slow);
   await slow.keyboard.press("Control+Meta+k");
-  await slow.waitForTimeout(200);
+  await rest(slow);
   await slow.keyboard.type("atavis");
   await slow.waitForTimeout(400);
   const loading = await slow.evaluate((s) => [...document.querySelectorAll(s)].map((l) => l.textContent.trim()).join(" | ").slice(0, 40), S.searchRows);
@@ -2046,17 +2064,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the Go to row and the bookshelf, each opened on a fresh slow launch with the keys left in it */
   const options = () => slow.evaluate(() => [...document.querySelectorAll(".page-goto select, #pagegoto select")].reduce((n, s) => n + s.options.length, 0));
   await slow.goto(A.url("page/Horace", "warm=slow&again=1"));
-  await slow.waitForTimeout(300);
+  await rest(slow);
   await slow.keyboard.press("Control+Meta+j");
-  await slow.waitForTimeout(300);
+  await rest(slow);
   const gotoBefore = await options();
   await slow.waitForTimeout(3500);
   await log("Go to opened before the warm", { more: (await options()) > gotoBefore, focusInRow: await slow.evaluate(() => !!document.activeElement?.closest(".page-goto, #pagegoto")) });
   const shelf = () => slow.evaluate(() => { const p = document.querySelector(".pages, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
   await slow.goto(A.url("page/Horace", "warm=slow&again=2"));
-  await slow.waitForTimeout(300);
+  await rest(slow);
   await slow.click(S.booksOpener, { timeout: 2000 }).catch(() => {});
-  await slow.waitForTimeout(200);
+  await rest(slow);
   await slow.evaluate(() => document.querySelector(".pages .panel-new, #bookspanel .panel-new")?.focus());
   await slow.mouse.move(5, 700);
   const shelfBefore = await shelf();
@@ -2086,7 +2104,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   answer = "Plans";
   await page.click(S.renameSubPage);
   await A.waitEntry(page, "page/Rename Host/Plans", 5000).catch(() => {});
-  for (let i = 0; i < 30 && !((await A.stored(page, "page/Rename Host")) || "").includes("/Plans"); i++) await page.waitForTimeout(100);
+  for (let i = 0; i < 30 && !((await A.stored(page, "page/Rename Host")) || "").includes("/Plans"); i++) await rest(page);
   await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "page/Rename Host")) || "").split("\n")[0] });
   answer = null;
     }],
@@ -2099,11 +2117,34 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.bringToFront();
     await page.keyboard.press("Escape").catch(() => {});
   };
+  /* TIMING=1: each section's time and the fixed waits within it, to stderr */
+  const timing = process.env.TIMING ? [] : null;
+  let slept = 0;
+  const counted = new Set();
+  let expired = 0;
+  const sites = {};
+  const lapses = {};
+  const count = (p) => {
+    if (counted.has(p)) return; counted.add(p);
+    const w = p.waitForTimeout.bind(p); p.waitForTimeout = (ms) => { slept += ms; const at = (new Error().stack.split("\n").filter((l) => /helium-steps|adapters/.test(l))[1] || "").replace(/.*\/(tools\/[^:]+:\d+).*/, "$1"); sites[at] = (sites[at] || 0) + ms; return w(ms); };
+    const f = p.waitForFunction.bind(p);
+    p.waitForFunction = async (...a) => { const t = Date.now(); try { return await f(...a); } catch (e) { const ms = Date.now() - t; expired += ms; const k = section + " · " + String(a[0]).slice(0, 70).replace(/\s+/g, " "); lapses[k] = (lapses[k] || 0) + ms; throw e; } };
+  };
+  if (timing) { for (const p of ctx.pages()) count(p); ctx.on("page", count); }
   for (const [name, fn] of sections) {
     if (opts.only && name !== sections[0][0] && !opts.only.includes(name)) continue;
+    const t0 = Date.now(), s0 = slept;
     await settle();
     section = name;
     try { await fn(); }
     catch (e) { console.log("SECTION FAILED (" + name + "): " + String(e).split("\n")[0].slice(0, 200)); }
+    if (timing) timing.push([name, Date.now() - t0, slept - s0]);
+  }
+  if (timing) {
+    for (const [n, ms, w] of timing.sort((a, b) => b[1] - a[1])) console.error(String(Math.round(ms / 100) / 10).padStart(6) + "s " + String(Math.round(w / 100) / 10).padStart(6) + "s waits  " + n);
+    console.error("total " + timing.reduce((a, t) => a + t[1], 0) / 1000 + "s, fixed waits " + slept / 1000 + "s");
+    for (const [k, ms] of Object.entries(sites).sort((a, b) => b[1] - a[1]).slice(0, 30)) console.error("sleep " + String(ms / 1000).padStart(6) + "s  " + k);
+    console.error("condition waits run out: " + expired / 1000 + "s");
+    for (const [k, ms] of Object.entries(lapses).sort((a, b) => b[1] - a[1]).slice(0, 25)) console.error(String(ms / 1000).padStart(7) + "s  " + k);
   }
 }

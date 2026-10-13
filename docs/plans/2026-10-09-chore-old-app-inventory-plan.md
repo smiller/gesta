@@ -1023,3 +1023,22 @@ Venice 3.5's stray "‘ Then", Donne's Satyre II "‘and they are his
 owne". Run: 1569 turned in 431 entries — 369 by rule, 1200 by reading —
 777 read as openings and left; 49 highlighted links into changed
 entries all still found (MEASURED).
+
+### A faster verify (2026-10-13, asked: "we definitely want a faster verify run")
+Asked from "Fixed waits? Shouldn't we be able to wait for when something
+appears". Measured (TIMING=1, new): the corner run 268 s, of it about
+206 s fixed sleeps. Changed, each under the verdict: the 270 sleeps of
+300 ms or less became `rest()`, two animation frames with a 100 ms cap;
+the adapter's `stored()` waits on a watcher the driver installs (650 ms
+past the last edit gesture — key, input, paste, drop, cut, pointerdown,
+click — and no IndexedDB write open) instead of 800 ms each of 53 calls;
+seven typing-then-save sleeps the same way. Six more converted were put
+back, the verdict reading otherwise: the two-window steps' 2.5 s cover the
+"saved" fade and the other window's redraw, and a picture's conversion
+needs its 2 s. The flaky "a bookmark's link pressed" step now measures
+the line until two readings a frame apart agree. Running the bridge
+beside the corner was tried and dropped: three of three runs then read
+an arrival's place differently, the load moving it. Result: the Helium
+stage 278 s → 202–206 s, three runs of three passing (MEASURED). The
+sleeps left mostly time the app's own clocks; faking the page's timers
+would be the next lever.
