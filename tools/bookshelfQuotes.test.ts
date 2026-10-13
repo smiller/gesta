@@ -81,3 +81,10 @@ test("quotedProse: a quotation differing from the entry within a line is placed 
   const r = quotedProse(ix, "bookshelf/Lewis, C. S/The Four Loves/Eros", ["> Can we be in this selfless liberation for a lifetime?  Hardly for a week. Between the best possible lovers the high condition is intermittent.", "", "> But these lapses will not destroy a marriage between two decent people, seen from one particular angle."]);
   expect(r && r.passage).toBe("> Can we be in this selfless liberation for a lifetime?  Hardly for a week.  Between the best possible lovers this high condition is intermittent.\n> \n> But these lapses will not destroy a marriage between two decent people, seen from one particular angle.");
 });
+test("quotedProse: a passage named by its first and last words may run any length between them", () => {
+  const long = "Between them, " + "a long stretch of words. ".repeat(40);
+  const ix = shelfIndex({ ...cache, "2016-02-22": "# x\n\nAnd what did they both see in that moment? " + long + "\n\nWhat if she saw him only to dismiss him as none of her concern?\n" });
+  expect(quotedProse(ix, "2016-02-22", ["And what did they both see in that moment", "saw him only to dismiss him as none of her concern?"], ["2016-02-22"])).toBeNull();
+  const r = quotedProse(ix, "2016-02-22", ["And what did they both see in that moment", "saw him only to dismiss him as none of her concern?"], ["2016-02-22"], true);
+  expect(r && r.passage.split("\n").length).toBe(3);
+});

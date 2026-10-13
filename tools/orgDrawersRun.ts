@@ -48,7 +48,18 @@ const resolver = (texts: Record<string, string>) => {
    holding an old link reads differently once the link is made */
 const first = resolver(cache);
 const linkedTexts = Object.fromEntries(Object.entries(cache).map(([k, md]) => [k, referOrgLinks(md, first).md]));
-const resolve = resolver(linkedTexts);
+const anchored = resolver(linkedTexts);
+/* links given the whole passage they mean, asked: its first words and its last */
+const SPANS = new Map([["journal/2016/2016-07-25.md:69", { key: "2016-02-22", first: "And what did they both see in that moment when their eyes met", last: "or saw him only to dismiss him as none of her concern?" }]]);
+const spans = shelfIndex(linkedTexts);
+let current = "";
+const resolve = (l: OrgLink): Resolved => {
+  const span = SPANS.get(current + ":" + l.line);
+  if (!span) return anchored(l);
+  const r = quotedProse(spans, span.key, [span.first, span.last], [span.key], true);
+  if (!r) throw new Error(`${current}:${l.line}: the passage named is not in ${span.key}`);
+  return { href: r.url };
+};
 
 /* a section's quotation made the reference to its passage, asked: the
    heading it stands under and the entry it quotes */
@@ -75,6 +86,7 @@ const linked: { file: string; l: Referred }[] = [], cleared: { file: string; bef
 for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8"), file = relative(SRC, path);
+  current = file;
   const r = referOrgLinks(md, resolve);
   for (const l of r.links) if (!("why" in l.res)) { counts.links++; linked.push({ file, l }); }
   const c = clearDrawers(r.md);

@@ -846,3 +846,7 @@ his own for 2016-02-07, byte for byte (MEASURED), the passage the
 bookshelf's words ("this high condition" where the entry had "the"). The
 prose matcher now places a long line by its opening and close, sixty
 letters each, so a word changed inside does not part it.
+Asked after: 2016-07-25's "the vision after the Florence film" highlights
+the whole two-paragraph passage he gave in 2016-02-22, named by its first
+and last words (a span named so may run any length; a quotation placed
+by its lines may not run four times its own).

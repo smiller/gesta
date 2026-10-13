@@ -88,8 +88,11 @@ const SPEAKER = /^\s*(?:>\s?)*[A-Z][A-Z0-9 .'’-]*(?:\s*\[[^\]]*\])?:\s*/;
    it opens on a speaker's name, to the last line's end,
    its closing marks with it, makes (pin: bookshelfQuotes.test ›
    quotedProse: a prose quotation) */
-/* `keys`: the entries to try, in order; every entry under `prefix` when not given */
-export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], keys?: string[]): Referred | null {
+/* `keys`: the entries to try, in order; every entry under `prefix` when not
+   given. `ends`: the quote is a passage's first words and last, any length
+   between (pin: bookshelfQuotes.test › quotedProse: a passage named by its
+   first and last words) */
+export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], keys?: string[], ends = false): Referred | null {
   const lines = quote.map((l) => l.replace(/^\s*(?:>\s?)*/, "")).filter((l) => norm(l));
   if (!lines.length) return null;
   /* a first line's opening and a last line's close: a word changed inside a long line does not part them */
@@ -108,7 +111,7 @@ export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], 
       return false;
     });
     const i = stream.indexOf(first), j = i < 0 ? -1 : stream.indexOf(last, i);
-    if (j < 0 || j - i > 4 * quote.join("").length) continue;
+    if (j < 0 || !ends && j - i > 4 * quote.join("").length) continue;
     /* a quotation opening on a speaker's name opens on the speech; else on its own words */
     const from = SPEAKER.test(lines[0]) ? doc.resolve(at[i]).start() : at[i];
     /* the last line's closing marks are its own: a question ending at its letters lost its mark */
