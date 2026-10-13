@@ -53,3 +53,9 @@ test("quotedRuns: opening lines are carried back one after another, a half-line 
   const splice = "> Maecenas … collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n";
   expect(quotedRuns(splice, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 5, 6]]);
 });
+test("referRuns: a run quoted inside a quotation keeps the outer quotation, the reference within it and its passage a level in", () => {
+  const md = "> Horace put it so.\n>> sunt quos curriculo pulverem Olympicum\n>> collegisse iuvat metaque fervidis\n> So that is that.\n";
+  const runs = quotedRuns(md, index);
+  const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` }));
+  expect(out).toBe("> Horace put it so.\n>\n> [Horace, *Odes*, 1.1.3-4](#u):\n>\n>> ::: verse 3\n>> line\n>> :::\n>\n> So that is that.\n");
+});

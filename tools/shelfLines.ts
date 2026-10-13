@@ -122,13 +122,17 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
   const lines = md.split("\n");
   for (const r of [...runs].reverse()) {
     const m = mint(r);
+    /* a run quoted inside a quotation keeps the outer one (pin:
+       shelfLines.test › referRuns: a run quoted inside) */
+    const outer = ">".repeat(Math.max(0, (lines[r.start].match(/^\s*((?:>\s*)*)/)![1].match(/>/g) ?? []).length - 1));
+    const within = (l: string): string => !outer ? l : !l ? outer : l.startsWith(">") ? outer + l : outer + " " + l;
     const prev = r.start > 0 ? lines[r.start - 1] : "", next = r.end + 1 < lines.length ? lines[r.end + 1] : "";
     const cited = bare(prev);
     const tail = next.trim() ? [""] : [];
     if (cited && /:\s*$/.test(cited) && cited.length <= CITATION && !/\]\(/.test(cited))
-      lines.splice(r.start - 1, r.end - r.start + 2, "[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n"), ...tail);
+      lines.splice(r.start - 1, r.end - r.start + 2, ...["[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n"), ...tail].map(within));
     else
-      lines.splice(r.start, r.end - r.start + 1, ...(prev.trim() ? [""] : []), ...m.text.split("\n"), ...tail);
+      lines.splice(r.start, r.end - r.start + 1, ...[...(prev.trim() ? [""] : []), ...m.text.split("\n"), ...tail].map(within));
   }
   return lines.join("\n");
 }

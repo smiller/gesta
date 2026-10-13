@@ -924,3 +924,19 @@ letters or more, and from eight letters two letters' change is allowed
 them: that line, and 2020-03-04's last line with "{ *Paradise Lost*,
 8.546ff }" after it. Run: 110 references, 646 lines, in 54 entries; 112
 highlighted links, each finds its words (MEASURED).
+Asked after: 2019-12-04 quoted 11.553-54 at `>>` inside a quotation of
+his, and the reference was set at the outer level, splitting his
+quotation in two; the review's green showed the reference alone, so his
+lines either side read as lost (they were in the file, MEASURED). A run
+quoted at depth two or more now keeps the outer levels, the reference
+inside the quotation and its passage a level in (15 runs; each nested
+verse parses as verse inside two quotations, MEASURED); the review's
+green is the same window as its red, as the entry will read. Two
+single-level quotations that go on past the verse (2025-10-03,
+2025-10-27, a card's citation, the verse, more notes) are still split
+around it. His bookshelf fixes in the same pass — 9.1016, 6.60, 10.710
+’gan, 5.802 and 5.848 a closing quotation mark — each regenerated after
+the backup took it; 1995-07-29 (9.1016) and 2020-03-28 (5.802) changed,
+the others fall in no reference. Run: 110 references, 646 lines, in 54
+entries; 112 highlighted links, each found by the page's own finder over
+the backup (MEASURED).

@@ -49,8 +49,9 @@ for (const path of walk(SRC).sort()) {
   const src = md.split("\n");
   for (const r of ok) {
     counts.runs++; counts.lines += r.end - r.start + 1;
-    const m = minted.get(r) as { text: string };
-    shown.push({ file, r, label: m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1), before: src.slice(Math.max(0, r.start - 1), r.end + 2), after: m.text.split("\n") });
+    const m = minted.get(r) as { text: string; url: string; passage: string };
+    const alone = referRuns(md, [r], () => m).split("\n"), grew = alone.length - src.length;
+    shown.push({ file, r, label: m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1), before: src.slice(Math.max(0, r.start - 1), r.end + 2), after: alone.slice(Math.max(0, r.start - 1), r.end + grew + 2) });
   }
   const doc = parseMarkdown(out);
   if (serializeMarkdown(parseMarkdown(serializeMarkdown(doc))) !== serializeMarkdown(doc)) throw new Error(`${file}: not a fixed point`);
@@ -76,9 +77,9 @@ h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}
 pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em 0;padding:6px 8px}
 .before{background:#fbeee8}.after{background:#e6f0dc}</style>
 <h1>${esc(AUTHOR.replace(/^bookshelf\//, ""))}: ${counts.runs} quotations made references, ${counts.lines} lines, in ${counts.changed} entries</h1>
-<p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them: after a short citation ending in a colon, that citation becomes the link in its own words; otherwise the whole reference stands in the run's place. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the reference the run becomes.</p>
+<p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them: after a short citation ending in a colon, that citation becomes the link in its own words; otherwise the whole reference stands in the run's place. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the same place as it will read, the reference in the run's stead.</p>
 <h2>Left: the reference feature's own test data (${left.length})</h2>
 <ul>${left.map((f) => `<li><code>${esc(f)}</code></li>`).join("")}</ul>
 <h2>Made references (${shown.length})</h2>
-${shown.map(({ file, r, label, before, after }) => `<div class="e"><span>${esc(file)}:${r.start + 1}–${r.end + 1} — ${esc(label)}</span><pre class="before">${esc(before.join("\n"))}</pre><pre class="after">${esc(after.join("\n").replace(/\?h=[^)]*/, "?h=…"))}</pre></div>`).join("")}`);
+${shown.map(({ file, r, label, before, after }) => `<div class="e"><span>${esc(file)}:${r.start + 1}–${r.end + 1} — ${esc(label)}</span><pre class="before">${esc(before.join("\n"))}</pre><pre class="after">${esc(after.join("\n").replace(/\?h=[^)]*/g, "?h=…"))}</pre></div>`).join("")}`);
 console.log(`${counts.entries} entries read; ${counts.runs} runs (${counts.lines} lines) made references in ${counts.changed} entries; written to ${OUT}, the review beside it`);
