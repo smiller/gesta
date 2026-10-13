@@ -1466,7 +1466,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
   await go("page/Horace");
   const at = await R.wordAt(page, "Maecenas atavis", 8);
+  /* the click's caret is the editor's only once its selectionchange has
+     reached it: under a full run's load the link landed at the caret before */
+  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await page.mouse.click(at.x + 30, at.y);
+  await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
+  await page.waitForTimeout(100);
   await page.keyboard.press("Control+Meta+b");
   await page.waitForTimeout(150);
   await tap(".bookmark-link[aria-label='Link to Links']");
