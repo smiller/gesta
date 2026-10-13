@@ -959,3 +959,32 @@ work, when it is dropped as the citation the link gives; 2020-03-04 is
 the only entry it touches (MEASURED). Run: 110 references, 649 lines, in
 54 entries; 112 highlighted links, each found by the page's own finder
 (MEASURED).
+Imported 2026-10-13 and backed up: 53 of the 54 entries match the folder
+byte for byte; 2019-12-04, saved again at 16:13, differs only in its four
+quoted blank lines written `> ` where the folder wrote `>` (MEASURED).
+
+### Elisions' apostrophes (2026-10-13, asked: "Let's fix the elision apostrophes")
+On the bookshelf, ‘ is an opening quotation mark far more often than an
+elision (‘I 588, ‘The 240), and some quotations run across paragraphs, so
+neither the word nor a closing mark decides alone (MEASURED, a survey of
+every ‘). tools/elisions.ts turns ‘ to ’ where: the word after it is a
+clip that is no word of its own (‘tis, ‘scape, ‘mongst, an explicit list
+from the survey) — always; a clip that is also a word, in Latin or French
+or a single letter (‘is, ‘old, ‘ad, ‘t, ‘d), or a dropped h (the word
+without it not in /usr/share/dict/words, with it in) — only where no
+closing mark follows in the paragraph, a dialect's own clipped ending
+(-in’, o’, th’, ha’, wiv’) closing nothing; a mark between letters
+(they‘ll) — always. A word with its own apostrophe after the mark
+(‘D’you, ‘e’) opens a quotation. First runs turned Horace's and
+Boethius's Latin openers (‘et, ‘est: web2 holds "het", "hest"), Frost's
+‘Isn’t and ‘D’you, Shakespeare's ‘D sol re — each made a test. Run: 1305
+turned in 422 bookshelf entries, 154 left and listed on the review page;
+the 49 highlighted links into changed entries all still found by the
+page's finder, which folds ‘ and ’ alike (MEASURED).
+Verify's time, asked ("10 minutes seems very long"): measured stage by
+stage on an idle machine — tsc 1 s, the suite 3 s, comments 0 s, hooks
+5 s, the Helium tools 278 s (MEASURED); the ten minutes were runs beside
+other work. The steps hold 349 fixed waits, about 151 s at their face
+value: 31 of a second or more (about 69 s), 273 of 100–300 ms (about
+60 s) (MEASURED, counted in the step files). Waiting for the thing itself
+instead is proposed, not yet asked.

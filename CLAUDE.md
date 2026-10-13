@@ -256,6 +256,10 @@ is in the plan's record, under the phase named):
   an entry found and made the references ⌃⌘R makes for them, pure, its
   test beside it; `tools/shelfLinesRun.ts [author-prefix]` (Milton by
   default) writes an import folder with a review page.
+  `tools/elisions.ts` — an elision's apostrophe typed as an opening
+  quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
+  `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
+  writes the changed entries as an import folder with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and
