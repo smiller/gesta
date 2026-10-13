@@ -880,3 +880,18 @@ opens the host first: seeded behind the app's back, a host not yet read
 was not in the cache the rename retargets through.
 c96a959 accepted 2026-10-13 on the headless reading. src/store/links.ts is no DOM
 seam and this closes no phase: no review by the review shape.
+
+MILTON QUOTED LINE FOR LINE, asked 2026-10-13 ("look for other bits of
+Milton in the journal entries and turn them into references, usual
+drill, review first"; 2022-02-15's "PL 3.17-8:" his example).
+tools/shelfLines.ts finds runs of consecutive lines, quoted or bare, that
+are an author's verse on the bookshelf (Paradise Lost, Lycidas), carrying
+through a line spelled otherwise when the next goes on (1993-06-12's
+1.242-63, Milton's "hee"); a run under 30 letters is no quotation; code
+and a quotation already under a bookshelf link are left. A run after a
+short citation ending in a colon makes the citation the link in its own
+words; any other gives way to the whole ⌃⌘R reference. Left by name: the
+four entries quoting Paradise Lost 1.254-55 as the reference feature's
+test data (gesta-wrangling, the Verity Cards snapshot and page). Run: 110
+references, 570 lines, in 54 entries; every one of the 350 highlighted
+links then in the backup and folder finds its words (MEASURED).

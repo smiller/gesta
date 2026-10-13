@@ -252,6 +252,10 @@ is in the plan's record, under the phase named):
   anchor or its words — and writes an import folder with a review page;
   `tools/orgDrawersRun.ts` points an old `[[#anchor]]` link at the place
   its Org property drawer marks, then clears the drawers, the same way.
+  `tools/shelfLines.ts` — runs of an author's verse quoted line for line in
+  an entry found and made the references ⌃⌘R makes for them, pure, its
+  test beside it; `tools/shelfLinesRun.ts [author-prefix]` (Milton by
+  default) writes an import folder with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and
