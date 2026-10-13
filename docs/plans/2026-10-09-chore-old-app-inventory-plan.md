@@ -720,3 +720,11 @@ partly indented is verse and keeps its indents. Result: 41 quotations in 32 entr
 no emphasis running over a line break (MEASURED). The same look over the
 whole backup: 12 entries with emphasis over a line break, all a `*…*` span
 typed over several lines, none made by the two imported passes (READ).
+
+PARKED, 2026-10-13, his suggestion for another pass: a two-column pipe
+table, where it pairs a text with its translation, made a `::: verse`
+block with `|` pairs. Over the backup (MEASURED): 670 two-column pipe
+lines in 21 entries, 6 of them in 2026 (the wrangling entries' terminal
+tables among them), 439 lines in 2023-09-18 alone, 36 in page/Tres
+Leones. Not every one pairs a text with a translation (INFERRED); each
+wants reading before a rule is chosen.
