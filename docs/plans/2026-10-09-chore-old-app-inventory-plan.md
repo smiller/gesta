@@ -911,3 +911,16 @@ half-line, three read in their entries (2022-11-13, 2006-10-11,
 2002-10-30), each a half-line. Run: 110 references, 615 lines, in 54
 entries; 112 highlighted links in the folder, each finds its words
 (MEASURED).
+Asked after (2002-10-16 is 9.994-97 and 2006-10-06 is 2.170-72, both
+already so by the change above; "can we run a check for more half-lines"):
+a probe over every run read the line either side against the passage's
+neighbouring line. It found 30 opening half-lines and first lines spelled
+otherwise, and one closing half-line under ten letters ("Illumine …"). A
+run now reaches back over lines that are the passage's own spelled
+otherwise, the first of them perhaps a half-line; a half-line is six
+letters or more, and from eight letters two letters' change is allowed
+(fixt, mee); a line joining two places with an ellipsis is not carried
+(2020-03-28 "His malice …That space…"). Two left, as the probe reads
+them: that line, and 2020-03-04's last line with "{ *Paradise Lost*,
+8.546ff }" after it. Run: 110 references, 646 lines, in 54 entries; 112
+highlighted links, each finds its words (MEASURED).

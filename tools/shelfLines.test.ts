@@ -36,6 +36,20 @@ test("quotedRuns: a line's closing <br/> is not its verse, and a stray blank lin
 test("quotedRuns: a run's last line that is the start of the passage's next line, a half-line, is carried; a fragment of a word or two is not", () => {
   const half = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis.\n";
   expect(quotedRuns(half, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
-  const scrap = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata\n";
+  const scrap = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evit\n";
   expect(quotedRuns(scrap, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 3, 4]]);
+});
+test("quotedRuns: a run's first line may be the end of the passage's line before it, a half-line, or that line spelled otherwise; a line of one's own is not", () => {
+  const half = "> Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
+  expect(quotedRuns(half, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
+  const spelt = "> sunt quos curiculo pulverem Olimpicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
+  expect(quotedRuns(spelt, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
+  const own = "and so I said\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
+  expect(quotedRuns(own, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 4, 5]]);
+});
+test("quotedRuns: opening lines are carried back one after another, a half-line spelled otherwise among them; a line joining two places with an ellipsis is not", () => {
+  const back = "> dulce decus meun\n> sunt quos curiculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
+  expect(quotedRuns(back, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 2, 5]]);
+  const splice = "> Maecenas … collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n";
+  expect(quotedRuns(splice, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 5, 6]]);
 });
