@@ -818,3 +818,11 @@ drawer — under a `##` section, the section's first quotation highlighted
 (else its first paragraph); under none, the entry itself. Run: 25 day
 links, 9 references with their passages, 9 bookshelf links, in 35
 entries; 70 left (MEASURED).
+Asked after: four more given by name, each his own ⌃⌘R reference
+(2015-07-20's Figure of Beatrice pp. 22-25, 2016-02-06's Beatrician
+vision, 2016-02-07's Four Loves, 2016-02-14's Alford), kept with
+Brenan's in tools/orgReferencesNamed.json; each address taken from the
+session's transcript, not retyped, and its highlight found in its entry
+(MEASURED). The link keeps his words; the passage is not set under it, the
+link standing mid-sentence. Run: 24 day links, 9 references with their
+passages, 11 bookshelf links, in 36 entries; 69 left (MEASURED).
