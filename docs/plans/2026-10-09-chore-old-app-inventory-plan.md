@@ -789,3 +789,24 @@ listed. Hand-checked in his Helium on Housman, Last Poems 25.9-12: the
 clipboard held the reference minted by the same code, byte for byte
 (MEASURED). 8df275e accepted 2026-10-13. src/editor/reference.ts is no
 DOM seam and this closes no phase: no review by the review shape.
+
+THE OLD .ORG LINKS, asked 2026-10-13 ("do the .org links pass with a
+review page"). 113 double-bracket links left in the text (MEASURED).
+tools/orgReferences.ts makes each one resolved a markdown link, its words
+kept; a link whose line ends in a colon, nothing but marks between,
+introduces the quotation under it, which becomes the bookshelf's passage
+as ⌃⌘R quotes it. tools/orgReferencesRun.ts resolves: a year file's link
+to the day its label names, else the day its anchor still stands in (8
+anchors survive as `<<name>>`); a text's file, mapped by hand to its
+place on the bookshelf, by its quotation (verse as the tables were;
+prose — the Doctor Who scripts — by its first and last lines, speakers'
+names aside, the episode the label names first, then the earliest), by a
+line anchor (`purg-8-28`, `1-254` with the label's range), or by the
+anchor's own words or episode number. Found reading the run: the Tao
+Te Ching page holds Inferno 30.130-2 too, so a quotation named after a
+link was placed in the link's text — the colon rule now needs the link
+last; "One day I shall come back" placed in The Five Doctors, which
+quotes The Dalek Invasion of Earth, before the episode order. Run: 18
+day links, 9 references with their passages, 9 bookshelf links, in 28
+entries; 77 left: names and numbers, texts not on the bookshelf, working
+files, days its label does not name (MEASURED).

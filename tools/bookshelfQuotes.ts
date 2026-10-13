@@ -27,7 +27,7 @@ const DISTINCT = 12;
 const misses = (n: number): number => n < 3 ? 0 : Math.max(1, Math.floor(n / 5));
 
 interface Shelved { key: string; doc: Node; units: Unit[]; left: string[] }
-export interface ShelfIndex { journal: Journal; entries: Shelved[]; at: Map<string, { e: number; i: number }[]> }
+export interface ShelfIndex { journal: Journal; entries: Shelved[]; at: Map<string, { e: number; i: number }[]>; texts: Record<string, string>; docs: Map<string, Node> }
 
 const cell = (row: Node, k: number): string => row.type === schema.nodes.pair ? (row.child(k)?.textContent ?? "") : k ? "" : row.textContent;
 
@@ -42,7 +42,8 @@ export function shelfIndex(cache: Record<string, string>): ShelfIndex {
     const e = entries.push({ key, doc, units, left }) - 1;
     left.forEach((l, i) => { if (l.length >= DISTINCT) at.set(l, [...(at.get(l) ?? []), { e, i }]); });
   }
-  return { journal: journalOf(cache), entries, at };
+  const texts = Object.fromEntries(Object.entries(cache).filter(([k]) => /^(bookshelf|page)\//.test(k)));
+  return { journal: journalOf(cache), entries, at, texts, docs: new Map() };
 }
 
 export interface Quoted { left: string; right?: string }
@@ -71,6 +72,47 @@ export function quotedFrom(index: ShelfIndex, lines: Quoted[], except?: string):
     if (s.key === except || first < 0 || last >= s.units.length) continue;
     if (q.filter((l, j) => l.left === s.left[first + j]).length < q.length - misses(q.length)) continue;
     return minted(index, s, first, last);
+  }
+  return null;
+}
+
+/* a speaker's name opening a line of a script */
+const SPEAKER = /^\s*(?:>\s?)*[A-Z][A-Z0-9 .'’-]*(?:\s*\[[^\]]*\])?:\s*/;
+/* A PROSE QUOTATION OF AN ENTRY under `prefix`, placed by its first and
+   last lines, letters and numerals alone and a speaker's name aside: the
+   reference a copy from its first words, or the first speech's start when
+   it opens on a speaker's name, to the last line's end,
+   its closing marks with it, makes (pin: bookshelfQuotes.test ›
+   quotedProse: a prose quotation) */
+/* `keys`: the entries to try, in order; every entry under `prefix` when not given */
+export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], keys?: string[]): Referred | null {
+  const lines = quote.map((l) => l.replace(/^\s*(?:>\s?)*/, "")).filter((l) => norm(l));
+  if (!lines.length) return null;
+  const first = norm(lines[0].replace(SPEAKER, "")), last = norm(lines[lines.length - 1].replace(SPEAKER, ""));
+  if (first.length < DISTINCT || last.length < DISTINCT) return null;
+  for (const key of keys ?? Object.keys(index.texts).filter((k) => k.startsWith(prefix)).sort()) {
+    if (!norm(index.texts[key]).includes(first)) continue;
+    let doc = index.docs.get(key);
+    if (!doc) { doc = parseMarkdown(index.texts[key]); index.docs.set(key, doc); }
+    /* the entry's letters, each with its place in the document */
+    let stream = "";
+    const at: number[] = [];
+    doc.descendants((n, pos) => {
+      if (!n.isText) return true;
+      [...n.text!].reduce((off, ch) => { const c = norm(ch); for (const x of c) { stream += x; at.push(pos + off); } return off + ch.length; }, 0);
+      return false;
+    });
+    const i = stream.indexOf(first), j = i < 0 ? -1 : stream.indexOf(last, i);
+    if (j < 0 || j - i > 4 * quote.join("").length) continue;
+    /* a quotation opening on a speaker's name opens on the speech; else on its own words */
+    const from = SPEAKER.test(lines[0]) ? doc.resolve(at[i]).start() : at[i];
+    /* the last line's closing marks are its own: a question ending at its letters lost its mark */
+    let to = at[j + last.length - 1] + 1;
+    const close = doc.resolve(to).end();
+    while (to < close && /^[^\s\p{L}\p{Nd}]$/u.test(doc.textBetween(to, to + 1))) to++;
+    const out = referencePayload(EditorState.create({ doc, selection: TextSelection.create(doc, from, to) }), key.split("/")[0], key.split("/").slice(1).join("/"), index.journal);
+    if ("refused" in out) continue;
+    return { text: out.text, key, url: out.url, passage: out.passage };
   }
   return null;
 }

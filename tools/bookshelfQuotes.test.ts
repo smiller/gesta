@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { shelfIndex, quotedFrom, referenceAt } from "./bookshelfQuotes.ts";
+import { shelfIndex, quotedFrom, referenceAt, quotedProse } from "./bookshelfQuotes.ts";
 
 const cache: Record<string, string> = {
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -57,4 +57,22 @@ test("quotedFrom: a passage of single-column verse is quoted as a verse block nu
   const r = quotedFrom(index, [{ left: "Soracte, nec iam sustineant onus" }, { left: "silvae laborantes, geluque" }]);
   expect(r && "passage" in r && r.passage).toBe("> ::: verse 2\n> Soracte, nec iam sustineant onus\n> silvae laborantes, geluque\n> :::");
   expect(r && "text" in r && r.text.split("\n").slice(1).join("\n")).toBe("\n> ::: verse 2\n> Soracte, nec iam sustineant onus\n> silvae laborantes, geluque\n> :::");
+});
+test("quotedProse: a prose quotation is placed by its first and last lines in an entry under the prefix, speakers' names aside, from the start of the first speech, and is the reference a copy of that stretch makes", () => {
+  const dw = shelfIndex({ ...cache, "bookshelf/Doctor Who/First Doctor/1-2 The Daleks": "# The Daleks\n\nTEMMOSUS: Yes, but we’ve changed over the centuries. Why shouldn’t they?\n\nDYONI: But the Daleks were teachers, weren’t they, Temmosus?\n\nTEMMOSUS: Yes, they were. And philosophers.\n" });
+  const r = quotedProse(dw, "bookshelf/Doctor Who/", ["> TEMMOSUS: Yes, but we've changed over the centuries.", "> ", "> ELEVENTY: But the Daleks were teachers, weren't they, Temmosus?"]);
+  expect(r && "url" in r && r.url).toMatch(/^#bookshelf\/Doctor%20Who\/First%20Doctor\/1-2%20The%20Daleks\?h=TEMMOSUS%3A%20Yes%2C%20but/);
+  expect(r && "passage" in r && r.passage).toBe("> TEMMOSUS: Yes, but we’ve changed over the centuries. Why shouldn’t they?\n> \n> DYONI: But the Daleks were teachers, weren’t they, Temmosus?");
+  expect(quotedProse(dw, "bookshelf/Horace/", ["> TEMMOSUS: Yes, but we've changed over the centuries."])).toBeNull();
+});
+test("quotedProse: the entries tried may be named, in the order given", () => {
+  const two = { "bookshelf/Doctor Who/Fifth Doctor/20-7 The Five Doctors": "# x\n\nDOCTOR: One day I shall come back. Yes, I shall come back.\n", "bookshelf/Doctor Who/First Doctor/2-2 The Dalek Invasion of Earth": "# y\n\nDOCTOR: One day I shall come back. Yes, I shall come back.\n" };
+  const ix = shelfIndex({ ...cache, ...two });
+  const r = quotedProse(ix, "bookshelf/Doctor Who", ["> One day I shall come back."], ["bookshelf/Doctor Who/First Doctor/2-2 The Dalek Invasion of Earth", "bookshelf/Doctor Who/Fifth Doctor/20-7 The Five Doctors"]);
+  expect(r && r.key).toBe("bookshelf/Doctor Who/First Doctor/2-2 The Dalek Invasion of Earth");
+});
+test("quotedProse: a quotation opening mid-speech starts where its words do", () => {
+  const ix = shelfIndex({ ...cache, "bookshelf/Doctor Who/First Doctor/2-2 The Dalek Invasion of Earth": "# y\n\nDOCTOR: Believe me, my dear. One day I shall come back. Until then, there must be no regrets, no tears, no anxieties.\n" });
+  const r = quotedProse(ix, "bookshelf/Doctor Who", ["> there must be no regrets, no tears, no anxieties."]);
+  expect(r && r.passage).toBe("> there must be no regrets, no tears, no anxieties.");
 });

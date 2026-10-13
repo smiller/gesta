@@ -244,6 +244,12 @@ is in the plan's record, under the phase named):
   passage a quotation's lines are and mints the reference ⌃⌘C would, its
   test beside it; `tools/pipeTablesRun.ts` runs both over the backup and
   writes the changed entries as an import folder with a review page.
+  `tools/orgReferences.ts` — the old `[[target][label]]` links made
+  markdown links, their words kept, and a quotation a link introduces
+  replaced by the passage it is given, pure, its test beside it;
+  `tools/orgReferencesRun.ts` resolves each against the backup — a
+  journal day, a bookshelf passage placed by its quotation, its line
+  anchor or its words — and writes an import folder with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and
