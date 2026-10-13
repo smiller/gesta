@@ -769,4 +769,7 @@ references and 29 verse blocks in 31 entries (MEASURED). He asked why
 unasked. Read, 2026 adds one table, Jesu bleibet meine Freude (verse; not
 on the bookshelf); its two data tables, 2026-06-26's key bindings and
 2026-07-16's language codes, are left by name. Run: 30 references and 30
-verse blocks in 32 entries (MEASURED).
+verse blocks in 32 entries (MEASURED). Asked after: a single-column
+passage (the Housman, the Cavafy) is quoted as a verse block numbered
+from its first line, where ⌃⌘C quotes it as bare lines by a pinned
+decision; the tool wraps it, the app is unchanged (asked of him).

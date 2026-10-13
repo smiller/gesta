@@ -4,7 +4,8 @@ import { shelfIndex, quotedFrom, referenceAt } from "./bookshelfQuotes.ts";
 
 const cache: Record<string, string> = {
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
-  "bookshelf/Horace/Odes": "# Odes\n\n- [1.1 Maecenas atavis edite regibus](#bookshelf/Horace/Odes/1.1)\n",
+  "bookshelf/Horace/Odes": "# Odes\n\n- [1.1 Maecenas atavis edite regibus](#bookshelf/Horace/Odes/1.1)\n- [1.9 Vides ut alta stet nive candidum](#bookshelf/Horace/Odes/1.9)\n",
+  "bookshelf/Horace/Odes/1.9": "# Odes, 1.9\n\n::: verse\nVides ut alta stet nive candidum\nSoracte, nec iam sustineant onus\nsilvae laborantes, geluque\nflumina constiterint acuto.\n:::\n",
   "bookshelf/Horace/Odes/1.1": readFileSync(new URL("../fixtures/horace-odes-1.1.md", import.meta.url), "utf8"),
 };
 const index = shelfIndex(cache);
@@ -51,4 +52,9 @@ test("referenceAt: a passage named by its entry and lines is the reference a cop
 });
 test("quotedFrom: an entry's own lines are not a quotation of itself", () => {
   expect(quotedFrom(index, [{ left: "sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }], "bookshelf/Horace/Odes/1.1")).toBeNull();
+});
+test("quotedFrom: a passage of single-column verse is quoted as a verse block numbered from its first line", () => {
+  const r = quotedFrom(index, [{ left: "Soracte, nec iam sustineant onus" }, { left: "silvae laborantes, geluque" }]);
+  expect(r && "passage" in r && r.passage).toBe("> ::: verse 2\n> Soracte, nec iam sustineant onus\n> silvae laborantes, geluque\n> :::");
+  expect(r && "text" in r && r.text.split("\n").slice(1).join("\n")).toBe("\n> ::: verse 2\n> Soracte, nec iam sustineant onus\n> silvae laborantes, geluque\n> :::");
 });

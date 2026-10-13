@@ -16,6 +16,7 @@ import { lineUnits, type Unit } from "../src/editor/numbering.ts";
 import { referencePayload } from "../src/editor/reference.ts";
 import { journalOf } from "../src/store/headings.ts";
 import type { Journal } from "../src/store/reference.ts";
+import { escapeCell } from "../src/model/grammar.ts";
 
 /* a note's superscript mark is not a numeral of the line */
 const norm = (s: string): string => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "");
@@ -53,7 +54,13 @@ function minted(index: ShelfIndex, s: Shelved, first: number, last: number): Ref
   const selection = TextSelection.between(s.doc.resolve(a.pos + 1), s.doc.resolve(b.pos + b.node.nodeSize - 1));
   const [date, ...tag] = s.key.split("/");
   const out = referencePayload(EditorState.create({ doc: s.doc, selection }), date, tag.join("/"), index.journal);
-  return "refused" in out ? { why: `a copy is refused: ${out.refused}` } : { text: out.text, key: s.key, url: out.url, passage: out.passage };
+  if ("refused" in out) return { why: `a copy is refused: ${out.refused}` };
+  /* single-column verse quoted as a verse block numbered from its first
+     line, as a paired passage is, where a copy quotes it as bare lines
+     (pin: bookshelfQuotes.test › quotedFrom: a passage of single-column verse) */
+  const passage = /^> :::/.test(out.passage) || s.doc.nodeAt(a.blockPos)?.type !== schema.nodes.verse ? out.passage
+    : ["> ::: verse" + (a.line > 1 ? " " + a.line : ""), ...out.passage.split("\n").map((l) => l === ">" || l === "> " ? ">" : "> " + escapeCell(l.replace(/^> /, ""))), "> :::"].join("\n");
+  return { text: out.text.slice(0, out.text.length - out.passage.length) + passage, key: s.key, url: out.url, passage };
 }
 /* a passage named by its entry and its first and last line numbers */
 export function referenceAt(index: ShelfIndex, key: string, from: number, to: number): Referred | { why: string } {
