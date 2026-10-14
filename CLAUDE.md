@@ -263,6 +263,14 @@ is in the plan's record, under the phase named):
   `tools/elisionsRead.json` the marks judged by reading each in its
   sentence, by entry and the words either side, standing over the rules
   but for a sure clip; `UNREAD=path` writes the marks not yet read.
+  `tools/quoteMarks.ts` — a single quotation's marks set right, pure, its
+  test beside it: a closing mark typed as an opening one after italics, an
+  opening one typed as a closing one before them, and an edition's spaced
+  marks closed up (“ ‘ Let there be light! ‘ said God), a spaced mark that
+  could be either left for a hand; `tools/quoteMarksRun.ts` runs it over
+  the bookshelf in the backup and writes the changed entries as an import
+  folder with a review page, a journal entry whose highlighted link and
+  quotation carried the old marks set right to follow.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and

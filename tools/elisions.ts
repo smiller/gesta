@@ -9,7 +9,7 @@
 
 /* clips that are no English word of their own, from the bookshelf's own
    unpaired marks */
-const CLIPS = new Set(("tis twas twere twill twould twixt tween tisn twasn tweren twouldn " +
+export const CLIPS = new Set(("tis twas twere twill twould twixt tween tisn twasn tweren twouldn " +
   "scape scapes scaped scapeth mongst mong gainst gan gins zounds sblood sdeath swounds sfoot ods neath " +
   "bove pon prentice prentices prenticed pothecary larum larums cos til scuse tec em uns ee oman omans " +
   "adn im stroy havior nointed tother taters smorning scutcheon stablish paritors casion").split(" "));
@@ -17,7 +17,7 @@ const CLIPS = new Set(("tis twas twere twill twould twixt tween tisn twasn twere
 const WORDS = new Set(("t s d ll n m ad ave un and andy is e er ere ow old ear eat art arm ell alf course morning afternoon faith fore long " +
   "longs plane phone phoned bus buses flu varsity cause bout tide lack las gree shun").split(" "));
 /* words a dialect ends with an apostrophe, which close nothing */
-const CLIPPED_END = /(?:in|^(?:o|th|an|wi|wiv|ha|i|t|e|gi|ne|wo|tha|fro|ol))$/;
+export const CLIPPED_END = /(?:in|^(?:o|th|an|wi|wiv|ha|i|t|e|gi|ne|wo|tha|fro|ol))$/;
 
 const LETTER = /\p{L}/u;
 const OPENS = /^$|[\s“"(\[—–\-*_]/;

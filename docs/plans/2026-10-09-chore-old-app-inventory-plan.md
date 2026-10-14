@@ -1046,3 +1046,36 @@ an arrival's place differently, the load moving it. Result: the Helium
 stage 278 s → 202–206 s, three runs of three passing (MEASURED). The
 sleeps left mostly time the app's own clocks; faking the page's timers
 would be the next lever.
+
+A flake after it (2026-10-13): the "source view" step once carried the
+caret from the top under a busy machine, the typed "FOOD " landing above
+the day's text; it did not come back in fourteen section runs. The step
+now waits for the editor's focus and places the caret until it stays
+(e148622).
+
+### Quotation marks (2026-10-13, asked: "yes, build the pass")
+
+Found while checking his hand fixes after the elisions: 125 opening marks
+with a space after them. Two kinds were proposed and asked for — closing
+marks typed as opening ones after italics (Browning, The Inn Album most),
+and the spaced marks of the Paradise Lost edition (“ ‘ Let there be light!
+‘ said God) — and a third, measured on the way and put on the review for
+his ruling, not asked: opening marks typed as closing ones before italics
+(’*Your uncle!*, Tey's The Privateer most). `tools/quoteMarks.ts`, pure,
+11 tests; `tools/quoteMarksRun.ts` writes Desktop/gesta-imports/
+gesta-quote-marks with its review page. Read whole before handing over:
+the spaced decisions, the left and the opening turns one by one, the
+closing turns not after italics. Faults found reading and fixed
+test-first: a plural's possessive (six days’ work) read as a quotation's
+close; a closing mark ending its line after a blank-line reset left; three
+italic elisions in Busman's Honeymoon (’*im*, ’*Tis Pity*, ’*ave*) turned.
+Run: 403 marks in 79 entries — 185 closing turned, 99 opening turned, 59
+spaced openings and 60 spaced closings closed up — 6 left for a hand
+(MEASURED). One highlighted link (journal 2020-03-28 → Paradise Lost 5,
+the Milton pass's) carried the spaced marks in its highlight and its
+quotation; the run sets both right and writes the day, so all 48 links
+into changed entries are found after (MEASURED). The link check now
+passes a link's occurrence as the page does (`nth || 0`); over the whole
+backup 280 of 288 highlighted bookshelf links are found, the 8 not all
+into paired Horace and Boethius texts these passes never touched
+(MEASURED).
