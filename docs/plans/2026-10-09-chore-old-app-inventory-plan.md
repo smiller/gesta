@@ -1022,7 +1022,11 @@ Tailors closing marks set after the space ("there? ‘And he"), Merchant of
 Venice 3.5's stray "‘ Then", Donne's Satyre II "‘and they are his
 owne". Run: 1569 turned in 431 entries — 369 by rule, 1200 by reading —
 777 read as openings and left; 49 highlighted links into changed
-entries all still found (MEASURED).
+entries all still found (MEASURED). The reading cost 488k tokens across
+four readers against an estimate of 150–250k (MEASURED from their
+transcripts). IMPORTED 2026-10-13 ("Looks good. Ready to import." then
+"431 entries, backed up"): all 431 files in the folder byte-identical to
+the backup afterwards (MEASURED, cmp).
 
 ### A faster verify (2026-10-13, asked: "we definitely want a faster verify run")
 Asked from "Fixed waits? Shouldn't we be able to wait for when something

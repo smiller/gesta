@@ -612,10 +612,19 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the editor reads the DOM selection when the browser's selectionchange
      reaches it: waited for, not a fixed beat — a 100 ms beat left the caret
      at the top on one run in three, and again under a busy machine */
-  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
-  await R.caretBefore(page, "food of love");
-  await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
-  await rest(page);
+  /* and only while the editor holds focus, and not in the beat after it set
+     the selection itself, when it puts its own back: under a busy machine
+     the caret was carried from the top with "food of love" selected on
+     screen, so it is placed until it stays */
+  await page.waitForFunction((ed) => document.querySelector(ed)?.contains(document.activeElement), S.editor, { timeout: 2000 }).catch(() => {});
+  for (let tries = 0; tries < 3; tries++) {
+    await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
+    await R.caretBefore(page, "food of love");
+    await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
+    await rest(page);
+    await rest(page);
+    if (await page.evaluate(() => { const s = document.getSelection(); return !!s.anchorNode?.textContent.slice(s.anchorOffset).startsWith("food of love"); })) break;
+  }
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 });
   await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
