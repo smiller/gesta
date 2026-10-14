@@ -39,6 +39,9 @@ test("quoteMarks: a quotation stays open across lines, and a blank line closes i
 test("quoteMarks: a spaced mark ending its line after punctuation is a closing one, its quotation opened before a blank line", () => {
   expect(run("Thy rebels, or be found the worst in Heaven. ‘\n\n“So spake the Son\n")).toBe("Thy rebels, or be found the worst in Heaven.’\n\n“So spake the Son\n");
 });
+test("quoteMarks: a spaced mark whose quotation closes later on its line is an opening one", () => {
+  expect(run("So when you let yourself be called ‘ wise and faultless’, respond\n")).toBe("So when you let yourself be called ‘wise and faultless’, respond\n");
+});
 test("quoteMarks: a spaced mark after a word, before a small letter, outside a quotation, is left for a hand", () => {
   expect(run("O’er ladies ‘ lips, who straight\n")).toBe("O’er ladies ‘ lips, who straight\n");
   expect(kinds("O’er ladies ‘ lips, who straight\n")).toEqual(["left"]);

@@ -1069,8 +1069,8 @@ closing turns not after italics. Faults found reading and fixed
 test-first: a plural's possessive (six days’ work) read as a quotation's
 close; a closing mark ending its line after a blank-line reset left; three
 italic elisions in Busman's Honeymoon (’*im*, ’*Tis Pity*, ’*ave*) turned.
-Run: 403 marks in 79 entries — 185 closing turned, 99 opening turned, 59
-spaced openings and 60 spaced closings closed up — 6 left for a hand
+Run: 404 marks in 79 entries — 185 closing turned, 99 opening turned, 60
+spaced openings and 60 spaced closings closed up — 5 left for a hand
 (MEASURED). One highlighted link (journal 2020-03-28 → Paradise Lost 5,
 the Milton pass's) carried the spaced marks in its highlight and its
 quotation; the run sets both right and writes the day, so all 48 links
@@ -1079,3 +1079,7 @@ passes a link's occurrence as the page does (`nth || 0`); over the whole
 backup 280 of 288 highlighted bookshelf links are found, the 8 not all
 into paired Horace and Boethius texts these passes never touched
 (MEASURED).
+His look found Horace, Epistles 1.16 "called ‘ wise and faultless’" left
+("that should probably be no-space"): a spaced mark whose quotation
+closes later on its own line is now an opening one, 12 tests; the run
+moved that mark alone (MEASURED).

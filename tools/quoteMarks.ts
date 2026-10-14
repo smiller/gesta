@@ -29,6 +29,15 @@ export function quoteMarks(md: string): Fix[] {
   /* the spaces either side of i on its own line, and the character past them */
   const back = (i: number): { from: number; ch: string } => { let j = i; while (md[j - 1] === " " || md[j - 1] === "\t") j--; return { from: j, ch: md[j - 1] ?? "\n" }; };
   const ahead = (i: number): { to: number; ch: string } => { let j = i + 1; while (md[j] === " " || md[j] === "\t") j++; return { to: j, ch: md[j] ?? "\n" }; };
+  /* a closing mark later on the line, before punctuation or the line's end,
+     no opening one between (pin: quoteMarks.test › quoteMarks: a spaced mark whose quotation) */
+  const closesOnLine = (from: number): boolean => {
+    for (let j = from; j < md.length && md[j] !== "\n"; j++) {
+      if (md[j] === "‘") return false;
+      if (md[j] === "’" && !/\s/.test(md[j - 1]) && /^$|[\n.,;:!?)\]—–”]/.test(md[j + 1] ?? "")) return true;
+    }
+    return false;
+  };
   const range = (a: number, b: number): number[] => Array.from({ length: Math.max(0, b - a) }, (_, k) => a + k);
   /* a quotation open in the paragraph, so a spaced mark met inside it is
      the closing one (pin: quoteMarks.test › quoteMarks: a quotation stays open) */
@@ -71,7 +80,7 @@ export function quoteMarks(md: string): Fix[] {
     /* a spaced mark beside another, or with nothing after it on its line, is
        left (pin: quoteMarks.test › quoteMarks: a spaced mark beside another) */
     if (/[‘’“”"]/.test(a.ch)) { fixes.push({ at, kind: "left", ch: "‘", del: [] }); continue; }
-    const opening = b.ch === "“" || (!open && (b.ch === "\n" || PUNCT.test(b.ch) || /\p{Lu}/u.test(a.ch)));
+    const opening = b.ch === "“" || (!open && (b.ch === "\n" || PUNCT.test(b.ch) || /\p{Lu}/u.test(a.ch) || closesOnLine(a.to)));
     /* nothing after it on its line, after punctuation: a speech's close,
        opened before a blank line (pin: quoteMarks.test › quoteMarks: a spaced mark ending its line) */
     if (a.ch === "\n" && b.ch !== "\n" && /[.,;:!?]/.test(b.ch)) {
