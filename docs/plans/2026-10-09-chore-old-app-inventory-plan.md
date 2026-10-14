@@ -1091,3 +1091,7 @@ plural, before a small letter, outside a quotation, is its possessive
 (thus, his, was and the like are no plural). 14 tests. Run: 407 marks in
 81 entries, 2 left (Paradise Lost 9 "die. ‘ “", Lucrece "‘ ‘For"); 52
 links into changed entries, all found after (MEASURED).
+Then Paradise Lost 9 "lest ye die. ‘ “" ("pretty sure that should be
+lest ye die.’”"): a spaced mark inside a quotation with only a spaced “
+after it on its line closes both. 15 tests. Run: 408 marks in 81 entries,
+1 left (Lucrece "‘ ‘For"); 52 links, all found after (MEASURED).

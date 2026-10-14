@@ -57,6 +57,10 @@ test("quoteMarks: a spaced closing mark after punctuation closes up", () => {
   expect(run("Augustus ’ stepson\n")).toBe("Augustus ’ stepson\n");
   expect(run("“ ‘ Thrones, Powers — not to serve! ’”")).toBe("“‘Thrones, Powers — not to serve!’”");
 });
+test("quoteMarks: a spaced mark inside a quotation, a spaced opening double mark after it ending the line, closes both", () => {
+  expect(run("The garden, God hath said, ‘ Ye shall not eat\nThereof, nor shall ye touch it, lest ye die. ‘ “\n\nShe scarce had said\n"))
+    .toBe("The garden, God hath said, ‘Ye shall not eat\nThereof, nor shall ye touch it, lest ye die.’”\n\nShe scarce had said\n");
+});
 test("quoteMarks: a spaced mark beside another mark is left for a hand", () => {
   expect(kinds("‘ ‘For some hard-favour’d groom\n")).toEqual(["left"]);
 });

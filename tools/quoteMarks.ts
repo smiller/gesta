@@ -82,6 +82,13 @@ export function quoteMarks(md: string): Fix[] {
     if (!spaced) { if (BEFORE_OPEN.test(before)) open = true; continue; }
     /* a spaced mark beside another, or with nothing after it on its line, is
        left (pin: quoteMarks.test › quoteMarks: a spaced mark beside another) */
+    if (a.ch === "“" && open && b.ch !== "\n" && ahead(a.to).ch === "\n") {
+      /* the speech's close and the narration's, the double typed opening
+         (pin: quoteMarks.test › quoteMarks: a spaced mark inside a quotation, a spaced opening double) */
+      fixes.push({ at, kind: "spacedClose", ch: "’”", del: [...range(b.from, at), ...range(at + 1, ahead(a.to).to)] });
+      open = false;
+      continue;
+    }
     if (/[‘’“”"]/.test(a.ch)) { fixes.push({ at, kind: "left", ch: "‘", del: [] }); continue; }
     const opening = b.ch === "“" || (!open && (b.ch === "\n" || PUNCT.test(b.ch) || /\p{Lu}/u.test(a.ch) || closesOnLine(a.to)));
     /* nothing after it on its line, after punctuation: a speech's close,
