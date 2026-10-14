@@ -6,7 +6,7 @@
    is left. */
 import { CLIPPED_END, CLIPS } from "./elisions.ts";
 
-export type Kind = "closing" | "opening" | "spacedOpen" | "spacedClose" | "left";
+export type Kind = "closing" | "opening" | "spacedOpen" | "spacedClose" | "possessive" | "left";
 export interface Fix { at: number; kind: Kind; ch: string; del: number[] }
 
 const LETTER = /\p{L}/u;
@@ -15,6 +15,8 @@ const BEFORE_OPEN = /^$|[\s“"(\[—–\-‘’]/;
 /* what may follow a closing mark */
 const AFTER_CLOSE = /^$|[\s.,;:!?)\]—–\-”…]/;
 const PUNCT = /[,:;.!?—–\-]/;
+/* words ending in s that are no plural */
+const NOT_PLURAL = new Set("thus his is was as us yes this its hers ours yours theirs".split(" "));
 
 export function quoteMarks(md: string): Fix[] {
   const fixes: Fix[] = [];
@@ -33,7 +35,8 @@ export function quoteMarks(md: string): Fix[] {
      no opening one between (pin: quoteMarks.test › quoteMarks: a spaced mark whose quotation) */
   const closesOnLine = (from: number): boolean => {
     for (let j = from; j < md.length && md[j] !== "\n"; j++) {
-      if (md[j] === "‘") return false;
+      /* the edition's own closing, spaced and typed the same way */
+      if (md[j] === "‘") return /\s/.test(md[j - 1]) && /^$|[\s.,;:!?)\]—–”]/.test(md[j + 1] ?? "");
       if (md[j] === "’" && !/\s/.test(md[j - 1]) && /^$|[\n.,;:!?)\]—–”]/.test(md[j + 1] ?? "")) return true;
     }
     return false;
@@ -92,6 +95,9 @@ export function quoteMarks(md: string): Fix[] {
     } else if (open && b.ch !== "\n") {
       fixes.push({ at, kind: "spacedClose", ch: "’", del: range(b.from, at) });
       open = false;
+    } else if (/s/.test(b.ch) && /\p{Ll}/u.test(a.ch) && !NOT_PLURAL.has(/\p{L}*$/u.exec(md.slice(Math.max(0, b.from - 20), b.from))![0].toLowerCase())) {
+      /* a plural's possessive, ladies ‘ lips (pin: quoteMarks.test › quoteMarks: a spaced mark after a plural) */
+      fixes.push({ at, kind: "possessive", ch: "’", del: range(b.from, at) });
     } else fixes.push({ at, kind: "left", ch: "‘", del: [] });
   }
   return fixes;

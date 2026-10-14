@@ -34,7 +34,7 @@ function shown(out: string, from: number, to: number, kinds: Map<number, Kind>):
 }
 
 rmSync(OUT, { recursive: true, force: true });
-const counts: Record<Kind, number> = { closing: 0, opening: 0, spacedOpen: 0, spacedClose: 0, left: 0 };
+const counts: Record<Kind, number> = { closing: 0, opening: 0, spacedOpen: 0, spacedClose: 0, possessive: 0, left: 0 };
 let entries = 0, changed = 0;
 const byFile: { file: string; lines: string[] }[] = [];
 for (const path of walk(join(SRC, "bookshelf")).sort()) {
@@ -117,16 +117,16 @@ for (const f of walk(SRC)) {
 }
 
 const where = (f: string): string => f.replace(/^bookshelf\//, "").replace(/\.md$/, "");
-const turned = counts.closing + counts.opening + counts.spacedOpen + counts.spacedClose;
+const turned = counts.closing + counts.opening + counts.spacedOpen + counts.spacedClose + counts.possessive;
 writeFileSync(OUT + "-review.html", `<!doctype html><meta charset="utf-8"><title>Quotation marks review</title><style>
 body{font:15px/1.5 Georgia,serif;max-width:1100px;margin:2em auto;padding:0 16px;background:#f4f7ec;color:#1a2418}
 h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}h3{font:12px ui-monospace,Menlo,monospace;color:#6b7568;margin:1.1em 0 .2em}
 p.l{margin:.25em 0 .25em 1em;white-space:pre-wrap}b{font-weight:normal;padding:0 3px;border-radius:2px}
-.closing{background:#bfe0a8}.opening{background:#b9d4f2}.spacedOpen{background:#e3d2f2}.spacedClose{background:#f6e3a1}.left{background:#f4c1b4}
+.closing{background:#bfe0a8}.opening{background:#b9d4f2}.spacedOpen{background:#e3d2f2}.spacedClose{background:#f6e3a1}.possessive{background:#c9ece6}.left{background:#f4c1b4}
 .key b{margin:0 .2em}.lost{color:#a4321c}</style>
 <h1>Quotation marks: ${turned} marks set right in ${changed} bookshelf entries</h1>
 <p>${entries} bookshelf entries read. Every line holding a mark the pass set right or left, as it will read:</p>
-<p class="key"><b class="closing">’</b> a closing mark typed as an opening one, turned (${counts.closing}) — <b class="opening">‘</b> an opening mark typed as a closing one before italics, turned (${counts.opening}) — <b class="spacedOpen">‘</b> a spaced opening mark closed up (${counts.spacedOpen}) — <b class="spacedClose">’</b> a spaced closing mark turned and closed up (${counts.spacedClose}) — <b class="left">‘</b> a spaced mark left for a hand (${counts.left}).</p>
+<p class="key"><b class="closing">’</b> a closing mark typed as an opening one, turned (${counts.closing}) — <b class="opening">‘</b> an opening mark typed as a closing one before italics, turned (${counts.opening}) — <b class="spacedOpen">‘</b> a spaced opening mark closed up (${counts.spacedOpen}) — <b class="spacedClose">’</b> a spaced closing mark turned and closed up (${counts.spacedClose}) — <b class="possessive">’</b> a spaced mark after a plural made its possessive (${counts.possessive}) — <b class="left">‘</b> a spaced mark left for a hand (${counts.left}).</p>
 <p>Highlighted links into the changed entries: ${found} found before, ${kept} found after, ${followed.length} of their entries set right to follow.${lost.length ? " Lost:" : ""}</p>
 ${lost.map((l) => `<p class="lost">${esc(l)}</p>`).join("")}
 ${followed.length ? `<h2>Following the passage</h2><p>An entry whose highlighted link and quotation carried the marks as they were, set right the same way:</p>` + followed.map(({ file, lines }) => `<h3>${esc(file.replace(/\.md$/, ""))}</h3>` + lines.map((l) => `<p class="l">${l}</p>`).join("")).join("") : ""}
@@ -134,5 +134,5 @@ ${byFile.map(({ file, lines }, k) => {
   const a = where(file).split("/")[0], first = k === 0 || where(byFile[k - 1].file).split("/")[0] !== a;
   return (first ? `<h2>${esc(a)}</h2>` : "") + `<h3>${esc(where(file))}</h3>` + lines.map((l) => `<p class="l">${l}</p>`).join("");
 }).join("")}`);
-console.log(`${entries} bookshelf entries read; ${turned} marks set right in ${changed} entries (${counts.closing} closing turned, ${counts.opening} opening turned, ${counts.spacedOpen} spaced opening, ${counts.spacedClose} spaced closing), ${counts.left} left; written to ${OUT}, the review beside it`);
+console.log(`${entries} bookshelf entries read; ${turned} marks set right in ${changed} entries (${counts.closing} closing turned, ${counts.opening} opening turned, ${counts.spacedOpen} spaced opening, ${counts.spacedClose} spaced closing, ${counts.possessive} possessive), ${counts.left} left; written to ${OUT}, the review beside it`);
 console.log(`links into changed entries: ${found} found before, ${kept} after, ${followed.length} entries following the passage${lost.length ? "; lost:\n" + lost.join("\n") : ""}`);

@@ -1083,3 +1083,11 @@ His look found Horace, Epistles 1.16 "called ‘ wise and faultless’" left
 ("that should probably be no-space"): a spaced mark whose quotation
 closes later on its own line is now an opening one, 12 tests; the run
 moved that mark alone (MEASURED).
+Then Paradise Lost 4 "couldst thou ‘ faithful ‘ add?" ("faithful should
+have opening and closing single quotes without spaces") and Romeo and
+Juliet 1.4 "O’er ladies ‘ lips" ("should be ladies’"): a later spaced ‘ on
+the line counts as the quotation's close, and a spaced mark after a
+plural, before a small letter, outside a quotation, is its possessive
+(thus, his, was and the like are no plural). 14 tests. Run: 407 marks in
+81 entries, 2 left (Paradise Lost 9 "die. ‘ “", Lucrece "‘ ‘For"); 52
+links into changed entries, all found after (MEASURED).

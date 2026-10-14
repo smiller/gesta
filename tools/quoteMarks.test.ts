@@ -42,9 +42,15 @@ test("quoteMarks: a spaced mark ending its line after punctuation is a closing o
 test("quoteMarks: a spaced mark whose quotation closes later on its line is an opening one", () => {
   expect(run("So when you let yourself be called ‘ wise and faultless’, respond\n")).toBe("So when you let yourself be called ‘wise and faultless’, respond\n");
 });
-test("quoteMarks: a spaced mark after a word, before a small letter, outside a quotation, is left for a hand", () => {
-  expect(run("O’er ladies ‘ lips, who straight\n")).toBe("O’er ladies ‘ lips, who straight\n");
-  expect(kinds("O’er ladies ‘ lips, who straight\n")).toEqual(["left"]);
+test("quoteMarks: a spaced mark closing a word later on its line closes that quotation", () => {
+  expect(run("Satan, and couldst thou ‘ faithful ‘ add? O name,\n")).toBe("Satan, and couldst thou ‘faithful’ add? O name,\n");
+});
+test("quoteMarks: a spaced mark after a plural, before a small letter, outside a quotation, is its possessive's", () => {
+  expect(run("O’er ladies ‘ lips, who straight\n")).toBe("O’er ladies’ lips, who straight\n");
+  expect(kinds("O’er ladies ‘ lips, who straight\n")).toEqual(["possessive"]);
+});
+test("quoteMarks: a spaced mark after any other word, before a small letter, outside a quotation, is left for a hand", () => {
+  expect(kinds("then thou ‘ art\n")).toEqual(["left"]);
 });
 test("quoteMarks: a spaced closing mark after punctuation closes up", () => {
   expect(run("‘ To govern, not to serve! ’\n\n“Thus far\n")).toBe("‘To govern, not to serve!’\n\n“Thus far\n");
