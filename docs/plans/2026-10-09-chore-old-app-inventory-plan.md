@@ -1095,3 +1095,17 @@ Then Paradise Lost 9 "lest ye die. ‘ “" ("pretty sure that should be
 lest ye die.’”"): a spaced mark inside a quotation with only a spaced “
 after it on its line closes both. 15 tests. Run: 408 marks in 81 entries,
 1 left (Lucrece "‘ ‘For"); 52 links, all found after (MEASURED).
+His rulings on the last two questions: the Lucrece mark stays ("no, that's
+inner reported speech. And so the inner one should probably be
+double-quotes, but let's leave it for now"); the 99 ’ before italics
+turned to ‘ stand ("‘*Your uncle!* looks right"). The folder as run at
+c48f15a is the one to import.
+IMPORTED 2026-10-14: all 82 files of the folder byte-identical to the
+backup afterwards; the pass run again over the backup sets 0 marks right,
+the Lucrece mark alone left (MEASURED).
+The plan note's commit failed verify on "⌃⌘T on today from Search" and
+"Tab twelve times from the bookmarks card" reading the caret at the end:
+the step typed "one" straight after ⌃⌘K, and before the Search box took
+the focus the word went into the day under it (the entry read "one", the
+box empty, 3 runs in 4 alone; MEASURED). Every ⌃⌘K-then-type step now
+waits for the box's focus first; 4 runs in 4 read as approved (MEASURED).

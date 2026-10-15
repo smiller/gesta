@@ -45,6 +45,13 @@ async function landed(p, ms) {
   if (!(await p.evaluate(() => "__writes" in window).catch(() => false))) return p.waitForTimeout(ms);
   await p.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: ms + 2000, polling: 25 }).catch(() => {});
 }
+/* ⌃⌘K, then the words once the box holds the focus: typed at once, they
+   went to the entry under it (pin: where the keys go › ⌃⌘T on today from Search) */
+async function searchFor(p, words) {
+  await p.keyboard.press("Control+Meta+k");
+  await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
+  await p.keyboard.type(words);
+}
 async function rest(p) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }
@@ -1541,16 +1548,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("z");
   await log("a click below a table at the end, z typed", { last: below?.last, tail: ((await A.stored(page)) || "").trimEnd().split("\n").slice(-2) });
   /* Escape after a search jump; ⌃⌘M over open results */
-  await page.keyboard.press("Control+Meta+k");
-  await page.keyboard.type("two");
+  await searchFor(page, "two");
   await landed(page, 600);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(400);
   await page.keyboard.press("Escape");
   await rest(page);
   await log("Escape after a search jump", {});
-  await page.keyboard.press("Control+Meta+k");
-  await page.keyboard.type("one");
+  await searchFor(page, "one");
   await landed(page, 600);
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
@@ -1565,8 +1570,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+t");
   await rest(page);
   await log("⌃⌘T on today from the shortcuts popup", {});
-  await page.keyboard.press("Control+Meta+k");
-  await page.keyboard.type("one");
+  await searchFor(page, "one");
   await landed(page, 600);
   await page.keyboard.press("Control+Meta+t");
   await rest(page);
@@ -1604,8 +1608,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await hold(".", 6, ["Control", "Meta"]);
   await page.waitForTimeout(1200);
   await log("⌃⌘. held from 3pr1", { walks: await page.evaluate(() => window.__walks) });
-  await page.keyboard.press("Control+Meta+k");
-  await page.keyboard.type("defixo");
+  await searchFor(page, "defixo");
   await landed(page, 600);
   await hold("Enter", 3);
   await rest(page);
@@ -1666,9 +1669,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await tap(S.editor);
   await page.evaluate(() => { const own = window.createImageBitmap; window.createImageBitmap = (...a) => new Promise((r) => setTimeout(() => r(own(...a)), 800)); });
   await R.pastePng(page);
-  await page.keyboard.press("Control+Meta+k");
-  await page.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
-  await page.keyboard.type("abc");
+  await searchFor(page, "abc");
   await page.waitForTimeout(2000);
   await log("a picture pasted, then Search typed in", { query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null), pictures: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), md: await A.stored(page) });
   await page.keyboard.press("Escape");
