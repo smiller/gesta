@@ -277,6 +277,27 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group)).join("\n" + quotePrefix("") + "\n");
   return blockPassage(doc, from, to, units);
 }
+/* A LINE THE SELECTION STARTS OR ENDS INSIDE is quoted from the word it
+   starts in to the word it ends in, as the highlight carries it; the
+   line's number stands (pin: reference.test › a passage starting or ending inside a line) */
+const inWord = (ch: string): boolean => /[\p{L}\p{N}’'-]/u.test(ch);
+function partOf(doc: Node, row: Node, pos: number, from: number, to: number): Fragment {
+  if (!row.isTextblock) return row.content;
+  const start = pos + 1, end = start + row.content.size;
+  const at = (p: number): string => doc.textBetween(p, p + 1, " ", " ");
+  let a = start, b = end;
+  if (to > start && to < end) {
+    b = to;
+    while (b < end && inWord(at(b)) && b > start && inWord(at(b - 1))) b++;
+    while (b > start && /\s/.test(at(b - 1))) b--;
+  }
+  if (from > start && from < b) {
+    a = from;
+    while (a > start && inWord(at(a - 1)) && inWord(at(a))) a--;
+    while (a < b && /\s/.test(at(a))) a++;
+  }
+  return row.content.cut(a - start, b - start);
+}
 function blockPassage(doc: Node, from: number, to: number, units: Unit[]): string {
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
@@ -303,7 +324,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
     const row = rows[i].node;
     if (row.type === N.note) continue;
     if (isTurn(row)) continue;
-    run.push(row.copy(dropFolios(row.content)));
+    run.push(row.copy(dropFolios(paired ? row.content : partOf(doc, row, rows[i].pos, from, to))));
   }
   const kept = withoutMarginNotes(run);
   /* a stanza's own count is its stanza's, so a run from inside one quotes as lines */

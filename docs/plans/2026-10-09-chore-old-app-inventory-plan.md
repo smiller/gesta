@@ -1208,3 +1208,25 @@ file, no highlighted link into them (MEASURED).
 byte-identical to the backup afterwards; the run again over the backup
 refuses, every reading's words gone; the quotation-marks and stray-marks
 passes over the backup set 0 marks and leave 0 for a hand (MEASURED).
+
+### 2026-10-15 — ⌃⌘R quotes from mid-line when the selection does
+
+Shakespeare's line-for-line pass run (384 quotations, 2,858 lines, 280
+entries; review only, not for import): he asked that a reference whose
+passage starts mid-line start mid-line too ("for Milton, I would have
+preferred when the passage starts mid-line, so does the cited
+reference. I don't remember getting asked about that"), and, the passes
+minting through ⌃⌘R, that ⌃⌘R itself do so ("I thought this already
+happened, so yes, let's make this change"). A passage's first and last
+lines are now quoted from the word the selection starts in to the word it
+ends in; the line numbers stand, the highlight was already exact; a
+paired row stays whole. Test first in reference.test; four tests that
+selected mid-line only for convenience now select whole lines, the
+referencePayload test keeps the mid-line case end to end. Headless Helium:
+"⌃⌘R on a line" over "bloudie Crosse" quotes "> bloudie Crosse" under
+I.i.2.1, "⌃⌘R across a stanza gap" from "deepe wounds did remaine," to
+"But on his brest a bloudie Crosse"; nothing else moved; the corner run
+approved on that reading (MEASURED). Milton: 27 runs began mid-line and
+32 ended so on its review page (MEASURED) — the redo, and the two
+Shakespeare questions (one quotation split by speakers, his own wording
+from memory), wait on his word.

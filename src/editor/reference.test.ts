@@ -34,10 +34,20 @@ test("referenceRange over covered lines; a speaker label takes the line under it
 });
 
 test("a single-column passage quotes whole rows as its own fence numbered from the first quoted line, the stanza gap kept, apparatus and prose left out of the count", () => {
-  const [a, b] = span(verse, "forbidden", "Brought death");
+  const [a, b] = span(verse, "Of that forbidden", "and all our woe,");
   expect(passageMd(verse, a, b)).toBe("> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::");
 });
 
+test("a passage starting or ending inside a line quotes from the word the selection starts in to the word it ends in, numbered as before", () => {
+  const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\nHow tender ’tis to love the babe that milks me:\nI would, while it was smiling in my face,\n:::");
+  const [a, b] = span(doc, "I have given", "smiling");
+  expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> I have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
+  const [c, d] = span(doc, "ave given", "smil");
+  expect(passageMd(doc, c, d)).toBe("> ::: verse 2\n> have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
+  const [e, f] = span(doc, " I have", "and know");
+  expect(passageMd(doc, e, f)).toBe("> ::: verse 2\n> I have given suck, and know\n> :::");
+  expect(referenceRange(doc, a, b)).toBe(referenceRange(doc, span(doc, "Does")[0], span(doc, "face,")[1]));
+});
 test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
   const doc = parseMarkdown("::: verse\nMaecenas atavis | Maecenas, descended\nedite regibus | of kings\no et praesidium | my bulwark\n:::");
   const [a, b] = span(doc, "regibus", "bulwark");
@@ -79,7 +89,7 @@ test("no cut through a pair, one quote level, a note kept, the block's own count
   expect(passageMd(spoken, a, b)).toBe("> ::: verse 13\n> **Duke** | **Duke**\n> :::");
   /* an ink-less pair row between plain lines does not make the passage paired */
   const stray = parseMarkdown("::: verse\nfirst line\n |\nsecond line\n:::");
-  [a, b] = span(stray, "first", "second");
+  [a, b] = span(stray, "first", "second line");
   expect(passageMd(stray, a, b)).toBe("> ::: verse\n> first line\n> \n> second line\n> :::");
   /* a quoted paragraph cited again: one level */
   const para = parseMarkdown("[*M*](#x):\n\n> The mind is its own place\n\n[*H*](#y):\n\n> ::: verse 13\n> a | b\n> :::");
@@ -244,9 +254,9 @@ test("referencePayload: the link line with the range and the highlight, the pass
   const out = referencePayload(state(verse, a, b), "bookshelf", "Milton, John/Paradise Lost/Book 1", journal);
   expect(out).toMatchObject({ text:
     "[Milton, *Paradise Lost*, 1.2-3](#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death):\n\n" +
-    "> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::" });
+    "> ::: verse 2\n> forbidden tree, whose mortal taste\n> \n> Brought death\n> :::" });
   /* the parts the rich flavour is built from ride beside the text */
-  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::" });
+  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> ::: verse 2\n> forbidden tree, whose mortal taste\n> \n> Brought death\n> :::" });
   expect(referencePayload(state(verse, a, a), "bookshelf", "x", journal)).toEqual({ refused: "select" });
 });
 
@@ -311,7 +321,7 @@ test("referencePayload under the directive: I.i.2.1, a run across a stanza gap a
   const [a, b] = span(canto, "bloudie Crosse");
   const one = referencePayload(state(canto, a, b), "bookshelf", FQ1, fqJournal);
   expect("label" in one && one.label).toBe("Spenser, *The Faerie Queene*, I.i.2.1");
-  const [c, d] = span(canto, "deepe wounds", "dying Lord");
+  const [c, d] = span(canto, "Wherein old dints", "dying Lord,");
   const run = referencePayload(state(canto, c, d), "bookshelf", FQ1, fqJournal);
   expect("label" in run && run.label).toBe("Spenser, *The Faerie Queene*, I.i.1.3–2.2");
   expect("passage" in run && run.passage).toBe("> Wherein old dints of deepe wounds did remaine,\n> \n> But on his brest a bloudie Crosse he bore,\n> The deare remembrance of his dying Lord,");
