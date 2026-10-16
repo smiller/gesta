@@ -20,7 +20,7 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -235,6 +235,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
     clipboardTextSerializer: (slice) => copyMd(slice),
     transformCopied: (slice, view) => copiedSlice(slice, view.state.doc, view.state.selection.from, view.state.selection.to),
+    transformPasted: (slice) => bareLinks(slice, location.href),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the
          DOM only while the editor has focus, and skips its

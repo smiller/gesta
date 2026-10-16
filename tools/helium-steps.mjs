@@ -271,6 +271,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   await log("⌃⌘R", { ...(barMissed ? { barMissed } : {}), said, ...await R.clipboardReference(page) });
     }],
+    ["a reference pasted", async () => {
+  /* ⌃⌘R's reference pasted with ⌘V into another entry: the link stored by its bare address (#page/…), never the page's full file address */
+  await go("page/Horace");
+  await R.selectAll(page, S.editorCell);
+  await R.waitBar(page).catch(() => {});
+  await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  await go("page/Referred");
+  await page.click(S.editor);
+  await page.keyboard.press("Meta+v");
+  await rest(page);
+  { const md = await A.stored(page); const href = (md.match(/\]\(([^)]*)\)/) ?? [])[1] ?? ""; await log("the reference pasted", { link: href.startsWith("#") ? "bare" : href.startsWith("file:") ? "file address" : href ? "other" : "none", head: href.replace(/\?h=.*$/, "").replace(/^file:.*#/, "file:…#") }); }
+    }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
   await go("page/Coded");
@@ -849,8 +861,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* a blank row between stanzas is an empty line (2026-10-16): clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
   await go("2026-09-06");
   await R.settle(page);
-  /* the row brought into the window first: a run that left the page scrolled clicked nothing */
-  const clickBlank = async () => { const g = page.locator(S.editor + " .vgap").first(); await g.scrollIntoViewIfNeeded(); const b = await g.boundingBox(); await page.mouse.click(b.x + 60, b.y + b.height / 2); await rest(page); };
+  /* the locator's click, which waits for the row to stop moving: an arrival's
+     restored place scrolled it between a position read and a click */
+  const clickBlank = async () => { const g = page.locator(S.editor + " .vgap").first(); const b = await g.boundingBox(); await g.click({ position: { x: 60, y: b.height / 2 } }); await rest(page); };
   await clickBlank();
   await log("a blank row clicked", await R.blankRow(page));
   await searchFor(page, "");

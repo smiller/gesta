@@ -7,7 +7,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { renumbered } from "./numbering.ts";
 import { bareUrl } from "./typing.ts";
-import { namesEntry } from "../store/nav.ts";
+import { namesEntry, internalHash } from "../store/nav.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
 
 const N = schema.nodes;
@@ -112,6 +112,24 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
     } catch { /* a form the schema refuses stays as typed */ }
   }
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
+}
+/* A PASTED LINK TO THIS PAGE KEEPS ITS BARE ADDRESS: pasted HTML carries the
+   page's full file address, which breaks when the page moves (pin:
+   paste.test › a pasted link to this page) */
+export function bareLinks(slice: Slice, docHref: string): Slice {
+  const bare = (frag: Fragment): Fragment => {
+    const out: Node[] = [];
+    frag.forEach((n) => {
+      const marks = n.marks.map((m) => {
+        if (m.type !== schema.marks.link) return m;
+        const frag = internalHash(m.attrs.href as string, docHref);
+        return frag && frag !== m.attrs.href ? schema.marks.link.create({ ...m.attrs, href: frag }) : m;
+      });
+      out.push(n.isText ? n.mark(marks) : n.copy(bare(n.content)).mark(marks));
+    });
+    return Fragment.fromArray(out);
+  };
+  return new Slice(bare(slice.content), slice.openStart, slice.openEnd);
 }
 /* NO PAGE MARKER LEAVES IN A COPY: pasted into a journal entry it made a
    page number with no book behind it. Where one stood between two spaces,

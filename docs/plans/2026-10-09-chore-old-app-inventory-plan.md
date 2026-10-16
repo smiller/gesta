@@ -1509,3 +1509,35 @@ Milton, three imported entries the pass now makes otherwise, in one folder
 gesta-milton-fixes: 2016-11-10 from "a dark" (2.891-97), 1988-04-11 its
 closing "—*Paradise Lost*, I. ll. 246-7." dropped, 2022-07-03 the
 full-address copy of its link taken out; 12 links found (MEASURED).
+"Wording differs changes look good." IMPORTED 2026-10-16: the Shakespeare
+folder (275 entries, 357 references) and gesta-milton-fixes (3), all 278
+files byte-identical to the backup; both passes run again over the backup
+make 0 references (MEASURED). Shakespeare's line-for-line work closed.
+Parked by him: the 147 references starting inside a speech, its speaker
+unnamed, without a speaker's row; the 102 passages Folger has and the
+bookshelf lacks; a reference pasted in Gesta stored with the page's full
+file:/// address.
+"a blank row clicked" failed a third full run after the scroll-into-view
+change; the section alone passes. An earlier section visits 2026-09-06, so
+the last arrival restores a remembered place a moment after settling
+(INFERRED): the step now clicks through the locator, which waits for the
+row to stop moving.
+The 147 references starting inside a speech, the speaker unnamed: "Let's
+leave it" (asked) — no speaker's row.
+
+### 2026-10-16 — a pasted reference keeps its bare address
+
+Asked ("fix the pasted reference, and then import the shorter links").
+Headless Helium, a new section "a reference pasted": ⌃⌘R over Horace, ⌘V
+into another page, the link stored as "file:…#page/Horace" (MEASURED);
+the old app's run stores it bare. A pasted link to this page by its full
+address now keeps its bare address (bareLinks in paste.ts, the editor's
+transformPasted; paste.test), as typed links already did; the reading now
+"bare" in both apps (MEASURED). Nine page lists in later sections gain the
+new page "Referred"; 434 steps, 0 open. paste.ts and editor.ts are DOM
+seams: a review is owed after his look.
+The backup's full-address links: 65 to Gesta's own page in 31 files made
+bare in gesta-bare-links (only the addresses change, each file a fixed
+point; 64 name an entry, the 65th, 2026-09-09's Rick Hanson newsletter,
+named none before either) (MEASURED). Links to the web reader's pages and
+to the web stay as written.

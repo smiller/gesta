@@ -2,7 +2,9 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks } from "./paste.ts";
+import { Slice } from "prosemirror-model";
+import { schema } from "../model/schema.ts";
 
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
@@ -194,4 +196,12 @@ test("a bare URL pasted alone is a link at once", () => {
   expect(href).toBe("https://example.org/x");
   expect(doc.textContent).toBe("see https://example.org/x now");
   expect(pasteSlice("see https://example.org/x", s.selection.$from).content.firstChild!.marks.length).toBe(0);
+});
+test("a pasted link to this page by its full address keeps only its bare address; a link anywhere else keeps its own", () => {
+  const page = "file:///Users/someone/gesta/dist/index.html";
+  const link = (href: string) => schema.text("Horace", [schema.marks.link.create({ href })]);
+  const pasted = new Slice(schema.node("doc", null, [schema.node("paragraph", null, [link(page + "#page/Horace?h=sunt%20quos"), schema.text(" and "), link("https://example.com/#x"), schema.text(" and "), link("file:///Users/someone/writer/index.html#2022-07-05")])]).content, 0, 0);
+  const hrefs: string[] = [];
+  bareLinks(pasted, page + "#2026-10-16").content.descendants((n) => { n.marks.forEach((m) => hrefs.push(m.attrs.href as string)); });
+  expect(hrefs).toEqual(["#page/Horace?h=sunt%20quos", "https://example.com/#x", "file:///Users/someone/writer/index.html#2022-07-05"]);
 });
