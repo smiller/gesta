@@ -1444,3 +1444,23 @@ Gower choruses among them; set aside by him for now.
 Run: 360 references in 278 entries; 36 wording, 70 spelling only, 254 the
 same words; 379 highlighted links, each found by the page's own finder;
 every file a fixed point (MEASURED). Review only, not yet imported.
+Asked after, from his reading of the review: a speaker's name opening the
+quotation stays outside (2017-11-27 PORTIA, 2016-02-15, 2025-11-26,
+2017-11-14 FESTE where the bookshelf says Clown), and lines left after a
+reference where his line breaks or speech-by-speech blank lines differ
+(2018-12-20, 2025-11-02, 2005-11-24). Now: a speaker's name on its own
+line above the quotation, or before a colon or a wide space opening its
+line (one to three capitalised words: never "Too old by heaven:"), goes
+into the reference, the speaker's row heading the passage where the run
+starts inside the speech; the word-by-word walk passes blank lines between
+speeches, his own bracketed directions, and the passage's speaker and
+direction rows. Every reference in the folder checked for both: 0 names
+left above, 0 lines of the passage left below (MEASURED). Tempest 2016-09-10
+read against the corrected 5.1. Run: 360 references in 278 entries; 39
+wording, 71 spelling only (asked: all take the bookshelf's spelling), 250
+the same words; 379 links found; Milton unchanged but 2016-11-10.
+The first commit of it failed verify on headless Helium's "a blank row"
+section, the click landing on no row; the section alone read as approved
+4 times in 4 (MEASURED), no app code changed since 5ea6345: the timing
+flake, committed on a second run. MND 2.2.210 "tie heresies" made "the
+heresies" (Folger's reading), asked; folder gesta-mnd-2.2.

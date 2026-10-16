@@ -90,9 +90,15 @@ export function referenceAt(index: ShelfIndex, key: string, from: number, to: nu
 }
 /* a passage named by its entry and its first and last rows by place, a
    speaker's row among them */
-export function referenceOf(index: ShelfIndex, run: { key: string; first: number; last: number } & Cut): Referred | { why: string } {
+export function referenceOf(index: ShelfIndex, run: { key: string; first: number; last: number; speaker?: number } & Cut): Referred | { why: string } {
   const s = index.entries.find((e) => e.key === run.key);
-  return s && run.first >= 0 && run.last >= run.first && run.last < s.units.length ? minted(index, s, run.first, run.last, run) : { why: `${run.key} has no rows ${run.first}-${run.last}` };
+  if (!s || run.first < 0 || run.last < run.first || run.last >= s.units.length) return { why: `${run.key} has no rows ${run.first}-${run.last}` };
+  const m = minted(index, s, run.first, run.last, run);
+  if (!("passage" in m) || run.speaker === undefined) return m;
+  /* the speaker's row heading a passage taken from inside the speech, as a row of it */
+  const [fence, ...rest] = m.passage.split("\n");
+  const passage = [fence, "> **" + s.units[run.speaker].node.textContent + "**", ...rest].join("\n");
+  return { ...m, text: m.text.replace(m.passage, passage), passage };
 }
 /* `except`: the entry the lines stand in, never a quotation of itself */
 export function quotedFrom(index: ShelfIndex, lines: Quoted[], except?: string): Referred | { why: string } | null {

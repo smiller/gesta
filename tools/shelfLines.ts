@@ -80,6 +80,8 @@ export interface Run {
   head?: number; tail?: number;
   /* how many runs it was joined from */
   parts?: number;
+  /* the speaker's row heading a passage taken from inside the speech */
+  speaker?: number;
 }
 
 export function quotedRuns(md: string, index: ShelfIndex): Run[] {
@@ -103,14 +105,26 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
      between two that agree (pin: shelfLines.test › quotedRuns: a quotation
      broken into lines otherwise) */
   const words = (t: string): string[] => t.split(/[\s—–]+/).map(norm).filter(Boolean);
+  /* a speaker's name opening a line, one to three capitalised words before a
+     colon or a wide space: never a line of verse with a colon in it */
+  const NAMED = /^(?:[A-Z][A-Za-z'’.-]*(?: [A-Z][A-Za-z'’.-]*){0,2}:\s+|[A-Z][A-Z .'’-]*[A-Z](?:\s{2,}|\t))/;
   const follow = (r: Run, floor: number): Run => {
     const s = index.entries.find((e) => e.key === r.key)!, block = s.units[r.first].blockPos, quoted = QUOTE.test(lines[r.start]);
     const ours = (k: number): boolean => k > floor && k < lines.length && !skip[k] && !!norm(bare(lines[k])) && QUOTE.test(lines[k]) === quoted;
-    const theirs = (x: number): boolean => x >= 0 && x < s.units.length && s.units[x].blockPos === block && s.units[x].line > 0;
+    /* blank lines between speeches, and a stage direction of one's own, passed over where a line of the quotation follows */
+    const gap = (k: number): boolean => k > floor && k < lines.length && !skip[k] && (!norm(bare(lines[k])) || /^\[[^\]]*\]$/.test(bare(lines[k])) && QUOTE.test(lines[k]) === quoted) && (!quoted || !lines[k].trim() || QUOTE.test(lines[k]));
+    const theirs = (x: number): boolean => x >= 0 && x < s.units.length && s.units[x].blockPos === block;
     /* the words either side as they come, ours by line and theirs by row with the letters to it */
     const walk = (d: 1 | -1, k0: number, x0: number, skipLetters: number) => {
-      const our: { w: string; k: number }[] = [], their: { w: string; x: number; n: number }[] = [];
-      for (let k = k0; ours(k) && (k === k0 || k > r.end || k < r.start); k += d) { const ws = words(bare(lines[k])); (d < 0 ? ws.reverse() : ws).forEach((w) => our.push({ w, k })); }
+      const our: { w: string; k: number; name?: boolean }[] = [], their: { w: string; x: number; n: number }[] = [];
+      for (let k = k0; (k === k0 || k > r.end || k < r.start); k += d) {
+        if (gap(k)) { let g = k; while (gap(g)) g += d; if (!ours(g)) break; k = g; }
+        if (!ours(k)) break;
+        const t = bare(lines[k]), name = t.match(NAMED)?.[0] ?? "";
+        /* a speaker's name before a line's words: matched where the passage has the speaker's row, else passed over */
+        const ws = [...words(name).map((w) => ({ w, k, name: true })), ...words(t.slice(name.length)).map((w) => ({ w, k }))];
+        our.push(...(d < 0 ? ws.reverse() : ws));
+      }
       for (let x = x0; theirs(x); x += d) {
         const ws = words(s.units[x].node.textContent);
         let n = 0;
@@ -122,6 +136,7 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
       let i = 0;
       while (i < our.length && j + i < their.length) {
         if (our[i].w === their[j + i].w) { i++; continue; }
+        if (our[i].name) { our.splice(i, 1); continue; }
         if (i + 1 < our.length && j + i + 1 < their.length && our[i + 1].w === their[j + i + 1].w && i > 0) { i++; continue; }
         break;
       }
@@ -262,6 +277,29 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     runs.splice(at - 1, 2, { ...a, end: b.end, last: b.last, to: b.to, tail: b.tail, parts: (a.parts ?? 1) + (b.parts ?? 1) });
     if (b.tail === undefined) delete runs[at - 1].tail;
   }
+  /* a speaker's name opening the quotation, on its own line or before a
+     colon, names whoever speaks where the run starts: the speaker's row
+     goes into the reference, heading it where the run starts inside the
+     speech (pin: shelfLines.test › quotedRuns, referenceOf: a speaker's name) */
+  runs.forEach((r, at) => {
+    const s = index.entries.find((e) => e.key === r.key)!, block = s.units[r.first].blockPos;
+    if (s.units[r.first].kind === "speaker") return;
+    let x = r.first - 1;
+    while (x >= 0 && s.units[x].blockPos === block && s.units[x].kind !== "speaker") x--;
+    if (x < 0 || s.units[x].blockPos !== block) return;
+    const floor = at ? runs[at - 1].end : -1;
+    let up = r.start - 1;
+    while (up > floor && !lines[up].trim().replace(/^[>\s]*$/, "")) up--;
+    const own = bare(lines[r.start]).match(NAMED)?.[0], above = up > floor ? bare(lines[up]) : "";
+    const name = own ? own.replace(/:\s*$/, "") : /^[A-Z][A-Za-z .'’-]*[.:]?$/.test(above) && above.length <= 40 ? above : "";
+    const n = norm(name);
+    /* a name on its own line inside the quotation is the speaker's, however the passage names them: FESTE for Clown */
+    const ownLine = !own && !!n && QUOTE.test(lines[up]) === QUOTE.test(lines[r.start]);
+    if (!n || !(ownLine || s.left[x] === n || s.left[x].includes(n) || alike(n, s.left[x]))) return;
+    if (!own) r.start = up;
+    if (x === r.first - 1 && !r.head) { r.first = x; return; }
+    r.speaker = x;
+  });
   /* a joined line shared by two runs gives way to both; its other place,
      where no run takes it, is kept as written (pin: shelfLines.test ›
      quotedRuns, referRuns: a joined line's place) */

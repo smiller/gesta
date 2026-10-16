@@ -127,7 +127,7 @@ test("quotedRuns: runs of one scene in one quotation, nothing of the scene left 
   expect(spans(two)).toEqual([[0, 4, 14, 20]]);
   const staged = shelfIndex({ "bookshelf/Somebody/A Play/1.1": "# 1.1\n\n::: verse\n**A**\nThe first speech of the play is spoken here\nAnd carries on a while before it stops\n**B**\nThe second speech begins upon its cue\n*Enter SOMEONE*\n**C**\nAnd ends the scene with nothing more to say\nAnd there the play is done for all of us\n:::\n" });
   const early = "> A\n> The first speech of the play is spoken here\n> And carries on a while before it stops\n> [Enter SOMEONE]\n> B\n> The second speech begins upon its cue\n> C\n> And ends the scene with nothing more to say\n> And there the play is done for all of us\n";
-  expect(quotedRuns(early, staged).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 8, 1, 5]]);
+  expect(quotedRuns(early, staged).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 8, 1, 5]]);
 });
 test("quotedRuns: lines of one's own wording standing for the lines left out between two runs, as many as they and each close in its letters, join them", () => {
   const worded = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n> The hunger may sicken, and so die.\n> That tune again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n> That breathes upon a bank of violets,\n";
@@ -172,4 +172,28 @@ test("quotedRuns: a quotation broken into lines otherwise than the passage is fo
   expect(quotedRuns(back, prose).map((r) => [r.start, r.end, r.from, r.to, r.head])).toEqual([[0, 3, 2, 5, "fools".length]]);
   const own = "> The first speech of the play is spoken here\n> Then the liars and swearers are fools, for there are\n> liars and swearers enow, said I, to beat them all\n";
   expect(quotedRuns(own, prose).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 1, 3]]);
+});
+test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from inside the speech goes inside the reference, the speaker's row heading its passage", () => {
+  const md = "> DUKE ORSINO\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
+  const runs = quotedRuns(md, play);
+  expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 4, 5]]);
+  expect((referenceOf(play, runs[0]) as { passage: string }).passage).toBe("> ::: verse 4\n> **DUKE ORSINO**\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n> :::");
+  const colon = "> DUKE ORSINO:  The appetite may sicken, and so die.\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
+  const said = quotedRuns(colon, play);
+  expect(said.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
+  expect((referenceOf(play, said[0]) as { passage: string }).passage.split("\n").slice(0, 3)).toEqual(["> ::: verse 3", "> **DUKE ORSINO**", "> The appetite may sicken, and so die."]);
+  const spaced = "> Even in a minute: so full of shapes is fancy\n> That it alone is high fantastical.\n> CURIO   Will you go hunt, my lord?\n> DUKE ORSINO   What, Curio?\n";
+  expect(quotedRuns(spaced, play).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 14, 17]]);
+  const apart = "> DUKE ORSINO\n>\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
+  expect(quotedRuns(apart, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 3, true]]);
+  const speeches = "> Even in a minute: so full of shapes is fancy\n> That it alone is high fantastical.\n\n> CURIO\n> Will you go hunt, my lord?\n\n> DUKE ORSINO\n> What, Curio?\n\nMy own words.\n";
+  expect(quotedRuns(speeches, play).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 7, 14, 17]]);
+  const verse = "> DUKE ORSINO\n> Stealing and giving odour! Enough; no more:\n> ’Tis not so sweet now as it was before.\n";
+  expect(quotedRuns(verse, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
+  const directed = "> Even in a minute: so full of shapes is fancy\n> That it alone is high fantastical.\n> [ *Music.* ]\n> CURIO\n> Will you go hunt, my lord?\n";
+  expect(quotedRuns(directed, play).map((r) => [r.start, r.end, r.to])).toEqual([[0, 4, 16]]);
+  const other = "> ORSINO THE DUKE\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
+  expect(quotedRuns(other, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
+  const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
+  expect(quotedRuns(outside, play).map((r) => [r.start, r.end])).toEqual([[1, 2]]);
 });
