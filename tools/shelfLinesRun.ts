@@ -5,8 +5,8 @@
    page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { quotedRuns, referRuns, type Run } from "./shelfLines.ts";
-import { shelfIndex, referenceAt } from "./bookshelfQuotes.ts";
+import { quotedRuns, referRuns, wordDiff, type Run } from "./shelfLines.ts";
+import { shelfIndex, referenceOf } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 import { importTarget } from "../src/store/names.ts";
@@ -31,19 +31,36 @@ const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) =
 /* entries that quote the bookshelf as the reference feature's test data, left */
 const LEAVE = /gesta-wrangl|verity cards/i;
 const left: string[] = [];
+/* quotations left as written, by entry and the passage's first line: a deliberate variant */
+const KEEP: { file: string; key: string; from: number; why: string }[] = [
+  { file: "journal/2002/2002-02-03.md", key: "bookshelf/Shakespeare, William/Twelfth Night/1.5", from: 255, why: "a deliberate variant: “Cry out Ors… – Olivia!”" },
+];
+const kept: string[] = [];
 
 rmSync(OUT, { recursive: true, force: true });
 const counts = { entries: 0, changed: 0, runs: 0, lines: 0 };
-const shown: { file: string; r: Run; label: string; before: string[]; after: string[] }[] = [];
+const shown: { file: string; r: Run; label: string; before: string[]; after: string[]; diff: ReturnType<typeof wordDiff> }[] = [];
+/* the words a quotation says, its marks, indents, speakers' names and
+   stage directions aside: the passage's directions are its italic rows,
+   the names its bold ones, and a quotation's own names are those */
+const SPEAKER_ROW = /^\*\*([^*]+)\*\*$/;
+const names = (passage: string[]): Set<string> => new Set(passage.map((l) => l.replace(/^\s*(?:>\s?)*/, "").trim().match(SPEAKER_ROW)?.[1]).filter((n): n is string => !!n).map((n) => n.toLowerCase().replace(/[^\p{L}]+/gu, "")));
+const spoken = (ls: string[], passage: boolean, called: Set<string>): string => ls.map((l) => l.replace(/^\s*(?:>\s?)*/, "").trim())
+  .filter((l) => !/^:::/.test(l) && !SPEAKER_ROW.test(l) && !(passage && /^\*[^*]+\*$/.test(l)) && !/^\[[^\]]*\]?$/.test(l) && !/^[A-Z][A-Z .'’-]*[.:]?$/.test(l) && !called.has(l.toLowerCase().replace(/[^\p{L}]+/gu, "")))
+  .map((l) => l.replace(/^[A-Z][\w .'’-]*?\t/, "").replace(/^[A-Z][A-Z .'’-]+:\s+/, "").replace(/\*/g, "")).join(" ");
 for (const path of walk(SRC).sort()) {
   const file = relative(SRC, path);
   if (file.startsWith("bookshelf/")) continue;
   counts.entries++;
   const md = readFileSync(path, "utf8");
-  const runs = quotedRuns(md, index);
+  const runs = quotedRuns(md, index).filter((r) => {
+    const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from);
+    if (k) kept.push(`${file} — ${r.key.split("/").slice(-2).join(" ")}.${r.from}-${r.to}: ${k.why}`);
+    return !k;
+  });
   if (!runs.length) continue;
   if (LEAVE.test(file)) { left.push(file); continue; }
-  const minted = new Map<Run, ReturnType<typeof referenceAt>>(runs.map((r) => [r, referenceAt(index, r.key, r.from, r.to, r)]));
+  const minted = new Map<Run, ReturnType<typeof referenceOf>>(runs.map((r) => [r, referenceOf(index, r)]));
   const ok = runs.filter((r) => "url" in minted.get(r)!);
   const out = referRuns(md, ok, (r) => minted.get(r) as { text: string; url: string; passage: string });
   const src = md.split("\n");
@@ -51,7 +68,7 @@ for (const path of walk(SRC).sort()) {
     counts.runs++; counts.lines += r.end - r.start + 1;
     const m = minted.get(r) as { text: string; url: string; passage: string };
     const alone = referRuns(md, [r], () => m).split("\n"), grew = alone.length - src.length;
-    shown.push({ file, r, label: m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1), before: src.slice(Math.max(0, r.start - 1), r.end + 2), after: alone.slice(Math.max(0, r.start - 1), r.end + grew + 2) });
+    shown.push({ file, r, label: m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1), before: src.slice(Math.max(0, r.start - 1), r.end + 2), after: alone.slice(Math.max(0, r.start - 1), r.end + grew + 2), diff: wordDiff(spoken(src.slice(r.start, r.end + 1), false, names(m.passage.split("\n"))), spoken(m.passage.split("\n"), true, new Set())) });
   }
   const doc = parseMarkdown(out);
   if (serializeMarkdown(parseMarkdown(serializeMarkdown(doc))) !== serializeMarkdown(doc)) throw new Error(`${file}: not a fixed point`);
@@ -70,16 +87,28 @@ const sweep = (dir: string): boolean => {
 };
 mkdirSync(OUT, { recursive: true });
 sweep(OUT);
+const group = (kind: string) => shown.filter((x) => x.diff.kind === kind);
+const words = (d: ReturnType<typeof wordDiff>): string => d.ops.map(([o, w]) => o === "=" ? esc(w) : o === "-" ? `<del>${esc(w)}</del>` : `<ins>${esc(w)}</ins>`).join(" ");
+const card = ({ file, r, label, before, after, diff }: (typeof shown)[number]): string => `<div class="e"><span>${esc(file)}:${r.start + 1}–${r.end + 1} — ${esc(label)}${r.parts ? ` — one reference for ${r.parts} runs of your quotation` : ""}</span>${diff.kind === "same" ? "" : `<p class="d">${words(diff)}</p>`}<pre class="before">${esc(before.join("\n"))}</pre><pre class="after">${esc(after.join("\n").replace(/\?h=[^)]*/g, "?h=…"))}</pre></div>`;
 writeFileSync(OUT + "-review.html", `<!doctype html><meta charset="utf-8"><title>Quoted lines review</title><style>
 body{font:15px/1.5 Georgia,serif;max-width:1100px;margin:2em auto;padding:0 16px;background:#f4f7ec;color:#1a2418}
 h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}
 .e{margin:1.4em 0}.e>span{font:12px ui-monospace,Menlo,monospace;color:#6b7568}
 pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em 0;padding:6px 8px}
-.before{background:#fbeee8}.after{background:#e6f0dc}</style>
+.before{background:#fbeee8}.after{background:#e6f0dc}
+.d{background:#fffbe6;padding:6px 8px;margin:.3em 0}del{color:#a3201a;text-decoration:line-through}ins{color:#17632a;text-decoration:none;border-bottom:2px solid #17632a}</style>
 <h1>${esc(AUTHOR.replace(/^bookshelf\//, ""))}: ${counts.runs} quotations made references, ${counts.lines} lines, in ${counts.changed} entries</h1>
-<p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them: after a short citation ending in a colon, that citation becomes the link in its own words; otherwise the whole reference stands in the run's place. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the same place as it will read, the reference in the run's stead.</p>
+<p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them, starting and ending where your quotation does: after a short citation ending in a colon, that citation becomes the link in its own words; otherwise the whole reference stands in the run's place. Runs of one scene in one quotation of yours, with nothing of the scene left out between them, are one reference. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the same place as it will read.</p>
+<p>Where your words and the bookshelf's differ, a yellow line sets them side by side: <del>struck through in red</del> your words the reference drops, <ins>underlined in green</ins> the bookshelf's words it puts in. Speakers' names, stage directions and marks are left out of the comparison.</p>
+<p><a href="#wording">Wording differs: ${group("wording").length}</a> · <a href="#spelling">Spelling only: ${group("spelling").length}</a> · <a href="#same">Same words: ${group("same").length}</a></p>
 <h2>Left: the reference feature's own test data (${left.length})</h2>
 <ul>${left.map((f) => `<li><code>${esc(f)}</code></li>`).join("")}</ul>
-<h2>Made references (${shown.length})</h2>
-${shown.map(({ file, r, label, before, after }) => `<div class="e"><span>${esc(file)}:${r.start + 1}–${r.end + 1} — ${esc(label)}</span><pre class="before">${esc(before.join("\n"))}</pre><pre class="after">${esc(after.join("\n").replace(/\?h=[^)]*/g, "?h=…"))}</pre></div>`).join("")}`);
+<h2>Left as you wrote them (${kept.length})</h2>
+<ul>${kept.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+<h2 id="wording">Wording differs (${group("wording").length})</h2>
+${group("wording").map(card).join("")}
+<h2 id="spelling">Spelling only (${group("spelling").length})</h2>
+${group("spelling").map(card).join("")}
+<h2 id="same">Same words (${group("same").length})</h2>
+${group("same").map(card).join("")}`);
 console.log(`${counts.entries} entries read; ${counts.runs} runs (${counts.lines} lines) made references in ${counts.changed} entries; written to ${OUT}, the review beside it`);

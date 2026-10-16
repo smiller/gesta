@@ -1400,3 +1400,47 @@ A closing mark is the bookshelf's, as ⌃⌘R gives it ("Where no ill
 seems:" for his "seems.").
 IMPORTED 2026-10-16: all 25 files of the folder byte-identical to the
 backup afterwards (MEASURED, cmp).
+
+### 2026-10-16 — Shakespeare quoted line for line: one quotation one reference
+
+Asked: runs of one quotation joined into one reference; where his wording
+differs, a diff on the review ("I expect the differences won't be
+significant ... but I want to check all the examples first"). The pass
+(tools/shelfLines.ts):
+- A run carries its first and last rows by place. A speaker's row is
+  numbered 0, and a run opening on one had been minted from the scene's
+  first row: 27 lines of Cymbeline cited 4.2.1-342, eight such on the old
+  review (READ). Now 4.2.327-48.
+- Runs of one passage in one quotation join when nothing of the passage is
+  left out between them and nothing else stands there but blank lines,
+  speakers' names, the passage's own rows (a line may hold several, a
+  direction set a line early or late), or his own wording of the lines
+  left out, line for line (Dice ≥ 0.6: his rewordings 0.69–0.79, the
+  Quenya of 2022-04-11 0.04–0.11, MEASURED). An ellipsis keeps runs apart,
+  as he ruled for Milton's 2020-03-28; so do words of his own, a line left
+  out, and a second verse block (⌃⌘R refuses two). A run keeps to one
+  verse block (no run in either poet's corpus was refused, MEASURED).
+- A run is followed word by word past either end where his line breaks
+  differ from the passage's, through whole lines of his whose every word is
+  the passage's ("Asked after": 2000-01-16 left "liars and swearers enow
+  ..." outside 4.2.50-60; now 4.2.50-62).
+- A kept place that only numbers the scene is dropped ("… (II,i)",
+  1995-12-15, asked).
+- The review groups every reference by a word diff: wording, spelling only,
+  same words (wordDiff, tested); a quotation he keeps as written is listed
+  (2002-02-03, "a deliberate variant", asked). His spelling variants give
+  way to the bookshelf's text (asked: 1990-08-23, 1991-01-27).
+Milton's 110 runs over its pre-import originals come out as imported but
+for 2016-11-10, whose "a dark" half-line the pass now takes (2.891-97 for
+2.892-97); not changed, put to him.
+Bookshelf fixes, asked: Macbeth 1.3's "This supernatural soliciting"
+restored as line 140 (missing on the MIT site too, he checked a paper
+copy), Tempest 5.1.48 "‘gaitist" made "’gainst" (Folger's reading); both
+IMPORTED 2026-10-16, byte-identical to the backup. A word-by-word
+comparison of every play with Folger's text (tools/out, not kept) lists
+102 passages Folger has and the bookshelf lacks
+(~/Desktop/gesta-imports/shakespeare-missing-lines.html), Pericles's
+Gower choruses among them; set aside by him for now.
+Run: 360 references in 278 entries; 36 wording, 70 spelling only, 254 the
+same words; 379 highlighted links, each found by the page's own finder;
+every file a fixed point (MEASURED). Review only, not yet imported.

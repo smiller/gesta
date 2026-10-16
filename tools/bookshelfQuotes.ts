@@ -88,6 +88,12 @@ export function referenceAt(index: ShelfIndex, key: string, from: number, to: nu
   const first = s ? s.units.findIndex((u) => u.line === from) : -1, last = s ? s.units.findIndex((u) => u.line === to) : -1;
   return s && first >= 0 && last >= first ? minted(index, s, first, last, cut) : { why: `${key} has no lines ${from}-${to}` };
 }
+/* a passage named by its entry and its first and last rows by place, a
+   speaker's row among them */
+export function referenceOf(index: ShelfIndex, run: { key: string; first: number; last: number } & Cut): Referred | { why: string } {
+  const s = index.entries.find((e) => e.key === run.key);
+  return s && run.first >= 0 && run.last >= run.first && run.last < s.units.length ? minted(index, s, run.first, run.last, run) : { why: `${run.key} has no rows ${run.first}-${run.last}` };
+}
 /* `except`: the entry the lines stand in, never a quotation of itself */
 export function quotedFrom(index: ShelfIndex, lines: Quoted[], except?: string): Referred | { why: string } | null {
   const q = lines.map((l) => ({ left: norm(l.left), right: l.right === undefined ? undefined : norm(l.right) }));
