@@ -3,8 +3,9 @@
    each the next line of one passage, letters and numerals alone; code is
    left, and so is a quotation already under a link to the bookshelf (pin:
    shelfLines.test › quotedRuns). A run after a short citation ending in a
-   colon makes that citation the link, its words kept; any other run gives
-   way to the whole reference (pin: shelfLines.test › referRuns) */
+   colon that gives the lines makes that citation the link, its words kept;
+   any other run gives way to the whole reference (pin: shelfLines.test ›
+   referRuns) */
 import type { ShelfIndex, Referred } from "./bookshelfQuotes.ts";
 
 const norm = (s: string): string => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "");
@@ -338,8 +339,17 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
     const numbered = (l: string): boolean => /^[\s>….]*[([]?\s*(?:[IVXLC]+|\d+)\s*[,.]\s*(?:[ivxlc]+|\d+)\s*[)\]]?\s*$/i.test(l);
     const kept = (l?: string): l is string => l !== undefined && !(work && norm(l).includes(work)) && !numbered(l);
     const after = !kept(r.after) ? tail.map(within) : [within(""), r.after];
-    if (cited && /:\s*$/.test(cited) && cited.length <= CITATION && !/\]\(/.test(cited) && !kept(r.before))
+    /* a citation giving the lines is the link in its own words; one giving
+       only the book or scene gives way to the reference whole; a line with no
+       numbers is no citation (pin: shelfLines.test › referRuns: a citation
+       giving the lines) */
+    const citation = !!cited && /:\s*$/.test(cited) && cited.length <= CITATION && !/\]\(/.test(cited) && !kept(r.before);
+    const lined = /\d+\s*[.,:]\s*\d+\s*[-–]\s*\d+|\d+\.\d+\.\d+/.test(cited);
+    const scened = /\d|\b[IVXLC]+\s*[.,]\s*[ivxlcIVXLC]+\b/.test(cited);
+    if (citation && lined)
       lines.splice(r.start - 1, end - r.start + 2, ...["[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n")].map(within), ...after);
+    else if (citation && scened)
+      lines.splice(r.start - 1, end - r.start + 2, ...m.text.split("\n").map(within), ...after);
     else
       lines.splice(r.start, end - r.start + 1, ...(kept(r.before) ? [r.before] : []), ...[...(!kept(r.before) && blank(prev) ? [] : [""]), ...m.text.split("\n")].map(within), ...after);
   }

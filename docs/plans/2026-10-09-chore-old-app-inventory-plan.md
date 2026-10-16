@@ -1477,3 +1477,10 @@ in the window (INFERRED). The step now scrolls the row into view first.
 Asked after (1991-04-04): his own line "Furor scribendi." above the
 quotation was taken for HECATE's name and replaced. A line above counts as
 a name only in capitals or as the speaker's own name in the bookshelf.
+Asked after (1997-03-21, "[AYLI, II. vii]" should be the full label): of
+three references in the folder labelled in his own words, one was a
+Quenya line ending in a colon (2022-04-11). A citation keeps its words as
+the link only when it gives the lines ("PL 3.17-8"); one giving the act
+and scene alone gives way to the full reference; a line with no numbers is
+no citation. Shakespeare: 0 references now in his own words; Milton
+unchanged (MEASURED).

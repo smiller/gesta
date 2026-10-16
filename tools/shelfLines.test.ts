@@ -203,3 +203,12 @@ test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from i
   const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(outside, play).map((r) => [r.start, r.end])).toEqual([[1, 2]]);
 });
+test("referRuns: a citation giving the lines is the link in its own words; one giving only the book or scene gives way to the reference whole; a line with no numbers is no citation", () => {
+  const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` });
+  const verse = "sunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n";
+  const at = (head: string) => referRuns(head + "\n" + verse, quotedRuns(head + "\n" + verse, index), mint);
+  expect(at("Odes 1.1.3-4:")).toBe("[Odes 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("Odes, I. i:")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("ODES (I.i):")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("cemenna nún, yasse atamána nás:")).toBe("cemenna nún, yasse atamána nás:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+});
