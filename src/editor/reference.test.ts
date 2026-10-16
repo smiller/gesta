@@ -4,7 +4,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
+import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -43,10 +43,27 @@ test("a passage starting or ending inside a line quotes from the word the select
   const [a, b] = span(doc, "I have given", "smiling");
   expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> I have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
   const [c, d] = span(doc, "ave given", "smil");
-  expect(passageMd(doc, c, d)).toBe("> ::: verse 2\n> have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
+  expect(passageMd(doc, ...wordEdges(doc, c, d))).toBe("> ::: verse 2\n> have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
   const [e, f] = span(doc, " I have", "and know");
-  expect(passageMd(doc, e, f)).toBe("> ::: verse 2\n> I have given suck, and know\n> :::");
+  expect(passageMd(doc, ...wordEdges(doc, e, f))).toBe("> ::: verse 2\n> I have given suck, and know\n> :::");
   expect(referenceRange(doc, a, b)).toBe(referenceRange(doc, span(doc, "Does")[0], span(doc, "face,")[1]));
+});
+test("wordEdges: a selection is widened to whole words, past the spaces and punctuation it starts on, an opening mark before its first word kept", () => {
+  const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\nHe said, “O soul, still in\n:::");
+  const words = (a: number, b: number): string => { const [x, y] = wordEdges(doc, a, b); return doc.textBetween(x, y, "/"); };
+  expect(words(...span(doc, "ave given", "suc"))).toBe("have given suck");
+  expect(words(span(doc, "you")[1], span(doc, "and know")[1])).toBe("I have given suck, and know");
+  expect(words(span(doc, "O soul")[0], span(doc, "O soul")[1])).toBe("“O soul");
+  expect(words(span(doc, "then,")[1], span(doc, "Does unmake")[1])).toBe("Does unmake");
+  expect(words(span(doc, "ve given ")[0], span(doc, "ve given ")[1])).toBe("have given");
+  /* nothing but punctuation and spaces selected: the selection as it was */
+  expect(words(span(doc, ". ")[0], span(doc, ". ")[1])).toBe(". ");
+});
+test("a passage begun at the end of a line starts on the next, numbered from it", () => {
+  const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\n:::");
+  const [a, b] = wordEdges(doc, span(doc, "then,")[1], span(doc, "and know")[1]);
+  expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> Does unmake you. I have given suck, and know\n> :::");
+  expect(referenceRange(doc, a, b)).toBe(referenceRange(doc, ...span(doc, "Does", "know")));
 });
 test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
   const doc = parseMarkdown("::: verse\nMaecenas atavis | Maecenas, descended\nedite regibus | of kings\no et praesidium | my bulwark\n:::");
@@ -258,6 +275,9 @@ test("referencePayload: the link line with the range and the highlight, the pass
   /* the parts the rich flavour is built from ride beside the text */
   expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 1.2-3", url: "#bookshelf/Milton%2C%20John/Paradise%20Lost/Book%201?h=forbidden%20tree%2C%20whose%20mortal%20taste%20Brought%20death", passage: "> ::: verse 2\n> forbidden tree, whose mortal taste\n> \n> Brought death\n> :::" });
   expect(referencePayload(state(verse, a, a), "bookshelf", "x", journal)).toEqual({ refused: "select" });
+  /* the highlight carries the words the passage quotes */
+  const [c, d] = span(verse, "orbidden", "Brought de");
+  expect(referencePayload(state(verse, c, d), "bookshelf", "Milton, John/Paradise Lost/Book 1", journal)).toMatchObject({ url: out && "url" in out ? out.url : "" });
 });
 
 test("a selection wholly inside a margin-note is refused, between paragraphs or in a verse block", () => {

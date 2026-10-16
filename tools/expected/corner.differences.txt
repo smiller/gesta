@@ -66,6 +66,7 @@ a canto opened · crumb · the successor respells the key under the work's `roma
 ⌃⌘G 2.9 · * · the same: the successor refuses a line past the stanza's end in words; the current app's bar never opened
 a blank row clicked · drawn · a blank row is selected whole here and drawn with a caret on it, no box and no bar (asked 2026-10-16, the least surprise); the current app's contenteditable puts the browser's own caret in the empty row
 a blank row clicked · cursor · the same: the row selected whole reads as one thing selected; the current app's caret is collapsed in it
+the search row opened over it · caret · the blank row stays selected in the editor while the search row has the focus, its caret not drawn; the current app's selection leaves the page
 x typed on the blank row · cursor · both carets stand after the x (the caret field); the current app's typed row keeps the blank row's 1em height, so the reading's geometry takes the next line's first letter as beside it
 a contents page opened · folds · a work's contents folding under its headings is successor-only (2026-09-28, the contents-folds plan): the current app draws the page whole
 a contents page opened · counts · the same: no closed heading, no count

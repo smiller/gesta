@@ -6,8 +6,9 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection, NodeSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
+import { schema } from "../model/schema.ts";
 import { baseKeymap } from "prosemirror-commands";
-import { blankRowSelected, enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
+import { blankRowSelected, typeOnBlankRow, enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
 
 /* a state with the caret placed `offset` characters into the first text
    holding `needle` (its end when omitted) */
@@ -219,4 +220,40 @@ test("blankRowSelected: a stanza gap selected whole is the blank row; a caret, a
   expect(blankRowSelected(base.apply(base.tr.setSelection(TextSelection.create(base.doc, 2, 3))))).toBe(false);
   const pic = EditorState.create({ doc: parseMarkdown("![](p.webp)") });
   expect(blankRowSelected(pic.apply(pic.tr.setSelection(NodeSelection.create(pic.doc, 1))))).toBe(false);
+});
+
+/* a state with the stanza gap after `n` other gaps selected whole */
+function onGap(doc: ReturnType<typeof parseMarkdown>, n = 0): EditorState {
+  const gaps: number[] = [];
+  doc.descendants((node, p) => { if (node.type.name === "gap") gaps.push(p); });
+  return EditorState.create({ doc, selection: NodeSelection.create(doc, gaps[n]) });
+}
+test("a blank row selected in a paired block: Enter makes a pair after it, typing makes the text a pair's first half", () => {
+  const paired = parseMarkdown("::: verse\na | b\n\nc | d\n:::");
+  const entered = run(enterInRow, onGap(paired));
+  expect(md(type(entered, "x"))).toBe("::: verse\na | b\n\nx |\nc | d\n:::");
+  expect(md(run(typeOnBlankRow("x"), onGap(paired)))).toBe("::: verse\na | b\nx |\nc | d\n:::");
+  const typed = run(typeOnBlankRow("x"), onGap(parseMarkdown("::: verse\na\n\nc\n:::")));
+  expect(md(typed)).toBe("::: verse\na\nx\nc\n:::");
+  expect(caret(typed)).toBe("line:x|");
+  expect(refuses(typeOnBlankRow("x"), at("::: verse\na\n\nc\n:::", "a"))).toBe(true);
+});
+test("a blank row selected with no line above it: Backspace takes it out to the start of the line below", () => {
+  const N = schema.nodes;
+  const first = N.doc.create(null, [N.paragraph.create(null, schema.text("Title")), N.verse.create(null, [N.gap.create(), N.line.create(null, schema.text("a"))])]);
+  const s = run(backspaceInRow, onGap(first));
+  expect(md(s)).toBe("Title\n\n::: verse\na\n:::");
+  expect(caret(s)).toBe("line:|a");
+  const noted = run(backspaceInRow, onGap(parseMarkdown("::: verse\na\n::: note\ngloss\n:::\n\nb\n:::")));
+  expect(md(noted)).toBe("::: verse\na\n::: note\ngloss\n:::\nb\n:::");
+  expect(caret(noted)).toBe("line:|b");
+  const above = run(backspaceInRow, onGap(parseMarkdown("::: verse\na | b\n\nc | d\n:::")));
+  expect(caret(above)).toBe("cell:b|");
+});
+test("a blank row selected with no line below it: Delete takes it out to the end of the line above", () => {
+  const N = schema.nodes;
+  const last = N.doc.create(null, [N.verse.create(null, [N.line.create(null, schema.text("a")), N.gap.create()]), N.paragraph.create(null, schema.text("After"))]);
+  const s = run(deleteInRow, onGap(last));
+  expect(md(s)).toBe("::: verse\na\n:::\n\nAfter");
+  expect(caret(s)).toBe("line:a|");
 });

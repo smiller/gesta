@@ -1285,3 +1285,46 @@ caret after "attending"; x typed, the row the line "x" (MEASURED). The old
 app does the same three with the browser's own caret in the empty row
 (MEASURED, its run regenerated); the three fields that differ are listed
 with their reasons. Nothing else in the run moved.
+
+### 2026-10-16 — the review over ⌃⌘R mid-line and the blank row
+
+Accepted by him (66a8e867b144…); one `/code-review` at high over
+c87808e..3277077 (21a5938, 7dc5fd4, 3277077). REVIEW CYCLES: 1. Cost
+107,293 tokens (MEASURED, the transcript's last message: 2 input + 476
+cache creation + 102,537 cache read + 4,278 output). Ten findings, each
+read against the code before its fix:
+1. A blank row in a paired block, typed into or given Enter, became a
+   full-width line among pairs (READ: the text fell into the first row
+   type the block takes; enterInRow inserted a line). Now a new row takes
+   its block's shape, a pair where the block holds one; typing over the
+   row is its own command (rowKeys.test).
+2. The drawn caret blinked on after the editor lost the focus (READ: the
+   node's class outlives a blur). Drawn only under `.ProseMirror-focused`;
+   a new reading, "the search row opened over it", drawn false (MEASURED).
+3. A selection starting on punctuation quoted the line from it (". I
+   have"), and one starting at a line's end quoted an empty first line
+   (READ). wordEdges now widens a selection to whole words, past spaces
+   and punctuation it starts on, into the next line if need be, an
+   opening mark before the first word kept (reference.test).
+4. The highlight took the selection as made while the passage took whole
+   words (READ). ⌃⌘R now takes both, and the range, from wordEdges.
+5. Backspace on a blank row with no line above it (the block's first
+   row, or after a note) put the caret outside the rows (READ). The caret
+   now goes to the row on the side the key points, or the other side;
+   Delete the same, mirrored (rowKeys.test).
+6. A comment on blankRowSelected spoke of the format bar, another
+   module's (READ). Dropped; a role in plain English, no checker owed.
+7. The blank row stays a node selection with a drawn caret, where a real
+   caret position (a gap cursor) would spare every other consumer its
+   exception (Shift-arrows, ⌘C, composition). A design alternative, not a
+   defect: noted for him, not built.
+8. enterInRow repeated blankRowSelected's test. Uses it now.
+9. The blank-row reader was pasted into both adapters. One reader,
+   tools/adapters/blankRow.mjs, over the root each names.
+10. ⌃⌘G's Escape hand-back placed its caret with TextSelection.near (READ,
+   main.ts). Routed through caretNear.
+The old app's run regenerated; the one new difference ("the search row
+opened over it · caret") listed with its reason. "Tab held in a quote"
+read "at the end" in one approve run against "inside a line" before
+(MEASURED), the flake seen once on 2026-10-15; the approved line kept as
+it was.

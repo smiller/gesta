@@ -56,16 +56,41 @@ function unpair(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
   return caretAt(tr, start + 1 + a.content.size);
 }
 
-/* a blank row selected whole is an empty line under the caret: no format
-   bar over it (pin: rowKeys.test › blankRowSelected) */
 export function blankRowSelected(state: EditorState): boolean {
   return state.selection instanceof NodeSelection && state.selection.node.type === N.gap;
+}
+/* a new row takes its block's shape: a pair where the block holds one,
+   never a full-width row among pairs */
+function freshRow(block: Node): Node {
+  let paired = false;
+  block.forEach((row) => { if (row.type === N.pair) paired = true; });
+  return paired ? pair(null, Fragment.empty, Fragment.empty) : N.line.create();
+}
+const textStart = (row: Node): number => row.type === N.pair ? 2 : 1;
+const isRow = (n: Node | null): boolean => !!n && (n.type === N.line || n.type === N.pair);
+
+/* text typed over a blank row selected whole is a new row in its place */
+export const typeOnBlankRow = (text: string): Command => (state, dispatch) => {
+  if (!blankRowSelected(state)) return false;
+  const sel = state.selection, row = freshRow(sel.$from.parent), at = sel.from + textStart(row);
+  if (dispatch) dispatch(caretAt(state.tr.replaceWith(sel.from, sel.to, row).insertText(text, at), at + text.length).scrollIntoView());
+  return true;
+};
+/* a blank row selected whole taken out: the caret to the row on the side
+   the key points, or the other side where there is none */
+function dropBlankRow(state: EditorState, dir: 1 | -1): Transaction {
+  const sel = state.selection, block = sel.$from.parent, idx = sel.$from.index();
+  const toward = isRow(block.maybeChild(idx + dir)) ? dir : isRow(block.maybeChild(idx - dir)) ? -dir : dir;
+  const tr = state.tr.delete(sel.from, sel.to);
+  const $p = tr.doc.resolve(sel.from);
+  return tr.setSelection(Selection.findFrom($p, toward, true) ?? Selection.near($p)).scrollIntoView();
 }
 
 export const enterInRow: Command = (state, dispatch) => {
   const sel = state.selection;
-  if (sel instanceof NodeSelection && sel.node.type === N.gap) {
-    if (dispatch) dispatch(caretAt(state.tr.insert(sel.to, N.line.create()), sel.to + 1));
+  if (blankRowSelected(state)) {
+    const row = freshRow(sel.$from.parent);
+    if (dispatch) dispatch(caretAt(state.tr.insert(sel.to, row), sel.to + textStart(row)));
     return true;
   }
   const r0 = rowOf(sel.$from);
@@ -137,10 +162,9 @@ export const exitNoteRow: Command = (state, dispatch) => {
   if (note.childCount === 1) tr.delete($c.before(-1), after);
   else tr.delete($c.before(), $c.after());
   const at = tr.mapping.map(after, -1);
-  let paired = false;
-  block.forEach((row) => { if (row.type === N.pair) paired = true; });
-  tr.insert(at, paired ? pair(null, Fragment.empty, Fragment.empty) : N.line.create());
-  if (dispatch) dispatch(caretAt(tr, at + 1 + (paired ? 1 : 0)));
+  const row = freshRow(block);
+  tr.insert(at, row);
+  if (dispatch) dispatch(caretAt(tr, at + textStart(row)));
   return true;
 };
 
@@ -160,8 +184,7 @@ export const pipeInLine: Command = (state, dispatch) => {
 export const backspaceInRow: Command = (state, dispatch) => {
   const sel = state.selection;
   if (blankRowSelected(state)) {
-    const tr = state.tr.delete(sel.from, sel.to);
-    if (dispatch) dispatch(tr.setSelection(Selection.findFrom(tr.doc.resolve(sel.from), -1, true) ?? Selection.near(tr.doc.resolve(sel.from))).scrollIntoView());
+    if (dispatch) dispatch(dropBlankRow(state, -1));
     return true;
   }
   if (!sel.empty || !(sel instanceof TextSelection)) return false;
@@ -186,6 +209,10 @@ export const backspaceInRow: Command = (state, dispatch) => {
 
 export const deleteInRow: Command = (state, dispatch) => {
   const sel = state.selection;
+  if (blankRowSelected(state)) {
+    if (dispatch) dispatch(dropBlankRow(state, 1));
+    return true;
+  }
   if (!sel.empty || !(sel instanceof TextSelection)) return false;
   const $c = sel.$from, r = rowOf($c);
   if (!r || $c.parentOffset < $c.parent.content.size) return false;

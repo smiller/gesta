@@ -244,9 +244,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .verse > .vrow { min-height: 1.2em; }
 .page .verse > .vgap { height: 1em; }
 /* a blank row selected whole is an empty line with the caret on it, drawn
-   blinking at the row's start, not boxed (pin: a blank row › a blank row clicked) */
+   blinking at the row's start while the editor has focus, not boxed
+   (pin: a blank row › a blank row clicked) (pin: a blank row › the search row opened over it) */
 .page .vgap.ProseMirror-selectednode { outline: none; position: relative; }
-.page .vgap.ProseMirror-selectednode::before { content: ""; position: absolute; left: 0; top: 50%; height: 1.2em; margin-top: -0.6em; border-left: 1px solid var(--accent); animation: gap-caret 1.06s steps(1) infinite; }
+.ProseMirror-focused .vgap.ProseMirror-selectednode::before { content: ""; position: absolute; left: 0; top: 50%; height: 1.2em; margin-top: -0.6em; border-left: 1px solid var(--accent); animation: gap-caret 1.06s steps(1) infinite; }
 @keyframes gap-caret { 50% { opacity: 0; } }
 
 /* ---------- the ::: prose block ---------- */

@@ -166,6 +166,7 @@ a canto opened: {"drawn":[],"shown":[],"crumb":"Edmund Spenser/The Faerie Queene
 ⌃⌘G 2.9: {"open":false,"focused":"editor","lineBox":false,"pageBox":true,"marked":null,"centred":null,"corner":"no line or page numbers here","cursor":"at the end","screen":"bookshelf/Spenser, Edmund/The Faerie Queene/1.1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a blank row: arrived at 2026-09-06: {"cursor":"at a line's start"}
 a blank row clicked: {"caret":"on the blank row","box":"none","drawn":false,"rows":["Enter DUKE ORSINO, CURIO","(blank)"],"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the search row opened over it: {"caret":"none","box":"none","drawn":false,"rows":["Enter DUKE ORSINO, CURIO","(blank)"],"cursor":"on input","screen":"2026-09-06 · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 Backspace on the blank row: {"caret":"…ns attending|","box":"none","drawn":false,"rows":["Enter DUKE ORSINO, CURIO","DUKE ORSINO"],"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 x typed on the blank row: {"caret":"…x|","box":"none","drawn":false,"rows":["Enter DUKE ORSINO, CURIO","x"],"cursor":"inside a line","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the switch carries the text: arrived at page/Long Canto: {"cursor":"at a line's start"}

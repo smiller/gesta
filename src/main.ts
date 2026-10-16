@@ -40,7 +40,7 @@ import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
 import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
-import { TextSelection } from "prosemirror-state";
+import { caretNear } from "./editor/renderedView.ts";
 import { Fragment } from "prosemirror-model";
 import { dropFolios } from "./editor/paste.ts";
 import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "./editor/replace.ts";
@@ -648,7 +648,7 @@ if (fixture && fixtures[fixture]) {
       const node = view.state.doc.nodeAt(pos);
       if (node) {
         const at = node.isLeaf ? pos + 1 : pos + 1 + (node.type.name === "pair" ? 1 : 0);
-        view.dispatch(view.state.tr.setSelection(TextSelection.near(view.state.doc.resolve(at))));
+        view.dispatch(view.state.tr.setSelection(caretNear(view.state.doc, at)));
       }
     }
     view.focus();

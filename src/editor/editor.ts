@@ -4,7 +4,7 @@ import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
-import { rowKeymap, pipeInLine } from "./rowKeys.ts";
+import { rowKeymap, pipeInLine, typeOnBlankRow } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { marginNotes } from "./margins.ts";
 import { folios } from "./folios.ts";
@@ -201,7 +201,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
        (pin: schema.test › a link's DOM) */
     markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = "⌘-click to open"; return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },
-    handleTextInput: (view, _from, _to, text) => text === "|" && pipeInLine(view.state, view.dispatch),
+    handleTextInput: (view, _from, _to, text) => (text === "|" && pipeInLine(view.state, view.dispatch)) || typeOnBlankRow(text)(view.state, view.dispatch),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);

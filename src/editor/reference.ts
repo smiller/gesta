@@ -1,5 +1,5 @@
 import { Fragment, type Node } from "prosemirror-model";
-import type { EditorState } from "prosemirror-state";
+import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, countAt, drawsInk, renumbered, type Unit } from "./numbering.ts";
@@ -277,26 +277,51 @@ export function passageMd(doc: Node, from: number, to: number): string {
   if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group)).join("\n" + quotePrefix("") + "\n");
   return blockPassage(doc, from, to, units);
 }
-/* A LINE THE SELECTION STARTS OR ENDS INSIDE is quoted from the word it
-   starts in to the word it ends in, as the highlight carries it; the
-   line's number stands (pin: reference.test › a passage starting or ending inside a line) */
+/* A SELECTION WIDENED TO WHOLE WORDS, what ⌃⌘R quotes and highlights both:
+   back to the start of the word it starts in and on to the end of the word
+   it ends in, past the spaces and punctuation it starts on into the next
+   line if need be, an opening mark before the first word kept; nothing but
+   spaces and punctuation selected stays as it was
+   (pin: reference.test › wordEdges) (pin: reference.test › a passage begun at the end of a line) */
 const inWord = (ch: string): boolean => /[\p{L}\p{N}’'-]/u.test(ch);
-function partOf(doc: Node, row: Node, pos: number, from: number, to: number): Fragment {
+const opening = (ch: string): boolean => /[“‘«(\[]/.test(ch);
+export function wordEdges(doc: Node, from: number, to: number): [number, number] {
+  const text = (n: Node): string => n.textBetween(0, n.content.size, undefined, "\ufffc");
+  let a = from, b = to;
+  for (let $a = doc.resolve(a); $a.parent.isTextblock && a < b;) {
+    const t = text($a.parent), start = a - $a.parentOffset;
+    let i = $a.parentOffset;
+    while (i > 0 && inWord(t[i - 1]) && inWord(t[i])) i--;
+    while (i < t.length && !inWord(t[i]) && !opening(t[i])) i++;
+    if (i > 0 && opening(t[i - 1]) && i < t.length && inWord(t[i])) i--;
+    a = start + i;
+    if (i < t.length) break;
+    const next = Selection.findFrom(doc.resolve($a.after()), 1, true);
+    if (!next || next.from >= b) break;
+    a = next.from;
+    $a = doc.resolve(a);
+  }
+  for (let $b = doc.resolve(b); $b.parent.isTextblock && b > a;) {
+    const t = text($b.parent), start = b - $b.parentOffset;
+    let j = $b.parentOffset;
+    while (j < t.length && j > 0 && inWord(t[j - 1]) && inWord(t[j])) j++;
+    while (j > 0 && (/\s/.test(t[j - 1]) || opening(t[j - 1]))) j--;
+    b = start + j;
+    if (j > 0) break;
+    const prev = Selection.findFrom(doc.resolve($b.before()), -1, true);
+    if (!prev || prev.from <= a) break;
+    b = prev.from;
+    $b = doc.resolve(b);
+  }
+  return a < b ? [a, b] : [from, to];
+}
+/* a line the selection starts or ends inside is quoted from where it
+   starts to where it ends; the line's number stands
+   (pin: reference.test › a passage starting or ending inside a line) */
+function partOf(row: Node, pos: number, from: number, to: number): Fragment {
   if (!row.isTextblock) return row.content;
   const start = pos + 1, end = start + row.content.size;
-  const at = (p: number): string => doc.textBetween(p, p + 1, " ", " ");
-  let a = start, b = end;
-  if (to > start && to < end) {
-    b = to;
-    while (b < end && inWord(at(b)) && b > start && inWord(at(b - 1))) b++;
-    while (b > start && /\s/.test(at(b - 1))) b--;
-  }
-  if (from > start && from < b) {
-    a = from;
-    while (a > start && inWord(at(a - 1)) && inWord(at(a))) a--;
-    while (a < b && /\s/.test(at(a))) a++;
-  }
-  return row.content.cut(a - start, b - start);
+  return row.content.cut(Math.max(from, start) - start, Math.min(to, end) - start);
 }
 function blockPassage(doc: Node, from: number, to: number, units: Unit[]): string {
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
@@ -324,7 +349,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
     const row = rows[i].node;
     if (row.type === N.note) continue;
     if (isTurn(row)) continue;
-    run.push(row.copy(dropFolios(paired ? row.content : partOf(doc, row, rows[i].pos, from, to))));
+    run.push(row.copy(dropFolios(paired ? row.content : partOf(row, rows[i].pos, from, to))));
   }
   const kept = withoutMarginNotes(run);
   /* a stanza's own count is its stanza's, so a run from inside one quotes as lines */
@@ -377,6 +402,9 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return { refused: "margin-note" };
   const stanzas = romanWorkKey(date, tag, journal) !== null;
   if (spansTwoBlocks(doc, from, to, stanzas)) return { refused: "two-blocks" };
+  return payloadOver(doc, ...wordEdges(doc, from, to), stanzas, date, tag, journal);
+}
+function payloadOver(doc: Node, from: number, to: number, stanzas: boolean, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
   const range = (stanzas && stanzaRange(doc, from, to)) || referenceRange(doc, from, to);

@@ -7,6 +7,7 @@ import { resolve } from "node:path";
 import { NS } from "../../src/store/keys.ts";
 import { ENTRY_DB, ENTRY_STORE } from "../../src/store/store.ts";
 import { tmpdir } from "node:os";
+import { blankRowReader } from "./blankRow.mjs";
 export const name = "successor";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -71,10 +72,8 @@ export const screen = (page) => page.evaluate(() => {
     q(".mode") && !q(".mode").hidden ? "source" : "rendered", "corner " + JSON.stringify(corner)].join(" · ");
 });
 const SAVED = ".saved.show";   /* the corner, for cornerAfter */
-const ROOT = "#editor .ProseMirror";
 export const read = {
-  /* the blank-row step (2026-10-16): where the caret is, the first blank row's box and drawn caret, the first verse's first two rows */
-  blankRow: (page) => page.evaluate((root) => { const g = document.querySelector(root + " .vgap"); const s = getSelection(); const a = s.anchorNode; const el = a?.nodeType === 3 ? a.parentElement : a; const held = el?.closest?.(".vgap"); const gap = (held && !held.textContent ? held : null) || (g?.classList.contains("ProseMirror-selectednode") ? g : null); const row = el?.closest?.(".vrow, .vgap"); const first = document.querySelector(root + " .vrow"); return { caret: gap ? "on the blank row" : row ? "…" + row.textContent.slice(0, s.anchorOffset).slice(-12) + "|" : "none", box: g ? getComputedStyle(g).outlineStyle : null, drawn: g ? getComputedStyle(g, "::before").content !== "none" : null, rows: first ? [...first.parentElement.children].slice(0, 2).map((c) => c.classList.contains("vgap") && !c.textContent ? "(blank)" : c.textContent.slice(0, 24)) : [] }; }, ROOT),
+  blankRow: blankRowReader("#editor .ProseMirror"),
   /* the contents-folds step (2026-09-28): the headings that fold, which are open, their counts, the links showing, the followed link's place */
   folds: (page) => page.evaluate(() => { const hs = [...document.querySelectorAll("#editor h2")]; const links = [...document.querySelectorAll("#editor a")].filter((a) => a.offsetParent); const canto = links.find((a) => (a.getAttribute("href") || "").endsWith("/1.1")); const r = canto?.getBoundingClientRect(); return { folds: hs.filter((h) => h.classList.contains("fold")).length, open: hs.filter((h) => h.getAttribute("aria-expanded") === "true").map((h) => h.textContent.slice(0, 12)), counts: hs.map((h) => h.dataset.count || null), linksShowing: links.length, cantoInView: r ? r.top >= 0 && r.bottom <= innerHeight : null }; }),
   /* the triangle stands beside the heading's FIRST line: a two-line heading's middle is below it (the step's first aim, 2026-09-28) */
