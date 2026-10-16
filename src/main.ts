@@ -62,6 +62,7 @@ import { richBlockHtml, withPictureBytes } from "./ui/richCopy.ts";
 import icon from "./favicon.ico?inline";
 import { schema } from "./model/schema.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "./editor/format.ts";
+import { blankRowSelected } from "./editor/rowKeys.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -967,7 +968,7 @@ if (fixture && fixtures[fixture]) {
   const placeBar = (): void => {
     const view = session.view;
     const sel = document.getSelection();
-    if (!view || session.mdView || barSuppressed || !sel || sel.rangeCount === 0 || sel.isCollapsed || !view.dom.contains(sel.anchorNode)) { screen.bar.show = false; return; }
+    if (!view || session.mdView || barSuppressed || !sel || sel.rangeCount === 0 || sel.isCollapsed || !view.dom.contains(sel.anchorNode) || blankRowSelected(view.state)) { screen.bar.show = false; return; }
     const rect = sel.getRangeAt(0).getBoundingClientRect();
     if (!rect.width && !rect.height) { screen.bar.show = false; return; }
     const floor = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 8;

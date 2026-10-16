@@ -7,7 +7,7 @@ import { EditorState, TextSelection, NodeSelection, type Command } from "prosemi
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { baseKeymap } from "prosemirror-commands";
-import { enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
+import { blankRowSelected, enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
 
 /* a state with the caret placed `offset` characters into the first text
    holding `needle` (its end when omitted) */
@@ -210,4 +210,13 @@ test("a margin-note row is left the way a note row is: Enter is its own, the sec
   expect(lifted.doc.content.content.map((n) => n.type.name)).toEqual(["margin_note", "paragraph", "paragraph"]);
   expect(lifted.selection.$from.parent.type.name).toBe("paragraph");
   expect(lifted.selection.$from.depth).toBe(1);
+});
+
+test("blankRowSelected: a stanza gap selected whole is the blank row; a caret, a picture or a line's words are not", () => {
+  const base = at("::: verse\na\n\nb\n:::", "a");
+  expect(blankRowSelected(base.apply(base.tr.setSelection(NodeSelection.create(base.doc, 4))))).toBe(true);
+  expect(blankRowSelected(base)).toBe(false);
+  expect(blankRowSelected(base.apply(base.tr.setSelection(TextSelection.create(base.doc, 2, 3))))).toBe(false);
+  const pic = EditorState.create({ doc: parseMarkdown("![](p.webp)") });
+  expect(blankRowSelected(pic.apply(pic.tr.setSelection(NodeSelection.create(pic.doc, 1))))).toBe(false);
 });

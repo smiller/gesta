@@ -4,7 +4,7 @@
 // paragraph split inside the item, the autolink's Enter arm running ahead of
 // the list keymap and calling the base Enter itself.
 import { test, expect } from "vitest";
-import { TextSelection, type EditorState, type Transaction } from "prosemirror-state";
+import { TextSelection, NodeSelection, type EditorState, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
@@ -228,4 +228,27 @@ test("no change from outside a reference block reaches into it: a join from eith
   expect(lands(s.tr.addMark(ref + 1, ref + 5, schema.marks.strong.create()))).toBe(false);
   expect(lands(s.tr.delete(ref - 3, end + 2))).toBe(true);
   expect(lands(s.tr.insertText("Q", end + 1))).toBe(true);
+});
+
+/* a blank row selected is an empty line: Backspace takes it out to the end
+   of the line above, Delete to the start of the line below */
+function onBlankRow(md: string): EditorState {
+  const s = editorState(parseMarkdown(md), 5);
+  let gap = -1;
+  s.doc.descendants((n, p) => { if (n.type.name === "gap") gap = p; });
+  return s.apply(s.tr.setSelection(NodeSelection.create(s.doc, gap)));
+}
+const caretText = (s: EditorState): string => {
+  const $c = s.selection.$from;
+  return s.selection.empty ? $c.parent.textContent.slice(0, $c.parentOffset) + "|" + $c.parent.textContent.slice($c.parentOffset) : "not a caret";
+};
+test("a blank row selected: Backspace takes it out, the caret at the end of the line above", () => {
+  const s = press(onBlankRow("::: verse\none\ntwo\n\nthree\n:::"), "Backspace");
+  expect(serializeMarkdown(s.doc)).toBe("::: verse\none\ntwo\nthree\n:::");
+  expect(caretText(s)).toBe("two|");
+});
+test("a blank row selected: Delete takes it out, the caret at the start of the line below", () => {
+  const s = press(onBlankRow("::: verse\none\ntwo\n\nthree\n:::"), "Delete");
+  expect(serializeMarkdown(s.doc)).toBe("::: verse\none\ntwo\nthree\n:::");
+  expect(caretText(s)).toBe("|three");
 });

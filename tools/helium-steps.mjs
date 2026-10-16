@@ -845,6 +845,25 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G 2.9", await R.linebar(page));
   await page.keyboard.press("Escape");
     }],
+    ["a blank row", async () => {
+  /* a blank row between stanzas is an empty line (2026-10-16): clicked, the caret drawn on it, no box and no bar; typed into, it becomes the line typed; Backspace takes it out, the caret at the end of the line above */
+  await go("2026-09-06");
+  await R.settle(page);
+  const clickBlank = async () => { const b = await page.locator(S.editor + " .vgap").first().boundingBox(); await page.mouse.click(b.x + 60, b.y + b.height / 2); await rest(page); };
+  await clickBlank();
+  await log("a blank row clicked", await R.blankRow(page));
+  await page.keyboard.press("Backspace");
+  await rest(page);
+  await log("Backspace on the blank row", await R.blankRow(page));
+  await page.keyboard.press("Meta+z");
+  await rest(page);
+  await clickBlank();
+  await page.keyboard.type("x");
+  await rest(page);
+  await log("x typed on the blank row", await R.blankRow(page));
+  await page.keyboard.press("Meta+z");
+  await rest(page);
+    }],
     ["the switch carries the text", async () => {
   /* ⌃⌘M carries the TEXT at the window's top across the switch, not its pixel offset: a long canto switched at its middle and at its end */
   const canto = Array.from({ length: 40 }, (_, k) => "::: stanza " + (k + 1) + "\n" + Array.from({ length: 9 }, (_, j) => "Stanza " + (k + 1) + ", line " + (j + 1) + ", set down to fill the measure").join("\n") + "\n:::").join("\n\n") + "\n";

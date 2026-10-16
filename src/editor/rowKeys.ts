@@ -6,7 +6,7 @@
    the heading above it (both have inline content, so the join is legal)
    (pin: rowKeys.test › Backspace at a row's start: a gap above comes out, a
    line above joins, another shape only takes the caret) */
-import { type Command, TextSelection, NodeSelection, Selection, type Transaction } from "prosemirror-state";
+import { type Command, type EditorState, TextSelection, NodeSelection, Selection, type Transaction } from "prosemirror-state";
 import { chainCommands } from "prosemirror-commands";
 import { Fragment, type Node, type ResolvedPos } from "prosemirror-model";
 import { keymap } from "prosemirror-keymap";
@@ -54,6 +54,12 @@ function unpair(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
   const start = $c.before(r.rowDepth);
   tr.replaceWith(start, $c.after(r.rowDepth), N.line.create(r.row.attrs, a.content.append(b.content)));
   return caretAt(tr, start + 1 + a.content.size);
+}
+
+/* a blank row selected whole is an empty line under the caret: no format
+   bar over it (pin: rowKeys.test › blankRowSelected) */
+export function blankRowSelected(state: EditorState): boolean {
+  return state.selection instanceof NodeSelection && state.selection.node.type === N.gap;
 }
 
 export const enterInRow: Command = (state, dispatch) => {
@@ -153,6 +159,11 @@ export const pipeInLine: Command = (state, dispatch) => {
 
 export const backspaceInRow: Command = (state, dispatch) => {
   const sel = state.selection;
+  if (blankRowSelected(state)) {
+    const tr = state.tr.delete(sel.from, sel.to);
+    if (dispatch) dispatch(tr.setSelection(Selection.findFrom(tr.doc.resolve(sel.from), -1, true) ?? Selection.near(tr.doc.resolve(sel.from))).scrollIntoView());
+    return true;
+  }
   if (!sel.empty || !(sel instanceof TextSelection)) return false;
   const $c = sel.$from, r = rowOf($c);
   if (!r || $c.parentOffset > 0) return false;

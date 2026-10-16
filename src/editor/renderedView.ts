@@ -11,9 +11,8 @@ import type { Surface } from "./surface.ts";
 
 export interface RenderedView extends Surface { readonly view: EditorView }
 
-/* a caret, never a node selected whole: at a stanza gap the nearest
-   selection is the gap itself, outlined, the bar shown over it
-   (pin: renderedView.test › caretNear) */
+/* a caret in text, never a node selected whole: at a stanza gap the
+   nearest selection is the gap itself (pin: renderedView.test › caretNear) */
 export function caretNear(doc: Node, pos: number): Selection {
   const $pos = doc.resolve(Math.min(pos, doc.content.size));
   return Selection.findFrom($pos, 1, true) ?? Selection.findFrom($pos, -1, true) ?? Selection.atStart(doc);

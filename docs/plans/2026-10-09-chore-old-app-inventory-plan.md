@@ -1262,3 +1262,26 @@ built on it is Enter with the row selected, a line after it (READ,
 rowKeys.ts enterInRow, pinned in rowKeys.test); Backspace at the start
 of the line below and Delete at the end of the line above already take a
 gap out (READ, rowKeys.ts). Whether the row stays selectable is put to him.
+
+### 2026-10-16 — a blank row is an empty line
+
+Three ways were put to him for the outline round a selected blank row:
+leave it, make the row unselectable, or keep it selectable and draw it as
+an empty line. Measured in a throwaway copy in headless Helium: with the
+row unselectable, ↑ and ↓ step across it keeping the column, and a click
+anywhere on it (six spots) lands at the start of the line below; as
+committed, typing over the selected row makes it the line typed, joining
+the stanzas (MEASURED). He asked for the third: "I prefer 3. In general,
+'principle of least surprise' feels like the right aim here." Built test
+first: the format bar is not shown over a selected blank row
+(blankRowSelected, rowKeys.test); Backspace on it takes it out with the
+caret at the end of the line above, where it had gone to the start of the
+line below; Delete already went to the line below (editor.test, through
+the whole key chain); the row selected is drawn with a blinking caret at
+its start in place of the box (editor.css). A new Helium section, "a
+blank row", over Twelfth Night 1.1 (2026-09-06): clicked, the caret on
+the row, no box, the caret drawn, bar off; Backspace, the row gone and the
+caret after "attending"; x typed, the row the line "x" (MEASURED). The old
+app does the same three with the browser's own caret in the empty row
+(MEASURED, its run regenerated); the three fields that differ are listed
+with their reasons. Nothing else in the run moved.
