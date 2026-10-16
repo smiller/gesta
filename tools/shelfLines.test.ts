@@ -194,6 +194,10 @@ test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from i
   expect(quotedRuns(directed, play).map((r) => [r.start, r.end, r.to])).toEqual([[0, 4, 16]]);
   const unnamed = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n";
   expect((referenceOf(play, quotedRuns(unnamed, play)[0]) as { passage: string }).passage.split("\n").slice(0, 3)).toEqual(["> ::: verse", "> **DUKE ORSINO**", "> If music be the food of love, play on;"]);
+  const remark = "Furor poetica.\nIf music be the food of love, play on;\nGive me excess of it, that, surfeiting,\n";
+  expect(quotedRuns(remark, play).map((r) => [r.start, r.end])).toEqual([[1, 2]]);
+  const titled = "Duke Orsino\nThat strain again! it had a dying fall:\nO, it came o’er my ear like the sweet sound,\n";
+  expect(quotedRuns(titled, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
   const other = "> ORSINO THE DUKE\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(other, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
   const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";

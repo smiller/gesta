@@ -1474,3 +1474,6 @@ found; 0 names above, 0 lines below (MEASURED).
 Verify failed twice more on "a blank row clicked" in the full run while
 the section alone passed 4 in 4: the click's place read before the row was
 in the window (INFERRED). The step now scrolls the row into view first.
+Asked after (1991-04-04): his own line "Furor scribendi." above the
+quotation was taken for HECATE's name and replaced. A line above counts as
+a name only in capitals or as the speaker's own name in the bookshelf.

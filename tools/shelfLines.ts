@@ -292,7 +292,9 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     let up = r.start - 1;
     while (up > floor && !lines[up].trim().replace(/^[>\s]*$/, "")) up--;
     const own = bare(lines[r.start]).match(NAMED)?.[0], above = up > floor ? bare(lines[up]) : "";
-    const name = own ? own.replace(/:\s*$/, "") : /^[A-Z][A-Za-z .'’-]*[.:]?$/.test(above) && above.length <= 40 ? above : "";
+    /* a line above is a name in capitals, or the speaker's own name in any case: never a line of one's own */
+    const capitals = /^[A-Z][A-Z .'’-]*[.:]?$/.test(above), called = norm(above) === s.left[x];
+    const name = own ? own.replace(/:\s*$/, "") : above.length <= 40 && (capitals || called) ? above : "";
     const n = norm(name);
     /* a quotation opening a speech takes its speaker's row, named or not */
     if (!n && x === r.first - 1 && !r.head) { r.first = x; return; }
