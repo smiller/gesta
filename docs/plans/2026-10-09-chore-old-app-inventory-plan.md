@@ -1366,6 +1366,8 @@ before its fix:
 9. dropBlankRow fell back on Selection.near, which can select a gap
    whole (READ). caretNear moved beside it, a direction its first try,
    and used there; its test moved to rowKeys.test.
+5ea6345 accepted 2026-10-16 (7457466cc31e…): the batch closed at REVIEW
+CYCLES: 2.
 
 ### 2026-10-16 — the Milton references quoted from mid-line
 
@@ -1396,3 +1398,5 @@ own finder over the backup (MEASURED). Folder
 ~/Desktop/gesta-imports/gesta-shelf-lines-midline with its review page.
 A closing mark is the bookshelf's, as ⌃⌘R gives it ("Where no ill
 seems:" for his "seems.").
+IMPORTED 2026-10-16: all 25 files of the folder byte-identical to the
+backup afterwards (MEASURED, cmp).
