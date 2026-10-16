@@ -271,6 +271,14 @@ is in the plan's record, under the phase named):
   the bookshelf in the backup and writes the changed entries as an import
   folder with a review page, a journal entry whose highlighted link and
   quotation carried the old marks set right to follow.
+  `tools/strayMarks.ts` — quotation marks the wrong way round or set
+  apart that a single quotation's rules do not reach, pure, its test
+  beside it: a double mark turned (*Unique!*“, ”You will not), a word
+  quoted back to front (”comedy“member), a double closing mark set apart
+  (me.  ”), a single mark run onto its punctuation (said.’*Ancient*), a
+  plural's possessive set apart (Augustus ’ stepson), a spaced mark that
+  could be either left for a hand; `tools/strayMarksRun.ts` runs it over
+  the bookshelf in the backup the same way, with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and

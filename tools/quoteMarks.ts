@@ -7,7 +7,7 @@
 import { CLIPPED_END, CLIPS } from "./elisions.ts";
 
 export type Kind = "closing" | "opening" | "spacedOpen" | "spacedClose" | "possessive" | "left";
-export interface Fix { at: number; kind: Kind; ch: string; del: number[] }
+export interface Fix<K extends string = Kind> { at: number; kind: K; ch: string; del: number[] }
 
 const LETTER = /\p{L}/u;
 /* what may stand before an opening mark */
@@ -16,10 +16,10 @@ const BEFORE_OPEN = /^$|[\s“"(\[—–\-‘’]/;
 const AFTER_CLOSE = /^$|[\s.,;:!?)\]—–\-”…]/;
 const PUNCT = /[,:;.!?—–\-]/;
 /* words ending in s that are no plural */
-const NOT_PLURAL = new Set("thus his is was as us yes this its hers ours yours theirs".split(" "));
+export const NOT_PLURAL = new Set("thus his is was as us yes this its hers ours yours theirs".split(" "));
 
-export function quoteMarks(md: string): Fix[] {
-  const fixes: Fix[] = [];
+/* each character, whether it stands in a fenced code block */
+export function codeMask(md: string): boolean[] {
   const code = new Array(md.length).fill(false);
   let fence = false, pos = 0;
   for (const line of md.split("\n")) {
@@ -28,6 +28,12 @@ export function quoteMarks(md: string): Fix[] {
     if (edge) fence = !fence;
     pos += line.length + 1;
   }
+  return code;
+}
+
+export function quoteMarks(md: string): Fix[] {
+  const fixes: Fix[] = [];
+  const code = codeMask(md);
   /* the spaces either side of i on its own line, and the character past them */
   const back = (i: number): { from: number; ch: string } => { let j = i; while (md[j - 1] === " " || md[j - 1] === "\t") j--; return { from: j, ch: md[j - 1] ?? "\n" }; };
   const ahead = (i: number): { to: number; ch: string } => { let j = i + 1; while (md[j] === " " || md[j] === "\t") j++; return { to: j, ch: md[j] ?? "\n" }; };
@@ -110,16 +116,17 @@ export function quoteMarks(md: string): Fix[] {
   return fixes;
 }
 
-/* the text with the fixes made, and where each fix's mark now stands */
-export function respellMarks(md: string, fixes: Fix[]): { out: string; marks: { at: number; kind: Kind }[] } {
+/* the text with the fixes made, and where each fix's mark now stands: a
+   space a fix puts before its mark is not the mark */
+export function respellMarks<K extends string>(md: string, fixes: Fix<K>[]): { out: string; marks: { at: number; kind: K }[] } {
   const del = new Set(fixes.flatMap((f) => f.del));
   const by = new Map(fixes.map((f) => [f.at, f]));
   let out = "";
-  const marks: { at: number; kind: Kind }[] = [];
+  const marks: { at: number; kind: K }[] = [];
   for (let i = 0; i < md.length; i++) {
     if (del.has(i)) continue;
     const f = by.get(i);
-    if (f) { marks.push({ at: out.length, kind: f.kind }); out += f.ch; } else out += md[i];
+    if (f) { marks.push({ at: out.length + Math.max(0, f.ch.search(/\S/)), kind: f.kind }); out += f.ch; } else out += md[i];
   }
   return { out, marks };
 }

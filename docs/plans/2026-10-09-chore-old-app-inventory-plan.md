@@ -1122,3 +1122,30 @@ first in highlight.test. Over the backup 0 highlighted bookshelf links
 are lost, against 8 before; a headless Helium probe following such a link
 selected nothing before the change and the whole passage after
 (MEASURED).
+
+### 2026-10-15 — stray quotation marks, a review and import pass
+
+Asked ("yes, stray marks as another review and import pass") after the
+survey's list. tools/strayMarks.ts, 10 tests; tools/strayMarksRun.ts
+writes Desktop/gesta-imports/gesta-stray-marks and its review page. The
+survey's classes, and one it had not counted, found reading the doubles:
+an opening double mark typed after a word as a closing one, 98, nearly
+all Browning's after italics (*Unique!*“). Run: 249 marks in 121 entries
+(98 double closings turned, 52 double openings turned — Gaudy Night,
+Miss Pym, Browning after a dash — 3 Allingham dropped h's (— ”e was →
+’e), 9 pairs back to front, 55 double closings set apart closed up — 48
+of them Hide My Eyes, 6 The Figure of Beatrice after a single closing —
+30 single marks run onto their punctuation, opened and spaced, Tey and
+Williams, and the 2 Horace possessives), 13 left: Sayers's ditto marks
+in two timetables, a spaced pair in The Lost Tools of Learning, Gaudy
+Night's "Too long. ” ...", Beatrice's "*simulacra* ”," (MEASURED).
+Faults found reading and fixed test-first before the page was handed
+over: a closing mark inside italics (pain —”*) read as an opening one;
+Allingham's "‘My husband comes in for his supper at nine,’ — he goes"
+read as a resumed speech (a single quotation open on its line now
+keeps it a closing mark); a double mark set apart after a single
+closing one, before a capital or a bracket, left. The resumed speeches
+Tey and Williams set in single marks inside a book of doubles stay
+single: turned and spaced, not made double. One journal day
+(2015-07-20) follows its link into The Figure of Beatrice; 10 links into
+changed entries, all found after (MEASURED).
