@@ -25,6 +25,7 @@ export function strayMarks(md: string): Fix<StrayKind>[] {
   /* a double mark turned to an opening one, with no mark since on its line:
      a mark run into the next word closes it (pin: strayMarks.test › a word between) */
   let opened = false;
+  const paired = new Set<number>();
   const singleOpen = (at: number): boolean => {
     let open = false;
     for (let j = md.lastIndexOf("\n", at - 1) + 1; j < at; j++) {
@@ -55,6 +56,16 @@ export function strayMarks(md: string): Fix<StrayKind>[] {
         continue;
       }
       opened = false;
+      if (paired.has(at)) continue;
+      /* ” All A is B ” — a spaced pair around words on one line (pin: strayMarks.test › a pair of spaced closing) */
+      const pair = /^( +)([^“”\n]*?\S)( +)”(?=[\s.,;:!?)]|$)/u.exec(md.slice(at + 1));
+      if (b.from < at && b.ch !== "\n" && pair && LETTER.test(pair[2][0])) {
+        const close = at + 1 + pair[1].length + pair[2].length + pair[3].length;
+        fixes.push({ at, kind: "dOpening", ch: "“", del: range(at + 1, at + 1 + pair[1].length) });
+        fixes.push({ at: close, kind: "dSpacedClose", ch: "”", del: range(close - pair[3].length, close) });
+        paired.add(close);
+        continue;
+      }
       if (b.from < at && b.ch !== "\n") {
         const rest = md.slice(at + 1, md.indexOf("\n", at) < 0 ? md.length : md.indexOf("\n", at));
         /* after a single closing mark, the next sentence may follow (pin: strayMarks.test › a closing double mark set after punctuation) */

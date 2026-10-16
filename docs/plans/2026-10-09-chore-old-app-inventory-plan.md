@@ -1149,3 +1149,9 @@ Tey and Williams set in single marks inside a book of doubles stay
 single: turned and spaced, not made double. One journal day
 (2015-07-20) follows its link into The Figure of Beatrice; 10 links into
 changed entries, all found after (MEASURED).
+His look found The Lost Tools of Learning "in the form ” All A is B ” can
+be recast" left ("All A is B should be surrounded without spaces by
+double open and closed quotes"): a spaced pair around words on one line
+now quotes them, closed up; 11 tests. Run: 251 marks in 122 entries, 11
+left (the ditto marks, Gaudy Night's "Too long. ” ...", Beatrice's
+"*simulacra* ”,"); only that line moved (MEASURED).

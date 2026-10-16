@@ -35,6 +35,10 @@ test("strayMarks: a closing double mark set after punctuation and a space closes
   expect(run("than is useful to you.’ ” After which\n")).toBe("than is useful to you.’” After which\n");
   expect(run("‘I go speaking of your friend.’ ”\u00a0 The phrase\n")).toBe("‘I go speaking of your friend.’”\u00a0 The phrase\n");
 });
+test("strayMarks: a pair of spaced closing double marks around words on one line quotes them, closed up", () => {
+  expect(run("whose major premise is in the form ” All A is B ” can be recast\n")).toBe("whose major premise is in the form “All A is B” can be recast\n");
+  expect(kinds("in the form ” All A is B ” can\n")).toEqual(["dOpening", "dSpacedClose"]);
+});
 test("strayMarks: a spaced double mark before anything else is left for a hand", () => {
   expect(kinds("New Luce 12.7 p.m. ” 4.33\n")).toEqual(["left"]);
   expect(kinds("Bother! Too long. ” ... was handicapped\n")).toEqual(["left"]);
