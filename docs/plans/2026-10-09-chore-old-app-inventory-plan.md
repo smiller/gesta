@@ -1155,3 +1155,22 @@ double open and closed quotes"): a spaced pair around words on one line
 now quotes them, closed up; 11 tests. Run: 251 marks in 122 entries, 11
 left (the ditto marks, Gaudy Night's "Too long. ” ...", Beatrice's
 "*simulacra* ”,"); only that line moved (MEASURED).
+Then three more from his look: The Poetry of Search, "“ ‘One law" ("If
+the closing quotation marks don't have spaces, then the opening
+quotations marks shouldn't either") — an opening double mark set apart
+from an opening single one closes up, the one such in the bookshelf;
+Murder Must Advertise's ditto marks under "Jan." ("these should probably
+be bullet points") — a ditto opening a quoted line before a number is a
+• character; The Five Red Herrings' timetable ("these should probably be
+em-dashes") — a spaced double mark between two times is an em-dash (it
+stands in the 12.30 train's column, a station that train does not
+stop at, not a range). 14 tests. Run: 261 marks in 124 entries, 2 left
+(Gaudy Night's "Too long. ” ...", Beatrice's "*simulacra* ”,");
+"Otherwise looks good, I think" (MEASURED).
+That commit's verify failed once on "Tab held in a quote", the caret read
+at the end of ">> quoted" where the approved run reads it inside the
+line; the stored text matched. Tools-only change, so a timing flake; it
+did not come back in 4 runs of the section alone, so its cause is not
+measured. The step's word click now clicks again (up to 3 times) until
+the caret stands in the word, a guard on the likeliest cause, the click
+measured while the page settled after the view switch (INFERRED).

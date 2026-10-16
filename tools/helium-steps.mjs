@@ -1526,7 +1526,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await view(false);
   await R.waitCorner(page, "saved");
   await page.waitForTimeout(1500);   /* every save landed first: a whisper of theirs stood over Tab's */
-  const clickWord = async (w) => { const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await rest(page); };
+  /* clicked until the caret stands in the word: a click measured while the
+     page settled after a view switch landed at the entry's end
+     (pin: where the keys go › Tab held in a quote) */
+  const clickWord = async (w) => {
+    for (let i = 0; i < 3; i++) {
+      const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await rest(page);
+      if (await page.evaluate((w) => (getSelection().anchorNode?.textContent || "").includes(w), w)) return;
+      await rest(page); await rest(page);
+    }
+  };
   await clickWord("one");
   await page.keyboard.press("Tab");
   await rest(page);

@@ -39,8 +39,18 @@ test("strayMarks: a pair of spaced closing double marks around words on one line
   expect(run("whose major premise is in the form ” All A is B ” can be recast\n")).toBe("whose major premise is in the form “All A is B” can be recast\n");
   expect(kinds("in the form ” All A is B ” can\n")).toEqual(["dOpening", "dSpacedClose"]);
 });
+test("strayMarks: an opening double mark set apart from an opening single one closes up", () => {
+  expect(run("up to the words: “ ‘One law for the Lion and the Ox is oppression.’ ”]\n")).toBe("up to the words: “‘One law for the Lion and the Ox is oppression.’”]\n");
+});
+test("strayMarks: a ditto mark opening a quoted line before a number is a bullet", () => {
+  expect(run("> Jan. 7 G\n> ” 14 O?\n> ” 21 A\n> Feb. 5 G\n")).toBe("> Jan. 7 G\n> • 14 O?\n> • 21 A\n> Feb. 5 G\n");
+  expect(kinds("> ” 14 O?\n")).toEqual(["ditto"]);
+});
+test("strayMarks: a spaced double mark between two times is a timetable's dash, a train that does not stop", () => {
+  expect(run("> Castle Kennedy 11.42 ” 4.12\n> New Luce 12.7 p.m. ” 4.33\n")).toBe("> Castle Kennedy 11.42 — 4.12\n> New Luce 12.7 p.m. — 4.33\n");
+  expect(kinds("> Glenwhilly 12.19 ” 4.45\n")).toEqual(["noStop"]);
+});
 test("strayMarks: a spaced double mark before anything else is left for a hand", () => {
-  expect(kinds("New Luce 12.7 p.m. ” 4.33\n")).toEqual(["left"]);
   expect(kinds("Bother! Too long. ” ... was handicapped\n")).toEqual(["left"]);
 });
 test("strayMarks: a single mark run onto punctuation before italics is an opening one, spaced as the entry spaces its sentences", () => {

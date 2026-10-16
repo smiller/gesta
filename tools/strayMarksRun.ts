@@ -35,7 +35,7 @@ function shown(out: string, from: number, to: number, kinds: Map<number, Kind>):
 }
 
 rmSync(OUT, { recursive: true, force: true });
-const counts: Record<Kind, number> = { dClosing: 0, dOpening: 0, elision: 0, swapped: 0, dSpacedClose: 0, sOpening: 0, possessive: 0, left: 0 };
+const counts: Record<Kind, number> = { dClosing: 0, dOpening: 0, dSpacedOpen: 0, ditto: 0, noStop: 0, elision: 0, swapped: 0, dSpacedClose: 0, sOpening: 0, possessive: 0, left: 0 };
 let entries = 0, changed = 0;
 const byFile: { file: string; lines: string[] }[] = [];
 for (const path of walk(join(SRC, "bookshelf")).sort()) {
@@ -126,11 +126,11 @@ writeFileSync(OUT + "-review.html", `<!doctype html><meta charset="utf-8"><title
 body{font:15px/1.5 Georgia,serif;max-width:1100px;margin:2em auto;padding:0 16px;background:#f4f7ec;color:#1a2418}
 h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}h3{font:12px ui-monospace,Menlo,monospace;color:#6b7568;margin:1.1em 0 .2em}
 p.l{margin:.25em 0 .25em 1em;white-space:pre-wrap}b{font-weight:normal;padding:0 3px;border-radius:2px}
-.dClosing{background:#bfe0a8}.dOpening{background:#b9d4f2}.elision{background:#d9d9d9}.swapped{background:#e3d2f2}.dSpacedClose{background:#f6e3a1}.sOpening{background:#a9dcc0}.possessive{background:#c9ece6}.left{background:#f4c1b4}
+.dClosing{background:#bfe0a8}.dOpening{background:#b9d4f2}.elision{background:#d9d9d9}.dSpacedOpen{background:#f2d0e4}.ditto{background:#d4e7f7}.noStop{background:#e8dcc4}.swapped{background:#e3d2f2}.dSpacedClose{background:#f6e3a1}.sOpening{background:#a9dcc0}.possessive{background:#c9ece6}.left{background:#f4c1b4}
 .key b{margin:0 .2em}.lost{color:#a4321c}</style>
 <h1>Stray marks: ${turned} marks set right in ${changed} bookshelf entries</h1>
 <p>${entries} bookshelf entries read. Every line holding a mark the pass set right or left, as it will read:</p>
-<p class="key"><b class="dClosing">”</b> an opening double mark typed after a word, turned (${counts.dClosing}) — <b class="dOpening">“</b> a closing double mark typed before a word, turned (${counts.dOpening}) — <b class="elision">’</b> a closing double mark after a dash, before a small letter, made an elision's apostrophe (${counts.elision}) — <b class="swapped">”</b> the second of a pair typed back to front, turned and spaced (${counts.swapped}) — <b class="dSpacedClose">”</b> a double closing mark set apart, closed up (${counts.dSpacedClose}) — <b class="sOpening">‘</b> a single mark run onto the punctuation before it, opened and spaced (${counts.sOpening}) — <b class="possessive">’</b> a spaced mark after a plural made its possessive (${counts.possessive}) — <b class="left">”</b> a spaced mark left for a hand (${counts.left}).</p>
+<p class="key"><b class="dClosing">”</b> an opening double mark typed after a word, turned (${counts.dClosing}) — <b class="dOpening">“</b> a closing double mark typed before a word, turned (${counts.dOpening}) — <b class="dSpacedOpen">“</b> an opening double mark set apart from an opening single one, closed up (${counts.dSpacedOpen}) — <b class="ditto">•</b> a ditto mark opening a quoted line, a bullet (${counts.ditto}) — <b class="noStop">—</b> a timetable's ditto between two times, a dash (${counts.noStop}) — <b class="elision">’</b> a closing double mark after a dash, before a small letter, made an elision's apostrophe (${counts.elision}) — <b class="swapped">”</b> the second of a pair typed back to front, turned and spaced (${counts.swapped}) — <b class="dSpacedClose">”</b> a double closing mark set apart, closed up (${counts.dSpacedClose}) — <b class="sOpening">‘</b> a single mark run onto the punctuation before it, opened and spaced (${counts.sOpening}) — <b class="possessive">’</b> a spaced mark after a plural made its possessive (${counts.possessive}) — <b class="left">”</b> a spaced mark left for a hand (${counts.left}).</p>
 <p>Highlighted links into the changed entries: ${found} found before, ${kept} found after, ${followed.length} of their entries set right to follow.${lost.length ? " Lost:" : ""}</p>
 ${lost.map((l) => `<p class="lost">${esc(l)}</p>`).join("")}
 ${followed.length ? `<h2>Following the passage</h2><p>An entry whose highlighted link and quotation carried the marks as they were, set right the same way:</p>` + followed.map(({ file, lines }) => `<h3>${esc(file.replace(/\.md$/, ""))}</h3>` + lines.map((l) => `<p class="l">${l}</p>`).join("")).join("") : ""}

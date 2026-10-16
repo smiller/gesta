@@ -7,7 +7,7 @@
    either is left for a hand. Code is left. */
 import { codeMask, NOT_PLURAL, type Fix } from "./quoteMarks.ts";
 
-export type StrayKind = "dClosing" | "dOpening" | "elision" | "swapped" | "dSpacedClose" | "sOpening" | "possessive" | "left";
+export type StrayKind = "dClosing" | "dOpening" | "dSpacedOpen" | "ditto" | "noStop" | "elision" | "swapped" | "dSpacedClose" | "sOpening" | "possessive" | "left";
 
 const LETTER = /\p{L}/u;
 /* what a closing mark may follow and come before */
@@ -39,6 +39,9 @@ export function strayMarks(md: string): Fix<StrayKind>[] {
     if (m[0] === "\n") { opened = false; continue; }
     if (code[at]) continue;
     if (m[0] === "“") {
+      /* “ ‘One law (pin: strayMarks.test › an opening double mark set apart) */
+      const inner = /^[ \u00a0]+(?=‘)/.exec(md.slice(at + 1));
+      if (inner) { fixes.push({ at, kind: "dSpacedOpen", ch: "“", del: range(at + 1, at + 1 + inner[0].length) }); opened = false; continue; }
       if (WORD_END.test(before) && AFTER_CLOSE.test(after)) fixes.push({ at, kind: "dClosing", ch: "”", del: [] });
       else if (opened && WORD_END.test(before) && LETTER.test(after)) fixes.push({ at, kind: "swapped", ch: "” ", del: [] });
       opened = false;
@@ -57,6 +60,11 @@ export function strayMarks(md: string): Fix<StrayKind>[] {
       }
       opened = false;
       if (paired.has(at)) continue;
+      const line = md.slice(md.lastIndexOf("\n", at - 1) + 1, at);
+      /* a list's ditto, “Jan. 7 / ” 14” (pin: strayMarks.test › a ditto mark opening) */
+      if (/^(?:> ?)*$/.test(line) && /^ \d/.test(md.slice(at + 1))) { fixes.push({ at, kind: "ditto", ch: "•", del: [] }); continue; }
+      /* a timetable's column with no time (pin: strayMarks.test › a spaced double mark between two times) */
+      if (/\d(?: [ap]\.m\.)? $/.test(line) && /^ \d/.test(md.slice(at + 1))) { fixes.push({ at, kind: "noStop", ch: "—", del: [] }); continue; }
       /* ” All A is B ” — a spaced pair around words on one line (pin: strayMarks.test › a pair of spaced closing) */
       const pair = /^( +)([^“”\n]*?\S)( +)”(?=[\s.,;:!?)]|$)/u.exec(md.slice(at + 1));
       if (b.from < at && b.ch !== "\n" && pair && LETTER.test(pair[2][0])) {
