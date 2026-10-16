@@ -1230,3 +1230,35 @@ approved on that reading (MEASURED). Milton: 27 runs began mid-line and
 32 ended so on its review page (MEASURED) — the redo, and the two
 Shakespeare questions (one quotation split by speakers, his own wording
 from memory), wait on his word.
+The first commit of it failed verify on the sub-entries section, an
+arrival at 2026-09-06 reading "selected 1": run alone the section did it
+in 1 of 10 arrivals, the selected node a stanza gap row (`vgap
+ProseMirror-selectednode`, the bar on) (MEASURED). An arrival's caret is
+placed with TextSelection.near, which is Selection.near and gives a node
+selection on a selectable gap when the kept place falls on one (READ,
+renderedView.ts placeCaret) — an app defect, timing-dependent, not the
+change's; the commit went in on a second run. A fix touches
+renderedView.ts, a DOM seam: put to him.
+
+### 2026-10-16 — ⌃⌘R mid-line accepted; an arrival never selects a stanza gap
+
+21a5938 looked at in Helium and accepted (060c849ae1bd…). The arrival's
+gap selection put to him; he asked it fixed ("yes, let's fix this,
+too"). Measured first under node: over "::: verse\nOne line\n\nTwo
+line\n:::", TextSelection.near at the position before the gap gives a
+NodeSelection of the gap, every other position a caret (MEASURED). An
+arrival's caret is now the first text position at or after the place,
+else before it (caretNear in renderedView.ts, test first in
+renderedView.test). The sub-entries section run alone 10 times after it:
+250 readings, all "sel none · bar off" (MEASURED; before it, 1 run in 10
+failed). renderedView.ts is a DOM seam: the batch owes one review.
+Asked by him on seeing it: what the outline round a blank row is for. In
+headless Helium over Twelfth Night 1.1 (journal 2026-09-06): a click on
+the blank row, an ArrowDown from the line above it, an ArrowUp or a
+Home-ArrowLeft from the line below each select the row whole, outlined
+(`ProseMirror-selectednode`, 2px #8cf) with the format bar shown; an
+ArrowDown or ArrowRight from there moves on (MEASURED). The one gesture
+built on it is Enter with the row selected, a line after it (READ,
+rowKeys.ts enterInRow, pinned in rowKeys.test); Backspace at the start
+of the line below and Delete at the end of the line above already take a
+gap out (READ, rowKeys.ts). Whether the row stays selectable is put to him.
