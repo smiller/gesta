@@ -279,6 +279,12 @@ is in the plan's record, under the phase named):
   plural's possessive set apart (Augustus ’ stepson), a spaced mark that
   could be either left for a hand; `tools/strayMarksRun.ts` runs it over
   the bookshelf in the backup the same way, with a review page.
+  `tools/speechMarks.ts` — quotation marks set by reading, each named by
+  the words around it, pure, its test beside it; `tools/speechMarksRead.json`
+  the marks read (a speech in single marks where its book speaks in
+  doubles, a quotation inside a quotation, a doubled mark);
+  `tools/speechMarksRun.ts` sets them in the backup's entries and writes an
+  import folder with a review page.
   `tools/stageDirections.ts` — a play's stage directions made one
   italic run each, pure, its test beside it; `tools/stageDirectionsRun.ts`
   runs it over the fourteen plays of Tey and Williams in the backup and

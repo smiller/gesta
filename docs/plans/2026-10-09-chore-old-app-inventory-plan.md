@@ -1182,3 +1182,25 @@ measured while the page settled after the view switch (INFERRED).
 IMPORTED 2026-10-15: all 125 files of the folder byte-identical to the
 backup afterwards; the pass run again over the backup sets 0 marks right,
 the 2 left for a hand alone remaining (MEASURED).
+The 2 left he fixed by hand, with Gaudy Night's two ’ for ” in the same
+paragraph (itch”, ghoulies”); read in the backup, and the pass run again
+leaves 0 (MEASURED).
+
+### 2026-10-15 — speeches in single marks, Lucrece's inner speech
+
+Asked: "a review and import of making the inner quotes double-quotes in
+Lucrece and then close out any open examples left". The open examples:
+the speeches the stray-marks pass opened and spaced but kept single.
+Every book they stand in speaks in doubles — Tey's 1,501–2,236 “ against
+51–111 opening ‘, Williams's and Allingham's alike (MEASURED). 54
+paragraphs holding such a mark were read: 27 speeches in single marks
+where the book speaks in doubles (Tey, Williams, Allingham's Late Pig),
+the rest quotations inside a double-marked speech, rightly single, left.
+Two more found reading: Privateer 6's first ‘*No*!’ (at its line's
+start) and Police at the Funeral's "Marcus*.’’", a doubled mark for ’”.
+Lucrece: Tarquin's words inside Lucrece's, “Awake … ‘“For some
+hard-favour’d groom of thine,” quoth he, “Unless … infamy.”. Every mark
+judged by reading, kept in tools/speechMarksRead.json by its words, set by
+tools/speechMarks.ts (3 tests); a run fails on words found twice or not
+at all. Run: 62 marks in 23 entries, nothing but marks changed in any
+file, no highlighted link into them (MEASURED).
