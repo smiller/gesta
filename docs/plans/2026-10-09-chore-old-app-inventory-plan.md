@@ -1484,3 +1484,28 @@ the link only when it gives the lines ("PL 3.17-8"); one giving the act
 and scene alone gives way to the full reference; a line with no numbers is
 no citation. Shakespeare: 0 references now in his own words; Milton
 unchanged (MEASURED).
+2006-06-28 a second deliberate variant, kept as written; he put the
+quotation itself beneath it with ⌃⌘R, stored with the page's full address
+(file:///…/index.html#bookshelf/…). The pass knew a reference only as
+"](#bookshelf/": a quotation under a full-address link is now one too;
+that gap had given Milton's 2022-07-03 a second link over his own
+reference to Lycidas 15-22. The backup holds 47 files with full-address
+links, 40 to the bookshelf, two written today (MEASURED): a reference
+pasted in Gesta is stored with the page's address; put to him.
+Asked after (2010-05-20, "To do ’t." left below 4.4.45-47; "I thought you
+said you'd fix them all"): the leftover check had only looked at lines of
+eight letters or more, and the walk compared words, "do ’t" two against
+"do’t" one. The walk now meets the quotation's lines against the passage
+letter by letter, a few spelled otherwise, a line ending where a word of
+the passage ends ("evit" no line of "evitata"), a speaker's name taken
+only as written or as a name alone where the passage has a speaker's row
+(2015-02-08 "RICHARD II" for KING RICHARD II). Asked after (2019-08-27):
+an attribution closing the quotation that names the work ("\- Hecate,
+*Macbeth* 3.5") goes with it. The check now reads every line after every
+reference against the bookshelf's text running on, any length: 0 carry
+on, 0 attributions naming the work, 0 names left above (MEASURED). Run:
+358 references in 276 entries; 377 links found.
+Milton, three imported entries the pass now makes otherwise, in one folder
+gesta-milton-fixes: 2016-11-10 from "a dark" (2.891-97), 1988-04-11 its
+closing "—*Paradise Lost*, I. ll. 246-7." dropped, 2022-07-03 the
+full-address copy of its link taken out; 12 links found (MEASURED).

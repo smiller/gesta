@@ -34,6 +34,7 @@ const left: string[] = [];
 /* quotations left as written, by entry and the passage's first line: a deliberate variant */
 const KEEP: { file: string; key: string; from: number; why: string }[] = [
   { file: "journal/2002/2002-02-03.md", key: "bookshelf/Shakespeare, William/Twelfth Night/1.5", from: 255, why: "a deliberate variant: “Cry out Ors… – Olivia!”" },
+  { file: "journal/2006/2006-06-28.md", key: "bookshelf/Shakespeare, William/Hamlet/5.2", from: 376, why: "a deliberate variant: “Good night, dear heart”, the quotation itself beneath it" },
 ];
 const kept: string[] = [];
 

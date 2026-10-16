@@ -95,16 +95,17 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
   });
   /* a quotation under a link to the bookshelf is a reference already */
   for (let i = 0; i < lines.length; i++) {
-    if (!/\]\(#(?:bookshelf|page)\//.test(lines[i])) continue;
+    /* the link as an address alone or as the page's full address before it */
+    if (!/\]\([^)\s#]*#(?:bookshelf|page)\//.test(lines[i])) continue;
     let j = i + 1;
     while (j < lines.length && !lines[j].trim()) j++;
     while (j < lines.length && QUOTE.test(lines[j])) skip[j++] = true;
   }
-  /* A RUN FOLLOWED WORD BY WORD past either end, where the quotation is
+  /* A RUN FOLLOWED LETTER BY LETTER past either end, where the quotation is
      broken into lines otherwise than the passage: on through whole lines of
-     the quotation whose every word is the passage's, one spelled otherwise
-     between two that agree (pin: shelfLines.test › quotedRuns: a quotation
-     broken into lines otherwise) */
+     the quotation whose letters are the passage's, a few spelled otherwise
+     (pin: shelfLines.test › quotedRuns: a quotation broken into lines
+     otherwise) (pin: shelfLines.test › quotedRuns: a run's last line split) */
   const words = (t: string): string[] => t.split(/[\s—–]+/).map(norm).filter(Boolean);
   /* a speaker's name opening a line, one to three capitalised words before a
      colon or a wide space: never a line of verse with a colon in it */
@@ -115,41 +116,55 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     /* blank lines between speeches, and a stage direction of one's own, passed over where a line of the quotation follows */
     const gap = (k: number): boolean => k > floor && k < lines.length && !skip[k] && (!norm(bare(lines[k])) || /^\[[^\]]*\]$/.test(bare(lines[k])) && QUOTE.test(lines[k]) === quoted) && (!quoted || !lines[k].trim() || QUOTE.test(lines[k]));
     const theirs = (x: number): boolean => x >= 0 && x < s.units.length && s.units[x].blockPos === block;
-    /* the words either side as they come, ours by line and theirs by row with the letters to it */
-    const walk = (d: 1 | -1, k0: number, x0: number, skipLetters: number) => {
-      const our: { w: string; k: number; name?: boolean }[] = [], their: { w: string; x: number; n: number }[] = [];
-      for (let k = k0; (k === k0 || k > r.end || k < r.start); k += d) {
+    /* the passage's letters as they come, each with its row and the letters
+       of that row up to it; then the quotation's lines met against them one by
+       one, letters alone, so a word split or joined otherwise (do ’t, do’t)
+       does not part them, a few letters spelled otherwise allowed */
+    const walk = (d: 1 | -1, k0: number, x0: number) => {
+      let stream = "";
+      const row: number[] = [], into: number[] = [], wordEnd: boolean[] = [];
+      for (let x = x0; theirs(x); x += d) {
+        const t = d > 0 ? s.left[x] : [...s.left[x]].reverse().join("");
+        /* where the row's words end, counted from the side the walk comes from */
+        const ws = words(s.units[x].node.textContent), ends = new Set<number>();
+        (d > 0 ? ws : [...ws].reverse()).reduce((n, w) => { ends.add(n + w.length); return n + w.length; }, 0);
+        [...t].forEach((c, q) => { stream += c; row.push(x); into.push(q + 1); wordEnd.push(ends.has(q + 1)); });
+      }
+      let p = 0, last: { k: number; p: number } | null = null;
+      for (let k = k0; k === k0 || k > r.end || k < r.start; k += d) {
         if (gap(k)) { let g = k; while (gap(g)) g += d; if (!ours(g)) break; k = g; }
         if (!ours(k)) break;
         const t = bare(lines[k]), name = t.match(NAMED)?.[0] ?? "";
-        /* a speaker's name before a line's words: matched where the passage has the speaker's row, else passed over */
-        const ws = [...words(name).map((w) => ({ w, k, name: true })), ...words(t.slice(name.length)).map((w) => ({ w, k }))];
-        our.push(...(d < 0 ? ws.reverse() : ws));
+        const take = (c: string, exact = false): number => {
+          if (!c) return -1;
+          if (d < 0) c = [...c].reverse().join("");
+          if (stream.startsWith(c, p)) return c.length;
+          if (exact) return -1;
+          const tol = k === k0 ? Math.max(2, Math.floor(c.length / 5)) : c.length >= 8 ? Math.max(2, Math.floor(c.length / 12)) : 0;
+          let best = -1, least = tol + 1;
+          for (let m = Math.max(1, c.length - tol); m <= c.length + tol && p + m <= stream.length; m++) {
+            const dd = distance(c, stream.slice(p, p + m));
+            if (dd < least) { least = dd; best = m; }
+          }
+          return best;
+        };
+        /* a speaker's name before a line's words: met where the passage has the speaker's row, else passed over */
+        /* a name alone on its line, where the passage has a speaker's row, is that row, however named */
+        if (/^[A-Z][A-Z .'’-]*[.:]?$/.test(t) && p < stream.length && s.units[row[p]].kind === "speaker" && into[p] === 1) {
+          p += s.left[row[p]].length; last = { k, p }; continue;
+        }
+        let m = name ? take(norm(t), true) : -1;
+        if (m < 0) m = take(norm(t.slice(name.length)));
+        /* a line ends where a word of the passage ends: evit is no line of evitata */
+        if (m < 0 || !wordEnd[p + m - 1]) break;
+        p += m; last = { k, p };
       }
-      for (let x = x0; theirs(x); x += d) {
-        const ws = words(s.units[x].node.textContent);
-        let n = 0;
-        (d < 0 ? ws.reverse() : ws).forEach((w) => { n += w.length; their.push({ w, x, n }); });
-      }
-      /* the first line opening part way into its row: that row's letters before it passed over */
-      let j = 0;
-      for (let left = skipLetters; left > 0 && j < their.length; j++) left -= their[j].w.length;
-      let i = 0;
-      while (i < our.length && j + i < their.length) {
-        if (our[i].w === their[j + i].w) { i++; continue; }
-        if (our[i].name) { our.splice(i, 1); continue; }
-        if (i + 1 < our.length && j + i + 1 < their.length && our[i + 1].w === their[j + i + 1].w && i > 0) { i++; continue; }
-        break;
-      }
-      /* the last whole line of ours taken, and the word of theirs its last word meets */
-      let at = -1;
-      for (let q = 0; q < i; q++) if (q + 1 === our.length || our[q + 1].k !== our[q].k) at = q;
-      return at < 0 ? null : { k: our[at].k, x: their[j + at].x, n: their[j + at].n };
+      return last ? { k: last.k, x: row[last.p - 1], n: into[last.p - 1] } : null;
     };
     const out = { ...r };
     if (!(r.start === r.end && r.head)) {
       const rowLetters = s.left[r.last].length;
-      const e = walk(1, r.end, r.last, 0);
+      const e = walk(1, r.end, r.last);
       if (e && (e.k > r.end || e.x > r.last || r.tail !== undefined && e.n > r.tail && e.x === r.last)) {
         out.end = e.k; out.last = e.x;
         const total = e.x === r.last ? rowLetters : s.left[e.x].length;
@@ -157,7 +172,7 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
       }
     }
     if (!(r.start === r.end && r.tail)) {
-      const b = walk(-1, r.start, r.first, 0);
+      const b = walk(-1, r.start, r.first);
       if (b && (b.k < r.start || b.x < r.first || r.head !== undefined && b.n > r.head && b.x === r.first)) {
         out.start = b.k; out.first = b.x;
         if (b.n < s.left[b.x].length - SPELT) out.head = b.n; else delete out.head;
@@ -305,6 +320,17 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     if (!own) r.start = up;
     if (x === r.first - 1 && !r.head) { r.first = x; return; }
     r.speaker = x;
+  });
+  /* an attribution closing the quotation, short, naming the work, from a dash
+     or with a number, is the link's own citation and goes with it (pin:
+     shelfLines.test › quotedRuns: an attribution closing) */
+  runs.forEach((r, at) => {
+    const next = at + 1 < runs.length ? runs[at + 1].start : lines.length, work = norm(r.key.split("/")[2] ?? "");
+    let k = r.end + 1;
+    while (k < next && !norm(bare(lines[k])) && (QUOTE.test(lines[k]) || !lines[k].trim())) k++;
+    if (k >= next || !work) return;
+    const t = bare(lines[k]);
+    if (QUOTE.test(lines[k]) === QUOTE.test(lines[r.start]) && t.length <= 60 && norm(t).includes(work) && /^\\?[-–—―]|\d|\b[IVXL]+\s*[.,]\s*[ivxlIVXL]+\b/.test(t)) r.end = k;
   });
   /* a joined line shared by two runs gives way to both; its other place,
      where no run takes it, is kept as written (pin: shelfLines.test ›

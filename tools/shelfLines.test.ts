@@ -13,6 +13,10 @@ test("quotedRuns: consecutive lines that are the bookshelf's, quoted or bare, ma
   const md = "Odes 1.1.3-4:\nsunt quos curriculo pulverem Olympicum | x\ncollegisse iuvat, metaque fervidis | y\n\n> certat tergeminis tollere honoribus;\n\n```\nevitata rotis palmaque nobilis\n```\n\n[Horace, *Odes*, 1.1.5](#bookshelf/Horace/Odes/1.1?h=x):\n\n> ::: verse 5\n> evitata rotis palmaque nobilis | The goal\n> :::\n";
   expect(quotedRuns(md, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 3, 4], [4, 4, 8, 8]]);
 });
+test("quotedRuns: a quotation under a link to the bookshelf written as the page's full address is a reference already", () => {
+  const md = "[Horace, *Odes*, 1.1.3-4](file:///Users/someone/gesta/dist/index.html#bookshelf/Horace/Odes/1.1?h=x):\n\n> ::: verse 3\n> sunt quos curriculo pulverem Olympicum | x\n> collegisse iuvat metaque fervidis | y\n> :::\n";
+  expect(quotedRuns(md, index)).toEqual([]);
+});
 test("referRuns: a run after a short citation ending in a colon makes that line the reference's link; else the reference stands in its place", () => {
   const md = "Odes 1.1.3-4:\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n\nAnd then\n> certat tergeminis tollere honoribus;\nhe said.\n";
   const runs = quotedRuns(md, index);
@@ -198,6 +202,8 @@ test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from i
   expect(quotedRuns(remark, play).map((r) => [r.start, r.end])).toEqual([[1, 2]]);
   const titled = "Duke Orsino\nThat strain again! it had a dying fall:\nO, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(titled, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
+  const renamed = "> Even in a minute: so full of shapes is fancy\n> That it alone is high fantastical.\n\n> THE CURIO\n>> Will you go hunt, my lord?\n";
+  expect(quotedRuns(renamed, play).map((r) => [r.start, r.end, r.to])).toEqual([[0, 4, 16]]);
   const other = "> ORSINO THE DUKE\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(other, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
   const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
@@ -211,4 +217,15 @@ test("referRuns: a citation giving the lines is the link in its own words; one g
   expect(at("Odes, I. i:")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("ODES (I.i):")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("cemenna nún, yasse atamána nás:")).toBe("cemenna nún, yasse atamána nás:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+});
+test("quotedRuns: a run's last line split otherwise into words than the passage, To do ’t against To do’t, is still followed: letters, not words", () => {
+  const prose = shelfIndex({ "bookshelf/Somebody/A Play/4.4": "# 4.4\n\n::: verse\nI do not know\nWhy yet I live to say ‘This thing’s to do;’\nSith I have cause and will and strength and means\nTo do’t. Examples gross as earth exhort me:\n:::\n" });
+  const md = "> I do not know\n> Why yet I live to say “This thing’s to do”,\n> Sith I have cause, and will, and strength, and means\n> To do ’t.\n\nAnd so.\n";
+  expect(quotedRuns(md, prose).map((r) => [r.start, r.end, r.to, r.tail])).toEqual([[0, 3, 4, "todot".length]]);
+});
+test("quotedRuns: an attribution closing the quotation that names the work, the link's own citation, goes with it; a line of one's own naming the work stays", () => {
+  const md = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n> \\- Orsino, *Twelfth Night* 1.1\n\nAnd so.\n";
+  expect(quotedRuns(md, play).map((r) => [r.start, r.end])).toEqual([[0, 2]]);
+  const own = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n> and Twelfth Night was the first play I saw\n";
+  expect(quotedRuns(own, play).map((r) => [r.start, r.end])).toEqual([[0, 1]]);
 });
