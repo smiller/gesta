@@ -47,19 +47,31 @@ function distance(a: string, b: string): number {
   return row[b.length];
 }
 /* a half-line: the start (or end) of a line, two letters' change allowed
-   once it is eight long — fixt against fixed, mee against me */
-function halfOf(n: string, line: string, start: boolean): boolean {
-  if (start ? line.startsWith(n) : line.endsWith(n)) return true;
-  if (n.length < 8) return false;
-  for (let k = n.length - 2; k <= Math.min(n.length + 2, line.length); k++)
-    if (distance(n, start ? line.slice(0, k) : line.slice(-k)) <= 2) return true;
-  return false;
+   once it is eight long — fixt against fixed, mee against me; how many of
+   the line's letters it is, the closest, or 0 */
+function halfAt(n: string, line: string, start: boolean): number {
+  if (start ? line.startsWith(n) : line.endsWith(n)) return n.length;
+  if (n.length < 8) return 0;
+  let best = 0, least = 3;
+  for (let k = n.length - 2; k <= Math.min(n.length + 2, line.length); k++) {
+    const d = distance(n, start ? line.slice(0, k) : line.slice(-k));
+    if (d < least || d === least && Math.abs(k - n.length) < Math.abs(best - n.length)) { best = k; least = d; }
+  }
+  return best;
 }
+const halfOf = (n: string, line: string, start: boolean): boolean => halfAt(n, line, start) > 0;
+/* a line this many letters short of its own or fewer is spelled otherwise,
+   not halved: Heav'n, chang'd, thir (pin: shelfLines.test › quotedRuns: a
+   first or last line spelled otherwise) */
+const SPELT = 2;
 
 export interface Run {
   start: number; end: number; key: string; from: number; to: number;
   /* a joined first or last line's other place, as written, kept beside the reference */
   before?: string; after?: string;
+  /* how many of its line's letters a half-line opening the run quotes, from
+     the line's end, and one closing it, from the line's start */
+  head?: number; tail?: number;
 }
 
 export function quotedRuns(md: string, index: ShelfIndex): Run[] {
@@ -120,7 +132,14 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
         if (o.length >= HALF && halfOf(o, l, false)) { start--; first--; }
         break;
       }
-      if (letters >= ENOUGH && (!best || end - start > best.end - best.start)) best = { start, end, key: s.key, from: s.units[first].line, to: s.units[last].line };
+      /* a first or last line short of its line's letters, however it was
+         carried, is a half-line, quoted from where it starts or to where it
+         ends (pin: shelfLines.test › quotedRuns: a run opening or closing) */
+      const q0 = spliced(start) ? places(lines[start])[1] : norm(bare(lines[start]));
+      const q1 = spliced(end) ? places(lines[end])[0] : norm(bare(lines[end]));
+      const cut = (q: string, line: string, start: boolean): number | undefined => { const k = halfAt(q, line, start); return k && k < line.length - SPELT ? k : undefined; };
+      const head = cut(q0, s.left[first], false), tail = cut(q1, s.left[last], true);
+      if (letters >= ENOUGH && (!best || end - start > best.end - best.start)) best = { start, end, key: s.key, from: s.units[first].line, to: s.units[last].line, ...(head && { head }), ...(tail && { tail }) };
     }
     if (best) { runs.push(best); i = best.end; }
   }

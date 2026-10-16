@@ -43,7 +43,7 @@ for (const path of walk(SRC).sort()) {
   const runs = quotedRuns(md, index);
   if (!runs.length) continue;
   if (LEAVE.test(file)) { left.push(file); continue; }
-  const minted = new Map<Run, ReturnType<typeof referenceAt>>(runs.map((r) => [r, referenceAt(index, r.key, r.from, r.to)]));
+  const minted = new Map<Run, ReturnType<typeof referenceAt>>(runs.map((r) => [r, referenceAt(index, r.key, r.from, r.to, r)]));
   const ok = runs.filter((r) => "url" in minted.get(r)!);
   const out = referRuns(md, ok, (r) => minted.get(r) as { text: string; url: string; passage: string });
   const src = md.split("\n");

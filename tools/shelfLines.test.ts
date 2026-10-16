@@ -47,6 +47,22 @@ test("quotedRuns: a run's first line may be the end of the passage's line before
   const own = "and so I said\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
   expect(quotedRuns(own, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 4, 5]]);
 });
+test("quotedRuns: a run opening or closing on a half-line, however it was carried, carries how many of its line's letters it quotes, for the reference to start and end where it does; a whole line carries none", () => {
+  const halves = "> Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis.\n";
+  expect(quotedRuns(halves, index).map((r) => [r.head, r.tail])).toEqual([[9, 12]]);
+  const close = "> quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque\n";
+  expect(quotedRuns(close, index).map((r) => [r.from, r.to, r.head, r.tail])).toEqual([[3, 5, 30, 20]]);
+  const spelt = "> metaque fervidiss\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n";
+  expect(quotedRuns(spelt, index).map((r) => [r.from, r.head])).toEqual([[4, "metaquefervidis".length]]);
+  const whole = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n";
+  expect(quotedRuns(whole, index).map((r) => [r.head, r.tail])).toEqual([[undefined, undefined]]);
+  const joined = "> sunt quos curriculo pulverem … palmaque nobilis\n> terrarum dominos evehit ad deos;\n> hunc, si mobilium turba Quiritium\n";
+  expect(quotedRuns(joined, index).map((r) => [r.from, r.head])).toEqual([[5, 15]]);
+});
+test("quotedRuns: a first or last line spelled otherwise, a letter or two short of its line, is the whole line, not a half", () => {
+  const md = "> sunt quos curiculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaq nobilis\n";
+  expect(quotedRuns(md, index).map((r) => [r.from, r.to, r.head, r.tail])).toEqual([[3, 5, undefined, undefined]]);
+});
 test("quotedRuns: opening lines are carried back one after another, a half-line spelled otherwise among them; a joined line whose second place is not the passage's is not", () => {
   const back = "> dulce decus meun\n> sunt quos curiculo pulverem Olympicum\n> collegisse iuvat metaque fervidis\n> evitata rotis palmaque nobilis\n";
   expect(quotedRuns(back, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 2, 5]]);

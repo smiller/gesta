@@ -1366,3 +1366,33 @@ before its fix:
 9. dropBlankRow fell back on Selection.near, which can select a gap
    whole (READ). caretNear moved beside it, a direction its first try,
    and used there; its test moved to rowKeys.test.
+
+### 2026-10-16 — the Milton references quoted from mid-line
+
+Asked ("look at fixing the Miltons"), after ⌃⌘R took mid-line passages.
+A run now carries how many of its line's letters a half-line opening it
+quotes, and one closing it, read off the run's ends once it is found,
+whichever rule carried them (the closeness rule had carried nine
+half-lines the half-line rule never saw); referenceAt selects from those
+letters, the word a cut falls in taken whole and a closing cut running on
+over the line's own marks. A line two letters short of its own or fewer
+is spelled otherwise, not halved: the first run read "Heav'n", "chang'd",
+"thir" and "Accurst" as half-lines and cut each a letter short, its
+closing mark lost (MEASURED); and a fuzzy half-line is cut at its closest
+alignment ("he had of mee" had taken "Ingrate,"). Tests first in
+shelfLines.test and bookshelfQuotes.test.
+The redo (tools/out/miltonRedo.ts, a one-off, not kept): each entry the
+pass changed read as it stood before the import, from the backup's
+archive named by its 2026-10-13 manifest; the pass run again there finds
+the same 110 runs (MEASURED), and 50 of the 54 entries come out byte for
+byte as imported (the other four moved with the bookshelf's later fixes).
+Each run opening or closing on a half-line is minted whole and mid-line,
+and in the entry as it stands now in the backup the link's address and
+the passage's first and last lines are replaced. Run: 49 references in
+25 entries, 26 opening and 32 closing on half-lines; 107 lines changed
+(49 addresses, 58 passage lines), no file's line count moved; every
+file a fixed point; all 79 bookshelf links in them found by the page's
+own finder over the backup (MEASURED). Folder
+~/Desktop/gesta-imports/gesta-shelf-lines-midline with its review page.
+A closing mark is the bookshelf's, as ⌃⌘R gives it ("Where no ill
+seems:" for his "seems.").

@@ -48,19 +48,45 @@ export function shelfIndex(cache: Record<string, string>): ShelfIndex {
 
 export interface Quoted { left: string; right?: string }
 export interface Referred { text: string; key: string; url: string; passage: string }
-/* the reference a copy of an entry's lines makes */
-function minted(index: ShelfIndex, s: Shelved, first: number, last: number): Referred | { why: string } {
+/* how many letters a quotation's first line takes from its line's end,
+   and its last from its line's start, where it quotes half a line */
+export interface Cut { head?: number; tail?: number }
+/* a row's letters, each with its place in the document */
+function lettersOf(row: Node, pos: number): number[] {
+  const at: number[] = [];
+  row.descendants((n, p) => {
+    if (n.isText) [...n.text!].reduce((off, ch) => { for (const _ of norm(ch)) at.push(pos + 1 + p + off); return off + ch.length; }, 0);
+    return !n.isText;
+  });
+  return at;
+}
+/* the reference a copy of an entry's lines makes; a half-line from its
+   line's last letters or to its first, the word a cut falls in taken whole
+   (pin: bookshelfQuotes.test › referenceAt: a passage whose first line) */
+function minted(index: ShelfIndex, s: Shelved, first: number, last: number, cut: Cut = {}): Referred | { why: string } {
   const a = s.units[first], b = s.units[last];
-  const selection = TextSelection.between(s.doc.resolve(a.pos + 1), s.doc.resolve(b.pos + b.node.nodeSize - 1));
+  let from = a.pos + 1, to = b.pos + b.node.nodeSize - 1;
+  if (cut.head && a.node.isTextblock) { const at = lettersOf(a.node, a.pos); from = at[Math.max(0, at.length - cut.head)] ?? from; }
+  if (cut.tail && b.node.isTextblock) {
+    const at = lettersOf(b.node, b.pos);
+    if (cut.tail < at.length) {
+      to = at[cut.tail - 1] + 1;
+      /* the line's closing marks are its own: a half-line ending at its letters loses its comma */
+      const close = s.doc.resolve(to).end(), next = (): string => s.doc.textBetween(to, to + 1);
+      while (to < close && /^[\p{L}\p{Nd}’'-]$/u.test(next())) to++;
+      while (to < close && /^[^\s\p{L}\p{Nd}]$/u.test(next())) to++;
+    }
+  }
+  const selection = TextSelection.between(s.doc.resolve(from), s.doc.resolve(to));
   const [date, ...tag] = s.key.split("/");
   const out = referencePayload(EditorState.create({ doc: s.doc, selection }), date, tag.join("/"), index.journal);
   return "refused" in out ? { why: `a copy is refused: ${out.refused}` } : { text: out.text, key: s.key, url: out.url, passage: out.passage };
 }
 /* a passage named by its entry and its first and last line numbers */
-export function referenceAt(index: ShelfIndex, key: string, from: number, to: number): Referred | { why: string } {
+export function referenceAt(index: ShelfIndex, key: string, from: number, to: number, cut: Cut = {}): Referred | { why: string } {
   const s = index.entries.find((e) => e.key === key);
   const first = s ? s.units.findIndex((u) => u.line === from) : -1, last = s ? s.units.findIndex((u) => u.line === to) : -1;
-  return s && first >= 0 && last >= first ? minted(index, s, first, last) : { why: `${key} has no lines ${from}-${to}` };
+  return s && first >= 0 && last >= first ? minted(index, s, first, last, cut) : { why: `${key} has no lines ${from}-${to}` };
 }
 /* `except`: the entry the lines stand in, never a quotation of itself */
 export function quotedFrom(index: ShelfIndex, lines: Quoted[], except?: string): Referred | { why: string } | null {

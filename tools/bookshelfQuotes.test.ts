@@ -50,6 +50,14 @@ test("referenceAt: a passage named by its entry and lines is the reference a cop
   expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", 3, 4)).toEqual(found);
   expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", 3, 99)).toEqual({ why: "bookshelf/Horace/Odes/1.1 has no lines 3-99" });
 });
+test("referenceAt: a passage whose first line is quoted from mid-line, and its last line to mid-line, is quoted and highlighted from that word to that word, its closing mark kept, the line numbers standing; a cut inside a word takes the word", () => {
+  const r = referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3, { head: 20, tail: 16 }) as { text: string; passage: string; url: string };
+  expect(r.text.split("\n")[0]).toMatch(/^\[Horace, \*Odes\*, 1\.9\.1-3\]\(#bookshelf\/Horace\/Odes\/1\.9\?h=alta%20stet/);
+  expect(r.url).toMatch(/silvae%20laborantes%2C$/);
+  expect(r.passage).toBe("> ::: verse\n> alta stet nive candidum\n> Soracte, nec iam sustineant onus\n> silvae laborantes,\n> :::");
+  expect((referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3, { head: 20, tail: 13 }) as { passage: string }).passage).toBe(r.passage);
+  expect(referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3, {})).toEqual(referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3));
+});
 test("quotedFrom: an entry's own lines are not a quotation of itself", () => {
   expect(quotedFrom(index, [{ left: "sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }], "bookshelf/Horace/Odes/1.1")).toBeNull();
 });
