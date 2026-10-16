@@ -60,7 +60,9 @@ export function blankRowSelected(state: EditorState): boolean {
   return state.selection instanceof NodeSelection && state.selection.node.type === N.gap;
 }
 /* a new row takes its block's shape: a pair where the block holds one,
-   never a full-width row among pairs */
+   never a full-width row among pairs (pin: rowKeys.test › a blank row
+   selected in a paired block) (pin: rowKeys.test › Enter on an empty line
+   in a block of pairs) */
 function freshRow(block: Node): Node {
   let paired = false;
   block.forEach((row) => { if (row.type === N.pair) paired = true; });
@@ -69,21 +71,31 @@ function freshRow(block: Node): Node {
 const textStart = (row: Node): number => row.type === N.pair ? 2 : 1;
 const isRow = (n: Node | null): boolean => !!n && (n.type === N.line || n.type === N.pair);
 
-/* text typed over a blank row selected whole is a new row in its place */
-export const typeOnBlankRow = (text: string): Command => (state, dispatch) => {
+/* a caret in text, never a node selected whole: at a stanza gap the
+   nearest selection is the gap itself (pin: rowKeys.test › caretNear) */
+export function caretNear(doc: Node, pos: number, dir: 1 | -1 = 1): Selection {
+  const $pos = doc.resolve(Math.min(pos, doc.content.size));
+  return Selection.findFrom($pos, dir, true) ?? Selection.findFrom($pos, -dir, true) ?? Selection.atStart(doc);
+}
+/* a blank row selected whole opened for typing: a new row in its place, the caret in it */
+export const openBlankRow: Command = (state, dispatch) => {
   if (!blankRowSelected(state)) return false;
-  const sel = state.selection, row = freshRow(sel.$from.parent), at = sel.from + textStart(row);
-  if (dispatch) dispatch(caretAt(state.tr.replaceWith(sel.from, sel.to, row).insertText(text, at), at + text.length).scrollIntoView());
+  const sel = state.selection, row = freshRow(sel.$from.parent);
+  if (dispatch) dispatch(caretAt(state.tr.replaceWith(sel.from, sel.to, row), sel.from + textStart(row)));
   return true;
 };
 /* a blank row selected whole taken out: the caret to the row on the side
-   the key points, or the other side where there is none */
+   the key points, past other blank rows, or the other side where there is
+   none (pin: rowKeys.test › a blank row selected with no line) (pin:
+   rowKeys.test › two blank rows together) */
 function dropBlankRow(state: EditorState, dir: 1 | -1): Transaction {
   const sel = state.selection, block = sel.$from.parent, idx = sel.$from.index();
-  const toward = isRow(block.maybeChild(idx + dir)) ? dir : isRow(block.maybeChild(idx - dir)) ? -dir : dir;
+  const reach = (d: 1 | -1): boolean => {
+    for (let k = idx + d; ; k += d) { const n = block.maybeChild(k); if (!n || n.type !== N.gap) return isRow(n); }
+  };
+  const back = -dir as 1 | -1, toward = reach(dir) ? dir : reach(back) ? back : dir;
   const tr = state.tr.delete(sel.from, sel.to);
-  const $p = tr.doc.resolve(sel.from);
-  return tr.setSelection(Selection.findFrom($p, toward, true) ?? Selection.near($p)).scrollIntoView();
+  return tr.setSelection(caretNear(tr.doc, sel.from, toward)).scrollIntoView();
 }
 
 export const enterInRow: Command = (state, dispatch) => {
@@ -114,9 +126,9 @@ export const enterInRow: Command = (state, dispatch) => {
       if (dispatch) dispatch(caretAt(tr, at + 1));
       return true;
     }
-    const fresh = r.row.type === N.pair ? pair(null, Fragment.empty, Fragment.empty) : N.line.create();
+    const fresh = freshRow(block);
     tr.replaceWith(start, end, [N.gap.create(), fresh]);
-    if (dispatch) dispatch(caretAt(tr, start + 2 + (r.cell < 0 ? 0 : 1)));
+    if (dispatch) dispatch(caretAt(tr, start + 1 + textStart(fresh)));
     return true;
   }
   if (r.cell < 0) {

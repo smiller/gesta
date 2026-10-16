@@ -280,9 +280,11 @@ export function passageMd(doc: Node, from: number, to: number): string {
 /* A SELECTION WIDENED TO WHOLE WORDS, what ⌃⌘R quotes and highlights both:
    back to the start of the word it starts in and on to the end of the word
    it ends in, past the spaces and punctuation it starts on into the next
-   line if need be, an opening mark before the first word kept; nothing but
-   spaces and punctuation selected stays as it was
-   (pin: reference.test › wordEdges) (pin: reference.test › a passage begun at the end of a line) */
+   line if need be, an opening mark before the first word kept, one with no
+   word after it passed over; nothing but spaces and punctuation selected
+   stays as it was
+   (pin: reference.test › wordEdges) (pin: reference.test › a passage begun at the end of a line)
+   (pin: reference.test › a passage begun on an opening mark) */
 const inWord = (ch: string): boolean => /[\p{L}\p{N}’'-]/u.test(ch);
 const opening = (ch: string): boolean => /[“‘«(\[]/.test(ch);
 export function wordEdges(doc: Node, from: number, to: number): [number, number] {
@@ -291,8 +293,8 @@ export function wordEdges(doc: Node, from: number, to: number): [number, number]
   for (let $a = doc.resolve(a); $a.parent.isTextblock && a < b;) {
     const t = text($a.parent), start = a - $a.parentOffset;
     let i = $a.parentOffset;
-    while (i > 0 && inWord(t[i - 1]) && inWord(t[i])) i--;
-    while (i < t.length && !inWord(t[i]) && !opening(t[i])) i++;
+    while (i > 0 && i < t.length && inWord(t[i - 1]) && inWord(t[i])) i--;
+    while (i < t.length && !inWord(t[i]) && !(opening(t[i]) && inWord(t[i + 1] ?? ""))) i++;
     if (i > 0 && opening(t[i - 1]) && i < t.length && inWord(t[i])) i--;
     a = start + i;
     if (i < t.length) break;
@@ -392,9 +394,11 @@ export function citationAnchorHTML(url: string, label: string): string {
 }
 export interface Payload { text: string; label: string; url: string; passage: string }
 export function referencePayload(state: EditorState, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
-  const { from, to, empty } = state.selection;
-  if (empty) return { refused: "select" };
+  if (state.selection.empty) return { refused: "select" };
   const doc = state.doc;
+  /* the refusals read the words quoted, not the selection as made (pin:
+     reference.test › a passage begun at the end of one verse block's) */
+  const [from, to] = wordEdges(doc, state.selection.from, state.selection.to);
   let inCode = false;
   doc.nodesBetween(from, to, (n) => { if (n.type === N.code_block) inCode = true; return !inCode; });
   if (inCode) return { refused: "code" };
@@ -402,7 +406,7 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return { refused: "margin-note" };
   const stanzas = romanWorkKey(date, tag, journal) !== null;
   if (spansTwoBlocks(doc, from, to, stanzas)) return { refused: "two-blocks" };
-  return payloadOver(doc, ...wordEdges(doc, from, to), stanzas, date, tag, journal);
+  return payloadOver(doc, from, to, stanzas, date, tag, journal);
 }
 function payloadOver(doc: Node, from: number, to: number, stanzas: boolean, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
   const hl = selectionLink(doc, from, to);

@@ -68,6 +68,7 @@ a blank row clicked · drawn · a blank row is selected whole here and drawn wit
 a blank row clicked · cursor · the same: the row selected whole reads as one thing selected; the current app's caret is collapsed in it
 the search row opened over it · caret · the blank row stays selected in the editor while the search row has the focus, its caret not drawn; the current app's selection leaves the page
 x typed on the blank row · cursor · both carets stand after the x (the caret field); the current app's typed row keeps the blank row's 1em height, so the reading's geometry takes the next line's first letter as beside it
+a quotation mark typed on the blank row · cursor · both carets stand after the curled mark (the caret field); the current app's typed row keeps the blank row's 1em height, so the reading's geometry takes the next line's first letter as beside it
 a contents page opened · folds · a work's contents folding under its headings is successor-only (2026-09-28, the contents-folds plan): the current app draws the page whole
 a contents page opened · counts · the same: no closed heading, no count
 a contents page opened · linksShowing · the same: the current app shows the canto link, the successor's is folded away

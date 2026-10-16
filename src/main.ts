@@ -40,7 +40,7 @@ import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
 import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
-import { caretNear } from "./editor/renderedView.ts";
+import { caretNear } from "./editor/rowKeys.ts";
 import { Fragment } from "prosemirror-model";
 import { dropFolios } from "./editor/paste.ts";
 import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "./editor/replace.ts";

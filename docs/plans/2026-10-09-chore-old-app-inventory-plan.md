@@ -1328,3 +1328,41 @@ opened over it · caret") listed with its reason. "Tab held in a quote"
 read "at the end" in one approve run against "inside a line" before
 (MEASURED), the flake seen once on 2026-10-15; the approved line kept as
 it was.
+e791a43 accepted 2026-10-16 (4f60b30f99a5…); no confirmation pass asked
+for: the batch closed at REVIEW CYCLES: 1.
+
+### 2026-10-16 — the confirmation pass over the review's fixes
+
+Asked for ("Let's start the review run"): one `/code-review` at high over
+3277077..e791a43. REVIEW CYCLES: 2. Cost 119,010 tokens (MEASURED, the
+transcript's last message: 2 input + 4,187 cache creation + 112,248
+cache read + 2,573 output). Nine findings, each read against the code
+before its fix:
+1. wordEdges' backward step read past a line's end, `inWord(undefined)`
+   testing the string "undefined": a selection begun at the end of a line
+   ending in a letter took that line's last word (the reviewer MEASURED
+   it; the test of cycle 1 used a line ending in a comma). Guarded
+   (reference.test).
+2. Text typed on a blank row was taken by the view's own text handler
+   before the typing rules: a `"` stayed straight (READ). The row is now
+   opened first, then the text handed to every text handler a line's
+   typing meets (editor.test); headless Helium, a new reading "a
+   quotation mark typed on the blank row", reads “ in both apps
+   (MEASURED); its cursor field listed with the x's reason.
+3. Backspace on the second of two blank rows went down, a gap not
+   counted as a row on the key's side (the reviewer MEASURED it). The
+   side is now read past other blank rows (rowKeys.test).
+4. ⌃⌘R's refusals read the selection as made, before the widening: a
+   selection begun at the end of one block's last line was refused as
+   two blocks (READ). The refusals read the widened words (reference.test).
+5. The forward skip stopped at an opening mark with no word after it
+   (READ). It passes such a mark (reference.test).
+6. A `|` typed on a blank row became a literal pipe (the reviewer
+   MEASURED it). Fixed by 2: the pipe meets the line's own handler.
+7. The comments on freshRow and dropBlankRow carried no pins though
+   tests check both (READ). Pinned.
+8. Enter on an empty line chose the new row's shape by the row, not the
+   block (READ). freshRow and textStart now (rowKeys.test).
+9. dropBlankRow fell back on Selection.near, which can select a gap
+   whole (READ). caretNear moved beside it, a direction its first try,
+   and used there; its test moved to rowKeys.test.

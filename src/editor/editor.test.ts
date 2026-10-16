@@ -9,7 +9,7 @@ import type { EditorView } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { editorState, lockKey, landed } from "./editor.ts";
+import { editorState, lockKey, landed, textOnBlankRow } from "./editor.ts";
 import { jumpTo } from "./highlight.ts";
 import { codeTab } from "./codeKeys.ts";
 const keymapTab = (s: EditorState, dispatch: (tr: Transaction) => void): boolean => codeTab(false)(s, dispatch);
@@ -45,6 +45,22 @@ test("Enter after a bare URL lands as Enter after a word does, in every context"
   }
 });
 
+/* text typed with the caret's state, through the view's own text handler */
+function typeIn(s: EditorState, text: string): EditorState {
+  let state = s;
+  const view = { get state() { return state; }, dispatch: (tr: Transaction) => { state = state.apply(tr); }, composing: false } as unknown as EditorView;
+  if (!textOnBlankRow(view, text)) throw new Error("not a blank row");
+  return state;
+}
+test("text typed on a blank row is typed in an empty line in its place: a quotation mark curls, a pipe makes a pair", () => {
+  const doc = parseMarkdown("::: verse\na\n\nc\n:::");
+  let gap = -1;
+  doc.descendants((n, p) => { if (n.type === schema.nodes.gap) gap = p; });
+  const s = editorState(doc, 5), onGap = s.apply(s.tr.setSelection(NodeSelection.create(s.doc, gap)));
+  expect(serializeMarkdown(typeIn(onGap, "\"").doc)).toBe("::: verse\na\n“\nc\n:::");
+  expect(serializeMarkdown(typeIn(onGap, "|").doc)).toBe("::: verse\na\n |\nc\n:::");
+  expect(serializeMarkdown(typeIn(onGap, "x").doc)).toBe("::: verse\na\nx\nc\n:::");
+});
 test("a locked entry takes no change from anywhere — a command, an insert — and takes them again unlocked", () => {
   let s = editorState(parseMarkdown("some words"), 5);
   s = s.apply(s.tr.setMeta(lockKey, true));

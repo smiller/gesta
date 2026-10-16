@@ -4,7 +4,7 @@ import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
-import { rowKeymap, pipeInLine, typeOnBlankRow } from "./rowKeys.ts";
+import { rowKeymap, pipeInLine, openBlankRow } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { marginNotes } from "./margins.ts";
 import { folios } from "./folios.ts";
@@ -124,6 +124,18 @@ const inertReference = (say?: (why: string) => void): Plugin => new Plugin({
     handlePaste: (view) => inReference(view.state),
   },
 });
+/* text typed on a blank row is text typed in an empty line in its place:
+   the line opened, then the text handed to every handler a line's typing
+   meets (pin: editor.test › text typed on a blank row) */
+export function textOnBlankRow(view: EditorView, text: string): boolean {
+  if (!openBlankRow(view.state, view.dispatch)) return false;
+  const at = view.state.selection.from;
+  if (text === "|" && pipeInLine(view.state, view.dispatch)) return true;
+  const typed = (): Transaction => view.state.tr.insertText(text, at);
+  for (const p of view.state.plugins) if (p.props.handleTextInput?.call(p, view, at, at, text, typed)) return true;
+  view.dispatch(typed().scrollIntoView());
+  return true;
+}
 export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
   /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a refusal
      is said once per press, not over its own whisper on every repeat
@@ -201,7 +213,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
        (pin: schema.test › a link's DOM) */
     markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = "⌘-click to open"; return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },
-    handleTextInput: (view, _from, _to, text) => (text === "|" && pipeInLine(view.state, view.dispatch)) || typeOnBlankRow(text)(view.state, view.dispatch),
+    handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);

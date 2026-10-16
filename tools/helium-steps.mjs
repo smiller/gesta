@@ -846,7 +846,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
     }],
     ["a blank row", async () => {
-  /* a blank row between stanzas is an empty line (2026-10-16): clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed; Backspace takes it out, the caret at the end of the line above */
+  /* a blank row between stanzas is an empty line (2026-10-16): clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
   await go("2026-09-06");
   await R.settle(page);
   const clickBlank = async () => { const b = await page.locator(S.editor + " .vgap").first().boundingBox(); await page.mouse.click(b.x + 60, b.y + b.height / 2); await rest(page); };
@@ -867,6 +867,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("x");
   await rest(page);
   await log("x typed on the blank row", await R.blankRow(page));
+  await page.keyboard.press("Meta+z");
+  await rest(page);
+  await clickBlank();
+  await page.keyboard.type("\"");
+  await rest(page);
+  await log("a quotation mark typed on the blank row", await R.blankRow(page));
   await page.keyboard.press("Meta+z");
   await rest(page);
     }],

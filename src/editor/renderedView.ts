@@ -1,22 +1,16 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
-import { Selection, TextSelection } from "prosemirror-state";
+import { TextSelection } from "prosemirror-state";
 import { createEditor, lockKey, type EditorOptions } from "./editor.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc } from "../model/flatten.ts";
 import { schema } from "../model/schema.ts";
 import { wordCount } from "./format.ts";
 import { openFoldAt } from "./folds.ts";
+import { caretNear } from "./rowKeys.ts";
 import type { Surface } from "./surface.ts";
 
 export interface RenderedView extends Surface { readonly view: EditorView }
-
-/* a caret in text, never a node selected whole: at a stanza gap the
-   nearest selection is the gap itself (pin: renderedView.test › caretNear) */
-export function caretNear(doc: Node, pos: number): Selection {
-  const $pos = doc.resolve(Math.min(pos, doc.content.size));
-  return Selection.findFrom($pos, 1, true) ?? Selection.findFrom($pos, -1, true) ?? Selection.atStart(doc);
-}
 
 export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions): RenderedView {
   const view = createEditor(mount, doc, opts);

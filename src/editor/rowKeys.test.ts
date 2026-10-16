@@ -8,7 +8,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { schema } from "../model/schema.ts";
 import { baseKeymap } from "prosemirror-commands";
-import { blankRowSelected, typeOnBlankRow, enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
+import { blankRowSelected, openBlankRow, caretNear, enterInRow, backspaceInRow, deleteInRow, tabInRow, shiftTabInRow, pipeInLine, toggleDeclaredLine, exitNoteRow } from "./rowKeys.ts";
 
 /* a state with the caret placed `offset` characters into the first text
    holding `needle` (its end when omitted) */
@@ -228,15 +228,15 @@ function onGap(doc: ReturnType<typeof parseMarkdown>, n = 0): EditorState {
   doc.descendants((node, p) => { if (node.type.name === "gap") gaps.push(p); });
   return EditorState.create({ doc, selection: NodeSelection.create(doc, gaps[n]) });
 }
-test("a blank row selected in a paired block: Enter makes a pair after it, typing makes the text a pair's first half", () => {
+test("a blank row selected in a paired block: Enter makes a pair after it, and opened for typing it is a pair, the caret in its first half", () => {
   const paired = parseMarkdown("::: verse\na | b\n\nc | d\n:::");
   const entered = run(enterInRow, onGap(paired));
   expect(md(type(entered, "x"))).toBe("::: verse\na | b\n\nx |\nc | d\n:::");
-  expect(md(run(typeOnBlankRow("x"), onGap(paired)))).toBe("::: verse\na | b\nx |\nc | d\n:::");
-  const typed = run(typeOnBlankRow("x"), onGap(parseMarkdown("::: verse\na\n\nc\n:::")));
-  expect(md(typed)).toBe("::: verse\na\nx\nc\n:::");
-  expect(caret(typed)).toBe("line:x|");
-  expect(refuses(typeOnBlankRow("x"), at("::: verse\na\n\nc\n:::", "a"))).toBe(true);
+  expect(md(type(run(openBlankRow, onGap(paired)), "x"))).toBe("::: verse\na | b\nx |\nc | d\n:::");
+  const opened = run(openBlankRow, onGap(parseMarkdown("::: verse\na\n\nc\n:::")));
+  expect(caret(opened)).toBe("line:|");
+  expect(md(type(opened, "x"))).toBe("::: verse\na\nx\nc\n:::");
+  expect(refuses(openBlankRow, at("::: verse\na\n\nc\n:::", "a"))).toBe(true);
 });
 test("a blank row selected with no line above it: Backspace takes it out to the start of the line below", () => {
   const N = schema.nodes;
@@ -249,6 +249,38 @@ test("a blank row selected with no line above it: Backspace takes it out to the 
   expect(caret(noted)).toBe("line:|b");
   const above = run(backspaceInRow, onGap(parseMarkdown("::: verse\na | b\n\nc | d\n:::")));
   expect(caret(above)).toBe("cell:b|");
+});
+test("two blank rows together: Backspace on the second goes up past the first, Delete on the first goes down past the second", () => {
+  const two = parseMarkdown("::: verse\na\n\n\nc\n:::");
+  expect(caret(run(backspaceInRow, onGap(two, 1)))).toBe("line:a|");
+  expect(caret(run(deleteInRow, onGap(two, 0)))).toBe("line:|c");
+});
+test("a blank row taken out with no text in the block either side: the caret goes to the nearest text, never a blank row selected whole", () => {
+  const N = schema.nodes;
+  const gaps = N.doc.create(null, [N.verse.create(null, [N.gap.create(), N.gap.create()]), N.paragraph.create(null, schema.text("After"))]);
+  const s = run(backspaceInRow, onGap(gaps, 1));
+  expect(s.selection).toBeInstanceOf(TextSelection);
+  expect(caret(s)).toBe("paragraph:|After");
+});
+test("Enter on an empty line in a block of pairs makes the new row a pair", () => {
+  const N = schema.nodes, cell = (t: string) => N.cell.create(null, t ? schema.text(t) : null);
+  const doc = N.doc.create(null, [N.verse.create(null, [N.pair.create(null, [cell("a"), cell("b")]), N.line.create(), N.pair.create(null, [cell("c"), cell("d")])])]);
+  let line = -1;
+  doc.descendants((n, p) => { if (n.type === N.line) line = p; });
+  const s = run(enterInRow, EditorState.create({ doc, selection: TextSelection.create(doc, line + 1) }));
+  expect(s.doc.child(0).content.content.map((n) => n.type.name)).toEqual(["pair", "gap", "pair", "pair"]);
+  expect(caret(s)).toBe("cell:|");
+});
+test("caretNear: a position before a stanza gap gives the caret at the next line's start, never the gap selected whole; asked the other way, the line before's end", () => {
+  const d = parseMarkdown("::: verse\nOne line\n\nTwo line\n:::\n");
+  let gap = -1;
+  d.descendants((n, p) => { if (n.type.name === "gap") gap = p; });
+  const s = caretNear(d, gap);
+  expect(s).toBeInstanceOf(TextSelection);
+  expect(d.textBetween(s.from, s.from + 8)).toBe("Two line");
+  expect(d.textBetween(caretNear(d, gap, -1).from - 8, caretNear(d, gap, -1).from)).toBe("One line");
+  expect(caretNear(d, 0).from).toBe(2);
+  expect(caretNear(d, d.content.size).from).toBe(d.content.size - 2);
 });
 test("a blank row selected with no line below it: Delete takes it out to the end of the line above", () => {
   const N = schema.nodes;

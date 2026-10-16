@@ -65,6 +65,21 @@ test("a passage begun at the end of a line starts on the next, numbered from it"
   expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> Does unmake you. I have given suck, and know\n> :::");
   expect(referenceRange(doc, a, b)).toBe(referenceRange(doc, ...span(doc, "Does", "know")));
 });
+test("a passage begun at the end of a line ending in a letter starts on the next, never on that line's last word", () => {
+  const doc = parseMarkdown("::: verse\nI would, while it was smiling\nHave pluck’d my nipple from his boneless gums\n:::");
+  const [a, b] = wordEdges(doc, span(doc, "smiling")[1], span(doc, "boneless")[1]);
+  expect(doc.textBetween(a, b, "/")).toBe("Have pluck’d my nipple from his boneless");
+});
+test("a passage begun on an opening mark that ends its line starts on the next line; a mark before a word stays", () => {
+  const doc = parseMarkdown("::: verse\nAnd then he cried, “\nO soul, still in\n:::");
+  const [a, b] = wordEdges(doc, span(doc, "cried,")[1], span(doc, "O soul")[1]);
+  expect(doc.textBetween(a, b, "/")).toBe("O soul");
+});
+test("a passage begun at the end of one verse block's last line lies in the next block alone: no refusal", () => {
+  const doc = parseMarkdown("::: verse\na line of the first\n:::\n\n::: verse\nthe second block's line\n:::");
+  const out = referencePayload(state(doc, span(doc, "first")[1], span(doc, "second")[1]), "bookshelf", "Milton, John/Paradise Lost/Book 1", journal);
+  expect("passage" in out && out.passage).toBe("> ::: verse\n> the second\n> :::");
+});
 test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
   const doc = parseMarkdown("::: verse\nMaecenas atavis | Maecenas, descended\nedite regibus | of kings\no et praesidium | my bulwark\n:::");
   const [a, b] = span(doc, "regibus", "bulwark");
