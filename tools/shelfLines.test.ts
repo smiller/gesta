@@ -173,7 +173,7 @@ test("quotedRuns: a quotation broken into lines otherwise than the passage is fo
   const own = "> The first speech of the play is spoken here\n> Then the liars and swearers are fools, for there are\n> liars and swearers enow, said I, to beat them all\n";
   expect(quotedRuns(own, prose).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 1, 3]]);
 });
-test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from inside the speech goes inside the reference, the speaker's row heading its passage", () => {
+test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from inside the speech goes inside the reference, the speaker's row heading its passage; a quotation opening a speech takes its speaker's row unnamed", () => {
   const md = "> DUKE ORSINO\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   const runs = quotedRuns(md, play);
   expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 4, 5]]);
@@ -192,6 +192,8 @@ test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from i
   expect(quotedRuns(verse, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
   const directed = "> Even in a minute: so full of shapes is fancy\n> That it alone is high fantastical.\n> [ *Music.* ]\n> CURIO\n> Will you go hunt, my lord?\n";
   expect(quotedRuns(directed, play).map((r) => [r.start, r.end, r.to])).toEqual([[0, 4, 16]]);
+  const unnamed = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n";
+  expect((referenceOf(play, quotedRuns(unnamed, play)[0]) as { passage: string }).passage.split("\n").slice(0, 3)).toEqual(["> ::: verse", "> **DUKE ORSINO**", "> If music be the food of love, play on;"]);
   const other = "> ORSINO THE DUKE\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(other, play).map((r) => [r.start, r.end, r.speaker !== undefined])).toEqual([[0, 2, true]]);
   const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";

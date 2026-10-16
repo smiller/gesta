@@ -1464,3 +1464,13 @@ section, the click landing on no row; the section alone read as approved
 4 times in 4 (MEASURED), no app code changed since 5ea6345: the timing
 flake, committed on a second run. MND 2.2.210 "tie heresies" made "the
 heresies" (Folger's reading), asked; folder gesta-mnd-2.2.
+MND 2.2 IMPORTED 2026-10-16, byte-identical to the backup. Asked after
+(2009-08-03 against 2006-10-30, "They both should"): a quotation opening a
+speech takes its speaker's row whether or not it names the speaker. 147
+play passages starting inside a speech, the speaker unnamed, have no
+speaker row, as ⌃⌘R gives them (MEASURED); put to him. Run: 360
+references; 39 wording, 70 spelling only, 251 the same words; 379 links
+found; 0 names above, 0 lines below (MEASURED).
+Verify failed twice more on "a blank row clicked" in the full run while
+the section alone passed 4 in 4: the click's place read before the row was
+in the window (INFERRED). The step now scrolls the row into view first.

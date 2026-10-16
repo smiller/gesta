@@ -849,7 +849,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* a blank row between stanzas is an empty line (2026-10-16): clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
   await go("2026-09-06");
   await R.settle(page);
-  const clickBlank = async () => { const b = await page.locator(S.editor + " .vgap").first().boundingBox(); await page.mouse.click(b.x + 60, b.y + b.height / 2); await rest(page); };
+  /* the row brought into the window first: a run that left the page scrolled clicked nothing */
+  const clickBlank = async () => { const g = page.locator(S.editor + " .vgap").first(); await g.scrollIntoViewIfNeeded(); const b = await g.boundingBox(); await page.mouse.click(b.x + 60, b.y + b.height / 2); await rest(page); };
   await clickBlank();
   await log("a blank row clicked", await R.blankRow(page));
   await searchFor(page, "");

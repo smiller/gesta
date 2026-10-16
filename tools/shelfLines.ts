@@ -280,7 +280,8 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
   /* a speaker's name opening the quotation, on its own line or before a
      colon, names whoever speaks where the run starts: the speaker's row
      goes into the reference, heading it where the run starts inside the
-     speech (pin: shelfLines.test › quotedRuns, referenceOf: a speaker's name) */
+     speech; a quotation opening a speech takes its speaker's row unnamed
+     (pin: shelfLines.test › quotedRuns, referenceOf: a speaker's name) */
   runs.forEach((r, at) => {
     const s = index.entries.find((e) => e.key === r.key)!, block = s.units[r.first].blockPos;
     if (s.units[r.first].kind === "speaker") return;
@@ -293,6 +294,8 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     const own = bare(lines[r.start]).match(NAMED)?.[0], above = up > floor ? bare(lines[up]) : "";
     const name = own ? own.replace(/:\s*$/, "") : /^[A-Z][A-Za-z .'’-]*[.:]?$/.test(above) && above.length <= 40 ? above : "";
     const n = norm(name);
+    /* a quotation opening a speech takes its speaker's row, named or not */
+    if (!n && x === r.first - 1 && !r.head) { r.first = x; return; }
     /* a name on its own line inside the quotation is the speaker's, however the passage names them: FESTE for Clown */
     const ownLine = !own && !!n && QUOTE.test(lines[up]) === QUOTE.test(lines[r.start]);
     if (!n || !(ownLine || s.left[x] === n || s.left[x].includes(n) || alike(n, s.left[x]))) return;
