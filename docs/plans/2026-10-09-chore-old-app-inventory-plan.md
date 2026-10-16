@@ -1204,3 +1204,7 @@ judged by reading, kept in tools/speechMarksRead.json by its words, set by
 tools/speechMarks.ts (3 tests); a run fails on words found twice or not
 at all. Run: 62 marks in 23 entries, nothing but marks changed in any
 file, no highlighted link into them (MEASURED).
+"Looks good." IMPORTED 2026-10-15: all 23 files of the folder
+byte-identical to the backup afterwards; the run again over the backup
+refuses, every reading's words gone; the quotation-marks and stray-marks
+passes over the backup set 0 marks and leave 0 for a hand (MEASURED).
