@@ -1,17 +1,17 @@
 /* the document flattened and the query parsed as the index's were, so nth
    lines up (pin: highlight.test › what selectionLink minted, findHit lands
    on). honorMarkers tells a live search-box jump (an edge "_" is a boundary
-   marker) from a deep-link replay (the passage is LITERAL text, and an old
+   marker) from a deep-link replay (the passage is LITERAL text less its footnote marks, and an old
    link's nth, counted under substring rules, still lands) (pin:
    highlight.test › a deep link replays literally) */
 import type { Node } from "prosemirror-model";
 import { Plugin, PluginKey, TextSelection, type Command, type EditorState, type Transaction } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { flattenDoc, flatRange } from "../model/flatten.ts";
-import { parseSearchQuery, searchFold, searchHits } from "../store/search.ts";
+import { parseSearchQuery, searchFold, searchHits, withoutNoteMarks } from "../store/search.ts";
 
 export function findHit(doc: Node, query: string, nth: number, honorMarkers: boolean): { from: number; to: number } | null {
-  const p = honorMarkers ? parseSearchQuery(query) : { needle: searchFold((query || "").trim()), left: false, right: false };
+  const p = honorMarkers ? parseSearchQuery(query) : { needle: searchFold(withoutNoteMarks(query || "").trim()), left: false, right: false };
   if (!p.needle) return null;
   const flat = flattenDoc(doc);
   const hits = searchHits(searchFold(flat.text), p.needle, p.left, p.right, nth + 1);

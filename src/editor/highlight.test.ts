@@ -11,6 +11,13 @@ describe("findHit", () => {
     const hit = findHit(d, "Pedenteria in comparison", 0, true)!;
     expect(d.textBetween(hit.from, hit.to)).toBe("Pedenteria ¹ in comparison");
   });
+  it("a deep link whose passage carries its footnote marks lands, as the stream skips them", () => {
+    const d = parseMarkdown("::: verse\nvestimenta ⁵ maris deo. ⁶ | to the deity who rules the sea.\n:::\n");
+    const hit = findHit(d, "vestimenta ⁵ maris deo. ⁶ to the deity", 0, false)!;
+    expect(d.textBetween(hit.from, hit.to, " ")).toBe("vestimenta ⁵ maris deo. ⁶ to the deity");
+    const m = parseMarkdown("Area 3 m² and more.");
+    expect(m.textBetween(findHit(m, "3 m²", 0, false)!.from, findHit(m, "3 m²", 0, false)!.to)).toBe("3 m²");
+  });
   it("the nth occurrence under the search parse, folded, across blocks", () => {
     const first = findHit(doc, "Sister", 0, true)!;
     expect(doc.textBetween(first.from, first.to)).toBe("sister");

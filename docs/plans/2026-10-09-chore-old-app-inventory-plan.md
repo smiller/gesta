@@ -1109,3 +1109,16 @@ the step typed "one" straight after ⌃⌘K, and before the Search box took
 the focus the word went into the day under it (the entry read "one", the
 box empty, 3 runs in 4 alone; MEASURED). Every ⌃⌘K-then-type step now
 waits for the box's focus first; 4 runs in 4 read as approved (MEASURED).
+
+### 2026-10-15 — a deep link's passage carrying its footnote marks
+
+8 highlighted links into the paired Horace Odes (2.16, 1.5) and Boethius
+texts opened their entry and selected nothing: their passages, minted
+before search skipped footnote marks, carry them ("vestimenta ⁵ maris
+deo. ⁶"), and the stream they are matched against no longer does. Asked:
+"In the app" over rewriting the links. A deep link's passage now drops
+its footnote marks as the search box's query does, one shared rule; test
+first in highlight.test. Over the backup 0 highlighted bookshelf links
+are lost, against 8 before; a headless Helium probe following such a link
+selected nothing before the change and the whole passage after
+(MEASURED).

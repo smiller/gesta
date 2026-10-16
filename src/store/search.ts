@@ -40,8 +40,13 @@ export interface Query { needle: string; left: boolean; right: boolean }
    so "_sister_" is the whole word; a doubled edge underscore searches the
    literal one; an only-underscores query is a literal search (pin:
    search.test › substring by default) */
+/* a footnote mark, a space and superscript digits after a word, dropped;
+   "m²" stays (pin: highlight.test › a deep link whose passage carries its footnote marks) */
+export function withoutNoteMarks(s: string): string {
+  return s.replace(/(?<=\S) [⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, "");
+}
 export function parseSearchQuery(raw: string | null | undefined): Query {
-  const t = (raw || "").replace(/(?<=\S) [⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, "").trim();
+  const t = withoutNoteMarks(raw || "").trim();
   const left = t.charAt(0) === "_";
   let core = left ? t.slice(1) : t;
   const right = core.length > 0 && core.charAt(core.length - 1) === "_";
