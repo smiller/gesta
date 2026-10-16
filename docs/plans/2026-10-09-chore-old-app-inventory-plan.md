@@ -1122,6 +1122,11 @@ first in highlight.test. Over the backup 0 highlighted bookshelf links
 are lost, against 8 before; a headless Helium probe following such a link
 selected nothing before the change and the whole passage after
 (MEASURED).
+His look in Helium: the link into Odes 1.5.13-16 lands with the four
+lines selected, Latin and English, the marks ⁵ ⁶ inside the selection
+("I can confirm in the live app that it does the highlighting now").
+Accepted 2026-10-15 (51179136cdd7…). No review: highlight.ts and
+search.ts are no DOM seam, and no phase closes.
 
 ### 2026-10-15 — stray quotation marks, a review and import pass
 
@@ -1174,3 +1179,6 @@ did not come back in 4 runs of the section alone, so its cause is not
 measured. The step's word click now clicks again (up to 3 times) until
 the caret stands in the word, a guard on the likeliest cause, the click
 measured while the page settled after the view switch (INFERRED).
+IMPORTED 2026-10-15: all 125 files of the folder byte-identical to the
+backup afterwards; the pass run again over the backup sets 0 marks right,
+the 2 left for a hand alone remaining (MEASURED).
