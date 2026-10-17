@@ -275,13 +275,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* ⌃⌘R's reference pasted with ⌘V into another entry: the link stored by its bare address (#page/…), never the page's full file address */
   await go("page/Horace");
   await R.selectAll(page, S.editorCell);
-  await R.waitBar(page).catch(() => {});
-  await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  const barMissed = await R.waitBar(page).then(() => null, (e) => e.message);
+  const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  /* the HTML flavour is the paste's source and carries the full address, so a bare link stored is the paste's own doing; the old app's copy was still landing at the first read ("Clipboard data has changed") */
+  const copied = await page.evaluate(async () => { let last = ""; for (let i = 0; i < 10; i++) { try { const item = (await navigator.clipboard.read())[0]; if (!item.types.includes("text/html")) return "no html"; const href = (/<a href="([^"]*)"/.exec(await (await item.getType("text/html")).text()) ?? [])[1] ?? ""; return href.startsWith("#") ? "bare" : href.startsWith("file:") ? "file address" : href ? "other" : "no link"; } catch (e) { last = String(e); await new Promise((r) => setTimeout(r, 50)); } } return last; });
   await go("page/Referred");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
   await rest(page);
-  { const md = await A.stored(page); const href = (md.match(/\]\(([^)]*)\)/) ?? [])[1] ?? ""; await log("the reference pasted", { link: href.startsWith("#") ? "bare" : href.startsWith("file:") ? "file address" : href ? "other" : "none", head: href.replace(/\?h=.*$/, "").replace(/^file:.*#/, "file:…#") }); }
+  { const md = await A.stored(page); const href = (md.match(/\]\(([^)]*)\)/) ?? [])[1] ?? ""; await log("the reference pasted", { ...(barMissed ? { barMissed } : {}), said, copied, link: href.startsWith("#") ? "bare" : href.startsWith("file:") ? "file address" : href ? "other" : "none", head: href.replace(/\?h=.*$/, "").replace(/^file:.*#/, "file:…#") }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */

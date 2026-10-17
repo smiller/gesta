@@ -7,7 +7,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { renumbered } from "./numbering.ts";
 import { bareUrl } from "./typing.ts";
-import { namesEntry, internalHash } from "../store/nav.ts";
+import { namesEntry, internalHash, makeHref } from "../store/nav.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
 
 const N = schema.nodes;
@@ -114,22 +114,34 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
 /* A PASTED LINK TO THIS PAGE KEEPS ITS BARE ADDRESS: pasted HTML carries the
-   page's full file address, which breaks when the page moves (pin:
-   paste.test › a pasted link to this page) */
-export function bareLinks(slice: Slice, docHref: string): Slice {
-  const bare = (frag: Fragment): Fragment => {
-    const out: Node[] = [];
-    frag.forEach((n) => {
-      const marks = n.marks.map((m) => {
-        if (m.type !== schema.marks.link) return m;
-        const frag = internalHash(m.attrs.href as string, docHref);
-        return frag && frag !== m.attrs.href ? schema.marks.link.create({ ...m.attrs, href: frag }) : m;
-      });
-      out.push(n.isText ? n.mark(marks) : n.copy(bare(n.content)).mark(marks));
+   page's full file address, which breaks when the page moves; a link whose
+   words are its address stays whole (pin: paste.test › a pasted link to this
+   page) (pin: paste.test › a link to this page in pasted markdown) */
+function bareFragment(frag: Fragment, docHref: string): Fragment {
+  let changed = false;
+  const out: Node[] = [];
+  frag.forEach((n) => {
+    const marks = n.marks.map((m) => {
+      const href = m.attrs.href as string;
+      if (m.type !== schema.marks.link || (n.isText && n.text === href) || !internalHash(href, docHref)) return m;
+      const bare = makeHref(href, docHref);
+      return bare === href ? m : schema.marks.link.create({ ...m.attrs, href: bare });
     });
-    return Fragment.fromArray(out);
-  };
-  return new Slice(bare(slice.content), slice.openStart, slice.openEnd);
+    const content = n.isText ? n.content : bareFragment(n.content, docHref);
+    const same = content === n.content && marks.every((m, i) => m === n.marks[i]);
+    if (!same) changed = true;
+    out.push(same ? n : n.isText ? n.mark(marks) : n.copy(content).mark(marks));
+  });
+  return changed ? Fragment.fromArray(out) : frag;
+}
+export function bareLinks(slice: Slice, docHref: string): Slice {
+  const content = bareFragment(slice.content, docHref);
+  return content === slice.content ? slice : new Slice(content, slice.openStart, slice.openEnd);
+}
+export function bareBlocks(blocks: Node[], docHref: string): Node[] {
+  const out: Node[] = [];
+  bareFragment(Fragment.from(blocks), docHref).forEach((b) => out.push(b));
+  return out;
 }
 /* NO PAGE MARKER LEAVES IN A COPY: pasted into a journal entry it made a
    page number with no book behind it. Where one stood between two spaces,

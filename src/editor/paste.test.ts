@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks } from "./paste.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 
@@ -204,4 +204,12 @@ test("a pasted link to this page by its full address keeps only its bare address
   const hrefs: string[] = [];
   bareLinks(pasted, page + "#2026-10-16").content.descendants((n) => { n.marks.forEach((m) => hrefs.push(m.attrs.href as string)); });
   expect(hrefs).toEqual(["#page/Horace?h=sunt%20quos", "https://example.com/#x", "file:///Users/someone/writer/index.html#2022-07-05"]);
+});
+test("a link to this page in pasted markdown keeps only its bare address; one whose words are its address stays whole; a paste with nothing to change comes back as it was", () => {
+  const page = "file:///Users/someone/gesta/dist/index.html";
+  const s = at("start here", "here");
+  const blocks = bareBlocks(pasteBlocks(`[Horace](${page}#page/Horace)\n\nand [${page}#page/Ode](${page}#page/Ode)`, s.selection.$from)!, page + "#2026-10-16");
+  expect(serializeMarkdown(placeBlocks(s, blocks).doc)).toBe(`start here\n\n[Horace](#page/Horace)\n\nand ${page}#page/Ode`);
+  const plain = new Slice(parseMarkdown("no links [here](https://example.com/)").content, 0, 0);
+  expect(bareLinks(plain, page)).toBe(plain);
 });

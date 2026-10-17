@@ -20,7 +20,7 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks, bareBlocks } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -225,8 +225,9 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       if (onlyLineBreaks(data.getData("text/plain"), view.state.selection.$from, data.getData("text/html"))) return true;
       /* text carrying HTML keeps the editor's paste */
       if (data.types.includes("text/html")) return false;
-      const blocks = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
-      if (!blocks) return false;
+      const parsed = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
+      if (!parsed) return false;
+      const blocks = bareBlocks(parsed, location.href);
       view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
       const refused = pastedRefusal(blocks);
       if (refused) opts.onPasteRefused?.(refused);

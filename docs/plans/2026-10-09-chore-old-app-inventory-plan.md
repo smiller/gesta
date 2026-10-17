@@ -1541,3 +1541,37 @@ bare in gesta-bare-links (only the addresses change, each file a fixed
 point; 64 name an entry, the 65th, 2026-09-09's Rick Hanson newsletter,
 named none before either) (MEASURED). Links to the web reader's pages and
 to the web stay as written.
+The Hanson link was re-pointed to "Hanson, Rick" (his address) before the
+import; IMPORTED 2026-10-16, 31/31 byte-identical to the backup, and the
+backup holds 0 links by the page's full file address (MEASURED). Accepted
+2026-10-16.
+
+#### Review, cycle 1 — 97b973d..48390f9
+
+`/code-review` at high. REVIEW CYCLES: 1. Cost 95,689 tokens (MEASURED, the
+transcript's last message: 2 + 3,080 + 89,921 input, 2,686 output). Ten
+findings, unverified; fixed:
+
+1. Markdown pasted as plain text (several lines) took the placeBlocks route,
+   which transformPasted never sees: a full-address link stayed full. Now
+   `bareBlocks` over the parsed blocks too (paste.test › a link to this page
+   in pasted markdown).
+2. The step swallowed a bar miss and the corner: it now logs `barMissed` and
+   `said`.
+3. A link whose words are its address (a bare URL pasted alone) had its href
+   cut and its words kept: now left whole.
+4. The step could not tell the HTML route from the text one: it now reads
+   the HTML flavour's href, "file address" in both apps (MEASURED), so the
+   bare link stored is the paste's doing. The old app's first read threw
+   "Clipboard data has changed"; the read retries.
+6. `makeHref`, nav's minting of a same-document URL, replaces the direct
+   `internalHash` slice (its `"` escaping kept).
+9. A paste with nothing to change comes back as the same slice.
+10. The shadowing `frag` is gone with the rewrite.
+
+Not taken: 5 (normalising in the link mark's parseDOM: the schema has no
+page address, and every paste route now passes through one of the two
+calls); 7 (settle waiting for an arrival's restored scroll: the locator
+click has held in every full run since, a wider change not asked); 8 (the
+new page "Referred" in nine list readings: approved already, a move would
+churn them again).
