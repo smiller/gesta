@@ -9,9 +9,10 @@
 // session) could move without warning under `npm test`.
 // `node tools/helium-approve.mjs [--approve] [corner|bridge ...]`
 import { spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, rmSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { fingerprint, mayReuse } from "./heliumStamp.ts";
 
 const TOOLS = { corner: "tools/helium-corner.mjs", bridge: "tools/helium-bridge.mjs" };
 /* `--writer` runs the CURRENT APP's driver over the same steps and keeps
@@ -51,10 +52,37 @@ if (args.includes("--writer")) {
   console.log("writer: " + (r.stdout || "").split("\n").length + " lines to tools/expected/corner.writer.txt" + (bad ? " — FAILED, " + bad : ""));
   process.exit(bad ? (r.status || 1) : 0);
 }
+/* WHAT A RUN READS, fingerprinted after the build: the page (every line of
+   the app, its fixtures and its libraries), the drivers, steps and
+   adapters, the two source files an adapter imports, the approved copy,
+   and the browser, node and playwright that play it. A run whose inputs
+   match a passing run's stamp is not played again; asked 2026-10-17, after
+   a commit replayed for seven minutes a run approved minutes before */
+const HELIUM_PLIST = "/Applications/Helium.app/Contents/Info.plist";
+const file = (p) => ({ name: p, bytes: existsSync(p) ? readFileSync(p) : "(missing)" });
+function inputsFor(name) {
+  const helium = (/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/.exec(readFileSync(HELIUM_PLIST, "utf8")) ?? [])[1] ?? "(unknown)";
+  return [
+    file("dist/index.html"),
+    ...readdirSync("tools").filter((f) => /^helium-.*\.mjs$/.test(f)).map((f) => file("tools/" + f)),
+    ...readdirSync("tools/adapters").map((f) => file("tools/adapters/" + f)),
+    file("src/store/keys.ts"), file("src/store/store.ts"),
+    file("tools/expected/" + name + ".approved.txt"),
+    { name: "helium", bytes: helium },
+    { name: "node", bytes: process.version },
+    { name: "playwright-core", bytes: JSON.parse(readFileSync("node_modules/playwright-core/package.json", "utf8")).version },
+  ];
+}
+const STAMPS = resolve("tools/out/helium-pass");
+const stampPath = (name) => resolve(STAMPS, name + ".txt");
+const stamp = (name) => { mkdirSync(STAMPS, { recursive: true }); writeFileSync(stampPath(name), fingerprint(inputsFor(name))); };
 let failed = 0;
 const build = spawnSync("npm", ["run", "build"], { env, encoding: "utf8" });
 if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
 for (const name of run) {
+  const before = existsSync(stampPath(name)) ? readFileSync(stampPath(name), "utf8") : null;
+  if (mayReuse(before, fingerprint(inputsFor(name)), { approve, steps: !!process.env.STEPS })) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); continue; }
+  rmSync(stampPath(name), { force: true });
   /* the last run's browser may still be exiting: kill, then retry the
      delete for a few seconds rather than fail on a held directory */
   spawnSync("pkill", ["-f", "gesta-helium-" + name + "-profile"]);
@@ -67,8 +95,8 @@ for (const name of run) {
   const approved = existsSync(approvedPath) ? readFileSync(approvedPath, "utf8") : null;
   /* a run that died is never the approved copy, whatever the flag */
   if (approve && bad) { failed++; writeFileSync(receivedPath, received); console.log(name + ": FAILED (" + bad + "), not approved; see " + receivedPath); continue; }
-  if (approve) { writeFileSync(approvedPath, received); rmSync(receivedPath, { force: true }); console.log(name + ": approved (" + received.split("\n").length + " lines)"); continue; }
-  if (approved === received) { rmSync(receivedPath, { force: true }); console.log(name + ": ok"); continue; }
+  if (approve) { writeFileSync(approvedPath, received); rmSync(receivedPath, { force: true }); if (!process.env.STEPS) stamp(name); console.log(name + ": approved (" + received.split("\n").length + " lines)"); continue; }
+  if (approved === received) { rmSync(receivedPath, { force: true }); if (!process.env.STEPS) stamp(name); console.log(name + ": ok"); continue; }
   failed++;
   writeFileSync(receivedPath, received);
   console.log(name + ": DIFFERS from " + approvedPath + (approved === null ? " (no approved copy yet)" : ""));

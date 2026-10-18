@@ -92,7 +92,13 @@ here NOW, and what is not yet:
   verify. A step added after that date, or a field of an old one that
   changes, is judged by the approved copy alone and listed in
   `corner.differences.txt` as `<label> · * · new here, the old app
-  frozen` (or its field, `· <field> ·`).
+  frozen` (or its field, `· <field> ·`). A PASSING RUN IS NOT REPLAYED
+  from 2026-10-17 (asked): `helium-approve.mjs` stamps the fingerprint of
+  what a run reads (`tools/heliumStamp.ts`: the built page, the drivers,
+  steps and adapters, the source an adapter imports, the approved copy,
+  Helium's version, node's and playwright's) under `tools/out/helium-pass`
+  when it passes or is approved, and a run with the same fingerprint prints
+  "ok — not replayed"; `--approve` and `STEPS=` always play.
 - IN FORCE — `node_modules` carries the Dropbox-ignore attribute. A
   `rm -rf node_modules` loses it with the directory, so a clean reinstall runs
   `mkdir -p node_modules && xattr -w com.dropbox.ignored 1 node_modules`

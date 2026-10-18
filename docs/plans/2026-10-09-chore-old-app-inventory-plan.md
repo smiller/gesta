@@ -1615,3 +1615,16 @@ Headless: "prose with two spaces pasted" over the Williams fixture read
 step pastes over the whole page: pasted at a paragraph's start, the HTML
 route joined the quote's last line onto that paragraph — the same before
 the fix (MEASURED), noted, not changed.
+
+### 2026-10-17 — the old app frozen; a passing run not replayed
+
+Asked, after 37 minutes of one fix were mostly headless runs (MEASURED:
+the old app's whole run 7m57s, again with the successor's 11m27s, a
+flake's rerun 3m30s, the commit's verify 6m59s). The old app frozen
+(462eca2): never replayed, its stored run still compared. A passing run
+not replayed: the fingerprint of everything a run reads stamped when it
+passes; two builds of one source are byte-identical (MEASURED, one SHA-256),
+so the stamp matches until something changes. Measured: a matched run
+0.69 s against 3m19s played. The first pass after the change saw the
+corner differ and a rerun pass, its diff not kept — a flake, the second
+of the day.
