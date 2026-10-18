@@ -2043,3 +2043,25 @@ changed, 78 new (MEASURED). Review pages per author regenerated, Spenser's
   window now runs over every line the reference changes, a line either
   side: 0 cards of 625 without a link on any page (MEASURED). Folder and
   pages rewritten: 625 references, 4195 lines, 285 entries.
+- Asked, the same day: the Faerie Queene cited 2.7.5.8-9, not II.vii.5.8-9
+  ("Spenser references default ... to 2.7.5.8-9"); a reference's link the
+  standard form, [Spenser, *The Faerie Queene*, 2.7.5.8-9], not the entry's
+  own citation ("you can change the references from the variants in the
+  entries to the standard format"). The run reads a work's page without
+  its `roman book and canto` directive (the Faerie Queene page in the
+  backup still carries it, so ⌃⌘R in the app says II.vii.5 until the box is
+  taken off by hand; an import never ships that page); a citation with
+  numbers above a run gives way to the reference whole, the rule that kept
+  a citation giving the lines as the link in its own words dropped.
+- Seen the same day: 1992-05-04's I.x.58.5-6,9 referred at line 9 alone,
+  the two lines above it left bare ("We've seen that mistake before this
+  weekend"). Fixed as a class (`carried`): a verse run is carried over the
+  quoted lines beside it, up to a blank line, each its block's next line back
+  or on within twelve rows, spelled otherwise (0.8), the very next line in
+  another edition's words (0.6), cut short by an elision, or the line with
+  one's own note after it; and an attribution closing a quotation goes
+  with it when it names any part the work is filed under (*Paradiso*, not
+  only Commedia). Partial quotations listed: 20 → 12 (a translation in the
+  block, a line not the author's, a fragment). 1.10.58.5-9 is one reference.
+  Folder and pages rewritten: 621 references, 4208 lines, 285 entries; every
+  Spenser label arabic, every card's link the standard form (MEASURED).

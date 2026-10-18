@@ -333,12 +333,12 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
      or with a number, is the link's own citation and goes with it (pin:
      shelfLines.test › quotedRuns: an attribution closing) */
   runs.forEach((r, at) => {
-    const next = at + 1 < runs.length ? runs[at + 1].start : lines.length, work = norm(r.key.split("/")[2] ?? "");
+    const next = at + 1 < runs.length ? runs[at + 1].start : lines.length, works = r.key.split("/").slice(2).filter((w) => /\p{L}/u.test(w)).map(norm);
     let k = r.end + 1;
     while (k < next && !norm(bare(lines[k])) && (QUOTE.test(lines[k]) || !lines[k].trim())) k++;
-    if (k >= next || !work) return;
+    if (k >= next || !works.length) return;
     const t = bare(lines[k]);
-    if (QUOTE.test(lines[k]) === QUOTE.test(lines[r.start]) && t.length <= 60 && norm(t).includes(work) && /^\\?[-–—―]|\d|\b[IVXL]+\s*[.,]\s*[ivxlIVXL]+\b/.test(t)) r.end = k;
+    if (QUOTE.test(lines[k]) === QUOTE.test(lines[r.start]) && t.length <= 60 && works.some((w) => norm(t).includes(w)) && /^\\?[-–—―]|\d|\b[IVXL]+\s*[.,]\s*[ivxlIVXL]+\b/.test(t)) r.end = k;
   });
   /* a joined line shared by two runs gives way to both; its other place,
      where no run takes it, is kept as written (pin: shelfLines.test ›
@@ -353,6 +353,47 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
   });
 }
 
+/* A RUN CARRIED OVER ITS QUOTATION: the quoted lines beside it, up to a
+   blank line, each its block's next line back or on, a few lines left out
+   allowed, spelled otherwise or cut short by an elision; a line that is no
+   line of the block stops it. A quotation part referred and part left
+   bare beside its reference was read as two (pin: shelfLines.test ›
+   carried) */
+const CARRY = 12;
+export function carried(md: string, index: ShelfIndex, runs: Run[]): Run[] {
+  const lines = md.split("\n");
+  const taken = (k: number, r: Run): boolean => runs.some((x) => x !== r && k >= x.start && k <= x.end);
+  return runs.map((r) => {
+    if (!QUOTE.test(lines[r.start])) return r;
+    const s = index.entries.find((e) => e.key === r.key)!, block = s.units[r.first].blockPos;
+    const place = (k: number, from: number, d: 1 | -1): number => {
+      const n = norm(bare(lines[k]).replace(/…|\.\.\./g, ""));
+      if (n.length < HALF) return -1;
+      for (let x = from, seen = 0; x >= 0 && x < s.units.length && s.units[x].blockPos === block && seen < CARRY; x += d, seen++) {
+        if (s.units[x].line <= 0) continue;
+        /* the very next line in another edition's words, or the line with one's own note after it */
+        if (alike(n, s.left[x], seen ? ALIKE : REWORDED) || n.length >= HALF * 2 && s.left[x].includes(n) || s.left[x].length >= HALF * 2 && n.startsWith(s.left[x])) return x;
+      }
+      return -1;
+    };
+    let { start, end, first, last } = r;
+    for (let k = start - 1, x = first - 1; k >= 0 && QUOTE.test(lines[k]) && norm(bare(lines[k])) && !taken(k, r); k--) {
+      const y = place(k, x, -1);
+      if (y < 0) break;
+      start = k; first = y; x = y - 1;
+    }
+    for (let k = end + 1, x = last + 1; k < lines.length && QUOTE.test(lines[k]) && norm(bare(lines[k])) && !taken(k, r); k++) {
+      const y = place(k, x, 1);
+      if (y < 0) break;
+      end = k; last = y; x = y + 1;
+    }
+    if (start === r.start && end === r.end) return r;
+    const out: Run = { ...r, start, end, first, last, from: s.units[first].line, to: s.units[last].line };
+    if (start !== r.start) delete out.head;
+    if (end !== r.end) delete out.tail;
+    return out;
+  });
+}
 const inked = (passage: string): string => norm(passage.split("\n").filter((l) => !/^:::/.test(bare(l))).join(" "));
 /* A BOOK'S PASSAGE QUOTED AS TEXT, in a prose book or a translation beside
    verse: each quoted paragraph placed, and joined to the next a blank line
@@ -445,16 +486,12 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
     const numbered = (l: string): boolean => /^[\s>….]*[([]?\s*(?:[IVXLC]+|\d+)\s*[,.]\s*(?:[ivxlc]+|\d+)\s*[)\]]?\s*$/i.test(l);
     const kept = (l?: string): l is string => l !== undefined && !(work && norm(l).includes(work)) && !numbered(l);
     const after = !kept(r.after) ? tail.map(within) : [within(""), r.after];
-    /* a citation giving the lines is the link in its own words; one giving
-       only the book or scene gives way to the reference whole; a line with no
-       numbers is no citation (pin: shelfLines.test › referRuns: a citation
-       giving the lines) */
+    /* a citation with numbers gives way to the reference whole, in the
+       standard form; a line with no numbers is no citation (pin:
+       shelfLines.test › referRuns: a citation with numbers) */
     const citation = !!cited && /:\s*$/.test(cited) && cited.length <= CITATION && !/\]\(/.test(cited) && !kept(r.before);
-    const lined = /\d+\s*[.,:]\s*\d+\s*[-–]\s*\d+|\d+\.\d+\.\d+/.test(cited);
-    const scened = /\d|\b[IVXLC]+\s*[.,]\s*[ivxlcIVXLC]+\b/.test(cited);
-    if (citation && (lined || r.prose && scened))
-      lines.splice(above, end - above + 1, ...["[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n")].map(within), ...after);
-    else if (citation && scened)
+    const cites = /\d|\b[IVXLC]+\s*[.,]\s*[ivxlcIVXLC]+\b/.test(cited);
+    if (citation && cites)
       lines.splice(above, end - above + 1, ...m.text.split("\n").map(within), ...after);
     else
       lines.splice(r.start, end - r.start + 1, ...(kept(r.before) ? [r.before] : []), ...[...(!kept(r.before) && blank(r.start > 0 ? lines[r.start - 1] : "") ? [] : [""]), ...m.text.split("\n")].map(within), ...after);

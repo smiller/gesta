@@ -5,7 +5,7 @@
    page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { quotedRuns, quotedPassages, sameQuoted, referRuns, wordDiff, type Run } from "./shelfLines.ts";
+import { quotedRuns, quotedPassages, sameQuoted, carried, referRuns, wordDiff, type Run } from "./shelfLines.ts";
 import { shelfIndex, referenceOf, norm } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -28,6 +28,8 @@ const cache: Record<string, string> = Object.create(null);
 for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if (t) cache[entryKey(t.date, t.tag)] = readFileSync(path, "utf8"); }
 /* a comma and a space is inside a filed name (Spenser, Edmund); a bare comma parts two */
 const PREFIXES = AUTHOR.split(/,(?! )/);
+/* a work cited in roman book and canto by its own page is cited in arabic all the same, asked: Spenser, The Faerie Queene, 2.7.5.8-9 */
+for (const k of Object.keys(cache)) if (/^bookshelf\//.test(k)) cache[k] = cache[k].replace(/^::: reference\nroman book and canto\n:::\n\n?/m, "");
 const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) => PREFIXES.some((p) => k === p || k.startsWith(p + "/")))));
 
 /* entries that quote the bookshelf as the reference feature's test data, left */
@@ -106,7 +108,7 @@ for (const path of walk(SRC).sort()) {
     md = ls.join("\n");
     counts.runs++; counts.lines++;
   }
-  const verse = [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start).filter((r) => {
+  const verse = carried(md, index, [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start)).filter((r) => {
     const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from && (x.at === undefined || x.at === r.start + 1));
     if (k) kept.push(`${file} — ${r.key.split("/").slice(-2).join(" ")}.${r.from}-${r.to}: ${k.why}`);
     return !k;

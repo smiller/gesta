@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { shelfIndex, referenceOf } from "./bookshelfQuotes.ts";
-import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted } from "./shelfLines.ts";
+import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted, carried } from "./shelfLines.ts";
 
 const index = shelfIndex({
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -17,11 +17,11 @@ test("quotedRuns: a quotation under a link to the bookshelf written as the page'
   const md = "[Horace, *Odes*, 1.1.3-4](file:///Users/someone/gesta/dist/index.html#bookshelf/Horace/Odes/1.1?h=x):\n\n> ::: verse 3\n> sunt quos curriculo pulverem Olympicum | x\n> collegisse iuvat metaque fervidis | y\n> :::\n";
   expect(quotedRuns(md, index)).toEqual([]);
 });
-test("referRuns: a run after a short citation ending in a colon makes that line the reference's link; else the reference stands in its place", () => {
+test("referRuns: a run after a short citation ending in a colon takes that line's place with the reference; else the reference stands in the run's place", () => {
   const md = "Odes 1.1.3-4:\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n\nAnd then\n> certat tergeminis tollere honoribus;\nhe said.\n";
   const runs = quotedRuns(md, index);
   const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u${r.from}):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: `#u${r.from}`, passage: `> ::: verse ${r.from}\n> line\n> :::` }));
-  expect(out).toBe("[Odes 1.1.3-4](#u3):\n\n> ::: verse 3\n> line\n> :::\n\nAnd then\n\n[Horace, *Odes*, 1.1.8-8](#u8):\n\n> ::: verse 8\n> line\n> :::\n\nhe said.\n");
+  expect(out).toBe("[Horace, *Odes*, 1.1.3-4](#u3):\n\n> ::: verse 3\n> line\n> :::\n\nAnd then\n\n[Horace, *Odes*, 1.1.8-8](#u8):\n\n> ::: verse 8\n> line\n> :::\n\nhe said.\n");
 });
 test("quotedRuns: a run carries through a line spelled otherwise when the next goes on with the passage; a blank line ends it", () => {
   const md = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidiss ed\n> evitata rotis palmaque nobilis\n\n> certat tergeminis tollere honoribus;\n";
@@ -209,11 +209,11 @@ test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from i
   const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(outside, play).map((r) => [r.start, r.end])).toEqual([[1, 2]]);
 });
-test("referRuns: a citation giving the lines is the link in its own words; one giving only the book or scene gives way to the reference whole; a line with no numbers is no citation", () => {
+test("referRuns: a citation with numbers, giving the lines or only the book or scene, gives way to the reference whole, in the standard form; a line with no numbers is no citation", () => {
   const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` });
   const verse = "sunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n";
   const at = (head: string) => referRuns(head + "\n" + verse, quotedRuns(head + "\n" + verse, index), mint);
-  expect(at("Odes 1.1.3-4:")).toBe("[Odes 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("Odes 1.1.3-4:")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("Odes, I. i:")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("ODES (I.i):")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("cemenna nún, yasse atamána nás:")).toBe("cemenna nún, yasse atamána nás:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
@@ -275,7 +275,7 @@ test("referRuns: a short citation ending in a colon a blank line above the run i
   const md = "Odes 1.1.3-4:\n\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n\nOdes 1.1:\n\n> certat tergeminis tollere honoribus;\n";
   const runs = quotedRuns(md, index);
   const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u${r.from}):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: `#u${r.from}`, passage: `> ::: verse ${r.from}\n> line\n> :::` }));
-  expect(out).toBe("[Odes 1.1.3-4](#u3):\n\n> ::: verse 3\n> line\n> :::\n\n[Horace, *Odes*, 1.1.8-8](#u8):\n\n> ::: verse 8\n> line\n> :::\n");
+  expect(out).toBe("[Horace, *Odes*, 1.1.3-4](#u3):\n\n> ::: verse 3\n> line\n> :::\n\n[Horace, *Odes*, 1.1.8-8](#u8):\n\n> ::: verse 8\n> line\n> :::\n");
 });
 test("quotedRuns: stanzas quoted one after another, a blank line between, are one run, a reference across them", () => {
   const hav = shelfIndex({ "bookshelf/Havamal": "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::\n\n::: stanza 78\nFullar grindr | Full folds\n:::" });
@@ -309,10 +309,10 @@ test("quotedPassages: a paragraph of one's own among the quoted ones leaves the 
   expect(quotedPassages(taken, novel, AUSTEN, [{ start: 0, end: 0, key: "k", first: 0, last: 0, from: 1, to: 1 }])).toEqual([]);
   expect(quotedPassages("```\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n```\n", novel, AUSTEN, [])).toEqual([]);
 });
-test("referRuns: before a prose passage, whose reference cites its chapter alone, a short citation with a number is the link in its own words", () => {
+test("referRuns: before a prose passage, a short citation with a number gives way to the reference whole", () => {
   const md = "Volume 1, chapter 9:\n\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n";
   const { run, ref } = quotedPassages(md, novel, AUSTEN, [])[0];
-  expect(referRuns(md, [run], () => ref)).toBe("[Volume 1, chapter 9](" + ref.url + "):\n\n" + ref.passage + "\n");
+  expect(referRuns(md, [run], () => ref)).toBe(ref.text + "\n");
 });
 test("quotedPassages: quoted paragraphs join one by one while nothing of the book is left out between them; a paragraph left out parts them there", () => {
   const book = shelfIndex({
@@ -348,4 +348,28 @@ test("quotedPassages: a quotation as short as a verse run too common to count, a
   });
   expect(quotedPassages("> My dearest love,\n", book, AUSTEN, [])).toEqual([]);
   expect(quotedPassages("> “My dearest love,” said she, “you must not think so ill of yourself.”\n", book, AUSTEN, []).length).toBe(1);
+});
+test("carried: a run is carried over the lines beside it in its quotation that are its block's earlier or later lines, spelled otherwise, an elision passed over; a line of one's own stops it", () => {
+  const md = "> Maecenas atavis edite regibs,\n> o et presidium et dulce decus meum: ...\n> terrarum dominos evehit ad deos;\n> hunc, si mobilium turba Quiritium\n> – Horace, my favourite\n";
+  const runs = quotedRuns(md, index);
+  expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[2, 3, 6, 7]]);
+  expect(carried(md, index, runs).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 1, 7]]);
+  const own = "> My own line that is nothing of Horace\n> terrarum dominos evehit ad deos;\n> hunc, si mobilium turba Quiritium\n";
+  expect(carried(own, index, quotedRuns(own, index)).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 6, 7]]);
+});
+test("carried: the line beside a run that is its block's very next line in another edition's words, or that line with one's own note after it, is carried", () => {
+  const md = "> hunc, si mobilium turba Quiritium\n> certant trigeminis tolli honores\n";
+  expect(carried(md, index, [{ start: 0, end: 0, key: "bookshelf/Horace/Odes/1.1", first: 6, last: 6, from: 7, to: 7 }]).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 7, 8]]);
+  const far = "> hunc, si mobilium turba Quiritium\n> quicquid ex Libyae verrunt areis.\n";
+  expect(carried(far, index, [{ start: 0, end: 0, key: "bookshelf/Horace/Odes/1.1", first: 6, last: 6, from: 7, to: 7 }]).map((r) => [r.start, r.end])).toEqual([[0, 0]]);
+  const noted = "> terrarum dominos evehit ad deos;\n> hunc, si mobilium turba Quiritium\n> certat tergeminis tollere honoribus; (*Odes*, i.1.6-8)\n";
+  expect(carried(noted, index, quotedRuns(noted, index)).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 6, 8]]);
+});
+test("quotedRuns: an attribution closing the quotation that names any part the work is filed under goes with it", () => {
+  const dante = shelfIndex({ "bookshelf/Dante/Commedia/Paradiso/20": "# Canto 20\n\n::: verse\nQuando colui che tutto ’l mondo alluma\nde l’emisperio nostro sì discende,\nche ’l giorno d’ogne parte si consuma,\n:::\n" });
+  const md = "> Quando colui che tutto ’l mondo alluma\n> de l’emisperio nostro sì discende,\n> – *Paradiso* 20.1-2.\n";
+  expect(quotedRuns(md, dante).map((r) => [r.start, r.end])).toEqual([[0, 2]]);
+  const poem = shelfIndex({ "bookshelf/Somebody/A Poem": "# A Poem\n\n::: verse\nThe first line of the poem is spoken here\nAnd carries on a while before it stops\n:::\n" });
+  const named = "> The first line of the poem is spoken here\n> And carries on a while before it stops\n> – *A Poem*, 1-2\n";
+  expect(quotedRuns(named, poem).map((r) => [r.start, r.end])).toEqual([[0, 2]]);
 });
