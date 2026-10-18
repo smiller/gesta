@@ -278,6 +278,12 @@ is in the plan's record, under the phase named):
   `bookshelf/Finnsburh` (`finnsburhLines` keeps his asterisks where the
   fragment breaks off); `tools/wyattPages.ts` the pages' fetch and cache
   both runs share.
+  `tools/hwaetTexts.ts` — an Old English text with its translation as
+  early-medieval-england.net gives it, a row a half-line, made one bookshelf
+  page of pairs, a whole line each, pure, its test beside it;
+  `tools/hwaetTextsRun.ts` runs it over Deor, The Wanderer and The Seafarer
+  (pages cached under `tools/out/hwaet`), checks each poem's line count and
+  the site's numbers, and writes an import folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and

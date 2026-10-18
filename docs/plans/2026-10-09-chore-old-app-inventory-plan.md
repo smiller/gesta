@@ -1746,3 +1746,18 @@ referenceCorpus: *The Fight at Finnsburh* (MEASURED). The fetch moved to
 tools/wyattPages.ts, shared with the Beowulf run. Folder
 ~/Desktop/gesta-imports/gesta-finnsburh. The Shelves entry is not shipped
 (an existing entry): its Old English line is added by hand.
+
+### 2026-10-18 — Deor, The Wanderer, The Seafarer
+
+Asked: import the three from early-medieval-england.net (the site's own
+footer: "Site by Sean Miller") as paired verse, whole lines: the Old
+English half-lines two spaces apart, the translation's joined by one.
+A table per stanza there, a row per half-line, an empty row a lost
+half-line (The Seafarer 16 stands alone, as the site numbers it). Keys
+Deor, Wanderer, Seafarer, headed Deor, The Wanderer, The Seafarer, each
+`no author`; the site's spare spaces inside a half-line collapsed, its one
+italic kept, its note marks dropped and its seven notes (six on Deor, one
+on The Wanderer) not carried, pending a ruling. 42, 115 and 124 lines,
+every number the site prints at its line (MEASURED); labels *Deor*, *The
+Wanderer*, *The Seafarer* (referenceCorpus, MEASURED). Folder
+~/Desktop/gesta-imports/gesta-old-english.
