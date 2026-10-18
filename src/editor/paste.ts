@@ -13,7 +13,6 @@ const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
 const ONE_HEADING_LINE = /^#{1,6} \S/;
 const ONE_QUOTE_LINE = /^>+ \S/;
 const INTERNAL_LINK_RE = /^\[[^\]]+\]\(#([^)\s]+)\)$/;
-const REFERENCE_HEAD_RE = /^\[[^\]]+\]\(#([^)\s]+)\):\n\n/;
 const FLAT_HOSTS = new Set([N.list_item, N.table_cell, N.line, N.cell]);
 function inAny($ctx: ResolvedPos, types: Set<unknown>): boolean {
   for (let d = $ctx.depth; d >= 0; d--) if (types.has($ctx.node(d).type)) return true;
@@ -85,15 +84,25 @@ export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(pos + frag.size, tr.doc.content.size)), -1));
   return tr;
 }
+const REFERENCE_HEAD_RE = /^(\[[^\]]+\]\(#([^)\s]+)\)):\n\n/;
+const linkable = ($at: ResolvedPos): boolean => $at.parent.type.allowsMarkType(schema.marks.link);
 export function linkSelection(state: EditorState, raw: string): Transaction | null {
   const sel = state.selection;
-  if (sel.empty || !(sel instanceof TextSelection) || !sel.$from.sameParent(sel.$to)) return null;
-  if (!sel.$from.parent.type.allowsMarkType(schema.marks.link)) return null;
+  if (sel.empty || !(sel instanceof TextSelection) || !sel.$from.sameParent(sel.$to) || !linkable(sel.$from)) return null;
   const txt = raw.replace(LINE_BREAK_RE, "\n").trim();
-  const target = (REFERENCE_HEAD_RE.exec(txt) || INTERNAL_LINK_RE.exec(txt))?.[1];
+  const target = REFERENCE_HEAD_RE.exec(txt)?.[2] ?? INTERNAL_LINK_RE.exec(txt)?.[1];
   if (!target || !namesEntry(target)) return null;
   const tr = state.tr.addMark(sel.from, sel.to, schema.marks.link.create({ href: "#" + target }));
   return tr.setSelection(TextSelection.create(tr.doc, sel.to));
+}
+export function citeInLine(state: EditorState, raw: string): Transaction | null {
+  const sel = state.selection;
+  if (!sel.empty || !linkable(sel.$from) || !sel.$from.parent.textContent.trim()) return null;
+  const head = REFERENCE_HEAD_RE.exec(raw.replace(LINE_BREAK_RE, "\n").trim());
+  if (!head || !namesEntry(head[2])) return null;
+  try {
+    return state.tr.replaceSelection(new Slice(parseMarkdown(head[1]).firstChild!.content, 0, 0));
+  } catch { return null; }
 }
 /* only PLAIN text is asked of this parser: HTML carries its own structure */
 export function pasteSlice(raw: string, $context: ResolvedPos): Slice {

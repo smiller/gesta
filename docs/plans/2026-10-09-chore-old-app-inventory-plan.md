@@ -1973,3 +1973,10 @@ entry. The source view is unchanged (a textarea; its paste is literal).
 Helium step "a reference pasted onto a word" (MEASURED: the word linked to
 `#page/Williams/Witchcraft%203`, one reference in the stored text, the
 caret after the word).
+- Asked, the same day: a reference pasted into a line that already has
+  words in it arrives as its citation alone, the link with no colon; on an
+  empty line, whole as before (asked: "A", from three offered — by where
+  it is pasted, a second copy gesture, ⇧⌘V; and the colon dropped inside a
+  sentence). `citeInLine` in `src/editor/paste.ts`, test-first. Helium step
+  "a reference pasted mid-sentence" (MEASURED: the citation after
+  "greater.", no colon, one whole reference on the page).

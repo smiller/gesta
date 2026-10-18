@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection, citeInLine } from "./paste.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 
@@ -255,4 +255,22 @@ test("a paste onto a selection is a paste as before when it is no reference, the
   expect(linkSelection(EditorState.create({ doc: two, selection: TextSelection.create(two, 2, 8) }), REF)).toBeNull();
   expect(linkSelection(over("```\ncode 78\n```", "78"), REF)).toBeNull();
   expect(linkSelection(over("::: reference\nfrom 78\n:::", "78"), REF)).toBeNull();
+});
+test("a reference pasted into a line with words in it arrives as its citation alone, no colon, the caret after it", () => {
+  const s = at("as the poem says,  and so on", "says, ");
+  const tr = citeInLine(s, REF)!;
+  expect(serializeMarkdown(tr.doc)).toBe("as the poem says, [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0) and so on");
+  expect(tr.doc.textBetween(tr.selection.from, tr.doc.content.size - 1)).toBe(" and so on");
+  expect(serializeMarkdown(citeInLine(at("as the poem says ", "says "), REF)!.doc)).toBe("as the poem says [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
+  expect(serializeMarkdown(citeInLine(at("- see ", "see "), REF)!.doc)).toBe("- see [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
+});
+test("a reference pasted on an empty line, over a selection, where a link cannot stand, or naming no entry is not cut to its citation", () => {
+  const P = schema.nodes.paragraph;
+  const empty = schema.nodes.doc.create(null, [P.create(null, schema.text("before")), P.create(), P.create(null, schema.text("after"))]);
+  expect(citeInLine(EditorState.create({ doc: empty, selection: TextSelection.create(empty, 9) }), REF)).toBeNull();
+  expect(citeInLine(over("pauses at 78", "78"), REF)).toBeNull();
+  expect(citeInLine(at("```\ncode 78\n```", "78"), REF)).toBeNull();
+  expect(citeInLine(at("pauses at 78", "78"), "[x](#not%20an%20entry):\n\n> one")).toBeNull();
+  expect(citeInLine(at("pauses at 78", "78"), "[Ideas](#2026-09-07/Ideas)")).toBeNull();
+  expect(citeInLine(at("pauses at 78", "78"), "plain words")).toBeNull();
 });
