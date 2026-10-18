@@ -63,7 +63,9 @@ const LINKED: { file: string; at: number; key: string; from: number }[] = [
   { file: "journal/2016/2016-03-29.md", at: 24, key: "bookshelf/Beowulf", from: 311 },
   { file: "page/Sean’s Books/39b.md", at: 23, key: "bookshelf/Beowulf", from: 311 },
 ];
-const placed = (file: string): Run[] => PLACED.filter((x) => x.file === file).map((x) => {
+/* the hand's places belong to the works this run reads */
+const read = (key: string): boolean => index.entries.some((e) => e.key === key);
+const placed = (file: string): Run[] => PLACED.filter((x) => x.file === file && read(x.key)).map((x) => {
   const sh = index.entries.find((e) => e.key === x.key)!;
   const first = sh.units.findIndex((u) => u.line === x.from), last = sh.units.findIndex((u) => u.line === (x.to ?? x.from));
   /* a half-line's letters, the original's halves two spaces apart */
@@ -91,7 +93,7 @@ for (const path of walk(SRC).sort()) {
   counts.entries++;
   const original = readFileSync(path, "utf8");
   let md = original;
-  for (const x of LINKED.filter((x) => x.file === file)) {
+  for (const x of LINKED.filter((x) => x.file === file && read(x.key))) {
     const ls = md.split("\n"), m = referenceOf(index, { key: x.key, first: index.entries.find((e) => e.key === x.key)!.units.findIndex((u) => u.line === x.from), last: index.entries.find((e) => e.key === x.key)!.units.findIndex((u) => u.line === x.from) });
     const it = ls[x.at - 1].match(/\*[^*]+\*/);
     if (!("url" in m) || !it) throw new Error(`${file}:${x.at}: no italic line of verse to link`);
