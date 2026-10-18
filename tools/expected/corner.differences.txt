@@ -220,3 +220,7 @@ the bookshelf opened before the warm, the keys on its button · after · the row
 #   "backing up…" is a whisper restarted at each step, fading on a stall; the current app's stood untimed with an "N / total" counter (B100; main.ts's backup status comment)
 #   the search index is built in idle chunks right after the warm, by a 4.4 s measurement; the current app built none while navigating (T395; main.ts's index comment)
 ⌃⌘R on verse lines 2–3 · lines · a passage of single-column verse is quoted as a verse block numbered from its first line, as a dual-language one is (asked 2026-10-13); the old app quotes bare lines
+shelves: arrived at 2026-09-06 · * · new here, the old app frozen
+the bookshelf on its shelves · * · new here, the old app frozen
+Shelves… clicked · * · new here, the old app frozen
+the go-to box on its shelves · * · new here, the old app frozen

@@ -435,6 +435,10 @@ with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"
 a rename keeps a label's marks: arrived at page/Rename Host: {"cursor":"at a line's start"}
 a rename keeps a label's marks: arrived at page/Rename Host/Ideas: {"cursor":"at a line's start"}
 renamed under a label part italic: {"entry":"page/Rename Host/Plans","host":"See [the *Ideas* page](#page/Rename%20Host/Plans) here.","cursor":"on button","screen":"page/Rename Host/Plans · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the bookshelf on its shelves: {"shelvesShown":true,"rows":["## Latin","  Boethius @26","## English","  Browning, Robert @26","  Donne, John @26","  Harley Price @26","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on button","screen":"2026-09-06 · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
+Shelves… clicked: {"entry":"bookshelf/Shelves","panel":null,"cursor":"at a line's start","screen":"bookshelf/Shelves · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+shelves: arrived at 2026-09-06: {"cursor":"at a line's start"}
+the go-to box on its shelves: {"value":["Pages: 1569 pages","Latin: Boethius","English: Browning, Robert|Donne, John|Harley Price|Edmund Spenser"],"cursor":"on select","screen":"2026-09-06 · sel none · bar off · panel none · rows goto · rendered · corner [whatever stood]"}
 console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
 error: bookmarks not saved Error: bookmarks unreadable

@@ -4,7 +4,8 @@
    book unioned into its own namespace's group so a preselect can never
    name a row the list does not hold (pin: searchModel.test › the open
    unregistered book joins its own group) */
-import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, PAGE_KEY, capitalized } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, PAGE_KEY, NS_BOOK, capitalized } from "../store/keys.ts";
+import { SHELVES } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_PAGES, bookScope, type Scope, type Result } from "../store/search.ts";
@@ -29,6 +30,7 @@ export function scopeOptions(date: string, tag: string | null, keys: string[], j
     const roots = childrenOf(keys, ns);
     if (open.kind === "book" && open.ns === ns && roots.indexOf(open.book) === -1) roots.push(open.book);
     for (const name of roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))) {
+      if (ns === NS_BOOK.key && name === SHELVES && !(open.kind === "book" && open.book === SHELVES)) continue;
       out.push({ label: trimLabel(rootLabel(ns, name, journal), LABEL_CAP), scope: bookScope(ns, name), group: nsGroupLabel(ns) });
     }
   }

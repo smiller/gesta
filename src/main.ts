@@ -51,7 +51,8 @@ import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
-import { todayKey, entryKey, entryHash } from "./store/keys.ts";
+import { todayKey, entryKey, entryHash, NS_BOOK } from "./store/keys.ts";
+import { SHELVES } from "./store/shelves.ts";
 import { hashParts } from "./store/nav.ts";
 import Corner from "./ui/Corner.svelte";
 import Masthead from "./ui/Masthead.svelte";
@@ -1035,7 +1036,9 @@ if (fixture && fixtures[fixture]) {
     screen.panel = ns;
   };
   function answerPanel(ns: Ns): void {
-    screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal);
+    const shelvesKey = entryKey(NS_BOOK.key, SHELVES);
+    screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal, layer.cache[shelvesKey] || "");
+    screen.panelShelves = ns === NS_BOOK.key && layer.cache[shelvesKey] !== undefined ? entryHash(NS_BOOK.key, SHELVES) : "";
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
       : "No authors yet — import a folder, or start one below.";

@@ -113,6 +113,16 @@ describe("the panels", () => {
     expect(panelRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }, { text: "Edmund Spenser", href: "#bookshelf/Spenser%2C%20Edmund" }]);
     expect(panelRows("nowhere", keys, journal)).toEqual([]);
   });
+  it("the bookshelf on its shelves: a heading row per shelf, its authors set in under it; the shelves entry never an author", () => {
+    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n" };
+    expect(panelRows("bookshelf", Object.keys(c), journalOf(c), c["bookshelf/Shelves"])).toEqual([
+      { text: "Latin", href: "", shelf: true },
+      { text: "Horace", href: "#bookshelf/Horace", shelved: true },
+      { text: "English", href: "", shelf: true },
+      { text: "John Milton", href: "#bookshelf/Milton%2C%20John", shelved: true },
+    ]);
+    expect(panelRows("bookshelf", Object.keys(c), journalOf(c))).toEqual([{ text: "Horace", href: "#bookshelf/Horace" }, { text: "John Milton", href: "#bookshelf/Milton%2C%20John" }]);
+  });
   it("trimLabel keeps a short label, cuts a long one to the cap with an ellipsis, never inside a surrogate pair", () => {
     expect(trimLabel("short", 10)).toBe("short");
     expect(trimLabel("a long label indeed", 8)).toBe("a long …");

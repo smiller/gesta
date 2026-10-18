@@ -13,12 +13,13 @@
    a walk (pin: gotoModel.test › a sole child that is itself a parent
    collapses). A book's sections and its order come from one reading of the
    parent's contents. */
-import { isDayKey, nsOf, pageParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, PAGE_KEY } from "../store/keys.ts";
+import { isDayKey, nsOf, pageParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, PAGE_KEY, NS_BOOK } from "../store/keys.ts";
 import { dayKeys, childrenOf } from "../store/lists.ts";
 import { subPageOrder, subPageDisplayList, type Bearing } from "../store/contents.ts";
 import type { Journal } from "../store/reference.ts";
 import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
 import { nsGroupLabel } from "./searchModel.ts";
+import { parseShelves, shelved, SHELVES } from "../store/shelves.ts";
 
 export interface Row { v: string; label: string; group?: string | null; ns?: string; here?: boolean }
 export interface Level { level: number; aria: string; rows: Row[]; value: string | null; valueNs?: string; sentinel: string | null; path: string | null }
@@ -50,7 +51,11 @@ export function destinationRows(w: GotoWorld, date: string, tag: string | null):
   for (const key of NS_KEYS) {
     const roots = childrenOf(w.keys, key);
     if (open && date === key && roots.indexOf(open) === -1) roots.push(open);
-    for (const n of roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))) dest.push({ v: n, label: trimLabel(rootLabel(key, n, w.journal), LABEL_CAP), ns: key, group: nsGroupLabel(key) });
+    roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    /* an author's group is its shelf; the shelves entry is a destination only while it is open (pin: gotoModel.test › an author's group is its shelf) */
+    const groups = key === NS_BOOK.key ? shelved(roots, parseShelves(w.cache[entryKey(key, SHELVES)] || "")) : [{ shelf: null, roots }];
+    if (key === NS_BOOK.key && open === SHELVES && date === key) groups.push({ shelf: null, roots: [SHELVES] });
+    for (const g of groups) for (const n of g.roots) dest.push({ v: n, label: trimLabel(rootLabel(key, n, w.journal), LABEL_CAP), ns: key, group: g.shelf ?? nsGroupLabel(key) });
   }
   return dest;
 }

@@ -1649,3 +1649,26 @@ tokens (MEASURED, the transcript's last message: 2 + 1,907 + 106,101 input,
 10. The htmlHead difference's reason names the mark now.
 Not taken: 8 (`data-pm-slice` instead of the mark: it skips the fitting of
 foreign HTML into place, which changes where a reference lands).
+
+6372b7e accepted 2026-10-17; no confirmation pass asked: the batch closed at
+REVIEW CYCLES: 1.
+
+### 2026-10-17 — the bookshelf's shelves
+
+Asked: the bookshelf grouped by language — Latin, Old English, Italian,
+French, English, in that order, translations under English (Hesse,
+Cavafy) — after a stop to think: moving authors into a tree would have
+moved 466 entries and 583 links for eight authors alone (MEASURED) and
+broken the citation's author, the list, go-to, the breadcrumb and search's
+book scope. Chosen (B): a grouping in the list only, the keys unchanged;
+the list's form B2 (headings in the list's own type, authors set in) from
+a mockup of four; the go-to box grouped too; the shelves kept in
+`bookshelf/Shelves` (not a page: "something bookshelf-specific under
+page"), opened from "Shelves…" at the list's foot. shelves.ts (pure,
+tested); panelRows heads each shelf; destinationRows groups by shelf;
+search's scopes leave Shelves out; help card. Headless "shelves" step,
+last in the run, new here, the old app frozen: Latin / Boethius set in
+26px, English / the rest, Shelves… opens the entry, go-to grouped
+(MEASURED). Folder ~/Desktop/gesta-imports/gesta-shelves: Shelves,
+Beowulf moved to bookshelf/Beowulf with its own `no author`, 2026-10-17's
+reference pointed at it.

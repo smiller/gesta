@@ -109,9 +109,10 @@
   {#if screen.panel === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
   {#if screen.panel === "page" || screen.panel === "bookshelf"}
     <nav class="pages" onfocusout={leave}>
-      {#each screen.panelRows as r (r.href)}<a href={r.href} title={r.text} onclick={onClosePanel}>{r.text}</a>{/each}
+      {#each screen.panelRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onClosePanel}>{r.text}</a>{/if}{/each}
       {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}
       <button class="panel-new" type="button" onclick={() => onNewRoot(screen.panel!)}>New {NOUN[screen.panel]}…</button>
+      {#if screen.panel === "bookshelf" && screen.panelShelves}<a class="panel-new" href={screen.panelShelves} onclick={onClosePanel}>Shelves…</a>{/if}
     </nav>
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
@@ -222,6 +223,10 @@
   .pages a:hover, .pages button:hover { background: var(--aside-bg); }
   .pages a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pages .panel-new { color: var(--bar-link); }
+  /* a shelf's heading in the list's own type, its authors set in under it */
+  .pages .shelf { flex: none; line-height: 1.35; padding: 8px 12px 2px; font-size: 0.95em; font-family: var(--sans); font-weight: 600; color: var(--ink); }
+  .pages .shelf:first-child { padding-top: 5px; }
+  .pages a.shelved { padding-left: 26px; }
   .pages .panel-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
   .mode {

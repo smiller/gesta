@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { gotoLevels, gotoPick, type Level } from "./gotoModel.ts";
+import { gotoLevels, gotoPick, destinationRows, type Level } from "./gotoModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache: Record<string, string> = {
@@ -73,5 +73,15 @@ describe("gotoPick", () => {
     const V = gotoLevels(w, "bookshelf", "Virgil");
     expect(gotoPick(w, "bookshelf", "Virgil", V, 1, "Aeneid")).toEqual({ jump: "#bookshelf/Virgil/Aeneid" });
     expect(gotoPick(w, "bookshelf", "Virgil", V, 1, "Aeneid/1")).toEqual({ jump: "#bookshelf/Virgil/Aeneid/1" });
+  });
+});
+
+describe("the destination on the shelves", () => {
+  it("an author's group is its shelf, in the shelves' order; the shelves entry is no destination unless it is open", () => {
+    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n", "page/Notes": "n" };
+    const world = { keys: Object.keys(c), cache: c, journal: journalOf(c), today: "2026-09-07" };
+    const rows = destinationRows(world, "2026-09-07", null).map((r) => [r.label, r.group ?? null]);
+    expect(rows).toEqual([["Journal", null], ["Notes", "Pages"], ["Horace", "Latin"], ["John Milton", "English"]]);
+    expect(destinationRows(world, "bookshelf", "Shelves").map((r) => r.v)).toContain("Shelves");
   });
 });

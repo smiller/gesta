@@ -43,3 +43,10 @@ describe("resultLabel", () => {
     expect(resultLabel(r("page", null), any, journal)).toBe("");
   });
 });
+
+describe("scopeOptions on the shelves", () => {
+  it("the shelves entry is no book to search within", () => {
+    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)" };
+    expect(scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c)).map((o) => o.label)).toEqual(["Everything", "Journal", "All Pages", "Horace"]);
+  });
+});

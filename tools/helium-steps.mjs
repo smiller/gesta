@@ -2186,6 +2186,27 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "page/Rename Host")) || "").split("\n")[0] });
   answer = null;
     }],
+    ["shelves", async () => {
+  /* the bookshelf's shelves: an entry Shelves names them in order and the authors on each; the list heads each shelf and sets its authors in, the go-to box groups by shelf */
+  await A.foreignWrite(page, "bookshelf/Shelves", "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n\n## English\n");
+  /* read back before the reload: a reload during the write's commit read the store without it */
+  for (let i = 0; i < 30 && !(await A.stored(page, "bookshelf/Shelves")); i++) await rest(page);
+  await page.goto(A.url("2026-09-06"));
+  await A.waitEntry(page, "2026-09-06", 5000).catch(() => {});
+  await page.click(S.booksOpener);
+  /* the list is answered again when the store's read ends: the shelves come with it */
+  const shelvesShown = await page.waitForSelector(".pages .shelf", { timeout: 5000 }).then(() => true, () => false);
+  const list = () => page.evaluate(() => { const p = document.querySelector(".pages"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
+  await log("the bookshelf on its shelves", { shelvesShown, rows: await list() });
+  await page.click(".pages a.panel-new[href=\"#bookshelf/Shelves\"]");
+  await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
+  await log("Shelves… clicked", { entry: await A.entry(page), panel: await R.panel(page) });
+  await go("2026-09-06");
+  await page.keyboard.press("Control+Meta+j");
+  await rest(page);
+  await log("the go-to box on its shelves", await page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), S.gotoDestination));
+  await page.keyboard.press("Escape");
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the
