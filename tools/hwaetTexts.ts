@@ -58,6 +58,16 @@ export function hwaetNotes(html: string): Record<string, string> {
 }
 const SUPERSCRIPT = "⁰¹²³⁴⁵⁶⁷⁸⁹";
 const mark = (k: number): string => String(k).split("").map((d) => SUPERSCRIPT[+d]).join("");
+/* a row's text with its note's mark after it, the note kept in `said`, its
+   stanza's, numbered in the order the stanza gives them */
+function marked(h: Half, notes: Record<string, string>, said: string[]): string {
+  if (!h.note) return h.text;
+  if (!(h.note in notes)) throw new Error("no note " + h.note);
+  said.push(notes[h.note]);
+  return h.text + " " + mark(said.length);
+}
+const noteLines = (said: string[]): string[] => ["::: note", ...said.map((t, k) => `[${k + 1}] ${t}`).join("\n\n").split("\n"), ":::"];
+const pageHead = (title: string, note: string): string => `# ${title}\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n`;
 
 /* two half-lines a line: the text's two spaces apart, the translation one;
    the site's numbers ("16a") are where a line starts, checked by the caller */
@@ -66,17 +76,11 @@ export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}
   let line = 0;
   const out = stanzas.map((rows, s) => {
     if (rows.length % 2) odd.push(s + 1);
-    const lines: string[] = [], said: string[] = [];
     /* a mark after its half-line in the text, the stanza's notes after its last line */
-    const marked = (h: Half): string => {
-      if (!h.note) return h.text;
-      if (!(h.note in notes)) throw new Error("no note " + h.note);
-      said.push(notes[h.note]);
-      return h.text + " " + mark(said.length);
-    };
+    const lines: string[] = [], said: string[] = [];
     for (let i = 0; i < rows.length; i += 2) {
       line++;
-      const a = { ...rows[i], text: marked(rows[i]) }, b = rows[i + 1] ? { ...rows[i + 1], text: marked(rows[i + 1]) } : { text: "", tr: "", n: "" };
+      const a = { ...rows[i], text: marked(rows[i], notes, said) }, b = rows[i + 1] ? { ...rows[i + 1], text: marked(rows[i + 1], notes, said) } : { text: "", tr: "", n: "" };
       const m = /^(\d+)a$/.exec(a.n);
       if (m) numbered.push({ n: +m[1], at: line });
       if (b.n) numbered.push({ n: -1, at: line });
@@ -89,7 +93,6 @@ export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}
   });
   return { stanzas: out, numbered, odd };
 }
-const noteLines = (said: string[]): string[] => ["::: note", ...said.map((t, k) => `[${k + 1}] ${t}`).join("\n\n").split("\n"), ":::"];
 
 /* a poem in stanzas (Hávamál): a row a line, cited stanza and line, so
    each stanza keeps its own fence and number; the site heads a stanza "76."
@@ -101,12 +104,7 @@ export function stanzaLines(stanzas: Half[][], notes: Record<string, string>): {
     const said: string[] = [];
     const lines = rows.map((r, i) => {
       if (i && r.n && +r.n !== i + 1) off.push(`stanza ${s + 1} row ${i + 1} numbered ${r.n}`);
-      let text = r.text;
-      if (r.note) {
-        if (!(r.note in notes)) throw new Error("no note " + r.note);
-        said.push(notes[r.note]);
-        text += " " + mark(said.length);
-      }
+      const text = marked(r, notes, said);
       return r.tr ? text + " | " + r.tr : text + " |";
     });
     if (said.length) lines.push(...noteLines(said));
@@ -116,9 +114,9 @@ export function stanzaLines(stanzas: Half[][], notes: Record<string, string>): {
 }
 
 export function hwaetStanzaEntry(key: string, title: string, stanzas: { n: number; lines: string[] }[], note: string): Record<string, string> {
-  return { [`bookshelf/${key}.md`]: `# ${title}\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n${stanzas.map((s) => `::: stanza ${s.n}\n${s.lines.join("\n")}\n:::`).join("\n\n")}` };
+  return { [`bookshelf/${key}.md`]: pageHead(title, note) + stanzas.map((s) => `::: stanza ${s.n}\n${s.lines.join("\n")}\n:::`).join("\n\n") };
 }
 
 export function hwaetEntry(key: string, title: string, stanzas: string[][], note: string): Record<string, string> {
-  return { [`bookshelf/${key}.md`]: `# ${title}\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${stanzas.map((s) => s.join("\n")).join("\n\n")}\n:::` };
+  return { [`bookshelf/${key}.md`]: pageHead(title, note) + `::: verse\n${stanzas.map((s) => s.join("\n")).join("\n\n")}\n:::` };
 }

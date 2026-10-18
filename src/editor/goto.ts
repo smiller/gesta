@@ -71,18 +71,18 @@ export function askCheck(ask: string, kind: "line" | "page"): string | null {
   return kind === "page" && FOLIO_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + kind + " number";
 }
 
-/* in a work citing by stanza the Line box takes `N` (stanza N, at its first
-   line) or `N.M` (its line M). A stanza number names one place — the
-   stanzas are numbered in the text, each once — so there is nothing to
-   cycle (pin: goto.test › a stanza lands on its first line) */
+/* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).
+   A stanza number names one place — the stanzas are numbered in the text,
+   each once — so there is nothing to cycle (pin: goto.test › a stanza
+   lands on its first line) */
 export function stanzaAskCheck(ask: string): string | null {
   const a = ask.trim();
   if (!a) return "type a stanza, or stanza.line";
   return /^\d+(?:\.\d+)?$/.test(a) ? null : trimLabel(a, ECHO_CAP) + " is not a stanza or stanza.line, like 2.1";
 }
-/* the PAGE decides, not the work's directive alone: a plain verse entry
-   under a work citing by stanza (the commendatory verses) keeps the line
-   ask (pin: goto.test › a page holding a top-level stanza asks by stanza) */
+/* the page, not its work: a plain verse entry beside stanza entries (the
+   commendatory verses) has none (pin: goto.test › a page holding a
+   top-level stanza asks by stanza) */
 export function hasStanzas(doc: Node): boolean {
   let yes = false;
   doc.forEach((block) => { if (block.attrs.stanza != null) yes = true; });

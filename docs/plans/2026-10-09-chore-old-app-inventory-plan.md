@@ -1798,3 +1798,34 @@ lands on ek veit einn" as if of the poem; he caught it ("line 2 of stanza
 77 is deyja frændr"); the seed is now the poem's two stanzas. The shelves
 step's "a shelf renamed" read the double-click's bar once in a full run:
 it now waits for the bar to hide. Folder ~/Desktop/gesta-imports/gesta-old-norse.
+
+#### Review cycle 1 — stanza citation and Hávamál (70f680a..865f092)
+
+REVIEW CYCLES: 1. One /code-review at high after the accept: 118,800
+tokens (the transcript's last message: 2 + 1,446 + 113,939 + 3,413), 10
+findings:
+1. hwaetTextsRun with no ids threw on the first poem already imported:
+   FIXED — a poem the backup has is left out and named, the run goes on;
+   nothing to write says so and writes nothing.
+2. ⌃⌘G takes the stanza ask on any page with a top-level stanza, so a
+   page mixing stanzas with a plain verse block loses that block's lines:
+   NOT CHANGED — no page in the backup mixes them (MEASURED); raised.
+3. Without the directive a digit-keyed entry's numerals run into the
+   stanza range (1.1.2.1): NOT CHANGED — the ruling was every stanza work
+   cites by stanza, and the only stanza works are the Faerie Queene (its
+   directive) and Hávamál (a root, no numerals); raised.
+4. goto.ts and goto.test.ts comments still named the directive: FIXED.
+5. coveredUnits walked up to four times per ⌃⌘R: NOT CHANGED — 4.0 ms a
+   ⌃⌘R over all of Beowulf, 1.3 ms over Hávamál (MEASURED).
+6–7. The footnote mark and the page head copied between the two poem
+   forms: FIXED — one `marked`, one `pageHead`; Hávamál and Deor rebuilt
+   from the cache equal the backup byte for byte (MEASURED).
+8. The guard missed a poem filed under another name: FIXED — also found
+   by its heading among the backup's roots.
+9. An empty stanza would crash stanzaLines: NOT CHANGED — hwaetStanzas
+   never yields one (READ: it pushes a table's rows only when there are any).
+10. The steps' seed waits ran out silently: FIXED in both (shelves, a
+    work in stanzas) — the reading carries `seeded`. My first fix named
+    the helper `landed`, shadowing the steps' own `landed(page, ms)`, and
+    four sections failed; the run was approved before it was read, then
+    restored from git, the helper renamed, and the run read and approved.

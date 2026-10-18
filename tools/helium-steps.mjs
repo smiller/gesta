@@ -100,6 +100,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.waitForFunction(([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source], { timeout: 1000 }).catch(() => {});
     console.log(section + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
   };
+  /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
+  const seededIn = async (key) => { for (let i = 0; i < 30; i++) { if (await A.stored(page, key)) return true; await rest(page); } return false; };
   /* the window, a paragraph by its first words, the corner's text */
   const winY = () => page.evaluate(() => Math.round(scrollY));
   const inView = (start) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
@@ -2192,14 +2194,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the bookshelf's shelves: an entry Shelves names them in order and the authors on each; the list heads each shelf and sets its authors in, the go-to box groups by shelf */
   await A.foreignWrite(page, "bookshelf/Shelves", "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Browning](#bookshelf/Browning%2C%20Robert)\n\n## English\n");
   /* read back before the reload: a reload during the write's commit read the store without it */
-  for (let i = 0; i < 30 && !(await A.stored(page, "bookshelf/Shelves")); i++) await rest(page);
+  const seeded = await seededIn("bookshelf/Shelves");
   await page.goto(A.url("2026-09-06"));
   await A.waitEntry(page, "2026-09-06", 5000).catch(() => {});
   await page.click(S.booksOpener);
   /* the list is answered again when the store's read ends: the shelves come with it */
   const shelvesShown = await page.waitForSelector(".pages .shelf", { timeout: 5000 }).then(() => true, () => false);
   const list = () => page.evaluate(() => { const p = document.querySelector(".pages"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
-  await log("the bookshelf on its shelves", { shelvesShown, rows: await list() });
+  await log("the bookshelf on its shelves", { seeded, shelvesShown, rows: await list() });
   await page.click(".pages button.panel-new:has-text('Shelves…')");
   await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
   await log("Shelves… clicked", { entry: await A.entry(page), panel: await R.panel(page) });
@@ -2238,7 +2240,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["a work in stanzas", async () => {
   /* any work in stanza fences cites by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
   await A.foreignWrite(page, "bookshelf/Havamal", "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
-  for (let i = 0; i < 30 && !(await A.stored(page, "bookshelf/Havamal")); i++) await rest(page);
+  const seeded = await seededIn("bookshelf/Havamal");
   await page.goto(A.url("bookshelf/Havamal"));
   await A.waitEntry(page, "bookshelf/Havamal", 5000).catch(() => {});
   await R.settle(page);
@@ -2246,7 +2248,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitBar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
-  await log("⌃⌘R on three lines of a stanza", { lines: await R.clipboardLines(page) });
+  await log("⌃⌘R on three lines of a stanza", { seeded, lines: await R.clipboardLines(page) });
   await R.selectBetween(page, "orðstírr", "ek veit einn");
   await R.waitBar(page);
   await page.keyboard.press("Control+Meta+r");

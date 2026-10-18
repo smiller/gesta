@@ -3,7 +3,7 @@
    Wanderer and The Seafarer (Deor, Wdr, Sfr) as whole lines, Hávamál (Hav)
    in stanzas; written under OUT (default ~/Desktop/gesta-imports/gesta-hwaet)
    for an import, a review page beside it, the counts printed */
-import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { join, dirname, basename, resolve } from "node:path";
 import { hwaetStanzas, hwaetNotes, wholeLines, hwaetEntry, stanzaLines, hwaetStanzaEntry } from "./hwaetTexts.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
@@ -47,9 +47,13 @@ const noteRow = (lines: string[]): string => `<tr><td></td><td colspan="2" class
 /* the lines before a stanza's notes, and the notes */
 const split = (s: string[]): [string[], string[]] => { const at = s.indexOf("::: note"); return at === -1 ? [s, []] : [s.slice(0, at), s.slice(at + 1, -1)]; };
 
+/* the backup's bookshelf roots by their heading, so a poem filed under another name is still found */
+const shelf = join(BACKUP, "bookshelf");
+const headed = new Map(readdirSync(shelf).filter((f) => f.endsWith(".md")).map((f) => [/^# (.+)/.exec(readFileSync(join(shelf, f), "utf8"))?.[1] ?? "", f]));
 for (const p of POEMS.filter((p) => !ASKED.length || ASKED.includes(p.id))) {
-  /* an entry already in the backup is never replaced: an edit made there would be lost */
-  if (existsSync(join(BACKUP, "bookshelf", p.key)) || existsSync(join(BACKUP, "bookshelf", p.key + ".md"))) throw new Error(`the backup has ${p.key} already: this folder would overwrite it`);
+  /* a poem the backup has already is left out, under its key or its heading: an edit made there would be lost */
+  const had = existsSync(join(shelf, p.key)) || existsSync(join(shelf, p.key + ".md")) ? p.key : headed.get(p.title);
+  if (had) { console.log(`${p.title}: the backup has it already (bookshelf/${had}), left out`); continue; }
   const html = await page(p.id);
   const half = hwaetStanzas(html), notes = hwaetNotes(html);
   const marks = half.flat().flatMap((h) => (h.note ? [h.note] : []));
@@ -77,6 +81,7 @@ for (const p of POEMS.filter((p) => !ASKED.length || ASKED.includes(p.id))) {
   console.log(`${p.title}: ${count} lines, ${stanzas.length} stanzas, ${numbered.length} line numbers checked, ${marks.length} notes`);
 }
 for (const md of Object.values(entries)) if (serializeMarkdown(parseMarkdown(md)) !== md) throw new Error("an entry does not survive its round trip");
+if (!Object.keys(entries).length) { console.log("nothing to write"); process.exit(0); }
 
 rmSync(OUT, { recursive: true, force: true });
 for (const [path, md] of Object.entries(entries)) {

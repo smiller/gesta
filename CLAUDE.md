@@ -286,8 +286,8 @@ is in the plan's record, under the phase named):
   its own `::: stanza N` fence), pages cached under `tools/out/hwaet`; it
   checks each poem's count and the site's numbers, carries the site's notes
   as footnotes (a mark after the line, the stanza's notes in a `::: note`
-  after its last line), refuses an entry the backup already has, and writes
-  an import folder with a review page.
+  after its last line), leaves out a poem the backup already has (by its key
+  or its heading), and writes an import folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
