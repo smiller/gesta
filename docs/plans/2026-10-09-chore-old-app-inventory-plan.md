@@ -1980,3 +1980,16 @@ caret after the word).
   sentence). `citeInLine` in `src/editor/paste.ts`, test-first. Helium step
   "a reference pasted mid-sentence" (MEASURED: the citation after
   "greater.", no colon, one whole reference on the page).
+- REVIEW CYCLES: 1. `/code-review` at high over 68c17cd^..d71a7d0: 95,733
+  tokens (MEASURED, the run's transcript), 8 findings. Fixed, test-first:
+  text after a reference's first line that is no quoted passage pastes as
+  before (it was dropped); a copy made in the page (`data-pm-slice`) pastes
+  as itself (a cut reference pasted mid-line lost its quotation) — Helium
+  step "the page's own reference pasted mid-sentence" (MEASURED: copied
+  in-page, the whole reference pasted, no citation alone); a test that
+  ⌃⌘R's payload is the text both read; spaces at a selection's edges left
+  outside the link; the clipboard read once; one helper for the address a
+  paste names and one for a one-line link as a slice. Not changed: a line
+  of a picture or spaces alone counts as empty (the help says "words").
+  Asked, not changed: a caret at the end of a line ending in a colon (or a
+  heading) takes the citation alone, not the whole reference.

@@ -84,25 +84,40 @@ export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(pos + frag.size, tr.doc.content.size)), -1));
   return tr;
 }
-const REFERENCE_HEAD_RE = /^(\[[^\]]+\]\(#([^)\s]+)\)):\n\n/;
+const REFERENCE_HEAD_RE = /^(\[[^\]]+\]\(#([^)\s]+)\)):\n\n([^]*)$/;
 const linkable = ($at: ResolvedPos): boolean => $at.parent.type.allowsMarkType(schema.marks.link);
-export function linkSelection(state: EditorState, raw: string): Transaction | null {
+function inlineSlice(md: string): Slice | null {
+  try { return new Slice(parseMarkdown(md).firstChild!.content, 0, 0); } catch { return null; }
+}
+/* a copy made in this page pastes as itself: a cut reference and its
+   quotation pasted mid-line arrived as the citation alone, the quotation
+   lost (pin: paste.test › text after a reference's first line) */
+function pastedAddress(raw: string, html: string): { link: string; target: string; reference: boolean } | null {
+  if (html.includes("data-pm-slice")) return null;
+  const txt = raw.replace(LINE_BREAK_RE, "\n").trim();
+  const ref = REFERENCE_HEAD_RE.exec(txt);
+  const found = ref && ref[3].split("\n").every((l) => l.startsWith(">")) ? { link: ref[1], target: ref[2], reference: true }
+    : INTERNAL_LINK_RE.test(txt) ? { link: txt, target: INTERNAL_LINK_RE.exec(txt)![1], reference: false } : null;
+  return found && namesEntry(found.target) ? found : null;
+}
+export function linkSelection(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
   if (sel.empty || !(sel instanceof TextSelection) || !sel.$from.sameParent(sel.$to) || !linkable(sel.$from)) return null;
-  const txt = raw.replace(LINE_BREAK_RE, "\n").trim();
-  const target = REFERENCE_HEAD_RE.exec(txt)?.[2] ?? INTERNAL_LINK_RE.exec(txt)?.[1];
-  if (!target || !namesEntry(target)) return null;
-  const tr = state.tr.addMark(sel.from, sel.to, schema.marks.link.create({ href: "#" + target }));
+  const pasted = pastedAddress(raw, html);
+  if (!pasted) return null;
+  let from = sel.from, to = sel.to;
+  while (from < to && /\s/.test(state.doc.textBetween(from, from + 1))) from++;
+  while (to > from && /\s/.test(state.doc.textBetween(to - 1, to))) to--;
+  if (from === to) return null;
+  const tr = state.tr.addMark(from, to, schema.marks.link.create({ href: "#" + pasted.target }));
   return tr.setSelection(TextSelection.create(tr.doc, sel.to));
 }
-export function citeInLine(state: EditorState, raw: string): Transaction | null {
+export function citeInLine(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
   if (!sel.empty || !linkable(sel.$from) || !sel.$from.parent.textContent.trim()) return null;
-  const head = REFERENCE_HEAD_RE.exec(raw.replace(LINE_BREAK_RE, "\n").trim());
-  if (!head || !namesEntry(head[2])) return null;
-  try {
-    return state.tr.replaceSelection(new Slice(parseMarkdown(head[1]).firstChild!.content, 0, 0));
-  } catch { return null; }
+  const pasted = pastedAddress(raw, html);
+  const slice = pasted?.reference ? inlineSlice(pasted.link) : null;
+  return slice && state.tr.replaceSelection(slice);
 }
 /* only PLAIN text is asked of this parser: HTML carries its own structure */
 export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
@@ -121,7 +136,8 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   const internal = INTERNAL_LINK_RE.exec(body.trim());
   if (internal && !namesEntry(internal[1])) return new Slice(Fragment.from(schema.text(body)), 0, 0);
   if (internal) {
-    try { return new Slice(parseMarkdown(body.trim()).firstChild!.content, 0, 0); } catch { /* literal below */ }
+    const slice = inlineSlice(body.trim());
+    if (slice) return slice;
   }
   if (blockShaped || oneQuoteLine(body, $context)) {
     if (inAny($context, FLAT_HOSTS)) return flat(lines);

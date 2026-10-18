@@ -239,3 +239,4 @@ the host's link followed · value · the step's caret now goes to the body's end
 ⌃⌘R from a second half-line beside its translation · * · new here, the old app frozen
 a reference pasted onto a word · * · new here, the old app frozen
 a reference pasted mid-sentence · * · new here, the old app frozen
+the page's own reference pasted mid-sentence · * · new here, the old app frozen

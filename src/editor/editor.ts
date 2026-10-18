@@ -220,15 +220,15 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       if (file) { opts.onPasteFile?.(file); return true; }
       const data = event.clipboardData;
       if (!data) return false;
-      const plain = data.getData("text/plain");
-      const linked = linkSelection(view.state, plain) || citeInLine(view.state, plain);
+      const plain = data.getData("text/plain"), html = data.getData("text/html");
+      const linked = linkSelection(view.state, plain, html) || citeInLine(view.state, plain, html);
       if (linked) { view.dispatch(linked.scrollIntoView()); return true; }
       /* line breaks alone are nothing to paste, from any app: they replaced a
          selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
-      if (onlyLineBreaks(data.getData("text/plain"), view.state.selection.$from, data.getData("text/html"))) return true;
+      if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
       /* text carrying HTML keeps the editor's paste */
       if (data.types.includes("text/html")) return false;
-      const parsed = pasteBlocks(data.getData("text/plain"), view.state.selection.$from);
+      const parsed = pasteBlocks(plain, view.state.selection.$from);
       if (!parsed) return false;
       const blocks = bareBlocks(parsed, location.href);
       view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());

@@ -308,6 +308,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+v");
   await rest(page);
   { const md = await A.stored(page); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, cited: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
+  /* the page's reference copied with ⌘C, then pasted mid-sentence: a copy made in the page pastes whole */
+  await page.click(S.editor);
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.press("Meta+c");
+  const copiedHere = await page.evaluate(async () => { for (let i = 0; i < 40; i++) { try { const it = (await navigator.clipboard.read())[0]; if (it.types.includes("text/html") && (await (await it.getType("text/html")).text()).includes("data-pm-slice")) return "in-page"; } catch { /* read again */ } await new Promise((r) => setTimeout(r, 50)); } return "not landed"; });
+  await R.caretAfter(page, "greater.", 8);
+  await page.keyboard.press("Meta+v");
+  await rest(page);
+  { const md = await A.stored(page); await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, citedAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
