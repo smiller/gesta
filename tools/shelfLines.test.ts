@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { shelfIndex, referenceOf } from "./bookshelfQuotes.ts";
-import { quotedRuns, referRuns, wordDiff } from "./shelfLines.ts";
+import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted } from "./shelfLines.ts";
 
 const index = shelfIndex({
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -284,4 +284,60 @@ test("quotedRuns: stanzas quoted one after another, a blank line between, are on
   expect(runs.map((r) => [r.start, r.end])).toEqual([[0, 12]]);
   const m = referenceOf(hav, runs[0]);
   expect("text" in m && m.text.split("\n")[0]).toMatch(/^\[\*Hávamál\*, 76–77\]/);
+});
+
+const novel = shelfIndex({
+  "bookshelf/Austen, Jane": "# Jane Austen\n\n- [Pride and Prejudice](#bookshelf/Austen%2C%20Jane/Pride%20and%20Prejudice)\n",
+  "bookshelf/Austen, Jane/Pride and Prejudice": "# Pride and Prejudice\n\n- [Volume 1, Chapter 9](#bookshelf/Austen%2C%20Jane/Pride%20and%20Prejudice/1.9)\n",
+  "bookshelf/Austen, Jane/Pride and Prejudice/1.9": "# Volume 1, Chapter 9\n\n“I wonder who first discovered the efficacy of poetry in driving away love!” said Darcy.\n\n“I have been used to consider poetry as the food of love,” said Elizabeth.\n\nMrs. Bennet looked round the room with a very satisfied air.\n",
+});
+const AUSTEN = ["bookshelf/Austen, Jane"];
+test("quotedPassages: quoted paragraphs a blank line apart that are one passage of a prose book are one run, the reference the passage's", () => {
+  const md = "Darcy and Elizabeth:\n\n> “I wonder who first discovered the efficacy of poetry in driving away love!” said Darcy.\n\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n\nAnd so on.\n";
+  const found = quotedPassages(md, novel, AUSTEN, []);
+  expect(found.map(({ run }) => [run.start, run.end, run.key, run.prose])).toEqual([[2, 4, "bookshelf/Austen, Jane/Pride and Prejudice/1.9", true]]);
+  expect(found[0].ref.url.startsWith("#bookshelf/Austen%2C%20Jane/Pride%20and%20Prejudice/1.9?h=")).toBe(true);
+  expect(found[0].ref.passage).toContain("food of love");
+});
+test("quotedPassages: a paragraph of one's own among the quoted ones leaves the book's alone; a quotation not the book's, one already under a link to the bookshelf, one a verse run took and one in code are left", () => {
+  const own = "> “I wonder who first discovered the efficacy of poetry in driving away love!” said Darcy.\n\n> Which is what I have always thought about the matter myself.\n";
+  expect(quotedPassages(own, novel, AUSTEN, []).map(({ run }) => [run.start, run.end])).toEqual([[0, 0]]);
+  expect(quotedPassages("> Nothing of the novel is in these words at all, none.\n", novel, AUSTEN, [])).toEqual([]);
+  const linked = "[Austen, *Pride and Prejudice*, 1.9](#bookshelf/Austen%2C%20Jane/Pride%20and%20Prejudice/1.9?h=x):\n\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n";
+  expect(quotedPassages(linked, novel, AUSTEN, [])).toEqual([]);
+  const taken = "> “I have been used to consider poetry as the food of love,” said Elizabeth.\n";
+  expect(quotedPassages(taken, novel, AUSTEN, [{ start: 0, end: 0, key: "k", first: 0, last: 0, from: 1, to: 1 }])).toEqual([]);
+  expect(quotedPassages("```\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n```\n", novel, AUSTEN, [])).toEqual([]);
+});
+test("referRuns: before a prose passage, whose reference cites its chapter alone, a short citation with a number is the link in its own words", () => {
+  const md = "Volume 1, chapter 9:\n\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n";
+  const { run, ref } = quotedPassages(md, novel, AUSTEN, [])[0];
+  expect(referRuns(md, [run], () => ref)).toBe("[Volume 1, chapter 9](" + ref.url + "):\n\n" + ref.passage + "\n");
+});
+test("quotedPassages: quoted paragraphs join one by one while nothing of the book is left out between them; a paragraph left out parts them there", () => {
+  const book = shelfIndex({
+    "bookshelf/Austen, Jane": "# Jane Austen\n",
+    "bookshelf/Austen, Jane/Pride and Prejudice/1.9": "# Volume 1, Chapter 9\n\nThe first paragraph of the chapter is this one here.\n\nThe second paragraph of the chapter follows it there.\n\nThe third paragraph of the chapter is never quoted by anyone.\n\nThe fourth paragraph of the chapter closes it at last.\n",
+  });
+  const md = "> The first paragraph of the chapter is this one here.\n\n> The second paragraph of the chapter follows it there.\n\n> The fourth paragraph of the chapter closes it at last.\n";
+  expect(quotedPassages(md, book, AUSTEN, []).map(({ run }) => [run.start, run.end])).toEqual([[0, 2], [4, 4]]);
+});
+test("sameQuoted: couplets each beside its translation, one after another in the passage, are one reference across them", () => {
+  const md = "> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat, metaque fervidis\n\n> Some like the dust\n> and the turning post\n\n> evitata rotis palmaque nobilis\n> terrarum dominos evehit ad deos;\n\n> grazed by the wheels\n> lifts them to the gods\n";
+  const runs = quotedRuns(md, index);
+  expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 1, 3, 4], [6, 7, 5, 6]]);
+  const all = [...runs, { ...runs[0], start: 3, end: 4 }, { ...runs[1], start: 9, end: 10 }].sort((a, b) => a.start - b.start);
+  const out = sameQuoted(md, all, (r) => (referenceOf(index, r) as { passage: string }).passage, index);
+  expect(out.map(({ run, as }) => [run.start, run.end, as.from, as.to])).toEqual([[0, 10, 3, 6]]);
+});
+test("sameQuoted: a quotation and its translation a blank line apart are one reference, the passage that holds the other's", () => {
+  const md = "> La gloria di colui che tutto move\n\n> The glory of Him who moves all things\n\nAnd then.\n\n> La gloria di colui che tutto move\n";
+  const run = (start: number, end: number) => ({ start, end, key: "k", first: 0, last: 0, from: 1, to: 1 });
+  const joined = (md: string, runs: ReturnType<typeof run>[], passage: (r: ReturnType<typeof run>) => string) => sameQuoted(md, runs, passage).map(({ run, as }) => [run.start, run.end, as.start]);
+  expect(joined(md, [run(0, 0), run(2, 2), run(6, 6)], () => "> ::: verse\n> La gloria | The glory\n> :::")).toEqual([[0, 2, 0], [6, 6, 6]]);
+  expect(joined(md, [run(0, 0), run(2, 2)], (r) => r.start ? "> other" : "> one")).toEqual([[0, 0, 0], [2, 2, 2]]);
+  const thrice = "> one\n\n> two\n\n> three\n";
+  const part = new Map([[0, "> a | b\n> c | d"], [2, "> a | b"], [4, "> e | f\n> a | b\n> c | d"]]);
+  expect(joined(thrice, [run(0, 0), run(2, 2)], (r) => part.get(r.start)!)).toEqual([[0, 2, 0]]);
+  expect(joined(thrice, [run(2, 2), run(4, 4)], (r) => part.get(r.start)!)).toEqual([[2, 4, 4]]);
 });

@@ -6,7 +6,7 @@
    colon that gives the lines makes that citation the link, its words kept;
    any other run gives way to the whole reference (pin: shelfLines.test ›
    referRuns) */
-import { norm, type ShelfIndex, type Referred } from "./bookshelfQuotes.ts";
+import { norm, quotedProse, type ShelfIndex, type Referred } from "./bookshelfQuotes.ts";
 
 const FENCE = /^\s*(?:>\s*)*(```|~~~)/;
 const QUOTE = /^\s*>/;
@@ -82,10 +82,11 @@ export interface Run {
   parts?: number;
   /* the speaker's row heading a passage taken from inside the speech */
   speaker?: number;
+  /* a prose book's passage, cited by its chapter alone */
+  prose?: boolean;
 }
 
-export function quotedRuns(md: string, index: ShelfIndex): Run[] {
-  const lines = md.split("\n"), runs: Run[] = [];
+function skipped(lines: string[]): boolean[] {
   const skip = new Array(lines.length).fill(false);
   let fence = false;
   lines.forEach((l, i) => {
@@ -100,6 +101,11 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     while (j < lines.length && !lines[j].trim()) j++;
     while (j < lines.length && QUOTE.test(lines[j])) skip[j++] = true;
   }
+  return skip;
+}
+export function quotedRuns(md: string, index: ShelfIndex): Run[] {
+  const lines = md.split("\n"), runs: Run[] = [];
+  const skip = skipped(lines);
   /* A RUN FOLLOWED LETTER BY LETTER past either end, where the quotation is
      broken into lines otherwise than the passage: on through whole lines of
      the quotation whose letters are the passage's, a few spelled otherwise
@@ -347,6 +353,73 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
   });
 }
 
+const inked = (passage: string): string => norm(passage.split("\n").filter((l) => !/^:::/.test(bare(l))).join(" "));
+/* A BOOK'S PASSAGE QUOTED AS TEXT, in a prose book or a translation beside
+   verse: each quoted paragraph placed, and joined to the next a blank line
+   on while the two are one passage with nothing of the book left out
+   between them (pin: shelfLines.test › quotedPassages: quoted paragraphs
+   join one by one); lines a verse run took are its */
+export function quotedPassages(md: string, index: ShelfIndex, prefixes: string[], taken: Run[]): { run: Run; ref: Referred }[] {
+  const lines = md.split("\n"), skip = skipped(lines), found: { run: Run; ref: Referred }[] = [];
+  const free = (i: number): boolean => QUOTE.test(lines[i]) && !skip[i] && !/^:::/.test(bare(lines[i])) && !taken.some((r) => i >= r.start && i <= r.end);
+  const place = (from: number, to: number): Referred | null => {
+    for (const prefix of prefixes) { const ref = quotedProse(index, prefix + "/", lines.slice(from, to + 1)); if (ref) return ref; }
+    return null;
+  };
+  const paragraphs: { from: number; to: number; ref: Referred | null }[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!free(i)) continue;
+    let j = i;
+    while (j + 1 < lines.length && free(j + 1)) j++;
+    paragraphs.push({ from: i, to: j, ref: place(i, j) });
+    i = j;
+  }
+  let open: { run: Run; ref: Referred; letters: number } | null = null;
+  for (let k = 0; k < paragraphs.length; k++) {
+    const p = paragraphs[k];
+    if (!p.ref) { open = null; continue; }
+    if (open && p.from === open.run.end + 2 && !lines[open.run.end + 1].trim() && p.ref.key === open.ref.key) {
+      const joined = place(open.run.start, p.to);
+      const letters = open.letters + inked(p.ref.passage).length;
+      if (joined && joined.key === open.ref.key && inked(joined.passage).length === letters) {
+        Object.assign(open, { ref: joined, letters });
+        open.run.end = p.to;
+        found[found.length - 1].ref = joined;
+        continue;
+      }
+    }
+    open = { run: { start: p.from, end: p.to, key: p.ref.key, first: 0, last: 0, from: 0, to: 0, prose: true }, ref: p.ref, letters: inked(p.ref.passage).length };
+    found.push({ run: open.run, ref: open.ref });
+  }
+  return found;
+}
+/* a quotation and its translation one after another, a blank line apart,
+   are one reference, its passage the one that holds the other's: a
+   translation of part of the lines quoted, or the lines of part of it;
+   and two such, one after another in the passage, one across them (pin:
+   shelfLines.test › sameQuoted) */
+export function sameQuoted(md: string, runs: Run[], passage: (r: Run) => string, index?: ShelfIndex): { run: Run; as: Run }[] {
+  const lines = md.split("\n"), out: { run: Run; as: Run }[] = [];
+  /* two verse runs of one block, no numbered line left out between them, read as one */
+  const onward = (a: Run, b: Run): Run | null => {
+    const s = index?.entries.find((e) => e.key === a.key);
+    if (!s || a.prose || b.prose || b.first <= a.last || s.units[a.last].blockPos !== s.units[b.first].blockPos) return null;
+    for (let x = a.last + 1; x < b.first; x++) if (s.units[x].line > 0) return null;
+    return { start: a.start, end: b.end, key: a.key, first: a.first, last: b.last, from: a.from, to: b.to, ...(a.head !== undefined && { head: a.head }), ...(b.tail !== undefined && { tail: b.tail }), parts: (a.parts ?? 1) + (b.parts ?? 1) };
+  };
+  for (const r of runs) {
+    const prev = out[out.length - 1];
+    if (prev && prev.run.key === r.key && r.start > prev.run.end && lines.slice(prev.run.end + 1, r.start).every((l) => !l.trim())) {
+      const held = inked(passage(prev.as)), mine = inked(passage(r));
+      if (held.includes(mine) || mine.includes(held)) { out[out.length - 1] = { run: { ...prev.run, end: r.end }, as: held.includes(mine) ? prev.as : r }; continue; }
+      const across = onward(prev.as, r);
+      if (across) { out[out.length - 1] = { run: { ...prev.run, end: r.end }, as: across }; continue; }
+    }
+    out.push({ run: r, as: r });
+  }
+  return out;
+}
+
 export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Referred, "text" | "url" | "passage">): string {
   const lines = md.split("\n");
   for (const [at, r] of [...runs.entries()].reverse()) {
@@ -378,7 +451,7 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
     const citation = !!cited && /:\s*$/.test(cited) && cited.length <= CITATION && !/\]\(/.test(cited) && !kept(r.before);
     const lined = /\d+\s*[.,:]\s*\d+\s*[-–]\s*\d+|\d+\.\d+\.\d+/.test(cited);
     const scened = /\d|\b[IVXLC]+\s*[.,]\s*[ivxlcIVXLC]+\b/.test(cited);
-    if (citation && lined)
+    if (citation && (lined || r.prose && scened))
       lines.splice(above, end - above + 1, ...["[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n")].map(within), ...after);
     else if (citation && scened)
       lines.splice(above, end - above + 1, ...m.text.split("\n").map(within), ...after);

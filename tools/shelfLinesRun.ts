@@ -5,7 +5,7 @@
    page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { quotedRuns, referRuns, wordDiff, type Run } from "./shelfLines.ts";
+import { quotedRuns, quotedPassages, sameQuoted, referRuns, wordDiff, type Run } from "./shelfLines.ts";
 import { shelfIndex, referenceOf, norm } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -26,7 +26,8 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const cache: Record<string, string> = Object.create(null);
 for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if (t) cache[entryKey(t.date, t.tag)] = readFileSync(path, "utf8"); }
-const PREFIXES = AUTHOR.split(",");
+/* a comma and a space is inside a filed name (Spenser, Edmund); a bare comma parts two */
+const PREFIXES = AUTHOR.split(/,(?! )/);
 const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) => PREFIXES.some((p) => k === p || k.startsWith(p + "/")))));
 
 /* entries that quote the bookshelf as the reference feature's test data, left */
@@ -40,6 +41,8 @@ const KEEP: { file: string; key: string; from: number; at?: number; why: string 
   { file: "journal/2006/2006-06-28.md", key: "bookshelf/Shakespeare, William/Hamlet/5.2", from: 376, why: "a deliberate variant: “Good night, dear heart”, the quotation itself beneath it" },
 ];
 const kept: string[] = [];
+const partial: string[] = [];
+const QUOTED = /^\s*>/;
 /* a book on the shelf whose quotation is made a reference too, asked */
 const ALSO = ["bookshelf/Lewis, C. S/The Allegory of Love/1. Courtly Love.md"];
 /* quotations too short for the run to place, placed by hand: the entry's
@@ -103,15 +106,23 @@ for (const path of walk(SRC).sort()) {
     md = ls.join("\n");
     counts.runs++; counts.lines++;
   }
-  const runs = [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start).filter((r) => {
+  const verse = [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start).filter((r) => {
     const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from && (x.at === undefined || x.at === r.start + 1));
     if (k) kept.push(`${file} — ${r.key.split("/").slice(-2).join(" ")}.${r.from}-${r.to}: ${k.why}`);
     return !k;
   });
+  const prose = quotedPassages(md, index, PREFIXES, verse);
+  const runs = [...verse, ...prose.map((p) => p.run)].sort((a, b) => a.start - b.start);
   if (!runs.length && md === original) continue;
   if (LEAVE.test(file)) { left.push(file); continue; }
-  const minted = new Map<Run, ReturnType<typeof referenceOf>>(runs.map((r) => [r, referenceOf(index, r)]));
-  const ok = runs.filter((r) => "url" in minted.get(r)!);
+  const minted = new Map<Run, ReturnType<typeof referenceOf>>([...verse.map((r): [Run, ReturnType<typeof referenceOf>] => [r, referenceOf(index, r)]), ...prose.map((p): [Run, ReturnType<typeof referenceOf>] => [p.run, p.ref])]);
+  const each = runs.filter((r) => "url" in minted.get(r)!);
+  /* a quoted line beside a verse run that no run takes stays as written beside the reference: listed for a hand */
+  const src0 = md.split("\n");
+  const lone = (i: number): boolean => i >= 0 && i < src0.length && QUOTED.test(src0[i]) && /\p{L}/u.test(src0[i]) && !runs.some((x) => i >= x.start && i <= x.end);
+  for (const r of verse) if (QUOTED.test(src0[r.start]) && (lone(r.start - 1) || lone(r.end + 1))) partial.push(`${file}:${r.start + 1}–${r.end + 1} — ${r.key.split("/").slice(1).join(" ")} — beside it: ${(lone(r.start - 1) ? src0[r.start - 1] : src0[r.end + 1]).trim()}`);
+  const passage = (r: Run): string => { if (!minted.has(r)) minted.set(r, referenceOf(index, r)); const m = minted.get(r)!; return "passage" in m ? m.passage : ""; };
+  const ok = sameQuoted(md, each, passage, index).map(({ run, as }) => { passage(as); minted.set(run, minted.get(as)!); return run; }).filter((r) => "url" in minted.get(r)!);
   const out = referRuns(md, ok, (r) => minted.get(r) as { text: string; url: string; passage: string });
   const src = md.split("\n");
   for (const r of ok) {
@@ -155,6 +166,8 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em
 <ul>${left.map((f) => `<li><code>${esc(f)}</code></li>`).join("")}</ul>
 <h2>Left as you wrote them (${kept.length})</h2>
 <ul>${kept.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+<h2>Part of a quotation left beside its reference (${partial.length})</h2>
+<ul>${partial.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
 <h2 id="wording">Wording differs (${group("wording").length})</h2>
 ${group("wording").map(card).join("")}
 <h2 id="spelling">Spelling only (${group("spelling").length})</h2>

@@ -265,10 +265,13 @@ is in the plan's record, under the phase named):
   `tools/orgDrawersRun.ts` points an old `[[#anchor]]` link at the place
   its Org property drawer marks, then clears the drawers, the same way.
   `tools/shelfLines.ts` — runs of an author's verse quoted line for line in
-  an entry found and made the references ⌃⌘R makes for them, pure, its
-  test beside it; `tools/shelfLinesRun.ts [author-prefix,…]` (Milton by
-  default; several prefixes a comma apart) writes an import folder with a
-  review page. Letters are matched with accents dropped and ð and þ one
+  an entry found and made the references ⌃⌘R makes for them, and quoted
+  paragraphs that are a book's text (a prose book, a translation beside
+  verse) placed and joined while nothing is left out between them, a
+  quotation and its translation one reference, pure, its test beside it;
+  `tools/shelfLinesRun.ts [author-prefix,…]` (Milton by default; several
+  prefixes a comma apart, a comma and a space inside a filed name) writes
+  an import folder with a review page. Letters are matched with accents dropped and ð and þ one
   letter; the review compares words with them kept.
   `tools/beowulfWyatt.ts` — Wyatt's Beowulf (1894) as Wikisource
   transcribes it made one bookshelf page, `bookshelf/Beowulf`, its page

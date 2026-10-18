@@ -136,6 +136,9 @@ const SPEAKER = /^\s*(?:>\s?)*[A-Z][A-Z0-9 .'’-]*(?:\s*\[[^\]]*\])?:\s*/;
    given. `ends`: the quote is a passage's first words and last, any length
    between (pin: bookshelfQuotes.test › quotedProse: a passage named by its
    first and last words) */
+/* a book's letters once, not once a quotation: a run over every quotation in the backup took minutes a book */
+const normedTexts = new Map<string, string>();
+const normed = (text: string): string => { let n = normedTexts.get(text); if (n === undefined) { n = norm(text); normedTexts.set(text, n); } return n; };
 export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], keys?: string[], ends = false): Referred | null {
   const lines = quote.map((l) => l.replace(/^\s*(?:>\s?)*/, "")).filter((l) => norm(l));
   if (!lines.length) return null;
@@ -143,7 +146,7 @@ export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], 
   const first = norm(lines[0].replace(SPEAKER, "")).slice(0, REACH), last = norm(lines[lines.length - 1].replace(SPEAKER, "")).slice(-REACH);
   if (first.length < DISTINCT || last.length < DISTINCT) return null;
   for (const key of keys ?? Object.keys(index.texts).filter((k) => k.startsWith(prefix)).sort()) {
-    if (!norm(index.texts[key]).includes(first)) continue;
+    if (!normed(index.texts[key]).includes(first)) continue;
     let doc = index.docs.get(key);
     if (!doc) { doc = parseMarkdown(index.texts[key]); index.docs.set(key, doc); }
     /* the entry's letters, each with its place in the document */

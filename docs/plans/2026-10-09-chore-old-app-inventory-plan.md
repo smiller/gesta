@@ -1994,3 +1994,36 @@ caret after the word).
   Asked, not changed: a caret at the end of a line ending in a colon (or a
   heading) takes the citation alone — a whole reference is pasted on a
   line of its own ("a reference is always on a new line").
+
+### 2026-10-18 — Spenser and Austen added to the five; prose quoted, quotations joined
+
+Asked: the references to Jane Austen (Pride and Prejudice) and the Faerie
+Queene checked and added to the review pages and to
+~/Desktop/gesta-imports/gesta-shelf-lines-five. Found, fixed in the tools:
+- `shelfLinesRun.ts` split its prefixes at every comma, so a filed name
+  ("Spenser, Edmund", the default "Milton, John") matched nothing (MEASURED:
+  0 index entries); a comma and a space now stays inside a name.
+- Prose was not read (the index is verse only): `quotedPassages` places a
+  quoted paragraph by `quotedProse`, a book's text whole, so a prose book
+  and a translation beside verse are found; normalised book text memoised
+  (a run took over ten minutes; now about a minute for seven authors).
+- Asked, the same day: "lots of passages in separate quote paras which
+  should be connected quotations"; and variants never preserved, the
+  quotations only identified. Quoted paragraphs a blank line apart join
+  one by one while nothing of the book is left out between them (2017-06-04:
+  nineteen tercets of Purgatorio 18 made two references, 22-57 and 61-75,
+  where 58-60 is not quoted); a quotation and its translation one after
+  another are one reference (`sameQuoted`), and two such, one after another
+  in the passage, one across them (Alcuin, O mea cella 31-34). References of
+  one work standing one after another: 123 → 16, the rest lines left out
+  between them or already in the backup (MEASURED).
+- Prose: a short citation with a number is the link in its own words (the
+  reference cites the chapter alone).
+- Listed, not changed: a verse run beside a quoted line no run takes (20:
+  a citation inside the quote, a line spelled too far from the book's, an
+  elision, a translation line in the block, a line not the author's) — the
+  review page's "Part of a quotation left beside its reference".
+Folder rewritten for the seven: 649 references, 4223 lines, 295 entries
+(was 438, 2357, 217); none of the old entries dropped, 153 identical, 64
+changed, 78 new (MEASURED). Review pages per author regenerated, Spenser's
+(29 in 11 entries) and Austen's (26 in 21) new.
