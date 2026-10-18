@@ -1575,3 +1575,25 @@ calls); 7 (settle waiting for an arrival's restored scroll: the locator
 click has held in every full run since, a wider change not asked); 8 (the
 new page "Referred" in nine list readings: approved already, a move would
 churn them again).
+
+d36d8e7 accepted 2026-10-17; no confirmation pass asked: the batch closed
+at REVIEW CYCLES: 1.
+
+### 2026-10-17 — Old English Beowulf
+
+Asked: an Old English *Beowulf* on the bookshelf, one page, cited by line
+through the poem ("*Beowulf*, 50-52"), under a top-level `Old English`
+that the citation does not name; length marks and hyphens removed (the
+part after a hyphen lower-cased, Gardena), brackets and notes dropped, the
+half-lines a double space apart, the fitts as gaps.
+The source: Gutenberg #9701 (Harrison and Sharp) numbers 3,184 lines on
+Heyne's count, one ahead of the standard by 3150 (MEASURED); Wyatt (1894,
+Wikisource, 137 pages all "proofread", none "validated") has the standard
+3182 (MEASURED). Klaeber 1922 is full view on HathiTrust, scans only.
+A root's page carrying `::: reference` / `no author` names no author in its
+works' references; the root itself cites as its title (reference.ts,
+headings.ts, reference.test; the help card's Ref paragraph).
+tools/beowulfWyatt.ts + Run: 3182 lines in 43 parts, 636 printed line
+numbers checked, one misprinted (2885 for 2835); six transcription slips
+corrected (w«s ×2, Hr¯wðel, Gewât, two stray marks) (MEASURED). Folder
+~/Desktop/gesta-imports/gesta-beowulf + review page.

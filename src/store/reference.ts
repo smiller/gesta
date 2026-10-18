@@ -68,6 +68,8 @@ export interface Journal {
   fromLastTitle(rootKey: string): boolean;
   /* the WORK's page carries `roman book and canto` */
   romanBookCanto(workKey: string): boolean;
+  /* the ROOT's page carries `no author`: a heading that gathers works, not a person */
+  noAuthor(rootKey: string): boolean;
 }
 
 /* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
@@ -180,8 +182,12 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
     }
   }
   /* the first field is a person (roman), a title (italic), or nothing */
-  const first = referenceAuthor(date, root);
+  /* a root that names no author still names itself where nothing stands below it
+     (pin: reference.test › referenceLabel: a root whose page says no author) */
+  const unnamed = books && journal.noAuthor(entryKey(date, root));
+  const first = unnamed ? "" : referenceAuthor(date, root);
   if (first) parts.unshift(books ? { plain: first } : { t: first });
+  else if (unnamed && !parts.length) parts.push({ t: journal.heading(entryKey(date, root)) || root });
   return parts.map((p) => {
     if (p.t !== undefined) return "*" + p.t + "*";
     if (p.plain !== undefined) return p.plain;

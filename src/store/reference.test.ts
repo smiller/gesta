@@ -5,7 +5,7 @@ import {
   roman, romanKey, romanWorkKey,
 } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
-import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto } from "./headings.ts";
+import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor } from "./headings.ts";
 
 test("referenceNumeral: a digit-led token or a division word is a numeral, everything else a title", () => {
   expect(referenceNumeral("19", true)).toBe("19");
@@ -89,6 +89,8 @@ const journal: Journal = journalOf({
   "bookshelf/Blake, William/Songs of Innocence": "# Songs of Innocence",
   "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
   "bookshelf/Dante/Commedia": "# Commedia",
+  "bookshelf/Old English": "# Old English\n\n::: reference\nno author\n:::",
+  "bookshelf/Old English/Beowulf": "# Beowulf",
   "bookshelf/Dante/Commedia/Inferno": "# Inferno",
   "bookshelf/Lewis, C. S/The Screwtape Letters": "# The Screwtape Letters",
   "page/Sean's Books/1": "# The Figure of Beatrice\n\ntext",
@@ -126,6 +128,15 @@ test("referenceLabel: from the last title, a day, a page", () => {
   expect(referenceLabel(NS_PAGE.key, "Sean's Books/2", "", null, journal)).toBe("*Sean's Books*, 2: *Witchcraft*");
   expect(referenceLabel(NS_PAGE.key, "Notes", "", null, journal)).toBe("*Notes*");
   expect(referenceLabel(NS_PAGE.key, "Notes", "", { from: "3", to: "4" }, journal)).toBe("*Notes*");
+});
+
+test("referenceLabel: a root whose page says no author is named in no reference; the root itself stands on its title", () => {
+  expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", "50-52", null, journal)).toBe("*Beowulf*, 50-52");
+  expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", "", null, journal)).toBe("*Beowulf*");
+  expect(referenceLabel(NS_BOOK.key, "Old English", "", null, journal)).toBe("*Old English*");
+  expect(directsNoAuthor("# Old English\n\n::: reference\nno author\n:::")).toBe(true);
+  expect(directsNoAuthor("# W\n\n> ::: reference\n> no author\n> :::")).toBe(false);
+  expect(directsNoAuthor("# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(false);
 });
 
 test("headings: the first level-one heading is the title; a ## is a section; the directive is top-level only", () => {

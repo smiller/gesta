@@ -23,22 +23,17 @@ export function firstHeading(md: string): string {
 /* top-level only: a descendant scan found a directive an entry merely
    QUOTED as an example (pin: reference.test › headings: the first level-one
    heading is the title; a ## is a section; the directive is top-level only) */
-export function directsFromLastTitle(md: string): boolean {
+function directs(md: string, words: RegExp): boolean {
   if (!/^::: reference/m.test(md)) return false;
   let doc: Node;
   try { doc = parseMarkdown(md); } catch { return false; }
   let yes = false;
-  doc.forEach((block) => { if (block.type === N.reference && /last title/i.test(block.textContent)) yes = true; });
+  doc.forEach((block) => { if (block.type === N.reference && words.test(block.textContent)) yes = true; });
   return yes;
 }
-export function directsRomanBookCanto(md: string): boolean {
-  if (!/^::: reference/m.test(md)) return false;
-  let doc: Node;
-  try { doc = parseMarkdown(md); } catch { return false; }
-  let yes = false;
-  doc.forEach((block) => { if (block.type === N.reference && /roman book and canto/i.test(block.textContent)) yes = true; });
-  return yes;
-}
+export const directsFromLastTitle = (md: string): boolean => directs(md, /last title/i);
+export const directsRomanBookCanto = (md: string): boolean => directs(md, /roman book and canto/i);
+export const directsNoAuthor = (md: string): boolean => directs(md, /no author/i);
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
   return {
@@ -52,5 +47,6 @@ export function journalOf(cache: Record<string, string>): Journal {
     },
     fromLastTitle: (rootKey) => directsFromLastTitle(cache[rootKey] || ""),
     romanBookCanto: (workKey) => directsRomanBookCanto(cache[workKey] || ""),
+    noAuthor: (rootKey) => directsNoAuthor(cache[rootKey] || ""),
   };
 }

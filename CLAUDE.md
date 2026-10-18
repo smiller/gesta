@@ -256,6 +256,12 @@ is in the plan's record, under the phase named):
   an entry found and made the references ⌃⌘R makes for them, pure, its
   test beside it; `tools/shelfLinesRun.ts [author-prefix]` (Milton by
   default) writes an import folder with a review page.
+  `tools/beowulfWyatt.ts` — Wyatt's Beowulf (1894) as Wikisource
+  transcribes it made one bookshelf page under `Old English`, a root whose
+  page says `no author`: the apparatus dropped, the spelling plain, pure, its
+  test beside it; `tools/beowulfWyattRun.ts` fetches the pages (cached under
+  `tools/out/wyatt`), checks the 3182 lines against the printed numbers and
+  writes an import folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
