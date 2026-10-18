@@ -84,3 +84,18 @@ export function beowulfEntries(fitts: string[][], note: string): Record<string, 
     "bookshelf/Old English/Beowulf.md": `# Beowulf\n\n::: note\n${note}\n:::\n\n::: verse\n${fitts.map((f) => f.join("\n")).join("\n\n")}\n:::`,
   };
 }
+
+/* the Finnsburh fragment, Wyatt's appendix: its asterisks mark the halves of
+   its first and last lines the fragment lost, kept where Beowulf's marked a
+   folio */
+const LACUNA = "\u0003";
+export function finnsburhLines(pages: string[]): { lines: string[]; numbered: Numbered[] } {
+  const unwrapped = pages.map((page) => replaceTemplates(page, /\{\{lang\|an[gf]\|font=Junicode\|text=/, (whole) => whole.slice(whole.indexOf("text=") + 5, -2))
+    .replace(/\*\{\{gap\}\}\*\{\{gap\}\}\*/g, LACUNA));
+  const { fitts, numbered } = wyattFitts(unwrapped);
+  return { lines: fitts.flat().map((line) => line.replace(LACUNA, "* * *")), numbered };
+}
+
+export function finnsburhEntry(lines: string[], note: string): Record<string, string> {
+  return { "bookshelf/Finnsburh.md": `# The Fight at Finnsburh\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${lines.join("\n")}\n:::` };
+}

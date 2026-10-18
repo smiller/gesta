@@ -1725,3 +1725,24 @@ the accept: 108,775 tokens (the transcript's last message: 2 + 2,683 +
 10. shelves.ts's module header (the layout says it) removed; the step's
     fixed 400 ms after the search rows replaced by a wait for rows that
     hold the query.
+
+aa3a4f3 ACCEPTED 2026-10-18; no confirmation pass asked — closed at 1 cycle.
+
+### 2026-10-18 — The Fight at Finnsburh, from Wyatt
+
+Asked: "Import Wyatt's Fight at Finnsburh first. (into Old English)".
+Wyatt's appendix "The Fight at Finnsburg", Wikisource pages 162–163, 48
+lines, made `bookshelf/Finnsburh` headed "The Fight at Finnsburh" (the
+name as asked; Wyatt's heading in the note), `no author`, one verse block,
+the Beowulf rules: length marks, hyphens, brackets and notes gone, the
+half-lines two spaces apart. Wyatt's asterisks where the fragment breaks
+off (the first half of line 1, the second of line 48) kept, as text: they
+round-trip bare and parse with no emphasis (MEASURED, the test). Every
+line read against the page scans: five transcription slips corrected —
+5 beratð/berað, 11 hiegeað/hicgeað, 33 hyue/hyne, 35 sealo-brün/sealo-brūn,
+47 hū ðū/hū ðā wīgend (the last missed on a first look at the full page,
+found reading the output against enlarged crops). Its label read by
+referenceCorpus: *The Fight at Finnsburh* (MEASURED). The fetch moved to
+tools/wyattPages.ts, shared with the Beowulf run. Folder
+~/Desktop/gesta-imports/gesta-finnsburh. The Shelves entry is not shipped
+(an existing entry): its Old English line is added by hand.

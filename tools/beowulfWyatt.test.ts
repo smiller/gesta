@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { wyattFitts, plainSpelling, beowulfEntries } from "./beowulfWyatt.ts";
+import { wyattFitts, plainSpelling, beowulfEntries, finnsburhLines, finnsburhEntry } from "./beowulfWyatt.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -44,4 +44,44 @@ test("one page under a heading that names no author, the poem one verse block wi
   const poem = out["bookshelf/Old English/Beowulf.md"];
   expect(poem).toBe("# Beowulf\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\nHwæt we Gardena  in geardagum\nþeodcyninga  þrym gefrunon,\n\nÐa wæs on burgum  Beowulf Scyldinga,\n:::");
   expect(serializeMarkdown(parseMarkdown(poem))).toBe(poem);
+});
+
+const FINN = [`<noinclude><pagequality level="3" user="x" /></noinclude>{{c|{{larger|APPENDIX.}}
+
+THE FIGHT AT FINNSBURG<ref>“Fragmenti poetici…” Hickes {{smaller|I}}.192.</ref>.
+
+(See “Beowulf” ll. 1068 ff.)}}
+
+{{block center/s}}
+<!-- -->
+{{lang|anf|font=Junicode|text=
+*{{gap}}*{{gap}}*{{gap}}[hor]nas byrnað nǣfre?”<br>
+Hlēoðrode þā {{gap}} heaðo-geong<ref>2. ‘hearo geong’ H.</ref> cyning:<br>}}<noinclude><!-- -->
+{{block center/e}}
+{{smallrefs}}</noinclude>`, `<noinclude><pagequality level="3" user="x" />{{rh||APPENDIX.|139}}
+{{block center/s}}
+<!-- --></noinclude>{{lang|ang|font=Junicode|text=
+{{pline|3|l}}ōð [þæt] æt ðǣre gūðe {{gap}} Gārulf gecrang,<br>
+oððe hwæþer ðǣra hyssa {{gap}}*{{gap}}*{{gap}}* }}
+<!-- -->
+{{block center/e}}<noinclude>{{smallrefs}}</noinclude>`];
+
+test("the Finnsburh fragment's pages read as lines: its asterisks, the halves the fragment lost, kept apart from the words; brackets and notes gone", () => {
+  const { lines, numbered } = finnsburhLines(FINN);
+  expect(lines).toEqual(["* * *  hornas byrnað nǣfre?”", "Hlēoðrode þā  heaðo-geong cyning:", "ōð þæt æt ðǣre gūðe  Gārulf gecrang,", "oððe hwæþer ðǣra hyssa  * * *"]);
+  expect(numbered).toEqual([{ n: 3, at: 3 }]);
+});
+
+test("one page that names no author, the fragment one verse block, its asterisks text, not emphasis, its text as stored", () => {
+  const out = finnsburhEntry(["* * *  hornas byrnað næfre?”", "oððe hwæþer ðæra hyssa  * * *"], "Text: A. J. Wyatt.");
+  expect(Object.keys(out)).toEqual(["bookshelf/Finnsburh.md"]);
+  const md = out["bookshelf/Finnsburh.md"];
+  expect(md).toBe("# The Fight at Finnsburh\n\n::: reference\nno author\n:::\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\n* * *  hornas byrnað næfre?”\noððe hwæþer ðæra hyssa  * * *\n:::");
+  expect(serializeMarkdown(parseMarkdown(md))).toBe(md);
+  const doc = parseMarkdown(md);
+  expect(doc.textContent).toContain("* * *  hornas");
+  expect(doc.textContent).toContain("hyssa  * * *");
+  let marked = 0;
+  doc.descendants((n) => { if (n.isText && n.marks.length) marked++; });
+  expect(marked).toBe(0);
 });

@@ -273,7 +273,11 @@ is in the plan's record, under the phase named):
   page says `no author`: the apparatus dropped, the spelling plain, pure, its
   test beside it; `tools/beowulfWyattRun.ts` fetches the pages (cached under
   `tools/out/wyatt`), checks the 3182 lines against the printed numbers and
-  writes an import folder with a review page.
+  writes an import folder with a review page; `tools/finnsburhWyattRun.ts`
+  the same for the Finnsburh fragment, Wyatt's appendix, made
+  `bookshelf/Finnsburh` (`finnsburhLines` keeps his asterisks where the
+  fragment breaks off); `tools/wyattPages.ts` the pages' fetch and cache
+  both runs share.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
