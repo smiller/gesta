@@ -1761,3 +1761,15 @@ on The Wanderer) not carried, pending a ruling. 42, 115 and 124 lines,
 every number the site prints at its line (MEASURED); labels *Deor*, *The
 Wanderer*, *The Seafarer* (referenceCorpus, MEASURED). Folder
 ~/Desktop/gesta-imports/gesta-old-english.
+
+Then asked: "the notes should be carried over. As footnotes, not marginal
+notes." As the Sidney footnotes are written: a mark " ¹" after the
+half-line the site marks, in the Old English, numbered within its stanza;
+the stanza's notes, "[1] …", in a `::: note` inside the verse block after
+its last line, so the lines after count on. Every paragraph of a note
+kept, its italics and accents kept, its "Back to text" gone; a note with no
+mark, or a mark with no note, is an error. Deor 6 notes, The Wanderer 1
+(its note quotes a line with " | ", parsed as the note's text, not a
+pair), The Seafarer none and left out of the folder. Replacing an imported
+entry is allowed only where the backup holds it exactly as the first run
+wrote it (MEASURED: Deor and Wanderer identical).

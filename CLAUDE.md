@@ -283,7 +283,9 @@ is in the plan's record, under the phase named):
   page of pairs, a whole line each, pure, its test beside it;
   `tools/hwaetTextsRun.ts` runs it over Deor, The Wanderer and The Seafarer
   (pages cached under `tools/out/hwaet`), checks each poem's line count and
-  the site's numbers, and writes an import folder with a review page.
+  the site's numbers, carries the site's notes as footnotes (a mark after
+  the half-line, the stanza's notes in a `::: note` after its last line),
+  and writes an import folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
