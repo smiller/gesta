@@ -72,6 +72,14 @@ describe("inScope", () => {
     expect(inScope(bookRow, { kind: "book", ns: "page", book: "Corpus" })).toBe(false);
     expect(inBook({ date: "page", tag: "Sean's Books/x" }, "page", "Sean")).toBe(false);
   });
+  it("a shelf scope holds its authors' books, every level of each, and nothing else", () => {
+    const latin: Scope = { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: ["Horace", "Virgil"] };
+    expect(inScope({ date: "bookshelf", tag: "Horace" }, latin)).toBe(true);
+    expect(inScope({ date: "bookshelf", tag: "Virgil/Aeneid/1" }, latin)).toBe(true);
+    expect(inScope({ date: "bookshelf", tag: "Milton, John/PL" }, latin)).toBe(false);
+    expect(inScope({ date: "page", tag: "Horace" }, latin)).toBe(false);
+    expect(inScope({ date: "2020-06-06", tag: null }, latin)).toBe(false);
+  });
 });
 describe("searchEntries", () => {
   const row = (date: string, tag: string | null, text: string): IndexRow => ({ date, tag, text, lower: searchFold(text) });

@@ -739,11 +739,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("2026-09-06");
   await log("the masthead over the day after the rows closed", await R.rowsClosed(page));
   /* the link goes in at the caret: the click's caret is the editor's only
-     once its selectionchange has reached it, else the link landed last */
+     once its selectionchange has reached it. ⌘↓ takes it to the body's end;
+     End moves no caret on a Mac, and the click alone left it mid-heading,
+     the link splitting a word, once the heading ran past the click's point */
   await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await page.click(S.editorFirst);
   await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
-  await page.keyboard.press("End");
+  await page.keyboard.press("Meta+ArrowDown");
   await rest(page);
   await log("a day's tools", await R.tools(page));
   answer = "Ideas";
@@ -2188,7 +2190,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     }],
     ["shelves", async () => {
   /* the bookshelf's shelves: an entry Shelves names them in order and the authors on each; the list heads each shelf and sets its authors in, the go-to box groups by shelf */
-  await A.foreignWrite(page, "bookshelf/Shelves", "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n\n## English\n");
+  await A.foreignWrite(page, "bookshelf/Shelves", "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Browning](#bookshelf/Browning%2C%20Robert)\n\n## English\n");
   /* read back before the reload: a reload during the write's commit read the store without it */
   for (let i = 0; i < 30 && !(await A.stored(page, "bookshelf/Shelves")); i++) await rest(page);
   await page.goto(A.url("2026-09-06"));
@@ -2204,7 +2206,23 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+j");
   await rest(page);
-  await log("the go-to box on its shelves", await page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), S.gotoDestination));
+  const groups = (sel) => page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), sel);
+  await log("the go-to box on its shelves", await groups(S.gotoDestination));
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForSelector(S.searchScope + " optgroup", { timeout: 5000 }).catch(() => {});
+  await log("the search scopes on their shelves", await groups(S.searchScope));
+  await page.selectOption(S.searchScope, { label: "All Latin" });
+  /* a word only one author's book holds, then one only the other's: each found under the shelf */
+  for (const q of ["uisu", "silk-mills"]) {
+    await page.click(".page-search input");
+    await page.keyboard.press("Meta+a");
+    await page.keyboard.type(q);
+    await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {});
+    await R.waitSearchRows(page).catch(() => {});
+    await page.waitForTimeout(400);
+    await log("searched " + q + " under All Latin", await page.evaluate(() => ({ scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, where: [...document.querySelectorAll(".search-results .where")].map((w) => w.textContent) })));
+  }
   await page.keyboard.press("Escape");
     }],
   ];

@@ -49,4 +49,22 @@ describe("scopeOptions on the shelves", () => {
     const c = { "bookshelf/Horace": "# Horace", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)" };
     expect(scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c)).map((o) => o.label)).toEqual(["Everything", "Journal", "All Pages", "Horace"]);
   });
+  it("an author's group is its shelf, in the shelves' order, as in the go-to box", () => {
+    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n", "page/Notes": "n" };
+    expect(scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c), c["bookshelf/Shelves"]).map((o) => [o.group, o.label])).toEqual([
+      [null, "Everything"], [null, "Journal"], [null, "All Pages"], ["Pages", "Notes"], ["Latin", "Horace"], ["English", "John Milton"],
+    ]);
+    expect(scopeOptions("bookshelf", "Shelves", Object.keys(c), journalOf(c), c["bookshelf/Shelves"]).map((o) => [o.group, o.label])).toContainEqual(["Authors", "Shelves"]);
+  });
+  it("a shelf of more than one author opens with All <shelf>, searching those authors together", () => {
+    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Virgil](#bookshelf/Virgil)\n- [Horace](#bookshelf/Horace)\n\n## English\n" };
+    const o = scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c), c["bookshelf/Shelves"]);
+    expect(o.map((x) => [x.group, x.label])).toEqual([
+      [null, "Everything"], [null, "Journal"], [null, "All Pages"], ["Latin", "All Latin"], ["Latin", "Horace"], ["Latin", "Virgil"], ["English", "John Milton"],
+    ]);
+    expect(o[3].scope).toEqual({ kind: "shelf", ns: "bookshelf", shelf: "Latin", books: ["Horace", "Virgil"] });
+    expect(sameScope(o[3].scope, { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: [] })).toBe(true);
+    expect(sameScope(o[3].scope, { kind: "shelf", ns: "bookshelf", shelf: "English", books: ["Horace", "Virgil"] })).toBe(false);
+    expect(sameScope(o[3].scope, o[4].scope)).toBe(false);
+  });
 });

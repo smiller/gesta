@@ -10,7 +10,7 @@ export function searchFold(s: string): string {
   return s.replace(/İ/g, "I").toLowerCase().replace(/[‘’]/g, "'");
 }
 export interface IndexRow { date: string; tag: string | null; text: string; lower: string }
-export type Scope = { kind: "everything" } | { kind: "journal" } | { kind: "pages" } | { kind: "book"; ns: string; book: string };
+export type Scope = { kind: "everything" } | { kind: "journal" } | { kind: "pages" } | { kind: "book"; ns: string; book: string } | { kind: "shelf"; ns: string; shelf: string; books: string[] };
 export const SCOPE_EVERYTHING: Scope = Object.freeze({ kind: "everything" }) as Scope;
 export const SCOPE_JOURNAL: Scope = Object.freeze({ kind: "journal" }) as Scope;
 export const SCOPE_PAGES: Scope = Object.freeze({ kind: "pages" }) as Scope;
@@ -33,6 +33,7 @@ export function inScope(row: { date: string; tag: string | null }, scope: Scope)
   if (scope.kind === "journal") return isDayKey(row.date);
   if (scope.kind === "pages") return row.date === PAGE_KEY;
   if (scope.kind === "book") return inBook(row, scope.ns, scope.book);
+  if (scope.kind === "shelf") return row.date === scope.ns && scope.books.indexOf(pageParts(row.tag || "").name) !== -1;
   return false;
 }
 export interface Query { needle: string; left: boolean; right: boolean }

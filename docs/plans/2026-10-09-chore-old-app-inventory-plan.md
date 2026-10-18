@@ -1672,3 +1672,24 @@ last in the run, new here, the old app frozen: Latin / Boethius set in
 (MEASURED). Folder ~/Desktop/gesta-imports/gesta-shelves: Shelves,
 Beowulf moved to bookshelf/Beowulf with its own `no author`, 2026-10-17's
 reference pointed at it.
+
+### 2026-10-18 — search's scopes on shelves; All Latin
+
+Asked: "The go-to dropdown in the header has changed, but the search
+dropdown hasn't", then a selectable "All Latin" for a shelf of more than
+one author. scopeOptions groups the bookshelf's roots by shelf as
+destinationRows does; a shelf of two or more authors opens its group with
+"All <shelf>", a new scope kind `shelf` (its authors' books, every level)
+— English gets "All English" by the same rule. A result under it keeps
+its author in "where". Headless: the scope groups, and under All Latin a
+word only Boethius holds and one only Browning holds each found
+(MEASURED). The step's Latin now lists Browning too.
+
+A sub-entries reading was wrong in f68b559's approved copy and approved
+unnoticed: "+ tagged entry" put its link mid-heading ("ORS[Ideas]INO"),
+read as Music the last link. The step clicked the heading's centre and
+pressed End, which moves no caret on a Mac; the click landed inside the
+536px heading text in its 712px box (MEASURED). One run at 03:54 landed
+right by chance; HEAD's whole tree reproduced the bad reading after it,
+so not this change. The step now presses ⌘↓ to the body's end: Ideas
+last, the renamed link Plans (MEASURED). Logged in tools/out/flakes.log.

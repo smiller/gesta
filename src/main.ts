@@ -349,7 +349,7 @@ if (fixture && fixtures[fixture]) {
     overlay.open("search");
     session.flushSave();
     const c = session.current;
-    sr.options = scopeOptions(c.date, c.tag, Object.keys(layer.cache), journal);
+    sr.options = scopeOptions(c.date, c.tag, Object.keys(layer.cache), journal, layer.cache[entryKey(NS_BOOK.key, SHELVES)] || "");
     const pre = defaultScope(c.date, c.tag);
     sr.scopeAt = Math.max(0, sr.options.findIndex((o) => sameScope(o.scope, pre)));
     setTimeout(() => masthead.focusSearch(), 0);
