@@ -1937,3 +1937,18 @@ Run over the six works: 127 references, 618 lines, in 79 entries; left:
 single lines and half-lines too short to place, the three lone refrains,
 Lewis's Allegory of Love (a book on the shelf, its quotation his), two
 entries already linked. Folder ~/Desktop/gesta-imports/gesta-shelf-lines-old-english.
+- Asked: every entry under "Lines quoted" made a reference, Lewis's Allegory
+  of Love included, but for the two excluded (2023-04-25 lines 9–14;
+  2016-03-14); and 2023-01-13's "Hroðgar maðelode", the first line of a poem
+  of his own, left (asked). The translations a reference brings stay, his
+  own beside them to be trimmed by hand (asked: "in case the translations
+  have relevant variants"). Placed by hand in the run (PLACED), too short
+  for it: 1992-02-25, 1992-04-16 (three), 1993-06-07, 2017-09-29,
+  2020-01-12, 2022-08-31; a line of verse in a list or his own line made a
+  link on its words, no passage (LINKED): 2016-03-29, 39b.
+- Found in the folder and fixed as a class, test-first: a short citation
+  ending in a colon a blank line above the run ("*Hávamál* 23:", "Seafarer
+  9b:") was left standing over the reference, saying it twice — now the
+  run's citation as one just above is; stanzas quoted one after another are
+  one run, one reference across them (1995-04-03, Hávamál 36–37).
+- Still asked: the three entries quoting Deor's refrain alone.

@@ -6,7 +6,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
 import { quotedRuns, referRuns, wordDiff, type Run } from "./shelfLines.ts";
-import { shelfIndex, referenceOf } from "./bookshelfQuotes.ts";
+import { shelfIndex, referenceOf, norm } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 import { importTarget } from "../src/store/names.ts";
@@ -40,6 +40,34 @@ const KEEP: { file: string; key: string; from: number; at?: number; why: string 
   { file: "journal/2006/2006-06-28.md", key: "bookshelf/Shakespeare, William/Hamlet/5.2", from: 376, why: "a deliberate variant: “Good night, dear heart”, the quotation itself beneath it" },
 ];
 const kept: string[] = [];
+/* a book on the shelf whose quotation is made a reference too, asked */
+const ALSO = ["bookshelf/Lewis, C. S/The Allegory of Love/1. Courtly Love.md"];
+/* quotations too short for the run to place, placed by hand: the entry's
+   lines (from 1), the passage's lines, and a half-line at either end */
+const PLACED: { file: string; at: number; end?: number; key: string; from: number; to?: number; half?: { from?: "b"; to?: "a" } }[] = [
+  { file: "journal/1992/1992-02-25.md", at: 66, key: "bookshelf/Seafarer", from: 97 },
+  { file: "journal/1992/1992-04-16.md", at: 17, key: "bookshelf/Seafarer", from: 9, half: { from: "b" } },
+  { file: "journal/1992/1992-04-16.md", at: 21, key: "bookshelf/Seafarer", from: 32, half: { to: "a" } },
+  { file: "journal/1992/1992-04-16.md", at: 52, key: "bookshelf/Beowulf", from: 1557 },
+  { file: "journal/1993/1993-06-07.md", at: 18, end: 19, key: "bookshelf/Beowulf", from: 726, to: 727, half: { from: "b" } },
+  { file: "journal/2017/2017-09-29.md", at: 29, end: 30, key: "bookshelf/Wanderer", from: 104, to: 105, half: { from: "b" } },
+  { file: "journal/2020/2020-01-12.md", at: 7, key: "bookshelf/Beowulf", from: 432, half: { from: "b" } },
+  { file: "journal/2022/2022-08-31.md", at: 60, key: "bookshelf/Beowulf", from: 3052 },
+];
+/* a line of verse in one's own sentence or list: its words made the link, no passage quoted */
+const LINKED: { file: string; at: number; key: string; from: number }[] = [
+  { file: "journal/2016/2016-03-29.md", at: 24, key: "bookshelf/Beowulf", from: 311 },
+  { file: "page/Sean’s Books/39b.md", at: 23, key: "bookshelf/Beowulf", from: 311 },
+];
+const placed = (file: string): Run[] => PLACED.filter((x) => x.file === file).map((x) => {
+  const sh = index.entries.find((e) => e.key === x.key)!;
+  const first = sh.units.findIndex((u) => u.line === x.from), last = sh.units.findIndex((u) => u.line === (x.to ?? x.from));
+  /* a half-line's letters, the original's halves two spaces apart */
+  const halves = (u: number): string[] => (sh.units[u].node.type.name === "pair" ? sh.units[u].node.child(0) : sh.units[u].node).textContent.split(/ {2,}/).map(norm);
+  if (first < 0 || last < 0) throw new Error(`${file}: ${x.key} has no line ${x.from}`);
+  return { start: x.at - 1, end: (x.end ?? x.at) - 1, key: x.key, first, last, from: x.from, to: x.to ?? x.from,
+    ...(x.half?.from && { head: halves(first)[1].length }), ...(x.half?.to && { tail: halves(last)[0].length }) };
+});
 
 rmSync(OUT, { recursive: true, force: true });
 const counts = { entries: 0, changed: 0, runs: 0, lines: 0 };
@@ -55,15 +83,26 @@ const spoken = (ls: string[], passage: boolean, called: Set<string>): string => 
   .map((l) => l.replace(/^[A-Z][\w .'’-]*?\t/, "").replace(/^[A-Z][A-Z .'’-]+:\s+/, "").replace(/\*/g, "")).join(" ");
 for (const path of walk(SRC).sort()) {
   const file = relative(SRC, path);
-  if (file.startsWith("bookshelf/")) continue;
+  if (file.startsWith("bookshelf/") && !ALSO.includes(file)) continue;
   counts.entries++;
-  const md = readFileSync(path, "utf8");
-  const runs = quotedRuns(md, index).filter((r) => {
+  const original = readFileSync(path, "utf8");
+  let md = original;
+  for (const x of LINKED.filter((x) => x.file === file)) {
+    const ls = md.split("\n"), m = referenceOf(index, { key: x.key, first: index.entries.find((e) => e.key === x.key)!.units.findIndex((u) => u.line === x.from), last: index.entries.find((e) => e.key === x.key)!.units.findIndex((u) => u.line === x.from) });
+    const it = ls[x.at - 1].match(/\*[^*]+\*/);
+    if (!("url" in m) || !it) throw new Error(`${file}:${x.at}: no italic line of verse to link`);
+    const label = m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1);
+    shown.push({ file, r: { start: x.at - 1, end: x.at - 1, key: x.key, first: 0, last: 0, from: x.from, to: x.from }, label, before: [ls[x.at - 1]], after: [ls[x.at - 1].replace(it[0], `[${it[0]}](${m.url})`)], diff: { kind: "same", ops: [] } });
+    ls[x.at - 1] = ls[x.at - 1].replace(it[0], `[${it[0]}](${m.url})`);
+    md = ls.join("\n");
+    counts.runs++; counts.lines++;
+  }
+  const runs = [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start).filter((r) => {
     const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from && (x.at === undefined || x.at === r.start + 1));
     if (k) kept.push(`${file} — ${r.key.split("/").slice(-2).join(" ")}.${r.from}-${r.to}: ${k.why}`);
     return !k;
   });
-  if (!runs.length) continue;
+  if (!runs.length && md === original) continue;
   if (LEAVE.test(file)) { left.push(file); continue; }
   const minted = new Map<Run, ReturnType<typeof referenceOf>>(runs.map((r) => [r, referenceOf(index, r)]));
   const ok = runs.filter((r) => "url" in minted.get(r)!);

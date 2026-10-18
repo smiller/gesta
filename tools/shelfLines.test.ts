@@ -271,3 +271,17 @@ test("wordDiff: an accent, or ð for þ, is a change of spelling a reader sees",
   expect(wordDiff("þá ðe gifsceattas", "þa þe gifsceattas").ops).toEqual([["-", "þá"], ["-", "ðe"], ["+", "þa"], ["+", "þe"], ["=", "gifsceattas"]]);
   expect(wordDiff("þá ðe gifsceattas", "þa þe gifsceattas").kind).toBe("spelling");
 });
+test("referRuns: a short citation ending in a colon a blank line above the run is the run's citation all the same", () => {
+  const md = "Odes 1.1.3-4:\n\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n\nOdes 1.1:\n\n> certat tergeminis tollere honoribus;\n";
+  const runs = quotedRuns(md, index);
+  const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u${r.from}):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: `#u${r.from}`, passage: `> ::: verse ${r.from}\n> line\n> :::` }));
+  expect(out).toBe("[Odes 1.1.3-4](#u3):\n\n> ::: verse 3\n> line\n> :::\n\n[Horace, *Odes*, 1.1.8-8](#u8):\n\n> ::: verse 8\n> line\n> :::\n");
+});
+test("quotedRuns: stanzas quoted one after another, a blank line between, are one run, a reference across them", () => {
+  const hav = shelfIndex({ "bookshelf/Havamal": "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::\n\n::: stanza 78\nFullar grindr | Full folds\n:::" });
+  const md = "> Deyr fé\n> deyja frændr\n> deyr sjálfr it sama\n> en orðstírr\n> deyr aldregi\n> hveim er sér góðan getr\n\n> Deyr fé\n> deyja frændr\n> deyr sjálfr it sama\n> ek veit einn\n> at aldri deyr\n> dómr um dauðan hvern\n";
+  const runs = quotedRuns(md, hav);
+  expect(runs.map((r) => [r.start, r.end])).toEqual([[0, 12]]);
+  const m = referenceOf(hav, runs[0]);
+  expect("text" in m && m.text.split("\n")[0]).toMatch(/^\[\*Hávamál\*, 76–77\]/);
+});

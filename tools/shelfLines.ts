@@ -253,8 +253,10 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     const a = runs[at - 1], b = runs[at];
     if (a.key !== b.key || b.start <= a.end || b.first < a.last || b.last <= a.last || QUOTE.test(lines[a.start]) !== QUOTE.test(lines[b.start])) continue;
     const s = index.entries.find((e) => e.key === a.key)!;
-    /* one reference quotes one verse block */
-    if (s.units[a.last].blockPos !== s.units[b.first].blockPos) continue;
+    /* one reference quotes one verse block, or stanzas one after another (pin:
+       shelfLines.test › quotedRuns: stanzas quoted one after another) */
+    const stanza = (x: number): boolean => s.doc.nodeAt(s.units[x].blockPos)?.attrs.stanza != null;
+    if (s.units[a.last].blockPos !== s.units[b.first].blockPos && !(b.first === a.last + 1 && stanza(a.last) && stanza(b.first))) continue;
     const said = new Set<number>();
     const between = (l: string): boolean => {
       if (QUOTE.test(lines[a.start]) && l.trim() && !QUOTE.test(l)) return false;
@@ -354,9 +356,13 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
        shelfLines.test › referRuns: a run quoted inside) */
     const outer = ">".repeat(Math.max(0, (lines[r.start].match(/^\s*((?:>\s*)*)/)![1].match(/>/g) ?? []).length - 1));
     const within = (l: string): string => !outer ? l : !l ? outer : l.startsWith(">") ? outer + l : outer + " " + l;
-    const prev = r.start > 0 ? lines[r.start - 1] : "", next = end + 1 < lines.length ? lines[end + 1] : "";
-    const cited = bare(prev);
     const blank = (l: string): boolean => outer ? !/[^\s>]/.test(l) : !l.trim();
+    /* a short citation a blank line above the run is its citation as well
+       as one just above (pin: shelfLines.test › referRuns: a short citation ending in a colon a blank line above) */
+    const short = (l: string): boolean => /:\s*$/.test(bare(l)) && bare(l).length <= CITATION && !/\]\(/.test(l);
+    const above = r.start > 1 && blank(lines[r.start - 1]) && short(lines[r.start - 2]) && (at === 0 || runs[at - 1].end < r.start - 2) ? r.start - 2 : r.start - 1;
+    const prev = above >= 0 ? lines[above] : "", next = end + 1 < lines.length ? lines[end + 1] : "";
+    const cited = bare(prev);
     const tail = blank(next) ? [] : [""];
     /* a kept place that names the work, or only numbers it, is its citation, which the reference gives (pin:
        shelfLines.test › quotedRuns, referRuns: a joined line's place) */
@@ -373,11 +379,11 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
     const lined = /\d+\s*[.,:]\s*\d+\s*[-–]\s*\d+|\d+\.\d+\.\d+/.test(cited);
     const scened = /\d|\b[IVXLC]+\s*[.,]\s*[ivxlcIVXLC]+\b/.test(cited);
     if (citation && lined)
-      lines.splice(r.start - 1, end - r.start + 2, ...["[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n")].map(within), ...after);
+      lines.splice(above, end - above + 1, ...["[" + cited.replace(/:\s*$/, "") + "](" + m.url + "):", "", ...m.passage.split("\n")].map(within), ...after);
     else if (citation && scened)
-      lines.splice(r.start - 1, end - r.start + 2, ...m.text.split("\n").map(within), ...after);
+      lines.splice(above, end - above + 1, ...m.text.split("\n").map(within), ...after);
     else
-      lines.splice(r.start, end - r.start + 1, ...(kept(r.before) ? [r.before] : []), ...[...(!kept(r.before) && blank(prev) ? [] : [""]), ...m.text.split("\n")].map(within), ...after);
+      lines.splice(r.start, end - r.start + 1, ...(kept(r.before) ? [r.before] : []), ...[...(!kept(r.before) && blank(r.start > 0 ? lines[r.start - 1] : "") ? [] : [""]), ...m.text.split("\n")].map(within), ...after);
   }
   return lines.join("\n");
 }
