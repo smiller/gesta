@@ -1957,3 +1957,4 @@ entries already linked. Folder ~/Desktop/gesta-imports/gesta-shelf-lines-old-eng
   entries. Seen in it: a quoted line keeps its footnote mark without the
   note (⌃⌘R's passage leaves the note fence out) — 6 lines, 6 entries;
   raised, not changed.
+- IMPORTED 2026-10-18: 91 entries, all identical in the backup (MEASURED).
