@@ -1958,3 +1958,18 @@ entries already linked. Folder ~/Desktop/gesta-imports/gesta-shelf-lines-old-eng
   note (⌃⌘R's passage leaves the note fence out) — 6 lines, 6 entries;
   raised, not changed.
 - IMPORTED 2026-10-18: 91 entries, all identical in the backup (MEASURED).
+
+### 2026-10-18 — a reference pasted onto a selection links it
+
+Asked: a reference (⌃⌘R / Ref) pasted with ⌘V onto a selection — a line
+number in a sentence — makes the selection a link to the reference's
+address rather than pasting the reference whole. Built test-first in
+`src/editor/paste.ts` (`linkSelection`), called first in the editor's
+paste. Taken as the same class and built with it: a copied entry link
+(`[label](#…)`) pasted onto a selection. A paste is a paste as before when
+the selection is empty, spans two blocks, sits where a link cannot (a code
+or reference block), the text is no reference, or its address names no
+entry. The source view is unchanged (a textarea; its paste is literal).
+Helium step "a reference pasted onto a word" (MEASURED: the word linked to
+`#page/Williams/Witchcraft%203`, one reference in the stored text, the
+caret after the word).

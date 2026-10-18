@@ -298,6 +298,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+v");
   await rest(page);
   { const md = await A.stored(page); await log("prose with two spaces pasted", { ...(barMissedProse ? { barMissed: barMissedProse } : {}), joined: /again\[/.test(md), spanned, said: saidProse, spaces: md.includes("greater.  The") ? "kept" : md.includes("greater. The") ? "folded" : "not found" }); }
+  /* the same reference pasted onto a selected word: the word made a link to its address, the passage not pasted again */
+  const chosen = await R.selectBetween(page, "vampires", "vampires");
+  await page.keyboard.press("Meta+v");
+  await rest(page);
+  { const md = await A.stored(page); const screen = await page.evaluate(() => { const a = [...document.querySelectorAll("#editor .ProseMirror a")].find((x) => x.textContent === "vampires"); const s = getSelection(); return { link: a ? (a.getAttribute("href") ?? "").replace(/\?h=.*$/, "") : "none", collapsed: s.isCollapsed, caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset) }; }); await log("a reference pasted onto a word", { chosen, ...screen, references: md.split("):\n").length - 1, stored: /\[vampires\]\(#page\/Williams/.test(md) }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */

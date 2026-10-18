@@ -20,7 +20,7 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks, bareBlocks, clipboardParser } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks, bareBlocks, clipboardParser, linkSelection } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -220,6 +220,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       if (file) { opts.onPasteFile?.(file); return true; }
       const data = event.clipboardData;
       if (!data) return false;
+      const linked = linkSelection(view.state, data.getData("text/plain"));
+      if (linked) { view.dispatch(linked.scrollIntoView()); return true; }
       /* line breaks alone are nothing to paste, from any app: they replaced a
          selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
       if (onlyLineBreaks(data.getData("text/plain"), view.state.selection.$from, data.getData("text/html"))) return true;

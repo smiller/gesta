@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection } from "./paste.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 
@@ -224,4 +224,35 @@ test("pasted HTML keeps its spaces only when every block in it is one this page 
   expect(keepsSpaces(root(el("P"), el("BLOCKQUOTE", true)))).toBe(false);
   expect(keepsSpaces(root(el("P", true), text("and more"))) ).toBe(false);
   expect(keepsSpaces(root(el("META")))).toBe(false);
+});
+
+function over(md: string, words: string): EditorState {
+  const doc = parseMarkdown(md);
+  let from = -1;
+  doc.descendants((n, p) => { if (from < 0 && n.isTextblock && n.textContent.indexOf(words) >= 0) from = p + 1 + n.textContent.indexOf(words); return from < 0; });
+  return EditorState.create({ doc, selection: TextSelection.create(doc, from, from + words.length) });
+}
+const REF = "[*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0):\n\n> ::: verse 78\n> Woriað þa winsalo | The halls decay\n> :::";
+test("a reference pasted onto a selection in one line makes the selection a link to its address, the caret after it", () => {
+  const s = over("pauses at 78 (woriað)", "78");
+  const tr = linkSelection(s, REF)!;
+  expect(serializeMarkdown(tr.doc)).toBe("pauses at [78](#bookshelf/Wanderer?h=Woria%C3%B0) (woriað)");
+  expect([tr.selection.empty, tr.selection.from]).toEqual([true, s.selection.to]);
+  expect(serializeMarkdown(linkSelection(over("see the Ideas page", "the Ideas"), "[Ideas](#2026-09-07/Ideas)")!.doc)).toBe("see [the Ideas](#2026-09-07/Ideas) page");
+  const part = over("see [the](#2026-09-01) Ideas page", "the");
+  const wide = EditorState.create({ doc: part.doc, selection: TextSelection.create(part.doc, part.selection.from, part.selection.to + 6) });
+  expect(serializeMarkdown(linkSelection(wide, REF)!.doc)).toBe("see [the Ideas](#bookshelf/Wanderer?h=Woria%C3%B0) page");
+  expect(serializeMarkdown(linkSelection(over("a *very* fine 78", "very fine"), REF)!.doc)).toBe("a [*very* fine](#bookshelf/Wanderer?h=Woria%C3%B0) 78");
+});
+test("a paste onto a selection is a paste as before when it is no reference, the words span two blocks, they cannot carry a link or the address names no entry", () => {
+  expect(linkSelection(over("pauses at 78", "78"), "plain words")).toBeNull();
+  expect(linkSelection(over("pauses at 78", "78"), "[x](#2026-09-07):\n\n> one\n\nand more [y](#2026-09-08)")).not.toBeNull();
+  expect(linkSelection(over("pauses at 78", "78"), "[x](https://example.com/):\n\n> one")).toBeNull();
+  expect(linkSelection(over("pauses at 78", "78"), "[x](#not%20an%20entry):\n\n> one")).toBeNull();
+  expect(linkSelection(over("pauses at 78", "78"), "[x](#2026-09-07) and more")).toBeNull();
+  expect(linkSelection(at("pauses at 78", "78"), REF)).toBeNull();
+  const two = parseMarkdown("one\n\ntwo");
+  expect(linkSelection(EditorState.create({ doc: two, selection: TextSelection.create(two, 2, 8) }), REF)).toBeNull();
+  expect(linkSelection(over("```\ncode 78\n```", "78"), REF)).toBeNull();
+  expect(linkSelection(over("::: reference\nfrom 78\n:::", "78"), REF)).toBeNull();
 });
