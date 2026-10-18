@@ -70,6 +70,8 @@ export interface Journal {
   romanBookCanto(workKey: string): boolean;
   /* the ROOT's page carries `no author`: a heading that gathers works, not a person */
   noAuthor(rootKey: string): boolean;
+  /* the page carries `Old English verse`: its lines are cited by half-line */
+  oldEnglishVerse(ekey: string): boolean;
 }
 
 /* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
@@ -98,6 +100,15 @@ export function romanWorkKey(date: string, tag: string | null, journal: Journal)
   if (!titlesRoots(date) || segs.length < 3) return null;
   const work = entryKey(date, segs[0] + "/" + segs[1]);
   return journal.romanBookCanto(work) ? work : null;
+}
+/* a book entry cites half-lines when its own page or any above it says
+   `Old English verse`: a root of works with no author says it once for all
+   of them, an author's work for its parts */
+export function citesHalfLines(date: string, tag: string | null, journal: Journal): boolean {
+  const segs = tag ? tag.split("/") : [];
+  if (!titlesRoots(date)) return false;
+  for (let i = 1; i <= segs.length; i++) if (journal.oldEnglishVerse(entryKey(date, segs.slice(0, i).join("/")))) return true;
+  return false;
 }
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null }
 /* the "<key><separator> " an entry's own heading opens with when it repeats

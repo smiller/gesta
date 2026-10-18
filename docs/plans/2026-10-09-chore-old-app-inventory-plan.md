@@ -1829,3 +1829,31 @@ findings:
     the helper `landed`, shadowing the steps' own `landed(page, ms)`, and
     four sections failed; the run was approved before it was read, then
     restored from git, the helper renamed, and the run read and approved.
+
+### Old English verse cites half-lines (2026-10-18, asked)
+
+Asked: Old English verse, its lines explicitly two half-lines that are
+cited separately, cites "Men ne cunnon…" as *Beowulf*, 50b-52; only Old
+English verse — other verse with half-lines does not cite 50a/50b, and Old
+English prose does not either, so the switch is named for what it is.
+Chosen from two offered (asked): a line on the work's page, in its
+`::: reference` box, `Old English verse` on a line of its own — not the
+Old English shelf, which would tie a citation to a shelf's name.
+
+- The page that says it is the entry's own or any above it, so a root of
+  works with no author (Beowulf, Deor…) says it once for itself, an
+  author's work for its parts.
+- The halves are the original's text (a pair's first cell) split at its
+  first run of two spaces between words; a line with none (`* * *`) is
+  whole; the translation's words cite the line.
+- A run starting on a second half or ending on a first says so (50b-52,
+  49-50a), a half alone 50a or 50b, both halves the line; the numbers keep
+  their elision (1162b-68a).
+- Not built: ⌃⌘G does not take 50b.
+- Tests: reference.test, four; Helium "Old English verse" (two readings,
+  new here). Played headless first: 50b-52 and 50a (MEASURED).
+- Not a DOM seam (editor/reference.ts, store/reference.ts, headings.ts,
+  help.html): no review owed.
+- To make it work in the backup the five Old English pages (Beowulf,
+  Finnsburh, Deor, The Wanderer, The Seafarer) each need the line, typed
+  in Gesta — never re-shipped.

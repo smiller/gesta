@@ -2262,6 +2262,25 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G 77.4", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Escape");
     }],
+    ["Old English verse", async () => {
+  /* a work whose page says Old English verse cites its half-lines: Beowulf 49-52, a root that names no author */
+  await A.foreignWrite(page, "bookshelf/Beowulf", "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
+  const seeded = await seededIn("bookshelf/Beowulf");
+  await page.goto(A.url("bookshelf/Beowulf"));
+  await A.waitEntry(page, "bookshelf/Beowulf", 5000).catch(() => {});
+  await R.settle(page);
+  await R.selectBetween(page, "Men ne cunnon", "onfeng");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R from a second half-line", { seeded, lines: await R.clipboardLines(page) });
+  await R.selectBetween(page, "murnende", "mod");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on a first half-line", { lines: await R.clipboardLines(page) });
+  await page.keyboard.press("Escape");
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the

@@ -3,7 +3,7 @@ import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, countAt, drawsInk, renumbered, type Unit } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, citesHalfLines, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 import { dropFolios } from "./paste.ts";
@@ -47,18 +47,43 @@ export function coveredUnits(doc: Node, from: number, to: number, topOnly = fals
   }
   return out;
 }
-export function referenceRange(doc: Node, from: number, to: number): string {
-  let lo = 0, hi = 0;
+/* which halves of a line the selection inks: the original's text (a pair's
+   first cell) split at its first run of two spaces between words; null for
+   a line with no such run, or none of the original selected */
+function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolean } | null {
+  const cell = u.node.type === N.pair ? u.node.child(0) : u.node;
+  if (!cell.isTextblock) return null;
+  const start = u.pos + 1 + (cell === u.node ? 0 : 1);
+  const t = cell.textBetween(0, cell.content.size, undefined, "\ufffc");
+  const m = /\S( {2,})\S/.exec(t);
+  if (!m) return null;
+  const cut = m.index + 1, rest = cut + m[1].length;
+  const s = from - start, e = to - start;
+  const inked = (x: number, y: number): boolean => x < y && !!t.slice(x, y).trim();
+  const halves = { a: inked(Math.max(s, 0), Math.min(e, cut)), b: inked(Math.max(s, rest), Math.min(e, t.length)) };
+  return halves.a || halves.b ? halves : null;
+}
+/* with `halves`, Old English verse's: a run starting on a line's second half
+   or ending on its first says so, 50b-52, 49-50a, a half alone 50a (pin:
+   reference.test › Old English verse cites a half-line) */
+export function referenceRange(doc: Node, from: number, to: number, halves = false): string {
+  let lo: Unit | null = null, hi: Unit | null = null;
   /* THE TOP LEVEL ALONE: a pasted citation's own fence numbers are not the
      host's — a quoted Horace pair in Paradise Lost labelled the reference
      "1.13-14" (pin: reference.test › a block inside a note, the label's top
      level) */
   for (const u of coveredUnits(doc, from, to, true)) {
     if (!u.line) continue;
-    if (!lo || u.line < lo) lo = u.line;
-    if (u.line > hi) hi = u.line;
+    if (!lo || u.line < lo.line) lo = u;
+    if (!hi || u.line > hi.line) hi = u;
   }
-  return lo ? elideRange(lo, hi) : "";
+  if (!lo || !hi) return "";
+  const range = elideRange(lo.line, hi.line);
+  if (!halves) return range;
+  const first = halvesInked(lo, from, to), last = halvesInked(hi, from, to);
+  if (lo === hi) return range + (first && first.a !== first.b ? (first.a ? "a" : "b") : "");
+  const [x, y] = range.split("-");
+  return x + (first && !first.a ? "b" : "") + "-" + y + (last && !last.b ? "a" : "");
 }
 export function stanzaRange(doc: Node, from: number, to: number): string {
   const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
@@ -410,7 +435,7 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
   /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
-  const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to);
+  const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, citesHalfLines(date, tag, journal));
   const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal);
   const url = entryLinkUrl(date, tag, hl);
   const passage = passageMd(doc, from, to);

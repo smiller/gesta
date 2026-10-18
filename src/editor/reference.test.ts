@@ -386,6 +386,51 @@ test("a work in stanza fences cites by stanza with no directive: Hávamál, 76.1
   expect(havLabel("Deyr fé", "getr")).toBe("*Hávamál*, 76");
   expect(havLabel("orðstírr", "ek veit einn")).toBe("*Hávamál*, 76.4–77.4");
 });
+// Old English verse cites its half-lines: a work whose page says so, its
+// lines two half-lines apart at a double space.
+const BWF_PAGE = "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::";
+const BWF = parseMarkdown(BWF_PAGE + "\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
+const oeLabel = (doc: Node, tag: string, page: Record<string, string>, needle: string, end?: string): string | false => {
+  const [a, b] = span(doc, needle, end);
+  const p = referencePayload(state(doc, a, b), "bookshelf", tag, journalOf(page));
+  return "label" in p && p.label;
+};
+test("Old English verse cites a half-line as 50a or 50b, a run from a second half or to a first as 50b-52 or 49-50a, both halves as the line", () => {
+  const page = { "bookshelf/Beowulf": BWF_PAGE };
+  expect(oeLabel(BWF, "Beowulf", page, "Men ne cunnon", "onfeng")).toBe("*Beowulf*, 50b-52");
+  expect(oeLabel(BWF, "Beowulf", page, "Men ne cunnon")).toBe("*Beowulf*, 50b");
+  expect(oeLabel(BWF, "Beowulf", page, "murnende mod")).toBe("*Beowulf*, 50a");
+  expect(oeLabel(BWF, "Beowulf", page, "murnende", "cunnon")).toBe("*Beowulf*, 50");
+  expect(oeLabel(BWF, "Beowulf", page, "geafon", "murnende mod")).toBe("*Beowulf*, 49-50a");
+  expect(oeLabel(BWF, "Beowulf", page, "ne cunnon", "to soðe")).toBe("*Beowulf*, 50b-51a");
+  // a selection begun in the double space starts on the second half's first word
+  const [a, b] = span(BWF, "  Men ne");
+  const p = referencePayload(state(BWF, a, b), "bookshelf", "Beowulf", journalOf(page));
+  expect("label" in p && p.label).toBe("*Beowulf*, 50b");
+});
+test("without the line on its page a work cites whole lines, double space or not", () => {
+  expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\n:::" }, "Men ne cunnon", "onfeng")).toBe("*Beowulf*, 50-52");
+  // the words inside a longer line are not the directive
+  expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nnot Old English verse here\n:::" }, "Men ne cunnon")).toBe("*Beowulf*, 50");
+});
+test("Old English verse with its translation: the original's halves count, the translation's words cite the line; a line with no double space is whole", () => {
+  const page = "# Deor\n\n::: reference\nno author\nOld English verse\n:::";
+  const deor = parseMarkdown(page + "\n\n::: verse\nWelund him be wurman  wræces cunnade, | Weland himself, by means of worms (swords?), experienced agony,\nanhydig eorl  earfoþa dreag, | the strong-minded noble endured troubles;\n* * * |\n:::");
+  const j = { "bookshelf/Deor": page };
+  expect(oeLabel(deor, "Deor", j, "wræces cunnade")).toBe("*Deor*, 1b");
+  expect(oeLabel(deor, "Deor", j, "wræces", "anhydig eorl")).toBe("*Deor*, 1b-2a");
+  expect(oeLabel(deor, "Deor", j, "experienced agony")).toBe("*Deor*, 1");
+  expect(oeLabel(deor, "Deor", j, "* * *")).toBe("*Deor*, 3");
+});
+test("Old English verse said on a work's page reaches the entries below it; the range keeps its elision, 1162b-68a", () => {
+  const work = "# Elene\n\n::: reference\nOld English verse\n:::";
+  const doc = parseMarkdown("::: verse 1162\na b  c d\ne\nf\ng\nh\ni\nj k  l m\n:::");
+  const p = referencePayload(state(doc, ...span(doc, "c d", "j k")), "bookshelf", "Cynewulf/Elene/Fitt 1", journalOf({ "bookshelf/Cynewulf": "# Cynewulf", "bookshelf/Cynewulf/Elene": work }));
+  expect("label" in p && p.label).toBe("Cynewulf, *Elene*, 1.1162b-68a");
+  expect(referenceRange(doc, ...span(doc, "c d", "j k"), true)).toBe("1162b-68a");
+  expect(referenceRange(doc, ...span(doc, "c d", "j k"))).toBe("1162-68");
+});
+
 test("under the directive a run reaching a plain verse block is still refused", () => {
   const mixed = parseMarkdown("::: stanza 1\na\nb\n:::\n\n::: verse\nc\n:::");
   const [a, b] = span(mixed, "b", "c");
