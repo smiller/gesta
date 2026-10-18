@@ -284,6 +284,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+v");
   await rest(page);
   { const md = await A.stored(page); const href = (md.match(/\]\(([^)]*)\)/) ?? [])[1] ?? ""; await log("the reference pasted", { ...(barMissed ? { barMissed } : {}), said, copied, link: href.startsWith("#") ? "bare" : href.startsWith("file:") ? "file address" : href ? "other" : "none", head: href.replace(/\?h=.*$/, "").replace(/^file:.*#/, "file:…#") }); }
+  /* prose with two spaces after a full stop: the paste keeps them as the entry has them */
+  await go("page/Williams/Witchcraft 3");
+  const spanned = await R.selectBetween(page, "though they were not vampires", "could take again");
+  await R.waitBar(page).catch(() => {});
+  const saidProse = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  await go("page/Referred");
+  /* over the whole page: a paste at a paragraph's start joins its last line to that paragraph */
+  await page.click(S.editor);
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.press("Meta+v");
+  await rest(page);
+  { const md = await A.stored(page); await log("prose with two spaces pasted", { joined: /again\[/.test(md), spanned, said: saidProse, spaces: md.includes("greater.  The") ? "kept" : md.includes("greater. The") ? "folded" : "not found" }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */

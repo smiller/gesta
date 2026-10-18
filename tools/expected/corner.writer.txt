@@ -36,6 +36,9 @@ reference copy: arrived at page/Horace: {"cursor":"at a line's start"}
 a reference pasted: arrived at page/Horace: {"cursor":"selected 30"}
 a reference pasted: arrived at page/Referred: {"cursor":"at a line's start"}
 the reference pasted: {"said":"Reference copied to clipboard","copied":"file address","link":"bare","head":"#page/Horace","cursor":"at the end","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a reference pasted: arrived at page/Williams/Witchcraft 3: {"cursor":"at a line's start"}
+a reference pasted: arrived at page/Referred: {"cursor":"at a line's start"}
+prose with two spaces pasted: {"joined":false,"spanned":true,"said":"Reference copied to clipboard","spaces":"kept","cursor":"at the end","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 code block: arrived at page/Coded: {"cursor":"at a line's start"}
 a js block typed: {"lang":"js","label":"\"js\"","tokens":["tok-k:const","tok-n:42","tok-c:// answer"],"cursor":"at the end","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 hovered: {"show":true,"title":"Copy this code block","insideBlock":true,"labelHidden":"0","cursor":"at the end","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

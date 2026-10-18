@@ -17,6 +17,7 @@ import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { citationAnchorHTML } from "../editor/reference.ts";
 import { inlineBlockStyles } from "../editor/inlineStyles.ts";
+import { COPY_MARK } from "../editor/paste.ts";
 export { inlineBlockStyles };
 
 /* a live block's HTML with its look inlined and the caret-holders gone */
@@ -27,6 +28,7 @@ export function richBlockHtml(el: Element): string {
      nor the editor's hint on a link */
   clone.querySelectorAll(".folio").forEach((f) => f.remove());
   clone.querySelectorAll("a[title]").forEach((a) => a.removeAttribute("title"));
+  clone.setAttribute(COPY_MARK, "");
   return clone.outerHTML.replace(/​/g, "");
 }
 /* a picture's address on screen is one this tab alone can read: the copy
@@ -55,6 +57,6 @@ export function richReferenceHtml(surface: HTMLElement, url: string, label: stri
     stage.appendChild(frag);
     surface.appendChild(stage);
     const blocks = Array.from(stage.children).map((b) => richBlockHtml(b)).join("");
-    return "<p>" + citationAnchorHTML(url, label) + ":</p>" + blocks;
+    return "<p " + COPY_MARK + ">" + citationAnchorHTML(url, label) + ":</p>" + blocks;
   } finally { stage.remove(); }
 }

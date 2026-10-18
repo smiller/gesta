@@ -1597,3 +1597,21 @@ tools/beowulfWyatt.ts + Run: 3182 lines in 43 parts, 636 printed line
 numbers checked, one misprinted (2885 for 2835); six transcription slips
 corrected (w«s ×2, Hr¯wðel, Gewât, two stray marks) (MEASURED). Folder
 ~/Desktop/gesta-imports/gesta-beowulf + review page.
+7c01462 accepted 2026-10-17 (the citation looked at: "*Beowulf*, 50-52").
+IMPORTED 2026-10-17: both files byte-identical to the backup (MEASURED).
+
+### 2026-10-17 — a pasted reference keeps its spaces
+
+Seen in his paste of *Beowulf* 50-52: the half-lines' double space folded
+to one in the stored text (2026-10-17 line 43, MEASURED); the text flavour
+kept it (MEASURED, a scratch run of referencePayload). ProseMirror folds
+runs of spaces in pasted HTML not marked `data-pm-slice` (READ,
+prosemirror-view parseFromClipboard), and ⌃⌘R's and the hover copy's HTML
+are written outside the editor. Asked: fix it. Gesta's own copied HTML
+now carries `data-gesta-copy`, and the editor's clipboard parser keeps
+whitespace in HTML that carries it (paste.ts, editor.ts, richCopy.ts).
+Headless: "prose with two spaces pasted" over the Williams fixture read
+"folded" before the fix and "kept" after, in both apps (MEASURED). The
+step pastes over the whole page: pasted at a paragraph's start, the HTML
+route joined the quote's last line onto that paragraph — the same before
+the fix (MEASURED), noted, not changed.

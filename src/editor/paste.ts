@@ -1,6 +1,6 @@
 /* only PLAIN text is asked of this parser: the editor's own HTML carries its
    structure */
-import { Fragment, Slice, type ResolvedPos, type Node } from "prosemirror-model";
+import { Fragment, Slice, DOMParser, type ResolvedPos, type Node, type ParseOptions } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection, Selection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
@@ -143,6 +143,18 @@ export function bareBlocks(blocks: Node[], docHref: string): Node[] {
   bareFragment(Fragment.from(blocks), docHref).forEach((b) => out.push(b));
   return out;
 }
+/* HTML THIS PAGE WROTE KEEPS ITS SPACES: other HTML has its runs of spaces
+   folded on a paste, which took the gap between a line's half-lines and
+   two spaces after a full stop (pin: a reference pasted › prose with two
+   spaces pasted) */
+export const COPY_MARK = "data-gesta-copy";
+class SpaceKeepingParser extends DOMParser {
+  parseSlice(dom: globalThis.Node, options: ParseOptions = {}): Slice {
+    const ours = (dom as Element).querySelector?.(`[${COPY_MARK}]`);
+    return super.parseSlice(dom, ours && !options.preserveWhitespace ? { ...options, preserveWhitespace: true } : options);
+  }
+}
+export const clipboardParser = new SpaceKeepingParser(schema, DOMParser.fromSchema(schema).rules);
 /* NO PAGE MARKER LEAVES IN A COPY: pasted into a journal entry it made a
    page number with no book behind it. Where one stood between two spaces,
    one space goes with it (pin: paste.test › a copy carries no page marker out) */
