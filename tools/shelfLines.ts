@@ -391,7 +391,8 @@ export function quotedPassages(md: string, index: ShelfIndex, prefixes: string[]
     open = { run: { start: p.from, end: p.to, key: p.ref.key, first: 0, last: 0, from: 0, to: 0, prose: true }, ref: p.ref, letters: inked(p.ref.passage).length };
     found.push({ run: open.run, ref: open.ref });
   }
-  return found;
+  /* too short to be a quotation, in prose as in verse (pin: shelfLines.test › quotedPassages: a quotation as short as a verse run too common to count) */
+  return found.filter(({ run }) => norm(lines.slice(run.start, run.end + 1).map(bare).join("")).length >= ENOUGH);
 }
 /* a quotation and its translation one after another, a blank line apart,
    are one reference, its passage the one that holds the other's: a

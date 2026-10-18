@@ -2027,3 +2027,19 @@ Folder rewritten for the seven: 649 references, 4223 lines, 295 entries
 (was 438, 2357, 217); none of the old entries dropped, 153 identical, 64
 changed, 78 new (MEASURED). Review pages per author regenerated, Spenser's
 (29 in 11 entries) and Austen's (26 in 21) new.
+- Seen in the review the same day: common phrases made references — "My
+  dearest love," (1998-05-26), "What do you think?" (2015-11-07,
+  2026-08-11), "Congratulations." (2018-07-21), "What do you mean?"
+  (2020-04-07), "The intention…" (2024-09-15). Fixed as a class: a quotation
+  the prose path places is held to the verse run's floor, 30 letters
+  (`ENOUGH`): every false match was 15 letters or fewer; the genuine lines
+  under 30 (about 25, Dante's and Virgil's, never in the old folder) are
+  left for a hand. Austen 20 in 15 entries, every one a passage
+  ("Otherwise, the Austens look good").
+- Seen the same day: Spenser's I.x.63 (1992-05-04) and I.vii.40
+  (1992-05-02) cards showed no reference link. The folder had it; the card's
+  window began a line above the quotation, and a citation a blank line
+  above, which the reference replaces, was out of sight with the link. The
+  window now runs over every line the reference changes, a line either
+  side: 0 cards of 625 without a link on any page (MEASURED). Folder and
+  pages rewritten: 625 references, 4195 lines, 285 entries.

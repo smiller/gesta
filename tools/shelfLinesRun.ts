@@ -128,8 +128,12 @@ for (const path of walk(SRC).sort()) {
   for (const r of ok) {
     counts.runs++; counts.lines += r.end - r.start + 1;
     const m = minted.get(r) as { text: string; url: string; passage: string };
-    const alone = referRuns(md, [r], () => m).split("\n"), grew = alone.length - src.length;
-    shown.push({ file, r, label: m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1), before: src.slice(Math.max(0, r.start - 1), r.end + 2), after: alone.slice(Math.max(0, r.start - 1), r.end + grew + 2), diff: wordDiff(spoken(src.slice(r.start, r.end + 1), false, names(m.passage.split("\n"))), spoken(m.passage.split("\n"), true, new Set())) });
+    const alone = referRuns(md, [r], () => m).split("\n");
+    /* the card shows every line the reference changes, a line either side: a citation it replaced a blank line above was out of sight, and the link with it */
+    let first = 0, same = 0;
+    while (first < src.length && src[first] === alone[first]) first++;
+    while (same < src.length - first && same < alone.length - first && src[src.length - 1 - same] === alone[alone.length - 1 - same]) same++;
+    shown.push({ file, r, label: m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1), before: src.slice(Math.max(0, first - 1), src.length - same + 1), after: alone.slice(Math.max(0, first - 1), alone.length - same + 1), diff: wordDiff(spoken(src.slice(r.start, r.end + 1), false, names(m.passage.split("\n"))), spoken(m.passage.split("\n"), true, new Set())) });
   }
   const doc = parseMarkdown(out);
   if (serializeMarkdown(parseMarkdown(serializeMarkdown(doc))) !== serializeMarkdown(doc)) throw new Error(`${file}: not a fixed point`);

@@ -341,3 +341,11 @@ test("sameQuoted: a quotation and its translation a blank line apart are one ref
   expect(joined(thrice, [run(0, 0), run(2, 2)], (r) => part.get(r.start)!)).toEqual([[0, 2, 0]]);
   expect(joined(thrice, [run(2, 2), run(4, 4)], (r) => part.get(r.start)!)).toEqual([[2, 4, 4]]);
 });
+test("quotedPassages: a quotation as short as a verse run too common to count, a phrase in anyone's mouth, is no reference", () => {
+  const book = shelfIndex({
+    "bookshelf/Austen, Jane": "# Jane Austen\n",
+    "bookshelf/Austen, Jane/Pride and Prejudice/3.17": "# Volume 3, Chapter 17\n\n“My dearest love,” said she, “you must not think so ill of yourself.”\n",
+  });
+  expect(quotedPassages("> My dearest love,\n", book, AUSTEN, [])).toEqual([]);
+  expect(quotedPassages("> “My dearest love,” said she, “you must not think so ill of yourself.”\n", book, AUSTEN, []).length).toBe(1);
+});
