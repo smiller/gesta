@@ -229,3 +229,45 @@ test("quotedRuns: an attribution closing the quotation that names the work, the 
   const own = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n> and Twelfth Night was the first play I saw\n";
   expect(quotedRuns(own, play).map((r) => [r.start, r.end])).toEqual([[0, 1]]);
 });
+
+// Old English verse, a root of its own with no author, its half-lines cited;
+// Hávamál in stanza fences.
+const north = shelfIndex({
+  "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 377\nÐonne sægdon þæt  sæliþende,\nþa ðe gifsceattas  Geata fyredon\nþyder to þance,  þæt he þrittiges\nmanna mægencræft  on his mundgripe\nheaþorof hæbbe.  Hine halig God\n:::",
+  "bookshelf/Havamal": "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::",
+});
+test("quotedRuns: the letters matched without their accents and with ð and þ one letter, so a quotation in another edition's marks is the passage", () => {
+  const md = "> Ðonne sægdon þæt      sælíþende\n> þá ðe gifsceattas      Géata fyredon\n> þyder tó þance      þæt hé þrítiges\n> manna mægencræft      on his mundgripe\n> heaþoróf hæbbe\n";
+  const runs = quotedRuns(md, north);
+  expect(runs.map((r) => [r.key, r.start, r.end, r.from, r.to])).toEqual([["bookshelf/Beowulf", 0, 4, 377, 381]]);
+  const m = referenceOf(north, runs[0]);
+  expect("text" in m && m.text.split("\n")[0]).toMatch(/^\[\*Beowulf\*, 377-81a\]/);
+});
+test("shelfIndex: a work in stanza fences is indexed, and a stanza quoted is a reference by stanza", () => {
+  const md = "> Deyr fe\n> deyja frændr\n> deyr sjalfr it sama\n> en orðstírr\n> deyr aldregi\n> hveim er sér góðan getr\n";
+  const runs = quotedRuns(md, north);
+  expect(runs.map((r) => [r.key, r.start, r.end])).toEqual([["bookshelf/Havamal", 0, 5]]);
+  const m = referenceOf(north, runs[0]);
+  expect("text" in m && m.text.split("\n")[0]).toMatch(/^\[\*Hávamál\*, 76\]/);
+});
+test("quotedRuns: the lines placed by their likeness count toward a run's letters, so three lines with one short line exact are a run", () => {
+  const bwf = shelfIndex({ "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 1316\nGang ða æfter flore  fyrdwyrðe man\nmid his handscole  (healwudu dynede),\nþæt he þone wisan  wordum nægde\nfrean Ingwina,  frægn gif him wære\næfter neodlaðu  niht getæse.\nHroðgar maþelode,  helm Scyldinga:\n:::" });
+  const md = "Also Bwf’s [1318-20]\n\n> þæt he ðone wisan  wordum nægde\n> frean Ingwine,  frægn gif him wære\n> æfter neodlaðum  niht gelæse.\n";
+  expect(quotedRuns(md, bwf).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[2, 4, 1318, 1320]]);
+  // a line too short to be a quotation on its own is still none
+  expect(quotedRuns("> þæt he ðone wisan  wordum nægde\n", bwf)).toEqual([]);
+});
+test("referenceOf: Old English verse beside its translation, quoted from a second half-line and to a first, is cited and quoted by its halves", () => {
+  const sf = shelfIndex({ "bookshelf/Seafarer": "# The Seafarer\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\nne goldgiefan  swylce iu wæron, | nor givers of gold as once there were,\n:::" });
+  const md = "> Dagas sind gewitene\n> ealle onmedlan  eorþan rices;\n> nearon nu cyningas  ne caseras\n> ne goldgiefan\n";
+  const runs = quotedRuns(md, sf);
+  expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 80, 83]]);
+  const m = referenceOf(sf, runs[0]);
+  expect("text" in m && m.text.split("\n")[0]).toMatch(/^\[\*The Seafarer\*, 80b-83a\]/);
+  expect("passage" in m && m.passage.split("\n")[1]).toBe("> Dagas sind gewitene, | joy with the Hosts. The days are gone");
+  expect("passage" in m && m.passage.split("\n")[4]).toBe("> ne goldgiefan | nor givers of gold as once there were,");
+});
+test("wordDiff: an accent, or ð for þ, is a change of spelling a reader sees", () => {
+  expect(wordDiff("þá ðe gifsceattas", "þa þe gifsceattas").ops).toEqual([["-", "þá"], ["-", "ðe"], ["+", "þa"], ["+", "þe"], ["=", "gifsceattas"]]);
+  expect(wordDiff("þá ðe gifsceattas", "þa þe gifsceattas").kind).toBe("spelling");
+});

@@ -266,8 +266,10 @@ is in the plan's record, under the phase named):
   its Org property drawer marks, then clears the drawers, the same way.
   `tools/shelfLines.ts` — runs of an author's verse quoted line for line in
   an entry found and made the references ⌃⌘R makes for them, pure, its
-  test beside it; `tools/shelfLinesRun.ts [author-prefix]` (Milton by
-  default) writes an import folder with a review page.
+  test beside it; `tools/shelfLinesRun.ts [author-prefix,…]` (Milton by
+  default; several prefixes a comma apart) writes an import folder with a
+  review page. Letters are matched with accents dropped and ð and þ one
+  letter; the review compares words with them kept.
   `tools/beowulfWyatt.ts` — Wyatt's Beowulf (1894) as Wikisource
   transcribes it made one bookshelf page, `bookshelf/Beowulf`, its page
   saying `no author` and `Old English verse`: the apparatus dropped, the

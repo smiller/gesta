@@ -1,4 +1,4 @@
-/* node tools/shelfLinesRun.ts [author-prefix] [backup-dir] [out-dir] — every
+/* node tools/shelfLinesRun.ts [author-prefix,…] [backup-dir] [out-dir] — every
    entry outside the bookshelf read, its runs of an author's verse quoted
    line for line made the references ⌃⌘R makes for them, the changed
    entries written under out-dir at their own paths for an import, a review
@@ -26,13 +26,16 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const cache: Record<string, string> = Object.create(null);
 for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if (t) cache[entryKey(t.date, t.tag)] = readFileSync(path, "utf8"); }
-const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) => k === AUTHOR || k.startsWith(AUTHOR + "/"))));
+const PREFIXES = AUTHOR.split(",");
+const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) => PREFIXES.some((p) => k === p || k.startsWith(p + "/")))));
 
 /* entries that quote the bookshelf as the reference feature's test data, left */
-const LEAVE = /gesta-wrangl|verity cards/i;
+const LEAVE = /gesta-wrangl|verity cards|journal\/2016\/2016-03-14\.md/i;
 const left: string[] = [];
-/* quotations left as written, by entry and the passage's first line: a deliberate variant */
-const KEEP: { file: string; key: string; from: number; why: string }[] = [
+/* quotations left as written, by entry and the passage's first line, and where
+   the entry repeats it, by the quotation's first line in the entry */
+const KEEP: { file: string; key: string; from: number; at?: number; why: string }[] = [
+  { file: "journal/2023/2023-04-25.md", key: "bookshelf/Beowulf", from: 1, at: 9, why: "recited from memory, its slips and their corrections kept" },
   { file: "journal/2002/2002-02-03.md", key: "bookshelf/Shakespeare, William/Twelfth Night/1.5", from: 255, why: "a deliberate variant: “Cry out Ors… – Olivia!”" },
   { file: "journal/2006/2006-06-28.md", key: "bookshelf/Shakespeare, William/Hamlet/5.2", from: 376, why: "a deliberate variant: “Good night, dear heart”, the quotation itself beneath it" },
 ];
@@ -46,7 +49,8 @@ const shown: { file: string; r: Run; label: string; before: string[]; after: str
    the names its bold ones, and a quotation's own names are those */
 const SPEAKER_ROW = /^\*\*([^*]+)\*\*$/;
 const names = (passage: string[]): Set<string> => new Set(passage.map((l) => l.replace(/^\s*(?:>\s?)*/, "").trim().match(SPEAKER_ROW)?.[1]).filter((n): n is string => !!n).map((n) => n.toLowerCase().replace(/[^\p{L}]+/gu, "")));
-const spoken = (ls: string[], passage: boolean, called: Set<string>): string => ls.map((l) => l.replace(/^\s*(?:>\s?)*/, "").trim())
+/* a pair's translation is the bookshelf's, not words of the quotation: the original alone is compared */
+const spoken = (ls: string[], passage: boolean, called: Set<string>): string => ls.map((l) => l.replace(/^\s*(?:>\s?)*/, "").replace(/(?<!\\)\s\|(?:\s.*)?$/, "").trim())
   .filter((l) => !/^:::/.test(l) && !SPEAKER_ROW.test(l) && !(passage && /^\*[^*]+\*$/.test(l)) && !/^\[[^\]]*\]?$/.test(l) && !/^[A-Z][A-Z .'’-]*[.:]?$/.test(l) && !called.has(l.toLowerCase().replace(/[^\p{L}]+/gu, "")))
   .map((l) => l.replace(/^[A-Z][\w .'’-]*?\t/, "").replace(/^[A-Z][A-Z .'’-]+:\s+/, "").replace(/\*/g, "")).join(" ");
 for (const path of walk(SRC).sort()) {
@@ -55,7 +59,7 @@ for (const path of walk(SRC).sort()) {
   counts.entries++;
   const md = readFileSync(path, "utf8");
   const runs = quotedRuns(md, index).filter((r) => {
-    const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from);
+    const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from && (x.at === undefined || x.at === r.start + 1));
     if (k) kept.push(`${file} — ${r.key.split("/").slice(-2).join(" ")}.${r.from}-${r.to}: ${k.why}`);
     return !k;
   });
@@ -98,7 +102,7 @@ h2{font-size:1.2em;margin-top:2em;border-bottom:1px solid #cdd6c2}
 pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em 0;padding:6px 8px}
 .before{background:#fbeee8}.after{background:#e6f0dc}
 .d{background:#fffbe6;padding:6px 8px;margin:.3em 0}del{color:#a3201a;text-decoration:line-through}ins{color:#17632a;text-decoration:none;border-bottom:2px solid #17632a}</style>
-<h1>${esc(AUTHOR.replace(/^bookshelf\//, ""))}: ${counts.runs} quotations made references, ${counts.lines} lines, in ${counts.changed} entries</h1>
+<h1>${esc(PREFIXES.map((p) => p.replace(/^bookshelf\//, "")).join(", "))}: ${counts.runs} quotations made references, ${counts.lines} lines, in ${counts.changed} entries</h1>
 <p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them, starting and ending where your quotation does: after a short citation ending in a colon that gives the lines, that citation becomes the link in its own words; otherwise the whole reference stands in the run's place, a citation of the act and scene alone included. Runs of one scene in one quotation of yours, with nothing of the scene left out between them, are one reference. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the same place as it will read.</p>
 <p>Where your words and the bookshelf's differ, a yellow line sets them side by side: <del>struck through in red</del> your words the reference drops, <ins>underlined in green</ins> the bookshelf's words it puts in. Speakers' names, stage directions and marks are left out of the comparison.</p>
 <p><a href="#wording">Wording differs: ${group("wording").length}</a> · <a href="#spelling">Spelling only: ${group("spelling").length}</a> · <a href="#same">Same words: ${group("same").length}</a></p>

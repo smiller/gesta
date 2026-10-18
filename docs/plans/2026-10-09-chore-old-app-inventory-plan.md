@@ -1909,3 +1909,31 @@ lines placed by likeness showed the bookshelf's words, not his, wrong.
   typed into both pages by hand and carried into both runs; no count, as
   the review page holds the list. The Beowulf run's guard takes the
   backup page as it writes it with or without the misreadings.
+
+### Old English and Old Norse quotations made references (2026-10-18, asked: "go")
+
+The sheet (`tools/out/northSurvey.ts`, scratch) first, read and ruled on:
+runs not lists (1990-08-18 "Deor 9, 10, 11, 12, 7, 28…" seen wrong), a
+lone refrain by the run before it, spellings placed by likeness, half-lines
+cited (asked: "We definitely want to respect only citing half-lines with
+the Old English"), accents counted as a difference (asked, 1996-01-09).
+Rulings: 2023-04-25 lines 9–14, Beowulf recited from memory with its slips,
+keep his own text; 2016-03-14 is a LaTeX typesetting entry, left like the
+Gesta-wrangling ones; 1998-09-08 he re-set to quote 112–114a.
+
+`tools/shelfLines.ts` and `tools/bookshelfQuotes.ts`, test-first:
+- letters matched with accents dropped and ð and þ one letter (his
+  quotations follow other editions' marks); the review's word comparison
+  keeps them (`wordDiff`), so þá → þa shows.
+- `::: stanza` pages indexed (Hávamál).
+- a line placed by likeness counts toward a run's 30 letters, before or
+  after its anchor (1991-12-08's three lines, one exact and short).
+- a pair's half-line is cut in its original cell, so Old English verse
+  beside its translation is cited and quoted by its halves (80b-90).
+`tools/shelfLinesRun.ts`: several prefixes; KEEP may name the quotation's
+line in the entry; the review compares the original side of a pair only.
+
+Run over the six works: 127 references, 618 lines, in 79 entries; left:
+single lines and half-lines too short to place, the three lone refrains,
+Lewis's Allegory of Love (a book on the shelf, its quotation his), two
+entries already linked. Folder ~/Desktop/gesta-imports/gesta-shelf-lines-old-english.

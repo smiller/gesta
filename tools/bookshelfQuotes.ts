@@ -17,8 +17,11 @@ import { referencePayload } from "../src/editor/reference.ts";
 import { journalOf } from "../src/store/headings.ts";
 import type { Journal } from "../src/store/reference.ts";
 
-/* a note's superscript mark is not a numeral of the line */
-const norm = (s: string): string => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "");
+/* a note's superscript mark is not a numeral of the line; an accent is not a
+   letter of its own, and ð and þ are one letter, as editions of Old English
+   and Old Norse set them otherwise (pin: shelfLines.test › quotedRuns: the
+   letters matched without their accents) */
+export const norm = (s: string): string => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/ð/g, "þ").replace(/[^\p{L}\p{Nd}]+/gu, "");
 /* a line shorter than this is too common to place a passage by */
 const DISTINCT = 12;
 /* the lines of a quotation that may differ from the bookshelf's: one in
@@ -34,7 +37,7 @@ const cell = (row: Node, k: number): string => row.type === schema.nodes.pair ? 
 export function shelfIndex(cache: Record<string, string>): ShelfIndex {
   const entries: Shelved[] = [], at = new Map<string, { e: number; i: number }[]>();
   for (const key of Object.keys(cache).filter((k) => /^(bookshelf|page)\//.test(k))) {
-    if (!/^:::\s*verse/m.test(cache[key])) continue;
+    if (!/^:::\s*(?:verse|stanza)/m.test(cache[key])) continue;
     const doc = parseMarkdown(cache[key]);
     /* a speaker's row is a row a quotation copies too */
     const units = lineUnits(doc, 0);
@@ -66,9 +69,12 @@ function lettersOf(row: Node, pos: number): number[] {
 function minted(index: ShelfIndex, s: Shelved, first: number, last: number, cut: Cut = {}): Referred | { why: string } {
   const a = s.units[first], b = s.units[last];
   let from = a.pos + 1, to = b.pos + b.node.nodeSize - 1;
-  if (cut.head && a.node.isTextblock) { const at = lettersOf(a.node, a.pos); from = at[Math.max(0, at.length - cut.head)] ?? from; }
-  if (cut.tail && b.node.isTextblock) {
-    const at = lettersOf(b.node, b.pos);
+  /* a pair's half-line is its original's, the first cell (pin: shelfLines.test › referenceOf: Old English verse beside its translation) */
+  const text = (u: Unit): { node: Node; pos: number } => u.node.type === schema.nodes.pair ? { node: u.node.child(0), pos: u.pos + 1 } : { node: u.node, pos: u.pos };
+  const ta = text(a), tb = text(b);
+  if (cut.head && ta.node.isTextblock) { const at = lettersOf(ta.node, ta.pos); from = at[Math.max(0, at.length - cut.head)] ?? from; }
+  if (cut.tail && tb.node.isTextblock) {
+    const at = lettersOf(tb.node, tb.pos);
     if (cut.tail < at.length) {
       to = at[cut.tail - 1] + 1;
       /* the line's closing marks are its own: a half-line ending at its letters loses its comma */

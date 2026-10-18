@@ -6,9 +6,8 @@
    colon that gives the lines makes that citation the link, its words kept;
    any other run gives way to the whole reference (pin: shelfLines.test ›
    referRuns) */
-import type { ShelfIndex, Referred } from "./bookshelfQuotes.ts";
+import { norm, type ShelfIndex, type Referred } from "./bookshelfQuotes.ts";
 
-const norm = (s: string): string => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "");
 const FENCE = /^\s*(?:>\s*)*(```|~~~)/;
 const QUOTE = /^\s*>/;
 /* a line as the verse it may hold: its quotation's marks, its indent, a
@@ -210,7 +209,8 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
           if (n.length >= HALF && block(p) && halfOf(n, s.left[p], true)) { end = k; last = p; }
           break;
         }
-        if (fits(k, p)) letters += s.left[p].length;
+        /* a line placed by its likeness counts as well as one exact (pin: shelfLines.test › quotedRuns: the lines placed by their likeness) */
+        if (fits(k, p) || near(k, p)) letters += s.left[p].length;
         end = k++; last = p++;
       }
       /* the lines before may be the passage's own spelled otherwise, and
@@ -222,7 +222,7 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
       let start = i, first = u;
       while (block(first - 1) && (start - 1 > floor && carried(start - 1) || start - 1 >= floor && spliced(start - 1))) {
         const o = spliced(start - 1) ? places(lines[start - 1])[1] : norm(bare(lines[start - 1])), l = s.left[first - 1];
-        if (alike(o, l) && !spliced(start - 1)) { start--; first--; continue; }
+        if (alike(o, l) && !spliced(start - 1)) { letters += l.length; start--; first--; continue; }
         if (o.length >= HALF && halfOf(o, l, false)) { start--; first--; }
         break;
       }
@@ -388,9 +388,12 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
    each change two letters at most, is spelling (pin:
    shelfLines.test › wordDiff) */
 export type WordOp = ["=" | "-" | "+", string];
+/* a word's letters as written: an accent or ð for þ is a change a reader sees,
+   though the passage was found without them (pin: shelfLines.test › wordDiff: an accent) */
+const written = (s: string): string => s.normalize("NFC").toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "");
 export function wordDiff(yours: string, theirs: string): { kind: "same" | "spelling" | "wording"; ops: WordOp[] } {
-  const a = yours.split(/[\s—–]+/).filter((w) => norm(w)), b = theirs.split(/[\s—–]+/).filter((w) => norm(w));
-  const ka = a.map(norm), kb = b.map(norm);
+  const a = yours.split(/[\s—–]+/).filter((w) => written(w)), b = theirs.split(/[\s—–]+/).filter((w) => written(w));
+  const ka = a.map(written), kb = b.map(written);
   const lcs = ka.map(() => new Array<number>(kb.length + 1).fill(0));
   lcs.push(new Array<number>(kb.length + 1).fill(0));
   for (let i = ka.length - 1; i >= 0; i--) for (let j = kb.length - 1; j >= 0; j--) lcs[i][j] = ka[i] === kb[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1]);
@@ -409,8 +412,8 @@ export function wordDiff(yours: string, theirs: string): { kind: "same" | "spell
     if (ops[k][0] === "=") continue;
     let e = k;
     while (e < ops.length && ops[e][0] !== "=") e++;
-    const out = ops.slice(k, e).filter(([o]) => o === "-").map(([, w]) => norm(w)).join(""), put = ops.slice(k, e).filter(([o]) => o === "+");
-    if (out === put.map(([, w]) => norm(w)).join("")) { ops.splice(k, e - k, ...put.map(([, w]): WordOp => ["=", w])); k += put.length - 1; }
+    const out = ops.slice(k, e).filter(([o]) => o === "-").map(([, w]) => written(w)).join(""), put = ops.slice(k, e).filter(([o]) => o === "+");
+    if (out === put.map(([, w]) => written(w)).join("")) { ops.splice(k, e - k, ...put.map(([, w]): WordOp => ["=", w])); k += put.length - 1; }
     else k = e - 1;
   }
   if (ops.every(([o]) => o === "=")) return { kind: "same", ops };
@@ -420,7 +423,7 @@ export function wordDiff(yours: string, theirs: string): { kind: "same" | "spell
     if (ops[k][0] === "=") continue;
     let e = k;
     while (e < ops.length && ops[e][0] !== "=") e++;
-    const out = ops.slice(k, e).filter(([o]) => o === "-").map(([, w]) => norm(w)).join(""), put = ops.slice(k, e).filter(([o]) => o === "+").map(([, w]) => norm(w)).join("");
+    const out = ops.slice(k, e).filter(([o]) => o === "-").map(([, w]) => written(w)).join(""), put = ops.slice(k, e).filter(([o]) => o === "+").map(([, w]) => written(w)).join("");
     if (!out || !put || distance(out, put) > 2) spelling = false;
     k = e - 1;
   }
