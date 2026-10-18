@@ -5,8 +5,8 @@
    book unioned into its own namespace's group so a preselect can never
    name a row the list does not hold (pin: searchModel.test › the open
    unregistered book joins its own group) */
-import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, PAGE_KEY, NS_BOOK, capitalized } from "../store/keys.ts";
-import { SHELVES, parseShelves, shelved } from "../store/shelves.ts";
+import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, PAGE_KEY, capitalized } from "../store/keys.ts";
+import { rootGroups } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_PAGES, bookScope, type Scope, type Result } from "../store/search.ts";
@@ -33,14 +33,26 @@ export function scopeOptions(date: string, tag: string | null, keys: string[], j
     const roots = childrenOf(keys, ns);
     if (open.kind === "book" && open.ns === ns && roots.indexOf(open.book) === -1) roots.push(open.book);
     roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    const groups = ns === NS_BOOK.key ? shelved(roots, parseShelves(shelvesMd)) : [{ shelf: null, roots }];
-    if (ns === NS_BOOK.key && open.kind === "book" && open.ns === ns && open.book === SHELVES) groups.push({ shelf: null, roots: [SHELVES] });
-    for (const g of groups) {
-      if (g.shelf !== null && g.roots.length > 1) out.push({ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: g.roots }, group: g.shelf });
-      for (const name of g.roots) out.push({ label: trimLabel(rootLabel(ns, name, journal), LABEL_CAP), scope: bookScope(ns, name), group: g.shelf ?? nsGroupLabel(ns) });
+    for (const g of rootGroups(ns, roots, shelvesMd, open.kind === "book" && open.ns === ns ? open.book : null)) {
+      const group = g.shelf === null ? nsGroupLabel(ns) : trimLabel(g.shelf, LABEL_CAP);
+      if (g.shelf !== null && g.roots.length > 1) out.push({ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: new Set(g.roots) }, group });
+      for (const name of g.roots) out.push({ label: trimLabel(rootLabel(ns, name, journal), LABEL_CAP), scope: bookScope(ns, name), group });
     }
   }
   return out;
+}
+/* the dropdown's runs of options under one optgroup: a run breaks where
+   its namespace does as well as its label, so a shelf named "Pages" is not
+   drawn among the pages, and each run is keyed by where it starts (pin:
+   searchModel.test › the dropdown's runs) */
+export function optionGroups(options: ScopeOption[]): { group: string | null; at: number[] }[] {
+  const nsOfOption = (o: ScopeOption): string => (o.scope.kind === "book" || o.scope.kind === "shelf" ? o.scope.ns : "");
+  const out: { group: string | null; at: number[]; ns: string }[] = [];
+  options.forEach((o, i) => {
+    const last = out[out.length - 1], ns = nsOfOption(o);
+    if (last && last.group === o.group && last.ns === ns) last.at.push(i); else out.push({ group: o.group, at: [i], ns });
+  });
+  return out.map(({ group, at }) => ({ group, at }));
 }
 /* a result row's "where": a day by its DATE (identity, not title), a page
    by its name, a sub-page as book › parent › leaf (the parent is what

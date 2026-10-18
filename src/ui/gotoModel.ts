@@ -19,7 +19,7 @@ import { subPageOrder, subPageDisplayList, type Bearing } from "../store/content
 import type { Journal } from "../store/reference.ts";
 import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
 import { nsGroupLabel } from "./searchModel.ts";
-import { parseShelves, shelved, SHELVES } from "../store/shelves.ts";
+import { rootGroups, SHELVES } from "../store/shelves.ts";
 
 export interface Row { v: string; label: string; group?: string | null; ns?: string; here?: boolean }
 export interface Level { level: number; aria: string; rows: Row[]; value: string | null; valueNs?: string; sentinel: string | null; path: string | null }
@@ -52,12 +52,24 @@ export function destinationRows(w: GotoWorld, date: string, tag: string | null):
     const roots = childrenOf(w.keys, key);
     if (open && date === key && roots.indexOf(open) === -1) roots.push(open);
     roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    /* an author's group is its shelf; the shelves entry is a destination only while it is open (pin: gotoModel.test › an author's group is its shelf) */
-    const groups = key === NS_BOOK.key ? shelved(roots, parseShelves(w.cache[entryKey(key, SHELVES)] || "")) : [{ shelf: null, roots }];
-    if (key === NS_BOOK.key && open === SHELVES && date === key) groups.push({ shelf: null, roots: [SHELVES] });
-    for (const g of groups) for (const n of g.roots) dest.push({ v: n, label: trimLabel(rootLabel(key, n, w.journal), LABEL_CAP), ns: key, group: g.shelf ?? nsGroupLabel(key) });
+    for (const g of rootGroups(key, roots, w.cache[entryKey(NS_BOOK.key, SHELVES)] || "", date === key ? open : null)) {
+      const group = g.shelf === null ? nsGroupLabel(key) : trimLabel(g.shelf, LABEL_CAP);
+      for (const n of g.roots) dest.push({ v: n, label: trimLabel(rootLabel(key, n, w.journal), LABEL_CAP), ns: key, group });
+    }
   }
   return dest;
+}
+/* a select's runs of rows under one optgroup: a run breaks where its
+   namespace does as well as its label, so a shelf named "Pages" is not
+   drawn among the pages, and each run is keyed by where it starts (pin:
+   gotoModel.test › a select's runs) */
+export function rowGroups(rows: Row[]): { group: string | null; at: number; rows: Row[] }[] {
+  const out: { group: string | null; at: number; rows: Row[] }[] = [];
+  rows.forEach((r, i) => {
+    const g = r.group || null, last = out[out.length - 1];
+    if (last && last.group === g && last.rows[0].ns === r.ns) last.rows.push(r); else out.push({ group: g, at: i, rows: [r] });
+  });
+  return out;
 }
 export function journalLevels(w: GotoWorld, cd: string, tag: string | null): Level[] {
   const days = daysOf(w, cd);

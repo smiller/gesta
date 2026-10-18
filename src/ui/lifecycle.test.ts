@@ -584,3 +584,38 @@ describe("the parent's links follow a sub-page's heading", () => {
     expect(w.log).toEqual([]);
   });
 });
+
+describe("the shelves", () => {
+  it("the shelves are no author: no book is made under them, they keep their name, and no author is filed under it", async () => {
+    const on = await world({ at: ["bookshelf", "Shelves"], entries: { "bookshelf/Shelves": "# Shelves\n" } });
+    await on.life.create();
+    on.select(2, 5);
+    await on.life.extract();
+    await on.life.rename();
+    expect(on.asked).toEqual([]);
+    expect(on.log).toEqual(["say the shelves hold no books", "say the shelves hold no books", "say the shelves keep their name"]);
+    const author = await world({ at: ["bookshelf", "Horace"], entries: { "bookshelf/Horace": "# Horace\n" } });
+    author.answer("Shelves");
+    await author.life.rename();
+    expect(author.log).toEqual(["say “Shelves” is the shelves’ own name"]);
+    expect(author.md("bookshelf/Horace")).toBe("# Horace\n");
+    const fresh = await world({ at: ["bookshelf", null] });
+    fresh.answer("Horace", "Shelves");
+    await fresh.life.newRoot("bookshelf");
+    expect(fresh.log).toEqual(["say “Shelves” is the shelves’ own name"]);
+    expect(fresh.md("bookshelf/Shelves")).toBeNull();
+  });
+  it("the shelves opened: made with their heading when there are none, opened as they stand when there are", async () => {
+    const none = await world({ at: ["2026-09-07", null] });
+    await none.life.shelves();
+    expect(none.log).toEqual(["set bookshelf/Shelves", "goto #bookshelf/Shelves | already here"]);
+    expect(none.md("bookshelf/Shelves")).toBe("# Shelves\n");
+    const there = await world({ at: ["2026-09-07", null], entries: { "bookshelf/Shelves": "# Shelves\n\n## Latin\n" } });
+    await there.life.shelves();
+    expect(there.log).toEqual(["goto #bookshelf/Shelves | already here"]);
+    expect(there.md("bookshelf/Shelves")).toBe("# Shelves\n\n## Latin\n");
+    const failed = await world({ at: ["2026-09-07", null], failSet: "bookshelf/Shelves" });
+    await failed.life.shelves();
+    expect(failed.log).toEqual(["set bookshelf/Shelves"]);
+  });
+});

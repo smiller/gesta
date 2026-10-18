@@ -37,6 +37,9 @@ describe("the buttons and the dialogs", () => {
     expect(subButtons("2026-09-07", null)).toMatchObject({ create: "+ tagged entry", canCreate: true, canEdit: false });
     expect(subButtons("2026-09-07", "Ideas")).toMatchObject({ canCreate: false, canEdit: true, renameTitle: "Rename this entry's tag" });
     expect(subButtons("page", "Books")).toMatchObject({ create: "+ sub-page", canCreate: true, canEdit: true, renameTitle: "Rename this page", deleteTitle: "Delete this page" });
+    // the shelves hold no books; a page called Shelves is a page
+    expect(subButtons("bookshelf", "Shelves")).toMatchObject({ canCreate: false, canEdit: true });
+    expect(subButtons("page", "Shelves")).toMatchObject({ canCreate: true });
     expect(subButtons("bookshelf", "Dante/Inferno")).toMatchObject({ create: "+ book", renameTitle: "Rename this book" });
   });
   it("the Tag button's title names what the selection moves to", () => {

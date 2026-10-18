@@ -1693,3 +1693,35 @@ pressed End, which moves no caret on a Mac; the click landed inside the
 right by chance; HEAD's whole tree reproduced the bad reading after it,
 so not this change. The step now presses ⌘↓ to the body's end: Ideas
 last, the renamed link Plans (MEASURED). Logged in tools/out/flakes.log.
+
+#### Review cycle 1 — shelves and All Latin (6372b7e..36ddf64)
+
+REVIEW CYCLES: 1. One /code-review at high over 6372b7e..36ddf64 after
+the accept: 108,775 tokens (the transcript's last message: 2 + 2,683 +
+103,414 + 2,676), 10 findings, all fixed in one commit:
+1. A shelf named twice drew its authors under both (duplicate keys):
+   parseShelves merges a repeated name into one shelf.
+2–3. parseShelves read raw lines (a `##` in a code block or quote, a
+   heading's markup kept): it now reads the parsed document — top-level
+   `##` headings, links by linkRuns, addresses by hashParts. contentsLinks
+   was not reused: it drops a heading with no links under it, which is
+   the shelf for the rest.
+4. "Shelves…" showed only when the entry existed, and a bookshelf address
+   makes nothing on a visit: the row is always on the bookshelf list and
+   makes the page with its heading the first time.
+5. "Shelves" was an author everywhere but three lists: no "+ book" on it,
+   create and extract refuse ("the shelves hold no books"), rename refuses
+   ("the shelves keep their name"), and no author is filed or re-filed
+   under it.
+6. A shelf named "Pages" merged with the pages' optgroup: a dropdown's run
+   breaks where the namespace does, keyed by where it starts
+   (rowGroups, optionGroups, now in the models); shelf labels trimmed.
+7. The list and go-to read the cache before the pending save: both flush
+   first. Headless "a shelf renamed, the list opened at once" reads
+   "Classical" with the flush, "Latin" without (MEASURED).
+8. The grouping block copied into go-to and search: rootGroups in
+   shelves.ts serves the list, go-to and search.
+9. The shelf scope's books are a Set.
+10. shelves.ts's module header (the layout says it) removed; the step's
+    fixed 400 ms after the search rows replaced by a wait for rows that
+    hold the query.

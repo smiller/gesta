@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { gotoLevels, gotoPick, destinationRows, type Level } from "./gotoModel.ts";
+import { gotoLevels, gotoPick, destinationRows, rowGroups, type Level } from "./gotoModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache: Record<string, string> = {
@@ -83,5 +83,14 @@ describe("the destination on the shelves", () => {
     const rows = destinationRows(world, "2026-09-07", null).map((r) => [r.label, r.group ?? null]);
     expect(rows).toEqual([["Journal", null], ["Notes", "Pages"], ["Horace", "Latin"], ["John Milton", "English"]]);
     expect(destinationRows(world, "bookshelf", "Shelves").map((r) => r.v)).toContain("Shelves");
+  });
+});
+describe("rowGroups", () => {
+  it("a select's runs break where the namespace does as well as the label, keyed by where each starts", () => {
+    const c = { "page/Notes": "n", "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Shelves": "# Shelves\n\n## Pages\n- [Horace](#bookshelf/Horace)\n\n## Latin\n- [Virgil](#bookshelf/Virgil)" };
+    const world = { keys: Object.keys(c), cache: c, journal: journalOf(c) };
+    expect(rowGroups(destinationRows(world, "2026-09-07", null)).map((g) => [g.group, g.at, g.rows.map((r) => r.v)])).toEqual([
+      [null, 0, [""]], ["Pages", 1, ["Notes"]], ["Pages", 2, ["Horace"]], ["Latin", 3, ["Virgil"]],
+    ]);
   });
 });

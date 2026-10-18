@@ -95,7 +95,7 @@ type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
   today: () => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {},
   backupsPanel: () => {},
-  interval: (_n: number) => {}, panel: (_ns: PanelName, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {},
+  interval: (_n: number) => {}, panel: (_ns: PanelName, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {}, shelves: () => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   bar: (_act: string) => {},
@@ -132,7 +132,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* the row closed by its own label hands the keys back as ⌃⌘L does
      (pin: where the keys go › Line numbering closed by its label) */
   onLines: (open: boolean) => acts.lines(open),
-  onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns),
+  onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
@@ -385,6 +385,7 @@ if (fixture && fixtures[fixture]) {
     if (!open) { screen.goto.levels = []; session.focusText(); return; }
     gotoPicked = false;
     overlay.open("goto");
+    session.flushSave();
     const c = session.current;
     screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
     setTimeout(() => masthead.focusGoto(), 0);
@@ -1032,13 +1033,14 @@ if (fixture && fixtures[fixture]) {
     if (ns === "shortcuts") { openShortcuts(); return; }
     if (ns === "backups") { overlay.open("backups"); readBackups(); screen.panel = "backups"; return; }
     overlay.open("pages");
+    /* the list reads the text as typed (pin: shelves › a shelf renamed, the list opened at once) */
+    session.flushSave();
     answerPanel(ns);
     screen.panel = ns;
   };
   function answerPanel(ns: Ns): void {
     const shelvesKey = entryKey(NS_BOOK.key, SHELVES);
     screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal, layer.cache[shelvesKey] || "");
-    screen.panelShelves = ns === NS_BOOK.key && layer.cache[shelvesKey] !== undefined ? entryHash(NS_BOOK.key, SHELVES) : "";
     screen.panelEmpty = ns !== "bookshelf" ? ""
       : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
       : "No authors yet — import a folder, or start one below.";
@@ -1071,6 +1073,10 @@ if (fixture && fixtures[fixture]) {
   acts.newRoot = (ns) => {
     closePanel();
     life.newRoot(ns);
+  };
+  acts.shelves = () => {
+    closePanel();
+    life.shelves();
   };
   stage("start");
   const seeds: Record<string, string> = {

@@ -15,7 +15,7 @@
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
+  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, onShelves, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
     screen: Screen;
     onToday: () => void; onExport: () => void; onImport: () => void;
     onCreate: () => void; onRename: () => void; onDelete: () => void;
@@ -24,6 +24,7 @@
     onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
     onClosePanel: () => void;
     onNewRoot: (ns: "page" | "bookshelf") => void;
+    onShelves: () => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
     lineBar: { onInput: (kind: "line" | "page", value: string) => void; onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void; onClose: () => void };
@@ -112,7 +113,7 @@
       {#each screen.panelRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onClosePanel}>{r.text}</a>{/if}{/each}
       {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}
       <button class="panel-new" type="button" onclick={() => onNewRoot(screen.panel!)}>New {NOUN[screen.panel]}…</button>
-      {#if screen.panel === "bookshelf" && screen.panelShelves}<a class="panel-new" href={screen.panelShelves} onclick={onClosePanel}>Shelves…</a>{/if}
+      {#if screen.panel === "bookshelf"}<button class="panel-new" type="button" onclick={onShelves}>Shelves…</button>{/if}
     </nav>
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />

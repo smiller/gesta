@@ -31,8 +31,6 @@ export interface Screen {
      spot and are not in it. */
   panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
   panelRows: PanelRow[];
-  /* the shelves entry's address, "" when the bookshelf has none */
-  panelShelves: string;
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;
   search: SearchState;
@@ -58,7 +56,7 @@ export interface Screen {
 export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false, buttons: { create: "", createTitle: "", tagTitle: "", canCreate: false, canEdit: false, renameTitle: "", deleteTitle: "" } };
 export function screenState(interval: number): Screen {
   const screen = $state<Screen>({
-    masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelShelves: "", panelEmpty: "",
+    masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelEmpty: "",
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, tagTitle: "" },

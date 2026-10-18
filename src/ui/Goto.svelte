@@ -5,7 +5,7 @@
      pickable "← the thing itself" row, value "". Groups are minted on first
      use, so the ungrouped rows above keep their place. -->
 <script lang="ts">
-  import type { Level } from "./gotoModel.ts";
+  import { rowGroups, type Level } from "./gotoModel.ts";
   let { goto, onToggle, onPick }: {
     goto: { open: boolean; levels: Level[] };
     onToggle: (open: boolean) => void;
@@ -13,15 +13,6 @@
   } = $props();
   let body: HTMLElement | undefined = $state();
   export function focusFirst(): void { body?.querySelector("select")?.focus(); }
-  const grouped = (l: Level): { group: string | null; rows: Level["rows"] }[] => {
-    const out: { group: string | null; rows: Level["rows"] }[] = [];
-    for (const r of l.rows) {
-      const g = r.group || null;
-      const last = out[out.length - 1];
-      if (last && last.group === g) last.rows.push(r); else out.push({ group: g, rows: [r] });
-    }
-    return out;
-  };
   const selected = (l: Level, r: Level["rows"][number]): boolean => l.value !== null && r.v === l.value && (!l.valueNs || r.ns === l.valueNs);
   const pick = (l: Level, e: Event): void => {
     const s = e.currentTarget as HTMLSelectElement;
@@ -38,7 +29,7 @@
       <select aria-label={l.aria} data-level={l.level} onchange={(e) => pick(l, e)}>
         {#if l.value === null}<option value="" disabled selected>— go to —</option>{/if}
         {#if l.sentinel !== null}<option value="" selected={l.value === ""}>{l.sentinel}</option>{/if}
-        {#each grouped(l) as g (g.group ?? "")}
+        {#each rowGroups(l.rows) as g (g.at)}
           {#if g.group}<optgroup label={g.group}>{#each g.rows as r (r.v)}<option value={r.v} data-ns={r.ns} selected={selected(l, r)}>{r.label}</option>{/each}</optgroup>
           {:else}{#each g.rows as r (r.v)}<option value={r.v} data-ns={r.ns} selected={selected(l, r)}>{r.label}</option>{/each}{/if}
         {/each}

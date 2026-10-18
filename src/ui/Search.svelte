@@ -10,6 +10,7 @@
 <script lang="ts">
   import type { SearchState } from "./screen.svelte.ts";
   import { SEARCH_CAP } from "../store/search.ts";
+  import { optionGroups } from "./searchModel.ts";
   let { search, onToggle, onQuery, onScope, onWalk, onEnter, onPick }: {
     search: SearchState;
     onToggle: (open: boolean) => void;
@@ -27,14 +28,7 @@
     const dir = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
     if (dir) { e.preventDefault(); onWalk(dir); }
   };
-  const groups = $derived.by(() => {
-    const out: { group: string | null; at: number[] }[] = [];
-    search.options.forEach((o, i) => {
-      const last = out[out.length - 1];
-      if (last && last.group === o.group) last.at.push(i); else out.push({ group: o.group, at: [i] });
-    });
-    return out;
-  });
+  const groups = $derived(optionGroups(search.options));
 </script>
 
 <details class="page-search" open={search.open} ontoggle={(e) => onToggle((e.currentTarget as HTMLDetailsElement).open)}>

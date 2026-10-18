@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { defaultScope, scopeOptions, resultLabel, sameScope } from "./searchModel.ts";
+import { defaultScope, scopeOptions, resultLabel, sameScope, optionGroups } from "./searchModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache = {
@@ -62,9 +62,18 @@ describe("scopeOptions on the shelves", () => {
     expect(o.map((x) => [x.group, x.label])).toEqual([
       [null, "Everything"], [null, "Journal"], [null, "All Pages"], ["Latin", "All Latin"], ["Latin", "Horace"], ["Latin", "Virgil"], ["English", "John Milton"],
     ]);
-    expect(o[3].scope).toEqual({ kind: "shelf", ns: "bookshelf", shelf: "Latin", books: ["Horace", "Virgil"] });
-    expect(sameScope(o[3].scope, { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: [] })).toBe(true);
-    expect(sameScope(o[3].scope, { kind: "shelf", ns: "bookshelf", shelf: "English", books: ["Horace", "Virgil"] })).toBe(false);
+    expect(o[3].scope).toEqual({ kind: "shelf", ns: "bookshelf", shelf: "Latin", books: new Set(["Horace", "Virgil"]) });
+    expect(sameScope(o[3].scope, { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: new Set() })).toBe(true);
+    expect(sameScope(o[3].scope, { kind: "shelf", ns: "bookshelf", shelf: "English", books: new Set(["Horace", "Virgil"]) })).toBe(false);
     expect(sameScope(o[3].scope, o[4].scope)).toBe(false);
+  });
+});
+describe("optionGroups", () => {
+  it("the dropdown's runs break where the namespace does as well as the label, keyed by where each starts", () => {
+    const c = { "page/Notes": "n", "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Shelves": "# Shelves\n\n## Pages\n- [Horace](#bookshelf/Horace)\n- [Virgil](#bookshelf/Virgil)" };
+    const o = scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c), c["bookshelf/Shelves"]);
+    expect(optionGroups(o).map((g) => [g.group, g.at.map((i) => o[i].label)])).toEqual([
+      [null, ["Everything", "Journal", "All Pages"]], ["Pages", ["Notes"]], ["Pages", ["All Pages", "Horace", "Virgil"]],
+    ]);
   });
 });

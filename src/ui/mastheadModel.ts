@@ -11,11 +11,11 @@
    names itself in the crumb (pin: mastheadModel.test › a sub-page: the parent
    crumb links back) (pin: mastheadModel.test › deeper down every ancestor is
    its own link) */
-import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots, NS_BOOK } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
 import { romanKey, romanWorkKey, type Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
-import { parseShelves, shelved } from "../store/shelves.ts";
+import { rootGroups } from "../store/shelves.ts";
 
 export interface Crumb { text: string; href: string | null; title: string }
 export interface Link { text: string; href: string }
@@ -84,8 +84,6 @@ export function trimLabel(s: string, max: number): string {
 }
 export function panelRows(ns: string, keys: string[], journal: Journal, shelvesMd = ""): PanelRow[] {
   const row = (name: string, under: boolean): PanelRow => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name), ...(under ? { shelved: true as const } : {}) });
-  const roots = childrenOf(keys, ns);
-  if (ns !== NS_BOOK.key) return roots.map((name) => row(name, false));
-  return shelved(roots, parseShelves(shelvesMd)).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))
-    : [{ text: g.shelf, href: "", shelf: true as const }, ...g.roots.map((name) => row(name, true))]);
+  return rootGroups(ns, childrenOf(keys, ns), shelvesMd, null).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))
+    : [{ text: trimLabel(g.shelf, LABEL_CAP), href: "", shelf: true as const }, ...g.roots.map((name) => row(name, true))]);
 }

@@ -2200,9 +2200,18 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const shelvesShown = await page.waitForSelector(".pages .shelf", { timeout: 5000 }).then(() => true, () => false);
   const list = () => page.evaluate(() => { const p = document.querySelector(".pages"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
   await log("the bookshelf on its shelves", { shelvesShown, rows: await list() });
-  await page.click(".pages a.panel-new[href=\"#bookshelf/Shelves\"]");
+  await page.click(".pages button.panel-new:has-text('Shelves…')");
   await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
   await log("Shelves… clicked", { entry: await A.entry(page), panel: await R.panel(page) });
+  /* a shelf renamed, the list opened at once: the list reads the text as typed */
+  const latin = await R.wordAt(page, "Latin", 5);
+  await page.mouse.dblclick(latin.x, latin.y);
+  await rest(page);
+  await page.keyboard.type("Classical");
+  await page.click(S.booksOpener);
+  await page.waitForSelector(".pages .shelf", { timeout: 5000 }).catch(() => {});
+  await log("a shelf renamed, the list opened at once", { rows: await list() });
+  await page.keyboard.press("Escape");
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+j");
   await rest(page);
@@ -2212,16 +2221,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+k");
   await page.waitForSelector(S.searchScope + " optgroup", { timeout: 5000 }).catch(() => {});
   await log("the search scopes on their shelves", await groups(S.searchScope));
-  await page.selectOption(S.searchScope, { label: "All Latin" });
+  await page.selectOption(S.searchScope, { label: "All Classical" });
   /* a word only one author's book holds, then one only the other's: each found under the shelf */
   for (const q of ["uisu", "silk-mills"]) {
     await page.click(".page-search input");
     await page.keyboard.press("Meta+a");
     await page.keyboard.type(q);
     await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {});
-    await R.waitSearchRows(page).catch(() => {});
-    await page.waitForTimeout(400);
-    await log("searched " + q + " under All Latin", await page.evaluate(() => ({ scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, where: [...document.querySelectorAll(".search-results .where")].map((w) => w.textContent) })));
+    await page.waitForFunction((q) => { const li = [...document.querySelectorAll(".search-results li")]; return li.length > 0 && li.every((e) => e.innerText.toLowerCase().includes(q)); }, q, { timeout: 5000 }).catch(() => {});
+    await log("searched " + q + " under All Classical", await page.evaluate(() => ({ scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, where: [...document.querySelectorAll(".search-results .where")].map((w) => w.textContent) })));
   }
   await page.keyboard.press("Escape");
     }],

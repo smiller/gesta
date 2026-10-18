@@ -73,7 +73,7 @@ describe("inScope", () => {
     expect(inBook({ date: "page", tag: "Sean's Books/x" }, "page", "Sean")).toBe(false);
   });
   it("a shelf scope holds its authors' books, every level of each, and nothing else", () => {
-    const latin: Scope = { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: ["Horace", "Virgil"] };
+    const latin: Scope = { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: new Set(["Horace", "Virgil"]) };
     expect(inScope({ date: "bookshelf", tag: "Horace" }, latin)).toBe(true);
     expect(inScope({ date: "bookshelf", tag: "Virgil/Aeneid/1" }, latin)).toBe(true);
     expect(inScope({ date: "bookshelf", tag: "Milton, John/PL" }, latin)).toBe(false);

@@ -11,7 +11,8 @@ import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { firstHeading } from "../store/headings.ts";
-import { nsOf, pageParts, entryKey, entryHash, KEYED_NS } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, entryHash, KEYED_NS, NS_BOOK } from "../store/keys.ts";
+import { SHELVES } from "../store/shelves.ts";
 import { registered, childrenOf } from "../store/lists.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
@@ -51,6 +52,7 @@ export interface Lifecycle {
   rename(): Promise<void>;
   remove(): Promise<void>;
   newRoot(ns: string): Promise<void>;
+  shelves(): Promise<void>;
   shown(ekey: string, stored: string): void;
 }
 
@@ -79,6 +81,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      anything is minted (pin: lifecycle.test › refuses every operation)
      (pin: lifecycle.test › refuses with no editor) */
   const cold = (): boolean => refuseCold(layer, ui.say);
+  /* "Shelves" is no author's: the shelves hold no books, keep their name,
+     and no author is filed under it, or it would be hidden from every list
+     (pin: lifecycle.test › the shelves are no author) */
+  const onShelves = (date: string, tag: string | null): boolean => date === NS_BOOK.key && !!tag && pageParts(tag).name === SHELVES;
+  const SHELVES_KEEP = "the shelves keep their name", SHELVES_EMPTY = "the shelves hold no books", SHELVES_TAKEN = "“" + SHELVES + "” is the shelves’ own name";
   const keysNow = (): string[] => Object.keys(layer.cache);
   const shownName = (date: string, tag: string): string => {
     const ns = nsOf(date), pp = pageParts(tag);
@@ -106,6 +113,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const ns = nsOf(c.date);
     /* the one leaf: a day's tagged entry hosts nothing, and ⌃⌘N reaches it all the same */
     if (!ns && c.tag) { ui.say("a tagged entry holds no entries of its own", 2500); return done; }
+    if (onShelves(c.date, c.tag)) { ui.say(SHELVES_EMPTY, 2500); return done; }
     const typed = typedName(dialogs.prompt(newName(ns)));
     if (!typed) return done;
     if ("refuse" in typed) { ui.say(typed.refuse); return done; }
@@ -141,6 +149,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const { from, to } = view.state.selection;
     const c = session.current;
     const ns = nsOf(c.date);
+    if (onShelves(c.date, c.tag)) { ui.say(SHELVES_EMPTY, 2500); return done; }
     const typed = typedName(dialogs.prompt(newName(ns)));
     if (!typed) return done;
     if ("refuse" in typed) { ui.say(typed.refuse); return done; }
@@ -176,6 +185,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     if (!c.tag || renaming || cold()) return done;
     const date = c.date, old = c.tag, ns = nsOf(date), pp = ns ? pageParts(old) : null;
+    if (onShelves(date, old)) { ui.say(SHELVES_KEEP, 2500); return done; }
     if (ns && ns.titledRoots && !pp!.sub) return refile(date, old);
     if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old))) { ui.say("rename after the " + ns.subNoun + "s are deleted", 2500); return done; }
     const oldLeaf = pp ? pp.leaf : old;
@@ -227,6 +237,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if ("refuse" in typed) { ui.say(typed.refuse); return done; }
     const root = typed.name;
     if (root === old) return done;
+    if (onShelves(date, root)) { ui.say(SHELVES_TAKEN, 2500); return done; }
     if (childrenOf(keysNow(), date).indexOf(root) !== -1) { dialogs.alert(takenText(date, root)); return done; }
     renaming = true;
     return session.flushSave().then(() => {
@@ -339,6 +350,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const filed = typedName(dialogs.prompt("Sorted under:", filingForm(shown)));
     if (!filed) return done;
     if ("refuse" in filed) { ui.say(filed.refuse); return done; }
+    if (onShelves(ns, filed.name)) { ui.say(SHELVES_TAKEN, 2500); return done; }
     if (registered(keysNow(), ns, filed.name)) { go(filed.name); return done; }
     return layer.setEntry(entryKey(ns, filed.name), "# " + shown + "\n").then((landed) => { if (landed) go(filed.name); });
   }
@@ -364,5 +376,15 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (out !== null) layer.setEntry(parent, out);
   }
 
-  return { create, extract, rename, remove, newRoot, shown };
+  /* the shelves page opened, made with its heading when there is none: a
+     bookshelf address makes nothing on a visit (pin: lifecycle.test › the
+     shelves opened) */
+  function shelves(): Promise<void> {
+    if (cold()) return done;
+    const key = entryKey(NS_BOOK.key, SHELVES), href = entryHash(NS_BOOK.key, SHELVES);
+    if (key in layer.cache) { session.goto(href, "already here"); return done; }
+    return layer.setEntry(key, "# " + SHELVES + "\n").then((landed) => { if (landed) session.goto(href, "already here"); });
+  }
+
+  return { create, extract, rename, remove, newRoot, shelves, shown };
 }

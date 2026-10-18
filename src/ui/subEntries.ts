@@ -4,7 +4,8 @@
    every depth; registered-but-blank ones never block, and are swept only
    AFTER the user confirms (pin: subEntries.test › content-bearing
    descendants at any depth block; blanks never do) */
-import { nsOf, pageParts, entryKey, entryHash, entryNoun, todayKey } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, entryHash, entryNoun, todayKey, NS_BOOK } from "../store/keys.ts";
+import { SHELVES } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import { pageName } from "../store/names.ts";
 
@@ -44,7 +45,7 @@ export function subButtons(date: string, tag: string | null): SubButtons {
     create: ns ? "+ " + ns.subNoun : "+ tagged entry",
     createTitle: ns ? "Create a " + ns.subNoun + " here" : "Create a tagged sub-entry for this day",
     tagTitle: "Move selection to a new " + (ns ? ns.subNoun : "tagged entry"),
-    canCreate: !!ns || !tag,
+    canCreate: (!!ns || !tag) && !(date === NS_BOOK.key && tag === SHELVES),
     canEdit: !!tag,
     renameTitle: ns ? "Rename this " + level : "Rename this entry's tag",
     deleteTitle: ns ? "Delete this " + level : "Delete this tagged entry",
