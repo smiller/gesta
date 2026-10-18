@@ -2279,6 +2279,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on a first half-line", { lines: await R.clipboardLines(page) });
+  /* beside its translation the original is quoted from the half cited, the translation whole */
+  await A.foreignWrite(page, "bookshelf/Seafarer", "# The Seafarer\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
+  const paired = await seededIn("bookshelf/Seafarer");
+  await page.goto(A.url("bookshelf/Seafarer"));
+  await A.waitEntry(page, "bookshelf/Seafarer", 5000).catch(() => {});
+  await R.settle(page);
+  await R.selectBetween(page, "Dagas sind", "ealle onmedlan");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R from a second half-line beside its translation", { seeded: paired, lines: await R.clipboardLines(page) });
   await page.keyboard.press("Escape");
     }],
   ];

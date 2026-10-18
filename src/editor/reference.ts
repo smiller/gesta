@@ -47,17 +47,23 @@ export function coveredUnits(doc: Node, from: number, to: number, topOnly = fals
   }
   return out;
 }
-/* which halves of a line the selection inks: the original's text (a pair's
-   first cell) split at its first run of two spaces between words; null for
-   a line with no such run, or none of the original selected */
-function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolean } | null {
-  const cell = u.node.type === N.pair ? u.node.child(0) : u.node;
+/* a line's original text: a pair's first cell, and where it starts */
+const original = (u: Unit): { cell: Node; start: number } => u.node.type === N.pair ? { cell: u.node.child(0), start: u.pos + 2 } : { cell: u.node, start: u.pos + 1 };
+/* the original's halves meet at its first run of two spaces between words:
+   where the first ends and the second starts, as offsets into it */
+function caesura(cell: Node): { cut: number; rest: number; t: string } | null {
   if (!cell.isTextblock) return null;
-  const start = u.pos + 1 + (cell === u.node ? 0 : 1);
   const t = cell.textBetween(0, cell.content.size, undefined, "\ufffc");
   const m = /\S( {2,})\S/.exec(t);
-  if (!m) return null;
-  const cut = m.index + 1, rest = cut + m[1].length;
+  return m ? { cut: m.index + 1, rest: m.index + 1 + m[1].length, t } : null;
+}
+/* which halves of a line the selection inks; null for a line with no
+   halves, or none of the original selected */
+function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolean } | null {
+  const { cell, start } = original(u);
+  const c = caesura(cell);
+  if (!c) return null;
+  const { cut, rest, t } = c;
   const s = from - start, e = to - start;
   const inked = (x: number, y: number): boolean => x < y && !!t.slice(x, y).trim();
   const halves = { a: inked(Math.max(s, 0), Math.min(e, cut)), b: inked(Math.max(s, rest), Math.min(e, t.length)) };
@@ -276,7 +282,7 @@ function dropTurns(frag: Fragment): Fragment {
   });
   return Fragment.from(out);
 }
-export function passageMd(doc: Node, from: number, to: number): string {
+export function passageMd(doc: Node, from: number, to: number, halves = false): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {
@@ -298,8 +304,8 @@ export function passageMd(doc: Node, from: number, to: number): string {
     const last = byBlock[byBlock.length - 1];
     if (last && last[0].blockPos === u.blockPos) last.push(u); else byBlock.push([u]);
   }
-  if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group)).join("\n" + quotePrefix("") + "\n");
-  return blockPassage(doc, from, to, units);
+  if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group, halves)).join("\n" + quotePrefix("") + "\n");
+  return blockPassage(doc, from, to, units, halves);
 }
 /* A SELECTION WIDENED TO WHOLE WORDS, what ⌃⌘R quotes and highlights both:
    back to the start of the word it starts in and on to the end of the word
@@ -349,7 +355,18 @@ function partOf(row: Node, pos: number, from: number, to: number): Fragment {
   const start = pos + 1, end = start + row.content.size;
   return row.content.cut(Math.max(from, start) - start, Math.min(to, end) - start);
 }
-function blockPassage(doc: Node, from: number, to: number, units: Unit[]): string {
+/* Old English verse beside its translation: the original quoted from the half
+   the citation starts on to the half it ends on, the translation whole, as it
+   cannot be divided by half-lines (pin: reference.test › Old English verse with
+   its translation quotes the original) */
+function fromTheHalf(row: Node, first: Unit | null, last: Unit | null, from: number, to: number): Node {
+  const u = first || last!;
+  const c = caesura(row.child(0)), h = halvesInked(u, from, to);
+  if (!c || !h) return row;
+  const a = first && !h.a ? c.rest : 0, b = last && !h.b ? c.cut : row.child(0).content.size;
+  return row.copy(Fragment.from([row.child(0).copy(row.child(0).content.cut(a, b)), row.child(1)]));
+}
+function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves = false): string {
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
   const rows: { node: Node; pos: number }[] = [];
@@ -375,7 +392,9 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[]): strin
     const row = rows[i].node;
     if (row.type === N.note) continue;
     if (isTurn(row)) continue;
-    run.push(row.copy(dropFolios(paired ? row.content : partOf(row, rows[i].pos, from, to))));
+    const ends = halves && row.type === N.pair ? [units[0], units[units.length - 1]].map((u) => u.pos === rows[i].pos ? u : null) : [null, null];
+    const cut = ends[0] || ends[1] ? fromTheHalf(row, ends[0], ends[1], from, to) : row;
+    run.push(row.copy(dropFolios(paired ? cut.content : partOf(row, rows[i].pos, from, to))));
   }
   const kept = withoutMarginNotes(run);
   /* a stanza's own count is its stanza's, so a run from inside one quotes as lines */
@@ -435,10 +454,11 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
   /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
-  const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, citesHalfLines(date, tag, journal));
+  const halves = citesHalfLines(date, tag, journal);
+  const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
   const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal);
   const url = entryLinkUrl(date, tag, hl);
-  const passage = passageMd(doc, from, to);
+  const passage = passageMd(doc, from, to, halves);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {

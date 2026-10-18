@@ -422,6 +422,19 @@ test("Old English verse with its translation: the original's halves count, the t
   expect(oeLabel(deor, "Deor", j, "experienced agony")).toBe("*Deor*, 1");
   expect(oeLabel(deor, "Deor", j, "* * *")).toBe("*Deor*, 3");
 });
+test("Old English verse with its translation quotes the original from the half the citation names, the translation whole", () => {
+  const page = "# Seafarer\n\n::: reference\nno author\nOld English verse\n:::";
+  const sf = parseMarkdown(page + "\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
+  const j = journalOf({ "bookshelf/Seafarer": page });
+  const run = referencePayload(state(sf, ...span(sf, "Dagas sind", "ealle onmedlan")), "bookshelf", "Seafarer", j);
+  expect("label" in run && run.label).toBe("*Seafarer*, 80b-81a");
+  expect("passage" in run && run.passage).toBe("> ::: verse 80\n> Dagas sind gewitene, | joy with the Hosts. The days are gone\n> ealle onmedlan | of all the glory of the kingdoms of the earth;\n> :::");
+  const whole = referencePayload(state(sf, ...span(sf, "Dagas sind", "ne caseras")), "bookshelf", "Seafarer", j);
+  expect("passage" in whole && whole.passage).toBe("> ::: verse 80\n> Dagas sind gewitene, | joy with the Hosts. The days are gone\n> ealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\n> nearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n> :::");
+  // without the line on its page a paired row is quoted whole
+  const plain = referencePayload(state(sf, ...span(sf, "Dagas sind", "ealle onmedlan")), "bookshelf", "Seafarer", journalOf({ "bookshelf/Seafarer": "# Seafarer" }));
+  expect("passage" in plain && plain.passage).toMatch(/^> ::: verse 80\n> dream mid dugeþum\.  Dagas/);
+});
 test("Old English verse said on a work's page reaches the entries below it; the range keeps its elision, 1162b-68a", () => {
   const work = "# Elene\n\n::: reference\nOld English verse\n:::";
   const doc = parseMarkdown("::: verse 1162\na b  c d\ne\nf\ng\nh\ni\nj k  l m\n:::");

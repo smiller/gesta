@@ -1857,3 +1857,14 @@ Old English shelf, which would tie a citation to a shelf's name.
 - To make it work in the backup the five Old English pages (Beowulf,
   Finnsburh, Deor, The Wanderer, The Seafarer) each need the line, typed
   in Gesta — never re-shipped.
+- Seen in Helium (82d56be, The Seafarer): cited 80b-85 rightly, but the
+  quoted pair still began "dream mid dugeþum.  " — a paired row is quoted
+  whole. Fixed: in Old English verse a pair's original is quoted from the
+  half the citation starts on to the half it ends on; the translation stays
+  whole, as it cannot be divided by half-lines (a single-column line was
+  already cut at the selection's words). Test: reference.test, one; Helium
+  "⌃⌘R from a second half-line beside its translation", played headless
+  first: 80b-81a quoted from "Dagas sind gewitene," (MEASURED). One full
+  run read "Tab held in a quote" with the caret at the end, not inside: the
+  section alone three times and the next full run read the approved
+  "inside a line" — a flake of the click's landing, not this change.
