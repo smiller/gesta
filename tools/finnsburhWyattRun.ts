@@ -22,7 +22,7 @@ const SLIPS: { from: string; to: string; line: number }[] = [
   { from: "sealo-brün", to: "sealo-brūn", line: 35 },
   { from: "hū ðū wīgend", to: "hū ðā wīgend", line: 47 },
 ];
-const NOTE = "Text: A. J. Wyatt, ed., *Beowulf* (Cambridge, 1894), its appendix “The Fight at Finnsburg”, as transcribed on Wikisource; the length marks, hyphens, square brackets and notes left out. The asterisks are Wyatt’s, where the fragment breaks off.";
+const NOTE = "Text: A. J. Wyatt, ed., *Beowulf* (Cambridge, 1894), its appendix “The Fight at Finnsburg”, from the transcription on Wikisource, its misreadings corrected against Wyatt’s printed page; the length marks, hyphens, square brackets and notes left out. The asterisks are Wyatt’s, where the fragment breaks off.";
 
 /* the folder is emptied before it is written: only one inside gesta-imports */
 const IMPORTS = join(HOME, "Desktop/gesta-imports") + "/";

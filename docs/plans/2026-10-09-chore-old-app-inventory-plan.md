@@ -1901,3 +1901,11 @@ lines placed by likeness showed the bookshelf's words, not his, wrong.
   each by one word ("æt somne" → "ætsomne" the one that joins two).
 - The import folder: ~/Desktop/gesta-imports/gesta-beowulf, review page
   beside it.
+- IMPORTED 2026-10-18, the backup identical to the folder (MEASURED); the
+  pre-Shelves copy (Old English, Old English/Beowulf) removed by hand.
+- The text note, asked ("wanted the point that it was corrected to be
+  in"): Beowulf's and Finnsburh's now say "from the transcription on
+  Wikisource, its misreadings corrected against Wyatt’s printed page",
+  typed into both pages by hand and carried into both runs; no count, as
+  the review page holds the list. The Beowulf run's guard takes the
+  backup page as it writes it with or without the misreadings.

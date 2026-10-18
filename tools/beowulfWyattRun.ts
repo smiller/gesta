@@ -117,7 +117,7 @@ const MISREAD: Misreading[] = [
 ];
 /* a line number misprinted in the transcription, its neighbours five lines apart: 2830, 2885, 2840 */
 const MISNUMBERED = [{ n: 2885, at: 2835 }];
-const NOTE = "Text: A. J. Wyatt, ed., *Beowulf* (Cambridge, 1894), as transcribed on Wikisource; the length marks, hyphens, square brackets and notes left out.";
+const NOTE = "Text: A. J. Wyatt, ed., *Beowulf* (Cambridge, 1894), from the transcription on Wikisource, its misreadings corrected against Wyatt’s printed page; the length marks, hyphens, square brackets and notes left out.";
 
 
 /* the folder is emptied before it is written: only one inside gesta-imports */
@@ -135,15 +135,15 @@ const off = numbered.filter((x) => x.n !== x.at && !MISNUMBERED.some((m) => m.n 
 if (total !== LINES || off.length) throw new Error(`${total} lines; line numbers off: ${JSON.stringify(off.slice(0, 5))}`);
 const read = fitts.map((f) => f.map(plainSpelling));
 const plain = misread(read, MISREAD);
-/* the backup's page may be replaced only as it was written, misreadings and all: an edit made in Gesta would be lost */
+/* the backup's page may be replaced only as this run writes it, with its misreadings or without: an edit made in Gesta would be lost */
 const was = beowulfEntries(read, NOTE)["bookshelf/Beowulf.md"];
+const entries = beowulfEntries(plain, NOTE);
 const backup = join(BACKUP, "bookshelf/Beowulf.md");
-if (existsSync(backup) && readFileSync(backup, "utf8") !== was) {
+if (existsSync(backup) && ![was, entries["bookshelf/Beowulf.md"]].includes(readFileSync(backup, "utf8"))) {
   const a = readFileSync(backup, "utf8").split("\n"), b = was.split("\n");
   const at = a.findIndex((l, i) => l !== b[i]);
   throw new Error(`the backup's Beowulf has been edited (its line ${at + 1}: ${JSON.stringify(a[at])}): this folder would overwrite it`);
 }
-const entries = beowulfEntries(plain, NOTE);
 for (const md of Object.values(entries)) if (serializeMarkdown(parseMarkdown(md)) !== md) throw new Error("an entry does not survive its round trip");
 
 rmSync(OUT, { recursive: true, force: true });
