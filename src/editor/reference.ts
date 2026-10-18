@@ -3,7 +3,7 @@ import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, countAt, drawsInk, renumbered, type Unit } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, romanWorkKey, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 import { dropFolios } from "./paste.ts";
@@ -77,14 +77,13 @@ export function stanzaRange(doc: Node, from: number, to: number): string {
   return whole ? sa + "–" + sb : sa + "." + a.line + "–" + sb + "." + b.line;
 }
 /* TWO BLOCKS IS A REFUSAL: every block numbers from 1 (pin: reference.test ›
-   two verse blocks are a refusal) — except a run of top-level stanzas in a
-   work that cites by stanza, whose range names each end's stanza (pin:
-   reference.test › referencePayload under the directive) */
-export function spansTwoBlocks(doc: Node, from: number, to: number, stanzas = false): boolean {
+   two verse blocks are a refusal) — except a run of top-level stanzas,
+   whose range names each end's stanza (pin: reference.test › a work in
+   stanza fences cites by stanza) */
+export function spansTwoBlocks(doc: Node, from: number, to: number): boolean {
   const units = coveredUnits(doc, from, to);
   const blocks = new Set(units.map((u) => u.blockPos));
   if (blocks.size <= 1) return false;
-  if (!stanzas) return true;
   const top = new Set(coveredUnits(doc, from, to, true).map((u) => u.blockPos));
   return [...blocks].some((p) => !top.has(p) || doc.nodeAt(p)!.attrs.stanza == null);
 }
@@ -264,7 +263,7 @@ export function passageMd(doc: Node, from: number, to: number): string {
        verse (pin: reference.test › the number on the right block at every depth) */
     return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(dropTurns(cut.content))))));
   }
-  /* a run across stanzas (allowed only where the work cites by stanza):
+  /* a run across stanzas:
      each stanza's rows quoted as one block's are, a blank quoted line
      between them, as the stanza gap stands in print (pin: reference.test ›
    referencePayload under the directive: I.i.2.1, a run across a stanza gap
@@ -404,14 +403,14 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   if (inCode) return { refused: "code" };
   const $from = doc.resolve(from);
   for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return { refused: "margin-note" };
-  const stanzas = romanWorkKey(date, tag, journal) !== null;
-  if (spansTwoBlocks(doc, from, to, stanzas)) return { refused: "two-blocks" };
-  return payloadOver(doc, from, to, stanzas, date, tag, journal);
+  if (spansTwoBlocks(doc, from, to)) return { refused: "two-blocks" };
+  return payloadOver(doc, from, to, date, tag, journal);
 }
-function payloadOver(doc: Node, from: number, to: number, stanzas: boolean, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
+function payloadOver(doc: Node, from: number, to: number, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
-  const range = (stanzas && stanzaRange(doc, from, to)) || referenceRange(doc, from, to);
+  /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
+  const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to);
   const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal);
   const url = entryLinkUrl(date, tag, hl);
   const passage = passageMd(doc, from, to);

@@ -35,7 +35,7 @@ import { searchIndex } from "./store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
 import { flattenDoc } from "./model/flatten.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
-import { mdLabel, romanWorkKey } from "./store/reference.ts";
+import { mdLabel } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
 import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
 import { openFoldAt } from "./editor/folds.ts";
@@ -685,11 +685,10 @@ if (fixture && fixtures[fixture]) {
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
     if (repeat || session.mdView || !session.view) return;
-    /* a work citing by stanza: on a page holding stanzas the Line box takes
-       `N` or `N.M`, stanza and line, one place each; a plain verse page of
-       the same work keeps the line ask (pin: stanza › ⌃⌘G 2.1) */
-    const c = session.current;
-    if (kind === "line" && romanWorkKey(c.date, c.tag, journal) && hasStanzas(session.view.state.doc)) {
+    /* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and
+       line, one place each; a plain verse page keeps the line ask (pin:
+       stanza › ⌃⌘G 2.1) */
+    if (kind === "line" && hasStanzas(session.view.state.doc)) {
       const bad = stanzaAskCheck(v);
       if (bad) { say(bad, 2000); return; }
       const hit = stanzaHit(session.view.state.doc, v);

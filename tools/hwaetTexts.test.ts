@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { hwaetStanzas, hwaetNotes, wholeLines, hwaetEntry } from "./hwaetTexts.ts";
+import { hwaetStanzas, hwaetNotes, wholeLines, hwaetEntry, stanzaLines, hwaetStanzaEntry } from "./hwaetTexts.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -65,4 +65,23 @@ test("a note's mark after its half-line in the text, numbered within its stanza,
   expect(kinds).toEqual(["note", "pair", "pair", "note", "gap", "pair"]);
   // a note named by a mark the notes do not hold is an error, not a silent drop
   expect(() => wholeLines(half, {})).toThrow(/1\.1/);
+});
+
+test("a poem in stanzas: a row a line, each stanza its own numbered fence, a line with no translation kept, the notes inside their stanza; the site's numbers checked", () => {
+  const half = [
+    [{ n: "1.", text: "Gáttir allar", tr: "Before one would advance" }, { n: "", text: "því at óvíst", tr: "" }, { n: "3", text: "er at vita", tr: "because one can't know", note: "1.3.1" }],
+    [{ n: "2.", text: "Gefendr heilir", tr: "Greetings to the hosts," }],
+  ];
+  const { stanzas, off } = stanzaLines(half, { "1.3.1": "A note." });
+  expect(off).toEqual([]);
+  expect(stanzas).toEqual([
+    { n: 1, lines: ["Gáttir allar | Before one would advance", "því at óvíst |", "er at vita ¹ | because one can't know", "::: note", "[1] A note.", ":::"] },
+    { n: 2, lines: ["Gefendr heilir | Greetings to the hosts,"] },
+  ]);
+  const md = hwaetStanzaEntry("Hávamál", "Hávamál", stanzas, "Text: x.")["bookshelf/Hávamál.md"];
+  expect(md).toBe("# Hávamál\n\n::: reference\nno author\n:::\n\n::: note\nText: x.\n:::\n\n::: stanza 1\nGáttir allar | Before one would advance\nþví at óvíst |\ner at vita ¹ | because one can't know\n::: note\n[1] A note.\n:::\n:::\n\n::: stanza 2\nGefendr heilir | Greetings to the hosts,\n:::");
+  expect(serializeMarkdown(parseMarkdown(md))).toBe(md);
+  // a stanza out of order, or a line number off its row, is named
+  expect(stanzaLines([[{ n: "2.", text: "a", tr: "A" }]], {}).off).toEqual(["stanza 1 headed 2."]);
+  expect(stanzaLines([[{ n: "1.", text: "a", tr: "A" }, { n: "4", text: "b", tr: "B" }]], {}).off).toEqual(["stanza 1 row 2 numbered 4"]);
 });

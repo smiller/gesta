@@ -5,7 +5,8 @@
 
 export interface Numbered { n: number; at: number }
 
-const ENTITIES: Record<string, string> = { aelig: "æ", AElig: "Æ", thorn: "þ", THORN: "Þ", eth: "ð", ETH: "Ð", amp: "&", nbsp: " ", quot: "\"", lt: "<", gt: ">", ouml: "ö", uacute: "ú", aacute: "á", eacute: "é", iacute: "í", oacute: "ó" };
+const ENTITIES: Record<string, string> = { aelig: "æ", AElig: "Æ", thorn: "þ", THORN: "Þ", eth: "ð", ETH: "Ð", amp: "&", nbsp: " ", quot: "\"", lt: "<", gt: ">", ouml: "ö", uacute: "ú", aacute: "á", eacute: "é", iacute: "í", oacute: "ó", yacute: "ý", oslash: "ø", oelig: "œ",
+  Ouml: "Ö", Oacute: "Ó", Aacute: "Á", Iacute: "Í", OElig: "Œ" };
 /* an entity the table does not hold is an error, not a letter lost */
 const decode = (s: string): string => s.replace(/&(?:#x([0-9a-f]+)|#(\d+)|([a-z]+));/gi, (whole, hex, dec, name: string) => {
   if (hex) return String.fromCodePoint(parseInt(hex, 16));
@@ -83,10 +84,39 @@ export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}
       const tr = [a.tr, b.tr].filter(Boolean).join(" ");
       lines.push(text + " | " + tr);
     }
-    if (said.length) lines.push("::: note", ...said.map((t, k) => `[${k + 1}] ${t}`).join("\n\n").split("\n"), ":::");
+    if (said.length) lines.push(...noteLines(said));
     return lines;
   });
   return { stanzas: out, numbered, odd };
+}
+const noteLines = (said: string[]): string[] => ["::: note", ...said.map((t, k) => `[${k + 1}] ${t}`).join("\n\n").split("\n"), ":::"];
+
+/* a poem in stanzas (Hávamál): a row a line, cited stanza and line, so
+   each stanza keeps its own fence and number; the site heads a stanza "76."
+   and numbers a line within it ("4"), both checked against their place */
+export function stanzaLines(stanzas: Half[][], notes: Record<string, string>): { stanzas: { n: number; lines: string[] }[]; off: string[] } {
+  const off: string[] = [];
+  const out = stanzas.map((rows, s) => {
+    if (rows[0].n !== `${s + 1}.`) off.push(`stanza ${s + 1} headed ${rows[0].n}`);
+    const said: string[] = [];
+    const lines = rows.map((r, i) => {
+      if (i && r.n && +r.n !== i + 1) off.push(`stanza ${s + 1} row ${i + 1} numbered ${r.n}`);
+      let text = r.text;
+      if (r.note) {
+        if (!(r.note in notes)) throw new Error("no note " + r.note);
+        said.push(notes[r.note]);
+        text += " " + mark(said.length);
+      }
+      return r.tr ? text + " | " + r.tr : text + " |";
+    });
+    if (said.length) lines.push(...noteLines(said));
+    return { n: s + 1, lines };
+  });
+  return { stanzas: out, off };
+}
+
+export function hwaetStanzaEntry(key: string, title: string, stanzas: { n: number; lines: string[] }[], note: string): Record<string, string> {
+  return { [`bookshelf/${key}.md`]: `# ${title}\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n${stanzas.map((s) => `::: stanza ${s.n}\n${s.lines.join("\n")}\n:::`).join("\n\n")}` };
 }
 
 export function hwaetEntry(key: string, title: string, stanzas: string[][], note: string): Record<string, string> {

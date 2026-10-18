@@ -364,12 +364,27 @@ test("referencePayload under the directive: I.i.2.1, a run across a stanza gap a
   const all = referencePayload(state(canto, e, f), "bookshelf", FQ1, fqJournal);
   expect("label" in all && all.label).toBe("Spenser, *The Faerie Queene*, I.i.1–3");
 });
-test("without the directive stanzas cite by line and a run across them is refused as before", () => {
+test("without the directive stanzas still cite by stanza, the numbers as keyed, and a run across them is allowed", () => {
   const [a, b] = span(canto, "bloudie Crosse");
   const plain = referencePayload(state(canto, a, b), "bookshelf", "Somebody/A Work/1.1", journalOf({}));
-  expect("label" in plain && plain.label).toBe("Somebody, *A Work*, 1.1.1");
+  expect("label" in plain && plain.label).toBe("Somebody, *A Work*, 1.1.2.1");
   const [c, d] = span(canto, "deepe wounds", "dying Lord");
-  expect(referencePayload(state(canto, c, d), "bookshelf", "Somebody/A Work/1.1", journalOf({}))).toEqual({ refused: "two-blocks" });
+  const run = referencePayload(state(canto, c, d), "bookshelf", "Somebody/A Work/1.1", journalOf({}));
+  expect("label" in run && run.label).toBe("Somebody, *A Work*, 1.1.1.3–2.2");
+});
+// Any work whose verse is in stanza fences cites by stanza: Hávamál, a root
+// with no author, its stanzas paired with a translation.
+const HAV = parseMarkdown("# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
+const havJournal = journalOf({ "bookshelf/Hávamál": "# Hávamál\n\n::: reference\nno author\n:::" });
+const havLabel = (needle: string, end?: string): string | false => {
+  const [a, b] = span(HAV, needle, end);
+  const p = referencePayload(state(HAV, a, b), "bookshelf", "Hávamál", havJournal);
+  return "label" in p && p.label;
+};
+test("a work in stanza fences cites by stanza with no directive: Hávamál, 76.1-3; a whole stanza 76; a run across stanzas 76.4–77.4", () => {
+  expect(havLabel("Deyr fé", "it sama")).toBe("*Hávamál*, 76.1-3");
+  expect(havLabel("Deyr fé", "getr")).toBe("*Hávamál*, 76");
+  expect(havLabel("orðstírr", "ek veit einn")).toBe("*Hávamál*, 76.4–77.4");
 });
 test("under the directive a run reaching a plain verse block is still refused", () => {
   const mixed = parseMarkdown("::: stanza 1\na\nb\n:::\n\n::: verse\nc\n:::");

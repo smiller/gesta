@@ -2208,6 +2208,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.mouse.dblclick(latin.x, latin.y);
   await rest(page);
   await page.keyboard.type("Classical");
+  /* the bar the double-click floated hides once the typing has collapsed the selection: read before it went, the screen said so */
+  await page.waitForFunction(() => !document.querySelector(".fmt")?.classList.contains("show"), null, { timeout: 2000 }).catch(() => {});
   await page.click(S.booksOpener);
   await page.waitForSelector(".pages .shelf", { timeout: 5000 }).catch(() => {});
   await log("a shelf renamed, the list opened at once", { rows: await list() });
@@ -2231,6 +2233,31 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.waitForFunction((q) => { const li = [...document.querySelectorAll(".search-results li")]; return li.length > 0 && li.every((e) => e.innerText.toLowerCase().includes(q)); }, q, { timeout: 5000 }).catch(() => {});
     await log("searched " + q + " under All Classical", await page.evaluate(() => ({ scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, where: [...document.querySelectorAll(".search-results .where")].map((w) => w.textContent) })));
   }
+  await page.keyboard.press("Escape");
+    }],
+    ["a work in stanzas", async () => {
+  /* any work in stanza fences cites by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
+  await A.foreignWrite(page, "bookshelf/Havamal", "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
+  for (let i = 0; i < 30 && !(await A.stored(page, "bookshelf/Havamal")); i++) await rest(page);
+  await page.goto(A.url("bookshelf/Havamal"));
+  await A.waitEntry(page, "bookshelf/Havamal", 5000).catch(() => {});
+  await R.settle(page);
+  await R.selectBetween(page, "Deyr fé", "it sama");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on three lines of a stanza", { lines: await R.clipboardLines(page) });
+  await R.selectBetween(page, "orðstírr", "ek veit einn");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R across two stanzas", { lines: await R.clipboardLines(page) });
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await page.keyboard.type("77.4");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G 77.4", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Escape");
     }],
   ];

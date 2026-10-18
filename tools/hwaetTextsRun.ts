@@ -1,23 +1,30 @@
-/* node tools/hwaetTextsRun.ts [out-dir] — Deor, The Wanderer and The
-   Seafarer with their translations from early-medieval-england.net (pages
-   cached under tools/out/hwaet), written under out-dir/bookshelf/ for an
-   import, a review page beside out-dir, the counts printed */
+/* node tools/hwaetTextsRun.ts [id ...] — texts with their translations from
+   early-medieval-england.net (pages cached under tools/out/hwaet): Deor, The
+   Wanderer and The Seafarer (Deor, Wdr, Sfr) as whole lines, Hávamál (Hav)
+   in stanzas; written under OUT (default ~/Desktop/gesta-imports/gesta-hwaet)
+   for an import, a review page beside it, the counts printed */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join, dirname, basename, resolve } from "node:path";
-import { hwaetStanzas, hwaetNotes, wholeLines, hwaetEntry } from "./hwaetTexts.ts";
+import { hwaetStanzas, hwaetNotes, wholeLines, hwaetEntry, stanzaLines, hwaetStanzaEntry } from "./hwaetTexts.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
 const HOME = process.env.HOME!;
 const BACKUP = join(HOME, "Library/CloudStorage/Dropbox/gesta-backups/current");
-const OUT = process.argv[2] ?? join(HOME, "Desktop/gesta-imports/gesta-old-english");
+const OUT = process.env.OUT ?? join(HOME, "Desktop/gesta-imports/gesta-hwaet");
 const CACHE = new URL("out/hwaet/", import.meta.url).pathname;
-const POEMS = [
+/* `lines` the poem's count of lines, `stanzas` its count of stanzas where it is in stanzas */
+const POEMS: { id: string; key: string; title: string; lines?: number; stanzas?: number }[] = [
   { id: "Deor", key: "Deor", title: "Deor", lines: 42 },
   { id: "Wdr", key: "Wanderer", title: "The Wanderer", lines: 115 },
   { id: "Sfr", key: "Seafarer", title: "The Seafarer", lines: 124 },
+  { id: "Hav", key: "Havamal", title: "Hávamál", stanzas: 164 },
 ];
-const NOTE = "Text and translation: early-medieval-england.net, the half-lines set as whole lines.";
+const ASKED = process.argv.slice(2);
+const unknown = ASKED.filter((id) => !POEMS.some((p) => p.id === id));
+if (unknown.length) throw new Error(`no such text: ${unknown} (one of ${POEMS.map((p) => p.id)})`);
+const NOTE_LINES = "Text and translation: early-medieval-england.net, the half-lines set as whole lines.";
+const NOTE_STANZAS = "Text and translation: early-medieval-england.net.";
 
 async function page(id: string): Promise<string> {
   mkdirSync(CACHE, { recursive: true });
@@ -35,44 +42,50 @@ if (!resolve(OUT).startsWith(IMPORTS)) throw new Error(`the folder is emptied be
 const entries: Record<string, string> = {};
 const report: string[] = [];
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
-for (const p of POEMS) {
+const row = (n: string, l: string): string => { const [t, tr] = l.split(/ \|(?: |$)/); return `<tr><td class="n">${n}</td><td>${esc(t).replace(/  /g, "&emsp;")}</td><td class="w">${esc(tr ?? "")}</td></tr>`; };
+const noteRow = (lines: string[]): string => `<tr><td></td><td colspan="2" class="note">${lines.map(esc).join("<br>")}</td></tr>`;
+/* the lines before a stanza's notes, and the notes */
+const split = (s: string[]): [string[], string[]] => { const at = s.indexOf("::: note"); return at === -1 ? [s, []] : [s.slice(0, at), s.slice(at + 1, -1)]; };
+
+for (const p of POEMS.filter((p) => !ASKED.length || ASKED.includes(p.id))) {
+  /* an entry already in the backup is never replaced: an edit made there would be lost */
+  if (existsSync(join(BACKUP, "bookshelf", p.key)) || existsSync(join(BACKUP, "bookshelf", p.key + ".md"))) throw new Error(`the backup has ${p.key} already: this folder would overwrite it`);
   const html = await page(p.id);
   const half = hwaetStanzas(html), notes = hwaetNotes(html);
-  /* an entry already there is replaced only as this run first wrote it, without the notes: an edit made since would be lost */
-  if (existsSync(join(BACKUP, "bookshelf", p.key))) throw new Error(`the backup has entries under ${p.key}: this folder would not replace them`);
-  const stored = join(BACKUP, "bookshelf", p.key + ".md");
-  const first = hwaetEntry(p.key, p.title, wholeLines(half.map((s) => s.map(({ note: _, ...h }) => h))).stanzas, NOTE)[`bookshelf/${p.key}.md`];
-  if (existsSync(stored) && readFileSync(stored, "utf8") !== first) throw new Error(`the backup's ${p.key} has changed since it was imported: this folder would overwrite it`);
   const marks = half.flat().flatMap((h) => (h.note ? [h.note] : []));
   const unmarked = Object.keys(notes).filter((id) => !marks.includes(id));
   if (unmarked.length) throw new Error(`${p.key}: notes with no mark in the text: ${unmarked}`);
-  if (half.flat().some((r) => (r.text + r.tr).includes("|"))) throw new Error(`${p.key}: a half-line holds a pipe`);
+  if (half.flat().some((r) => (r.text + r.tr).includes("|"))) throw new Error(`${p.key}: a row holds a pipe`);
+  if (p.stanzas) {
+    const { stanzas, off } = stanzaLines(half, notes);
+    if (stanzas.length !== p.stanzas || off.length) throw new Error(`${p.key}: ${stanzas.length} stanzas, not ${p.stanzas}; ${off.slice(0, 3)}`);
+    Object.assign(entries, hwaetStanzaEntry(p.key, p.title, stanzas, NOTE_STANZAS));
+    const lines = stanzas.reduce((a, s) => a + split(s.lines)[0].length, 0);
+    report.push(`<h2>${esc(p.title)}</h2><p>${stanzas.length} stanzas, ${lines} lines, every stanza number and line number the site prints at its place, ${marks.length} notes.</p><table>` +
+      stanzas.map((s) => { const [ls, ns] = split(s.lines); return ls.map((l, i) => row(i ? String(i + 1) : `<b>${s.n}</b>`, l)).join("") + (ns.length ? noteRow(ns) : ""); }).join(`<tr class="gap"><td colspan="3"></td></tr>`) + "</table>");
+    console.log(`${p.title}: ${stanzas.length} stanzas, ${lines} lines, ${marks.length} notes`);
+    continue;
+  }
   const { stanzas, numbered, odd } = wholeLines(half, notes);
-  const count = stanzas.reduce((a, s) => a + (s.includes("::: note") ? s.indexOf("::: note") : s.length), 0);
+  const count = stanzas.reduce((a, s) => a + split(s)[0].length, 0);
   const off = numbered.filter((x) => x.n !== x.at);
   if (count !== p.lines || off.length || odd.length) throw new Error(`${p.key}: ${count} lines, not ${p.lines}; numbers off ${JSON.stringify(off.slice(0, 3))}; odd stanzas ${odd}`);
-  Object.assign(entries, hwaetEntry(p.key, p.title, stanzas, NOTE));
+  Object.assign(entries, hwaetEntry(p.key, p.title, stanzas, NOTE_LINES));
   let n = 0;
   report.push(`<h2>${esc(p.title)}</h2><p>${count} lines in ${stanzas.length} stanzas, ${numbered.length} of the site's line numbers checked, ${marks.length} notes.</p><table>` +
-    stanzas.map((s) => {
-      const at = s.indexOf("::: note");
-      const lines = (at === -1 ? s : s.slice(0, at)).map((l) => { n++; const [t, tr] = l.split(" | "); return `<tr><td class="n">${n % 5 ? "" : n}</td><td>${esc(t).replace(/  /g, "&emsp;")}</td><td class="w">${esc(tr)}</td></tr>`; }).join("");
-      return lines + (at === -1 ? "" : `<tr><td></td><td colspan="2" class="note">${s.slice(at + 1, -1).map(esc).join("<br>")}</td></tr>`);
-    }).join(`<tr class="gap"><td colspan="3"></td></tr>`) + "</table>");
+    stanzas.map((s) => { const [ls, ns] = split(s); return ls.map((l) => { n++; return row(n % 5 ? "" : String(n), l); }).join("") + (ns.length ? noteRow(ns) : ""); }).join(`<tr class="gap"><td colspan="3"></td></tr>`) + "</table>");
   console.log(`${p.title}: ${count} lines, ${stanzas.length} stanzas, ${numbered.length} line numbers checked, ${marks.length} notes`);
 }
 for (const md of Object.values(entries)) if (serializeMarkdown(parseMarkdown(md)) !== md) throw new Error("an entry does not survive its round trip");
 
 rmSync(OUT, { recursive: true, force: true });
-/* an entry the backup already holds as it stands is left out */
 for (const [path, md] of Object.entries(entries)) {
-  if (existsSync(join(BACKUP, path)) && readFileSync(join(BACKUP, path), "utf8") === md) { console.log(`${path}: as the backup has it, left out`); continue; }
   mkdirSync(dirname(join(OUT, path)), { recursive: true });
   writeFileSync(join(OUT, path), md);
 }
-writeFileSync(join(dirname(OUT), basename(OUT) + ".html"), `<!doctype html><meta charset="utf-8"><title>Old English import</title>
+writeFileSync(join(dirname(OUT), basename(OUT) + ".html"), `<!doctype html><meta charset="utf-8"><title>Texts with translations</title>
 <style>body{font:16px/1.45 Georgia,serif;margin:2em auto;max-width:64em;padding:0 1em}td{padding:0 1em 0 0;vertical-align:top}.n{color:#999;text-align:right;font-size:.8em}.w{color:#555}.gap td{height:1em}.note{font-size:.85em;color:#333;border:1px solid #ccc;padding:.4em .6em}</style>
-<h1>Deor, The Wanderer, The Seafarer</h1>
-<p>From early-medieval-england.net, a row a half-line there, made a whole line here: the Old English half-lines two spaces apart, the translation's joined by one. Three entries, <code>bookshelf/Deor</code>, <code>bookshelf/Wanderer</code>, <code>bookshelf/Seafarer</code>, each with its reference setting <code>no author</code> and one verse block of pairs, a gap between stanzas. The site's notes as footnotes: a mark after the half-line in the text, numbered within the stanza, the stanza's notes after its last line.</p>
+<h1>Texts with translations, from early-medieval-england.net</h1>
+<p>Each entry is one bookshelf page with its reference setting <code>no author</code>, the text and its translation side by side as pairs. A poem in half-lines there is set in whole lines here, the half-lines two spaces apart; a poem in stanzas keeps a row a line, each stanza its own <code>::: stanza N</code> fence, cited stanza and line (76.1-3). The site's notes are footnotes: a mark after the line or half-line, the stanza's notes after its last line.</p>
 ${report.join("\n")}`);
 console.log(`written to ${OUT}`);

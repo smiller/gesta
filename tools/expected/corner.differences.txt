@@ -231,3 +231,6 @@ searched silk-mills under All Classical · * · new here, the old app frozen
 a day's tools · cursor · the step's caret now goes to the body's end by ⌘↓; the stored run read End, which moves none on a Mac, the old app frozen
 the day's body ends with the link, its tag bar lists it · link · the step's caret now goes to the body's end by ⌘↓; the stored run's link went in mid-heading, the old app frozen
 the host's link followed · value · the step's caret now goes to the body's end by ⌘↓; the stored run's link went in mid-heading, the old app frozen
+⌃⌘R on three lines of a stanza · * · new here, the old app frozen
+⌃⌘R across two stanzas · * · new here, the old app frozen
+⌃⌘G 77.4 · * · new here, the old app frozen

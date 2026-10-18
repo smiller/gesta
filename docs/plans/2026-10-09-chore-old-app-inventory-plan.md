@@ -1773,3 +1773,28 @@ mark, or a mark with no note, is an error. Deor 6 notes, The Wanderer 1
 pair), The Seafarer none and left out of the folder. Replacing an imported
 entry is allowed only where the backup holds it exactly as the first run
 wrote it (MEASURED: Deor and Wanderer identical).
+
+### 2026-10-18 — Hávamál; any work in stanza fences cites by stanza
+
+Asked: an "Old Norse" shelf and Hávamál from early-medieval-england.net,
+the same rules, "a poem in stanzas, so a reference to Deyr fé / deyja
+frændr / deyr sjálfr it sama should be *Hávamál*, 76.1-3"; then, on my
+proposing a `by stanza` directive (the Faerie Queene plan had stanza
+citation only under its directive): "FQ should also have cited by stanza.
+Any work using the stanza fence should cite by stanza." So the reference
+reads stanzaRange wherever the passage is in stanza fences, and a run
+across top-level stanzas is allowed, in any work; ⌃⌘G's Line box takes
+`N.M` on any page holding stanzas. The Faerie Queene's directive now only
+adds its Roman book and canto (its readings unchanged, MEASURED).
+Hávamál: the site's rows are lines, not half-lines; 164 stanzas, 1087
+lines, every stanza and line number the site prints at its place; 18 notes
+as footnotes inside their stanza; five rows with no translation written
+`text |`. Keyed `Havamal`, headed `Hávamál`: the import does not normalise
+a file name, so an NFD name would key apart from the link (MEASURED, 7
+against 9 code units); no author key in the backup is non-ASCII. Headless
+"a work in stanzas": ⌃⌘R 76.1-3, 76.4–77.4, ⌃⌘G 77.4 on ek veit einn
+(MEASURED). My first seed cut stanza 77 to two lines and I reported "77.2
+lands on ek veit einn" as if of the poem; he caught it ("line 2 of stanza
+77 is deyja frændr"); the seed is now the poem's two stanzas. The shelves
+step's "a shelf renamed" read the double-click's bar once in a full run:
+it now waits for the bar to hide. Folder ~/Desktop/gesta-imports/gesta-old-norse.
