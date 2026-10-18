@@ -1952,3 +1952,8 @@ entries already linked. Folder ~/Desktop/gesta-imports/gesta-shelf-lines-old-eng
   run's citation as one just above is; stanzas quoted one after another are
   one run, one reference across them (1995-04-03, Hávamál 36–37).
 - Still asked: the three entries quoting Deor's refrain alone.
+- Asked: the three lone refrains cite Deor 7; 2025-06-01's card title
+  joined to Dante left as written. Folder now 140 references, 638 lines, 91
+  entries. Seen in it: a quoted line keeps its footnote mark without the
+  note (⌃⌘R's passage leaves the note fence out) — 6 lines, 6 entries;
+  raised, not changed.

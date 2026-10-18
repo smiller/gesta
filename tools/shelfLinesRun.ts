@@ -53,6 +53,10 @@ const PLACED: { file: string; at: number; end?: number; key: string; from: numbe
   { file: "journal/2017/2017-09-29.md", at: 29, end: 30, key: "bookshelf/Wanderer", from: 104, to: 105, half: { from: "b" } },
   { file: "journal/2020/2020-01-12.md", at: 7, key: "bookshelf/Beowulf", from: 432, half: { from: "b" } },
   { file: "journal/2022/2022-08-31.md", at: 60, key: "bookshelf/Beowulf", from: 3052 },
+  /* Deor's refrain alone, six lines of the poem: cited at its first, asked; 2025-06-01's card title joined to Dante is left */
+  { file: "journal/1990/1990-09-15.md", at: 41, key: "bookshelf/Deor", from: 7 },
+  { file: "journal/1995/1995-08-28.md", at: 10, key: "bookshelf/Deor", from: 7 },
+  { file: "journal/2025/2025-06-01.md", at: 9, key: "bookshelf/Deor", from: 7 },
 ];
 /* a line of verse in one's own sentence or list: its words made the link, no passage quoted */
 const LINKED: { file: string; at: number; key: string; from: number }[] = [
