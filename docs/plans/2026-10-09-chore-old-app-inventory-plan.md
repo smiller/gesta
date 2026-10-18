@@ -1992,4 +1992,5 @@ caret after the word).
   paste names and one for a one-line link as a slice. Not changed: a line
   of a picture or spaces alone counts as empty (the help says "words").
   Asked, not changed: a caret at the end of a line ending in a colon (or a
-  heading) takes the citation alone, not the whole reference.
+  heading) takes the citation alone — a whole reference is pasted on a
+  line of its own ("a reference is always on a new line").
