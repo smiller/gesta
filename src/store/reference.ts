@@ -182,12 +182,12 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
     }
   }
   /* the first field is a person (roman), a title (italic), or nothing */
-  /* a root that names no author still names itself where nothing stands below it
-     (pin: reference.test › referenceLabel: a root whose page says no author) */
+  /* a root that names no author still names itself where no title stands
+     below it (pin: reference.test › referenceLabel: a root whose page says no author) */
   const unnamed = books && journal.noAuthor(entryKey(date, root));
   const first = unnamed ? "" : referenceAuthor(date, root);
   if (first) parts.unshift(books ? { plain: first } : { t: first });
-  else if (unnamed && !parts.length) parts.push({ t: journal.heading(entryKey(date, root)) || root });
+  else if (unnamed && !parts.some((p) => p.t !== undefined)) parts.unshift({ t: journal.heading(entryKey(date, root)) || root });
   return parts.map((p) => {
     if (p.t !== undefined) return "*" + p.t + "*";
     if (p.plain !== undefined) return p.plain;

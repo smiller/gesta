@@ -134,9 +134,13 @@ test("referenceLabel: a root whose page says no author is named in no reference;
   expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", "50-52", null, journal)).toBe("*Beowulf*, 50-52");
   expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", "", null, journal)).toBe("*Beowulf*");
   expect(referenceLabel(NS_BOOK.key, "Old English", "", null, journal)).toBe("*Old English*");
+  expect(referenceLabel(NS_BOOK.key, "Old English", "1-3", null, journal)).toBe("*Old English*, 1-3");
+  expect(referenceLabel(NS_BOOK.key, "Old English", "", { from: "3", to: "3" }, journal)).toBe("*Old English*, p. 3");
   expect(directsNoAuthor("# Old English\n\n::: reference\nno author\n:::")).toBe(true);
   expect(directsNoAuthor("# W\n\n> ::: reference\n> no author\n> :::")).toBe(false);
   expect(directsNoAuthor("# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(false);
+  expect(directsNoAuthor("# W\n\n::: reference\nfrom the last title (no authority for the order)\n:::")).toBe(false);
+  expect(directsNoAuthor("# W\n\n::: reference\nfrom the last title\nNo author\n:::")).toBe(true);
 });
 
 test("headings: the first level-one heading is the title; a ## is a section; the directive is top-level only", () => {

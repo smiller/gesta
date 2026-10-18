@@ -1,5 +1,3 @@
-/* only PLAIN text is asked of this parser: the editor's own HTML carries its
-   structure */
 import { Fragment, Slice, DOMParser, type ResolvedPos, type Node, type ParseOptions } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection, Selection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
@@ -86,6 +84,7 @@ export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(pos + frag.size, tr.doc.content.size)), -1));
   return tr;
 }
+/* only PLAIN text is asked of this parser: HTML carries its own structure */
 export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   const body = txt.replace(/\n$/, "");
@@ -145,13 +144,29 @@ export function bareBlocks(blocks: Node[], docHref: string): Node[] {
 }
 /* HTML THIS PAGE WROTE KEEPS ITS SPACES: other HTML has its runs of spaces
    folded on a paste, which took the gap between a line's half-lines and
-   two spaces after a full stop (pin: a reference pasted › prose with two
-   spaces pasted) */
+   two spaces after a full stop; a marked copy inside HTML of its own is not
+   marked throughout, and that HTML's layout whitespace would come in with it
+   (pin: a reference pasted › prose with two spaces pasted) (pin: paste.test ›
+   pasted HTML keeps its spaces only when every block in it is one this page
+   marked) */
 export const COPY_MARK = "data-gesta-copy";
+interface PastedNode { nodeType: number; nodeName: string; textContent: string | null; hasAttribute?(name: string): boolean }
+export function keepsSpaces(dom: globalThis.Node): boolean {
+  let marked = false;
+  for (const n of Array.from(dom.childNodes) as unknown as PastedNode[]) {
+    if (n.nodeType === 3) { if (/\S/.test(n.textContent ?? "")) return false; continue; }
+    if (n.nodeType !== 1) continue;
+    if (n.hasAttribute?.(COPY_MARK)) { marked = true; continue; }
+    if (!/^(META|STYLE)$/.test(n.nodeName)) return false;
+  }
+  return marked;
+}
 class SpaceKeepingParser extends DOMParser {
   parseSlice(dom: globalThis.Node, options: ParseOptions = {}): Slice {
-    const ours = (dom as Element).querySelector?.(`[${COPY_MARK}]`);
-    return super.parseSlice(dom, ours && !options.preserveWhitespace ? { ...options, preserveWhitespace: true } : options);
+    if (options.preserveWhitespace || !keepsSpaces(dom)) return super.parseSlice(dom, options);
+    /* the layout's whitespace between blocks is not text */
+    for (const n of Array.from(dom.childNodes)) if (n.nodeType === 3) dom.removeChild(n);
+    return super.parseSlice(dom, { ...options, preserveWhitespace: true });
   }
 }
 export const clipboardParser = new SpaceKeepingParser(schema, DOMParser.fromSchema(schema).rules);

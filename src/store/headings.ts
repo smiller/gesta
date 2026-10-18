@@ -23,19 +23,33 @@ export function firstHeading(md: string): string {
 /* top-level only: a descendant scan found a directive an entry merely
    QUOTED as an example (pin: reference.test › headings: the first level-one
    heading is the title; a ## is a section; the directive is top-level only) */
-function directs(md: string, words: RegExp): boolean {
-  if (!/^::: reference/m.test(md)) return false;
+export function referenceDirectives(md: string): string {
+  if (!/^::: reference/m.test(md)) return "";
   let doc: Node;
-  try { doc = parseMarkdown(md); } catch { return false; }
-  let yes = false;
-  doc.forEach((block) => { if (block.type === N.reference && words.test(block.textContent)) yes = true; });
-  return yes;
+  try { doc = parseMarkdown(md); } catch { return ""; }
+  const out: string[] = [];
+  doc.forEach((block) => { if (block.type === N.reference) out.push(block.textContent); });
+  return out.join("\n");
 }
-export const directsFromLastTitle = (md: string): boolean => directs(md, /last title/i);
-export const directsRomanBookCanto = (md: string): boolean => directs(md, /roman book and canto/i);
-export const directsNoAuthor = (md: string): boolean => directs(md, /no author/i);
+const lastTitle = (d: string): boolean => /last title/i.test(d);
+const romanBookCanto = (d: string): boolean => /roman book and canto/i.test(d);
+/* a line of its own: "no author" inside another directive's words is not one
+   (pin: reference.test › referenceLabel: a root whose page says no author) */
+const noAuthor = (d: string): boolean => /^\s*no author\s*$/im.test(d);
+export const directsFromLastTitle = (md: string): boolean => lastTitle(referenceDirectives(md));
+export const directsRomanBookCanto = (md: string): boolean => romanBookCanto(referenceDirectives(md));
+export const directsNoAuthor = (md: string): boolean => noAuthor(referenceDirectives(md));
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
+  const said: Record<string, { md: string; directives: string }> = Object.create(null);
+  const directives = (ekey: string): string => {
+    const md = cache[ekey] || "";
+    const m = said[ekey];
+    if (m && m.md === md) return m.directives;
+    const d = referenceDirectives(md);
+    said[ekey] = { md, directives: d };
+    return d;
+  };
   return {
     heading: (ekey) => {
       const md = cache[ekey] || "";
@@ -45,8 +59,8 @@ export function journalOf(cache: Record<string, string>): Journal {
       memo[ekey] = { md, heading };
       return heading;
     },
-    fromLastTitle: (rootKey) => directsFromLastTitle(cache[rootKey] || ""),
-    romanBookCanto: (workKey) => directsRomanBookCanto(cache[workKey] || ""),
-    noAuthor: (rootKey) => directsNoAuthor(cache[rootKey] || ""),
+    fromLastTitle: (rootKey) => lastTitle(directives(rootKey)),
+    romanBookCanto: (workKey) => romanBookCanto(directives(workKey)),
+    noAuthor: (rootKey) => noAuthor(directives(rootKey)),
   };
 }

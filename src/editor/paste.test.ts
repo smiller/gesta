@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK } from "./paste.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 
@@ -212,4 +212,16 @@ test("a link to this page in pasted markdown keeps only its bare address; one wh
   expect(serializeMarkdown(placeBlocks(s, blocks).doc)).toBe(`start here\n\n[Horace](#page/Horace)\n\nand ${page}#page/Ode`);
   const plain = new Slice(parseMarkdown("no links [here](https://example.com/)").content, 0, 0);
   expect(bareLinks(plain, page)).toBe(plain);
+});
+
+test("pasted HTML keeps its spaces only when every block in it is one this page marked", () => {
+  const el = (name: string, marked = false) => ({ nodeType: 1, nodeName: name, textContent: "", hasAttribute: (a: string) => marked && a === COPY_MARK });
+  const text = (t: string) => ({ nodeType: 3, nodeName: "#text", textContent: t, hasAttribute: () => false });
+  const root = (...kids: object[]) => ({ childNodes: kids }) as unknown as globalThis.Node;
+  expect(keepsSpaces(root(el("META"), el("P", true), el("BLOCKQUOTE", true)))).toBe(true);
+  expect(keepsSpaces(root(el("P", true), text("\n"), el("BLOCKQUOTE", true)))).toBe(true);
+  // a marked copy inside a message of its own: the message's HTML is not ours
+  expect(keepsSpaces(root(el("P"), el("BLOCKQUOTE", true)))).toBe(false);
+  expect(keepsSpaces(root(el("P", true), text("and more"))) ).toBe(false);
+  expect(keepsSpaces(root(el("META")))).toBe(false);
 });

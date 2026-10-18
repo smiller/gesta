@@ -2,7 +2,7 @@
    (pages cached under tools/out/wyatt), written under out-dir/bookshelf/…
    for an import, a review page beside out-dir, the counts printed */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
-import { join, dirname, basename } from "node:path";
+import { join, dirname, basename, resolve } from "node:path";
 import { wyattFitts, plainSpelling, beowulfEntries } from "./beowulfWyatt.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -31,12 +31,21 @@ async function pages(): Promise<string[]> {
   for (let i = 0; i < want.length; i += 50) {
     const titles = want.slice(i, i + 50).map((n) => `Page:Beowulf (Wyatt).djvu/${n}`).join("|");
     const q = new URLSearchParams({ action: "query", prop: "revisions", rvprop: "content", rvslots: "main", format: "json", formatversion: "2", titles });
-    const r = await (await fetch("https://en.wikisource.org/w/api.php?" + q, { headers: { "User-Agent": "GestaBeowulfImport/1.0 (a personal bookshelf import)" } })).json();
-    for (const pg of r.query.pages) writeFileSync(join(CACHE, pg.title.split("/").pop() + ".txt"), pg.revisions[0].slots.main.content);
+    const res = await fetch("https://en.wikisource.org/w/api.php?" + q, { headers: { "User-Agent": "GestaBeowulfImport/1.0 (a personal bookshelf import)" } });
+    if (!res.ok) throw new Error(`Wikisource answered ${res.status} for pages ${want[i]}…`);
+    const r = await res.json();
+    if (!r.query?.pages) throw new Error("Wikisource answered with no pages: " + JSON.stringify(r).slice(0, 200));
+    for (const pg of r.query.pages) {
+      if (pg.missing || !pg.revisions?.[0]) throw new Error("Wikisource has no text for " + pg.title);
+      writeFileSync(join(CACHE, pg.title.split("/").pop() + ".txt"), pg.revisions[0].slots.main.content);
+    }
   }
   return Array.from({ length: LAST - FIRST + 1 }, (_, i) => readFileSync(join(CACHE, FIRST + i + ".txt"), "utf8"));
 }
 
+/* the folder is emptied before it is written: only one inside gesta-imports */
+const IMPORTS = join(HOME, "Desktop/gesta-imports") + "/";
+if (!resolve(OUT).startsWith(IMPORTS)) throw new Error(`the folder is emptied before it is written, so it must be inside ${IMPORTS}: ${OUT}`);
 if (existsSync(join(BACKUP, "bookshelf/Old English")) || existsSync(join(BACKUP, "bookshelf/Old English.md"))) throw new Error("the backup has an Old English entry already: this folder would overwrite it");
 let text = (await pages()).join("\u0000");
 for (const s of SLIPS) {

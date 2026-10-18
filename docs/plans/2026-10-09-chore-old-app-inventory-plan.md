@@ -1628,3 +1628,24 @@ so the stamp matches until something changes. Measured: a matched run
 0.69 s against 3m19s played. The first pass after the change saw the
 corner differ and a rerun pass, its diff not kept — a flake, the second
 of the day.
+
+#### Review, cycle 1 — d36d8e7..571ca3b (the no-author setting, Beowulf, the kept spaces)
+
+`/code-review` at high, after his accept. REVIEW CYCLES: 1. Cost 111,989
+tokens (MEASURED, the transcript's last message: 2 + 1,907 + 106,101 input,
+3,979 output). Ten findings; fixed (asked "Fix those"):
+1. A passage from the no-author root itself cited as a bare "1-3": the
+   root's title now stands wherever no title does.
+2. One marked element anywhere kept a whole paste's whitespace: now only
+   HTML whose every block is marked (keepsSpaces, a paste.test over stand-in
+   nodes — the pin finding 6 asked for), its layout whitespace dropped.
+3. `no author` matched inside other words: now a line of its own.
+4. The Beowulf run read Wikisource's answer unchecked, and emptied any
+   folder it was given: both refused now (it refuses ~/Desktop, MEASURED).
+5. The new step swallowed a bar miss: it logs `barMissed` now.
+7. A label parsed a root's markdown once per directive: journalOf keeps
+   each entry's directives on its text.
+9. paste.ts's header spoke of plain text only: moved onto pasteSlice.
+10. The htmlHead difference's reason names the mark now.
+Not taken: 8 (`data-pm-slice` instead of the mark: it skips the fitting of
+foreign HTML into place, which changes where a reference lands).
