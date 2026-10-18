@@ -85,8 +85,14 @@ here NOW, and what is not yet:
   it reads differently with that reason. The approved copy is only a
   fence against change. `--approve` makes a run
   the approved copy, a judgement made after reading the diff, never to
-  quiet it; `npm run compare:writer` regenerates the current app's run
-  when ../writer changes. A `.received.txt` is never committed.
+  quiet it. A `.received.txt` is never committed. THE OLD APP IS FROZEN
+  from 2026-10-17 (asked, after two of its runs cost about 8 minutes each
+  for one changed step): ../writer is never played again, and
+  `corner.writer.txt` stands as last generated, still compared on every
+  verify. A step added after that date, or a field of an old one that
+  changes, is judged by the approved copy alone and listed in
+  `corner.differences.txt` as `<label> · * · new here, the old app
+  frozen` (or its field, `· <field> ·`).
 - IN FORCE — `node_modules` carries the Dropbox-ignore attribute. A
   `rm -rf node_modules` loses it with the directory, so a clean reinstall runs
   `mkdir -p node_modules && xattr -w com.dropbox.ignored 1 node_modules`
