@@ -1868,3 +1868,36 @@ Old English shelf, which would tie a citation to a shelf's name.
   run read "Tab held in a quote" with the caret at the end, not inside: the
   section alone three times and the next full run read the approved
   "inside a line" — a flake of the click's landing, not this change.
+
+### Beowulf's misreadings (2026-10-18, asked)
+
+Asked: "the meaningless typos in the Beowulf transcript are really bad, so
+we'll want to fix those before creating any references. Maybe see whether
+the Klaeber scans help with that." Found by the Old English quotation sheet:
+lines placed by likeness showed the bookshelf's words, not his, wrong.
+
+- Klaeber on HathiTrust: a script is met by a Cloudflare challenge (403),
+  not passed. The Internet Archive holds Klaeber 1922 twice
+  (beowulfandfighta00klaeuoft, cu31924059417794) and Wyatt 1894 twice
+  (beowulf00wyat, beowulfedwithte00wyatgoog), OCR text and page images;
+  Gutenberg #9701 (Harrison & Sharp's Heyne) is proofread text. Wikisource's
+  page status is no guide: 176 pages "Proofread", 15 "Validated", the
+  misreadings on them (MEASURED).
+- The candidates: every bookshelf word Gutenberg's text does not have, 248
+  (MEASURED), on 109 of Wyatt's pages. Each read against Wyatt's printed
+  page (the Internet Archive's scan; Wikimedia's thumbnails refused a run
+  of requests, 429): 87 misreadings, 161 Wyatt's own readings
+  (ond-, his emendations, fāmi-heals, fīftēna, wylm...).
+- The real-word kind (a misreading that is a word, "ha" for "he"): the
+  bookshelf's words that differ from Gutenberg's at their place, 371, each
+  looked for in both IA OCRs of Wyatt at that line; the 31 found in
+  neither read against the page — all Wyatt's (MEASURED). Not covered: a
+  misreading both IA OCRs share at that line.
+- The run now writes `bookshelf/Beowulf` as it stands (no author, Old
+  English verse — the line he added, the only difference between his
+  backup and what was shipped, MEASURED) with the 87 set right by line,
+  each a whole word found once on its line; it refuses a backup page that
+  differs from what it wrote before. Against the backup: 87 lines change,
+  each by one word ("æt somne" → "ætsomne" the one that joins two).
+- The import folder: ~/Desktop/gesta-imports/gesta-beowulf, review page
+  beside it.

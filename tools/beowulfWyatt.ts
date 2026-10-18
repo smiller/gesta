@@ -80,9 +80,24 @@ export function plainSpelling(line: string): string {
 
 export function beowulfEntries(fitts: string[][], note: string): Record<string, string> {
   return {
-    "bookshelf/Old English.md": "# Old English\n\n::: reference\nno author\n:::\n\n- [Beowulf](#bookshelf/Old%20English/Beowulf)",
-    "bookshelf/Old English/Beowulf.md": `# Beowulf\n\n::: note\n${note}\n:::\n\n::: verse\n${fitts.map((f) => f.join("\n")).join("\n\n")}\n:::`,
+    "bookshelf/Beowulf.md": `# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${fitts.map((f) => f.join("\n")).join("\n\n")}\n:::`,
   };
+}
+
+/* a misreading of the transcription set right on the line it stands on, by
+   the line's number through the poem: a whole word, found there once, or an
+   error rather than a word changed somewhere else */
+export interface Misreading { line: number; from: string; to: string }
+export function misread(fitts: string[][], list: Misreading[]): string[][] {
+  const lines = fitts.flat();
+  for (const m of list) {
+    const word = new RegExp(`(?<![\\p{L}])${m.from.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}])`, "gu");
+    const n = (lines[m.line - 1] ?? "").match(word)?.length ?? 0;
+    if (n !== 1) throw new Error(`"${m.from}" found ${n} times on line ${m.line}, not once`);
+    lines[m.line - 1] = lines[m.line - 1].replace(word, m.to);
+  }
+  let at = 0;
+  return fitts.map((f) => f.map(() => lines[at++]));
 }
 
 /* the Finnsburh fragment, Wyatt's appendix: its asterisks mark the halves of

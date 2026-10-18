@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { wyattFitts, plainSpelling, beowulfEntries, finnsburhLines, finnsburhEntry } from "./beowulfWyatt.ts";
+import { wyattFitts, plainSpelling, beowulfEntries, misread, finnsburhLines, finnsburhEntry } from "./beowulfWyatt.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
@@ -37,13 +37,20 @@ test("the spelling as he writes it: no length marks, a hyphen joined with the ne
   expect(plainSpelling("ellen‐gǣst")).toBe("ellengæst");
 });
 
-test("one page under a heading that names no author, the poem one verse block with a gap between fitts, its text as stored", () => {
+test("one bookshelf page that names no author and says it is Old English verse, the poem one verse block with a gap between fitts, its text as stored", () => {
   const out = beowulfEntries([["Hwæt we Gardena  in geardagum", "þeodcyninga  þrym gefrunon,"], ["Ða wæs on burgum  Beowulf Scyldinga,"]], "Text: A. J. Wyatt.");
-  expect(Object.keys(out)).toEqual(["bookshelf/Old English.md", "bookshelf/Old English/Beowulf.md"]);
-  expect(out["bookshelf/Old English.md"]).toBe("# Old English\n\n::: reference\nno author\n:::\n\n- [Beowulf](#bookshelf/Old%20English/Beowulf)");
-  const poem = out["bookshelf/Old English/Beowulf.md"];
-  expect(poem).toBe("# Beowulf\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\nHwæt we Gardena  in geardagum\nþeodcyninga  þrym gefrunon,\n\nÐa wæs on burgum  Beowulf Scyldinga,\n:::");
+  expect(Object.keys(out)).toEqual(["bookshelf/Beowulf.md"]);
+  const poem = out["bookshelf/Beowulf.md"];
+  expect(poem).toBe("# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\nHwæt we Gardena  in geardagum\nþeodcyninga  þrym gefrunon,\n\nÐa wæs on burgum  Beowulf Scyldinga,\n:::");
   expect(serializeMarkdown(parseMarkdown(poem))).toBe(poem);
+});
+
+test("a misreading set right as a whole word on its own line, counted through the fitts; one not found once on its line is an error", () => {
+  const fitts = [["Þa ha hean gewat,  hafalan beran", "leton hohn beran"], ["wintrys wyhn.  Git on wæteres æht"]];
+  expect(misread(fitts, [{ line: 1, from: "ha", to: "he" }, { line: 2, from: "hohn", to: "holm" }, { line: 3, from: "wyhn", to: "wylm" }]))
+    .toEqual([["Þa he hean gewat,  hafalan beran", "leton holm beran"], ["wintrys wylm.  Git on wæteres æht"]]);
+  expect(() => misread(fitts, [{ line: 2, from: "ha", to: "he" }])).toThrow(/line 2/);
+  expect(() => misread(fitts, [{ line: 1, from: "hafa", to: "x" }])).toThrow(/line 1/);
 });
 
 const FINN = [`<noinclude><pagequality level="3" user="x" /></noinclude>{{c|{{larger|APPENDIX.}}

@@ -269,10 +269,13 @@ is in the plan's record, under the phase named):
   test beside it; `tools/shelfLinesRun.ts [author-prefix]` (Milton by
   default) writes an import folder with a review page.
   `tools/beowulfWyatt.ts` — Wyatt's Beowulf (1894) as Wikisource
-  transcribes it made one bookshelf page under `Old English`, a root whose
-  page says `no author`: the apparatus dropped, the spelling plain, pure, its
-  test beside it; `tools/beowulfWyattRun.ts` fetches the pages (cached under
-  `tools/out/wyatt`), checks the 3182 lines against the printed numbers and
+  transcribes it made one bookshelf page, `bookshelf/Beowulf`, its page
+  saying `no author` and `Old English verse`: the apparatus dropped, the
+  spelling plain, the transcription's misreadings set right by line
+  (`misread`), pure, its test beside it; `tools/beowulfWyattRun.ts` fetches
+  the pages (cached under `tools/out/wyatt`), checks the 3182 lines against
+  the printed numbers, sets right the misreadings read against Wyatt's
+  printed page, refuses a backup page edited since it was written, and
   writes an import folder with a review page; `tools/finnsburhWyattRun.ts`
   the same for the Finnsburh fragment, Wyatt's appendix, made
   `bookshelf/Finnsburh` (`finnsburhLines` keeps his asterisks where the
