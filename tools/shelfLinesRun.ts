@@ -41,6 +41,9 @@ const KEEP: { file: string; key: string; from: number; at?: number; why: string 
   { file: "journal/2023/2023-04-25.md", key: "bookshelf/Beowulf", from: 1, at: 9, why: "recited from memory, its slips and their corrections kept" },
   { file: "journal/2002/2002-02-03.md", key: "bookshelf/Shakespeare, William/Twelfth Night/1.5", from: 255, why: "a deliberate variant: “Cry out Ors… – Olivia!”" },
   { file: "journal/2006/2006-06-28.md", key: "bookshelf/Shakespeare, William/Hamlet/5.2", from: 376, why: "a deliberate variant: “Good night, dear heart”, the quotation itself beneath it" },
+  { file: "journal/2025/2025-01-27.md", key: "bookshelf/Rostand, Edmond/Cyrano de Bergerac/2.8", from: 91, why: "a verity card, Cyrano and Sean" },
+  { file: "journal/2025/2025-07-11.md", key: "bookshelf/Rostand, Edmond/Cyrano de Bergerac/2.8", from: 91, why: "a verity card, Cyrano and Sean, quoted whole" },
+  { file: "journal/1999/1999-10-29.md", key: "bookshelf/Rostand, Edmond/Cyrano de Bergerac/5.2", from: 52, why: "an email's epigraph, its own words around it" },
 ];
 const kept: string[] = [];
 const partial: string[] = [];
@@ -69,6 +72,10 @@ const PLACED: { file: string; at: number; end?: number; key: string; from: numbe
 const LINKED: { file: string; at: number; key: string; from: number }[] = [
   { file: "journal/2016/2016-03-29.md", at: 24, key: "bookshelf/Beowulf", from: 311 },
   { file: "page/Sean’s Books/39b.md", at: 23, key: "bookshelf/Beowulf", from: 311 },
+];
+/* a citation inside another writer's quotation made the link, its words and the quotation unchanged */
+const CITED: { file: string; at: number; words: string; key: string; from: number; to: number }[] = [
+  { file: "journal/2020/2020-04-19.md", at: 128, words: "*Cyrano de Bergerac*, Act I, scene iv, lines 363-364", key: "bookshelf/Rostand, Edmond/Cyrano de Bergerac/1.4", from: 252, to: 253 },
 ];
 /* the hand's places belong to the works this run reads */
 const read = (key: string): boolean => index.entries.some((e) => e.key === key);
@@ -107,6 +114,17 @@ for (const path of walk(SRC).sort()) {
     const label = m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1);
     shown.push({ file, r: { start: x.at - 1, end: x.at - 1, key: x.key, first: 0, last: 0, from: x.from, to: x.from }, label, before: [ls[x.at - 1]], after: [ls[x.at - 1].replace(it[0], `[${it[0]}](${m.url})`)], diff: { kind: "same", ops: [] } });
     ls[x.at - 1] = ls[x.at - 1].replace(it[0], `[${it[0]}](${m.url})`);
+    md = ls.join("\n");
+    counts.runs++; counts.lines++;
+  }
+  for (const x of CITED.filter((x) => x.file === file && read(x.key))) {
+    const ls = md.split("\n"), units = index.entries.find((e) => e.key === x.key)!.units;
+    const m = referenceOf(index, { key: x.key, first: units.findIndex((u) => u.line === x.from), last: units.findIndex((u) => u.line === x.to) });
+    if (!("url" in m) || !ls[x.at - 1].includes(x.words)) throw new Error(`${file}:${x.at}: no citation “${x.words}” to link`);
+    const label = m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1);
+    const after = ls[x.at - 1].replace(x.words, `[${x.words}](${m.url})`);
+    shown.push({ file, r: { start: x.at - 1, end: x.at - 1, key: x.key, first: 0, last: 0, from: x.from, to: x.to }, label, before: [ls[x.at - 1]], after: [after], diff: { kind: "same", ops: [] } });
+    ls[x.at - 1] = after;
     md = ls.join("\n");
     counts.runs++; counts.lines++;
   }

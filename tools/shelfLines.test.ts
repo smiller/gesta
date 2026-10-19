@@ -422,3 +422,8 @@ test("quotedRuns: an attribution closing the quotation that names any part the w
   const named = "> The first line of the poem is spoken here\n> And carries on a while before it stops\n> – *A Poem*, 1-2\n";
   expect(quotedRuns(named, poem).map((r) => [r.start, r.end])).toEqual([[0, 2]]);
 });
+test("citedAs: a short word inside the work's name goes with the name when a word of it stands before", () => {
+  const head = "[Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):", key = "bookshelf/Rostand, Edmond/Cyrano de Bergerac/5.2";
+  expect(citedAs("Remember Mom saying it?  Roxane, in Cyrano de Bergerac V, ii:", head, key)).toBe("Remember Mom saying it?  Roxane, in [Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):");
+  expect(citedAs("Roxane says de Bergerac V, ii:", head, key)).toBe("Roxane says de [Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):");
+});

@@ -538,6 +538,7 @@ function ownWords(cited: string, head: string, key: string, long: boolean): stri
   const names = [...key.split("/").slice(1), ...label.split(/,\s+/).slice(0, -1)].map((n) => n.replace(/\*/g, ""));
   const words = names.flatMap((n) => [n, ...n.split(/\s+/).filter((w) => w.length > 3)]).map(folded);
   const initials = names.map((n) => n.split(/\s+/).filter((w) => /^\p{Lu}/u.test(w) && w !== "The").map((w) => w[0]).join("").toLowerCase());
+  const inner = names.flatMap((n) => n.split(/\s+/)).map(folded);
   const isNamed = (t: string): boolean => { const w = folded(t); return w.length > 1 && (words.includes(w) || initials.includes(w) || w.length >= 3 && words.some((n) => n.startsWith(w))); };
   /* the place a name of the work or its author goes with, before the last place (Boethius 3pr3, q.v. *Paradiso* 1.127-35) */
   const spans = [...cited.matchAll(PLACE)].filter((p) => /\d|[.,]/.test(p[0])).map((p) => span(p.index, p.index + p[0].length, true));
@@ -551,7 +552,10 @@ function ownWords(cited: string, head: string, key: string, long: boolean): stri
       const t = before.match(/(\*[^*]+\*|[\p{L}\p{Nd}’'.-]+)([\s,]*)$/u);
       if (!t) break;
       const word = t[1], number = new RegExp(`^${PLACE.source}$`, "u").test(word);
-      const name = isNamed(word);
+      /* a short word inside the name, de in Cyrano de Bergerac, goes with it only between two of its words (pin:
+         shelfLines.test › citedAs: a short word inside the work's name) */
+      const prior = before.slice(0, before.length - t[0].length).match(/(\*[^*]+\*|[\p{L}\p{Nd}’'.-]+)([\s,]*)$/u);
+      const name = isNamed(word) || inner.includes(folded(word)) && !!prior && isNamed(prior[1]);
       if (!(first && numbered && /^\*/.test(word) || name || LOCATOR.test(word) || number && locator)) break;
       start -= t[0].length; first = false; locator = LOCATOR.test(word); named ||= name; located ||= locator;
     }
