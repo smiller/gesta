@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { shelfIndex, referenceOf } from "./bookshelfQuotes.ts";
-import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted, carried } from "./shelfLines.ts";
+import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted, carried, citedAs, withinQuotation } from "./shelfLines.ts";
 
 const index = shelfIndex({
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -216,7 +216,56 @@ test("referRuns: a citation with numbers, giving the lines or only the book or s
   expect(at("Odes 1.1.3-4:")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("Odes, I. i:")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("ODES (I.i):")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("Horace, [Odes 1.1, 3-4](file:///reader/odes/1.1.html#hl=3-4):")).toBe("[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("Odes 1.1.3-4 (to Maecenas):")).toBe("[Horace, *Odes*, 1.1.3-4](#u) (to Maecenas):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("cemenna nún, yasse atamána nás:")).toBe("cemenna nún, yasse atamána nás:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+});
+test("referRuns: a link above a verse fence whose lines a run is, the fence unquoted, is one reference, its passage quoted", () => {
+  const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` });
+  const md = "So:\n\n[Horace, *Odes*, 1.1.3-4](#bookshelf/Horace/Odes/1.1?h=x):\n\n::: verse 3\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n:::\n\nAnd so.\n";
+  expect(referRuns(md, quotedRuns(md, index), mint)).toBe("So:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n\nAnd so.\n");
+});
+test("withinQuotation: a line of the book in another tongue takes the quotation's translation and the book's neighbouring lines' pieces; another writer's line leaves it, the quotation whole", () => {
+  const at = (md: string) => { const w = withinQuotation(md, index, carried(md, index, quotedRuns(md, index))); return { runs: w.runs.map((r) => [r.start, r.end, r.from, r.to]), left: w.left.length }; };
+  const line = "> sunt quos curriculo pulverem Olympicum\n";
+  expect(at(line + "> There are those whom the Olympic dust delights\n\nAnd so.\n")).toEqual({ runs: [[0, 1, 3, 3]], left: 0 });
+  expect(at(line + "> hoc est in summis gloria summa viris.\n\nAnd so.\n")).toEqual({ runs: [], left: 1 });
+  expect(at("> decus meum\n" + line + "\nAnd so.\n")).toEqual({ runs: [[0, 1, 2, 3]], left: 0 });
+  expect(at("> meum\n" + line + "\n> There are those whom the Olympic dust delights\n\nAnd so.\n")).toEqual({ runs: [[0, 3, 2, 3]], left: 0 });
+  expect(at(line + "\n> There are those whom the Olympic dust delights\n\nAnd so.\n")).toEqual({ runs: [[0, 0, 3, 3]], left: 0 });
+  expect(at("> 3:\n" + line + "\nAnd so.\n")).toEqual({ runs: [[1, 1, 3, 3]], left: 0 });
+  expect(at("> A card\n>\n> 3:\n" + line + "\nAnd so.\n")).toEqual({ runs: [], left: 1 });
+  expect(at(line + "> Some there are whom the dust delights\n>\n> collegisse iuvat\n> to gather in the course\n\nAnd so.\n")).toEqual({ runs: [[0, 4, 3, 4]], left: 0 });
+  expect(at(line + "\n> And this is what I make of it, the whole of it.\n> More.\n")).toEqual({ runs: [[0, 0, 3, 3]], left: 0 });
+});
+test("referRuns: a long citation inside a quotation, perhaps another writer's, keeps its words, the reference under it; one of one's own outside a quotation takes the link in its place", () => {
+  const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` });
+  const verse = "sunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n";
+  const at = (head: string) => referRuns(head + "\n" + verse, quotedRuns(head + "\n" + verse, index), mint);
+  expect(at("> The line is drawn from Horace, *Odes* 1.1.3-4, near the opening:")).toBe("> The line is drawn from Horace, *Odes* 1.1.3-4, near the opening:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+  expect(at("The line I keep coming back to is Horace, *Odes* 1.1.3-4:")).toBe("The line I keep coming back to is [Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
+});
+test("citedAs: a citation's own words kept around the link, its author, work and numbers the link's; the link alone where no words are left; a line naming only the work its citation", () => {
+  const head = "[Spenser, *The Faerie Queene*, 1.7.40](#u):", key = "bookshelf/Spenser, Edmund/The Faerie Queene/1.7";
+  expect(citedAs("FQ I.vii.40 (Arthur to Una):", head, key)).toBe("[Spenser, *The Faerie Queene*, 1.7.40](#u) (Arthur to Una):");
+  expect(citedAs("I think *Faerie Queene* 1.7.40:", head, key)).toBe("I think [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  expect(citedAs("1.7.40, of the squire:", head, key)).toBe("[Spenser, *The Faerie Queene*, 1.7.40](#u), of the squire:");
+  expect(citedAs("Arthur to Una, book 1, canto 7:", head, key)).toBe("Arthur to Una, [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  expect(citedAs("1.13pm: Spenser, Faerie Queene I.vii.40:", head, key)).toBe("1.13pm: [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  expect(citedAs("an appeal (40-41):", head, key)).toBe("an appeal [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  for (const bare of ["[I.vii.40:", "10.07 ~ *FQ* I.vii.40:", "(Spenser, FQ, I.vii.40:", "Spenser, *The Faerie Queene*:"]) expect(citedAs(bare, head, key)).toBe(head);
+  expect(citedAs("Arthur to Una:", head, key)).toBe(null);
+  expect(citedAs("Æneid VI. 125-9:", "[Virgil, *Aeneid*, 6.125-29](#u):", "bookshelf/Virgil/Aeneid/6")).toBe("[Virgil, *Aeneid*, 6.125-29](#u):");
+  expect(citedAs("Boethius 3pr3, q.v. *Paradiso* 1.127-35:", "[Boethius, *De consolatione philosophiae*, 3pr3.1](#u):", "bookshelf/Boethius/De consolatione philosophiae/3pr3")).toBe("[Boethius, *De consolatione philosophiae*, 3pr3.1](#u), q.v. *Paradiso* 1.127-35:");
+  expect(citedAs("6: The Italian reads:", head, key)).toBe(null);
+  expect(citedAs("Mr Bennet to Elizabeth, volume 3, chapter 15:", "[Austen, *Pride and Prejudice*, 3.15](#u):", "bookshelf/Austen, Jane/Pride and Prejudice/3.15")).toBe("Mr Bennet to Elizabeth, [Austen, *Pride and Prejudice*, 3.15](#u):");
+  expect(citedAs("Jane Austen, *Pride and Prejudice*, p. 250:", "[Austen, *Pride and Prejudice*, 3.4](#u):", "bookshelf/Austen, Jane/Pride and Prejudice/3.4")).toBe("[Austen, *Pride and Prejudice*, 3.4](#u):");
+  expect(citedAs("From Bernardus Silvestris’ *Commentary*, book 6, p. 35:", "[Virgil, *Aeneid*, 6.1](#u):", "bookshelf/Virgil/Aeneid/6")).toBe(null);
+  expect(citedAs("Boethius, *De Consolatione Philosophiae*, II prose 4:", "[Boethius, *De consolatione philosophiae*, 2pr4.18](#u):", "bookshelf/Boethius/Consolatio/2pr4")).toBe("[Boethius, *De consolatione philosophiae*, 2pr4.18](#u):");
+  expect(citedAs("Or the disdain of the messenger who opens the gates at 88-90 and goes:", head, key)).toBe(null);
+  expect(citedAs("But, if you insist, what you must do first is find the golden bough, and 145-8:", "[Virgil, *Aeneid*, 6.145-48](#u):", "bookshelf/Virgil/Aeneid/6")).toBe("But, if you insist, what you must do first is find the golden bough, and [Virgil, *Aeneid*, 6.145-48](#u):");
+  expect(citedAs("And now, what you must do first, if you insist, is find the bough, 6:", "[Virgil, *Aeneid*, 6.145-48](#u):", "bookshelf/Virgil/Aeneid/6")).toBe(null);
+  expect(citedAs("[[ Alcuin, *O mea cella*:", "[Alcuin, *O mea cella*, 31](#u):", "bookshelf/Alcuin/O mea cella")).toBe("[Alcuin, *O mea cella*, 31](#u):");
 });
 test("quotedRuns: a run's last line split otherwise into words than the passage, To do ’t against To do’t, is still followed: letters, not words", () => {
   const prose = shelfIndex({ "bookshelf/Somebody/A Play/4.4": "# 4.4\n\n::: verse\nI do not know\nWhy yet I live to say ‘This thing’s to do;’\nSith I have cause and will and strength and means\nTo do’t. Examples gross as earth exhort me:\n:::\n" });

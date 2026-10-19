@@ -5,7 +5,7 @@
    page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
-import { quotedRuns, quotedPassages, sameQuoted, carried, referRuns, wordDiff, type Run } from "./shelfLines.ts";
+import { quotedRuns, quotedPassages, sameQuoted, carried, withinQuotation, referRuns, wordDiff, type Run } from "./shelfLines.ts";
 import { shelfIndex, referenceOf, norm } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -44,6 +44,8 @@ const KEEP: { file: string; key: string; from: number; at?: number; why: string 
 ];
 const kept: string[] = [];
 const partial: string[] = [];
+/* a line of the book inside another writer's quotation, left with it */
+const whole: string[] = [];
 const QUOTED = /^\s*>/;
 /* a book on the shelf whose quotation is made a reference too, asked */
 const ALSO = ["bookshelf/Lewis, C. S/The Allegory of Love/1. Courtly Love.md"];
@@ -108,7 +110,9 @@ for (const path of walk(SRC).sort()) {
     md = ls.join("\n");
     counts.runs++; counts.lines++;
   }
-  const verse = carried(md, index, [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start)).filter((r) => {
+  const within = withinQuotation(md, index, carried(md, index, [...quotedRuns(md, index), ...placed(file)].sort((a, b) => a.start - b.start)));
+  for (const r of within.left) whole.push(`${file}:${r.start + 1}–${r.end + 1} — ${r.key.split("/").slice(1).join(" ")}`);
+  const verse = within.runs.filter((r) => {
     const k = KEEP.find((x) => x.file === file && x.key === r.key && x.from === r.from && (x.at === undefined || x.at === r.start + 1));
     if (k) kept.push(`${file} — ${r.key.split("/").slice(-2).join(" ")}.${r.from}-${r.to}: ${k.why}`);
     return !k;
@@ -172,6 +176,8 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em
 <ul>${left.map((f) => `<li><code>${esc(f)}</code></li>`).join("")}</ul>
 <h2>Left as you wrote them (${kept.length})</h2>
 <ul>${kept.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
+<h2>A line inside another writer's quotation, left as written (${whole.length})</h2>
+<ul>${whole.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
 <h2>Part of a quotation left beside its reference (${partial.length})</h2>
 <ul>${partial.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
 <h2 id="wording">Wording differs (${group("wording").length})</h2>

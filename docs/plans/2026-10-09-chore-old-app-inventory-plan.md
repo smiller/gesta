@@ -2065,3 +2065,38 @@ changed, 78 new (MEASURED). Review pages per author regenerated, Spenser's
   block, a line not the author's, a fragment). 1.10.58.5-9 is one reference.
   Folder and pages rewritten: 621 references, 4208 lines, 285 entries; every
   Spenser label arabic, every card's link the standard form (MEASURED).
+- Asked, the same day: a citation giving way to the reference keeps the
+  entry's own words round the link ("after the reference should put back
+  the text (Arthur to Una)"): FQ I.vii.40 (Arthur to Una): reads
+  [Spenser, *The Faerie Queene*, 1.7.40](…) (Arthur to Una):. The link
+  takes the citation proper — author, work by name, abbreviation (Inf.) or
+  initials (FQ), book and chapter words, the numbers — and the rest stays;
+  a lone number with words of one's own is a note's (6: The Italian
+  reads:); a long line's citation only with the work named, a book's or
+  chapter's word, or a range ending it ("Mr Bennet to Elizabeth, [link]
+  is fine"), and never in a long line inside a quotation (Ruys's note, a
+  commentary's "46"); a citation linked to the old web reader on disk is a
+  citation; a page beside the work's name alone gives way to the link. 39
+  short citations keep their words (MEASURED); doubled citations above a
+  new link 127 → 35, every one left a date, a time, a page of Bernardus's
+  commentary, a heading over several citations, or a long quoted line.
+- Seen the same day: Alcuin, *O mea cella* above its own reference
+  (1992-02-25), a line naming the work with no numbers, now its citation;
+  Boethius 2026-09-12's link above an unquoted `::: verse 22` block made a
+  second reference inside the fence. A run that is a fence's whole body
+  takes the fence, and a link to the bookshelf alone above it is its
+  citation: 0 stray fences in the folder (MEASURED).
+- Seen the same day: *Aeneid* 6.853 inside Abelard's couplet ("hec est in
+  summis gloria summa uiris", not Virgil's) referred and the couplet split.
+  Asked (1–3): a line of a book in another tongue inside a longer quotation
+  takes the quotation's translation lines in its paragraph, and a piece of
+  the book's neighbouring line (nec te, experienza, …) with the translation
+  paragraph after; where another line is another writer's (Abelard ×2, the
+  *Convivio*, the two AM October 2025 cards) the run is left and the
+  quotation stands whole, listed on the page. Applied only to a book whose
+  run is not in English. A first draft took every translation paragraph
+  after a quotation — 247 quotations, beyond what was asked — and was
+  narrowed before anything was shown. Changed 6, left 5, partial
+  quotations 12 → 1 (the Tao page's q.v. line, now the link in its own
+  words). Folder and pages rewritten: 616 references, 4216 lines, 283
+  entries (MEASURED).

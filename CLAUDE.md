@@ -268,7 +268,9 @@ is in the plan's record, under the phase named):
   an entry found and made the references ⌃⌘R makes for them, and quoted
   paragraphs that are a book's text (a prose book, a translation beside
   verse) placed and joined while nothing is left out between them, a
-  quotation and its translation one reference, pure, its test beside it;
+  quotation and its translation one reference, a citation's own words kept
+  round the link, a line inside another writer's quotation left with it,
+  pure, its test beside it;
   `tools/shelfLinesRun.ts [author-prefix,…]` (Milton by default; several
   prefixes a comma apart, a comma and a space inside a filed name) writes
   an import folder with a review page. Letters are matched with accents dropped and ð and þ one
