@@ -332,6 +332,12 @@ is in the plan's record, under the phase named):
   runs it over the fourteen plays of Tey and Williams in the backup and
   writes the changed entries as an import folder with a before-and-after
   page.
+  `tools/quoteJoins.ts` — quotes a blank line apart made one quotation, the
+  blank line an empty quoted line as deep as the shallower side, pure, its
+  test beside it; `tools/quoteJoinsRun.ts` runs it over the journal before
+  2026 in the backup and writes the changed entries as an import folder
+  with a review page; `tools/quoteJoinsApart.json` the gaps read as two
+  quotations, by entry and the quoted line above.
   `tools/corpusRules.ts` its decided differences from the old parser,
   pure: a `###`–`######` heading here, text there; emphasis across a
   line break here, its delimiters text there.

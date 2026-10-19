@@ -2100,3 +2100,32 @@ changed, 78 new (MEASURED). Review pages per author regenerated, Spenser's
   quotations 12 → 1 (the Tao page's q.v. line, now the link in its own
   words). Folder and pages rewritten: 616 references, 4216 lines, 283
   entries (MEASURED).
+
+### 2026-10-19 — quotes a blank line apart joined (asked)
+
+- Asked: in the journal before 2026, quoted blocks with only a blank line
+  between them were one quotation split by the conversion; the blank line
+  becomes an empty quoted line, as deep as the shallower side (`>> a` /
+  blank / `> b` → `>> a` / `> ` / `> b`). A block with unquoted text
+  between stays apart. `tools/quoteJoins.ts`, its test, and
+  `tools/quoteJoinsRun.ts` writing an import folder with a review page.
+- Measured over the backup first: 17,538 gaps in 1,712 entries; 16,152
+  at one depth, 608 into a deeper quote, 778 out of one; every gap one
+  blank line, none of two or more (MEASURED).
+- A dash line as a citation's sign, closing a quotation, was tried and
+  dropped: 93 gaps after a dash line and 45 before one were read by hand,
+  and every one joins but 1995-09-30 (– Racine, then another poem) — a
+  French conversation (1990-10-07), emails transcribed (1999-04-28,
+  1999-10-06, 2017-06-22), notes (2005-11-12, 2016-03-16), and the 25
+  citations of 2020-04-02, each closing its own quotation, all asked
+  joined. A rule by the line's shape caught 13 citations and a remark,
+  and missed 20 that end in a full stop (MEASURED). Five entries whose
+  citations inside a quotation came out wrong were set right by hand
+  before the run (2005-01-14, 2013-07-30, 2014-06-19, 2016-02-18,
+  2016-02-27). Asked: join by default, the gaps kept apart listed by the
+  quoted line above them in `tools/quoteJoinsApart.json`; the lines
+  ending in a dash and words (106), in parentheses (37), in a link (5),
+  and short without closing punctuation (633) join too.
+- The run: 7,352 entries read, 17,516 gaps joined in 1,707 entries, 1,384
+  of them changing depth, 1 kept apart, 0 refused by the gate (a fixed
+  point, the words unchanged, fewer quotations in the model) (MEASURED).
