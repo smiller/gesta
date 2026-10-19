@@ -39,6 +39,12 @@ describe("crossViewOffset", () => {
     const r2 = "out. Be there";
     expect(crossViewOffset(r2, src2, r2.indexOf("Be"), true, false)).toBe(src2.indexOf("Be"));
   });
+  it("to the source, the next words found only where they next appear, markup between them: a reference's end", () => {
+    const md = "[Rostand, *Cyrano de Bergerac*, 2.10.19-20](#bookshelf/x?h=Christian%2C%20lui):\n\n> ::: verse 19\n> **Christian, lui prenant les mains.**\n> Comme je suis heureux !\n> :::\n\nUnbroken tradition of Christian stoicism.";
+    const r = flattenDoc(parseMarkdown(md)).text, s = flattenText(md).text;
+    const at = r.indexOf(":") + 1;
+    expect(crossViewOffset(r, s, at, true, false)).toBe(s.indexOf("):") + 2);
+  });
   it("past the last rendered character the tail belongs behind a reader who was below it all", () => {
     const src2 = "out.\n\n![](p.webp)";
     expect(crossViewOffset("out.", src2, 4, true, true)).toBe(src2.length);

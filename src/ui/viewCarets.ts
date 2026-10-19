@@ -58,11 +58,19 @@ export function crossViewOffset(from: string, to: string, at: number, toSource: 
   if (!toSource) return i;
   if (at >= sub.length) return pastTail ? sup.length : j;
   const probe = sub.substr(at, 4);
-  let after = sup.indexOf(probe, j);
-  if (after < 0) {
-    after = j;
-    while (after < sup.length && sup.charAt(after) !== sub.charAt(at)) after++;
+  /* the probe taken only where its characters next appear in order, markup
+     between them allowed: unbounded, a probe split by markup (" **Chr")
+     matched the same letters a paragraph down (pin: viewCarets.test › to the
+     source, the next words found only where they next appear) */
+  let first = -1, last = -1;
+  for (let k = j, q = 0; k < sup.length && q < probe.length; k++) {
+    if (sup.charAt(k) !== probe.charAt(q)) continue;
+    if (q === 0) first = k;
+    last = k;
+    q++;
   }
+  let after = sup.indexOf(probe, j);
+  if (after < 0 || after > last) after = first < 0 ? sup.length : first;
   return /\s/.test(sup.slice(j, after)) ? after : j;
 }
 /* THE VISIBILITY BIT IS THE LEAVING VIEW'S, whichever count is used: an
