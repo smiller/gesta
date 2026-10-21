@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { scanLines, editionLines, findStart, witnessPoem, cutPoem, readLine, words, ligatures, knows, vocabulary } from "./harvardMilton.ts";
+import { scanLines, editionLines, findStart, witnessPoem, cutPoem, readLine, readAgainst, unstressed, words, ligatures, knows, vocabulary } from "./harvardMilton.ts";
 
 // the scans' own lines, verbatim: scan A curls its marks and garbles small
 // capitals; scan B spaces its punctuation and reads small capitals as capitals
@@ -94,4 +94,28 @@ test("a speck one scan reads is dropped; a word in one scan only stands when the
   expect(readLine("| How soon hath Time", "How  soon  hath  Time", "How soon hath Time", KNOWN, 2).text).toBe("How soon hath Time");
   expect(readLine("form, and style;", "form,  and  style  J", "form, and style;", KNOWN, 2).text).toBe("form, and style;");
   expect(readLine("the lady wise", "the wise", "the lady wise", KNOWN, 2).text).toBe("the lady wise");
+});
+
+test("against a typed text of the edition: what the scans cannot read is the typed text's, the kind named; a word or a mark is the side read on the page", () => {
+  const lig = readAgainst("“Princes, Heaven’s ancient Sons, /Ethereal Thrones—", "“Princes, Heaven’s ancient Sons, Æthereal Thrones—");
+  expect(lig).toEqual({ text: "“Princes, Heaven’s ancient Sons, Æthereal Thrones—", diffs: [{ kind: "ligature", scans: "/Ethereal", typed: "Æthereal" }] });
+  expect(readAgainst("And said to me apart, “High are thy thoughts,", "And said to me apart, ‘High are thy thoughts,").diffs[0].kind).toBe("nested quote");
+  expect(readAgainst("» Recovered Paradise to all mankind,", "Recovered Paradise to all mankind,").diffs[0].kind).toBe("speck");
+  // man for main: Gutenberg's slip, the scans' word on the page
+  expect(readAgainst("And management of this main enterprise", "And management of this man enterprise", ["scans"]).text).toBe("And management of this main enterprise");
+  // the dash after replied: the scans lose it
+  expect(readAgainst("To whom our Saviour sternly thus replied:", "To whom our Saviour sternly thus replied:—", ["typed"]).text).toBe("To whom our Saviour sternly thus replied:—");
+  // one word on the page, hyphened in the typed text: read there too
+  const male = readAgainst("To whom thus answered Satan, malecontent:—", "To whom thus answered Satan, male-content:—", ["scans"]);
+  expect(male.diffs[0].kind).toBe("turn's hyphen");
+  expect(male.text).toBe("To whom thus answered Satan, malecontent:—");
+  // a word in one side only, taken or not as the page has it
+  expect(readAgainst("Refused on me baptism to confer,", "Refused on me his baptism to confer,", ["scans"]).text).toBe("Refused on me baptism to confer,");
+});
+
+test("a stress accent the scans read is left off unless kept; an accent the typed text has is the letter's own", () => {
+  expect(readAgainst("Me his belovéd Son, in whom alone", "Me his beloved Son, in whom alone").text).toBe("Me his beloved Son, in whom alone");
+  expect(readAgainst("Me his belovéd Son, in whom alone", "Me his beloved Son, in whom alone", [], true).text).toBe("Me his belovéd Son, in whom alone");
+  expect(readAgainst("Meroé, Nilotic isle,", "Meroë, Nilotic isle,", [], true).text).toBe("Meroë, Nilotic isle,");
+  expect(unstressed("Methought I saw my late espouséd saint, belovèd, Meroë")).toBe("Methought I saw my late espoused saint, beloved, Meroë");
 });

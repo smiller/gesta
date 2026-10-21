@@ -310,6 +310,17 @@ is in the plan's record, under the phase named):
   scans and texts cached under `tools/out/harvard`, the names respelled and
   the readings given Milton's word as asked, and writes an import folder with
   a review page.
+  `tools/harvardStrips.ts` — a disputed line seen on the printed page: found
+  in scan A's hOCR, cut from the archive's page image (cached under
+  `tools/out/harvard/pages`) onto a sheet that headless Helium screenshots,
+  to be read by eye; the hOCR's parse and the finder pure, tested.
+  `tools/paradiseRegained.ts` — Gutenberg's Paradise Regained (#58), the
+  Harvard text, made four book pages laid out as Paradise Lost's, pure, its
+  test beside it; `tools/paradiseRegainedRun.ts` reads it against the two
+  scans (`readAgainst` in harvardMilton.ts), each word or mark they differ on
+  settled as read on the page, the Oxford edition's readings, the names and
+  spellings the bookshelf's Paradise Lost has as asked, and writes an import
+  folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and

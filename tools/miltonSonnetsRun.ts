@@ -6,7 +6,7 @@
    beside it, the counts printed */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join, dirname, basename, resolve } from "node:path";
-import { scanLines, editionLines, findStart, witnessPoem, cutPoem, readLine, vocabulary, type Decision } from "./harvardMilton.ts";
+import { scanLines, editionLines, findStart, witnessPoem, cutPoem, readLine, vocabulary, unstressed, type Decision } from "./harvardMilton.ts";
 import { italianPoem, cowperItalian, sonnetEntries, type Sonnet } from "./miltonSonnets.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
@@ -85,7 +85,8 @@ for (const s of ENGLISH) {
   const lines: string[] = [], decisions: Decision[] = [];
   ca.lines.forEach((la, i) => {
     const r = readLine(la, cb.lines[i], witness[i], KNOWN, i + 1);
-    let text = r.text;
+    /* the stress marks left off, as the bookshelf's Paradise Lost has them (asked) */
+    let text = unstressed(r.text);
     for (const r of READINGS.filter((r) => r.poem === (s.n || s.title) && r.line === i + 1)) {
       const re = new RegExp(`\\b${r.from}\\b`);
       if (!re.test(text)) throw new Error(`${r.poem}.${r.line}: no "${r.from}" in ${text}`);

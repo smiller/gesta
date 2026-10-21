@@ -34,12 +34,17 @@ export const editionLines = (text: string): string[] => text.split("\n").map((l)
 const tail = (s: string): string => { const w = s.split(/\s+/); return letters(w.slice(w.length > 4 ? 2 : 1).join(" ")); };
 
 /* where a poem starts: the line most like its first, its first words
-   aside (small capitals, which the OCR reads worst); null below 0.75 */
+   aside (small capitals, which the OCR reads worst, a drop capital it can
+   lose whole), the two compared over the ending they share; null below 0.75 */
+const ending = (a: string, b: string): number => {
+  const n = Math.min(a.length, b.length);
+  return similar(a.slice(a.length - n), b.slice(b.length - n)) * (n >= 0.6 * Math.max(a.length, b.length) ? 1 : 0.5);
+};
 export function findStart(lines: string[], first: string, from = 0): number | null {
   let best = -1, at: number | null = null;
   const want = tail(first);
   for (let i = from; i < lines.length; i++) {
-    const s = similar(tail(lines[i]), want);
+    const s = ending(tail(lines[i]), want);
     if (s > best) { best = s; at = i; }
   }
   return best >= 0.75 ? at : null;
@@ -83,7 +88,7 @@ const marks = (w: string): string => w.normalize("NFD").replace(/[\p{L}̀-ͯ]/gu
 const accented = (w: string): boolean => /[̀-ͯ]/.test(w.normalize("NFD"));
 
 /* the two scans' words aligned, a pair either side's word or a gap */
-function align(a: string[], b: string[]): [string | null, string | null][] {
+export function align(a: string[], b: string[]): [string | null, string | null][] {
   const cost = (x: string, y: string): number => (x === y ? 0 : letters(x) === letters(y) ? 1 : similar(letters(x), letters(y)) >= 0.5 ? 2 : 4);
   const n = a.length, m = b.length;
   const d = Array.from({ length: n + 1 }, (_, i) => Array.from({ length: m + 1 }, (_, j) => (i ? (j ? 0 : i * 3) : j * 3)));
@@ -173,3 +178,44 @@ export const knows = (known: Set<string>, k: string): boolean => known.has(k) ||
 
 /* every word the edition prints in a text already clean, by its letters */
 export const vocabulary = (...texts: string[]): Set<string> => new Set(texts.flatMap((t) => t.split(/[^\p{L}’']+/u).flatMap((w) => [letters(w), keyed(w)])).filter(Boolean));
+
+/* a line read from the scans set against a typed text of the same edition:
+   where they differ only by a stress accent, a nested quotation's mark,
+   the ligature the scans cannot read or a speck, the typed text's is taken
+   and the kind named; a word, a mark or a hyphen where a word ran over the
+   line is for the page image, `seen` the side read there, in order
+   (malecontent, one word on the page, typed male-content) */
+export type Against = "accent" | "nested quote" | "ligature" | "speck" | "turn's hyphen" | "MARK" | "WORD";
+export function readAgainst(scans: string, typed: string, seen: ("scans" | "typed")[] = [], stress = false): { text: string; diffs: { kind: Against; scans: string; typed: string }[] } {
+  const out: string[] = [], diffs: { kind: Against; scans: string; typed: string }[] = [];
+  let hard = 0;
+  const quoteless = (w: string): string => w.replace(/[‘’“”]/g, "'");
+  for (const [x, y] of align(words(scans), words(typed))) {
+    if (x != null && y != null && x === y) { out.push(x); continue; }
+    /* a word or a mark read on the page: `seen` the side it is, in order */
+    const say = (kind: Against, take: string | null) => {
+      diffs.push({ kind, scans: x ?? "", typed: y ?? "" });
+      if (kind === "WORD" || kind === "MARK" || kind === "turn's hyphen") { const side = seen[hard++]; if (side) take = side === "scans" ? x : y; }
+      if (take) out.push(take);
+    };
+    if (x == null) { say(letters(y!) ? "WORD" : "MARK", y); continue; }
+    if (y == null) { say(letters(x) ? "WORD" : "speck", letters(x) ? x : null); continue; }
+    const bare = (w: string): string => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    /* a stress accent the scans read, kept or not (`stress`); an accent the typed text has is a letter's own (Meroë) */
+    if (bare(x) === bare(y)) { say("accent", accented(y) || !stress ? y : x); continue; }
+    if (letters(x) === letters(y)) {
+      if (quoteless(x) === quoteless(y)) { say("nested quote", y); continue; }
+      if (x.replace(/[^\p{L}’'‘“”,.;:!?()—-]/gu, "") === y) { say("speck", y); continue; }
+      if (x.replace(/-/g, "") === y.replace(/-/g, "") && keyed(x) === keyed(y)) { say("turn's hyphen", y); continue; }
+      say("MARK", x);
+      continue;
+    }
+    if (/[æœ]/i.test(y) && (ligatures(x).includes(y) || ligatures(x.replace(/^\P{L}+/u, "")).some((v) => y.endsWith(v)) || similar(letters(x), letters(y)) >= 0.7)) { say("ligature", y); continue; }
+    say("WORD", x);
+  }
+  return { text: out.join(" "), diffs };
+}
+
+/* the edition's stress marks (belovèd, espousèd) off a line: an acute or a
+   grave, never a diaeresis (Meroë) */
+export const unstressed = (line: string): string => line.normalize("NFD").replace(/[\u0300\u0301]/g, "").normalize("NFC");
