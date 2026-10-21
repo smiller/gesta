@@ -347,6 +347,11 @@ is in the plan's record, under the phase named):
   by reading (a personification, a name, a title, another sense) listed with
   their reasons, and writes an import folder with a review page; it rewrites
   Arcades and Comus in their own folder, so it runs after miltonMasksRun.ts.
+  `tools/miltonPsalmsRun.ts` — Milton's Psalms I–VIII and LXXX–LXXXVIII from
+  `tools/miltonPsalms.txt`, set from the Oxford edition's pages (its italics,
+  its notes on the Hebrew, its verse numbers as italic rows), a page a psalm
+  under `Milton, John/Psalms`, each line checked against Beeching's text for
+  a slip in the setting; writes an import folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
