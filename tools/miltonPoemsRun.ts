@@ -111,7 +111,7 @@ const PRINTED: Record<string, string> = {
    spelling aside, from the sweep against Beeching's text read line by line:
    each read in the Oxford edition (asked) */
 const DEPARTURES: { at: string; harvard: string; milton: string; owc?: boolean }[] = [
-  { at: "On the Morning of Christ’s Nativity 143–144", harvard: "The enamelled arras of the rainbow wearing; / And Mercy set between,", milton: "1673: Orbed in a rainbow; and, like glories wearing, / Mercy will sit between, (Harvard’s is 1645’s)", owc: true },
+  { at: "On the Morning of Christ’s Nativity 141–144", harvard: "Yes, Truth and Justice then / … / The enamelled arras of the rainbow wearing; / And Mercy set between,", milton: "1673: Yea, Truth and Justice then / … / Orbed in a rainbow; and, like glories wearing, / Mercy will sit between, (Harvard’s is 1645’s)", owc: true },
   { at: "On the Morning of Christ’s Nativity 211", harvard: "The brutish gods of Nile", milton: "1645 and 1673: And brutish gods of Nile" },
   { at: "On the Death of a Fair Infant Dying of a Cough 53", harvard: "Or wert thou [Mercy], that sweet smiling Youth?", milton: "1673: Or wert thou that sweet smiling Youth! (a line short; Mercy is a later editor’s word)" },
   { at: "At a Vacation Exercise in the College, Part Latin, Part English 61", harvard: "The drowsy Nurse", milton: "1673: Thy drowsy Nurse", owc: true },
@@ -123,8 +123,9 @@ const DEPARTURES: { at: string; harvard: string; milton: string; owc?: boolean }
 ];
 
 /* where the Oxford World's Classics edition reads otherwise than Harvard,
-   its words (asked: Nativity 143–144 in 1673's version, Thurber's spelling) */
+   its words (asked: Nativity 141–144 in 1673's version, Thurber's spelling) */
 const READINGS: { at: string; from: string; to: string }[] = [
+  { at: "On the Morning of Christ’s Nativity 141", from: "Yes, Truth", to: "Yea, Truth" },
   { at: "On the Morning of Christ’s Nativity 143", from: "The enamelled arras of the rainbow wearing;", to: "Orbed in a rainbow; and, like glories wearing," },
   { at: "On the Morning of Christ’s Nativity 144", from: "And Mercy set between,", to: "Mercy will sit between," },
   { at: "At a Vacation Exercise in the College, Part Latin, Part English 61", from: "The drowsy", to: "Thy drowsy" },
