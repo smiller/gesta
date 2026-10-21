@@ -109,17 +109,25 @@ const PRINTED: Record<string, string> = {
 };
 /* where the Harvard Classics' words are not those of Milton's own printing,
    spelling aside, from the sweep against Beeching's text read line by line:
-   each left as Harvard prints it until read in the Oxford edition */
-const DEPARTURES: { at: string; harvard: string; milton: string }[] = [
-  { at: "On the Morning of Christ’s Nativity 143–144", harvard: "The enamelled arras of the rainbow wearing; / And Mercy set between,", milton: "1673: Orbed in a rainbow; and, like glories wearing, / Mercy will sit between, (Harvard’s is 1645’s)" },
+   each read in the Oxford edition (asked) */
+const DEPARTURES: { at: string; harvard: string; milton: string; owc?: boolean }[] = [
+  { at: "On the Morning of Christ’s Nativity 143–144", harvard: "The enamelled arras of the rainbow wearing; / And Mercy set between,", milton: "1673: Orbed in a rainbow; and, like glories wearing, / Mercy will sit between, (Harvard’s is 1645’s)", owc: true },
   { at: "On the Morning of Christ’s Nativity 211", harvard: "The brutish gods of Nile", milton: "1645 and 1673: And brutish gods of Nile" },
   { at: "On the Death of a Fair Infant Dying of a Cough 53", harvard: "Or wert thou [Mercy], that sweet smiling Youth?", milton: "1673: Or wert thou that sweet smiling Youth! (a line short; Mercy is a later editor’s word)" },
-  { at: "At a Vacation Exercise in the College, Part Latin, Part English 61", harvard: "The drowsy Nurse", milton: "1673: Thy drowsy Nurse" },
+  { at: "At a Vacation Exercise in the College, Part Latin, Part English 61", harvard: "The drowsy Nurse", milton: "1673: Thy drowsy Nurse", owc: true },
   { at: "The Passion 22", harvard: "These latest scenes", milton: "1645: These latter scenes (Harvard’s is 1673’s)" },
   { at: "The Passion 49", harvard: "That they would fitly fall", milton: "Beeching: They would fitly fall" },
   { at: "The Passion 50", harvard: "Or, should I thence, hurried on viewless wing,", milton: "Beeching: I thence hurried on viewless wing," },
   { at: "The Passion 55", harvard: "the infection of my sorrows loud", milton: "Beeching: the infection of my sorrows bound," },
   { at: "At a Solemn Music 21", harvard: "Broke the fair music", milton: "Beeching: The fair music" },
+];
+
+/* where the Oxford World's Classics edition reads otherwise than Harvard,
+   its words (asked: Nativity 143–144 in 1673's version, Thurber's spelling) */
+const READINGS: { at: string; from: string; to: string }[] = [
+  { at: "On the Morning of Christ’s Nativity 143", from: "The enamelled arras of the rainbow wearing;", to: "Orbed in a rainbow; and, like glories wearing," },
+  { at: "On the Morning of Christ’s Nativity 144", from: "And Mercy set between,", to: "Mercy will sit between," },
+  { at: "At a Vacation Exercise in the College, Part Latin, Part English 61", from: "The drowsy", to: "Thy drowsy" },
 ];
 
 /* a spelling the edition keeps old, given the one the bookshelf's Milton
@@ -174,7 +182,7 @@ const near = (k: string, ws: string[]): boolean => ws.some((v) => similar(k, v) 
 const entries: Record<string, string> = {};
 const report: string[] = [], spelt: string[] = [], respelled: string[] = [], seenRows: string[] = [], departures: string[] = [], unconfirmed: string[] = [];
 const counts = { lines: 0, agreed: 0, settled: 0, read: 0 };
-const unused = new Set(Object.keys(SEEN));
+const unused = new Set(Object.keys(SEEN)), unread = new Set(READINGS.map((r) => r.at));
 const why: Record<string, number> = {};
 const disputed: { label: string; line: HocrLine }[] = [];
 
@@ -194,6 +202,11 @@ for (const p of POEMS) {
     let text = unstressed(elided(PRINTED[id] ?? seen ?? (i ? r.text : smallCaps(r.text))));
     for (const n of SPELLINGS) text = text.replace(new RegExp(`(?<![\\p{L}’])${n.from}(?![\\p{L}’])`, "giu"), (old) => { const to = /^\p{Lu}/u.test(old) ? n.to[0].toUpperCase() + n.to.slice(1) : n.to; spelt.push(`${p.key} ${i + 1}: ${old} → ${to}`); return to; });
     for (const n of NAMES) text = text.replace(new RegExp(`\\b${n.from}\\b`, "g"), () => { respelled.push(`${p.key} ${i + 1}: ${n.from} → ${n.to}`); return n.to; });
+    for (const r of READINGS.filter((r) => r.at === id)) {
+      if (!text.includes(r.from)) throw new Error(`${id}: no "${r.from}" in ${text}`);
+      text = text.replace(r.from, r.to);
+      unread.delete(r.at);
+    }
     lines.push(text);
     const hard = r.decisions.filter((d) => !/the witness's word|a speck|UNCONFIRMED/.test(d.why));
     for (const d of r.decisions) why[d.why.replace(/:.*/, "")] = (why[d.why.replace(/:.*/, "")] ?? 0) + 1;
@@ -220,6 +233,7 @@ for (const p of POEMS) {
     `<table>${rows.map((l) => `<tr><td>${esc(l) || "&nbsp;"}</td></tr>`).join("")}</table>` + (decided.length ? `<ul>${decided.join("")}</ul>` : ""));
 }
 if (unused.size) throw new Error("page readings for lines with nothing disputed: " + [...unused].join(", "));
+if (unread.size) throw new Error("readings for lines not met: " + [...unread].join(", "));
 if (process.env.STRIPS) console.log(await stripSheets(disputed, join(CACHE, "poems-strips"), 16, 1));
 
 const had = Object.keys(entries).filter((f) => existsSync(join(BACKUP, f)));
@@ -239,8 +253,8 @@ writeFileSync(join(dirname(OUT), basename(OUT) + ".html"), `<!doctype html><meta
 <p>Names given their modern spelling: ${respelled.map(esc).join("; ")}. Kept as Milton's own form of the name: ${KEPT_NAMES.join(", ")}.</p>
 <p>Read alike in both scans but found in no dictionary or other Milton text: ${unconfirmed.map(esc).join("; ")}.</p>
 <h2>For a reading in the Oxford edition</h2>
-<p>Where the Harvard Classics' words are not those of Milton's own printing, spelling aside: each left as Harvard prints it until read in the Oxford edition. Found by a sweep against Beeching's text of 1645 and 1673, line by line (not made for the two psalms, which Beeching lacks); where only Beeching is named, his text may have lost the word.</p>
-<table>${DEPARTURES.map((d) => `<tr><td class="n">${esc(d.at)}</td><td>Harvard <b>${esc(d.harvard)}</b></td><td>${esc(d.milton)}</td></tr>`).join("")}</table>
+<p>Where the Harvard Classics' words are not those of Milton's own printing, spelling aside, each read in the Oxford edition: its reading taken where it differs from Harvard's. Found by a sweep against Beeching's text of 1645 and 1673, line by line (not made for the two psalms, which Beeching lacks); where only Beeching is named, his text may have lost the word.</p>
+<table>${DEPARTURES.map((d) => `<tr><td class="n">${esc(d.at)}</td><td>Harvard <b>${esc(d.harvard)}</b></td><td>${esc(d.milton)}</td><td>${d.owc ? "the Oxford edition’s reading taken" : "Harvard’s kept, as the Oxford edition reads"}</td></tr>`).join("")}</table>
 <details><summary>Every line the sweep found (${departures.length}), spelling and compounding among them</summary><table>${departures.join("")}</table></details>
 <h2>Read on the printed page</h2>
 <p>Each line where the scans differed in a mark, or one has a word the other lacks: the two readings, and the line as the page has it where the reading was wrong.</p>
