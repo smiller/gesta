@@ -62,7 +62,7 @@ const A = scan("harvardclassicsv0004milt.txt"), B = scan("completepoems00miltuof
 const HOCR = hocrLines(read("harvardclassicsv0004milt_hocr.html")).filter((l) => /[a-z]/.test(l.text) && !NUMERAL.test(l.text) && !runningHead(l.text)).map((l) => ({ ...l, text: l.text.replace(PREFIX, "") }));
 
 /* a disputed line as the Oxford edition prints it (asked: its pages
-   photographed, lines 1–927), its word and mark taken where the two scans
+   photographed), its word and mark taken where the two scans
    disagree; the Harvard page itself out of reach */
 const SEEN: Record<string, string> = {
   "17": "This unfrequented place to find some ease,",
@@ -128,9 +128,61 @@ const SEEN: Record<string, string> = {
   "916": "Where other senses want not their delights,",
   "924": "With nursing diligence, to me glad office,",
   "927": "That what by me thou hast lost thou least shalt miss.",
+  "946": "In perfect thraldom! how again betray me,",
+  "951": "Let me approach at least, and touch thy hand.",
+  "960": "I see thou art implacable, more deaf",
+  "997": "She’s gone—a manifest serpent by her sting",
+  "1000": "And aggravate my folly, who committed",
+  "1023": "Their nuptials, nor this last so treacherously",
+  "1030": "In choice, but oftest to affect the wrong?",
+  "1037": "Once joined, the contrary she proves—a thorn",
+  "1050": "But virtue which breaks through all opposition,",
+  "1156": "Presume not on thy God; whate’er he be,",
+  "1157": "Thee he regards not, owns not, hath cut off",
+  "1227": "Cam’st thou for this, vain boaster, to survey me,",
+  "1229": "Come nearer; part not hence so slight informed;",
+  "1276": "The righteous, and all such as honour Truth!",
+  "1298": "Labouring thy mind",
+  "1306": "A public officer, and now at hand.",
+  "1318": "To appear as fits before th’ illustrious lords.",
+  "1319": "Thou know’st I am an Hebrew; therefore tell them",
+  "1342": "Joined with extreme contempt? I will not come.",
+  "1346": "I am sorry what this stoutness will produce.",
+  "1356": "After my great transgression—so requite",
+  "1364": "Idolatrous, uncircumcised, unclean.",
+  "1369": "Where outward force constrains, the sentence holds:",
+  "1375": "Set God behind; which, in his jealousy,",
+  "1383": "To something extraordinary my thoughts.",
+  "1384": "I with this messenger will go along,",
+  "1413": "Brethren, farewell; your company along",
+  "1437": "Be efficacious in thee now at need.",
+  "1445": "Peace with you, brethren; my inducement hither",
+  "1448": "To come and play before them at their feast.",
+  "1474": "Their once great dread, captive and blind before them,",
+  "1480": "And he in that calamitous prison left.",
+  "1489": "Made older than thy age through eyesight lost.",
+  "1499": "To use him further yet in some great service—",
+  "1508": "I know your friendly minds, and—O, what noise!",
+  "1520": "What shall we do—stay here, or run and see?",
+  "1522": "We unawares run into danger’s mouth.",
+  "1527": "What if his eyesight (for to Israel’s God",
+  "1531": "That were a joy presumptuous to be thought.",
+  "1539": "And to our wish I see one hither speeding—",
+  "1586 ⟨…⟩": "Inevitable cause",
+  "1622": "Who had made their dreadful enemy their thrall.",
+  "1639": "At last, with head erect, thus cried aloud:—",
+  "1640": "“Hitherto, Lords, what your commands imposed",
+  "1653": "Lords, ladies, captains, counsellors, or priests,",
+  "1660": "O dearly-bought revenge, yet glorious!",
+  "1712": "Fully revenged—hath left them years of mourning,",
+  "1752": "Bore witness gloriously; whence Gaza mourns,",
 };
 /* a word both scans read alike and wrongly, as the Oxford edition has it */
-const FIXES: { at: string; from: string; to: string }[] = [{ at: "815", from: "not a stere", to: "not austere" }];
+const FIXES: { at: string; from: string; to: string }[] = [
+  { at: "815", from: "not a stere", to: "not austere" }, { at: "996", from: "leave him his lot", to: "leave him to his lot" },
+  /* where Harvard departs from Milton's printing: the Oxford edition's reading (asked) */
+  { at: "1378", from: "adolatrous", to: "idolatrous" }, { at: "1491", from: "in his house", to: "in the house" }, { at: "1495", from: "hath not permitted", to: "had not permitted" },
+];
 
 const items = beechingItems();
 const w = items.filter((i) => i.kind === "line").map((i) => (i as Extract<Item, { kind: "line" }>).text);
@@ -146,9 +198,9 @@ console.log("rows", w.length, "cut", ca.lines.length, cb.lines.length, "off", of
 const DEPARTURES: { at: string; harvard: string; milton: string }[] = [
   { at: "193", harvard: "Ye see, O friends", milton: "Beeching: Wee see, O friends; the Oxford edition: Ye see, as Harvard" },
   { at: "282–283", harvard: "Had dealt with Jephtha, who by argument, / Not worse than by his shield and spear,", milton: "Beeching: the two lines the other way round; the Oxford edition: as Harvard" },
-  { at: "1491", harvard: "sitting in his house", milton: "Beeching: sitting in the house" },
-  { at: "1495", harvard: "God hath not permitted", milton: "Beeching: God had not permitted" },
-  { at: "1378", harvard: "at adolatrous rites", milton: "Beeching: at Idolatrous rites (Harvard's may be a misprint)" },
+  { at: "1491", harvard: "sitting in his house", milton: "Beeching: sitting in the house; the Oxford edition: the house, taken" },
+  { at: "1495", harvard: "God hath not permitted", milton: "Beeching: God had not permitted; the Oxford edition: had, taken" },
+  { at: "1378", harvard: "at adolatrous rites", milton: "Beeching: at Idolatrous rites; the Oxford edition: idolatrous, taken" },
 ];
 const unprimed = (s: string): string => s.replace(/\b(\p{L}+)’(\p{L}+)\b/gu, (m, a, b) => (PRIMED.includes(m) ? a + b : m));
 /* a stress the edition marks with a prime the scans read as an apostrophe,
@@ -225,7 +277,7 @@ writeFileSync(join(dirname(OUT), basename(OUT) + ".html"), `<!doctype html><meta
 <h2>For a reading in the Oxford edition</h2>
 <table>${DEPARTURES.map((d) => `<tr><td class="n">${esc(d.at)}</td><td>Harvard <b>${esc(d.harvard)}</b></td><td>${esc(d.milton)}</td></tr>`).join("")}</table>
 <details><summary>Every line the sweep against Beeching found (${departures.length})</summary><table>${departures.join("")}</table></details>
-<h2>Disputed lines (${seenRows.length}): to 927 as the Oxford edition prints them, the rest to be read</h2>
+<h2>Disputed lines (${seenRows.length}), as the Oxford edition prints them</h2>
 <p>Where the two scans differ in a mark, or one has a word the other lacks: the line as it now stands, and in grey what each scan read and what was taken.</p>
 <table>${seenRows.join("")}</table>
 <h2>The page</h2><pre>${esc(md)}</pre>`);

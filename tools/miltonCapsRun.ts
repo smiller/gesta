@@ -15,6 +15,7 @@ const HOME = process.env.HOME!;
 const BACKUP = join(HOME, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const OUT = process.env.OUT ?? join(HOME, "Desktop/gesta-imports/gesta-milton-caps");
 const MASKS = join(HOME, "Desktop/gesta-imports/gesta-milton-masks");
+const SAMSON = join(HOME, "Desktop/gesta-imports/gesta-milton-samson");
 const MILTON = "bookshelf/Milton, John";
 
 /* the verse rows of a page that are lines: not a speaker, a direction or a
@@ -43,6 +44,10 @@ for (const f of ["On the Morning of Christ’s Nativity", "A Paraphrase on Psalm
   "At a Vacation Exercise in the College, Part Latin, Part English", "The Passion", "On Shakespeare", "On the University Carrier", "Another on the Same",
   "An Epitaph on the Marchioness of Winchester", "L’Allegro", "Il Penseroso", "Song on May Morning", "On Time", "At a Solemn Music", "Upon the Circumcision"]) shelf(`${f}.md`);
 for (const f of ["Arcades", "Comus"]) pages.push({ key: `${MILTON}/${f}.md`, from: join(MASKS, MILTON, `${f}.md`) });
+pages.push({ key: `${MILTON}/Samson Agonistes.md`, from: join(SAMSON, MILTON, "Samson Agonistes.md") });
+/* ONLY=page,… runs the pass over those pages alone: the others imported, their pass done */
+const only = process.env.ONLY?.split(",");
+if (only) pages.splice(0, pages.length, ...pages.filter((p) => only.includes(p.key.slice(MILTON.length + 1).replace(/\.md$/, ""))));
 
 /* a word kept as the page has it, read in its line: a personification or a
    character, a name that is also a common word, a word in another sense
@@ -287,6 +292,27 @@ const KEPT: { page: string; line: string; word: string; why: string }[] = [
   { page: "Comus", line: "green earth’s end", word: "earth’s", why: "as the Oxford edition has earth’s in the Fair Infant 30" },
   /* as the Oxford edition has the same word in the same sense elsewhere in the poem */
   { page: "Paradise Regained/Book 4", line: "glorious Temple", word: "Temple", why: "the Temple, as the Oxford edition has it at 1.211, 1.256, 3.161, 4.217" },
+  /* Samson Agonistes, read against the Oxford edition's pages where they were to hand */
+  { page: "Samson Agonistes", line: "O first-created Beam", word: "Beam", why: "an address" },
+  { page: "Samson Agonistes", line: "Treason against me", word: "Treason", why: "personification" },
+  { page: "Samson Agonistes", line: "To Honour and Religion", word: "Honour", why: "personification" },
+  { page: "Samson Agonistes", line: "To Honour and Religion", word: "Religion", why: "personification" },
+  { page: "Samson Agonistes", line: "as their god who hath", word: "god", why: "another sense than Paradise Lost’s" },
+  { page: "Samson Agonistes", line: "no god, compared", word: "god", why: "another sense than Paradise Lost’s" },
+  { page: "Samson Agonistes", line: "Among the Heathen round; to God", word: "Heathen", why: "as the Oxford edition has Heathen in Paradise Regained" },
+  { page: "Samson Agonistes", line: "like a petty god", word: "god", why: "another sense than Paradise Lost’s" },
+  { page: "Samson Agonistes", line: "the Living God", word: "Living", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "if Dagon be thy god", word: "god", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "his godhead seconded", word: "godhead", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "whose god is God", word: "god", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "Of saints, the trial", word: "saints", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "their god—", word: "god", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "the Holy One", word: "One", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "Great among the Heathen", word: "Heathen", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "both God and State", word: "State", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "clamouring their god", word: "god", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "Living Dread", word: "Dread", why: "as the Oxford edition has it" },
+  { page: "Samson Agonistes", line: "So Virtue, given", word: "Virtue", why: "as the Oxford edition has it" },
 ];
 
 /* a capital, a mark or a spelling the Oxford edition has otherwise than either (asked) */
@@ -347,8 +373,9 @@ for (const p of pages) {
   });
   if (next !== md) out[p.key] = next;
 }
-const unmet = KEPT.filter((k) => !met.has(k));
-if (oxford.size !== OXFORD.length) throw new Error("an Oxford reading that matches nothing");
+const ran = new Set(pages.map((p) => p.key.slice(MILTON.length + 1).replace(/\.md$/, "")));
+const unmet = KEPT.filter((k) => ran.has(k.page) && !met.has(k));
+if (oxford.size !== OXFORD.filter((o) => ran.has(o.page)).length) throw new Error("an Oxford reading that matches nothing");
 if (unmet.length) throw new Error("kept words that match nothing: " + unmet.map((k) => `${k.page}: ${k.word} in “${k.line}”`).join("; "));
 if (process.env.LIST) for (const a of all) console.log(`${a.kept ? "KEPT " : ""}${a.page} ${a.n}: ${a.c.from}→${a.c.to} (PL ${a.c.usage.cap}/${a.c.usage.low}) | ${a.line}`);
 const made = all.filter((a) => !a.kept), kept = all.filter((a) => a.kept);
@@ -361,7 +388,7 @@ for (const p of pages) {
   const md = out[p.key];
   if (!md) continue;
   /* Arcades and Comus, not yet on the shelf, rewritten where they wait */
-  const to = p.from.startsWith(MASKS) ? p.from : join(OUT, p.key);
+  const to = p.from.startsWith(MASKS) || p.from.startsWith(SAMSON) ? p.from : join(OUT, p.key);
   mkdirSync(dirname(to), { recursive: true });
   writeFileSync(to, md);
 }
