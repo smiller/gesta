@@ -474,20 +474,20 @@ With honey *for their meat*.
 [1] *Be Sether ragnam.*
 = 82 | Psalm LXXXII
 #1
-God in the great¹ assembly¹ stands
+God in the ¹ great ¹ assembly stands
 *Of kings and lordly states*;
-Among the gods on² both his hands
+Among the gods ² on both his hands
 He judges and debates.
 #2
-How long will ye pervert³ the right
-With judgement³ false and wrong,
+How long will ye ³ pervert the right
+With ³ judgement false and wrong,
 Favouring the wicked *by your might*,
 *Who thence grow bold and strong?*
 #3
-Regard⁴ the weak⁴ and fatherless;
-Despatch⁴ the poor⁴ man’s cause;
-And raise⁵ the man in deep distress
-By just⁵ and equal laws.
+⁴ Regard the ⁴ weak and fatherless;
+⁴ Despatch the ⁴ poor man’s cause;
+And ⁵ raise the man in deep distress
+By ⁵ just and equal laws.
 #4
 Defend the poor and desolate,
 And rescue from the hands
@@ -496,8 +496,8 @@ Of him *that help demands*.
 #5
 They know not, nor will understand;
 In darkness they walk on;
-The earth’s foundations all are moved,⁶
-And out⁶ of order gone.
+The earth’s foundations all are ⁶ moved,
+And ⁶ out of order gone.
 #6
 I said that ye were gods, yea, all
 The sons of God most high;
@@ -505,8 +505,8 @@ The sons of God most high;
 But ye shall die like men, and fall
 As other princes *die*.
 #8
-Rise, God; judge⁷ thou the earth *in might*;
-This *wicked* earth redress;⁷
+Rise, God; ⁷ judge thou the earth *in might*;
+This *wicked* earth ⁷ redress;
 For thou art he who shalt by right
 The nations all possess.
 [1] *Bagnadath-el.*
@@ -523,22 +523,22 @@ O God, hold not thy peace;
 Sit not thou still, O God *of strength*;
 *We cry and do not cease*.
 #2
-For lo! thy *furious* foes now swell,¹
-And storm¹ outrageously;
+For lo! thy *furious* foes now ¹ swell,
+And ¹ storm outrageously;
 And they that hate thee, *proud and fell*,
 Exalt their heads full high.
 #3
-Against thy people they contrive²
-Their³ plots and counsels deep;
-Them⁴ to ensnare they chiefly strive,
-Whom⁵ thou dost hide and keep.
+Against thy people they ² contrive
+³ Their plots and counsels deep;
+⁴ Them to ensnare they chiefly strive,
+⁵ Whom thou dost hide and keep.
 #4
 “Come, let us cut them off,” say they,
 “Till they no nation be;
 That Israel’s name for ever may
 Be lost in memory.”
 #5
-For they consult with⁶ all their might,
+For they consult ⁶ with all their might,
 And all as one in mind
 Themselves against thee they unite,
 And in firm union bind.
@@ -576,7 +576,7 @@ So let their princes *bleed*.
 *For they amidst their pride* have said,
 “By right now shall we seize
 God’s houses, and *will now invade*
-Their⁷ stately palaces.”
+⁷ Their stately palaces.”
 #13
 My God, oh make them as a wheel;
 *No quiet let them find*;
@@ -591,7 +591,7 @@ Till all the mountains blaze;
 So with thy whirlwind them pursue,
 And with thy tempest chase;
 #16
-And⁸ till they yield⁸ thee honour due,
+⁸ And till they ⁸ yield thee honour due,
 Lord, fill with shame their face.
 #17
 Ashamed and troubled let them be,
@@ -686,7 +686,7 @@ Hast hid *where none shall know*.
 #3
 Thine anger all thou hadst removed,
 And *calmly* didst return
-From thy fierce¹ wrath, which we had proved
+From thy ¹ fierce wrath, which we had proved
 Far worse than fire to burn.
 #4
 God of our saving health and peace,
@@ -699,8 +699,8 @@ For ever angry thus?
 Wilt thou thy frowning ire extend
 From age to age on us?
 #6
-Wilt thou not turn² and *hear our voice*,
-And us again revive,²
+Wilt thou not ² turn and *hear our voice*,
+And us again ² revive,
 That so thy people may rejoice,
 By thee preserved alive?
 #7
@@ -740,7 +740,7 @@ Her fruits *to be our food*.
 #13
 Before him Righteousness shall go,
 *His royal harbinger*:
-Then will³ he come, and not be slow;
+Then ³ will he come, and not be slow;
 His footsteps cannot err.
 [1] Heb. *The burning heat of thy wrath.*
 [2] Heb. *Turn to quicken us.*
@@ -752,7 +752,7 @@ O hear me, *I thee pray*;
 For I am poor, and almost pine
 With need *and sad decay*.
 #2
-Preserve my soul, for I¹ have trod
+Preserve my soul, for ¹ I have trod
 Thy ways, and love the just;
 Save thou thy servant, O my God,
 Who *still* in thee doth trust.
@@ -882,7 +882,7 @@ Unto the grave draws nigh.
 #4
 Reckoned I am with them that pass
 Down to the *dismal* pit;
-I am a man,¹ but weak, alas!
+I am a ¹ man, but weak, alas!
 And for that name unfit.
 #5
 From life discharged and parted quite
@@ -901,8 +901,8 @@ In horrid deeps *to mourn*.
 #7
 Thy wrath, *from which no shelter saves*,
 Full sore doth press on me;
-Thou² break’st upon me all thy waves,
-And² all thy waves break me.
+² Thou break’st upon me all thy waves,
+² And all thy waves break me.
 #8
 Thou dost my friends from me estrange,
 And mak’st me odious,
@@ -937,7 +937,7 @@ Each morn, and thee prevent.
 Why wilt thou, Lord, my soul forsake,
 And hide thy face from me,
 #15
-That am already bruised, and shake³
+That am already bruised, and ³ shake
 With terror sent from thee;
 Bruised and afflicted, and *so low*
 As ready to expire,
