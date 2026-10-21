@@ -289,10 +289,12 @@ const KEPT: { page: string; line: string; word: string; why: string }[] = [
   { page: "Paradise Regained/Book 4", line: "glorious Temple", word: "Temple", why: "the Temple, as the Oxford edition has it at 1.211, 1.256, 3.161, 4.217" },
 ];
 
-/* a capital the Oxford edition has otherwise than either (asked) */
+/* a capital, a mark or a spelling the Oxford edition has otherwise than either (asked) */
 const OXFORD: { page: string; line: string; from: string; to: string }[] = [
   { page: "Paradise Regained/Book 4", line: "an Imperial City stood", from: "Imperial", to: "imperial" },
   { page: "Psalm CXXXVI", line: "blaze his Name", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "Praise the Lord for", from: "Lord for", to: "Lord, for" },
+  { page: "Psalm CXXXVI", line: "mercies aye endure", from: "aye", to: "ay" },
   { page: "L’Allegro", line: "Knights and Barons bold", from: "Barons", to: "barons" },
   { page: "At a Solemn Music", line: "uplifted angel trumpets", from: "angel trumpets", to: "angel-trumpets" },
   /* God's pronouns through the psalm, as the Oxford edition has them at 2, 3 and 5 (asked); the Sun's, the King's, Sihon's and Og's left */
