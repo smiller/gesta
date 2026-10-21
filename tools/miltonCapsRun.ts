@@ -235,11 +235,87 @@ const KEPT: { page: string; line: string; word: string; why: string }[] = [
   { page: "Arcades", line: "Look, Nymphs and Shepherds", word: "Shepherds", why: "kept with its fellow" },
   { page: "Arcades", line: "Nymphs and Shepherds, dance", word: "Shepherds", why: "kept with its fellow" },
   { page: "Comus", line: "dapper Elves", word: "Elves", why: "kept with its fellow" },
+  /* as the Oxford edition has it (asked) */
+  { page: "Sonnets/19", line: "lest He returning", word: "He", why: "as the Oxford edition has it" },
+  { page: "On the New Forcers of Conscience", line: "old Priest writ", word: "Priest", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "The Prophet do him", word: "Prophet", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "what will He not do", word: "He", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "him in the Wilderness", word: "Wilderness", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "our great Feast", word: "Feast", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "went into the Temple", word: "Temple", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "found thee in the Temple", word: "Temple", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 1", line: "baptizing Prophet", word: "Prophet", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 2", line: "his great Prophet", word: "Prophet", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 2", line: "the wide Wilderness", word: "Wilderness", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 2", line: "that Prophet bold", word: "Prophet", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 2", line: "Among the Heathen", word: "Heathen", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 3", line: "The Temple, oft the Law", word: "Temple", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 3", line: "everlasting Kingdom", word: "Kingdom", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 3", line: "By Prophet or by Angel", word: "Prophet", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "both Angels are and Men", word: "Men", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "from Men and Angels", word: "Men", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "Alone into the Temple", word: "Temple", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "Much of the Soul", word: "Soul", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "The Wilderness", word: "Wilderness", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "to the Wilderness", word: "Wilderness", why: "as the Oxford edition has it" },
+  { page: "Paradise Regained/Book 4", line: "both ends of heaven", word: "heaven", why: "as the Oxford edition has it: the sky of a storm" },
+  { page: "Paradise Regained/Book 4", line: "with Godlike force", word: "Godlike", why: "as the Oxford edition has it" },
+  { page: "A Paraphrase on Psalm CXIV", line: "Of Him that ever was", word: "Him", why: "as the Oxford edition has it" },
+  { page: "On the Death of a Fair Infant Dying of a Cough", line: "in earth’s dark womb", word: "earth’s", why: "as the Oxford edition has it" },
+  { page: "On the Death of a Fair Infant Dying of a Cough", line: "in nature’s true behoof", word: "nature’s", why: "as the Oxford edition has it" },
+  { page: "L’Allegro", line: "In heaven yclep’d", word: "heaven", why: "as the Oxford edition has it" },
+  { page: "Il Penseroso", line: "the heaven’s wide pathless way", word: "heaven’s", why: "as the Oxford edition has it" },
+  { page: "At a Solemn Music", line: "To Him that sits", word: "Him", why: "as the Oxford edition has it" },
+  { page: "At a Solemn Music", line: "To live with Him", word: "Him", why: "as the Oxford edition has it" },
+  { page: "Upon the Circumcision", line: "till He, that dwelt", word: "He", why: "as the Oxford edition has it" },
+  { page: "Arcades", line: "Such a rural Queen", word: "Queen", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "But this Isle", word: "Isle", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "I shoot from heaven", word: "heaven", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "top of heaven", word: "heaven", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "hung in heaven", word: "heaven", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "hovering angel", word: "angel", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "That He, the Supreme Good", word: "He", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "liveried angels", word: "angels", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "sadly, Shepherd", word: "Shepherd", why: "as the Oxford edition has it: addressed" },
+  { page: "Comus", line: "joined with hell", word: "hell", why: "as the Oxford edition has it" },
+  { page: "Comus", line: "prithee Shepherd", word: "Shepherd", why: "as the Oxford edition has it: addressed" },
+  { page: "Comus", line: "some good angel", word: "angel", why: "as the Oxford edition has it" },
+  { page: "At a Solemn Music", line: "uplifted angel trumpets", word: "angel", why: "as the Oxford edition has it, angel-trumpets" },
+  /* earth's in Comus, as the Oxford edition has it in the Fair Infant */
+  { page: "Comus", line: "mixture of earth’s mould", word: "earth’s", why: "as the Oxford edition has earth’s in the Fair Infant 30" },
+  { page: "Comus", line: "And earth’s base", word: "earth’s", why: "as the Oxford edition has earth’s in the Fair Infant 30" },
+  { page: "Comus", line: "green earth’s end", word: "earth’s", why: "as the Oxford edition has earth’s in the Fair Infant 30" },
+  /* as the Oxford edition has the same word in the same sense elsewhere in the poem */
+  { page: "Paradise Regained/Book 4", line: "glorious Temple", word: "Temple", why: "the Temple, as the Oxford edition has it at 1.211, 1.256, 3.161, 4.217" },
 ];
 
+/* a capital the Oxford edition has otherwise than either (asked) */
+const OXFORD: { page: string; line: string; from: string; to: string }[] = [
+  { page: "Paradise Regained/Book 4", line: "an Imperial City stood", from: "Imperial", to: "imperial" },
+  { page: "Psalm CXXXVI", line: "blaze his Name", from: "his", to: "His" },
+  { page: "L’Allegro", line: "Knights and Barons bold", from: "Barons", to: "barons" },
+  { page: "At a Solemn Music", line: "uplifted angel trumpets", from: "angel trumpets", to: "angel-trumpets" },
+  /* God's pronouns through the psalm, as the Oxford edition has them at 2, 3 and 5 (asked); the Sun's, the King's, Sihon's and Og's left */
+  { page: "Psalm CXXXVI", line: "Praise the Lord for he is kind", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "For his mercies aye endure", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "For of gods he is", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "O let us his praises", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "That with his miracles", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "That by his wisdom", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "That by his all-commanding", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "with his thunder-clasping", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "from thence his Israel", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "waves he cleft", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "chosen people he did", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "battle he brought", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "Og he did", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "to his servant Israel", from: "his", to: "His" },
+  { page: "Psalm CXXXVI", line: "creatures he doth", from: "he", to: "He" },
+  { page: "Psalm CXXXVI", line: "That his mansion", from: "his", to: "His" },
+];
 const label = (key: string): string => key.slice(MILTON.length + 1).replace(/\.md$/, "");
-const all: { page: string; n: number; line: string; c: Change; kept?: string }[] = [];
-const met = new Set<(typeof KEPT)[number]>();
+const all: { page: string; n: number; line: string; c: Change; kept?: string; after?: string }[] = [];
+const met = new Set<(typeof KEPT)[number]>(), oxford = new Set<(typeof OXFORD)[number]>();
 const out: Record<string, string> = {};
 for (const p of pages) {
   const md = readFileSync(p.from, "utf8");
@@ -255,11 +331,22 @@ for (const p of pages) {
       all.push({ page: label(p.key), n, line: body, c, kept: k?.why });
       return !k;
     });
-    return head + applied(body, changes);
+    for (const o of OXFORD.filter((o) => o.page === label(p.key) && body.includes(o.line))) {
+      const at = body.slice(body.indexOf(o.line)).search(new RegExp(`\\b${o.from}\\b`)) + body.indexOf(o.line);
+      const c = { at, from: o.from, to: o.to, usage: TABLE.get(o.from.toLowerCase()) ?? { cap: 0, low: 0 } };
+      changes.push(c);
+      all.push({ page: label(p.key), n, line: body, c });
+      oxford.add(o);
+    }
+    changes.sort((a, b) => a.at - b.at);
+    const after = applied(body, changes);
+    for (const a of all) if (a.page === label(p.key) && a.line === body && a.after === undefined) a.after = after;
+    return head + after;
   });
   if (next !== md) out[p.key] = next;
 }
 const unmet = KEPT.filter((k) => !met.has(k));
+if (oxford.size !== OXFORD.length) throw new Error("an Oxford reading that matches nothing");
 if (unmet.length) throw new Error("kept words that match nothing: " + unmet.map((k) => `${k.page}: ${k.word} in “${k.line}”`).join("; "));
 if (process.env.LIST) for (const a of all) console.log(`${a.kept ? "KEPT " : ""}${a.page} ${a.n}: ${a.c.from}→${a.c.to} (PL ${a.c.usage.cap}/${a.c.usage.low}) | ${a.line}`);
 const made = all.filter((a) => !a.kept), kept = all.filter((a) => a.kept);
@@ -278,7 +365,7 @@ for (const p of pages) {
 }
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 const mark = (line: string, c: Change, word: string): string => esc(line.slice(0, c.at)) + `<b>${esc(word)}</b>` + esc(line.slice(c.at + c.from.length));
-const row = (a: (typeof all)[number], to: boolean) => `<tr><td class="n">${esc(a.page)} ${a.n}</td><td>${mark(a.line, a.c, a.c.from)}</td><td>${to ? mark(a.line, a.c, a.c.to) : esc(a.kept!)}</td><td class="n">Paradise Lost ${a.c.usage.cap} capital, ${a.c.usage.low} lower</td></tr>`;
+const row = (a: (typeof all)[number], to: boolean) => `<tr><td class="n">${esc(a.page)} ${a.n}</td><td>${mark(a.line, a.c, a.c.from)}</td><td>${to ? mark(a.after!, a.c, a.c.to) : esc(a.kept!)}</td><td class="n">Paradise Lost ${a.c.usage.cap} capital, ${a.c.usage.low} lower</td></tr>`;
 writeFileSync(join(dirname(OUT), basename(OUT) + ".html"), `<!doctype html><meta charset="utf-8"><title>Milton's capitals</title>
 <style>body{font:16px/1.45 Georgia,serif;margin:2em auto;max-width:72em;padding:0 1em}td{padding:.1em 1em .1em 0;vertical-align:top}.n{color:#888;font-size:.8em;white-space:nowrap}b{background:#fff3b0}</style>
 <h1>Milton's capitals, matched to Paradise Lost</h1>
