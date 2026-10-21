@@ -339,6 +339,14 @@ is in the plan's record, under the phase named):
   outline, checks the count against Thurber's margin, and writes an import
   folder with a review page. `tools/miltonSpellings.ts` the spellings and
   names both runs give the shelf's or the modern form, as asked.
+  `tools/miltonCaps.ts` — a Milton page's capitals matched to the bookshelf's
+  Paradise Lost, word by word from its mid-sentence usage (nine times in ten
+  either way), a line's or sentence's first word and a word it lacks left;
+  pure, its test beside it; `tools/miltonCapsRun.ts` applies it to the pages
+  made from the Harvard Classics as the backup has them now, the words kept
+  by reading (a personification, a name, a title, another sense) listed with
+  their reasons, and writes an import folder with a review page; it rewrites
+  Arcades and Comus in their own folder, so it runs after miltonMasksRun.ts.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
