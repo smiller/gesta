@@ -133,7 +133,9 @@ export const enterInRow: Command = (state, dispatch) => {
   }
   if (r.cell < 0) {
     const atEnd = $c.parentOffset === r.row.content.size;
-    tr.split($c.pos, 1, atEnd ? [{ type: N.line }] : undefined);
+    /* text carried off the rest of a split line begins a line of its own
+       (pin: rowKeys.test › a ⟨…⟩ row split keeps the rest of the line) */
+    tr.split($c.pos, 1, atEnd || r.row.attrs.kind === "cont" ? [{ type: N.line }] : undefined);
     if (dispatch) dispatch(caretAt(tr, $c.pos + 2));
     return true;
   }

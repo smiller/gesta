@@ -254,6 +254,17 @@ test("a ⟨line⟩ token at a row's head is the row's declared kind, not its tex
   expect(visibleText(d)).not.toContain("⟨line⟩");
 });
 
+test("a ⟨…⟩ token at a row's head declares the row the rest of the verse line above, not its text", () => {
+  const d = parseMarkdown("::: verse\nRelate by whom.\n\n**Messenger**\n⟨…⟩By Samson.\n⟨…⟩ That still lessens\n:::");
+  const rows = d.firstChild!;
+  expect(rows.child(3).attrs.kind).toBe("cont");
+  expect(rows.child(3).textContent).toBe("By Samson.");
+  expect(rows.child(4).attrs.kind).toBe("cont");
+  expect(rows.child(4).textContent).toBe("That still lessens");
+  expect(visibleText(d)).not.toContain("⟨…⟩");
+  expect(visibleText(parseMarkdown("::: verse\na ⟨…⟩ b\n:::"))).toBe("a ⟨…⟩ b");
+});
+
 test("the token is a row's head only: in a paragraph, or mid-row, it is text", () => {
   expect(visibleText(parseMarkdown("⟨line⟩ in prose"))).toBe("⟨line⟩ in prose");
   expect(visibleText(parseMarkdown("::: verse\na ⟨line⟩ b\n:::"))).toBe("a ⟨line⟩ b");

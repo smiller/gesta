@@ -96,6 +96,19 @@ export const read = {
   /* the stanza step (2026-09-28): the number each stanza DRAWS (its ::before), and the line numbers shown */
   stanzas: (page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
   selectBetween: (page, a, b) => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),
+  /* each rest of a split line: its number, and how far its text starts past the end of the half above, in px; and the numbers drawn */
+  splitRests: (page) => page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#editor .ProseMirror .verse > .vrow")];
+    const ends = (el) => { const r = document.createRange(); r.selectNodeContents(el); const rs = r.getClientRects(); return rs.length ? [rs[0].left, rs[rs.length - 1].right] : null; };
+    let above = null;
+    const rests = [];
+    for (const el of rows) {
+      if (!el.dataset.line) continue;
+      if (el.dataset.kind === "cont" && above) rests.push({ text: el.textContent, line: +el.dataset.line, past: Math.round(ends(el)[0] - ends(above)[1]), setIn: getComputedStyle(el).paddingLeft });
+      above = el;
+    }
+    return { rests, drawn: rows.filter((el) => el.classList.contains("shown")).map((el) => +el.dataset.line) };
+  }),
   clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
   corner: (page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),

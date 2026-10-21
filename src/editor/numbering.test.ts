@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
-import { lineUnits, blocksOf, whollyIn, drawsInk, paintsLines } from "./numbering.ts";
+import { lineUnits, blocksOf, whollyIn, drawsInk, paintsLines, countAt } from "./numbering.ts";
 
 const doc = parseMarkdown;
 const kinds = (md: string, interval = 0): string =>
@@ -34,6 +34,24 @@ test("a ⟨line⟩ row is a line whatever it is set in", () => {
   expect(kinds("::: verse\n⟨line⟩*a* | *b*\n:::")).toBe("line:1");
   /* a declared row drawing nothing is still no unit */
   expect(kinds("::: verse\n⟨line⟩\n:::")).toBe("");
+});
+
+test("a ⟨…⟩ row is the rest of the verse line above it, past the speakers between, and draws no number of its own", () => {
+  const md = "::: verse 1561\nThe desolation of a hostile city.\n\n**Manoa**\nRelate by whom.\n\n**Messenger**\n⟨…⟩By Samson.\n\n**Manoa**\n⟨…⟩That still lessens\nThe sorrow, and converts it nigh to joy.\n:::";
+  expect(kinds(md)).toBe("line:1561 speaker line:1562 speaker line:1562 speaker line:1562 line:1563");
+  const u = lineUnits(doc(md), 1);
+  expect(u.filter((x) => x.shown).map((x) => x.line)).toEqual([1561, 1562, 1563]);
+  /* wholly italic, it is still the line's rest, never a direction */
+  expect(kinds("::: verse\nWhat, Curio?\n⟨…⟩*The hart.*\n:::")).toBe("line:1 line:1");
+  /* with no line above it in the block it begins one */
+  expect(kinds("::: verse\n**Messenger**\n⟨…⟩By Samson.\nnext\n:::")).toBe("speaker line:1 line:2");
+});
+
+test("a passage quoted from the rest of a split line is numbered from the line it finishes", () => {
+  const d = doc("::: verse 1562\nRelate by whom.\n**Messenger**\n⟨…⟩By Samson.\nThe sorrow\n:::");
+  const block = d.firstChild!, rows = lineUnits(d, 0);
+  expect(countAt(block, 0, rows[2].pos)).toBe(1562);
+  expect(countAt(block, 0, rows[3].pos)).toBe(1563);
 });
 
 // a stanza has no apparatus: a row set wholly in italics is an

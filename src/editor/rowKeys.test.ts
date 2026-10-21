@@ -75,6 +75,13 @@ test("a ⟨line⟩ row keeps its kind on a mid-split and hands none to a line ma
   expect(end.doc.firstChild!.child(1).attrs.kind).toBe(null);
 });
 
+test("a ⟨…⟩ row split keeps the rest of the line on its first half; the text carried below begins a line of its own", () => {
+  const mid = run(enterInRow, at("::: verse\nRelate by whom.\n⟨…⟩That still lessens the sorrow\n:::", "lessens "));
+  expect(md(mid)).toBe("::: verse\nRelate by whom.\n⟨…⟩That still lessens\nthe sorrow\n:::");
+  const end = run(enterInRow, at("::: verse\nRelate by whom.\n⟨…⟩By Samson.\n:::", "By Samson."));
+  expect(end.doc.firstChild!.child(2).attrs.kind).toBe(null);
+});
+
 test("Enter in a paired row splits the caret's cell and carries the rest to a new row", () => {
   const a = run(enterInRow, at("::: verse\nalpha | one\nbeta | two\n:::", "al"));
   expect(md(a)).toBe("::: verse\nal | one\npha |\nbeta | two\n:::");

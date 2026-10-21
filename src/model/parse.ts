@@ -11,7 +11,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_LINE_AT,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT,
   fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -174,9 +174,10 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
     if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from, "note"); continue; }
     if (MARGIN_NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from, "margin_note"); continue; }
     const raw = line.trim();
-    const declared = ROW_LINE_AT.test(raw);
-    const body = declared ? raw.replace(ROW_LINE_AT, "") : raw;
-    const meta = declared ? { kind: "line" } : undefined;
+    const head = ROW_KIND_AT.exec(raw);
+    const declared = !!head;
+    const body = head ? raw.slice(head[0].length) : raw;
+    const meta = head ? { kind: head[1] === "line" ? "line" : "cont" } : undefined;
     if (!body && !declared) sink.push("gap", "div", 0);
     else {
       const at = verseSplit(body);

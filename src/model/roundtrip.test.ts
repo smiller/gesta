@@ -71,6 +71,7 @@ const ROUND_TRIPS = [
   "⟨xxiv⟩**Enter GHOST**",
   "::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*a* | *b*\n⟨line⟩\n:::",
   "::: prose\n⟨line⟩ |\n:::",
+  "::: verse\nRelate by whom.\n\n**Messenger**\n⟨…⟩By Samson.\n\n**Manoa**\n⟨…⟩That still lessens\nThe sorrow, and converts it nigh to joy.\n:::",
   "an image ![alt text](2022-02-06-img-1.webp) inline",
   "<u>underlined</u> text",
   "<Sean> a transcript line\n<suzie> stays literal",

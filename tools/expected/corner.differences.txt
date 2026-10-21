@@ -240,3 +240,6 @@ the host's link followed · value · the step's caret now goes to the body's end
 a reference pasted onto a word · * · new here, the old app frozen
 a reference pasted mid-sentence · * · new here, the old app frozen
 the page's own reference pasted mid-sentence · * · new here, the old app frozen
+split lines in Samson · * · new here, the old app frozen
+typed into the first half of a split line · * · new here, the old app frozen
+⌃⌘R on the rest of a split line · * · new here, the old app frozen

@@ -54,7 +54,7 @@ export function whollyIn(row: Node, mark: MarkType): boolean {
 /* bold first: a row bold and italic both is a speaker (pin: numbering.test
    › a wholly bold-italic row is a speaker) */
 function rowKind(row: Node): UnitKind {
-  if (row.attrs.kind === "line") return "line";
+  if (row.attrs.kind === "line" || row.attrs.kind === "cont") return "line";
   if (whollyIn(row, schema.marks.strong)) return "speaker";
   if (whollyIn(row, schema.marks.em)) return "stage";
   return "line";
@@ -68,11 +68,14 @@ export function lineUnits(doc: Node, interval: number): Unit[] {
 /* the ONE walk over one block, wherever it stands: a second copy of it
    drifted from the count */
 /* the block's count at a row: one past the last counted line before it
-   (the block's start when none) — what a passage cut or quoted from that
-   row is numbered from, whatever the row is */
+   (the block's start when none), or the line a rest finishes — what a
+   passage cut or quoted from that row is numbered from, whatever the row is */
 export function countAt(block: Node, blockPos: number, rowPos: number): number {
   let n = block.attrs.start as number;
-  for (const u of blockUnits(block, blockPos, 0)) { if (u.pos >= rowPos) break; if (u.line) n = u.line + 1; }
+  for (const u of blockUnits(block, blockPos, 0)) {
+    if (u.pos >= rowPos) return u.pos === rowPos && u.line && u.line < n ? u.line : n;
+    if (u.line) n = u.line + 1;
+  }
   return n;
 }
 export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
@@ -88,10 +91,13 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
        italics is an inscription or a song, and it is numbered (pin:
        numbering.test › every inked row of a stanza is a line) */
     const kind: UnitKind = prose ? "sentence" : block.attrs.stanza != null ? "line" : rowKind(row);
-    const num = kind === "line" || kind === "sentence" ? ++line : 0;
+    /* the rest of a split line takes the number of the line it finishes,
+       once the block has one */
+    const rest = kind === "line" && row.attrs.kind === "cont" && line >= (block.attrs.start as number);
+    const num = kind === "line" || kind === "sentence" ? (rest ? line : ++line) : 0;
     out.push({
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
-      shown: interval > 0 && kind === "line" && num % interval === 0,
+      shown: interval > 0 && kind === "line" && !rest && num % interval === 0,
     });
   });
   return out;

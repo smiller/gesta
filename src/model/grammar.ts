@@ -54,10 +54,16 @@ export function folioToken(label: string): string {
    song. IN THE TEXT, not a side table, so a backup carries it. MEASURED: no
    `⟨word⟩` of any kind exists in the corpus, and `line` is not a folio label
    (n, e are not roman). The token names what the row IS, so a second value
-   can follow the same grammar; only this one is read (pin: parse.test › a
-   ⟨line⟩ token at a row's head is the row's declared kind, not its text) */
+   follows the same grammar (pin: parse.test › a ⟨line⟩ token at a row's
+   head is the row's declared kind, not its text) */
 export const ROW_LINE_TOKEN = "⟨line⟩";
-export const ROW_LINE_AT = /^⟨line⟩\s*/;
+/* the row that is the rest of the verse line above it: a line split
+   between speakers, Samson's "Relate by whom." / "By Samson." / "That
+   still lessens", is one line (pin: numbering.test › a ⟨…⟩ row is the rest
+   of the verse line above it) */
+export const ROW_CONT_TOKEN = "⟨…⟩";
+export const ROW_KIND_AT = /^⟨(line|…)⟩\s*/;
+export const rowKindToken = (kind: string | null): string => (kind === "line" ? ROW_LINE_TOKEN : kind === "cont" ? ROW_CONT_TOKEN : "");
 
 /* ---------- the ::: family ---------- */
 /* "::: verse 2" numbers its first line 2; 1 when the opener carries none.

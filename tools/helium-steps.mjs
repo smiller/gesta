@@ -2311,6 +2311,27 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘R from a second half-line beside its translation", { seeded: paired, lines: await R.clipboardLines(page) });
   await page.keyboard.press("Escape");
     }],
+    ["split lines", async () => {
+  /* a verse line split between speakers is one line (2026-10-20, asked): Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." cites 1563 */
+  await A.foreignWrite(page, "bookshelf/Milton, John/Samson Agonistes", fixture("samson-split-lines.md"));
+  const seeded = await seededIn("bookshelf/Milton, John/Samson Agonistes");
+  await page.goto(A.url("bookshelf/Milton%2C%20John/Samson%20Agonistes"));
+  await A.waitEntry(page, "bookshelf/Milton, John/Samson Agonistes", 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await log("split lines in Samson", { seeded, ...(await R.splitRests(page)) });
+  await R.caretAfter(page, "Relate by whom", "Relate by whom".length);
+  await page.keyboard.type(" then");
+  await rest(page);
+  await rest(page);
+  await log("typed into the first half of a split line", await R.splitRests(page));
+  await R.selectBetween(page, "By Samson", "By Samson");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on the rest of a split line", { lines: await R.clipboardLines(page) });
+  await page.keyboard.press("Escape");
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the
