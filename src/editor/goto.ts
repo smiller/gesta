@@ -31,7 +31,7 @@ export interface Hit { pos: number; nth: number; block: Unit[] }
 export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] } {
   const blocks = blocksOf(lineUnits(doc, 0));
   const hits: Hit[] = [];
-  blocks.forEach((rows, i) => { for (const u of rows) if (u.line === n) hits.push({ pos: u.pos, nth: i + 1, block: rows }); });
+  blocks.forEach((rows, i) => { for (const u of rows) if (u.line === n && !u.rest) hits.push({ pos: u.pos, nth: i + 1, block: rows }); });
   return { hits, blocks };
 }
 export function lineRefusal(blocks: Unit[][], n: number): string {
@@ -100,7 +100,7 @@ export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   if (!last) return "no stanzas here";
   if (!found) return "no stanza " + s + " here — the last is " + last;
   const { node, pos } = found as { node: Node; pos: number };
-  const lines = blockUnits(node, pos, 0).filter((u) => u.line);
+  const lines = blockUnits(node, pos, 0).filter((u) => u.line && !u.rest);
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
   return want ? { pos: want.pos } : "stanza " + s + " has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
 }

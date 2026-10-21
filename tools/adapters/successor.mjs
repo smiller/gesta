@@ -104,7 +104,7 @@ export const read = {
     const rests = [];
     for (const el of rows) {
       if (!el.dataset.line) continue;
-      if (el.dataset.kind === "cont" && above) rests.push({ text: el.textContent, line: +el.dataset.line, past: Math.round(ends(el)[0] - ends(above)[1]), setIn: getComputedStyle(el).paddingLeft });
+      if (el.dataset.kind === "cont" && above) rests.push({ text: el.textContent, line: +el.dataset.line, past: Math.round(ends(el)[0] - ends(above)[1]), setIn: getComputedStyle(el).paddingLeft, lines: new Set([...(() => { const r = document.createRange(); r.selectNodeContents(el); return r.getClientRects(); })()].filter((x) => x.width).map((x) => Math.round(x.top))).size });
       above = el;
     }
     return { rests, drawn: rows.filter((el) => el.classList.contains("shown")).map((el) => +el.dataset.line) };

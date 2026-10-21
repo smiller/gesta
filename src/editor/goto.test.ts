@@ -17,6 +17,12 @@ describe("askKind", () => {
   });
 });
 describe("lineHits and the cycle", () => {
+  it("a split line is one hit, on its first half; a stanza counts it once", () => {
+    const split = parseMarkdown("::: verse 1562\nRelate by whom.\n**Messenger**\n⟨…⟩By Samson.\nThe sorrow\n:::");
+    const { hits } = lineHits(split, 1562);
+    expect(hits.map((h) => split.nodeAt(h.pos)!.textContent)).toEqual(["Relate by whom."]);
+    expect(stanzaHit(parseMarkdown("::: stanza 1\na\n⟨…⟩b\nc\n:::"), "1.9")).toBe("stanza 1 has 2 lines");
+  });
   it("a line in two blocks is two hits; Enter again cycles and wraps; an edit between presses keeps the standing row", () => {
     const { hits, blocks } = lineHits(two, 3);
     expect(blocks.length).toBe(2);

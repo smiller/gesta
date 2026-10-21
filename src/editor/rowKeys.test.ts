@@ -80,6 +80,10 @@ test("a ⟨…⟩ row split keeps the rest of the line on its first half; the te
   expect(md(mid)).toBe("::: verse\nRelate by whom.\n⟨…⟩That still lessens\nthe sorrow\n:::");
   const end = run(enterInRow, at("::: verse\nRelate by whom.\n⟨…⟩By Samson.\n:::", "By Samson."));
   expect(end.doc.firstChild!.child(2).attrs.kind).toBe(null);
+  /* at its start, the row opened above is a plain one and the rest stays the rest */
+  const start = run(enterInRow, at("::: verse\nRelate by whom.\n⟨…⟩By Samson.\n:::", "By Samson.", 0));
+  expect(md(start)).toBe("::: verse\nRelate by whom.\n\n⟨…⟩By Samson.\n:::");
+  expect(start.doc.firstChild!.child(1).attrs.kind).toBe(null);
 });
 
 test("Enter in a paired row splits the caret's cell and carries the rest to a new row", () => {
@@ -179,6 +183,13 @@ test("⌃⌘I declares the selection's rows lines, and returns them to the conve
   const mixed = at("::: verse\n⟨line⟩*a*\n*b*\n:::", "a");
   const sel2 = mixed.apply(mixed.tr.setSelection(TextSelection.create(mixed.doc, mixed.selection.from, mixed.doc.content.size - 3)));
   expect(md(run(toggleDeclaredLine, sel2))).toBe("::: verse\n⟨line⟩*a*\n⟨line⟩*b*\n:::");
+  /* the rest of a split line is a line already, and stays the rest */
+  const split = at("::: verse\nRelate by whom.\n**Messenger**\n⟨…⟩*By Samson.*\n:::", "Relate");
+  const over = split.apply(split.tr.setSelection(TextSelection.create(split.doc, 2, split.doc.content.size - 3)));
+  const declared = run(toggleDeclaredLine, over);
+  expect(md(declared)).toBe("::: verse\n⟨line⟩Relate by whom.\n⟨line⟩**Messenger**\n⟨…⟩*By Samson.*\n:::");
+  expect(md(run(toggleDeclaredLine, declared))).toBe("::: verse\nRelate by whom.\n**Messenger**\n⟨…⟩*By Samson.*\n:::");
+  expect(md(run(toggleDeclaredLine, at("::: verse\nWhat, Curio?\n⟨…⟩*The hart.*\n:::", "hart")))).toBe("::: verse\nWhat, Curio?\n⟨…⟩*The hart.*\n:::");
   expect(refuses(toggleDeclaredLine, at("prose *here*", "here"))).toBe(true);
   expect(refuses(toggleDeclaredLine, at("::: verse\na\n::: note\ngloss\n:::\n:::", "gloss"))).toBe(true);
 });

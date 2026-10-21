@@ -52,6 +52,11 @@ test("a passage quoted from the rest of a split line is numbered from the line i
   const block = d.firstChild!, rows = lineUnits(d, 0);
   expect(countAt(block, 0, rows[2].pos)).toBe(1562);
   expect(countAt(block, 0, rows[3].pos)).toBe(1563);
+  /* from the speaker row or the gap before a rest, the same line */
+  expect(countAt(block, 0, rows[1].pos)).toBe(1562);
+  const gapped = doc("::: verse 1562\nRelate by whom.\n\n**Messenger**\n⟨…⟩By Samson.\n:::").firstChild!;
+  expect(countAt(gapped, 0, 1 + gapped.child(0).nodeSize)).toBe(1562);
+  expect(rows.map((u) => u.rest)).toEqual([false, false, true, false]);
 });
 
 // a stanza has no apparatus: a row set wholly in italics is an

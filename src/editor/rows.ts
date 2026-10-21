@@ -23,9 +23,8 @@ class RowView implements NodeView {
     this.kind(node);
     return true;
   }
-  /* the indent the measuring pass writes on a rest is never the document's:
-     read back as a change, it redrew the row with none (pin: split lines ›
-     split lines in Samson) */
+  /* a style on this row is never the document's: read back as a change,
+     it redrew the row without it (pin: split lines › split lines in Samson) */
   ignoreMutation(m: ViewMutationRecord): boolean { return m.type === "attributes" && m.target === this.dom && m.attributeName === "style"; }
 }
 

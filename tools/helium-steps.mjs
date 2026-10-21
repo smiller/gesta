@@ -2312,7 +2312,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
     }],
     ["split lines", async () => {
-  /* a verse line split between speakers is one line (2026-10-20, asked): Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." cites 1563 */
+  /* a verse line split between speakers is one line (2026-10-20, asked): Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." cites 1563; a rest typed longer than its row has room for is set in less, not wrapped */
   await A.foreignWrite(page, "bookshelf/Milton, John/Samson Agonistes", fixture("samson-split-lines.md"));
   const seeded = await seededIn("bookshelf/Milton, John/Samson Agonistes");
   await page.goto(A.url("bookshelf/Milton%2C%20John/Samson%20Agonistes"));
@@ -2331,6 +2331,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await log("⌃⌘R on the rest of a split line", { lines: await R.clipboardLines(page) });
   await page.keyboard.press("Escape");
+  await R.caretAfter(page, "That still lessens", "That still lessens".length);
+  await page.keyboard.type(" and converts the sorrow nigh to joy, and more");
+  await rest(page);
+  await rest(page);
+  await log("a rest typed past its row's width", await R.splitRests(page));
     }],
   ];
   /* each section starts from the one window, in front, nothing open over

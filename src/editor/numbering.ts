@@ -18,6 +18,8 @@ export interface Unit {
   blockPos: number;
   /* would a view draw the number — the interval's only effect */
   shown: boolean;
+  /* the rest of a split line, numbered with the line it finishes */
+  rest: boolean;
 }
 
 /* text that is not whitespace, or a picture; a folio draws nothing here, a
@@ -68,13 +70,15 @@ export function lineUnits(doc: Node, interval: number): Unit[] {
 /* the ONE walk over one block, wherever it stands: a second copy of it
    drifted from the count */
 /* the block's count at a row: one past the last counted line before it
-   (the block's start when none), or the line a rest finishes — what a
-   passage cut or quoted from that row is numbered from, whatever the row is */
+   (the block's start when none), or the line a rest finishes when the
+   first line at or after the row is one — what a passage cut or quoted from
+   that row is numbered from, whatever the row is */
 export function countAt(block: Node, blockPos: number, rowPos: number): number {
   let n = block.attrs.start as number;
   for (const u of blockUnits(block, blockPos, 0)) {
-    if (u.pos >= rowPos) return u.pos === rowPos && u.line && u.line < n ? u.line : n;
-    if (u.line) n = u.line + 1;
+    if (!u.line) continue;
+    if (u.pos >= rowPos) return u.rest ? u.line : n;
+    n = u.line + 1;
   }
   return n;
 }
@@ -97,7 +101,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
     const num = kind === "line" || kind === "sentence" ? (rest ? line : ++line) : 0;
     out.push({
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
-      shown: interval > 0 && kind === "line" && !rest && num % interval === 0,
+      shown: interval > 0 && kind === "line" && !rest && num % interval === 0, rest,
     });
   });
   return out;

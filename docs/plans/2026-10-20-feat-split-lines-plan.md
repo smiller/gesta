@@ -58,4 +58,34 @@ Cyrano now." Checked in the Oxford World's Classics edition: Samson's
   run approved is the second, whose whole diff is this section's three
   readings.
 
-REVIEW CYCLES: 0
+## Review cycle 1 (2026-10-21)
+
+One `/code-review` at high over 5067615 (⌃⌘M's caret probe, folded into
+this batch as asked on 2026-10-19) and 5bd9481: 130,767 tokens (the run's
+final context plus output, read from its transcript), ten findings, nine
+on this feature; none on 5067615. Fixed in one commit:
+
+1. `countAt` from a speaker row or gap before a rest counted one past the
+   line it finishes, so a quote or copy opening there was fenced a line
+   high. Now the first numbered row at or after the cut decides.
+2. Enter at the start of a `⟨…⟩` row left the mark on the empty row above
+   and made the text a new line. The row opened above is now a plain one.
+3. ⌃⌘G's Line box found the half and each rest as separate hits, and a
+   stanza counted a rest as a line. Rests are passed over.
+4. ⌃⌘I overwrote a rest's kind with "line". A rest now counts as declared
+   and keeps its kind.
+5. A rest the indent had wrapped was measured by its last visual line,
+   so the fit clamp never pulled it back. It is now measured unwrapped.
+   MEASURED in headless Helium (the new reading "a rest typed past its
+   row's width"): the old pass left it on two lines set in 276px, the new
+   one sets it in 149px on one.
+6. The pass built every verse and prose block's units each frame, and
+   measured every row of a block with a rest. It now skips blocks with no
+   `⟨…⟩` row and measures only the rests and the lines they finish.
+7. `Unit` carries `rest`, the one fact the count, ⌃⌘G and the pass share.
+8. and 9. Two comments: provenance ("asked") in continuations.ts, and the
+   row view's comment naming the measuring pass.
+10. A `⟨…⟩` pair in prose was set in on screen but numbered as a sentence.
+   The pass now runs over verse only.
+
+REVIEW CYCLES: 1

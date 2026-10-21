@@ -132,10 +132,14 @@ export const enterInRow: Command = (state, dispatch) => {
     return true;
   }
   if (r.cell < 0) {
-    const atEnd = $c.parentOffset === r.row.content.size;
-    /* text carried off the rest of a split line begins a line of its own
-       (pin: rowKeys.test › a ⟨…⟩ row split keeps the rest of the line) */
-    tr.split($c.pos, 1, atEnd || r.row.attrs.kind === "cont" ? [{ type: N.line }] : undefined);
+    const atEnd = $c.parentOffset === r.row.content.size, rest = r.row.attrs.kind === "cont";
+    /* text carried off the rest of a split line begins a line of its own;
+       a row opened above it is a plain one (pin: rowKeys.test › a ⟨…⟩ row
+       split keeps the rest of the line) */
+    if (rest && $c.parentOffset === 0) {
+      tr.split($c.pos, 1, [{ type: N.line, attrs: r.row.attrs }]);
+      tr.setNodeMarkup(start, undefined, { ...r.row.attrs, kind: null });
+    } else tr.split($c.pos, 1, atEnd || rest ? [{ type: N.line }] : undefined);
     if (dispatch) dispatch(caretAt(tr, $c.pos + 2));
     return true;
   }
@@ -277,10 +281,13 @@ export const toggleDeclaredLine: Command = (state, dispatch) => {
     return true;
   });
   if (!rows.length) return false;
-  const kind = rows.every((r) => r.node.attrs.kind === "line") ? null : "line";
+  /* the rest of a split line is a line already, and keeps its kind (pin:
+     rowKeys.test › ⌃⌘I declares the selection's rows lines) */
+  const own = rows.filter((r) => r.node.attrs.kind !== "cont");
+  const kind = own.every((r) => r.node.attrs.kind === "line") ? null : "line";
   if (dispatch) {
     const tr = state.tr;
-    for (const r of rows) tr.setNodeMarkup(r.pos, undefined, { ...r.node.attrs, kind });
+    for (const r of own) tr.setNodeMarkup(r.pos, undefined, { ...r.node.attrs, kind });
     dispatch(tr);
   }
   return true;

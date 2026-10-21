@@ -243,3 +243,4 @@ the page's own reference pasted mid-sentence · * · new here, the old app froze
 split lines in Samson · * · new here, the old app frozen
 typed into the first half of a split line · * · new here, the old app frozen
 ⌃⌘R on the rest of a split line · * · new here, the old app frozen
+a rest typed past its row's width · * · new here, the old app frozen
