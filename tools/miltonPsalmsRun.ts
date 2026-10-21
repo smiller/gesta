@@ -65,8 +65,11 @@ entries[`${AUTHOR}/Psalms.md`] = `# Psalms\n\n::: note\n${NOTE}\n:::\n\n` + psal
   ["A Paraphrase on Psalm CXIV", "Psalm CXXXVI"].map((t) => `\n- [${t}](${href(`${AUTHOR}/${t}`)})`).join("");
 
 if (process.env.SLIPS) console.log(slips.join("\n"));
+/* a page the backup has is replaced only as this folder last wrote it:
+   one edited since in Gesta would be lost */
 const had = Object.keys(entries).filter((f) => existsSync(join(BACKUP, f)));
-if (had.length) throw new Error("the backup has these already: " + had.join(", "));
+const edited = had.filter((f) => !existsSync(join(OUT, f)) || readFileSync(join(BACKUP, f), "utf8") !== readFileSync(join(OUT, f), "utf8"));
+if (edited.length) throw new Error("the backup has these, changed since this folder wrote them: " + edited.join(", "));
 const IMPORTS = join(HOME, "Desktop/gesta-imports") + "/";
 if (!resolve(OUT).startsWith(IMPORTS)) throw new Error(`the folder is emptied before it is written, so it must be inside ${IMPORTS}: ${OUT}`);
 rmSync(OUT, { recursive: true, force: true });
