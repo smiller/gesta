@@ -88,4 +88,8 @@ on this feature; none on 5067615. Fixed in one commit:
 10. A `⟨…⟩` pair in prose was set in on screen but numbered as a sentence.
    The pass now runs over verse only.
 
+Accepted 2026-10-21. No confirmation pass was asked. ⌃⌘G to a split line
+highlights its first half alone, where a reference link to it highlights
+every part: looked at in Helium and kept as it is (2026-10-21).
+
 REVIEW CYCLES: 1

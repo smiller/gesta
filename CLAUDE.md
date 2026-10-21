@@ -321,6 +321,15 @@ is in the plan's record, under the phase named):
   settled as read on the page, the Oxford edition's readings, the names and
   spellings the bookshelf's Paradise Lost has as asked, and writes an import
   folder with a review page.
+  `tools/miltonPoems.ts` — Milton's shorter poems made pages, a page each
+  beside Lycidas: the furniture between a scan's lines told from verse, a
+  witness's stanza gaps, the verse paragraphs read from where the edition
+  indents a line (scan A's hOCR), an elision's apostrophe and the first
+  words' small capitals set right, the stanza numerals and headings as
+  italic rows; pure, its test beside it; `tools/miltonPoemsRun.ts` reads the
+  sixteen poems from the two scans, the lines whose reading was wrong as read
+  on the printed page, the spellings and names as asked, and writes an import
+  folder with a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
