@@ -330,6 +330,15 @@ is in the plan's record, under the phase named):
   sixteen poems from the two scans, the lines whose reading was wrong as read
   on the printed page, the spellings and names as asked, and writes an import
   folder with a review page.
+  `tools/miltonMasks.ts` — Arcades and Comus made pages: Thurber's edition
+  read for their outline (a speaker's prefix written out, a split line's
+  rest, the directions by their openings, the song headings, a verse
+  paragraph or a song's stanza) and the page laid out as a play, a speaker a
+  bold row, a direction or heading an italic row; pure, its test beside it;
+  `tools/miltonMasksRun.ts` reads the words from the two scans against that
+  outline, checks the count against Thurber's margin, and writes an import
+  folder with a review page. `tools/miltonSpellings.ts` the spellings and
+  names both runs give the shelf's or the modern form, as asked.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and

@@ -7,12 +7,13 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node
 import { join, dirname, basename, resolve } from "node:path";
 import { scanLines, editionLines, findStart, cutPoem, readLine, vocabulary, unstressed, letters, similar } from "./harvardMilton.ts";
 import { hocrLines, stripSheets, type HocrLine } from "./harvardStrips.ts";
+import { KEPT_FORMS, KEPT_NAMES, respell } from "./miltonSpellings.ts";
 import { NUMERAL, runningHead, unspecked, witnessGaps as gapsOf, placeLines, indents as indentsOf, paragraphs, elided, smallCaps, poemPage } from "./miltonPoems.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 
 const HOME = process.env.HOME!;
-const BACKUP = join(HOME, "Library/CloudStorage/Dropbox/gesta-backups/current");
+const BACKUP = process.env.BACKUP ?? join(HOME, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const OUT = process.env.OUT ?? join(HOME, "Desktop/gesta-imports/gesta-milton-poems");
 const CACHE = new URL("out/harvard/", import.meta.url).pathname;
 const read = (f: string): string => readFileSync(CACHE + f, "utf8");
@@ -131,24 +132,6 @@ const READINGS: { at: string; from: string; to: string }[] = [
   { at: "At a Vacation Exercise in the College, Part Latin, Part English 61", from: "The drowsy", to: "Thy drowsy" },
 ];
 
-/* a spelling the edition keeps old, given the one the bookshelf's Milton
-   has, or where it has none the modern one (asked for Paradise Regained:
-   perfect, not perfet; jubilee as the Oxford edition has it); a form the
-   metre or a rhyme rests on stays, and so do the forms the bookshelf keeps
-   (dropt, wrapt) */
-const SPELLINGS: { from: string; to: string }[] = [
-  { from: "shew", to: "show" }, { from: "antick", to: "antic" }, { from: "battail", to: "battle" }, { from: "battail’s", to: "battle’s" },
-  { from: "chauntress", to: "chantress" }, { from: "encrease", to: "increase" }, { from: "hearb", to: "herb" }, { from: "hearbs", to: "herbs" },
-  { from: "inchantments", to: "enchantments" }, { from: "intirely", to: "entirely" }, { from: "jocond", to: "jocund" }, { from: "lanthorn", to: "lantern" },
-  { from: "lantskip", to: "landscape" }, { from: "weept", to: "wept" }, { from: "wisards", to: "wizards" }, { from: "swindges", to: "swinges" },
-  { from: "chamberlin", to: "chamberlain" }, { from: "jubily", to: "jubilee" },
-];
-const KEPT_FORMS = ["strook", "eyn", "chieftest", "dropt", "wrapt", "kerchieft", "un’wares", "yclep’d", "ychained", "ypointing", "sovran"];
-/* a name the edition leaves in Milton's spelling, given its modern one (asked) */
-const NAMES: { from: string; to: string }[] = [
-  { from: "Pharao", to: "Pharaoh" }, { from: "Seon", to: "Sihon" }, { from: "Sevren", to: "Severn" }, { from: "Juda", to: "Judah" },
-];
-const KEPT_NAMES = ["Amorrean", "Libyc", "Hammon", "Orus", "Thammuz", "Thame", "Delphos"];
 
 /* what the page holds besides the lines: Milton's own headnote (a note,
    asked), the headings, numerals and prose links inside the poem as italic
@@ -201,8 +184,7 @@ for (const p of POEMS) {
     unused.delete(id);
     /* the stress marks left off, as the bookshelf's Paradise Lost has them (asked) */
     let text = unstressed(elided(PRINTED[id] ?? seen ?? (i ? r.text : smallCaps(r.text))));
-    for (const n of SPELLINGS) text = text.replace(new RegExp(`(?<![\\p{L}’])${n.from}(?![\\p{L}’])`, "giu"), (old) => { const to = /^\p{Lu}/u.test(old) ? n.to[0].toUpperCase() + n.to.slice(1) : n.to; spelt.push(`${p.key} ${i + 1}: ${old} → ${to}`); return to; });
-    for (const n of NAMES) text = text.replace(new RegExp(`\\b${n.from}\\b`, "g"), () => { respelled.push(`${p.key} ${i + 1}: ${n.from} → ${n.to}`); return n.to; });
+    text = respell(text, `${p.key} ${i + 1}`, spelt, respelled);
     for (const r of READINGS.filter((r) => r.at === id)) {
       if (!text.includes(r.from)) throw new Error(`${id}: no "${r.from}" in ${text}`);
       text = text.replace(r.from, r.to);
