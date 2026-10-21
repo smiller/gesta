@@ -298,6 +298,18 @@ is in the plan's record, under the phase named):
   as footnotes (a mark after the line, the stanza's notes in a `::: note`
   after its last line), leaves out a poem the backup already has (by its key
   or its heading), and writes an import folder with a review page.
+  `tools/harvardMilton.ts` — the Harvard Classics' Milton (1909) read from
+  two scans' OCR against each other, a poem at a time: the page furniture
+  dropped, a line the page ran over joined back, the two read word by word,
+  a disagreement settled by another edition's line (Thurber's, Beeching's)
+  or the words the edition prints elsewhere, its æ and œ, which neither scan
+  reads, put back, the rest named; pure, its test beside it.
+  `tools/miltonSonnets.ts` — the sonnets made pages, a sonnet a page under
+  `Milton, John/Sonnets`, the Italian ones paired with Cowper's translations,
+  pure, its test beside it; `tools/miltonSonnetsRun.ts` runs both over the
+  scans and texts cached under `tools/out/harvard`, the names respelled and
+  the readings given Milton's word as asked, and writes an import folder with
+  a review page.
   `tools/elisions.ts` — an elision's apostrophe typed as an opening
   quotation mark (‘tis, ‘orse) turned, pure, its test beside it;
   `tools/elisionsRun.ts` runs it over the bookshelf in the backup and
