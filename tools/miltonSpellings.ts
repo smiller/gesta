@@ -6,7 +6,7 @@
    metre or a rhyme rests on stays, and so do the forms the bookshelf keeps
    (dropt, wrapt) */
 export const SPELLINGS: { from: string; to: string }[] = [
-  { from: "shew", to: "show" }, { from: "antick", to: "antic" }, { from: "battail", to: "battle" }, { from: "battail’s", to: "battle’s" },
+  { from: "shew", to: "show" }, { from: "perfet", to: "perfect" }, { from: "antick", to: "antic" }, { from: "battail", to: "battle" }, { from: "battail’s", to: "battle’s" },
   { from: "chauntress", to: "chantress" }, { from: "encrease", to: "increase" }, { from: "hearb", to: "herb" }, { from: "hearbs", to: "herbs" },
   { from: "inchantments", to: "enchantments" }, { from: "intirely", to: "entirely" }, { from: "jocond", to: "jocund" }, { from: "lanthorn", to: "lantern" },
   { from: "lantskip", to: "landscape" }, { from: "weept", to: "wept" }, { from: "wisards", to: "wizards" }, { from: "swindges", to: "swinges" },
@@ -14,7 +14,8 @@ export const SPELLINGS: { from: string; to: string }[] = [
   { from: "inchanted", to: "enchanted" }, { from: "injoyment", to: "enjoyment" }, { from: "ingaged", to: "engaged" }, { from: "travailler", to: "traveller" },
   { from: "travailler’s", to: "traveller’s" }, { from: "imbroidered", to: "embroidered" }, { from: "inchanting", to: "enchanting" }, { from: "uninchanted", to: "unenchanted" },
   { from: "encline", to: "incline" }, { from: "wisard", to: "wizard" }, { from: "furder", to: "further" }, { from: "inchanter", to: "enchanter" },
-  { from: "pretious", to: "precious" }, { from: "oiser", to: "osier" }, { from: "intranced", to: "entranced" }, { from: "spheary", to: "sphery" },
+  { from: "pretious", to: "precious" }, { from: "oiser", to: "osier" }, { from: "intranced", to: "entranced" }, { from: "spheary", to: "sphery" }, { from: "crystallin", to: "crystalline" },
+  { from: "unimployed", to: "unemployed" }, { from: "enclined", to: "inclined" }, { from: "shipwracked", to: "shipwrecked" },
 ];
 export const KEPT_FORMS = ["adventrous", "ventrous", "wandring", "strook", "eyn", "chieftest", "dropt", "wrapt", "kerchieft", "un’wares", "yclep’d", "ychained", "ypointing", "sovran"];
 /* a name the edition leaves in Milton's spelling, given its modern one (asked) */
