@@ -244,3 +244,5 @@ split lines in Samson · * · new here, the old app frozen
 typed into the first half of a split line · * · new here, the old app frozen
 ⌃⌘R on the rest of a split line · * · new here, the old app frozen
 a rest typed past its row's width · * · new here, the old app frozen
+dual-language in Ovid · * · new here, the old app frozen
+a sentence typed longer than its Latin · * · new here, the old app frozen

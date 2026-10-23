@@ -163,7 +163,7 @@ function blockMd(node: Node, escaping: boolean): string {
        (pin: roundtrip.test › an empty grid serializes to nothing) */
     case N.grid: return node.childCount ? "::: grid" + (node.attrs.n == null ? "" : " " + String(node.attrs.n)) + "\n" + blocksMd(node) + "\n:::" : "";
     case N.reference: return node.textContent ? "::: reference\n" + node.textContent + "\n:::" : "::: reference\n:::";
-    case N.verse: return rowsMd(node, "verse");
+    case N.verse: return rowsMd(node, node.attrs.dual ? "dual-language" : "verse");
     case N.prose: return rowsMd(node, "prose");
     default: throw new Error(`block the serializer does not know: ${node.type.name}`);
   }

@@ -12,8 +12,10 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    copied verse block pasted back arrived as its cells' text in paragraphs,
    a paired canto interleaved line by line (pin: schema.test › every node
    that draws itself reads itself back) */
+/* the verse block's dual-language form draws with both classes and is read
+   back by the second: a copy pasted back keeps its layout */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
-  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null } } : { start: { default: 1 } },
+  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false } } : { start: { default: 1 } },
   content: "(line | pair | gap | note | margin_note)*",
   group: "block",
   defining: true,
@@ -21,11 +23,12 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
     tag: "div." + cls,
     getAttrs: (dom) => {
       const start = dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1;
-      return stanzas ? { start, stanza: dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null } : { start };
+      const dual = dom.className.split(/\s+/).includes("dual-language");
+      return stanzas ? { start, stanza: dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null, dual } : { start };
     },
   }],
   toDOM: (n) => {
-    const attrs: Record<string, string> = { class: cls };
+    const attrs: Record<string, string> = { class: n.attrs.dual ? cls + " dual-language" : cls };
     if (n.attrs.start > 1) attrs["data-start"] = String(n.attrs.start);
     if (n.attrs.stanza != null) attrs["data-stanza"] = String(n.attrs.stanza);
     return ["div", attrs, 0];

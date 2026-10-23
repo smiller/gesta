@@ -68,10 +68,11 @@ import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
 import williams from "../fixtures/williams-witchcraft-3.md?raw";
+import ovid from "../fixtures/ovid-metamorphoses-1.md?raw";
 import donneMarginNotes from "../fixtures/donne-anniversarie-margin-notes.md?raw";
 import marginsProse from "../fixtures/margins-prose.md?raw";
 
-const fixtures: Record<string, string> = { horace, pippa, twelfth, williams };
+const fixtures: Record<string, string> = { horace, pippa, twelfth, williams, ovid };
 const mountEl = document.getElementById("editor") as HTMLElement;
 const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };

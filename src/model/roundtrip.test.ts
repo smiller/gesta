@@ -41,6 +41,9 @@ const ROUND_TRIPS = [
   "::: prose\nsentence | its translation\n:::",
   "::: prose\nfirst | one\n\nsecond | two\n:::",
   "::: verse 2\nsecond line\nthird\n:::",
+  "::: dual-language 568\nEst nemus Haemoniae, praerupta quod undique claudit | There is a vale in Thessaly.\nsilva:\n⟨…⟩vocant Tempe; | Men call it Tempe.\neffusus Pindo spumosis volvitur undis\n:::",
+  "::: dual-language\nIn nova fert animus | My mind is bent.\n:::",
+  "::: dual-language 405\nforma potest hominis, sed uti de marmore coeptis² | statues just begun\nnon exacta satis\n::: note\n[2] *coeptis* Merkel: *coepta* MSS.\n:::\n:::",
   "::: prose 4\nfourth | its translation\n:::",
   "> ::: verse 3\n> third\n> :::",
   "::: note\na footnote\n:::",
@@ -121,6 +124,9 @@ const NORMALIZED: [string, string][] = [
   ["::: grid\n::: card-red\na\n:::\n::: card-pink\nb\n:::\n:::", "::: grid\n::: card-red\na\n:::\n\n::: card-pink\nb\n:::\n:::"],
   ["::: grid 03\n::: card-red\na\n:::\n:::", "::: grid 3\n::: card-red\na\n:::\n:::"],
   ["::: stanza 02\na\n:::", "::: stanza 2\na\n:::"],
+  ["::: dual-language 1\na\n:::", "::: dual-language\na\n:::"],
+  ["::: dual-language 007\na\n:::", "::: dual-language 7\na\n:::"],
+  [":::dual-language 7\na\n:::", "::: dual-language 7\na\n:::"],
   [":::stanza 2\na\n:::", "::: stanza 2\na\n:::"],
 ];
 test("non-canonical spellings normalize in one pass and then hold", () => {
@@ -209,11 +215,11 @@ test("a stanza block starting past its first line is written as a verse fence", 
 });
 test("the stanza travels in the DOM: toDOM writes it and parseDOM reads it back", () => {
   const verse = schema.nodes.verse;
-  const dom = (attrs: Record<string, string>) => ({ hasAttribute: (k: string) => k in attrs, getAttribute: (k: string) => attrs[k] ?? null }) as unknown as HTMLElement;
+  const dom = (attrs: Record<string, string>) => ({ className: "verse", hasAttribute: (k: string) => k in attrs, getAttribute: (k: string) => attrs[k] ?? null }) as unknown as HTMLElement;
   expect(verse.spec.toDOM!(verse.create({ stanza: 2 }))).toEqual(["div", { class: "verse", "data-stanza": "2" }, 0]);
   expect(verse.spec.toDOM!(verse.create())).toEqual(["div", { class: "verse" }, 0]);
   const rule = verse.spec.parseDOM![0] as { getAttrs: (d: HTMLElement) => Record<string, unknown> };
-  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2 });
-  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null });
+  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2, dual: false });
+  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null, dual: false });
   expect(schema.nodes.prose.spec.attrs).not.toHaveProperty("stanza");
 });

@@ -8,6 +8,7 @@ import { rowKeymap, pipeInLine, openBlankRow } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { marginNotes } from "./margins.ts";
 import { continuations } from "./continuations.ts";
+import { dualLanguage } from "./dualLanguage.ts";
 import { folios } from "./folios.ts";
 import { typing, typingKeymap, autolinkEnter } from "./typing.ts";
 import { DOMSerializer, Fragment, type Node } from "prosemirror-model";
@@ -170,6 +171,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       fittedMeasure(),
       marginNotes(),
       continuations(),
+      ...dualLanguage(),
       folios(),
       landing(),
       codeHighlight(),

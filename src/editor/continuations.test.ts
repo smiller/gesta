@@ -18,3 +18,9 @@ test("a rest with no half above it in the block is not set in; one that would ru
   expect(contIndents([line(500), cont(200)], 5)).toEqual([0, 400]);
   expect(contIndents([line(500), cont(700)], 5)).toEqual([0, 0]);
 });
+
+test("a rest opening a block is set in past the half carried from the block before, where there is one", () => {
+  expect(contIndents([cont(90), line(100)], 5, 200)).toEqual([205, 0]);
+  expect(contIndents([cont(90), cont(50)], 5, 200)).toEqual([205, 300]);
+  expect(contIndents([line(100), cont(90)], 5, 400)).toEqual([0, 105]);
+});

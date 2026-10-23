@@ -15,6 +15,7 @@ export const CARD_OPEN = /^\s*:::\s*(card-[\w-]+)\s*$/;
 export const CARD_CLOSE = /^\s*:::\s*$/;
 export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*)?\s*$/;
 export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
+export const DUAL_OPEN = /^\s*:::\s*dual-language(?:\s+0*[1-9]\d*)?\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
@@ -81,12 +82,12 @@ export function stanzaNumber(line: string): number | null {
   return m ? parseInt(m[1], 10) : null;
 }
 export function opensFence(line: string): boolean {
-  return CARD_OPEN.test(line) || VERSE_OPEN.test(line) || STANZA_OPEN.test(line) ||
+  return CARD_OPEN.test(line) || VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line) ||
     REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || MARGIN_NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
 }
 /* the openers whose body is NOT blocks */
 export function flatFence(line: string): boolean {
-  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || REFERENCE_OPEN.test(line) || PROSE_OPEN.test(line);
+  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line) || REFERENCE_OPEN.test(line) || PROSE_OPEN.test(line);
 }
 export function opensNoteRow(line: string): boolean {
   return NOTE_OPEN.test(line) || MARGIN_NOTE_OPEN.test(line);
@@ -94,7 +95,7 @@ export function opensNoteRow(line: string): boolean {
 /* the openers whose body is ROWS — narrower than flatFence by the reference
    block, whose one directive admits no nested note */
 export function rowFence(line: string): boolean {
-  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || PROSE_OPEN.test(line);
+  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line) || PROSE_OPEN.test(line);
 }
 export function codeCloses(lines: string[], at: number, run: string): boolean {
   for (let i = at; i < lines.length; i++) {

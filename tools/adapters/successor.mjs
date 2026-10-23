@@ -109,6 +109,30 @@ export const read = {
     }
     return { rests, drawn: rows.filter((el) => el.classList.contains("shown")).map((el) => +el.dataset.line) };
   }),
+  dualLayout: (page) => page.evaluate(() => {
+    const blocks = [...document.querySelectorAll("#editor .verse.dual-language")];
+    let sentences = 0, level = 0, clear = 0;
+    for (const b of blocks) {
+      const pairs = [...b.querySelectorAll(":scope > .vpair")];
+      pairs.forEach((p, i) => {
+        sentences++;
+        const [latin, english] = p.children;
+        if (Math.abs(latin.getBoundingClientRect().top - english.getBoundingClientRect().top) < 1) level++;
+        const next = pairs[i + 1] ?? b.nextElementSibling;
+        if (!next || english.getBoundingClientRect().top + english.scrollHeight <= next.getBoundingClientRect().top + 1) clear++;
+      });
+    }
+    const rests = [...document.querySelectorAll('#editor .dual-language > [data-kind="cont"]')];
+    const opening = rests.find((r) => r === r.parentElement.firstElementChild);
+    const note = (mark) => [...document.querySelectorAll("#editor .dual-language > .note")].find((n) => n.textContent.startsWith("[" + mark + "]"));
+    const column = (n) => n && (Math.abs(n.getBoundingClientRect().left - n.parentElement.querySelector(".vpair > .vcell + .vcell").getBoundingClientRect().left) < 1 ? "English" : Math.abs(n.getBoundingClientRect().left - n.parentElement.querySelector(".vpair > .vcell").getBoundingClientRect().left) < 1 ? "Latin" : "neither");
+    const em = parseFloat(getComputedStyle(blocks[0]).fontSize);
+    const englishWidth = Math.round(blocks[0].querySelector(".vpair > .vcell + .vcell").getBoundingClientRect().width / em);
+    const waiting = blocks.reduce((n, b) => n + [...b.children].filter((r) => parseFloat(r.style.marginTop) > 0).length, 0);
+    const tempe = [...document.querySelectorAll("#editor .dual-language .vcell")].find((c) => c.textContent.startsWith("Men call it Tempe"));
+    return { blocks: blocks.length, sentences, level, clear, waiting, tempeLines: tempe && Math.round(tempe.scrollHeight / parseFloat(getComputedStyle(tempe).lineHeight)), rests: rests.length, setIn: rests.filter((r) => parseFloat(r.style.getPropertyValue("--cont-x")) > 0).length,
+      openingRest: opening && { text: opening.textContent.split("|")[0].trim(), setIn: parseFloat(opening.style.getPropertyValue("--cont-x")) > 0 }, note1: column(note(1)), note4: column(note(4)), englishEm: englishWidth };
+  }),
   clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
   corner: (page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),

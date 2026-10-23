@@ -2337,6 +2337,21 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await log("a rest typed past its row's width", await R.splitRests(page));
     }],
+    ["dual-language", async () => {
+  /* Ovid's Latin beside Miller's prose (2026-10-22, asked): each sentence level with the row its Latin starts on, the Latin waiting where the English runs long, split lines set in (one opening a fence, past the half the fence before closes), a note under the column its mark is in, the English held to 30em; typed longer, a sentence still clears the next */
+  await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses/Book 1", fixture("ovid-metamorphoses-1.md"));
+  const seeded = await seededIn("bookshelf/Ovid/Metamorphoses/Book 1");
+  await page.goto(A.url("bookshelf/Ovid/Metamorphoses/Book%201"));
+  await A.waitEntry(page, "bookshelf/Ovid/Metamorphoses/Book 1", 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await log("dual-language in Ovid", { seeded, ...(await R.dualLayout(page)) });
+  await R.caretAfter(page, "Men call it Tempe", "Men call it Tempe".length);
+  await page.keyboard.type(", a name the valley keeps to this day among the shepherds of Thessaly who drive their flocks along its river");
+  await rest(page);
+  await rest(page);
+  await log("a sentence typed longer than its Latin", await R.dualLayout(page));
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the

@@ -31,11 +31,11 @@ export function fenceRefusals(doc: Node): FenceRefusal[] {
 export function fenceLineReason(l: string): string | null {
   const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
   if (!m || opensFence(l)) return null;
-  const tok = m[1].match(/^(verse|prose)\s+(.+)$/);
+  const tok = m[1].match(/^(verse|prose|dual-language)\s+(.+)$/);
   const tail = m[1].match(/^(note|margin-note|reference|card-[\w-]+)\s+\S/);
   const count = m[1].match(/^grid\s+(.+)$/);
   const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
-  return tok ? tok[2] + " is not a starting " + (tok[1] === "verse" ? "line" : "sentence")
+  return tok ? tok[2] + " is not a starting " + (tok[1] === "prose" ? "sentence" : "line")
     : stanza ? (stanza[1] ? stanza[1] + " is not a stanza number" : "stanza needs its number, like ::: stanza 2")
     : tail ? tail[1] + " takes nothing after it"
     : count ? count[1] + " is not a count"

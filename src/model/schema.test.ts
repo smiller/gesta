@@ -16,6 +16,14 @@ test("every node that draws itself reads itself back", () => {
   for (const t of drawn) expect(t.spec.parseDOM?.length, t.name).toBeGreaterThan(0);
 });
 
+test("a dual-language block draws as a verse block that says so, and reads back dual", () => {
+  const v = schema.nodes.verse.create({ start: 568, dual: true }, schema.nodes.line.create(null, schema.text("Est nemus")));
+  expect(schema.nodes.verse.spec.toDOM!(v)).toEqual(["div", { class: "verse dual-language", "data-start": "568" }, 0]);
+  const getAttrs = rule("verse").getAttrs!;
+  expect(getAttrs(el({ "data-start": "568" }, "verse dual-language"))).toEqual({ start: 568, stanza: null, dual: true });
+  expect(getAttrs(el({}, "verse"))).toEqual({ start: 1, stanza: null, dual: false });
+});
+
 test("a card is read back only from the editor's own copy, which carries data-card", () => {
   expect(rule("card").tag).toBe("div[class^='card-'][data-card]");
   expect(schema.nodes.card.spec.toDOM!(schema.nodes.card.create({ colour: "card-red" }, schema.nodes.paragraph.create()))).toEqual(["div", { class: "card-red", "data-card": "" }, 0]);

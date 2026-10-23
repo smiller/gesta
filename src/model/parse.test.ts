@@ -124,6 +124,20 @@ test("verse rows: paired, full-width, and the stanza gap; prose gaps on an empty
   expect(ve.content.content.map((n) => n.type.name)).toEqual(["pair"]);
 });
 
+test("a ::: dual-language fence is a verse block marked dual, numbered from its opener, its rows a verse's", () => {
+  const v = parseMarkdown("::: dual-language 568\nEst nemus | There is a vale\nsilva:\n⟨…⟩vocant Tempe; | Men call it Tempe.\n:::").firstChild!;
+  expect(v.type.name).toBe("verse");
+  expect(v.attrs).toEqual({ start: 568, stanza: null, dual: true });
+  expect(v.content.content.map((n) => [n.type.name, n.attrs.kind])).toEqual([["pair", null], ["line", null], ["pair", "cont"]]);
+  expect(parseMarkdown("::: dual-language\na\n:::").firstChild!.attrs).toEqual({ start: 1, stanza: null, dual: true });
+  expect(parseMarkdown("::: verse 5\na\n:::").firstChild!.attrs.dual).toBe(false);
+});
+
+test("the dual-language opener: indented or closed up opens, another spelling stays a paragraph", () => {
+  expect(kinds("  :::dual-language 3\na\n:::")).toEqual(["verse"]);
+  for (const md of ["::: dual language\na\n:::", "::: Dual-language\na\n:::", "::: dual-language x\na\n:::", "::: dual-language 0\na\n:::"]) expect(kinds(md)[0], md).toBe("paragraph");
+});
+
 test("the split is at the FIRST pipe, and an escaped one stays in its cell", () => {
   expect(verseSplit("a\\|b | c | d")).toBe(5);
   const pair = parseMarkdown("::: verse\na\\|b | c | d\n:::").firstChild!.firstChild!;
@@ -273,7 +287,7 @@ test("the token is a row's head only: in a paragraph, or mid-row, it is text", (
 test("a stanza fence is a verse block carrying its number, and its first line is 1", () => {
   const b = parseMarkdown("::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\n:::").child(0);
   expect(b.type.name).toBe("verse");
-  expect(b.attrs).toEqual({ start: 1, stanza: 2 });
+  expect(b.attrs).toEqual({ start: 1, stanza: 2, dual: false });
   expect(b.childCount).toBe(2);
   expect(parseMarkdown("::: verse\na\n:::").child(0).attrs.stanza).toBe(null);
   expect(parseMarkdown("::: stanza 012\na\n:::").child(0).attrs.stanza).toBe(12);

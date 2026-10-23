@@ -20,6 +20,8 @@ export const CAP = 1285;
 /* the <main> element's own padding plus a classic scrollbar: 100vw counts the scrollbar,
    documentElement.clientWidth does not */
 export const WINDOW_MARGIN = 64;
+/* em: the mockups' English column, settled by eye in Helium */
+export const DUAL_MEASURE_EM = 30;
 
 export interface Measured {
   /* the entry's own box with no block on it — the prose measure, the floor */
@@ -147,11 +149,14 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
         if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
       }
       frame = Math.max(frame, own);
+      /* a dual-language block's English is prose, held to a reading measure
+         however long its sentences run */
+      const measureCap = b.classList.contains("dual-language") ? parseFloat(getComputedStyle(b).fontSize) * DUAL_MEASURE_EM : Infinity;
       b.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
         gapRow ??= r;
         const cells = r.children;
         if (cells[0]) c1 = Math.max(c1, cells[0].getBoundingClientRect().width);
-        if (cells[1]) c2 = Math.max(c2, cells[1].getBoundingClientRect().width);
+        if (cells[1]) c2 = Math.max(c2, Math.min(measureCap, cells[1].getBoundingClientRect().width));
       });
     }
     /* the gap is the row's, not the block's, read once off the first pair */

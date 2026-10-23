@@ -454,7 +454,11 @@ is in the plan's record, under the phase named):
   the margin-notes, the page labels and the split lines share),
   `continuations.ts` (a verse line split between speakers: the rest a
   `⟨…⟩` row, set in past the end of the half above, the arithmetic pure,
-  the measuring pass a plugin view writing `--cont-x` on the row), `folios.ts` (the
+  the measuring pass a plugin view writing `--cont-x` on the row),
+  `dualLanguage.ts` (a `::: dual-language` block, the verse block's
+  `dual` form: the Latin's wait where a sentence runs long, the arithmetic
+  pure, the measuring pass writing it on the rows; a note's column from
+  where its mark stands, as node decorations), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's, and
   each label's drop to the line its leaf's first word starts on),
   `typing.ts` (markdown as you type: the input rules and the two Enter
@@ -617,7 +621,10 @@ is in the plan's record, under the phase named):
   First Anniversarie with its margin-notes (one moved up from 30 lines on,
   so it is pushed) and a prose page with margin-notes between paragraphs
   and in a grid card; and the split lines step's Samson Agonistes
-  1554–1595 (Harvard's text), three lines split between speakers.
+  1554–1595 (Harvard's text), three lines split between speakers; and the
+  dual-language step's Ovid, *Metamorphoses* 1.348–380, 525–600, 682–712
+  (the Loeb's Latin, Miller's English, two notes, a fence opening part-way
+  along a line).
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything; the tab's icon,
   `src/favicon.ico`, the old app's, is inlined by main.ts itself, a

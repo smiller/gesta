@@ -7,6 +7,7 @@ test("a fence-shaped line that opens nothing is named with its reason; the words
   expect(refused("::: versey\nline\n:::")).toEqual([{ line: "::: versey", reason: "not a block Gesta knows" }]);
   expect(refused("::: verse 0\nline\n:::")[0].reason).toBe("0 is not a starting line");
   expect(refused("::: prose x\nline\n:::")[0].reason).toBe("x is not a starting sentence");
+  expect(refused("::: dual-language 0\nline\n:::")[0].reason).toBe("0 is not a starting line");
   expect(refused("::: note 2\nline\n:::")[0].reason).toBe("note takes nothing after it");
   expect(refused("::: margin-note 2\nline\n:::")[0].reason).toBe("margin-note takes nothing after it");
   expect(refused("::: card\nline\n:::")[0].reason).toBe("card blocks must include a colour, like card-light-green");

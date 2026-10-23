@@ -46,6 +46,7 @@ class NoteView implements NodeView {
     this.dom.className = "note";
   }
   update(node: Node): boolean { return node.type.name === "note"; }
+  ignoreMutation(m: ViewMutationRecord): boolean { return m.type === "attributes" && m.target === this.dom && m.attributeName === "style"; }
 }
 
 /* an attribute of this node is never the document's: read back as a
