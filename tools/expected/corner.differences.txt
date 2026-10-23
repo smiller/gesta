@@ -253,3 +253,5 @@ dual-language: arrived at page/Quoted Ovid · * · new here, the old app frozen
 ArrowDown from a sentence above a note under the English · * · new here, the old app frozen
 ArrowDown from a block's last sentence · * · new here, the old app frozen
 ArrowUp from a block's first sentence · * · new here, the old app frozen
+a skipped line number · * · new here, the old app frozen
+⌃⌘G for a skipped line · * · new here, the old app frozen

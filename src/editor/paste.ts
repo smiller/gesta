@@ -275,7 +275,7 @@ export function copyMd(slice: Slice): string {
    (pin: paste.test › a drag across two cards of a grid is closed at the
    grid). The card is not a row (pin: paste.test › a plain card is not a
    row) */
-const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.list_item, N.table_row, N.grid]);
+const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.skip, N.list_item, N.table_row, N.grid]);
 const rowish = (n: Node): boolean => ROW_BLOCKS.has(n.type) && !(n.type === N.grid && n.childCount < 2);
 export function closeRowSlice(slice: Slice): Slice {
   const first = slice.content.firstChild, last = slice.content.lastChild;

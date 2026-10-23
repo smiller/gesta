@@ -82,12 +82,20 @@ export function countAt(block: Node, blockPos: number, rowPos: number): number {
   }
   return n;
 }
-export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
+/* `skips`, where given, takes each skipped line number and its row */
+export function blockUnits(block: Node, blockPos: number, interval: number, skips?: { line: number; pos: number }[]): Unit[] {
   const out: Unit[] = [];
   const prose = block.type === N.prose;
   if (!prose && block.type !== N.verse) return out;
   let line = (block.attrs.start as number) - 1;
   block.forEach((row, offset) => {
+    /* a number and no unit: nothing is drawn for it (pin: numbering.test ›
+       a skipped line number is counted) */
+    if (row.type === N.skip) {
+      line++;
+      skips?.push({ line, pos: blockPos + 1 + offset });
+      return;
+    }
     if (row.type === N.gap || row.type === N.note || row.type === N.margin_note) return;
     if (prose && row.type !== N.pair) return;
     if (!drawsInk(row)) return;

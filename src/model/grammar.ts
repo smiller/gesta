@@ -63,6 +63,10 @@ export const ROW_LINE_TOKEN = "⟨line⟩";
    still lessens", is one line (pin: numbering.test › a ⟨…⟩ row is the rest
    of the verse line above it) */
 export const ROW_CONT_TOKEN = "⟨…⟩";
+/* a line the edition leaves out but numbers: the row holds nothing and
+   takes its number, so the lines after it keep the edition's (pin:
+   parse.test › a ⟨skipped line number⟩ row) */
+export const ROW_SKIP_TOKEN = "⟨skipped line number⟩";
 export const ROW_KIND_AT = /^⟨(line|…)⟩\s*/;
 export const rowKindToken = (kind: string | null): string => (kind === "line" ? ROW_LINE_TOKEN : kind === "cont" ? ROW_CONT_TOKEN : "");
 

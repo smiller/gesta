@@ -38,6 +38,16 @@ class GapView implements NodeView {
   ignoreMutation(): boolean { return true; }
 }
 
+class SkipView implements NodeView {
+  dom: HTMLElement;
+  constructor() {
+    this.dom = document.createElement("div");
+    this.dom.className = "vskip";
+  }
+  update(node: Node): boolean { return node.type.name === "skip"; }
+  ignoreMutation(): boolean { return true; }
+}
+
 class NoteView implements NodeView {
   dom: HTMLElement;
   contentDOM: HTMLElement;
@@ -66,6 +76,7 @@ export const rowNodeViews = {
   line: (node: Node): NodeView => new RowView(node),
   pair: (node: Node): NodeView => new RowView(node),
   gap: (): NodeView => new GapView(),
+  skip: (): NodeView => new SkipView(),
   note: (): NodeView => new NoteView(),
   margin_note: (): NodeView => new MarginNoteView(),
 };

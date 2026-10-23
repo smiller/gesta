@@ -68,6 +68,7 @@ inminet et crinem sparsum cervicibus adflat.
 viribus absumptis expalluit illa citaeque | Now was her strength all gone, and, pale with fear and utterly overcome by the toil of her swift flight, seeing her father’s waters near, she cried: “O father, help! if your waters hold divinity; change and destroy this beauty by which I pleased o’er well.”
 victa labore fugae spectans Peneidas undas⁴
 “fer, pater,” inquit “opem! si flumina numen habetis,
+⟨skipped line number⟩
 qua nimium placui, mutando perde figuram!”
 vix prece finita torpor gravis occupat artus, | Scarce had she thus prayed when a down-dragging numbness seized her limbs, and her soft sides were begirt with thin bark.
 mollia cinguntur tenui praecordia libro,

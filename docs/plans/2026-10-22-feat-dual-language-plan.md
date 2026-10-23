@@ -190,3 +190,26 @@ severe reported, all real on a read of the code; fixed in one commit:
 The step `caretCell` reads the caret's place in its cell (start, end,
 inside) and names a note; the page-wide cursor reading crosses the
 columns and read the end of "…remained." as a line's start.
+
+## A skipped line number (2026-10-23, asked)
+
+The Loeb leaves out lines but keeps their numbers (Book 1 has no 546, Book 4
+no 768, Book 8 fifteen), and a fence numbers its rows one after another, so
+every line after such a gap in its fence read one low (six low after Book
+8's 603–608). Asked: a row `⟨skipped line number⟩` (the reader's words, over
+`⟨omitted⟩` and `⟨skipped⟩`) stands for the line; nothing is drawn (asked
+over a faint marker); ⌃⌘G for its number lands on the line after the gap
+and says "line N is omitted in this edition" (asked over refusing).
+
+- The model: a leaf row `skip`, never selectable, drawn as `div.vskip`
+  (display none). The numbering walk counts it and makes no unit; a caller
+  asking for them (Go to) is handed the skips. A quotation across one keeps
+  it, so its lines keep their numbers; Backspace or Delete beside one move
+  the caret over it, so it is never taken out unseen.
+- MEASURED in headless Helium (the fixture's 546, the steps "a skipped line
+  number" and "⌃⌘G for a skipped line"): *qua nimium placui* reads 547, the
+  row above it not displayed; ⌃⌘G 546 marks 547 and the corner reads "line
+  546 is omitted in this edition".
+- FAILURE, caught by its test: `skips?.push({ line: ++line, … })` skipped
+  the count whenever no list was asked for — optional chaining leaves the
+  arguments unevaluated.

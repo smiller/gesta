@@ -106,3 +106,21 @@ describe("hasStanzas", () => {
     expect(hasStanzas(parseMarkdown("plain"))).toBe(false);
   });
 });
+
+describe("a skipped line number", () => {
+  it("lands where the line would be, on the line after the gap, and says it is omitted; a run of them all land there", () => {
+    const d = parseMarkdown("::: verse 595\na\nb\n⟨skipped line number⟩\n⟨skipped line number⟩\nc\n:::\n\n::: verse 700\nx\n:::");
+    for (const n of [597, 598]) {
+      const { hits, blocks } = lineHits(d, n);
+      expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
+      expect(landingWord(hits[0], blocks, n)).toBe("line " + n + " is omitted in this edition");
+    }
+    const { hits, blocks } = lineHits(d, 599);
+    expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
+    expect(landingWord(hits[0], blocks, 599)).toBe("line 599 — verse block 1 of 2");
+  });
+  it("one ending its block lands on the line before it", () => {
+    const d = parseMarkdown("::: verse 10\na\n⟨skipped line number⟩\n:::");
+    expect(lineHits(d, 11).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["a"]);
+  });
+});

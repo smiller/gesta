@@ -307,3 +307,10 @@ test("a stanza nests a note row, sits in a quote, and a prose line spelling it i
   expect(escapeProse("::: stanza 2")).toBe("\\::: stanza 2");
   expect(kinds("::: stanza 4\na\n:::\n\n::: stanza 5\nb\n:::")).toEqual(["verse", "verse"]);
 });
+
+test("a ⟨skipped line number⟩ row is a line the edition leaves out: a row of its own holding nothing, not text", () => {
+  const rows = parseMarkdown("::: verse 545\nqua nimium placui\n⟨skipped line number⟩\nvix prece finita\n:::").firstChild!;
+  expect(rows.childCount).toBe(3);
+  expect(rows.child(1).type.name).toBe("skip");
+  expect(visibleText(parseMarkdown("::: verse\na ⟨skipped line number⟩ b\n:::"))).toBe("a ⟨skipped line number⟩ b");
+});

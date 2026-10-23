@@ -11,7 +11,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT, ROW_SKIP_TOKEN,
   fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -174,6 +174,7 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
     if (NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from, "note"); continue; }
     if (MARGIN_NOTE_OPEN.test(line)) { from = emitNote(sink, lines, from, "margin_note"); continue; }
     const raw = line.trim();
+    if (raw === ROW_SKIP_TOKEN && cls === "verse") { sink.push("skip", "div", 0); from++; continue; }
     const head = ROW_KIND_AT.exec(raw);
     const declared = !!head;
     const body = head ? raw.slice(head[0].length) : raw;
@@ -493,6 +494,7 @@ function buildDoc(tokens: Token[]): Node {
         case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null }); break;
         case "cell_open": open(schema.nodes.cell); break;
         case "gap": add(schema.nodes.gap.create()); break;
+        case "skip": add(schema.nodes.skip.create()); break;
         case "fence": add(schema.nodes.code_block.create({ lang: t.info, rest: (t.meta?.rest as string) ?? "" }, t.content ? schema.text(t.content) : null)); break;
         case "reference": add(schema.nodes.reference.create(null, t.content ? schema.text(t.content) : null)); break;
         case "paragraph_close": case "heading_close": case "blockquote_close":

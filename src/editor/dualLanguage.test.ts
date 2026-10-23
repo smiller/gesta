@@ -74,6 +74,7 @@ test("a margin-note drawn in the text is a row that waits for the English, as a 
   const el = (cls: string) => { const d = { classList: new Set(cls.split(" ")) }; return { classList: { contains: (c: string) => d.classList.has(c) } } as unknown as HTMLElement; };
   expect(isDualRow(el("margin-note in-margin"))).toBe(false);
   expect(isDualRow(el("margin-note"))).toBe(true);
+  expect(isDualRow(el("vskip"))).toBe(false);
   expect(waitsAsNote(el("margin-note"))).toBe(true);
   expect(waitsAsNote(el("vrow vpair"))).toBe(false);
 });

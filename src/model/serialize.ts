@@ -6,7 +6,7 @@ import type { Node, Mark, MarkType } from "prosemirror-model";
 import { schema, MARK_ORDER } from "./schema.ts";
 import {
   LIST_LINE, ITEM_BLOCK_INDENT, FENCE_CLOSE, blockLineAt, escapeProse, escapeIndent,
-  escapeCell, folioToken, quotePrefix, rowKindToken,
+  escapeCell, folioToken, quotePrefix, rowKindToken, ROW_SKIP_TOKEN,
 } from "./grammar.ts";
 
 const N = schema.nodes;
@@ -210,6 +210,7 @@ function rowsMd(block: Node, word: string): string {
   const rows: string[] = [];
   block.forEach((row) => {
     if (row.type === N.gap) rows.push("");
+    else if (row.type === N.skip) rows.push(ROW_SKIP_TOKEN);
     else if (row.type === N.note || row.type === N.margin_note) rows.push(blockMd(row, true));
     else if (row.type === N.pair) rows.push(rowHead(row) + (row.childCount > 1 ? pairMd(cellMd(row.child(0)), cellMd(row.child(1))) : cellMd(row.child(0))));
     else rows.push(rowHead(row) + cellMd(row));

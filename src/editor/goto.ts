@@ -27,11 +27,24 @@ export function askKind(doc: Node): AskKind {
   const lines = paintsLines(doc) || blocksOf(lineUnits(doc, 0)).length > 0;
   return lines ? (hasFolios(doc) ? "both" : "line") : hasFolios(doc) ? "page" : "none";
 }
-export interface Hit { pos: number; nth: number; block: Unit[] }
+export interface Hit { pos: number; nth: number; block: Unit[]; skipped?: boolean }
+/* a skipped line number lands where the line would stand, on the line after
+   the gap, or before it where the gap ends its block (pin: goto.test › a
+   skipped line number) */
 export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] } {
   const blocks = blocksOf(lineUnits(doc, 0));
   const hits: Hit[] = [];
   blocks.forEach((rows, i) => { for (const u of rows) if (u.line === n && !u.rest) hits.push({ pos: u.pos, nth: i + 1, block: rows }); });
+  if (hits.length) return { hits, blocks };
+  blocks.forEach((rows, i) => {
+    const skips: { line: number; pos: number }[] = [];
+    blockUnits(doc.nodeAt(rows[0].blockPos)!, rows[0].blockPos, 0, skips);
+    const skip = skips.find((s) => s.line === n);
+    if (!skip) return;
+    const lines = rows.filter((u) => !u.rest);
+    const at = lines.find((u) => u.pos > skip.pos) ?? lines[lines.length - 1];
+    hits.push({ pos: at.pos, nth: i + 1, block: rows, skipped: true });
+  });
   return { hits, blocks };
 }
 export function lineRefusal(blocks: Unit[][], n: number): string {
@@ -51,6 +64,7 @@ export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean):
 }
 /* silent where unambiguous; with several blocks the ordinal is load-bearing */
 export function landingWord(hit: Hit, blocks: Unit[][], n: number): string | null {
+  if (hit.skipped) return "line " + n + " is omitted in this edition";
   if (blocks.length < 2) return null;
   const oneForm = blocks.every((rows) => prose(rows) === prose(hit.block));
   return unitNoun(hit.block) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;

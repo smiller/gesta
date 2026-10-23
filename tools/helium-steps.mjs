@@ -2370,6 +2370,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("ArrowUp");
   await rest(page);
   await log("ArrowUp from a block's first sentence", { cell: await R.caretCell(page) });
+  /* a line the Loeb leaves out but counts (2026-10-23, asked): nothing drawn, the line after it 547 (qua nimium placui), and ⌃⌘G for 546 lands there saying so */
+  await log("a skipped line number", await page.evaluate(() => { const row = [...document.querySelectorAll("#editor .vrow")].find((r) => r.textContent.startsWith("qua nimium placui")); return { line: row?.dataset.line ?? null, before: row?.previousElementSibling?.className, drawn: row?.previousElementSibling ? getComputedStyle(row.previousElementSibling).display : null }; }));
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await page.keyboard.type("546");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G for a skipped line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
+  await page.keyboard.press("Escape");
+  await rest(page);
   /* quoted, the block stays dual-language (2026-10-23, asked): two Latin lines beside a six-line sentence keep together, the English held inside the quotation */
   await R.selectBetween(page, "ut canis in vacuo", "ille salutem;");
   await R.waitBar(page);

@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
-import { lineUnits, blocksOf, whollyIn, drawsInk, paintsLines, countAt } from "./numbering.ts";
+import { lineUnits, blocksOf, blockUnits, whollyIn, drawsInk, paintsLines, countAt } from "./numbering.ts";
 
 const doc = parseMarkdown;
 const kinds = (md: string, interval = 0): string =>
@@ -132,4 +132,12 @@ test("paintsLines: a top-level verse block, and nothing else", () => {
   expect(paintsLines(doc("::: note\n::: verse\na\n:::\n:::"))).toBe(false);
   expect(paintsLines(doc("::: prose\na | b\n:::"))).toBe(false);
   expect(paintsLines(doc("text"))).toBe(false);
+});
+
+test("a skipped line number is counted and draws no line: the lines after it keep the edition's numbers", () => {
+  expect(kinds("::: verse 545\na\n⟨skipped line number⟩\nb\n⟨skipped line number⟩\n⟨skipped line number⟩\nc\n:::")).toBe("line:545 line:547 line:550");
+  const d = doc("::: verse 545\na\n⟨skipped line number⟩\nb\n:::");
+  const skips: { line: number; pos: number }[] = [];
+  blockUnits(d.firstChild!, 0, 0, skips);
+  expect(skips.map((s) => [s.line, d.nodeAt(s.pos)!.type.name])).toEqual([[546, "skip"]]);
 });

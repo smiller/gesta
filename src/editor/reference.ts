@@ -403,7 +403,8 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
        direction alone as the block's last row was numbered 1 (pin:
        reference.test › a block inside a note, the label's top level, an end
        resting on a row, blanks, depth, the count before) */
-    const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || drawsInk(row) ? row : N.gap.create());
+    /* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
+    const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
     const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, rowsKept);
     return quoted([fence]);
   }

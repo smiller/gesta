@@ -44,6 +44,16 @@ test("a passage quoted from a dual-language block is a dual-language fence numbe
   expect(passageMd(doc, a, b)).toBe("> ::: dual-language 568\n> Est nemus Haemoniae | There is a vale.\n> silva:\n> :::");
 });
 
+test("a passage across a skipped line number keeps it, numbered as the edition numbers it", () => {
+  const doc = parseMarkdown("::: dual-language 544\nvicta labore fugae | Overcome\nqua nimium placui | Destroy\n⟨skipped line number⟩\nvix prece finita | Scarce\n:::");
+  const [a, b] = span(doc, "qua nimium", "vix prece");
+  expect(passageMd(doc, a, b)).toBe("> ::: dual-language 545\n> qua nimium placui | Destroy\n> ⟨skipped line number⟩\n> vix prece finita | Scarce\n> :::");
+  expect(referenceRange(doc, a, b)).toBe("545-47");
+  const plain = parseMarkdown("::: verse 545\nqua nimium placui\n⟨skipped line number⟩\nvix prece finita\n:::");
+  const [c, d] = span(plain, "qua nimium", "vix prece");
+  expect(passageMd(plain, c, d)).toBe("> ::: verse 545\n> qua nimium placui\n> ⟨skipped line number⟩\n> vix prece\n> :::");
+});
+
 test("a passage starting or ending inside a line quotes from the word the selection starts in to the word it ends in, numbered as before", () => {
   const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\nHow tender ’tis to love the babe that milks me:\nI would, while it was smiling in my face,\n:::");
   const [a, b] = span(doc, "I have given", "smiling");
