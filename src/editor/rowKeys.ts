@@ -98,6 +98,27 @@ function dropBlankRow(state: EditorState, dir: 1 | -1): Transaction {
   return tr.setSelection(caretNear(tr.doc, sel.from, toward)).scrollIntoView();
 }
 
+/* two lines with skipped line numbers between them join as two lines
+   together do, the skips kept after the joined line: a skip draws nothing,
+   so the key reaches the line it can see, and nothing unseen is taken out
+   (pin: rowKeys.test › a skipped line number between two lines) */
+function joinAcrossSkips(tr: Transaction, block: Node, blockStart: number, idx: number, dir: 1 | -1): Transaction | null {
+  let k = idx + dir;
+  while (block.maybeChild(k)?.type === N.skip) k += dir;
+  const other = block.maybeChild(k);
+  if (!other || other.type !== N.line) return null;
+  const [upper, lower] = dir < 0 ? [k, idx] : [idx, k];
+  let at = blockStart;
+  for (let j = 0; j < upper; j++) at += block.child(j).nodeSize;
+  const upperEnd = at + block.child(upper).nodeSize - 1;
+  let lowerStart = at;
+  for (let j = upper; j < lower; j++) lowerStart += block.child(j).nodeSize;
+  const lowerRow = block.child(lower);
+  tr.delete(lowerStart, lowerStart + lowerRow.nodeSize);
+  tr.insert(upperEnd, lowerRow.content);
+  return caretAt(tr, upperEnd);
+}
+
 export const enterInRow: Command = (state, dispatch) => {
   const sel = state.selection;
   if (blankRowSelected(state)) {
@@ -114,7 +135,11 @@ export const enterInRow: Command = (state, dispatch) => {
   const start = $c.before(r.rowDepth), end = $c.after(r.rowDepth);
   if (blank(r.row)) {
     const block = $c.node(r.blockDepth), idx = $c.index(r.blockDepth);
-    if (idx === block.childCount - 1) {
+    /* skipped line numbers after it are no rows of its (pin: rowKeys.test ›
+       an empty last line before a trailing skipped line number) */
+    let lastRow = true;
+    for (let k = idx + 1; k < block.childCount; k++) if (block.child(k).type !== N.skip) lastRow = false;
+    if (lastRow) {
       /* THE WAY OUT: an empty last row is taken away and the caret steps
          into a paragraph below the block, so a block ending an entry is
          never a trap (pin: rowKeys.test › Enter at the end of the last line
@@ -220,6 +245,10 @@ export const backspaceInRow: Command = (state, dispatch) => {
   if (!prev) return true;
   if (prev.type === N.gap) { if (dispatch) dispatch(tr.delete(start - 1, start).scrollIntoView()); return true; }
   if (prev.type === N.line && r.cell < 0) { if (dispatch) dispatch(tr.join(start).scrollIntoView()); return true; }
+  if (prev.type === N.skip && r.cell < 0) {
+    const joined = joinAcrossSkips(tr, r.block, $c.start(r.blockDepth), idx, -1);
+    if (joined) { if (dispatch) dispatch(joined.scrollIntoView()); return true; }
+  }
   /* a different shape above: the caret goes to its end, nothing joins */
   if (dispatch) dispatch(tr.setSelection(Selection.near(tr.doc.resolve(start), -1)).scrollIntoView());
   return true;
@@ -244,6 +273,10 @@ export const deleteInRow: Command = (state, dispatch) => {
   if (!next) return true;
   if (next.type === N.gap) { if (dispatch) dispatch(tr.delete(end, end + 1).scrollIntoView()); return true; }
   if (next.type === N.line && r.cell < 0) { if (dispatch) dispatch(tr.join(end).scrollIntoView()); return true; }
+  if (next.type === N.skip && r.cell < 0) {
+    const joined = joinAcrossSkips(tr, r.block, $c.start(r.blockDepth), idx, 1);
+    if (joined) { if (dispatch) dispatch(joined.scrollIntoView()); return true; }
+  }
   if (dispatch) dispatch(tr.setSelection(Selection.near(tr.doc.resolve(end), 1)).scrollIntoView());
   return true;
 };

@@ -74,6 +74,7 @@ const ROUND_TRIPS = [
   "⟨xxiv⟩**Enter GHOST**",
   "::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*a* | *b*\n⟨line⟩\n:::",
   "::: prose\n⟨line⟩ |\n:::",
+  "::: verse\n\\⟨skipped line number⟩\n\\⟨…⟩By Samson.\n\\⟨line⟩ typed\n:::",
   "::: verse 545\nqua nimium placui\n⟨skipped line number⟩\n⟨skipped line number⟩\nvix prece finita\n:::",
   "::: dual-language 545\nqua nimium placui | Destroy\n⟨skipped line number⟩\nvix prece finita | Scarce\n:::",
   "::: verse\nRelate by whom.\n\n**Messenger**\n⟨…⟩By Samson.\n\n**Manoa**\n⟨…⟩That still lessens\nThe sorrow, and converts it nigh to joy.\n:::",

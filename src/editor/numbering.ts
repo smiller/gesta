@@ -20,6 +20,8 @@ export interface Unit {
   shown: boolean;
   /* the rest of a split line, numbered with the line it finishes */
   rest: boolean;
+  /* a line the edition leaves out: its number taken, nothing drawn */
+  skip: boolean;
 }
 
 /* text that is not whitespace, or a picture; a folio draws nothing here, a
@@ -82,18 +84,18 @@ export function countAt(block: Node, blockPos: number, rowPos: number): number {
   }
   return n;
 }
-/* `skips`, where given, takes each skipped line number and its row */
-export function blockUnits(block: Node, blockPos: number, interval: number, skips?: { line: number; pos: number }[]): Unit[] {
+export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
   const out: Unit[] = [];
   const prose = block.type === N.prose;
   if (!prose && block.type !== N.verse) return out;
   let line = (block.attrs.start as number) - 1;
   block.forEach((row, offset) => {
-    /* a number and no unit: nothing is drawn for it (pin: numbering.test ›
-       a skipped line number is counted) */
+    /* counted, so a passage from the line after it is numbered as the
+       edition numbers it (pin: numbering.test › a skipped line number is
+       counted) (pin: reference.test › a passage starting on the line after a
+       skipped line number) */
     if (row.type === N.skip) {
-      line++;
-      skips?.push({ line, pos: blockPos + 1 + offset });
+      out.push({ pos: blockPos + 1 + offset, node: row, kind: "line", line: ++line, blockPos, shown: false, rest: false, skip: true });
       return;
     }
     if (row.type === N.gap || row.type === N.note || row.type === N.margin_note) return;
@@ -109,7 +111,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number, skip
     const num = kind === "line" || kind === "sentence" ? (rest ? line : ++line) : 0;
     out.push({
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
-      shown: interval > 0 && kind === "line" && !rest && num % interval === 0, rest,
+      shown: interval > 0 && kind === "line" && !rest && num % interval === 0, rest, skip: false,
     });
   });
   return out;

@@ -5,7 +5,7 @@ import { lineUnits, blocksOf, blockUnits, whollyIn, drawsInk, paintsLines, count
 
 const doc = parseMarkdown;
 const kinds = (md: string, interval = 0): string =>
-  lineUnits(doc(md), interval).map((u) => u.kind + (u.line ? ":" + u.line : "")).join(" ");
+  lineUnits(doc(md), interval).map((u) => (u.skip ? "skip" : u.kind) + (u.line ? ":" + u.line : "")).join(" ");
 
 test("prose is unnumbered, a verse block's rows are its lines from 1", () => {
   const d = doc("intro\n\n::: verse\na\nb\nc\n:::\n\nafter");
@@ -135,9 +135,9 @@ test("paintsLines: a top-level verse block, and nothing else", () => {
 });
 
 test("a skipped line number is counted and draws no line: the lines after it keep the edition's numbers", () => {
-  expect(kinds("::: verse 545\na\n⟨skipped line number⟩\nb\n⟨skipped line number⟩\n⟨skipped line number⟩\nc\n:::")).toBe("line:545 line:547 line:550");
+  expect(kinds("::: verse 545\na\n⟨skipped line number⟩\nb\n⟨skipped line number⟩\n⟨skipped line number⟩\nc\n:::", 5)).toBe("line:545 skip:546 line:547 skip:548 skip:549 line:550");
   const d = doc("::: verse 545\na\n⟨skipped line number⟩\nb\n:::");
-  const skips: { line: number; pos: number }[] = [];
-  blockUnits(d.firstChild!, 0, 0, skips);
-  expect(skips.map((s) => [s.line, d.nodeAt(s.pos)!.type.name])).toEqual([[546, "skip"]]);
+  const u = blockUnits(d.firstChild!, 0, 0);
+  expect(u.map((x) => [x.line, d.nodeAt(x.pos)!.type.name, x.shown])).toEqual([[545, "line", false], [546, "skip", false], [547, "line", false]]);
+  expect(lineUnits(doc("::: verse 545\na\n⟨skipped line number⟩\n:::"), 1).map((x) => x.shown)).toEqual([true, false]);
 });

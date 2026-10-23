@@ -43,3 +43,9 @@ test("a grid cannot require a card: a card's colour has no default, so the schem
 test("a link's DOM, which copies are made from, carries its address alone", () => {
   expect(schema.marks.link.spec.toDOM!(schema.marks.link.create({ href: "#page/Horace" }), true)).toEqual(["a", { href: "#page/Horace" }, 0]);
 });
+
+test("a skipped line number is never selected, and stands only in verse", () => {
+  expect(schema.nodes.skip.spec.selectable).toBe(false);
+  expect(schema.nodes.verse.contentMatch.matchType(schema.nodes.skip)).not.toBeNull();
+  expect(schema.nodes.prose.contentMatch.matchType(schema.nodes.skip)).toBeNull();
+});

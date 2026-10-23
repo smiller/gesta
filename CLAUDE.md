@@ -444,7 +444,7 @@ is in the plan's record, under the phase named):
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
   over the document — which rows are lines, and their numbers; no DOM),
   `lineNumbers.ts` (the plugin drawing that answer as node decorations),
-  `rows.ts` (the line, pair, gap, note and margin-note node views), `rowKeys.ts` (the
+  `rows.ts` (the line, pair, gap, skipped-line-number, note and margin-note node views), `rowKeys.ts` (the
   gestures under a fence, as commands: Enter, Backspace, Delete, Tab, the
   typed pipe), `fit.ts` (the fitted measure: the arithmetic pure, the
   measuring pass and its scheduling as a plugin view), `margins.ts` (a

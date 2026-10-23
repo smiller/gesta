@@ -68,7 +68,7 @@ function place(view: EditorView): void {
     const carries = dual && opensWithRest($end.parent.maybeChild($end.index()));
     if (!any && !carries) return false;
     const from = dual && carried?.at === pos ? carried.end : null;
-    const units = blockUnits(block, pos, 0).filter((u) => u.line);
+    const units = blockUnits(block, pos, 0).filter((u) => u.line && !u.skip);
     const latin = (el: HTMLElement | null): HTMLElement | null => (el && dual && el.classList.contains("vpair") ? (el.firstElementChild as HTMLElement | null) : el);
     const last = units.length - 1;
     /* a ⟨…⟩ row opening a dual-language block is the rest of the line the

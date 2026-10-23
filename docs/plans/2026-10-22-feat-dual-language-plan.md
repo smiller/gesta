@@ -202,8 +202,8 @@ over a faint marker); ⌃⌘G for its number lands on the line after the gap
 and says "line N is omitted in this edition" (asked over refusing).
 
 - The model: a leaf row `skip`, never selectable, drawn as `div.vskip`
-  (display none). The numbering walk counts it and makes no unit; a caller
-  asking for them (Go to) is handed the skips. A quotation across one keeps
+  (display none), in verse only. The numbering walk counts it as a unit
+  marked `skip` (from review cycle 1, below). A quotation across one keeps
   it, so its lines keep their numbers; Backspace or Delete beside one move
   the caret over it, so it is never taken out unseen.
 - MEASURED in headless Helium (the fixture's 546, the steps "a skipped line
@@ -213,3 +213,35 @@ and says "line N is omitted in this edition" (asked over refusing).
 - FAILURE, caught by its test: `skips?.push({ line: ++line, … })` skipped
   the count whenever no list was asked for — optional chaining leaves the
   arguments unevaluated.
+
+### Skipped line number: review cycle 1 (ba1caba..216317d, /code-review at high) — REVIEW CYCLES: 1
+
+Cost 122,692 tokens (the transcript's last message: 2 input, 2,271 cache
+creation, 117,644 cache read, 2,775 output). Ten findings, all real on a
+read of the code (three the reviewer measured in scratch tests); fixed in
+one commit:
+
+1. A passage starting on the line after a skip was numbered one low
+   (`::: verse 546` under a link reading 547): the skip was handed out on
+   a side list, and `countAt` never saw it.
+2. A stanza's quotation drew a skip as an empty quoted line, a stanza gap
+   that was never there: it is left out.
+3. The schema let a skip into a prose block, which wrote it back as text:
+   it stands in verse only.
+4. Backspace and Delete beside a skip only moved the caret: two lines with
+   skips between them now join, the skips kept after the joined line.
+5. Enter's way out of a block was missed when skips trailed the last line:
+   skips after a row are no rows of its.
+6. A skipped line in several blocks lost the block's ordinal: it is said,
+   as every landing says it where there are several blocks. In the Ovid
+   page this reads "line 546 is omitted in this edition — verse block 2 of
+   8".
+7. A row whose own text read as a token (⟨skipped line number⟩, ⟨…⟩,
+   ⟨line⟩ at its head) became one on reload: it is written after a
+   backslash and read back as text. MEASURED over the corpus: the same 64
+   entries differ on the round trip before and after.
+8. Altitude: the skip is a unit of the one walk (`skip: true`, numbered,
+   never shown), the side list gone; Go to, the line numbers and the split
+   lines leave it out.
+9. Two comments stated another module's CSS or carried no pin: fixed.
+10. CLAUDE.md's layout gained the skip's node view.

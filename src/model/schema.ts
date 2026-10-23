@@ -17,7 +17,10 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    a dual-language block draws as a verse block that says so) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
   attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false } } : { start: { default: 1 } },
-  content: "(line | pair | gap | skip | note | margin_note)*",
+  /* a prose block numbers sentences, and has no skipped line (pin:
+     schema.test › a skipped line number is never selected, and stands only
+     in verse) */
+  content: stanzas ? "(line | pair | gap | skip | note | margin_note)*" : "(line | pair | gap | note | margin_note)*",
   group: "block",
   defining: true,
   parseDOM: [{
@@ -115,7 +118,8 @@ const nodes: Record<string, NodeSpec> = {
   pair: { attrs: { kind: { default: null } }, content: "cell cell", parseDOM: [{ tag: "div.vrow.vpair", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
   cell: { content: "inline*", parseDOM: [{ tag: "div.vcell" }], toDOM: () => ["div", { class: "vcell" }, 0] },
   gap: { parseDOM: [{ tag: "div.vgap" }], toDOM: () => ["div", { class: "vgap" }] },
-  /* never selected: it draws nothing, and a caret on it would be lost */
+  /* never selected: it holds nothing for a caret (pin: schema.test › a
+     skipped line number is never selected) */
   skip: { selectable: false, parseDOM: [{ tag: "div.vskip" }], toDOM: () => ["div", { class: "vskip" }] },
   text: { group: "inline" },
   /* a newline where a block holds no breaks: code over broken lines kept

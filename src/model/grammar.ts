@@ -69,6 +69,11 @@ export const ROW_CONT_TOKEN = "⟨…⟩";
 export const ROW_SKIP_TOKEN = "⟨skipped line number⟩";
 export const ROW_KIND_AT = /^⟨(line|…)⟩\s*/;
 export const rowKindToken = (kind: string | null): string => (kind === "line" ? ROW_LINE_TOKEN : kind === "cont" ? ROW_CONT_TOKEN : "");
+/* a row's own text that would read back as a token is written after a
+   backslash, and read back as text (pin: parse.test › a row's text that
+   would read as a row token) */
+export const ROW_TOKEN_ESCAPE = "\\";
+export const readsAsRowToken = (text: string): boolean => ROW_KIND_AT.test(text) || text.trim() === ROW_SKIP_TOKEN;
 
 /* ---------- the ::: family ---------- */
 /* "::: verse 2" numbers its first line 2; 1 when the opener carries none.

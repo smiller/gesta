@@ -20,7 +20,7 @@ export const lineNumbersKey = new PluginKey<LineNumbersState>("lineNumbers");
 export function rowDecorations(doc: Node, interval: number): Decoration[] {
   const out: Decoration[] = [];
   for (const u of lineUnits(doc, interval)) {
-    if (u.kind === "sentence") continue;
+    if (u.kind === "sentence" || u.skip) continue;
     let cls = "ln";
     if (u.kind === "stage") cls += " stage";
     if (u.shown) cls += " shown";

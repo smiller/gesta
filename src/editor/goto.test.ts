@@ -113,14 +113,25 @@ describe("a skipped line number", () => {
     for (const n of [597, 598]) {
       const { hits, blocks } = lineHits(d, n);
       expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
-      expect(landingWord(hits[0], blocks, n)).toBe("line " + n + " is omitted in this edition");
+      expect(landingWord(hits[0], blocks, n)).toBe("line " + n + " is omitted in this edition — verse block 1 of 2");
     }
     const { hits, blocks } = lineHits(d, 599);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
     expect(landingWord(hits[0], blocks, 599)).toBe("line 599 — verse block 1 of 2");
   });
-  it("one ending its block lands on the line before it", () => {
+  it("one ending its block lands on the line before it, and alone on the page says so plainly", () => {
     const d = parseMarkdown("::: verse 10\na\n⟨skipped line number⟩\n:::");
-    expect(lineHits(d, 11).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["a"]);
+    const { hits, blocks } = lineHits(d, 11);
+    expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["a"]);
+    expect(landingWord(hits[0], blocks, 11)).toBe("line 11 is omitted in this edition");
+  });
+});
+
+describe("a skipped line number in more than one block", () => {
+  it("says which block, as every landing does where there are several", () => {
+    const d = parseMarkdown("::: verse\na\n⟨skipped line number⟩\nb\n:::\n\n::: verse\nx\n⟨skipped line number⟩\ny\n:::");
+    const { hits, blocks } = lineHits(d, 2);
+    expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["b", "y"]);
+    expect(landingWord(hits[1], blocks, 2)).toBe("line 2 is omitted in this edition — verse block 2 of 2");
   });
 });

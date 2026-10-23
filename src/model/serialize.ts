@@ -6,7 +6,7 @@ import type { Node, Mark, MarkType } from "prosemirror-model";
 import { schema, MARK_ORDER } from "./schema.ts";
 import {
   LIST_LINE, ITEM_BLOCK_INDENT, FENCE_CLOSE, blockLineAt, escapeProse, escapeIndent,
-  escapeCell, folioToken, quotePrefix, rowKindToken, ROW_SKIP_TOKEN,
+  escapeCell, folioToken, quotePrefix, rowKindToken, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE, readsAsRowToken,
 } from "./grammar.ts";
 
 const N = schema.nodes;
@@ -203,8 +203,9 @@ function cellMd(node: Node): string {
 function pairMd(a: string, b: string): string {
   return b ? a + " | " + b : a + " |";
 }
-function rowHead(row: Node): string {
-  return rowKindToken(row.attrs.kind as string | null);
+function rowHead(row: Node, text: string): string {
+  const kind = rowKindToken(row.attrs.kind as string | null);
+  return kind || (readsAsRowToken(text) ? ROW_TOKEN_ESCAPE : "");
 }
 function rowsMd(block: Node, word: string): string {
   const rows: string[] = [];
@@ -212,8 +213,8 @@ function rowsMd(block: Node, word: string): string {
     if (row.type === N.gap) rows.push("");
     else if (row.type === N.skip) rows.push(ROW_SKIP_TOKEN);
     else if (row.type === N.note || row.type === N.margin_note) rows.push(blockMd(row, true));
-    else if (row.type === N.pair) rows.push(rowHead(row) + (row.childCount > 1 ? pairMd(cellMd(row.child(0)), cellMd(row.child(1))) : cellMd(row.child(0))));
-    else rows.push(rowHead(row) + cellMd(row));
+    else if (row.type === N.pair) { const a = cellMd(row.child(0)); rows.push(rowHead(row, a) + (row.childCount > 1 ? pairMd(a, cellMd(row.child(1))) : a)); }
+    else { const a = cellMd(row); rows.push(rowHead(row, a) + a); }
   });
   const start = block.attrs.start as number, stanza = block.attrs.stanza as number | null | undefined;
   const open = (stanza != null && start === 1 ? "::: stanza " + stanza : "::: " + word + (start > 1 ? " " + start : "")) + "\n";

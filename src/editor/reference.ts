@@ -408,7 +408,10 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
     const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, rowsKept);
     return quoted([fence]);
   }
-  return kept.map((row) => {
+  /* quoted as lines a skipped line number has no place, and a blank would
+     read as a stanza gap (pin: reference.test › a stanza's quotation leaves
+     a skipped line number out) */
+  return kept.filter((row) => row.type !== N.skip).map((row) => {
     if (row.type === N.gap || !drawsInk(row)) return quotePrefix("");
     const line = serializeMarkdown(schema.nodes.doc.create(null, [N.paragraph.create(null, row.content)]));
     return "> " + line.replace(/\s*\n\s*/g, " ").trim();

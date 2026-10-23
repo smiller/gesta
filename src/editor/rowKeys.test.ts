@@ -307,3 +307,19 @@ test("a blank row selected with no line below it: Delete takes it out to the end
   expect(md(s)).toBe("::: verse\na\n:::\n\nAfter");
   expect(caret(s)).toBe("line:a|");
 });
+
+test("a skipped line number between two lines: Backspace and Delete join the lines across it, the skip kept after them", () => {
+  const back = run(backspaceInRow, at("::: verse 545\nalpha\n⟨skipped line number⟩\nbeta\n:::", "beta", 0));
+  expect(md(back)).toBe("::: verse 545\nalphabeta\n⟨skipped line number⟩\n:::");
+  expect(caret(back)).toBe("line:alpha|beta");
+  const del = run(deleteInRow, at("::: verse 545\nalpha\n⟨skipped line number⟩\nbeta\n:::", "alpha"));
+  expect(md(del)).toBe("::: verse 545\nalphabeta\n⟨skipped line number⟩\n:::");
+  expect(caret(del)).toBe("line:alpha|beta");
+});
+
+test("an empty last line before a trailing skipped line number is still the way out", () => {
+  const one = run(enterInRow, at("::: verse 10\nalpha\n⟨skipped line number⟩\n:::", "alpha"));
+  const two = run(enterInRow, one);
+  expect(two.doc.lastChild!.type.name).toBe("paragraph");
+  expect(md(type(two, "after"))).toBe("::: verse 10\nalpha\n⟨skipped line number⟩\n:::\n\nafter");
+});

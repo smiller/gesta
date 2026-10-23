@@ -77,9 +77,8 @@ function dualBlocks(view: EditorView): { node: Node; dom: HTMLElement }[] {
    which no margin collapses into, and a note as margin on top of its own,
    read with the waits off — written as the margin, it replaced the note's
    1.2em and the English still overlapped it. A margin-note drawn in the
-   margin stands outside the rows and is no row here, nor a skipped line
-   number, which draws nothing; a margin-note drawn in the text waits as a
-   note does. The foot is padding on the last row: a margin there
+   margin stands outside the rows and is no row here, nor is a skipped
+   line number; a margin-note drawn in the text waits as a note does. The foot is padding on the last row: a margin there
    collapsed through the block into the next fence's (pin: dual-language ›
    dual-language in Ovid) (pin: dualLanguage.test › a margin-note drawn in
    the text) */

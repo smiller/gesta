@@ -481,3 +481,16 @@ test("a page-turn row is left out of a quoted run that starts in prose too", () 
   const [a, b] = span(doc, "a paragraph", "line two");
   expect(passageMd(doc, a, b)).toContain("> line one\n> line two");
 });
+
+test("a passage starting on the line after a skipped line number is numbered from that line", () => {
+  const doc = parseMarkdown("::: verse 545\nqua\n⟨skipped line number⟩\nvix\nnext\n:::");
+  const [a, b] = span(doc, "vix", "next");
+  expect(referenceRange(doc, a, b)).toBe("547-48");
+  expect(passageMd(doc, a, b)).toBe("> ::: verse 547\n> vix\n> next\n> :::");
+});
+
+test("a stanza's quotation leaves a skipped line number out rather than drawing a gap that was never there", () => {
+  const doc = parseMarkdown("::: stanza 2\na\nb\n⟨skipped line number⟩\nc\n:::");
+  const [a, b] = span(doc, "b", "c");
+  expect(passageMd(doc, a, b)).not.toContain("> \n");
+});

@@ -314,3 +314,11 @@ test("a ⟨skipped line number⟩ row is a line the edition leaves out: a row of
   expect(rows.child(1).type.name).toBe("skip");
   expect(visibleText(parseMarkdown("::: verse\na ⟨skipped line number⟩ b\n:::"))).toBe("a ⟨skipped line number⟩ b");
 });
+
+test("a row's text that would read as a row token is written escaped and read back as text", () => {
+  const rows = parseMarkdown("::: verse\n\\⟨skipped line number⟩\n\\⟨…⟩By Samson.\n:::").firstChild!;
+  expect(rows.child(0).type.name).toBe("line");
+  expect(rows.child(0).textContent).toBe("⟨skipped line number⟩");
+  expect(rows.child(1).attrs.kind).toBeNull();
+  expect(rows.child(1).textContent).toBe("⟨…⟩By Samson.");
+});

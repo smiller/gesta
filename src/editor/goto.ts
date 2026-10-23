@@ -34,16 +34,13 @@ export interface Hit { pos: number; nth: number; block: Unit[]; skipped?: boolea
 export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] } {
   const blocks = blocksOf(lineUnits(doc, 0));
   const hits: Hit[] = [];
-  blocks.forEach((rows, i) => { for (const u of rows) if (u.line === n && !u.rest) hits.push({ pos: u.pos, nth: i + 1, block: rows }); });
-  if (hits.length) return { hits, blocks };
   blocks.forEach((rows, i) => {
-    const skips: { line: number; pos: number }[] = [];
-    blockUnits(doc.nodeAt(rows[0].blockPos)!, rows[0].blockPos, 0, skips);
-    const skip = skips.find((s) => s.line === n);
-    if (!skip) return;
-    const lines = rows.filter((u) => !u.rest);
-    const at = lines.find((u) => u.pos > skip.pos) ?? lines[lines.length - 1];
-    hits.push({ pos: at.pos, nth: i + 1, block: rows, skipped: true });
+    const lines = rows.filter((u) => !u.rest && !u.skip);
+    for (const u of rows) {
+      if (u.line !== n || u.rest) continue;
+      const at = u.skip ? lines.find((v) => v.pos > u.pos) ?? lines[lines.length - 1] : u;
+      if (at) hits.push({ pos: at.pos, nth: i + 1, block: rows, skipped: u.skip });
+    }
   });
   return { hits, blocks };
 }
@@ -64,7 +61,7 @@ export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean):
 }
 /* silent where unambiguous; with several blocks the ordinal is load-bearing */
 export function landingWord(hit: Hit, blocks: Unit[][], n: number): string | null {
-  if (hit.skipped) return "line " + n + " is omitted in this edition";
+  if (hit.skipped) return "line " + n + " is omitted in this edition" + (blocks.length < 2 ? "" : " — " + formNoun(hit.block) + " " + hit.nth + " of " + blocks.length);
   if (blocks.length < 2) return null;
   const oneForm = blocks.every((rows) => prose(rows) === prose(hit.block));
   return unitNoun(hit.block) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
@@ -114,7 +111,7 @@ export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   if (!last) return "no stanzas here";
   if (!found) return "no stanza " + s + " here — the last is " + last;
   const { node, pos } = found as { node: Node; pos: number };
-  const lines = blockUnits(node, pos, 0).filter((u) => u.line && !u.rest);
+  const lines = blockUnits(node, pos, 0).filter((u) => u.line && !u.rest && !u.skip);
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
   return want ? { pos: want.pos } : "stanza " + s + " has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
 }
