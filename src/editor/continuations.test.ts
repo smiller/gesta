@@ -15,7 +15,7 @@ test("a line split three ways steps on: each rest past the one before it", () =>
 
 test("a rest with no half above it in the block is not set in; one that would run past the row is set in only as far as it fits", () => {
   expect(contIndents([other, cont(90), line(100)], 5)).toEqual([0, 0, 0]);
-  expect(contIndents([line(500), cont(200)], 5)).toEqual([0, 400]);
+  expect(contIndents([line(500), cont(200)], 5)).toEqual([0, 399]);
   expect(contIndents([line(500), cont(700)], 5)).toEqual([0, 0]);
 });
 
@@ -23,4 +23,8 @@ test("a rest opening a block is set in past the half carried from the block befo
   expect(contIndents([cont(90), line(100)], 5, 200)).toEqual([205, 0]);
   expect(contIndents([cont(90), cont(50)], 5, 200)).toEqual([205, 300]);
   expect(contIndents([line(100), cont(90)], 5, 400)).toEqual([0, 105]);
+});
+
+test("a rest is set in a pixel short of filling its row: text a fraction wider than its measure wrapped", () => {
+  expect(contIndents([line(211), cont(244, 450)], 5.4)).toEqual([0, 205]);
 });

@@ -16,7 +16,10 @@ export function contIndents(rows: RowMeasure[], space: number, carried: number |
   return rows.map((r) => {
     if (r.kind === "other") return 0;
     if (r.kind === "line" || above === null) { above = r.end; return 0; }
-    const indent = Math.max(0, Math.min(above + space, r.room - r.end));
+    /* a pixel short of the row: a rest set in to fill it exactly wrapped,
+       its text a fraction wider than measured (pin: continuations.test ›
+       a rest is set in a pixel short of filling its row) */
+    const indent = Math.max(0, Math.min(above + space, r.room - r.end - 1));
     above = indent + r.end;
     return indent;
   });

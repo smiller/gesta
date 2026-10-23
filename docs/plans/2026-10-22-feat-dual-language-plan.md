@@ -124,3 +124,11 @@ read of the code; fixed in one commit:
 The steps' readings gained what the review found them blind to: a
 sentence clear of a note and of the rule over the next pair, measured
 from where a waited row's text starts; Latin rows wrapped.
+
+### After cycle 1: a rest that fills its row
+
+- FAILURE, MEASURED in headless Helium on Book 6 as imported: the rest
+  "magnum, quodcumque paravi;" set in 206px in a 450px Latin column wrapped
+  ("paravi;" on a second line), its text 244px in the 244px left. A rest
+  is now set in a pixel short of filling its row (`contIndents`); Book 6's
+  wrapped Latin rows 1 → 0.
