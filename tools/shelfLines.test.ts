@@ -13,6 +13,10 @@ test("quotedRuns: consecutive lines that are the bookshelf's, quoted or bare, ma
   const md = "Odes 1.1.3-4:\nsunt quos curriculo pulverem Olympicum | x\ncollegisse iuvat, metaque fervidis | y\n\n> certat tergeminis tollere honoribus;\n\n```\nevitata rotis palmaque nobilis\n```\n\n[Horace, *Odes*, 1.1.5](#bookshelf/Horace/Odes/1.1?h=x):\n\n> ::: verse 5\n> evitata rotis palmaque nobilis | The goal\n> :::\n";
   expect(quotedRuns(md, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[1, 2, 3, 4], [4, 4, 8, 8]]);
 });
+test("quotedRuns: a line inside a card, one's own composition, is never made a reference, the card left whole however its fences nest", () => {
+  const md = "::: grid\n::: card-bright-green\nFinding Verity\n\nsunt quos curriculo pulverem Olympicum\n\n> collegisse iuvat metaque fervidis\n:::\n:::\n\n> certat tergeminis tollere honoribus;\n";
+  expect(quotedRuns(md, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[10, 10, 8, 8]]);
+});
 test("quotedRuns: a quotation under a link to the bookshelf written as the page's full address is a reference already", () => {
   const md = "[Horace, *Odes*, 1.1.3-4](file:///Users/someone/gesta/dist/index.html#bookshelf/Horace/Odes/1.1?h=x):\n\n> ::: verse 3\n> sunt quos curriculo pulverem Olympicum | x\n> collegisse iuvat metaque fervidis | y\n> :::\n";
   expect(quotedRuns(md, index)).toEqual([]);

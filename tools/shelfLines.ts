@@ -89,9 +89,17 @@ export interface Run {
 function skipped(lines: string[]): boolean[] {
   const skip = new Array(lines.length).fill(false);
   let fence = false;
+  /* a card is one's own composition, kept whole: a line of the book inside
+     one is never made a reference (pin: shelfLines.test › quotedRuns: a line
+     inside a card) */
+  const open: string[] = [];
   lines.forEach((l, i) => {
     if (FENCE.test(l)) { fence = !fence; skip[i] = true; return; }
-    if (fence) skip[i] = true;
+    if (fence) { skip[i] = true; return; }
+    const div = l.replace(/^\s*(?:>\s?)*/, "").match(/^:::\s*(\S*)/);
+    if (div && div[1]) open.push(div[1]);
+    if (open.some((name) => name.startsWith("card"))) skip[i] = true;
+    if (div && !div[1]) open.pop();
   });
   /* a quotation under a link to the bookshelf is a reference already */
   for (let i = 0; i < lines.length; i++) {
