@@ -131,8 +131,8 @@ from where a waited row's text starts; Latin rows wrapped.
 - FAILURE, MEASURED in headless Helium on Book 6 as imported: the rest
   "magnum, quodcumque paravi;" set in 206px in a 450px Latin column wrapped
   ("paravi;" on a second line), its text 244px in the 244px left. A rest
-  is now set in a pixel short of filling its row (`contIndents`); Book 6's
-  wrapped Latin rows 1 → 0.
+  was set in a pixel short of filling its row (`contIndents`); Book 6's
+  wrapped Latin rows 1 → 0. Replaced in cycle 2 by its cause, below.
 
 ### After cycle 1: a quotation stays dual-language (2026-10-23, asked)
 
@@ -149,3 +149,44 @@ from where a waited row's text starts; Latin rows wrapped.
   and inside the quotation's box. Before the fit's settle (500ms) the
   English stood 41 lines in 106px, the unfitted column: a paste waits for
   the settle as a plain verse quotation does.
+
+### Review cycle 2 (5b1463f..618f4f7, /code-review at high) — REVIEW CYCLES: 2
+
+Cost 118,883 tokens (the transcript's last message: 2 input, 2,958 cache
+creation, 113,158 cache read, 2,765 output). Eleven findings, the ten most
+severe reported, all real on a read of the code; fixed in one commit:
+
+1. The English's 288px floor was held back even where its widest sentence
+   needs less: a quotation of short sentences wrapped its Latin at 319px
+   with 200px to spare. The English is held back to the lesser.
+2. A block whose node and width stood was skipped though the entry's
+   split had moved its English column: the column's width is in the key.
+3. A margin-note drawn in the text, not the margin, was no row and the
+   English ran over it: it waits as a note does.
+4. ArrowDown from a block's last sentence fell to the next Latin row,
+   above the caret; a note under the English was jumped over. The arrows
+   now go down the English column: a sentence, a note under the English,
+   then the next dual-language block's first sentence (up, its last).
+   MEASURED in headless Helium: from "…remained." ArrowDown lands at the
+   start of "But even now in this new form…", ArrowUp back at the end of
+   "…remained."; from "…o’erwhelmed.”" at the start of note 1.
+5. A grow pass could narrow the dual-language column mid-keystroke: it
+   only widens, as the plain split does.
+6. One dual-language block let an over-wide line in any paired block
+   take more than two thirds: the cap holds for dual-language too.
+7. The cache's width was read after the writes, a layout per block: it is
+   read once, before them.
+8. The 1px slack covered a rounding: `room` was the whole-pixel
+   `clientWidth` and the indent rounded to the nearest pixel. The room is
+   now read to the fraction and the indent rounded down, the slack gone.
+   MEASURED at 1400px over all fifteen books: every sentence level and
+   clear, 0 Latin rows wrapped, every rest set in (Book 6 included);
+   Samson's rests move by a pixel at most.
+9. The paste step's wait swallowed its timeout: its reading carries
+   `fitted`, and it waits out the fit's settle (500ms, the app's clock).
+10. A duplicated condition in `measure` and a hand-built offsets array:
+    merged, and the caret's stops rebuilt over `forEach`.
+
+The step `caretCell` reads the caret's place in its cell (start, end,
+inside) and names a note; the page-wide cursor reading crosses the
+columns and read the end of "…remained." as a line's start.

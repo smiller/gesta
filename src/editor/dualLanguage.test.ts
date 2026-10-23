@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { dualWaits, noteColumns, type DualRow } from "./dualLanguage.ts";
+import { dualWaits, englishStop, isDualRow, noteColumns, waitsAsNote, type DualRow } from "./dualLanguage.ts";
 
 const latin = (top: number): DualRow => ({ top, english: null, clears: false });
 const pair = (top: number, english: number): DualRow => ({ top, english, clears: false });
@@ -55,4 +55,25 @@ test("a note stands under the column its mark is in", () => {
 test("a mark is a number's superscript digits whole: ¹ is not found in ¹²", () => {
   const block = parseMarkdown("::: dual-language\nline | sentence¹²\n::: note\n[1] one\n:::\n::: note\n[12] twelve\n:::\n:::").firstChild!;
   expect(noteColumns(block)).toEqual(new Map([[1, "latin"], [2, "english"]]));
+});
+
+test("the arrows move down the English column: to the next sentence or a note under the English, past the block from its last", () => {
+  // rows: a pair, a Latin line, a note under the English, a Latin line, a pair, a Latin line
+  const stops = [true, false, true, false, true, false];
+  expect(englishStop(stops, 0, "down")).toBe(2);
+  expect(englishStop(stops, 2, "down")).toBe(4);
+  expect(englishStop(stops, 4, "down")).toBe("out");
+  expect(englishStop(stops, 4, "up")).toBe(2);
+  expect(englishStop(stops, 0, "up")).toBe("out");
+  // entering a block: from before its first row, or after its last
+  expect(englishStop(stops, -1, "down")).toBe(0);
+  expect(englishStop(stops, stops.length, "up")).toBe(4);
+});
+
+test("a margin-note drawn in the text is a row that waits for the English, as a note does; one in the margin is no row", () => {
+  const el = (cls: string) => { const d = { classList: new Set(cls.split(" ")) }; return { classList: { contains: (c: string) => d.classList.has(c) } } as unknown as HTMLElement; };
+  expect(isDualRow(el("margin-note in-margin"))).toBe(false);
+  expect(isDualRow(el("margin-note"))).toBe(true);
+  expect(waitsAsNote(el("margin-note"))).toBe(true);
+  expect(waitsAsNote(el("vrow vpair"))).toBe(false);
 });

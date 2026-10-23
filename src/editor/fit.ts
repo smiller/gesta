@@ -65,9 +65,19 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
      the cap the two give way in proportion) */
   if (c1 + c2 > room) col = Math.min(Math.round(room * c1 / (c1 + c2)), Math.round(room * 2 / 3));
   /* a verse line wrapped beside prose loses its row: the Latin keeps its
-     width while the English has room for a reading line (pin: fit.test ›
-     past the cap a dual-language block's Latin keeps its width) */
-  if (m.whole) return { width, col: Math.min(c1, Math.max(MIN_COL, Math.round(room - DUAL_MIN_ENGLISH))) };
+     width while the English has room for a reading line, or for its widest
+     sentence where that is less, and one over-wide line still takes no more
+     than two thirds (pin: fit.test › past the cap a dual-language block's
+     Latin keeps its width) (pin: fit.test › a dual-language block whose
+     sentences are all short) (pin: fit.test › beside a dual-language block
+     one over-wide line) */
+  if (m.whole) {
+    const most = Math.max(MIN_COL, Math.round(Math.min(room * 2 / 3, room - Math.min(DUAL_MIN_ENGLISH, c2))));
+    let whole = Math.min(c1, most);
+    /* (pin: fit.test › a dual-language block's grow only widens) */
+    if (growOnly && prev && prev.col != null) whole = Math.min(Math.max(whole, prev.col), Math.max(whole, most));
+    return { width, col: whole };
+  }
   /* the remembered column, and what this room affords: never less than the
      root carries, never more than the room holds — and the room holds more
      than the fresh answer wherever the translation only needs c2 */
@@ -169,8 +179,10 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
       });
       /* most of a dual-language block's lines carry no English: the Latin
          column is as wide as the widest of them too, or a long one wraps */
-      if (measureCap !== Infinity) whole = true;
-      if (measureCap !== Infinity) b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, r.getBoundingClientRect().width); });
+      if (measureCap !== Infinity) {
+        whole = true;
+        b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, r.getBoundingClientRect().width); });
+      }
     }
     /* the gap is the row's, not the block's, read once off the first pair */
     if (gapRow) gap = parseFloat(getComputedStyle(gapRow).columnGap) || 0;

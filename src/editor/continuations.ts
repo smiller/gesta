@@ -16,10 +16,8 @@ export function contIndents(rows: RowMeasure[], space: number, carried: number |
   return rows.map((r) => {
     if (r.kind === "other") return 0;
     if (r.kind === "line" || above === null) { above = r.end; return 0; }
-    /* a pixel short of the row: a rest set in to fill it exactly wrapped,
-       its text a fraction wider than measured (pin: continuations.test ›
-       a rest is set in a pixel short of filling its row) */
-    const indent = Math.max(0, Math.min(above + space, r.room - r.end - 1));
+    /* (pin: continuations.test › a rest past the end of the half above that would overrun its row) */
+    const indent = Math.max(0, Math.min(above + space, r.room - r.end));
     above = indent + r.end;
     return indent;
   });
@@ -44,6 +42,11 @@ function lineExtents(el: HTMLElement): { left: number; right: number }[] {
    would run unwrapped, so a rest the indent has wrapped is still pulled
    back to fit (pin: split lines › a rest typed past its row's width) */
 const lineEnd = (el: HTMLElement): number => lineExtents(el).at(-1)?.right ?? 0;
+/* a row's room to the fraction of a pixel, and an indent written rounded
+   down: the room read as a whole clientWidth and the indent rounded to the
+   nearest pixel overran a row a rest exactly filled, and its last word
+   wrapped (MEASURED, Ovid 6 "magnum, quodcumque paravi;") */
+const sideBorders = (el: HTMLElement): number => { const cs = getComputedStyle(el); return (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0); };
 const restWidth = (el: HTMLElement): number => lineExtents(el).reduce((w, l) => w + l.right - l.left, 0);
 
 /* written only where a value differs, so a keystroke that moves no rest
@@ -75,7 +78,8 @@ function place(view: EditorView): void {
     const rows: RowMeasure[] = units.map((_, i) => {
       const el = els[i];
       if (!el) return { kind: "other", end: 0, room: 0 };
-      return rest(i) ? { kind: "cont", end: restWidth(el), room: el.clientWidth } : { kind: "line", end: lineEnd(el), room: el.clientWidth };
+      const room = el.getBoundingClientRect().width - sideBorders(el);
+      return rest(i) ? { kind: "cont", end: restWidth(el), room } : { kind: "line", end: lineEnd(el), room };
     });
     const first = els.find(Boolean);
     const space = first ? parseFloat(getComputedStyle(first).fontSize) * 0.3 : 0;
@@ -83,7 +87,7 @@ function place(view: EditorView): void {
     indents.forEach((x, i) => {
       const el = els[i] && (view.nodeDOM(units[i].pos) as HTMLElement);
       if (!el || units[i].node.attrs.kind !== "cont") return;
-      const value = rows[i].kind === "cont" && x ? Math.round(x) + "px" : "";
+      const value = rows[i].kind === "cont" && x ? Math.floor(x) + "px" : "";
       if (el.style.getPropertyValue("--cont-x") === value) return;
       if (value) el.style.setProperty("--cont-x", value);
       else el.style.removeProperty("--cont-x");

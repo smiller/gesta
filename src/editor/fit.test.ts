@@ -87,3 +87,19 @@ test("past the cap a dual-language block's Latin keeps its width and the English
   // a room too narrow for both: the English keeps its floor and the Latin takes what is left
   expect(fitWidth(m(460, 540, { cap: 600, whole: true }), null, false)).toEqual({ width: 600, col: Math.round(600 - 105.4 - DUAL_MIN_ENGLISH) });
 });
+
+test("a dual-language block whose sentences are all short keeps its Latin whole: the English is held back only to the room it needs", () => {
+  // room 712 - 105.4 = 606.6 holds 381 + 101: nothing gives way
+  expect(fitWidth(m(380, 100, { whole: true }), null, false)).toEqual({ width: 712, col: 381 });
+});
+
+test("a dual-language block's grow only widens, its column kept against a Latin line just shortened", () => {
+  expect(fitWidth(m(300, 540, { cap: 936, whole: true }), { width: 936, col: 461 }, true)).toEqual({ width: 936, col: 461 });
+  // the settle narrows it again
+  expect(fitWidth(m(300, 540, { cap: 936, whole: true }), { width: 936, col: 461 }, false)!.col).toBe(301);
+});
+
+test("beside a dual-language block one over-wide line still takes no more than two thirds", () => {
+  // room 1285 - 105.4 = 1179.6: the English's floor would leave the URL 892
+  expect(fitWidth(m(1200, 540, { whole: true }), null, false)!.col).toBe(Math.round(1179.6 * 2 / 3));
+});

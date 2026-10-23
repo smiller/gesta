@@ -151,7 +151,14 @@ export const read = {
       latinStep: rows[1] ? Math.round((top(rows[1]) - top(rows[0])) / lh * 10) / 10 : null, englishLines: lines,
       englishInside: top(english) + english.scrollHeight <= b.closest("blockquote").getBoundingClientRect().bottom + 1 };
   }),
-  caretCell: (page) => page.evaluate(() => { const n = getSelection().anchorNode; const el = n && (n.nodeType === 3 ? n.parentElement : n); return el?.closest(".vcell, .vrow")?.textContent.slice(0, 40) ?? null; }),
+  caretCell: (page) => page.evaluate(() => {
+    const sel = getSelection(), n = sel.anchorNode; const el = n && (n.nodeType === 3 ? n.parentElement : n);
+    const cell = el?.closest(".vcell, .note, .vrow");
+    if (!cell) return null;
+    const r = document.createRange(); r.selectNodeContents(cell); r.setEnd(sel.anchorNode, sel.anchorOffset);
+    const at = r.toString().length;
+    return cell.textContent.slice(0, 40) + (at === 0 ? " · at its start" : at === cell.textContent.length ? " · at its end" : " · inside");
+  }),
   clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
   corner: (page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
