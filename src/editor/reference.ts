@@ -404,10 +404,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
        reference.test › a block inside a note, the label's top level, an end
        resting on a row, blanks, depth, the count before) */
     const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || drawsInk(row) ? row : N.gap.create());
-    /* a quotation is never laid out as a dual-language block: its sentences
-       start rows the quotation may not hold (pin: reference.test › a
-       passage quoted from a dual-language block) */
-    const fence = block.type.create({ ...block.attrs, dual: false, start: countAt(block, blockPos, rows[first].pos) }, rowsKept);
+    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, rowsKept);
     return quoted([fence]);
   }
   return kept.map((row) => {

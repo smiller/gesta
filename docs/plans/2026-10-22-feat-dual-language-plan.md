@@ -117,8 +117,9 @@ read of the code; fixed in one commit:
    the end of the one above. MEASURED in headless Helium: from "…by its
    roar." ArrowDown lands in "Here is the home…", ArrowUp back in
    "Through this the River Peneus…".
-9. A passage quoted from a dual-language block quoted as one: it is a
-   plain `::: verse` fence (the pairs keep their sentences).
+9. A passage quoted from a dual-language block quoted as one: made a
+   plain `::: verse` fence (the pairs keep their sentences). Undone after
+   cycle 1, below.
 10. Three comments broke the standard (provenance, two unpinned): fixed.
 
 The steps' readings gained what the review found them blind to: a
@@ -132,3 +133,19 @@ from where a waited row's text starts; Latin rows wrapped.
   ("paravi;" on a second line), its text 244px in the 244px left. A rest
   is now set in a pixel short of filling its row (`contIndents`); Book 6's
   wrapped Latin rows 1 → 0.
+
+### After cycle 1: a quotation stays dual-language (2026-10-23, asked)
+
+- Finding 9's fix was a choice made without asking: a quotation of
+  dual-language rows became a plain `::: verse` fence. Asked, the reader
+  ruled the quotation `::: dual-language N`, each quoted row keeping its
+  sentence. A plain pair is as tall as its English, so two Latin lines
+  beside a long sentence stood apart by its height; the dual-language
+  layout keeps the Latin together and leaves the room at the foot.
+- MEASURED in headless Helium (the step "⌃⌘R across a long sentence,
+  pasted", 1.533–534 into a fresh page at a 1000px window): the quotation
+  pastes as `::: dual-language 533`; the two Latin lines one line apart;
+  the English 8 lines at 470px beside 380px of Latin, level with its row
+  and inside the quotation's box. Before the fit's settle (500ms) the
+  English stood 41 lines in 106px, the unfitted column: a paste waits for
+  the settle as a plain verse quotation does.

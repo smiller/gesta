@@ -139,6 +139,18 @@ export const read = {
     return { blocks: blocks.length, sentences, level, clear, waiting, latinWrapped, tempeLines: tempe && Math.round(tempe.scrollHeight / parseFloat(getComputedStyle(tempe).lineHeight)), rests: rests.length, setIn: rests.filter((r) => parseFloat(r.style.getPropertyValue("--cont-x")) > 0).length,
       openingRest: opening && { text: opening.textContent.split("|")[0].trim(), setIn: parseFloat(opening.style.getPropertyValue("--cont-x")) > 0 }, note1: column(note(1)), note4: column(note(4)), englishEm: englishWidth };
   }),
+  dualQuote: (page) => page.evaluate(() => {
+    const b = document.querySelector("#editor blockquote .verse.dual-language");
+    if (!b) return { dual: false };
+    const rows = [...b.querySelectorAll(":scope > .vrow")];
+    const english = b.querySelector(".vpair > .vcell + .vcell");
+    const lh = parseFloat(getComputedStyle(rows[0]).lineHeight);
+    const top = (el) => el.getBoundingClientRect().top;
+    const lines = Math.round(english.scrollHeight / parseFloat(getComputedStyle(english).lineHeight));
+    return { dual: true, rows: rows.length, level: Math.abs(top(rows[0].children[0]) - top(english)) < 1,
+      latinStep: rows[1] ? Math.round((top(rows[1]) - top(rows[0])) / lh * 10) / 10 : null, englishLines: lines,
+      englishInside: top(english) + english.scrollHeight <= b.closest("blockquote").getBoundingClientRect().bottom + 1 };
+  }),
   caretCell: (page) => page.evaluate(() => { const n = getSelection().anchorNode; const el = n && (n.nodeType === 3 ? n.parentElement : n); return el?.closest(".vcell, .vrow")?.textContent.slice(0, 40) ?? null; }),
   clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),

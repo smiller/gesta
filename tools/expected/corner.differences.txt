@@ -248,3 +248,5 @@ dual-language in Ovid · * · new here, the old app frozen
 a sentence typed longer than its Latin · * · new here, the old app frozen
 ArrowDown from a sentence's last line · * · new here, the old app frozen
 ArrowUp from a sentence's first line · * · new here, the old app frozen
+dual-language: arrived at page/Quoted Ovid · * · new here, the old app frozen
+⌃⌘R across a long sentence, pasted · * · new here, the old app frozen

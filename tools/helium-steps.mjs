@@ -2358,6 +2358,20 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("ArrowUp");
   await rest(page);
   await log("ArrowUp from a sentence's first line", { cell: await R.caretCell(page) });
+  /* quoted, the block stays dual-language (2026-10-23, asked): two Latin lines beside a six-line sentence keep together, the English held inside the quotation */
+  await R.selectBetween(page, "ut canis in vacuo", "ille salutem;");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  const quoted = await R.clipboardLines(page);
+  await page.keyboard.press("Escape");
+  await go("page/Quoted%20Ovid");
+  await page.click(S.editor);
+  await page.keyboard.press("Meta+v");
+  await page.waitForFunction(() => document.querySelector("#editor .ProseMirror.fitted"), null, { timeout: 3000 }).catch(() => {});
+  await rest(page);
+  await rest(page);
+  await log("⌃⌘R across a long sentence, pasted", { lines: quoted, ...(await R.dualQuote(page)) });
     }],
   ];
   /* each section starts from the one window, in front, nothing open over
