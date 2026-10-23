@@ -2351,6 +2351,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await rest(page);
   await log("a sentence typed longer than its Latin", await R.dualLayout(page));
+  await R.caretAfter(page, "remoter regions by its roar", "remoter regions by its roar".length);
+  await page.keyboard.press("ArrowDown");
+  await rest(page);
+  await log("ArrowDown from a sentence's last line", { cell: await R.caretCell(page) });
+  await page.keyboard.press("ArrowUp");
+  await rest(page);
+  await log("ArrowUp from a sentence's first line", { cell: await R.caretCell(page) });
     }],
   ];
   /* each section starts from the one window, in front, nothing open over

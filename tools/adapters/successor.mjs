@@ -118,8 +118,12 @@ export const read = {
         sentences++;
         const [latin, english] = p.children;
         if (Math.abs(latin.getBoundingClientRect().top - english.getBoundingClientRect().top) < 1) level++;
-        const next = pairs[i + 1] ?? b.nextElementSibling;
-        if (!next || english.getBoundingClientRect().top + english.scrollHeight <= next.getBoundingClientRect().top + 1) clear++;
+        /* clear of whatever stands below it: the next row with English, a note, or the rule over the next pair */
+        const rows = [...b.children];
+        const next = rows.slice(rows.indexOf(p) + 1).find((r) => r.classList.contains("vpair") || r.classList.contains("note"));
+        const after = b.nextElementSibling;
+        const limit = next ? (next.classList.contains("vpair") ? next.children[0] : next).getBoundingClientRect().top : after ? after.getBoundingClientRect().top - 1.2 * parseFloat(getComputedStyle(after).fontSize) : Infinity;
+        if (english.getBoundingClientRect().top + english.scrollHeight <= limit + 1) clear++;
       });
     }
     const rests = [...document.querySelectorAll('#editor .dual-language > [data-kind="cont"]')];
@@ -128,11 +132,14 @@ export const read = {
     const column = (n) => n && (Math.abs(n.getBoundingClientRect().left - n.parentElement.querySelector(".vpair > .vcell + .vcell").getBoundingClientRect().left) < 1 ? "English" : Math.abs(n.getBoundingClientRect().left - n.parentElement.querySelector(".vpair > .vcell").getBoundingClientRect().left) < 1 ? "Latin" : "neither");
     const em = parseFloat(getComputedStyle(blocks[0]).fontSize);
     const englishWidth = Math.round(blocks[0].querySelector(".vpair > .vcell + .vcell").getBoundingClientRect().width / em);
-    const waiting = blocks.reduce((n, b) => n + [...b.children].filter((r) => parseFloat(r.style.marginTop) > 0).length, 0);
+    const waiting = blocks.reduce((n, b) => n + [...b.children].filter((r) => parseFloat(r.style.paddingTop) > 0 || parseFloat(r.style.marginTop) > 0).length, 0);
     const tempe = [...document.querySelectorAll("#editor .dual-language .vcell")].find((c) => c.textContent.startsWith("Men call it Tempe"));
-    return { blocks: blocks.length, sentences, level, clear, waiting, tempeLines: tempe && Math.round(tempe.scrollHeight / parseFloat(getComputedStyle(tempe).lineHeight)), rests: rests.length, setIn: rests.filter((r) => parseFloat(r.style.getPropertyValue("--cont-x")) > 0).length,
+    const lines = (el) => { const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].filter((x) => x.width).map((x) => Math.round(x.top))).size; };
+    const latinWrapped = blocks.reduce((n, b) => n + [...b.querySelectorAll(":scope > .vrow")].filter((r) => lines(r.classList.contains("vpair") ? r.children[0] : r) > 1).length, 0);
+    return { blocks: blocks.length, sentences, level, clear, waiting, latinWrapped, tempeLines: tempe && Math.round(tempe.scrollHeight / parseFloat(getComputedStyle(tempe).lineHeight)), rests: rests.length, setIn: rests.filter((r) => parseFloat(r.style.getPropertyValue("--cont-x")) > 0).length,
       openingRest: opening && { text: opening.textContent.split("|")[0].trim(), setIn: parseFloat(opening.style.getPropertyValue("--cont-x")) > 0 }, note1: column(note(1)), note4: column(note(4)), englishEm: englishWidth };
   }),
+  caretCell: (page) => page.evaluate(() => { const n = getSelection().anchorNode; const el = n && (n.nodeType === 3 ? n.parentElement : n); return el?.closest(".vcell, .vrow")?.textContent.slice(0, 40) ?? null; }),
   clipboardLines: (page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
   corner: (page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),

@@ -246,3 +246,5 @@ typed into the first half of a split line · * · new here, the old app frozen
 a rest typed past its row's width · * · new here, the old app frozen
 dual-language in Ovid · * · new here, the old app frozen
 a sentence typed longer than its Latin · * · new here, the old app frozen
+ArrowDown from a sentence's last line · * · new here, the old app frozen
+ArrowUp from a sentence's first line · * · new here, the old app frozen

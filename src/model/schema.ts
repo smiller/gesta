@@ -13,7 +13,8 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    a paired canto interleaved line by line (pin: schema.test › every node
    that draws itself reads itself back) */
 /* the verse block's dual-language form draws with both classes and is read
-   back by the second: a copy pasted back keeps its layout */
+   back by the second: a copy pasted back keeps its layout (pin: schema.test ›
+   a dual-language block draws as a verse block that says so) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
   attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false } } : { start: { default: 1 } },
   content: "(line | pair | gap | note | margin_note)*",

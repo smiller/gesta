@@ -260,13 +260,15 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .verse.dual-language > .vpair[data-kind="cont"] { padding-left: 0; }
 .page .verse.dual-language > .vpair[data-kind="cont"] > .vcell:first-child { padding-left: var(--cont-x, 0px); }
 /* the pair's column gap as a length worked out at the block: in the note's
-   own smaller type an em gap stood 8px short of the English (MEASURED) */
+   own smaller type an em gap stood 8px short of the English (pin:
+   dual-language › dual-language in Ovid) */
 @property --dl-gap {
   syntax: "<length>";
   inherits: true;
   initial-value: 0px;
 }
 .page .verse.dual-language { --dl-gap: 2.4em; }
+.page.fitting .verse.dual-language > .vrow:not(.vpair) { width: max-content; max-width: none; }
 .page .verse.dual-language > .note.dl-english { margin-left: calc(var(--vb-col, 520px) + var(--dl-gap)); max-width: none; }
 /* a rule between pairs, from the text's edge: over the next pair, or over
    the heading that opens it */

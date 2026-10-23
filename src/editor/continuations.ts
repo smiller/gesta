@@ -1,5 +1,6 @@
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
+import type { Node } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { blockUnits } from "./numbering.ts";
 import { measurePass } from "./measurePass.ts";
@@ -46,23 +47,28 @@ const restWidth = (el: HTMLElement): number => lineExtents(el).reduce((w, l) => 
    invalidates nothing; only a rest and the line it finishes are measured,
    and a ⟨…⟩ row with no line above it is cleared. In a dual-language block
    only the Latin cell is the line, and a rest opening the block finishes
-   the line closing the dual-language block before it */
+   the line closing the dual-language block straight before it; that line is
+   measured only when the next block opens with a rest */
+const opensWithRest = (n: Node | null | undefined): boolean => !!n && n.type === N.verse && !!n.attrs.dual && n.firstChild?.attrs.kind === "cont";
 function place(view: EditorView): void {
-  let carried: number | null = null;
+  let carried: { end: number; at: number } | null = null;
   view.state.doc.descendants((block, pos) => {
     if (block.isTextblock) return false;
     if (block.type !== N.verse) return true;
     const dual = !!block.attrs.dual;
     let any = false;
     block.forEach((row) => { if (row.attrs.kind === "cont") any = true; });
-    if (!any && !dual) return false;
+    const $end = view.state.doc.resolve(pos + block.nodeSize);
+    const carries = dual && opensWithRest($end.parent.maybeChild($end.index()));
+    if (!any && !carries) return false;
+    const from = dual && carried?.at === pos ? carried.end : null;
     const units = blockUnits(block, pos, 0).filter((u) => u.line);
     const latin = (el: HTMLElement | null): HTMLElement | null => (el && dual && el.classList.contains("vpair") ? (el.firstElementChild as HTMLElement | null) : el);
     const last = units.length - 1;
     /* a ⟨…⟩ row opening a dual-language block is the rest of the line the
        block before closes, though it begins this block's count */
-    const rest = (i: number): boolean => units[i].rest || (dual && i === 0 && carried !== null && units[0].node.attrs.kind === "cont");
-    const els = units.map((u, i) => (rest(i) || (i + 1 <= last && rest(i + 1)) || u.node.attrs.kind === "cont" || (dual && i === last) ? latin(view.nodeDOM(u.pos) as HTMLElement | null) : null));
+    const rest = (i: number): boolean => units[i].rest || (i === 0 && from !== null && units[0].node.attrs.kind === "cont");
+    const els = units.map((u, i) => (rest(i) || (i + 1 <= last && rest(i + 1)) || u.node.attrs.kind === "cont" || (carries && i === last) ? latin(view.nodeDOM(u.pos) as HTMLElement | null) : null));
     const rows: RowMeasure[] = units.map((_, i) => {
       const el = els[i];
       if (!el) return { kind: "other", end: 0, room: 0 };
@@ -70,7 +76,7 @@ function place(view: EditorView): void {
     });
     const first = els.find(Boolean);
     const space = first ? parseFloat(getComputedStyle(first).fontSize) * 0.3 : 0;
-    const indents = contIndents(rows, space, dual ? carried : null);
+    const indents = contIndents(rows, space, from);
     indents.forEach((x, i) => {
       const el = els[i] && (view.nodeDOM(units[i].pos) as HTMLElement);
       if (!el || units[i].node.attrs.kind !== "cont") return;
@@ -79,7 +85,7 @@ function place(view: EditorView): void {
       if (value) el.style.setProperty("--cont-x", value);
       else el.style.removeProperty("--cont-x");
     });
-    carried = dual && last >= 0 && rows[last].kind !== "other" ? indents[last] + rows[last].end : null;
+    carried = carries && last >= 0 && rows[last].kind !== "other" ? { end: indents[last] + rows[last].end, at: pos + block.nodeSize } : null;
     return false;
   });
 }

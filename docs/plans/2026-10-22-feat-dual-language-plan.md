@@ -84,3 +84,43 @@ starts were placed by reading (asked over a length rule).
   English) under the English, note 4 under the Latin; typed three lines
   longer, "Men call it Tempe" adds one wait (7 → 8) and every sentence
   still clears the next.
+
+### Review cycle 1 (5b1463f, /code-review at high) — REVIEW CYCLES: 1
+
+Cost 134,559 tokens (the transcript's last message: 2 input, 2,383 cache
+creation, 129,276 cache read, 2,898 output). Ten findings, all real on a
+read of the code; fixed in one commit:
+
+1. The Latin column was measured from the pairs alone: a Latin-only row
+   longer than every Latin cell wrapped. Latin-only rows now count, and
+   past the cap a dual-language block keeps its Latin whole while the
+   English gives way to 16em (`whole` in `fitWidth`, `DUAL_MIN_ENGLISH`).
+   MEASURED at the steps' 1000px window: 36 Latin rows wrapped, now 0;
+   the English 21em.
+2. A wait written as `margin-top` replaced a note's own margin and
+   collapsed with the margins beside it: a row now takes it as padding, a
+   note as margin added to its own, read with the waits off.
+3. The foot as the last row's `margin-bottom` collapsed through the block
+   into the next fence's margin: it is padding on the last row; a block
+   ending in a note needs none, the note waiting for the English.
+4. A margin-note drawn in the margin took a wait: margin-notes are no
+   rows of the pass.
+5. A split half carried past a plain verse block or a heading: it is
+   carried only into the block straight after.
+6. The last row of every dual-language block was measured each pass: only
+   where the next block opens with a ⟨…⟩ row.
+7. Every block was remeasured on every keystroke: a block whose node and
+   width are those of its last pass keeps its waits; a block's note
+   columns are cached by its node.
+8. ArrowDown on an English sentence's last line went to the next row's
+   Latin, above the caret: it now goes to the sentence below, ArrowUp to
+   the end of the one above. MEASURED in headless Helium: from "…by its
+   roar." ArrowDown lands in "Here is the home…", ArrowUp back in
+   "Through this the River Peneus…".
+9. A passage quoted from a dual-language block quoted as one: it is a
+   plain `::: verse` fence (the pairs keep their sentences).
+10. Three comments broke the standard (provenance, two unpinned): fixed.
+
+The steps' readings gained what the review found them blind to: a
+sentence clear of a note and of the rule over the next pair, measured
+from where a waited row's text starts; Latin rows wrapped.

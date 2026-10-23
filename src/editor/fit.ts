@@ -20,8 +20,11 @@ export const CAP = 1285;
 /* the <main> element's own padding plus a classic scrollbar: 100vw counts the scrollbar,
    documentElement.clientWidth does not */
 export const WINDOW_MARGIN = 64;
-/* em: the mockups' English column, settled by eye in Helium */
+/* em: the English column's reading measure, a line of about 65 characters */
 export const DUAL_MEASURE_EM = 30;
+/* px: the narrowest the English of a dual-language block gives way to, 16em
+   at 18px, before the Latin wraps */
+export const DUAL_MIN_ENGLISH = 288;
 
 export interface Measured {
   /* the entry's own box with no block on it — the prose measure, the floor */
@@ -33,6 +36,8 @@ export interface Measured {
   gap: number;
   frame: number;
   cap: number;
+  /* a dual-language block's: its Latin lines are never wrapped to share the room */
+  whole?: boolean;
 }
 export interface Fit { width: number; col: number | null }
 
@@ -59,6 +64,10 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
      line (a URL) must not set the split for every row (pin: fit.test › past
      the cap the two give way in proportion) */
   if (c1 + c2 > room) col = Math.min(Math.round(room * c1 / (c1 + c2)), Math.round(room * 2 / 3));
+  /* a verse line wrapped beside prose loses its row: the Latin keeps its
+     width while the English has room for a reading line (pin: fit.test ›
+     past the cap a dual-language block's Latin keeps its width) */
+  if (m.whole) return { width, col: Math.min(c1, Math.max(MIN_COL, Math.round(room - DUAL_MIN_ENGLISH))) };
   /* the remembered column, and what this room affords: never less than the
      root carries, never more than the room holds — and the room holds more
      than the fresh answer wherever the translation only needs c2 */
@@ -133,7 +142,7 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
   if (!verse.length) return pairedBlocksIn(host, "div.prose").length ? "prose" : null;
   const scroller = document.scrollingElement || document.documentElement;
   const held = scroller.scrollTop;
-  let floor = 0, c1 = 0, c2 = 0, gap = 0, frame = 0;
+  let floor = 0, c1 = 0, c2 = 0, gap = 0, frame = 0, whole = false;
   let gapRow: HTMLElement | null = null;
   host.classList.add("fitting");
   try {
@@ -158,6 +167,10 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
         if (cells[0]) c1 = Math.max(c1, cells[0].getBoundingClientRect().width);
         if (cells[1]) c2 = Math.max(c2, Math.min(measureCap, cells[1].getBoundingClientRect().width));
       });
+      /* most of a dual-language block's lines carry no English: the Latin
+         column is as wide as the widest of them too, or a long one wraps */
+      if (measureCap !== Infinity) whole = true;
+      if (measureCap !== Infinity) b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, r.getBoundingClientRect().width); });
     }
     /* the gap is the row's, not the block's, read once off the first pair */
     if (gapRow) gap = parseFloat(getComputedStyle(gapRow).columnGap) || 0;
@@ -165,7 +178,7 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
     host.classList.remove("fitting");
     scroller.scrollTop = held;
   }
-  return { floor, c1, c2, gap, frame, cap: fitCap() };
+  return { floor, c1, c2, gap, frame, cap: fitCap(), whole };
 }
 
 /* a card's and a note's paired blocks, each measured in its own box. The

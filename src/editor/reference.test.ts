@@ -38,6 +38,12 @@ test("a single-column passage quotes whole rows as its own fence numbered from t
   expect(passageMd(verse, a, b)).toBe("> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::");
 });
 
+test("a passage quoted from a dual-language block is a plain verse fence numbered from its first line", () => {
+  const doc = parseMarkdown("::: dual-language 568\nEst nemus Haemoniae | There is a vale.\nsilva:\n⟨…⟩vocant Tempe; | Men call it Tempe.\n:::");
+  const [a, b] = span(doc, "Est nemus", "silva:");
+  expect(passageMd(doc, a, b)).toBe("> ::: verse 568\n> Est nemus Haemoniae | There is a vale.\n> silva:\n> :::");
+});
+
 test("a passage starting or ending inside a line quotes from the word the selection starts in to the word it ends in, numbered as before", () => {
   const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\nHow tender ’tis to love the babe that milks me:\nI would, while it was smiling in my face,\n:::");
   const [a, b] = span(doc, "I have given", "smiling");

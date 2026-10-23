@@ -1,7 +1,7 @@
 // The fit's arithmetic, pinned with measured numbers. The measuring pass and
 // the scheduling are DOM and are looked at in Helium.
 import { test, expect } from "vitest";
-import { fitWidth, insetCol, sideBox, MIN_COL, FIT_SLACK } from "./fit.ts";
+import { fitWidth, insetCol, sideBox, MIN_COL, FIT_SLACK, DUAL_MIN_ENGLISH } from "./fit.ts";
 
 test("the side box is padding and border on both sides, in px, whatever the style spells them as", () => {
   expect(sideBox({ paddingLeft: "19.8px", paddingRight: "19.8px", borderLeftWidth: "3px", borderRightWidth: "0px" })).toBeCloseTo(42.6);
@@ -79,4 +79,11 @@ test("an inset block's split: the original is never measured below a column a ca
 test("an inset block's split: the translation is never measured below a column a caret can land in, nor the original pushed below one", () => {
   expect(insetCol(400, 500, 0)).toBe(400 - MIN_COL - FIT_SLACK);
   expect(insetCol(400, 0, 500)).toBe(MIN_COL + FIT_SLACK);
+});
+
+test("past the cap a dual-language block's Latin keeps its width and the English gives way, down to a floor of its own", () => {
+  // room 936 - 105.4 = 830.6: the Latin's 461 kept, the English the rest
+  expect(fitWidth(m(460, 540, { cap: 936, whole: true }), null, false)).toEqual({ width: 936, col: 461 });
+  // a room too narrow for both: the English keeps its floor and the Latin takes what is left
+  expect(fitWidth(m(460, 540, { cap: 600, whole: true }), null, false)).toEqual({ width: 600, col: Math.round(600 - 105.4 - DUAL_MIN_ENGLISH) });
 });
