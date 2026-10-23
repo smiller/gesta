@@ -237,8 +237,22 @@ export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number
     const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
     if (next && next.from < to) { from = next.from; slice = doc.slice(from, to, true); }
   }
-  const cut = renumbered(doc, from, doc.copy(slice.content));
+  const cut = keepRightCell(doc, from, renumbered(doc, from, doc.copy(slice.content)));
   return closeRowSlice(new Slice(dropFolios(cut.content), slice.openStart, slice.openEnd));
+}
+/* a cut opening inside a pair's right cell keeps the left one, empty:
+   without it the right column's text read back as the left's (pin:
+   paste.test › lines copied from a block numbered on both sides) */
+function keepRightCell(doc: Node, at: number, cut: Node): Node {
+  const $at = doc.resolve(at);
+  const mend = (node: Node, d: number): Node => {
+    if (d > $at.depth || !node.firstChild) return node;
+    if (node.type === N.pair && $at.node(d).type === N.pair && $at.index(d) === 1 && node.childCount === 1) {
+      return node.copy(Fragment.from([N.cell.create(), node.firstChild]));
+    }
+    return node.copy(Fragment.from([mend(node.firstChild, d + 1), ...node.content.content.slice(1)]));
+  };
+  return mend(cut, 0);
 }
 /* a selection open inside one code block copies its characters, as the
    browser would (pin: paste.test › a selection inside one code block copies

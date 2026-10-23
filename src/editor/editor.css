@@ -273,8 +273,8 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .verse.dual-language > .note.dl-english { margin-left: calc(var(--vb-col, 520px) + var(--dl-gap)); max-width: none; }
 /* a rule between pairs, from the text's edge: over the next pair, or over
    the heading that opens it */
-.page .verse.dual-language + :is(.verse.dual-language, h2, h3) { position: relative; margin-top: 2.4em; }
-.page .verse.dual-language + :is(.verse.dual-language, h2, h3)::before {
+.page :is(.verse.dual-language + :is(.verse.dual-language, h2, h3), .verse[data-facing] + :is(.verse[data-facing], h2, h3)) { position: relative; margin-top: 2.4em; }
+.page :is(.verse.dual-language + :is(.verse.dual-language, h2, h3), .verse[data-facing] + :is(.verse[data-facing], h2, h3))::before {
   content: ""; position: absolute; left: var(--ln-gutter, 0px); right: 0; top: -1.2em;
   border-top: 1px solid rgba(26, 36, 24, 0.16);
 }
@@ -341,6 +341,24 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   pointer-events: none;
 }
 .page.versepage .ln.shown::before { content: attr(data-line); }
+/* a block numbered on both sides: a gutter on the right as on the left,
+   inside the fitted width, so the right column's numbers are never past
+   the window's edge (found by hand at 1100px) */
+.page.versepage > .verse[data-facing] { padding-right: var(--ln-gutter); }
+.page.versepage .rn.rshown::after {
+  content: attr(data-facing);
+  position: absolute;
+  left: calc(100% - var(--ln-gutter) + 1em);
+  font-family: var(--sans);
+  font-size: 0.75em;
+  font-variant-numeric: tabular-nums;
+  line-height: 2.3;
+  white-space: nowrap;
+  color: var(--muted);
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: none;
+}
 /* THE STANZA'S NUMBER: bold, ink, in a column of its own left of the line
    numbers, beside the stanza's first line, and drawn whatever the interval
    — "none" included — since it is how a citation is followed. The column

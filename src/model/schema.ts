@@ -16,7 +16,7 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    back by the second: a copy pasted back keeps its layout (pin: schema.test ›
    a dual-language block draws as a verse block that says so) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
-  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false } } : { start: { default: 1 } },
+  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false }, facing: { default: null } } : { start: { default: 1 } },
   /* a prose block numbers sentences, and has no skipped line (pin:
      schema.test › a skipped line number is never selected, and stands only
      in verse) */
@@ -28,13 +28,15 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
     getAttrs: (dom) => {
       const start = dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1;
       const dual = dom.className.split(/\s+/).includes("dual-language");
-      return stanzas ? { start, stanza: dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null, dual } : { start };
+      const facing = dom.hasAttribute("data-facing") ? +dom.getAttribute("data-facing")! : null;
+      return stanzas ? { start, stanza: dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null, dual, facing } : { start };
     },
   }],
   toDOM: (n) => {
     const attrs: Record<string, string> = { class: n.attrs.dual ? cls + " dual-language" : cls };
     if (n.attrs.start > 1) attrs["data-start"] = String(n.attrs.start);
     if (n.attrs.stanza != null) attrs["data-stanza"] = String(n.attrs.stanza);
+    if (n.attrs.facing != null) attrs["data-facing"] = String(n.attrs.facing);
     return ["div", attrs, 0];
   },
 });

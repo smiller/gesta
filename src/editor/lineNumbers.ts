@@ -17,8 +17,9 @@ export interface LineNumbersState {
 
 export const lineNumbersKey = new PluginKey<LineNumbersState>("lineNumbers");
 
+/* ONE decoration a row, both columns' numbers on it */
 export function rowDecorations(doc: Node, interval: number): Decoration[] {
-  const out: Decoration[] = [];
+  const rows = new Map<number, { end: number; attrs: Record<string, string> }>();
   for (const u of lineUnits(doc, interval)) {
     if (u.kind === "sentence" || u.skip) continue;
     let cls = "ln";
@@ -26,9 +27,15 @@ export function rowDecorations(doc: Node, interval: number): Decoration[] {
     if (u.shown) cls += " shown";
     const attrs: Record<string, string> = { class: cls };
     if (u.line) attrs["data-line"] = String(u.line);
-    out.push(Decoration.node(u.pos, u.pos + u.node.nodeSize, attrs));
+    rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs });
   }
-  return out;
+  for (const u of lineUnits(doc, interval, "right")) {
+    const row = rows.get(u.pos) ?? { end: u.pos + u.node.nodeSize, attrs: { class: "" } };
+    row.attrs.class = (row.attrs.class + " rn" + (u.shown ? " rshown" : "")).trim();
+    row.attrs["data-facing"] = String(u.line);
+    rows.set(u.pos, row);
+  }
+  return [...rows].sort(([a], [b]) => a - b).map(([pos, r]) => Decoration.node(pos, r.end, r.attrs));
 }
 
 function build(doc: Node, interval: number): LineNumbersState {

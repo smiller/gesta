@@ -77,6 +77,8 @@ const ROUND_TRIPS = [
   "::: verse\n\\⟨skipped line number⟩\n\\⟨…⟩By Samson.\n\\⟨line⟩ typed\n:::",
   "::: verse 545\nqua nimium placui\n⟨skipped line number⟩\n⟨skipped line number⟩\nvix prece finita\n:::",
   "::: dual-language 545\nqua nimium placui | Destroy\n⟨skipped line number⟩\nvix prece finita | Scarce\n:::",
+  "::: verse 179 244\nTres aberant noctes | Before the Moone\n | So softly as you would\nvivaque saxa\n:::",
+  "::: verse 1 3\na | b\n:::",
   "::: verse\nRelate by whom.\n\n**Messenger**\n⟨…⟩By Samson.\n\n**Manoa**\n⟨…⟩That still lessens\nThe sorrow, and converts it nigh to joy.\n:::",
   "an image ![alt text](2022-02-06-img-1.webp) inline",
   "<u>underlined</u> text",
@@ -222,7 +224,7 @@ test("the stanza travels in the DOM: toDOM writes it and parseDOM reads it back"
   expect(verse.spec.toDOM!(verse.create({ stanza: 2 }))).toEqual(["div", { class: "verse", "data-stanza": "2" }, 0]);
   expect(verse.spec.toDOM!(verse.create())).toEqual(["div", { class: "verse" }, 0]);
   const rule = verse.spec.parseDOM![0] as { getAttrs: (d: HTMLElement) => Record<string, unknown> };
-  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2, dual: false });
-  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null, dual: false });
+  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2, dual: false, facing: null });
+  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null, dual: false, facing: null });
   expect(schema.nodes.prose.spec.attrs).not.toHaveProperty("stanza");
 });

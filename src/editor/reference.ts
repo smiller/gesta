@@ -2,7 +2,7 @@ import { Fragment, type Node } from "prosemirror-model";
 import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, countAt, drawsInk, renumbered, type Unit } from "./numbering.ts";
+import { blockUnits, countAt, drawsInk, renumbered, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, citesHalfLines, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -37,11 +37,11 @@ function rowBlocks(doc: Node, topOnly = false): { node: Node; pos: number }[] {
   });
   return out;
 }
-export function coveredUnits(doc: Node, from: number, to: number, topOnly = false): Unit[] {
+export function coveredUnits(doc: Node, from: number, to: number, topOnly = false, side: Side = "left"): Unit[] {
   const out: Unit[] = [];
   for (const b of rowBlocks(doc, topOnly)) {
     if (b.pos + b.node.nodeSize <= from || b.pos >= to) continue;
-    for (const u of blockUnits(b.node, b.pos, 0)) {
+    for (const u of blockUnits(b.node, b.pos, 0, side)) {
       if (inkBetween(doc, Math.max(from, u.pos), Math.min(to, u.pos + u.node.nodeSize))) out.push(u);
     }
   }
@@ -72,13 +72,13 @@ function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolea
 /* with `halves`, Old English verse's: a run starting on a line's second half
    or ending on its first says so, 50b-52, 49-50a, a half alone 50a (pin:
    reference.test › Old English verse cites a half-line) */
-export function referenceRange(doc: Node, from: number, to: number, halves = false): string {
+export function referenceRange(doc: Node, from: number, to: number, halves = false, side: Side = "left"): string {
   let lo: Unit | null = null, hi: Unit | null = null;
   /* THE TOP LEVEL ALONE: a pasted citation's own fence numbers are not the
      host's — a quoted Horace pair in Paradise Lost labelled the reference
      "1.13-14" (pin: reference.test › a block inside a note, the label's top
      level) */
-  for (const u of coveredUnits(doc, from, to, true)) {
+  for (const u of coveredUnits(doc, from, to, true, side)) {
     if (!u.line) continue;
     if (!lo || u.line < lo.line) lo = u;
     if (!hi || u.line > hi.line) hi = u;
@@ -405,7 +405,8 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
        resting on a row, blanks, depth, the count before) */
     /* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
     const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
-    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos) }, rowsKept);
+    const facing = block.attrs.facing != null ? { facing: countAt(block, blockPos, rows[first].pos, "right") } : {};
+    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos), ...facing }, rowsKept);
     return quoted([fence]);
   }
   /* quoted as lines a skipped line number has no place, and a blank would
@@ -460,7 +461,7 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
   const halves = citesHalfLines(date, tag, journal);
   const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
-  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal);
+  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, referenceRange(doc, from, to, false, "right"));
   const url = entryLinkUrl(date, tag, hl);
   const passage = passageMd(doc, from, to, halves);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };

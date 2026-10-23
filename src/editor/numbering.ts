@@ -64,9 +64,12 @@ function rowKind(row: Node): UnitKind {
   return "line";
 }
 
-export function lineUnits(doc: Node, interval: number): Unit[] {
+/* a block whose fence carries two numbers counts each column of its pairs
+   apart: the right from its second number */
+export type Side = "left" | "right";
+export function lineUnits(doc: Node, interval: number, side: Side = "left"): Unit[] {
   const out: Unit[] = [];
-  doc.forEach((block, blockPos) => { for (const u of blockUnits(block, blockPos, interval)) out.push(u); });
+  doc.forEach((block, blockPos) => { for (const u of blockUnits(block, blockPos, interval, side)) out.push(u); });
   return out;
 }
 /* the ONE walk over one block, wherever it stands: a second copy of it
@@ -75,19 +78,21 @@ export function lineUnits(doc: Node, interval: number): Unit[] {
    (the block's start when none), or the line a rest finishes when the
    first line at or after the row is one — what a passage cut or quoted from
    that row is numbered from, whatever the row is */
-export function countAt(block: Node, blockPos: number, rowPos: number): number {
-  let n = block.attrs.start as number;
-  for (const u of blockUnits(block, blockPos, 0)) {
+export function countAt(block: Node, blockPos: number, rowPos: number, side: Side = "left"): number {
+  let n = (side === "right" ? block.attrs.facing : block.attrs.start) as number;
+  for (const u of blockUnits(block, blockPos, 0, side)) {
     if (!u.line) continue;
     if (u.pos >= rowPos) return u.rest ? u.line : n;
     n = u.line + 1;
   }
   return n;
 }
-export function blockUnits(block: Node, blockPos: number, interval: number): Unit[] {
+export function blockUnits(block: Node, blockPos: number, interval: number, side: Side = "left"): Unit[] {
   const out: Unit[] = [];
   const prose = block.type === N.prose;
   if (!prose && block.type !== N.verse) return out;
+  const facing = block.attrs.facing as number | null | undefined;
+  if (side === "right") return facing == null ? out : rightUnits(block, blockPos, interval, facing);
   let line = (block.attrs.start as number) - 1;
   block.forEach((row, offset) => {
     /* counted, so a passage from the line after it is numbered as the
@@ -101,6 +106,11 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
     if (row.type === N.gap || row.type === N.note || row.type === N.margin_note) return;
     if (prose && row.type !== N.pair) return;
     if (!drawsInk(row)) return;
+    /* the right column's row alone (pin: numbering.test › a block numbered
+       on both sides) — in a plain block it is a line, as a card's two poems
+       side by side were counted (pin: numbering.test › a plain verse block
+       counts a row with nothing on the left) */
+    if (facing != null && row.type === N.pair && !drawsInk(row.child(0))) return;
     /* a stanza has no apparatus: in the Faerie Queene a row wholly in
        italics is an inscription or a song, and it is numbered (pin:
        numbering.test › every inked row of a stanza is a line) */
@@ -113,6 +123,17 @@ export function blockUnits(block: Node, blockPos: number, interval: number): Uni
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
       shown: interval > 0 && kind === "line" && !rest && num % interval === 0, rest, skip: false,
     });
+  });
+  return out;
+}
+
+function rightUnits(block: Node, blockPos: number, interval: number, facing: number): Unit[] {
+  const out: Unit[] = [];
+  let line = facing - 1;
+  block.forEach((row, offset) => {
+    if (row.type !== N.pair || row.childCount < 2 || !drawsInk(row.child(1))) return;
+    line++;
+    out.push({ pos: blockPos + 1 + offset, node: row, kind: "line", line, blockPos, shown: interval > 0 && line % interval === 0, rest: false, skip: false });
   });
   return out;
 }
@@ -160,7 +181,8 @@ export function renumbered(doc: Node, at: number, cut: Node): Node {
     let out = child;
     if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
       const rowPos = $at.depth > d ? $at.before(d + 1) : at;
-      out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos) }, child.content);
+      const facing = anc.attrs.facing != null ? { facing: countAt(anc, $at.before(d), rowPos, "right") } : {};
+      out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos), ...facing }, child.content);
     } else if (anc.type === N.ordered_list && child.type === anc.type && $at.depth > d) {
       out = child.type.create({ ...child.attrs, start: itemNumbers(anc)[$at.index(d)] }, child.content);
     }

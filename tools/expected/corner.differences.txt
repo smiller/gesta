@@ -255,3 +255,6 @@ ArrowDown from a block's last sentence · * · new here, the old app frozen
 ArrowUp from a block's first sentence · * · new here, the old app frozen
 a skipped line number · * · new here, the old app frozen
 ⌃⌘G for a skipped line · * · new here, the old app frozen
+a verse block numbered on both sides · * · new here, the old app frozen
+⌃⌘G for a Golding line · * · new here, the old app frozen
+⌃⌘R across Prospero's borrowing · * · new here, the old app frozen

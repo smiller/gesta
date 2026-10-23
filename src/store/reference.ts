@@ -110,7 +110,11 @@ export function citesHalfLines(date: string, tag: string | null, journal: Journa
   for (let i = 1; i <= segs.length; i++) if (journal.oldEnglishVerse(entryKey(date, segs.slice(0, i).join("/")))) return true;
   return false;
 }
-export interface Piece { t?: string; n?: string; plain?: string; after?: string | null }
+export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string }
+/* a work headed "Metamorphoses (with Golding’s translation)": the title,
+   and the translator a citation names its own lines by (pin:
+   reference.test › referenceLabel: a work headed as given with a translation) */
+const WITH_TRANSLATION = /^(.+?)\s+\(with\s+(.+?)[’']s translation\)$/;
 /* the "<key><separator> " an entry's own heading opens with when it repeats
    the number it is keyed by */
 export const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -142,7 +146,9 @@ export function referenceParts(date: string, tag: string | null, journal: Journa
       /* the root and the levels below read differently: a page's root is
          its own name, a level below it its heading or its bare name */
       const own = journal.heading(entryKey(parentKey, segs[i]));
-      parts.push({ t: i === 0 ? (titlesRoots(date) ? own || segs[0] : segs[0]) : own || segs[i] });
+      const t = i === 0 ? (titlesRoots(date) ? own || segs[0] : segs[0]) : own || segs[i];
+      const w = i > 0 ? WITH_TRANSLATION.exec(t) : null;
+      parts.push(w ? { t: w[1], translator: w[2] } : { t });
       continue;
     }
     let last = parts[parts.length - 1];
@@ -171,7 +177,7 @@ export interface FolioRange { from: string; to: string }
    leaf drops (Screwtape came back cited by leaf for Letter 12); titled, the
    leaf replaces every level below the work (pin: reference.test ›
    referenceLabel: the line range dots onto a numeral run) */
-export function referenceLabel(date: string, tag: string | null, range: string, folio: FolioRange | null, journal: Journal): string {
+export function referenceLabel(date: string, tag: string | null, range: string, folio: FolioRange | null, journal: Journal, facing = ""): string {
   const root = (tag || "").split("/")[0];
   let parts = referenceParts(date, tag, journal);
   if (isDayKey(date)) parts.unshift({ plain: dateLabel(date) });
@@ -182,6 +188,8 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   }
   const books = titlesRoots(date), deepest = parts[parts.length - 1];
   if (deepest && deepest.n !== undefined && romanWorkKey(date, tag, journal)) deepest.n = romanKey(deepest.n);
+  const translator = parts.find((p) => p.translator)?.translator;
+  const division = deepest && deepest.n !== undefined ? deepest.n + "." : "";
   const ns = nsOf(date), locates = !!(ns && ns.citesLocator);
   if (range && locates) {
     if (deepest && deepest.n !== undefined) deepest.n += "." + range;
@@ -199,11 +207,12 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   const first = unnamed ? "" : referenceAuthor(date, root);
   if (first) parts.unshift(books ? { plain: first } : { t: first });
   else if (unnamed && !parts.some((p) => p.t !== undefined)) parts.unshift({ t: journal.heading(entryKey(date, root)) || root });
-  return parts.map((p) => {
+  const label = parts.map((p) => {
     if (p.t !== undefined) return "*" + p.t + "*";
     if (p.plain !== undefined) return p.plain;
     return p.n + (p.after ? ": *" + p.after + "*" : "");
   }).join(", ");
+  return translator ? label + " (" + translator + (facing && locates ? ", " + division + facing : "") + ")" : label;
 }
 export function mdLabel(text: string, fallback: string): string {
   return (text || "").replace(/[\]\n]/g, " ").replace(/\s+/g, " ").trim() || fallback;

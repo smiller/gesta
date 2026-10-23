@@ -127,10 +127,21 @@ test("verse rows: paired, full-width, and the stanza gap; prose gaps on an empty
 test("a ::: dual-language fence is a verse block marked dual, numbered from its opener, its rows a verse's", () => {
   const v = parseMarkdown("::: dual-language 568\nEst nemus | There is a vale\nsilva:\n⟨…⟩vocant Tempe; | Men call it Tempe.\n:::").firstChild!;
   expect(v.type.name).toBe("verse");
-  expect(v.attrs).toEqual({ start: 568, stanza: null, dual: true });
+  expect(v.attrs).toEqual({ start: 568, stanza: null, dual: true, facing: null });
   expect(v.content.content.map((n) => [n.type.name, n.attrs.kind])).toEqual([["pair", null], ["line", null], ["pair", "cont"]]);
-  expect(parseMarkdown("::: dual-language\na\n:::").firstChild!.attrs).toEqual({ start: 1, stanza: null, dual: true });
+  expect(parseMarkdown("::: dual-language\na\n:::").firstChild!.attrs).toEqual({ start: 1, stanza: null, dual: true, facing: null });
   expect(parseMarkdown("::: verse 5\na\n:::").firstChild!.attrs.dual).toBe(false);
+});
+
+test("a verse fence's second number is its right column's first line; the first is still the block's start", () => {
+  const v = parseMarkdown("::: verse 179 244\nTres | Before\n| So softly\nvivaque\n:::").firstChild!;
+  expect(v.attrs).toEqual({ start: 179, stanza: null, dual: false, facing: 244 });
+  expect(v.content.content.map((n) => n.type.name)).toEqual(["pair", "pair", "line"]);
+  expect(parseMarkdown("::: verse 1 3\na | b\n:::").firstChild!.attrs).toEqual({ start: 1, stanza: null, dual: false, facing: 3 });
+  expect(parseMarkdown("::: verse 179\na\n:::").firstChild!.attrs.facing).toBe(null);
+  for (const md of ["::: verse 1 2 3\na\n:::", "::: dual-language 1 3\na\n:::", "::: verse 0 3\na\n:::", "::: verse 3 0\na\n:::"]) {
+    expect(parseMarkdown(md).firstChild!.type.name, md).toBe("paragraph");
+  }
 });
 
 test("the dual-language opener: indented or closed up opens, another spelling stays a paragraph", () => {
@@ -287,7 +298,7 @@ test("the token is a row's head only: in a paragraph, or mid-row, it is text", (
 test("a stanza fence is a verse block carrying its number, and its first line is 1", () => {
   const b = parseMarkdown("::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\n:::").child(0);
   expect(b.type.name).toBe("verse");
-  expect(b.attrs).toEqual({ start: 1, stanza: 2, dual: false });
+  expect(b.attrs).toEqual({ start: 1, stanza: 2, dual: false, facing: null });
   expect(b.childCount).toBe(2);
   expect(parseMarkdown("::: verse\na\n:::").child(0).attrs.stanza).toBe(null);
   expect(parseMarkdown("::: stanza 012\na\n:::").child(0).attrs.stanza).toBe(12);

@@ -135,3 +135,12 @@ describe("a skipped line number in more than one block", () => {
     expect(landingWord(hits[1], blocks, 2)).toBe("line 2 is omitted in this edition — verse block 2 of 2");
   });
 });
+describe("a page of blocks numbered on both sides", () => {
+  it("goes by the right column's numbers, and names them in its refusal", () => {
+    const d = parseMarkdown("::: verse 179 244\nTres | Before\n | So softly\nvivaque\n:::\n\n::: verse 182 246\nsidera | The starres\n:::");
+    expect(lineHits(d, 245).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["So softly"]);
+    expect(lineHits(d, 246).hits.map((h) => h.nth)).toEqual([2]);
+    expect(lineHits(d, 180).hits).toEqual([]);
+    expect(lineRefusal(lineHits(d, 300).blocks, 300)).toBe("no line 300 — the longest verse block ends at 246");
+  });
+});

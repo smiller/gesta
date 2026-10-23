@@ -73,3 +73,18 @@ test("a top-level prose block holding a pair marks the root prosepage: the text,
   expect(attrs("::: verse\na\n:::\n\n::: prose\nx | y\n:::")).toEqual({ class: "versepage prosepage" });
   expect(attrs("> ::: prose\n> x | y\n> :::")).toEqual({});
 });
+
+test("a block numbered on both sides marks the right column's lines too, on the same row, drawn at the interval", () => {
+  const s = state("::: verse 179 244\nTres | Before\n | So softly\nvivaque\nsidera | The starres\n:::", 2);
+  const rows = lineNumbersKey.getState(s)!.decorations.find().map((d) => {
+    const a = (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs;
+    return [a.class, a["data-line"] ?? null, a["data-facing"] ?? null];
+  });
+  expect(rows).toEqual([
+    ["ln rn rshown", "179", "244"],
+    ["rn", null, "245"],
+    ["ln shown", "180", null],
+    ["ln rn rshown", "181", "246"],
+  ]);
+  expect(marks(state("::: verse\na | b\n | c\n:::", 1))).toEqual(["ln shown=1", "ln shown=2"]);
+});

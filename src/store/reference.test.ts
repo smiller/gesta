@@ -96,6 +96,18 @@ const journal: Journal = journalOf({
   "page/Sean's Books/1": "# The Figure of Beatrice\n\ntext",
   "page/Sean's Books/2": "# 2: Witchcraft\n",
   "page/Notes": "no heading here",
+  "bookshelf/Ovid/Metamorphoses": "# Metamorphoses",
+  "bookshelf/Ovid/Metamorphoses (with Golding’s translation)": "# *Metamorphoses* (with Golding’s translation)",
+  "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7": "# Book 7",
+});
+
+test("referenceLabel: a work headed as given with a translation cites the title, and the translation's own lines after it", () => {
+  const golding = "Ovid/Metamorphoses (with Golding’s translation)";
+  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "197-208", null, journal, "265-77")).toBe("Ovid, *Metamorphoses*, 7.197-208 (Golding, 7.265-77)");
+  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "", null, journal, "265-66")).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.265-66)");
+  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "", null, journal)).toBe("Ovid, *Metamorphoses*, 7 (Golding)");
+  expect(referenceLabel(NS_BOOK.key, golding, "", null, journal)).toBe("Ovid, *Metamorphoses* (Golding)");
+  expect(referenceLabel(NS_BOOK.key, "Ovid/Metamorphoses", "", null, journal)).toBe("Ovid, *Metamorphoses*");
 });
 
 test("referenceLabel: the corpus table, author then pieces", () => {

@@ -147,6 +147,12 @@ test("verse lines copied from inside a block keep their numbers", () => {
   /* a selection from the prose above takes the block whole, from its own first line */
   expect(copied(sel("before\n\n" + verse, "before", "two line"))).toBe("before\n\n::: verse\none line\ntwo line\n:::");
 });
+test("lines copied from a block numbered on both sides keep both numbers", () => {
+  const facing = "::: verse 179 244\nTres | Before\n | So softly\nvivaque\nsidera | The starres\n:::";
+  expect(copied(sel(facing, "So softly", "The starres"))).toBe("::: verse 180 245\n | So softly\nvivaque\nsidera | The starres\n:::");
+  expect(copied(sel(facing, "vivaque", "sidera"))).toBe("::: verse 180 246\nvivaque\nsidera\n:::");
+  expect(copied(sel("::: verse\nMaecenas | Maecenas, born\no et | The shield\n:::", "born", "The shield"))).toBe("::: verse\n | born\no et | The shield\n:::");
+});
 test("a copy whose selection opens at the end of a line starts at the next line, numbered as it", () => {
   const s = sel("::: verse\none line\ntwo line\nthree line\n:::", "two line", "three line");
   const atEnd = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from - 2, s.selection.to) });

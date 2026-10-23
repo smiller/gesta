@@ -11,7 +11,7 @@
    goto.test › name the range of one block, the longest of several). THE BOX
    KEEPS WHAT WAS TYPED, and Enter says what is wrong with it. */
 import type { Node } from "prosemirror-model";
-import { lineUnits, blocksOf, paintsLines, blockUnits, type Unit } from "./numbering.ts";
+import { lineUnits, blocksOf, paintsLines, blockUnits, type Unit, type Side } from "./numbering.ts";
 import { hasFolios } from "./folios.ts";
 import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
@@ -31,8 +31,16 @@ export interface Hit { pos: number; nth: number; block: Unit[]; skipped?: boolea
 /* a skipped line number lands where the line would stand, on the line after
    the gap, or before it where the gap ends its block (pin: goto.test › a
    skipped line number) */
+/* a page of blocks numbered on both sides is asked by the right column's
+   numbers: the translation is what it is read for (pin: goto.test › a page
+   of blocks numbered on both sides) */
+function askedSide(doc: Node): Side {
+  let right = false;
+  doc.forEach((block) => { if (block.attrs.facing != null) right = true; });
+  return right ? "right" : "left";
+}
 export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] } {
-  const blocks = blocksOf(lineUnits(doc, 0));
+  const blocks = blocksOf(lineUnits(doc, 0, askedSide(doc)));
   const hits: Hit[] = [];
   blocks.forEach((rows, i) => {
     const lines = rows.filter((u) => !u.rest && !u.skip);

@@ -141,3 +141,26 @@ test("a skipped line number is counted and draws no line: the lines after it kee
   expect(u.map((x) => [x.line, d.nodeAt(x.pos)!.type.name, x.shown])).toEqual([[545, "line", false], [546, "skip", false], [547, "line", false]]);
   expect(lineUnits(doc("::: verse 545\na\n⟨skipped line number⟩\n:::"), 1).map((x) => x.shown)).toEqual([true, false]);
 });
+
+test("a block numbered on both sides: a row with nothing on the left takes no left number, and the right column counts from the second number", () => {
+  const md = "::: verse 179 244\nTres | Before\nefficerent | Three\n | So softly\nvivaque\n\n::: note\nn\n:::\nsidera | The starres\n:::";
+  expect(kinds(md)).toBe("line:179 line:180 line:181 line:182");
+  const right = lineUnits(doc(md), 5, "right");
+  expect(right.map((u) => [u.line, u.shown, u.node.textContent])).toEqual([[244, false, "TresBefore"], [245, true, "efficerentThree"], [246, false, "So softly"], [247, false, "sideraThe starres"]]);
+  expect(lineUnits(doc("::: verse 179\na | b\n:::"), 0, "right")).toEqual([]);
+});
+
+test("a plain verse block counts a row with nothing on the left, as before: a card's two poems side by side keep their count", () => {
+  expect(kinds("::: verse\na | b\n | c\n:::")).toBe("line:1 line:2");
+  const card = doc("::: card-light-blue\n::: verse\na | b\n | c\nd |\n:::\n:::");
+  let pos = -1;
+  card.descendants((n, p) => { if (n.type === schema.nodes.verse) pos = p; return pos < 0; });
+  expect(blockUnits(card.nodeAt(pos)!, pos, 0).map((u) => u.line)).toEqual([1, 2, 3]);
+});
+
+test("a cut from a block numbered on both sides is numbered on both sides from the row it opens on", () => {
+  const block = doc("::: verse 179 244\nTres | Before\n | So softly\nvivaque\nsidera | The starres\n:::").firstChild!;
+  const rows: number[] = [];
+  block.forEach((_r, off) => rows.push(1 + off));
+  expect(rows.map((p) => [countAt(block, 0, p), countAt(block, 0, p, "right")])).toEqual([[179, 244], [180, 245], [180, 246], [181, 246]]);
+});

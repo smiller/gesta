@@ -624,7 +624,9 @@ is in the plan's record, under the phase named):
   1554–1595 (Harvard's text), three lines split between speakers; and the
   dual-language step's Ovid, *Metamorphoses* 1.348–380, 525–600, 682–712
   (the Loeb's Latin, Miller's English, two notes, a fence opening part-way
-  along a line).
+  along a line); and the facing numbers step's Ovid, *Metamorphoses*
+  7.179–233 beside Golding's 7.244–308 (Rouse's text), a verse block
+  numbered on both sides.
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything; the tab's icon,
   `src/favicon.ico`, the old app's, is inlined by main.ts itself, a

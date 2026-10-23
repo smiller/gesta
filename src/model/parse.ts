@@ -12,7 +12,7 @@ import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
   CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
-  fenceStart, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
+  fenceStart, fenceFacing, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
 
@@ -167,7 +167,7 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
   const start = stanza === null ? fenceStart(lines[from]) : 1;
   from++;
   const open = sink.push(cls + "_open", "div", 1);
-  open.meta = { start, stanza, dual: DUAL_OPEN.test(lines[from - 1]) };
+  open.meta = { start, stanza, dual: DUAL_OPEN.test(lines[from - 1]), facing: fenceFacing(lines[from - 1]) };
   const emptyPairGaps = cls === "prose";
   while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
     const line = lines[from];
@@ -490,7 +490,7 @@ function buildDoc(tokens: Token[]): Node {
         case "note_open": open(schema.nodes.note); break;
         case "margin_note_open": open(schema.nodes.margin_note); break;
         case "grid_open": open(schema.nodes.grid, { n: t.meta!.n }); break;
-        case "verse_open": open(schema.nodes.verse, { start: t.meta!.start, stanza: t.meta!.stanza ?? null, dual: !!t.meta!.dual }); break;
+        case "verse_open": open(schema.nodes.verse, { start: t.meta!.start, stanza: t.meta!.stanza ?? null, dual: !!t.meta!.dual, facing: t.meta!.facing ?? null }); break;
         case "prose_open": open(schema.nodes.prose, { start: t.meta!.start }); break;
         case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null }); break;
         case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null }); break;

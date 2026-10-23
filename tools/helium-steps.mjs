@@ -2396,6 +2396,50 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await log("⌃⌘R across a long sentence, pasted", { lines: quoted, fitted, ...(await R.dualQuote(page)) });
     }],
+    ["facing numbers", async () => {
+  /* Ovid's Latin beside Golding's verse (2026-10-23, asked): a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R cites both */
+  await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)", "# *Metamorphoses* (with Golding’s translation)\n\n- [Book 7](#bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207)\n");
+  await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", fixture("ovid-golding-7.md"));
+  await page.goto(A.url("bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207"));
+  await A.waitEntry(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await log("a verse block numbered on both sides", await page.evaluate(() => {
+    const block = document.querySelector("#editor .verse[data-facing]");
+    if (!block) return { block: false };
+    const rows = [...block.querySelectorAll(":scope > .vrow")];
+    const lines = (el) => { const g = document.createRange(); g.selectNodeContents(el); return new Set([...g.getClientRects()].filter((x) => x.width).map((x) => Math.round(x.top))).size; };
+    const golding = rows.map((r) => r.querySelector(".vcell + .vcell")).filter(Boolean);
+    const widest = Math.max(...golding.map((c) => { const g = document.createRange(); g.selectNodeContents(c); return g.getBoundingClientRect().right; }));
+    const first = rows.find((r) => r.classList.contains("rshown"));
+    const after = first ? getComputedStyle(first, "::after") : null;
+    return {
+      fitted: !!document.querySelector("#editor .ProseMirror.fitted"),
+      rows: rows.length,
+      left: rows.filter((r) => r.classList.contains("shown")).map((r) => r.dataset.line).join(" "),
+      right: rows.filter((r) => r.classList.contains("rshown")).map((r) => r.dataset.facing).join(" "),
+      unnumbered: rows.filter((r) => r.dataset.facing && !r.dataset.line).map((r) => r.dataset.facing).join(" "),
+      drawn: after ? after.content : null,
+      clear: after ? Math.round(first.getBoundingClientRect().left + parseFloat(after.left) - widest) : null,
+      wrapped: rows.filter((r) => [...r.querySelectorAll(".vcell")].concat(r.classList.contains("vpair") ? [] : [r]).some((c) => lines(c) > 1)).length,
+    };
+  }));
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await page.keyboard.type("265");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G for a Golding line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 40) ?? null });
+  await page.keyboard.press("Escape");
+  await rest(page);
+  await R.selectBetween(page, "Ye Ayres and windes", "darkes the Sun at Noone.");
+  await R.waitBar(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  const lines = await R.clipboardLines(page);
+  await page.keyboard.press("Escape");
+  await log("⌃⌘R across Prospero's borrowing", { label: lines[0], fence: lines.find((l) => l.includes(":::")), rows: lines.length });
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the

@@ -13,7 +13,7 @@ export const QUOTE_LINE = /^>\s?/;
 export const HEADING_LINE = /^(#{1,6})\s+(.*)$/;
 export const CARD_OPEN = /^\s*:::\s*(card-[\w-]+)\s*$/;
 export const CARD_CLOSE = /^\s*:::\s*$/;
-export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*)?\s*$/;
+export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*(?:\s+0*[1-9]\d*)?)?\s*$/;
 export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
 export const DUAL_OPEN = /^\s*:::\s*dual-language(?:\s+0*[1-9]\d*)?\s*$/;
 export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
@@ -80,8 +80,14 @@ export const readsAsRowToken = (text: string): boolean => ROW_KIND_AT.test(text)
    The opener regexes are the whole grammar: this reads the one token they
    admit and validates nothing itself */
 export function fenceStart(line: string): number {
-  const m = line.match(/\s(\d+)\s*$/);
+  const m = line.match(/^\s*:::\s*[\w-]+\s+(\d+)/);
   return m ? parseInt(m[1], 10) : 1;
+}
+/* "::: verse 179 244" numbers its right column from 244; null when the
+   opener carries one number or none */
+export function fenceFacing(line: string): number | null {
+  const m = line.match(/^\s*:::\s*[\w-]+\s+\d+\s+(\d+)/);
+  return m ? parseInt(m[1], 10) : null;
 }
 /* never read through fenceStart, which would take it for the first line's
    number: a stanza's lines count from 1 (pin: parse.test › a stanza fence

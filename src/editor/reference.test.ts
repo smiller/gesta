@@ -494,3 +494,19 @@ test("a stanza's quotation leaves a skipped line number out rather than drawing 
   const [a, b] = span(doc, "b", "c");
   expect(passageMd(doc, a, b)).not.toContain("> \n");
 });
+// A block numbered on both sides: Golding's lines beside the Latin.
+const GOLDING_TAG = "Ovid/Metamorphoses (with Golding’s translation)/Book 7";
+const goldingJournal = journalOf({ "bookshelf/Ovid/Metamorphoses (with Golding’s translation)": "# *Metamorphoses* (with Golding’s translation)", ["bookshelf/" + GOLDING_TAG]: "# Book 7" });
+const GOLDING = parseMarkdown("# Book 7\n\n::: verse 196 263\nquaeque magos, Tellus, | Ye Charmes and Witchcrafts,\n | Of mightie working furnishest\nauraeque et venti | Ye Ayres and windes:\ndique omnes nemorum | Of standing Lakes,\nquorum ope, cum volui | Through helpe of whom\n | I have compelled streames\n:::");
+const golding = (needle: string, end?: string) => {
+  const [a, b] = span(GOLDING, needle, end);
+  return referencePayload(state(GOLDING, a, b), "bookshelf", GOLDING_TAG, goldingJournal);
+};
+test("a passage from a block numbered on both sides cites both columns' lines and quotes them numbered from where it opens", () => {
+  const p = golding("Ye Ayres", "I have compelled");
+  expect("label" in p && p.label).toBe("Ovid, *Metamorphoses*, 7.197-99 (Golding, 7.265-68)");
+  expect("passage" in p && p.passage).toBe("> ::: verse 197 265\n> auraeque et venti | Ye Ayres and windes:\n> dique omnes nemorum | Of standing Lakes,\n> quorum ope, cum volui | Through helpe of whom\n>  | I have compelled streames\n> :::");
+  const alone = golding("Of mightie working");
+  expect("label" in alone && alone.label).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.264)");
+  expect("passage" in alone && alone.passage).toBe("> ::: verse 197 264\n>  | Of mightie working furnishest\n> :::");
+});
