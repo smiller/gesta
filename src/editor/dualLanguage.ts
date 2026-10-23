@@ -160,11 +160,6 @@ function noteDecorations(doc: Node): DecorationSet {
   return DecorationSet.create(doc, decos);
 }
 
-/* ArrowDown on an English sentence's last line goes to what stands below it
-   in the English column, and ArrowUp on its first line to what stands above:
-   the next cell in the document is the next row's Latin, which stands above
-   the caret beside a long sentence (pin: dual-language › ArrowDown from a
-   sentence's last line) */
 /* the caret at a stop of a dual-language block standing at `pos`: a
    sentence's start going down, its end going up; a note's first or last
    text. Out of the block it goes on in the English of a dual-language block
