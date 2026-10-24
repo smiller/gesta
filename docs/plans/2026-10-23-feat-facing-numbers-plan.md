@@ -60,3 +60,46 @@ witness for words only. Book 7 pilot: 1123 lines, every tenth checked
 against Rouse's printed number; 273 disputes, 194 settled from the page.
 Perseus splits two of Rouse's lines in Book 7, so its numbers run up to 2
 ahead (MEASURED); Rouse's are used.
+
+The rulings on the text (2026-10-23): a ligature on what is a plain e or o
+in the Latin name gives the classical form (39 places: Aeneas, Peneus,
+Ceyx, Onetor, Learchus, Emathian … and, by the same rule, Nestor, Mareotis,
+Phlegra, Egerias, Eous, Eetions); Golding's 25 side notes in the books a
+`::: note` at the foot of the passage, `[Golding’s side note at 8.400:
+*Castor & Pollux.*]` (a margin-note inside a block numbered on both sides
+stood in the text and parted both columns, MEASURED at 1100 and 1400px);
+the Epistle's 15 stay margin-notes, the page one column. All 15 books
+aligned, ≈4,130 sentences placed; every page round-trips through the app
+and its numbers match the Loeb's and Rouse's, 0 lines different (MEASURED).
+Import folder gesta-ovid-golding, 18 pages.
+
+## Review
+
+1ba56e7 accepted 2026-10-23. `/code-review high e9a3408..1ba56e7`: 148,780
+tokens (the transcript's last message), ten findings, all fixed in one
+commit:
+
+1. A selection from one two-number block into the next was not refused:
+   the two-blocks test read the left column alone. Both columns now.
+2. A copy opening at the end of a pair's right cell copied an empty pair,
+   numbering both columns one low. A pair's row ends with its last cell.
+3. The right column numbered speakers, directions and a split line's rest.
+   It counts as the left does.
+4. One two-number block switched ⌃⌘G to the right column for the whole
+   page, leaving a plain block unreachable. Each block is asked by its own
+   column (a default, stated).
+5. A dual-language block or a stanza carrying `facing` (pasted HTML) was
+   written `::: dual-language 5 9` and read back a paragraph. Only a plain
+   verse block writes or reads a second number.
+6. A refused two-number fence was told "is not a starting line". It is
+   told verse alone takes a second number, or which number is wrong.
+7. The translator was read after a "from the last title" root dropped the
+   work that names it. Read first.
+8. The right range was walked on every ⌃⌘R; now only on a page with a
+   two-number block.
+9. The line numbers walked the right column on every change; now only on
+   such a page.
+10. The stamp of both numbers was written twice, and the opener read by two
+    regexes: one `fenceAt`, one `fenceNumbers`.
+
+REVIEW CYCLES: 1

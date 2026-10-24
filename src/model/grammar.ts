@@ -76,20 +76,15 @@ export const ROW_TOKEN_ESCAPE = "\\";
 export const readsAsRowToken = (text: string): boolean => ROW_KIND_AT.test(text) || text.trim() === ROW_SKIP_TOKEN;
 
 /* ---------- the ::: family ---------- */
-/* "::: verse 2" numbers its first line 2; 1 when the opener carries none.
-   The opener regexes are the whole grammar: this reads the one token they
-   admit and validates nothing itself */
-export function fenceStart(line: string): number {
-  const m = line.match(/^\s*:::\s*[\w-]+\s+(\d+)/);
-  return m ? parseInt(m[1], 10) : 1;
+/* "::: verse 2" numbers its first line 2, 1 when the opener carries none;
+   "::: verse 179 244" its right column from 244, null when it carries one
+   number or none. The opener regexes are the whole grammar: this reads the
+   tokens they admit and validates nothing itself */
+export function fenceNumbers(line: string): { start: number; facing: number | null } {
+  const m = line.match(/^\s*:::\s*[\w-]+\s+(\d+)(?:\s+(\d+))?/);
+  return { start: m ? parseInt(m[1], 10) : 1, facing: m && m[2] ? parseInt(m[2], 10) : null };
 }
-/* "::: verse 179 244" numbers its right column from 244; null when the
-   opener carries one number or none */
-export function fenceFacing(line: string): number | null {
-  const m = line.match(/^\s*:::\s*[\w-]+\s+\d+\s+(\d+)/);
-  return m ? parseInt(m[1], 10) : null;
-}
-/* never read through fenceStart, which would take it for the first line's
+/* never read through fenceNumbers, which would take it for the first line's
    number: a stanza's lines count from 1 (pin: parse.test › a stanza fence
    is a verse block carrying its number, and its first line is 1) */
 export function stanzaNumber(line: string): number | null {

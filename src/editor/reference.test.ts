@@ -510,3 +510,8 @@ test("a passage from a block numbered on both sides cites both columns' lines an
   expect("label" in alone && alone.label).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.264)");
   expect("passage" in alone && alone.passage).toBe("> ::: verse 197 264\n>  | Of mightie working furnishest\n> :::");
 });
+test("a passage running from one block numbered on both sides into the next is refused, though it starts on a row with nothing on the left", () => {
+  const two = parseMarkdown("# Book 7\n\n::: verse 179 244\nTres | Before\n | Untill that Glaucus\n:::\n\n::: verse 180 246\nsidera | The starres\n:::");
+  const [a, b] = span(two, "Untill", "The starres");
+  expect(referencePayload(state(two, a, b), "bookshelf", GOLDING_TAG, goldingJournal)).toEqual({ refused: "two-blocks" });
+});

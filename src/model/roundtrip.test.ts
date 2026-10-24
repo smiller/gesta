@@ -228,3 +228,9 @@ test("the stanza travels in the DOM: toDOM writes it and parseDOM reads it back"
   expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null, dual: false, facing: null });
   expect(schema.nodes.prose.spec.attrs).not.toHaveProperty("stanza");
 });
+test("only a plain verse block writes its right column's number: a dual-language block or a stanza carrying one is written as itself", () => {
+  const line = schema.nodes.line.create(null, schema.text("a"));
+  const one = (attrs: Record<string, unknown>) => serializeMarkdown(schema.nodes.doc.create(null, [schema.nodes.verse.create(attrs, line)]));
+  expect(one({ start: 5, dual: true, facing: 9 })).toBe("::: dual-language 5\na\n:::");
+  expect(one({ stanza: 2, facing: 9 })).toBe("::: stanza 2\na\n:::");
+});

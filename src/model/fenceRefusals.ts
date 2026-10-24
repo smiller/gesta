@@ -35,7 +35,12 @@ export function fenceLineReason(l: string): string | null {
   const tail = m[1].match(/^(note|margin-note|reference|card-[\w-]+)\s+\S/);
   const count = m[1].match(/^grid\s+(.+)$/);
   const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
-  return tok ? tok[2] + " is not a starting " + (tok[1] === "prose" ? "sentence" : "line")
+  const two = tok && tok[2].match(/^(\d+)\s+(\d+)$/);
+  return two && tok[1] !== "verse" ? tok[1] + " takes one number; a second, for the right column, is verse's alone"
+    : two && +two[1] > 0 ? two[2] + " is not a starting line for the right column"
+    : two ? two[1] + " is not a starting line"
+    : tok && tok[1] === "verse" && /^\d+\s+\d+\s+\d/.test(tok[2]) ? "verse takes two numbers at most: its first line, and its right column's"
+    : tok ? tok[2] + " is not a starting " + (tok[1] === "prose" ? "sentence" : "line")
     : stanza ? (stanza[1] ? stanza[1] + " is not a stanza number" : "stanza needs its number, like ::: stanza 2")
     : tail ? tail[1] + " takes nothing after it"
     : count ? count[1] + " is not a count"

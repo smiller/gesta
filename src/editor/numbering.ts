@@ -127,16 +127,31 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
   return out;
 }
 
+/* apparatus and a split line's rest as the left walk has them, or the
+   translation's numbers drift ahead of the edition's (pin: numbering.test ›
+   the right column counts as the left does) */
 function rightUnits(block: Node, blockPos: number, interval: number, facing: number): Unit[] {
   const out: Unit[] = [];
   let line = facing - 1;
   block.forEach((row, offset) => {
     if (row.type !== N.pair || row.childCount < 2 || !drawsInk(row.child(1))) return;
-    line++;
-    out.push({ pos: blockPos + 1 + offset, node: row, kind: "line", line, blockPos, shown: interval > 0 && line % interval === 0, rest: false, skip: false });
+    if (rowKind(row) !== "line") return;
+    const rest = row.attrs.kind === "cont" && line >= facing;
+    if (!rest) line++;
+    out.push({ pos: blockPos + 1 + offset, node: row, kind: "line", line, blockPos, shown: interval > 0 && !rest && line % interval === 0, rest, skip: false });
   });
   return out;
 }
+/* a block's fence numbers for a passage taken from a row: both columns' when it has two */
+export function fenceAt(block: Node, blockPos: number, rowPos: number): { start: number; facing?: number } {
+  const start = countAt(block, blockPos, rowPos);
+  return block.attrs.facing != null ? { start, facing: countAt(block, blockPos, rowPos, "right") } : { start };
+}
+export const hasFacing = (doc: Node): boolean => {
+  let yes = false;
+  doc.forEach((block) => { if (block.attrs.facing != null) yes = true; });
+  return yes;
+};
 
 export function paintsLines(doc: Node): boolean {
   let yes = false;
@@ -181,8 +196,7 @@ export function renumbered(doc: Node, at: number, cut: Node): Node {
     let out = child;
     if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
       const rowPos = $at.depth > d ? $at.before(d + 1) : at;
-      const facing = anc.attrs.facing != null ? { facing: countAt(anc, $at.before(d), rowPos, "right") } : {};
-      out = child.type.create({ ...child.attrs, start: countAt(anc, $at.before(d), rowPos), ...facing }, child.content);
+      out = child.type.create({ ...child.attrs, ...fenceAt(anc, $at.before(d), rowPos) }, child.content);
     } else if (anc.type === N.ordered_list && child.type === anc.type && $at.depth > d) {
       out = child.type.create({ ...child.attrs, start: itemNumbers(anc)[$at.index(d)] }, child.content);
     }

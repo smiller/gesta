@@ -164,3 +164,9 @@ test("a cut from a block numbered on both sides is numbered on both sides from t
   block.forEach((_r, off) => rows.push(1 + off));
   expect(rows.map((p) => [countAt(block, 0, p), countAt(block, 0, p, "right")])).toEqual([[179, 244], [180, 245], [180, 246], [181, 246]]);
 });
+
+test("the right column counts as the left does: a speaker and a direction take no number, the rest of a split line the number of the line it finishes", () => {
+  const md = "::: verse 1 10\n**Medea** | **Medea**\nTres | Before\n*Exit* | *Exit*\n⟨…⟩rest | rest\nquattuor | four\n:::";
+  expect(kinds(md)).toBe("speaker line:1 stage line:1 line:2");
+  expect(lineUnits(doc(md), 0, "right").map((u) => [u.line, u.rest])).toEqual([[10, false], [10, true], [11, false]]);
+});

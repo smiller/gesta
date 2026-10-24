@@ -12,7 +12,7 @@ import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
   CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
-  fenceStart, fenceFacing, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
+  fenceNumbers, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
 
@@ -164,10 +164,10 @@ function emitReference(sink: Sink, lines: string[], from: number): number {
 
 function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "prose"): number {
   const stanza = stanzaNumber(lines[from]);
-  const start = stanza === null ? fenceStart(lines[from]) : 1;
+  const { start, facing } = stanza === null ? fenceNumbers(lines[from]) : { start: 1, facing: null };
   from++;
   const open = sink.push(cls + "_open", "div", 1);
-  open.meta = { start, stanza, dual: DUAL_OPEN.test(lines[from - 1]), facing: fenceFacing(lines[from - 1]) };
+  open.meta = { start, stanza, dual: DUAL_OPEN.test(lines[from - 1]), facing };
   const emptyPairGaps = cls === "prose";
   while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
     const line = lines[from];

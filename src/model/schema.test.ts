@@ -28,6 +28,9 @@ test("a verse block numbered on both sides draws its right column's first line, 
   const v = schema.nodes.verse.create({ start: 179, facing: 244 }, schema.nodes.line.create(null, schema.text("Tres")));
   expect(schema.nodes.verse.spec.toDOM!(v)).toEqual(["div", { class: "verse", "data-start": "179", "data-facing": "244" }, 0]);
   expect(rule("verse").getAttrs!(el({ "data-start": "179", "data-facing": "244" }, "verse"))).toEqual({ start: 179, stanza: null, dual: false, facing: 244 });
+  /* only a plain verse block has a right column numbered apart */
+  expect(rule("verse").getAttrs!(el({ "data-start": "5", "data-facing": "9" }, "verse dual-language"))).toEqual({ start: 5, stanza: null, dual: true, facing: null });
+  expect(rule("verse").getAttrs!(el({ "data-stanza": "2", "data-facing": "9" }, "verse"))).toEqual({ start: 1, stanza: 2, dual: false, facing: null });
 });
 
 test("a card is read back only from the editor's own copy, which carries data-card", () => {

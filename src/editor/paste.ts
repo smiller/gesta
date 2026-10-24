@@ -232,7 +232,9 @@ export function dropFolios(frag: Fragment): Fragment {
 export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number): Slice {
   if (!doc || from === undefined) return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
   const $from = doc.resolve(from);
-  const rowEnd = $from.parent.type === N.line || ($from.parent.type === N.paragraph && $from.depth > 1 && $from.node(-1).type === N.list_item);
+  /* a pair's row ends with its last cell (pin: paste.test › a copy opening at the end of a pair's right cell) */
+  const lastCell = $from.parent.type === N.cell && $from.index(-1) === $from.node(-1).childCount - 1;
+  const rowEnd = $from.parent.type === N.line || lastCell || ($from.parent.type === N.paragraph && $from.depth > 1 && $from.node(-1).type === N.list_item);
   if (to !== undefined && rowEnd && $from.parentOffset === $from.parent.content.size) {
     const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
     if (next && next.from < to) { from = next.from; slice = doc.slice(from, to, true); }

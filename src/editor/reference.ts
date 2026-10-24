@@ -2,7 +2,7 @@ import { Fragment, type Node } from "prosemirror-model";
 import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, countAt, drawsInk, renumbered, type Unit, type Side } from "./numbering.ts";
+import { blockUnits, fenceAt, hasFacing, drawsInk, renumbered, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, citesHalfLines, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -112,7 +112,9 @@ export function stanzaRange(doc: Node, from: number, to: number): string {
    whose range names each end's stanza (pin: reference.test › a work in
    stanza fences cites by stanza) */
 export function spansTwoBlocks(doc: Node, from: number, to: number): boolean {
-  const units = coveredUnits(doc, from, to);
+  /* a row with nothing on the left is in its block by the right column (pin:
+     reference.test › a passage running from one block numbered on both sides) */
+  const units = [...coveredUnits(doc, from, to), ...coveredUnits(doc, from, to, false, "right")];
   const blocks = new Set(units.map((u) => u.blockPos));
   if (blocks.size <= 1) return false;
   const top = new Set(coveredUnits(doc, from, to, true).map((u) => u.blockPos));
@@ -405,8 +407,7 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
        resting on a row, blanks, depth, the count before) */
     /* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
     const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
-    const facing = block.attrs.facing != null ? { facing: countAt(block, blockPos, rows[first].pos, "right") } : {};
-    const fence = block.type.create({ ...block.attrs, start: countAt(block, blockPos, rows[first].pos), ...facing }, rowsKept);
+    const fence = block.type.create({ ...block.attrs, ...fenceAt(block, blockPos, rows[first].pos) }, rowsKept);
     return quoted([fence]);
   }
   /* quoted as lines a skipped line number has no place, and a blank would
@@ -461,7 +462,7 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
   const halves = citesHalfLines(date, tag, journal);
   const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
-  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, referenceRange(doc, from, to, false, "right"));
+  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "");
   const url = entryLinkUrl(date, tag, hl);
   const passage = passageMd(doc, from, to, halves);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };

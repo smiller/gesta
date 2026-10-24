@@ -92,6 +92,8 @@ const journal: Journal = journalOf({
   "bookshelf/Old English": "# Old English\n\n::: reference\nno author\n:::",
   "bookshelf/Old English/Beowulf": "# Beowulf",
   "bookshelf/Dante/Commedia/Inferno": "# Inferno",
+  "bookshelf/Dante/Commedia (with Longfellow’s translation)": "# *Commedia* (with Longfellow’s translation)",
+  "bookshelf/Dante/Commedia (with Longfellow’s translation)/Inferno": "# Inferno",
   "bookshelf/Lewis, C. S/The Screwtape Letters": "# The Screwtape Letters",
   "page/Sean's Books/1": "# The Figure of Beatrice\n\ntext",
   "page/Sean's Books/2": "# 2: Witchcraft\n",
@@ -108,6 +110,8 @@ test("referenceLabel: a work headed as given with a translation cites the title,
   expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "", null, journal)).toBe("Ovid, *Metamorphoses*, 7 (Golding)");
   expect(referenceLabel(NS_BOOK.key, golding, "", null, journal)).toBe("Ovid, *Metamorphoses* (Golding)");
   expect(referenceLabel(NS_BOOK.key, "Ovid/Metamorphoses", "", null, journal)).toBe("Ovid, *Metamorphoses*");
+  // a title below the work that the label starts from keeps the translation's lines
+  expect(referenceLabel(NS_BOOK.key, "Dante/Commedia (with Longfellow’s translation)/Inferno/7", "121-6", null, journal, "130-5")).toBe("Dante, *Inferno*, 7.121-6 (Longfellow, 7.130-5)");
 });
 
 test("referenceLabel: the corpus table, author then pieces", () => {

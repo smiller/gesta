@@ -305,3 +305,10 @@ test("spaces at a selection's edges stay outside the link; a selection of spaces
   expect(tr.selection.from).toBe(s.selection.to);
   expect(linkSelection(over("pauses at  78", "  "), REF)).toBeNull();
 });
+test("a copy opening at the end of a pair's right cell starts at the next row, numbered on both sides as it", () => {
+  const s = sel("::: verse 179 244\nTres | Before\n | So softly\nvivaque\nsidera | The starres\n:::", "Before", "The starres");
+  const atEnd = EditorState.create({ doc: s.doc, selection: TextSelection.create(s.doc, s.selection.from + "Before".length, s.selection.to) });
+  expect(copied(atEnd)).toBe("::: verse 180 245\n | So softly\nvivaque\nsidera | The starres\n:::");
+  const plain = sel("::: verse\na | one\nb | two\n:::", "one", "two");
+  expect(copied(EditorState.create({ doc: plain.doc, selection: TextSelection.create(plain.doc, plain.selection.from + 3, plain.selection.to) }))).toBe("::: verse 2\nb | two\n:::");
+});

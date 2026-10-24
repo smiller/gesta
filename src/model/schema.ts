@@ -28,8 +28,10 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
     getAttrs: (dom) => {
       const start = dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1;
       const dual = dom.className.split(/\s+/).includes("dual-language");
-      const facing = dom.hasAttribute("data-facing") ? +dom.getAttribute("data-facing")! : null;
-      return stanzas ? { start, stanza: dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null, dual, facing } : { start };
+      const stanza = dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null;
+      /* only a plain verse block numbers its right column apart (pin: schema.test › a verse block numbered on both sides) */
+      const facing = !dual && stanza === null && dom.hasAttribute("data-facing") ? +dom.getAttribute("data-facing")! : null;
+      return stanzas ? { start, stanza, dual, facing } : { start };
     },
   }],
   toDOM: (n) => {

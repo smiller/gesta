@@ -17,6 +17,13 @@ test("a fence-shaped line that opens nothing is named with its reason; the words
   expect(refused("::: stanza two\nline\n:::")[0].reason).toBe("two is not a stanza number");
   expect(refused("::: stanza 0\nline\n:::")[0].reason).toBe("0 is not a stanza number");
 });
+test("a second number is told it is verse's alone, or what is wrong with it", () => {
+  expect(refused("::: dual-language 568 244\nline\n:::")[0].reason).toBe("dual-language takes one number; a second, for the right column, is verse's alone");
+  expect(refused("::: prose 3 5\nline\n:::")[0].reason).toBe("prose takes one number; a second, for the right column, is verse's alone");
+  expect(refused("::: verse 179 0\nline\n:::")[0].reason).toBe("0 is not a starting line for the right column");
+  expect(refused("::: verse 0 244\nline\n:::")[0].reason).toBe("0 is not a starting line");
+  expect(refused("::: verse 1 2 3\nline\n:::")[0].reason).toBe("verse takes two numbers at most: its first line, and its right column's");
+});
 test("a real fence, a bare closer, a code block's line and a row are none of them refusals", () => {
   expect(refused("::: verse\nline\n:::")).toEqual([]);
   expect(refused("::: stanza 2\nline\n:::")).toEqual([]);

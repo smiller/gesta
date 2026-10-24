@@ -143,4 +143,10 @@ describe("a page of blocks numbered on both sides", () => {
     expect(lineHits(d, 180).hits).toEqual([]);
     expect(lineRefusal(lineHits(d, 300).blocks, 300)).toBe("no line 300 — the longest verse block ends at 246");
   });
+  it("asks a plain verse block on the same page by its own numbers", () => {
+    const d = parseMarkdown("::: verse\nan epigraph\nits second line\n:::\n\n::: verse 179 244\nTres | Before\n | So softly\n:::");
+    expect(lineHits(d, 2).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["its second line"]);
+    expect(lineHits(d, 245).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["So softly"]);
+    expect(lineHits(d, 180).hits).toEqual([]);
+  });
 });

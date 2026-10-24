@@ -180,6 +180,8 @@ export interface FolioRange { from: string; to: string }
 export function referenceLabel(date: string, tag: string | null, range: string, folio: FolioRange | null, journal: Journal, facing = ""): string {
   const root = (tag || "").split("/")[0];
   let parts = referenceParts(date, tag, journal);
+  /* read before the last title drops the work that names it (pin: reference.test › referenceLabel: a work headed as given with a translation) */
+  const translator = parts.find((p) => p.translator)?.translator;
   if (isDayKey(date)) parts.unshift({ plain: dateLabel(date) });
   if (titlesRoots(date) && journal.fromLastTitle(entryKey(date, root))) {
     let at = -1;
@@ -188,7 +190,6 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   }
   const books = titlesRoots(date), deepest = parts[parts.length - 1];
   if (deepest && deepest.n !== undefined && romanWorkKey(date, tag, journal)) deepest.n = romanKey(deepest.n);
-  const translator = parts.find((p) => p.translator)?.translator;
   const division = deepest && deepest.n !== undefined ? deepest.n + "." : "";
   const ns = nsOf(date), locates = !!(ns && ns.citesLocator);
   if (range && locates) {
