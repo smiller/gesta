@@ -4,7 +4,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML } from "./reference.ts";
+import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML, facingBlockOf } from "./reference.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -498,17 +498,34 @@ test("a stanza's quotation leaves a skipped line number out rather than drawing 
 const GOLDING_TAG = "Ovid/Metamorphoses (with Golding’s translation)/Book 7";
 const goldingJournal = journalOf({ "bookshelf/Ovid/Metamorphoses (with Golding’s translation)": "# *Metamorphoses* (with Golding’s translation)", ["bookshelf/" + GOLDING_TAG]: "# Book 7" });
 const GOLDING = parseMarkdown("# Book 7\n\n::: verse 196 263\nquaeque magos, Tellus, | Ye Charmes and Witchcrafts,\n | Of mightie working furnishest\nauraeque et venti | Ye Ayres and windes:\ndique omnes nemorum | Of standing Lakes,\nquorum ope, cum volui | Through helpe of whom\n | I have compelled streames\n:::");
-const golding = (needle: string, end?: string) => {
+const golding = (needle: string, end?: string, all = false) => {
   const [a, b] = span(GOLDING, needle, end);
-  return referencePayload(state(GOLDING, a, b), "bookshelf", GOLDING_TAG, goldingJournal);
+  return referencePayload(state(GOLDING, a, b), "bookshelf", GOLDING_TAG, goldingJournal, all);
 };
-test("a passage from a block numbered on both sides cites both columns' lines and quotes them numbered from where it opens", () => {
-  const p = golding("Ye Ayres", "I have compelled");
+test("a passage from a block numbered on both sides quotes the translation alone, numbered from its first line, and cites both columns' lines", () => {
+  const p = golding("Ye Ayres", "I have compelled streames");
+  expect("label" in p && p.label).toBe("Ovid, *Metamorphoses*, 7.197-99 (Golding, 7.265-68)");
+  expect("passage" in p && p.passage).toBe("> ::: verse 265\n> Ye Ayres and windes:\n> Of standing Lakes,\n> Through helpe of whom\n> I have compelled streames\n> :::");
+  const part = golding("Of mightie working");
+  expect("label" in part && part.label).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.264)");
+  expect("passage" in part && part.passage).toBe("> ::: verse 264\n> Of mightie working\n> :::");
+  expect(golding("quaeque magos")).toEqual({ refused: "no-translation" });
+});
+test("Ref (all): a passage from a block numbered on both sides quotes both columns, numbered on both sides from where it opens", () => {
+  const p = golding("Ye Ayres", "I have compelled", true);
   expect("label" in p && p.label).toBe("Ovid, *Metamorphoses*, 7.197-99 (Golding, 7.265-68)");
   expect("passage" in p && p.passage).toBe("> ::: verse 197 265\n> auraeque et venti | Ye Ayres and windes:\n> dique omnes nemorum | Of standing Lakes,\n> quorum ope, cum volui | Through helpe of whom\n>  | I have compelled streames\n> :::");
-  const alone = golding("Of mightie working");
-  expect("label" in alone && alone.label).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.264)");
+  const alone = golding("Of mightie working", undefined, true);
   expect("passage" in alone && alone.passage).toBe("> ::: verse 197 264\n>  | Of mightie working furnishest\n> :::");
+  expect(golding("quaeque magos", undefined, true)).not.toHaveProperty("refused");
+});
+test("a block can be quoted by its translation alone only where the selection lies wholly inside one numbered on both sides", () => {
+  const [a, b] = span(GOLDING, "Ye Ayres", "Of standing");
+  expect(facingBlockOf(GOLDING, a, b)?.pos).toBe(GOLDING.child(0).nodeSize);
+  const [c, d] = span(GOLDING, "Book 7", "Ye Ayres");
+  expect(facingBlockOf(GOLDING, c, d)).toBeNull();
+  const [e, f] = span(verse, "forbidden", "Brought death");
+  expect(facingBlockOf(verse, e, f)).toBeNull();
 });
 test("a passage running from one block numbered on both sides into the next is refused, though it starts on a row with nothing on the left", () => {
   const two = parseMarkdown("# Book 7\n\n::: verse 179 244\nTres | Before\n | Untill that Glaucus\n:::\n\n::: verse 180 246\nsidera | The starres\n:::");

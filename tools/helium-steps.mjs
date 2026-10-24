@@ -2434,11 +2434,22 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await R.selectBetween(page, "Ye Ayres and windes", "darkes the Sun at Noone.");
   await R.waitBar(page);
+  const refAll = () => page.evaluate(() => { const b = document.querySelector(".fmt button[title='Copy a reference to both columns']"); return b ? !b.hidden && getComputedStyle(b).display !== "none" : null; });
+  const shown = await refAll();
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   const lines = await R.clipboardLines(page);
+  await log("⌃⌘R across Prospero's borrowing", { label: lines[0], fence: lines.find((l) => l.includes(":::")), first: lines.find((l) => l.startsWith("> ") && !l.includes(":::")) ?? null, rows: lines.length, refAll: shown });
+  await page.evaluate(() => document.querySelector(".fmt button[title='Copy a reference to both columns']")?.click());
+  await rest(page);
+  const all = await R.clipboardLines(page);
   await page.keyboard.press("Escape");
-  await log("⌃⌘R across Prospero's borrowing", { label: lines[0], fence: lines.find((l) => l.includes(":::")), rows: lines.length });
+  await rest(page);
+  await R.selectBetween(page, "Jason", "Medea");
+  await R.waitBar(page);
+  await rest(page);
+  await log("Ref (all) across Prospero's borrowing", { label: all[0], fence: all.find((l) => l.includes(":::")), rows: all.length, refAllOverHeading: await refAll() });
+  await page.keyboard.press("Escape");
     }],
   ];
   /* each section starts from the one window, in front, nothing open over

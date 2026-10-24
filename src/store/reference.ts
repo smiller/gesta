@@ -182,6 +182,10 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   let parts = referenceParts(date, tag, journal);
   /* read before the last title drops the work that names it (pin: reference.test › referenceLabel: a work headed as given with a translation) */
   const translator = parts.find((p) => p.translator)?.translator;
+  /* a page whose heading names no translation is the translator's own, so
+     its right column's lines are the ones cited (pin: reference.test ›
+     referenceLabel: a work headed as given with a translation) */
+  if (!translator && facing) range = facing;
   if (isDayKey(date)) parts.unshift({ plain: dateLabel(date) });
   if (titlesRoots(date) && journal.fromLastTitle(entryKey(date, root))) {
     let at = -1;

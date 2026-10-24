@@ -79,7 +79,8 @@ export interface Session {
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
-  copyReference(): void;
+  /* `all`: a block numbered on both sides quoted with both its columns */
+  copyReference(all?: boolean): void;
   copyEntryLink(): void;
   /* honorMarkers for a search-box jump; a link's payload is literal
      (pin: search › Enter) (pin: reference paste › the reference link followed) */
@@ -429,11 +430,11 @@ export function startSession(opts: SessionOptions): Session {
     const n = surface.current ? surface.current.words() : 0;
     say(n === 1 ? "1 word" : n + " words", 2000);
   }
-  function copyReference(): void {
+  function copyReference(all = false): void {
     if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
-    const out = referencePayload(view.state, current.date, current.tag, journal);
+    const out = referencePayload(view.state, current.date, current.tag, journal, all);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
     try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }

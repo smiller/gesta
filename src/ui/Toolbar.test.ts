@@ -18,6 +18,10 @@ describe("Toolbar", () => {
     expect(html).not.toMatch(/title="Move selection to a new sub-page" hidden/);
     expect(draw({ show: true, tagTitle: "Move selection to a new book" }).toString()).toMatch(/title="Move selection to a new book" hidden/);
   });
+  it("offers Ref (all) only where the selection lies in a block numbered on both sides", () => {
+    expect(draw({ show: true })).toMatch(/title="Copy a reference to both columns" hidden[^>]*>Ref \(all\)/);
+    expect(draw({ show: true, canRefAll: true })).not.toMatch(/title="Copy a reference to both columns" hidden/);
+  });
   it("inside a code block the class says so", () => {
     expect(draw({ show: true, incode: true })).toMatch(/class="fmt[^"]*incode/);
   });

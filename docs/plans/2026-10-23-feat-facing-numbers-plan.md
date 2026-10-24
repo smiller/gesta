@@ -103,3 +103,29 @@ commit:
     regexes: one `fenceAt`, one `fenceNumbers`.
 
 REVIEW CYCLES: 1
+
+## The translation alone (2026-10-24, asked)
+
+The reader: "in a reference we probably almost always want just Golding's
+text" — his 7.265-75 is the source of Prospero's speech, *The Tempest*
+5.1.38-55, and citing the two together wants no Latin. Rulings:
+
+- ⌃⌘R, and Ref in the bar, quote a block numbered on both sides by its
+  right column alone, as one column's verse numbered from its first line
+  (`> ::: verse 265`); a line the selection starts or ends inside is quoted
+  from there, as one column's verse is. The label is unchanged, both
+  columns' lines: `Ovid, *Metamorphoses*, 7.197-209 (Golding, 7.265-77)`
+  ("saying what Golding was translating _from_ still feels useful").
+- A button in the bar, Ref (all), shown only where the selection lies wholly
+  inside such a block, quotes both columns as before. No chord (asked).
+- A selection inking no right-column line is refused: "No translation lines
+  selected — Ref (all) quotes the Latin too" (asked).
+- No `::: reference` directive (asked: the button serves the rare case).
+- A page whose heading names no translation is the translator's own, so
+  its label cites the right column's lines (a default, stated: Milton's
+  *Fifth Ode of Horace*, if redone as Latin | Milton with two numbers,
+  cites Milton's lines). Notes are not quoted, as in every passage.
+
+MEASURED in headless Helium: the bar over Golding's lines is one row,
+505px, Ref (all) beside Ref; over a heading on the same page the button is
+hidden.

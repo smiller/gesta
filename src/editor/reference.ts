@@ -419,17 +419,42 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
     return "> " + line.replace(/\s*\n\s*/g, " ").trim();
   }).join("\n");
 }
+/* the top-level block numbered on both sides holding the whole selection */
+export function facingBlockOf(doc: Node, from: number, to: number): { node: Node; pos: number } | null {
+  const $a = doc.resolve(from), $b = doc.resolve(to);
+  if ($a.depth < 1 || $b.depth < 1 || $a.before(1) !== $b.before(1)) return null;
+  const node = $a.node(1);
+  return node.type === N.verse && node.attrs.facing != null ? { node, pos: $a.before(1) } : null;
+}
+/* the right column alone as one column's verse, numbered from its first
+   line: the lines whose own cell the selection inks, a line it starts or
+   ends inside quoted from there (pin: reference.test › a passage from a
+   block numbered on both sides quotes the translation alone) */
+function translationPassage(doc: Node, from: number, to: number, block: { node: Node; pos: number }): { passage: string; range: string } | null {
+  const lines: Node[] = [];
+  let first = 0, last = 0;
+  for (const u of blockUnits(block.node, block.pos, 0, "right")) {
+    const start = u.pos + 1 + u.node.child(0).nodeSize + 1, end = start + u.node.child(1).content.size;
+    if (!inkBetween(doc, Math.max(from, start), Math.min(to, end))) continue;
+    if (!lines.length) first = u.line;
+    last = u.line;
+    const words = u.node.child(1).content.cut(Math.max(from, start) - start, Math.min(to, end) - start);
+    lines.push(N.line.create(u.rest && lines.length ? { kind: "cont" } : null, dropFolios(words)));
+  }
+  return lines.length ? { passage: quoted([N.verse.create({ start: first }, lines)]), range: elideRange(first, last) } : null;
+}
 /* the entry's hash as a markdown link TARGET: a paren in a tag would close
    the (url) early on paste */
 export function entryLinkUrl(date: string, tag: string | null, hl?: Highlight | null): string {
   return entryHash(date, tag, hl || undefined).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
-export type Refusal = "select" | "code" | "margin-note" | "two-blocks";
+export type Refusal = "select" | "code" | "margin-note" | "two-blocks" | "no-translation";
 export const REFUSAL_TEXT: Record<Refusal, string> = {
   select: "Select a passage to reference first",
   code: "A code block can't be referenced",
   "margin-note": "A margin-note can't be referenced — select the text beside it",
   "two-blocks": "That spans two verse blocks — reference them one at a time",
+  "no-translation": "No translation lines selected — Ref (all) quotes the Latin too",
 };
 /* the whole clipboard text: the heading line as the link, a colon outside
    it, the passage quoted under it — or the refusal */
@@ -442,7 +467,8 @@ export function citationAnchorHTML(url: string, label: string): string {
   return '<a href="' + escapeHtml(url) + '">' + escapeHtml(label).replace(/\*([^*]+)\*/g, "<em>$1</em>") + "</a>";
 }
 export interface Payload { text: string; label: string; url: string; passage: string }
-export function referencePayload(state: EditorState, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
+/* `all`: a block numbered on both sides quoted with both its columns */
+export function referencePayload(state: EditorState, date: string, tag: string | null, journal: Journal, all = false): Payload | { refused: Refusal } {
   if (state.selection.empty) return { refused: "select" };
   const doc = state.doc;
   /* the refusals read the words quoted, not the selection as made (pin:
@@ -454,17 +480,21 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   const $from = doc.resolve(from);
   for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return { refused: "margin-note" };
   if (spansTwoBlocks(doc, from, to)) return { refused: "two-blocks" };
-  return payloadOver(doc, from, to, date, tag, journal);
+  return payloadOver(doc, from, to, date, tag, journal, all);
 }
-function payloadOver(doc: Node, from: number, to: number, date: string, tag: string | null, journal: Journal): Payload | { refused: Refusal } {
+function payloadOver(doc: Node, from: number, to: number, date: string, tag: string | null, journal: Journal, all: boolean): Payload | { refused: Refusal } {
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
   /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
   const halves = citesHalfLines(date, tag, journal);
   const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
-  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "");
+  const block = all ? null : facingBlockOf(doc, from, to);
+  const alone = block && translationPassage(doc, from, to, block);
+  if (block && !alone) return { refused: "no-translation" };
+  const facing = alone ? alone.range : hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "";
+  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, facing);
   const url = entryLinkUrl(date, tag, hl);
-  const passage = passageMd(doc, from, to, halves);
+  const passage = alone ? alone.passage : passageMd(doc, from, to, halves);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {

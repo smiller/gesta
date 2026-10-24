@@ -78,6 +78,7 @@ test("referenceAuthor: a book's surname off the key, Gesta for a day, nothing fo
 // the corpus cases, over a journal of headings
 const journal: Journal = journalOf({
   "bookshelf/Milton, John/Paradise Lost": "# Paradise Lost\n",
+  "bookshelf/Milton, John/The Fifth Ode of Horace": "# The Fifth Ode of Horace",
   "bookshelf/Milton, John/Paradise Lost/Book 1": "# Book 1\n\n::: verse\nOf man's first\n:::",
   "bookshelf/Shakespeare, William/King John": "# King John",
   "bookshelf/Rostand, Edmond/Cyrano de Bergerac": "# Cyrano de Bergerac",
@@ -110,6 +111,8 @@ test("referenceLabel: a work headed as given with a translation cites the title,
   expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "", null, journal)).toBe("Ovid, *Metamorphoses*, 7 (Golding)");
   expect(referenceLabel(NS_BOOK.key, golding, "", null, journal)).toBe("Ovid, *Metamorphoses* (Golding)");
   expect(referenceLabel(NS_BOOK.key, "Ovid/Metamorphoses", "", null, journal)).toBe("Ovid, *Metamorphoses*");
+  // a page with no translation in its heading is the translator's own: its right column's lines are cited
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/The Fifth Ode of Horace", "2", null, journal, "4")).toBe("Milton, *The Fifth Ode of Horace*, 4");
   // a title below the work that the label starts from keeps the translation's lines
   expect(referenceLabel(NS_BOOK.key, "Dante/Commedia (with Longfellow’s translation)/Inferno/7", "121-6", null, journal, "130-5")).toBe("Dante, *Inferno*, 7.121-6 (Longfellow, 7.130-5)");
 });
