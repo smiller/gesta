@@ -64,7 +64,7 @@ import icon from "./favicon.ico?inline";
 import { schema } from "./model/schema.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "./editor/format.ts";
 import { blankRowSelected } from "./editor/rowKeys.ts";
-import { facingBlockOf } from "./editor/reference.ts";
+import { offersBoth } from "./editor/reference.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -980,7 +980,7 @@ if (fixture && fixtures[fixture]) {
     screen.bar.incode = inCode(view.state);
     screen.bar.on = formatState(view.state);
     screen.bar.canTag = screen.masthead.buttons.canCreate;
-    screen.bar.canRefAll = !!facingBlockOf(view.state.doc, view.state.selection.from, view.state.selection.to);
+    screen.bar.canRefAll = offersBoth(view.state);
     screen.bar.tagTitle = screen.masthead.buttons.tagTitle;
     screen.bar.show = true;
   };

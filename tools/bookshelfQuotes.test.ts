@@ -96,3 +96,9 @@ test("quotedProse: a passage named by its first and last words may run any lengt
   const r = quotedProse(ix, "2016-02-22", ["And what did they both see in that moment", "saw him only to dismiss him as none of her concern?"], ["2016-02-22"], true);
   expect(r && r.passage.split("\n").length).toBe(3);
 });
+
+test("referenceAt: a passage of a block numbered on both sides is minted with both its columns, the shape the quotation takes", () => {
+  const golding = shelfIndex({ "bookshelf/Ovid/Metamorphoses (with Golding’s translation)": "# *Metamorphoses* (with Golding’s translation)", "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7": "# Book 7\n\n::: verse 197 265\nauraeque et venti | Ye Ayres and windes:\ndique omnes nemorum | Of standing Lakes,\n:::" });
+  const r = referenceAt(golding, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", 197, 198);
+  expect("passage" in r && r.passage).toBe("> ::: verse 197 265\n> auraeque et venti | Ye Ayres and windes:\n> dique omnes nemorum | Of standing Lakes,\n> :::");
+});

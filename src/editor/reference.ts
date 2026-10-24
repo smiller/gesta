@@ -2,7 +2,7 @@ import { Fragment, type Node } from "prosemirror-model";
 import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, fenceAt, hasFacing, drawsInk, renumbered, type Unit, type Side } from "./numbering.ts";
+import { blockUnits, fenceAt, hasFacing, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, citesHalfLines, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -419,29 +419,47 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
     return "> " + line.replace(/\s*\n\s*/g, " ").trim();
   }).join("\n");
 }
-/* the top-level block numbered on both sides holding the whole selection */
+/* the block numbered on both sides holding the whole selection, outside a
+   note. THE TOP LEVEL ALONE, as every reference's numbers are: a block
+   quoted inside an entry is that entry's passage (pin: reference.test › a
+   block can be quoted by its translation alone only where) */
 export function facingBlockOf(doc: Node, from: number, to: number): { node: Node; pos: number } | null {
   const $a = doc.resolve(from), $b = doc.resolve(to);
   if ($a.depth < 1 || $b.depth < 1 || $a.before(1) !== $b.before(1)) return null;
+  for (const $x of [$a, $b]) for (let d = 2; d <= $x.depth; d++) if ($x.node(d).type === N.note) return null;
   const node = $a.node(1);
   return node.type === N.verse && node.attrs.facing != null ? { node, pos: $a.before(1) } : null;
 }
+/* read over the selection as ⌃⌘R reads it (pin: reference.test › Ref (all) is offered) */
+export function offersBoth(state: EditorState): boolean {
+  if (state.selection.empty) return false;
+  const [a, b] = wordEdges(state.doc, state.selection.from, state.selection.to);
+  return !!facingBlockOf(state.doc, a, b);
+}
 /* the right column alone as one column's verse, numbered from its first
-   line: the lines whose own cell the selection inks, a line it starts or
-   ends inside quoted from there (pin: reference.test › a passage from a
-   block numbered on both sides quotes the translation alone) */
-function translationPassage(doc: Node, from: number, to: number, block: { node: Node; pos: number }): { passage: string; range: string } | null {
-  const lines: Node[] = [];
-  let first = 0, last = 0;
-  for (const u of blockUnits(block.node, block.pos, 0, "right")) {
-    const start = u.pos + 1 + u.node.child(0).nodeSize + 1, end = start + u.node.child(1).content.size;
-    if (!inkBetween(doc, Math.max(from, start), Math.min(to, end))) continue;
-    if (!lines.length) first = u.line;
-    last = u.line;
-    const words = u.node.child(1).content.cut(Math.max(from, start) - start, Math.min(to, end) - start);
-    lines.push(N.line.create(u.rest && lines.length ? { kind: "cont" } : null, dropFolios(words)));
-  }
-  return lines.length ? { passage: quoted([N.verse.create({ start: first }, lines)]), range: elideRange(first, last) } : null;
+   line: each row the selection inks gives its line, as the label counts
+   them, cut only where the selection starts or ends inside it (pin:
+   reference.test › the translation alone: every row the selection inks);
+   the gaps and apparatus between kept, and a line that would read as
+   apparatus alone declared a line, or the lines after it lose a number
+   (pin: reference.test › the translation alone keeps its verse
+   paragraphs' gaps) */
+function translationPassage(doc: Node, from: number, to: number, block: { node: Node; pos: number }): string | null {
+  const units = coveredUnits(doc, from, to, true, "right").filter((u) => u.blockPos === block.pos);
+  if (!units.length) return null;
+  const rows: Node[] = [];
+  block.node.forEach((row, offset) => {
+    const pos = block.pos + 1 + offset;
+    if (pos < units[0].pos || pos > units[units.length - 1].pos) return;
+    if (row.type === N.gap) { if (rows.length && rows[rows.length - 1].type !== N.gap) rows.push(row); return; }
+    if (row.type !== N.pair || !drawsInk(row.child(1))) return;
+    const start = pos + 1 + row.child(0).nodeSize + 1, end = start + row.child(1).content.size;
+    const words = inkBetween(doc, Math.max(from, start), Math.min(to, end)) ? row.child(1).content.cut(Math.max(from, start) - start, Math.min(to, end) - start) : row.child(1).content;
+    const line = N.line.create(null, dropFolios(words)), u = units.find((v) => v.pos === pos);
+    const kind = !u ? null : u.rest && rows.some((r) => r.type === N.line) ? "cont" : whollyIn(line, schema.marks.strong) || whollyIn(line, schema.marks.em) ? "line" : null;
+    rows.push(kind ? N.line.create({ kind }, line.content) : line);
+  });
+  return quoted([N.verse.create({ start: units[0].line }, rows)]);
 }
 /* the entry's hash as a markdown link TARGET: a paren in a tag would close
    the (url) early on paste */
@@ -491,10 +509,9 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   const block = all ? null : facingBlockOf(doc, from, to);
   const alone = block && translationPassage(doc, from, to, block);
   if (block && !alone) return { refused: "no-translation" };
-  const facing = alone ? alone.range : hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "";
-  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, facing);
+  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "");
   const url = entryLinkUrl(date, tag, hl);
-  const passage = alone ? alone.passage : passageMd(doc, from, to, halves);
+  const passage = alone || passageMd(doc, from, to, halves);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {

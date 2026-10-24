@@ -85,7 +85,8 @@ function minted(index: ShelfIndex, s: Shelved, first: number, last: number, cut:
   }
   const selection = TextSelection.between(s.doc.resolve(from), s.doc.resolve(to));
   const [date, ...tag] = s.key.split("/");
-  const out = referencePayload(EditorState.create({ doc: s.doc, selection }), date, tag.join("/"), index.journal);
+  /* both columns of a block numbered on both sides, the shape a quotation of it takes (pin: bookshelfQuotes.test › referenceAt: a passage of a block numbered on both sides) */
+  const out = referencePayload(EditorState.create({ doc: s.doc, selection }), date, tag.join("/"), index.journal, true);
   return "refused" in out ? { why: `a copy is refused: ${out.refused}` } : { text: out.text, key: s.key, url: out.url, passage: out.passage };
 }
 /* a passage named by its entry and its first and last line numbers */
@@ -165,7 +166,8 @@ export function quotedProse(index: ShelfIndex, prefix: string, quote: string[], 
     let to = at[j + last.length - 1] + 1;
     const close = doc.resolve(to).end();
     while (to < close && /^[^\s\p{L}\p{Nd}]$/u.test(doc.textBetween(to, to + 1))) to++;
-    const out = referencePayload(EditorState.create({ doc, selection: TextSelection.create(doc, from, to) }), key.split("/")[0], key.split("/").slice(1).join("/"), index.journal);
+    /* both columns, as a quotation of the passage gives them */
+    const out = referencePayload(EditorState.create({ doc, selection: TextSelection.create(doc, from, to) }), key.split("/")[0], key.split("/").slice(1).join("/"), index.journal, true);
     if ("refused" in out) continue;
     return { text: out.text, key, url: out.url, passage: out.passage };
   }

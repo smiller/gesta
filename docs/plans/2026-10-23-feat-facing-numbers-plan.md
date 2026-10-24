@@ -129,3 +129,33 @@ text" — his 7.265-75 is the source of Prospero's speech, *The Tempest*
 MEASURED in headless Helium: the bar over Golding's lines is one row,
 505px, Ref (all) beside Ref; over a heading on the same page the button is
 hidden.
+
+## Review of the translation alone
+
+3fa912f accepted 2026-10-24. `/code-review high 46fc7a8..3fa912f`: 115,258
+tokens (the transcript's last message), nine findings, fixed in one commit:
+
+1. A wholly italic or bold Golding cell, numbered beside plain Latin, read
+   as apparatus once quoted alone and lost its number. Declared `⟨line⟩`.
+2. The bar offered Ref (all) by the raw selection, ⌃⌘R by its ends drawn
+   in to whole words. Both by the drawn-in selection now.
+3. ⌃⌘R counted Golding lines by their own cell's ink, Ref (all) by the
+   row's, so the labels differed. One rule: each row the selection inks
+   gives its Golding line, cut only where the selection starts or ends
+   inside it; both buttons cite the same lines. A selection of Latin in a
+   row with Golding beside it now quotes that Golding; the refusal stands
+   for rows with none (the ruled case).
+4. Gaps between verse paragraphs and apparatus rows were dropped from the
+   translation alone. Kept.
+5. A note inside the block was refused as "no translation". A note is
+   quoted as before.
+6. A two-number block quoted inside an entry is not offered the translation
+   alone: the top level alone, as every reference's numbers (a decision,
+   now said and pinned).
+7. On a page naming no translation, Ref (all) over Latin cites the
+   translator's lines of the rows inked: by the rule above, as designed.
+8. The bookshelf tools minted references without `all`, so a Latin
+   quotation was refused. They mint both columns, the quotation's shape.
+9. facingBlockOf's comment restated its name; it now records the decision.
+
+REVIEW CYCLES (the translation alone): 1
