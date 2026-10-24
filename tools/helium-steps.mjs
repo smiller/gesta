@@ -1955,6 +1955,22 @@ export async function runSteps(page, ctx, A, opts = {}) {
   }));
   await write("page/Note Quote", "::: note\n> quoted in a note\n:::\n");
   await log("a quotation inside a note", await page.evaluate(() => { const q = document.querySelector("#editor .note blockquote, #page .note blockquote"); if (!q) return { quote: null }; const cs = getComputedStyle(q); return { fill: cs.backgroundColor !== "rgba(0, 0, 0, 0)", rule: parseFloat(cs.borderLeftWidth) > 0 || getComputedStyle(q, "::before").content !== "none" }; }));
+  const box = "data:image/svg+xml;base64," + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120"><rect width="300" height="120" fill="#ccc"/></svg>').toString("base64");
+  await write("page/Spacing", `early light:\n\n![](${box})\n\n~ ~\n\nA paragraph.\n\n> ::: verse 265\n> ye Elves of Hilles,\n> :::\n\n> ::: verse 197 265\n> auraeque | Ye Ayres\n> :::\n\n> A quoted paragraph.\n`);
+  await page.waitForFunction(() => [...document.querySelectorAll("#editor img:not(.ProseMirror-separator)")].every((i) => i.complete), null, { timeout: 2000 }).catch(() => {});
+  await log("a picture's gaps and a quotation's top", await page.evaluate(() => {
+    const R = (e) => e.getBoundingClientRect();
+    const top = [...document.querySelectorAll("#editor .ProseMirror > *")];
+    const at = (t) => top.find((e) => e.textContent === t);
+    const img = document.querySelector("#editor .ProseMirror > p > img:not(.ProseMirror-separator)");
+    if (!img) return { picture: null };
+    return {
+      abovePicture: Math.round(R(img).top - R(at("early light:")).bottom),
+      belowPicture: Math.round(R(at("~ ~")).top - R(img).bottom),
+      paragraphGap: Math.round(R(at("A paragraph.")).top - R(at("~ ~")).bottom),
+      quoteTopToText: top.filter((e) => e.tagName === "BLOCKQUOTE").map((b) => Math.round(R(b.querySelector(".vrow, p")).top - R(b).top)),
+    };
+  }));
   await write("page/Reference Block", "::: reference\nroman book and canto\n:::\n\nafter\n");
   await page.click("#editor .reference, #page .reference", { timeout: 2000 }).catch(() => {});
   await rest(page);

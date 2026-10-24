@@ -38,6 +38,12 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .landed { background: var(--flash); }
 .page .folio.landed { box-shadow: 0 0 0 3px var(--flash); }
 .page img { max-width: 100%; height: auto; display: block; margin: 0.8em 0; border: 1px solid var(--rule); border-radius: 3px; }
+/* a picture ending its paragraph is followed by ProseMirror's caret
+   placeholder, an empty line under a block picture: 77px below it against
+   18 above (pin: editing as the old app does › a picture's gaps and a
+   quotation's top) */
+.page img:not(.ProseMirror-separator) + img.ProseMirror-separator,
+.page img:not(.ProseMirror-separator) + img.ProseMirror-separator + br.ProseMirror-trailingBreak { display: none; }
 .page h1 { font-size: 1.5em; font-weight: 600; line-height: 1.3; margin: 1.3em 0 0.5em; }
 .page h2 { font-size: 1.2em; font-weight: 600; line-height: 1.35; margin: 1.2em 0 0.4em; }
 .page h3, .page h4, .page h5, .page h6 { font-size: 1em; font-weight: 600; margin: 1em 0 0.4em; }
@@ -60,6 +66,11 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    Helium: a note ending a quotation kept 17px) */
 .page blockquote > :last-child,
 .page blockquote > :is(div.note, div[class^="card-"], div.reference):last-child { margin-bottom: 0; }
+/* and the first its top margin: a single-column verse block's stood its
+   text 29px into the box against a paragraph's 7 (pin: editing as the old
+   app does › a picture's gaps and a quotation's top) */
+.page blockquote > :first-child,
+.page blockquote > :is(div.note, div[class^="card-"], div.reference):first-child { margin-top: 0; }
 .page ul, .page ol { margin: 0 0 1em; padding-left: 1.6em; }
 .page li { margin: 0.15em 0; }
 /* the item's OWN LINE is its first paragraph, and takes no margin: two
@@ -291,7 +302,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    the quoted text's edge with a quoted paragraph's margins (found by hand:
    pulled, it stood 21px out of the box; as an inset box, equal halves
    wrapped its English). A single-column quoted fence keeps a verse block's
-   margins. */
+   margins but at the quotation's edges. */
 .page blockquote > :is(.verse, .prose):has(> .vpair) { margin: 0 0 1em; }
 /* and as the quotation's last block it drops that margin like any other:
    the rule above outweighs the general one (found by hand: the pair alone
