@@ -32,6 +32,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page p { margin: 0 0 1em; }
 /* a selection is painted in the flash, as a found passage is */
 .page ::selection { background: var(--flash); }
+.page .jump-hit { background: var(--flash); }
 /* THE LANDING MARK, ⌃⌘G's: the row in the flash; a leaf marker is a
    zero-width span, so a spread shadow gives the flash a body at the exact
    turn and moves no character */

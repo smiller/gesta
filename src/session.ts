@@ -50,6 +50,8 @@ export interface SessionOptions {
      reproduce the beat */
   onSelect?: () => void;
   onHighlight?: () => void;
+  /* every entry locked and the markdown view refused */
+  readOnly?: boolean;
 }
 export interface Session {
   readonly current: { date: string; tag: string | null };
@@ -194,7 +196,7 @@ export function startSession(opts: SessionOptions): Session {
      into, the open one kept the typing and lost the import's text unsaid
      (pin: losing nothing › typed into an entry an import overwrites) */
   let locked: Set<string> | null = null;
-  const lockedNow = <S extends Surface>(s: S): S => { s.lock(!!locked?.has(ekeyOf())); return s; };
+  const lockedNow = <S extends Surface>(s: S): S => { s.lock(!!opts.readOnly || !!locked?.has(ekeyOf())); return s; };
   const surface = surfaces({
     build: {
       rendered: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
@@ -459,13 +461,13 @@ export function startSession(opts: SessionOptions): Session {
     else if (k === "t") { e.preventDefault(); today(); }
     else if (k === "r") { e.preventDefault(); copyReference(); }
     else if (k === "c") { e.preventDefault(); copyEntryLink(); }
-    else if (k === "m") { e.preventDefault(); opts.onSwitch?.(); surface.switchTo(!surface.md); }
+    else if (k === "m") { e.preventDefault(); if (opts.readOnly) say("no markdown view here", 2000); else { opts.onSwitch?.(); surface.switchTo(!surface.md); } }
     else if (k === "w") { e.preventDefault(); showWordCount(); }
   });
   return {
     get current() { return current; },
     get view() { return live(); },
-    get locked() { return !!locked?.has(ekeyOf()); },
+    get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
     open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,

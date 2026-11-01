@@ -12,7 +12,8 @@ import { parseMarkdown } from "./model/parse.ts";
 import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
-import { idbEntryStore, idbImageStore, idbBackupStore } from "./store/store.ts";
+import { idbEntryStore, idbImageStore, idbBackupStore, memEntryStore, dexieKeyedStore, type ImageStore } from "./store/store.ts";
+import { readBundle, bundleImages, bundleKeeper, heldLabel, READER_DB, READER_STORE, type BundleRow } from "./store/bundle.ts";
 import { exportEntries, missingPictures } from "./store/exportEntries.ts";
 import { writeFilesTo } from "./store/io.ts";
 import { backupRunner, PAUSED_MSG } from "./store/backup.ts";
@@ -74,6 +75,10 @@ import donneMarginNotes from "../fixtures/donne-anniversarie-margin-notes.md?raw
 import marginsProse from "../fixtures/margins-prose.md?raw";
 
 const fixtures: Record<string, string> = { horace, pippa, twelfth, williams, ovid };
+/* the read-only build (`vite build --mode reader`): the entries a picked
+   bundle holds, every one locked */
+const READER = import.meta.env.MODE === "reader";
+if (READER) document.title = "Gesta reader";
 const mountEl = document.getElementById("editor") as HTMLElement;
 const root = document.documentElement;
 const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
@@ -95,7 +100,7 @@ const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : is
 type Ns = "page" | "bookshelf";
 type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
-  today: () => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {},
+  today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {},
   backupsPanel: () => {},
   interval: (_n: number) => {}, panel: (_ns: PanelName, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {}, shelves: () => {},
   create: () => {}, rename: () => {}, delete: () => {},
@@ -121,8 +126,11 @@ const overlay = overlays({
   replaceBack: () => acts.replace.close(),
 });
 mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
-mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
-mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
+if (!READER) {
+  mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
+  mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
+}
+const keptBundle = READER ? bundleKeeper(dexieKeyedStore<BundleRow>(READER_DB, READER_STORE, "k")) : null;
 const masthead = mount(Masthead, { target: document.body, anchor: document.querySelector("main")!, props: {
   screen, onToday: () => acts.today(), onExport: () => acts.export(), onImport: () => acts.import(),
   /* the choice takes effect whether or not it could be kept: a failed
@@ -136,6 +144,11 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onLines: (open: boolean) => acts.lines(open),
   onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
+  /* a new pick is kept, then read as at any launch */
+  reader: READER ? { onOpen: (file: File) => {
+    const p = notices.progress("keeping the backup…");
+    keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn't keep the backup", err), errText(err)); });
+  }, onWalk: (dir: "prev" | "next") => acts.walk(dir) } : null,
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
@@ -179,6 +192,7 @@ document.addEventListener("keydown", (e) => {
   /* a letter is matched in either case: Caps Lock leaves the chord a
      chord (pin: notices and surfaces as the old app has them › ⌃⌘K with Caps Lock) */
   const k = e.key.toLowerCase();
+  if (READER && "hbsne".includes(k)) return;
   /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
   if (k === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
   else if (k === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
@@ -195,13 +209,19 @@ document.addEventListener("keydown", (e) => {
   else if (k === "e") { e.preventDefault(); acts.replace.open(); }
 });
 
-const tabs = typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
+const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
 /* every landed write or delete arms the folder backup, not typing alone:
    an import, a rename or a delete waited for the next launch
    (pin: entries.test › a landed write and a landed delete are told to onLanded) */
 let armBackup = (): void => {};
-const layer = entryLayer(idbEntryStore(), notices.entry, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
-const images = idbImageStore();
+const readerStore = READER ? memEntryStore() : null;
+const layer = entryLayer(readerStore ?? idbEntryStore(), notices.entry, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
+let bundlePictures: ImageStore | null = null;
+const images: ImageStore = READER ? {
+  get: (id) => bundlePictures ? bundlePictures.get(id) : Promise.resolve(null),
+  set: () => Promise.reject(new Error("nothing is written here")),
+  clear: () => Promise.resolve(),
+} : idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
 const fixture = q.get("fixture");
@@ -264,6 +284,7 @@ if (fixture && fixtures[fixture]) {
     onHere: () => overlay.open("here"),
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
+    readOnly: READER,
   });
   /* gathered for a beat and the masthead redrawn once: an import in
      another tab announces every entry it writes */
@@ -281,9 +302,10 @@ if (fixture && fixtures[fixture]) {
   };
   /* leaving the tab with a backup still pending writes it at once, after the
      entry's own flush, registered first so it runs first */
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
+  if (!READER) document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") backup.firePendingBackup(); });
   acts.interval = (n) => session.setInterval(n);
   acts.today = () => session.today();
+  acts.walk = (dir) => session.step(dir);
   acts.lines = (open) => {
     if (open && !screen.gutter) { say("no line numbers here", 2000); return; }
     screen.linesOpen = open;
@@ -1102,7 +1124,19 @@ if (fixture && fixtures[fixture]) {
   const marginSeeds: Record<string, string> = {
     "bookshelf/Donne, John/Anniversaries/The First Anniversarie": donneMarginNotes, "page/Margins": marginsProse,
   };
-  const wrote = q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
+  /* the kept bundle read into the memory store before the open entry is
+     primed from it; none kept, the page says where one is found */
+  const openBundle = (): Promise<void> => keptBundle!.get().then((row) => {
+    if (!row) { screen.held = "no backup opened"; notices.stick("open backup: gesta.zip in Dropbox › gesta-backups › reader"); return; }
+    screen.held = heldLabel(row.modified);
+    const p = notices.progress("opening the backup…");
+    return row.file.arrayBuffer().then((buf) => readBundle(new Uint8Array(buf), p.step)).then((b) => {
+      bundlePictures = bundleImages(row.file, b.pictures);
+      const keys = Object.keys(b.entries);
+      return Promise.all(keys.map((k) => readerStore!.foreignSet(k, b.entries[k]))).then(() => { p.ok(keys.length + " entries"); stage("bundle"); });
+    }).catch((err: unknown) => { console.error("the backup could not be read", err); p.fail(failMsg("couldn't read the backup", err), errText(err)); });
+  });
+  const wrote = READER ? openBundle() : q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
     : q.get("store") === "seed" ? Promise.all(Object.keys(seeds).map((k) => layer.setEntry(k, seeds[k]))).then(() => stage("seed"))
     : q.get("store") === "seed-stanza" ? Promise.all(Object.keys(stanzaSeeds).map((k) => layer.setEntry(k, stanzaSeeds[k]))).then(() => stage("seed"))
     : q.get("store") === "seed-margin" ? Promise.all(Object.keys(marginSeeds).map((k) => layer.setEntry(k, marginSeeds[k]))).then(() => stage("seed"))
@@ -1150,7 +1184,7 @@ if (fixture && fixtures[fixture]) {
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an
        unconfigured backup: the one state no headless run reaches */
-    backup.runBackup().then(() => { if (q.get("corner") === "pill") notices.setTrouble(PAUSED_MSG); });
+    if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") notices.setTrouble(PAUSED_MSG); });
   });
   /* the manual export: a folder the user picks, filled with the journal as
      it stands. The picker opens FIRST, in the click, and so does the

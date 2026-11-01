@@ -3,7 +3,7 @@ import { utf8 } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, errText, failMsg, fsaFatal, type ExportFile } from "./files.ts";
 import {
   fileSig, fileSize, sidecarOfOurs, reconcilePlan, RECONCILE_FLOOR,
-  dedupFiles, backupPlan, rootOf, rootSig, archivePlan, rootManifest,
+  dedupFiles, backupPlan, rootOf, rootSig, archivePlan, rootManifest, bundleDue,
 } from "./plans.ts";
 
 const doc = (path: string, text: string): ExportFile => {
@@ -207,4 +207,14 @@ test("rootManifest: every line terminated, a gap written as a bare name", () => 
   expect(rootManifest(["B", "A", null], { A: { sig: "s", at: "archive/A.zip" } })).toBe("A\tarchive/A.zip\nB\n");
   expect(rootManifest(["b", "a", "a"], {})).toBe("a\nb\n");
   expect(rootManifest([], {})).toBe("");
+});
+
+test("bundleDue: the reader's bundle is written unless its record and the folder both vouch for it", () => {
+  const files = [doc("journal/2026/2026-01-01.md", "one"), doc("page/A.md", "two")];
+  const sig = rootSig(files);
+  expect(bundleDue(files, undefined, 120)).toBe(true);
+  expect(bundleDue(files, { sig, size: 120 }, null)).toBe(true);
+  expect(bundleDue(files, { sig, size: 120 }, 119)).toBe(true);
+  expect(bundleDue(files, { sig: "1.other", size: 120 }, 120)).toBe(true);
+  expect(bundleDue(files, { sig, size: 120 }, 120)).toBe(false);
 });

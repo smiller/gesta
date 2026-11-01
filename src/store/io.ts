@@ -2,7 +2,7 @@
    pass fakes */
 import { utf8, type EntryFile } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, fsaFatal, type ExportFile } from "./files.ts";
-import { fileSig, fileSize, MIRROR_DIR, ARCHIVE_DIR, MANIFESTS_DIR, dedupFiles, reconcilePlan, archivePlan, rootManifest, type Manifest, type Archived, type BackupPlan, type ArchiveGroup } from "./plans.ts";
+import { fileSig, fileSize, MIRROR_DIR, ARCHIVE_DIR, MANIFESTS_DIR, READER_ZIP, bundleDue, rootSig, dedupFiles, reconcilePlan, archivePlan, rootManifest, type Manifest, type Archived, type BackupPlan, type ArchiveGroup } from "./plans.ts";
 import { emitZipEntry, deflateRaw } from "./zip.ts";
 import type { Dir } from "./fsa.ts";
 
@@ -81,10 +81,22 @@ export const ZIP_YIELD_BYTES = 512 * 1024;
 export const ZIP_MAX_ENTRIES = 0xFFFF;
 export const ZIP_MAX_BYTES = 0xFFFFFFFF;
 export function zipBytes(files: ExportFile[], day: string): Promise<Uint8Array> {
+  const parts: Uint8Array[] = [];
+  return zipTo(files, day, (chunk) => { parts.push(chunk); }).then((size) => {
+    const out = new Uint8Array(size);
+    let o = 0;
+    for (const p of parts) { out.set(p, o); o += p.length; }
+    return out;
+  });
+}
+/* the same archive handed to `put` a member at a time, in order, each put
+   awaited before the next member is packed: the bundle of the whole corpus
+   is never held at once. Resolves with the bytes put. */
+export function zipTo(files: ExportFile[], day: string, put: (chunk: Uint8Array) => Promise<void> | void): Promise<number> {
   if (files.length > ZIP_MAX_ENTRIES)
     return Promise.reject(new Error("too many files for one archive (" + files.length + ")"));
   const stamp = ((+day.slice(0, 4) - 1980) << 9) | (+day.slice(5, 7) << 5) | +day.slice(8, 10);
-  const parts: Uint8Array[] = [], central: Uint8Array[] = [];
+  const central: Uint8Array[] = [];
   let at = 0, since = 0;
   return files.reduce((chain, f) => chain.then(() => {
     const body = fileBody(f);
@@ -94,28 +106,26 @@ export function zipBytes(files: ExportFile[], day: string): Promise<Uint8Array> 
          already-compressed pictures */
       const use = packed.length < raw.length ? packed : raw;
       const e = emitZipEntry(filePath(f), raw, use, stamp, at);
-      parts.push(e.local, use);
       central.push(e.central);
       at += e.local.length + use.length;
       if (at > ZIP_MAX_BYTES) throw new Error("archive too large for one zip file");
+      return Promise.resolve(put(e.local)).then(() => put(use));
+    }).then(() => {
       since += raw.length;
       if (since >= ZIP_YIELD_BYTES) { since = 0; return yieldToTaskQueue(); }
     });
   }), Promise.resolve()).then(() => {
     const cdAt = at;
     let cdSize = 0;
-    for (const c of central) { cdSize += c.length; parts.push(c); }
+    for (const c of central) cdSize += c.length;
     const end = new Uint8Array(22), v = new DataView(end.buffer);
     v.setUint32(0, 0x06054b50, true);
     v.setUint16(8, files.length, true);
     v.setUint16(10, files.length, true);
     v.setUint32(12, cdSize, true);
     v.setUint32(16, cdAt, true);
-    parts.push(end);
-    const out = new Uint8Array(cdAt + cdSize + end.length);
-    let o = 0;
-    for (const p of parts) { out.set(p, o); o += p.length; }
-    return out;
+    return central.reduce((chain, c) => chain.then(() => put(c)), Promise.resolve())
+      .then(() => put(end)).then(() => cdAt + cdSize + end.length);
   });
 }
 export interface Failure { name: string; error: unknown; doc: boolean; sweep?: boolean; blind?: boolean }
@@ -356,4 +366,24 @@ export function writeFilesTo(dir: Dir, files: ExportFile[], onProgress?: (done: 
         failures.push({ name: filePath(f), error: err, doc: isDoc(f) });
       })
       .then(() => { if (onProgress && isDoc(f)) onProgress(++done, docTotal); })), Promise.resolve()).then(() => failures);
+}
+/* the bundle: every file of the export in one zip, streamed into
+   the file, its row in the manifest only on a clean close (pin: io.test ›
+   writeBundle writes the whole export as one zip); a refusal is collected as
+   a lost write, a session-fatal one rethrown (pin: io.test › writeBundle
+   collects a refused write) */
+export function writeBundle(dir: Dir, files: ExportFile[], manifest: Manifest, day: string): Promise<Failure[]> {
+  const cut = READER_ZIP.lastIndexOf("/"), name = READER_ZIP.slice(cut + 1);
+  return folderMemo(dir, { create: true })(READER_ZIP.slice(0, cut)).then((sub) =>
+    sub.getFileHandle(name).then((h) => h.getFile()).then((f) => f.size, () => null).then((present) => {
+      if (!bundleDue(files, manifest[READER_ZIP], present)) return [];
+      return sub.getFileHandle(name, { create: true }).then((h) => h.createWritable()).then((w) =>
+        zipTo(files, day, (chunk) => w.write(chunk)).then((size) => w.close().then(() => {
+          manifest[READER_ZIP] = { sig: rootSig(files), size };
+          return [] as Failure[];
+        })));
+    })).catch((err: unknown) => {
+    if (fsaFatal(err)) throw err;
+    return [{ name: READER_ZIP, error: err, doc: false }];
+  });
 }

@@ -6,7 +6,7 @@
    highlight.test › a deep link replays literally) */
 import type { Node } from "prosemirror-model";
 import { Plugin, PluginKey, TextSelection, type Command, type EditorState, type Transaction } from "prosemirror-state";
-import type { EditorView } from "prosemirror-view";
+import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 import { flattenDoc, flatRange } from "../model/flatten.ts";
 import { parseSearchQuery, searchFold, searchHits, withoutNoteMarks } from "../store/search.ts";
 
@@ -26,14 +26,17 @@ export function highlightIn(view: EditorView, query: string, nth: number, honorM
   const hit = findHit(view.state.doc, query, nth, honorMarkers);
   if (!hit) return false;
   view.focus();
-  view.dispatch(jumpTo(view.state, hit.from, hit.to));
+  view.dispatch(jumpTo(view.state, hit.from, hit.to, !view.editable));
   return true;
 }
 /* the jump's selection, until anything else moves the selection or the text:
-   Escape takes back only a selection a reader did not make */
-const jumpKey = new PluginKey<{ from: number; to: number } | null>("jump");
-export function jumpTo(state: EditorState, from: number, to: number): Transaction {
-  return state.tr.setSelection(TextSelection.create(state.doc, from, to)).setMeta(jumpKey, { from, to });
+   Escape takes back only a selection a reader did not make. `drawn` marks
+   the hit itself, for a view that is not editable and so draws no
+   selection (pin: highlight.test › a drawn jump) */
+interface Jump { from: number; to: number; drawn?: boolean }
+const jumpKey = new PluginKey<Jump | null>("jump");
+export function jumpTo(state: EditorState, from: number, to: number, drawn = false): Transaction {
+  return state.tr.setSelection(TextSelection.create(state.doc, from, to)).setMeta(jumpKey, drawn ? { from, to, drawn } : { from, to });
 }
 export const escapeJump: Command = (state, dispatch) => {
   const hit = jumpKey.getState(state);
@@ -41,10 +44,16 @@ export const escapeJump: Command = (state, dispatch) => {
   dispatch?.(state.tr.setSelection(TextSelection.create(state.doc, hit.to)));
   return true;
 };
-export const jump = new Plugin<{ from: number; to: number } | null>({
+export const jump = new Plugin<Jump | null>({
   key: jumpKey,
   state: {
     init: () => null,
-    apply: (tr, was) => (tr.getMeta(jumpKey) as { from: number; to: number } | undefined) ?? (tr.docChanged || tr.selectionSet ? null : was),
+    apply: (tr, was) => (tr.getMeta(jumpKey) as Jump | undefined) ?? (tr.docChanged || tr.selectionSet ? null : was),
+  },
+  props: {
+    decorations: (state) => {
+      const hit = jumpKey.getState(state);
+      return hit?.drawn ? DecorationSet.create(state.doc, [Decoration.inline(hit.from, hit.to, { class: "jump-hit" })]) : null;
+    },
   },
 });

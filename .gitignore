@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-reader
 tools/out
 .DS_Store
 *.received.txt

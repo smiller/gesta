@@ -9,6 +9,10 @@ export const MIRROR_DIR = "current";
    <namespace>/<root>/… and import unchanged */
 export const ARCHIVE_DIR = "archive";
 export const MANIFESTS_DIR = ARCHIVE_DIR + "/manifests";
+/* the whole export in one file, for a reader with no folder picker; its
+   manifest row sits under this path beside the mirror's, which never begin
+   with it */
+export const READER_ZIP = "reader/gesta.zip";
 /* memoised on the per-run record. Its PAIR is the size in the listing: a
    hash alone cannot tell a file that is there from one deleted or truncated
    under us, the failure a recovery artifact must never have */
@@ -180,4 +184,9 @@ export function rootManifest(roots: (string | null)[], archived: Archived): stri
     return was && typeof was === "object" && was.at ? r + "\t" + was.at : r;
   });
   return lines.length ? lines.join("\n") + "\n" : "";
+}
+/* the bundle, as the mirror's dedup: written unless what we last wrote and
+   what is there both vouch for it (pin: plans.test › bundleDue) */
+export function bundleDue(files: ExportFile[], was: ManifestRow | undefined, present: number | null): boolean {
+  return !was || present !== was.size || was.sig !== rootSig(files);
 }

@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { findHit } from "./highlight.ts";
+import { findHit, jump, jumpTo } from "./highlight.ts";
+import { EditorState, TextSelection } from "prosemirror-state";
+import type { DecorationSet } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { selectionLink } from "./reference.ts";
 
@@ -43,5 +45,16 @@ describe("findHit", () => {
     const hit = findHit(doc, hl.q!, hl.nth!, false)!;
     expect(hit).toEqual({ from: pos + 2, to: pos + 8 });
     expect(from).toBeGreaterThan(0);
+  });
+});
+
+describe("a drawn jump", () => {
+  const state = EditorState.create({ doc: parseMarkdown("one two three\n"), plugins: [jump] });
+  const decos = (s: EditorState) => (jump.props.decorations!.call(jump, s) as DecorationSet | null)?.find() ?? [];
+  it("marks the hit until the selection moves; a plain jump marks nothing", () => {
+    const drawn = state.apply(jumpTo(state, 5, 8, true));
+    expect(decos(drawn).map((d) => [d.from, d.to])).toEqual([[5, 8]]);
+    expect(decos(state.apply(jumpTo(state, 5, 8)))).toEqual([]);
+    expect(decos(drawn.apply(drawn.tr.setSelection(TextSelection.create(drawn.doc, 2))))).toEqual([]);
   });
 });

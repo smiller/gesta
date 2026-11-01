@@ -3,11 +3,11 @@
 import { test, expect } from "vitest";
 import {
   yieldToTaskQueue, setYieldWatch, folderNames, writeFilesTo, zipBytes,
-  ZIP_MAX_ENTRIES, writeBackup, lastRun, sweepFlatCopies, folderMemo, type Failure,
+  ZIP_MAX_ENTRIES, writeBackup, lastRun, sweepFlatCopies, folderMemo, writeBundle, type Failure,
 } from "./io.ts";
 import { utf8, entryFile } from "./names.ts";
 import { crc32 } from "./zip.ts";
-import { MIRROR_DIR, ARCHIVE_DIR } from "./plans.ts";
+import { MIRROR_DIR, ARCHIVE_DIR, READER_ZIP, type Manifest } from "./plans.ts";
 import type { ExportFile } from "./files.ts";
 import type { Dir } from "./fsa.ts";
 
@@ -588,4 +588,71 @@ test("zipBytes yields to the task queue on a large root; a small one never pays 
     await zipBytes([{ name: "a.md", dir: "page/", text: "short" }], "2026-08-18");
     expect(quiet).toBe(0);
   } finally { off(); }
+});
+
+// a folder of files by full path, a file handle answering getFile's size,
+// a missing one NotFound, a writable that takes many chunks
+function bundleDir(files: Record<string, Uint8Array>, log: string[], refuse?: Error): Dir {
+  const at = (prefix: string): Dir => ({
+    kind: "directory", name: prefix,
+    getDirectoryHandle: (n: string) => Promise.resolve(at(prefix + n + "/")),
+    getFileHandle(n: string, opts?: { create?: boolean }) {
+      const p = prefix + n;
+      if (!opts?.create && !files[p]) return Promise.reject(Object.assign(new Error("gone"), { name: "NotFoundError" }));
+      return Promise.resolve({
+        getFile: () => Promise.resolve({ size: files[p].length }),
+        createWritable() {
+          if (refuse) return Promise.reject(refuse);
+          const parts: Uint8Array[] = [];
+          return Promise.resolve({
+            write(c: Uint8Array) { parts.push(c); return Promise.resolve(); },
+            close() {
+              const out = new Uint8Array(parts.reduce((n, c) => n + c.length, 0));
+              let o = 0;
+              for (const c of parts) { out.set(c, o); o += c.length; }
+              files[p] = out;
+              log.push("write " + p + " in " + parts.length);
+              return Promise.resolve();
+            },
+          });
+        },
+      });
+    },
+  }) as unknown as Dir;
+  return at("");
+}
+
+test("writeBundle writes the whole export as one zip, a member at a time, and records it", async () => {
+  const files: ExportFile[] = [docFor("2026-01-01", "one"), { name: "p.webp", dir: "journal/2026/", bytes: new Uint8Array([9, 9]) }];
+  const disk: Record<string, Uint8Array> = {}, log: string[] = [], manifest: Manifest = {};
+  expect(await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31")).toEqual([]);
+  expect(log).toEqual(["write " + READER_ZIP + " in 7"]);
+  expect(disk[READER_ZIP]).toEqual(await zipBytes(files, "2026-10-31"));
+  expect(manifest[READER_ZIP].size).toBe(disk[READER_ZIP].length);
+});
+
+test("writeBundle skips a bundle the record and the folder vouch for, and rewrites one either doubts", async () => {
+  const files: ExportFile[] = [docFor("2026-01-01", "one")];
+  const disk: Record<string, Uint8Array> = {}, log: string[] = [], manifest: Manifest = {};
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  expect(log.length).toBe(1);
+  disk[READER_ZIP] = new Uint8Array(3);
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  expect(log.length).toBe(2);
+  delete disk[READER_ZIP];
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  expect(log.length).toBe(3);
+  await writeBundle(bundleDir(disk, log), [docFor("2026-01-01", "changed")], manifest, "2026-10-31");
+  expect(log.length).toBe(4);
+});
+
+test("writeBundle collects a refused write without a record; a session-fatal one rejects", async () => {
+  const files: ExportFile[] = [docFor("2026-01-01", "one")];
+  const manifest: Manifest = {}, err = new Error("held open");
+  const failures = await writeBundle(bundleDir({}, [], err), files, manifest, "2026-10-31");
+  expect(failures).toEqual([{ name: READER_ZIP, error: err, doc: false }]);
+  expect(manifest[READER_ZIP]).toBeUndefined();
+  const fatal = Object.assign(new Error("no"), { name: "NotAllowedError" });
+  await expect(writeBundle(bundleDir({}, [], fatal), files, manifest, "2026-10-31")).rejects.toBe(fatal);
 });

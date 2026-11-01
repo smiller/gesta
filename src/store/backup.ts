@@ -4,7 +4,7 @@ import { readRaw, writeRaw } from "./local.ts";
 import { imgHash } from "./names.ts";
 import { filePath, errText, failMsg, fsaFatal } from "./files.ts";
 import { backupPlan, type Manifest, type Archived } from "./plans.ts";
-import { writeBackup, type Failure } from "./io.ts";
+import { writeBackup, writeBundle, type Failure } from "./io.ts";
 import { exportEntries, archiveRoots } from "./exportEntries.ts";
 import type { EntryLayer } from "./entries.ts";
 import type { ImageStore, BackupStore } from "./store.ts";
@@ -25,7 +25,7 @@ export const IDLE_MS = 600000;
 export function backupSig(cache: Record<string, string>): string {
   const keys = Object.keys(cache).sort();
   const s = keys.map((k) => k + "\u0000" + cache[k]).join("\u0000");
-  return "2." + imgHash(s) + "." + s.length;
+  return "3." + imgHash(s) + "." + s.length;
 }
 export interface BackupOptions {
   layer: EntryLayer;
@@ -97,7 +97,9 @@ export function backupRunner(opts: BackupOptions): Backup {
             if (f.picsFaulted) picFaults.push({ name: filePath(f), error: new Error("this entry's pictures could not be read"), doc: true });
           }
           return writeBackup({ dir: h, files, plan, manifest, archived, roots, unread: plan.reconcile ? spare : null,
-            onProgress: (done, total) => say("backing up… " + done + " / " + total) }).then((written) => {
+            onProgress: (done, total) => say("backing up… " + done + " / " + total) })
+            .then((written) => plan.writeMirror && h === handle ? writeBundle(h, files, manifest, today).then((b) => written.concat(b)) : written)
+            .then((written) => {
             const failures = written.concat(picFaults);
             /* a folder change repointed the handle mid-run: this run wrote
                the OLD folder, so commit nothing and claim nothing */

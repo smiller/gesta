@@ -15,8 +15,10 @@
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, onShelves, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete }: {
+  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, onShelves, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
+    /* the read-only page: a new bundle picked */
+    reader?: { onOpen: (file: File) => void; onWalk: (dir: "prev" | "next") => void } | null;
     onToday: () => void; onExport: () => void; onImport: () => void;
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
@@ -83,9 +85,13 @@
       </svg>
     </button>
     <span class="date-stack">
+      <span class={reader ? "date-row" : "date-plain"}>
+      {#if reader}<button class="walk" type="button" title="Previous entry (⌃⌘,)" aria-label="Previous entry" onclick={() => reader.onWalk("prev")}>‹</button>{/if}
       <span class="datelabel">
         {#each screen.masthead.crumbs as c, i (i)}{#if i}/{/if}{#if c.href}<a class="datelink date-unit" href={c.href} title={c.title}>{c.text}</a>{:else}<span class="date-unit">{c.text}</span>{/if}{/each}
         {#if screen.masthead.leaf !== null}{#if screen.masthead.crumbs.length}{" › "}{/if}<strong class="tag-current">{screen.masthead.leaf}</strong>{/if}
+      </span>
+      {#if reader}<button class="walk" type="button" title="Next entry (⌃⌘.)" aria-label="Next entry" onclick={() => reader.onWalk("next")}>›</button>{/if}
       </span>
       <span class="tagbar">{#each screen.masthead.tags as t (t.href)}<a href={t.href}>{t.text}</a>{/each}</span>
     </span>
@@ -93,6 +99,10 @@
   <div class="site-tools">
     <span class="mode" title="⌃⌘M toggles the markdown source view" hidden={!screen.mdView}>markdown</span>
     <button class="toolbtn" type="button" title="Go to today" hidden={!screen.masthead.showToday} onclick={onToday}>today</button>
+    {#if reader}
+      <span class="held">{screen.held}</span>
+      <label class="toolbtn" title="Open gesta.zip from the backups folder">open backup<input type="file" accept=".zip,application/zip" hidden onchange={(e) => { const f = e.currentTarget.files?.[0]; e.currentTarget.value = ""; if (f) reader.onOpen(f); }}></label>
+    {:else}
     <button class="toolbtn" type="button" title={screen.masthead.buttons.createTitle} hidden={!screen.masthead.buttons.canCreate} onclick={onCreate}>{screen.masthead.buttons.create}</button>
     <button class="toolbtn" type="button" title={screen.masthead.buttons.renameTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onRename}>rename</button>
     <button class="toolbtn" type="button" title={screen.masthead.buttons.deleteTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onDelete}>delete</button>
@@ -100,6 +110,7 @@
     <button class="toolbtn" type="button" title="Import Markdown files from a folder" onclick={onImport}>import</button>
     <button class="toolbtn opener" type="button" title="Automatic folder backups" onclick={() => onPanel("backups")}>backups</button>
     <button class="toolbtn opener" type="button" title="How Gesta works (⌃⌘H)" onclick={() => onPanel("help")}>help</button>
+    {/if}
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
   <Goto bind:this={gotoRow} goto={screen.goto} {...goto} />
@@ -112,8 +123,10 @@
     <nav class="pages" onfocusout={leave}>
       {#each screen.panelRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onClosePanel}>{r.text}</a>{/if}{/each}
       {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}
+      {#if !reader}
       <button class="panel-new" type="button" onclick={() => onNewRoot(screen.panel!)}>New {NOUN[screen.panel]}…</button>
       {#if screen.panel === "bookshelf"}<button class="panel-new" type="button" onclick={onShelves}>Shelves…</button>{/if}
+      {/if}
     </nav>
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
@@ -169,6 +182,12 @@
     cursor: pointer;
   }
   .site-home a:hover, .datebtn:hover, .toolbtn:hover { color: var(--bar-ink); }
+  .date-row { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+  .date-plain { display: contents; }
+  /* a finger's width round a glyph the bar's size */
+  .walk { font-family: var(--serif); font-size: 1.3em; line-height: 1; color: var(--bar-link); background: none; border: none; padding: 9px 14px; margin: -9px -8px; cursor: pointer; }
+  .walk:hover { color: var(--bar-ink); }
+  .held { font-family: var(--sans); font-size: 0.85em; color: var(--bar-ink); white-space: nowrap; }
   .tagbar { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
   .tagbar a { white-space: nowrap; font-family: var(--serif); color: var(--bar-link); text-decoration: none; }
   .tagbar a:hover { color: var(--bar-ink); text-decoration: underline; }

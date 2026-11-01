@@ -9,8 +9,8 @@ import { viteSingleFile } from "vite-plugin-singlefile";
    modules holding their state; under Vitest's node environment it compiles
    them for the server, so a component test renders to a string
    (svelte/server) and a rune module's state is a plain object. */
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [svelte(), viteSingleFile()],
-  build: { target: "esnext", assetsInlineLimit: 100_000_000, cssCodeSplit: false },
+  build: { target: "esnext", assetsInlineLimit: 100_000_000, cssCodeSplit: false, outDir: mode === "reader" ? "dist-reader" : "dist" },
   test: { include: ["src/**/*.test.ts", "tools/**/*.test.ts"], environment: "node" },
-});
+}));

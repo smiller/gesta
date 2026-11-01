@@ -517,7 +517,10 @@ is in the plan's record, under the phase named):
   `fsa.ts` (the directory and file handle types the fakes are shaped to),
   `local.ts` (one localStorage key, read and written inside try),
   `plans.ts` (the backup's pure decisions: the dedup, the reconcile, the
-  archive plan, the day's census), `zip.ts` (the zip byte format),
+  archive plan, the day's census), `zip.ts` (the zip byte format), `bundle.ts` (the reader's
+  side of the bundle `gesta-backups/reader/gesta.zip`: the zip's members
+  read, the entries keyed as the import keys them, the pictures read from
+  the kept file on demand, the one picked file kept in `gesta.reader`),
   `io.ts` (the disk edge: the tolerant writer, the listing, the zip walk,
   the backup writer with its sweep and reconcile), `exportEntries.ts` (the
   export walk over the cache and the image store), `backup.ts` (the
@@ -627,6 +630,16 @@ is in the plan's record, under the phase named):
   along a line); and the facing numbers step's Ovid, *Metamorphoses*
   7.179–233 beside Golding's 7.244–308 (Rouse's text), a verse block
   numbered on both sides.
+- THE READER (2026-10-31): `npm run build:reader` builds the same page
+  with `--mode reader` into `dist-reader/index.html` — main.ts's `READER`:
+  the entries of a picked bundle in a memory store, every one locked, no
+  markdown view, format bar, copy button, lifecycle, import/export,
+  backups, shortcuts, bookmarks or replace. The backup writes the bundle
+  (`writeBundle` in io.ts) after the mirror. `tools/readerBundle.ts` makes
+  one from a backup folder; `tools/helium-reader.mjs` plays the reader
+  headless over it; `tools/publishReader.sh` pushes the page to the
+  `gh-pages` branch, run only on the reader's word. The plan:
+  docs/plans/2026-10-31-feat-reader-plan.md.
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
   (vite-plugin-singlefile inlines everything; the tab's icon,
   `src/favicon.ico`, the old app's, is inlined by main.ts itself, a

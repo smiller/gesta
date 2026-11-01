@@ -52,6 +52,8 @@ export interface Screen {
   /* the markdown source view is on: the mode pill shows */
   mdView: boolean;
   interval: number;
+  /* which bundle the read-only page holds */
+  held: string;
 }
 export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false, buttons: { create: "", createTitle: "", tagTitle: "", canCreate: false, canEdit: false, renameTitle: "", deleteTitle: "" } };
 export function screenState(interval: number): Screen {
@@ -66,7 +68,7 @@ export function screenState(interval: number): Screen {
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
     backups: { canPick: true, configured: false, trouble: "", warm: "loading" },
-    gutter: false, linesOpen: false, mdView: false, interval,
+    gutter: false, linesOpen: false, mdView: false, interval, held: "",
   });
   return screen;
 }
