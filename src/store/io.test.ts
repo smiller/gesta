@@ -3,7 +3,7 @@
 import { test, expect } from "vitest";
 import {
   yieldToTaskQueue, setYieldWatch, folderNames, writeFilesTo, zipBytes,
-  ZIP_MAX_ENTRIES, writeBackup, lastRun, sweepFlatCopies, folderMemo, writeBundle, type Failure,
+  ZIP_MAX_ENTRIES, writeBackup, lastRun, sweepFlatCopies, folderMemo, writeBundle, zipTo, BUNDLE_WRITE_BYTES, type Failure,
 } from "./io.ts";
 import { utf8, entryFile } from "./names.ts";
 import { crc32 } from "./zip.ts";
@@ -591,8 +591,8 @@ test("zipBytes yields to the task queue on a large root; a small one never pays 
 });
 
 // a folder of files by full path, a file handle answering getFile's size,
-// a missing one NotFound, a writable that takes many chunks
-function bundleDir(files: Record<string, Uint8Array>, log: string[], refuse?: Error): Dir {
+// a missing one NotFound, a writable that takes many chunks and may refuse one
+function bundleDir(files: Record<string, Uint8Array>, log: string[], refuse?: Error, failWrite?: Error): Dir {
   const at = (prefix: string): Dir => ({
     kind: "directory", name: prefix,
     getDirectoryHandle: (n: string) => Promise.resolve(at(prefix + n + "/")),
@@ -605,7 +605,8 @@ function bundleDir(files: Record<string, Uint8Array>, log: string[], refuse?: Er
           if (refuse) return Promise.reject(refuse);
           const parts: Uint8Array[] = [];
           return Promise.resolve({
-            write(c: Uint8Array) { parts.push(c); return Promise.resolve(); },
+            write(c: Uint8Array) { if (failWrite) return Promise.reject(failWrite); parts.push(c); return Promise.resolve(); },
+            abort() { log.push("abort " + p); return Promise.resolve(); },
             close() {
               const out = new Uint8Array(parts.reduce((n, c) => n + c.length, 0));
               let o = 0;
@@ -622,37 +623,50 @@ function bundleDir(files: Record<string, Uint8Array>, log: string[], refuse?: Er
   return at("");
 }
 
-test("writeBundle writes the whole export as one zip, a member at a time, and records it", async () => {
-  const files: ExportFile[] = [docFor("2026-01-01", "one"), { name: "p.webp", dir: "journal/2026/", bytes: new Uint8Array([9, 9]) }];
+const AT = Date.parse("2026-11-01T11:57:03.000Z");
+test("writeBundle writes the whole export as one zip in megabyte writes, stamped with when, and records it", async () => {
+  const big = new Uint8Array(BUNDLE_WRITE_BYTES * 2.5);
+  for (let i = 0; i < big.length; i += 65536) crypto.getRandomValues(big.subarray(i, i + 65536));
+  const files: ExportFile[] = [docFor("2026-01-01", "one"), { name: "p.webp", dir: "journal/2026/", bytes: big }];
   const disk: Record<string, Uint8Array> = {}, log: string[] = [], manifest: Manifest = {};
-  expect(await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31")).toEqual([]);
-  expect(log).toEqual(["write " + READER_ZIP + " in 7"]);
-  expect(disk[READER_ZIP]).toEqual(await zipBytes(files, "2026-10-31"));
+  expect(await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT)).toEqual([]);
+  expect(log).toEqual(["write " + READER_ZIP + " in 2"]);
+  const parts: Uint8Array[] = [];
+  await zipTo(files, "2026-10-31", (c) => { parts.push(c); }, "2026-11-01T11:57:03.000Z");
+  expect(disk[READER_ZIP]).toEqual(new Uint8Array(await new Blob(parts as BlobPart[]).arrayBuffer()));
   expect(manifest[READER_ZIP].size).toBe(disk[READER_ZIP].length);
+});
+
+test("writeBundle abandons the file when a write fails partway, and records nothing", async () => {
+  const log: string[] = [], manifest: Manifest = {}, err = new Error("quota");
+  const failures = await writeBundle(bundleDir({}, log, undefined, err), [docFor("2026-01-01", "one")], manifest, "2026-10-31", AT);
+  expect(failures).toEqual([{ name: READER_ZIP, error: err, doc: false }]);
+  expect(log).toEqual(["abort " + READER_ZIP]);
+  expect(manifest[READER_ZIP]).toBeUndefined();
 });
 
 test("writeBundle skips a bundle the record and the folder vouch for, and rewrites one either doubts", async () => {
   const files: ExportFile[] = [docFor("2026-01-01", "one")];
   const disk: Record<string, Uint8Array> = {}, log: string[] = [], manifest: Manifest = {};
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
   expect(log.length).toBe(1);
   disk[READER_ZIP] = new Uint8Array(3);
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
   expect(log.length).toBe(2);
   delete disk[READER_ZIP];
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31");
+  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
   expect(log.length).toBe(3);
-  await writeBundle(bundleDir(disk, log), [docFor("2026-01-01", "changed")], manifest, "2026-10-31");
+  await writeBundle(bundleDir(disk, log), [docFor("2026-01-01", "changed")], manifest, "2026-10-31", AT);
   expect(log.length).toBe(4);
 });
 
 test("writeBundle collects a refused write without a record; a session-fatal one rejects", async () => {
   const files: ExportFile[] = [docFor("2026-01-01", "one")];
   const manifest: Manifest = {}, err = new Error("held open");
-  const failures = await writeBundle(bundleDir({}, [], err), files, manifest, "2026-10-31");
+  const failures = await writeBundle(bundleDir({}, [], err), files, manifest, "2026-10-31", AT);
   expect(failures).toEqual([{ name: READER_ZIP, error: err, doc: false }]);
   expect(manifest[READER_ZIP]).toBeUndefined();
   const fatal = Object.assign(new Error("no"), { name: "NotAllowedError" });
-  await expect(writeBundle(bundleDir({}, [], fatal), files, manifest, "2026-10-31")).rejects.toBe(fatal);
+  await expect(writeBundle(bundleDir({}, [], fatal), files, manifest, "2026-10-31", AT)).rejects.toBe(fatal);
 });

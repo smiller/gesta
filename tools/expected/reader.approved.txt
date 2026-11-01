@@ -1,0 +1,19 @@
+nothing kept: {"entry":"page/Witchcraft","store":"0","held":"no backup opened","corner":"open backup: gesta.zip in Dropbox › gesta-backups › reader (click to copy)","editable":"false","tools":["today","no backup opened","open backup"]}
+the bundle picked: {"entry":"page/Witchcraft","store":"6","held":"backup of 12 Sep 2026, 04:30","corner":"6 entries stored","editable":"false","tools":["today","backup of 12 Sep 2026, 04:30","open backup"]}
+relaunched: {"entry":"bookshelf/Horace/Odes","store":"6","held":"backup of 12 Sep 2026, 04:30","corner":"6 entries stored","editable":"false","tools":["today","backup of 12 Sep 2026, 04:30","open backup"]}
+a contents link clicked: {"entry":"bookshelf/Horace/Odes/1.1","editable":"false","hit":"","crumb":"Horace/Odes › 1.1"}
+Search clicked under a redraw: {"open":true}
+Line numbering clicked under a redraw: {"open":true}
+› clicked: {"entry":"bookshelf/Horace/Odes/1.2","editable":"false","hit":"","crumb":"Horace/Odes › 1.2"}
+‹ clicked: {"entry":"bookshelf/Horace/Odes/1.1","editable":"false","hit":"","crumb":"Horace/Odes › 1.1"}
+‹ clicked on the first: {"entry":"bookshelf/Horace/Odes/1.1","editable":"false","corner":"no earlier entry","hit":"","crumb":"Horace/Odes › 1.1"}
+a search row clicked, of 1: {"entry":"page/Witchcraft","editable":"false","hit":"rumoured Goetia","crumb":"Witchcraft","scrolled":true}
+Escape after the hit: {"entry":"page/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft"}
+a line clicked, xyz, Enter and Backspace typed: {"entry":"page/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft","changed":false,"focus":"BODY"}
+⌃⌘M: {"entry":"page/Witchcraft","editable":"false","corner":"no markdown view here","hit":"","crumb":"Witchcraft"}
+⌃⌘H, B, S, N and E: {"entry":"page/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft","open":[]}
+a day with a picture: {"entry":"2026-09-10","editable":"false","hit":"","crumb":"Past — Thursday, 10 September 2026","pictures":[1]}
+› clicked on the day: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026"}
+the bookshelf list: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026","rows":["Horace"],"buttons":0}
+Go to: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026","selects":4}
+console: 

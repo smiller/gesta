@@ -169,6 +169,7 @@ export interface PinSources {
   corner: string;
   bridge: string;
   bridgeRun: string;
+  readerRun: string;
   tests: Map<string, string[]>;
 }
 
@@ -199,6 +200,8 @@ export function unresolved(pin: Pin, src: PinSources): string | null {
     if (!src.bridgeRun.split("\n").some((l) => l === label || l.startsWith(label + " "))) return "no line \"" + label + "\" in tools/expected/bridge.approved.txt";
     return null;
   }
+  if (head === "reader")
+    return src.readerRun.split("\n").some((l) => l.startsWith(label + ": ")) ? null : "no reading \"" + label + "\" in tools/expected/reader.approved.txt";
   if (head === "console") {
     const lines = src.corner.split("\n");
     const at = lines.findIndex((l) => l.startsWith("console: "));

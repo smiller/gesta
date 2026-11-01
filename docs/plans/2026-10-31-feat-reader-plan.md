@@ -86,4 +86,58 @@
 - Safari on the iPad: Helium is Chromium. The page meets Safari only once
   published.
 
-REVIEW CYCLES: 0
+## Published (2026-11-01)
+
+- `tools/publishReader.sh` pushed the page alone to `gh-pages` (bd0de8a,
+  "reader from 0a45a3f"). The account's Pages site named a custom domain
+  (`blog.thewanderingcoder.com`, in `smiller/smiller.github.io`'s CNAME)
+  with no DNS record, so every project page redirected nowhere; the domain
+  was removed as asked (GitHub's commit 4571abf, "Delete CNAME"). The page
+  at `https://smiller.github.io/gesta/` is byte for byte
+  `dist-reader/index.html` (MEASURED).
+
+## Review cycle 1 (2026-11-01)
+
+One `/code-review` at high over 0a45a3f: 141,640 tokens (the transcript's
+last message: 2 + 1,985 + 137,122 input, 2,531 output), 10 findings.
+
+1. A failed bundle withheld the mirror's signature, so a bundle that could
+   never be written stopped the reconcile for good. FIXED: `withheld` in
+   plans.ts, the bundle's failure withholding neither scalar; the corner
+   says "backed up, but gesta.zip for the reader couldn't be written"; the
+   next change to the mirror retries.
+2. A write failing partway left the writable open and its swap file beside
+   the bundle. FIXED: aborted.
+3. The 8 s "couldn't load entries" timer ran through the bundle's read.
+   FIXED: in the reader it starts once the bundle is read.
+4. Escape did not take back a drawn search hit: a view that is not
+   editable never holds the keys. FIXED: the session's own Escape in the
+   reader.
+5. The whole zip was read into memory at every launch, pictures included.
+   FIXED: the directory read from the tail, the entries in runs of up to
+   64 or 1 MB, the pictures never; over the real bundle the heap after the
+   relaunch 254 MB against 410 MB, the open 1.9 s as before (MEASURED).
+6. Some 44,000 writes, one a zip piece. FIXED: gathered into 1 MB writes.
+   The whole corpus is still deflated at every run that writes the mirror.
+7. A deleted or torn bundle is not rewritten until the mirror next moves.
+   LEFT: any edit rewrites it.
+8. The label took the picked file's date, which a file provider may set
+   at the pick. FIXED: the bundle carries its write time as the zip's
+   comment, and the label reads it; the file's date only for a bundle
+   without one.
+9. No test under verify covered the reader. FIXED: `tools/helium-reader.mjs`
+   plays a bundle made from `fixtures/` under helium-approve.mjs's verdict
+   (`reader`), and the comment checker resolves `(pin: reader › …)`.
+10. A comment described the import's keying, another module's. FIXED: it
+    names its test.
+
+Found while playing the run for 9: the Search row's label clicked as a
+redraw landed shut the row again (two launches in three, MEASURED in
+headless Helium): the row's render set `open` from the state before the
+browser's toggle event had told the state. Line numbering shares a render
+with most of the masthead and could do the same; Go to's render reads its
+open state alone and cannot. FIXED: the label's click opens Search and Line
+numbering through the state; the steps that force the redraw shut both rows
+on the old build and leave them open now (MEASURED).
+
+REVIEW CYCLES: 1

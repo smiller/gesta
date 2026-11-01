@@ -2,6 +2,7 @@
 export interface WritableFile {
   write(body: string | Uint8Array): Promise<void>;
   close(): Promise<void>;
+  abort(): Promise<void>;
 }
 export interface FileH {
   kind: "file";

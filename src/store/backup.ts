@@ -3,7 +3,7 @@ import { NS, todayKey } from "./keys.ts";
 import { readRaw, writeRaw } from "./local.ts";
 import { imgHash } from "./names.ts";
 import { filePath, errText, failMsg, fsaFatal } from "./files.ts";
-import { backupPlan, type Manifest, type Archived } from "./plans.ts";
+import { backupPlan, withheld, READER_ZIP, type Manifest, type Archived } from "./plans.ts";
 import { writeBackup, writeBundle, type Failure } from "./io.ts";
 import { exportEntries, archiveRoots } from "./exportEntries.ts";
 import type { EntryLayer } from "./entries.ts";
@@ -98,18 +98,13 @@ export function backupRunner(opts: BackupOptions): Backup {
           }
           return writeBackup({ dir: h, files, plan, manifest, archived, roots, unread: plan.reconcile ? spare : null,
             onProgress: (done, total) => say("backing up… " + done + " / " + total) })
-            .then((written) => plan.writeMirror && h === handle ? writeBundle(h, files, manifest, today).then((b) => written.concat(b)) : written)
+            .then((written) => plan.writeMirror && h === handle ? writeBundle(h, files, manifest, today, Date.now()).then((b) => written.concat(b)) : written)
             .then((written) => {
             const failures = written.concat(picFaults);
             /* a folder change repointed the handle mid-run: this run wrote
                the OLD folder, so commit nothing and claim nothing */
             if (h !== handle) return;
-            /* EACH KIND OF FAILURE withholds only what it cannot vouch for: a
-               lost WRITE withholds both scalars; a BLIND sweep the mirror's
-               signature only; a failed DELETE neither, since every file the
-               run was asked to write landed */
-            const lostWrite = failures.some((x) => !x.sweep && !x.blind);
-            const blind = failures.some((x) => x.blind);
+            const { lostWrite, blind } = withheld(failures);
             const datedThen = readRaw(BACKUP_DATED) ?? null;   /* sampled BEFORE our own write */
             if (plan.dated && !lostWrite) writeRaw(BACKUP_DATED, plan.dated);
             if (plan.writeMirror && !lostWrite && !blind) { writeRaw(BACKUP_SIG, sig); committedSig = sig; }
@@ -119,9 +114,12 @@ export function backupRunner(opts: BackupOptions): Backup {
             if (lostWrite || blind) setTrouble("backup incomplete — click to retry");
             else if (failures.length) {
               /* a delete-only failure is not backup trouble: a resume click
-                 could do nothing against a file something else holds open */
+                 could do nothing against a file something else holds open;
+                 nor is the bundle's, retried when the mirror next moves */
               setTrouble("");
-              stick("backup couldn't remove " + failures.length + " old file(s)", failures[0].error, failures.map((x) => x.name).join(", "));
+              const bundle = failures.find((x) => x.name === READER_ZIP), swept = failures.filter((x) => x !== bundle);
+              if (swept.length) stick("backup couldn't remove " + swept.length + " old file(s)", swept[0].error, swept.map((x) => x.name).join(", "));
+              if (bundle) stick("backed up, but gesta.zip for the reader couldn't be written", bundle.error, errText(bundle.error) || READER_ZIP);
             } else { setTrouble(""); say("backed up"); }
             /* the commits, ONE AFTER THE OTHER: both ride in the same record.
                Another tab's dated run voids ours: the shared scalar moved

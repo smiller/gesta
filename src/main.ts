@@ -1130,7 +1130,8 @@ if (fixture && fixtures[fixture]) {
     if (!row) { screen.held = "no backup opened"; notices.stick("open backup: gesta.zip in Dropbox › gesta-backups › reader"); return; }
     screen.held = heldLabel(row.modified);
     const p = notices.progress("opening the backup…");
-    return row.file.arrayBuffer().then((buf) => readBundle(new Uint8Array(buf), p.step)).then((b) => {
+    return readBundle(row.file, p.step).then((b) => {
+      if (b.written !== null) screen.held = heldLabel(b.written);
       bundlePictures = bundleImages(row.file, b.pictures);
       const keys = Object.keys(b.entries);
       return Promise.all(keys.map((k) => readerStore!.foreignSet(k, b.entries[k]))).then(() => { p.ok(keys.length + " entries"); stage("bundle"); });
@@ -1165,9 +1166,13 @@ if (fixture && fixtures[fixture]) {
   navigator.storage?.persist?.().catch(() => {});
   /* a store that never answers left a blank page saying nothing
      (pin: losing nothing › a store that never answers) */
-  let slowPin = 0;
-  const slowLoad = setTimeout(() => { slowPin = notices.stick("couldn't load entries — reload"); }, LOAD_PATIENCE_MS);
+  let slowPin = 0, slowLoad: ReturnType<typeof setTimeout> | undefined, loaded = false;
+  const patience = () => { if (!loaded) slowLoad = setTimeout(() => { slowPin = notices.stick("couldn't load entries — reload"); }, LOAD_PATIENCE_MS); };
+  /* the bundle's own progress line speaks while it is read, however long a
+     slow device takes */
+  if (READER) wrote.then(patience); else patience();
   primed.then(held).then(() => layer.warm()).then(() => {
+    loaded = true;
     clearTimeout(slowLoad);
     if (slowPin) notices.releasePin(slowPin);
     /* an unreadable journal is an error, not a status: it sticks, the

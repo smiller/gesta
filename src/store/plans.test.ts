@@ -3,7 +3,7 @@ import { utf8 } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, errText, failMsg, fsaFatal, type ExportFile } from "./files.ts";
 import {
   fileSig, fileSize, sidecarOfOurs, reconcilePlan, RECONCILE_FLOOR,
-  dedupFiles, backupPlan, rootOf, rootSig, archivePlan, rootManifest, bundleDue,
+  dedupFiles, backupPlan, rootOf, rootSig, archivePlan, rootManifest, bundleDue, READER_ZIP, withheld,
 } from "./plans.ts";
 
 const doc = (path: string, text: string): ExportFile => {
@@ -217,4 +217,12 @@ test("bundleDue: the reader's bundle is written unless its record and the folder
   expect(bundleDue(files, { sig, size: 120 }, 119)).toBe(true);
   expect(bundleDue(files, { sig: "1.other", size: 120 }, 120)).toBe(true);
   expect(bundleDue(files, { sig, size: 120 }, 120)).toBe(false);
+});
+
+test("withheld: a lost write withholds both scalars, a blind sweep the signature; the bundle's own failure neither", () => {
+  expect(withheld([])).toEqual({ lostWrite: false, blind: false });
+  expect(withheld([{ name: "page/A.md" }])).toEqual({ lostWrite: true, blind: false });
+  expect(withheld([{ name: "current", blind: true }])).toEqual({ lostWrite: false, blind: true });
+  expect(withheld([{ name: "old.md", sweep: true }])).toEqual({ lostWrite: false, blind: false });
+  expect(withheld([{ name: READER_ZIP }])).toEqual({ lostWrite: false, blind: false });
 });

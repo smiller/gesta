@@ -63,6 +63,7 @@ if (!commit && !sweep) {
     corner: read("tools/expected/corner.approved.txt"),
     bridge: read("tools/helium-bridge.mjs"),
     bridgeRun: read("tools/expected/bridge.approved.txt"),
+    readerRun: read("tools/expected/reader.approved.txt"),
     tests,
   };
   const bad: string[] = [];

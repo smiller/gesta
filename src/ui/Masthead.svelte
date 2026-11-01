@@ -131,8 +131,11 @@
   {/if}
   <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
   <ReplaceBar bind:this={replaceEl} replace={screen.replace} {...replace} />
-  <details class="page-lines" hidden={!screen.gutter} open={screen.linesOpen} ontoggle={(e) => { const open = (e.currentTarget as HTMLDetailsElement).open; if (open !== screen.linesOpen) onLines(open); }}>
-    <summary>Line numbering</summary>
+  <!-- the label opens the row through the state, never the browser: a render
+       landing between the browser's toggle and its event shut it again (pin:
+       reader › Line numbering clicked under a redraw) -->
+  <details class="page-lines" hidden={!screen.gutter} open={screen.linesOpen}>
+    <summary onclick={(e) => { e.preventDefault(); onLines(!screen.linesOpen); }}>Line numbering</summary>
     <span class="page-lines-body">
       <select aria-label="Line numbering" bind:this={linesSelect} value={screen.interval} onchange={(e) => onInterval(+e.currentTarget.value)}>
         {#each INTERVALS as [n, label] (n)}<option value={n}>{label}</option>{/each}

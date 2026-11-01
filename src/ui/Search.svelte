@@ -31,8 +31,11 @@
   const groups = $derived(optionGroups(search.options));
 </script>
 
-<details class="page-search" open={search.open} ontoggle={(e) => onToggle((e.currentTarget as HTMLDetailsElement).open)}>
-  <summary>Search</summary>
+<!-- the label opens the row through the state, never the browser: a render
+     landing between the browser's toggle and its event shut it again (pin:
+     reader › Search clicked under a redraw) -->
+<details class="page-search" open={search.open}>
+  <summary onclick={(e) => { e.preventDefault(); onToggle(!search.open); }}>Search</summary>
   <div class="page-search-body">
     <select aria-label="Search scope" value={search.scopeAt} onchange={(e) => onScope(+e.currentTarget.value)}>
       {#each groups as g (g.at[0])}

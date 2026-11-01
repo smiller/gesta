@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { findHit, jump, jumpTo } from "./highlight.ts";
+import { findHit, jump, jumpTo, escapeJump } from "./highlight.ts";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { DecorationSet } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
@@ -56,5 +56,10 @@ describe("a drawn jump", () => {
     expect(decos(drawn).map((d) => [d.from, d.to])).toEqual([[5, 8]]);
     expect(decos(state.apply(jumpTo(state, 5, 8)))).toEqual([]);
     expect(decos(drawn.apply(drawn.tr.setSelection(TextSelection.create(drawn.doc, 2))))).toEqual([]);
+  });
+  it("is taken back by escapeJump as a selected one is", () => {
+    let drawn = state.apply(jumpTo(state, 5, 8, true));
+    expect(escapeJump(drawn, (tr) => { drawn = drawn.apply(tr); })).toBe(true);
+    expect(decos(drawn)).toEqual([]);
   });
 });

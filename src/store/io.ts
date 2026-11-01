@@ -4,7 +4,7 @@ import { utf8, type EntryFile } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, fsaFatal, type ExportFile } from "./files.ts";
 import { fileSig, fileSize, MIRROR_DIR, ARCHIVE_DIR, MANIFESTS_DIR, READER_ZIP, bundleDue, rootSig, dedupFiles, reconcilePlan, archivePlan, rootManifest, type Manifest, type Archived, type BackupPlan, type ArchiveGroup } from "./plans.ts";
 import { emitZipEntry, deflateRaw } from "./zip.ts";
-import type { Dir } from "./fsa.ts";
+import type { Dir, WritableFile } from "./fsa.ts";
 
 /* A LONG RUN MUST NOT FREEZE THE SCREEN: a promise chain resolves entirely
    through microtasks, so no keystroke, timer or frame is serviced for the
@@ -92,7 +92,7 @@ export function zipBytes(files: ExportFile[], day: string): Promise<Uint8Array> 
 /* the same archive handed to `put` a member at a time, in order, each put
    awaited before the next member is packed: the bundle of the whole corpus
    is never held at once. Resolves with the bytes put. */
-export function zipTo(files: ExportFile[], day: string, put: (chunk: Uint8Array) => Promise<void> | void): Promise<number> {
+export function zipTo(files: ExportFile[], day: string, put: (chunk: Uint8Array) => Promise<void> | void, comment = ""): Promise<number> {
   if (files.length > ZIP_MAX_ENTRIES)
     return Promise.reject(new Error("too many files for one archive (" + files.length + ")"));
   const stamp = ((+day.slice(0, 4) - 1980) << 9) | (+day.slice(5, 7) << 5) | +day.slice(8, 10);
@@ -118,12 +118,14 @@ export function zipTo(files: ExportFile[], day: string, put: (chunk: Uint8Array)
     const cdAt = at;
     let cdSize = 0;
     for (const c of central) cdSize += c.length;
-    const end = new Uint8Array(22), v = new DataView(end.buffer);
+    const note = utf8.encode(comment), end = new Uint8Array(22 + note.length), v = new DataView(end.buffer);
     v.setUint32(0, 0x06054b50, true);
     v.setUint16(8, files.length, true);
     v.setUint16(10, files.length, true);
     v.setUint32(12, cdSize, true);
     v.setUint32(16, cdAt, true);
+    v.setUint16(20, note.length, true);
+    end.set(note, 22);
     return central.reduce((chain, c) => chain.then(() => put(c)), Promise.resolve())
       .then(() => put(end)).then(() => cdAt + cdSize + end.length);
   });
@@ -372,17 +374,38 @@ export function writeFilesTo(dir: Dir, files: ExportFile[], onProgress?: (done: 
    writeBundle writes the whole export as one zip); a refusal is collected as
    a lost write, a session-fatal one rethrown (pin: io.test › writeBundle
    collects a refused write) */
-export function writeBundle(dir: Dir, files: ExportFile[], manifest: Manifest, day: string): Promise<Failure[]> {
+/* the zip's pieces gathered into writes of about this size: a write a piece
+   was three to a file, some 44,000 for the whole corpus */
+export const BUNDLE_WRITE_BYTES = 1 << 20;
+export function writeBundle(dir: Dir, files: ExportFile[], manifest: Manifest, day: string, written: number): Promise<Failure[]> {
   const cut = READER_ZIP.lastIndexOf("/"), name = READER_ZIP.slice(cut + 1);
+  let w: WritableFile | null = null;
   return folderMemo(dir, { create: true })(READER_ZIP.slice(0, cut)).then((sub) =>
     sub.getFileHandle(name).then((h) => h.getFile()).then((f) => f.size, () => null).then((present) => {
       if (!bundleDue(files, manifest[READER_ZIP], present)) return [];
-      return sub.getFileHandle(name, { create: true }).then((h) => h.createWritable()).then((w) =>
-        zipTo(files, day, (chunk) => w.write(chunk)).then((size) => w.close().then(() => {
+      return sub.getFileHandle(name, { create: true }).then((h) => h.createWritable()).then((opened) => {
+        w = opened;
+        let held: Uint8Array[] = [], heldBytes = 0;
+        const flush = (): Promise<void> => {
+          if (!heldBytes) return Promise.resolve();
+          const out = new Uint8Array(heldBytes);
+          let o = 0;
+          for (const c of held) { out.set(c, o); o += c.length; }
+          held = []; heldBytes = 0;
+          return opened.write(out);
+        };
+        const put = (chunk: Uint8Array): Promise<void> | void => {
+          held.push(chunk); heldBytes += chunk.length;
+          if (heldBytes >= BUNDLE_WRITE_BYTES) return flush();
+        };
+        return zipTo(files, day, put, new Date(written).toISOString()).then((size) => flush().then(() => opened.close()).then(() => {
           manifest[READER_ZIP] = { sig: rootSig(files), size };
           return [] as Failure[];
-        })));
+        }));
+      });
     })).catch((err: unknown) => {
+    /* a stream left open keeps its swap file beside the bundle */
+    if (w) (w as WritableFile).abort().catch(() => {});
     if (fsaFatal(err)) throw err;
     return [{ name: READER_ZIP, error: err, doc: false }];
   });

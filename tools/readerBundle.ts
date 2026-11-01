@@ -3,7 +3,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { zipBytes } from "../src/store/io.ts";
+import { zipTo } from "../src/store/io.ts";
 import { readBundle } from "../src/store/bundle.ts";
 import type { ExportFile } from "../src/store/files.ts";
 
@@ -22,9 +22,11 @@ const walk = (at: string): void => {
 };
 walk("");
 let t = performance.now();
-const zip = await zipBytes(files, new Date().toISOString().slice(0, 10));
+const parts: Uint8Array[] = [], now = new Date().toISOString();
+await zipTo(files, now.slice(0, 10), (c) => { parts.push(c); }, now);
+const zip = new Uint8Array(await new Blob(parts as BlobPart[]).arrayBuffer());
 console.log("zipped " + files.length + " files, " + (zip.length / 1e6).toFixed(1) + " MB, " + Math.round(performance.now() - t) + " ms");
 writeFileSync(out, zip);
 t = performance.now();
-const b = await readBundle(zip);
+const b = await readBundle(new Blob([zip]));
 console.log("read " + Object.keys(b.entries).length + " entries, " + Object.keys(b.pictures).length + " pictures, " + b.skipped + " skipped, " + Math.round(performance.now() - t) + " ms");

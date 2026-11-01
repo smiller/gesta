@@ -47,6 +47,7 @@ describe("the pins", () => {
     corner: '⌃⌘. from 3pr1 over an index: {"entry":"x"}\n⌃⌘W rendered: {}\nconsole: error: cannot render page/Gridded a grid\nwarning: a later line\n',
     bridge: 'say("an unknown book is refused", o);\n',
     bridgeRun: 'an unknown book is refused         {"entry":"2026-09-12"}\n',
+    readerRun: 'Escape after the hit: {"hit":""}\nconsole: \n',
     tests: new Map([["nav.test", ['test("hashParts: a page routes; anything less falls back", () => {});\ndescribe.each(xs)("keyed store over %s", () => {});\n']]]),
   };
   const why = (body: string): (string | null)[] => pins(body).map((p) => unresolved(p, sources));
@@ -75,6 +76,10 @@ describe("the pins", () => {
   test("a bridge pin is a step of the bridge tool and a line of its approved run", () => {
     expect(why("(pin: bridge › an unknown book is refused)")).toEqual([null]);
     expect(why("(pin: bridge › an unknown page mints)")[0]).toMatch(/^no step/);
+  });
+  test("a reader pin is a reading of the reader's approved run", () => {
+    expect(why("(pin: reader › Escape after the hit)")).toEqual([null]);
+    expect(why("(pin: reader › Escape twice)")[0]).toBe('no reading "Escape twice" in tools/expected/reader.approved.txt');
   });
   test("a pin with no › is not in the form", () => {
     expect(why("(pin: the grid step)")[0]).toMatch(/^not in the form/);

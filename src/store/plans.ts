@@ -190,3 +190,12 @@ export function rootManifest(roots: (string | null)[], archived: Archived): stri
 export function bundleDue(files: ExportFile[], was: ManifestRow | undefined, present: number | null): boolean {
   return !was || present !== was.size || was.sig !== rootSig(files);
 }
+/* what a run's failures withhold: a lost write both scalars, a blind sweep
+   the mirror's signature alone; the bundle's own failure neither, every
+   file of the mirror having landed */
+export function withheld(failures: { name: string; sweep?: boolean; blind?: boolean }[]): { lostWrite: boolean; blind: boolean } {
+  return {
+    lostWrite: failures.some((x) => !x.sweep && !x.blind && x.name !== READER_ZIP),
+    blind: failures.some((x) => x.blind),
+  };
+}

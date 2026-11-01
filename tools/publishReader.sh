@@ -21,3 +21,4 @@ git -C "$out" add index.html .nojekyll
 git -C "$out" commit -qm "reader from $(git rev-parse --short HEAD)" || echo "the page is unchanged"
 git -C "$out" push origin HEAD:refs/heads/gh-pages
 git worktree remove --force "$out"
+git branch -D gh-pages-new 2>/dev/null || true

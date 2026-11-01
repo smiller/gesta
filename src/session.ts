@@ -19,7 +19,7 @@ import { writeClipboard } from "./ui/clipboard.ts";
 import { richReferenceHtml } from "./ui/richCopy.ts";
 import type { EntryLayer } from "./store/entries.ts";
 import type { ImageStore } from "./store/store.ts";
-import { highlightIn } from "./editor/highlight.ts";
+import { highlightIn, escapeJump } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
 import { surfaces, type Surface, type Viewport, type ReplacePort } from "./editor/surface.ts";
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
@@ -450,6 +450,12 @@ export function startSession(opts: SessionOptions): Session {
   window.addEventListener("hashchange", () => { flushSave().then(openHash); });
   window.addEventListener("beforeunload", () => { saveNow(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
+  /* a view that is not editable never holds the keys, so its own keymap
+     never sees Escape (pin: reader › Escape after the hit) */
+  if (opts.readOnly) document.addEventListener("keydown", (e) => {
+    const view = live();
+    if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
+  });
   /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
      excluded (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
      (pin: source view › ⌃⌘W rendered) */

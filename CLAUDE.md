@@ -41,6 +41,7 @@ here NOW, and what is not yet:
     its pin in a fixed trailing form, one group per pin:
     `(pin: <section> › <reading label>)` for a Helium step,
     `(pin: bridge › <reading label>)` for the bridge tool's,
+    `(pin: reader › <reading label>)` for the reader run's,
     `(pin: console › <line prefix>)` for a console line of the approved run,
     `(pin: <file>.test › <title prefix>)` for a Vitest test. The comment
     checker verifies every pin resolves (below).
@@ -637,7 +638,9 @@ is in the plan's record, under the phase named):
   backups, shortcuts, bookmarks or replace. The backup writes the bundle
   (`writeBundle` in io.ts) after the mirror. `tools/readerBundle.ts` makes
   one from a backup folder; `tools/helium-reader.mjs` plays the reader
-  headless over it; `tools/publishReader.sh` pushes the page to the
+  headless over a bundle it makes from `fixtures/`, `reader` under
+  helium-approve.mjs's verdict (`tools/expected/reader.approved.txt`), or
+  times a real bundle given as its argument; `tools/publishReader.sh` pushes the page to the
   `gh-pages` branch, run only on the reader's word. The plan:
   docs/plans/2026-10-31-feat-reader-plan.md.
 - `index.html` + `src/main.ts` — the page Vite builds into `dist/index.html`
