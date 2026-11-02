@@ -249,6 +249,7 @@ a sentence typed longer than its Latin · * · new here, the old app frozen
 ArrowDown from a sentence's last line · * · new here, the old app frozen
 ArrowUp from a sentence's first line · * · new here, the old app frozen
 dual-language: arrived at page/Quoted Ovid · * · new here, the old app frozen
+a dual-language block in a note · * · new here, the old app frozen
 ⌃⌘R across a long sentence, pasted · * · new here, the old app frozen
 ArrowDown from a sentence above a note under the English · * · new here, the old app frozen
 ArrowDown from a block's last sentence · * · new here, the old app frozen

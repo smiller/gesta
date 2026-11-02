@@ -630,7 +630,8 @@ is in the plan's record, under the phase named):
   (the Loeb's Latin, Miller's English, two notes, a fence opening part-way
   along a line); and the facing numbers step's Ovid, *Metamorphoses*
   7.179–233 beside Golding's 7.244–308 (Rouse's text), a verse block
-  numbered on both sides.
+  numbered on both sides; and the dual-language in a note step's Horace,
+  *Satires* 1.10's opening (its eight bracketed lines in a `::: note`).
 - THE READER (2026-10-31): `npm run build:reader` builds the same page
   with `--mode reader` into `dist-reader/index.html` — main.ts's `READER`:
   the entries of a picked bundle in a memory store, every one locked, no

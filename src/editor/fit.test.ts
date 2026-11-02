@@ -1,7 +1,7 @@
 // The fit's arithmetic, pinned with measured numbers. The measuring pass and
 // the scheduling are DOM and are looked at in Helium.
 import { test, expect } from "vitest";
-import { fitWidth, insetCol, sideBox, MIN_COL, FIT_SLACK, DUAL_MIN_ENGLISH } from "./fit.ts";
+import { fitWidth, insetCol, insetDualCol, sideBox, MIN_COL, FIT_SLACK, DUAL_MIN_ENGLISH } from "./fit.ts";
 
 test("the side box is padding and border on both sides, in px, whatever the style spells them as", () => {
   expect(sideBox({ paddingLeft: "19.8px", paddingRight: "19.8px", borderLeftWidth: "3px", borderRightWidth: "0px" })).toBeCloseTo(42.6);
@@ -79,6 +79,23 @@ test("an inset block's split: the original is never measured below a column a ca
 test("an inset block's split: the translation is never measured below a column a caret can land in, nor the original pushed below one", () => {
   expect(insetCol(400, 500, 0)).toBe(400 - MIN_COL - FIT_SLACK);
   expect(insetCol(400, 0, 500)).toBe(MIN_COL + FIT_SLACK);
+});
+
+/* Satire 1.10's bracketed lines in their note at a 1400px window: room
+   1047, the page's English 545 in from the box's Latin, the widest Latin 254 */
+test("a dual-language block in a note: its English stands at the page's English edge", () => {
+  expect(insetDualCol(1047, 545, 254, 230)).toBe(545);
+});
+test("a dual-language block in a note: where the edge leaves the Latin or the English short, equal halves", () => {
+  expect(insetDualCol(1047, 200, 254, 230)).toBe(524);
+  expect(insetDualCol(600, 545, 254, 230)).toBe(300);
+});
+test("a dual-language block in a note: with no edge on the page, equal halves", () => {
+  expect(insetDualCol(1047, null, 254, 230)).toBe(524);
+});
+test("a dual-language block in a note: halves that would wrap the Latin give it its width, up to two thirds", () => {
+  expect(insetDualCol(600, null, 350, 230)).toBe(351);
+  expect(insetDualCol(600, null, 500, 230)).toBe(400);
 });
 
 test("past the cap a dual-language block's Latin keeps its width and the English gives way, down to a floor of its own", () => {

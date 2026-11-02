@@ -304,6 +304,11 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .prose > .vgap::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid rgba(26, 36, 24, 0.16); }
 .page :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: var(--inset-col, 1fr) 1fr; gap: 0 1.6em; }
 .page.fitting-insets :is(div.note, div[class^="card-"]) :is(.verse, .prose) > .vpair { grid-template-columns: max-content max-content; }
+/* a dual-language block in a box takes the box's split and gap, so its lines
+   with no English and its notes stand in the box's columns (pin: dual-language
+   › a dual-language block in a note) */
+.page :is(div.note, div[class^="card-"]) .verse.dual-language { --vb-col: var(--inset-col, 50%); --dl-gap: 1.6em; }
+.page.fitting-insets :is(div.note, div[class^="card-"]) .verse.dual-language > .vrow:not(.vpair) { width: max-content; max-width: none; }
 /* A PAIRED CITATION: a quoted pair is fitted with the entry and stands at
    the quoted text's edge with a quoted paragraph's margins (found by hand:
    pulled, it stood 21px out of the box; as an inset box, equal halves

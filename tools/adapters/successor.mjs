@@ -159,6 +159,22 @@ export const read = {
     return { blocks: blocks.length, sentences, level, clear, waiting, latinWrapped, tempeLines: tempe && Math.round(tempe.scrollHeight / parseFloat(getComputedStyle(tempe).lineHeight)), rests: rests.length, setIn: rests.filter((r) => parseFloat(r.style.getPropertyValue("--cont-x")) > 0).length,
       openingRest: opening && { text: opening.textContent.split("|")[0].trim(), setIn: parseFloat(opening.style.getPropertyValue("--cont-x")) > 0 }, note1: column(note(1)), note4: column(note(4)), englishEm: englishWidth };
   }),
+  dualInset: (page) => page.evaluate(() => {
+    const b = document.querySelector("#editor div.note > .verse.dual-language");
+    const outer = [...document.querySelectorAll("#editor .verse.dual-language")].find((x) => !x.closest("div.note"));
+    if (!b || !outer) return { inset: !!b, page: !!outer };
+    const left = (el) => el.getBoundingClientRect().left;
+    const right = (el) => el.getBoundingClientRect().right;
+    const latin = b.querySelector(".vpair > .vcell"), english = b.querySelector(".vpair > .vcell + .vcell");
+    const notes = [...b.querySelectorAll(":scope > .note")];
+    const lines = (el) => { const r = document.createRange(); r.selectNodeContents(el); return new Set([...r.getClientRects()].filter((x) => x.width).map((x) => Math.round(x.top))).size; };
+    return {
+      englishEdge: Math.round(left(english) - left(outer.querySelector(".vpair > .vcell + .vcell"))),
+      notes: notes.map((n) => Math.abs(left(n) - left(english)) < 1 ? "English" : Math.abs(left(n) - left(latin)) < 1 && right(n) <= left(english) ? "Latin" : "neither").join(" "),
+      englishNoteToEdge: notes.length > 1 ? Math.round(right(b) - right(notes[1])) : null,
+      latinWrapped: [...b.querySelectorAll(":scope > .vrow")].filter((r) => lines(r.classList.contains("vpair") ? r.children[0] : r) > 1).length,
+    };
+  }),
   dualQuote: (page) => page.evaluate(() => {
     const b = document.querySelector("#editor blockquote .verse.dual-language");
     if (!b) return { dual: false };

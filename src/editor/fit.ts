@@ -22,9 +22,10 @@ export const CAP = 1285;
 export const WINDOW_MARGIN = 64;
 /* em: the English column's reading measure, a line of about 65 characters */
 export const DUAL_MEASURE_EM = 30;
-/* px: the narrowest the English of a dual-language block gives way to, 16em
-   at 18px, before the Latin wraps */
-export const DUAL_MIN_ENGLISH = 288;
+/* the narrowest the English of a dual-language block gives way to before
+   the Latin wraps: in px at 18px, and in em for a note's smaller type */
+export const DUAL_MIN_ENGLISH_EM = 16;
+export const DUAL_MIN_ENGLISH = DUAL_MIN_ENGLISH_EM * 18;
 
 export interface Measured {
   /* the entry's own box with no block on it — the prose measure, the floor */
@@ -100,6 +101,19 @@ export function insetCol(room: number, c1: number, c2: number): number {
   if (b <= room / 2) return Math.round(room - b);
   if (a <= room / 2) return a;
   return Math.round(room / 2);
+}
+
+/* a dual-language block's split in a note: its English at the page's
+   English edge, so the box's columns stand over the page's (pin: fit.test ›
+   a dual-language block in a note: its English stands at the page's English
+   edge); where that edge would wrap the Latin or leave the English short, or
+   the page has none, equal halves, widened to the Latin's widest line up to
+   two thirds (pin: fit.test › a dual-language block in a note: halves that
+   would wrap the Latin) */
+export function insetDualCol(room: number, edge: number | null, c1: number, minEnglish: number): number {
+  const a = Math.max(Math.ceil(c1), MIN_COL) + FIT_SLACK;
+  if (edge != null && edge >= a && room - edge >= minEnglish) return Math.round(edge);
+  return Math.round(Math.max(room / 2, Math.min(a, room * 2 / 3)));
 }
 
 export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderLeftWidth: string; borderRightWidth: string }): number {
@@ -223,6 +237,12 @@ export function measureInsets(view: EditorView): { pos: number; col: number }[] 
     const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;
     return r.getBoundingClientRect().width - (parseFloat(getComputedStyle(r).columnGap) || 0);
   });
+  const pageEnglish = pairedBlocksIn(view.dom, "div.verse.dual-language")[0]?.querySelector<HTMLElement>(":scope > .vpair > .vcell + .vcell");
+  const edges = blocks.map(({ dom }) => {
+    if (!pageEnglish || !dom.classList.contains("dual-language")) return null;
+    const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;
+    return pageEnglish.getBoundingClientRect().left - r.getBoundingClientRect().left - (parseFloat(getComputedStyle(r).columnGap) || 0);
+  });
   const scroller = document.scrollingElement || document.documentElement;
   const held = scroller.scrollTop;
   const widths: [number, number][] = [];
@@ -235,13 +255,22 @@ export function measureInsets(view: EditorView): { pos: number; col: number }[] 
         if (cells[0]) c1 = Math.max(c1, cells[0].getBoundingClientRect().width);
         if (cells[1]) c2 = Math.max(c2, cells[1].getBoundingClientRect().width);
       });
+      if (dom.classList.contains("dual-language")) {
+        dom.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, r.getBoundingClientRect().width); });
+      }
       widths.push([c1, c2]);
     }
   } finally {
     view.dom.classList.remove("fitting-insets");
     scroller.scrollTop = held;
   }
-  return blocks.flatMap((b, i) => rooms[i] > 0 ? [{ pos: b.pos, col: insetCol(rooms[i], widths[i][0], widths[i][1]) }] : []);
+  return blocks.flatMap((b, i) => {
+    if (!(rooms[i] > 0)) return [];
+    const col = b.dom.classList.contains("dual-language")
+      ? insetDualCol(rooms[i], edges[i], widths[i][0], parseFloat(getComputedStyle(b.dom).fontSize) * DUAL_MIN_ENGLISH_EM)
+      : insetCol(rooms[i], widths[i][0], widths[i][1]);
+    return [{ pos: b.pos, col }];
+  });
 }
 function insetDecorations(doc: EditorView["state"]["doc"], cols: { pos: number; col: number }[]): DecorationSet {
   return DecorationSet.create(doc, cols.map(({ pos, col }) => Decoration.node(pos, pos + doc.nodeAt(pos)!.nodeSize, { style: "--inset-col: " + col + "px" }, { col })));

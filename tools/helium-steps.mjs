@@ -2420,6 +2420,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(600);
   await rest(page);
   await log("⌃⌘R across a long sentence, pasted", { lines: quoted, fitted, ...(await R.dualQuote(page)) });
+  /* a dual-language block in a note (2026-11-02, asked): Satire 1.10's bracketed lines, their English at the page's English edge, each note under its own column, the Latin unwrapped */
+  await A.foreignWrite(page, "bookshelf/Horace/Satires/1.10", fixture("horace-satires-1.10.md"));
+  await page.goto(A.url("bookshelf/Horace/Satires/1.10"));
+  await A.waitEntry(page, "bookshelf/Horace/Satires/1.10", 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await log("a dual-language block in a note", await R.dualInset(page));
     }],
     ["facing numbers", async () => {
   /* Ovid's Latin beside Golding's verse (2026-10-23, asked): a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R cites both */
