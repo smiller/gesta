@@ -2396,6 +2396,15 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G for a skipped line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
+  /* a drag over one sentence's English (2026-11-02, asked): it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R cites and quotes that Latin */
+  await R.dragCell(page, "Through this the River Peneus");
+  await rest(page);
+  await log("a drag over one sentence's English", await R.dualSelection(page));
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on one sentence's English", { lines: await R.clipboardLines(page) });
+  await page.keyboard.press("Escape");
+  await rest(page);
   /* quoted, the block stays dual-language (2026-10-23, asked): two Latin lines beside a six-line sentence keep together, the English held inside the quotation */
   await R.selectBetween(page, "ut canis in vacuo", "ille salutem;");
   await R.waitBar(page);

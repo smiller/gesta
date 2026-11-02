@@ -268,7 +268,12 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 /* a row's English is the sentence starting there, running down beside the
    Latin rows below it: the cell takes no height of its own, and the waits
    the measuring pass writes keep each sentence clear of the next */
-.page .verse.dual-language > .vpair > .vcell + .vcell { height: 0; overflow: visible; }
+/* the cell keeps its own height and gives the row none of it by a margin
+   deeper than any sentence: at a height of 0 a drag ending in its overflow
+   ended in the Latin row beside it (pin: dual-language › a drag over one
+   sentence's English) */
+.page .verse.dual-language > .vpair > .vcell + .vcell { align-self: start; margin-bottom: -100000px; }
+.page .dl-covered { background: var(--flash); }
 .page .verse.dual-language > :is(.vrow:not(.vpair), .note) { max-width: var(--vb-col, 520px); }
 .page .verse.dual-language > .vpair[data-kind="cont"] { padding-left: 0; }
 .page .verse.dual-language > .vpair[data-kind="cont"] > .vcell:first-child { padding-left: var(--cont-x, 0px); }

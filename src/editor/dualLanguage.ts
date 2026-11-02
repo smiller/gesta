@@ -50,6 +50,58 @@ export function noteColumns(block: Node): Map<number, "latin" | "english"> {
   return out;
 }
 
+/* the sentence whose English holds `pos`: its block's first position, its
+   row's index, and the last row it stands beside, before the next sentence
+   or a note */
+function sentenceAt(doc: Node, pos: number): { start: number; block: Node; first: number; last: number } | null {
+  const $p = doc.resolve(pos), d = $p.depth;
+  if (d < 3 || $p.parent.type !== N.cell || $p.node(d - 1).type !== N.pair || $p.index(d - 1) !== 1) return null;
+  const block = $p.node(d - 2);
+  if (block.type !== N.verse || !block.attrs.dual) return null;
+  const first = $p.index(d - 2);
+  let last = first;
+  for (let k = first + 1; k < block.childCount; k++) {
+    const row = block.child(k);
+    if (row.type === N.line || row.type === N.pair && !row.child(1).content.size) last = k;
+    else break;
+  }
+  return { start: $p.start(d - 2), block, first, last };
+}
+const rowAt = (s: { start: number; block: Node }, i: number): number => {
+  let at = s.start;
+  for (let k = 0; k < i; k++) at += s.block.child(k).nodeSize;
+  return at;
+};
+
+/* a selection with an end in a sentence's English, widened to the Latin
+   the sentence stands beside: from its own row's start to the end of the
+   last row before the next sentence (pin: reference.test › a selection in
+   a sentence's English takes the Latin) */
+export function sentenceRange(doc: Node, from: number, to: number): [number, number] {
+  const a = sentenceAt(doc, from), b = sentenceAt(doc, to);
+  const start = a ? rowAt(a, a.first) + 2 : from;
+  const end = b ? Math.max(to, rowAt(b, b.last) + b.block.child(b.last).nodeSize - (b.block.child(b.last).type === N.pair ? 2 : 1)) : to;
+  return [start, end];
+}
+
+/* the Latin that widening takes in, a range per row; none where neither
+   end of the selection is in an English cell */
+export function sentenceLatin(doc: Node, from: number, to: number): [number, number][] {
+  if (!sentenceAt(doc, from) && !sentenceAt(doc, to)) return [];
+  const [start, end] = sentenceRange(doc, from, to);
+  const out: [number, number][] = [];
+  doc.nodesBetween(start, end, (n, pos, parent) => {
+    if (n.type === N.verse) return !!n.attrs.dual;
+    if (parent?.type !== N.verse) return true;
+    const latin = n.type === N.line ? pos + 1 : n.type === N.pair ? pos + 2 : -1;
+    const size = n.type === N.line ? n.content.size : n.type === N.pair ? n.child(0).content.size : 0;
+    const a = Math.max(latin, start), b = Math.min(latin + size, end);
+    if (latin >= 0 && b > a) out.push([a, b]);
+    return false;
+  });
+  return out;
+}
+
 /* where an arrow goes from an English cell's edge, by the block's index:
    `stops` the rows standing in the English column, a sentence or a note
    under it; from the last or the first, out of the block (pin:
@@ -217,6 +269,17 @@ export function dualLanguage(): Plugin[] {
         handleKeyDown: (view, e) => {
           if (e.shiftKey || e.altKey || e.metaKey || e.ctrlKey) return false;
           return e.key === "ArrowDown" ? englishCaret(view, "down") : e.key === "ArrowUp" ? englishCaret(view, "up") : false;
+        },
+      },
+    }),
+    /* the Latin a selection in the English takes in, marked as selected:
+       a reference quotes it (pin: dual-language › a drag over one
+       sentence's English) */
+    new Plugin({
+      props: {
+        decorations: (s) => {
+          const covered = s.selection.empty ? [] : sentenceLatin(s.doc, s.selection.from, s.selection.to);
+          return covered.length ? DecorationSet.create(s.doc, covered.map(([a, b]) => Decoration.inline(a, b, { class: "dl-covered" }))) : null;
         },
       },
     }),

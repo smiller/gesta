@@ -96,6 +96,26 @@ export const read = {
   /* the stanza step (2026-09-28): the number each stanza DRAWS (its ::before), and the line numbers shown */
   stanzas: (page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
   selectBetween: (page, a, b) => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n) => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),
+  /* a hand's drag over one English cell of a dual-language block, its first letter to its last; then what is selected and what is marked beside it */
+  dragCell: async (page, start) => {
+    const at = await page.evaluate((s) => {
+      const cell = [...document.querySelectorAll("#editor .dual-language > .vpair > .vcell + .vcell")].find((c) => c.textContent.startsWith(s));
+      if (!cell) return null;
+      cell.scrollIntoView({ block: "center" });
+      const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT); const ts = []; for (let t = w.nextNode(); t; t = w.nextNode()) ts.push(t);
+      const box = (t, i) => { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 1); return r.getBoundingClientRect(); };
+      const a = box(ts[0], 0), last = ts.at(-1), b = box(last, last.length - 1);
+      return { x1: a.left + 1, y1: a.top + a.height / 2, x2: b.right, y2: b.top + b.height / 2 };
+    }, start);
+    if (!at) return false;
+    await page.mouse.move(at.x1, at.y1);
+    await page.mouse.down();
+    await page.mouse.move((at.x1 + at.x2) / 2, at.y2, { steps: 8 });
+    await page.mouse.move(at.x2, at.y2, { steps: 8 });
+    await page.mouse.up();
+    return true;
+  },
+  dualSelection: (page) => page.evaluate(() => ({ selected: getSelection().toString().slice(0, 60), ends: getSelection().toString().slice(-30), marked: [...document.querySelectorAll("#editor .dl-covered")].map((m) => m.textContent.slice(0, 40)) })),
   /* each rest of a split line: its number, and how far its text starts past the end of the half above, in px; and the numbers drawn */
   splitRests: (page) => page.evaluate(() => {
     const rows = [...document.querySelectorAll("#editor .ProseMirror .verse > .vrow")];

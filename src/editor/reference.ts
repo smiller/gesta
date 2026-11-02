@@ -7,6 +7,7 @@ import { elideRange, referenceLabel, mdLabel, citesHalfLines, type Journal, type
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 import { dropFolios } from "./paste.ts";
+import { sentenceRange } from "./dualLanguage.ts";
 
 const N = schema.nodes;
 export function inkBetween(doc: Node, a: number, b: number): boolean {
@@ -491,7 +492,7 @@ export function referencePayload(state: EditorState, date: string, tag: string |
   const doc = state.doc;
   /* the refusals read the words quoted, not the selection as made (pin:
      reference.test › a passage begun at the end of one verse block's) */
-  const [from, to] = wordEdges(doc, state.selection.from, state.selection.to);
+  const [from, to] = wordEdges(doc, ...sentenceRange(doc, state.selection.from, state.selection.to));
   let inCode = false;
   doc.nodesBetween(from, to, (n) => { if (n.type === N.code_block) inCode = true; return !inCode; });
   if (inCode) return { refused: "code" };

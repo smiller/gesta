@@ -5,6 +5,7 @@ import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML, facingBlockOf, offersBoth } from "./reference.ts";
+import { sentenceLatin } from "./dualLanguage.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -42,6 +43,35 @@ test("a passage quoted from a dual-language block is a dual-language fence numbe
   const doc = parseMarkdown("::: dual-language 568\nEst nemus Haemoniae | There is a vale.\nsilva:\n⟨…⟩vocant Tempe; | Men call it Tempe.\n:::");
   const [a, b] = span(doc, "Est nemus", "silva:");
   expect(passageMd(doc, a, b)).toBe("> ::: dual-language 568\n> Est nemus Haemoniae | There is a vale.\n> silva:\n> :::");
+});
+
+const PISOS = parseMarkdown("# Ars Poetica\n\n::: dual-language\nHumano capiti cervicem pictor equinam | If a painter chose to join a human head to the neck of a horse, could you refrain from laughing?\nspectatum admissi risum teneatis, amici?\ncredite, Pisones, isti tabulae fore librum | Believe me, dear Pisos, quite like such pictures would be a book, so that neither head nor foot can be assigned to a single shape.\npersimilem, cuius, velut aegri somnia, vanae\nfingentur species, ut nec pes nec caput uni\nreddatur formae.\n⟨…⟩“pictoribus atque poetis | “Painters and poets,” you say, “have always had an equal right.”\nquidlibet audendi semper fuit aequa potestas.”\n:::");
+const pisos = journalOf({ "bookshelf/Horace": "# Horace" });
+
+test("a selection in a sentence's English takes the Latin it stands beside, from its own row to the row before the next sentence, cited and quoted whole", () => {
+  const [a, b] = span(PISOS, "quite like such pictures");
+  const out = referencePayload(state(PISOS, a, b), "bookshelf", "Horace/Ars Poetica", pisos);
+  expect(out).toMatchObject({ label: "Horace, *Ars Poetica*, 3-6" });
+  expect(out && "passage" in out ? out.passage : "").toBe("> ::: dual-language 3\n> credite, Pisones, isti tabulae fore librum | Believe me, dear Pisos, quite like such pictures would be a book, so that neither head nor foot can be assigned to a single shape.\n> persimilem, cuius, velut aegri somnia, vanae\n> fingentur species, ut nec pes nec caput uni\n> reddatur formae.\n> :::");
+  // the whole sentence, from its first word to its last, takes the same
+  const [c, d] = span(PISOS, "Believe me", "a single shape.");
+  expect(referencePayload(state(PISOS, c, d), "bookshelf", "Horace/Ars Poetica", pisos)).toMatchObject({ label: "Horace, *Ars Poetica*, 3-6" });
+  // across two sentences: from the first one's row to the second one's last Latin
+  const [e, f] = span(PISOS, "could you refrain", "Painters and poets");
+  expect(referencePayload(state(PISOS, e, f), "bookshelf", "Horace/Ars Poetica", pisos)).toMatchObject({ label: "Horace, *Ars Poetica*, 1-7" });
+  // a selection in the Latin is the Latin it covers, as before
+  const [g, h] = span(PISOS, "persimilem", "nec caput uni");
+  expect(referencePayload(state(PISOS, g, h), "bookshelf", "Horace/Ars Poetica", pisos)).toMatchObject({ label: "Horace, *Ars Poetica*, 4-5" });
+});
+
+test("sentenceLatin: the Latin a selection's English stands beside, a range per row; none for a selection in the Latin or outside a dual-language block", () => {
+  const [a, b] = span(PISOS, "quite like such pictures");
+  const texts = sentenceLatin(PISOS, a, b).map(([x, y]) => PISOS.textBetween(x, y));
+  expect(texts).toEqual(["credite, Pisones, isti tabulae fore librum", "persimilem, cuius, velut aegri somnia, vanae", "fingentur species, ut nec pes nec caput uni", "reddatur formae."]);
+  const [c, d] = span(PISOS, "persimilem", "nec caput uni");
+  expect(sentenceLatin(PISOS, c, d)).toEqual([]);
+  const [e, f] = span(verse, "forbidden", "Brought death");
+  expect(sentenceLatin(verse, e, f)).toEqual([]);
 });
 
 test("a passage across a skipped line number keeps it, numbered as the edition numbers it", () => {

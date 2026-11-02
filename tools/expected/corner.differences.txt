@@ -261,3 +261,5 @@ a verse block numbered on both sides · * · new here, the old app frozen
 Ref (all) across Prospero's borrowing · * · new here, the old app frozen
 editing as the old app does: arrived at page/Spacing · * · new here, the old app frozen
 a picture's gaps and a quotation's top · * · new here, the old app frozen
+a drag over one sentence's English · * · new here, the old app frozen
+⌃⌘R on one sentence's English · * · new here, the old app frozen
