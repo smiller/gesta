@@ -64,6 +64,17 @@ test("a selection in a sentence's English takes the Latin it stands beside, from
   expect(referencePayload(state(PISOS, g, h), "bookshelf", "Horace/Ars Poetica", pisos)).toMatchObject({ label: "Horace, *Ars Poetica*, 4-5" });
 });
 
+test("an end resting at an English cell's edge, none of the English selected, takes no sentence: rows 1-3, not 1-6; 2-4, not 1-4", () => {
+  const a = span(PISOS, "Humano capiti")[0], b = span(PISOS, "Believe me")[0];
+  expect(referencePayload(state(PISOS, a, b), "bookshelf", "Horace/Ars Poetica", pisos)).toMatchObject({ label: "Horace, *Ars Poetica*, 1-3" });
+  const c = span(PISOS, "could you refrain from laughing?")[1], d = span(PISOS, "persimilem")[1];
+  expect(referencePayload(state(PISOS, c, d), "bookshelf", "Horace/Ars Poetica", pisos)).toMatchObject({ label: "Horace, *Ars Poetica*, 2-4" });
+});
+test("a sentence's Latin runs on past a skipped line number to the line its English ends beside", () => {
+  const doc = parseMarkdown("::: dual-language 542\nviribus absumptis | Now was her strength all gone, destroy this beauty.\nvicta labore fugae\n⟨skipped line number⟩\nqua nimium placui\nTellus, ait, hisce | Then Earth.\n:::");
+  const [a, b] = span(doc, "strength all gone");
+  expect(sentenceLatin(doc, a, b).map(([x, y]) => doc.textBetween(x, y))).toEqual(["viribus absumptis", "victa labore fugae", "qua nimium placui"]);
+});
 test("sentenceLatin: the Latin a selection's English stands beside, a range per row; none for a selection in the Latin or outside a dual-language block", () => {
   const [a, b] = span(PISOS, "quite like such pictures");
   const texts = sentenceLatin(PISOS, a, b).map(([x, y]) => PISOS.textBetween(x, y));
@@ -615,7 +626,7 @@ const vnLabel = (doc: Node, ch: string, needle: string, end?: string, j = vnJour
 test("a prosimetrum's sentence quotes that sentence and its translation alone", () => {
   const [a, b] = span(VN3, "quarta");
   const p = referencePayload(state(VN3, a, b), "bookshelf", "Dante/Vita Nuova/3", vnJournal);
-  expect("passage" in p && p.passage).toBe("> ::: prose 9\n> E trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n> :::");
+  expect("passage" in p && p.passage).toBe("> ::: prose 8\n> E trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n> :::");
 });
 test("a prosimetrum cites the prose by Barbi's paragraph, its sentences counted under it, and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
   expect(vnLabel(VN3, "3", "cominciai")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");

@@ -262,7 +262,9 @@ export function measureInsets(view: EditorView): { pos: number; col: number }[] 
     const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;
     return r.getBoundingClientRect().width - (parseFloat(getComputedStyle(r).columnGap) || 0);
   });
-  const pageEnglish = pairedBlocksIn(view.dom, "div.verse.dual-language")[0]?.querySelector<HTMLElement>(":scope > .vpair > .vcell + .vcell");
+  /* the page's own text, not a citation quoted in it: a quotation's padding
+     and rule set its English apart from the page's */
+  const pageEnglish = pairedBlocksIn(view.dom, "div.verse.dual-language").find((b) => !b.closest("blockquote"))?.querySelector<HTMLElement>(":scope > .vpair > .vcell + .vcell");
   const edges = blocks.map(({ dom }) => {
     if (!pageEnglish || !dom.classList.contains("dual-language")) return null;
     const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;

@@ -54,4 +54,4 @@ reddatur formae."
 - Every other dual-language reading is unchanged against the approved run.
 - `npm run verify` passed.
 
-REVIEW CYCLES: 0
+REVIEW CYCLES: 1

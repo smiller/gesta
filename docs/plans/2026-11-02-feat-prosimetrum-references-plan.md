@@ -1,6 +1,6 @@
 # feat: a prosimetrum's references — prose by paragraph, poems by line
 
-REVIEW CYCLES: 0
+REVIEW CYCLES: 1
 
 ## The ask (2026-11-02)
 
@@ -73,3 +73,42 @@ pairs; the width from a mockup at four widths in Helium: "B." (24em).
   width the block has").
 - Tests: fit.test (two), reference.test (the paragraph count, the one-row
   quotation), pairMarks.test (five). `npm run verify` passes.
+
+## Review cycle 1 (2026-11-03)
+
+One `/code-review` at high over a28771c^..f197509 (this plan's two commits,
+the dual-language sentence selection a28771c and the note layout ae8081b, all
+accepted). 183,018 tokens (the run's own count). Ten findings: four
+behaviour bugs checked in node by the reviewer (a sentence's Latin stopping
+at a skipped line number; an end resting at an English cell's edge widening
+the selection; a facing block's Latin marked though its reference leaves it
+out; a cross-column drag quoting cells it neither selects nor marks), two
+smaller (the quoted prose fence numbered by sentence under the directive; a
+dual-language block's English never marked from a Latin selection), and four
+cleanup (an inset's edge measured off a quoted citation; a stale CSS
+comment; comments naming other modules' mechanism; two copies of the
+marking plugin). Fixes wait on the rulings asked.
+
+### Cycle 1's fixes (asked 2026-11-03: "Yes, go ahead with all of them")
+
+1. `sentenceAt` runs a sentence's Latin on past a skipped line number and a
+   stanza gap (Ovid 1.545: "qua nimium placui" now marked and quoted).
+2. `sentenceRange` widens an end only where the selection holds words of its
+   English cell (Ars Poetica: 1-3, not 1-6; 2-4, not 1-4).
+3–4, 6, 10. `pairMarks.ts` rewritten as `coveredMarks`: the rows the
+   selection's ends widen to (`sentenceRange`, then `wholeRows`, now exported),
+   less the selection itself — so what is marked is what Ref quotes, a
+   cross-column drag included; dual-language blocks included (a Latin
+   selection marks its row's English), the duplicate plugin in
+   dualLanguage.ts removed; a block numbered on both sides marks nothing.
+5. `passageMd(…, paragraphs)`: under the directive a quoted prose fence opens
+   at its paragraph (`::: prose 8`, the label's para 8).
+7. `measureInsets` takes the page's English edge from a dual-language block
+   outside any quotation.
+8–9. The stale CSS comment merged into the rule's; the comments naming another
+   module's mechanism reworded.
+- Tests: reference.test (the edge, the skipped line, the fence number),
+  pairMarks.test (rewritten, seven). `npm run verify` passes. One full run
+  read "ArrowDown from a sentence above a note under the English" landing on
+  the next sentence; the section alone twice, and the next full run, read the
+  approved note (MEASURED 2026-11-03): a flake, not approved.

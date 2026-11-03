@@ -220,7 +220,7 @@ export function coversProse(doc: Node, from: number, to: number): boolean {
    into the paragraph after it cut a cell out, and an end merely resting at
    a row's edge widened to a whole row no one selected) (pin: reference.test
    › no cut through a pair) */
-function wholeRows(doc: Node, from: number, to: number): [number, number] {
+export function wholeRows(doc: Node, from: number, to: number): [number, number] {
   const $from = doc.resolve(from), $to = doc.resolve(to);
   let a = from, b = to;
   for (let d = $from.depth; d >= 1; d--) if ($from.node(d).type === N.pair) {
@@ -314,7 +314,8 @@ function dropTurns(frag: Fragment): Fragment {
   });
   return Fragment.from(out);
 }
-export function passageMd(doc: Node, from: number, to: number, halves = false): string {
+/* `paragraphs`: a prosimetrum's, whose prose fence counts paragraphs */
+export function passageMd(doc: Node, from: number, to: number, halves = false, paragraphs = false): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
   if (!units.length) {
@@ -336,8 +337,8 @@ export function passageMd(doc: Node, from: number, to: number, halves = false): 
     const last = byBlock[byBlock.length - 1];
     if (last && last[0].blockPos === u.blockPos) last.push(u); else byBlock.push([u]);
   }
-  if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group, halves)).join("\n" + quotePrefix("") + "\n");
-  return blockPassage(doc, from, to, units, halves);
+  if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group, halves, paragraphs)).join("\n" + quotePrefix("") + "\n");
+  return blockPassage(doc, from, to, units, halves, paragraphs);
 }
 /* A SELECTION WIDENED TO WHOLE WORDS, what ⌃⌘R quotes and highlights both:
    back to the start of the word it starts in and on to the end of the word
@@ -398,7 +399,7 @@ function fromTheHalf(row: Node, first: Unit | null, last: Unit | null, from: num
   const a = first && !h.a ? c.rest : 0, b = last && !h.b ? c.cut : row.child(0).content.size;
   return row.copy(Fragment.from([row.child(0).copy(row.child(0).content.cut(a, b)), row.child(1)]));
 }
-function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves = false): string {
+function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves = false, paragraphs = false): string {
   const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
   const paired = units.some((u) => u.node.type === N.pair);
   const rows: { node: Node; pos: number }[] = [];
@@ -437,7 +438,9 @@ function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves
        resting on a row, blanks, depth, the count before) */
     /* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
     const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
-    const fence = block.type.create({ ...block.attrs, ...fenceAt(block, blockPos, rows[first].pos) }, rowsKept);
+    /* (pin: reference.test › a prosimetrum's sentence quotes that sentence) */
+    const at = paragraphs && block.type === N.prose ? { start: paragraphOf(doc, units[0]) } : fenceAt(block, blockPos, rows[first].pos);
+    const fence = block.type.create({ ...block.attrs, ...at }, rowsKept);
     return quoted([fence]);
   }
   /* quoted as lines a skipped line number has no place, and a blank would
@@ -541,7 +544,7 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   if (block && !alone) return { refused: "no-translation" };
   const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "");
   const url = entryLinkUrl(date, tag, hl);
-  const passage = alone || passageMd(doc, from, to, halves);
+  const passage = alone || passageMd(doc, from, to, halves, citesProsimetrum(date, tag, journal));
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {

@@ -62,6 +62,10 @@ function sentenceAt(doc: Node, pos: number): { start: number; block: Node; first
   let last = first;
   for (let k = first + 1; k < block.childCount; k++) {
     const row = block.child(k);
+    /* a skipped line number and a stanza gap stand in the Latin column under
+       the English as no row (pin: reference.test › a sentence's Latin runs on
+       past a skipped line number) */
+    if (row.type === N.skip || row.type === N.gap) continue;
     if (row.type === N.line || row.type === N.pair && !row.child(1).content.size) last = k;
     else break;
   }
@@ -73,12 +77,21 @@ const rowAt = (s: { start: number; block: Node }, i: number): number => {
   return at;
 };
 
+/* an end widens only where the selection holds some of its cell's words:
+   one resting at a cell's edge pulled in a sentence no one selected (pin:
+   reference.test › an end resting at an English cell's edge) */
+function inked(doc: Node, end: number, from: number, to: number): boolean {
+  const $p = doc.resolve(end);
+  if ($p.parent.type !== N.cell) return false;
+  return !!doc.textBetween(Math.max(from, $p.start()), Math.min(to, $p.end())).trim();
+}
+
 /* a selection with an end in a sentence's English, widened to the Latin
    the sentence stands beside: from its own row's start to the end of the
    last row before the next sentence (pin: reference.test › a selection in
    a sentence's English takes the Latin) */
 export function sentenceRange(doc: Node, from: number, to: number): [number, number] {
-  const a = sentenceAt(doc, from), b = sentenceAt(doc, to);
+  const a = inked(doc, from, from, to) ? sentenceAt(doc, from) : null, b = inked(doc, to, from, to) ? sentenceAt(doc, to) : null;
   const start = a ? rowAt(a, a.first) + 2 : from;
   const end = b ? Math.max(to, rowAt(b, b.last) + b.block.child(b.last).nodeSize - (b.block.child(b.last).type === N.pair ? 2 : 1)) : to;
   return [start, end];
@@ -87,8 +100,8 @@ export function sentenceRange(doc: Node, from: number, to: number): [number, num
 /* the Latin that widening takes in, a range per row; none where neither
    end of the selection is in an English cell */
 export function sentenceLatin(doc: Node, from: number, to: number): [number, number][] {
-  if (!sentenceAt(doc, from) && !sentenceAt(doc, to)) return [];
   const [start, end] = sentenceRange(doc, from, to);
+  if (start === from && end === to) return [];
   const out: [number, number][] = [];
   doc.nodesBetween(start, end, (n, pos, parent) => {
     if (n.type === N.verse) return !!n.attrs.dual;
@@ -269,17 +282,6 @@ export function dualLanguage(): Plugin[] {
         handleKeyDown: (view, e) => {
           if (e.shiftKey || e.altKey || e.metaKey || e.ctrlKey) return false;
           return e.key === "ArrowDown" ? englishCaret(view, "down") : e.key === "ArrowUp" ? englishCaret(view, "up") : false;
-        },
-      },
-    }),
-    /* the Latin a selection in the English takes in, marked as selected:
-       a reference quotes it (pin: dual-language › a drag over one
-       sentence's English) */
-    new Plugin({
-      props: {
-        decorations: (s) => {
-          const covered = s.selection.empty ? [] : sentenceLatin(s.doc, s.selection.from, s.selection.to);
-          return covered.length ? DecorationSet.create(s.doc, covered.map(([a, b]) => Decoration.inline(a, b, { class: "dl-covered" }))) : null;
         },
       },
     }),
