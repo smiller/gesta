@@ -47,6 +47,25 @@ export function flattenDoc(doc: Node): Flat {
   });
   return { text: chars.join(""), pos };
 }
+/* flattenDoc's text alone, for the search index, which never maps a hit
+   back: the per-character pass over a whole library cost a third of the
+   index's build (pin: flatten.test › is flattenDoc's text, built without
+   the position map). A separator is \u0001 until the end, so a footnote
+   mark is skipped only after a space that came from the text */
+export function flattenDocText(doc: Node): string {
+  const parts: string[] = [];
+  let first = true;
+  doc.nodesBetween(0, doc.content.size, (node) => {
+    if (node.isBlock && (node.isTextblock || node.isLeaf)) { if (!first) parts.push("\u0001"); first = false; }
+    if (node.isText) parts.push(node.text!);
+    else if (node.isLeaf) parts.push("\u0001");
+    return true;
+  });
+  return parts.join("")
+    .replace(/[\s\u0001]+/g, (run) => (run[0] === "\u0001" ? "\u0001" : " "))
+    .replace(/(?<=[^\s\u0001]) [⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, "")
+    .replace(/\u0001/g, " ");
+}
 /* null when either end sits on a separator: the fail-safe if a fold ever
    drifts an offset */
 export function flatRange(flat: Flat, at: number, len: number): { from: number; to: number } | null {

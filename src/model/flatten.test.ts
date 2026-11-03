@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { flattenDoc, flatRange, flattenText } from "./flatten.ts";
+import { flattenDoc, flatRange, flattenText, flattenDocText } from "./flatten.ts";
 import { parseMarkdown } from "./parse.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../../fixtures/pippa-passes-intro.md?raw";
@@ -58,5 +58,15 @@ describe("footnote marks", () => {
   it("flattenText skips the same marks, so the two views count alike", () => {
     const md = "was but a Pedenteria ¹ in comparison\n\n¹ start, m² and a word ¹ ² next";
     expect(flattenText(md).text).toBe(flattenDoc(parseMarkdown(md)).text);
+  });
+});
+
+describe("flattenDocText", () => {
+  it("is flattenDoc's text, built without the position map, over every fixture and every footnote-mark case", () => {
+    const cases = [horace, pippa, twelfth, williams,
+      "was but a Pedenteria ¹ in comparison, So as Amphion, ³ was said", "a word ¹ ² next, and ¹⁹ last", "an area of 4 m² and 10³ more",
+      "end.\n\n¹ start", "a line  with\ttabs\n\n\n  and a gap", "> quoted ¹ mark\n\n- a list ² item", "![a picture](x.png) after ³ it",
+      "::: verse numbered\nThe LORD *is* my shepherd ¹\n:::"];
+    for (const md of cases) { const doc = parseMarkdown(md); expect(flattenDocText(doc)).toBe(flattenDoc(doc).text); }
   });
 });

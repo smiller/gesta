@@ -88,3 +88,21 @@ should be automatic.) And it should show up in references too".
 - Headless Helium at interval 0: KJV Genesis 1 and the Douay's Canticle 1
   draw 1, 2, 3…; no Line numbering row; Canticle 1.1-2 quoted into a journal
   day draws 1 and 2 (MEASURED 2026-11-03).
+
+## The search index, faster (asked 2026-11-03)
+
+"and look at making the search index faster", after the reader's first
+search over the bundle with the Bible took 12.5 s (headless Helium, MEASURED).
+
+- Under node over the backup (17,128 entries, 148 MB): the parse 4,966 ms,
+  the flatten 7,062 ms — its per-character position map, which the index
+  never reads (a CPU profile: `push`, `flattenDoc` and `nodesBetween` about
+  37% of the run). The Bible's share of the whole: 1,070 ms of 11,792.
+- `flattenDocText`: the same text from string operations, a separator
+  standing as \u0001 until the end so a footnote mark is skipped only after a
+  space from the text. Equal to `flattenDoc(…).text` on all 17,128 entries
+  (MEASURED); 1,319 ms against 7,062.
+- main.ts: the index flattens with it; a search waiting on the build takes
+  50 ms slices instead of 12.
+- The reader's first search over the real bundle: 12.5 s → 7.4 s with the
+  new flatten → 7.0 s with the slices (twice, MEASURED in headless Helium).

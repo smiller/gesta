@@ -34,7 +34,7 @@ import { overlays } from "./ui/overlays.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./ui/searchModel.ts";
 import { searchIndex } from "./store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
-import { flattenDoc } from "./model/flatten.ts";
+import { flattenDocText } from "./model/flatten.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
 import { mdLabel } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
@@ -321,12 +321,15 @@ if (fixture && fixtures[fixture]) {
      arrows flush a pending scan first, so type-then-Enter opens the top
      row. A real navigation collapses the row and drops its query; a
      same-entry re-render leaves an open row alone. */
-  const index = searchIndex(layer.cache, (md) => flattenDoc(parseMarkdown(md)).text);
+  const index = searchIndex(layer.cache, (md) => flattenDocText(parseMarkdown(md)));
   let indexing: Progress | null = null;
   const CHUNK_MS = 12;
+  /* a reader waiting on a search: longer slices, the progress line still
+     repainting between them */
+  const WAITED_MS = 50;
   const buildIndex = (then?: () => void): void => {
     if (index.complete) { then?.(); return; }
-    const { done, total } = index.step(performance.now() + CHUNK_MS);
+    const { done, total } = index.step(performance.now() + (then ? WAITED_MS : CHUNK_MS));
     if (indexing) indexing.step(done, total);
     if (index.complete) { indexing?.ok("indexed " + total + " entries", 1400); indexing = null; then?.(); return; }
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
