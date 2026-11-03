@@ -113,12 +113,29 @@ export function stanzaRange(doc: Node, from: number, to: number): string {
    reference.test › a prosimetrum chapter with two poems) */
 export function prosimetrumRange(doc: Node, from: number, to: number): string {
   const range = referenceRange(doc, from, to);
-  const first = coveredUnits(doc, from, to, true).find((u) => u.line);
+  const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
+  const first = lines[0];
   if (!range || !first) return "";
-  if (doc.nodeAt(first.blockPos)!.type === N.prose) return "prose, " + (range.includes("-") ? "paras " : "para ") + range;
+  if (doc.nodeAt(first.blockPos)!.type === N.prose) {
+    const a = paragraphOf(doc, first), b = paragraphOf(doc, lines[lines.length - 1]);
+    return "prose, " + (a === b ? "para " + a : "paras " + elideRange(a, b));
+  }
   const poems: number[] = [];
   doc.forEach((n, pos) => { if (n.type === N.verse) poems.push(pos); });
   return "verse " + (poems.length > 1 ? poems.indexOf(first.blockPos) + 1 + "." : "") + range;
+}
+/* a prose block's paragraphs are its runs of sentences between breaks, the
+   first numbered as the fence is (pin: reference.test › a prosimetrum cites
+   the prose by Barbi's paragraph) */
+function paragraphOf(doc: Node, u: Unit): number {
+  const block = doc.nodeAt(u.blockPos)!;
+  let para = block.attrs.start as number, inked = false, found = para;
+  block.forEach((row, offset) => {
+    if (row.type === N.gap) { if (inked) para++; inked = false; return; }
+    if (u.blockPos + 1 + offset === u.pos) found = para;
+    if (row.type === N.pair) inked = true;
+  });
+  return found;
 }
 /* TWO BLOCKS IS A REFUSAL: every block numbers from 1 (pin: reference.test ›
    two verse blocks are a refusal) — except a run of top-level stanzas,

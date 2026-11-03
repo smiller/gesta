@@ -601,7 +601,7 @@ const vnJournal = journalOf({
   "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
   "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
 });
-const VN3 = parseMarkdown("# Vita Nuova, 3\n\n::: prose 8\nE mantenente cominciai a pensare. | And immediately having considered.\nPensando io a ciò che m'era apparuto. | Then, musing on what I had seen.\n:::\n\n" +
+const VN3 = parseMarkdown("# Vita Nuova, 3\n\n::: prose 8\nE mantenente cominciai a pensare. | And immediately having considered.\nE trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n\nPensando io a ciò che m'era apparuto. | Then, musing on what I had seen.\n:::\n\n" +
   "::: verse\nA ciascun' alma presa e gentil core | To every heart which the sweet pain doth move,\nnel cui cospetto ven lo dir presente, | And unto which these words may now be brought\n:::\n\n" +
   "::: prose 13\nA questo sonetto fue risposto da molti. | To this sonnet I received many answers.\n:::");
 const VN8 = parseMarkdown("# Vita Nuova, 8\n\n::: prose\nAppresso lo partire. | After the departure.\n:::\n\n" +
@@ -612,8 +612,17 @@ const vnLabel = (doc: Node, ch: string, needle: string, end?: string, j = vnJour
   const p = referencePayload(state(doc, a, b), "bookshelf", "Dante/Vita Nuova/" + ch, j);
   return "label" in p && p.label;
 };
-test("a prosimetrum cites the prose by Barbi's paragraph and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
+test("a prosimetrum's sentence quotes that sentence and its translation alone", () => {
+  const [a, b] = span(VN3, "quarta");
+  const p = referencePayload(state(VN3, a, b), "bookshelf", "Dante/Vita Nuova/3", vnJournal);
+  expect("passage" in p && p.passage).toBe("> ::: prose 9\n> E trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n> :::");
+});
+test("a prosimetrum cites the prose by Barbi's paragraph, its sentences counted under it, and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
   expect(vnLabel(VN3, "3", "cominciai")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
+  expect(vnLabel(VN3, "3", "quarta")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
+  expect(vnLabel(VN3, "3", "cominciai", "quarta")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
+  expect(vnLabel(VN3, "3", "fourth hour")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
+  expect(vnLabel(VN3, "3", "apparuto")).toBe("Dante, *Vita Nuova*, 3, prose, para 9");
   expect(vnLabel(VN3, "3", "cominciai", "apparuto")).toBe("Dante, *Vita Nuova*, 3, prose, paras 8-9");
   expect(vnLabel(VN3, "3", "risposto")).toBe("Dante, *Vita Nuova*, 3, prose, para 13");
   expect(vnLabel(VN3, "3", "ciascun", "presente")).toBe("Dante, *Vita Nuova*, 3, verse 1-2");

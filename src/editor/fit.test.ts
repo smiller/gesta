@@ -1,7 +1,7 @@
 // The fit's arithmetic, pinned with measured numbers. The measuring pass and
 // the scheduling are DOM and are looked at in Helium.
 import { test, expect } from "vitest";
-import { fitWidth, insetCol, insetDualCol, sideBox, MIN_COL, FIT_SLACK, DUAL_MIN_ENGLISH } from "./fit.ts";
+import { fitWidth, insetCol, insetDualCol, sideBox, proseWidth, MIN_COL, FIT_SLACK, DUAL_MIN_ENGLISH } from "./fit.ts";
 
 test("the side box is padding and border on both sides, in px, whatever the style spells them as", () => {
   expect(sideBox({ paddingLeft: "19.8px", paddingRight: "19.8px", borderLeftWidth: "3px", borderRightWidth: "0px" })).toBeCloseTo(42.6);
@@ -119,4 +119,15 @@ test("a dual-language block's grow only widens, its column kept against a Latin 
 test("beside a dual-language block one over-wide line still takes no more than two thirds", () => {
   // room 1285 - 105.4 = 1179.6: the English's floor would leave the URL 892
   expect(fitWidth(m(1200, 540, { whole: true }), null, false)!.col).toBe(Math.round(1179.6 * 2 / 3));
+});
+
+test("paired prose takes two 24em columns and its gap, with its frame: 908px at 18px, a quotation's padding and rule on top", () => {
+  expect(proseWidth(18, 0)).toBe(908);
+  expect(proseWidth(18, 42.6)).toBe(Math.ceil(864 + 43.2 + 42.6));
+});
+test("paired prose beside verse: the entry is as wide as the wider of the two, never past the cap", () => {
+  expect(fitWidth(m(300, 300, { prose: 950 }), null, false)!.width).toBe(950);
+  expect(fitWidth(m(300, 300, { prose: 950 }), null, false)!.col).toBe(301);
+  expect(fitWidth(m(500, 500, { prose: 950 }), null, false)!.width).toBe(Math.ceil(501 + 501 + 43.2 + 62.2));
+  expect(fitWidth(m(300, 300, { prose: 950, cap: 800 }), null, false)!.width).toBe(800);
 });

@@ -26,6 +26,10 @@ export const DUAL_MEASURE_EM = 30;
    the Latin wraps: in px at 18px, and in em for a note's smaller type */
 export const DUAL_MIN_ENGLISH_EM = 16;
 export const DUAL_MIN_ENGLISH = DUAL_MIN_ENGLISH_EM * 18;
+/* em: a paired prose column, a line of about 47 characters, and the gap
+   between the two (pin: fit.test › paired prose takes two 24em columns) */
+export const PROSE_COLUMN_EM = 24;
+export const PROSE_GAP_EM = 2.4;
 
 export interface Measured {
   /* the entry's own box with no block on it — the prose measure, the floor */
@@ -39,6 +43,8 @@ export interface Measured {
   cap: number;
   /* a dual-language block's: its Latin lines are never wrapped to share the room */
   whole?: boolean;
+  /* the width paired prose on the entry asks for */
+  prose?: number;
 }
 export interface Fit { width: number; col: number | null }
 
@@ -55,7 +61,7 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
   const c1 = Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK;
   const c2 = Math.ceil(m.c2) + FIT_SLACK;
   const extra = m.gap + m.frame;
-  let width = Math.ceil(Math.min(Math.max(m.floor, c1 + c2 + extra), m.cap));
+  let width = Math.ceil(Math.min(Math.max(m.floor, c1 + c2 + extra, m.prose ?? 0), m.cap));
   /* clamped to the cap even while growing: the window can have narrowed */
   if (growOnly && prev) width = Math.min(m.cap, Math.max(width, prev.width));
   const room = width - extra;
@@ -116,6 +122,10 @@ export function insetDualCol(room: number, edge: number | null, c1: number, minE
   return Math.round(Math.max(room / 2, Math.min(a, room * 2 / 3)));
 }
 
+export function proseWidth(fontSize: number, frame: number): number {
+  return Math.ceil(fontSize * (2 * PROSE_COLUMN_EM + PROSE_GAP_EM) + frame);
+}
+
 export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderLeftWidth: string; borderRightWidth: string }): number {
   return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
 }
@@ -161,9 +171,10 @@ export function fitCap(): number { return Math.min(CAP, window.innerWidth - WIND
    naming the cause. And a reader's place is held across it: under the
    class rows un-wrap, the document collapses and the engine clamps
    scrollTop — MEASURED, 22,313px of jump on a 400-row block. */
-export function measure(host: HTMLElement): Measured | "prose" | null {
+export function measure(host: HTMLElement): Measured | number | null {
   const verse = pairedBlocksIn(host, "div.verse");
-  if (!verse.length) return pairedBlocksIn(host, "div.prose").length ? "prose" : null;
+  const prose = proseNeed(host);
+  if (!verse.length) return prose || null;
   const scroller = document.scrollingElement || document.documentElement;
   const held = scroller.scrollTop;
   let floor = 0, c1 = 0, c2 = 0, gap = 0, frame = 0, whole = false;
@@ -204,7 +215,21 @@ export function measure(host: HTMLElement): Measured | "prose" | null {
     host.classList.remove("fitting");
     scroller.scrollTop = held;
   }
-  return { floor, c1, c2, gap, frame, cap: fitCap(), whole };
+  return { floor, c1, c2, gap, frame, cap: fitCap(), whole, prose };
+}
+
+/* the widest paired prose block's ask: its columns at their measure, and its
+   own box with a quotation's around it, as a verse block pays them */
+function proseNeed(host: HTMLElement): number {
+  let need = 0;
+  for (const b of pairedBlocksIn(host, "div.prose")) {
+    let own = sideBox(getComputedStyle(b));
+    for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
+      if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
+    }
+    need = Math.max(need, proseWidth(parseFloat(getComputedStyle(b).fontSize), own));
+  }
+  return need;
 }
 
 /* a card's and a note's paired blocks, each measured in its own box. The
@@ -409,9 +434,8 @@ class FitView implements PluginView {
     queueMicrotask(() => this.fitInsets());
     const m = measure(host);
     if (m === null) { writeFit(host, null); if (!growOnly) this.window = window.innerWidth; return; }
-    /* a paired prose block takes the cap, not a measurement: its cells wrap,
-       and the columns are equal halves of whatever the entry gets */
-    if (m === "prose") { writeFit(host, { width: fitCap(), col: null }); if (!growOnly) this.window = window.innerWidth; return; }
+    /* paired prose alone asks its measure, not a measurement: its cells wrap */
+    if (typeof m === "number") { writeFit(host, { width: Math.min(m, fitCap()), col: null }); if (!growOnly) this.window = window.innerWidth; return; }
     const fit = fitWidth(m, readFit(host), growOnly);
     if (!fit) return;
     writeFit(host, fit);

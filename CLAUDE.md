@@ -459,7 +459,8 @@ is in the plan's record, under the phase named):
   `dualLanguage.ts` (a `::: dual-language` block, the verse block's
   `dual` form: the Latin's wait where a sentence runs long, the arithmetic
   pure, the measuring pass writing it on the rows; a note's column from
-  where its mark stands, as node decorations), `folios.ts` (the
+  where its mark stands, as node decorations), `pairMarks.ts` (a selection in one column of paired rows: the
+  other column of the rows it covers, marked as selected), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's, and
   each label's drop to the line its leaf's first word starts on),
   `typing.ts` (markdown as you type: the input rules and the two Enter

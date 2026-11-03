@@ -43,3 +43,33 @@ chapter. Asked for its references:
   src/editor/reference.test.ts (3, prose, para 8; paras 8-9; para 13;
   verse 1-2; 8, verse 1.1-2, verse 2.2; without the directive 3.8).
 - `npm run verify` passes (MEASURED 2026-11-02).
+
+## Sentences, the other column, the prose measure (asked 2026-11-02)
+
+Looked at in Helium after the first build: a sentence selected in Vita Nuova
+12 quoted its whole paragraph; "(a) shouldn't it highlight the relevant part
+of the translation as well? (b) it should definitely not present as the
+reference the whole paragraph both of text and translation", and the pasted
+reference was wider than on its own page. Ruled: sentence rows, Barbi's
+paragraphs as the block's breaks; the other column marked in prose and verse
+pairs; the width from a mockup at four widths in Helium: "B." (24em).
+
+- `prosimetrumRange` counts paragraphs: the fence's number, one more after
+  each break that follows a pair. A sentence in 12.5 cites "12, prose, para 5"
+  and quotes that sentence's row alone.
+- `src/editor/pairMarks.ts`: a selection in one column of `::: prose` or
+  plain `::: verse` pairs marks the other column of the rows it covers
+  (`dl-covered`); a selection reaching both columns, or in a dual-language
+  block, marks nothing.
+- `fit.ts`: paired prose asks two 24em columns and a 2.4em gap plus its own
+  box and any quotation's (`proseWidth`: 908px at 18px); alone it takes that
+  (capped by the window), beside verse the wider of the two; `editor.css`
+  holds each column to 24em however wide verse sets the entry.
+- MEASURED 2026-11-02 at a 1512px window, before: 22.4em columns on
+  Vita Nuova 12 (its ballata set the width), 34.5em on 12's prose-only
+  neighbours and on a journal day; after: 24em on all three.
+- Not changed: the paragraphs around a paired block widen with it, the rule
+  verse already has (the help: "the prose around the block always has the
+  width the block has").
+- Tests: fit.test (two), reference.test (the paragraph count, the one-row
+  quotation), pairMarks.test (five). `npm run verify` passes.
