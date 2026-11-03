@@ -3,7 +3,7 @@ import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, fenceAt, hasFacing, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, citesHalfLines, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, citesHalfLines, citesProsimetrum, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 import { dropFolios } from "./paste.ts";
@@ -107,6 +107,18 @@ export function stanzaRange(doc: Node, from: number, to: number): string {
   const whole = a.line === 1 && b.line === lastLine(b);
   if (sa === sb) return whole ? String(sa) : sa + "." + elideRange(a.line, b.line);
   return whole ? sa + "–" + sb : sa + "." + a.line + "–" + sb + "." + b.line;
+}
+/* a prosimetrum's chapter: its prose by paragraph, a poem by its lines, and
+   by its place among the chapter's poems where there is more than one (pin:
+   reference.test › a prosimetrum chapter with two poems) */
+export function prosimetrumRange(doc: Node, from: number, to: number): string {
+  const range = referenceRange(doc, from, to);
+  const first = coveredUnits(doc, from, to, true).find((u) => u.line);
+  if (!range || !first) return "";
+  if (doc.nodeAt(first.blockPos)!.type === N.prose) return "prose, " + (range.includes("-") ? "paras " : "para ") + range;
+  const poems: number[] = [];
+  doc.forEach((n, pos) => { if (n.type === N.verse) poems.push(pos); });
+  return "verse " + (poems.length > 1 ? poems.indexOf(first.blockPos) + 1 + "." : "") + range;
 }
 /* TWO BLOCKS IS A REFUSAL: every block numbers from 1 (pin: reference.test ›
    two verse blocks are a refusal) — except a run of top-level stanzas,
@@ -506,7 +518,7 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   if (!hl) return { refused: "select" };
   /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
   const halves = citesHalfLines(date, tag, journal);
-  const range = stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
+  const range = citesProsimetrum(date, tag, journal) ? prosimetrumRange(doc, from, to) : stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
   const block = all ? null : facingBlockOf(doc, from, to);
   const alone = block && translationPassage(doc, from, to, block);
   if (block && !alone) return { refused: "no-translation" };

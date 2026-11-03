@@ -37,9 +37,11 @@ const romanBookCanto = (d: string): boolean => /roman book and canto/i.test(d);
    (pin: reference.test › referenceLabel: a root whose page says no author) */
 const noAuthor = (d: string): boolean => /^\s*no author\s*$/im.test(d);
 const oldEnglishVerse = (d: string): boolean => /^\s*old english verse\s*$/im.test(d);
+const prosimetrum = (d: string): boolean => /^\s*prosimetrum\s*$/im.test(d);
 export const directsFromLastTitle = (md: string): boolean => lastTitle(referenceDirectives(md));
 export const directsRomanBookCanto = (md: string): boolean => romanBookCanto(referenceDirectives(md));
 export const directsNoAuthor = (md: string): boolean => noAuthor(referenceDirectives(md));
+export const directsProsimetrum = (md: string): boolean => prosimetrum(referenceDirectives(md));
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
   const said: Record<string, { md: string; directives: string }> = Object.create(null);
@@ -64,5 +66,6 @@ export function journalOf(cache: Record<string, string>): Journal {
     romanBookCanto: (workKey) => romanBookCanto(directives(workKey)),
     noAuthor: (rootKey) => noAuthor(directives(rootKey)),
     oldEnglishVerse: (ekey) => oldEnglishVerse(directives(ekey)),
+    prosimetrum: (workKey) => prosimetrum(directives(workKey)),
   };
 }

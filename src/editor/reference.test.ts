@@ -594,3 +594,38 @@ test("a passage running from one block numbered on both sides into the next is r
   const [a, b] = span(two, "Untill", "The starres");
   expect(referencePayload(state(two, a, b), "bookshelf", GOLDING_TAG, goldingJournal)).toEqual({ refused: "two-blocks" });
 });
+
+// The Vita Nuova: a chapter of prose numbered by Barbi's paragraphs and its
+// poems, under the work's `prosimetrum` directive.
+const vnJournal = journalOf({
+  "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
+  "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
+});
+const VN3 = parseMarkdown("# Vita Nuova, 3\n\n::: prose 8\nE mantenente cominciai a pensare. | And immediately having considered.\nPensando io a ciò che m'era apparuto. | Then, musing on what I had seen.\n:::\n\n" +
+  "::: verse\nA ciascun' alma presa e gentil core | To every heart which the sweet pain doth move,\nnel cui cospetto ven lo dir presente, | And unto which these words may now be brought\n:::\n\n" +
+  "::: prose 13\nA questo sonetto fue risposto da molti. | To this sonnet I received many answers.\n:::");
+const VN8 = parseMarkdown("# Vita Nuova, 8\n\n::: prose\nAppresso lo partire. | After the departure.\n:::\n\n" +
+  "::: verse\nPiangete, amanti, poi che piange Amore, | Weep, Lovers, sith Love's very self doth weep,\nudendo qual cagion lui fa plorare. | And sith the cause for weeping is so great;\n:::\n\n" +
+  "::: verse\nMorte villana, di pietà nemica, | Death, alway cruel, Pity's foe in chief,\ndi dolor madre antica, | Mother who brought forth grief,\n:::");
+const vnLabel = (doc: Node, ch: string, needle: string, end?: string, j = vnJournal): string | false => {
+  const [a, b] = span(doc, needle, end);
+  const p = referencePayload(state(doc, a, b), "bookshelf", "Dante/Vita Nuova/" + ch, j);
+  return "label" in p && p.label;
+};
+test("a prosimetrum cites the prose by Barbi's paragraph and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
+  expect(vnLabel(VN3, "3", "cominciai")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
+  expect(vnLabel(VN3, "3", "cominciai", "apparuto")).toBe("Dante, *Vita Nuova*, 3, prose, paras 8-9");
+  expect(vnLabel(VN3, "3", "risposto")).toBe("Dante, *Vita Nuova*, 3, prose, para 13");
+  expect(vnLabel(VN3, "3", "ciascun", "presente")).toBe("Dante, *Vita Nuova*, 3, verse 1-2");
+  expect(vnLabel(VN3, "3", "sweet pain")).toBe("Dante, *Vita Nuova*, 3, verse 1");
+});
+test("a prosimetrum chapter with two poems names the poem: 8, verse 1.1-2, verse 2.2; its prose as ever", () => {
+  expect(vnLabel(VN8, "8", "Piangete", "plorare")).toBe("Dante, *Vita Nuova*, 8, verse 1.1-2");
+  expect(vnLabel(VN8, "8", "dolor madre")).toBe("Dante, *Vita Nuova*, 8, verse 2.2");
+  expect(vnLabel(VN8, "8", "partire")).toBe("Dante, *Vita Nuova*, 8, prose, para 1");
+});
+test("without the directive the same chapter cites as every book does: 3.8, 3.1-2", () => {
+  const plain = journalOf({ "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::" });
+  expect(vnLabel(VN3, "3", "cominciai", undefined, plain)).toBe("Dante, *Vita Nuova*, 3.8");
+  expect(vnLabel(VN3, "3", "ciascun", "presente", plain)).toBe("Dante, *Vita Nuova*, 3.1-2");
+});

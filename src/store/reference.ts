@@ -72,6 +72,8 @@ export interface Journal {
   noAuthor(rootKey: string): boolean;
   /* the page carries `Old English verse`: its lines are cited by half-line */
   oldEnglishVerse(ekey: string): boolean;
+  /* the WORK's page carries `prosimetrum`: a chapter's prose and its poems are cited apart */
+  prosimetrum(workKey: string): boolean;
 }
 
 /* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
@@ -109,6 +111,10 @@ export function citesHalfLines(date: string, tag: string | null, journal: Journa
   if (!titlesRoots(date)) return false;
   for (let i = 1; i <= segs.length; i++) if (journal.oldEnglishVerse(entryKey(date, segs.slice(0, i).join("/")))) return true;
   return false;
+}
+export function citesProsimetrum(date: string, tag: string | null, journal: Journal): boolean {
+  const segs = tag ? tag.split("/") : [];
+  return titlesRoots(date) && segs.length >= 3 && journal.prosimetrum(entryKey(date, segs[0] + "/" + segs[1]));
 }
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string }
 /* a work headed "Metamorphoses (with Golding’s translation)": the title,
@@ -196,7 +202,9 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   if (deepest && deepest.n !== undefined && romanWorkKey(date, tag, journal)) deepest.n = romanKey(deepest.n);
   const division = deepest && deepest.n !== undefined ? deepest.n + "." : "";
   const ns = nsOf(date), locates = !!(ns && ns.citesLocator);
-  if (range && locates) {
+  /* a worded range, "prose, para 4", stands after the chapter as a field of its own (pin: reference.test › referenceLabel: a worded range) */
+  if (range && locates && /^[a-z]/i.test(range)) parts.push({ plain: range });
+  else if (range && locates) {
     if (deepest && deepest.n !== undefined) deepest.n += "." + range;
     else parts.push({ n: range });
   } else if (folio && locates) {

@@ -5,7 +5,7 @@ import {
   roman, romanKey, romanWorkKey,
 } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
-import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor } from "./headings.ts";
+import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor, directsProsimetrum } from "./headings.ts";
 
 test("referenceNumeral: a digit-led token or a division word is a numeral, everything else a title", () => {
   expect(referenceNumeral("19", true)).toBe("19");
@@ -220,4 +220,25 @@ test("referenceLabel under the directive: I.i.2.1, the proem, whole stanzas, a r
   expect(referenceLabel(NS_BOOK.key, FQ + "7.8", "2.9", null, fq)).toBe("Spenser, *The Faerie Queene*, VII.viii.2.9");
   /* a work without the directive cites as every book does */
   expect(referenceLabel(NS_BOOK.key, "Spenser, Edmund/Amoretti/1", "3", null, fq)).toBe("Spenser, *Amoretti*, 1.3");
+});
+
+// The Vita Nuova: under the work's `prosimetrum` directive a citation names
+// the part of the chapter it is in, comma-joined, never dotted.
+const vn = journalOf({
+  "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
+  "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
+  "bookshelf/Dante/Vita Nuova/3": "# Vita Nuova, 3",
+});
+test("the prosimetrum directive is read off the work's page, a line of its own, top level only", () => {
+  expect(directsProsimetrum("# W\n\n::: reference\nprosimetrum\n:::")).toBe(true);
+  expect(directsProsimetrum("# W\n\n> ::: reference\n> prosimetrum\n> :::")).toBe(false);
+  expect(directsProsimetrum("# W\n\n::: reference\nnot a prosimetrum here\n:::")).toBe(false);
+  expect(vn.prosimetrum("bookshelf/Dante/Vita Nuova")).toBe(true);
+  expect(vn.prosimetrum("bookshelf/Dante/Commedia")).toBe(false);
+});
+test("referenceLabel: a worded range is comma-joined after the chapter, a numeral range still dots on", () => {
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "prose, para 4", null, vn)).toBe("Dante, *Vita Nuova*, 3, prose, para 4");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/8", "verse 2.1-4", null, vn)).toBe("Dante, *Vita Nuova*, 8, verse 2.1-4");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "", null, vn)).toBe("Dante, *Vita Nuova*, 3");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "4", null, vn)).toBe("Dante, *Vita Nuova*, 3.4");
 });
