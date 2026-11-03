@@ -6,6 +6,22 @@
    build stops at its deadline and resumes) */
 import { searchFold, type IndexRow } from "./search.ts";
 import { isDayKey, byName, NS_KEYS } from "./keys.ts";
+import type { Known, KeptRow } from "./indexStore.ts";
+
+/* cyrb53: a text's fingerprint, its length beside it — a kept text is used
+   only for the markdown it was made from (pin: searchIndex.test › a
+   fingerprint is the text's own) */
+export function fingerprint(s: string): string {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 2654435761);
+    h2 = Math.imul(h2 ^ c, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return s.length + ":" + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
 
 /* ONE PASS over the keys, bucketed by their first segment: filtering the
    whole key list once per day, O(days × keys), MEASURED 500–708 ms a call
@@ -40,9 +56,16 @@ export interface SearchIndex {
      edit needs no invalidation (pin: searchIndex.test › rows over the
      non-blank entries, flattened once and reused until the text moves) */
   rows(): IndexRow[];
+  /* texts kept from an earlier launch, used where the markdown is the same */
+  know(known: Known): void;
+  /* the texts parsed since the last call, for keeping */
+  made(): KeptRow[];
+  /* kept keys no longer in the cache */
+  stale(): string[];
 }
 export function searchIndex(cache: Record<string, string>, flatten: (md: string) => string, now: () => number = () => performance.now()): SearchIndex {
   const memo: Record<string, { md: string; text: string; lower: string }> = Object.create(null);
+  let known: Known = Object.create(null), parsed: KeptRow[] = [];
   let order: string[] | null = null, at = 0;
   const entry = (key: string): { text: string; lower: string } | null => {
     const md = cache[key];
@@ -54,7 +77,12 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
        searchIndex.test › an entry whose flatten throws is indexed as its
        raw source) */
     let text: string;
-    try { text = flatten(md); } catch { text = md; }
+    const sig = fingerprint(md), kept = known[key];
+    if (kept && kept.sig === sig) text = kept.text;
+    else {
+      try { text = flatten(md); } catch { text = md; }
+      parsed.push({ k: key, sig, text });
+    }
     const fresh = { md, text, lower: searchFold(text) };
     memo[key] = fresh;
     return fresh;
@@ -79,6 +107,9 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
       return { done: at, total: order.length };
     },
     get complete() { return !!order && at >= order.length; },
+    know(k) { known = k; },
+    made() { const out = parsed; parsed = []; return out; },
+    stale() { return Object.keys(known).filter((k) => !(k in cache)); },
     rows() {
       const out: IndexRow[] = [];
       for (const key of currentOrder()) {

@@ -533,7 +533,9 @@ is in the plan's record, under the phase named):
   directive, read from the cache), `search.ts` (the query grammar, the
   scope filter, the scan over an index with its snippets),
   `searchIndex.ts` (the index over the cache: memoised per entry on its
-  text, built in chunks), `bookmarks.ts` (the list's rules: what the
+  text, built in chunks, seeded with the texts a launch kept by their
+  markdown's fingerprint), `indexStore.ts` (those texts kept between
+  launches, written in bulk), `bookmarks.ts` (the list's rules: what the
   store parses to and refuses, the two views, the trigger's grammar, the
   rows that still lead somewhere), `bookmarkStore.ts` (the list in its one
   localStorage key: the latch, the seed once, the failure pin, the re-read

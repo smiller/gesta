@@ -106,3 +106,19 @@ search over the bundle with the Bible took 12.5 s (headless Helium, MEASURED).
   50 ms slices instead of 12.
 - The reader's first search over the real bundle: 12.5 s → 7.4 s with the
   new flatten → 7.0 s with the slices (twice, MEASURED in headless Helium).
+
+## The index kept between launches (asked 2026-11-03: "Let's build that.")
+
+- `searchIndex.ts`: `fingerprint` (cyrb53 with the length); `know(kept)`
+  seeds texts by key, used only where the markdown's fingerprint matches;
+  `made()` the texts parsed since, `stale()` kept keys gone from the cache.
+- `indexStore.ts`: `dexieIndexKeeper` (bulk writes, one table `texts`),
+  `memIndexKeeper` for tests.
+- main.ts: the kept texts read once before the build's first step (every
+  call waits on the read; a failed read is an empty one), the parsed ones
+  saved and the stale dropped when the build completes. Databases
+  `gesta.v1.index` (the app) and `gesta.reader.index` (the reader).
+- Headless Helium over the real bundle (17,128 entries): the first search
+  with nothing kept 6.8–7.0 s; after a relaunch 1.3, 0.9, 0.9 s (MEASURED).
+- Tests: searchIndex.test (the fingerprint; the seed, the made and the
+  stale; the memory keeper). `npm run verify` passes.

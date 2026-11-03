@@ -13,6 +13,7 @@ import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { idbEntryStore, idbImageStore, idbBackupStore, memEntryStore, dexieKeyedStore, type ImageStore } from "./store/store.ts";
+import { dexieIndexKeeper } from "./store/indexStore.ts";
 import { readBundle, bundleImages, bundleKeeper, heldLabel, READER_DB, READER_STORE, type BundleRow } from "./store/bundle.ts";
 import { exportEntries, missingPictures } from "./store/exportEntries.ts";
 import { writeFilesTo } from "./store/io.ts";
@@ -327,11 +328,24 @@ if (fixture && fixtures[fixture]) {
   /* a reader waiting on a search: longer slices, the progress line still
      repainting between them */
   const WAITED_MS = 50;
+  /* the texts an earlier launch parsed, read once before the build's first
+     step; a failed read is an empty one, the build parsing everything as
+     before (pin: searchIndex.test › an entry whose fingerprint is known) */
+  const keeper = dexieIndexKeeper(READER ? READER_DB + ".index" : NS + "index");
+  let knownRead: Promise<void> | null = null, knownIn = false;
+  const keepIndex = (): void => {
+    keeper.save(index.made()).then(() => keeper.drop(index.stale())).catch((err: unknown) => console.error("the search index could not be kept", err));
+  };
   const buildIndex = (then?: () => void): void => {
     if (index.complete) { then?.(); return; }
+    if (!knownIn) {
+      knownRead ??= keeper.load().then((k) => index.know(k), (err: unknown) => console.error("the kept search index could not be read", err)).then(() => { knownIn = true; });
+      knownRead.then(() => buildIndex(then));
+      return;
+    }
     const { done, total } = index.step(performance.now() + (then ? WAITED_MS : CHUNK_MS));
     if (indexing) indexing.step(done, total);
-    if (index.complete) { indexing?.ok("indexed " + total + " entries", 1400); indexing = null; then?.(); return; }
+    if (index.complete) { indexing?.ok("indexed " + total + " entries", 1400); indexing = null; keepIndex(); then?.(); return; }
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
     if (then) setTimeout(() => buildIndex(then), 0);   /* wanted now: keep going, yielding only to paint */
     else if (idle) idle(() => buildIndex());

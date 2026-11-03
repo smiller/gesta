@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { searchIndex, indexOrder } from "./searchIndex.ts";
+import { searchIndex, indexOrder, fingerprint } from "./searchIndex.ts";
+import { memIndexKeeper } from "./indexStore.ts";
 
 describe("indexOrder", () => {
   it("keyed namespaces first by name, then the days newest first with their tags after each", () => {
@@ -63,5 +64,31 @@ describe("indexOrder over a journal-sized key set", () => {
     const t1 = performance.now();
     idx.rows();
     expect(performance.now() - t1).toBeLessThan(50);
+  });
+});
+
+describe("the index kept between launches", () => {
+  it("a fingerprint is the text's own: equal texts alike, a one-letter change and a reordering apart", () => {
+    expect(fingerprint("In principio")).toBe(fingerprint("In principio"));
+    expect(fingerprint("In principio")).not.toBe(fingerprint("In principiO"));
+    expect(fingerprint("ab")).not.toBe(fingerprint("ba"));
+  });
+  it("an entry whose fingerprint is known takes its kept text unparsed; a changed or new one is parsed and reported made", () => {
+    const cache: Record<string, string> = { "page/A": "alpha", "page/B": "beta changed", "page/C": "gamma" };
+    let flattens = 0;
+    const idx = searchIndex(cache, (md) => { flattens++; return md.toUpperCase(); });
+    idx.know({ "page/A": { sig: fingerprint("alpha"), text: "KEPT ALPHA" }, "page/B": { sig: fingerprint("beta"), text: "OLD BETA" }, "page/Gone": { sig: "x", text: "gone" } });
+    while (!idx.complete) idx.step(Infinity);
+    expect(idx.rows().map((r) => r.text)).toEqual(["KEPT ALPHA", "BETA CHANGED", "GAMMA"]);
+    expect(flattens).toBe(2);
+    expect(idx.made()).toEqual([{ k: "page/B", sig: fingerprint("beta changed"), text: "BETA CHANGED" }, { k: "page/C", sig: fingerprint("gamma"), text: "GAMMA" }]);
+    expect(idx.made()).toEqual([]);
+    expect(idx.stale()).toEqual(["page/Gone"]);
+  });
+  it("the memory keeper keeps what is saved, and drops what is dropped", async () => {
+    const keep = memIndexKeeper();
+    await keep.save([{ k: "page/A", sig: "1", text: "a" }, { k: "page/B", sig: "2", text: "b" }]);
+    await keep.drop(["page/B"]);
+    expect(await keep.load()).toEqual({ "page/A": { sig: "1", text: "a" } });
   });
 });
