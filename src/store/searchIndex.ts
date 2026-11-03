@@ -63,9 +63,12 @@ export interface SearchIndex {
   /* kept keys no longer in the cache */
   stale(): string[];
 }
-export function searchIndex(cache: Record<string, string>, flatten: (md: string) => string, now: () => number = () => performance.now()): SearchIndex {
+/* `parser`: what made the texts, so a kept text outlives no change to it
+   (pin: searchIndex.test › a kept text made by another parser) */
+export function searchIndex(cache: Record<string, string>, flatten: (md: string) => string, now: () => number = () => performance.now(), parser = ""): SearchIndex {
   const memo: Record<string, { md: string; text: string; lower: string }> = Object.create(null);
-  let known: Known = Object.create(null), parsed: KeptRow[] = [];
+  let known: Known = Object.create(null);
+  const parsed = new Map<string, KeptRow>();
   let order: string[] | null = null, at = 0;
   const entry = (key: string): { text: string; lower: string } | null => {
     const md = cache[key];
@@ -77,11 +80,11 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
        searchIndex.test › an entry whose flatten throws is indexed as its
        raw source) */
     let text: string;
-    const sig = fingerprint(md), kept = known[key];
+    const sig = (parser ? parser + ":" : "") + fingerprint(md), kept = known[key];
     if (kept && kept.sig === sig) text = kept.text;
     else {
       try { text = flatten(md); } catch { text = md; }
-      parsed.push({ k: key, sig, text });
+      parsed.set(key, { k: key, sig, text });
     }
     const fresh = { md, text, lower: searchFold(text) };
     memo[key] = fresh;
@@ -108,7 +111,7 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     },
     get complete() { return !!order && at >= order.length; },
     know(k) { known = k; },
-    made() { const out = parsed; parsed = []; return out; },
+    made() { const out = [...parsed.values()]; parsed.clear(); return out; },
     stale() { return Object.keys(known).filter((k) => !(k in cache)); },
     rows() {
       const out: IndexRow[] = [];

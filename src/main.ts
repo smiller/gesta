@@ -79,6 +79,8 @@ const fixtures: Record<string, string> = { horace, pippa, twelfth, williams, ovi
 /* the read-only build (`vite build --mode reader`): the entries a picked
    bundle holds, every one locked */
 const READER = import.meta.env.MODE === "reader";
+/* a gutter whose numbers the Line numbering row sets: not one a page's own numbered blocks draw */
+const offersInterval = (dom: HTMLElement): boolean => dom.classList.contains("versepage") && !dom.classList.contains("ownnumbers");
 if (READER) document.title = "Gesta reader";
 const mountEl = document.getElementById("editor") as HTMLElement;
 const root = document.documentElement;
@@ -229,7 +231,7 @@ const fixture = q.get("fixture");
 if (fixture && fixtures[fixture]) {
   /* SCRATCH: the fixture in the editor, nothing stored, nothing saved */
   const md = fixtures[fixture];
-  const gutter = (v: { dom: HTMLElement }): void => { screen.gutter = v.dom.classList.contains("versepage") && !v.dom.classList.contains("ownnumbers"); };
+  const gutter = (v: { dom: HTMLElement }): void => { screen.gutter = offersInterval(v.dom); };
   const v = createEditor(mountEl, parseMarkdown(md), { interval: screen.interval, onChange: gutter });
   gutter(v);
   screen.masthead = { ...EMPTY_MASTHEAD, crumbs: [{ text: "fixture " + fixture, href: null, title: "" }] };
@@ -274,7 +276,7 @@ if (fixture && fixtures[fixture]) {
     pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
       dropStaleCopy();
-      screen.gutter = !!session.view?.dom.classList.contains("versepage") && !session.view.dom.classList.contains("ownnumbers");
+      screen.gutter = !!session.view && offersInterval(session.view.dom);
       if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
       else acts.replace.check();
       if (screen.lineBar.open) acts.lineBar.reask();
@@ -322,7 +324,7 @@ if (fixture && fixtures[fixture]) {
      arrows flush a pending scan first, so type-then-Enter opens the top
      row. A real navigation collapses the row and drops its query; a
      same-entry re-render leaves an open row alone. */
-  const index = searchIndex(layer.cache, (md) => flattenDocText(parseMarkdown(md)));
+  const index = searchIndex(layer.cache, (md) => flattenDocText(parseMarkdown(md)), undefined, __PARSER__);
   let indexing: Progress | null = null;
   const CHUNK_MS = 12;
   /* a reader waiting on a search: longer slices, the progress line still
@@ -332,24 +334,33 @@ if (fixture && fixtures[fixture]) {
      step; a failed read is an empty one, the build parsing everything as
      before (pin: searchIndex.test › an entry whose fingerprint is known) */
   const keeper = dexieIndexKeeper(READER ? READER_DB + ".index" : NS + "index");
-  let knownRead: Promise<void> | null = null, knownIn = false;
+  let knownRead: Promise<void> | null = null;
   const keepIndex = (): void => {
     keeper.save(index.made()).then(() => keeper.drop(index.stale())).catch((err: unknown) => console.error("the search index could not be kept", err));
   };
+  /* texts parsed after the build, an edited entry's, kept as the window goes */
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && index.complete) keepIndex(); });
+  /* ONE build, whoever asks: each search waiting on it is answered once when
+     it completes */
+  const waiting = new Set<() => void>();
+  let building = false;
+  const answer = (): void => { const w = [...waiting]; waiting.clear(); for (const f of w) f(); };
   const buildIndex = (then?: () => void): void => {
-    if (index.complete) { then?.(); return; }
-    if (!knownIn) {
-      knownRead ??= keeper.load().then((k) => index.know(k), (err: unknown) => console.error("the kept search index could not be read", err)).then(() => { knownIn = true; });
-      knownRead.then(() => buildIndex(then));
-      return;
-    }
-    const { done, total } = index.step(performance.now() + (then ? WAITED_MS : CHUNK_MS));
-    if (indexing) indexing.step(done, total);
-    if (index.complete) { indexing?.ok("indexed " + total + " entries", 1400); indexing = null; keepIndex(); then?.(); return; }
-    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
-    if (then) setTimeout(() => buildIndex(then), 0);   /* wanted now: keep going, yielding only to paint */
-    else if (idle) idle(() => buildIndex());
-    else setTimeout(() => buildIndex(), 50);
+    if (then) waiting.add(then);
+    if (index.complete) { answer(); return; }
+    if (building) return;
+    building = true;
+    const run = (): void => {
+      const { done, total } = index.step(performance.now() + (waiting.size ? WAITED_MS : CHUNK_MS));
+      if (indexing) indexing.step(done, total);
+      if (index.complete) { building = false; indexing?.ok("indexed " + total + " entries", 1400); indexing = null; keepIndex(); answer(); return; }
+      const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
+      if (waiting.size) setTimeout(run, 0);   /* wanted now: keep going, yielding only to paint */
+      else if (idle) idle(run);
+      else setTimeout(run, 50);
+    };
+    knownRead ??= keeper.load().then((k) => index.know(k), (err: unknown) => console.error("the kept search index could not be read", err));
+    knownRead.then(run);
   };
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
   const sr = screen.search;

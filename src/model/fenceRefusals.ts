@@ -36,7 +36,10 @@ export function fenceLineReason(l: string): string | null {
   const count = m[1].match(/^grid\s+(.+)$/);
   const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
   const two = tok && tok[2].match(/^(\d+)\s+(\d+)$/);
-  return two && tok[1] !== "verse" ? tok[1] + " takes one number; a second, for the right column, is verse's alone"
+  const word = /\bnumbered\b/.test(m[1]);
+  return word && /^(dual-language|stanza)\b/.test(m[1]) ? m[1].split(/\s/)[0] + " takes no numbered: the word is verse's and prose's"
+    : word && tok && /^numbered\s+\d/.test(tok[2]) ? "numbered goes after the number, like ::: " + tok[1] + " " + tok[2].replace(/^numbered\s+/, "") + " numbered"
+    : two && tok[1] !== "verse" ? tok[1] + " takes one number; a second, for the right column, is verse's alone"
     : two && +two[1] > 0 ? two[2] + " is not a starting line for the right column"
     : two ? two[1] + " is not a starting line"
     : tok && tok[1] === "verse" && /^\d+\s+\d+\s+\d/.test(tok[2]) ? "verse takes two numbers at most: its first line, and its right column's"

@@ -37,3 +37,10 @@ test("the pin's text: one line with its tail, several one per line with the coun
   const two = refused("::: versey\nx\n:::\n\n::: card\ny\n:::");
   expect(refusalsText(two)).toBe("::: versey — not a block Gesta knows\n::: card — card blocks must include a colour, like card-light-green\n2 fences stayed paragraphs");
 });
+
+test("a misplaced or unsupported `numbered` is named as such", () => {
+  const why = (md: string) => fenceRefusals(parseMarkdown(md)).map((r) => r.reason);
+  expect(why("::: dual-language numbered\na\n:::")).toEqual(["dual-language takes no numbered: the word is verse's and prose's"]);
+  expect(why("::: verse numbered 5\na\n:::")).toEqual(["numbered goes after the number, like ::: verse 5 numbered"]);
+  expect(why("::: stanza 2 numbered\na\n:::")).toEqual(["stanza takes no numbered: the word is verse's and prose's"]);
+});

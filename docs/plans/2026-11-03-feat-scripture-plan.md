@@ -1,6 +1,6 @@
 # feat: the Bible — `scripture` references and numbered prose
 
-REVIEW CYCLES: 0
+REVIEW CYCLES: 1
 
 ## The ask (2026-11-03)
 
@@ -122,3 +122,41 @@ search over the bundle with the Bible took 12.5 s (headless Helium, MEASURED).
   with nothing kept 6.8–7.0 s; after a relaunch 1.3, 0.9, 0.9 s (MEASURED).
 - Tests: searchIndex.test (the fingerprint; the seed, the made and the
   stale; the memory keeper). `npm run verify` passes.
+
+## Review cycle 1 (2026-11-03)
+
+One `/code-review` at high over 9d5be38^..af776d6, all four commits
+accepted. 129,716 tokens (the run's own count). Ten findings: a kept text
+outliving a parser change; a facing block's right column still on the
+interval; one build chain per call made while the kept index loads; texts
+parsed after the first build never kept nor freed; the kept index read and
+written in one main-thread task; numbered blocks in containers the CSS has
+no gutter for; the decoration walk descending into every row; refusal
+reasons not knowing `numbered`; comments naming other modules, the gutter
+test copied twice, the help's note item contradicting the numbered one.
+Fixed on the reader's word ("let's review, and after that republish").
+
+### Cycle 1's fixes
+
+1. vite.config.ts hashes `src/model`'s source into `__PARSER__`; the index's
+   fingerprints carry it, so a parser change rebuilds the kept index once
+   and nothing else does (the page's own fingerprint is unchanged otherwise).
+2. `rightUnits` numbers every row of a numbered facing block.
+3. main.ts builds the index in ONE chain; each search waiting on it is
+   answered once when it completes.
+4. `made()` holds one row per key; the texts parsed after the build are kept
+   when the window is hidden.
+5. `dexieIndexKeeper` reads and writes in pages of 500, pausing between.
+   The reader's first search after a relaunch: 1.3 s (against 0.9 s read
+   whole), the page painting between pages (MEASURED).
+6. A numbered block below the top level is numbered only in a quotation, a
+   note or a card (a margin-note pinned); a verse fence cannot stand in a
+   list item at all (MEASURED: it parses top-level).
+7. The decoration walk stops at textblocks.
+8. fenceRefusals names `numbered` on a dual-language or stanza fence, and
+   before the number.
+9. The two comments reworded to their own code.
+10. `offersInterval` once in main.ts; the help's note item allows
+    `numbered`.
+- Tests: numbering.test, lineNumbers.test, fenceRefusals.test,
+  searchIndex.test (one each). `npm run verify` passes.

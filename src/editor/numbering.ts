@@ -138,7 +138,7 @@ function rightUnits(block: Node, blockPos: number, interval: number, facing: num
     if (rowKind(row) !== "line") return;
     const rest = row.attrs.kind === "cont" && line >= facing;
     if (!rest) line++;
-    out.push({ pos: blockPos + 1 + offset, node: row, kind: "line", line, blockPos, shown: interval > 0 && !rest && line % interval === 0, rest, skip: false });
+    out.push({ pos: blockPos + 1 + offset, node: row, kind: "line", line, blockPos, shown: !rest && (block.attrs.numbered ? true : interval > 0 && line % interval === 0), rest, skip: false });
   });
   return out;
 }

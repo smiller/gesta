@@ -99,3 +99,8 @@ test("a page of numbered blocks alone is marked as numbering itself, so no inter
   expect(cls("::: verse numbered\na\n:::").class).toBe("versepage ownnumbers");
   expect(cls("::: verse\na\n:::").class).toBe("versepage");
 });
+
+test("a numbered block's numbers travel only where a gutter is drawn for them: a quotation, a note, a card, never a margin-note", () => {
+  expect(marks(state("words\n\n::: note\n::: verse numbered\na\n:::\n:::", 0))).toEqual(["ln shown=1"]);
+  expect(marks(state("words\n\n::: margin-note\n::: verse numbered\na\n:::\n:::", 0))).toEqual([]);
+});

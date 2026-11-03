@@ -188,3 +188,9 @@ test("a page whose every numbered block draws its own numbers needs no interval;
   expect(ownNumbers(doc("::: verse numbered\na\n:::\n\n::: verse\nb\n:::"))).toBe(false);
   expect(ownNumbers(doc("::: verse\na\n:::"))).toBe(false);
 });
+
+test("a numbered block numbered on both sides draws every number in both columns, whatever the interval", () => {
+  const facing = doc("::: verse 179 244 numbered\nauraeque et venti | Ye Ayres and Windes\ndique omnes nemorum | ye Elves of Hills\n:::");
+  expect(lineUnits(facing, 0).map((u) => u.shown)).toEqual([true, true]);
+  expect(lineUnits(facing, 0, "right").map((u) => u.line + ":" + u.shown)).toEqual(["244:true", "245:true"]);
+});

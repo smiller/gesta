@@ -18,6 +18,10 @@ export interface LineNumbersState {
 
 export const lineNumbersKey = new PluginKey<LineNumbersState>("lineNumbers");
 
+/* the containers a numbered block below the top level is numbered in, and
+   no other (pin: lineNumbers.test › a numbered block's numbers travel only
+   where a gutter is drawn for them) */
+const GUTTERED = new Set(["blockquote", "note", "card"]);
 /* ONE decoration a row, both columns' numbers on it */
 export function rowDecorations(doc: Node, interval: number): Decoration[] {
   const rows = new Map<number, { end: number; attrs: Record<string, string> }>();
@@ -33,8 +37,9 @@ export function rowDecorations(doc: Node, interval: number): Decoration[] {
   /* a numbered block quoted, or in a note or a card, carries its numbers
      with it (pin: lineNumbers.test › a numbered block quoted in an entry) */
   doc.descendants((n, pos, parent) => {
+    if (n.isTextblock) return false;
     if (n.type !== schema.nodes.verse && n.type !== schema.nodes.prose) return true;
-    if (parent !== doc && n.attrs.numbered) {
+    if (n.attrs.numbered && parent && GUTTERED.has(parent.type.name)) {
       for (const u of blockUnits(n, pos, 1)) if (u.shown) rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs: { class: "ln shown", "data-line": String(u.line) } });
     }
     return true;

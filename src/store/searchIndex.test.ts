@@ -85,6 +85,18 @@ describe("the index kept between launches", () => {
     expect(idx.made()).toEqual([]);
     expect(idx.stale()).toEqual(["page/Gone"]);
   });
+  it("a kept text made by another parser is parsed again; an entry edited twice is kept once, as it now stands", () => {
+    const cache: Record<string, string> = { "page/A": "alpha" };
+    let flattens = 0;
+    const idx = searchIndex(cache, (md) => { flattens++; return md.toUpperCase(); }, undefined, "parser-2");
+    idx.know({ "page/A": { sig: "parser-1:" + fingerprint("alpha"), text: "OLD" } });
+    while (!idx.complete) idx.step(Infinity);
+    expect(idx.rows()[0].text).toBe("ALPHA");
+    cache["page/A"] = "alpha one"; idx.rows();
+    cache["page/A"] = "alpha two"; idx.rows();
+    expect(idx.made()).toEqual([{ k: "page/A", sig: "parser-2:" + fingerprint("alpha two"), text: "ALPHA TWO" }]);
+    expect(flattens).toBe(3);
+  });
   it("the memory keeper keeps what is saved, and drops what is dropped", async () => {
     const keep = memIndexKeeper();
     await keep.save([{ k: "page/A", sig: "1", text: "a" }, { k: "page/B", sig: "2", text: "b" }]);
