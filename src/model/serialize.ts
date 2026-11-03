@@ -219,7 +219,7 @@ function rowsMd(block: Node, word: string): string {
   const start = block.attrs.start as number, stanza = block.attrs.stanza as number | null | undefined;
   const facing = block.attrs.dual || stanza != null ? null : block.attrs.facing as number | null | undefined;
   const numbers = facing != null ? " " + start + " " + facing : start > 1 ? " " + start : "";
-  const open = (stanza != null && start === 1 ? "::: stanza " + stanza : "::: " + word + numbers) + "\n";
+  const open = (stanza != null && start === 1 ? "::: stanza " + stanza : "::: " + word + numbers + (block.attrs.numbered ? " numbered" : "")) + "\n";
   return rows.length ? open + rows.join("\n") + "\n:::" : open + ":::";
 }
 

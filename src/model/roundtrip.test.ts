@@ -234,3 +234,13 @@ test("only a plain verse block writes its right column's number: a dual-language
   expect(one({ start: 5, dual: true, facing: 9 })).toBe("::: dual-language 5\na\n:::");
   expect(one({ stanza: 2, facing: 9 })).toBe("::: stanza 2\na\n:::");
 });
+
+test("a prose block whose numbers are drawn: `numbered` after the word and any number, kept on the way back", () => {
+  const md = "::: prose numbered\nIn principio creavit Deus cælum et terram. | In the beginning God created heaven, and earth.\n:::";
+  expect(trip(md)).toBe(md);
+  expect(parseMarkdown(md).firstChild!.attrs.numbered).toBe(true);
+  const five = "::: prose 5 numbered\nAppellavitque lucem Diem. | And he called the light Day.\n:::";
+  expect(trip(five)).toBe(five);
+  expect(parseMarkdown(five).firstChild!.attrs).toMatchObject({ start: 5, numbered: true });
+  expect(parseMarkdown("::: prose 5\nA. | B.\n:::").firstChild!.attrs.numbered).toBe(false);
+});

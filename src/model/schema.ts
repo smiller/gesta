@@ -16,7 +16,7 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    back by the second: a copy pasted back keeps its layout (pin: schema.test ›
    a dual-language block draws as a verse block that says so) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
-  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false }, facing: { default: null } } : { start: { default: 1 } },
+  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false }, facing: { default: null } } : { start: { default: 1 }, numbered: { default: false } },
   /* a prose block numbers sentences, and has no skipped line (pin:
      schema.test › a skipped line number is never selected, and stands only
      in verse) */
@@ -31,7 +31,7 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
       const stanza = dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null;
       /* only a plain verse block numbers its right column apart (pin: schema.test › a verse block numbered on both sides) */
       const facing = !dual && stanza === null && dom.hasAttribute("data-facing") ? +dom.getAttribute("data-facing")! : null;
-      return stanzas ? { start, stanza, dual, facing } : { start };
+      return stanzas ? { start, stanza, dual, facing } : { start, numbered: dom.hasAttribute("data-numbered") };
     },
   }],
   toDOM: (n) => {
@@ -39,6 +39,7 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
     if (n.attrs.start > 1) attrs["data-start"] = String(n.attrs.start);
     if (n.attrs.stanza != null) attrs["data-stanza"] = String(n.attrs.stanza);
     if (n.attrs.facing != null) attrs["data-facing"] = String(n.attrs.facing);
+    if (n.attrs.numbered) attrs["data-numbered"] = "";
     return ["div", attrs, 0];
   },
 });

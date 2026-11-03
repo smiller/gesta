@@ -346,8 +346,8 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 /* the prose block pays the folio gutter like every other top-level block:
    a folio label is content, and without this it painted over the original */
 .page.foliopage > .prose { padding-left: var(--ln-gutter); }
-.page.versepage > .verse { position: relative; padding-left: var(--ln-gutter); }
-.page.versepage:has(> .verse > .vpair) > :is(h1, h2, h3), .page.foliopage > :is(h1, h2, h3) { padding-left: var(--ln-gutter); }
+.page.versepage > :is(.verse, .prose[data-numbered]) { position: relative; padding-left: var(--ln-gutter); }
+.page.versepage:has(> :is(.verse, .prose[data-numbered]) > .vpair) > :is(h1, h2, h3), .page.foliopage > :is(h1, h2, h3) { padding-left: var(--ln-gutter); }
 .page.versepage .ln::before {
   content: "";
   position: absolute;

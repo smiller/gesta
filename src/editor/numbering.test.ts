@@ -170,3 +170,13 @@ test("the right column counts as the left does: a speaker and a direction take n
   expect(kinds(md)).toBe("speaker line:1 stage line:1 line:2");
   expect(lineUnits(doc(md), 0, "right").map((u) => [u.line, u.rest])).toEqual([[10, false], [10, true], [11, false]]);
 });
+
+test("a numbered prose block's sentences are drawn as verse lines are, and its page paints the gutter; a plain one's never", () => {
+  const numbered = doc("::: prose numbered\nA. | a.\nB. | b.\nC. | c.\n:::");
+  expect(lineUnits(numbered, 1).map((u) => u.shown)).toEqual([true, true, true]);
+  expect(lineUnits(numbered, 2).map((u) => u.shown)).toEqual([false, true, false]);
+  expect(paintsLines(numbered)).toBe(true);
+  const plain = doc("::: prose\nA. | a.\nB. | b.\n:::");
+  expect(lineUnits(plain, 1).map((u) => u.shown)).toEqual([false, false]);
+  expect(paintsLines(plain)).toBe(false);
+});

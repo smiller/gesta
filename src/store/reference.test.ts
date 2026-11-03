@@ -5,7 +5,7 @@ import {
   roman, romanKey, romanWorkKey,
 } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
-import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor, directsProsimetrum } from "./headings.ts";
+import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor, directsProsimetrum, directsScripture } from "./headings.ts";
 
 test("referenceNumeral: a digit-led token or a division word is a numeral, everything else a title", () => {
   expect(referenceNumeral("19", true)).toBe("19");
@@ -241,4 +241,30 @@ test("referenceLabel: a worded range is comma-joined after the chapter, a numera
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/8", "verse 2.1-4", null, vn)).toBe("Dante, *Vita Nuova*, 8, verse 2.1-4");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "", null, vn)).toBe("Dante, *Vita Nuova*, 3");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "4", null, vn)).toBe("Dante, *Vita Nuova*, 3.4");
+});
+
+// Scripture: under the root's `scripture` directive a book is named plainly
+// and its chapter and verse follow a space, as a Bible is cited.
+const bible = journalOf({
+  "bookshelf/KJV": "# KJV\n\n::: reference\nscripture\n:::",
+  "bookshelf/KJV/Genesis": "# Genesis",
+  "bookshelf/KJV/1 Samuel": "# 1 Samuel",
+  "bookshelf/Douay-Rheims": "# Douay-Rheims\n\n::: reference\nscripture\n:::",
+  "bookshelf/Douay-Rheims/Psalms": "# Psalms",
+});
+test("the scripture directive is read off the root's page, a line of its own", () => {
+  expect(directsScripture("# KJV\n\n::: reference\nscripture\n:::")).toBe(true);
+  expect(directsScripture("# KJV\n\n::: reference\nnot scripture here\n:::")).toBe(false);
+  expect(bible.scripture("bookshelf/KJV")).toBe(true);
+  expect(bible.scripture("bookshelf/Dante")).toBe(false);
+});
+test("referenceLabel under scripture: KJV, Genesis 1.3; a range; a chapter; a book; a book whose name opens with a number", () => {
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "3", null, bible)).toBe("KJV, Genesis 1.3");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "3-5", null, bible)).toBe("KJV, Genesis 1.3-5");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "", null, bible)).toBe("KJV, Genesis 1");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis", "", null, bible)).toBe("KJV, Genesis");
+  expect(referenceLabel(NS_BOOK.key, "KJV/1 Samuel/17", "49", null, bible)).toBe("KJV, 1 Samuel 17.49");
+  expect(referenceLabel(NS_BOOK.key, "Douay-Rheims/Psalms/22", "1", null, bible)).toBe("Douay-Rheims, Psalms 22.1");
+  /* a root without the directive cites as every book does */
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "", null, vn)).toBe("Dante, *Vita Nuova*, 3");
 });

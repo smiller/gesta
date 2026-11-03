@@ -1,0 +1,71 @@
+# feat: the Bible — `scripture` references and numbered prose
+
+REVIEW CYCLES: 0
+
+## The ask (2026-11-03)
+
+"I'm interested in putting the KJV version of the Bible, possible paired
+with the Latin vulgate text, into the bookshelf." Ruled the same day, after
+the sources and four sample pages in headless Helium:
+
+- "KJV on its own. (ref KJV, Genesis 1.3)"
+- "Clementine Vulgate lined up with Douay-Rheims as a separate work. (ref
+  Douay-Rheims, Genesis 1.3)"
+- "Apocrypha in."
+- "Yes to all five": the KJV as `::: verse`, a verse a row; the Douay as
+  `::: prose` pairs with the verse numbers drawn; a `scripture` reference
+  rule; the Douay's own book names and Psalm numbers; the KJV's marginal
+  notes left out.
+
+## The rules
+
+- A root whose page carries `::: reference` / `scripture` / `:::` names its
+  books plainly and joins the chapter and verse to the book with a space:
+  "KJV, Genesis 1.3", "KJV, Genesis 1.3-5", a chapter "KJV, Genesis 1", a
+  book "KJV, Genesis", "KJV, 1 Samuel 17.49" (a book whose name opens with a
+  number is a title). Every other root cites as before.
+- `::: prose numbered` (and `::: prose 5 numbered`): the block's sentence
+  numbers are drawn in the margin at the Line numbering interval, as a verse
+  block's lines are, and its page paints the gutter. Without the word, a
+  prose block's numbers stay undrawn. A passage quoted from such a block
+  keeps the word.
+
+## Done
+
+- `src/model/grammar.ts` (`PROSE_OPEN`, `proseNumbered`), `schema.ts` (the
+  prose block's `numbered`), `parse.ts`, `serialize.ts`.
+- `src/editor/numbering.ts` (`paintsLines`, a numbered block's sentences
+  shown), `lineNumbers.ts`, `editor.css` (the gutter on a numbered prose
+  block, its page's heading padded into it).
+- `src/store/headings.ts` (`scripture`), `reference.ts`
+  (`Journal.scripture`, the plain titles and the space).
+- `src/ui/help.html`: both, in the `::: prose` item.
+- Tests: roundtrip.test (the fence word kept), numbering.test (drawn, the
+  gutter), reference.test (the directive; the labels). `npm run verify`
+  passes (MEASURED 2026-11-03).
+
+## The text (tools/out/bible, git-ignored)
+
+- eBible.org's USFM: eng-kjv (1769, with the Apocrypha: 80 books, 36,822
+  verses), latVUC (the Clementine Vulgate Project's text; 1 John 5.7 has the
+  Comma), engDRA (Challoner's revision as printed in 1899): 73 books each.
+  The VulSearch 2017 revision is inside its InstallShield installer and was
+  not read.
+- tools/rows.py parses a book into verses, headings (psalm titles, Psalm
+  119's letters, the epistles' subscriptions, the Epistle of Jeremy's title)
+  and paragraphs before the first verse (Sirach's prologue). The KJV's
+  supplied words in italics, LORD in capitals, its ¶ marks kept, its 6,959
+  marginal notes dropped; the Clementine's [ ] marks dropped.
+- tools/build.py writes `~/Desktop/gesta-bible`: the two root pages, a page
+  per book, a page per chapter; 2,851 pages, 72,633 verse rows. The KJV's
+  Rest of Esther opens at 10.4; Ecclesiasticus 1.7, printed wholly in
+  italics, is marked `⟨line⟩` so it stays a numbered verse.
+- The Clementine and the Douay differ in 14 chapters by one verse; the
+  Latin follows the Douay's numbering (`REALIGN`): seven split at a phrase,
+  Psalms 42 at two, six joined (Judith 4.5+6, Psalms 19.9+10, Ecclesiasticus
+  29.16+17, Isaias 46.11+12, 1 Thessalonians 4.11+12, 2 Thessalonians
+  2.10+11). After it, 0 chapters differ.
+- importCorpus 2,851/2,851; corpus 2,851 clean. Headless Helium: "KJV,
+  Genesis 1.3"; "Douay-Rheims, Psalms 22.1" from either column; the Douay's
+  numbers drawn every 5; Rest of Esther 10 opens at 4; Ecclesiasticus 1.7
+  numbered; Psalm 119's BETH unnumbered between 8 and 9 (MEASURED).

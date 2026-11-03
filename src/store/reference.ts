@@ -74,6 +74,8 @@ export interface Journal {
   oldEnglishVerse(ekey: string): boolean;
   /* the WORK's page carries `prosimetrum`: a chapter's prose and its poems are cited apart */
   prosimetrum(workKey: string): boolean;
+  /* the ROOT's page carries `scripture`: a book named plainly, its chapter and verse after a space */
+  scripture(rootKey: string): boolean;
 }
 
 /* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
@@ -220,11 +222,14 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   const first = unnamed ? "" : referenceAuthor(date, root);
   if (first) parts.unshift(books ? { plain: first } : { t: first });
   else if (unnamed && !parts.some((p) => p.t !== undefined)) parts.unshift({ t: journal.heading(entryKey(date, root)) || root });
-  const label = parts.map((p) => {
-    if (p.t !== undefined) return "*" + p.t + "*";
-    if (p.plain !== undefined) return p.plain;
-    return p.n + (p.after ? ": *" + p.after + "*" : "");
-  }).join(", ");
+  /* (pin: reference.test › referenceLabel under scripture) */
+  const plainTitles = books && journal.scripture(entryKey(date, root));
+  const label = parts.map((p, i) => {
+    const sep = i === 0 ? "" : plainTitles && p.n !== undefined && parts[i - 1].t !== undefined ? " " : ", ";
+    if (p.t !== undefined) return sep + (plainTitles ? p.t : "*" + p.t + "*");
+    if (p.plain !== undefined) return sep + p.plain;
+    return sep + p.n + (p.after ? ": *" + p.after + "*" : "");
+  }).join("");
   return translator ? label + " (" + translator + (facing && locates ? ", " + division + facing : "") + ")" : label;
 }
 export function mdLabel(text: string, fallback: string): string {

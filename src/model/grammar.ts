@@ -16,7 +16,10 @@ export const CARD_CLOSE = /^\s*:::\s*$/;
 export const VERSE_OPEN = /^\s*:::\s*verse(?:\s+0*[1-9]\d*(?:\s+0*[1-9]\d*)?)?\s*$/;
 export const STANZA_OPEN = /^\s*:::\s*stanza\s+0*([1-9]\d*)\s*$/;
 export const DUAL_OPEN = /^\s*:::\s*dual-language(?:\s+0*[1-9]\d*)?\s*$/;
-export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?\s*$/;
+export const PROSE_OPEN = /^\s*:::\s*prose(?:\s+0*[1-9]\d*)?(?:\s+numbered)?\s*$/;
+/* a prose block whose numbers are drawn in the margin, as verse lines' are
+   (pin: roundtrip.test › a prose block whose numbers are drawn) */
+export const proseNumbered = (line: string): boolean => PROSE_OPEN.test(line) && /\snumbered\s*$/.test(line);
 export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
 export const MARGIN_NOTE_OPEN = /^\s*:::\s*margin-note\s*$/;

@@ -121,7 +121,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
     const num = kind === "line" || kind === "sentence" ? (rest ? line : ++line) : 0;
     out.push({
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
-      shown: interval > 0 && kind === "line" && !rest && num % interval === 0, rest, skip: false,
+      shown: interval > 0 && (kind === "line" || kind === "sentence" && !!block.attrs.numbered) && !rest && num % interval === 0, rest, skip: false,
     });
   });
   return out;
@@ -155,7 +155,7 @@ export const hasFacing = (doc: Node): boolean => {
 
 export function paintsLines(doc: Node): boolean {
   let yes = false;
-  doc.forEach((block) => { if (block.type === N.verse) yes = true; });
+  doc.forEach((block) => { if (block.type === N.verse || block.type === N.prose && block.attrs.numbered) yes = true; });
   return yes;
 }
 /* a top-level prose block holding a pair; a pipe-less prose block counts

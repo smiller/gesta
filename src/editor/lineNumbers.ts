@@ -21,7 +21,7 @@ export const lineNumbersKey = new PluginKey<LineNumbersState>("lineNumbers");
 export function rowDecorations(doc: Node, interval: number): Decoration[] {
   const rows = new Map<number, { end: number; attrs: Record<string, string> }>();
   for (const u of lineUnits(doc, interval)) {
-    if (u.kind === "sentence" || u.skip) continue;
+    if (u.kind === "sentence" && !doc.nodeAt(u.blockPos)!.attrs.numbered || u.skip) continue;
     let cls = "ln";
     if (u.kind === "stage") cls += " stage";
     if (u.shown) cls += " shown";
