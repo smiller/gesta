@@ -88,3 +88,14 @@ test("a block numbered on both sides marks the right column's lines too, on the 
   ]);
   expect(marks(state("::: verse\na | b\n | c\n:::", 1))).toEqual(["ln shown=1", "ln shown=2"]);
 });
+
+test("a numbered block quoted in an entry carries its numbers, every row; a plain verse block quoted carries none", () => {
+  expect(marks(state("words\n\n> ::: prose 1 numbered\n> Sponsa. | The bride.\n> Fragrantia. | Smelling sweet.\n> :::", 5))).toEqual(["ln shown=1", "ln shown=2"]);
+  expect(marks(state("words\n\n> ::: verse 3 numbered\n> And God said.\n> :::", 0))).toEqual(["ln shown=3"]);
+  expect(marks(state("words\n\n> ::: verse 3\n> And God said.\n> :::", 1))).toEqual([]);
+});
+test("a page of numbered blocks alone is marked as numbering itself, so no interval is offered", () => {
+  const cls = (md: string) => { const s = state(md); return (lineNumbersKey.get(s)!.props.attributes as (st: EditorState) => Record<string, string>)(s); };
+  expect(cls("::: verse numbered\na\n:::").class).toBe("versepage ownnumbers");
+  expect(cls("::: verse\na\n:::").class).toBe("versepage");
+});

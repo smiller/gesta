@@ -228,7 +228,7 @@ const fixture = q.get("fixture");
 if (fixture && fixtures[fixture]) {
   /* SCRATCH: the fixture in the editor, nothing stored, nothing saved */
   const md = fixtures[fixture];
-  const gutter = (v: { dom: HTMLElement }): void => { screen.gutter = v.dom.classList.contains("versepage"); };
+  const gutter = (v: { dom: HTMLElement }): void => { screen.gutter = v.dom.classList.contains("versepage") && !v.dom.classList.contains("ownnumbers"); };
   const v = createEditor(mountEl, parseMarkdown(md), { interval: screen.interval, onChange: gutter });
   gutter(v);
   screen.masthead = { ...EMPTY_MASTHEAD, crumbs: [{ text: "fixture " + fixture, href: null, title: "" }] };
@@ -273,7 +273,7 @@ if (fixture && fixtures[fixture]) {
     pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
     onShow: (stored, ekey) => {
       dropStaleCopy();
-      screen.gutter = !!session.view?.dom.classList.contains("versepage");
+      screen.gutter = !!session.view?.dom.classList.contains("versepage") && !session.view.dom.classList.contains("ownnumbers");
       if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
       else acts.replace.check();
       if (screen.lineBar.open) acts.lineBar.reask();

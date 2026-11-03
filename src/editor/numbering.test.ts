@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
-import { lineUnits, blocksOf, blockUnits, whollyIn, drawsInk, paintsLines, countAt } from "./numbering.ts";
+import { lineUnits, blocksOf, blockUnits, whollyIn, drawsInk, paintsLines, countAt, ownNumbers } from "./numbering.ts";
 
 const doc = parseMarkdown;
 const kinds = (md: string, interval = 0): string =>
@@ -171,12 +171,20 @@ test("the right column counts as the left does: a speaker and a direction take n
   expect(lineUnits(doc(md), 0, "right").map((u) => [u.line, u.rest])).toEqual([[10, false], [10, true], [11, false]]);
 });
 
-test("a numbered prose block's sentences are drawn as verse lines are, and its page paints the gutter; a plain one's never", () => {
+test("a numbered block draws every number, whatever the interval, and its page paints the gutter; a plain prose block's never", () => {
   const numbered = doc("::: prose numbered\nA. | a.\nB. | b.\nC. | c.\n:::");
-  expect(lineUnits(numbered, 1).map((u) => u.shown)).toEqual([true, true, true]);
-  expect(lineUnits(numbered, 2).map((u) => u.shown)).toEqual([false, true, false]);
+  expect(lineUnits(numbered, 0).map((u) => u.shown)).toEqual([true, true, true]);
+  expect(lineUnits(numbered, 5).map((u) => u.shown)).toEqual([true, true, true]);
   expect(paintsLines(numbered)).toBe(true);
+  const verse = doc("::: verse numbered\n*A Psalm of David.*\nThe LORD is my shepherd.\nHe maketh me to lie down.\n:::");
+  expect(lineUnits(verse, 5).map((u) => u.kind + ":" + u.shown)).toEqual(["stage:false", "line:true", "line:true"]);
   const plain = doc("::: prose\nA. | a.\nB. | b.\n:::");
   expect(lineUnits(plain, 1).map((u) => u.shown)).toEqual([false, false]);
   expect(paintsLines(plain)).toBe(false);
+});
+test("a page whose every numbered block draws its own numbers needs no interval; one with a plain verse block does", () => {
+  expect(ownNumbers(doc("::: verse numbered\na\nb\n:::"))).toBe(true);
+  expect(ownNumbers(doc("::: prose numbered\nA. | a.\n:::"))).toBe(true);
+  expect(ownNumbers(doc("::: verse numbered\na\n:::\n\n::: verse\nb\n:::"))).toBe(false);
+  expect(ownNumbers(doc("::: verse\na\n:::"))).toBe(false);
 });

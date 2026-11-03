@@ -69,3 +69,22 @@ the sources and four sample pages in headless Helium:
   Genesis 1.3"; "Douay-Rheims, Psalms 22.1" from either column; the Douay's
   numbers drawn every 5; Rest of Esther 10 opens at 4; Ecclesiasticus 1.7
   numbered; Psalm 119's BETH unnumbered between 8 and 9 (MEASURED).
+
+## Every verse numbered, and in a quotation (asked 2026-11-03)
+
+"in scriptures, the line numbering shouldn't be optional, it should be every
+line. (Don't even show the line numbering row in the header, every line
+should be automatic.) And it should show up in references too".
+
+- `numbered` now means every number drawn, whatever the interval, and on a
+  verse fence too (`::: verse numbered`, `::: verse 4 numbered`).
+- `rowDecorations` draws a numbered block's numbers where it stands quoted,
+  in a note or in a card; `editor.css` gives such a block a gutter of its own.
+- `ownNumbers`: a page whose every top-level numbering block is numbered is
+  marked `ownnumbers`; main.ts offers no Line numbering row there.
+- The KJV's 1,362 chapter pages rebuilt as `::: verse numbered`
+  (~/Desktop/gesta-bible-numbered); the backup's copies were unedited since
+  the import (2,849 of 2,851 pages as shipped; the two root pages edited).
+- Headless Helium at interval 0: KJV Genesis 1 and the Douay's Canticle 1
+  draw 1, 2, 3…; no Line numbering row; Canticle 1.1-2 quoted into a journal
+  day draws 1 and 2 (MEASURED 2026-11-03).

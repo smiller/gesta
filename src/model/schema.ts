@@ -16,7 +16,7 @@ export const MARK_ORDER = ["link", "strong", "em", "strike", "underline", "code"
    back by the second: a copy pasted back keeps its layout (pin: schema.test ›
    a dual-language block draws as a verse block that says so) */
 const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
-  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false }, facing: { default: null } } : { start: { default: 1 }, numbered: { default: false } },
+  attrs: stanzas ? { start: { default: 1 }, stanza: { default: null }, dual: { default: false }, facing: { default: null }, numbered: { default: false } } : { start: { default: 1 }, numbered: { default: false } },
   /* a prose block numbers sentences, and has no skipped line (pin:
      schema.test › a skipped line number is never selected, and stands only
      in verse) */
@@ -31,7 +31,8 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
       const stanza = dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null;
       /* only a plain verse block numbers its right column apart (pin: schema.test › a verse block numbered on both sides) */
       const facing = !dual && stanza === null && dom.hasAttribute("data-facing") ? +dom.getAttribute("data-facing")! : null;
-      return stanzas ? { start, stanza, dual, facing } : { start, numbered: dom.hasAttribute("data-numbered") };
+      const numbered = dom.hasAttribute("data-numbered");
+      return stanzas ? { start, stanza, dual, facing, numbered } : { start, numbered };
     },
   }],
   toDOM: (n) => {

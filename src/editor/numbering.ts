@@ -121,7 +121,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
     const num = kind === "line" || kind === "sentence" ? (rest ? line : ++line) : 0;
     out.push({
       pos: blockPos + 1 + offset, node: row, kind, line: num, blockPos,
-      shown: interval > 0 && (kind === "line" || kind === "sentence" && !!block.attrs.numbered) && !rest && num % interval === 0, rest, skip: false,
+      shown: !rest && (block.attrs.numbered ? kind === "line" || kind === "sentence" : interval > 0 && kind === "line" && num % interval === 0), rest, skip: false,
     });
   });
   return out;
@@ -157,6 +157,18 @@ export function paintsLines(doc: Node): boolean {
   let yes = false;
   doc.forEach((block) => { if (block.type === N.verse || block.type === N.prose && block.attrs.numbered) yes = true; });
   return yes;
+}
+/* every top-level block that numbers draws all its own numbers: the page
+   has no interval to offer (pin: numbering.test › a page whose every
+   numbered block draws its own numbers) */
+export function ownNumbers(doc: Node): boolean {
+  let own = false, plain = false;
+  doc.forEach((block) => {
+    if (block.type !== N.verse && block.type !== N.prose) return;
+    if (block.attrs.numbered) own = true;
+    else if (block.type === N.verse) plain = true;
+  });
+  return own && !plain;
 }
 /* a top-level prose block holding a pair; a pipe-less prose block counts
    nothing. Without it a book's own paired prose was drawn as quoted matter,

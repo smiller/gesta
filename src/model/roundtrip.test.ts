@@ -224,8 +224,8 @@ test("the stanza travels in the DOM: toDOM writes it and parseDOM reads it back"
   expect(verse.spec.toDOM!(verse.create({ stanza: 2 }))).toEqual(["div", { class: "verse", "data-stanza": "2" }, 0]);
   expect(verse.spec.toDOM!(verse.create())).toEqual(["div", { class: "verse" }, 0]);
   const rule = verse.spec.parseDOM![0] as { getAttrs: (d: HTMLElement) => Record<string, unknown> };
-  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2, dual: false, facing: null });
-  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null, dual: false, facing: null });
+  expect(rule.getAttrs(dom({ "data-stanza": "2" }))).toEqual({ start: 1, stanza: 2, dual: false, facing: null, numbered: false });
+  expect(rule.getAttrs(dom({}))).toEqual({ start: 1, stanza: null, dual: false, facing: null, numbered: false });
   expect(schema.nodes.prose.spec.attrs).not.toHaveProperty("stanza");
 });
 test("only a plain verse block writes its right column's number: a dual-language block or a stanza carrying one is written as itself", () => {
@@ -243,4 +243,12 @@ test("a prose block whose numbers are drawn: `numbered` after the word and any n
   expect(trip(five)).toBe(five);
   expect(parseMarkdown(five).firstChild!.attrs).toMatchObject({ start: 5, numbered: true });
   expect(parseMarkdown("::: prose 5\nA. | B.\n:::").firstChild!.attrs.numbered).toBe(false);
+});
+
+test("a verse block whose numbers are always drawn: `numbered` after the word and any number, kept on the way back", () => {
+  for (const md of ["::: verse numbered\nThe LORD is my shepherd; I shall not want.\n:::", "::: verse 4 numbered\nAnd the king held out.\n:::"]) {
+    expect(trip(md)).toBe(md);
+    expect(parseMarkdown(md).firstChild!.attrs.numbered).toBe(true);
+  }
+  expect(parseMarkdown("::: verse 4\na\n:::").firstChild!.attrs.numbered).toBe(false);
 });

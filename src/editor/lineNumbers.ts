@@ -7,7 +7,8 @@
 import { Plugin, PluginKey, type Command } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
-import { lineUnits, paintsLines, countsSentences, hasFacing } from "./numbering.ts";
+import { schema } from "../model/schema.ts";
+import { lineUnits, blockUnits, paintsLines, countsSentences, hasFacing, ownNumbers } from "./numbering.ts";
 
 export interface LineNumbersState {
   /* every nth line carries a drawn number; 0 draws none */
@@ -29,6 +30,15 @@ export function rowDecorations(doc: Node, interval: number): Decoration[] {
     if (u.line) attrs["data-line"] = String(u.line);
     rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs });
   }
+  /* a numbered block quoted, or in a note or a card, carries its numbers
+     with it (pin: lineNumbers.test › a numbered block quoted in an entry) */
+  doc.descendants((n, pos, parent) => {
+    if (n.type !== schema.nodes.verse && n.type !== schema.nodes.prose) return true;
+    if (parent !== doc && n.attrs.numbered) {
+      for (const u of blockUnits(n, pos, 1)) if (u.shown) rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs: { class: "ln shown", "data-line": String(u.line) } });
+    }
+    return true;
+  });
   if (!hasFacing(doc)) return [...rows].map(([pos, r]) => Decoration.node(pos, r.end, r.attrs));
   for (const u of lineUnits(doc, interval, "right")) {
     const row = rows.get(u.pos) ?? { end: u.pos + u.node.nodeSize, attrs: { class: "" } };
@@ -57,7 +67,7 @@ export function lineNumbers(interval: number): Plugin<LineNumbersState> {
     props: {
       decorations: (state) => lineNumbersKey.getState(state)!.decorations,
       attributes: (state): Record<string, string> => {
-        const cls = [paintsLines(state.doc) ? "versepage" : "", countsSentences(state.doc) ? "prosepage" : ""].filter(Boolean).join(" ");
+        const cls = [paintsLines(state.doc) ? "versepage" : "", ownNumbers(state.doc) ? "ownnumbers" : "", countsSentences(state.doc) ? "prosepage" : ""].filter(Boolean).join(" ");
         return cls ? { class: cls } : {};
       },
     },

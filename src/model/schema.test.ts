@@ -20,17 +20,17 @@ test("a dual-language block draws as a verse block that says so, and reads back 
   const v = schema.nodes.verse.create({ start: 568, dual: true }, schema.nodes.line.create(null, schema.text("Est nemus")));
   expect(schema.nodes.verse.spec.toDOM!(v)).toEqual(["div", { class: "verse dual-language", "data-start": "568" }, 0]);
   const getAttrs = rule("verse").getAttrs!;
-  expect(getAttrs(el({ "data-start": "568" }, "verse dual-language"))).toEqual({ start: 568, stanza: null, dual: true, facing: null });
-  expect(getAttrs(el({}, "verse"))).toEqual({ start: 1, stanza: null, dual: false, facing: null });
+  expect(getAttrs(el({ "data-start": "568" }, "verse dual-language"))).toEqual({ start: 568, stanza: null, dual: true, facing: null, numbered: false });
+  expect(getAttrs(el({}, "verse"))).toEqual({ start: 1, stanza: null, dual: false, facing: null, numbered: false });
 });
 
 test("a verse block numbered on both sides draws its right column's first line, and reads it back", () => {
   const v = schema.nodes.verse.create({ start: 179, facing: 244 }, schema.nodes.line.create(null, schema.text("Tres")));
   expect(schema.nodes.verse.spec.toDOM!(v)).toEqual(["div", { class: "verse", "data-start": "179", "data-facing": "244" }, 0]);
-  expect(rule("verse").getAttrs!(el({ "data-start": "179", "data-facing": "244" }, "verse"))).toEqual({ start: 179, stanza: null, dual: false, facing: 244 });
+  expect(rule("verse").getAttrs!(el({ "data-start": "179", "data-facing": "244" }, "verse"))).toEqual({ start: 179, stanza: null, dual: false, facing: 244, numbered: false });
   /* only a plain verse block has a right column numbered apart */
-  expect(rule("verse").getAttrs!(el({ "data-start": "5", "data-facing": "9" }, "verse dual-language"))).toEqual({ start: 5, stanza: null, dual: true, facing: null });
-  expect(rule("verse").getAttrs!(el({ "data-stanza": "2", "data-facing": "9" }, "verse"))).toEqual({ start: 1, stanza: 2, dual: false, facing: null });
+  expect(rule("verse").getAttrs!(el({ "data-start": "5", "data-facing": "9" }, "verse dual-language"))).toEqual({ start: 5, stanza: null, dual: true, facing: null, numbered: false });
+  expect(rule("verse").getAttrs!(el({ "data-stanza": "2", "data-facing": "9" }, "verse"))).toEqual({ start: 1, stanza: 2, dual: false, facing: null, numbered: false });
 });
 
 test("a card is read back only from the editor's own copy, which carries data-card", () => {
