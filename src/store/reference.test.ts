@@ -5,7 +5,7 @@ import {
   roman, romanKey, romanWorkKey,
 } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
-import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor, directsProsimetrum, directsScripture } from "./headings.ts";
+import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor, directsProsimetrum, directsScripture, directsPartsInRoman } from "./headings.ts";
 
 test("referenceNumeral: a digit-led token or a division word is a numeral, everything else a title", () => {
   expect(referenceNumeral("19", true)).toBe("19");
@@ -267,4 +267,22 @@ test("referenceLabel under scripture: KJV, Genesis 1.3; a range; a chapter; a bo
   expect(referenceLabel(NS_BOOK.key, "Douay-Rheims/Psalms/22", "1", null, bible)).toBe("Douay-Rheims, Psalms 22.1");
   /* a root without the directive cites as every book does */
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "", null, vn)).toBe("Dante, *Vita Nuova*, 3");
+});
+
+// Chaucer: under the work's `parts in roman` directive a tale is named in
+// roman after the work's italic title.
+const ct = journalOf({
+  "bookshelf/Chaucer, Geoffrey/Canterbury Tales": "# Canterbury Tales\n\n::: reference\nparts in roman\n:::",
+  "bookshelf/Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale": "# The Knight’s Tale",
+  "bookshelf/Chaucer, Geoffrey/Troilus and Criseyde": "# Troilus and Criseyde",
+});
+test("the parts-in-roman directive is read off the work's page, a line of its own", () => {
+  expect(directsPartsInRoman("# W\n\n::: reference\nparts in roman\n:::")).toBe(true);
+  expect(directsPartsInRoman("# W\n\n::: reference\nnot parts in roman here\n:::")).toBe(false);
+  expect(ct.partsInRoman("bookshelf/Chaucer, Geoffrey/Canterbury Tales")).toBe(true);
+});
+test("referenceLabel under parts in roman: Chaucer, *Canterbury Tales*, The Knight's Tale, 859-62; a work without it as before", () => {
+  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", "859-62", null, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale, 859-62");
+  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", "", null, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale");
+  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Troilus and Criseyde/1", "1-7", null, ct)).toBe("Chaucer, *Troilus and Criseyde*, 1.1-7");
 });

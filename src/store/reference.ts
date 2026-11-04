@@ -76,6 +76,8 @@ export interface Journal {
   prosimetrum(workKey: string): boolean;
   /* the ROOT's page carries `scripture`: a book named plainly, its chapter and verse after a space */
   scripture(rootKey: string): boolean;
+  /* the WORK's page carries `parts in roman`: its tales and parts named in roman after its italic title */
+  partsInRoman(workKey: string): boolean;
 }
 
 /* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
@@ -188,6 +190,11 @@ export interface FolioRange { from: string; to: string }
 export function referenceLabel(date: string, tag: string | null, range: string, folio: FolioRange | null, journal: Journal, facing = ""): string {
   const root = (tag || "").split("/")[0];
   let parts = referenceParts(date, tag, journal);
+  /* (pin: reference.test › referenceLabel under parts in roman) */
+  const segs = (tag || "").split("/");
+  if (titlesRoots(date) && segs.length >= 3 && journal.partsInRoman(entryKey(date, segs[0] + "/" + segs[1]))) {
+    parts = parts.map((p, i) => (i > 0 && p.t !== undefined && !p.translator ? { plain: p.t } : p));
+  }
   /* read before the last title drops the work that names it (pin: reference.test › referenceLabel: a work headed as given with a translation) */
   const translator = parts.find((p) => p.translator)?.translator;
   /* a page whose heading names no translation is the translator's own, so
