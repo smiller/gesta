@@ -31,14 +31,17 @@ export function fenceRefusals(doc: Node): FenceRefusal[] {
 export function fenceLineReason(l: string): string | null {
   const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
   if (!m || opensFence(l)) return null;
-  const tok = m[1].match(/^(verse|prose|dual-language)\s+(.+)$/);
+  const raw = m[1].match(/^(verse|prose|dual-language)\s+(.+)$/);
+  const word = /\bnumbered\b/.test(m[1]);
+  /* the numbers alone: `numbered` read on either side of them is never part of one */
+  const tok = raw && [raw[0], raw[1], raw[2].replace(/^numbered\s+|\s+numbered$/g, "")];
+  const before = !!raw && /^numbered\s+[1-9]\d*$/.test(raw[2]) && raw[1] !== "dual-language";
   const tail = m[1].match(/^(note|margin-note|reference|card-[\w-]+)\s+\S/);
   const count = m[1].match(/^grid\s+(.+)$/);
   const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
   const two = tok && tok[2].match(/^(\d+)\s+(\d+)$/);
-  const word = /\bnumbered\b/.test(m[1]);
   return word && /^(dual-language|stanza)\b/.test(m[1]) ? m[1].split(/\s/)[0] + " takes no numbered: the word is verse's and prose's"
-    : word && tok && /^numbered\s+\d/.test(tok[2]) ? "numbered goes after the number, like ::: " + tok[1] + " " + tok[2].replace(/^numbered\s+/, "") + " numbered"
+    : before ? "numbered goes after the number, like ::: " + raw![1] + " " + tok![2] + " numbered"
     : two && tok[1] !== "verse" ? tok[1] + " takes one number; a second, for the right column, is verse's alone"
     : two && +two[1] > 0 ? two[2] + " is not a starting line for the right column"
     : two ? two[1] + " is not a starting line"

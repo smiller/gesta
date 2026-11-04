@@ -25,7 +25,9 @@ export function memIndexKeeper(): IndexKeeper {
 /* rows a page: one read or write of the whole library held the page for a
    long task; between pages the page paints */
 const PAGE = 500;
-const pause = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+/* none in a hidden window, whose timers are throttled to a second or more:
+   the write as it goes has to land before the window does */
+const pause = (): Promise<void> => typeof document !== "undefined" && document.visibilityState === "hidden" ? Promise.resolve() : new Promise((r) => setTimeout(r, 0));
 export function dexieIndexKeeper(dbName: string): IndexKeeper {
   const db = new Dexie(dbName);
   db.version(1).stores({ texts: "k" });

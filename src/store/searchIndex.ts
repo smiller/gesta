@@ -67,7 +67,7 @@ export interface SearchIndex {
    (pin: searchIndex.test › a kept text made by another parser) */
 export function searchIndex(cache: Record<string, string>, flatten: (md: string) => string, now: () => number = () => performance.now(), parser = ""): SearchIndex {
   const memo: Record<string, { md: string; text: string; lower: string }> = Object.create(null);
-  let known: Known = Object.create(null);
+  let known: Known = Object.create(null), keptKeys = new Set<string>();
   const parsed = new Map<string, KeptRow>();
   let order: string[] | null = null, at = 0;
   const entry = (key: string): { text: string; lower: string } | null => {
@@ -107,12 +107,14 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     step(deadlineMs) {
       if (!order) { order = currentOrder(); at = 0; }
       while (at < order.length && now() < deadlineMs) { entry(order[at]); at++; }
+      /* built: the kept texts are in the memo or no longer wanted; only their keys stay */
+      if (at >= order.length) known = Object.create(null);
       return { done: at, total: order.length };
     },
     get complete() { return !!order && at >= order.length; },
-    know(k) { known = k; },
+    know(k) { known = k; keptKeys = new Set(Object.keys(k)); },
     made() { const out = [...parsed.values()]; parsed.clear(); return out; },
-    stale() { return Object.keys(known).filter((k) => !(k in cache)); },
+    stale() { const out = [...keptKeys].filter((k) => !(k in cache)); for (const k of out) keptKeys.delete(k); return out; },
     rows() {
       const out: IndexRow[] = [];
       for (const key of currentOrder()) {

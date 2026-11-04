@@ -44,3 +44,11 @@ test("a misplaced or unsupported `numbered` is named as such", () => {
   expect(why("::: verse numbered 5\na\n:::")).toEqual(["numbered goes after the number, like ::: verse 5 numbered"]);
   expect(why("::: stanza 2 numbered\na\n:::")).toEqual(["stanza takes no numbered: the word is verse's and prose's"]);
 });
+
+test("`numbered` after a bad number leaves the number's own reason, and the word is never read as part of it", () => {
+  const why = (md: string) => fenceRefusals(parseMarkdown(md)).map((r) => r.reason);
+  expect(why("::: verse 179 0 numbered\na | b\n:::")).toEqual(["0 is not a starting line for the right column"]);
+  expect(why("::: prose 5 7 numbered\na | b\n:::")).toEqual(["prose takes one number; a second, for the right column, is verse's alone"]);
+  expect(why("::: verse 0 numbered\na\n:::")).toEqual(["0 is not a starting line"]);
+  expect(why("::: verse numbered 0\na\n:::")).toEqual(["0 is not a starting line"]);
+});

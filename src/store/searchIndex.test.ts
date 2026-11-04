@@ -84,6 +84,7 @@ describe("the index kept between launches", () => {
     expect(idx.made()).toEqual([{ k: "page/B", sig: fingerprint("beta changed"), text: "BETA CHANGED" }, { k: "page/C", sig: fingerprint("gamma"), text: "GAMMA" }]);
     expect(idx.made()).toEqual([]);
     expect(idx.stale()).toEqual(["page/Gone"]);
+    expect(idx.stale()).toEqual([]);
   });
   it("a kept text made by another parser is parsed again; an entry edited twice is kept once, as it now stands", () => {
     const cache: Record<string, string> = { "page/A": "alpha" };

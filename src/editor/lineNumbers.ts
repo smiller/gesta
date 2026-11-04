@@ -37,10 +37,16 @@ export function rowDecorations(doc: Node, interval: number): Decoration[] {
   /* a numbered block quoted, or in a note or a card, carries its numbers
      with it (pin: lineNumbers.test › a numbered block quoted in an entry) */
   doc.descendants((n, pos, parent) => {
-    if (n.isTextblock) return false;
+    if (n.isTextblock || n.type === schema.nodes.margin_note) return false;
     if (n.type !== schema.nodes.verse && n.type !== schema.nodes.prose) return true;
     if (n.attrs.numbered && parent && GUTTERED.has(parent.type.name)) {
       for (const u of blockUnits(n, pos, 1)) if (u.shown) rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs: { class: "ln shown", "data-line": String(u.line) } });
+      if (n.attrs.facing != null) for (const u of blockUnits(n, pos, 1, "right")) {
+        const row = rows.get(u.pos) ?? { end: u.pos + u.node.nodeSize, attrs: { class: "" } };
+        row.attrs.class = (row.attrs.class + " rn rshown").trim();
+        row.attrs["data-facing"] = String(u.line);
+        rows.set(u.pos, row);
+      }
     }
     return true;
   });

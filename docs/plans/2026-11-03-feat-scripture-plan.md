@@ -160,3 +160,26 @@ Fixed on the reader's word ("let's review, and after that republish").
     `numbered`.
 - Tests: numbering.test, lineNumbers.test, fenceRefusals.test,
   searchIndex.test (one each). `npm run verify` passes.
+
+## Confirmation pass (2026-11-03)
+
+One `/code-review` at high over 124a0fe, asked ("and a review is fine").
+115,746 tokens (the run's own count). Ten findings, all fixed:
+
+- fenceRefusals reads the numbers with `numbered` set aside on either side
+  (`::: verse 179 0 numbered`: "0 is not a starting line for the right
+  column"); "goes after the number" only where the number is good.
+- The kept texts let go once the build completes, their keys alone kept;
+  `stale()` reports a key once; `keepIndex` writes nothing when there is
+  nothing new.
+- `__PARSER__`: the files parse.ts and flatten.ts import, comments out, with
+  the pinned markdown-it and prosemirror-model versions.
+- A quoted numbered facing block numbers its right column; a margin-note's
+  descendants are never numbered; the stylesheet's containers pinned by a
+  test against GUTTERED.
+- A throw in the build ends it and says so (the next search starts again);
+  the kept read's failure is caught whole.
+- The store's pages pause only in a visible window.
+- The vite.config comment speaks of its own hash.
+- The reader's first search: 7.6 s with nothing kept, 1.3 s after a
+  relaunch (MEASURED). `npm run verify` passes.

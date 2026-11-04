@@ -336,7 +336,9 @@ if (fixture && fixtures[fixture]) {
   const keeper = dexieIndexKeeper(READER ? READER_DB + ".index" : NS + "index");
   let knownRead: Promise<void> | null = null;
   const keepIndex = (): void => {
-    keeper.save(index.made()).then(() => keeper.drop(index.stale())).catch((err: unknown) => console.error("the search index could not be kept", err));
+    const made = index.made(), stale = index.stale();
+    if (!made.length && !stale.length) return;
+    keeper.save(made).then(() => keeper.drop(stale)).catch((err: unknown) => console.error("the search index could not be kept", err));
   };
   /* texts parsed after the build, an edited entry's, kept as the window goes */
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && index.complete) keepIndex(); });
@@ -351,7 +353,11 @@ if (fixture && fixtures[fixture]) {
     if (building) return;
     building = true;
     const run = (): void => {
-      const { done, total } = index.step(performance.now() + (waiting.size ? WAITED_MS : CHUNK_MS));
+      /* a throw ends this build and says so; the next search starts another */
+      let step: { done: number; total: number };
+      try { step = index.step(performance.now() + (waiting.size ? WAITED_MS : CHUNK_MS)); }
+      catch (err) { building = false; waiting.clear(); console.error("the search index could not be built", err); indexing?.fail(failMsg("couldn't build the search index", err), errText(err)); indexing = null; return; }
+      const { done, total } = step;
       if (indexing) indexing.step(done, total);
       if (index.complete) { building = false; indexing?.ok("indexed " + total + " entries", 1400); indexing = null; keepIndex(); answer(); return; }
       const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
@@ -359,7 +365,7 @@ if (fixture && fixtures[fixture]) {
       else if (idle) idle(run);
       else setTimeout(run, 50);
     };
-    knownRead ??= keeper.load().then((k) => index.know(k), (err: unknown) => console.error("the kept search index could not be read", err));
+    knownRead ??= keeper.load().then((k) => index.know(k)).catch((err: unknown) => console.error("the kept search index could not be read", err));
     knownRead.then(run);
   };
   let searchTimer: ReturnType<typeof setTimeout> | null = null;

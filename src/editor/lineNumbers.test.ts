@@ -104,3 +104,15 @@ test("a numbered block's numbers travel only where a gutter is drawn for them: a
   expect(marks(state("words\n\n::: note\n::: verse numbered\na\n:::\n:::", 0))).toEqual(["ln shown=1"]);
   expect(marks(state("words\n\n::: margin-note\n::: verse numbered\na\n:::\n:::", 0))).toEqual([]);
 });
+
+test("a numbered facing block quoted numbers both columns; one in a quotation inside a margin-note numbers neither", () => {
+  const facing = state("words\n\n> ::: verse 179 244 numbered\n> auraeque et venti | Ye Ayres and Windes\n> :::", 0);
+  const attrs = lineNumbersKey.getState(facing)!.decorations.find().map((d) => (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs);
+  expect(attrs.map((a) => a.class + " " + a["data-line"] + " " + a["data-facing"])).toEqual(["ln shown rn rshown 179 244"]);
+  expect(marks(state("words\n\n::: margin-note\n> ::: verse numbered\n> a\n> :::\n:::", 0))).toEqual([]);
+});
+test("the containers numbered in are the ones the stylesheet gives a gutter: a quotation, a note, a card", async () => {
+  const { readFileSync } = await import("node:fs");
+  const css = readFileSync(new URL("./editor.css", import.meta.url), "utf8");
+  expect(css).toContain('.page :is(blockquote, div.note, div[class^="card-"]) > :is(.verse, .prose)[data-numbered] {');
+});
