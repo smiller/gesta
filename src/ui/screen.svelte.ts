@@ -40,7 +40,7 @@ export interface Screen {
   bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed" };
-  lineBar: { open: boolean; kind: AskKind; line: string; page: string };
+  lineBar: { open: boolean; kind: AskKind; line: string; page: string; lineLabel: string };
   /* ⌃⌘E's bar: `count` the line after Find, `any` whether there is a match to replace */
   replace: { open: boolean; find: string; with: string; count: string; any: boolean };
   copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
@@ -63,7 +63,7 @@ export function screenState(interval: number): Screen {
     goto: { open: false, levels: [] },
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, canRefAll: false, tagTitle: "" },
     copy: { show: false, top: 0, right: 0, minWidth: 0, title: "", label: "copy" },
-    lineBar: { open: false, kind: "none", line: "", page: "" },
+    lineBar: { open: false, kind: "none", line: "", page: "", lineLabel: "Line" },
     replace: { open: false, find: "", with: "", count: "", any: false },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },

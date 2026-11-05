@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
+import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
@@ -148,5 +148,30 @@ describe("a page of blocks numbered on both sides", () => {
     expect(lineHits(d, 2).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["its second line"]);
     expect(lineHits(d, 245).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["So softly"]);
     expect(lineHits(d, 180).hits).toEqual([]);
+  });
+});
+
+describe("a work by book, chapter, and paragraph: the Line box asks for a paragraph", () => {
+  const doc = parseMarkdown("# Book 2\n\n## Chapter 40\n\n::: prose 60\nFirst one. | E one.\nFirst two. | E two.\n::: note\n[1] A note.\n:::\n\nSecond one. | F one.\n:::\n\n## Chapter 41\n\n::: prose 61\nThird one. | G one.\n\nFourth one. | H one.\n:::");
+  const at = (n: number): string => { const h = paragraphHit(doc, n); return typeof h === "string" ? h : doc.nodeAt(h.pos)!.textContent; };
+  it("lands on the first sentence of the paragraph, the first place it stands where a chapter turns inside it", () => {
+    expect(at(60)).toContain("First one.");
+    expect(at(61)).toContain("Second one.");
+    expect(at(62)).toContain("Fourth one.");
+  });
+  it("names the paragraphs there are", () => {
+    expect(at(99)).toBe("no paragraph 99 — the paragraphs here are 60–62");
+    expect(at(0)).toBe("no paragraph 0 — the paragraphs here are 60–62");
+    expect(paragraphHit(parseMarkdown("# Book 2\n\nLoose."), 1)).toBe("no numbered paragraphs here");
+  });
+});
+
+describe("the words of a box that asks for a paragraph", () => {
+  it("say paragraph where they would say line, and page where they say page", () => {
+    expect(askCheck("", "line", "paragraph")).toBe("type a paragraph number");
+    expect(askCheck("61x", "line", "paragraph")).toBe("61x is not a paragraph number");
+    expect(askCheck("", "page", "paragraph")).toBe("type a page number");
+    expect(askCheck("61", "line", "paragraph")).toBe(null);
+    expect(askCheck("", "line")).toBe("type a line number");
   });
 });

@@ -244,7 +244,7 @@ test("referenceLabel: a worded range is comma-joined after the chapter, a numera
 });
 
 // De Doctrina Christiana: all prose, so under `by book, chapter, and paragraph` a reference names
-// the paragraph and no part of the chapter.
+// the book, the chapter and the paragraph, and no part of a chapter.
 const ddc = journalOf({
   "bookshelf/Augustine/De Doctrina Christiana": "# De Doctrina Christiana\n\n::: reference\nby book, chapter, and paragraph\n:::",
   "bookshelf/Augustine/De Doctrina Christiana/Preface": "# Preface",
@@ -261,6 +261,22 @@ test("referenceLabel by book, chapter, and paragraph: the book named as a book, 
   expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Book 2", "chapter 40 (para 60)", null, ddc)).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
   expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Book 2", "", null, ddc)).toBe("Augustine, *De Doctrina Christiana*, book 2");
   expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Preface", "paras 1-2", null, ddc)).toBe("Augustine, *De Doctrina Christiana*, *Preface*, paras 1-2");
+});
+
+const works = journalOf({
+  "bookshelf/A/W": "# W\n\n::: reference\nby book, chapter, and paragraph\n:::",
+  "bookshelf/A/Y (with Shaw’s translation)": "# Y (with Shaw’s translation)\n\n::: reference\nby book, chapter, and paragraph\n:::",
+  "bookshelf/Pius 2/W": "# W\n\n::: reference\nby book, chapter, and paragraph\n:::",
+});
+test("referenceLabel by book, chapter, and paragraph over other pages: the division's own word, a title in the key left out, the author never taken for it", () => {
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2. The Art of Signs", "chapter 4 (para 6)", null, works)).toBe("A, *W*, book 2, chapter 4 (para 6)");
+  expect(referenceLabel(NS_BOOK.key, "Pius 2/W/Book 2", "chapter 1 (para 1)", null, works)).toBe("Pius 2, *W*, book 2, chapter 1 (para 1)");
+  expect(referenceLabel(NS_BOOK.key, "A/W/2", "chapter 40 (para 60)", null, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2/Chapter 40", "para 60", null, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
+});
+test("referenceLabel by book, chapter, and paragraph: a numbered book stands and the leaf drops; a translator's locator keeps its book", () => {
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2", "", { from: "14", to: "14" }, works)).toBe("A, *W*, book 2");
+  expect(referenceLabel(NS_BOOK.key, "A/Y (with Shaw’s translation)/Book 2", "5", null, works, "7")).toBe("A, *Y*, book 2.5 (Shaw, 2.7)");
 });
 
 // Scripture: under the root's `scripture` directive a book is named plainly

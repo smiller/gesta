@@ -142,6 +142,18 @@ function rightUnits(block: Node, blockPos: number, interval: number, facing: num
   });
   return out;
 }
+/* a prose block's paragraphs are its runs of sentences between breaks, the
+   first numbered as the fence is (pin: reference.test › a prosimetrum refers to
+   the prose by Barbi's paragraph) */
+export function paragraphAt(block: Node, blockPos: number, rowPos: number): number {
+  let para = block.attrs.start as number, inked = false, found = para;
+  block.forEach((row, offset) => {
+    if (row.type === N.gap) { if (inked) para++; inked = false; return; }
+    if (blockPos + 1 + offset === rowPos) found = para;
+    if (row.type === N.pair) inked = true;
+  });
+  return found;
+}
 /* a block's fence numbers for a passage taken from a row: both columns' when it has two */
 export function fenceAt(block: Node, blockPos: number, rowPos: number): { start: number; facing?: number } {
   const start = countAt(block, blockPos, rowPos);
@@ -199,7 +211,7 @@ export function blocksOf(units: Unit[]): Unit[][] {
    cut opens on (pin: paste.test › verse lines copied from inside a block
    keep their numbers), and a numbered list from the item it opens on
    (pin: paste.test › list items copied from the middle keep their own numbers) */
-export function renumbered(doc: Node, at: number, cut: Node): Node {
+export function renumbered(doc: Node, at: number, cut: Node, paragraphs = false): Node {
   const $at = doc.resolve(at);
   const stamp = (node: Node, d: number): Node => {
     if (d > $at.depth || !node.firstChild) return node;
@@ -208,7 +220,8 @@ export function renumbered(doc: Node, at: number, cut: Node): Node {
     let out = child;
     if ((anc.type === N.verse || anc.type === N.prose) && child.type === anc.type) {
       const rowPos = $at.depth > d ? $at.before(d + 1) : at;
-      out = child.type.create({ ...child.attrs, ...fenceAt(anc, $at.before(d), rowPos) }, child.content);
+      const fence = paragraphs && anc.type === N.prose ? { start: paragraphAt(anc, $at.before(d), rowPos) } : fenceAt(anc, $at.before(d), rowPos);
+      out = child.type.create({ ...child.attrs, ...fence }, child.content);
     } else if (anc.type === N.ordered_list && child.type === anc.type && $at.depth > d) {
       out = child.type.create({ ...child.attrs, start: itemNumbers(anc)[$at.index(d)] }, child.content);
     }

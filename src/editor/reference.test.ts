@@ -658,12 +658,12 @@ const ddcLabel = (needle: string, end?: string): string | false => {
   const p = referencePayload(state(DDC2, a, b), "bookshelf", "Augustine/De Doctrina Christiana/Book 2", ddcJournal);
   return "label" in p && p.label;
 };
-test("a work by book, chapter, and paragraph refers to its prose by the paragraph alone, either column, and to its lines as any book does", () => {
+test("a work by book, chapter, and paragraph refers to its prose by chapter and paragraph, either column, and to its lines as a dotted number", () => {
   expect(ddcLabel("Philosophi")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
   expect(ddcLabel("Egyptians")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
   expect(ddcLabel("Philosophi", "aliud")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (paras 60-61)");
   expect(ddcLabel("Meminerint")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 41 (para 62)");
-  expect(ddcLabel("Canto")).toBe("Augustine, *De Doctrina Christiana*, book 2, 1");
+  expect(ddcLabel("Canto")).toBe("Augustine, *De Doctrina Christiana*, book 2.1");
 });
 test("a work by book, chapter, and paragraph quotes a sentence alone under its paragraph's number", () => {
   const [a, b] = span(DDC2, "Aegyptii");
@@ -679,6 +679,39 @@ test("a work by book, chapter, and paragraph refers to a page with no chapter he
   const [c, d] = span(turning, "Adumbrata");
   const q = referencePayload(state(turning, c, d), "bookshelf", "Augustine/De Doctrina Christiana/Book 2", ddcJournal);
   expect("label" in q && q.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 26 (para 40)");
+});
+const DDC_NOTES = parseMarkdown("# Book 2\n\n## Chapter 40\n\nA loose paragraph.\n\n::: prose 60\nFirst one. | E one.\nFirst two. | E two.\nFirst three. | E three.\n::: note\n[1] A note of Shaw's.\n:::\n\nSecond one. | F one.\n:::\n\n::: note\nA note beside the block.\n:::\n\n## Concerning signs\n\n::: prose 62\nThird one. | G one.\n:::\n\n## Chapter XL\n\n::: prose 63\nFourth one. | H one.\n:::");
+const ddcPayload = (needle: string, end?: string) => {
+  const [a, b] = span(DDC_NOTES, needle, end);
+  return referencePayload(state(DDC_NOTES, a, b), "bookshelf", "Augustine/De Doctrina Christiana/Book 2", ddcJournal);
+};
+test("by book, chapter, and paragraph: a drag from a sentence out of the block quotes it under its paragraph's number, as the label names it", () => {
+  const p = ddcPayload("Second one", "beside the block");
+  expect("label" in p && p.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 61)");
+  expect("passage" in p && p.passage).toMatch(/^> ::: prose 61\n/);
+});
+test("a prosimetrum: a drag out of the block quotes it under its paragraph's number too", () => {
+  const doc = parseMarkdown("# Vita Nuova, 3\n\n::: prose 8\nUna. | One.\nDue. | Two.\n\nTre. | Three.\n:::\n\n::: note\nA note.\n:::");
+  const [a, b] = span(doc, "Tre", "A note");
+  const p = referencePayload(state(doc, a, b), "bookshelf", "Dante/Vita Nuova/3", vnJournal);
+  expect("passage" in p && p.passage).toMatch(/^> ::: prose 9\n/);
+});
+test("by book, chapter, and paragraph: text under a chapter heading keeps its chapter, a note in a prose block its paragraph, its fence numbered by it", () => {
+  const inNote = ddcPayload("note of Shaw");
+  expect("label" in inNote && inNote.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
+  expect("passage" in inNote && inNote.passage).toMatch(/^> ::: prose 60\n> ::: note\n/);
+  const loose = ddcPayload("loose paragraph");
+  expect("label" in loose && loose.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40");
+  const beside = ddcPayload("beside the block");
+  expect("label" in beside && beside.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40");
+});
+test("by book, chapter, and paragraph: a selection running through a chapter heading names both chapters; a heading naming no chapter leaves the chapter standing; a roman chapter stands as written", () => {
+  const through = ddcPayload("Third one", "Chapter XL");
+  expect("label" in through && through.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapters 40-XL (para 62)");
+  const signs = ddcPayload("Third one");
+  expect("label" in signs && signs.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 62)");
+  const roman = ddcPayload("Fourth one");
+  expect("label" in roman && roman.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter XL (para 63)");
 });
 test("without the directive the same chapter refers as every book does: 3.8, 3.1-2", () => {
   const plain = journalOf({ "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::" });

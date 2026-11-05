@@ -1,5 +1,3 @@
-const RETIRED = [/\bcit(?:ation|ations|e|es|ed|ing)\b/i, /\bre-cited\b/i, /\bcit(?:ation|es|ed|ing)[A-Z]/, /[a-z]Cit(?:ation|e|es|ed|ing)(?:[A-Z]|\b)/, /\bCITATION/];
-export const retiredWord = (line: string): boolean => RETIRED.some((re) => re.test(line));
-export function retiredLines(text: string): { line: number; text: string }[] {
-  return text.split("\n").flatMap((t, i) => (retiredWord(t) ? [{ line: i + 1, text: t.trim().slice(0, 100) }] : []));
-}
+const RETIRED = new Set(["citation", "citations", "cite", "cites", "cited", "citing", "uncited", "miscited"]);
+const words = (line: string): string[] => line.match(/[A-Z]?[a-z]+|[A-Z]+(?![a-z])/g) ?? [];
+export const retiredWord = (line: string): boolean => words(line).some((w) => RETIRED.has(w.toLowerCase()));

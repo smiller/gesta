@@ -31,7 +31,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="linebar" hidden={!lineBar.open} onmousedown={press} role="search">
   <span class="ask" hidden={lineBar.kind === "page"}>
-    <label for="lineinput">Line</label>
+    <label for="lineinput">{lineBar.lineLabel}</label>
     <input id="lineinput" type="text" autocomplete="off" spellcheck="false" bind:this={lineInput} value={lineBar.line} oninput={(e) => onInput("line", e.currentTarget.value)} onkeydown={key("line")}>
   </span>
   <span class="askor" hidden={lineBar.kind !== "both"}>, or</span>

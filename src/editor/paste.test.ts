@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection, citeInLine } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection, referenceInLine } from "./paste.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { referencePayload } from "./reference.ts";
@@ -266,36 +266,36 @@ test("a paste onto a selection is a paste as before when it is no reference, the
 });
 test("a reference pasted into a line with words in it arrives as its label alone, no colon, the caret after it", () => {
   const s = at("as the poem says,  and so on", "says, ");
-  const tr = citeInLine(s, REF)!;
+  const tr = referenceInLine(s, REF)!;
   expect(serializeMarkdown(tr.doc)).toBe("as the poem says, [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0) and so on");
   expect(tr.doc.textBetween(tr.selection.from, tr.doc.content.size - 1)).toBe(" and so on");
-  expect(serializeMarkdown(citeInLine(at("as the poem says ", "says "), REF)!.doc)).toBe("as the poem says [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
-  expect(serializeMarkdown(citeInLine(at("- see ", "see "), REF)!.doc)).toBe("- see [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
+  expect(serializeMarkdown(referenceInLine(at("as the poem says ", "says "), REF)!.doc)).toBe("as the poem says [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
+  expect(serializeMarkdown(referenceInLine(at("- see ", "see "), REF)!.doc)).toBe("- see [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
 });
 test("a reference pasted on an empty line, over a selection, where a link cannot stand, or naming no entry is not cut to its label", () => {
   const P = schema.nodes.paragraph;
   const empty = schema.nodes.doc.create(null, [P.create(null, schema.text("before")), P.create(), P.create(null, schema.text("after"))]);
-  expect(citeInLine(EditorState.create({ doc: empty, selection: TextSelection.create(empty, 9) }), REF)).toBeNull();
-  expect(citeInLine(over("pauses at 78", "78"), REF)).toBeNull();
-  expect(citeInLine(at("```\ncode 78\n```", "78"), REF)).toBeNull();
-  expect(citeInLine(at("pauses at 78", "78"), "[x](#not%20an%20entry):\n\n> one")).toBeNull();
-  expect(citeInLine(at("pauses at 78", "78"), "[Ideas](#2026-09-07/Ideas)")).toBeNull();
-  expect(citeInLine(at("pauses at 78", "78"), "plain words")).toBeNull();
+  expect(referenceInLine(EditorState.create({ doc: empty, selection: TextSelection.create(empty, 9) }), REF)).toBeNull();
+  expect(referenceInLine(over("pauses at 78", "78"), REF)).toBeNull();
+  expect(referenceInLine(at("```\ncode 78\n```", "78"), REF)).toBeNull();
+  expect(referenceInLine(at("pauses at 78", "78"), "[x](#not%20an%20entry):\n\n> one")).toBeNull();
+  expect(referenceInLine(at("pauses at 78", "78"), "[Ideas](#2026-09-07/Ideas)")).toBeNull();
+  expect(referenceInLine(at("pauses at 78", "78"), "plain words")).toBeNull();
 });
 test("text after a reference's first line that is no quoted passage, or a copy made in this page, is pasted as before", () => {
   const rest = "[Monday](#2026-09-07):\n\nfirst para\n\n- a list";
-  expect(citeInLine(at("intro line", "line"), rest)).toBeNull();
+  expect(referenceInLine(at("intro line", "line"), rest)).toBeNull();
   expect(linkSelection(over("intro line", "line"), rest)).toBeNull();
   const cut = '<p data-pm-slice="1 1 []">x</p>';
-  expect(citeInLine(at("as the poem says ", "says "), REF, cut)).toBeNull();
+  expect(referenceInLine(at("as the poem says ", "says "), REF, cut)).toBeNull();
   expect(linkSelection(over("pauses at 78", "78"), REF, cut)).toBeNull();
-  expect(citeInLine(at("as the poem says ", "says "), REF, "<p data-gesta-copy><a href=\"#x\">x</a>:</p>")).not.toBeNull();
+  expect(referenceInLine(at("as the poem says ", "says "), REF, "<p data-gesta-copy><a href=\"#x\">x</a>:</p>")).not.toBeNull();
 });
 test("the reference ⌃⌘R copies is the one a paste onto words or into a line reads", () => {
   const doc = parseMarkdown("::: verse\nOf man's first disobedience, and the fruit\n:::");
   const out = referencePayload(EditorState.create({ doc, selection: TextSelection.create(doc, 3, 20) }), "bookshelf", "Milton, John/Paradise Lost/Book 1", journalOf({ "bookshelf/Milton, John/Paradise Lost": "# Paradise Lost" }));
   if (!("text" in out)) throw new Error("refused");
-  expect(serializeMarkdown(citeInLine(at("as he says ", "says "), out.text)!.doc)).toBe("as he says [" + out.label + "](" + out.url + ")");
+  expect(serializeMarkdown(referenceInLine(at("as he says ", "says "), out.text)!.doc)).toBe("as he says [" + out.label + "](" + out.url + ")");
   expect(serializeMarkdown(linkSelection(over("as he says so", "so"), out.text)!.doc)).toBe("as he says [so](" + out.url + ")");
 });
 test("spaces at a selection's edges stay outside the link; a selection of spaces alone is no link", () => {

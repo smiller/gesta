@@ -316,7 +316,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.caretAfter(page, "greater.", 8);
   await page.keyboard.press("Meta+v");
   await rest(page);
-  { const md = await A.stored(page); await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, labelAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
+  /* the paste may not have landed in two frames, and no edit is then there to wait on: the reading says what stood when the wait ran out */
+  { let md = await A.stored(page); for (let i = 0; i < 60 && md.split("):\n").length < 3; i++) { await page.waitForTimeout(50); md = await A.stored(page); } await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, labelAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
@@ -2482,6 +2483,57 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await log("Ref (all) across Prospero's borrowing", { label: all[0], fence: all.find((l) => l.includes(":::")), rows: all.length, refAllOverHeading: await refAll() });
   await page.keyboard.press("Escape");
+    }],
+    ["by book, chapter, and paragraph", async () => {
+  /* the Line box takes a paragraph on such a work, and ⌃⌘R names the book, the chapter and the paragraph */
+  const work = "bookshelf/Augustine/De Doctrina Christiana", book = work + "/Book 2";
+  await A.foreignWrite(page, "bookshelf/Augustine", "# Augustine\n");
+  await A.foreignWrite(page, work, "# De Doctrina Christiana\n\n::: reference\nby book, chapter, and paragraph\n:::\n");
+  await A.foreignWrite(page, book, "# Book 2\n\n## Chapter 40\n\n::: prose 60\n60. Philosophi autem. | 60. Moreover the philosophers.\nSicut enim Aegyptii. | For as the Egyptians.\n\n61. Nam quid aliud. | 61. And what else.\n:::\n\n## Chapter 41\n\n::: prose 62\n62. Meminerint ergo. | 62. Let them remember.\n:::\n");
+  await page.goto(A.url(book.replace(/ /g, "%20")));
+  await A.waitEntry(page, book, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  const landed = () => page.evaluate(() => document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null);
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await page.keyboard.type("61");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  const boxLabel = () => page.evaluate(() => document.querySelector("label[for=lineinput]").textContent);
+  await log("⌃⌘G 61 on a work by paragraph", { ...(await R.linebar(page)), landedOn: await landed(), box: await boxLabel() });
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("61x");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G 61x on a work by paragraph", { said: await page.evaluate(() => document.querySelector(".saved.show")?.textContent ?? null) });
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("99");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G 99 on a work by paragraph", { landedOn: await landed(), said: await page.evaluate(() => document.querySelector(".saved.show")?.textContent ?? null) });
+  await page.keyboard.press("Escape");
+  await rest(page);
+  await page.evaluate(() => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const i = n.data.indexOf("Nam quid aliud"); if (i >= 0) { getSelection().setBaseAndExtent(n, i, n, i + 14); break; } } });
+  await rest(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on a work by paragraph", { label: await page.evaluate(async () => { for (let i = 0; i < 40; i++) { const t = await navigator.clipboard.readText().catch(() => ""); if (t.includes("Augustine")) return t.split("\n")[0].replace(/\]\(#[^)]*\)/, "]"); await new Promise((r) => setTimeout(r, 50)); } return "not landed"; }) });
+  await page.evaluate(() => { location.hash = "#page/Horace"; });
+  await R.settle(page);
+  await rest(page);
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".linebar").hidden), box: await boxLabel() });
+  await page.evaluate((h) => { location.hash = h; }, "#" + book.replace(/ /g, "%20"));
+  await A.waitEntry(page, book, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await log("back on a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".linebar").hidden), box: await boxLabel() });
+  await page.keyboard.press("Escape");
+  await rest(page);
     }],
   ];
   /* each section starts from the one window, in front, nothing open over

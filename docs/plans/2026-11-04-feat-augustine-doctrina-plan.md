@@ -1,6 +1,6 @@
 # feat: Augustine, De Doctrina Christiana, and a work referred to by book, chapter, and paragraph
 
-REVIEW CYCLES: 0
+REVIEW CYCLES: 1
 
 ## Asked (2026-11-04)
 
@@ -43,3 +43,25 @@ REVIEW CYCLES: 0
 - Work files: tools/out/augustine. Imported 2026-11-04: 7/7 match the backup,
   two differing by a final newline.
 - verify exit 0: 1,304 tests, 44 hook checks, Helium steps 478, 0 open.
+
+## Review cycle 1 (2026-11-04)
+
+`/code-review` at HIGH over a22e6ae: 176,532 tokens as the run reported them, 17
+tool uses, 10 findings and 4 cut by the cap. Findings: a drag out of
+a prose block quotes a sentence-counted fence under a paragraph label; a note inside
+a prose block loses its chapter; the Line box counts sentences, not paragraphs; a
+folio drops the book; the key segment searched and lowercased whole; numerals of two
+levels never match; a chapter across a turn or spelled otherwise; a translator's
+locator loses its division; the paste step's two-frame read (the unexplained run);
+the retired-word check's missed forms.
+
+Fixed on the word "Fix them all; ⌃⌘G goes to the start of the paragraph" (asked).
+A note selected alone keeps the fence around it, now under its paragraph's number:
+two standing tests pin that wrapper for every work, so it was not removed. The
+paste step now waits for the paste to land; that this was the cause is inferred.
+The stricter retired-word check found `citeInLine`, renamed. New Helium steps:
+⌃⌘G 61 and 99 and ⌃⌘R on a work by paragraph. verify exit 0: 1,312 tests, steps 481.
+
+Measured for the question of unused code (a regex scan, 978 exports): 1 used
+nowhere, 14 used only by tests, 158 used only in their own file. Test titles: 2 of
+1,272 hold a number form absent from their body, neither stale on a first reading.

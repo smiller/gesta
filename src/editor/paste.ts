@@ -112,7 +112,7 @@ export function linkSelection(state: EditorState, raw: string, html = ""): Trans
   const tr = state.tr.addMark(from, to, schema.marks.link.create({ href: "#" + pasted.target }));
   return tr.setSelection(TextSelection.create(tr.doc, sel.to));
 }
-export function citeInLine(state: EditorState, raw: string, html = ""): Transaction | null {
+export function referenceInLine(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
   if (!sel.empty || !linkable(sel.$from) || !sel.$from.parent.textContent.trim()) return null;
   const pasted = pastedAddress(raw, html);

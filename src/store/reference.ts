@@ -117,15 +117,19 @@ export function refersByHalfLine(date: string, tag: string | null, journal: Jour
   for (let i = 1; i <= segs.length; i++) if (journal.oldEnglishVerse(entryKey(date, segs.slice(0, i).join("/")))) return true;
   return false;
 }
-export function refersAsProsimetrum(date: string, tag: string | null, journal: Journal): boolean {
+const workKeyOf = (date: string, tag: string | null): string | null => {
   const segs = tag ? tag.split("/") : [];
-  return titlesRoots(date) && segs.length >= 3 && journal.prosimetrum(entryKey(date, segs[0] + "/" + segs[1]));
+  return titlesRoots(date) && segs.length >= 3 ? entryKey(date, segs[0] + "/" + segs[1]) : null;
+};
+export function refersAsProsimetrum(date: string, tag: string | null, journal: Journal): boolean {
+  const work = workKeyOf(date, tag);
+  return !!work && journal.prosimetrum(work);
 }
 export function refersByBookChapterParagraph(date: string, tag: string | null, journal: Journal): boolean {
-  const segs = tag ? tag.split("/") : [];
-  return titlesRoots(date) && segs.length >= 3 && journal.byBookChapterParagraph(entryKey(date, segs[0] + "/" + segs[1]));
+  const work = workKeyOf(date, tag);
+  return !!work && journal.byBookChapterParagraph(work);
 }
-export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string }
+export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string; division?: string }
 /* a work headed "Metamorphoses (with Golding’s translation)": the title,
    and the translator a reference names its own lines by (pin:
    reference.test › referenceLabel: a work headed as given with a translation) */
@@ -148,7 +152,7 @@ export function referenceHeadPrefix(seg: string): RegExp {
    NOT IN THE BOOKSHELF, MEASURED: 1,099 of 1,340 numeral leaves are headed
    differently from their key, so the colon would repeat the reference (pin:
    reference.test › referenceLabel: the corpus table) */
-export function referenceParts(date: string, tag: string | null, journal: Journal): Piece[] {
+export function referenceParts(date: string, tag: string | null, journal: Journal, spelled = false): Piece[] {
   const segs = tag ? tag.split("/") : [];
   const desc = nsOf(date);
   const books = titlesRoots(date);
@@ -164,6 +168,11 @@ export function referenceParts(date: string, tag: string | null, journal: Journa
       const t = i === 0 ? (titlesRoots(date) ? own || segs[0] : segs[0]) : own || segs[i];
       const w = i > 0 ? WITH_TRANSLATION.exec(t) : null;
       parts.push(w ? { t: w[1], translator: w[2] } : { t });
+      continue;
+    }
+    if (spelled) {
+      const word = /^(\p{L}+)\s+\d/u.exec(segs[i])?.[1].toLowerCase() ?? (parts.some((p) => p.division) ? "chapter" : "book");
+      parts.push({ plain: word + " " + n, division: n });
       continue;
     }
     let last = parts[parts.length - 1];
@@ -194,15 +203,12 @@ export interface FolioRange { from: string; to: string }
    referenceLabel: the line range dots onto a numeral run) */
 export function referenceLabel(date: string, tag: string | null, range: string, folio: FolioRange | null, journal: Journal, facing = ""): string {
   const root = (tag || "").split("/")[0];
-  let parts = referenceParts(date, tag, journal);
+  /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
+  let parts = referenceParts(date, tag, journal, refersByBookChapterParagraph(date, tag, journal));
   /* (pin: reference.test › referenceLabel under parts in roman) */
   const segs = (tag || "").split("/");
   if (titlesRoots(date) && segs.length >= 3 && journal.partsInRoman(entryKey(date, segs[0] + "/" + segs[1]))) {
     parts = parts.map((p, i) => (i > 0 && p.t !== undefined && !p.translator ? { plain: p.t } : p));
-  }
-  /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
-  if (refersByBookChapterParagraph(date, tag, journal)) {
-    parts = parts.map((p) => (p.n !== undefined ? { plain: (segs.find((s) => referenceNumeral(s, true) === p.n) ?? p.n).toLowerCase() } : p));
   }
   /* read before the last title drops the work that names it (pin: reference.test › referenceLabel: a work headed as given with a translation) */
   const translator = parts.find((p) => p.translator)?.translator;
@@ -218,15 +224,18 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   }
   const books = titlesRoots(date), deepest = parts[parts.length - 1];
   if (deepest && deepest.n !== undefined && romanWorkKey(date, tag, journal)) deepest.n = romanKey(deepest.n);
-  const division = deepest && deepest.n !== undefined ? deepest.n + "." : "";
+  const numbered = deepest?.n ?? deepest?.division;
+  const division = numbered !== undefined ? numbered + "." : "";
   const ns = nsOf(date), locates = !!(ns && ns.refersWithLocator);
   /* a worded range, "prose, para 4", stands after the chapter as a field of its own (pin: reference.test › referenceLabel: a worded range) */
-  if (range && locates && /^[a-z]/i.test(range)) parts.push({ plain: range });
+  if (range && locates && deepest?.division !== undefined && /^chapter\b/.test(deepest.plain!) && /^paras? /.test(range)) deepest.plain += " (" + range + ")";
+  else if (range && locates && /^[a-z]/i.test(range)) parts.push({ plain: range });
   else if (range && locates) {
-    if (deepest && deepest.n !== undefined) deepest.n += "." + range;
+    if (deepest?.division !== undefined) deepest.plain += "." + range;
+    else if (deepest && deepest.n !== undefined) deepest.n += "." + range;
     else parts.push({ n: range });
   } else if (folio && locates) {
-    if (!(books && deepest && deepest.n !== undefined)) {
+    if (!(books && numbered !== undefined)) {
       if (books) parts = parts.slice(0, 1);
       parts.push({ plain: folioLabel(folio.from, folio.to) });
     }

@@ -17,7 +17,7 @@ const bare = (l: string): string => l.replace(/^\s*(?:>\s*)*/, "").replace(/(?<!
 const ENOUGH = 30;
 /* a half-line opening or ending a run, at least this long in letters */
 const HALF = 6;
-/* a source line line introducing a run, no longer than this */
+/* a source line introducing a run, no longer than this */
 const SOURCE_LINE = 40;
 
 /* two lines close in their letters: their letter pairs shared, by Dice's

@@ -24,4 +24,8 @@ describe("LineBar", () => {
     expect(html).toMatch(/<span class="ask[^"]*" hidden[^>]*>(<!--[^>]*-->)*<label for="lineinput"/);
     expect(html).toMatch(/<span class="askor[^"]*" hidden/);
   });
+  it("names its box as it is told: Paragraph on a work asked by paragraph, Line otherwise", () => {
+    expect(draw({ open: true, kind: "line" })).toMatch(/<label for="lineinput"[^>]*>Line/);
+    expect(draw({ open: true, kind: "line", lineLabel: "Paragraph" })).toMatch(/<label for="lineinput"[^>]*>Paragraph/);
+  });
 });

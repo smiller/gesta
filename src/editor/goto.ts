@@ -11,12 +11,14 @@
    goto.test › name the range of one block, the longest of several). THE BOX
    KEEPS WHAT WAS TYPED, and Enter says what is wrong with it. */
 import type { Node } from "prosemirror-model";
-import { lineUnits, blocksOf, paintsLines, blockUnits, type Unit } from "./numbering.ts";
+import { lineUnits, blocksOf, paintsLines, blockUnits, paragraphAt, type Unit } from "./numbering.ts";
+import { schema } from "../model/schema.ts";
 import { hasFolios } from "./folios.ts";
 import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 
+const N = schema.nodes;
 export type AskKind = "none" | "line" | "page" | "both";
 const prose = (block: Unit[]): boolean => block[0].kind === "sentence";
 const unitNoun = (block: Unit[]): string => prose(block) ? "sentence" : "line";
@@ -63,6 +65,22 @@ export function lineRefusal(blocks: Unit[][], n: number): string {
   if (blocks.length > 1) return "no " + unitNoun(longBlock) + " " + n + " — the longest " + formNoun(longBlock) + (lowest > 1 ? " ends at " : " has ") + longest;
   return lowest === longest ? "the only " + unitNoun(longBlock) + " here is " + longest : "the " + unitNoun(longBlock) + "s here are " + lowest + "–" + longest;
 }
+/* a paragraph names one place, its first sentence, though a chapter may turn
+   inside it (pin: goto.test › a work by book, chapter, and paragraph) */
+export function paragraphHit(doc: Node, n: number): { pos: number } | string {
+  let hit: number | null = null, low = Infinity, high = -Infinity;
+  doc.forEach((block, blockPos) => {
+    if (block.type !== N.prose) return;
+    block.forEach((row, offset) => {
+      if (row.type !== N.pair) return;
+      const pos = blockPos + 1 + offset, para = paragraphAt(block, blockPos, pos);
+      low = Math.min(low, para); high = Math.max(high, para);
+      if (para === n && hit === null) hit = pos;
+    });
+  });
+  if (hit !== null) return { pos: hit };
+  return high === -Infinity ? "no numbered paragraphs here" : "no paragraph " + n + " — the paragraphs here are " + low + "–" + high;
+}
 export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);
   return hits[sameAsk && was !== -1 ? (was + 1) % hits.length : 0];
@@ -82,12 +100,13 @@ export function folioHit(doc: Node, tok: string): { pos: number } | null {
 export function folioRefusal(doc: Node, tok: string): string {
   return !folioLeaves(doc).length ? "no page numbers here" : "no page " + trimLabel(tok, ECHO_CAP) + " here";
 }
-export function askCheck(ask: string, kind: "line" | "page"): string | null {
+export function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string | null {
   const a = ask.trim();
-  if (!a) return "type a " + kind + " number";
+  const noun = kind === "page" ? "page" : lineNoun;
+  if (!a) return "type a " + noun + " number";
   const ok = kind === "page" ? FOLIO_ONE.test(a) : FOLIO_ARABIC.test(a);
   if (ok) return null;
-  return kind === "page" && FOLIO_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + kind + " number";
+  return kind === "page" && FOLIO_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + noun + " number";
 }
 
 /* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).

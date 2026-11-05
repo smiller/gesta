@@ -2,7 +2,7 @@ import { Fragment, type Node } from "prosemirror-model";
 import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, fenceAt, hasFacing, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
+import { blockUnits, fenceAt, paragraphAt, hasFacing, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, refersByHalfLine, refersAsProsimetrum, refersByBookChapterParagraph, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
@@ -121,17 +121,24 @@ export function prosimetrumRange(doc: Node, from: number, to: number): string {
   doc.forEach((n, pos) => { if (n.type === N.verse) poems.push(pos); });
   return "verse " + (poems.length > 1 ? poems.indexOf(first.blockPos) + 1 + "." : "") + range;
 }
-/* (pin: reference.test › a work by book, chapter, and paragraph refers) */
+/* (pin: reference.test › a work by book, chapter, and paragraph refers) (pin:
+   reference.test › by book, chapter, and paragraph: text under a chapter) */
 function byBookChapterParagraphRange(doc: Node, from: number, to: number): string {
   const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
-  if (!lines[0] || doc.nodeAt(lines[0].blockPos)!.type !== N.prose) return referenceRange(doc, from, to);
-  const chapter = chapterBefore(doc, lines[0].blockPos);
-  return chapter ? "chapter " + chapter + " (" + paragraphRange(doc, lines) + ")" : paragraphRange(doc, lines);
+  if (lines[0] && doc.nodeAt(lines[0].blockPos)!.type !== N.prose) return referenceRange(doc, from, to);
+  const $from = doc.resolve(from);
+  const inBlock = $from.depth >= 2 && $from.node(1).type === N.prose ? paragraphAt($from.node(1), $from.before(1), $from.before(2)) : null;
+  const para = lines[0] ? paragraphRange(doc, lines) : inBlock === null ? "" : "para " + inBlock;
+  const a = chapterAt(doc, from), b = chapterAt(doc, to);
+  if (!a) return para;
+  const chapter = a === b || !b ? "chapter " + a : "chapters " + a + "-" + b;
+  return para ? chapter + " (" + para + ")" : chapter;
 }
-function chapterBefore(doc: Node, blockPos: number): string | null {
+/* the last `##` at or above the position that names a chapter: one naming none leaves it standing */
+function chapterAt(doc: Node, at: number): string | null {
   let found: string | null = null;
   doc.forEach((n, pos) => {
-    if (pos < blockPos && n.type === N.heading && n.attrs.level === 2) found = /^Chapter\s+(\d+)\b/.exec(n.textContent)?.[1] ?? null;
+    if (pos < at && n.type === N.heading && n.attrs.level === 2) found = /^Chapter\s+(\d+|[IVXLCDM]+)\b/i.exec(n.textContent)?.[1] ?? found;
   });
   return found;
 }
@@ -139,19 +146,7 @@ function paragraphRange(doc: Node, lines: Unit[]): string {
   const a = paragraphOf(doc, lines[0]), b = paragraphOf(doc, lines[lines.length - 1]);
   return a === b ? "para " + a : "paras " + elideRange(a, b);
 }
-/* a prose block's paragraphs are its runs of sentences between breaks, the
-   first numbered as the fence is (pin: reference.test › a prosimetrum refers to
-   the prose by Barbi's paragraph) */
-function paragraphOf(doc: Node, u: Unit): number {
-  const block = doc.nodeAt(u.blockPos)!;
-  let para = block.attrs.start as number, inked = false, found = para;
-  block.forEach((row, offset) => {
-    if (row.type === N.gap) { if (inked) para++; inked = false; return; }
-    if (u.blockPos + 1 + offset === u.pos) found = para;
-    if (row.type === N.pair) inked = true;
-  });
-  return found;
-}
+const paragraphOf = (doc: Node, u: Unit): number => paragraphAt(doc.nodeAt(u.blockPos)!, u.blockPos, u.pos);
 /* TWO BLOCKS IS A REFUSAL: every block numbers from 1 (pin: reference.test ›
    two verse blocks are a refusal) — except a run of top-level stanzas,
    whose range names each end's stanza (pin: reference.test › a work in
@@ -340,7 +335,7 @@ export function passageMd(doc: Node, from: number, to: number, halves = false, p
        landed on the wrong block once a truncated remainder had been
        dropped, and on the outer block of a verse inside a note inside a
        verse (pin: reference.test › the number on the right block at every depth) */
-    return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(dropTurns(cut.content))))));
+    return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(dropTurns(cut.content))), paragraphs)));
   }
   /* a run across stanzas:
      each stanza's rows quoted as one block's are, a blank quoted line
