@@ -58,6 +58,8 @@ here NOW, and what is not yet:
     naming another module and 0 carrying provenance, and a new comment
     is held to the same by the checker.
 - IN FORCE from 2026-11-04 — THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in code, tests, help, tools and replies; a label is the link's text; `tools/shelfLines.ts` calls his own typed attribution a "source line". `tools/vocabulary.test.ts`, under `npm test`, fails on a retired word anywhere in src/, tools/ or this file; dated plan records keep their words.
+- IN FORCE from 2026-11-05 — A TEST'S DESCRIPTION STATES THE RULE; the exact forms live only in its assertions, so there is less to go stale (asked).
+  `npm run test:titles`, under `verify`, fails when a test's code differs from HEAD under the same description, and lists them; each description is read against its assertions, fixed if out of step, and `npm run titles:read` records the list as read. Changing a listed test again clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.
@@ -422,6 +424,7 @@ is in the plan's record, under the phase named):
   on their exit codes, then the wiring — settings.json, `core.hooksPath`,
   the executable bits — read from this repo; `npm run test:hooks`,
   under `verify`.
+- `tools/testTitles.ts` — a test file's descriptions and their code, what changed under the same description, pure, its test beside it; `tools/testTitlesRun.ts` the check over the tree against HEAD, its record under `tools/out`.
 - `tools/vocabulary.ts` — the retired words, pure, checked over the tree by `tools/vocabulary.test.ts`.
 - `tools/unusedExports.ts` — what a file exports and who imports it, read from the text, pure; `tools/unusedExports.test.ts` fails, under `npm test`, on an export nothing uses or only tests use, its allowed list giving each exception's reason (2026-11-05, asked).
 - `tools/comments.ts` — the comment checker's run (above);

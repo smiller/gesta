@@ -84,3 +84,12 @@ The `--approve` for the Paragraph box took in two flaky readings ("referred":fal
 into ffa7607. Found when the next verify replayed. Set back to a22e6ae's values after
 three plays agreed. The race reached both paste steps, so both now wait for the paste
 to land. An approval's diff is read whole.
+
+## Test descriptions (2026-11-05, asked)
+
+A description states the rule; the exact forms live only in the assertions. `npm run
+test:titles`, under `verify`, fails while a test's code differs from HEAD under the
+same description, until `npm run titles:read` records the list; changing a listed test
+again clears the record. Chosen over a plain failure: over the last 150 commits 22
+commits, about 1 in 7, held such a test, 41 tests in all, 17 of them one-line changes,
+and two known stale. The record is a promise, not a proof.

@@ -13,8 +13,10 @@
     "corpus": "node tools/corpus.ts",
     "test:helium": "node tools/helium-approve.mjs && node tools/helium-compare.mjs",
     "test:comments": "node tools/comments.ts",
+    "test:titles": "node tools/testTitlesRun.ts",
+    "titles:read": "node tools/testTitlesRun.ts --read",
     "test:hooks": "sh tools/hooks-test.sh",
-    "verify": "npm run check && npm test && npm run test:comments && npm run test:hooks && npm run test:helium"
+    "verify": "npm run check && npm test && npm run test:comments && npm run test:titles && npm run test:hooks && npm run test:helium"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "7.3.0",
