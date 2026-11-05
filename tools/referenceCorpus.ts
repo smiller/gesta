@@ -1,5 +1,5 @@
-/* The citation label for entry keys, over the export mirror read into
-   memory: the cutover criterion's citation half. Prints one line per key,
+/* The reference label for entry keys, over the export mirror read into
+   memory: the cutover criterion's reference half. Prints one line per key,
    the label the successor mints; the current app's ⌃⌘C on the same entry
    is the other side of the comparison. Usage:
    node tools/referenceCorpus.ts [dir] [key ...] — with no keys, a fixed

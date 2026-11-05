@@ -94,7 +94,7 @@ export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}
   return { stanzas: out, numbered, odd };
 }
 
-/* a poem in stanzas (Hávamál): a row a line, cited stanza and line, so
+/* a poem in stanzas (Hávamál): a row a line, referred to stanza and line, so
    each stanza keeps its own fence and number; the site heads a stanza "76."
    and numbers a line within it ("4"), both checked against their place */
 export function stanzaLines(stanzas: Half[][], notes: Record<string, string>): { stanzas: { n: number; lines: string[] }[]; off: string[] } {

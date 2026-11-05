@@ -57,6 +57,7 @@ here NOW, and what is not yet:
     2026-09-28 (the plan's record); the checker's sweep reads 0 blocks
     naming another module and 0 carrying provenance, and a new comment
     is held to the same by the checker.
+- IN FORCE from 2026-11-04 — THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in code, tests, help, tools and replies; a label is the link's text; `tools/shelfLines.ts` calls his own typed attribution a "source line". `tools/vocabulary.test.ts`, under `npm test`, fails on a retired word anywhere in src/, tools/ or this file; dated plan records keep their words.
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.
@@ -269,8 +270,8 @@ is in the plan's record, under the phase named):
   an entry found and made the references ⌃⌘R makes for them, and quoted
   paragraphs that are a book's text (a prose book, a translation beside
   verse) placed and joined while nothing is left out between them, a
-  quotation and its translation one reference, a citation's own words kept
-  round the link, a line inside another writer's quotation left with it,
+  quotation and its translation one reference, a typed source line's own words
+  kept round the link, a line inside another writer's quotation left with it,
   pure, its test beside it;
   `tools/shelfLinesRun.ts [author-prefix,…]` (Milton by default; several
   prefixes a comma apart, a comma and a space inside a filed name) writes
@@ -421,6 +422,7 @@ is in the plan's record, under the phase named):
   on their exit codes, then the wiring — settings.json, `core.hooksPath`,
   the executable bits — read from this repo; `npm run test:hooks`,
   under `verify`.
+- `tools/vocabulary.ts` — the retired words, pure, checked over the tree by `tools/vocabulary.test.ts`.
 - `tools/comments.ts` — the comment checker's run (above);
   `tools/commentRules.ts` its rules, pure: the comment scanner (its own:
   TypeScript 7 exposes none), the pin resolver, the other-module rule,
@@ -439,7 +441,7 @@ is in the plan's record, under the phase named):
   the last edit and the open store writes, which this driver installs;
   a fixed sleep stays only where it times the app's own clock (a fade,
   the hang warning, a slow launch, the place keeper's scroll pause).
-- `tools/referenceCorpus.ts` — the citation label for entry keys over the
+- `tools/referenceCorpus.ts` — the reference label for entry keys over the
   mirror read into memory, `node tools/referenceCorpus.ts [dir] [key ...]`;
   the current app's ⌃⌘C on the same entries is the other side.
 - `src/editor/` — the editor, DOM-facing: `numbering.ts` (the unit walk
@@ -528,7 +530,7 @@ is in the plan's record, under the phase named):
   export walk over the cache and the image store), `backup.ts` (the
   automated backup: the run, the idle debounce, the folder setup and the
   resume, as a factory over callbacks), `folio.ts` (the folio token
-  grammar), `reference.ts` (the citation grammar and the label over an
+  grammar), `reference.ts` (the reference grammar and the label over an
   injected journal), `headings.ts` (an entry's title and a root's
   directive, read from the cache), `search.ts` (the query grammar, the
   scope filter, the scan over an index with its snippets),

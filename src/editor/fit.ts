@@ -131,7 +131,7 @@ export function sideBox(cs: { paddingLeft: string; paddingRight: string; borderL
 }
 /* ---------- the DOM side ---------- */
 
-/* NOT a quotation: a paired citation is fitted with the entry (tried as an
+/* NOT a quotation: a paired reference is fitted with the entry (tried as an
    inset box, equal halves wrapped its English column) */
 const INSET = "div.note, div[class^=\"card-\"]";
 
@@ -186,7 +186,7 @@ export function measure(host: HTMLElement): Measured | number | null {
       /* the block's own box, and in a book that includes the line-number
          gutter, so a four-digit number sits inside the fitted width; and
          a quoted block pays its quotation's padding and rule: the columns
-         have the entry's measure less that box, and a citation's English
+         have the entry's measure less that box, and a reference's English
          column wrapped by exactly it (found by hand) */
       let own = sideBox(getComputedStyle(b));
       for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
@@ -262,7 +262,7 @@ export function measureInsets(view: EditorView): { pos: number; col: number }[] 
     const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;
     return r.getBoundingClientRect().width - (parseFloat(getComputedStyle(r).columnGap) || 0);
   });
-  /* the page's own text, not a citation quoted in it: a quotation's padding
+  /* the page's own text, not a reference quoted in it: a quotation's padding
      and rule set its English apart from the page's */
   const pageEnglish = pairedBlocksIn(view.dom, "div.verse.dual-language").find((b) => !b.closest("blockquote"))?.querySelector<HTMLElement>(":scope > .vpair > .vcell + .vcell");
   const edges = blocks.map(({ dom }) => {

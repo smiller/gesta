@@ -19,7 +19,7 @@ a fence pasted as text mid-paragraph · md · the current app's contenteditable 
 3, Enter · centred · the landing is centred within 8px on both; the band's arithmetic differs by the masthead's height
 Enter again on one block · centred · the same
 ⌃⌘R · htmlHead · the successor's paired row carries `vpair` beside `vrow` in the clipboard HTML, and since 2026-09-12 the fence sits in a blockquote (the passage line below), a receiving application reads neither class; and since 2026-10-17 each top-level element Gesta copies carries `data-gesta-copy`, the mark that keeps its spaces when it is pasted back
-⌃⌘R · passage · a paired passage is a fence INSIDE the quotation here, bare in the current app: asked 2026-09-12 — a citation is a quotation whether or not it is paired, and a bare fence on a journal page raised the Line numbering row
+⌃⌘R · passage · a paired passage is a fence INSIDE the quotation here, bare in the current app: asked 2026-09-12 — a reference is a quotation whether or not it is paired, and a bare fence on a journal page raised the Line numbering row
 the day's body ends with the link, its tag bar lists it · tags · a day's tagged entries list BY NAME here, in creation order in the current app; asked and settled 2026-09-12 — the lists are derived from the cache's keys, which keep no creation order
 Tag with Music answered · body · the extract KEEPS the selection's marks here; the current app's loses the bold — a defect there, not a rule; asked and settled 2026-09-12
 after ⌃⌘, on the first entry · text · ⌃⌘, with nowhere to go whispers "no earlier entry" here; the current app says nothing — silence reads as a dead control; asked and settled 2026-09-12
@@ -27,8 +27,8 @@ after ⌃⌘, on the first entry · show · the same whisper
 after warm · text · the corner whispers "N entries stored" when the warm lands, the one sign the journal read completely and how many it holds; the current app says nothing; asked and settled 2026-09-12: kept
 after warm · show · the same whisper
 3.2 s later · text · the same whisper's text, standing as it fades
-a paired citation pasted · indent · the current app's quoted pair pulls itself 21px out of the quotation; here it stands at the quoted text's edge (asked 2026-09-12)
-a paired citation pasted · cols · the columns are the fitted measure less the quotation's box here; the current app's quoted pair takes its own
+a paired reference pasted · indent · the current app's quoted pair pulls itself 21px out of the quotation; here it stands at the quoted text's edge (asked 2026-09-12)
+a paired reference pasted · cols · the columns are the fitted measure less the quotation's box here; the current app's quoted pair takes its own
 typed into the quoted pair · indent · the same: the current app's quoted pair stands out of its box
 typed into the quoted pair · cols · the same: the fitted measure less the quotation's box here
 typed into the quoted pair · grew · whether the columns moved within 400ms of the typing: the successor's grow side re-fits on the frame; the current app's timing is its own
@@ -60,8 +60,8 @@ two cards pasted mid-paragraph · wider · the same
 two cards pasted mid-paragraph · type · the same
 a canto opened · drawn · a stanza is successor-only (2026-09-27, the Faerie Queene plan): the current app has no `::: stanza` word, reads the fences as text, and draws no stanza number
 a canto opened · crumb · the successor respells the key under the work's `roman book and canto` directive (I.i); the current app has no such directive and shows the key (1.1)
-⌃⌘R on a line · lines · the successor cites the stanza under the directive (I.i.2.1) and, since 2026-10-15, quotes the words selected (asked); the current app, whose stanzas are text, cites the entry alone and quotes the selection
-⌃⌘R across a stanza gap · lines · the successor cites a run across stanzas (I.i.1.3–2.1) and quotes both with the gap; the current app quotes the fences as text
+⌃⌘R on a line · lines · the successor refers to the stanza under the directive (I.i.2.1) and, since 2026-10-15, quotes the words selected (asked); the current app, whose stanzas are text, refers to the entry alone and quotes the selection
+⌃⌘R across a stanza gap · lines · the successor refers to a run across stanzas (I.i.1.3–2.1) and quotes both with the gap; the current app quotes the fences as text
 ⌃⌘G 2.1 · * · the successor's Line box takes stanza.line under the directive; the current app finds no numbered lines in fences it reads as text, and its bar does not open
 ⌃⌘G 2.9 · * · the same: the successor refuses a line past the stanza's end in words; the current app's bar never opened
 a blank row clicked · drawn · a blank row is selected whole here and drawn with a caret on it, no box and no bar (asked 2026-10-16, the least surprise); the current app's contenteditable puts the browser's own caret in the empty row

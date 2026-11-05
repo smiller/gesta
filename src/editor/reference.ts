@@ -3,7 +3,7 @@ import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, fenceAt, hasFacing, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, citesHalfLines, citesProsimetrum, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, refersByHalfLine, refersAsProsimetrum, refersByBookChapterParagraph, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { quotePrefix } from "../model/grammar.ts";
 import { dropFolios } from "./paste.ts";
@@ -26,7 +26,7 @@ export function inkBetween(doc: Node, a: number, b: number): boolean {
 /* an overlap holding ink, so a drag ending just past a row's edge does not
    pull that row in (pin: reference.test › a block inside a note, the
    label's top level, an end resting on a row) */
-/* AT ANY DEPTH: a citation inside a quotation is a block like any other,
+/* AT ANY DEPTH: a reference inside a quotation is a block like any other,
    and so is a verse block inside a note — Satires 1.10 opens one inside a
    note inside its verse, and stopped at the note its rows came out cut and
    fenced three deep (pin: reference.test › a block inside a note) */
@@ -72,10 +72,10 @@ function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolea
 }
 /* with `halves`, Old English verse's: a run starting on a line's second half
    or ending on its first says so, 50b-52, 49-50a, a half alone 50a (pin:
-   reference.test › Old English verse cites a half-line) */
+   reference.test › Old English verse refers to a half-line) */
 export function referenceRange(doc: Node, from: number, to: number, halves = false, side: Side = "left"): string {
   let lo: Unit | null = null, hi: Unit | null = null;
-  /* THE TOP LEVEL ALONE: a pasted citation's own fence numbers are not the
+  /* THE TOP LEVEL ALONE: a pasted reference's own fence numbers are not the
      host's — a quoted Horace pair in Paradise Lost labelled the reference
      "1.13-14" (pin: reference.test › a block inside a note, the label's top
      level) */
@@ -116,16 +116,31 @@ export function prosimetrumRange(doc: Node, from: number, to: number): string {
   const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
   const first = lines[0];
   if (!range || !first) return "";
-  if (doc.nodeAt(first.blockPos)!.type === N.prose) {
-    const a = paragraphOf(doc, first), b = paragraphOf(doc, lines[lines.length - 1]);
-    return "prose, " + (a === b ? "para " + a : "paras " + elideRange(a, b));
-  }
+  if (doc.nodeAt(first.blockPos)!.type === N.prose) return "prose, " + paragraphRange(doc, lines);
   const poems: number[] = [];
   doc.forEach((n, pos) => { if (n.type === N.verse) poems.push(pos); });
   return "verse " + (poems.length > 1 ? poems.indexOf(first.blockPos) + 1 + "." : "") + range;
 }
+/* (pin: reference.test › a work by book, chapter, and paragraph refers) */
+function byBookChapterParagraphRange(doc: Node, from: number, to: number): string {
+  const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
+  if (!lines[0] || doc.nodeAt(lines[0].blockPos)!.type !== N.prose) return referenceRange(doc, from, to);
+  const chapter = chapterBefore(doc, lines[0].blockPos);
+  return chapter ? "chapter " + chapter + " (" + paragraphRange(doc, lines) + ")" : paragraphRange(doc, lines);
+}
+function chapterBefore(doc: Node, blockPos: number): string | null {
+  let found: string | null = null;
+  doc.forEach((n, pos) => {
+    if (pos < blockPos && n.type === N.heading && n.attrs.level === 2) found = /^Chapter\s+(\d+)\b/.exec(n.textContent)?.[1] ?? null;
+  });
+  return found;
+}
+function paragraphRange(doc: Node, lines: Unit[]): string {
+  const a = paragraphOf(doc, lines[0]), b = paragraphOf(doc, lines[lines.length - 1]);
+  return a === b ? "para " + a : "paras " + elideRange(a, b);
+}
 /* a prose block's paragraphs are its runs of sentences between breaks, the
-   first numbered as the fence is (pin: reference.test › a prosimetrum cites
+   first numbered as the fence is (pin: reference.test › a prosimetrum refers to
    the prose by Barbi's paragraph) */
 function paragraphOf(doc: Node, u: Unit): number {
   const block = doc.nodeAt(u.blockPos)!;
@@ -140,7 +155,7 @@ function paragraphOf(doc: Node, u: Unit): number {
 /* TWO BLOCKS IS A REFUSAL: every block numbers from 1 (pin: reference.test ›
    two verse blocks are a refusal) — except a run of top-level stanzas,
    whose range names each end's stanza (pin: reference.test › a work in
-   stanza fences cites by stanza) */
+   stanza fences refers by stanza) */
 export function spansTwoBlocks(doc: Node, from: number, to: number): boolean {
   /* a row with nothing on the left is in its block by the right column (pin:
      reference.test › a passage running from one block numbered on both sides) */
@@ -216,7 +231,7 @@ export function coversProse(doc: Node, from: number, to: number): boolean {
 }
 /* the selection's ends moved off a pair's cells: out to the whole row
    where the selection covers ink in it, off the row where it does not
-   (a citation quotes rows, never a cell: a drag from a pair's last cell
+   (a reference quotes rows, never a cell: a drag from a pair's last cell
    into the paragraph after it cut a cell out, and an end merely resting at
    a row's edge widened to a whole row no one selected) (pin: reference.test
    › no cut through a pair) */
@@ -233,12 +248,12 @@ export function wholeRows(doc: Node, from: number, to: number): [number, number]
   }
   return [a, b];
 }
-/* the cut with the containers around THE WHOLE of it unwrapped: a citation
-   cited again is quoted ONE level deep, however many quotations, notes or
-   cards deep it stood — a quoted pair re-cited came out at one level, a
+/* the cut with the containers around THE WHOLE of it unwrapped: a reference
+   referenced again is quoted ONE level deep, however many quotations, notes or
+   cards deep it stood — a quoted pair referenced again came out at one level, a
    quoted paragraph at two (pin: reference.test › no cut through a pair, one
    quote level). A container holding only ONE END stays: a drag from a
-   citation into the line after it keeps the pair quoted beside the line
+   reference into the line after it keeps the pair quoted beside the line
    that was not, as the source had them. Every edge break comes off a
    paragraph, a gap row off a cut block's edge, and a block with no ink goes
    — inside a retained container as well: one break of two stayed, an empty
@@ -287,7 +302,7 @@ function unquoted(cut: Node): Node[] {
 /* THE QUOTED PASSAGE IS A QUOTATION: prose and a stanza's lines quote
    with "> " markers; a verse block copies as its own fence, numbered from
    its first quoted line, a dual-language one keeping the two columns —
-   INSIDE the quotation: bare beside a citation, it read as the entry's own
+   INSIDE the quotation: bare beside a reference, it read as the entry's own
    verse (pin: reference.test › a paired block copies as its own fence
    inside the quotation) (pin: reference.test › a single-column passage
    quotes whole rows as its own fence). In a row block the ROW is the unit and whole rows are quoted,
@@ -314,7 +329,7 @@ function dropTurns(frag: Fragment): Fragment {
   });
   return Fragment.from(out);
 }
-/* `paragraphs`: a prosimetrum's, whose prose fence counts paragraphs */
+/* `paragraphs`: a prose fence that counts paragraphs */
 export function passageMd(doc: Node, from: number, to: number, halves = false, paragraphs = false): string {
   let units = coveredUnits(doc, from, to);
   if (units.length && coversProse(doc, from, to)) units = [];
@@ -389,7 +404,7 @@ function partOf(row: Node, pos: number, from: number, to: number): Fragment {
   return row.content.cut(Math.max(from, start) - start, Math.min(to, end) - start);
 }
 /* Old English verse beside its translation: the original quoted from the half
-   the citation starts on to the half it ends on, the translation whole, as it
+   the reference starts on to the half it ends on, the translation whole, as it
    cannot be divided by half-lines (pin: reference.test › Old English verse with
    its translation quotes the original) */
 function fromTheHalf(row: Node, first: Unit | null, last: Unit | null, from: number, to: number): Node {
@@ -510,11 +525,11 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
 /* the whole clipboard text: the heading line as the link, a colon outside
    it, the passage quoted under it — or the refusal */
 /* the label is BUILT here, so its only markdown is the emphasis this puts
-   back (pin: reference.test › citationAnchorHTML) */
+   back (pin: reference.test › referenceAnchorHTML) */
 export function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
-export function citationAnchorHTML(url: string, label: string): string {
+export function referenceAnchorHTML(url: string, label: string): string {
   return '<a href="' + escapeHtml(url) + '">' + escapeHtml(label).replace(/\*([^*]+)\*/g, "<em>$1</em>") + "</a>";
 }
 export interface Payload { text: string; label: string; url: string; passage: string }
@@ -536,15 +551,16 @@ export function referencePayload(state: EditorState, date: string, tag: string |
 function payloadOver(doc: Node, from: number, to: number, date: string, tag: string | null, journal: Journal, all: boolean): Payload | { refused: Refusal } {
   const hl = selectionLink(doc, from, to);
   if (!hl) return { refused: "select" };
-  /* a passage in stanza fences cites by stanza, in any work (pin: reference.test › a work in stanza fences cites by stanza) */
-  const halves = citesHalfLines(date, tag, journal);
-  const range = citesProsimetrum(date, tag, journal) ? prosimetrumRange(doc, from, to) : stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
+  /* a passage in stanza fences refers by stanza, in any work (pin: reference.test › a work in stanza fences refers by stanza) */
+  const halves = refersByHalfLine(date, tag, journal);
+  const byBookChapterParagraph = refersByBookChapterParagraph(date, tag, journal);
+  const range = byBookChapterParagraph ? byBookChapterParagraphRange(doc, from, to) : refersAsProsimetrum(date, tag, journal) ? prosimetrumRange(doc, from, to) : stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
   const block = all ? null : facingBlockOf(doc, from, to);
   const alone = block && translationPassage(doc, from, to, block);
   if (block && !alone) return { refused: "no-translation" };
   const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "");
   const url = entryLinkUrl(date, tag, hl);
-  const passage = alone || passageMd(doc, from, to, halves, citesProsimetrum(date, tag, journal));
+  const passage = alone || passageMd(doc, from, to, halves, byBookChapterParagraph || refersAsProsimetrum(date, tag, journal));
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {

@@ -90,7 +90,7 @@ function inlineSlice(md: string): Slice | null {
   try { return new Slice(parseMarkdown(md).firstChild!.content, 0, 0); } catch { return null; }
 }
 /* a copy made in this page pastes as itself: a cut reference and its
-   quotation pasted mid-line arrived as the citation alone, the quotation
+   quotation pasted mid-line arrived as the label alone, the quotation
    lost (pin: paste.test › text after a reference's first line) */
 function pastedAddress(raw: string, html: string): { link: string; target: string; reference: boolean } | null {
   if (html.includes("data-pm-slice")) return null;

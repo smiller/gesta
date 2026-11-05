@@ -28,7 +28,7 @@ const cache: Record<string, string> = Object.create(null);
 for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if (t) cache[entryKey(t.date, t.tag)] = readFileSync(path, "utf8"); }
 /* a comma and a space is inside a filed name (Spenser, Edmund); a bare comma parts two */
 const PREFIXES = AUTHOR.split(/,(?! )/);
-/* a work cited in roman book and canto by its own page is cited in arabic all the same, asked: Spenser, The Faerie Queene, 2.7.5.8-9 */
+/* a work referred to in roman book and canto by its own page is referred to in arabic all the same, asked: Spenser, The Faerie Queene, 2.7.5.8-9 */
 for (const k of Object.keys(cache)) if (/^bookshelf\//.test(k)) cache[k] = cache[k].replace(/^::: reference\nroman book and canto\n:::\n\n?/m, "");
 const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) => PREFIXES.some((p) => k === p || k.startsWith(p + "/")))));
 
@@ -63,7 +63,7 @@ const PLACED: { file: string; at: number; end?: number; key: string; from: numbe
   { file: "journal/2017/2017-09-29.md", at: 29, end: 30, key: "bookshelf/Wanderer", from: 104, to: 105, half: { from: "b" } },
   { file: "journal/2020/2020-01-12.md", at: 7, key: "bookshelf/Beowulf", from: 432, half: { from: "b" } },
   { file: "journal/2022/2022-08-31.md", at: 60, key: "bookshelf/Beowulf", from: 3052 },
-  /* Deor's refrain alone, six lines of the poem: cited at its first, asked; 2025-06-01's card title joined to Dante is left */
+  /* Deor's refrain alone, six lines of the poem: referred to at its first, asked; 2025-06-01's card title joined to Dante is left */
   { file: "journal/1990/1990-09-15.md", at: 41, key: "bookshelf/Deor", from: 7 },
   { file: "journal/1995/1995-08-28.md", at: 10, key: "bookshelf/Deor", from: 7 },
   { file: "journal/2025/2025-06-01.md", at: 9, key: "bookshelf/Deor", from: 7 },
@@ -73,8 +73,8 @@ const LINKED: { file: string; at: number; key: string; from: number }[] = [
   { file: "journal/2016/2016-03-29.md", at: 24, key: "bookshelf/Beowulf", from: 311 },
   { file: "page/Sean’s Books/39b.md", at: 23, key: "bookshelf/Beowulf", from: 311 },
 ];
-/* a citation inside another writer's quotation made the link, its words and the quotation unchanged */
-const CITED: { file: string; at: number; words: string; key: string; from: number; to: number }[] = [
+/* a source line inside another writer's quotation made the link, its words and the quotation unchanged */
+const SOURCE_LINES: { file: string; at: number; words: string; key: string; from: number; to: number }[] = [
   { file: "journal/2020/2020-04-19.md", at: 128, words: "*Cyrano de Bergerac*, Act I, scene iv, lines 363-364", key: "bookshelf/Rostand, Edmond/Cyrano de Bergerac/1.4", from: 252, to: 253 },
 ];
 /* the hand's places belong to the works this run reads */
@@ -117,10 +117,10 @@ for (const path of walk(SRC).sort()) {
     md = ls.join("\n");
     counts.runs++; counts.lines++;
   }
-  for (const x of CITED.filter((x) => x.file === file && read(x.key))) {
+  for (const x of SOURCE_LINES.filter((x) => x.file === file && read(x.key))) {
     const ls = md.split("\n"), units = index.entries.find((e) => e.key === x.key)!.units;
     const m = referenceOf(index, { key: x.key, first: units.findIndex((u) => u.line === x.from), last: units.findIndex((u) => u.line === x.to) });
-    if (!("url" in m) || !ls[x.at - 1].includes(x.words)) throw new Error(`${file}:${x.at}: no citation “${x.words}” to link`);
+    if (!("url" in m) || !ls[x.at - 1].includes(x.words)) throw new Error(`${file}:${x.at}: no source line “${x.words}” to link`);
     const label = m.text.split("\n")[0].replace(/\]\(.*$/, "]").slice(1, -1);
     const after = ls[x.at - 1].replace(x.words, `[${x.words}](${m.url})`);
     shown.push({ file, r: { start: x.at - 1, end: x.at - 1, key: x.key, first: 0, last: 0, from: x.from, to: x.to }, label, before: [ls[x.at - 1]], after: [after], diff: { kind: "same", ops: [] } });
@@ -153,7 +153,7 @@ for (const path of walk(SRC).sort()) {
     counts.runs++; counts.lines += r.end - r.start + 1;
     const m = minted.get(r) as { text: string; url: string; passage: string };
     const alone = referRuns(md, [r], () => m).split("\n");
-    /* the card shows every line the reference changes, a line either side: a citation it replaced a blank line above was out of sight, and the link with it */
+    /* the card shows every line the reference changes, a line either side: a source line it replaced a blank line above was out of sight, and the link with it */
     let first = 0, same = 0;
     while (first < src.length && src[first] === alone[first]) first++;
     while (same < src.length - first && same < alone.length - first && src[src.length - 1 - same] === alone[alone.length - 1 - same]) same++;
@@ -187,7 +187,7 @@ pre{white-space:pre-wrap;font:13px/1.45 ui-monospace,Menlo,monospace;margin:.3em
 .before{background:#fbeee8}.after{background:#e6f0dc}
 .d{background:#fffbe6;padding:6px 8px;margin:.3em 0}del{color:#a3201a;text-decoration:line-through}ins{color:#17632a;text-decoration:none;border-bottom:2px solid #17632a}</style>
 <h1>${esc(PREFIXES.map((p) => p.replace(/^bookshelf\//, "")).join(", "))}: ${counts.runs} quotations made references, ${counts.lines} lines, in ${counts.changed} entries</h1>
-<p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them, starting and ending where your quotation does: after a short citation ending in a colon that gives the lines, that citation becomes the link in its own words; otherwise the whole reference stands in the run's place, a citation of the act and scene alone included. Runs of one scene in one quotation of yours, with nothing of the scene left out between them, are one reference. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the same place as it will read.</p>
+<p>${counts.entries} entries outside the bookshelf read. A run of lines that are the bookshelf's own, one after another, becomes the reference ⌃⌘R makes for them, starting and ending where your quotation does: after a short source line ending in a colon that gives the lines, that source line becomes the link in its own words; otherwise the whole reference stands in the run's place, a source line of the act and scene alone included. Runs of one scene in one quotation of yours, with nothing of the scene left out between them, are one reference. A quotation already under a link to the bookshelf is left. Red is the text as it stands, with a line either side; green the same place as it will read.</p>
 <p>Where your words and the bookshelf's differ, a yellow line sets them side by side: <del>struck through in red</del> your words the reference drops, <ins>underlined in green</ins> the bookshelf's words it puts in. Speakers' names, stage directions and marks are left out of the comparison.</p>
 <p><a href="#wording">Wording differs: ${group("wording").length}</a> · <a href="#spelling">Spelling only: ${group("spelling").length}</a> · <a href="#same">Same words: ${group("same").length}</a></p>
 <h2>Left: the reference feature's own test data (${left.length})</h2>

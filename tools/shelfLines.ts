@@ -2,8 +2,8 @@
    reference ⌃⌘R makes for them. A run is consecutive lines, quoted or bare,
    each the next line of one passage, letters and numerals alone; code is
    left, and so is a quotation already under a link to the bookshelf (pin:
-   shelfLines.test › quotedRuns). A run after a short citation ending in a
-   colon that gives the lines makes that citation the link, its words kept;
+   shelfLines.test › quotedRuns). A run after a short source line ending in a
+   colon that gives the lines makes that source line the link, its words kept;
    any other run gives way to the whole reference (pin: shelfLines.test ›
    referRuns) */
 import { norm, quotedProse, type ShelfIndex, type Referred } from "./bookshelfQuotes.ts";
@@ -17,8 +17,8 @@ const bare = (l: string): string => l.replace(/^\s*(?:>\s*)*/, "").replace(/(?<!
 const ENOUGH = 30;
 /* a half-line opening or ending a run, at least this long in letters */
 const HALF = 6;
-/* a citation line introducing a run, no longer than this */
-const CITATION = 40;
+/* a source line line introducing a run, no longer than this */
+const SOURCE_LINE = 40;
 
 /* two lines close in their letters: their letter pairs shared, by Dice's
    measure, at least this much — Heav'n against Heaven, a dropped letter */
@@ -82,7 +82,7 @@ export interface Run {
   parts?: number;
   /* the speaker's row heading a passage taken from inside the speech */
   speaker?: number;
-  /* a prose book's passage, cited by its chapter alone */
+  /* a prose book's passage, referred to by its chapter alone */
   prose?: boolean;
 }
 
@@ -338,7 +338,7 @@ export function quotedRuns(md: string, index: ShelfIndex): Run[] {
     r.speaker = x;
   });
   /* an attribution closing the quotation, short, naming the work, from a dash
-     or with a number, is the link's own citation and goes with it (pin:
+     or with a number, is the link's own source line and goes with it (pin:
      shelfLines.test › quotedRuns: an attribution closing) */
   runs.forEach((r, at) => {
     const next = at + 1 < runs.length ? runs[at + 1].start : lines.length, works = r.key.split("/").slice(2).filter((w) => /\p{L}/u.test(w)).map(norm);
@@ -424,8 +424,8 @@ export function withinQuotation(md: string, index: ShelfIndex, runs: Run[]): { r
     /* the end of the book's line before, or its opening with the rest left out; the start of the line after */
     const before = (k: number): boolean => first > 0 && piece(k).length >= 4 && (s.left[first - 1].endsWith(piece(k)) || /…|\.\.\.\s*$/.test(lines[k]) && alike(piece(k), s.left[first - 1].slice(0, piece(k).length), REWORDED));
     const after = (k: number): boolean => last + 1 < s.units.length && piece(k).length >= HALF && s.left[last + 1].startsWith(piece(k));
-    /* a citation heading the quotation is the reference's to replace; one inside a card joined to more of it a blank line above is the card's */
-    const heading = (k: number): boolean => !inside(k - 1) && /:\s*$/.test(bare(lines[k])) && bare(lines[k]).length <= CITATION && !(k > 0 && depth(lines[k - 1]) === d && !bare(lines[k - 1]));
+    /* a source line heading the quotation is the reference's to replace; one inside a card joined to more of it a blank line above is the card's */
+    const heading = (k: number): boolean => !inside(k - 1) && /:\s*$/.test(bare(lines[k])) && bare(lines[k]).length <= SOURCE_LINE && !(k > 0 && depth(lines[k - 1]) === d && !bare(lines[k - 1]));
     let trans = 0, pieced = false;
     for (let k = start - 1; inside(k); k--) {
       if (english(lines[k])) { trans++; start = k; } else if (k === start - 1 && before(k)) { start = k; first--; pieced = true; } else if (heading(k)) break; else { foreign = true; break; }
@@ -519,7 +519,7 @@ export function sameQuoted(md: string, runs: Run[], passage: (r: Run) => string,
   return out;
 }
 
-/* a citation's place: a book's, a canto's, a line's numbers, roman or
+/* a source line's place: a book's, a canto's, a line's numbers, roman or
    arabic, a metre's or a prose's (1m2, I.pr.5), a list of ranges */
 const UNIT = String.raw`(?:\d+|[IVXLC]+|[ivxlc]+)`;
 const PLACE = new RegExp(String.raw`(?<![\p{L}\p{Nd}])${UNIT}(?:(?:\s*[.,]?\s*(?:prose|pr\.?|meter|metre|m\.?)\s*|\s*[.,]\s*)${UNIT})*(?:\s*[-–]\s*\d+)?(?:\s*,\s*\d+(?:\.\d+)*(?:\s*[-–]\s*\d+)?)*(?:ff)?(?![\p{L}\p{Nd}])`, "gu");
@@ -527,21 +527,21 @@ const LOCATOR = /^(?:book|bk\.?|volume|vol\.?|chapter|ch\.?|canto|line|lines|ll?
 const folded = (s: string): string => norm(s.toLowerCase().replace(/æ/g, "ae").replace(/œ/g, "oe"));
 /* an edition's page, no place of the work */
 const PAGE = /,?\s*\bpp?\.\s*\d+(?:\s*[-–]\s*\d+)?/g;
-/* A CITATION'S OWN WORDS: the line with the citation proper — its author,
+/* A SOURCE LINE'S OWN WORDS: the line with the source line proper — its author,
    its work by name, abbreviation or initials, its numbers — made the
    reference's link and the rest kept around it (FQ I.vii.40 (Arthur to
    Una): the link, then (Arthur to Una):); the link alone where nothing with
-   a letter is left, and a line naming the work with no numbers its citation
-   only so; null where it is no citation. A citation past a short line's
+   a letter is left, and a line naming the work with no numbers its source line
+   only so; null where it is no source line. A source line past a short line's
    length is one only where its place goes with the work's name or a book's
    or chapter's word, or is a range ending the line (pin: shelfLines.test ›
-   citedAs) */
-export function citedAs(cited: string, head: string, key: string): string | null {
-  const own = ownWords(cited, head, key, cited.length > CITATION);
+   typedAs) */
+export function typedAs(typed: string, head: string, key: string): string | null {
+  const own = ownWords(typed, head, key, typed.length > SOURCE_LINE);
   /* a page beside the work's name alone: the link alone (Jane Austen, *Pride and Prejudice*, p. 250:) */
-  return own === null && /\bpp?\.\s*\d/.test(cited) && ownWords(cited.replace(PAGE, ""), head, key, false) === head ? head : own;
+  return own === null && /\bpp?\.\s*\d/.test(typed) && ownWords(typed.replace(PAGE, ""), head, key, false) === head ? head : own;
 }
-function ownWords(cited: string, head: string, key: string, long: boolean): string | null {
+function ownWords(typed: string, head: string, key: string, long: boolean): string | null {
   const label = head.match(/^\[([^\]]*)\]/)?.[1] ?? "";
   const names = [...key.split("/").slice(1), ...label.split(/,\s+/).slice(0, -1)].map((n) => n.replace(/\*/g, ""));
   const words = names.flatMap((n) => [n, ...n.split(/\s+/).filter((w) => w.length > 3)]).map(folded);
@@ -549,19 +549,19 @@ function ownWords(cited: string, head: string, key: string, long: boolean): stri
   const inner = names.flatMap((n) => n.split(/\s+/)).map(folded);
   const isNamed = (t: string): boolean => { const w = folded(t); return w.length > 1 && (words.includes(w) || initials.includes(w) || w.length >= 3 && words.some((n) => n.startsWith(w))); };
   /* the place a name of the work or its author goes with, before the last place (Boethius 3pr3, q.v. *Paradiso* 1.127-35) */
-  const spans = [...cited.matchAll(PLACE)].filter((p) => /\d|[.,]/.test(p[0])).map((p) => span(p.index, p.index + p[0].length, true));
+  const spans = [...typed.matchAll(PLACE)].filter((p) => /\d|[.,]/.test(p[0])).map((p) => span(p.index, p.index + p[0].length, true));
   const place = spans.filter((p) => p.named).pop() ?? spans.pop();
   function span(from: number, to: number, numbered: boolean): { start: number; end: number; named: boolean; located: boolean } {
     let start = from, end = to, named = false, located = false;
     for (let first = true, locator = false; ;) {
-      const before = cited.slice(0, start);
-      const paren = before.match(/\(\s*$/), close = cited.slice(end).match(/^\s*\)/);
+      const before = typed.slice(0, start);
+      const paren = before.match(/\(\s*$/), close = typed.slice(end).match(/^\s*\)/);
       if (paren && close) { start -= paren[0].length; end += close[0].length; continue; }
       const t = before.match(/(\*[^*]+\*|[\p{L}\p{Nd}’'.-]+)([\s,]*)$/u);
       if (!t) break;
       const word = t[1], number = new RegExp(`^${PLACE.source}$`, "u").test(word);
       /* a short word inside the name, de in Cyrano de Bergerac, goes with it only between two of its words (pin:
-         shelfLines.test › citedAs: a short word inside the work's name) */
+         shelfLines.test › typedAs: a short word inside the work's name) */
       const prior = before.slice(0, before.length - t[0].length).match(/(\*[^*]+\*|[\p{L}\p{Nd}’'.-]+)([\s,]*)$/u);
       const name = isNamed(word) || inner.includes(folded(word)) && !!prior && isNamed(prior[1]);
       if (!(first && numbered && /^\*/.test(word) || name || LOCATOR.test(word) || number && locator)) break;
@@ -569,13 +569,13 @@ function ownWords(cited: string, head: string, key: string, long: boolean): stri
     }
     return { start, end, named, located };
   }
-  if (long && !(place?.named || place?.located || place && !/[^\s,:]/.test(cited.slice(place.end)) && /[-–.]/.test(cited.slice(place.start, place.end)))) return null;
-  const { start, end } = place ?? span(cited.replace(/[\s,:]*$/, "").length, cited.replace(/[\s,:]*$/, "").length, false);
-  const rest = cited.slice(0, start) + cited.slice(end);
+  if (long && !(place?.named || place?.located || place && !/[^\s,:]/.test(typed.slice(place.end)) && /[-–.]/.test(typed.slice(place.start, place.end)))) return null;
+  const { start, end } = place ?? span(typed.replace(/[\s,:]*$/, "").length, typed.replace(/[\s,:]*$/, "").length, false);
+  const rest = typed.slice(0, start) + typed.slice(end);
   if (!/\p{L}/u.test(rest)) return place || start < end ? head : null;
   /* a lone number with words of one's own is a note's, not a place (6: The Italian reads:) */
-  if (!place || !place.named && /^\d+$/.test(cited.slice(start, end).replace(/[()\s]/g, ""))) return null;
-  return cited.slice(0, start) + head.replace(/:$/, "") + cited.slice(end);
+  if (!place || !place.named && /^\d+$/.test(typed.slice(start, end).replace(/[()\s]/g, ""))) return null;
+  return typed.slice(0, start) + head.replace(/:$/, "") + typed.slice(end);
 }
 
 export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Referred, "text" | "url" | "passage">): string {
@@ -591,31 +591,31 @@ export function referRuns(md: string, runs: Run[], mint: (run: Run) => Pick<Refe
     const outer = ">".repeat(Math.max(0, (lines[r.start].match(/^\s*((?:>\s*)*)/)![1].match(/>/g) ?? []).length - 1));
     const within = (l: string): string => !outer ? l : !l ? outer : l.startsWith(">") ? outer + l : outer + " " + l;
     const blank = (l: string): boolean => outer ? !/[^\s>]/.test(l) : !l.trim();
-    /* a short citation a blank line above the run is its citation as well
-       as one just above (pin: shelfLines.test › referRuns: a short citation ending in a colon a blank line above) */
+    /* a short source line a blank line above the run is its source line as well
+       as one just above (pin: shelfLines.test › referRuns: a short source line ending in a colon a blank line above) */
     /* a link to the bookshelf alone is a reference whose passage is not quoted */
     const linked = (l: string): boolean => /^\[[^\]]*\]\([^)\s]*#(?:bookshelf|page)\/[^)]*\):\s*$/.test(bare(l));
     const [link, ...passage] = m.text.split("\n");
-    const short = (l: string): boolean => { const c = bare(l).replace(/\[([^\]]*)\]\(file:[^)]*\)/g, "$1"); return /:\s*$/.test(c) && !/\]\(/.test(c) && (c.length <= CITATION || !QUOTE.test(l) && citedAs(c, link, r.key) !== null) || linked(l); };
+    const short = (l: string): boolean => { const c = bare(l).replace(/\[([^\]]*)\]\(file:[^)]*\)/g, "$1"); return /:\s*$/.test(c) && !/\]\(/.test(c) && (c.length <= SOURCE_LINE || !QUOTE.test(l) && typedAs(c, link, r.key) !== null) || linked(l); };
     const above = start > 1 && blank(lines[start - 1]) && short(lines[start - 2]) && (at === 0 || runs[at - 1].end < start - 2) ? start - 2 : start - 1;
     const prev = above >= 0 ? lines[above] : "", next = end + 1 < lines.length ? lines[end + 1] : "";
-    /* a citation linked to a copy on this machine's disk is a citation all the same */
-    const cited = bare(prev).replace(/\[([^\]]*)\]\(file:[^)]*\)/g, "$1");
+    /* a source line linked to a copy on this machine's disk is a source line all the same */
+    const typed = bare(prev).replace(/\[([^\]]*)\]\(file:[^)]*\)/g, "$1");
     const tail = blank(next) ? [] : [""];
-    /* a kept place that names the work, or only numbers it, is its citation, which the reference gives (pin:
+    /* a kept place that names the work, or only numbers it, is its source line, which the reference gives (pin:
        shelfLines.test › quotedRuns, referRuns: a joined line's place) */
     const work = norm(m.text.match(/^\[[^\]]*?, (.+), [^,\]]+\]/)?.[1] ?? "");
     /* a place that is only a book's or scene's number, the link's own: (II,i), [1.1] */
     const numbered = (l: string): boolean => /^[\s>….]*[([]?\s*(?:[IVXLC]+|\d+)\s*[,.]\s*(?:[ivxlc]+|\d+)\s*[)\]]?\s*$/i.test(l);
     const kept = (l?: string): l is string => l !== undefined && !(work && norm(l).includes(work)) && !numbered(l);
     const after = !kept(r.after) ? tail.map(within) : [within(""), r.after];
-    /* a citation gives way to the reference in the standard form, words
-       of one's own kept round its link (pin: shelfLines.test › citedAs); a
-       line with neither numbers nor the work's name is no citation (pin:
-       shelfLines.test › referRuns: a citation with numbers) */
-    /* a long line inside a quotation may be another writer's, its place his own (pin: shelfLines.test › referRuns: a long citation inside a quotation) */
-    const citation = !!cited && /:\s*$/.test(cited) && !/\]\(/.test(cited) && !kept(r.before) && !(cited.length > CITATION && QUOTE.test(prev));
-    const own = linked(prev) ? link : citation ? citedAs(cited, link, r.key) : null;
+    /* a source line gives way to the reference in the standard form, words
+       of one's own kept round its link (pin: shelfLines.test › typedAs); a
+       line with neither numbers nor the work's name is no source line (pin:
+       shelfLines.test › referRuns: a source line with numbers) */
+    /* a long line inside a quotation may be another writer's, its place his own (pin: shelfLines.test › referRuns: a long source line inside a quotation) */
+    const sourceLine = !!typed && /:\s*$/.test(typed) && !/\]\(/.test(typed) && !kept(r.before) && !(typed.length > SOURCE_LINE && QUOTE.test(prev));
+    const own = linked(prev) ? link : sourceLine ? typedAs(typed, link, r.key) : null;
     if (own !== null)
       lines.splice(above, end - above + 1, ...[own, ...passage].map(within), ...after);
     else

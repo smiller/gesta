@@ -254,7 +254,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("Escape", await R.linesRowOpen(page));
     }],
     ["reference copy", async () => {
-  /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the citation anchor and the pair's grid inline */
+  /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the reference anchor and the pair's grid inline */
   await go("page/Horace");
   await R.selectAll(page, S.editorCell);
   /* the bar, not 100ms: it shows after the selectionchange the editor takes the selection on */
@@ -303,11 +303,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+v");
   await rest(page);
   { const md = await A.stored(page); const screen = await page.evaluate(() => { const a = [...document.querySelectorAll("#editor .ProseMirror a")].find((x) => x.textContent === "vampires"); const s = getSelection(); return { link: a ? (a.getAttribute("href") ?? "").replace(/\?h=.*$/, "") : "none", collapsed: s.isCollapsed, caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset) }; }); await log("a reference pasted onto a word", { chosen, ...screen, references: md.split("):\n").length - 1, stored: /\[vampires\]\(#page\/Williams/.test(md) }); }
-  /* the same reference pasted mid-sentence: its citation alone, no colon, the caret after it */
+  /* the same reference pasted mid-sentence: its label alone, no colon, the caret after it */
   await R.caretAfter(page, "greater.", 8);
   await page.keyboard.press("Meta+v");
   await rest(page);
-  { const md = await A.stored(page); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, cited: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
+  { const md = await A.stored(page); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
   /* the page's reference copied with ⌘C, then pasted mid-sentence: a copy made in the page pastes whole */
   await page.click(S.editor);
   await page.keyboard.press("Meta+a");
@@ -316,7 +316,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.caretAfter(page, "greater.", 8);
   await page.keyboard.press("Meta+v");
   await rest(page);
-  { const md = await A.stored(page); await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, citedAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
+  { const md = await A.stored(page); await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, labelAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
@@ -624,13 +624,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.waitEntryAndSelection(page, "bookshelf/Browning, Robert/Pippa Passes", "Power shall fall short in or exceed");
   await rest(page);
   await log("a link deep into a long entry followed", await R.highlightFollowed(page));
-  /* a paired citation is a fence inside the quotation (2026-09-12): its
+  /* a paired reference is a fence inside the quotation (2026-09-12): its
      pair stands where a quoted paragraph's text does, its cells unwrapped */
   await go("page/Pasted Pair");
   await page.click(S.editor);
   await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#page/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
   await page.waitForTimeout(700);
-  await log("a paired citation pasted", await R.quotedPair(page));
+  await log("a paired reference pasted", await R.quotedPair(page));
   /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured 2026-09-12 with a longer phrase). READ WITHIN 400ms OF THE KEYS: a reading at 700ms proved nothing about the grow (the 2026-09-12 confirmation pass); the settled reading follows it */
   const pasted = await R.quotedPair(page);
   await R.caretAfter(page, "rules the sea.", 14);
@@ -865,7 +865,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
     }],
     ["stanza", async () => {
-  /* the Faerie Queene's stanzas (2026-09-28, successor-only): a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap citing I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
+  /* the Faerie Queene's stanzas (2026-09-28, successor-only): a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap referring to I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
   await A.seedStanza(page, STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1");
   await R.settle(page);
@@ -2273,7 +2273,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
     }],
     ["a work in stanzas", async () => {
-  /* any work in stanza fences cites by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
+  /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
   await A.foreignWrite(page, "bookshelf/Havamal", "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
   const seeded = await seededIn("bookshelf/Havamal");
   await page.goto(A.url("bookshelf/Havamal"));
@@ -2298,7 +2298,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
     }],
     ["Old English verse", async () => {
-  /* a work whose page says Old English verse cites its half-lines: Beowulf 49-52, a root that names no author */
+  /* a work whose page says Old English verse refers to its half-lines: Beowulf 49-52, a root that names no author */
   await A.foreignWrite(page, "bookshelf/Beowulf", "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
   const seeded = await seededIn("bookshelf/Beowulf");
   await page.goto(A.url("bookshelf/Beowulf"));
@@ -2314,7 +2314,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on a first half-line", { lines: await R.clipboardLines(page) });
-  /* beside its translation the original is quoted from the half cited, the translation whole */
+  /* beside its translation the original is quoted from the half referred to, the translation whole */
   await A.foreignWrite(page, "bookshelf/Seafarer", "# The Seafarer\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
   const paired = await seededIn("bookshelf/Seafarer");
   await page.goto(A.url("bookshelf/Seafarer"));
@@ -2328,7 +2328,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
     }],
     ["split lines", async () => {
-  /* a verse line split between speakers is one line (2026-10-20, asked): Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." cites 1563; a rest typed longer than its row has room for is set in less, not wrapped */
+  /* a verse line split between speakers is one line (2026-10-20, asked): Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." refers to 1563; a rest typed longer than its row has room for is set in less, not wrapped */
   await A.foreignWrite(page, "bookshelf/Milton, John/Samson Agonistes", fixture("samson-split-lines.md"));
   const seeded = await seededIn("bookshelf/Milton, John/Samson Agonistes");
   await page.goto(A.url("bookshelf/Milton%2C%20John/Samson%20Agonistes"));
@@ -2396,7 +2396,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G for a skipped line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
-  /* a drag over one sentence's English (2026-11-02, asked): it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R cites and quotes that Latin */
+  /* a drag over one sentence's English (2026-11-02, asked): it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R refers to and quotes that Latin */
   await R.dragCell(page, "Through this the River Peneus");
   await rest(page);
   await log("a drag over one sentence's English", await R.dualSelection(page));
@@ -2429,7 +2429,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a dual-language block in a note", await R.dualInset(page));
     }],
     ["facing numbers", async () => {
-  /* Ovid's Latin beside Golding's verse (2026-10-23, asked): a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R cites both */
+  /* Ovid's Latin beside Golding's verse (2026-10-23, asked): a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R refers to both */
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)", "# *Metamorphoses* (with Golding’s translation)\n\n- [Book 7](#bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207)\n");
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", fixture("ovid-golding-7.md"));
   await page.goto(A.url("bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207"));

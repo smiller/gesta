@@ -24,10 +24,10 @@ export interface Namespace {
   /* an unknown key opens, and registers on its first save (pin: bridge › an
      unknown page mints on visit) */
   mintsOnVisit: boolean;
-  /* whether a citation from here carries a locator — the selection's line
+  /* whether a reference from here carries a locator — the selection's line
      range, or the leaf it sits on. A named document or a day is not about
-     that: its citation names the entry and stops. */
-  citesLocator: boolean;
+     that: its reference names the entry and stops. */
+  refersWithLocator: boolean;
   /* whether a root's KEY and its LABEL are different strings: a book's root is
      an author, keyed "Milton, John" and labelled "John Milton" by the entry's
      own heading. A page's name is the label (pin: keys.test › titlesRoots) */
@@ -40,7 +40,7 @@ export interface Namespace {
 export const NS_PAGE: Namespace = {
   key: PAGE_KEY,
   noun: "page", subNoun: "sub-page",
-  mintsOnVisit: true, citesLocator: false, titledRoots: false, numeralDivisions: false,
+  mintsOnVisit: true, refersWithLocator: false, titledRoots: false, numeralDivisions: false,
 };
 export const NS_BOOK: Namespace = {
   key: "bookshelf",
@@ -48,7 +48,7 @@ export const NS_BOOK: Namespace = {
      18 to 1 (MEASURED). Deeper than one level the sub noun still applies,
      so a scene of a play confirms as a "book". */
   noun: "author", subNoun: "book",
-  mintsOnVisit: false, citesLocator: true, titledRoots: true, numeralDivisions: true,
+  mintsOnVisit: false, refersWithLocator: true, titledRoots: true, numeralDivisions: true,
 };
 /* a null-prototype map: a hand-typed #constructor or #__proto__ has to answer
    "not a namespace" (pin: keys.test › nsOf answers the namespace rows and

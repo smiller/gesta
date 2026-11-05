@@ -113,7 +113,7 @@ the reference link followed: {"selected":"food of love","bar":false,"onScreen":t
 reference paste: arrived at page/Pasted: {"cursor":"at a line's start"}
 a link deep into a long entry followed: {"selected":"Power shall fall short in or exceed","bar":false,"onScreen":true,"cursor":"selected 35","screen":"bookshelf/Browning, Robert/Pippa Passes · sel 35 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 reference paste: arrived at page/Pasted Pair: {"cursor":"at a line's start"}
-a paired citation pasted: {"quotes":2,"indent":-21,"cols":"266 403","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a paired reference pasted: {"quotes":2,"indent":-21,"cols":"266 403","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 typed into the quoted pair: {"grew":false,"quotes":2,"indent":-21,"cols":"266 403","wrapped":true,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 typed into the quoted pair, settled: {"quotes":2,"indent":-33,"cols":"266 426","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 toolbar: arrived at 2026-09-06: {"cursor":"at a line's start"}

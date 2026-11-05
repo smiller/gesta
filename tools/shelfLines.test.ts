@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { shelfIndex, referenceOf } from "./bookshelfQuotes.ts";
-import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted, carried, citedAs, withinQuotation } from "./shelfLines.ts";
+import { quotedRuns, referRuns, wordDiff, quotedPassages, sameQuoted, carried, typedAs, withinQuotation } from "./shelfLines.ts";
 
 const index = shelfIndex({
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -21,7 +21,7 @@ test("quotedRuns: a quotation under a link to the bookshelf written as the page'
   const md = "[Horace, *Odes*, 1.1.3-4](file:///Users/someone/gesta/dist/index.html#bookshelf/Horace/Odes/1.1?h=x):\n\n> ::: verse 3\n> sunt quos curriculo pulverem Olympicum | x\n> collegisse iuvat metaque fervidis | y\n> :::\n";
   expect(quotedRuns(md, index)).toEqual([]);
 });
-test("referRuns: a run after a short citation ending in a colon takes that line's place with the reference; else the reference stands in the run's place", () => {
+test("referRuns: a run after a short source line ending in a colon takes that line's place with the reference; else the reference stands in the run's place", () => {
   const md = "Odes 1.1.3-4:\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n\nAnd then\n> certat tergeminis tollere honoribus;\nhe said.\n";
   const runs = quotedRuns(md, index);
   const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u${r.from}):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: `#u${r.from}`, passage: `> ::: verse ${r.from}\n> line\n> :::` }));
@@ -93,7 +93,7 @@ test("quotedRuns, referRuns: a line joining two places with an ellipsis closes t
 test("quotedRuns: a run at an entry's very end, its last line without a newline", () => {
   expect(quotedRuns("> sunt quos curriculo pulverem Olympicum\n> collegisse iuvat metaque fervidis", index).map((r) => [r.start, r.end])).toEqual([[0, 1]]);
 });
-test("quotedRuns, referRuns: a joined line's place that is not a run's is kept beside the reference as written, unless it cites the work or is a book's or scene's number; inside a quotation the two references share one quoted blank", () => {
+test("quotedRuns, referRuns: a joined line's place that is not a run's is kept beside the reference as written, unless it names the work or is a book's or scene's number; inside a quotation the two references share one quoted blank", () => {
   const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: "" });
   const own = ">> sunt quos curriculo pulverem Olympicum\n>> collegisse iuvat metaque fervidis\n>> evitata rotis palmaque nobilis. … 1 { *Odes*, 1.1.3ff }\n";
   expect(quotedRuns(own, index).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 2, 3, 5]]);
@@ -213,7 +213,7 @@ test("quotedRuns, referenceOf: a speaker's name opening a quotation taken from i
   const outside = "PORTIA\n> That strain again! it had a dying fall:\n> O, it came o’er my ear like the sweet sound,\n";
   expect(quotedRuns(outside, play).map((r) => [r.start, r.end])).toEqual([[1, 2]]);
 });
-test("referRuns: a citation with numbers, giving the lines or only the book or scene, gives way to the reference whole, in the standard form; a line with no numbers is no citation", () => {
+test("referRuns: a source line with numbers, giving the lines or only the book or scene, gives way to the reference whole, in the standard form; a line with no numbers is no source line", () => {
   const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` });
   const verse = "sunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n";
   const at = (head: string) => referRuns(head + "\n" + verse, quotedRuns(head + "\n" + verse, index), mint);
@@ -242,48 +242,48 @@ test("withinQuotation: a line of the book in another tongue takes the quotation'
   expect(at(line + "> Some there are whom the dust delights\n>\n> collegisse iuvat\n> to gather in the course\n\nAnd so.\n")).toEqual({ runs: [[0, 4, 3, 4]], left: 0 });
   expect(at(line + "\n> And this is what I make of it, the whole of it.\n> More.\n")).toEqual({ runs: [[0, 0, 3, 3]], left: 0 });
 });
-test("referRuns: a long citation inside a quotation, perhaps another writer's, keeps its words, the reference under it; one of one's own outside a quotation takes the link in its place", () => {
+test("referRuns: a long source line inside a quotation, perhaps another writer's, keeps its words, the reference under it; one of one's own outside a quotation takes the link in its place", () => {
   const mint = (r: { from: number; to: number }) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: "#u", passage: `> ::: verse ${r.from}\n> line\n> :::` });
   const verse = "sunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n";
   const at = (head: string) => referRuns(head + "\n" + verse, quotedRuns(head + "\n" + verse, index), mint);
   expect(at("> The line is drawn from Horace, *Odes* 1.1.3-4, near the opening:")).toBe("> The line is drawn from Horace, *Odes* 1.1.3-4, near the opening:\n\n[Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
   expect(at("The line I keep coming back to is Horace, *Odes* 1.1.3-4:")).toBe("The line I keep coming back to is [Horace, *Odes*, 1.1.3-4](#u):\n\n> ::: verse 3\n> line\n> :::\n");
 });
-test("citedAs: a citation's own words kept around the link, its author, work and numbers the link's; the link alone where no words are left; a line naming only the work its citation", () => {
+test("typedAs: a source line's own words kept around the link, its author, work and numbers the link's; the link alone where no words are left; a line naming only the work its source line", () => {
   const head = "[Spenser, *The Faerie Queene*, 1.7.40](#u):", key = "bookshelf/Spenser, Edmund/The Faerie Queene/1.7";
-  expect(citedAs("FQ I.vii.40 (Arthur to Una):", head, key)).toBe("[Spenser, *The Faerie Queene*, 1.7.40](#u) (Arthur to Una):");
-  expect(citedAs("I think *Faerie Queene* 1.7.40:", head, key)).toBe("I think [Spenser, *The Faerie Queene*, 1.7.40](#u):");
-  expect(citedAs("1.7.40, of the squire:", head, key)).toBe("[Spenser, *The Faerie Queene*, 1.7.40](#u), of the squire:");
-  expect(citedAs("Arthur to Una, book 1, canto 7:", head, key)).toBe("Arthur to Una, [Spenser, *The Faerie Queene*, 1.7.40](#u):");
-  expect(citedAs("1.13pm: Spenser, Faerie Queene I.vii.40:", head, key)).toBe("1.13pm: [Spenser, *The Faerie Queene*, 1.7.40](#u):");
-  expect(citedAs("an appeal (40-41):", head, key)).toBe("an appeal [Spenser, *The Faerie Queene*, 1.7.40](#u):");
-  for (const bare of ["[I.vii.40:", "10.07 ~ *FQ* I.vii.40:", "(Spenser, FQ, I.vii.40:", "Spenser, *The Faerie Queene*:"]) expect(citedAs(bare, head, key)).toBe(head);
-  expect(citedAs("Arthur to Una:", head, key)).toBe(null);
-  expect(citedAs("Æneid VI. 125-9:", "[Virgil, *Aeneid*, 6.125-29](#u):", "bookshelf/Virgil/Aeneid/6")).toBe("[Virgil, *Aeneid*, 6.125-29](#u):");
-  expect(citedAs("Boethius 3pr3, q.v. *Paradiso* 1.127-35:", "[Boethius, *De consolatione philosophiae*, 3pr3.1](#u):", "bookshelf/Boethius/De consolatione philosophiae/3pr3")).toBe("[Boethius, *De consolatione philosophiae*, 3pr3.1](#u), q.v. *Paradiso* 1.127-35:");
-  expect(citedAs("6: The Italian reads:", head, key)).toBe(null);
-  expect(citedAs("Mr Bennet to Elizabeth, volume 3, chapter 15:", "[Austen, *Pride and Prejudice*, 3.15](#u):", "bookshelf/Austen, Jane/Pride and Prejudice/3.15")).toBe("Mr Bennet to Elizabeth, [Austen, *Pride and Prejudice*, 3.15](#u):");
-  expect(citedAs("Jane Austen, *Pride and Prejudice*, p. 250:", "[Austen, *Pride and Prejudice*, 3.4](#u):", "bookshelf/Austen, Jane/Pride and Prejudice/3.4")).toBe("[Austen, *Pride and Prejudice*, 3.4](#u):");
-  expect(citedAs("From Bernardus Silvestris’ *Commentary*, book 6, p. 35:", "[Virgil, *Aeneid*, 6.1](#u):", "bookshelf/Virgil/Aeneid/6")).toBe(null);
-  expect(citedAs("Boethius, *De Consolatione Philosophiae*, II prose 4:", "[Boethius, *De consolatione philosophiae*, 2pr4.18](#u):", "bookshelf/Boethius/Consolatio/2pr4")).toBe("[Boethius, *De consolatione philosophiae*, 2pr4.18](#u):");
-  expect(citedAs("Or the disdain of the messenger who opens the gates at 88-90 and goes:", head, key)).toBe(null);
-  expect(citedAs("But, if you insist, what you must do first is find the golden bough, and 145-8:", "[Virgil, *Aeneid*, 6.145-48](#u):", "bookshelf/Virgil/Aeneid/6")).toBe("But, if you insist, what you must do first is find the golden bough, and [Virgil, *Aeneid*, 6.145-48](#u):");
-  expect(citedAs("And now, what you must do first, if you insist, is find the bough, 6:", "[Virgil, *Aeneid*, 6.145-48](#u):", "bookshelf/Virgil/Aeneid/6")).toBe(null);
-  expect(citedAs("[[ Alcuin, *O mea cella*:", "[Alcuin, *O mea cella*, 31](#u):", "bookshelf/Alcuin/O mea cella")).toBe("[Alcuin, *O mea cella*, 31](#u):");
+  expect(typedAs("FQ I.vii.40 (Arthur to Una):", head, key)).toBe("[Spenser, *The Faerie Queene*, 1.7.40](#u) (Arthur to Una):");
+  expect(typedAs("I think *Faerie Queene* 1.7.40:", head, key)).toBe("I think [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  expect(typedAs("1.7.40, of the squire:", head, key)).toBe("[Spenser, *The Faerie Queene*, 1.7.40](#u), of the squire:");
+  expect(typedAs("Arthur to Una, book 1, canto 7:", head, key)).toBe("Arthur to Una, [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  expect(typedAs("1.13pm: Spenser, Faerie Queene I.vii.40:", head, key)).toBe("1.13pm: [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  expect(typedAs("an appeal (40-41):", head, key)).toBe("an appeal [Spenser, *The Faerie Queene*, 1.7.40](#u):");
+  for (const bare of ["[I.vii.40:", "10.07 ~ *FQ* I.vii.40:", "(Spenser, FQ, I.vii.40:", "Spenser, *The Faerie Queene*:"]) expect(typedAs(bare, head, key)).toBe(head);
+  expect(typedAs("Arthur to Una:", head, key)).toBe(null);
+  expect(typedAs("Æneid VI. 125-9:", "[Virgil, *Aeneid*, 6.125-29](#u):", "bookshelf/Virgil/Aeneid/6")).toBe("[Virgil, *Aeneid*, 6.125-29](#u):");
+  expect(typedAs("Boethius 3pr3, q.v. *Paradiso* 1.127-35:", "[Boethius, *De consolatione philosophiae*, 3pr3.1](#u):", "bookshelf/Boethius/De consolatione philosophiae/3pr3")).toBe("[Boethius, *De consolatione philosophiae*, 3pr3.1](#u), q.v. *Paradiso* 1.127-35:");
+  expect(typedAs("6: The Italian reads:", head, key)).toBe(null);
+  expect(typedAs("Mr Bennet to Elizabeth, volume 3, chapter 15:", "[Austen, *Pride and Prejudice*, 3.15](#u):", "bookshelf/Austen, Jane/Pride and Prejudice/3.15")).toBe("Mr Bennet to Elizabeth, [Austen, *Pride and Prejudice*, 3.15](#u):");
+  expect(typedAs("Jane Austen, *Pride and Prejudice*, p. 250:", "[Austen, *Pride and Prejudice*, 3.4](#u):", "bookshelf/Austen, Jane/Pride and Prejudice/3.4")).toBe("[Austen, *Pride and Prejudice*, 3.4](#u):");
+  expect(typedAs("From Bernardus Silvestris’ *Commentary*, book 6, p. 35:", "[Virgil, *Aeneid*, 6.1](#u):", "bookshelf/Virgil/Aeneid/6")).toBe(null);
+  expect(typedAs("Boethius, *De Consolatione Philosophiae*, II prose 4:", "[Boethius, *De consolatione philosophiae*, 2pr4.18](#u):", "bookshelf/Boethius/Consolatio/2pr4")).toBe("[Boethius, *De consolatione philosophiae*, 2pr4.18](#u):");
+  expect(typedAs("Or the disdain of the messenger who opens the gates at 88-90 and goes:", head, key)).toBe(null);
+  expect(typedAs("But, if you insist, what you must do first is find the golden bough, and 145-8:", "[Virgil, *Aeneid*, 6.145-48](#u):", "bookshelf/Virgil/Aeneid/6")).toBe("But, if you insist, what you must do first is find the golden bough, and [Virgil, *Aeneid*, 6.145-48](#u):");
+  expect(typedAs("And now, what you must do first, if you insist, is find the bough, 6:", "[Virgil, *Aeneid*, 6.145-48](#u):", "bookshelf/Virgil/Aeneid/6")).toBe(null);
+  expect(typedAs("[[ Alcuin, *O mea cella*:", "[Alcuin, *O mea cella*, 31](#u):", "bookshelf/Alcuin/O mea cella")).toBe("[Alcuin, *O mea cella*, 31](#u):");
 });
 test("quotedRuns: a run's last line split otherwise into words than the passage, To do ’t against To do’t, is still followed: letters, not words", () => {
   const prose = shelfIndex({ "bookshelf/Somebody/A Play/4.4": "# 4.4\n\n::: verse\nI do not know\nWhy yet I live to say ‘This thing’s to do;’\nSith I have cause and will and strength and means\nTo do’t. Examples gross as earth exhort me:\n:::\n" });
   const md = "> I do not know\n> Why yet I live to say “This thing’s to do”,\n> Sith I have cause, and will, and strength, and means\n> To do ’t.\n\nAnd so.\n";
   expect(quotedRuns(md, prose).map((r) => [r.start, r.end, r.to, r.tail])).toEqual([[0, 3, 4, "todot".length]]);
 });
-test("quotedRuns: an attribution closing the quotation that names the work, the link's own citation, goes with it; a line of one's own naming the work stays", () => {
+test("quotedRuns: an attribution closing the quotation that names the work, the link's own source line, goes with it; a line of one's own naming the work stays", () => {
   const md = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n> \\- Orsino, *Twelfth Night* 1.1\n\nAnd so.\n";
   expect(quotedRuns(md, play).map((r) => [r.start, r.end])).toEqual([[0, 2]]);
   const own = "> If music be the food of love, play on;\n> Give me excess of it, that, surfeiting,\n> and Twelfth Night was the first play I saw\n";
   expect(quotedRuns(own, play).map((r) => [r.start, r.end])).toEqual([[0, 1]]);
 });
 
-// Old English verse, a root of its own with no author, its half-lines cited;
+// Old English verse, a root of its own with no author, its half-lines referred to;
 // Hávamál in stanza fences.
 const north = shelfIndex({
   "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 377\nÐonne sægdon þæt  sæliþende,\nþa ðe gifsceattas  Geata fyredon\nþyder to þance,  þæt he þrittiges\nmanna mægencræft  on his mundgripe\nheaþorof hæbbe.  Hine halig God\n:::",
@@ -310,7 +310,7 @@ test("quotedRuns: the lines placed by their likeness count toward a run's letter
   // a line too short to be a quotation on its own is still none
   expect(quotedRuns("> þæt he ðone wisan  wordum nægde\n", bwf)).toEqual([]);
 });
-test("referenceOf: Old English verse beside its translation, quoted from a second half-line and to a first, is cited and quoted by its halves", () => {
+test("referenceOf: Old English verse beside its translation, quoted from a second half-line and to a first, is referred to and quoted by its halves", () => {
   const sf = shelfIndex({ "bookshelf/Seafarer": "# The Seafarer\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\nne goldgiefan  swylce iu wæron, | nor givers of gold as once there were,\n:::" });
   const md = "> Dagas sind gewitene\n> ealle onmedlan  eorþan rices;\n> nearon nu cyningas  ne caseras\n> ne goldgiefan\n";
   const runs = quotedRuns(md, sf);
@@ -324,7 +324,7 @@ test("wordDiff: an accent, or ð for þ, is a change of spelling a reader sees",
   expect(wordDiff("þá ðe gifsceattas", "þa þe gifsceattas").ops).toEqual([["-", "þá"], ["-", "ðe"], ["+", "þa"], ["+", "þe"], ["=", "gifsceattas"]]);
   expect(wordDiff("þá ðe gifsceattas", "þa þe gifsceattas").kind).toBe("spelling");
 });
-test("referRuns: a short citation ending in a colon a blank line above the run is the run's citation all the same", () => {
+test("referRuns: a short source line ending in a colon a blank line above the run is the run's source line all the same", () => {
   const md = "Odes 1.1.3-4:\n\nsunt quos curriculo pulverem Olympicum\ncollegisse iuvat metaque fervidis\n\nOdes 1.1:\n\n> certat tergeminis tollere honoribus;\n";
   const runs = quotedRuns(md, index);
   const out = referRuns(md, runs, (r) => ({ text: `[Horace, *Odes*, 1.1.${r.from}-${r.to}](#u${r.from}):\n\n> ::: verse ${r.from}\n> line\n> :::`, url: `#u${r.from}`, passage: `> ::: verse ${r.from}\n> line\n> :::` }));
@@ -362,7 +362,7 @@ test("quotedPassages: a paragraph of one's own among the quoted ones leaves the 
   expect(quotedPassages(taken, novel, AUSTEN, [{ start: 0, end: 0, key: "k", first: 0, last: 0, from: 1, to: 1 }])).toEqual([]);
   expect(quotedPassages("```\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n```\n", novel, AUSTEN, [])).toEqual([]);
 });
-test("referRuns: before a prose passage, a short citation with a number gives way to the reference whole", () => {
+test("referRuns: before a prose passage, a short source line with a number gives way to the reference whole", () => {
   const md = "Volume 1, chapter 9:\n\n> “I have been used to consider poetry as the food of love,” said Elizabeth.\n";
   const { run, ref } = quotedPassages(md, novel, AUSTEN, [])[0];
   expect(referRuns(md, [run], () => ref)).toBe(ref.text + "\n");
@@ -426,8 +426,8 @@ test("quotedRuns: an attribution closing the quotation that names any part the w
   const named = "> The first line of the poem is spoken here\n> And carries on a while before it stops\n> – *A Poem*, 1-2\n";
   expect(quotedRuns(named, poem).map((r) => [r.start, r.end])).toEqual([[0, 2]]);
 });
-test("citedAs: a short word inside the work's name goes with the name when a word of it stands before", () => {
+test("typedAs: a short word inside the work's name goes with the name when a word of it stands before", () => {
   const head = "[Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):", key = "bookshelf/Rostand, Edmond/Cyrano de Bergerac/5.2";
-  expect(citedAs("Remember Mom saying it?  Roxane, in Cyrano de Bergerac V, ii:", head, key)).toBe("Remember Mom saying it?  Roxane, in [Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):");
-  expect(citedAs("Roxane says de Bergerac V, ii:", head, key)).toBe("Roxane says de [Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):");
+  expect(typedAs("Remember Mom saying it?  Roxane, in Cyrano de Bergerac V, ii:", head, key)).toBe("Remember Mom saying it?  Roxane, in [Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):");
+  expect(typedAs("Roxane says de Bergerac V, ii:", head, key)).toBe("Roxane says de [Rostand, *Cyrano de Bergerac*, 5.2.14-16](#u):");
 });

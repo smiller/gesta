@@ -264,7 +264,7 @@ test("a paste onto a selection is a paste as before when it is no reference, the
   expect(linkSelection(over("```\ncode 78\n```", "78"), REF)).toBeNull();
   expect(linkSelection(over("::: reference\nfrom 78\n:::", "78"), REF)).toBeNull();
 });
-test("a reference pasted into a line with words in it arrives as its citation alone, no colon, the caret after it", () => {
+test("a reference pasted into a line with words in it arrives as its label alone, no colon, the caret after it", () => {
   const s = at("as the poem says,  and so on", "says, ");
   const tr = citeInLine(s, REF)!;
   expect(serializeMarkdown(tr.doc)).toBe("as the poem says, [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0) and so on");
@@ -272,7 +272,7 @@ test("a reference pasted into a line with words in it arrives as its citation al
   expect(serializeMarkdown(citeInLine(at("as the poem says ", "says "), REF)!.doc)).toBe("as the poem says [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
   expect(serializeMarkdown(citeInLine(at("- see ", "see "), REF)!.doc)).toBe("- see [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
 });
-test("a reference pasted on an empty line, over a selection, where a link cannot stand, or naming no entry is not cut to its citation", () => {
+test("a reference pasted on an empty line, over a selection, where a link cannot stand, or naming no entry is not cut to its label", () => {
   const P = schema.nodes.paragraph;
   const empty = schema.nodes.doc.create(null, [P.create(null, schema.text("before")), P.create(), P.create(null, schema.text("after"))]);
   expect(citeInLine(EditorState.create({ doc: empty, selection: TextSelection.create(empty, 9) }), REF)).toBeNull();

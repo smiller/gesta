@@ -15,7 +15,7 @@
 import { DOMSerializer } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
-import { citationAnchorHTML } from "../editor/reference.ts";
+import { referenceAnchorHTML } from "../editor/reference.ts";
 import { inlineBlockStyles } from "../editor/inlineStyles.ts";
 import { COPY_MARK } from "../editor/paste.ts";
 export { inlineBlockStyles };
@@ -45,7 +45,7 @@ export function withPictureBytes(html: string): Promise<string> {
   return Promise.all(imgs.map((img) => fetch(img.getAttribute("src")!).then((r) => r.blob()).then(asData)
     .then((u) => { img.setAttribute("src", u); }, () => {}))).then(() => t.innerHTML);
 }
-/* the reference's HTML: the citation line, then the quoted passage
+/* the reference's HTML: the label’s line, then the quoted passage
    rendered from its markdown and swept while parked under the surface */
 export function richReferenceHtml(surface: HTMLElement, url: string, label: string, passageMd: string): string {
   const doc = parseMarkdown(passageMd);
@@ -57,6 +57,6 @@ export function richReferenceHtml(surface: HTMLElement, url: string, label: stri
     stage.appendChild(frag);
     surface.appendChild(stage);
     const blocks = Array.from(stage.children).map((b) => richBlockHtml(b)).join("");
-    return "<p " + COPY_MARK + ">" + citationAnchorHTML(url, label) + ":</p>" + blocks;
+    return "<p " + COPY_MARK + ">" + referenceAnchorHTML(url, label) + ":</p>" + blocks;
   } finally { stage.remove(); }
 }

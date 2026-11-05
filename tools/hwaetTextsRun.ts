@@ -91,6 +91,6 @@ for (const [path, md] of Object.entries(entries)) {
 writeFileSync(join(dirname(OUT), basename(OUT) + ".html"), `<!doctype html><meta charset="utf-8"><title>Texts with translations</title>
 <style>body{font:16px/1.45 Georgia,serif;margin:2em auto;max-width:64em;padding:0 1em}td{padding:0 1em 0 0;vertical-align:top}.n{color:#999;text-align:right;font-size:.8em}.w{color:#555}.gap td{height:1em}.note{font-size:.85em;color:#333;border:1px solid #ccc;padding:.4em .6em}</style>
 <h1>Texts with translations, from early-medieval-england.net</h1>
-<p>Each entry is one bookshelf page with its reference setting <code>no author</code>, the text and its translation side by side as pairs. A poem in half-lines there is set in whole lines here, the half-lines two spaces apart; a poem in stanzas keeps a row a line, each stanza its own <code>::: stanza N</code> fence, cited stanza and line (76.1-3). The site's notes are footnotes: a mark after the line or half-line, the stanza's notes after its last line.</p>
+<p>Each entry is one bookshelf page with its reference setting <code>no author</code>, the text and its translation side by side as pairs. A poem in half-lines there is set in whole lines here, the half-lines two spaces apart; a poem in stanzas keeps a row a line, each stanza its own <code>::: stanza N</code> fence, referred to stanza and line (76.1-3). The site's notes are footnotes: a mark after the line or half-line, the stanza's notes after its last line.</p>
 ${report.join("\n")}`);
 console.log(`written to ${OUT}`);

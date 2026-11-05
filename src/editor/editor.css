@@ -235,7 +235,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    block's measure, wherever the pair it measured stands — a quotation, a
    quotation in a quotation — and its blocks fill it. A block-level pull
    beside it was a no-op when fitted and an overflow when not (pin:
-   reference paste › a paired citation pasted) */
+   reference paste › a paired reference pasted) */
 .page.fitted {
   margin-left: calc(50% - var(--par-w) / 2);
   margin-right: calc(50% - var(--par-w) / 2);
@@ -309,7 +309,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    › a dual-language block in a note) */
 .page :is(div.note, div[class^="card-"]) .verse.dual-language { --vb-col: var(--inset-col, 50%); --dl-gap: 1.6em; }
 .page.fitting-insets :is(div.note, div[class^="card-"]) .verse.dual-language > .vrow:not(.vpair) { width: max-content; max-width: none; }
-/* A PAIRED CITATION: a quoted pair is fitted with the entry and stands at
+/* A PAIRED REFERENCE: a quoted pair is fitted with the entry and stands at
    the quoted text's edge with a quoted paragraph's margins (found by hand:
    pulled, it stood 21px out of the box; as an inset box, equal halves
    wrapped its English). A single-column quoted fence keeps a verse block's
@@ -421,7 +421,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 }
 /* THE STANZA'S NUMBER: bold, ink, in a column of its own left of the line
    numbers, beside the stanza's first line, and drawn whatever the interval
-   — "none" included — since it is how a citation is followed. The column
+   — "none" included — since it is how a reference is followed. The column
    fits inside the reserved number column, so no line moves. */
 /* a stanza inside a note, a quote or a card draws its number too — III.xii's
    1590 stanzas stand in a note after the canto —

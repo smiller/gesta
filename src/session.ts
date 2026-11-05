@@ -14,7 +14,7 @@ import { stored } from "./store/local.ts";
 import { errText } from "./store/files.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
 import { journalOf } from "./store/headings.ts";
-import { referencePayload, entryLinkParts, citationAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
+import { referencePayload, entryLinkParts, referenceAnchorHTML, REFUSAL_TEXT } from "./editor/reference.ts";
 import { writeClipboard } from "./ui/clipboard.ts";
 import { richReferenceHtml } from "./ui/richCopy.ts";
 import type { EntryLayer } from "./store/entries.ts";
@@ -445,7 +445,7 @@ export function startSession(opts: SessionOptions): Session {
   function copyEntryLink(): void {
     if (!layer.warmed) { say("Still loading — try that again in a moment"); return; }
     const p = entryLinkParts(current.date, current.tag, journal);
-    copy({ text: "[" + p.label + "](" + p.url + ")", html: citationAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
+    copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }
   window.addEventListener("hashchange", () => { flushSave().then(openHash); });
   window.addEventListener("beforeunload", () => { saveNow(); });

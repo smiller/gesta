@@ -31,7 +31,7 @@ export function referenceNumeral(seg: string, divisions: boolean): string | null
   return m ? m[1] : null;
 }
 /* A NUMERAL THAT ALREADY SPELLS ITS PARENT'S DOES NOT REPEAT IT: Boethius
-   "Book 3/3m9" cites as 3m9. The remainder must begin with a NON-digit, so
+   "Book 3/3m9" refers as 3m9. The remainder must begin with a NON-digit, so
    "Acte 2/Scène 2" stays 2.2 and "11m2" under Book 1 names book 11 (pin:
    reference.test › referenceAbsorbs) */
 export function referenceAbsorbs(prev: string, next: string): boolean {
@@ -70,10 +70,11 @@ export interface Journal {
   romanBookCanto(workKey: string): boolean;
   /* the ROOT's page carries `no author`: a heading that gathers works, not a person */
   noAuthor(rootKey: string): boolean;
-  /* the page carries `Old English verse`: its lines are cited by half-line */
+  /* the page carries `Old English verse`: its lines are referred to by half-line */
   oldEnglishVerse(ekey: string): boolean;
-  /* the WORK's page carries `prosimetrum`: a chapter's prose and its poems are cited apart */
+  /* the WORK's page carries `prosimetrum`: a chapter's prose and its poems are referred to apart */
   prosimetrum(workKey: string): boolean;
+  byBookChapterParagraph(workKey: string): boolean;
   /* the ROOT's page carries `scripture`: a book named plainly, its chapter and verse after a space */
   scripture(rootKey: string): boolean;
   /* the WORK's page carries `parts in roman`: its tales and parts named in roman after its italic title */
@@ -82,9 +83,9 @@ export interface Journal {
 
 /* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
    join as numerals (`1.1`, `1.pr`), and a
-   work whose page says `roman book and canto` cites them as Spenserians
+   work whose page says `roman book and canto` refers to them as Spenserians
    do — the book upper-case Roman, the canto lower-case, `pr` (the proem)
-   as it stands: I.i.2.1. Subtractive, the modern citation's form (IV, ix),
+   as it stands: I.i.2.1. Subtractive, the modern reference's form (IV, ix),
    not the print's IIII (pin: reference.test › roman: upper case for a book,
    lower for a canto, subtractive) */
 const ROMAN: [number, string][] = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
@@ -107,22 +108,26 @@ export function romanWorkKey(date: string, tag: string | null, journal: Journal)
   const work = entryKey(date, segs[0] + "/" + segs[1]);
   return journal.romanBookCanto(work) ? work : null;
 }
-/* a book entry cites half-lines when its own page or any above it says
+/* a book entry refers to half-lines when its own page or any above it says
    `Old English verse`: a root of works with no author says it once for all
    of them, an author's work for its parts */
-export function citesHalfLines(date: string, tag: string | null, journal: Journal): boolean {
+export function refersByHalfLine(date: string, tag: string | null, journal: Journal): boolean {
   const segs = tag ? tag.split("/") : [];
   if (!titlesRoots(date)) return false;
   for (let i = 1; i <= segs.length; i++) if (journal.oldEnglishVerse(entryKey(date, segs.slice(0, i).join("/")))) return true;
   return false;
 }
-export function citesProsimetrum(date: string, tag: string | null, journal: Journal): boolean {
+export function refersAsProsimetrum(date: string, tag: string | null, journal: Journal): boolean {
   const segs = tag ? tag.split("/") : [];
   return titlesRoots(date) && segs.length >= 3 && journal.prosimetrum(entryKey(date, segs[0] + "/" + segs[1]));
 }
+export function refersByBookChapterParagraph(date: string, tag: string | null, journal: Journal): boolean {
+  const segs = tag ? tag.split("/") : [];
+  return titlesRoots(date) && segs.length >= 3 && journal.byBookChapterParagraph(entryKey(date, segs[0] + "/" + segs[1]));
+}
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string }
 /* a work headed "Metamorphoses (with Golding’s translation)": the title,
-   and the translator a citation names its own lines by (pin:
+   and the translator a reference names its own lines by (pin:
    reference.test › referenceLabel: a work headed as given with a translation) */
 const WITH_TRANSLATION = /^(.+?)\s+\(with\s+(.+?)[’']s translation\)$/;
 /* the "<key><separator> " an entry's own heading opens with when it repeats
@@ -182,9 +187,9 @@ export interface FolioRange { from: string; to: string }
    leaf range, never both. The LINE range joins with a DOT onto a trailing
    numeral run and with a COMMA after a title; a LEAF range is always
    comma-joined. A day names itself by its date. A LINE RANGE WINS OVER A
-   LEAF ONE, in a book alone (the citesLocator column). A LEAF LOCATES WHAT
+   LEAF ONE, in a book alone (the refersWithLocator column). A LEAF LOCATES WHAT
    HAS NO NUMBER OF ITS OWN: numbered, the deepest division stands and the
-   leaf drops (Screwtape came back cited by leaf for Letter 12); titled, the
+   leaf drops (Screwtape came back referred to by leaf for Letter 12); titled, the
    leaf replaces every level below the work (pin: reference.test ›
    referenceLabel: the line range dots onto a numeral run) */
 export function referenceLabel(date: string, tag: string | null, range: string, folio: FolioRange | null, journal: Journal, facing = ""): string {
@@ -195,10 +200,14 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   if (titlesRoots(date) && segs.length >= 3 && journal.partsInRoman(entryKey(date, segs[0] + "/" + segs[1]))) {
     parts = parts.map((p, i) => (i > 0 && p.t !== undefined && !p.translator ? { plain: p.t } : p));
   }
+  /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
+  if (refersByBookChapterParagraph(date, tag, journal)) {
+    parts = parts.map((p) => (p.n !== undefined ? { plain: (segs.find((s) => referenceNumeral(s, true) === p.n) ?? p.n).toLowerCase() } : p));
+  }
   /* read before the last title drops the work that names it (pin: reference.test › referenceLabel: a work headed as given with a translation) */
   const translator = parts.find((p) => p.translator)?.translator;
   /* a page whose heading names no translation is the translator's own, so
-     its right column's lines are the ones cited (pin: reference.test ›
+     its right column's lines are the ones referred to (pin: reference.test ›
      referenceLabel: a work headed as given with a translation) */
   if (!translator && facing) range = facing;
   if (isDayKey(date)) parts.unshift({ plain: dateLabel(date) });
@@ -210,7 +219,7 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   const books = titlesRoots(date), deepest = parts[parts.length - 1];
   if (deepest && deepest.n !== undefined && romanWorkKey(date, tag, journal)) deepest.n = romanKey(deepest.n);
   const division = deepest && deepest.n !== undefined ? deepest.n + "." : "";
-  const ns = nsOf(date), locates = !!(ns && ns.citesLocator);
+  const ns = nsOf(date), locates = !!(ns && ns.refersWithLocator);
   /* a worded range, "prose, para 4", stands after the chapter as a field of its own (pin: reference.test › referenceLabel: a worded range) */
   if (range && locates && /^[a-z]/i.test(range)) parts.push({ plain: range });
   else if (range && locates) {

@@ -38,12 +38,14 @@ const romanBookCanto = (d: string): boolean => /roman book and canto/i.test(d);
 const noAuthor = (d: string): boolean => /^\s*no author\s*$/im.test(d);
 const oldEnglishVerse = (d: string): boolean => /^\s*old english verse\s*$/im.test(d);
 const prosimetrum = (d: string): boolean => /^\s*prosimetrum\s*$/im.test(d);
+const byBookChapterParagraph = (d: string): boolean => /^\s*by book, chapter, and paragraph\s*$/im.test(d);
 const scripture = (d: string): boolean => /^\s*scripture\s*$/im.test(d);
 const partsInRoman = (d: string): boolean => /^\s*parts in roman\s*$/im.test(d);
 export const directsFromLastTitle = (md: string): boolean => lastTitle(referenceDirectives(md));
 export const directsRomanBookCanto = (md: string): boolean => romanBookCanto(referenceDirectives(md));
 export const directsNoAuthor = (md: string): boolean => noAuthor(referenceDirectives(md));
 export const directsProsimetrum = (md: string): boolean => prosimetrum(referenceDirectives(md));
+export const directsByBookChapterParagraph = (md: string): boolean => byBookChapterParagraph(referenceDirectives(md));
 export const directsScripture = (md: string): boolean => scripture(referenceDirectives(md));
 export const directsPartsInRoman = (md: string): boolean => partsInRoman(referenceDirectives(md));
 export function journalOf(cache: Record<string, string>): Journal {
@@ -71,6 +73,7 @@ export function journalOf(cache: Record<string, string>): Journal {
     noAuthor: (rootKey) => noAuthor(directives(rootKey)),
     oldEnglishVerse: (ekey) => oldEnglishVerse(directives(ekey)),
     prosimetrum: (workKey) => prosimetrum(directives(workKey)),
+    byBookChapterParagraph: (workKey) => byBookChapterParagraph(directives(workKey)),
     scripture: (rootKey) => scripture(directives(rootKey)),
     partsInRoman: (workKey) => partsInRoman(directives(workKey)),
   };

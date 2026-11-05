@@ -4,7 +4,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, citationAnchorHTML, facingBlockOf, offersBoth } from "./reference.ts";
+import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, referenceAnchorHTML, facingBlockOf, offersBoth } from "./reference.ts";
 import { sentenceLatin } from "./dualLanguage.ts";
 import { journalOf } from "../store/headings.ts";
 
@@ -48,7 +48,7 @@ test("a passage quoted from a dual-language block is a dual-language fence numbe
 const PISOS = parseMarkdown("# Ars Poetica\n\n::: dual-language\nHumano capiti cervicem pictor equinam | If a painter chose to join a human head to the neck of a horse, could you refrain from laughing?\nspectatum admissi risum teneatis, amici?\ncredite, Pisones, isti tabulae fore librum | Believe me, dear Pisos, quite like such pictures would be a book, so that neither head nor foot can be assigned to a single shape.\npersimilem, cuius, velut aegri somnia, vanae\nfingentur species, ut nec pes nec caput uni\nreddatur formae.\n⟨…⟩“pictoribus atque poetis | “Painters and poets,” you say, “have always had an equal right.”\nquidlibet audendi semper fuit aequa potestas.”\n:::");
 const pisos = journalOf({ "bookshelf/Horace": "# Horace" });
 
-test("a selection in a sentence's English takes the Latin it stands beside, from its own row to the row before the next sentence, cited and quoted whole", () => {
+test("a selection in a sentence's English takes the Latin it stands beside, from its own row to the row before the next sentence, referred to and quoted whole", () => {
   const [a, b] = span(PISOS, "quite like such pictures");
   const out = referencePayload(state(PISOS, a, b), "bookshelf", "Horace/Ars Poetica", pisos);
   expect(out).toMatchObject({ label: "Horace, *Ars Poetica*, 3-6" });
@@ -149,8 +149,8 @@ test("a paired block copies as its own fence inside the quotation, numbered from
   expect(parseMarkdown(md).toString()).toBe("doc(blockquote(verse(pair(cell(\"c\"), cell(\"d\")), gap, pair(cell(\"e\"), cell(\"f\")))))");
 });
 
-test("a paired citation referenced again: the quoted block walked whole, the number from its own start", () => {
-  /* a paired citation inside a quotation: a cut through one cell of the pair could not be written */
+test("a paired reference referenced again: the quoted block walked whole, the number from its own start", () => {
+  /* a paired reference inside a quotation: a cut through one cell of the pair could not be written */
   const doc = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::");
   const [a, b] = span(doc, "alph", "alph");
   expect(passageMd(doc, a, b + 4)).toBe("> ::: verse 13\n> alpha beta | one two\n> :::");
@@ -180,7 +180,7 @@ test("no cut through a pair, one quote level, a note kept, the block's own count
   const stray = parseMarkdown("::: verse\nfirst line\n |\nsecond line\n:::");
   [a, b] = span(stray, "first", "second line");
   expect(passageMd(stray, a, b)).toBe("> ::: verse\n> first line\n> \n> second line\n> :::");
-  /* a quoted paragraph cited again: one level */
+  /* a quoted paragraph referenced again: one level */
   const para = parseMarkdown("[*M*](#x):\n\n> The mind is its own place\n\n[*H*](#y):\n\n> ::: verse 13\n> a | b\n> :::");
   [a, b] = span(para, "mind", "own");
   expect(passageMd(para, a, b)).toBe("> mind is its own");
@@ -194,7 +194,7 @@ test("a block inside a note, the label's top level, an end resting on a row, bla
   const satires = parseMarkdown("::: verse\nLucili, quam sis mendosus, teste Catone,\n::: note\n::: verse\nquam sis mendosus, teste Catone,\ndefensore tuo, pervincam\n:::\n:::\n:::");
   let [a, b] = span(satires, "defensore", "pervincam");
   expect(passageMd(satires, a, b)).toBe("> ::: verse 2\n> defensore tuo, pervincam\n> :::");
-  /* the label counts the entry's own lines, never a pasted citation's */
+  /* the label counts the entry's own lines, never a pasted reference's */
   const host = parseMarkdown("::: verse\nline one\nline two\n:::\n\n> ::: verse 13\n> a | b\n> c | d\n> :::");
   [a, b] = span(host, "a", "d");
   expect(referenceRange(host, a, b)).toBe("");
@@ -372,13 +372,13 @@ test("a leaf stands in for a prose book's titled chapter; entryLink names the en
   expect(entryLink("bookshelf", "Williams, Charles/Witchcraft/3. The Dark Ages", journal)).toBe("[Williams, *Witchcraft*, *3. The Dark Ages*](#bookshelf/Williams%2C%20Charles/Witchcraft/3.%20The%20Dark%20Ages)");
 });
 
-test("citationAnchorHTML: the label's italics as em, everything else escaped, the url escaped", () => {
-  expect(citationAnchorHTML("#2026-09-07?h=a%20b", "*Gesta*, 7 September 2026")).toBe('<a href="#2026-09-07?h=a%20b"><em>Gesta</em>, 7 September 2026</a>');
-  expect(citationAnchorHTML('#x"y', "a <b> & *c*")).toBe('<a href="#x&quot;y">a &lt;b&gt; &amp; <em>c</em></a>');
+test("referenceAnchorHTML: the label's italics as em, everything else escaped, the url escaped", () => {
+  expect(referenceAnchorHTML("#2026-09-07?h=a%20b", "*Gesta*, 7 September 2026")).toBe('<a href="#2026-09-07?h=a%20b"><em>Gesta</em>, 7 September 2026</a>');
+  expect(referenceAnchorHTML('#x"y', "a <b> & *c*")).toBe('<a href="#x&quot;y">a &lt;b&gt; &amp; <em>c</em></a>');
 });
 
 
-test("a passage in a grid's card cites as it does in a plain card: the grid is a container the trim looks through", () => {
+test("a passage in a grid's card refers as it does in a plain card: the grid is a container the trim looks through", () => {
   const plain = parseMarkdown("::: card-red\nsome words here\n:::");
   const grid = parseMarkdown("::: grid\n::: card-red\nsome words here\n:::\n\n::: card-pink\nother words\n:::\n:::");
   const [a, b] = span(plain, "words");
@@ -389,7 +389,7 @@ test("a passage in a grid's card cites as it does in a plain card: the grid is a
 });
 
 // The Faerie Queene: under the work's `roman book and canto`
-// directive a citation names the stanza — I.i.2.1 — and a selection may run
+// directive a reference names the stanza — I.i.2.1 — and a selection may run
 // across stanzas, which a plain verse fence refuses.
 const fqJournal = journalOf({
   "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::",
@@ -421,7 +421,7 @@ test("referencePayload under the directive: I.i.2.1, a run across a stanza gap a
   const all = referencePayload(state(canto, e, f), "bookshelf", FQ1, fqJournal);
   expect("label" in all && all.label).toBe("Spenser, *The Faerie Queene*, I.i.1–3");
 });
-test("without the directive stanzas still cite by stanza, the numbers as keyed, and a run across them is allowed", () => {
+test("without the directive stanzas still refer by stanza, the numbers as keyed, and a run across them is allowed", () => {
   const [a, b] = span(canto, "bloudie Crosse");
   const plain = referencePayload(state(canto, a, b), "bookshelf", "Somebody/A Work/1.1", journalOf({}));
   expect("label" in plain && plain.label).toBe("Somebody, *A Work*, 1.1.2.1");
@@ -429,7 +429,7 @@ test("without the directive stanzas still cite by stanza, the numbers as keyed, 
   const run = referencePayload(state(canto, c, d), "bookshelf", "Somebody/A Work/1.1", journalOf({}));
   expect("label" in run && run.label).toBe("Somebody, *A Work*, 1.1.1.3–2.2");
 });
-// Any work whose verse is in stanza fences cites by stanza: Hávamál, a root
+// Any work whose verse is in stanza fences refers by stanza: Hávamál, a root
 // with no author, its stanzas paired with a translation.
 const HAV = parseMarkdown("# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
 const havJournal = journalOf({ "bookshelf/Hávamál": "# Hávamál\n\n::: reference\nno author\n:::" });
@@ -438,12 +438,12 @@ const havLabel = (needle: string, end?: string): string | false => {
   const p = referencePayload(state(HAV, a, b), "bookshelf", "Hávamál", havJournal);
   return "label" in p && p.label;
 };
-test("a work in stanza fences cites by stanza with no directive: Hávamál, 76.1-3; a whole stanza 76; a run across stanzas 76.4–77.4", () => {
+test("a work in stanza fences refers by stanza with no directive: Hávamál, 76.1-3; a whole stanza 76; a run across stanzas 76.4–77.4", () => {
   expect(havLabel("Deyr fé", "it sama")).toBe("*Hávamál*, 76.1-3");
   expect(havLabel("Deyr fé", "getr")).toBe("*Hávamál*, 76");
   expect(havLabel("orðstírr", "ek veit einn")).toBe("*Hávamál*, 76.4–77.4");
 });
-// Old English verse cites its half-lines: a work whose page says so, its
+// Old English verse refers to its half-lines: a work whose page says so, its
 // lines two half-lines apart at a double space.
 const BWF_PAGE = "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::";
 const BWF = parseMarkdown(BWF_PAGE + "\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
@@ -452,7 +452,7 @@ const oeLabel = (doc: Node, tag: string, page: Record<string, string>, needle: s
   const p = referencePayload(state(doc, a, b), "bookshelf", tag, journalOf(page));
   return "label" in p && p.label;
 };
-test("Old English verse cites a half-line as 50a or 50b, a run from a second half or to a first as 50b-52 or 49-50a, both halves as the line", () => {
+test("Old English verse refers to a half-line as 50a or 50b, a run from a second half or to a first as 50b-52 or 49-50a, both halves as the line", () => {
   const page = { "bookshelf/Beowulf": BWF_PAGE };
   expect(oeLabel(BWF, "Beowulf", page, "Men ne cunnon", "onfeng")).toBe("*Beowulf*, 50b-52");
   expect(oeLabel(BWF, "Beowulf", page, "Men ne cunnon")).toBe("*Beowulf*, 50b");
@@ -465,12 +465,12 @@ test("Old English verse cites a half-line as 50a or 50b, a run from a second hal
   const p = referencePayload(state(BWF, a, b), "bookshelf", "Beowulf", journalOf(page));
   expect("label" in p && p.label).toBe("*Beowulf*, 50b");
 });
-test("without the line on its page a work cites whole lines, double space or not", () => {
+test("without the line on its page a work refers to whole lines, double space or not", () => {
   expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\n:::" }, "Men ne cunnon", "onfeng")).toBe("*Beowulf*, 50-52");
   // the words inside a longer line are not the directive
   expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nnot Old English verse here\n:::" }, "Men ne cunnon")).toBe("*Beowulf*, 50");
 });
-test("Old English verse with its translation: the original's halves count, the translation's words cite the line; a line with no double space is whole", () => {
+test("Old English verse with its translation: the original's halves count, the translation's words refer to the line; a line with no double space is whole", () => {
   const page = "# Deor\n\n::: reference\nno author\nOld English verse\n:::";
   const deor = parseMarkdown(page + "\n\n::: verse\nWelund him be wurman  wræces cunnade, | Weland himself, by means of worms (swords?), experienced agony,\nanhydig eorl  earfoþa dreag, | the strong-minded noble endured troubles;\n* * * |\n:::");
   const j = { "bookshelf/Deor": page };
@@ -479,7 +479,7 @@ test("Old English verse with its translation: the original's halves count, the t
   expect(oeLabel(deor, "Deor", j, "experienced agony")).toBe("*Deor*, 1");
   expect(oeLabel(deor, "Deor", j, "* * *")).toBe("*Deor*, 3");
 });
-test("Old English verse with its translation quotes the original from the half the citation names, the translation whole", () => {
+test("Old English verse with its translation quotes the original from the half the reference names, the translation whole", () => {
   const page = "# Seafarer\n\n::: reference\nno author\nOld English verse\n:::";
   const sf = parseMarkdown(page + "\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
   const j = journalOf({ "bookshelf/Seafarer": page });
@@ -543,7 +543,7 @@ const golding = (needle: string, end?: string, all = false) => {
   const [a, b] = span(GOLDING, needle, end);
   return referencePayload(state(GOLDING, a, b), "bookshelf", GOLDING_TAG, goldingJournal, all);
 };
-test("a passage from a block numbered on both sides quotes the translation alone, numbered from its first line, and cites both columns' lines", () => {
+test("a passage from a block numbered on both sides quotes the translation alone, numbered from its first line, and refers to both columns' lines", () => {
   const p = golding("Ye Ayres", "I have compelled streames");
   expect("label" in p && p.label).toBe("Ovid, *Metamorphoses*, 7.197-99 (Golding, 7.265-68)");
   expect("passage" in p && p.passage).toBe("> ::: verse 265\n> Ye Ayres and windes:\n> Of standing Lakes,\n> Through helpe of whom\n> I have compelled streames\n> :::");
@@ -586,7 +586,7 @@ test("Ref (all) is offered for the selection ⌃⌘R reads, its ends drawn in to
   expect(offersBoth(state(GOLDING, a, b))).toBe(true);
   expect(offersBoth(EditorState.create({ doc: GOLDING }))).toBe(false);
 });
-test("the translation alone: every row the selection inks gives its line, cut only where the selection starts or ends inside it, so both buttons cite the same lines", () => {
+test("the translation alone: every row the selection inks gives its line, cut only where the selection starts or ends inside it, so both buttons refer to the same lines", () => {
   const p = golding("auraeque", "quorum ope");
   const all = golding("auraeque", "quorum ope", true);
   expect("label" in p && p.label).toBe("Ovid, *Metamorphoses*, 7.197-99 (Golding, 7.265-67)");
@@ -628,7 +628,7 @@ test("a prosimetrum's sentence quotes that sentence and its translation alone", 
   const p = referencePayload(state(VN3, a, b), "bookshelf", "Dante/Vita Nuova/3", vnJournal);
   expect("passage" in p && p.passage).toBe("> ::: prose 8\n> E trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n> :::");
 });
-test("a prosimetrum cites the prose by Barbi's paragraph, its sentences counted under it, and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
+test("a prosimetrum refers to the prose by Barbi's paragraph, its sentences counted under it, and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
   expect(vnLabel(VN3, "3", "cominciai")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
   expect(vnLabel(VN3, "3", "quarta")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
   expect(vnLabel(VN3, "3", "cominciai", "quarta")).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
@@ -644,7 +644,43 @@ test("a prosimetrum chapter with two poems names the poem: 8, verse 1.1-2, verse
   expect(vnLabel(VN8, "8", "dolor madre")).toBe("Dante, *Vita Nuova*, 8, verse 2.2");
   expect(vnLabel(VN8, "8", "partire")).toBe("Dante, *Vita Nuova*, 8, prose, para 1");
 });
-test("without the directive the same chapter cites as every book does: 3.8, 3.1-2", () => {
+// De Doctrina Christiana: a book of prose whose fences carry the edition's
+// section numbers, under the work's `by book, chapter, and paragraph` directive.
+const ddcJournal = journalOf({
+  "bookshelf/Augustine/De Doctrina Christiana": "# De Doctrina Christiana\n\n::: reference\nby book, chapter, and paragraph\n:::",
+  "bookshelf/Augustine/De Doctrina Christiana/Book 2": "# Book 2",
+  "bookshelf/Augustine/De Doctrina Christiana/Preface": "# Preface",
+});
+const DDC2 = parseMarkdown("# Book 2\n\n## Chapter 40\n\n::: prose 60\n60. Philosophi autem. | 60. Moreover the philosophers.\nSicut enim Aegyptii. | For as the Egyptians.\n\n61. Nam quid aliud. | 61. And what else.\n:::\n\n" +
+  "## Chapter 41\n\n::: prose 62\n62. Meminerint ergo. | 62. Let them remember.\n:::\n\n::: verse\nCanto una riga | I sing a line\n:::");
+const ddcLabel = (needle: string, end?: string): string | false => {
+  const [a, b] = span(DDC2, needle, end);
+  const p = referencePayload(state(DDC2, a, b), "bookshelf", "Augustine/De Doctrina Christiana/Book 2", ddcJournal);
+  return "label" in p && p.label;
+};
+test("a work by book, chapter, and paragraph refers to its prose by the paragraph alone, either column, and to its lines as any book does", () => {
+  expect(ddcLabel("Philosophi")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
+  expect(ddcLabel("Egyptians")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
+  expect(ddcLabel("Philosophi", "aliud")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (paras 60-61)");
+  expect(ddcLabel("Meminerint")).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 41 (para 62)");
+  expect(ddcLabel("Canto")).toBe("Augustine, *De Doctrina Christiana*, book 2, 1");
+});
+test("a work by book, chapter, and paragraph quotes a sentence alone under its paragraph's number", () => {
+  const [a, b] = span(DDC2, "Aegyptii");
+  const p = referencePayload(state(DDC2, a, b), "bookshelf", "Augustine/De Doctrina Christiana/Book 2", ddcJournal);
+  expect("passage" in p && p.passage).toBe("> ::: prose 60\n> Sicut enim Aegyptii. | For as the Egyptians.\n> :::");
+});
+test("a work by book, chapter, and paragraph refers to a page with no chapter headings by the paragraph alone, and to a chapter turning inside a section by the chapter it turned to", () => {
+  const preface = parseMarkdown("# Preface\n\n::: prose\n1. Sunt praecepta. | 1. There are rules.\n\n2. Quidam vero. | 2. Others again.\n:::");
+  const [a, b] = span(preface, "Quidam");
+  const p = referencePayload(state(preface, a, b), "bookshelf", "Augustine/De Doctrina Christiana/Preface", ddcJournal);
+  expect("label" in p && p.label).toBe("Augustine, *De Doctrina Christiana*, *Preface*, para 2");
+  const turning = parseMarkdown("# Book 2\n\n## Chapter 25\n\n::: prose 40\n40. Prior. | 40. Before.\n:::\n\n## Chapter 26\n\n::: prose 40\nAdumbrata enim. | For certain.\n:::");
+  const [c, d] = span(turning, "Adumbrata");
+  const q = referencePayload(state(turning, c, d), "bookshelf", "Augustine/De Doctrina Christiana/Book 2", ddcJournal);
+  expect("label" in q && q.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 26 (para 40)");
+});
+test("without the directive the same chapter refers as every book does: 3.8, 3.1-2", () => {
   const plain = journalOf({ "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::" });
   expect(vnLabel(VN3, "3", "cominciai", undefined, plain)).toBe("Dante, *Vita Nuova*, 3.8");
   expect(vnLabel(VN3, "3", "ciascun", "presente", plain)).toBe("Dante, *Vita Nuova*, 3.1-2");

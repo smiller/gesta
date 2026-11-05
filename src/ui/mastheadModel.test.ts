@@ -95,8 +95,8 @@ describe("the bookshelf", () => {
   });
 });
 
-describe("a work citing book and canto in Roman", () => {
-  it("the leaf is the key respelled as the citation spells it; the title row stays the heading", () => {
+describe("a work referring to book and canto in Roman", () => {
+  it("the leaf is the key respelled as the reference spells it; the title row stays the heading", () => {
     const x = m("bookshelf", "Spenser, Edmund/The Faerie Queene/1.1");
     expect(x.crumbs.map((c) => c.text)).toEqual(["Edmund Spenser", "The Faerie Queene"]);
     expect(x.leaf).toBe("I.i");

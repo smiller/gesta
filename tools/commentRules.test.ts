@@ -101,7 +101,7 @@ const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] =
    with the grid left out, and closed they travel whole — the in-app paste
    re-wraps them in their grid from the clipboard's own context. */` },
   { at: "7a0f71a^:104", file: "src/editor/reference.ts", caught: [], raw: `/* the verse or prose block holding BOTH ends of the selection below the
-   top level — a paired citation inside a quotation: the units walk numbers
+   top level — a paired reference inside a quotation: the units walk numbers
    top-level blocks alone, and the loose-prose arm cut ONE cell out of a
    pair, which the serializer refused (the 2026-09-12 review) */` },
   { at: "e81e417^:1", file: "src/editor/folds.ts", caught: ["foldsContents", "store/contents.ts", "the session's"], raw: `/* A WORK'S CONTENTS FOLD under its \`##\` headings (2026-09-28, the
