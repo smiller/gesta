@@ -162,4 +162,3 @@ const marks: Record<(typeof MARK_ORDER)[number], MarkSpec> = {
 };
 
 export const schema = new Schema({ nodes, marks });
-export type GestaSchema = typeof schema;

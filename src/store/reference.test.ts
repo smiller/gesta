@@ -5,7 +5,9 @@ import {
   roman, romanKey, romanWorkKey,
 } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
-import { journalOf, firstHeading, directsFromLastTitle, directsRomanBookCanto, directsNoAuthor, directsProsimetrum, directsByBookChapterParagraph, directsScripture, directsPartsInRoman } from "./headings.ts";
+import { journalOf, firstHeading } from "./headings.ts";
+
+const says = (word: "fromLastTitle" | "romanBookCanto" | "noAuthor" | "prosimetrum" | "byBookChapterParagraph" | "scripture" | "partsInRoman", md: string): boolean => journalOf({ "bookshelf/W": md })[word]("bookshelf/W");
 
 test("referenceNumeral: a digit-led token or a division word is a numeral, everything else a title", () => {
   expect(referenceNumeral("19", true)).toBe("19");
@@ -155,11 +157,11 @@ test("referenceLabel: a root whose page says no author is named in no reference;
   expect(referenceLabel(NS_BOOK.key, "Old English", "", null, journal)).toBe("*Old English*");
   expect(referenceLabel(NS_BOOK.key, "Old English", "1-3", null, journal)).toBe("*Old English*, 1-3");
   expect(referenceLabel(NS_BOOK.key, "Old English", "", { from: "3", to: "3" }, journal)).toBe("*Old English*, p. 3");
-  expect(directsNoAuthor("# Old English\n\n::: reference\nno author\n:::")).toBe(true);
-  expect(directsNoAuthor("# W\n\n> ::: reference\n> no author\n> :::")).toBe(false);
-  expect(directsNoAuthor("# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(false);
-  expect(directsNoAuthor("# W\n\n::: reference\nfrom the last title (no authority for the order)\n:::")).toBe(false);
-  expect(directsNoAuthor("# W\n\n::: reference\nfrom the last title\nNo author\n:::")).toBe(true);
+  expect(says("noAuthor", "# Old English\n\n::: reference\nno author\n:::")).toBe(true);
+  expect(says("noAuthor", "# W\n\n> ::: reference\n> no author\n> :::")).toBe(false);
+  expect(says("noAuthor", "# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(false);
+  expect(says("noAuthor", "# W\n\n::: reference\nfrom the last title (no authority for the order)\n:::")).toBe(false);
+  expect(says("noAuthor", "# W\n\n::: reference\nfrom the last title\nNo author\n:::")).toBe(true);
 });
 
 test("headings: the first level-one heading is the title; a ## is a section; the directive is top-level only", () => {
@@ -167,9 +169,9 @@ test("headings: the first level-one heading is the title; a ## is a section; the
   expect(firstHeading("## Section only")).toBe("");
   expect(firstHeading("text\n\n# Later title")).toBe("Later title");
   expect(firstHeading("")).toBe("");
-  expect(directsFromLastTitle("# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(true);
-  expect(directsFromLastTitle("> ::: reference\n> from the last title\n> :::")).toBe(false);
-  expect(directsFromLastTitle("# Dante")).toBe(false);
+  expect(says("fromLastTitle", "# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(true);
+  expect(says("fromLastTitle", "> ::: reference\n> from the last title\n> :::")).toBe(false);
+  expect(says("fromLastTitle", "# Dante")).toBe(false);
 });
 
 test("mdLabel: no ] and no newline in a link text", () => {
@@ -200,10 +202,10 @@ test("roman: upper case for a book, lower for a canto, subtractive", () => {
   expect(romanKey("Book 1")).toBe("Book 1");   /* not a digit-led key: as it stands */
 });
 test("the directive is read off the work's page, top level only", () => {
-  expect(directsRomanBookCanto("# W\n\n::: reference\nroman book and canto\n:::")).toBe(true);
-  expect(directsRomanBookCanto("# W\n\n::: reference\nfrom the last title\n:::")).toBe(false);
-  expect(directsRomanBookCanto("# W\n\n> ::: reference\n> roman book and canto\n> :::")).toBe(false);
-  expect(directsRomanBookCanto("no directive")).toBe(false);
+  expect(says("romanBookCanto", "# W\n\n::: reference\nroman book and canto\n:::")).toBe(true);
+  expect(says("romanBookCanto", "# W\n\n::: reference\nfrom the last title\n:::")).toBe(false);
+  expect(says("romanBookCanto", "# W\n\n> ::: reference\n> roman book and canto\n> :::")).toBe(false);
+  expect(says("romanBookCanto", "no directive")).toBe(false);
   expect(fq.romanBookCanto("bookshelf/Spenser, Edmund/The Faerie Queene")).toBe(true);
   expect(fq.romanBookCanto("bookshelf/Spenser, Edmund/Amoretti")).toBe(false);
   expect(romanWorkKey(NS_BOOK.key, FQ + "1.1", fq)).toBe("bookshelf/Spenser, Edmund/The Faerie Queene");
@@ -230,9 +232,9 @@ const vn = journalOf({
   "bookshelf/Dante/Vita Nuova/3": "# Vita Nuova, 3",
 });
 test("the prosimetrum directive is read off the work's page, a line of its own, top level only", () => {
-  expect(directsProsimetrum("# W\n\n::: reference\nprosimetrum\n:::")).toBe(true);
-  expect(directsProsimetrum("# W\n\n> ::: reference\n> prosimetrum\n> :::")).toBe(false);
-  expect(directsProsimetrum("# W\n\n::: reference\nnot a prosimetrum here\n:::")).toBe(false);
+  expect(says("prosimetrum", "# W\n\n::: reference\nprosimetrum\n:::")).toBe(true);
+  expect(says("prosimetrum", "# W\n\n> ::: reference\n> prosimetrum\n> :::")).toBe(false);
+  expect(says("prosimetrum", "# W\n\n::: reference\nnot a prosimetrum here\n:::")).toBe(false);
   expect(vn.prosimetrum("bookshelf/Dante/Vita Nuova")).toBe(true);
   expect(vn.prosimetrum("bookshelf/Dante/Commedia")).toBe(false);
 });
@@ -250,9 +252,9 @@ const ddc = journalOf({
   "bookshelf/Augustine/De Doctrina Christiana/Preface": "# Preface",
 });
 test("the by book, chapter, and paragraph directive is read off the work's page, a line of its own, top level only", () => {
-  expect(directsByBookChapterParagraph("# W\n\n::: reference\nby book, chapter, and paragraph\n:::")).toBe(true);
-  expect(directsByBookChapterParagraph("# W\n\n> ::: reference\n> by book, chapter, and paragraph\n> :::")).toBe(false);
-  expect(directsByBookChapterParagraph("# W\n\n::: reference\nnot by book, chapter, and paragraph here\n:::")).toBe(false);
+  expect(says("byBookChapterParagraph", "# W\n\n::: reference\nby book, chapter, and paragraph\n:::")).toBe(true);
+  expect(says("byBookChapterParagraph", "# W\n\n> ::: reference\n> by book, chapter, and paragraph\n> :::")).toBe(false);
+  expect(says("byBookChapterParagraph", "# W\n\n::: reference\nnot by book, chapter, and paragraph here\n:::")).toBe(false);
   expect(ddc.byBookChapterParagraph("bookshelf/Augustine/De Doctrina Christiana")).toBe(true);
   expect(ddc.byBookChapterParagraph("bookshelf/Dante/Vita Nuova")).toBe(false);
   expect(vn.byBookChapterParagraph("bookshelf/Dante/Vita Nuova")).toBe(false);
@@ -289,8 +291,8 @@ const bible = journalOf({
   "bookshelf/Douay-Rheims/Psalms": "# Psalms",
 });
 test("the scripture directive is read off the root's page, a line of its own", () => {
-  expect(directsScripture("# KJV\n\n::: reference\nscripture\n:::")).toBe(true);
-  expect(directsScripture("# KJV\n\n::: reference\nnot scripture here\n:::")).toBe(false);
+  expect(says("scripture", "# KJV\n\n::: reference\nscripture\n:::")).toBe(true);
+  expect(says("scripture", "# KJV\n\n::: reference\nnot scripture here\n:::")).toBe(false);
   expect(bible.scripture("bookshelf/KJV")).toBe(true);
   expect(bible.scripture("bookshelf/Dante")).toBe(false);
 });
@@ -313,8 +315,8 @@ const ct = journalOf({
   "bookshelf/Chaucer, Geoffrey/Troilus and Criseyde": "# Troilus and Criseyde",
 });
 test("the parts-in-roman directive is read off the work's page, a line of its own", () => {
-  expect(directsPartsInRoman("# W\n\n::: reference\nparts in roman\n:::")).toBe(true);
-  expect(directsPartsInRoman("# W\n\n::: reference\nnot parts in roman here\n:::")).toBe(false);
+  expect(says("partsInRoman", "# W\n\n::: reference\nparts in roman\n:::")).toBe(true);
+  expect(says("partsInRoman", "# W\n\n::: reference\nnot parts in roman here\n:::")).toBe(false);
   expect(ct.partsInRoman("bookshelf/Chaucer, Geoffrey/Canterbury Tales")).toBe(true);
 });
 test("referenceLabel under parts in roman: Chaucer, *Canterbury Tales*, The Knight's Tale, 859-62; a work without it as before", () => {

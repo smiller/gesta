@@ -307,7 +307,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.caretAfter(page, "greater.", 8);
   await page.keyboard.press("Meta+v");
   await rest(page);
-  { const md = await A.stored(page); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
+  /* the paste may not have landed in two frames, and no edit is then there to wait on: the reading says what stood when the wait ran out */
+  const landedAfter = async (done) => { let md = await A.stored(page); for (let i = 0; i < 60 && !done(md); i++) { await page.waitForTimeout(50); md = await A.stored(page); } return md; };
+  { const md = await landedAfter((m) => /greater\.\[\*Williams/.test(m)); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
   /* the page's reference copied with ⌘C, then pasted mid-sentence: a copy made in the page pastes whole */
   await page.click(S.editor);
   await page.keyboard.press("Meta+a");
@@ -316,8 +318,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.caretAfter(page, "greater.", 8);
   await page.keyboard.press("Meta+v");
   await rest(page);
-  /* the paste may not have landed in two frames, and no edit is then there to wait on: the reading says what stood when the wait ran out */
-  { let md = await A.stored(page); for (let i = 0; i < 60 && md.split("):\n").length < 3; i++) { await page.waitForTimeout(50); md = await A.stored(page); } await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, labelAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
+  { const md = await landedAfter((m) => m.split("):\n").length >= 3 && /greater\.\[\*Williams/.test(m)); await log("the page's own reference pasted mid-sentence", { copied: copiedHere, references: md.split("):\n").length - 1, labelAlone: (md.match(/greater\.\[\*Williams/g) ?? []).length }); }
     }],
     ["code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */

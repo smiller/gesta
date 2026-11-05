@@ -4,8 +4,8 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLink, referenceAnchorHTML, facingBlockOf, offersBoth } from "./reference.ts";
-import { sentenceLatin } from "./dualLanguage.ts";
+import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLinkParts, referenceAnchorHTML, facingBlockOf, offersBoth } from "./reference.ts";
+import { sentenceRange } from "./dualLanguage.ts";
 import { journalOf } from "../store/headings.ts";
 
 /* the positions of a needle's first occurrence in the document's text */
@@ -73,16 +73,18 @@ test("an end resting at an English cell's edge, none of the English selected, ta
 test("a sentence's Latin runs on past a skipped line number to the line its English ends beside", () => {
   const doc = parseMarkdown("::: dual-language 542\nviribus absumptis | Now was her strength all gone, destroy this beauty.\nvicta labore fugae\n⟨skipped line number⟩\nqua nimium placui\nTellus, ait, hisce | Then Earth.\n:::");
   const [a, b] = span(doc, "strength all gone");
-  expect(sentenceLatin(doc, a, b).map(([x, y]) => doc.textBetween(x, y))).toEqual(["viribus absumptis", "victa labore fugae", "qua nimium placui"]);
+  const [x, y] = sentenceRange(doc, a, b);
+  expect(doc.textBetween(x, y, " ")).toContain("qua nimium placui");
 });
-test("sentenceLatin: the Latin a selection's English stands beside, a range per row; none for a selection in the Latin or outside a dual-language block", () => {
+test("sentenceRange: a selection's English widens over the Latin it stands beside; a selection in the Latin or outside a dual-language block stays as it is", () => {
   const [a, b] = span(PISOS, "quite like such pictures");
-  const texts = sentenceLatin(PISOS, a, b).map(([x, y]) => PISOS.textBetween(x, y));
-  expect(texts).toEqual(["credite, Pisones, isti tabulae fore librum", "persimilem, cuius, velut aegri somnia, vanae", "fingentur species, ut nec pes nec caput uni", "reddatur formae."]);
+  const [x, y] = sentenceRange(PISOS, a, b);
+  const text = PISOS.textBetween(x, y, " ");
+  for (const latin of ["credite, Pisones", "persimilem, cuius", "fingentur species", "reddatur formae."]) expect(text).toContain(latin);
   const [c, d] = span(PISOS, "persimilem", "nec caput uni");
-  expect(sentenceLatin(PISOS, c, d)).toEqual([]);
+  expect(sentenceRange(PISOS, c, d)).toEqual([c, d]);
   const [e, f] = span(verse, "forbidden", "Brought death");
-  expect(sentenceLatin(verse, e, f)).toEqual([]);
+  expect(sentenceRange(verse, e, f)).toEqual([e, f]);
 });
 
 test("a passage across a skipped line number keeps it, numbered as the edition numbers it", () => {
@@ -364,12 +366,13 @@ test("a selection wholly inside a margin-note is refused, between paragraphs or 
   expect(referencePayload(state(inVerse, a, b), "bookshelf", "x", journal)).toMatchObject({ passage: "> ::: verse 2\n> beta\n> :::" });
 });
 
-test("a leaf stands in for a prose book's titled chapter; entryLink names the entry the same way", () => {
+test("a leaf stands in for a prose book's titled chapter; entryLinkParts names the entry the same way", () => {
   const doc = parseMarkdown("# 3. The Dark Ages\n\n⟨61⟩ The Church had a difficulty.\n\n⟨62⟩ It went on.");
   const [a, b] = span(doc, "difficulty", "went");
   const out = referencePayload(state(doc, a, b), "bookshelf", "Williams, Charles/Witchcraft/3. The Dark Ages", journal);
   expect((out as { text: string }).text.split("\n")[0]).toMatch(/^\[Williams, \*Witchcraft\*, pp\. 61-62\]/);
-  expect(entryLink("bookshelf", "Williams, Charles/Witchcraft/3. The Dark Ages", journal)).toBe("[Williams, *Witchcraft*, *3. The Dark Ages*](#bookshelf/Williams%2C%20Charles/Witchcraft/3.%20The%20Dark%20Ages)");
+  const link = entryLinkParts("bookshelf", "Williams, Charles/Witchcraft/3. The Dark Ages", journal);
+  expect("[" + link.label + "](" + link.url + ")").toBe("[Williams, *Witchcraft*, *3. The Dark Ages*](#bookshelf/Williams%2C%20Charles/Witchcraft/3.%20The%20Dark%20Ages)");
 });
 
 test("referenceAnchorHTML: the label's italics as em, everything else escaped, the url escaped", () => {

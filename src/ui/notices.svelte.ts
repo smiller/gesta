@@ -35,7 +35,6 @@ export interface Notices {
 }
 export const IDLE_TEXT = "saved";
 export const WHISPER_MS = 3000;
-export const SAVED_MS = 1400;
 export const COPIED_MS = 1200;
 
 export function noticeLedger(copyText: (text: string) => Promise<void>): Notices {

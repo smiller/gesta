@@ -22,4 +22,3 @@ export interface Dir {
   queryPermission(opts: { mode: "read" | "readwrite" }): Promise<PermissionState>;
   requestPermission(opts: { mode: "read" | "readwrite" }): Promise<PermissionState>;
 }
-export type Entry = Dir | FileH;

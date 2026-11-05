@@ -65,3 +65,22 @@ The stricter retired-word check found `citeInLine`, renamed. New Helium steps:
 Measured for the question of unused code (a regex scan, 978 exports): 1 used
 nowhere, 14 used only by tests, 158 used only in their own file. Test titles: 2 of
 1,272 hold a number form absent from their body, neither stale on a first reading.
+
+## The unused-export check (2026-11-05, asked)
+
+`tools/unusedExports.ts` and its test, under `npm test`: an export no file imports
+and its own file does not use, or that only tests import, fails unless the test's
+allowed list gives its reason. Read from imports, not bare names: 18 hits outside the
+adapters where the name scan found 15. Deleted as dead: `sentenceLatin`, `entryLink`,
+`SAVED_MS` in notices, `GestaSchema`, `Entry` and seven `directs…` readers, their
+tests moved to `sentenceRange`, `entryLinkParts` and the journal. Allowed, six:
+`toggleFold`, two memory fakes, `setYieldWatch`, and the two checkers' rules. It does
+not see an export its own file uses (158 by the name scan), by choice.
+
+## A bad approval (2026-11-05)
+
+The `--approve` for the Paragraph box took in two flaky readings ("referred":false,
+"labelAlone":0) with the three lines meant, the diff read through a filter; they went
+into ffa7607. Found when the next verify replayed. Set back to a22e6ae's values after
+three plays agreed. The race reached both paste steps, so both now wait for the paste
+to land. An approval's diff is read whole.

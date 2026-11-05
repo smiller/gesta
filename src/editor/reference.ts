@@ -561,7 +561,3 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
   return { label: mdLabel(referenceLabel(date, tag, "", null, journal), "entry"), url: entryLinkUrl(date, tag) };
 }
-export function entryLink(date: string, tag: string | null, journal: Journal): string {
-  const p = entryLinkParts(date, tag, journal);
-  return "[" + p.label + "](" + p.url + ")";
-}

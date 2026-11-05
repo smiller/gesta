@@ -423,6 +423,7 @@ is in the plan's record, under the phase named):
   the executable bits — read from this repo; `npm run test:hooks`,
   under `verify`.
 - `tools/vocabulary.ts` — the retired words, pure, checked over the tree by `tools/vocabulary.test.ts`.
+- `tools/unusedExports.ts` — what a file exports and who imports it, read from the text, pure; `tools/unusedExports.test.ts` fails, under `npm test`, on an export nothing uses or only tests use, its allowed list giving each exception's reason (2026-11-05, asked).
 - `tools/comments.ts` — the comment checker's run (above);
   `tools/commentRules.ts` its rules, pure: the comment scanner (its own:
   TypeScript 7 exposes none), the pin resolver, the other-module rule,

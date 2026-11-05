@@ -97,24 +97,6 @@ export function sentenceRange(doc: Node, from: number, to: number): [number, num
   return [start, end];
 }
 
-/* the Latin that widening takes in, a range per row; none where neither
-   end of the selection is in an English cell */
-export function sentenceLatin(doc: Node, from: number, to: number): [number, number][] {
-  const [start, end] = sentenceRange(doc, from, to);
-  if (start === from && end === to) return [];
-  const out: [number, number][] = [];
-  doc.nodesBetween(start, end, (n, pos, parent) => {
-    if (n.type === N.verse) return !!n.attrs.dual;
-    if (parent?.type !== N.verse) return true;
-    const latin = n.type === N.line ? pos + 1 : n.type === N.pair ? pos + 2 : -1;
-    const size = n.type === N.line ? n.content.size : n.type === N.pair ? n.child(0).content.size : 0;
-    const a = Math.max(latin, start), b = Math.min(latin + size, end);
-    if (latin >= 0 && b > a) out.push([a, b]);
-    return false;
-  });
-  return out;
-}
-
 /* where an arrow goes from an English cell's edge, by the block's index:
    `stops` the rows standing in the English column, a sentence or a note
    under it; from the last or the first, out of the block (pin:

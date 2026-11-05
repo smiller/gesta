@@ -41,13 +41,6 @@ const prosimetrum = (d: string): boolean => /^\s*prosimetrum\s*$/im.test(d);
 const byBookChapterParagraph = (d: string): boolean => /^\s*by book, chapter, and paragraph\s*$/im.test(d);
 const scripture = (d: string): boolean => /^\s*scripture\s*$/im.test(d);
 const partsInRoman = (d: string): boolean => /^\s*parts in roman\s*$/im.test(d);
-export const directsFromLastTitle = (md: string): boolean => lastTitle(referenceDirectives(md));
-export const directsRomanBookCanto = (md: string): boolean => romanBookCanto(referenceDirectives(md));
-export const directsNoAuthor = (md: string): boolean => noAuthor(referenceDirectives(md));
-export const directsProsimetrum = (md: string): boolean => prosimetrum(referenceDirectives(md));
-export const directsByBookChapterParagraph = (md: string): boolean => byBookChapterParagraph(referenceDirectives(md));
-export const directsScripture = (md: string): boolean => scripture(referenceDirectives(md));
-export const directsPartsInRoman = (md: string): boolean => partsInRoman(referenceDirectives(md));
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
   const said: Record<string, { md: string; directives: string }> = Object.create(null);
