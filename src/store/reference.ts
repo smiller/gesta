@@ -261,5 +261,13 @@ export function referenceLabel(date: string, tag: string | null, range: string, 
   return translator ? label + " (" + translator + (facing && locates ? ", " + division + facing : "") + ")" : label;
 }
 export function mdLabel(text: string, fallback: string): string {
-  return (text || "").replace(/[\]\n]/g, " ").replace(/\s+/g, " ").trim() || fallback;
+  /* a bracket closing one opened here stays, the link reads past it, 16.[379]; any
+     other would end the link (pin: reference.test › mdLabel keeps a bracket) */
+  let open = 0;
+  const kept = (text || "").replace(/[[\]\n]/g, (c) => {
+    if (c === "[") { open++; return c; }
+    if (c === "]" && open) { open--; return c; }
+    return " ";
+  });
+  return kept.replace(/\s+/g, " ").trim() || fallback;
 }

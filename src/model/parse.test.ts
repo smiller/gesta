@@ -269,6 +269,7 @@ test("a ⟨line 157a⟩ token at a row's head is the row's own label, not its te
   expect([v.child(1).attrs.label, v.child(1).textContent, v.child(2).attrs.label, v.child(0).attrs.label]).toEqual(["157a", "arma parant", "157b", null]);
   expect(visibleText(d)).not.toContain("⟨");
   expect(visibleText(parseMarkdown("::: verse\n⟨line a⟩ b\n:::"))).toContain("⟨line a⟩");
+  expect(parseMarkdown("::: verse\n⟨line [378]⟩at postremus\n:::").firstChild!.child(0).attrs.label).toBe("[378]");
 });
 test("a ⟨line⟩ token at a row's head is the row's declared kind, not its text", () => {
   const d = parseMarkdown("::: verse\n⟨line⟩*sung*\n⟨line⟩ *a* | *b*\n⟨line⟩\nplain\n:::");

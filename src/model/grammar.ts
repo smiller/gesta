@@ -72,9 +72,10 @@ export const ROW_CONT_TOKEN = "⟨…⟩";
    parse.test › a ⟨skipped line number⟩ row) */
 export const ROW_SKIP_TOKEN = "⟨skipped line number⟩";
 export const ROW_KIND_AT = /^⟨(line|…)⟩\s*/;
-/* a line an edition letters, 157a, whole, between 157 and 158: the row says its
-   label, and the count goes on past it (pin: parse.test › a ⟨line 157a⟩ token) */
-export const ROW_LABEL_AT = /^⟨line (\d+[a-z])⟩\s*/;
+/* a line an edition letters, 157a, whole, between 157 and 158, or prints moved
+   under its old number in brackets, [378]: the row says its label, and the count
+   goes on past it (pin: parse.test › a ⟨line 157a⟩ token) */
+export const ROW_LABEL_AT = /^⟨line (\d+[a-z]|\[\d+\])⟩\s*/;
 export const rowLabelToken = (label: string): string => "⟨line " + label + "⟩";
 export const rowKindToken = (kind: string | null): string => (kind === "line" ? ROW_LINE_TOKEN : kind === "cont" ? ROW_CONT_TOKEN : "");
 /* a row's own text that would read back as a token is written after a

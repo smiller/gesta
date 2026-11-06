@@ -14,6 +14,10 @@ REVIEW CYCLES: 1
 - A line a block opens part-way along, 6.589 in the Punica, names one place, where it begins, and is no repeated number; ⌃⌘G and the last-line refusal read it so (found by the folder's layout check, the class ruled 2026-11-06).
 - Tooling: `wordAt` reads until the page holds still, and the skipped-line step waits for a save. Under load, three readings flickered in nine full runs on a click or a corner read while the page settled (INFERRED from the readings; none reproduced alone).
 
+- A line printed moved under its old number in brackets is the same form, `⟨line [378]⟩` (asked 2026-11-06, of 16.378-380, printed after 371 and again in their places, "A for book 16"): drawn with its brackets, asked with them, `378` the plain line, `16.[378]`, a run reaching one whole at both ends, `371-[379]`.
+
+- A number short of a page's last line is refused as `no line 372`, the last line said only of a number past it (asked 2026-11-06: "The problem here is not that the last line is 700, it's that there is no line 372"). The same on a page whose blocks repeat a number.
+
 ## Not covered
 
 - A stanza page's box and a block numbered on both sides, whose box goes by the right column, do not ask for a lettered line. None exists.

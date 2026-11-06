@@ -72,6 +72,21 @@ describe("a line a block opens part-way along", () => {
     expect(lineHits(passage, 5).hits.map((h) => passage.nodeAt(h.pos)!.textContent)).toEqual(["per quaeThrough"]);
   });
 });
+describe("a bracketed line", () => {
+  const page = parseMarkdown("::: dual-language 370\na\nb\n⟨line [378]⟩c\n⟨line [379]⟩d\n:::\n\n::: dual-language 375\ne\nf\ng\nh\n:::");
+  const text = (h: { pos: number }): string => page.nodeAt(h.pos)!.textContent;
+  it("is asked with its brackets, and the bare number names the plain line", () => {
+    expect(askedLabel(page, " [378] ")).toBe("[378]");
+    expect(lineHits(page, "[378]").hits.map(text)).toEqual(["c"]);
+    expect(lineHits(page, 378).hits.map(text)).toEqual(["h"]);
+  });
+  it("is no number repeated, and a number the edition does not print is refused", () => {
+    const { hits, blocks } = lineHits(page, 372);
+    expect(hits).toEqual([]);
+    expect(lineRefusal(blocks, 372)).toBe("no line 372");
+    expect(lineRefusal(blocks, 400)).toBe("no line 400, the last line is 378");
+  });
+});
 describe("a lettered line", () => {
   const page = parseMarkdown("::: dual-language 156\na\nb | B\n⟨line 157a⟩c\nd\n:::\n\n::: dual-language 159\ne\n:::");
   const text = (h: { pos: number }): string => page.nodeAt(h.pos)!.textContent;
@@ -83,11 +98,12 @@ describe("a lettered line", () => {
   it("a letter the page lacks is refused in the page's words", () => {
     const { hits, blocks } = lineHits(page, "157b");
     expect(hits).toEqual([]);
-    expect(lineRefusal(blocks, "157b")).toBe("no line 157b, the last line is 159");
+    expect(lineRefusal(blocks, "157b")).toBe("no line 157b");
+    expect(lineRefusal(blocks, "159a")).toBe("no line 159a, the last line is 159");
   });
   it("does not read as a number repeated", () => {
-    expect(lineRefusal(lineHits(page, 9).blocks, 9)).toMatch(/the last line/);
-    expect(lineRefusal(lineHits(parseMarkdown("::: verse 157\na\n:::\n\n::: verse 200\n⟨line 157a⟩b\n:::"), 9).blocks, 9)).toMatch(/the last line/);
+    expect(lineRefusal(lineHits(page, 900).blocks, 900)).toMatch(/the last line/);
+    expect(lineRefusal(lineHits(parseMarkdown("::: verse 157\na\n:::\n\n::: verse 200\n⟨line 157a⟩b\n:::"), 900).blocks, 900)).toMatch(/the last line/);
   });
   it("a refusal names it as the gutter does", () => {
     const end = parseMarkdown("::: verse 200\nplanus\n⟨line 200a⟩x\n:::");
@@ -95,7 +111,7 @@ describe("a lettered line", () => {
     const start = parseMarkdown("::: verse 158\n⟨line 157a⟩c\nd\n:::");
     expect(lineRefusal(lineHits(start, 157).blocks, 157)).toBe("the lines here are 157a–158");
     const two = parseMarkdown("::: verse\na\n:::\n\n::: verse 200\nb\n⟨line 200a⟩c\n:::");
-    expect(lineRefusal(lineHits(two, 9).blocks, 9)).toBe("no line 9, the last line is 200a");
+    expect(lineRefusal(lineHits(two, 900).blocks, 900)).toBe("no line 900, the last line is 200a");
     expect(lineHits(parseMarkdown("::: verse 157\n⟨line 157a⟩half\n⟨…⟩rest\n:::"), "157a").hits.length).toBe(1);
   });
   it("a box takes a label only on a page that has one, in either case", () => {
@@ -106,7 +122,7 @@ describe("a lettered line", () => {
   });
 });
 describe("the refusals", () => {
-  it("on a page numbered straight on through several blocks, name the last line, whatever number was asked", () => {
+  it("on a page of several blocks, a number past the last names the last line, and one short of it only itself", () => {
     const on = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse 3\nc\nd\n:::");
     expect(lineRefusal(lineHits(on, 695).blocks, 695)).toBe("no line 695, the last line is 4");
     const moved = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse 5\nc\n:::\n\n::: verse 3\nd\ne\n:::");
@@ -115,12 +131,14 @@ describe("the refusals", () => {
     const sentences = parseMarkdown("::: prose\nOne. | Un.\n:::\n\n::: prose 2\nTwo. | Deux.\n:::");
     expect(lineRefusal(lineHits(sentences, 9).blocks, 9)).toBe("no sentence 9, the last sentence is 2");
     const gap = parseMarkdown("::: verse\na\n:::\n\n::: verse 5\nb\n:::");
-    expect(lineRefusal(lineHits(gap, 3).blocks, 3)).toBe("no line 3, the last line is 5");
+    expect(lineRefusal(lineHits(gap, 3).blocks, 3)).toBe("no line 3");
   });
   it("keep the longest block where blocks repeat a number", () => {
     expect(lineRefusal(lineHits(two, 7).blocks, 7)).toMatch(/the longest verse block/);
     const late = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse 2\nc\nd\ne\n:::");
     expect(lineRefusal(lineHits(late, 7).blocks, 7)).toBe("no line 7 — the longest verse block ends at 4");
+    const missing = parseMarkdown("::: verse\na\nb\nc\n:::\n\n::: verse\nd\n:::\n\n::: verse 5\ne\n:::");
+    expect(lineRefusal(lineHits(missing, 4).blocks, 4)).toBe("no line 4");
   });
   it("name the range of one block, the longest of several, the number below the first, and nothing at all", () => {
     expect(lineRefusal(lineHits(two, 7).blocks, 7)).toBe("no line 7 — the longest verse block has 4");
@@ -128,7 +146,7 @@ describe("the refusals", () => {
     expect(lineRefusal(lineHits(parseMarkdown("::: verse\nonly\n:::"), 9).blocks, 9)).toBe("the only line here is 1");
     expect(lineRefusal(lineHits(two, 0).blocks, 0)).toBe("no line 0 here");
     expect(lineRefusal([], 3)).toBe("no numbered lines here");
-    expect(lineRefusal(lineHits(parseMarkdown("::: verse 100\na\nb\n:::\n\n::: verse\nc\n:::"), 5).blocks, 5)).toBe("no line 5, the last line is 101");
+    expect(lineRefusal(lineHits(parseMarkdown("::: verse 100\na\nb\n:::\n\n::: verse\nc\n:::"), 5).blocks, 5)).toBe("no line 5");
   });
   it("a leaf is found case-blind and named back when missing", () => {
     const w = parseMarkdown(williams);

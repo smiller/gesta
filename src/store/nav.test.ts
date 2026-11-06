@@ -31,6 +31,7 @@ test("hashParts: an address names a line as the line box takes it, one number, a
   expect(h.hl).toEqual({ q: "", nth: 0, line: "672" });
   expect(hashParts("bookshelf/Spenser/1.1?line=2.1").hl!.line).toBe("2.1");
   expect(hashParts("bookshelf/Silius/Book%208?line=157a").hl!.line).toBe("157a");
+  expect(hashParts("bookshelf/Silius/Book%2016?line=[378]").hl!.line).toBe("[378]");
   for (const bad of ["0", "x", "6xy", "6X", "", "2.", ".1", "2.1a"]) expect(hashParts("bookshelf/Silius?line=" + bad).hl).toBe(null);
 });
 

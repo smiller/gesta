@@ -47,7 +47,7 @@ function askedUnits(doc: Node): Unit[] {
    a box takes a label only) */
 export function askedLabel(doc: Node, ask: string): string | null {
   const a = ask.trim().toLowerCase();
-  return /^\d+[a-z]$/.test(a) && askedUnits(doc).some((u) => u.label) ? a : null;
+  return /^(?:\d+[a-z]|\[\d+\])$/.test(a) && askedUnits(doc).some((u) => u.label) ? a : null;
 }
 export function lineHits(doc: Node, n: number | string): { hits: Hit[]; blocks: Unit[][] } {
   const blocks = blocksOf(askedUnits(doc));
@@ -77,14 +77,20 @@ const repeatsANumber = (blocks: Unit[][]): boolean => {
 };
 export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
   let longest = 0, longBlock: Unit[] | null = null, lowest = 0;
+  /* a line printed moved under its old number does not end the count (pin:
+     goto.test › is no number repeated) */
+  const inPlace = (rows: Unit[]): Unit[] => { const own = rows.filter((u) => !u.label?.startsWith("[")); return own.length ? own : rows; };
   for (const rows of blocks) {
-    const last = rows[rows.length - 1].line;
-    if (last > longest) { longest = last; longBlock = rows; lowest = rows[0].line; }
+    const last = inPlace(rows).at(-1)!.line;
+    if (last > longest) { longest = last; longBlock = inPlace(rows); lowest = longBlock[0].line; }
   }
-  const lastName = longBlock ? longBlock[longBlock.length - 1].label ?? longest : longest, firstName = longBlock ? longBlock[0].label ?? lowest : lowest;
+  const lastName = longBlock ? longBlock.at(-1)!.label ?? longest : longest, firstName = longBlock ? longBlock[0].label ?? lowest : lowest;
   const unit = (rows: Unit[]): string => noun ?? unitNoun(rows);
   if (typeof n === "number" && n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
   if (!longest || !longBlock) return "no numbered " + (noun ?? "line") + "s here";
+  /* the last line says why only a number past it is not there (pin: goto.test ›
+     on a page of several blocks) */
+  if (blocks.length > 1 && (typeof n === "number" ? n : parseInt(n.replace("[", ""), 10)) < longest) return "no " + unit(longBlock) + " " + n;
   if (blocks.length > 1 && !repeatsANumber(blocks)) return "no " + unit(longBlock) + " " + n + ", the last " + unit(longBlock) + " is " + lastName;
   if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + lastName;
   return firstName === lastName ? "the only " + unit(longBlock) + " here is " + lastName : "the " + unit(longBlock) + "s here are " + firstName + "–" + lastName;

@@ -299,6 +299,12 @@ the gutter with no numbering · * · new here, the old app frozen
 ⌃⌘G 157c, a letter the page lacks · * · new here, the old app frozen
 ⌃⌘R on a lettered line · * · new here, the old app frozen
 a link to a lettered line · * · new here, the old app frozen
+the gutter by a bracketed line · * · new here, the old app frozen
+⌃⌘G [378], a bracketed line · * · new here, the old app frozen
+⌃⌘G 378, the plain line of that number · * · new here, the old app frozen
+⌃⌘G 372, a number not printed · * · new here, the old app frozen
+⌃⌘R on a bracketed line · * · new here, the old app frozen
+a link to a bracketed line · * · new here, the old app frozen
 a line with no English, unmarked · * · new here, the old app frozen
 ⌃⌘G to a line with no English · * · new here, the old app frozen
 a link to a line with no English · * · new here, the old app frozen

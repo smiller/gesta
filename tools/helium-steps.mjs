@@ -2699,6 +2699,39 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await log("a link to a lettered line", { ...(await seen()), address: await page.evaluate(() => location.hash.split("?")[1] ?? null) });
     }],
+    ["a bracketed line", async () => {
+  /* a line printed moved under its old number in brackets: drawn with it, asked with it, the plain number the plain line's */
+  const key = "bookshelf/Statius/Thebaid/Book 16";
+  await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
+  await A.foreignWrite(page, "bookshelf/Statius/Thebaid", "# Thebaid\n");
+  await A.foreignWrite(page, key, "# Book 16\n\n[To the bracket](#bookshelf/Statius/Thebaid/Book%2016?line=[378])\n\n::: dual-language 370\nseptuagesimus | Seventy, a sentence that runs on down beside the lines after it, and past them.\nunus\n⟨line [378]⟩translata prima\n⟨line [379]⟩translata altera\n:::\n\n::: dual-language 375\nquintus | Five\nsextus\nseptimus\noctavus\n:::\n");
+  const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
+  await open();
+  await log("the gutter by a bracketed line", { drawn: await page.evaluate(() => [...document.querySelectorAll("#editor .ln")].map((r) => getComputedStyle(r, "::before").content.replace(/"/g, "")).filter((c) => c && c !== "none")) });
+  const seen = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null, said: document.querySelector(".saved.show")?.textContent || null }; });
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  const ask = async (n) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen(); };
+  await log("⌃⌘G [378], a bracketed line", await ask("[378]"));
+  await log("⌃⌘G 378, the plain line of that number", await ask("378"));
+  await log("⌃⌘G 372, a number not printed", await ask("372"));
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("[379]");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await page.keyboard.press("Escape");
+  await rest(page);
+  await page.keyboard.press("Shift+Meta+ArrowRight");
+  await rest(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on a bracketed line", { lines: await R.clipboardLines(page) });
+  await open();
+  await page.locator("#editor a", { hasText: "To the bracket" }).first().click();
+  await rest(page);
+  await rest(page);
+  await log("a link to a bracketed line", { ...(await seen()), address: await page.evaluate(() => decodeURI(location.hash.split("?")[1] ?? "")) });
+    }],
     ["a line with no English of its own", async () => {
   /* the mark is the row's band across both columns on every row of a dual-language block, the rows the English runs down beside included; nothing moves */
   const band = "bookshelf/Statius/Band";

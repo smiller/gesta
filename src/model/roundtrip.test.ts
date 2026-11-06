@@ -77,6 +77,8 @@ const ROUND_TRIPS = [
   "::: verse\n\\⟨skipped line number⟩\n\\⟨…⟩By Samson.\n\\⟨line⟩ typed\n:::",
   "::: dual-language 157\na | A\n⟨line 157a⟩arma parant\n⟨line 157b⟩b | B\nc\n:::",
   "::: verse\n\\⟨line 157a⟩ typed\n:::",
+  "::: dual-language 370\na | A\n⟨line [378]⟩at postremus\n⟨line [379]⟩b | B\n:::",
+  "::: verse\n\\⟨line [378]⟩ typed\n:::",
   "::: verse 545\nqua nimium placui\n⟨skipped line number⟩\n⟨skipped line number⟩\nvix prece finita\n:::",
   "::: dual-language 545\nqua nimium placui | Destroy\n⟨skipped line number⟩\nvix prece finita | Scarce\n:::",
   "::: verse 179 244\nTres aberant noctes | Before the Moone\n | So softly as you would\nvivaque saxa\n:::",

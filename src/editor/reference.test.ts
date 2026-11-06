@@ -470,6 +470,13 @@ test("a lettered line is referred to by its label, alone or at either end of a r
   const quoted = passageMd(d, ...span(d, "arma", "tum"));
   expect(quoted).toContain("::: dual-language 158\n> ⟨line 157a⟩arma\n> tum");
 });
+test("a bracketed line is referred to in its brackets, a run reaching one by both its ends whole", () => {
+  const d = parseMarkdown("::: dual-language 370\nalpha\nbeta\n⟨line [378]⟩gamma\n⟨line [379]⟩delta\n⟨line [380]⟩epsilon\n:::");
+  const range = (a: string, b?: string): string => referenceRange(d, ...span(d, a, b));
+  expect(range("gamma")).toBe("[378]");
+  expect(range("gamma", "epsilon")).toBe("[378]-[380]");
+  expect(range("beta", "delta")).toBe("371-[379]");
+});
 test("Old English verse refers to a half-line as 50a or 50b, a run from a second half or to a first as 50b-52 or 49-50a, both halves as the line", () => {
   const page = { "bookshelf/Beowulf": BWF_PAGE };
   expect(oeLabel(BWF, "Beowulf", page, "Men ne cunnon", "onfeng")).toBe("*Beowulf*, 50b-52");

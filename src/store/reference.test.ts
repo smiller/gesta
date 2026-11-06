@@ -173,7 +173,7 @@ test("headings: the first level-one heading is the title; a ## is a section; the
   expect(says("fromLastTitle", "# Dante")).toBe(false);
 });
 
-test("mdLabel: no ] and no newline in a link text", () => {
+test("mdLabel: no stray ] and no newline in a link text, and a fallback for none", () => {
   expect(mdLabel("a ] b\nc", "x")).toBe("a b c");
   expect(mdLabel("", "entry")).toBe("entry");
 });
@@ -328,4 +328,11 @@ test("referenceLabel under parts in roman: Chaucer, *Canterbury Tales*, The Knig
   expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", "859-62", null, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale, 859-62");
   expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", "", null, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale");
   expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Troilus and Criseyde/1", "1-7", null, ct)).toBe("Chaucer, *Troilus and Criseyde*, 1.1-7");
+});
+
+test("mdLabel keeps a bracket that closes one opened in the label, and drops a bracket that would end the link", () => {
+  expect(mdLabel("Silius, *Punica*, 16.[379]", "x")).toBe("Silius, *Punica*, 16.[379]");
+  expect(mdLabel("371-[379]", "x")).toBe("371-[379]");
+  expect(mdLabel("a]b", "x")).toBe("a b");
+  expect(mdLabel("[a]] b", "x")).toBe("[a] b");
 });

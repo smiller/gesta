@@ -22,7 +22,7 @@ export interface Unit {
   rest: boolean;
   /* a line the edition leaves out: its number taken, nothing drawn */
   skip: boolean;
-  /* a line the edition letters, its number the one before it */
+  /* a line the edition letters, or prints moved in brackets: what it is called */
   label?: string;
 }
 
@@ -85,7 +85,7 @@ export function countAt(block: Node, blockPos: number, rowPos: number, side: Sid
   for (const u of blockUnits(block, blockPos, 0, side)) {
     if (!u.line) continue;
     if (u.pos >= rowPos) return u.rest ? u.line : n;
-    n = u.line + 1;
+    if (!u.label) n = u.line + 1;
   }
   return n;
 }
@@ -121,7 +121,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
     /* drawn at every interval: its number is what says why the next line is
        not one higher (pin: numbering.test › a lettered line) */
     if (row.attrs.label) {
-      lettered = { line: parseInt(row.attrs.label as string, 10), label: row.attrs.label as string };
+      lettered = { line: parseInt((row.attrs.label as string).replace("[", ""), 10), label: row.attrs.label as string };
       out.push({ pos: blockPos + 1 + offset, node: row, kind, ...lettered, blockPos, shown: true, rest: false, skip: false });
       return;
     }

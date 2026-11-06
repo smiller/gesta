@@ -141,6 +141,12 @@ test("a lettered line carries its own label, does not advance the count and is d
   expect(lineUnits(start, 0).map((x) => x.line)).toEqual([157, 158]);
   expect(countAt(start.child(0), 0, 1)).toBe(158);
 });
+test("a bracketed line carries its printed number as its label and takes nothing from the count", () => {
+  const d = doc("::: dual-language 370\na\nb\n⟨line [378]⟩c\n⟨line [379]⟩d\ne\n:::");
+  expect(lineUnits(d, 0).map((x) => [x.line, x.label ?? null, x.shown])).toEqual([[370, null, false], [371, null, false], [378, "[378]", true], [379, "[379]", true], [372, null, false]]);
+  expect(countAt(d.child(0), 0, lineUnits(d, 0)[4].pos)).toBe(372);
+  expect(countAt(d.child(0), 0, lineUnits(d, 0)[3].pos)).toBe(372);
+});
 test("the rest of a lettered line shares its label, and the count goes on as after the line", () => {
   const u = (md: string) => lineUnits(doc(md), 0).map((x) => [x.line, x.label ?? null, x.rest]);
   expect(u("::: verse 158\n⟨line 157a⟩half\n⟨…⟩rest\nnext\n:::")).toEqual([[157, "157a", false], [157, "157a", true], [158, null, false]]);
