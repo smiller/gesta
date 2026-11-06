@@ -141,6 +141,11 @@ test("a lettered line carries its own label, does not advance the count and is d
   expect(lineUnits(start, 0).map((x) => x.line)).toEqual([157, 158]);
   expect(countAt(start.child(0), 0, 1)).toBe(158);
 });
+test("the rest of a lettered line shares its label, and the count goes on as after the line", () => {
+  const u = (md: string) => lineUnits(doc(md), 0).map((x) => [x.line, x.label ?? null, x.rest]);
+  expect(u("::: verse 158\n⟨line 157a⟩half\n⟨…⟩rest\nnext\n:::")).toEqual([[157, "157a", false], [157, "157a", true], [158, null, false]]);
+  expect(u("::: verse 157\nplain\n⟨line 157a⟩half\n⟨…⟩rest\nnext\n:::")).toEqual([[157, null, false], [157, "157a", false], [157, "157a", true], [158, null, false]]);
+});
 test("a skipped line number is counted and draws no line: the lines after it keep the edition's numbers", () => {
   expect(kinds("::: verse 545\na\n⟨skipped line number⟩\nb\n⟨skipped line number⟩\n⟨skipped line number⟩\nc\n:::", 5)).toBe("line:545 skip:546 line:547 skip:548 skip:549 line:550");
   const d = doc("::: verse 545\na\n⟨skipped line number⟩\nb\n:::");

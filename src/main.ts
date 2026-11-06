@@ -722,11 +722,29 @@ if (fixture && fixtures[fixture]) {
      not be read (pin: a link to a line › a link to a paragraph before the warm) */
   let lineOwed: { v: string; key: string } | null = null;
   let endLinkMark: (() => void) | null = null;
+  const untilHand = (act: () => void): (() => void) => {
+    const onKey = (e: KeyboardEvent): void => { if (endsLineMark(e.key, e.metaKey)) stop(); };
+    const stop = (): void => {
+      removeEventListener("click", stop, true);
+      removeEventListener("keydown", onKey, true);
+      endLinkMark = null;
+      act();
+    };
+    addEventListener("click", stop, true);
+    addEventListener("keydown", onKey, true);
+    return stop;
+  };
   const landFromLink = (v: string): void => {
     const view = session.view;
     if (!view || session.mdView) return;
     endLinkMark?.();
-    if (!layer.warmed) { lineOwed = { v, key: entryKey(session.current.date, session.current.tag) }; return; }
+    if (!layer.warmed) {
+      lineOwed = { v, key: entryKey(session.current.date, session.current.tag) };
+      /* what the hand does meanwhile stands: a landing owed moves no caret (pin:
+         a link to a line › a key before the warm) */
+      endLinkMark = untilHand(() => { lineOwed = null; });
+      return;
+    }
     if (!askLine(v, true)) return;
     /* the next key goes from the line, not the page's top (pin: a link to a
        line › a link to a line, a key after arriving) */
@@ -737,16 +755,7 @@ if (fixture && fixtures[fixture]) {
        scrollbar's press and a tap's scroll not
        (pin: a link to a line › a link to a line, the next click)
        (pin: landing.test › a key that moves or writes) */
-    const onKey = (e: KeyboardEvent): void => { if (endsLineMark(e.key, e.metaKey)) end(); };
-    const end = (): void => {
-      removeEventListener("click", end, true);
-      removeEventListener("keydown", onKey, true);
-      endLinkMark = null;
-      if (session.view) setLanding(session.view, null);
-    };
-    endLinkMark = end;
-    addEventListener("click", end, true);
-    addEventListener("keydown", onKey, true);
+    endLinkMark = untilHand(() => { if (session.view) setLanding(session.view, null); });
   };
   const goToFolio = (tok: string): void => {
     const view = session.view!;
@@ -1278,7 +1287,7 @@ if (fixture && fixtures[fixture]) {
     reanswerOpen();
     if (lineOwed) {
       const owed = lineOwed;
-      lineOwed = null;
+      endLinkMark?.();
       if (owed.key === entryKey(session.current.date, session.current.tag)) landFromLink(owed.v);
     }
     buildIndex();

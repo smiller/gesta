@@ -463,6 +463,10 @@ test("a lettered line is referred to by its label, alone or at either end of a r
   expect(range("arma", "devenio")).toBe("157a-59");
   expect(range("v", "arma")).toBe("155-57a");
   expect(range("v", "devenio")).toBe("155-59");
+  const two = parseMarkdown("::: verse 157\nplain\n⟨line 157a⟩first\n⟨…⟩rest\n⟨line 157b⟩second\nnext\n:::");
+  expect(referenceRange(two, ...span(two, "first", "second"))).toBe("157a-157b");
+  expect(referenceRange(two, ...span(two, "rest"))).toBe("157a");
+  expect(referenceRange(two, ...span(two, "first", "rest"))).toBe("157a");
   const quoted = passageMd(d, ...span(d, "arma", "tum"));
   expect(quoted).toContain("::: dual-language 158\n> ⟨line 157a⟩arma\n> tum");
 });

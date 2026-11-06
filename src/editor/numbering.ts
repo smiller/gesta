@@ -96,6 +96,7 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
   const facing = block.attrs.facing as number | null | undefined;
   if (side === "right") return facing == null ? out : rightUnits(block, blockPos, interval, facing);
   let line = (block.attrs.start as number) - 1;
+  let lettered: { line: number; label: string } | null = null;
   block.forEach((row, offset) => {
     /* counted, so a passage from the line after it is numbered as the
        edition numbers it (pin: numbering.test › a skipped line number is
@@ -120,10 +121,15 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
     /* drawn at every interval: its number is what says why the next line is
        not one higher (pin: numbering.test › a lettered line) */
     if (row.attrs.label) {
-      const label = row.attrs.label as string;
-      out.push({ pos: blockPos + 1 + offset, node: row, kind, line: parseInt(label, 10), label, blockPos, shown: true, rest: false, skip: false });
+      lettered = { line: parseInt(row.attrs.label as string, 10), label: row.attrs.label as string };
+      out.push({ pos: blockPos + 1 + offset, node: row, kind, ...lettered, blockPos, shown: true, rest: false, skip: false });
       return;
     }
+    if (lettered && row.attrs.kind === "cont") {
+      out.push({ pos: blockPos + 1 + offset, node: row, kind, ...lettered, blockPos, shown: false, rest: true, skip: false });
+      return;
+    }
+    lettered = null;
     /* the rest of a split line takes the number of the line it finishes,
        once the block has one */
     const rest = kind === "line" && row.attrs.kind === "cont" && line >= (block.attrs.start as number);

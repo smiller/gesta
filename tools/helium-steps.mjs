@@ -2643,6 +2643,12 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForFunction(() => document.querySelector("#editor .landed"), null, { timeout: 8000 }).catch(() => {});
   await rest(page);
   await log("a link to a paragraph before the warm", await page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null })));
+  /* a key before the warm: the landing owed is dropped, the warm's two seconds timed by the app's own clock */
+  await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
+  await A.waitEntry(page, work2, 8000).catch(() => {});
+  await page.keyboard.press("ArrowDown");
+  await page.waitForTimeout(2600);
+  await log("a key before the warm", await page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null })));
     }],
     ["a lettered line", async () => {
   /* a row saying its own number, 157a: every kind it can stand as, the gutter at every interval, the box, a link and a reference */

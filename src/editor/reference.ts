@@ -73,8 +73,8 @@ function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolea
 /* a lettered line says its label at the end of a run it stands at (pin:
    reference.test › a lettered line) */
 function labelledRange(lo: Unit, hi: Unit, range: string): string {
-  if (lo === hi) return lo.label!;
-  if (lo.line === hi.line) return lo.line + "-" + hi.label;
+  if (lo.label === hi.label) return lo.label!;
+  if (lo.line === hi.line) return (lo.label ?? lo.line) + "-" + hi.label;
   const [x, y] = range.split("-");
   return (lo.label ?? x) + "-" + y + (hi.label ? hi.label.slice(-1) : "");
 }

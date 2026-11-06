@@ -307,8 +307,9 @@ export function provenance(block: Block): string[] {
 
 /* ---- the diff ---- */
 
-/* the new side's added lines, per file, from `git diff --unified=0` */
 export const ledgerSeal = (blocks: Block[]): string => createHash("sha256").update(JSON.stringify(blocks.map((b) => [b.file, b.raw]))).digest("hex");
+
+/* the new side's added lines, per file, from `git diff --unified=0` */
 export function addedLines(diff: string): Map<string, Set<number>> {
   const out = new Map<string, Set<number>>();
   let file: string | null = null;

@@ -83,8 +83,10 @@ test("a lettered line split keeps its label on the one row: on its first half, o
   const start = run(enterInRow, at(line, "arma parant", 0));
   expect(md(start)).toBe("::: verse 157\nx\n\n⟨line 157a⟩arma parant\ny\n:::");
   const pairs = run(enterInRow, at("::: verse 157\nx\n⟨line 157a⟩arma parant | war\ny\n:::", "arma "));
-  expect(pairs.doc.firstChild!.child(1).attrs.label).toBe("157a");
-  expect(pairs.doc.firstChild!.child(2).attrs.label).toBe(null);
+  expect(md(pairs)).toBe("::: verse 157\nx\n⟨line 157a⟩arma | war\nparant |\ny\n:::");
+  const opened = run(enterInRow, at("::: verse 157\nx\n⟨line 157a⟩arma parant | war\ny\n:::", "arma parant", 0));
+  const rows = opened.doc.firstChild!;
+  expect([rows.child(1).attrs.label, rows.child(1).textContent, rows.child(2).attrs.label, rows.child(2).textContent]).toEqual([null, "", "157a", "arma parantwar"]);
 });
 test("a ⟨…⟩ row split keeps the rest of the line on its first half; the text carried below begins a line of its own", () => {
   const mid = run(enterInRow, at("::: verse\nRelate by whom.\n⟨…⟩That still lessens the sorrow\n:::", "lessens "));

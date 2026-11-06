@@ -170,10 +170,18 @@ export const enterInRow: Command = (state, dispatch) => {
     return true;
   }
   const k = $c.parentOffset, a = r.row.child(0).content, b = r.row.child(1).content;
+  /* a lettered line stays on its words, a row opened above them a plain one
+     (pin: rowKeys.test › a lettered line split) */
+  if (r.row.attrs.label && r.cell === 0 && k === 0) {
+    const above = pair(null, Fragment.empty, Fragment.empty);
+    tr.replaceWith(start, end, [above, r.row]);
+    if (dispatch) dispatch(caretAt(tr, start + above.nodeSize + 2));
+    return true;
+  }
   const own = r.cell === 0 ? a : b;
   const moved = own.size > k;
   const row1 = r.cell === 0 ? pair(r.row.attrs, a.cut(0, k), b) : pair(r.row.attrs, a, b.cut(0, k));
-  const carried = moved ? { ...r.row.attrs, label: null } : null;
+  const carried = moved && !r.row.attrs.label ? r.row.attrs : null;
   const row2 = r.cell === 0 ? pair(carried, a.cut(k), Fragment.empty)
                             : pair(carried, Fragment.empty, b.cut(k));
   tr.replaceWith(start, end, [row1, row2]);

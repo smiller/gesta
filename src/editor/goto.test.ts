@@ -89,6 +89,15 @@ describe("a lettered line", () => {
     expect(lineRefusal(lineHits(page, 9).blocks, 9)).toMatch(/the last line/);
     expect(lineRefusal(lineHits(parseMarkdown("::: verse 157\na\n:::\n\n::: verse 200\n⟨line 157a⟩b\n:::"), 9).blocks, 9)).toMatch(/the last line/);
   });
+  it("a refusal names it as the gutter does", () => {
+    const end = parseMarkdown("::: verse 200\nplanus\n⟨line 200a⟩x\n:::");
+    expect(lineRefusal(lineHits(end, 9).blocks, 9)).toBe("the lines here are 200–200a");
+    const start = parseMarkdown("::: verse 158\n⟨line 157a⟩c\nd\n:::");
+    expect(lineRefusal(lineHits(start, 157).blocks, 157)).toBe("the lines here are 157a–158");
+    const two = parseMarkdown("::: verse\na\n:::\n\n::: verse 200\nb\n⟨line 200a⟩c\n:::");
+    expect(lineRefusal(lineHits(two, 9).blocks, 9)).toBe("no line 9, the last line is 200a");
+    expect(lineHits(parseMarkdown("::: verse 157\n⟨line 157a⟩half\n⟨…⟩rest\n:::"), "157a").hits.length).toBe(1);
+  });
   it("a box takes a label only on a page that has one, in either case", () => {
     expect(askedLabel(page, " 157a ")).toBe("157a");
     expect(askedLabel(page, "157A")).toBe("157a");

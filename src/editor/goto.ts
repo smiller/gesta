@@ -55,7 +55,7 @@ export function lineHits(doc: Node, n: number | string): { hits: Hit[]; blocks: 
   blocks.forEach((rows, i) => {
     const lines = rows.filter((u) => !u.rest && !u.skip);
     for (const u of rows) {
-      if (typeof n === "string" ? u.label !== n : u.line !== n || u.rest || u.label) continue;
+      if (u.rest || (typeof n === "string" ? u.label !== n : u.line !== n || u.label)) continue;
       const at = u.skip ? lines.find((v) => v.pos > u.pos) ?? lines[lines.length - 1] : u;
       if (at) hits.push({ pos: at.pos, nth: i + 1, block: rows, skipped: u.skip });
     }
@@ -81,12 +81,13 @@ export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string)
     const last = rows[rows.length - 1].line;
     if (last > longest) { longest = last; longBlock = rows; lowest = rows[0].line; }
   }
+  const lastName = longBlock ? longBlock[longBlock.length - 1].label ?? longest : longest, firstName = longBlock ? longBlock[0].label ?? lowest : lowest;
   const unit = (rows: Unit[]): string => noun ?? unitNoun(rows);
   if (typeof n === "number" && n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
   if (!longest || !longBlock) return "no numbered " + (noun ?? "line") + "s here";
-  if (blocks.length > 1 && !repeatsANumber(blocks)) return "no " + unit(longBlock) + " " + n + ", the last " + unit(longBlock) + " is " + longest;
-  if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + longest;
-  return lowest === longest ? "the only " + unit(longBlock) + " here is " + longest : "the " + unit(longBlock) + "s here are " + lowest + "–" + longest;
+  if (blocks.length > 1 && !repeatsANumber(blocks)) return "no " + unit(longBlock) + " " + n + ", the last " + unit(longBlock) + " is " + lastName;
+  if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + lastName;
+  return firstName === lastName ? "the only " + unit(longBlock) + " here is " + lastName : "the " + unit(longBlock) + "s here are " + firstName + "–" + lastName;
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */

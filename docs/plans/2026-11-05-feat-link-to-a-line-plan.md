@@ -2,7 +2,7 @@
 
 Asked 2026-11-05, on the first look at the Punica's Book 1: a link in a book's Argument selected the line's words, which raised the format bar and marked the sentence's English, though that English translates several lines. "It would be neater if it just highlighted line 672."
 
-REVIEW CYCLES: 1
+REVIEW CYCLES: 2
 
 ## Decisions
 
@@ -24,3 +24,7 @@ REVIEW CYCLES: 1
 ## Review cycle 1
 
 `/code-review` at high over 5ee7661..ce79b13, the Verse box, the safer `--approve` and this: 166,981 tokens, 10 findings, read from the code by the reviewer and played by nobody. All fixed in the commit after it: 1, 3, 5, 6 and 7 by the shared code and what is left of the mark; 2 the rename; 4 the wait for the warm; 8 the noun; 9 the fingerprint taken before the run; 10 the comment reworded. Asked also: `npm run comments:read`, a changed comment recorded as read.
+
+## Review cycle 2
+
+`/code-review` at high over ce79b13..efbf461, the fixes of cycle 1 and the lettered line: 229,891 tokens (final context + final output, from the transcript), 10 findings, 5 measured under node by the reviewer, the rest read. Recorded with the lettered line's plan; fixes await the word.
