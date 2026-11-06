@@ -129,6 +129,9 @@ export function refersByBookChapterParagraph(date: string, tag: string | null, j
   const work = workKeyOf(date, tag);
   return !!work && journal.byBookChapterParagraph(work);
 }
+export function refersAsScripture(date: string, tag: string | null, journal: Journal): boolean {
+  return titlesRoots(date) && !!tag && journal.scripture(entryKey(date, tag.split("/")[0]));
+}
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string; division?: string }
 /* a work headed "Metamorphoses (with Golding’s translation)": the title,
    and the translator a reference names its own lines by (pin:

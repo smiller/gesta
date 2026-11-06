@@ -270,3 +270,7 @@ a drag over one sentence's English · * · new here, the old app frozen
 ⌃⌘G 61x on a work by paragraph · * · new here, the old app frozen
 ⌃⌘G on the next page after a work by paragraph · * · new here, the old app frozen
 back on a work by paragraph · * · new here, the old app frozen
+⌃⌘G 2 in KJV · * · new here, the old app frozen
+⌃⌘G 99 in KJV · * · new here, the old app frozen
+⌃⌘G 2 in Douay-Rheims · * · new here, the old app frozen
+⌃⌘G 99 in Douay-Rheims · * · new here, the old app frozen

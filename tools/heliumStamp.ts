@@ -15,8 +15,16 @@ export function fingerprint(inputs: Input[]): string {
   return h.digest("hex");
 }
 
-/* approving makes a new approved copy, and a run of some steps is not the
-   whole run: both always play */
-export function mayReuse(stamp: string | null, fp: string, opts: { approve: boolean; steps: boolean }): boolean {
-  return !opts.approve && !opts.steps && stamp === fp;
+/* a run of some steps is not the whole run: it always plays */
+export function mayReuse(stamp: string | null, fp: string, opts: { steps: boolean }): boolean {
+  return !opts.steps && stamp === fp;
+}
+/* APPROVING TAKES THE RUN THAT WAS READ, it does not play again: a replay wrote
+   whatever it met, a flaky section's timeout included, over a run read and good */
+export function approvalRefusal(received: string | null, playedOver: string | null, fp: string): string | null {
+  if (received === null) return "no run to approve: play it, and read what differs";
+  if (playedOver === null) return "that was not a whole run: play it without STEPS";
+  if (playedOver !== fp) return "what the run reads has changed since it played: play it again";
+  if (/^SECTION FAILED|^EXIT /m.test(received)) return "a section of that run failed: play it again";
+  return null;
 }

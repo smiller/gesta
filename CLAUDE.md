@@ -87,9 +87,11 @@ here NOW, and what is not yet:
   `../writer` is the reference for what was PORTED; a feature new here
   (the grid, 2026-09-22) has no reference there and lists every field
   it reads differently with that reason. The approved copy is only a
-  fence against change. `--approve` makes a run
-  the approved copy, a judgement made after reading the diff, never to
-  quiet it. A `.received.txt` is never committed. THE OLD APP IS FROZEN
+  fence against change. `--approve` makes the run
+  just played and read the approved copy, a judgement made after reading the
+  whole diff, never to quiet it; since 2026-11-05 it does not play again, and
+  refuses a run with a failed section, a run of some steps, or one whose inputs
+  have moved since it played (asked). A `.received.txt` is never committed. THE OLD APP IS FROZEN
   from 2026-10-17 (asked, after two of its runs cost about 8 minutes each
   for one changed step): ../writer is never played again, and
   `corner.writer.txt` stands as last generated, still compared on every
@@ -102,7 +104,7 @@ here NOW, and what is not yet:
   steps and adapters, the source an adapter imports, the approved copy,
   Helium's version, node's and playwright's) under `tools/out/helium-pass`
   when it passes or is approved, and a run with the same fingerprint prints
-  "ok — not replayed"; `--approve` and `STEPS=` always play.
+  "ok — not replayed"; `STEPS=` always plays.
 - IN FORCE — `node_modules` carries the Dropbox-ignore attribute. A
   `rm -rf node_modules` loses it with the directory, so a clean reinstall runs
   `mkdir -p node_modules && xattr -w com.dropbox.ignored 1 node_modules`

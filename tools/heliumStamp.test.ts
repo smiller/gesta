@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { fingerprint, mayReuse } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
 
 const inputs = [
   { name: "dist/index.html", bytes: "<html>page</html>" },
@@ -17,11 +17,23 @@ test("a run's inputs fingerprint the same in any order, and differently for any 
   expect(fingerprint([{ name: "a", bytes: "xy" }, { name: "b", bytes: "z" }])).not.toBe(fingerprint([{ name: "a", bytes: "x" }, { name: "b", bytes: "yz" }]));
 });
 
-test("a passing run is reused only for the same fingerprint, never when approving or running some steps", () => {
+test("a passing run is reused only for the same fingerprint, never for a run of some steps", () => {
   const fp = fingerprint(inputs);
-  expect(mayReuse(fp, fp, { approve: false, steps: false })).toBe(true);
-  expect(mayReuse(null, fp, { approve: false, steps: false })).toBe(false);
-  expect(mayReuse("other", fp, { approve: false, steps: false })).toBe(false);
-  expect(mayReuse(fp, fp, { approve: true, steps: false })).toBe(false);
-  expect(mayReuse(fp, fp, { approve: false, steps: true })).toBe(false);
+  expect(mayReuse(fp, fp, { steps: false })).toBe(true);
+  expect(mayReuse(null, fp, { steps: false })).toBe(false);
+  expect(mayReuse("other", fp, { steps: false })).toBe(false);
+  expect(mayReuse(fp, fp, { steps: true })).toBe(false);
+});
+
+test("approving takes the whole run that was played and read, over the inputs it played", () => {
+  expect(approvalRefusal("a good run\n", "print", "print")).toBe(null);
+});
+test("approving refuses when no run is there, it was a run of some steps, or what it read has changed", () => {
+  expect(approvalRefusal(null, null, "print")).toMatch(/no run/);
+  expect(approvalRefusal("a run\n", null, "print")).toMatch(/whole run/);
+  expect(approvalRefusal("a run\n", "older", "print")).toMatch(/changed/);
+});
+test("approving refuses a run in which a section failed or the tool died", () => {
+  expect(approvalRefusal("x\nSECTION FAILED (toolbar): TimeoutError\ny\n", "print", "print")).toMatch(/failed/);
+  expect(approvalRefusal("x\n\nEXIT 1\n", "print", "print")).toMatch(/failed/);
 });

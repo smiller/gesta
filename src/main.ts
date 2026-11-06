@@ -53,7 +53,7 @@ import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
-import { refersByBookChapterParagraph } from "./store/reference.ts";
+import { refersByBookChapterParagraph, refersAsScripture } from "./store/reference.ts";
 import { todayKey, entryKey, entryHash, NS_BOOK } from "./store/keys.ts";
 import { SHELVES } from "./store/shelves.ts";
 import { hashParts } from "./store/nav.ts";
@@ -676,6 +676,8 @@ if (fixture && fixtures[fixture]) {
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
   const asksParagraphs = (): boolean => refersByBookChapterParagraph(session.current.date, session.current.tag, journal);
+  const asksVerses = (): boolean => refersAsScripture(session.current.date, session.current.tag, journal);
+  const lineLabel = (): string => (asksParagraphs() ? "Paragraph" : asksVerses() ? "Verse" : "Line");
   const goToLine = (n: number): void => {
     const view = session.view!;
     if (asksParagraphs()) {
@@ -684,11 +686,12 @@ if (fixture && fixtures[fixture]) {
       return;
     }
     const { hits, blocks } = lineHits(view.state.doc, n);
-    if (!hits.length) { say(lineRefusal(blocks, n), 3000); return; }
+    const noun = asksVerses() ? "verse" : undefined;
+    if (!hits.length) { say(lineRefusal(blocks, n, noun), 3000); return; }
     const hit = nextHit(hits, landingPos(view.state), n === lineAsked);
     lineAsked = n;
     landOn(hit.pos);
-    const word = landingWord(hit, blocks, n);
+    const word = landingWord(hit, blocks, n, noun);
     if (word) say(word, 2500);
   };
   const goToFolio = (tok: string): void => {
@@ -722,16 +725,16 @@ if (fixture && fixtures[fixture]) {
   };
   acts.lineBar.toggle = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { say("Switch to the rendered view to go to " + (asksParagraphs() ? "a paragraph" : "a line or a page"), 3000); return; }
+    if (session.mdView) { say("Switch to the rendered view to go to " + (asksParagraphs() ? "a paragraph" : asksVerses() ? "a verse" : "a line or a page"), 3000); return; }
     const view = session.view;
     if (!view) return;
     const kind = askKind(view.state.doc);
-    if (kind === "none") { say(asksParagraphs() ? "no paragraph numbers here" : "no line or page numbers here", 2000); return; }
+    if (kind === "none") { say(asksParagraphs() ? "no paragraph numbers here" : asksVerses() ? "no verse numbers here" : "no line or page numbers here", 2000); return; }
     const c = session.current, askKey = entryKey(c.date, c.tag);
     if (askKey !== lastAskKey) { lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0; }
     overlay.open("lineBar");
     lb.kind = kind;
-    lb.lineLabel = asksParagraphs() ? "Paragraph" : "Line";
+    lb.lineLabel = lineLabel();
     lb.open = true;
     setTimeout(() => masthead.focusLineBar(), 0);
   };
@@ -742,7 +745,7 @@ if (fixture && fixtures[fixture]) {
   acts.lineBar.reask = () => {
     const view = session.view;
     if (!lb.open || !view) return;
-    lb.lineLabel = asksParagraphs() ? "Paragraph" : "Line";
+    lb.lineLabel = lineLabel();
     const asked = askKind(view.state.doc), kind = asked === "none" ? "both" : asked;
     if (kind === lb.kind) return;
     const held = document.activeElement?.closest(".linebar") ? document.activeElement : null;
@@ -762,7 +765,7 @@ if (fixture && fixtures[fixture]) {
       if (typeof hit === "string") say(hit, 3000); else landOn(hit.pos);
       return;
     }
-    const why = askCheck(v, kind, asksParagraphs() ? "paragraph" : "line");
+    const why = askCheck(v, kind, lineLabel().toLowerCase());
     if (why) { say(why, 2000); return; }
     if (kind === "page") goToFolio(v.trim()); else goToLine(parseInt(v.trim(), 10));
   };

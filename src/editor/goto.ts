@@ -54,16 +54,17 @@ export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] 
   });
   return { hits, blocks };
 }
-export function lineRefusal(blocks: Unit[][], n: number): string {
+export function lineRefusal(blocks: Unit[][], n: number, noun?: string): string {
   let longest = 0, longBlock: Unit[] | null = null, lowest = 0;
   for (const rows of blocks) {
     const last = rows[rows.length - 1].line;
     if (last > longest) { longest = last; longBlock = rows; lowest = rows[0].line; }
   }
-  if (n < 1) return "no " + (longBlock ? unitNoun(longBlock) : "line") + " " + n + " here";
+  const unit = (rows: Unit[]): string => noun ?? unitNoun(rows);
+  if (n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
   if (!longest || !longBlock) return "no numbered lines here";
-  if (blocks.length > 1) return "no " + unitNoun(longBlock) + " " + n + " — the longest " + formNoun(longBlock) + (lowest > 1 ? " ends at " : " has ") + longest;
-  return lowest === longest ? "the only " + unitNoun(longBlock) + " here is " + longest : "the " + unitNoun(longBlock) + "s here are " + lowest + "–" + longest;
+  if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + longest;
+  return lowest === longest ? "the only " + unit(longBlock) + " here is " + longest : "the " + unit(longBlock) + "s here are " + lowest + "–" + longest;
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
@@ -86,11 +87,11 @@ export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean):
   return hits[sameAsk && was !== -1 ? (was + 1) % hits.length : 0];
 }
 /* silent where unambiguous; with several blocks the ordinal is load-bearing */
-export function landingWord(hit: Hit, blocks: Unit[][], n: number): string | null {
+export function landingWord(hit: Hit, blocks: Unit[][], n: number, noun?: string): string | null {
   if (hit.skipped) return "line " + n + " is omitted in this edition" + (blocks.length < 2 ? "" : " — " + formNoun(hit.block) + " " + hit.nth + " of " + blocks.length);
   if (blocks.length < 2) return null;
-  const oneForm = blocks.every((rows) => prose(rows) === prose(hit.block));
-  return unitNoun(hit.block) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
+  const oneForm = !noun && blocks.every((rows) => prose(rows) === prose(hit.block));
+  return (noun ?? unitNoun(hit.block)) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
 }
 export function folioHit(doc: Node, tok: string): { pos: number } | null {
   const want = tok.toLowerCase();

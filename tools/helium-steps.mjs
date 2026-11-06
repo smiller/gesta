@@ -2485,6 +2485,32 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("Ref (all) across Prospero's borrowing", { label: all[0], fence: all.find((l) => l.includes(":::")), rows: all.length, refAllOverHeading: await refAll() });
   await page.keyboard.press("Escape");
     }],
+    ["scripture's Verse box", async () => {
+  /* a Bible's chapters are asked by verse, whichever block they are set in */
+  for (const [root, fence] of [["KJV", "::: verse numbered\nIn the beginning.\nAnd the earth.\nAnd God said.\n:::"], ["Douay-Rheims", "::: prose numbered\nIn principio. | In the beginning.\nTerra autem. | And the earth.\nDixitque Deus. | And God said.\n:::"]]) {
+    const chapter = "bookshelf/" + root + "/Genesis/1";
+    await A.foreignWrite(page, "bookshelf/" + root, "# " + root + "\n\n::: reference\nscripture\n:::\n");
+    await A.foreignWrite(page, "bookshelf/" + root + "/Genesis", "# Genesis\n");
+    await A.foreignWrite(page, chapter, "# Genesis 1\n\n" + fence + "\n");
+    await page.goto(A.url(chapter));
+    await A.waitEntry(page, chapter, 5000).catch(() => {});
+    await R.settle(page);
+    await rest(page);
+    await page.keyboard.press("Control+Meta+g");
+    await rest(page);
+    await page.keyboard.type("2");
+    await page.keyboard.press("Enter");
+    await rest(page);
+    await log("⌃⌘G 2 in " + root, { box: await page.evaluate(() => document.querySelector("label[for=lineinput]").textContent), landedOn: await page.evaluate(() => document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null) });
+    await page.keyboard.press("Meta+a");
+    await page.keyboard.type("99");
+    await page.keyboard.press("Enter");
+    await rest(page);
+    await log("⌃⌘G 99 in " + root, { said: await page.evaluate(() => document.querySelector(".saved.show")?.textContent ?? null) });
+    await page.keyboard.press("Escape");
+    await rest(page);
+  }
+    }],
     ["by book, chapter, and paragraph", async () => {
   /* the Line box takes a paragraph on such a work, and ⌃⌘R names the book, the chapter and the paragraph */
   const work = "bookshelf/Augustine/De Doctrina Christiana", book = work + "/Book 2";

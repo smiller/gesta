@@ -2,8 +2,7 @@ import { test, expect } from "vitest";
 import {
   REFERENCE_DATED, REFERENCE_TOKEN, REFERENCE_DIVISION, referenceNumeral,
   referenceAbsorbs, elideRange, folioLabel, referenceAuthor, referenceLabel, mdLabel, type Journal,
-  roman, romanKey, romanWorkKey,
-} from "./reference.ts";
+  roman, romanKey, romanWorkKey, refersAsScripture } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
 import { journalOf, firstHeading } from "./headings.ts";
 
@@ -295,6 +294,12 @@ test("the scripture directive is read off the root's page, a line of its own", (
   expect(says("scripture", "# KJV\n\n::: reference\nnot scripture here\n:::")).toBe(false);
   expect(bible.scripture("bookshelf/KJV")).toBe(true);
   expect(bible.scripture("bookshelf/Dante")).toBe(false);
+});
+test("a page refers as scripture when its root's page says so, whatever its depth", () => {
+  expect(refersAsScripture(NS_BOOK.key, "KJV/Genesis/1", bible)).toBe(true);
+  expect(refersAsScripture(NS_BOOK.key, "KJV/Genesis", bible)).toBe(true);
+  expect(refersAsScripture(NS_BOOK.key, "Dante/Vita Nuova/3", bible)).toBe(false);
+  expect(refersAsScripture("2026-09-22", null, bible)).toBe(false);
 });
 test("referenceLabel under scripture: KJV, Genesis 1.3; a range; a chapter; a book; a book whose name opens with a number", () => {
   expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "3", null, bible)).toBe("KJV, Genesis 1.3");

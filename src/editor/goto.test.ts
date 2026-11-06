@@ -175,3 +175,22 @@ describe("the words of a box that asks for a paragraph", () => {
     expect(askCheck("", "line")).toBe("type a line number");
   });
 });
+
+describe("the words of a box that asks for a verse", () => {
+  const prose = parseMarkdown("# Genesis 1\n\n::: prose numbered\nIn principio. | In the beginning.\nTerra autem. | And the earth.\n:::");
+  const verse = parseMarkdown("# Genesis 1\n\n::: verse numbered\nIn the beginning.\nAnd the earth.\n:::");
+  const two = parseMarkdown("# Psalm\n\n::: verse numbered\nOne.\n:::\n\n::: verse numbered\nTwo.\n:::");
+  it("a refusal names verses, whichever block the chapter is set in", () => {
+    for (const doc of [prose, verse]) expect(lineRefusal(lineHits(doc, 9).blocks, 9, "verse")).toMatch(/verses here/);
+    expect(lineRefusal(lineHits(prose, 0).blocks, 0, "verse")).toMatch(/^no verse /);
+  });
+  it("with several blocks the refusal and the landing say verse and block, not the form's own words", () => {
+    const { hits, blocks } = lineHits(two, 1);
+    expect(lineRefusal(blocks, 9, "verse")).toMatch(/^no verse 9 — the longest block /);
+    expect(landingWord(hits[0], blocks, 1, "verse")).toMatch(/^verse 1 — block 1 of 2$/);
+  });
+  it("a page with no noun given keeps its own words", () => {
+    expect(lineRefusal(lineHits(prose, 9).blocks, 9)).toMatch(/sentences here/);
+    expect(lineRefusal(lineHits(verse, 9).blocks, 9)).toMatch(/lines here/);
+  });
+});

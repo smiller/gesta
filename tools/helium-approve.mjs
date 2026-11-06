@@ -3,8 +3,9 @@
 // bits scrubbed — a fade's opacity, a whisper still on screen at an
 // incidental step, the app's path. A difference writes the received copy
 // beside the approved one, prints the diff and exits 1; `--approve` makes
-// the received copy the approved one, which is a judgement to be made
-// after reading it. Decided 2026-09-12, asked: the tools printed and a
+// that received copy the approved one without playing again, which is a
+// judgement to be made after reading it, and refuses a run that failed or
+// whose inputs have moved. Decided 2026-09-12, asked: the tools printed and a
 // reader judged, so a seam only they cover (the walk's order from the
 // session) could move without warning under `npm test`.
 // `node tools/helium-approve.mjs [--approve] [corner|bridge|reader ...]`
@@ -12,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { fingerprint, mayReuse } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
 
 const TOOLS = { corner: "tools/helium-corner.mjs", bridge: "tools/helium-bridge.mjs", reader: "tools/helium-reader.mjs" };
 /* `--writer` runs the CURRENT APP's driver over the same steps and keeps
@@ -82,10 +83,28 @@ for (const script of ["build", "build:reader"]) {
   const build = spawnSync("npm", ["run", script], { env, encoding: "utf8" });
   if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
 }
+const readOrNull = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
+const playedPath = (name) => resolve(STAMPS, name + ".played.txt");
 for (const name of run) {
-  const before = existsSync(stampPath(name)) ? readFileSync(stampPath(name), "utf8") : null;
-  if (mayReuse(before, fingerprint(inputsFor(name)), { approve, steps: !!process.env.STEPS })) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); continue; }
+  const approvedPath = resolve("tools/expected/" + name + ".approved.txt"), receivedPath = resolve("tools/expected/" + name + ".received.txt");
+  if (approve) {
+    const received = readOrNull(receivedPath);
+    if (received === null && !names.length) continue;
+    const refusal = approvalRefusal(received, readOrNull(playedPath(name)), fingerprint(inputsFor(name)));
+    if (refusal) { failed++; console.log(name + ": not approved — " + refusal); continue; }
+    const d = spawnSync("diff", ["-u", approvedPath, receivedPath], { encoding: "utf8" });
+    console.log(d.stdout || "");
+    writeFileSync(approvedPath, received);
+    rmSync(receivedPath, { force: true });
+    rmSync(playedPath(name), { force: true });
+    stamp(name);
+    console.log(name + ": approved, the run that was played (" + received.split("\n").length + " lines)");
+    continue;
+  }
+  const before = readOrNull(stampPath(name));
+  if (mayReuse(before, fingerprint(inputsFor(name)), { steps: !!process.env.STEPS })) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); continue; }
   rmSync(stampPath(name), { force: true });
+  rmSync(playedPath(name), { force: true });
   /* the last run's browser may still be exiting: kill, then retry the
      delete for a few seconds rather than fail on a held directory */
   spawnSync("pkill", ["-f", "gesta-helium-" + name + "-profile"]);
@@ -94,17 +113,16 @@ for (const name of run) {
   const r = spawnSync("node", [TOOLS[name]], { env, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const bad = r.status || r.signal;
   const received = scrub((r.stdout || "") + (bad ? "\nEXIT " + bad + "\n" + (r.stderr || "") : ""));
-  const approvedPath = resolve("tools/expected/" + name + ".approved.txt"), receivedPath = resolve("tools/expected/" + name + ".received.txt");
-  const approved = existsSync(approvedPath) ? readFileSync(approvedPath, "utf8") : null;
-  /* a run that died is never the approved copy, whatever the flag */
-  if (approve && bad) { failed++; writeFileSync(receivedPath, received); console.log(name + ": FAILED (" + bad + "), not approved; see " + receivedPath); continue; }
-  if (approve) { writeFileSync(approvedPath, received); rmSync(receivedPath, { force: true }); if (!process.env.STEPS) stamp(name); console.log(name + ": approved (" + received.split("\n").length + " lines)"); continue; }
+  const approved = readOrNull(approvedPath);
   if (approved === received) { rmSync(receivedPath, { force: true }); if (!process.env.STEPS) stamp(name); console.log(name + ": ok"); continue; }
   failed++;
   writeFileSync(receivedPath, received);
+  if (!process.env.STEPS) { mkdirSync(STAMPS, { recursive: true }); writeFileSync(playedPath(name), fingerprint(inputsFor(name))); }
   console.log(name + ": DIFFERS from " + approvedPath + (approved === null ? " (no approved copy yet)" : ""));
   const d = spawnSync("diff", ["-u", approvedPath, receivedPath], { encoding: "utf8" });
-  console.log((d.stdout || "").split("\n").slice(0, 80).join("\n"));
+  const diffLines = (d.stdout || "").split("\n");
+  console.log(diffLines.slice(0, 80).join("\n"));
+  if (diffLines.length > 80) console.log("… " + (diffLines.length - 80) + " more lines of the diff: read the received copy whole");
   console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.mjs --approve " + name + "`" + (name === "corner" ? "; to compare it as it stands, `node tools/helium-compare.mjs tools/expected/corner.received.txt`" : ""));
 }
 process.exit(failed ? 1 : 0);
