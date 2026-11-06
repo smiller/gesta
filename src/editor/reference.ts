@@ -70,6 +70,14 @@ function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolea
   const halves = { a: inked(Math.max(s, 0), Math.min(e, cut)), b: inked(Math.max(s, rest), Math.min(e, t.length)) };
   return halves.a || halves.b ? halves : null;
 }
+/* a lettered line says its label at the end of a run it stands at (pin:
+   reference.test › a lettered line) */
+function labelledRange(lo: Unit, hi: Unit, range: string): string {
+  if (lo === hi) return lo.label!;
+  if (lo.line === hi.line) return lo.line + "-" + hi.label;
+  const [x, y] = range.split("-");
+  return (lo.label ?? x) + "-" + y + (hi.label ? hi.label.slice(-1) : "");
+}
 /* with `halves`, Old English verse's: a run starting on a line's second half
    or ending on its first says so, 50b-52, 49-50a, a half alone 50a (pin:
    reference.test › Old English verse refers to a half-line) */
@@ -82,10 +90,11 @@ export function referenceRange(doc: Node, from: number, to: number, halves = fal
   for (const u of coveredUnits(doc, from, to, true, side)) {
     if (!u.line) continue;
     if (!lo || u.line < lo.line) lo = u;
-    if (!hi || u.line > hi.line) hi = u;
+    if (!hi || u.line > hi.line || (u.line === hi.line && u.label)) hi = u;
   }
   if (!lo || !hi) return "";
   const range = elideRange(lo.line, hi.line);
+  if (lo.label || hi.label) return labelledRange(lo, hi, range);
   if (!halves) return range;
   const first = halvesInked(lo, from, to), last = halvesInked(hi, from, to);
   if (lo === hi) return range + (first && first.a !== first.b ? (first.a ? "a" : "b") : "");

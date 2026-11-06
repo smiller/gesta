@@ -263,6 +263,13 @@ test("fenceBody counts depth for the recursing forms and shields raw bodies", ()
   expect(fenceBody(lines, 1)).toEqual({ body: ["::: verse", "::: card-red", ":::", "x"], next: 6 });
 });
 
+test("a ⟨line 157a⟩ token at a row's head is the row's own label, not its text, on a line or a pair", () => {
+  const d = parseMarkdown("::: verse 157\na\n⟨line 157a⟩arma parant\n⟨line 157b⟩ b | B\n:::");
+  const v = d.firstChild!;
+  expect([v.child(1).attrs.label, v.child(1).textContent, v.child(2).attrs.label, v.child(0).attrs.label]).toEqual(["157a", "arma parant", "157b", null]);
+  expect(visibleText(d)).not.toContain("⟨");
+  expect(visibleText(parseMarkdown("::: verse\n⟨line a⟩ b\n:::"))).toContain("⟨line a⟩");
+});
 test("a ⟨line⟩ token at a row's head is the row's declared kind, not its text", () => {
   const d = parseMarkdown("::: verse\n⟨line⟩*sung*\n⟨line⟩ *a* | *b*\n⟨line⟩\nplain\n:::");
   const rows = d.firstChild!;

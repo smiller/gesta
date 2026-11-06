@@ -44,10 +44,13 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
     return ["div", attrs, 0];
   },
 });
-const kindOf = (dom: HTMLElement): { kind: string | null } => ({ kind: dom.getAttribute("data-kind") || null });
+const kindOf = (dom: HTMLElement): { kind: string | null; label: string | null } => ({ kind: dom.getAttribute("data-kind") || null, label: dom.getAttribute("data-label") || null });
 
-const rowAttrs = (cls: string, n: PMNode): Record<string, string> =>
-  n.attrs.kind ? { class: cls, "data-kind": String(n.attrs.kind) } : { class: cls };
+const rowAttrs = (cls: string, n: PMNode): Record<string, string> => ({
+  class: cls,
+  ...(n.attrs.kind ? { "data-kind": String(n.attrs.kind) } : {}),
+  ...(n.attrs.label ? { "data-label": String(n.attrs.label) } : {}),
+});
 
 const nodes: Record<string, NodeSpec> = {
   doc: { content: "block+" },
@@ -120,8 +123,8 @@ const nodes: Record<string, NodeSpec> = {
   },
   verse: rowBlock("verse", true),
   prose: rowBlock("prose"),
-  line: { attrs: { kind: { default: null } }, content: "inline*", parseDOM: [{ tag: "div.vrow:not(.vpair)", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
-  pair: { attrs: { kind: { default: null } }, content: "cell cell", parseDOM: [{ tag: "div.vrow.vpair", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
+  line: { attrs: { kind: { default: null }, label: { default: null } }, content: "inline*", parseDOM: [{ tag: "div.vrow:not(.vpair)", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow", n), 0] },
+  pair: { attrs: { kind: { default: null }, label: { default: null } }, content: "cell cell", parseDOM: [{ tag: "div.vrow.vpair", getAttrs: kindOf }], toDOM: (n) => ["div", rowAttrs("vrow vpair", n), 0] },
   cell: { content: "inline*", parseDOM: [{ tag: "div.vcell" }], toDOM: () => ["div", { class: "vcell" }, 0] },
   gap: { parseDOM: [{ tag: "div.vgap" }], toDOM: () => ["div", { class: "vgap" }] },
   /* never selected: it holds nothing for a caret (pin: schema.test › a

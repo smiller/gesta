@@ -17,6 +17,8 @@ class RowView implements NodeView {
   private kind(node: Node): void {
     if (node.attrs.kind) this.dom.dataset.kind = String(node.attrs.kind);
     else delete this.dom.dataset.kind;
+    if (node.attrs.label) this.dom.dataset.label = String(node.attrs.label);
+    else delete this.dom.dataset.label;
   }
   update(node: Node): boolean {
     if (node.type.name !== this.name) return false;

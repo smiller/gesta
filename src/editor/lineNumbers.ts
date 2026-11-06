@@ -31,7 +31,7 @@ export function rowDecorations(doc: Node, interval: number): Decoration[] {
     if (u.kind === "stage") cls += " stage";
     if (u.shown) cls += " shown";
     const attrs: Record<string, string> = { class: cls };
-    if (u.line) attrs["data-line"] = String(u.line);
+    if (u.line) attrs["data-line"] = u.label ?? String(u.line);
     rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs });
   }
   /* a numbered block quoted, or in a note or a card, carries its numbers
@@ -40,7 +40,7 @@ export function rowDecorations(doc: Node, interval: number): Decoration[] {
     if (n.isTextblock || n.type === schema.nodes.margin_note) return false;
     if (n.type !== schema.nodes.verse && n.type !== schema.nodes.prose) return true;
     if (n.attrs.numbered && parent && GUTTERED.has(parent.type.name)) {
-      for (const u of blockUnits(n, pos, 1)) if (u.shown) rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs: { class: "ln shown", "data-line": String(u.line) } });
+      for (const u of blockUnits(n, pos, 1)) if (u.shown) rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs: { class: "ln shown", "data-line": u.label ?? String(u.line) } });
       if (n.attrs.facing != null) for (const u of blockUnits(n, pos, 1, "right")) {
         const row = rows.get(u.pos) ?? { end: u.pos + u.node.nodeSize, attrs: { class: "" } };
         row.attrs.class = (row.attrs.class + " rn rshown").trim();

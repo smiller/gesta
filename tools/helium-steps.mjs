@@ -2390,6 +2390,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("ArrowUp from a block's first sentence", { cell: await R.caretCell(page) });
   /* a line the Loeb leaves out but counts (2026-10-23, asked): nothing drawn, the line after it 547 (qua nimium placui), and ⌃⌘G for 546 lands there saying so */
   await log("a skipped line number", await page.evaluate(() => { const row = [...document.querySelectorAll("#editor .vrow")].find((r) => r.textContent.startsWith("qua nimium placui")); return { line: row?.dataset.line ?? null, before: row?.previousElementSibling?.className, drawn: row?.previousElementSibling ? getComputedStyle(row.previousElementSibling).display : null }; }));
+  await A.stored(page);   /* a save landing after the Enter takes the corner from the word this reads */
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   await page.keyboard.type("546");
@@ -2642,6 +2643,55 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForFunction(() => document.querySelector("#editor .landed"), null, { timeout: 8000 }).catch(() => {});
   await rest(page);
   await log("a link to a paragraph before the warm", await page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null })));
+    }],
+    ["a lettered line", async () => {
+  /* a row saying its own number, 157a: every kind it can stand as, the gutter at every interval, the box, a link and a reference */
+  const work = "bookshelf/Statius/Thebaid", key = work + "/Book 8", href = "#bookshelf/Statius/Thebaid/Book%208?line=";
+  await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
+  await A.foreignWrite(page, work, "# Thebaid\n");
+  await A.foreignWrite(page, key, "# Book 8\n\n[To the letter](" + href + "157a)\n\n::: dual-language 155\nquintus | Five, a sentence that runs on down beside the lines after it, and past them.\nsextus\nseptimus\n⟨line 157a⟩littera sola\n⟨line 157b⟩littera par | Its own English.\noctavus\n:::\n\n::: verse 200\nplanus\n⟨line 200a⟩littera in versu\n:::\n");
+  const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
+  await open();
+  const LINES = ".page-lines select, #pagelines select";
+  const setLines = (v) => page.evaluate(([s, v]) => { const e = document.querySelector(s); if (!e) return false; e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); return true; }, [LINES, v]);
+  const gutter = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln")].map((r) => getComputedStyle(r, "::before").content.replace(/"/g, "")).filter((c) => c && c !== "none"));
+  await log("the gutter at the page's setting", { drawn: await gutter() });
+  await page.keyboard.press("Control+Meta+l");
+  await rest(page);
+  const was = await page.evaluate((s) => document.querySelector(s)?.value ?? null, LINES);
+  await setLines("0");
+  await rest(page);
+  await log("the gutter with no numbering", { interval: await page.evaluate((s) => document.querySelector(s)?.value ?? null, LINES), drawn: await gutter() });
+  await setLines(was);
+  await rest(page);
+  await page.keyboard.press("Escape");
+  await rest(page);
+  const seen = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? (m.closest(".dual-language") ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null) : null, said: document.querySelector(".saved.show")?.textContent || null }; });
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  const ask = async (n) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen(); };
+  await log("⌃⌘G 157a, a lettered line with no English", await ask("157a"));
+  await log("⌃⌘G 157, the line before it", await ask("157"));
+  await log("⌃⌘G 157b, a lettered line with its own English", await ask("157b"));
+  await log("⌃⌘G 158, the line after them", await ask("158"));
+  await log("⌃⌘G 200a, a lettered line of plain verse", await ask("200a"));
+  await log("⌃⌘G 157c, a letter the page lacks", await ask("157c"));
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("157a");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await page.keyboard.press("Escape");
+  await rest(page);
+  await page.keyboard.press("Shift+Meta+ArrowRight");
+  await rest(page);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on a lettered line", { lines: await R.clipboardLines(page) });
+  await open();
+  await page.locator("#editor a", { hasText: "To the letter" }).first().click();
+  await rest(page);
+  await rest(page);
+  await log("a link to a lettered line", { ...(await seen()), address: await page.evaluate(() => location.hash.split("?")[1] ?? null) });
     }],
     ["a line with no English of its own", async () => {
   /* the mark is the row's band across both columns on every row of a dual-language block, the rows the English runs down beside included; nothing moves */

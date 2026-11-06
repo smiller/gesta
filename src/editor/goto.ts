@@ -42,36 +42,47 @@ function askedUnits(doc: Node): Unit[] {
   doc.forEach((block, pos) => { out.push(...blockUnits(block, pos, 0, block.attrs.facing != null ? "right" : "left")); });
   return out;
 }
-export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] } {
+/* what the box's words name beyond a number: a lettered line, only on a page
+   that has one, so a half-line's `50b` is no ask on Beowulf (pin: goto.test ›
+   a box takes a label only) */
+export function askedLabel(doc: Node, ask: string): string | null {
+  const a = ask.trim().toLowerCase();
+  return /^\d+[a-z]$/.test(a) && askedUnits(doc).some((u) => u.label) ? a : null;
+}
+export function lineHits(doc: Node, n: number | string): { hits: Hit[]; blocks: Unit[][] } {
   const blocks = blocksOf(askedUnits(doc));
   const hits: Hit[] = [];
   blocks.forEach((rows, i) => {
     const lines = rows.filter((u) => !u.rest && !u.skip);
     for (const u of rows) {
-      if (u.line !== n || u.rest) continue;
+      if (typeof n === "string" ? u.label !== n : u.line !== n || u.rest || u.label) continue;
       const at = u.skip ? lines.find((v) => v.pos > u.pos) ?? lines[lines.length - 1] : u;
       if (at) hits.push({ pos: at.pos, nth: i + 1, block: rows, skipped: u.skip });
     }
   });
-  return { hits, blocks };
+  /* a block opening part-way along a line holds that line's rest: the line is
+     where it begins, unless the page has only the rest (pin: goto.test › a
+     line a block opens part-way along) */
+  const begun = hits.filter((h) => doc.nodeAt(h.pos)!.attrs.kind !== "cont");
+  return { hits: begun.length ? begun : hits, blocks };
 }
 const repeatsANumber = (blocks: Unit[][]): boolean => {
-  const seen = new Set<number>();
+  const seen = new Set<number | string>();
   return blocks.some((rows) => {
-    const own = new Set(rows.map((u) => u.line));
+    const own = new Set(rows.filter((u) => u.node.attrs.kind !== "cont").map((u) => u.label ?? u.line));
     const repeats = [...own].some((line) => seen.has(line));
     own.forEach((line) => seen.add(line));
     return repeats;
   });
 };
-export function lineRefusal(blocks: Unit[][], n: number, noun?: string): string {
+export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
   let longest = 0, longBlock: Unit[] | null = null, lowest = 0;
   for (const rows of blocks) {
     const last = rows[rows.length - 1].line;
     if (last > longest) { longest = last; longBlock = rows; lowest = rows[0].line; }
   }
   const unit = (rows: Unit[]): string => noun ?? unitNoun(rows);
-  if (n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
+  if (typeof n === "number" && n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
   if (!longest || !longBlock) return "no numbered " + (noun ?? "line") + "s here";
   if (blocks.length > 1 && !repeatsANumber(blocks)) return "no " + unit(longBlock) + " " + n + ", the last " + unit(longBlock) + " is " + longest;
   if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + longest;
@@ -100,7 +111,7 @@ export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean):
 /* the ordinal is said only where the number names several places: a page of
    many blocks numbered straight on has one place for each (pin: goto.test ›
    says nothing of the blocks) */
-export function landingWord(hit: Hit, hits: Hit[], blocks: Unit[][], n: number, noun?: string): string | null {
+export function landingWord(hit: Hit, hits: Hit[], blocks: Unit[][], n: number | string, noun?: string): string | null {
   const several = hits.length > 1;
   if (hit.skipped) return (noun ?? "line") + " " + n + " is omitted in this edition" + (several ? " — " + (noun ? "block" : formNoun(hit.block)) + " " + hit.nth + " of " + blocks.length : "");
   if (!several) return null;

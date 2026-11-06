@@ -75,6 +75,17 @@ test("a ⟨line⟩ row keeps its kind on a mid-split and hands none to a line ma
   expect(end.doc.firstChild!.child(1).attrs.kind).toBe(null);
 });
 
+test("a lettered line split keeps its label on the one row: on its first half, or below a row opened above it", () => {
+  const line = "::: verse 157\nx\n⟨line 157a⟩arma parant\ny\n:::";
+  expect(md(run(enterInRow, at(line, "arma ")))).toBe("::: verse 157\nx\n⟨line 157a⟩arma\nparant\ny\n:::");
+  const end = run(enterInRow, at(line, "arma parant"));
+  expect(end.doc.firstChild!.child(2).attrs.label).toBe(null);
+  const start = run(enterInRow, at(line, "arma parant", 0));
+  expect(md(start)).toBe("::: verse 157\nx\n\n⟨line 157a⟩arma parant\ny\n:::");
+  const pairs = run(enterInRow, at("::: verse 157\nx\n⟨line 157a⟩arma parant | war\ny\n:::", "arma "));
+  expect(pairs.doc.firstChild!.child(1).attrs.label).toBe("157a");
+  expect(pairs.doc.firstChild!.child(2).attrs.label).toBe(null);
+});
 test("a ⟨…⟩ row split keeps the rest of the line on its first half; the text carried below begins a line of its own", () => {
   const mid = run(enterInRow, at("::: verse\nRelate by whom.\n⟨…⟩That still lessens the sorrow\n:::", "lessens "));
   expect(md(mid)).toBe("::: verse\nRelate by whom.\n⟨…⟩That still lessens\nthe sorrow\n:::");

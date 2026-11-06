@@ -39,7 +39,7 @@ import { flattenDocText } from "./model/flatten.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
 import { mdLabel } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
-import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
+import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, askedLabel, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
 import { openFoldAt } from "./editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "./editor/landing.ts";
 import { caretNear } from "./editor/rowKeys.ts";
@@ -644,7 +644,7 @@ if (fixture && fixtures[fixture]) {
      A number is a coordinate into ONE text, so the boxes empty when the
      bar opens on another entry. */
   const lb = screen.lineBar;
-  let lineAsked = 0, lastAskKey = "";
+  let lineAsked: number | string = 0, lastAskKey = "";
   function scrollIntoBand(rect: { top: number; bottom: number }): void {
     const top = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
     const mid = top + (document.documentElement.clientHeight - top) / 2;
@@ -679,9 +679,9 @@ if (fixture && fixtures[fixture]) {
   const asksParagraphs = (): boolean => refersByBookChapterParagraph(session.current.date, session.current.tag, journal);
   const asksVerses = (): boolean => refersAsScripture(session.current.date, session.current.tag, journal);
   const lineLabel = (): string => (asksParagraphs() ? "Paragraph" : asksVerses() ? "Verse" : "Line");
-  const goToLine = (n: number, quiet: boolean): boolean => {
+  const goToLine = (n: number | string, quiet: boolean): boolean => {
     const view = session.view!;
-    if (asksParagraphs()) {
+    if (typeof n === "number" && asksParagraphs()) {
       const hit = paragraphHit(view.state.doc, n);
       if (typeof hit === "string") { say(hit, 3000); return false; }
       landOn(hit.pos);
@@ -712,6 +712,8 @@ if (fixture && fixtures[fixture]) {
       landOn(hit.pos);
       return true;
     }
+    const label = askedLabel(doc, v);
+    if (label) return goToLine(label, quiet);
     const why = askCheck(v, "line", lineLabel().toLowerCase());
     if (why) { say(why, 2000); return false; }
     return goToLine(parseInt(v.trim(), 10), quiet);

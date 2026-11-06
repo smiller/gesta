@@ -25,12 +25,13 @@ test("hashParts: the ?h=…&n=… highlight payload", () => {
   expect(m.hl).toBe(null);
 });
 
-test("hashParts: an address names a line as the line box takes it, one number or stanza and line", () => {
+test("hashParts: an address names a line as the line box takes it, one number, a lettered number, or stanza and line", () => {
   const h = hashParts("bookshelf/Silius/Book%201?line=672");
   expect(dt(h)).toBe("bookshelf|Silius/Book 1");
   expect(h.hl).toEqual({ q: "", nth: 0, line: "672" });
   expect(hashParts("bookshelf/Spenser/1.1?line=2.1").hl!.line).toBe("2.1");
-  for (const bad of ["0", "x", "6x", "", "2.", ".1"]) expect(hashParts("bookshelf/Silius?line=" + bad).hl).toBe(null);
+  expect(hashParts("bookshelf/Silius/Book%208?line=157a").hl!.line).toBe("157a");
+  for (const bad of ["0", "x", "6xy", "6X", "", "2.", ".1", "2.1a"]) expect(hashParts("bookshelf/Silius?line=" + bad).hl).toBe(null);
 });
 
 test("entryHash writes the line an address names back as it was read", () => {

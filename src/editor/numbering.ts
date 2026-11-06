@@ -22,6 +22,8 @@ export interface Unit {
   rest: boolean;
   /* a line the edition leaves out: its number taken, nothing drawn */
   skip: boolean;
+  /* a line the edition letters, its number the one before it */
+  label?: string;
 }
 
 /* text that is not whitespace, or a picture; a folio draws nothing here, a
@@ -58,7 +60,7 @@ export function whollyIn(row: Node, mark: MarkType): boolean {
 /* bold first: a row bold and italic both is a speaker (pin: numbering.test
    › a wholly bold-italic row is a speaker) */
 function rowKind(row: Node): UnitKind {
-  if (row.attrs.kind === "line" || row.attrs.kind === "cont") return "line";
+  if (row.attrs.kind === "line" || row.attrs.kind === "cont" || row.attrs.label) return "line";
   if (whollyIn(row, schema.marks.strong)) return "speaker";
   if (whollyIn(row, schema.marks.em)) return "stage";
   return "line";
@@ -115,6 +117,13 @@ export function blockUnits(block: Node, blockPos: number, interval: number, side
        italics is an inscription or a song, and it is numbered (pin:
        numbering.test › every inked row of a stanza is a line) */
     const kind: UnitKind = prose ? "sentence" : block.attrs.stanza != null ? "line" : rowKind(row);
+    /* drawn at every interval: its number is what says why the next line is
+       not one higher (pin: numbering.test › a lettered line) */
+    if (row.attrs.label) {
+      const label = row.attrs.label as string;
+      out.push({ pos: blockPos + 1 + offset, node: row, kind, line: parseInt(label, 10), label, blockPos, shown: true, rest: false, skip: false });
+      return;
+    }
     /* the rest of a split line takes the number of the line it finishes,
        once the block has one */
     const rest = kind === "line" && row.attrs.kind === "cont" && line >= (block.attrs.start as number);

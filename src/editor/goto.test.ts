@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
+import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, askedLabel, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
@@ -55,6 +55,45 @@ describe("lineHits and the cycle", () => {
     const { hits, blocks } = lineHits(two, 1);
     expect(blocks.length).toBe(2);
     expect(landingWord(hits[0], hits, blocks, 1)).toBeNull();
+  });
+});
+describe("a line a block opens part-way along", () => {
+  const split = parseMarkdown("::: dual-language\na | A\nb\n:::\n\n::: dual-language 2\n⟨…⟩the rest | R\nc\n:::");
+  it("names one place, where the line begins", () => {
+    const { hits, blocks } = lineHits(split, 2);
+    expect(hits.map((h) => split.nodeAt(h.pos)!.textContent)).toEqual(["b"]);
+    expect(landingWord(hits[0], hits, blocks, 2)).toBeNull();
+  });
+  it("is not a number repeated", () => {
+    expect(lineRefusal(lineHits(split, 9).blocks, 9)).toBe("no line 9, the last line is 3");
+  });
+  it("is found in the rest where the page has no line it finishes, a passage opening part-way along one", () => {
+    const passage = parseMarkdown("::: dual-language 5\n⟨…⟩per quae | Through\nnext\n:::");
+    expect(lineHits(passage, 5).hits.map((h) => passage.nodeAt(h.pos)!.textContent)).toEqual(["per quaeThrough"]);
+  });
+});
+describe("a lettered line", () => {
+  const page = parseMarkdown("::: dual-language 156\na\nb | B\n⟨line 157a⟩c\nd\n:::\n\n::: dual-language 159\ne\n:::");
+  const text = (h: { pos: number }): string => page.nodeAt(h.pos)!.textContent;
+  it("is asked by its label, and its number still names the line before it", () => {
+    expect(lineHits(page, "157a").hits.map(text)).toEqual(["c"]);
+    expect(lineHits(page, 157).hits.map(text)).toEqual(["bB"]);
+    expect(lineHits(page, 158).hits.map(text)).toEqual(["d"]);
+  });
+  it("a letter the page lacks is refused in the page's words", () => {
+    const { hits, blocks } = lineHits(page, "157b");
+    expect(hits).toEqual([]);
+    expect(lineRefusal(blocks, "157b")).toBe("no line 157b, the last line is 159");
+  });
+  it("does not read as a number repeated", () => {
+    expect(lineRefusal(lineHits(page, 9).blocks, 9)).toMatch(/the last line/);
+    expect(lineRefusal(lineHits(parseMarkdown("::: verse 157\na\n:::\n\n::: verse 200\n⟨line 157a⟩b\n:::"), 9).blocks, 9)).toMatch(/the last line/);
+  });
+  it("a box takes a label only on a page that has one, in either case", () => {
+    expect(askedLabel(page, " 157a ")).toBe("157a");
+    expect(askedLabel(page, "157A")).toBe("157a");
+    expect(askedLabel(page, "157")).toBeNull();
+    expect(askedLabel(parseMarkdown("::: verse\na\n:::"), "50b")).toBeNull();
   });
 });
 describe("the refusals", () => {

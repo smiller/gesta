@@ -11,7 +11,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT, ROW_LABEL_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
   fenceNumbers, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -177,10 +177,11 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
     if (trimmed === ROW_SKIP_TOKEN && cls === "verse") { sink.push("skip", "div", 0); from++; continue; }
     const escaped = trimmed.startsWith(ROW_TOKEN_ESCAPE + "⟨");
     const raw = escaped ? trimmed.slice(ROW_TOKEN_ESCAPE.length) : trimmed;
-    const head = escaped ? null : ROW_KIND_AT.exec(raw);
+    const labelled = escaped ? null : ROW_LABEL_AT.exec(raw);
+    const head = labelled ?? (escaped ? null : ROW_KIND_AT.exec(raw));
     const declared = !!head;
     const body = head ? raw.slice(head[0].length) : raw;
-    const meta = head ? { kind: head[1] === "line" ? "line" : "cont" } : undefined;
+    const meta = labelled ? { kind: "line", label: labelled[1] } : head ? { kind: head[1] === "line" ? "line" : "cont" } : undefined;
     if (!body && !declared) sink.push("gap", "div", 0);
     else {
       const at = verseSplit(body);
@@ -492,8 +493,8 @@ function buildDoc(tokens: Token[]): Node {
         case "grid_open": open(schema.nodes.grid, { n: t.meta!.n }); break;
         case "verse_open": open(schema.nodes.verse, { start: t.meta!.start, stanza: t.meta!.stanza ?? null, dual: !!t.meta!.dual, facing: t.meta!.facing ?? null, numbered: !!t.meta!.numbered }); break;
         case "prose_open": open(schema.nodes.prose, { start: t.meta!.start, numbered: !!t.meta!.numbered }); break;
-        case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null }); break;
-        case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null }); break;
+        case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null, label: (t.meta?.label as string) ?? null }); break;
+        case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null, label: (t.meta?.label as string) ?? null }); break;
         case "cell_open": open(schema.nodes.cell); break;
         case "gap": add(schema.nodes.gap.create()); break;
         case "skip": add(schema.nodes.skip.create()); break;

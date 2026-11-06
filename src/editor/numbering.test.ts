@@ -134,6 +134,13 @@ test("paintsLines: a top-level verse block, and nothing else", () => {
   expect(paintsLines(doc("text"))).toBe(false);
 });
 
+test("a lettered line carries its own label, does not advance the count and is drawn at every interval", () => {
+  const u = lineUnits(doc("::: dual-language 156\na\nb | B\n⟨line 157a⟩c\nd\n:::"), 0);
+  expect(u.map((x) => [x.line, x.label ?? null, x.shown])).toEqual([[156, null, false], [157, null, false], [157, "157a", true], [158, null, false]]);
+  const start = doc("::: verse 158\n⟨line 157a⟩c\nd\n:::");
+  expect(lineUnits(start, 0).map((x) => x.line)).toEqual([157, 158]);
+  expect(countAt(start.child(0), 0, 1)).toBe(158);
+});
 test("a skipped line number is counted and draws no line: the lines after it keep the edition's numbers", () => {
   expect(kinds("::: verse 545\na\n⟨skipped line number⟩\nb\n⟨skipped line number⟩\n⟨skipped line number⟩\nc\n:::", 5)).toBe("line:545 skip:546 line:547 skip:548 skip:549 line:550");
   const d = doc("::: verse 545\na\n⟨skipped line number⟩\nb\n:::");

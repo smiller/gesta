@@ -157,13 +157,14 @@ export const enterInRow: Command = (state, dispatch) => {
     return true;
   }
   if (r.cell < 0) {
-    const atEnd = $c.parentOffset === r.row.content.size, rest = r.row.attrs.kind === "cont";
+    const atEnd = $c.parentOffset === r.row.content.size, rest = r.row.attrs.kind === "cont" || !!r.row.attrs.label;
     /* text carried off the rest of a split line begins a line of its own;
        a row opened above it is a plain one (pin: rowKeys.test › a ⟨…⟩ row
-       split keeps the rest of the line) */
+       split keeps the rest of the line) (pin: rowKeys.test › a lettered line
+       split) */
     if (rest && $c.parentOffset === 0) {
       tr.split($c.pos, 1, [{ type: N.line, attrs: r.row.attrs }]);
-      tr.setNodeMarkup(start, undefined, { ...r.row.attrs, kind: null });
+      tr.setNodeMarkup(start, undefined, { ...r.row.attrs, kind: null, label: null });
     } else tr.split($c.pos, 1, atEnd || rest ? [{ type: N.line }] : undefined);
     if (dispatch) dispatch(caretAt(tr, $c.pos + 2));
     return true;
@@ -172,8 +173,9 @@ export const enterInRow: Command = (state, dispatch) => {
   const own = r.cell === 0 ? a : b;
   const moved = own.size > k;
   const row1 = r.cell === 0 ? pair(r.row.attrs, a.cut(0, k), b) : pair(r.row.attrs, a, b.cut(0, k));
-  const row2 = r.cell === 0 ? pair(moved ? r.row.attrs : null, a.cut(k), Fragment.empty)
-                            : pair(moved ? r.row.attrs : null, Fragment.empty, b.cut(k));
+  const carried = moved ? { ...r.row.attrs, label: null } : null;
+  const row2 = r.cell === 0 ? pair(carried, a.cut(k), Fragment.empty)
+                            : pair(carried, Fragment.empty, b.cut(k));
   tr.replaceWith(start, end, [row1, row2]);
   const row2Start = start + row1.nodeSize;
   const caret = moved && r.cell === 1 ? row2Start + 2 + row2.child(0).nodeSize : row2Start + 2;

@@ -455,6 +455,17 @@ const oeLabel = (doc: Node, tag: string, page: Record<string, string>, needle: s
   const p = referencePayload(state(doc, a, b), "bookshelf", tag, journalOf(page));
   return "label" in p && p.label;
 };
+test("a lettered line is referred to by its label, alone or at either end of a run; a run through it by its numbers", () => {
+  const d = parseMarkdown("::: dual-language 155\nv\nvi\nrumor | Soon\n⟨line 157a⟩arma\ntum\ndevenio\n:::");
+  const range = (a: string, b?: string): string => referenceRange(d, ...span(d, a, b));
+  expect(range("arma")).toBe("157a");
+  expect(range("rumor", "arma")).toBe("157-157a");
+  expect(range("arma", "devenio")).toBe("157a-59");
+  expect(range("v", "arma")).toBe("155-57a");
+  expect(range("v", "devenio")).toBe("155-59");
+  const quoted = passageMd(d, ...span(d, "arma", "tum"));
+  expect(quoted).toContain("::: dual-language 158\n> ⟨line 157a⟩arma\n> tum");
+});
 test("Old English verse refers to a half-line as 50a or 50b, a run from a second half or to a first as 50b-52 or 49-50a, both halves as the line", () => {
   const page = { "bookshelf/Beowulf": BWF_PAGE };
   expect(oeLabel(BWF, "Beowulf", page, "Men ne cunnon", "onfeng")).toBe("*Beowulf*, 50b-52");

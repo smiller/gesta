@@ -16,6 +16,9 @@ const marks = (s: EditorState): string[] =>
     return spec.class + (spec["data-line"] ? "=" + spec["data-line"] : "");
   });
 
+test("a lettered line's mark says its label and is shown at every interval, none included", () => {
+  for (const interval of [0, 5, 1]) expect(marks(state("::: verse 157\na\n⟨line 157a⟩b\nc\n:::", interval))[1]).toBe("ln shown=157a");
+});
 test("every verse row that is a unit is marked; the number is an attribute, the interval a class", () => {
   const s = state("intro\n\n::: verse\n*Enter*\na\nb\nc\nd\ne\n:::", 5);
   expect(marks(s)).toEqual(["ln stage", "ln=1", "ln=2", "ln=3", "ln=4", "ln shown=5"]);

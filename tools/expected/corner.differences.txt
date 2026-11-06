@@ -288,6 +288,16 @@ a link to a stanza, and line · * · new here, the old app frozen
 a link to an omitted line · * · new here, the old app frozen
 a link to a line, then another with no press · * · new here, the old app frozen
 a link to a paragraph before the warm · * · new here, the old app frozen
+the gutter at the page's setting · * · new here, the old app frozen
+the gutter with no numbering · * · new here, the old app frozen
+⌃⌘G 157a, a lettered line with no English · * · new here, the old app frozen
+⌃⌘G 157, the line before it · * · new here, the old app frozen
+⌃⌘G 157b, a lettered line with its own English · * · new here, the old app frozen
+⌃⌘G 158, the line after them · * · new here, the old app frozen
+⌃⌘G 200a, a lettered line of plain verse · * · new here, the old app frozen
+⌃⌘G 157c, a letter the page lacks · * · new here, the old app frozen
+⌃⌘R on a lettered line · * · new here, the old app frozen
+a link to a lettered line · * · new here, the old app frozen
 a line with no English, unmarked · * · new here, the old app frozen
 ⌃⌘G to a line with no English · * · new here, the old app frozen
 a link to a line with no English · * · new here, the old app frozen
