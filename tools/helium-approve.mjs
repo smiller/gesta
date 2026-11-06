@@ -110,14 +110,16 @@ for (const name of run) {
   spawnSync("pkill", ["-f", "gesta-helium-" + name + "-profile"]);
   const prof = resolve(tmpdir(), "gesta-helium-" + name + "-profile");
   for (let i = 0; i < 20; i++) { try { rmSync(prof, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
+  /* an edit made while it plays is not what it played (2026-11-05, the review) */
+  const played = fingerprint(inputsFor(name));
   const r = spawnSync("node", [TOOLS[name]], { env, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   const bad = r.status || r.signal;
   const received = scrub((r.stdout || "") + (bad ? "\nEXIT " + bad + "\n" + (r.stderr || "") : ""));
   const approved = readOrNull(approvedPath);
-  if (approved === received) { rmSync(receivedPath, { force: true }); if (!process.env.STEPS) stamp(name); console.log(name + ": ok"); continue; }
+  if (approved === received) { rmSync(receivedPath, { force: true }); if (!process.env.STEPS) { mkdirSync(STAMPS, { recursive: true }); writeFileSync(stampPath(name), played); } console.log(name + ": ok"); continue; }
   failed++;
   writeFileSync(receivedPath, received);
-  if (!process.env.STEPS) { mkdirSync(STAMPS, { recursive: true }); writeFileSync(playedPath(name), fingerprint(inputsFor(name))); }
+  if (!process.env.STEPS) { mkdirSync(STAMPS, { recursive: true }); writeFileSync(playedPath(name), played); }
   console.log(name + ": DIFFERS from " + approvedPath + (approved === null ? " (no approved copy yet)" : ""));
   const d = spawnSync("diff", ["-u", approvedPath, receivedPath], { encoding: "utf8" });
   const diffLines = (d.stdout || "").split("\n");

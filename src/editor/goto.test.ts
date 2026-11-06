@@ -1,24 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { lineLanding, paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
+import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
 const two = parseMarkdown("::: verse\na\nb\nc\nd\n:::\n\nprose between\n\n::: verse 2\nx\ny\n:::");
 const mixed = parseMarkdown("::: prose\nSentence one. | Un.\nSentence two. | Deux.\n:::\n\n::: verse\nline one\nline two\nline three\n:::");
 
-describe("lineLanding", () => {
-  it("a link names the first line of that number, the blocks in the page's order", () => {
-    const moved = parseMarkdown("::: verse 533\nx\n:::\n\n::: verse 421\ny\n:::\n\n::: verse 533\nz\n:::");
-    const first = lineLanding(moved, 533) as { pos: number };
-    expect(first.pos).toBe(lineHits(moved, 533).hits[0].pos);
-    expect(moved.nodeAt(first.pos)!.textContent).toBe("x");
-    expect((lineLanding(moved, 421) as { pos: number }).pos).toBe(lineHits(moved, 421).hits[0].pos);
-  });
-  it("a line the page lacks is refused in the Line box's words, or the noun the work asks by", () => {
-    const one = parseMarkdown("::: verse\na\nb\n:::");
-    expect(lineLanding(one, 9)).toBe(lineRefusal(lineHits(one, 9).blocks, 9));
-    expect(lineLanding(one, 9, "verse")).toBe(lineRefusal(lineHits(one, 9).blocks, 9, "verse"));
+describe("the noun a work asks by", () => {
+  it("names an omitted line and a page with no numbers in that noun, and a block as a block", () => {
+    const skips = parseMarkdown("::: verse\na\n⟨skipped line number⟩\nc\n:::\n\n::: verse\nx\ny\nz\n:::");
+    const { hits, blocks } = lineHits(skips, 2);
+    expect(landingWord(hits[0], hits, blocks, 2, "verse")).toMatch(/^verse 2 is omitted .* block 1 of 2$/);
+    expect(lineRefusal([], 2, "verse")).toMatch(/numbered verses/);
   });
 });
 
@@ -49,22 +43,44 @@ describe("lineHits and the cycle", () => {
     expect(nextHit(hits, hits[1].pos, false).nth).toBe(1);
     expect(nextHit(hits, 9999, true).nth).toBe(1);
   });
-  it("says where it landed only with several blocks, form-neutral in a prosimetrum", () => {
+  it("says where it landed only where the number is in several blocks, form-neutral in a prosimetrum", () => {
     const { hits, blocks } = lineHits(two, 3);
-    expect(landingWord(hits[1], blocks, 3)).toBe("line 3 — verse block 2 of 2");
-    expect(landingWord(lineHits(parseMarkdown(horace), 2).hits[0], lineHits(parseMarkdown(horace), 2).blocks, 2)).toBeNull();
+    expect(landingWord(hits[1], hits, blocks, 3)).toBe("line 3 — verse block 2 of 2");
+    const one = lineHits(parseMarkdown(horace), 2);
+    expect(landingWord(one.hits[0], one.hits, one.blocks, 2)).toBeNull();
     const m = lineHits(mixed, 2);
-    expect(landingWord(m.hits[0], m.blocks, 2)).toBe("sentence 2 — block 1 of 2");
+    expect(landingWord(m.hits[0], m.hits, m.blocks, 2)).toBe("sentence 2 — block 1 of 2");
+  });
+  it("says nothing of the blocks where the page has several and the number is in one", () => {
+    const { hits, blocks } = lineHits(two, 1);
+    expect(blocks.length).toBe(2);
+    expect(landingWord(hits[0], hits, blocks, 1)).toBeNull();
   });
 });
 describe("the refusals", () => {
+  it("on a page numbered straight on through several blocks, name the last line, whatever number was asked", () => {
+    const on = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse 3\nc\nd\n:::");
+    expect(lineRefusal(lineHits(on, 695).blocks, 695)).toBe("no line 695, the last line is 4");
+    const moved = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse 5\nc\n:::\n\n::: verse 3\nd\ne\n:::");
+    expect(lineRefusal(lineHits(moved, 9).blocks, 9)).toBe("no line 9, the last line is 5");
+    expect(lineRefusal(lineHits(on, 9).blocks, 9, "verse")).toBe("no verse 9, the last verse is 4");
+    const sentences = parseMarkdown("::: prose\nOne. | Un.\n:::\n\n::: prose 2\nTwo. | Deux.\n:::");
+    expect(lineRefusal(lineHits(sentences, 9).blocks, 9)).toBe("no sentence 9, the last sentence is 2");
+    const gap = parseMarkdown("::: verse\na\n:::\n\n::: verse 5\nb\n:::");
+    expect(lineRefusal(lineHits(gap, 3).blocks, 3)).toBe("no line 3, the last line is 5");
+  });
+  it("keep the longest block where blocks repeat a number", () => {
+    expect(lineRefusal(lineHits(two, 7).blocks, 7)).toMatch(/the longest verse block/);
+    const late = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse 2\nc\nd\ne\n:::");
+    expect(lineRefusal(lineHits(late, 7).blocks, 7)).toBe("no line 7 — the longest verse block ends at 4");
+  });
   it("name the range of one block, the longest of several, the number below the first, and nothing at all", () => {
     expect(lineRefusal(lineHits(two, 7).blocks, 7)).toBe("no line 7 — the longest verse block has 4");
     expect(lineRefusal(lineHits(parseMarkdown("::: verse 2\nx\ny\n:::"), 9).blocks, 9)).toBe("the lines here are 2–3");
     expect(lineRefusal(lineHits(parseMarkdown("::: verse\nonly\n:::"), 9).blocks, 9)).toBe("the only line here is 1");
     expect(lineRefusal(lineHits(two, 0).blocks, 0)).toBe("no line 0 here");
     expect(lineRefusal([], 3)).toBe("no numbered lines here");
-    expect(lineRefusal(lineHits(parseMarkdown("::: verse 100\na\nb\n:::\n\n::: verse\nc\n:::"), 5).blocks, 5)).toBe("no line 5 — the longest verse block ends at 101");
+    expect(lineRefusal(lineHits(parseMarkdown("::: verse 100\na\nb\n:::\n\n::: verse\nc\n:::"), 5).blocks, 5)).toBe("no line 5, the last line is 101");
   });
   it("a leaf is found case-blind and named back when missing", () => {
     const w = parseMarkdown(williams);
@@ -128,26 +144,26 @@ describe("a skipped line number", () => {
     for (const n of [597, 598]) {
       const { hits, blocks } = lineHits(d, n);
       expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
-      expect(landingWord(hits[0], blocks, n)).toBe("line " + n + " is omitted in this edition — verse block 1 of 2");
+      expect(landingWord(hits[0], hits, blocks, n)).toBe("line " + n + " is omitted in this edition");
     }
     const { hits, blocks } = lineHits(d, 599);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
-    expect(landingWord(hits[0], blocks, 599)).toBe("line 599 — verse block 1 of 2");
+    expect(landingWord(hits[0], hits, blocks, 599)).toBeNull();
   });
   it("one ending its block lands on the line before it, and alone on the page says so plainly", () => {
     const d = parseMarkdown("::: verse 10\na\n⟨skipped line number⟩\n:::");
     const { hits, blocks } = lineHits(d, 11);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["a"]);
-    expect(landingWord(hits[0], blocks, 11)).toBe("line 11 is omitted in this edition");
+    expect(landingWord(hits[0], hits, blocks, 11)).toBe("line 11 is omitted in this edition");
   });
 });
 
 describe("a skipped line number in more than one block", () => {
-  it("says which block, as every landing does where there are several", () => {
+  it("says which block, as every landing does where the number is in several", () => {
     const d = parseMarkdown("::: verse\na\n⟨skipped line number⟩\nb\n:::\n\n::: verse\nx\n⟨skipped line number⟩\ny\n:::");
     const { hits, blocks } = lineHits(d, 2);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["b", "y"]);
-    expect(landingWord(hits[1], blocks, 2)).toBe("line 2 is omitted in this edition — verse block 2 of 2");
+    expect(landingWord(hits[1], hits, blocks, 2)).toBe("line 2 is omitted in this edition — verse block 2 of 2");
   });
 });
 describe("a page of blocks numbered on both sides", () => {
@@ -156,7 +172,7 @@ describe("a page of blocks numbered on both sides", () => {
     expect(lineHits(d, 245).hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["So softly"]);
     expect(lineHits(d, 246).hits.map((h) => h.nth)).toEqual([2]);
     expect(lineHits(d, 180).hits).toEqual([]);
-    expect(lineRefusal(lineHits(d, 300).blocks, 300)).toBe("no line 300 — the longest verse block ends at 246");
+    expect(lineRefusal(lineHits(d, 300).blocks, 300)).toBe("no line 300, the last line is 246");
   });
   it("asks a plain verse block on the same page by its own numbers", () => {
     const d = parseMarkdown("::: verse\nan epigraph\nits second line\n:::\n\n::: verse 179 244\nTres | Before\n | So softly\n:::");
@@ -199,10 +215,10 @@ describe("the words of a box that asks for a verse", () => {
     for (const doc of [prose, verse]) expect(lineRefusal(lineHits(doc, 9).blocks, 9, "verse")).toMatch(/verses here/);
     expect(lineRefusal(lineHits(prose, 0).blocks, 0, "verse")).toMatch(/^no verse /);
   });
-  it("with several blocks the refusal and the landing say verse and block, not the form's own words", () => {
+  it("on a page of several blocks the refusal, and the landing where the number is in several, say verse and block, not the form's own words", () => {
     const { hits, blocks } = lineHits(two, 1);
     expect(lineRefusal(blocks, 9, "verse")).toMatch(/^no verse 9 — the longest block /);
-    expect(landingWord(hits[0], blocks, 1, "verse")).toMatch(/^verse 1 — block 1 of 2$/);
+    expect(landingWord(hits[0], hits, blocks, 1, "verse")).toMatch(/^verse 1 — block 1 of 2$/);
   });
   it("a page with no noun given keeps its own words", () => {
     expect(lineRefusal(lineHits(prose, 9).blocks, 9)).toMatch(/sentences here/);

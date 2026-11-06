@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { EditorState } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
-import { landing, landingKey, landingPos } from "./landing.ts";
+import { endsLineMark, landing, landingKey, landingPos } from "./landing.ts";
 
 test("the mark is set by meta, maps through an edit above it, and goes with a deleted row", () => {
   const doc = parseMarkdown("para\n\n::: verse\na\nb\n:::");
@@ -20,4 +20,13 @@ test("the mark is set by meta, maps through an edit above it, and goes with a de
   expect(landingPos(s)).toBeNull();
   s = s.apply(s.tr.setMeta(landingKey, null));
   expect(landingPos(s)).toBeNull();
+});
+
+test("a key that moves or writes ends a link's mark; a bare modifier, a copy and leaving the window do not", () => {
+  for (const key of ["ArrowDown", "a", "Enter", "Escape", "g"]) expect(endsLineMark(key, false)).toBe(true);
+  for (const key of ["Control", "Meta", "Shift", "Alt"]) expect(endsLineMark(key, false)).toBe(false);
+  expect(endsLineMark("c", true)).toBe(false);
+  expect(endsLineMark("Tab", true)).toBe(false);
+  expect(endsLineMark("c", false)).toBe(true);
+  expect(endsLineMark("v", true)).toBe(true);
 });

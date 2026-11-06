@@ -2,18 +2,23 @@
    Usage: node tools/comments.ts             the working tree against HEAD
           node tools/comments.ts --commit R  what commit R added
           node tools/comments.ts --sweep     every block, a reading list
+          node tools/comments.ts --read      the working tree, its ledger recorded as read
    Fails on a pin that does not resolve (the working tree only), and on an
    added or changed comment block that names another module or carries
-   provenance; prints the ledger of every block the diff added or changed. */
+   provenance; prints the ledger of every block the diff added or changed, and
+   fails, on the working tree, until that ledger is recorded as read: the rules
+   cannot catch another module described in plain English. */
 import { execFileSync } from "node:child_process";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { addedLines, commentBlocks, nameIndex, namesOther, pins, provenance, touched, unresolved, type Block, type PinSources } from "./commentRules.ts";
+import { addedLines, commentBlocks, ledgerSeal, nameIndex, namesOther, pins, provenance, touched, unresolved, type Block, type PinSources } from "./commentRules.ts";
 
 const root = join(import.meta.dirname, "..");
 const args = process.argv.slice(2);
 const commit = args.includes("--commit") ? args[args.indexOf("--commit") + 1] : null;
 const sweep = args.includes("--sweep");
+const recording = args.includes("--read");
+const STAMP = join(root, "tools/out/comments-read");
 const git = (...a: string[]): string => execFileSync("git", a, { cwd: root, encoding: "utf8", maxBuffer: 1 << 28 });
 const SCANNED = /\.(ts|svelte|css|html)$/;
 
@@ -105,6 +110,19 @@ if (sweep) {
     failed = true;
     console.log("comments: FAILED — " + dated.length + " added or changed block" + (dated.length === 1 ? " carries" : "s carry") + " provenance; dates, the reader and the review live in the plan's record alone (the app's user is \"a reader\"):");
     for (const { b, hits } of dated) console.log("  " + show(b) + " — " + hits.join(", "));
+  }
+  if (!commit && changed.length) {
+    const seal = ledgerSeal(changed);
+    if (recording) {
+      mkdirSync(join(root, "tools/out"), { recursive: true });
+      writeFileSync(STAMP, seal);
+      console.log("comments: the ledger recorded as read");
+    } else if (existsSync(STAMP) && readFileSync(STAMP, "utf8") === seal) {
+      console.log("comments: the ledger recorded as read");
+    } else {
+      failed = true;
+      console.log("comments: FAILED — the ledger is not recorded as read. Read each block against the comment standard, above all for another module described in plain English; fix any that fails, then `npm run comments:read`");
+    }
   }
 }
 process.exit(failed ? 1 : 0);

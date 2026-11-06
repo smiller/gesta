@@ -205,11 +205,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       const sweptKeys = ns ? blankSubTree(keysNow(), oldKey) : [];
       const sweep = sweptKeys.map((k) => layer.removeEntry(k));
       /* an EMPTY body moves too: the row is the registration */
-      const moved = layer.setEntry(entryKey(date, full), md);
+      const ownLabel = ns ? pageParts(old).leaf : old, newOwnLabel = ns ? pageParts(full).leaf : full;
+      const followed = (text: string): string => retargetLinks(text, entryHash(date, old), entryHash(date, full), ownLabel, newOwnLabel) ?? text;
+      const moved = layer.setEntry(entryKey(date, full), followed(md));
       return Promise.all([moved, ...sweep]).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
         /* typed into the surface while the writes ran: carried to the new key */
         const live = session.surfaceMd();
-        return live !== md ? layer.setEntry(entryKey(date, full), live) : true;
+        return live !== md ? layer.setEntry(entryKey(date, full), followed(live)) : true;
       }).then(() => {
         /* the kept state before the open, the place after it (pin:
            lifecycle.test › flushes, suspends, writes the new key) */

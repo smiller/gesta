@@ -303,6 +303,15 @@ describe("rename", () => {
     expect(w.md("page/A/B/x")).toBeNull();
     expect(w.md("page/A")).toBe("- [C](#page/A/C)");
   });
+  it("a page's links to its own lines move with it, and the host's to them, what was typed meanwhile included", async () => {
+    const own = "[3-4](#page/A/B?line=3)\n";
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n- [line 3](#page/A/B?line=3)\n", "page/A/B": own } });
+    w.typeMeanwhile("more [3-4](#page/A/B?line=3)\n");
+    w.answer("C");
+    await w.life.rename();
+    expect(w.md("page/A/C")).toBe("more [3-4](#page/A/C?line=3)");
+    expect(w.md("page/A")).toBe("- [C](#page/A/C)\n- [line 3](#page/A/C?line=3)");
+  });
   it("ignores a second rename while one is in flight", async () => {
     const w = await world({ at: ["page", "A/B"], entries: { "page/A/B": "b\n" } });
     w.answer("C", "D");

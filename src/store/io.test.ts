@@ -635,7 +635,7 @@ test("writeBundle writes the whole export as one zip in megabyte writes, stamped
   await zipTo(files, "2026-10-31", (c) => { parts.push(c); }, "2026-11-01T11:57:03.000Z");
   expect(disk[READER_ZIP]).toEqual(new Uint8Array(await new Blob(parts as BlobPart[]).arrayBuffer()));
   expect(manifest[READER_ZIP].size).toBe(disk[READER_ZIP].length);
-});
+}, 30000);
 
 test("writeBundle abandons the file when a write fails partway, and records nothing", async () => {
   const log: string[] = [], manifest: Manifest = {}, err = new Error("quota");

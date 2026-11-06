@@ -1,12 +1,13 @@
 /* A line number names a LIST of places, every verse block counting from 1,
    so Enter cycles — first match, next match, wrap — and says which block it
-   landed in when there is more than one (pin: goto.test › a line in two
-   blocks is two hits); a leaf is unique in the entry, so a page number
+   landed in when the number is in more than one (pin: goto.test › says where
+   it landed only); a leaf is unique in the entry, so a page number
    names one place. THE WORDS FOLLOW THE FORM: "line" and "verse block" for verse,
    "sentence" and "prose block" for prose, and in a prosimetrum the
    ordinal counts every numbered block, form-neutral. The refusals name
    what is there: one block its range (a block may start above 1),
-   several the longest, a number below the first named back; a leaf is
+   several numbered straight on their last line, several repeating a number
+   the longest, a number below the first named back; a leaf is
    named, never counted (leaves are neither contiguous nor 1-based) (pin:
    goto.test › name the range of one block, the longest of several). THE BOX
    KEEPS WHAT WAS TYPED, and Enter says what is wrong with it. */
@@ -54,6 +55,15 @@ export function lineHits(doc: Node, n: number): { hits: Hit[]; blocks: Unit[][] 
   });
   return { hits, blocks };
 }
+const repeatsANumber = (blocks: Unit[][]): boolean => {
+  const seen = new Set<number>();
+  return blocks.some((rows) => {
+    const own = new Set(rows.map((u) => u.line));
+    const repeats = [...own].some((line) => seen.has(line));
+    own.forEach((line) => seen.add(line));
+    return repeats;
+  });
+};
 export function lineRefusal(blocks: Unit[][], n: number, noun?: string): string {
   let longest = 0, longBlock: Unit[] | null = null, lowest = 0;
   for (const rows of blocks) {
@@ -62,13 +72,10 @@ export function lineRefusal(blocks: Unit[][], n: number, noun?: string): string 
   }
   const unit = (rows: Unit[]): string => noun ?? unitNoun(rows);
   if (n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
-  if (!longest || !longBlock) return "no numbered lines here";
+  if (!longest || !longBlock) return "no numbered " + (noun ?? "line") + "s here";
+  if (blocks.length > 1 && !repeatsANumber(blocks)) return "no " + unit(longBlock) + " " + n + ", the last " + unit(longBlock) + " is " + longest;
   if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + longest;
   return lowest === longest ? "the only " + unit(longBlock) + " here is " + longest : "the " + unit(longBlock) + "s here are " + lowest + "–" + longest;
-}
-export function lineLanding(doc: Node, n: number, noun?: string): { pos: number } | string {
-  const { hits, blocks } = lineHits(doc, n);
-  return hits.length ? { pos: hits[0].pos } : lineRefusal(blocks, n, noun);
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
@@ -90,10 +97,13 @@ export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean):
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);
   return hits[sameAsk && was !== -1 ? (was + 1) % hits.length : 0];
 }
-/* silent where unambiguous; with several blocks the ordinal is load-bearing */
-export function landingWord(hit: Hit, blocks: Unit[][], n: number, noun?: string): string | null {
-  if (hit.skipped) return "line " + n + " is omitted in this edition" + (blocks.length < 2 ? "" : " — " + formNoun(hit.block) + " " + hit.nth + " of " + blocks.length);
-  if (blocks.length < 2) return null;
+/* the ordinal is said only where the number names several places: a page of
+   many blocks numbered straight on has one place for each (pin: goto.test ›
+   says nothing of the blocks) */
+export function landingWord(hit: Hit, hits: Hit[], blocks: Unit[][], n: number, noun?: string): string | null {
+  const several = hits.length > 1;
+  if (hit.skipped) return (noun ?? "line") + " " + n + " is omitted in this edition" + (several ? " — " + (noun ? "block" : formNoun(hit.block)) + " " + hit.nth + " of " + blocks.length : "");
+  if (!several) return null;
   const oneForm = !noun && blocks.every((rows) => prose(rows) === prose(hit.block));
   return (noun ?? unitNoun(hit.block)) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
 }

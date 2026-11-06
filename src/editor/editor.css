@@ -274,6 +274,10 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page .verse.dual-language > .vpair > .vcell + .vcell { align-self: start; margin-bottom: -100000px; }
 .page .dl-covered { background: var(--flash); }
 .page .verse.dual-language > :is(.vrow:not(.vpair), .note) { max-width: var(--vb-col, 520px); }
+/* the mark crosses both columns on a row with no English of its own too, its
+   padding keeping the words at the column's measure; not while the fit
+   measures (pin: a line with no English of its own › ⌃⌘G to a line with no English) */
+.page:not(.fitting):not(.fitting-insets) .verse.dual-language > .vrow.landed:not(.vpair) { box-sizing: border-box; width: 100%; max-width: none; padding-right: calc(100% - var(--vb-col, 520px)); }
 .page .verse.dual-language > .vpair[data-kind="cont"] { padding-left: 0; }
 .page .verse.dual-language > .vpair[data-kind="cont"] > .vcell:first-child { padding-left: var(--cont-x, 0px); }
 /* the pair's column gap as a length worked out at the block: in the note's

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { addedLines, commentBlocks, nameIndex, namesOther, pins, provenance, testTitles, touched, unresolved, type PinSources } from "./commentRules.ts";
+import { addedLines, commentBlocks, ledgerSeal, nameIndex, namesOther, pins, provenance, testTitles, touched, unresolved, type PinSources } from "./commentRules.ts";
 
 const root = join(import.meta.dirname, "..");
 const tree = new Map<string, string>();
@@ -248,5 +248,17 @@ describe("the diff", () => {
     expect(touched(bs, new Set([2])).map((b) => b.body)).toEqual(["a b"]);
     expect(touched(bs, new Set([3]))).toEqual([]);
     expect(touched(bs, undefined)).toEqual([]);
+  });
+});
+
+describe("ledgerSeal", () => {
+  const block = (raw: string, start = 1) => ({ file: "src/a.ts", start, end: start, raw, body: raw });
+  test("a block's words change the seal, and where it stands in the file does not", () => {
+    const seal = ledgerSeal([block("/* one */")]);
+    expect(ledgerSeal([block("/* one */", 90)])).toBe(seal);
+    expect(ledgerSeal([block("/* two */")])).not.toBe(seal);
+  });
+  test("a block added to the ledger changes the seal", () => {
+    expect(ledgerSeal([block("/* one */"), block("/* two */")])).not.toBe(ledgerSeal([block("/* one */")]));
   });
 });

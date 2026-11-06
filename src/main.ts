@@ -39,9 +39,9 @@ import { flattenDocText } from "./model/flatten.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
 import { mdLabel } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
-import { paragraphHit, lineLanding, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
+import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
 import { openFoldAt } from "./editor/folds.ts";
-import { landingPos, setLanding } from "./editor/landing.ts";
+import { endsLineMark, landingPos, setLanding } from "./editor/landing.ts";
 import { caretNear } from "./editor/rowKeys.ts";
 import { Fragment } from "prosemirror-model";
 import { dropFolios } from "./editor/paste.ts";
@@ -288,7 +288,7 @@ if (fixture && fixtures[fixture]) {
     onHere: () => overlay.open("here"),
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
-    onLine: (n) => { requestAnimationFrame(() => landFromLink(n)); },
+    onLine: (line) => { requestAnimationFrame(() => landFromLink(line)); },
     readOnly: READER,
   });
   /* gathered for a beat and the masthead redrawn once: an import in
@@ -679,41 +679,72 @@ if (fixture && fixtures[fixture]) {
   const asksParagraphs = (): boolean => refersByBookChapterParagraph(session.current.date, session.current.tag, journal);
   const asksVerses = (): boolean => refersAsScripture(session.current.date, session.current.tag, journal);
   const lineLabel = (): string => (asksParagraphs() ? "Paragraph" : asksVerses() ? "Verse" : "Line");
-  const goToLine = (n: number): void => {
+  const goToLine = (n: number, quiet: boolean): boolean => {
     const view = session.view!;
     if (asksParagraphs()) {
       const hit = paragraphHit(view.state.doc, n);
-      if (typeof hit === "string") say(hit, 3000); else landOn(hit.pos);
-      return;
+      if (typeof hit === "string") { say(hit, 3000); return false; }
+      landOn(hit.pos);
+      return true;
     }
     const { hits, blocks } = lineHits(view.state.doc, n);
     const noun = asksVerses() ? "verse" : undefined;
-    if (!hits.length) { say(lineRefusal(blocks, n, noun), 3000); return; }
+    if (!hits.length) { say(lineRefusal(blocks, n, noun), 3000); return false; }
     const hit = nextHit(hits, landingPos(view.state), n === lineAsked);
     lineAsked = n;
     landOn(hit.pos);
-    const word = landingWord(hit, blocks, n, noun);
-    if (word) say(word, 2500);
+    const word = landingWord(hit, hits, blocks, n, noun);
+    if (word && (!quiet || hit.skipped)) say(word, 2500);
+    return true;
   };
-  let endLinkLanding: (() => void) | null = null;
-  const landFromLink = (n: number): void => {
+  /* what the Line box's words name on this page, the box and a link to a line
+     alike (pin: a link to a line › a link to a stanza, and line) */
+  const askLine = (v: string, quiet: boolean): boolean => {
+    const doc = session.view!.state.doc;
+    /* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and
+       line, one place each; a plain verse page keeps the line ask (pin:
+       stanza › ⌃⌘G 2.1) */
+    if (hasStanzas(doc)) {
+      const bad = stanzaAskCheck(v);
+      if (bad) { say(bad, 2000); return false; }
+      const hit = stanzaHit(doc, v);
+      if (typeof hit === "string") { say(hit, 3000); return false; }
+      landOn(hit.pos);
+      return true;
+    }
+    const why = askCheck(v, "line", lineLabel().toLowerCase());
+    if (why) { say(why, 2000); return false; }
+    return goToLine(parseInt(v.trim(), 10), quiet);
+  };
+  /* before the warm a work's own page, which says how it is referred to, may
+     not be read (pin: a link to a line › a link to a paragraph before the warm) */
+  let lineOwed: { v: string; key: string } | null = null;
+  let endLinkMark: (() => void) | null = null;
+  const landFromLink = (v: string): void => {
     const view = session.view;
     if (!view || session.mdView) return;
-    const hit = asksParagraphs() ? paragraphHit(view.state.doc, n) : lineLanding(view.state.doc, n, asksVerses() ? "verse" : undefined);
-    if (typeof hit === "string") { say(hit, 3000); return; }
-    landOn(hit.pos);
-    /* no bar stands open to end the mark: the next press does
-       (pin: a link to a line › a link to a line, the next click) */
-    endLinkLanding?.();
+    endLinkMark?.();
+    if (!layer.warmed) { lineOwed = { v, key: entryKey(session.current.date, session.current.tag) }; return; }
+    if (!askLine(v, true)) return;
+    /* the next key goes from the line, not the page's top (pin: a link to a
+       line › a link to a line, a key after arriving) */
+    const landed = landingPos(view.state);
+    if (landed !== null) caretOn(view, landed);
+    view.focus();
+    /* no bar stands open to end the mark: a click or a key that moves does, a
+       scrollbar's press and a tap's scroll not
+       (pin: a link to a line › a link to a line, the next click)
+       (pin: landing.test › a key that moves or writes) */
+    const onKey = (e: KeyboardEvent): void => { if (endsLineMark(e.key, e.metaKey)) end(); };
     const end = (): void => {
-      removeEventListener("mousedown", end, true);
-      removeEventListener("keydown", end, true);
-      endLinkLanding = null;
+      removeEventListener("click", end, true);
+      removeEventListener("keydown", onKey, true);
+      endLinkMark = null;
       if (session.view) setLanding(session.view, null);
     };
-    endLinkLanding = end;
-    addEventListener("mousedown", end, true);
-    addEventListener("keydown", end, true);
+    endLinkMark = end;
+    addEventListener("click", end, true);
+    addEventListener("keydown", onKey, true);
   };
   const goToFolio = (tok: string): void => {
     const view = session.view!;
@@ -728,6 +759,12 @@ if (fixture && fixtures[fixture]) {
   };
   acts.lineBar.dismiss = closeLineBar;
   /* the caret hand-back: only the routes aimed at the bar */
+  const caretOn = (view: NonNullable<typeof session.view>, pos: number): void => {
+    const node = view.state.doc.nodeAt(pos);
+    if (!node) return;
+    const at = node.isLeaf ? pos + 1 : pos + 1 + (node.type.name === "pair" ? 1 : 0);
+    view.dispatch(view.state.tr.setSelection(caretNear(view.state.doc, at)));
+  };
   const putLineCaret = (): void => {
     if (!lb.open) return;
     const view = session.view;
@@ -735,13 +772,7 @@ if (fixture && fixtures[fixture]) {
     const pos = view ? landingPos(view.state) : null;
     closeLineBar();
     if (!view) return;
-    if (had && pos !== null) {
-      const node = view.state.doc.nodeAt(pos);
-      if (node) {
-        const at = node.isLeaf ? pos + 1 : pos + 1 + (node.type.name === "pair" ? 1 : 0);
-        view.dispatch(view.state.tr.setSelection(caretNear(view.state.doc, at)));
-      }
-    }
+    if (had && pos !== null) caretOn(view, pos);
     view.focus();
   };
   acts.lineBar.toggle = () => {
@@ -776,19 +807,10 @@ if (fixture && fixtures[fixture]) {
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
     if (repeat || session.mdView || !session.view) return;
-    /* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and
-       line, one place each; a plain verse page keeps the line ask (pin:
-       stanza › ⌃⌘G 2.1) */
-    if (kind === "line" && hasStanzas(session.view.state.doc)) {
-      const bad = stanzaAskCheck(v);
-      if (bad) { say(bad, 2000); return; }
-      const hit = stanzaHit(session.view.state.doc, v);
-      if (typeof hit === "string") say(hit, 3000); else landOn(hit.pos);
-      return;
-    }
+    if (kind === "line") { askLine(v, false); return; }
     const why = askCheck(v, kind, lineLabel().toLowerCase());
     if (why) { say(why, 2000); return; }
-    if (kind === "page") goToFolio(v.trim()); else goToLine(parseInt(v.trim(), 10));
+    goToFolio(v.trim());
   };
   acts.lineBar.close = putLineCaret;
   /* a click whose press began in the bar is a drag out of a box, not a
@@ -1252,6 +1274,11 @@ if (fixture && fixtures[fixture]) {
        places › the warm landed) */
     if (!opened || session.hashDeferred) session.openHash(); else { refreshMasthead(); session.refreshFolds(); }
     reanswerOpen();
+    if (lineOwed) {
+      const owed = lineOwed;
+      lineOwed = null;
+      if (owed.key === entryKey(session.current.date, session.current.tag)) landFromLink(owed.v);
+    }
     buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an

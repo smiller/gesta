@@ -9,6 +9,12 @@ describe("linkRuns", () => {
   });
 });
 describe("retargetLinks", () => {
+  it("an address that names a place in the entry moves with it, or goes with it, keeping what it names", () => {
+    const md = "[a](#bookshelf/A/One?line=7) and [b](#bookshelf/A/One?h=x) and [c](#bookshelf/A/Oneself?line=7).";
+    expect(retargetLinks(md, "#bookshelf/A/One", "#bookshelf/A/Two", "One", "Two"))
+      .toBe("[a](#bookshelf/A/Two?line=7) and [b](#bookshelf/A/Two?h=x) and [c](#bookshelf/A/Oneself?line=7).");
+    expect(retargetLinks(md, "#bookshelf/A/One", null, "One", null)).toBe(" and  and [c](#bookshelf/A/Oneself?line=7).");
+  });
   it("moves the href and a bare-name label; keeps a hand-written label; leaves other links alone", () => {
     const md = "Notes: [Ideas](#2026-09-07/Ideas) and [my thoughts](#2026-09-07/Ideas), [other](#2026-09-07/Other).";
     expect(retargetLinks(md, "#2026-09-07/Ideas", "#2026-09-07/Plans", "Ideas", "Plans"))

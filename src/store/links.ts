@@ -8,6 +8,7 @@ import { Transform } from "prosemirror-transform";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { schema } from "../model/schema.ts";
+import { hashTarget } from "./keys.ts";
 import { mdLabel } from "./reference.ts";
 
 export interface LinkRun { href: string; text: string; from: number; to: number }
@@ -62,9 +63,9 @@ export function rewriteLinks(md: string, visit: Visit): string | null {
    links.test › moves the href and a bare-name label) */
 export function retargetLinks(md: string, oldHref: string, newHref: string | null, oldLabel: string, newLabel: string | null): string | null {
   return rewriteLinks(md, (run) => {
-    if (run.href !== oldHref) return null;
+    if (hashTarget(run.href) !== oldHref) return null;
     if (!newHref) return { remove: true };
-    return { href: newHref, text: run.text === oldLabel ? newLabel! : run.text };
+    return { href: newHref + run.href.slice(oldHref.length), text: run.text === oldLabel ? newLabel! : run.text };
   });
 }
 export function relabelLinks(md: string, href: string, sub: string, oldHeading: string, heading: string): string | null {

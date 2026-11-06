@@ -2597,6 +2597,109 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await rest(page);
   await log("a link to a line, from another page", await seen());
+  const top = () => page.evaluate(() => { const s = getSelection(); return { row: s.anchorNode?.parentElement?.closest(".vrow")?.textContent ?? null, focused: document.activeElement?.closest("#editor") ? "the text" : "elsewhere" }; });
+  await page.keyboard.press("Meta");
+  await rest(page);
+  await page.keyboard.press("Meta+c");
+  await rest(page);
+  await log("a link to a line, a bare modifier and a copy", await seen());
+  await log("a link to a line, the caret after arriving", await top());
+  await page.keyboard.press("ArrowDown");
+  await rest(page);
+  await log("a link to a line, a key after arriving", { ...(await seen()), ...(await top()) });
+  /* a stanza: the same words name the same place as the bar, and an omitted line says so */
+  const stanzas = "bookshelf/Statius/Stanzas", skips = "bookshelf/Statius/Skips";
+  await A.foreignWrite(page, stanzas, "# Stanzas\n\n[2.1](#bookshelf/Statius/Stanzas?line=2.1) [2](#bookshelf/Statius/Stanzas?line=2)\n\n::: stanza 1\nalpha\nbeta\n:::\n\n::: stanza 2\ngamma\ndelta\n:::\n");
+  await A.foreignWrite(page, skips, "# Skips\n\n[2](#bookshelf/Statius/Skips?line=2)\n\n::: verse\nfirst\n⟨skipped line number⟩\nthird\n:::\n");
+  await page.goto(A.url(stanzas));
+  await A.waitEntry(page, stanzas, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await click("2.1");
+  await log("a link to a stanza, and line", await seen());
+  await page.goto(A.url(skips));
+  await A.waitEntry(page, skips, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await click("2");
+  await log("a link to an omitted line", await seen());
+  /* no press between two landings: the second keeps its mark */
+  await page.goto(A.url(book.replace(/ /g, "%20") + "?line=3"));
+  await A.waitEntry(page, book, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await rest(page);
+  await page.evaluate((h) => { location.hash = h; }, href + "5");
+  await rest(page);
+  await rest(page);
+  await rest(page);
+  await log("a link to a line, then another with no press", await seen());
+  /* opened before the warm: the work's own page says how it counts, and a rename follows */
+  const work2 = "bookshelf/Augustine/De Doctrina Christiana/Book 2";
+  await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
+  await A.waitEntry(page, work2, 8000).catch(() => {});
+  await R.settle(page);
+  await page.waitForFunction(() => document.querySelector("#editor .landed"), null, { timeout: 8000 }).catch(() => {});
+  await rest(page);
+  await log("a link to a paragraph before the warm", await page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null })));
+    }],
+    ["a line with no English of its own", async () => {
+  /* the mark is the row's band across both columns on every row of a dual-language block, the rows the English runs down beside included; nothing moves */
+  const band = "bookshelf/Statius/Band";
+  await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
+  await A.foreignWrite(page, band, "# Band\n\n[The second](#bookshelf/Statius/Band?line=2)\n\n::: dual-language\nprimus | First, a sentence that runs on down over the lines it translates, and past them.\nsecundus, a Latin line long enough to measure\ntertius\n:::\n");
+  await page.goto(A.url(band));
+  await A.waitEntry(page, band, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await rest(page);
+  const geometry = () => page.evaluate(() => {
+    const rows = [...document.querySelectorAll("#editor .verse.dual-language > .vrow")], [pair, row] = rows, r = document.createRange();
+    r.selectNodeContents(row);
+    const words = r.getBoundingClientRect(), box = row.getBoundingClientRect(), whole = pair.getBoundingClientRect();
+    return { words: Math.round(words.width), wordsTop: Math.round(words.top - whole.top), rows: rows.map((x) => Math.round(x.getBoundingClientRect().height)), acrossBoth: Math.abs(box.left - whole.left) < 1 && Math.abs(box.right - whole.right) < 1, marked: row.classList.contains("landed") };
+  });
+  await log("a line with no English, unmarked", await geometry());
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await page.keyboard.type("2");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G to a line with no English", await geometry());
+  await page.keyboard.press("Escape");
+  await rest(page);
+  await page.goto(A.url(band));
+  await A.waitEntry(page, band, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await page.locator("#editor a", { hasText: "The second" }).first().click();
+  await rest(page);
+  await rest(page);
+  await log("a link to a line with no English", await geometry());
+    }],
+    ["the block a line is in", async () => {
+  /* the corner names the block only where the number is in more than one */
+  const twice = "bookshelf/Statius/Twice";
+  await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
+  await A.foreignWrite(page, twice, "# Twice\n\n::: verse\nalpha\nbeta\n:::\n\n::: verse\ngamma\n:::\n");
+  await page.goto(A.url(twice));
+  await A.waitEntry(page, twice, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  const ask = async (n) => {
+    if (n) { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); }
+    await page.keyboard.press("Enter");
+    await rest(page);
+    return { ...(await R.linebar(page)), landed: await R.landedText(page) };
+  };
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await log("⌃⌘G for a line in one of two blocks", await ask("2"));
+  await log("⌃⌘G for a line in both blocks", await ask("1"));
+  await log("Enter again for a line in both blocks", await ask(""));
+  await log("⌃⌘G past the last line where blocks repeat a number", await ask("9"));
+  await page.keyboard.press("Escape");
+  await rest(page);
     }],
   ];
   /* each section starts from the one window, in front, nothing open over

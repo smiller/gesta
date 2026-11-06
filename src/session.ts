@@ -50,7 +50,7 @@ export interface SessionOptions {
      reproduce the beat */
   onSelect?: () => void;
   onHighlight?: () => void;
-  onLine?: (n: number) => void;
+  onLine?: (line: string) => void;
   /* every entry locked and the markdown view refused */
   readOnly?: boolean;
 }
@@ -395,7 +395,7 @@ export function startSession(opts: SessionOptions): Session {
        (pin: where the keys go › ⌃⌘T on today from Search) */
     if (location.hash === hash) {
       opts.onHere?.();
-      /* the mark went with the press that clicked the link again
+      /* a link naming a line lands again where another says it is already here
          (pin: a link to a line › a link to a line, clicked again) */
       const line = hashParts(hash.slice(1)).hl?.line;
       if (line) opts.onLine?.(line);

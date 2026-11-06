@@ -281,3 +281,17 @@ a link to a line, the next key · * · new here, the old app frozen
 a link to a line the page lacks · * · new here, the old app frozen
 a link to a line, from another page · * · new here, the old app frozen
 a link to a line in a dual-language block · * · new here, the old app frozen
+a link to a line, a bare modifier and a copy · * · new here, the old app frozen
+a link to a line, the caret after arriving · * · new here, the old app frozen
+a link to a line, a key after arriving · * · new here, the old app frozen
+a link to a stanza, and line · * · new here, the old app frozen
+a link to an omitted line · * · new here, the old app frozen
+a link to a line, then another with no press · * · new here, the old app frozen
+a link to a paragraph before the warm · * · new here, the old app frozen
+a line with no English, unmarked · * · new here, the old app frozen
+⌃⌘G to a line with no English · * · new here, the old app frozen
+a link to a line with no English · * · new here, the old app frozen
+⌃⌘G for a line in one of two blocks · * · new here, the old app frozen
+⌃⌘G for a line in both blocks · * · new here, the old app frozen
+Enter again for a line in both blocks · * · new here, the old app frozen
+⌃⌘G past the last line where blocks repeat a number · * · new here, the old app frozen

@@ -58,6 +58,7 @@ here NOW, and what is not yet:
     naming another module and 0 carrying provenance, and a new comment
     is held to the same by the checker.
 - IN FORCE from 2026-11-04 — THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in code, tests, help, tools and replies; a label is the link's text; `tools/shelfLines.ts` calls his own typed attribution a "source line". `tools/vocabulary.test.ts`, under `npm test`, fails on a retired word anywhere in src/, tools/ or this file; dated plan records keep their words.
+- IN FORCE from 2026-11-05 — A CHANGED COMMENT IS READ BEFORE IT IS COMMITTED (asked, after a review found a new comment describing another module in words the checker cannot see): `npm run test:comments`, under `verify`, fails while the ledger of added or changed blocks is not recorded as read; each is read against the comment standard, fixed if it fails, and `npm run comments:read` records the ledger. Changing a listed block clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
 - IN FORCE from 2026-11-05 — A TEST'S DESCRIPTION STATES THE RULE; the exact forms live only in its assertions, so there is less to go stale (asked).
   `npm run test:titles`, under `verify`, fails when a test's code differs from HEAD under the same description, and lists them; each description is read against its assertions, fixed if out of step, and `npm run titles:read` records the list as read. Changing a listed test again clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
@@ -225,6 +226,17 @@ is in the plan's record, under the phase named):
 - The stored text is markdown, the field `md`; a save is serialize and
   compare, and an entry the model refuses is shown as source, never
   edited as a lossy document (phases 2 and 3).
+- THE ROWS OF A TEXT BLOCK ARE NOT ALL ONE SHAPE (2026-11-06, asked, after
+  the line mark was called fixed having been read on one row). In
+  `::: dual-language`, N lines of verse starting at line X are translated by
+  the English on line X: row X is a `.vpair` whose English cell runs down
+  beside the rows after it, and those rows are `.vrow:not(.vpair)`, with no
+  English cell and capped at the Latin column's width. A split line's rest
+  (`⟨…⟩`) has its own English or none. Plain paired verse has rows with no
+  `|`; a block numbered on both sides has rows with nothing on the left; a
+  stanza counts its own lines. Anything that acts on a row is read in Helium
+  on every kind it can land on, the example named being one of them, and the
+  report says which kinds were played.
 
 ## Layout
 

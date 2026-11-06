@@ -109,7 +109,7 @@ export function entryKey(date: string, tag?: string | null): string { return dat
 export function encPart(s: string): string {
   return encodeURIComponent(s).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
-export interface Highlight { q?: string; nth?: number; line?: number }
+export interface Highlight { q?: string; nth?: number; line?: string }
 export function entryHash(date: string, tag?: string | null, hl?: Highlight): string {
   const enc = !tag ? "" : nsOf(date)
     ? tag.split("/").map(encPart).join("/")

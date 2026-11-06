@@ -34,3 +34,5 @@ export const landingPos = (state: EditorState): number | null => landingKey.getS
 export function setLanding(view: EditorView, pos: number | null): void {
   view.dispatch(view.state.tr.setMeta(landingKey, pos));
 }
+export const endsLineMark = (key: string, meta: boolean): boolean =>
+  !["Control", "Meta", "Shift", "Alt"].includes(key) && !(meta && (key === "c" || key === "Tab"));

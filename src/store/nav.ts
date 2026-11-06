@@ -24,8 +24,8 @@ function namedBy(raw: string): HashParts | null {
       const m = query.match(/(?:^|&)h=([^&]*)(?:&n=(\d+))?/);
       if (m && m[1]) hl = { q: decodeURIComponent(m[1]), nth: parseInt(m[2], 10) || 0 };
     } catch { hl = null; }
-    const line = query.match(/(?:^|&)line=([1-9]\d*)(?:&|$)/);
-    if (!hl && line) hl = { q: "", nth: 0, line: parseInt(line[1], 10) };
+    const line = query.match(/(?:^|&)line=([1-9]\d*(?:\.\d+)?)(?:&|$)/);
+    if (!hl && line) hl = { q: "", nth: 0, line: line[1] };
     raw = hashTarget(raw);
   }
   const slash = raw.indexOf("/");
