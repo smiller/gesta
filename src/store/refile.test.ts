@@ -20,6 +20,9 @@ describe("refileHref", () => {
     expect(refileHref("#bookshelf/C.%20P.%20Cavafy", "bookshelf", "C. P. Cavafy", "Cavafy, C. P")).toBe("#bookshelf/Cavafy%2C%20C.%20P");
     expect(refileHref("#bookshelf/C.%20P.%20Cavafy/Walls?h=the%20walls&n=2", "bookshelf", "C. P. Cavafy", "Cavafy, C. P")).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls?h=the%20walls&n=2");
   });
+  it("an address into the old name moves with the line it names", () => {
+    expect(refileHref("#bookshelf/Old/Book%201?line=7", "bookshelf", "Old", "New")).toBe("#bookshelf/New/Book%201?line=7");
+  });
   it("a hand-spelled address matches by the key it names", () => {
     expect(refileHref("#bookshelf/C. P. Cavafy/Walls", "bookshelf", "C. P. Cavafy", "Cavafy, C. P")).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls");
   });

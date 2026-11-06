@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { hashParts, internalHash, makeHref } from "./nav.ts";
-import { todayKey } from "./keys.ts";
+import { todayKey, entryHash } from "./keys.ts";
 
 const today = todayKey();
 const dt = (h: { date: string; tag: string | null }) => h.date + "|" + h.tag;
@@ -23,6 +23,19 @@ test("hashParts: the ?h=…&n=… highlight payload", () => {
   const m = hashParts("2020-01-05/notes?h=%zz");
   expect(dt(m)).toBe("2020-01-05|notes");
   expect(m.hl).toBe(null);
+});
+
+test("hashParts: an address can name a line, a whole number from 1", () => {
+  const h = hashParts("bookshelf/Silius/Book%201?line=672");
+  expect(dt(h)).toBe("bookshelf|Silius/Book 1");
+  expect(h.hl).toEqual({ q: "", nth: 0, line: 672 });
+  for (const bad of ["0", "x", "6x", ""]) expect(hashParts("bookshelf/Silius?line=" + bad).hl).toBe(null);
+});
+
+test("entryHash writes the line an address names back as it was read", () => {
+  const raw = "#bookshelf/Silius/Book%201?line=672";
+  const h = hashParts(raw.slice(1));
+  expect(entryHash(h.date, h.tag, h.hl!)).toBe(raw);
 });
 
 test("hashParts: a page routes; anything less falls back and drops the payload", () => {

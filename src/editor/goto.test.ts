@@ -1,11 +1,26 @@
 import { describe, it, expect } from "vitest";
 import { parseMarkdown } from "../model/parse.ts";
-import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
+import { lineLanding, paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
 const two = parseMarkdown("::: verse\na\nb\nc\nd\n:::\n\nprose between\n\n::: verse 2\nx\ny\n:::");
 const mixed = parseMarkdown("::: prose\nSentence one. | Un.\nSentence two. | Deux.\n:::\n\n::: verse\nline one\nline two\nline three\n:::");
+
+describe("lineLanding", () => {
+  it("a link names the first line of that number, the blocks in the page's order", () => {
+    const moved = parseMarkdown("::: verse 533\nx\n:::\n\n::: verse 421\ny\n:::\n\n::: verse 533\nz\n:::");
+    const first = lineLanding(moved, 533) as { pos: number };
+    expect(first.pos).toBe(lineHits(moved, 533).hits[0].pos);
+    expect(moved.nodeAt(first.pos)!.textContent).toBe("x");
+    expect((lineLanding(moved, 421) as { pos: number }).pos).toBe(lineHits(moved, 421).hits[0].pos);
+  });
+  it("a line the page lacks is refused in the Line box's words, or the noun the work asks by", () => {
+    const one = parseMarkdown("::: verse\na\nb\n:::");
+    expect(lineLanding(one, 9)).toBe(lineRefusal(lineHits(one, 9).blocks, 9));
+    expect(lineLanding(one, 9, "verse")).toBe(lineRefusal(lineHits(one, 9).blocks, 9, "verse"));
+  });
+});
 
 describe("askKind", () => {
   it("line for verse, page for a book of leaves, both, none; sentences count as lines", () => {

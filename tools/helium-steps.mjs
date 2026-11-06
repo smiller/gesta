@@ -2562,6 +2562,42 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
   await rest(page);
     }],
+    ["a link to a line", async () => {
+  /* an address naming a line marks it as ⌃⌘G does: no selection, no format bar, and gone at the next press */
+  const work = "bookshelf/Statius", book = work + "/Book 1", href = "#bookshelf/Statius/Book%201?line=";
+  await A.foreignWrite(page, work, "# Statius\n\n- [To line 3](" + href + "3)\n");
+  await A.foreignWrite(page, book, "# Book 1\n\n::: note\n[3-4](" + href + "3) and [nowhere](" + href + "99)\n:::\n\n::: verse\none\ntwo\n:::\n\n::: verse 3\nthree\nfour\n:::\n\n[Five](" + href + "5)\n\n::: dual-language 5\nquinque | Five, a sentence that runs on over the lines it translates.\nsex\nseptem\n:::\n");
+  await page.goto(A.url(book.replace(/ /g, "%20")));
+  await A.waitEntry(page, book, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  const seen = () => page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent ?? null, selected: getSelection().toString(), address: location.hash.split("?")[1] ?? null, said: document.querySelector(".saved.show")?.textContent ?? null }));
+  const click = async (text) => { await page.locator("#editor a", { hasText: text }).first().click(); await rest(page); await rest(page); };
+  await click("3-4");
+  await log("a link to a line, clicked", await seen());
+  await page.locator("#editor .vrow", { hasText: "one" }).first().click();
+  await rest(page);
+  await log("a link to a line, the next click", await seen());
+  await click("3-4");
+  await log("a link to a line, clicked again", await seen());
+  await page.keyboard.press("ArrowDown");
+  await rest(page);
+  await log("a link to a line, the next key", await seen());
+  await click("nowhere");
+  await log("a link to a line the page lacks", await seen());
+  await click("Five");
+  await log("a link to a line in a dual-language block", await page.evaluate(() => { const r = document.querySelector("#editor .landed"), on = (e) => getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)"; return { row: on(r), latin: on(r.children[0]), english: on(r.children[1]), latinText: r.children[0].textContent }; }));
+  await page.goto(A.url(work));
+  await A.waitEntry(page, work, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await click("To line 3");
+  await A.waitEntry(page, book, 5000).catch(() => {});
+  await R.settle(page);
+  await rest(page);
+  await rest(page);
+  await log("a link to a line, from another page", await seen());
+    }],
   ];
   /* each section starts from the one window, in front, nothing open over
      it: windows a section left open held the focus, and a click in the

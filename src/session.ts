@@ -50,6 +50,7 @@ export interface SessionOptions {
      reproduce the beat */
   onSelect?: () => void;
   onHighlight?: () => void;
+  onLine?: (n: number) => void;
   /* every entry locked and the markdown view refused */
   readOnly?: boolean;
 }
@@ -230,7 +231,11 @@ export function startSession(opts: SessionOptions): Session {
     document.documentElement.dataset.entry = ekey;
     show();
     if (surface.forced) return;
-    if (pending && pending.gen === navGen) { highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor); pending = null; }
+    if (pending && pending.gen === navGen) {
+      if (pending.hl.line) opts.onLine?.(pending.hl.line);
+      else highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor);
+      pending = null;
+    }
   }
   /* a page opened before the warm drew unfolded, its sub-entries not yet in
      the cache (pin: places › the warm landed) */
@@ -390,7 +395,11 @@ export function startSession(opts: SessionOptions): Session {
        (pin: where the keys go › ⌃⌘T on today from Search) */
     if (location.hash === hash) {
       opts.onHere?.();
-      if (sameMsg) say(sameMsg, 1500);
+      /* the mark went with the press that clicked the link again
+         (pin: a link to a line › a link to a line, clicked again) */
+      const line = hashParts(hash.slice(1)).hl?.line;
+      if (line) opts.onLine?.(line);
+      else if (sameMsg) say(sameMsg, 1500);
       if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
       return;
     }

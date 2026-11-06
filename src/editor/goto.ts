@@ -66,6 +66,10 @@ export function lineRefusal(blocks: Unit[][], n: number, noun?: string): string 
   if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + longest;
   return lowest === longest ? "the only " + unit(longBlock) + " here is " + longest : "the " + unit(longBlock) + "s here are " + lowest + "–" + longest;
 }
+export function lineLanding(doc: Node, n: number, noun?: string): { pos: number } | string {
+  const { hits, blocks } = lineHits(doc, n);
+  return hits.length ? { pos: hits[0].pos } : lineRefusal(blocks, n, noun);
+}
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
 export function paragraphHit(doc: Node, n: number): { pos: number } | string {

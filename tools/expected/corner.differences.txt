@@ -274,3 +274,10 @@ back on a work by paragraph · * · new here, the old app frozen
 ⌃⌘G 99 in KJV · * · new here, the old app frozen
 ⌃⌘G 2 in Douay-Rheims · * · new here, the old app frozen
 ⌃⌘G 99 in Douay-Rheims · * · new here, the old app frozen
+a link to a line, clicked · * · new here, the old app frozen
+a link to a line, the next click · * · new here, the old app frozen
+a link to a line, clicked again · * · new here, the old app frozen
+a link to a line, the next key · * · new here, the old app frozen
+a link to a line the page lacks · * · new here, the old app frozen
+a link to a line, from another page · * · new here, the old app frozen
+a link to a line in a dual-language block · * · new here, the old app frozen

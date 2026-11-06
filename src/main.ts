@@ -39,7 +39,7 @@ import { flattenDocText } from "./model/flatten.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
 import { mdLabel } from "./store/reference.ts";
 import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
-import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
+import { paragraphHit, lineLanding, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
 import { openFoldAt } from "./editor/folds.ts";
 import { landingPos, setLanding } from "./editor/landing.ts";
 import { caretNear } from "./editor/rowKeys.ts";
@@ -288,6 +288,7 @@ if (fixture && fixtures[fixture]) {
     onHere: () => overlay.open("here"),
     onSelect: () => requestAnimationFrame(placeBar),
     onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
+    onLine: (n) => { requestAnimationFrame(() => landFromLink(n)); },
     readOnly: READER,
   });
   /* gathered for a beat and the masthead redrawn once: an import in
@@ -693,6 +694,26 @@ if (fixture && fixtures[fixture]) {
     landOn(hit.pos);
     const word = landingWord(hit, blocks, n, noun);
     if (word) say(word, 2500);
+  };
+  let endLinkLanding: (() => void) | null = null;
+  const landFromLink = (n: number): void => {
+    const view = session.view;
+    if (!view || session.mdView) return;
+    const hit = asksParagraphs() ? paragraphHit(view.state.doc, n) : lineLanding(view.state.doc, n, asksVerses() ? "verse" : undefined);
+    if (typeof hit === "string") { say(hit, 3000); return; }
+    landOn(hit.pos);
+    /* no bar stands open to end the mark: the next press does
+       (pin: a link to a line › a link to a line, the next click) */
+    endLinkLanding?.();
+    const end = (): void => {
+      removeEventListener("mousedown", end, true);
+      removeEventListener("keydown", end, true);
+      endLinkLanding = null;
+      if (session.view) setLanding(session.view, null);
+    };
+    endLinkLanding = end;
+    addEventListener("mousedown", end, true);
+    addEventListener("keydown", end, true);
   };
   const goToFolio = (tok: string): void => {
     const view = session.view!;
