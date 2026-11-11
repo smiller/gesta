@@ -12,7 +12,7 @@ import { pictureKey } from "../store/names.ts";
 import { unnamed, picturesOf } from "../store/pictures.ts";
 import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
-import { linkRefusal, headingRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
+import { linkRefusal, headingRefusal, cutsHeading, HEADING_REFUSAL, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { firstHeading } from "../store/headings.ts";
 import { nsOf, pageParts, entryKey, entryHash, KEYED_NS, NS_BOOK } from "../store/keys.ts";
@@ -20,7 +20,7 @@ import { SHELVES } from "../store/shelves.ts";
 import { registered, childrenOf } from "../store/lists.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
-export interface SourcePort { insertAfter(text: string): void }
+export interface SourcePort { insertAfter(text: string): void; inHeading(): boolean }
 export type SessionPort = Pick<Session, "current" | "flushSave" | "suspendSaves" | "surfaceMd" | "open" | "movePlace" | "movePlaces" | "refresh" | "goto" | "saveNow">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
@@ -46,9 +46,7 @@ export interface LifecycleDeps {
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
-  /* the folded sections and bookmarks of each moved key */
-  moveKept(moves: Record<string, string>): void;
-  moveBookmarks(moves: Record<string, string>): void;
+  moveKept(folds: Record<string, string>, bookmarks: Record<string, string>): void;
   /* false when the store holds no picture under `from`; rejects when the write failed */
   copyPicture(from: string, to: string): Promise<boolean>;
   /* whether `to` holds a picture other than the one under `from` */
@@ -134,7 +132,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return done; }
     const view = deps.view(), source = view ? null : deps.source();
     if (!inEntry || (!view && !source)) { ui.say("place your cursor in the entry", 2000); return done; }
-    const why = view && (linkRefusal(view.state) || headingRefusal(view.state));
+    const why = view ? linkRefusal(view.state) || headingRefusal(view.state) : source!.inHeading() ? HEADING_REFUSAL : "";
     if (why) { ui.say(why, 2000); return done; }
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
@@ -160,6 +158,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     const ns = nsOf(c.date);
     if (onShelves(c.date, c.tag)) { ui.say(SHELVES_EMPTY, 2500); return done; }
+    if (cutsHeading(view.state)) { ui.say(HEADING_REFUSAL, 2000); return done; }
     const typed = typedName(dialogs.prompt(newName(ns)));
     if (!typed) return done;
     if ("refuse" in typed) { ui.say(typed.refuse); return done; }
@@ -220,18 +219,22 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       session.suspendSaves();   /* nothing lands under the old key from here on */
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
       const followed = (text: string): string => retargetLinks(text, entryHash(date, old), entryHash(date, full), old, full) ?? text;
-      return layer.setEntry(entryKey(date, full), followed(md)).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
+      return layer.setEntry(entryKey(date, full), followed(md)).then((landed) => {
+        if (!landed) { session.open(date, old); ui.pin("couldn't rename — nothing was moved"); return; }
+        return layer.removeEntry(oldKey).then(() => retargetHost(date, old, full)).then(() => {
         /* typed into the surface while the writes ran: carried to the new key */
         const live = session.surfaceMd();
         return live !== md ? layer.setEntry(entryKey(date, full), followed(live)) : true;
       }).then(() => {
         /* the kept state before the open, the place after it (pin:
            lifecycle.test › flushes, suspends, writes the new key) */
-        deps.moveKept({ [oldKey]: entryKey(date, full) });
+        const kept = { [oldKey]: entryKey(date, full) };
+        deps.moveKept(kept, kept);
         ui.replaceHash(entryHash(date, full));
         session.open(date, full);
         session.movePlace(oldKey, entryKey(date, full));
         ui.redraw();
+        });
       });
     }).finally(() => { renaming = false; });
   }
@@ -323,12 +326,15 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       const pageless = !(from in plan.moves);
       if (pageless) plan.moves[from] = to;
       const headed = (md: string): string => mode === "refile" ? withHeading(md, old) ?? md : md;
+      const newLeaf = pageParts(toTag).leaf, oldLeaf = pageParts(old).leaf;
+      const relabel = newLeaf !== oldLeaf ? { old: oldLeaf, new: newLeaf } : undefined;
       const rewrite = (md: string): string => moveLinks(md, from, plan) ?? md;
+      const rewriteOwn = (md: string): string => moveLinks(md, from, plan, relabel) ?? md;
       const flushed = layer.entryMd(from), there = plan.into ? layer.entryMd(to) : "";
       const names = (k: string): Record<string, string> => pictureNames(k, plan.moves[k], layer.entryMd(k), k === from && plan.into ? imageRefs(there) : []);
       const rootNames = names(from);
       const rootMd = (md: string): string => {
-        const own = renamePictures(headed(rewrite(md)), rootNames);
+        const own = renamePictures(headed(rewriteOwn(md)), rootNames);
         return plan.into ? joined(rewrite(there), own) : own;
       };
       const moved = Object.keys(plan.moves).map((k) => {
@@ -357,8 +363,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
           const twins = Object.keys(plan.twins);
           const linking = linkingKeys(layer.cache, date, plan.moves).filter((k) => !(k in plan.twins));
           const points = pointsInto(date, old);
-          const host = hostKey(date, old), newLeaf = pageParts(toTag).leaf, oldLeaf = pageParts(old).leaf;
-          const relabel = newLeaf !== oldLeaf ? { old: oldLeaf, new: newLeaf } : undefined;
+          const host = hostKey(date, old);
           return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => moveLinks(md, from, plan, k === host ? relabel : undefined)))).then((results) => {
             const left = [
               ...moved.filter((m) => points(m.md)).map((m) => m.to),
@@ -376,8 +381,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
               /* the kept state before the open, the places after it */
               const kept: Record<string, string> = Object.create(null);
               for (const k of Object.keys(plan.moves)) if (!(plan.into && k === from)) kept[k] = plan.moves[k];
-              deps.moveKept(kept);
-              deps.moveBookmarks({ ...plan.twins, ...(plan.into ? { [from]: to } : {}) });
+              deps.moveKept(kept, { ...kept, ...plan.twins, ...(plan.into ? { [from]: to } : {}) });
               ui.replaceHash(entryHash(toDate, toTag));
               session.open(toDate, toTag);
               session.movePlaces(kept);

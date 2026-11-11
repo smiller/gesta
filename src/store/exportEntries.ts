@@ -22,7 +22,8 @@ export function patternRefs(md: string): string[] {
   while ((m = re.exec(md))) out.push(m[1].charAt(0) === "<" ? m[1].slice(1, -1) : m[1]);
   return relative(out);
 }
-/* the pictures the editor shows, read by its own parser (pin:
+/* the pictures a text holds, read by parsing it as markdown, so a name with
+   brackets, a title or brackets in the words are read whole (pin:
    exportEntries.test › imageRefs: every picture the editor shows) */
 export function imageRefs(md: string): string[] {
   if (md.indexOf("![") === -1) return [];

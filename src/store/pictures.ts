@@ -1,7 +1,7 @@
 import { entryFile, pictureIn } from "./names.ts";
 import { imageRefs, patternRefs, splitKey } from "./exportEntries.ts";
 
-/* what the parser reads and what the picture syntax alone reads, both: a
+/* a text's pictures read both ways, parsed and by their syntax alone: a
    reading in doubt keeps a picture, never frees one (pin: pictures.test ›
    a picture only the syntax reads) */
 export function picturesOf(key: string, md: string): string[] {

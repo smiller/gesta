@@ -14,10 +14,19 @@ export function linkRefusal(state: EditorState): string {
   if (schema.marks.link.isInSet($to.marks())) return "no link inside a link";
   return "";
 }
+export const HEADING_REFUSAL = "no link inside a heading — place your cursor below it";
 /* a heading is a page's name: a new page's link placed there would rename
    the page it is minted on (pin: insertLink.test › headingRefusal) */
 export function headingRefusal(state: EditorState): string {
-  return state.selection.$to.parent.type === schema.nodes.heading ? "no link inside a heading — place your cursor below it" : "";
+  return state.selection.$to.parent.type === schema.nodes.heading ? HEADING_REFUSAL : "";
+}
+/* a selection that leaves part of a heading behind, the link landing in it;
+   one holding a whole heading is the new page's (pin: lifecycle.test › the
+   Tag button refuses a selection that cuts into a heading) */
+export function cutsHeading(state: EditorState): boolean {
+  const { $from, $to } = state.selection;
+  const heading = schema.nodes.heading;
+  return ($from.parent.type === heading && $from.parentOffset > 0) || ($to.parent.type === heading && $to.parentOffset < $to.parent.content.size);
 }
 /* the same link as markdown, for the markdown view: spelled by the
    serializer, so both views write one text (pin: insertLink.test ›

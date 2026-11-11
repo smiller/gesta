@@ -222,3 +222,31 @@ harness, not typed), and the link was not followed; it now visits it first —
 INFERRED a harness timing, entries a reader writes being in the app already.
 The margin-note reading at 1000px, wrong once more in a full run, now waits for
 the resize to settle; 3 of 3 right alone.
+
+## Review cycle 3 (2026-11-11)
+
+`/code-review` at high over `dbfbcdd..61a7a8a`, MEASURED 154,228 tokens (its
+transcript). Ten findings, the reviewer's; the reader said to fix eight and to
+time two first.
+
+- 1. A day's tagged entry renamed removed the old even when the new write did
+  not land — fixed: refused, the old standing, said in a pin.
+- 2, 3. The heading guard missed the markdown view and the Tag button —
+  fixed: a caret on a heading's line refuses there too (MEASURED headless); a
+  selection that cuts into a heading refuses, one holding a whole heading is
+  still the new page's.
+- 4. A picture's rename wrote the whole text anew, dropping titles — fixed:
+  the address changed where it is written, the parser saying which pictures
+  there are, the document written anew only where an address cannot be found.
+- 5. A page's link to itself kept its old name as its label — fixed.
+- 8. A click on "saved" took the clipboard — asked: a routine whisper ("saved",
+  "copied", a failed copy) only goes; a copy that never answers no longer holds
+  the whisper on screen. The first section's "after the click" reads as the
+  old app's again.
+- 9. Three comments said what the parser does — reworded.
+- 10. Bookmarks moved through two calls — one call, folds and bookmarks named.
+- 6, 7 timed first (asked), under node over the backup's 17,348 entries:
+  reading pictures, the old pattern 13.3 ms, the parser 55.3 ms, the panel's
+  count 54.4 ms over every entry; a rename's checking pass 8.8 ms and 9.1 ms
+  for two pages (19 entries), 1,246 ms for the book `bookshelf/Horace/Odes/1.1`
+  (1,383 entries). Taken to the reader before any change.

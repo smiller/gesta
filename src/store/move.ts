@@ -7,10 +7,10 @@ import { entryFile } from "./names.ts";
 import { imageRefs, imageLinks, splitKey } from "./exportEntries.ts";
 import { under } from "./refile.ts";
 import { destination, serializeMarkdown } from "../model/serialize.ts";
+import { escapeRe } from "./reference.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { Transform } from "prosemirror-transform";
-import type { Node } from "prosemirror-model";
 
 /* `moves` every key that changes its name, the root included; `twins` a
    sub-page the place already holds by its title, which is deleted and whose
@@ -103,21 +103,34 @@ export function pictureNames(from: string, to: string, md: string, taken: string
   }
   return out;
 }
-/* each picture the editor shows renamed in the document, the text written
-   anew; a text the editor cannot read renamed by the syntax alone */
+/* each picture renamed where its address is written, the rest of the text as
+   it was, a title included; which pictures there are is read by parsing, and
+   where the address cannot be found as written the document is written anew,
+   so no picture is left under a name gone (pin: move.test › each picture
+   renamed where its address is written) */
 export function renamePictures(md: string, names: Record<string, string>): string {
-  if (!Object.keys(names).some((k) => names[k] !== k)) return md;
-  let doc: Node;
-  try { doc = parseMarkdown(md); } catch { return renameBySyntax(md, names); }
-  const tr = new Transform(doc);
-  let changed = false;
+  const renamed = Object.keys(names).filter((k) => names[k] !== k);
+  if (!renamed.length) return md;
+  const shown = (text: string): string[] | null => {
+    try { const out: string[] = []; parseMarkdown(text).descendants((n) => { if (n.type === schema.nodes.image) out.push(String(n.attrs.src)); return true; }); return out; }
+    catch { return null; }
+  };
+  const before = shown(md);
+  if (!before) return renameBySyntax(md, names);
+  let text = md;
+  for (const src of renamed) {
+    const at = new RegExp("(!\\[(?:[^\\]\\n\\\\]|\\\\.|\\[[^\\]\\n]*\\])*\\]\\()(?:<" + escapeRe(src) + ">|" + escapeRe(src) + ")(?=(?:\\s+(?:\"[^\"\\n]*\"|'[^'\\n]*'|\\([^)\\n]*\\)))?\\s*\\))", "g");
+    text = text.replace(at, (_all, head: string) => head + destination(names[src]));
+  }
+  const after = shown(text);
+  const expected = before.map((s) => names[s] ?? s);
+  if (after && after.length === expected.length && after.every((s, i) => s === expected[i])) return text;
+  const doc = parseMarkdown(md), tr = new Transform(doc);
   doc.descendants((n, pos) => {
-    if (n.type !== schema.nodes.image) return true;
-    const src = String(n.attrs.src);
-    if (src in names && names[src] !== src) { tr.setNodeMarkup(pos, null, { ...n.attrs, src: names[src] }); changed = true; }
+    if (n.type === schema.nodes.image && names[String(n.attrs.src)]) tr.setNodeMarkup(pos, null, { ...n.attrs, src: names[String(n.attrs.src)] });
     return true;
   });
-  return changed ? serializeMarkdown(tr.doc) : md;
+  return serializeMarkdown(tr.doc);
 }
 function renameBySyntax(md: string, names: Record<string, string>): string {
   return md.replace(imageLinks(), (all, s: string) => {

@@ -138,11 +138,14 @@ describe("pictureNames", () => {
 });
 
 describe("renamePictures", () => {
-  it("each picture the editor shows renamed, in angle brackets where the name holds a space; a link of the same name left", () => {
+  it("a picture whose address cannot be found as written is renamed all the same, the text written anew", () => {
+    expect(renamePictures("![a [b [c]]](x.png)\n", { "x.png": "y.png" })).toBe("![a [b [c]]](y.png)");
+  });
+  it("each picture renamed where its address is written — a title, brackets in its name or words kept, in angle brackets where the new name holds a space — the rest of the text as it was, a link of the same name left", () => {
     const md = "Before ![a](x-img-1.webp) mid ![](<x-img-2.webp>) and [a link](x-img-1.webp)\n";
-    expect(renamePictures("![](Notes(2)-img-1.webp) and ![a](t.png \"title\")\n", { "Notes(2)-img-1.webp": "Notes(3)-img-1.webp", "t.png": "u.png" }))
-      .toBe("![](Notes(3)-img-1.webp) and ![a](u.png)");
+    expect(renamePictures("![](Notes(2)-img-1.webp) and ![fig [1]](t.png \"title\")\n\n<b>kept</b>\n", { "Notes(2)-img-1.webp": "Notes(3)-img-1.webp", "t.png": "u u.png" }))
+      .toBe("![](Notes(3)-img-1.webp) and ![fig [1]](<u u.png> \"title\")\n\n<b>kept</b>\n");
     expect(renamePictures(md, { "x-img-1.webp": "Miller, Sean--x-img-1.webp", "x-img-2.webp": "y-img-2.webp" }))
-      .toBe("Before ![a](<Miller, Sean--x-img-1.webp>) mid ![](y-img-2.webp) and [a link](x-img-1.webp)");
+      .toBe("Before ![a](<Miller, Sean--x-img-1.webp>) mid ![](y-img-2.webp) and [a link](x-img-1.webp)\n");
   });
 });

@@ -22,6 +22,7 @@ interface Opts {
   pics?: Record<string, string>;
   failPic?: string;
   failClash?: boolean;
+  sourceHeading?: boolean;
 }
 async function world(o: Opts) {
   const log: string[] = [];
@@ -48,7 +49,7 @@ async function world(o: Opts) {
   let onFlush: (() => void) | null = null;
   let typed: string | null = null;
   let dropped = false;
-  const source = { insertAfter: (text: string) => { log.push("type " + text); } };
+  const source = { insertAfter: (text: string) => { log.push("type " + text); }, inHeading: () => !!o.sourceHeading };
   const pics: Record<string, string> = { ...(o.pics ?? {}) };
   const life = lifecycle({
     layer,
@@ -82,8 +83,10 @@ async function world(o: Opts) {
     },
     removePictures: (keys) => { if (keys.length) log.push("unpic " + keys.join(", ")); for (const k of keys) delete pics[k]; return Promise.resolve(); },
     pictureClash: (from, to) => { log.push("clash? " + to); return o.failClash ? Promise.reject(new Error("blocked")) : Promise.resolve(to in pics && pics[to] !== pics[from]); },
-    moveKept: (moves) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
-    moveBookmarks: (moves) => { if (Object.keys(moves).length) log.push("marks " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
+    moveKept: (folds, marks) => {
+      const show = (m: Record<string, string>): string => Object.entries(m).map(([a, b]) => a + " → " + b).join(", ");
+      log.push("kept " + show(folds) + (show(marks) !== show(folds) ? " | marks " + show(marks) : ""));
+    },
     ui: {
       say: (text) => { log.push("say " + text); },
       pin: (text) => { log.push("pin " + text); },
@@ -232,6 +235,24 @@ describe("create", () => {
 });
 
 describe("create in a heading", () => {
+  it("in the markdown view, a caret on a heading's line refuses too", async () => {
+    const w = await world({ at: ["bookshelf", "Author, Test"], entries: { "bookshelf/Author, Test": "# Test Author\n" }, noView: true, source: true, sourceHeading: true });
+    w.answer("Pictures");
+    await w.life.create();
+    expect(w.log).toEqual(["say no link inside a heading — place your cursor below it"]);
+  });
+  it("the Tag button refuses a selection that cuts into a heading, and takes one that holds a whole heading", async () => {
+    const part = await world({ at: ["page", "A"], entries: { "page/A": "# A Title\n\nbody\n" } });
+    part.select(pos(part.doc(), "Title"), pos(part.doc(), "Title", true));
+    part.answer("T");
+    await part.life.extract();
+    expect(part.log).toEqual(["say no link inside a heading — place your cursor below it"]);
+    const whole = await world({ at: ["page", "A"], entries: { "page/A": "# A\n\n# Part\n\nbody text\n\nkeep" } });
+    whole.select(pos(whole.doc(), "Part"), pos(whole.doc(), "text", true));
+    whole.answer("P");
+    await whole.life.extract();
+    expect(whole.md("page/A/P")).toBe("# Part\n\nbody text");
+  });
   it("a new sub-page's link refuses a caret in the heading, so the page's own name cannot change", async () => {
     const w = await world({ at: ["bookshelf", "Author, Test"], entries: { "bookshelf/Author, Test": "# Test Author\n" } });
     w.select(1);
@@ -325,6 +346,12 @@ describe("rename", () => {
     expect(w.md("page/A/B")).toBeNull();
     expect(w.md("page/A")).toBe("- [C](#page/A/C)");
     expect(w.md("page/Q")).toBe("see [B](#page/A/C/x)");
+  });
+  it("a page's link to itself labelled with its old name takes the new one", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "[B](#page/A/B)\n", "page/A/B": "see [B](#page/A/B) and [here](#page/A/B)\n" } });
+    w.answer("C");
+    await w.life.rename();
+    expect(w.md("page/A/C")).toBe("see [C](#page/A/C) and [here](#page/A/C)");
   });
   it("a page's links to its own lines move with it, and the host's to them, what was typed meanwhile included", async () => {
     const own = "[3-4](#page/A/B?line=3)\n";
@@ -530,8 +557,8 @@ describe("rename moves a page with its sub-pages", () => {
     }
     const kept = "page/Essays/2024-07-26-birds → " + TO + "/2024-07-26-birds";
     const merged = "page/Essays/2026-07-22-essay → " + TO + "/2022-07-31-essay, page/Essays → " + TO;
-    expect(l.slice(l.indexOf("kept " + kept))).toEqual([
-      "kept " + kept, "marks " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
+    expect(l.slice(l.findIndex((x) => x.startsWith("kept ")))).toEqual([
+      "kept " + kept + " | marks " + kept + ", " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
       "move page/Essays/2026-07-22-essay → null", "move page/Essays → null", "redraw",
       "say moved to " + TO + " — 2 entries, 1 there already deleted, links updated in 1 other",
     ]);
@@ -574,6 +601,17 @@ describe("rename moves a page with its sub-pages", () => {
     expect(w.md(TO + "/2024-07-26-birds")).toBeNull();
     expect(w.log).not.toContain("del page/Essays");
     expect(w.log.slice(-2)).toEqual(["open page/Essays", "pin couldn't move — nothing was moved"]);
+  });
+});
+
+describe("a day's tagged entry renamed", () => {
+  it("a write under the new name that does not land leaves the old entry standing, said in a pin", async () => {
+    const w = await world({ at: ["2026-09-05", "draft"], entries: { "2026-09-05": "[draft](#2026-09-05/draft)\n", "2026-09-05/draft": "text\n" }, failSet: "2026-09-05/final" });
+    w.answer("final");
+    await w.life.rename();
+    expect(w.md("2026-09-05/draft")).toBe("text\n");
+    expect(w.log).not.toContain("del 2026-09-05/draft");
+    expect(w.log.slice(-2)).toEqual(["open 2026-09-05/draft", "pin couldn't rename — nothing was moved"]);
   });
 });
 
@@ -759,7 +797,7 @@ describe("rename re-files an author with books", () => {
     await w.life.rename();
     const now = "bookshelf/Cavafy, C. P/";
     expect([w.pics[now + "bookshelf--Cavafy, C. P--Walls-img-1.webp"], w.pics[now + "Walls-img-2.webp"], w.pics[now + "map.png"]]).toEqual(["1", "2", "m"]);
-    expect(w.md("bookshelf/Cavafy, C. P/Walls")).toBe("![](<bookshelf--Cavafy, C. P--Walls-img-1.webp>)\n\n![](Walls-img-2.webp)\n\n![](map.png)");
+    expect(w.md("bookshelf/Cavafy, C. P/Walls")).toBe("![](<bookshelf--Cavafy, C. P--Walls-img-1.webp>)\n\n![](<Walls-img-2.webp>)\n\n![](map.png)\n");
     expect(before(w.log, "pic " + old + "map.png → " + now + "map.png", "set bookshelf/Cavafy, C. P/Walls")).toBe(true);
   });
   it("a picture that cannot be copied stops the re-file before any entry is written", async () => {

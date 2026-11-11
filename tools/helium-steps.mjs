@@ -173,8 +173,6 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("after typing", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
   await page.click(S.corner);
-  /* a whisper clicked copies its words, the corner then saying so */
-  await page.waitForFunction((s) => document.querySelector(s)?.textContent === "copied", S.corner, { timeout: 2000 }).catch(() => {});
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
   await rest(page);
@@ -1378,6 +1376,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.act.create(page);
   await page.waitForFunction((s) => /heading/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
   await log("+ book with the caret in the heading", { corner: await cornerText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
+  /* the same in the markdown view, the caret on the heading's line */
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { timeout: 3000 }).catch(() => {});
+  await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.source);
+  answer = "Odes";
+  await A.act.create(page);
+  await page.waitForFunction((s) => /heading/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
+  await log("+ book with the caret on the heading's line, markdown view", { corner: await cornerText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
+  await page.keyboard.press("Control+Meta+m");
+  await page.waitForSelector(S.source, { state: "detached", timeout: 3000 }).catch(() => {});
   /* a click just past the heading's last letter, the caret at its end */
   const end = await page.evaluate((s) => { const h = document.querySelector(s); const r = document.createRange(); r.selectNodeContents(h); const b = r.getBoundingClientRect(); return { x: b.right + 3, y: b.top + b.height / 2 }; }, S.editorFirst);
   await page.mouse.click(end.x, end.y);

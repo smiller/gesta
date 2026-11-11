@@ -36,6 +36,8 @@ export interface Notices {
 export const IDLE_TEXT = "saved";
 export const WHISPER_MS = 3000;
 export const COPIED_MS = 1200;
+const COPY_FAILED = "copy failed — see console";
+const ROUTINE = new Set([IDLE_TEXT, "copied", COPY_FAILED]);
 
 export function noticeLedger(copyText: (text: string) => Promise<void>): Notices {
   const state = $state<NoticeState>({ text: IDLE_TEXT, shown: false, busy: false, trouble: "" });
@@ -184,21 +186,21 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
     if (state.busy) return;
     gen++;
     /* a whisper on screen copies its words, as a pin does, so what it said
-       can be pasted elsewhere; "copied" itself only goes (pin: notices.test ›
-       a click on a whisper copies its words) */
-    const words = !stuckCopy && state.shown && state.text !== "copied" ? state.text : "";
+       can be pasted elsewhere; a routine one only goes, so a click to clear
+       "saved" never takes the clipboard (pin: notices.test › a click on a
+       whisper copies its words) (pin: notices.test › a routine whisper) */
+    const words = !stuckCopy && state.shown && !ROUTINE.has(state.text) ? state.text : "";
     if (!stuckCopy && !words) {
       if (timer) clearTimeout(timer);
       hide();
       replayIdleStick();
       return;
     }
-    if (timer) clearTimeout(timer);
     const detail = stuckCopy || words, mine = gen;
     stuckCopy = "";
     copyText(detail).then(
       () => { if (mine === gen) whisper("copied", COPIED_MS); },
-      (err: unknown) => { console.error("copy failed", err, detail); if (mine === gen) whisper("copy failed — see console"); },
+      (err: unknown) => { console.error("copy failed", err, detail); if (mine === gen) whisper(COPY_FAILED); },
     );
     replayIdleStick();
   }

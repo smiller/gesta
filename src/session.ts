@@ -89,6 +89,7 @@ export interface Session {
      (pin: search › Enter) (pin: reference paste › the reference link followed) */
   highlight(q: string, nth: number, honorMarkers: boolean): boolean;
   insertText(text: string, after?: boolean): boolean;
+  sourceLineIsHeading(): boolean;
   /* null outside the source view */
   replacer(): ReplacePort | null;
   readonly mdView: boolean;
@@ -250,6 +251,12 @@ export function startSession(opts: SessionOptions): Session {
     /* the folds moved the text under a held place: set again now, not a
        frame later when the size is observed (pin: places › the warm landed) */
     keeper.reapply();
+  }
+  function sourceLineIsHeading(): boolean {
+    const s = surface.current;
+    if (!s || !s.source) return false;
+    const md = s.md(), at = s.caret();
+    return /^#{1,6}\s/.test(md.slice(md.lastIndexOf("\n", at - 1) + 1));
   }
   function insertText(text: string, after = false): boolean {
     if (!surface.current) return false;
@@ -485,7 +492,7 @@ export function startSession(opts: SessionOptions): Session {
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText,
+    open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },

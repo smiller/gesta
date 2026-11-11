@@ -515,7 +515,7 @@ if (fixture && fixtures[fixture]) {
      entry inserts nothing (pin: notices and surfaces as the old app has
      them › a shortcut chosen with no cursor in the entry) */
   const caretInEntry = (): boolean => { const a = document.getSelection()?.anchorNode; return !!a && mountEl.contains(a); };
-  const sourcePort = { insertAfter: (text: string) => { session.insertText(text, true); } };
+  const sourcePort = { insertAfter: (text: string) => { session.insertText(text, true); }, inHeading: () => session.sourceLineIsHeading() };
   let cardCaret = false;
   const openShortcuts = (): void => {
     cardCaret = caretInEntry();
@@ -1161,11 +1161,10 @@ if (fixture && fixtures[fixture]) {
     caretInEntry,
     source: () => session.mdView ? sourcePort : null,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
-    moveKept: (moves) => {
-      session.moveFolds(moves);
-      marks.move(moves);
+    moveKept: (folds, bookmarks) => {
+      session.moveFolds(folds);
+      marks.move(bookmarks);
     },
-    moveBookmarks: (moves) => { marks.move(moves); },
     removePictures: (keys) => Promise.all(keys.map((k) => images.del(k))).then(() => {}),
     copyPicture: (from, to) => images.get(from).then((row) => row ? images.set(to, row.bytes).then(() => true) : false),
     pictureClash: (from, to) => images.get(to).then((b) => !b ? false : images.get(from).then((a) => !a || a.bytes.length !== b.bytes.length || a.bytes.some((x, i) => x !== b.bytes[i]))),

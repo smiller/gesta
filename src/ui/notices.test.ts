@@ -62,6 +62,22 @@ describe("whisper", () => {
     expect(copied).toEqual(["removed 193 unused pictures"]);
     expect(n.state.shown).toBe(false);
   });
+  it("a routine whisper — saved, copied, a failed copy — only goes when clicked", async () => {
+    for (const text of ["saved", "copy failed — see console"]) {
+      n.whisper(text);
+      n.click();
+      await flush();
+      expect(n.state.shown).toBe(false);
+    }
+    expect(copied).toEqual([]);
+  });
+  it("a whisper whose copy never answers fades on its own clock", () => {
+    const stuck = noticeLedger(() => new Promise(() => {}));
+    stuck.whisper("removed 1 unused picture", 1000);
+    stuck.click();
+    vi.advanceTimersByTime(1000);
+    expect(stuck.state.shown).toBe(false);
+  });
   it("a click on a whisper already faded copies nothing", async () => {
     n.whisper("saved", 1000);
     vi.advanceTimersByTime(1000);
