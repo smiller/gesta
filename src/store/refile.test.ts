@@ -61,9 +61,9 @@ describe("pointsInto", () => {
 
 describe("withHeading", () => {
   it("a page with no level-one heading gets one, first; a headed page is left", () => {
-    expect(withHeading("", "Harley Price")).toBe("# Harley Price\n");
-    expect(withHeading("- [Book](#bookshelf/Harley%20Price/Book)\n", "Harley Price")).toBe("# Harley Price\n\n- [Book](#bookshelf/Harley%20Price/Book)\n");
-    expect(withHeading("## Works\n", "Harley Price")).toBe("# Harley Price\n\n## Works\n");
+    expect(withHeading("", "Sean Miller")).toBe("# Sean Miller\n");
+    expect(withHeading("- [Book](#bookshelf/Sean%20Miller/Book)\n", "Sean Miller")).toBe("# Sean Miller\n\n- [Book](#bookshelf/Sean%20Miller/Book)\n");
+    expect(withHeading("## Works\n", "Sean Miller")).toBe("# Sean Miller\n\n## Works\n");
     expect(withHeading("# C. P. Cavafy\n", "C. P. Cavafy")).toBeNull();
   });
 });

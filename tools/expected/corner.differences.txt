@@ -130,8 +130,8 @@ typed Pedenteria in comparison · rows · a footnote mark, a space and superscri
 Enter on the footnoted phrase · selected · the same: the successor selects the phrase with its mark inside; the current app had no row to jump to
 typed Amphion, was · * · the same, across a mark after a comma; the current app's row and box follow from its misses before
 typed 4 m² · rows · the successor finds a superscript joined to its word as typed; the current app finds nothing here, its box following from its misses before
-New author…, Harley Price, Enter twice · * · "New author…" asks a second name, the one the author is filed and sorted under, filled with the surname first, and heads the new page with the name (asked 2026-10-05, the author-filing plan); the current app asks once and files the name as typed, and its run stops after the bookshelf reading, its new author's empty page holding no heading for the step's click
-Rename, Harley Price typed, Enter · * · Rename on an author with books re-files it, its books and every link into it following, the heading kept, the corner saying what moved (asked 2026-10-05, the author-filing plan); the current app has no reading here, its run having stopped at the step before
+New author…, Sean Miller, Enter twice · * · "New author…" asks a second name, the one the author is filed and sorted under, filled with the surname first, and heads the new page with the name (asked 2026-10-05, the author-filing plan); the current app asks once and files the name as typed, and its run stops after the bookshelf reading, its new author's empty page holding no heading for the step's click
+Rename, Sean Miller typed, Enter · * · Rename on an author with books re-files it, its books and every link into it following, the heading kept, the corner saying what moved (asked 2026-10-05, the author-filing plan); the current app has no reading here, its run having stopped at the step before
 the bookshelf after the re-file · * · the same
 ⌃⌘E in the rendered view · * · find and replace is successor-only (2026-10-08, the find-and-replace plan): the current app has no ⌃⌘E and no bar
 *-* typed into Find · * · the same
@@ -161,7 +161,7 @@ Enter on the footnoted phrase · cursor · search skips footnote marks here (2c6
 places: arrived at page/Horace (8) · * · the current app's places section fails before this arrival
 bookmarks from another window: arrived at page/Deleted Elsewhere (2) · * · the current app's section fails before this arrival
 bookmarks from another window: arrived at 2026-09-06 (3) · * · the same
-author filing: arrived at bookshelf/Price, Harley · * · the current app's author filing section fails before this arrival
+author filing: arrived at bookshelf/Miller, Sean · * · the current app's author filing section fails before this arrival
 a card and a note of paired verse · blocks · a card's and a note's paired verse split by their own widest lines here, the spare room shared (2026-10-09, asked); the current app draws no paired rows inside a card or a note
 typed on in the note's last row · blocks · the same
 typed Pedenteria in comparison · options · the current app's places section fails before it makes Coded Lines and Long Paragraph, so its scope list lacks them
@@ -312,3 +312,8 @@ a link to a line with no English · * · new here, the old app frozen
 ⌃⌘G for a line in both blocks · * · new here, the old app frozen
 Enter again for a line in both blocks · * · new here, the old app frozen
 ⌃⌘G past the last line where blocks repeat a number · * · new here, the old app frozen
+a page moved with its sub-pages: arrived at page/Move Source/Essay · * · new here, the old app frozen
+a page moved with its sub-pages: arrived at page/Move Source · * · new here, the old app frozen
+Rename, an address in the bookshelf typed, Enter, the confirm accepted · * · new here, the old app frozen
+a page moved with its sub-pages: arrived at bookshelf/Mover, Test/Essays/Essay · * · new here, the old app frozen
+the moved essay, its picture · * · new here, the old app frozen

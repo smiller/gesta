@@ -1139,6 +1139,7 @@ if (fixture && fixtures[fixture]) {
       session.moveFolds(moves);
       marks.move(moves);
     },
+    copyPicture: (from, to) => images.get(from).then((row) => row ? images.set(to, row.bytes).then(() => true) : false),
     ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
   });
   acts.create = () => { life.create(); };

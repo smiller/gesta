@@ -7,6 +7,8 @@
    cleans away is refused with the reason). NOUN-FREE messages: one prompt serves days,
    pages, sub-pages and the bookshelf. */
 import { pageName, nameFromUrl } from "../store/names.ts";
+import { namesEntry, hashParts } from "../store/nav.ts";
+import { nsOf, NS_KEYS } from "../store/keys.ts";
 
 export const REFUSE_URL = "that link's title can't be a name — type one instead";
 export const REFUSE_EMPTY = "that name leaves nothing a filename can keep";
@@ -18,6 +20,18 @@ export function typedName(raw: string | null | undefined): Typed {
   if (derived === "") return { refuse: REFUSE_URL };
   const name = pageName(derived || s.replace(/\//g, "-"));
   return name ? { name } : { refuse: REFUSE_EMPTY };
+}
+
+/* a place typed where a name is asked: an address (`#bookshelf/…`) or one
+   spelled from its namespace (`bookshelf/Miller, Sean/Essays`), a
+   page or book there; anything else is a name (pin: naming.test › a typed
+   address names a page or book) */
+export function typedAddress(raw: string | null | undefined): { date: string; tag: string } | null {
+  const s = (raw || "").trim();
+  const addr = s.startsWith("#") ? s.slice(1) : NS_KEYS.some((ns) => s.startsWith(ns + "/")) ? s : null;
+  if (!addr || !namesEntry(addr)) return null;
+  const p = hashParts(addr);
+  return nsOf(p.date) && p.tag ? { date: p.date, tag: p.tag } : null;
 }
 
 const words = (s: string): string => s.trim().replace(/\s+/g, " ");

@@ -40,10 +40,10 @@ function wrapMark(mark: Mark, inner: string): string {
 }
 
 /* bare, or in <…> when it holds whitespace or an unbalanced paren —
-   CommonMark's rule, and what the Marginalian converter wrote: MEASURED,
+   CommonMark's rule, and what an imported site's converter wrote: MEASURED,
    eleven files with a space in a sidecar's name (pin: roundtrip.test ›
    round trips: every form survives) */
-function destination(s: string): string {
+export function destination(s: string): string {
   const open = (s.match(/\(/g) || []).length, close = (s.match(/\)/g) || []).length;
   return /\s/.test(s) || open !== close ? "<" + s + ">" : s;
 }

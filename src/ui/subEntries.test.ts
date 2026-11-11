@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, subButtons, renamePrompt, deleteConfirm, deleteLanding, hostKey } from "./subEntries.ts";
+import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, subButtons, renamePrompt, movePrompt, moveConfirm, movedText, deleteConfirm, deleteLanding, hostKey } from "./subEntries.ts";
 
 describe("subEntrySpec", () => {
   it("a day's tag is the typed text; a page's sub-page takes the filename rule under the page's key", () => {
@@ -65,5 +65,22 @@ describe("the buttons and the dialogs", () => {
     expect(hostKey("2026-09-07", "Ideas")).toBe("2026-09-07");
     expect(hostKey("page", "Books/E")).toBe("page/Books");
     expect(hostKey("page", "Books")).toBeNull();
+  });
+});
+
+describe("the move's texts", () => {
+  it("the move asks a place, naming the entry and what goes with it", () => {
+    expect(movePrompt("page", "Essays", "Essays")).toBe("Move the page “Essays” and its sub-pages to:");
+    expect(movePrompt("bookshelf", "Dante/Inferno", "Inferno")).toBe("Move the book “Inferno” and its books to:");
+  });
+  it("the confirm counts what moves, says where the text goes, and names each twin deleted", () => {
+    expect(moveConfirm("page", "Essays", "Essays", "bookshelf/Miller, Sean/Essays", { moved: 101, into: true, twins: ["On Growing Older"] }))
+      .toBe("Move the page “Essays” and its 101 sub-pages to bookshelf/Miller, Sean/Essays? Its own text goes after the text there. 1 sub-page is there already by title and is deleted, its links going to the one there: “On Growing Older”.");
+    expect(moveConfirm("page", "A", "A", "page/B", { moved: 1, into: false, twins: [] })).toBe("Move the page “A” and its 1 sub-page to page/B?");
+    expect(moveConfirm("page", "A", "A", "page/B", { moved: 0, into: true, twins: ["X", "Y"] })).toBe("Move the page “A” to page/B? Its own text goes after the text there. 2 sub-pages are there already by title and are deleted, their links going to the one there: “X”, “Y”.");
+  });
+  it("the outcome counts the entries, the twins, the pictures not found and the links, as the re-file does", () => {
+    expect(movedText("page/B", 3, 1, 2, 4, [], [])).toBe("moved to page/B — 3 entries, 1 there already deleted, 2 pictures not found, links updated in 4 others");
+    expect(movedText("page/B", 1, 0, 0, 0, ["page/C"], ["page/A"])).toBe("moved to page/B — 1 entry; 1 link not updated: page/C; old copy kept: page/A");
   });
 });

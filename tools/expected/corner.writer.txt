@@ -256,8 +256,8 @@ bookmarks from another window: arrived at 2026-09-06: {"cursor":"at a line's sta
 the deleted page left for the day: {"corner":"saved","cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 SECTION FAILED (bookmarks from another window): TimeoutError: page.waitForFunction: Timeout 15000ms exceeded.
 author filing: arrived at 2026-09-06: {"cursor":"at a line's start"}
-New author…, Harley Price, Enter twice: {"prompts":["Name for the new author: []"],"entry":"bookshelf/Harley Price","stored":null,"cursor":"at a line's start","screen":"bookshelf/Harley Price · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the bookshelf lists it by its heading: {"rows":["Boethius","Browning, Robert","Donne, John","Harley Price","Edmund Spenser"],"create":"New author…","cursor":"on button","screen":"bookshelf/Harley Price · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
+New author…, Sean Miller, Enter twice: {"prompts":["Name for the new author: []"],"entry":"bookshelf/Sean Miller","stored":null,"cursor":"at a line's start","screen":"bookshelf/Sean Miller · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the bookshelf lists it by its heading: {"rows":["Boethius","Browning, Robert","Donne, John","Sean Miller","Edmund Spenser"],"create":"New author…","cursor":"on button","screen":"bookshelf/Sean Miller · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
 SECTION FAILED (author filing): Error: page.evaluate: TypeError: Failed to execute 'selectNodeContents' on 'Range': parameter 1 is not of type 'Node'.
 replace: arrived at page/Replaced: {"cursor":"at a line's start"}
 ⌃⌘E in the rendered view: {"bar":"none","view":"rendered","corner":"saved","cursor":"at the end","screen":"page/Replaced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

@@ -97,7 +97,7 @@ const ROUND_TRIPS = [
   "## a heading ending in a space ",
   "a url with https://x.test/a_b_/c_d_/ underscores and https://x.test/*e*/ stars",
   "https://en.wikipedia.org/wiki/Foo_(bar) keeps its paren",
-  "![](<bookshelf--Popova, Maria--x-img-1.webp>) and [t](<a b>)",
+  "![](<bookshelf--Miller, Sean--x-img-1.webp>) and [t](<a b>)",
   "*an italic sentence holding [a link](https://x.test) and more*",
   "[**bold** and plain](https://x.test) and *a **bold** word inside*",
   "```not code\nx = 1\n```",

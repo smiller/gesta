@@ -19,6 +19,8 @@ interface Opts {
   noView?: boolean;
   noCaret?: boolean;
   source?: boolean;
+  pics?: Record<string, string>;
+  failPic?: string;
 }
 async function world(o: Opts) {
   const log: string[] = [];
@@ -46,6 +48,7 @@ async function world(o: Opts) {
   let typed: string | null = null;
   let dropped = false;
   const source = { insertAfter: (text: string) => { log.push("type " + text); } };
+  const pics: Record<string, string> = { ...(o.pics ?? {}) };
   const life = lifecycle({
     layer,
     journal: journalOf(layer.cache),
@@ -69,6 +72,13 @@ async function world(o: Opts) {
       confirm: (text) => { asked.push(text); return answers.shift() as boolean; },
       alert: (text) => { log.push("alert " + text); },
     },
+    copyPicture: (from, to) => {
+      log.push("pic " + from + " → " + to);
+      if (to === o.failPic) return Promise.reject(new Error("blocked"));
+      if (!(from in pics)) return Promise.resolve(false);
+      pics[to] = pics[from];
+      return Promise.resolve(true);
+    },
     moveKept: (moves) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
     ui: {
       say: (text) => { log.push("say " + text); },
@@ -80,7 +90,7 @@ async function world(o: Opts) {
     },
   });
   return {
-    life, layer, log, asked,
+    life, layer, log, asked, pics,
     foreign: (k: string, md: string) => mem.foreignSet(k, md),
     answer: (...a: (string | null | boolean)[]) => { answers.push(...a); },
     md: (k: string) => k in layer.cache ? layer.cache[k] : null,
@@ -270,13 +280,10 @@ describe("extract", () => {
 });
 
 describe("rename", () => {
-  it("refuses with no tag, over sub-pages holding text, on the same name, and on a taken one", async () => {
+  it("refuses with no tag, on the same name, and on a taken one", async () => {
     const root = await world({ at: ["page", null] });
     await root.life.rename();
     expect([...root.asked, ...root.log]).toEqual([]);
-    const full = await world({ at: ["page", "A"], entries: { "page/A": "a\n", "page/A/B": "text\n" } });
-    await full.life.rename();
-    expect(full.log).toEqual(["say rename after the sub-pages are deleted"]);
     const same = await world({ at: ["page", "A/B"], entries: { "page/A/B": "b\n", "page/A/C": "c\n" } });
     same.answer("B", "C");
     await same.life.rename();
@@ -327,6 +334,93 @@ describe("rename", () => {
     await w.life.rename();
     expect(w.log).toEqual(["flush"]);
     expect(w.md("page/A/B")).toBe("b\n");
+  });
+});
+
+const ESSAYS = {
+  "page/Essays": "2024/07/26: [Birds](#page/Essays/2024-07-26-birds)",
+  "page/Essays/2024-07-26-birds": "# Birds\n\n![](page--Essays--2024-07-26-birds-img-1.webp)\n\nSee [the essay](#page/Essays/2026-07-22-essay).\n",
+  "page/Essays/2026-07-22-essay": "# On Growing Older\n\nShorter.\n",
+  "bookshelf/Miller, Sean": "# Sean Miller\n\n[Essays](#bookshelf/Miller%2C%20Sean/Essays)\n",
+  "bookshelf/Miller, Sean/Essays": "# Essays\n\n[On Growing Older](#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay)\n",
+  "bookshelf/Miller, Sean/Essays/2022-07-31-essay": "# On Growing Older\n\nLonger.\n",
+  "2026-09-01": "See [birds](#page/Essays/2024-07-26-birds?line=3) and [it](#page/Essays/2026-07-22-essay).\n",
+};
+const PIC = "page/Essays/page--Essays--2024-07-26-birds-img-1.webp";
+const PIC_THERE = "bookshelf/Miller, Sean/Essays/bookshelf--Miller, Sean--Essays--2024-07-26-birds-img-1.webp";
+const TO = "bookshelf/Miller, Sean/Essays";
+describe("rename moves a page with its sub-pages", () => {
+  it("asks where, filled with its own address; the same address or Escape does nothing; a taken name alerts", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: { ...ESSAYS, "page/Other": "o\n" } });
+    w.answer(null, "page/Essays", "Other");
+    await w.life.rename();
+    await w.life.rename();
+    await w.life.rename();
+    expect(w.asked).toEqual(Array(3).fill("Move the page “Essays” and its sub-pages to: [page/Essays]"));
+    expect(w.log).toEqual(['alert A "Other" page already exists.']);
+  });
+  it("into another namespace's page: the pictures copied under the new entry's name, its text joined after the text there, a twin deleted with its links going to the one there, the old removed after, the place opened", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ESSAYS, pics: { [PIC]: "png" } });
+    w.answer(TO, true);
+    await w.life.rename();
+    expect(w.asked[1]).toBe("Move the page “Essays” and its 1 sub-page to " + TO + "? Its own text goes after the text there. 1 sub-page is there already by title and is deleted, its links going to the one there: “On Growing Older”.");
+    const l = w.log;
+    expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
+    expect(w.pics[PIC_THERE]).toBe("png");
+    expect(before(l, "pic " + PIC + " → " + PIC_THERE, "set " + TO + "/2024-07-26-birds")).toBe(true);
+    expect(w.md(TO)).toBe("# Essays\n\n[On Growing Older](#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay)\n\n2024/07/26: [Birds](#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds)");
+    expect(w.md(TO + "/2024-07-26-birds")).toBe("# Birds\n\n![](<bookshelf--Miller, Sean--Essays--2024-07-26-birds-img-1.webp>)\n\nSee [the essay](#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay).");
+    expect(w.md(TO + "/2022-07-31-essay")).toBe("# On Growing Older\n\nLonger.\n");
+    expect(w.md("2026-09-01")).toBe("See [birds](#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds?line=3) and [it](#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay).");
+    for (const k of Object.keys(ESSAYS).filter((k) => k.startsWith("page/"))) {
+      expect(w.md(k)).toBeNull();
+      expect(before(l, "set 2026-09-01", "del " + k)).toBe(true);
+    }
+    const kept = "page/Essays/2024-07-26-birds → " + TO + "/2024-07-26-birds";
+    expect(l.slice(l.indexOf("kept " + kept))).toEqual([
+      "kept " + kept, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
+      "move page/Essays/2026-07-22-essay → null", "move page/Essays → null", "redraw",
+      "say moved to " + TO + " — 2 entries, 1 there already deleted, links updated in 1 other",
+    ]);
+  });
+  it("a plain name moves it beside itself, as a rename, what was typed meanwhile carried", async () => {
+    const w = await world({ at: ["page", "A"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "b\n" } });
+    w.typeMeanwhile("- [B](#page/A/B)\n\nmore\n");
+    w.answer("C", true);
+    await w.life.rename();
+    expect(w.asked[1]).toBe("Move the page “A” and its 1 sub-page to page/C?");
+    expect(w.md("page/C")).toBe("- [B](#page/C/B)\n\nmore");
+    expect(w.md("page/C/B")).toBe("b\n");
+    expect(w.md("page/A")).toBeNull();
+    expect(w.log[w.log.length - 1]).toBe("say moved to page/C — 2 entries");
+  });
+  it("a cancelled confirm writes nothing; a refused place is said", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ESSAYS });
+    w.answer(TO, false, "bookshelf/Nobody/Essays", "page/Essays/2024-07-26-birds/x");
+    await w.life.rename();
+    await w.life.rename();
+    await w.life.rename();
+    expect(w.log).toEqual(["say nothing at bookshelf/Nobody to move it under", "say a page can’t move under itself"]);
+  });
+  it("a picture that cannot be copied stops it before any entry is written; one not found is counted", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ESSAYS, pics: { [PIC]: "png" }, failPic: PIC_THERE });
+    w.answer(TO, true);
+    await w.life.rename();
+    expect(w.log.filter((x) => x.startsWith("set ") || x.startsWith("del "))).toEqual([]);
+    expect(w.log.slice(-2)).toEqual(["open page/Essays", "pin couldn't move — a picture could not be copied, nothing was moved"]);
+    const lost = await world({ at: ["page", "Essays"], entries: ESSAYS });
+    lost.answer(TO, true);
+    await lost.life.rename();
+    expect(lost.log[lost.log.length - 1]).toBe("say moved to " + TO + " — 2 entries, 1 there already deleted, 1 picture not found, links updated in 1 other");
+  });
+  it("a failed copy takes the others back and leaves the text there as it was, the old page opened again", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ESSAYS, failSet: TO + "/2024-07-26-birds" });
+    w.answer(TO, true);
+    await w.life.rename();
+    for (const [k, v] of Object.entries(ESSAYS)) expect(w.md(k)).toBe(v);
+    expect(w.md(TO + "/2024-07-26-birds")).toBeNull();
+    expect(w.log).not.toContain("del page/Essays");
+    expect(w.log.slice(-2)).toEqual(["open page/Essays", "pin couldn't move — nothing was moved"]);
   });
 });
 
@@ -400,11 +494,11 @@ describe("a new root named as the dropdown shows an existing one", () => {
 describe("a new author asks where it sorts", () => {
   it("asks the name, then where it sorts with the filing form filled in; files it there, headed by the name", async () => {
     const w = await world({ at: ["bookshelf", null] });
-    w.answer("Harley Price", "Price, Harley");
+    w.answer("Sean Miller", "Miller, Sean");
     await w.life.newRoot("bookshelf");
-    expect(w.asked).toEqual(["Name for the new author:", "Sorted under: [Price, Harley]"]);
-    expect(w.md("bookshelf/Price, Harley")).toBe("# Harley Price\n");
-    expect(w.log).toEqual(["set bookshelf/Price, Harley", "goto #bookshelf/Price%2C%20Harley | already on Harley Price"]);
+    expect(w.asked).toEqual(["Name for the new author:", "Sorted under: [Miller, Sean]"]);
+    expect(w.md("bookshelf/Miller, Sean")).toBe("# Sean Miller\n");
+    expect(w.log).toEqual(["set bookshelf/Miller, Sean", "goto #bookshelf/Miller%2C%20Sean | already on Sean Miller"]);
   });
   it("files under what the second box holds, through the naming rule", async () => {
     const w = await world({ at: ["bookshelf", null] });
@@ -417,24 +511,24 @@ describe("a new author asks where it sorts", () => {
   });
   it("a name typed with a comma is the filing form, the heading turned round", async () => {
     const w = await world({ at: ["bookshelf", null] });
-    w.answer("Price, Harley", "Price, Harley");
+    w.answer("Miller, Sean", "Miller, Sean");
     await w.life.newRoot("bookshelf");
-    expect(w.asked[1]).toBe("Sorted under: [Price, Harley]");
-    expect(w.md("bookshelf/Price, Harley")).toBe("# Harley Price\n");
+    expect(w.asked[1]).toBe("Sorted under: [Miller, Sean]");
+    expect(w.md("bookshelf/Miller, Sean")).toBe("# Sean Miller\n");
   });
   it("escape on either box makes nothing", async () => {
     const w = await world({ at: ["bookshelf", null] });
-    w.answer(null, "Harley Price", null);
+    w.answer(null, "Sean Miller", null);
     await w.life.newRoot("bookshelf");
     await w.life.newRoot("bookshelf");
-    expect(w.asked).toEqual(["Name for the new author:", "Name for the new author:", "Sorted under: [Price, Harley]"]);
+    expect(w.asked).toEqual(["Name for the new author:", "Name for the new author:", "Sorted under: [Miller, Sean]"]);
     expect(w.log).toEqual([]);
   });
   it("a filing name already on the shelf opens that author, writing nothing", async () => {
-    const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Price, Harley": "# H. Price\n" } });
-    w.answer("Harley Price", "Price, Harley");
+    const w = await world({ at: ["bookshelf", null], entries: { "bookshelf/Miller, Sean": "# S. Miller\n" } });
+    w.answer("Sean Miller", "Miller, Sean");
     await w.life.newRoot("bookshelf");
-    expect(w.log).toEqual(["goto #bookshelf/Price%2C%20Harley | already on H. Price"]);
+    expect(w.log).toEqual(["goto #bookshelf/Miller%2C%20Sean | already on S. Miller"]);
   });
   it("two commas are kept as typed in the heading; a pasted article link heads the page with the name derived from it", async () => {
     const w = await world({ at: ["bookshelf", null] });
@@ -448,10 +542,10 @@ describe("a new author asks where it sorts", () => {
   });
   it("a new page still asks once", async () => {
     const w = await world({ at: ["page", null] });
-    w.answer("Harley Price");
+    w.answer("Sean Miller");
     await w.life.newRoot("page");
     expect(w.asked).toEqual(["Name for the new page:"]);
-    expect(w.md("page/Harley Price")).toBe("");
+    expect(w.md("page/Sean Miller")).toBe("");
   });
 });
 
@@ -497,12 +591,12 @@ describe("rename re-files an author with books", () => {
     ]);
   });
   it("writes the old name as the heading of a page that had none, and carries what was typed meanwhile", async () => {
-    const w = await world({ at: ["bookshelf", "Harley Price"], entries: { "bookshelf/Harley Price": "- [Book](#bookshelf/Harley%20Price/Book)\n", "bookshelf/Harley Price/Book": "text\n" } });
-    w.typeMeanwhile("- [Book](#bookshelf/Harley%20Price/Book)\n\nmore\n");
-    w.answer("Price, Harley");
+    const w = await world({ at: ["bookshelf", "Sean Miller"], entries: { "bookshelf/Sean Miller": "- [Book](#bookshelf/Sean%20Miller/Book)\n", "bookshelf/Sean Miller/Book": "text\n" } });
+    w.typeMeanwhile("- [Book](#bookshelf/Sean%20Miller/Book)\n\nmore\n");
+    w.answer("Miller, Sean");
     await w.life.rename();
-    expect(w.md("bookshelf/Price, Harley")).toBe("# Harley Price\n\n- [Book](#bookshelf/Price%2C%20Harley/Book)\n\nmore");
-    expect(w.log[w.log.length - 1]).toBe("say filed under Price, Harley — 2 entries moved");
+    expect(w.md("bookshelf/Miller, Sean")).toBe("# Sean Miller\n\n- [Book](#bookshelf/Miller%2C%20Sean/Book)\n\nmore");
+    expect(w.log[w.log.length - 1]).toBe("say filed under Miller, Sean — 2 entries moved");
   });
   it("a failed move removes the copies made and leaves the old author whole, opened again", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
@@ -560,10 +654,11 @@ describe("rename re-files an author with books", () => {
     expect(Object.keys(w.layer.cache).filter((k) => k.startsWith("bookshelf/Boethius/"))).toEqual([]);
     expect(w.log[w.log.length - 1]).toBe("say filed under Boethius, Anicius — 2 entries moved");
   });
-  it("a book with books under it still refuses, as a page does", async () => {
+  it("a book with books under it asks where to move them, as a page does", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy/Walls"], entries: { ...CAVAFY, "bookshelf/C. P. Cavafy/Walls/1": "one\n" } });
+    w.answer(null);
     await w.life.rename();
-    expect(w.log).toEqual(["say rename after the books are deleted"]);
+    expect(w.asked).toEqual(["Move the book “Walls” and its books to: [bookshelf/C. P. Cavafy/Walls]"]);
   });
   it("ignores a second rename while a re-file is in flight", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY });

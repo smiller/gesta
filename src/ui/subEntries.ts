@@ -59,6 +59,16 @@ export function renamePrompt(date: string, tag: string, shownLabel: string): str
   if (ns && ns.titledRoots && !pageParts(tag).sub) return "File and sort “" + shownLabel + "” under:";
   return "Rename the " + (ns ? entryNoun(date, tag) : "tag") + ' "' + shownLabel + '" to:';
 }
+export function movePrompt(date: string, tag: string, shownLabel: string): string {
+  return "Move the " + entryNoun(date, tag) + " “" + shownLabel + "” and its " + nsOf(date)!.subNoun + "s to:";
+}
+export function moveConfirm(date: string, tag: string, shownLabel: string, to: string, plan: { moved: number; into: boolean; twins: string[] }): string {
+  const sub = nsOf(date)!.subNoun;
+  let text = "Move the " + entryNoun(date, tag) + " “" + shownLabel + "”" + (plan.moved ? " and its " + plan.moved + " " + sub + (plan.moved === 1 ? "" : "s") : "") + " to " + to + "?";
+  if (plan.into) text += " Its own text goes after the text there.";
+  if (plan.twins.length) text += " " + (plan.twins.length === 1 ? "1 " + sub + " is" : plan.twins.length + " " + sub + "s are") + " there already by title and " + (plan.twins.length === 1 ? "is" : "are") + " deleted, " + (plan.twins.length === 1 ? "its" : "their") + " links going to the one there: " + plan.twins.map((t) => "“" + t + "”").join(", ") + ".";
+  return text;
+}
 export function deleteConfirm(date: string, tag: string, shown: string): string {
   return nsOf(date) ? "Delete the " + entryNoun(date, tag) + ' "' + shown + '"?' : 'Delete the entry "' + shown + '" for this day?';
 }
@@ -75,7 +85,15 @@ export function hostKey(date: string, tag: string): string | null {
   return pp.sub ? entryKey(date, pp.parent) : null;
 }
 export function refiledText(root: string, moved: number, updated: number, left: string[], stayed: string[] = []): string {
-  let text = "filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved";
+  return outcome("filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved", updated, left, stayed);
+}
+export function movedText(to: string, moved: number, twins: number, lost: number, updated: number, left: string[], stayed: string[]): string {
+  let text = "moved to " + to + " — " + moved + (moved === 1 ? " entry" : " entries");
+  if (twins) text += ", " + twins + " there already deleted";
+  if (lost) text += ", " + lost + (lost === 1 ? " picture" : " pictures") + " not found";
+  return outcome(text, updated, left, stayed);
+}
+function outcome(text: string, updated: number, left: string[], stayed: string[]): string {
   if (updated) text += ", links updated in " + updated + (updated === 1 ? " other" : " others");
   if (left.length === 1) text += "; 1 link not updated: " + left[0];
   else if (left.length) text += "; links not updated in " + left.length + " entries: " + left.join(", ");

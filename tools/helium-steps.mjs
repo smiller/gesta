@@ -120,9 +120,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
      (a list: one per prompt, in turn), a confirm is accepted; `prompts`
      keeps each prompt's text and what it held */
   let answer = null;
-  const prompts = [];
+  const prompts = [], confirms = [];
   page.on("dialog", (d) => {
-    if (d.type() === "confirm") { d.accept(); return; }
+    if (d.type() === "confirm") { confirms.push(d.message()); d.accept(); return; }
     prompts.push(d.message() + " [" + d.defaultValue() + "]");
     const a = Array.isArray(answer) ? (answer.length ? answer.shift() : null) : answer;
     if (a !== null) d.accept(a); else d.dismiss();
@@ -1346,11 +1346,11 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* (2026-10-05) "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so; the current app asks once and files the name as typed, and refuses to rename an author with books */
   await go("2026-09-06");
   await page.click(S.booksOpener);
-  answer = ["Harley Price", "Price, Harley"];
+  answer = ["Sean Miller", "Miller, Sean"];
   prompts.length = 0;
   await page.click(S.newAuthor);
-  await A.waitEntry(page, "bookshelf/Price, Harley", 5000).catch(() => {});
-  await log("New author…, Harley Price, Enter twice", { prompts: prompts.slice(), entry: await A.entry(page), stored: await A.stored(page, "bookshelf/Price, Harley") });
+  await A.waitEntry(page, "bookshelf/Miller, Sean", 5000).catch(() => {});
+  await log("New author…, Sean Miller, Enter twice", { prompts: prompts.slice(), entry: await A.entry(page), stored: await A.stored(page, "bookshelf/Miller, Sean") });
   await page.click(S.booksOpener);
   await log("the bookshelf lists it by its heading", await R.panel(page));
   await page.keyboard.press("Escape");
@@ -1362,17 +1362,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Enter");
   answer = "Odes";
   await A.act.create(page);
-  await A.waitEntry(page, "bookshelf/Price, Harley/Odes", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Miller, Sean/Odes", 5000).catch(() => {});
   await page.click(S.editor);
   await page.keyboard.type("A book.");
   await page.waitForTimeout(1500);
-  await go("bookshelf/Price%2C%20Harley", 5000);
-  answer = "Harley Price";
+  await go("bookshelf/Miller%2C%20Sean", 5000);
+  answer = "Sean Miller";
   prompts.length = 0;
   await page.click(S.renameAuthor);
-  await A.waitEntry(page, "bookshelf/Harley Price", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Sean Miller", 5000).catch(() => {});
   await page.waitForFunction((s) => /filed under/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
-  await log("Rename, Harley Price typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await cornerText(), author: await A.stored(page, "bookshelf/Harley Price"), book: await A.stored(page, "bookshelf/Harley Price/Odes"), oldAuthor: await A.stored(page, "bookshelf/Price, Harley"), oldBook: await A.stored(page, "bookshelf/Price, Harley/Odes") });
+  await log("Rename, Sean Miller typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await cornerText(), author: await A.stored(page, "bookshelf/Sean Miller"), book: await A.stored(page, "bookshelf/Sean Miller/Odes"), oldAuthor: await A.stored(page, "bookshelf/Miller, Sean"), oldBook: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.click(S.booksOpener);
   await log("the bookshelf after the re-file", await R.panel(page));
   await page.keyboard.press("Escape");
@@ -2789,6 +2789,37 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G past the last line where blocks repeat a number", await ask("9"));
   await page.keyboard.press("Escape");
   await rest(page);
+    }],
+    ["a page moved with its sub-pages", async () => {
+  /* Rename on a page whose sub-pages hold text asks where; an address in the bookshelf moves it there with its picture, its text after the text there, a sub-page there already by its title deleted, its links going to that one; a link from elsewhere follows */
+  await A.foreignWrite(page, "bookshelf/Mover, Test", "# Test Mover\n");
+  await A.foreignWrite(page, "bookshelf/Mover, Test/Essays", "# Essays\n\n[The Twin](#bookshelf/Mover%2C%20Test/Essays/2022-twin)\n");
+  await A.foreignWrite(page, "bookshelf/Mover, Test/Essays/2022-twin", "# The Twin\n\nThe longer copy.\n");
+  await A.foreignWrite(page, "page/Move Source", "[Essay](#page/Move%20Source/Essay)\n");
+  await A.foreignWrite(page, "page/Move Source/2026-twin", "# The Twin\n\nThe shorter copy.\n");
+  await A.foreignWrite(page, "page/Move Links", "See [the essay](#page/Move%20Source/Essay?line=1) and [the twin](#page/Move%20Source/2026-twin).\n");
+  await go("page/Move%20Source/Essay");
+  await page.click(S.editor);
+  await page.keyboard.type("An essay with a picture: ");
+  await R.pastePng(page);
+  await R.waitImg(page);
+  await R.waitCorner(page, "saved");
+  await go("page/Move%20Source");
+  answer = ["bookshelf/Mover, Test/Essays"];
+  prompts.length = 0;
+  confirms.length = 0;
+  await page.click(S.renameSubPage);
+  await page.waitForFunction((s) => /moved to/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 5000 }).catch(() => {});
+  const there = (k) => A.stored(page, "bookshelf/Mover, Test/Essays" + k);
+  await log("Rename, an address in the bookshelf typed, Enter, the confirm accepted", {
+    prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), hash: page.url().split("#")[1], corner: await cornerText(),
+    there: await there(""), essay: await there("/Essay"), twin: await there("/2022-twin"), links: await A.stored(page, "page/Move Links"),
+    left: [await A.stored(page, "page/Move Source"), await A.stored(page, "page/Move Source/Essay"), await A.stored(page, "page/Move Source/2026-twin")],
+  });
+  await go("bookshelf/Mover%2C%20Test/Essays/Essay");
+  await R.waitImg(page).catch(() => {});
+  await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
+  await log("the moved essay, its picture", { entry: await A.entry(page), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
     }],
   ];
   /* each section starts from the one window, in front, nothing open over
