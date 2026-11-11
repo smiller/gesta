@@ -112,12 +112,16 @@ export interface ImageRow { id: string; bytes: Uint8Array }
 export interface ImageStore {
   get(id: string): Promise<ImageRow | null>;
   set(id: string, bytes: Uint8Array): Promise<void>;
+  del(id: string): Promise<void>;
+  keys(): Promise<string[]>;
   clear(): Promise<void>;
 }
 export function imageStoreOver(store: KeyedStore<ImageRow>): ImageStore {
   return {
     get: (id) => store.get(id),
     set: (id, bytes) => store.put({ id, bytes }),
+    del: (id) => store.del(id),
+    keys: () => store.keys(),
     clear: () => store.clear(),
   };
 }

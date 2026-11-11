@@ -322,3 +322,7 @@ a link's tooltip · outside · new here, the old app frozen
 the place's links, hovered · * · new here, the old app frozen
 author filing: arrived at bookshelf/Sean Miller/Odes · * · new here, the old app frozen
 the re-filed book, its picture · * · new here, the old app frozen
+unused pictures: arrived at page/Unused Pictures · * · new here, the old app frozen
+the picture deleted from the text, the backups panel opened · * · new here, the old app frozen
+Remove … unused picture clicked, the confirm accepted · * · new here, the old app frozen
+the pictures under the old page and the new · * · new here, the old app frozen

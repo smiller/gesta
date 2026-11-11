@@ -5,7 +5,7 @@
 // Split out of helium-corner.mjs 2026-09-12.
 import { resolve } from "node:path";
 import { NS } from "../../src/store/keys.ts";
-import { ENTRY_DB, ENTRY_STORE } from "../../src/store/store.ts";
+import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.ts";
 import { tmpdir } from "node:os";
 import { blankRowReader } from "./blankRow.mjs";
 export const name = "successor";
@@ -41,6 +41,7 @@ export const waitWarm = (page) => page.waitForFunction(() => document.documentEl
 /* the save lands 500 ms after the last edit: read once that has passed and no write is open */
 export const stored = async (page, which) => { await page.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: 3000, polling: 25 }).catch(() => page.waitForTimeout(800)); return page.evaluate(([which, dbName, storeName]) => new Promise((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [which, ENTRY_DB, ENTRY_STORE]); };
 /* another tab's write or delete, made in `page` straight to the store and announced as a landing is */
+export const pictureKeys = (page, prefix) => page.evaluate(([prefix, dbName, storeName]) => new Promise((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).getAllKeys(); g.onsuccess = () => { db.close(); res(g.result.filter((k) => String(k).startsWith(prefix)).sort()); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [prefix, IMG_DB, IMG_STORE]);
 export const foreignWrite = (page, key, md) => page.evaluate(([k, md, dbName, storeName, channel]) => new Promise((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const t = db.transaction(storeName, "readwrite"); const st = t.objectStore(storeName); if (md === null) st.delete(k); else st.put({ key: k, md }); t.onerror = () => rej(t.error); t.oncomplete = () => { db.close(); new BroadcastChannel(channel).postMessage(k); res(); }; }; }), [key, md, ENTRY_DB, ENTRY_STORE, NS + "entries"]);
 export const act = {
   create: async (page) => { await page.keyboard.press("Control+Meta+n"); },

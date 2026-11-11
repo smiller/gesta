@@ -4,7 +4,7 @@
      folder it makes into a fresh Gesta; there is no in-app restore. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  let { backups, onSetup, onResume }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void } = $props();
+  let { backups, onSetup, onResume, onSweep }: { backups: Screen["backups"]; onSetup: () => void; onResume: () => void; onSweep: () => void } = $props();
   const status = $derived.by((): { text: string; trouble: boolean } | null => {
     const b = backups;
     if (!b.canPick) return { text: "Automatic folder backups need a Chromium browser (Helium or Chrome). Export needs one too, so here there is no way to write a copy out.", trouble: false };
@@ -25,6 +25,11 @@
     {/if}
     {#if status}<p class="backups-status" class:trouble={status.trouble}>{status.text}</p>{/if}
   </div>
+  {#if backups.unused}
+    <div class="backups-auto"><button type="button" onclick={onSweep}>Remove {backups.unused} unused picture{backups.unused === 1 ? "" : "s"}</button></div>
+  {:else if backups.overHalf}
+    <p class="backups-status trouble">{backups.overHalf} pictures no entry names — more than half of them, so none are removed.</p>
+  {/if}
   <p class="backups-note">A folder backup writes the whole journal to a folder you pick once — a live <code>current/</code> copy, plus an <code>archive/</code> folder of dated <code>.zip</code> archives of whatever changed that day. To recover an old version, read <code>archive/manifests/&lt;date&gt;.txt</code> for the archives that day held, unzip them and import the folder they make into a fresh, empty Gesta (a new browser profile — never over this journal), or copy one entry back from its <code>.md</code> file in any editor (a day sits under <code>journal/&lt;year&gt;/</code>, a page under <code>page/</code>).</p>
 </section>
 

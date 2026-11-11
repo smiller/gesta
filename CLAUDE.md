@@ -578,7 +578,9 @@ is in the plan's record, under the phase named):
   name moved by the key it names, the text test for one left behind, the
   heading a pageless author is given), `move.ts` (a page moved with its
   sub-pages to any place, pure: the keys that move, the twins the place holds
-  by title, the links rewritten, the texts joined). Tests beside
+  by title, the links rewritten, the texts joined), `pictures.ts` (the
+  pictures the entries name, those no entry names, and the sweep's plan with
+  its belt). Tests beside
   them, ported from the current app's node suites where they had one.
 - `src/ui/` — the UI, Svelte 5 (`src/chrome/` until 2026-09-30, and
   "chrome" its word for the UI in code and prose, both renamed because the

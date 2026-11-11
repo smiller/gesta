@@ -39,7 +39,8 @@ export interface Screen {
   goto: { open: boolean; levels: Level[] };
   bookmarks: { rows: BookmarkRow[]; foot: { full: true } | { full: false; name: string } | null; editing: string; draft: string; buf: string; unreadable: boolean; opening: number };
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
-  backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed" };
+  /* `unused` the pictures no entry names; `overHalf` that count where it is more than half of them */
+  backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed"; unused: number; overHalf: number };
   lineBar: { open: boolean; kind: AskKind; line: string; page: string; lineLabel: string };
   /* ⌃⌘E's bar: `count` the line after Find, `any` whether there is a match to replace */
   replace: { open: boolean; find: string; with: string; count: string; any: boolean };
@@ -67,7 +68,7 @@ export function screenState(interval: number): Screen {
     replace: { open: false, find: "", with: "", count: "", any: false },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
-    backups: { canPick: true, configured: false, trouble: "", warm: "loading" },
+    backups: { canPick: true, configured: false, trouble: "", warm: "loading", unused: 0, overHalf: 0 },
     gutter: false, linesOpen: false, mdView: false, interval, held: "",
   });
   return screen;

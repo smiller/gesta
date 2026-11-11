@@ -79,6 +79,7 @@ async function world(o: Opts) {
       pics[to] = pics[from];
       return Promise.resolve(true);
     },
+    removePictures: (keys) => { if (keys.length) log.push("unpic " + keys.join(", ")); for (const k of keys) delete pics[k]; return Promise.resolve(); },
     pictureClash: (from, to) => Promise.resolve(to in pics && pics[to] !== pics[from]),
     moveKept: (moves, merged) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ") + (merged && Object.keys(merged).length ? " | merged " + Object.entries(merged).map(([a, b]) => a + " → " + b).join(", ") : "")); },
     ui: {
@@ -350,6 +351,50 @@ const ESSAYS = {
 const PIC = "page/Essays/page--Essays--2024-07-26-birds-img-1.webp";
 const PIC_THERE = "bookshelf/Miller, Sean/Essays/bookshelf--Miller, Sean--Essays--2024-07-26-birds-img-1.webp";
 const TO = "bookshelf/Miller, Sean/Essays";
+describe("the pictures left behind", () => {
+  const ENTRIES = {
+    "page/Essays": "![](shared.webp) ![](page--Essays-img-1.webp)",
+    "page/Essays/A": "![](page--Essays--A-img-1.webp)\n",
+    "page/Essays/Old": "# The Twin\n\n![](twin.webp)\n",
+    "page/Other": "![](shared.webp)\n",
+    "bookshelf/Miller, Sean": "# Sean Miller\n",
+    "bookshelf/Miller, Sean/Letters": "# Letters\n",
+    "bookshelf/Miller, Sean/Letters/New": "# The Twin\n",
+  };
+  const PICS = { "page/shared.webp": "s", "page/page--Essays-img-1.webp": "e", "page/Essays/page--Essays--A-img-1.webp": "a", "page/Essays/twin.webp": "t" };
+  it("a move deletes the old copy of each picture it carried, and a twin's, but one an entry left behind still names", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: PICS });
+    w.answer("bookshelf/Miller, Sean/Letters", true);
+    await w.life.rename();
+    expect(Object.keys(w.pics).sort()).toEqual([
+      "bookshelf/Miller, Sean/Letters/bookshelf--Miller, Sean--Letters--A-img-1.webp",
+      "bookshelf/Miller, Sean/bookshelf--Miller, Sean--Letters-img-1.webp",
+      "bookshelf/Miller, Sean/shared.webp",
+      "page/shared.webp",
+    ]);
+    expect(before(w.log, "del page/Essays", "unpic page/page--Essays-img-1.webp, page/Essays/page--Essays--A-img-1.webp, page/Essays/twin.webp")).toBe(true);
+  });
+  it("a move that fails deletes the copies it made, the old ones kept", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: PICS, failSet: "bookshelf/Miller, Sean/Letters/A" });
+    w.answer("bookshelf/Miller, Sean/Letters", true);
+    await w.life.rename();
+    expect(Object.keys(w.pics).sort()).toEqual(Object.keys(PICS).sort());
+  });
+  it("a re-file deletes the old copies of its books' pictures", async () => {
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "bookshelf/C. P. Cavafy/Walls": "![](map.png)\n" }, pics: { "bookshelf/C. P. Cavafy/map.png": "m" } });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.pics).toEqual({ "bookshelf/Cavafy, C. P/map.png": "m" });
+  });
+  it("a delete deletes the entry's pictures, but one another entry still names", async () => {
+    const w = await world({ at: ["page", "Other"], entries: { "page/Other": "![](shared.webp) ![](own.webp)\n", "page/Essays": "![](shared.webp)" }, pics: { "page/shared.webp": "s", "page/own.webp": "o" } });
+    w.answer(true);
+    await w.life.remove();
+    expect(w.pics).toEqual({ "page/shared.webp": "s" });
+    expect(before(w.log, "del page/Other", "unpic page/own.webp")).toBe(true);
+  });
+});
+
 describe("rename moves a page with its sub-pages", () => {
   it("Enter on the address it was filled with does nothing, whatever the name holds", async () => {
     const w = await world({ at: ["page", "Growth 50%"], entries: { "page/Growth 50%": "g\n", "page/Growth 50%/A": "a\n" } });

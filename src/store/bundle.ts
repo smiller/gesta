@@ -112,6 +112,8 @@ export function bundleImages(file: Blob, pictures: Record<string, Member>): Imag
       return bytesOf(file.slice(m.at, m.end)).then((chunk) => inflated(m, memberData(chunk, m.at, m))).then((bytes) => ({ id, bytes }));
     },
     set: () => Promise.reject(new Error("the reader keeps no pictures of its own")),
+    del: () => Promise.reject(new Error("the reader keeps no pictures of its own")),
+    keys: () => Promise.resolve(Object.keys(pictures)),
     clear: () => Promise.resolve(),
   };
 }

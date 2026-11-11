@@ -2795,6 +2795,27 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Escape");
   await rest(page);
     }],
+    ["unused pictures", async () => {
+  /* a picture pasted, then deleted from the text: the backups panel offers to remove it, and its button removes it */
+  await go("page/Unused%20Pictures");
+  await page.click(S.editor);
+  await page.keyboard.type("A picture: ");
+  await R.pastePng(page);
+  await R.waitImg(page);
+  await R.waitCorner(page, "saved");
+  const kept = await A.pictureKeys(page, "page/Unused Pictures");
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.press("Backspace");
+  /* the corner may still say "saved" from the paste: the stored text is what the panel counts */
+  for (let i = 0; i < 40 && ((await A.stored(page, "page/Unused Pictures")) || "").includes("!["); i++) await rest(page);
+  await page.click(S.backupsButton);
+  await page.waitForFunction(() => /unused picture/.test(document.querySelector(".backups")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+  await log("the picture deleted from the text, the backups panel opened", { kept, md: await A.stored(page, "page/Unused Pictures"), panel: await R.backups(page) });
+  await page.click(".backups button:has-text('unused picture')").catch(() => {});
+  await page.waitForFunction((s) => /removed/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 5000 }).catch(() => {});
+  await log("Remove … unused picture clicked, the confirm accepted", { corner: await cornerText(), left: await A.pictureKeys(page, "page/Unused Pictures"), panel: await R.backups(page) });
+  await page.keyboard.press("Escape");
+    }],
     ["a page moved with its sub-pages", async () => {
   /* Rename on a page whose sub-pages hold text asks where; an address in the bookshelf moves it there with its picture, its text after the text there, a sub-page there already by its title deleted, its links going to that one; a link from elsewhere follows */
   await A.foreignWrite(page, "bookshelf/Mover, Test", "# Test Mover\n");
@@ -2825,6 +2846,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("bookshelf/Mover%2C%20Test/Essays/Essay");
   await R.waitImg(page).catch(() => {});
   await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
+  await log("the pictures under the old page and the new", { old: await A.pictureKeys(page, "page/Move Source/"), now: await A.pictureKeys(page, "bookshelf/Mover, Test/Essays/") });
   await log("the moved essay, its picture", { entry: await A.entry(page), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
     }],
   ];

@@ -112,3 +112,34 @@ its book: after the re-file the book's picture is drawn (a blob, 1400×700).
 
 Finding 7 of review cycle 1: the hand edit of `corner.writer.txt` kept, its
 exception noted in CLAUDE.md (asked). Finding 8 stays open.
+
+## Pictures nothing names (2026-11-11)
+
+Asked: unreferenced pictures deleted; the reader added that a move, a re-file
+and a delete should clean up their own, and the panel's sweep the rest.
+
+- The image store lists and deletes (`keys`, `del`); the reader's two stores
+  list and refuse a delete.
+- `pictures.ts`: the pictures the entries name, found as the export finds them
+  (`imageRefs` under each entry's folder); those of a list no entry names; the
+  sweep's plan, refused whole when more than half the stored pictures (and
+  more than 20) would go.
+- A move and a re-file delete each old picture they copied from, a twin's
+  too, once nothing names it; one that fails deletes the copies it made. A
+  delete removes the entry's pictures nothing else names. A picture deleted
+  from a text stays, so undo can bring it back, until the sweep.
+- The backups panel offers "Remove N unused pictures", counted as it opens and
+  again at the click, behind a confirm.
+- MEASURED, headless Helium: after the move step the old page holds no
+  picture and the new place one; the "unused pictures" step — a picture
+  pasted, deleted from the text, the panel opened — offers "Remove 1 unused
+  picture", and its click leaves none, the corner saying "removed 1 unused
+  picture". The step first read the panel before the blank text was stored
+  (the corner's "saved" was the paste's); it now waits on the stored text.
+- MEASURED: the backup mirror holds 470 pictures, all named. INFERRED: the
+  store holds at least 163 more no entry names — the first move's 81 old copies
+  under `page/`, the 81 the picture-rename import left under their old names,
+  and the test author's — about a quarter, under the belt.
+- Flakes seen, not caused here: "ArrowDown from a block's last sentence" (the
+  dual-language section) read a note's cell once in a full run; 3 of 3 alone
+  read the approved value.

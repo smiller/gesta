@@ -6,9 +6,17 @@ import { screenState } from "./screen.svelte.ts";
 const draw = (patch: Partial<ReturnType<typeof screenState>["backups"]>): string => {
   const screen = screenState(5);
   Object.assign(screen.backups, patch);
-  return render(Backups, { props: { backups: screen.backups, onSetup: () => {}, onResume: () => {} } }).body;
+  return render(Backups, { props: { backups: screen.backups, onSetup: () => {}, onResume: () => {}, onSweep: () => {} } }).body;
 };
 describe("Backups", () => {
+  it("unused pictures are offered for removal, counted; too many at once says why none go; none offers nothing", () => {
+    expect(draw({ warm: "ok", unused: 3 })).toContain(">Remove 3 unused pictures</button>");
+    expect(draw({ warm: "ok", unused: 1 })).toContain(">Remove 1 unused picture</button>");
+    const over = draw({ warm: "ok", overHalf: 40 });
+    expect(over).toContain("40 pictures no entry names — more than half of them, so none are removed.");
+    expect(over).not.toContain("unused picture");
+    expect(draw({ warm: "ok" })).not.toContain("picture");
+  });
   it("unconfigured: the setup button and no status; configured and warm: on; trouble: Resume and the reason", () => {
     const none = draw({ warm: "ok" });
     expect(none).toContain("Set up automatic backups…");

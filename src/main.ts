@@ -34,6 +34,7 @@ import { lifecycle, refuseCold } from "./ui/lifecycle.ts";
 import { overlays } from "./ui/overlays.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./ui/searchModel.ts";
 import { searchIndex } from "./store/searchIndex.ts";
+import { sweepPlan } from "./store/pictures.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
 import { flattenDocText } from "./model/flatten.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
@@ -104,7 +105,7 @@ const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : is
 type Ns = "page" | "bookshelf";
 type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 const acts = {
-  today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {},
+  today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
   backupsPanel: () => {},
   interval: (_n: number) => {}, panel: (_ns: PanelName, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {}, shelves: () => {},
   create: () => {}, rename: () => {}, delete: () => {},
@@ -157,7 +158,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
   shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
-  backups: { onSetup: () => acts.backups(), onResume: () => acts.resume() },
+  backups: { onSetup: () => acts.backups(), onResume: () => acts.resume(), onSweep: () => acts.sweep() },
   bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
@@ -224,6 +225,8 @@ let bundlePictures: ImageStore | null = null;
 const images: ImageStore = READER ? {
   get: (id) => bundlePictures ? bundlePictures.get(id) : Promise.resolve(null),
   set: () => Promise.reject(new Error("nothing is written here")),
+  del: () => Promise.reject(new Error("nothing is written here")),
+  keys: () => bundlePictures ? bundlePictures.keys() : Promise.resolve([]),
   clear: () => Promise.resolve(),
 } : idbImageStore();
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
@@ -249,6 +252,27 @@ if (fixture && fixtures[fixture]) {
     screen.backups.configured = backup.configured;
     screen.backups.trouble = backup.trouble;
     screen.backups.warm = layer.storeReadFailed ? "failed" : layer.warmed ? "ok" : "loading";
+    if (READER || screen.backups.warm !== "ok") return;
+    images.keys().then((keys) => {
+      const plan = sweepPlan(keys, layer.cache);
+      screen.backups.unused = plan.drop.length;
+      screen.backups.overHalf = plan.refused;
+    }, () => {});
+  };
+  /* counted again at the click, the journal having moved since the panel opened */
+  acts.sweep = () => {
+    if (refuseCold(layer, say)) return;
+    images.keys().then((keys) => {
+      const plan = sweepPlan(keys, layer.cache);
+      const n = plan.drop.length;
+      if (!n) { readBackups(); return; }
+      if (!confirm("Remove the " + n + " picture" + (n === 1 ? "" : "s") + " no entry names? This can’t be undone.")) return;
+      return Promise.all(plan.drop.map((k) => images.del(k).then(() => true, () => false))).then((gone) => {
+        const removed = gone.filter(Boolean).length;
+        say(removed === n ? "removed " + n + " unused picture" + (n === 1 ? "" : "s") : "removed " + removed + " of " + n + " unused pictures — the rest would not go", 3000);
+        readBackups();
+      });
+    }, () => { say("couldn’t read the pictures", 3000); });
   };
   const backup = backupRunner({
     layer, images, store: idbBackupStore(),
@@ -1139,6 +1163,7 @@ if (fixture && fixtures[fixture]) {
       session.moveFolds(moves);
       marks.move({ ...moves, ...merged });
     },
+    removePictures: (keys) => Promise.all(keys.map((k) => images.del(k))).then(() => {}),
     copyPicture: (from, to) => images.get(from).then((row) => row ? images.set(to, row.bytes).then(() => true) : false),
     pictureClash: (from, to) => Promise.all([images.get(from), images.get(to)]).then(([a, b]) => !!b && (!a || a.bytes.length !== b.bytes.length || a.bytes.some((x, i) => x !== b.bytes[i]))),
     ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
