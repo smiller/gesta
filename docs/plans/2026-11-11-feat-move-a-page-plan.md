@@ -250,3 +250,11 @@ time two first.
   count 54.4 ms over every entry; a rename's checking pass 8.8 ms and 9.1 ms
   for two pages (19 entries), 1,246 ms for the book `bookshelf/Horace/Odes/1.1`
   (1,383 entries). Taken to the reader before any change.
+- 6, fixed after the timing (asked): an entry is read in full only when one
+  of its addresses, read as an address without parsing the text (`mayName`),
+  falls under the page renamed. MEASURED under node over the backup, the same
+  entries changed with and without it in all four cases timed: the book
+  `Horace/Odes/1.1` 1,383 entries checked → 1, 1,338 ms → 28 ms; the author
+  `Milton, John` 1,377 → 69, 1,282 ms → 97 ms; `Paradise Lost/Book 1` 1,383 →
+  27, 1,284 ms → 60 ms; `page/Books/Books Lent` 19 → 1, 10 ms → 1 ms. 7 left as
+  is (about 42 ms a backup, spread over its batches).

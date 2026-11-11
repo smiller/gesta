@@ -23,6 +23,20 @@ export function pointsInto(ns: string, root: string): (md: string) => boolean {
     try { return linkRuns(parseMarkdown(md)).some((r) => namesUnder(r.href, ns, root)); } catch { return false; }
   };
 }
+/* every address in the namespace the text holds, read as an address without
+   parsing the text: a link, a link's definition, a full URL, bracketed or not.
+   An entry with none under `root` cannot link there, and is not parsed (pin:
+   refile.test › mayName) */
+export function mayName(ns: string, root: string): (md: string) => boolean {
+  const re = new RegExp("<[^<>\\n]*#" + escapeRe(ns) + "/([^<>\\n]*)>|#" + escapeRe(ns) + "/([^\\s)\"'<>\\]]*)", "g");
+  return (md) => {
+    if (md.indexOf("#" + ns + "/") === -1) return false;
+    re.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(md))) if (namesUnder("#" + ns + "/" + (m[1] ?? m[2]), ns, root)) return true;
+    return false;
+  };
+}
 /* null when the page already has its title */
 export function withHeading(md: string, name: string): string | null {
   if (firstHeading(md)) return null;
