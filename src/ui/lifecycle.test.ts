@@ -231,6 +231,17 @@ describe("create", () => {
   });
 });
 
+describe("create in a heading", () => {
+  it("a new sub-page's link refuses a caret in the heading, so the page's own name cannot change", async () => {
+    const w = await world({ at: ["bookshelf", "Author, Test"], entries: { "bookshelf/Author, Test": "# Test Author\n" } });
+    w.select(1);
+    w.answer("Pictures");
+    await w.life.create();
+    expect(w.log).toEqual(["say no link inside a heading — place your cursor below it"]);
+    expect(w.md("bookshelf/Author, Test/Pictures")).toBeNull();
+  });
+});
+
 describe("extract", () => {
   const HOST = "# A\n\n# Part\n\nbody text\n\nkeep";
   it("does nothing with no editor or nothing selected", async () => {

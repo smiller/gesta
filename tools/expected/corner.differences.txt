@@ -326,3 +326,7 @@ unused pictures: arrived at page/Unused Pictures · * · new here, the old app f
 the picture deleted from the text, the backups panel opened · * · new here, the old app frozen
 Remove … unused picture clicked, the confirm accepted · * · new here, the old app frozen
 the pictures under the old page and the new · * · new here, the old app frozen
+after the click · text · a click on a whisper copies its words, the corner then saying copied; new here, the old app frozen
+after the click · show · a click on a whisper copies its words, the corner then saying copied; new here, the old app frozen
++ book with the caret in the heading · * · new here, the old app frozen
+the whisper clicked · * · new here, the old app frozen

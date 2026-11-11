@@ -47,16 +47,27 @@ describe("whisper", () => {
   it("refuse says why once per press: a held key's repeats are swallowed", () => {
     n.refuse({ repeat: false }, "nothing above to nest under");
     expect(n.state.text).toBe("nothing above to nest under");
-    n.click();
+    vi.advanceTimersByTime(WHISPER_MS);
     n.refuse({ repeat: true }, "nothing above to nest under");
     expect(n.state.shown).toBe(false);
   });
-  it("a click dismisses a whisper", () => {
-    n.whisper("saved");
+  it("a click on a whisper copies its words and says so; a click on that dismisses it", async () => {
+    n.whisper("removed 193 unused pictures");
     n.click();
+    await flush();
+    expect(copied).toEqual(["removed 193 unused pictures"]);
+    expect(n.state).toMatchObject({ text: "copied", shown: true });
+    n.click();
+    await flush();
+    expect(copied).toEqual(["removed 193 unused pictures"]);
     expect(n.state.shown).toBe(false);
-    vi.advanceTimersByTime(WHISPER_MS);
-    expect(n.state.shown).toBe(false);
+  });
+  it("a click on a whisper already faded copies nothing", async () => {
+    n.whisper("saved", 1000);
+    vi.advanceTimersByTime(1000);
+    n.click();
+    await flush();
+    expect(copied).toEqual([]);
   });
 });
 
@@ -162,7 +173,7 @@ describe("progress", () => {
     p.ok("exported 1 entry");
     expect(n.state.text).toBe("exported 1 entry");
     n.click();
-    expect(copied).toEqual([]);
+    expect(copied).toEqual(["exported 1 entry"]);
   });
 });
 

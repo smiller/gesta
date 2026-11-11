@@ -178,3 +178,22 @@ said to fix all of them:
 
 Flakes seen in this cycle's runs, each 3 of 3 right alone: "a link to itself"
 read the caret at the line's start once.
+
+## A whisper copies on click; no new page's link in a heading; three waits (2026-11-11)
+
+- Asked: a click on a passing notice copies its words, as a pinned one copies
+  its details; "copied" itself only goes. MEASURED headless: the "removed 1
+  unused picture" whisper clicked, the clipboard holds those words and the
+  corner says "copied".
+- Asked: + sub-page / + book refuse a caret in a heading, after a link placed
+  at a heading's start renamed a test author ("PicturesTest Author"). MEASURED
+  headless: refused with "no link inside a heading — place your cursor below
+  it", the heading and the books unchanged. A bookmark's link is not guarded.
+  The "entries left and renamed" step had made its tagged entry from a day's
+  heading; it now places the caret in the text first.
+- Flaky steps: "Enter with the caret above the window" now waits for the
+  wheel's scroll to settle before Enter — MEASURED 6 of 6 right, against 1 in 3
+  wrong before; "ArrowDown from a block's last sentence" waits for the page to
+  hold still, and "a link to itself" for the click's caret — both were right
+  alone before too, so only later full runs can show them fixed. A margin-note
+  reading at 1000px was seen wrong once in a full run, 2 of 2 right alone.

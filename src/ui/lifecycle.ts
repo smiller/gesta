@@ -12,7 +12,7 @@ import { pictureKey } from "../store/names.ts";
 import { unnamed, picturesOf } from "../store/pictures.ts";
 import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
-import { linkRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
+import { linkRefusal, headingRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { firstHeading } from "../store/headings.ts";
 import { nsOf, pageParts, entryKey, entryHash, KEYED_NS, NS_BOOK } from "../store/keys.ts";
@@ -134,7 +134,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return done; }
     const view = deps.view(), source = view ? null : deps.source();
     if (!inEntry || (!view && !source)) { ui.say("place your cursor in the entry", 2000); return done; }
-    const why = view && linkRefusal(view.state);
+    const why = view && (linkRefusal(view.state) || headingRefusal(view.state));
     if (why) { ui.say(why, 2000); return done; }
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing

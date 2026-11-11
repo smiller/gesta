@@ -183,13 +183,18 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
   function click(): void {
     if (state.busy) return;
     gen++;
-    if (!stuckCopy) {
+    /* a whisper on screen copies its words, as a pin does, so what it said
+       can be pasted elsewhere; "copied" itself only goes (pin: notices.test ›
+       a click on a whisper copies its words) */
+    const words = !stuckCopy && state.shown && state.text !== "copied" ? state.text : "";
+    if (!stuckCopy && !words) {
       if (timer) clearTimeout(timer);
       hide();
       replayIdleStick();
       return;
     }
-    const detail = stuckCopy, mine = gen;
+    if (timer) clearTimeout(timer);
+    const detail = stuckCopy || words, mine = gen;
     stuckCopy = "";
     copyText(detail).then(
       () => { if (mine === gen) whisper("copied", COPIED_MS); },

@@ -55,6 +55,15 @@ async function searchFor(p, words) {
 async function rest(p) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }
+/* the page held still: the scroll and the layout's height the same over four
+   frames, a measuring pass a frame after a change having run */
+async function still(p) {
+  await p.evaluate(() => new Promise((done) => {
+    let last = "", same = 0, frames = 0;
+    const tick = () => { const now = scrollY + ":" + document.documentElement.scrollHeight; same = now === last ? same + 1 : 0; last = now; if (same >= 4 || ++frames > 120) done(); else requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  })).catch(() => {});
+}
 
 export async function runSteps(page, ctx, A, opts = {}) {
   const shot = opts.screenshot;
@@ -164,13 +173,16 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("after typing", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
   await page.click(S.corner);
+  /* a whisper clicked copies its words, the corner then saying so */
+  await page.waitForFunction((s) => document.querySelector(s)?.textContent === "copied", S.corner, { timeout: 2000 }).catch(() => {});
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
   await rest(page);
   await log("after ⌃⌘, on the first entry", await R.corner(page));
   await go("page/Links");
   await page.click(S.editorLink("#page/Links"));
-  await rest(page);
+  /* the editor takes a click's caret a tick after the click */
+  await page.waitForFunction(() => { const s = getSelection(); return !!s.rangeCount && s.anchorOffset > 0; }, null, { timeout: 1000 }).catch(() => {});
   await log("a link to itself", { entry: await A.entry(page), ...(await R.corner(page)) });
   await page.click(S.editorLink("https://example.org/"));
   await rest(page);
@@ -1183,6 +1195,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("page/Horace");
   await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "page/Never Typed")) ?? null });
   await go("2026-09-05");
+  /* the caret in the text, not its heading, where a new entry's link is refused */
+  await R.caretAfter(page, "The most famous story", "The most famous story".length);
   answer = "Long";
   await A.act.create(page);
   await A.waitEntry(page, "2026-09-05/Long", 5000).catch(() => {});
@@ -1354,6 +1368,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.booksOpener);
   await log("the bookshelf lists it by its heading", await R.panel(page));
   await page.keyboard.press("Escape");
+  /* + book with the caret inside the heading: refused, the author's name kept */
+  const mid = await page.evaluate((s) => { const h = document.querySelector(s); const b = h.getBoundingClientRect(); return { x: b.left + 8, y: b.top + b.height / 2 }; }, S.editorFirst);
+  await page.mouse.click(mid.x, mid.y);
+  await rest(page);
+  answer = "Odes";
+  await A.act.create(page);
+  await page.waitForFunction((s) => /heading/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
+  await log("+ book with the caret in the heading", { corner: await cornerText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   /* a click just past the heading's last letter, the caret at its end */
   const end = await page.evaluate((s) => { const h = document.querySelector(s); const r = document.createRange(); r.selectNodeContents(h); const b = r.getBoundingClientRect(); return { x: b.right + 3, y: b.top + b.height / 2 }; }, S.editorFirst);
   await page.mouse.click(end.x, end.y);
@@ -1733,11 +1755,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* a caret scrolled back into view stops below the masthead */
   await go("2026-09-05");
   await clickWord("The most famous story");
-  await page.mouse.move(500, 400);
-  await page.mouse.wheel(0, 900);
-  await rest(page);
+  /* the wheel's scroll settled before the Enter: one landing after it scrolled the caret back out of view */
+  await wheelTo((await page.evaluate(() => scrollY)) + 900);
   await page.keyboard.press("Enter");
-  await rest(page);
+  await page.waitForFunction(() => { const s = getSelection(); const r = s.rangeCount && (s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect()); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r && r.top >= head; }, null, { timeout: 2000 }).catch(() => {});
   await log("Enter with the caret above the window", { clear: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect(); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r ? Math.round(r.top - head) : null; }) });
   await page.keyboard.press("Backspace");
   /* a picture that finishes preparing while Search is typed in */
@@ -2387,6 +2408,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await rest(page);
   await log("ArrowDown from a sentence above a note under the English", { cell: await R.caretCell(page) });
   await R.caretAfter(page, "Her gleaming beauty alone remained.", "Her gleaming beauty alone remained.".length);
+  await still(page);
   await page.keyboard.press("ArrowDown");
   await rest(page);
   await log("ArrowDown from a block's last sentence", { cell: await R.caretCell(page) });
@@ -2814,6 +2836,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(".backups button:has-text('unused picture')").catch(() => {});
   await page.waitForFunction((s) => /removed/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 5000 }).catch(() => {});
   await log("Remove … unused picture clicked, the confirm accepted", { corner: await cornerText(), left: await A.pictureKeys(page, "page/Unused Pictures"), panel: await R.backups(page) });
+  await page.click(S.corner).catch(() => {});
+  await page.waitForFunction((s) => document.querySelector(s)?.textContent === "copied", S.corner, { timeout: 3000 }).catch(() => {});
+  await log("the whisper clicked", { corner: await cornerText(), clipboard: await page.evaluate(async () => { for (let i = 0; i < 20; i++) { try { return await navigator.clipboard.readText(); } catch { await new Promise((r) => setTimeout(r, 50)); } } return null; }) });
   await page.keyboard.press("Escape");
     }],
     ["a page moved with its sub-pages", async () => {

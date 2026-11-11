@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { linkRefusal, insertLinkAfter, linkMarkdown } from "./insertLink.ts";
+import { linkRefusal, headingRefusal, insertLinkAfter, linkMarkdown } from "./insertLink.ts";
 import { schema } from "../model/schema.ts";
 
 function at(md: string, needle: string): EditorState {
@@ -15,6 +15,11 @@ test("linkRefusal: a code block and a link refuse, prose does not", () => {
   expect(linkRefusal(at("plain text", "plain"))).toBe("");
   expect(linkRefusal(at("```\ncode here\n```", "code"))).toBe("no link inside a code block");
   expect(linkRefusal(at("see [the link](#x) now", "the li"))).toBe("no link inside a link");
+});
+test("headingRefusal: a caret in a heading refuses, at its start too; the line below does not", () => {
+  expect(headingRefusal(at("# Test Author\n\nbelow", "Test"))).toBe("no link inside a heading — place your cursor below it");
+  expect(headingRefusal(at("# Test Author\n\nbelow", ""))).toBe("no link inside a heading — place your cursor below it");
+  expect(headingRefusal(at("# Test Author\n\nbelow", "below"))).toBe("");
 });
 test("insertLinkAfter: the caret stands after the link it placed, outside it", () => {
   let s = at("some text here", "text");

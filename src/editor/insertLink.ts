@@ -14,6 +14,11 @@ export function linkRefusal(state: EditorState): string {
   if (schema.marks.link.isInSet($to.marks())) return "no link inside a link";
   return "";
 }
+/* a heading is a page's name: a new page's link placed there would rename
+   the page it is minted on (pin: insertLink.test › headingRefusal) */
+export function headingRefusal(state: EditorState): string {
+  return state.selection.$to.parent.type === schema.nodes.heading ? "no link inside a heading — place your cursor below it" : "";
+}
 /* the same link as markdown, for the markdown view: spelled by the
    serializer, so both views write one text (pin: insertLink.test ›
    linkMarkdown) */
