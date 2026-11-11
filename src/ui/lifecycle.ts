@@ -5,7 +5,7 @@ import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
 import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
 import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, movePrompt, moveConfirm, deleteConfirm, deleteLanding, hostKey, refiledText, movedText } from "./subEntries.ts";
-import { refileKeys, refileLinks, pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
+import { pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
 import { movePlan, moveLinks, joined, pictureNames, renamePictures } from "../store/move.ts";
 import { imageRefs, splitKey } from "../store/exportEntries.ts";
 import { pictureKey } from "../store/names.ts";
@@ -186,10 +186,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      click replayed against the renamed state would move nothing yet still
      retarget the address to a name that holds nothing. The new key lands
      BEFORE the old one clears, so a crash between leaves a transient
-     duplicate, never a lost entry. A sub-page renames by its leaf, within
-     its parent; content-bearing descendants block, blanks are swept only
-     past the prompt (pin: lifecycle.test › flushes, suspends, writes the new key)
-     (pin: lifecycle.test › ignores a second rename) */
+     duplicate, never a lost entry (pin: lifecycle.test › flushes, suspends,
+     writes the new key) (pin: lifecycle.test › ignores a second rename). A
+     page or book goes the one way, `relocate`, whether renamed, re-filed or
+     moved; a day's tagged entry, which hosts nothing, is renamed here */
   let renaming = false;
   function rename(): Promise<void> {
     const c = session.current;
@@ -204,7 +204,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if ((raw || "").trim() === filled) return done;
     const addr = ns ? typedAddress(raw) : null;
     if (addr && "refuse" in addr) { ui.say(addr.refuse); return done; }
-    if (addr) return move(date, old, entryKey(addr.date, addr.tag));
+    if (addr) return relocate(date, old, entryKey(addr.date, addr.tag), "move");
     const typed = typedName(raw);
     if (!typed) return done;
     if ("refuse" in typed) { ui.say(typed.refuse); return done; }
@@ -213,19 +213,14 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const listKey = pp && pp.sub ? entryKey(date, pp.parent) : date;
     if (childrenOf(keysNow(), listKey).indexOf(leaf) !== -1) { dialogs.alert(takenText(listKey, leaf)); return done; }
     const full = pp && pp.sub ? pp.parent + "/" + leaf : leaf;
-    if (deep) return move(date, old, entryKey(date, full));
+    if (ns) return relocate(date, old, entryKey(date, full), deep ? "move" : "rename");
     renaming = true;
     return session.flushSave().then(() => {
       if (session.current.date !== date || session.current.tag !== old) return;
       session.suspendSaves();   /* nothing lands under the old key from here on */
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
-      const sweptKeys = ns ? blankSubTree(keysNow(), oldKey) : [];
-      const sweep = sweptKeys.map((k) => layer.removeEntry(k));
-      /* an EMPTY body moves too: the row is the registration */
-      const ownLabel = ns ? pageParts(old).leaf : old, newOwnLabel = ns ? pageParts(full).leaf : full;
-      const followed = (text: string): string => retargetLinks(text, entryHash(date, old), entryHash(date, full), ownLabel, newOwnLabel) ?? text;
-      const moved = layer.setEntry(entryKey(date, full), followed(md));
-      return Promise.all([moved, ...sweep]).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
+      const followed = (text: string): string => retargetLinks(text, entryHash(date, old), entryHash(date, full), old, full) ?? text;
+      return layer.setEntry(entryKey(date, full), followed(md)).then(() => layer.removeEntry(oldKey)).then(() => retargetHost(date, old, full)).then(() => {
         /* typed into the surface while the writes ran: carried to the new key */
         const live = session.surfaceMd();
         return live !== md ? layer.setEntry(entryKey(date, full), followed(live)) : true;
@@ -236,7 +231,6 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
         ui.replaceHash(entryHash(date, full));
         session.open(date, full);
         session.movePlace(oldKey, entryKey(date, full));
-        for (const k of sweptKeys) session.movePlace(k, null);
         ui.redraw();
       });
     }).finally(() => { renaming = false; });
@@ -278,14 +272,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     })), Promise.resolve()).then(() => clash ? { clash } : { lost, olds: Array.from(new Set(dests.map((d) => source[d]))) });
   }
 
-  /* AN AUTHOR RE-FILED, its books and their pictures with it: every copy
-     lands before any old key is cleared, and a copy that fails takes the others back, the
-     old author standing whole (pin: lifecycle.test › a failed move removes
-     the copies made). The other entries' links are rewritten after the
-     copies land, and one that cannot be is NAMED in a pin rather than
-     undone: the undo is more writes that can fail the same way (pin:
-     lifecycle.test › a link refused once as stale is rewritten on the
-     retry) */
+  /* AN AUTHOR RE-FILED, its books and their pictures with it, a name typed
+     in the filing form */
   function refile(date: string, old: string): Promise<void> {
     const typed = typedName(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), old));
     if (!typed) return done;
@@ -294,104 +282,53 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (root === old) return done;
     if (onShelves(date, root)) { ui.say(SHELVES_TAKEN, 2500); return done; }
     if (childrenOf(keysNow(), date).indexOf(root) !== -1) { dialogs.alert(takenText(date, root)); return done; }
-    renaming = true;
-    return session.flushSave().then(() => {
-      if (session.current.date !== date || session.current.tag !== old) return;
-      session.suspendSaves();
-      const oldKey = entryKey(date, old), newKey = entryKey(date, root);
-      const points = pointsInto(date, old);
-      const rewrite = (md: string): string => (md.includes("#" + date + "/") && refileLinks(md, date, old, root)) || md;
-      const headed = (md: string): string => withHeading(md, old) ?? md;
-      const flushed = layer.entryMd(oldKey);
-      const moves = refileKeys(keysNow(), date, old, root);
-      /* an author whose books arrived without its own page gets one, or it
-         would read as the new filed name (pin: lifecycle.test › an author
-         with no page of its own) */
-      const pageless = !(oldKey in moves);
-      if (pageless) moves[oldKey] = newKey;
-      const named = (k: string): Record<string, string> => pictureNames(k, moves[k], layer.entryMd(k), []);
-      const rootNames = named(oldKey);
-      const rootMd = (md: string): string => renamePictures(headed(rewrite(md)), rootNames);
-      const moved = Object.keys(moves).map((from) => {
-        const names = from === oldKey ? rootNames : named(from);
-        return { from, to: moves[from], named: names, md: from === oldKey ? rootMd(layer.entryMd(from)) : renamePictures(rewrite(layer.entryMd(from)), names) };
-      });
-      const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
-      const copied: string[] = [];
-      const keepTyped = (): Promise<unknown> => { const live = session.surfaceMd(); return (live !== flushed ? layer.setEntry(oldKey, live) : Promise.resolve(true)).catch(() => {}); };
-      const refused = (why: string): Promise<void> => keepTyped().then(() => dropUnnamed(copied)).then(() => { session.open(date, old); ui.pin("couldn't re-file — " + why); });
-      return carryPictures(moved, copied).then((carried) => {
-      if ("clash" in carried) return refused(carried.clash);
-      return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
-        if (landed.includes(false)) {
-          /* typed while the copies ran: kept under the old name, which the
-             reopen reads (pin: lifecycle.test › a failed move keeps what was typed) */
-          const live = session.surfaceMd();
-          const kept = live !== flushed ? layer.setEntry(oldKey, live) : Promise.resolve(true);
-          return kept.then(() => Promise.all(moved.map((m) => layer.removeEntry(m.to)))).then((removed) => dropUnnamed(copied, stillThere(moved.map((m) => m.to), removed, (i) => moved[i].md)).then(() => removed)).then((removed) => {
-            const left = failed(moved.map((m) => m.to), removed).filter((_, i) => landed[i]);
-            session.open(date, old);
-            ui.pin(left.length ? "couldn't re-file — copies left: " + left.join(", ") : "couldn't re-file — nothing was moved");
-          });
-        }
-        const linking = linkingKeys(layer.cache, date, moves);
-        return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => refileLinks(md, date, old, root)))).then((results) => {
-          const left = [
-            ...moved.filter((m) => points(m.md)).map((m) => m.to),
-            ...linking.filter((k, i) => results[i] === "failed" || points(layer.entryMd(k))),
-          ];
-          const updated = linking.filter((k, i) => results[i] === "landed" && left.indexOf(k) === -1).length;
-          const olds = Object.keys(moves).filter((k) => !(pageless && k === oldKey));
-          const was = olds.map((k) => layer.entryMd(k));
-          return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
-            const stayed = failed(olds, removed);
-            const still = stillThere(olds, removed, (i) => was[i]);
-            /* typed into the surface while the writes ran: carried to the new key */
-            const live = session.surfaceMd();
-            return (live !== flushed ? layer.setEntry(newKey, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed(carried.olds, still)).then(() => stayed);
-          }).then((stayed) => {
-            deps.moveKept(moves);
-            ui.replaceHash(entryHash(date, root));
-            session.open(date, root);
-            session.movePlaces(moves);
-            ui.redraw();
-            const text = refiledText(root, moved.length - (pageless ? 1 : 0), updated, left, stayed, carried.lost);
-            if (left.length || stayed.length) ui.pin(text); else ui.say(text);
-          });
-        });
-      });
-      }, () => refused("a picture could not be copied, nothing was moved"));
-    }).finally(() => { renaming = false; });
+    return relocate(date, old, entryKey(date, root), "refile");
   }
 
-  /* A PAGE MOVED WITH ITS SUB-PAGES, to any place: the same order as the
-     re-file, the pictures copied first, so no entry lands where its
-     pictures are not, each under the name its new entry gives it. Into an
-     entry already there, its text joins after the text there and a sub-page the place holds by its title
-     is deleted, its links going to that one; a failed copy puts the text
-     there back as it was (pin: lifecycle.test › a failed copy takes the
-     others back) */
-  function move(date: string, old: string, to: string): Promise<void> {
+  /* A PAGE OR BOOK TO ANOTHER KEY, its sub-pages, pictures and every link to
+     them with it — renamed, re-filed or moved. Every copy lands before any
+     old key is cleared, and a copy that fails takes the others back, the
+     old standing whole, the text there put back as it was (pin:
+     lifecycle.test › a failed move removes the copies made) (pin:
+     lifecycle.test › a failed copy takes the others back). The other
+     entries' links are rewritten after the copies land, and one that cannot
+     be is NAMED in a pin rather than undone: the undo is more writes that
+     can fail the same way (pin: lifecycle.test › a link refused once as
+     stale is rewritten on the retry). Only a move asks first; into an entry
+     already there, its text joins after the text there and a sub-page the
+     place holds by its title is deleted, its links and bookmarks going to
+     that one. An author re-filed keeps its name as its page's heading, and
+     one whose books came without a page is given one (pin: lifecycle.test ›
+     an author with no page of its own) */
+  type Mode = "move" | "rename" | "refile";
+  const COULDNT: Record<Mode, string> = { move: "couldn't move", rename: "couldn't rename", refile: "couldn't re-file" };
+  function relocate(date: string, old: string, to: string, mode: Mode): Promise<void> {
     const from = entryKey(date, old);
     if (to === from) return done;
-    const [toDate, toTag] = splitKey(to);
-    if (toDate === NS_BOOK.key && toTag && pageParts(toTag).name === SHELVES) { ui.say(pageParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500); return done; }
+    const [toDate, toTag] = splitKey(to) as [string, string];
+    if (toDate === NS_BOOK.key && pageParts(toTag).name === SHELVES) { ui.say(pageParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500); return done; }
     const first = movePlan(layer.cache, from, to);
     if ("refuse" in first) { ui.say(first.refuse, 3000); return done; }
-    const twinTitles = Object.keys(first.twins).map((k) => firstHeading(layer.entryMd(k)) || pageParts(splitKey(k)[1]!).leaf);
-    if (!dialogs.confirm(moveConfirm(date, old, shownName(date, old), to, { moved: Object.keys(first.moves).length - 1, into: first.into, twins: twinTitles }))) return done;
+    if (mode === "move") {
+      const twinTitles = Object.keys(first.twins).map((k) => firstHeading(layer.entryMd(k)) || pageParts(splitKey(k)[1]!).leaf);
+      if (!dialogs.confirm(moveConfirm(date, old, shownName(date, old), to, { moved: Object.keys(first.moves).length - 1, into: first.into, twins: twinTitles }))) return done;
+    }
+    const couldnt = COULDNT[mode];
     renaming = true;
     return session.flushSave().then(() => {
       if (session.current.date !== date || session.current.tag !== old) return;
-      session.suspendSaves();
+      session.suspendSaves();   /* nothing lands under the old key from here on */
       const plan = movePlan(layer.cache, from, to);
-      if ("refuse" in plan) { session.open(date, old); ui.pin("couldn't move — " + plan.refuse); return; }
+      if ("refuse" in plan) { session.open(date, old); ui.pin(couldnt + " — " + plan.refuse); return; }
+      const pageless = !(from in plan.moves);
+      if (pageless) plan.moves[from] = to;
+      const headed = (md: string): string => mode === "refile" ? withHeading(md, old) ?? md : md;
       const rewrite = (md: string): string => moveLinks(md, from, plan) ?? md;
       const flushed = layer.entryMd(from), there = plan.into ? layer.entryMd(to) : "";
       const names = (k: string): Record<string, string> => pictureNames(k, plan.moves[k], layer.entryMd(k), k === from && plan.into ? imageRefs(there) : []);
       const rootNames = names(from);
       const rootMd = (md: string): string => {
-        const own = renamePictures(rewrite(md), rootNames);
+        const own = renamePictures(headed(rewrite(md)), rootNames);
         return plan.into ? joined(rewrite(there), own) : own;
       };
       const moved = Object.keys(plan.moves).map((k) => {
@@ -401,26 +338,26 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
       const copied: string[] = [];
       const twinPictures = Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k)));
+      /* typed while the copies ran: kept under the old name (pin:
+         lifecycle.test › a failed move keeps what was typed) */
       const keepTyped = (): Promise<unknown> => { const live = session.surfaceMd(); return (live !== flushed ? layer.setEntry(from, live) : Promise.resolve(true)).catch(() => {}); };
-      const refused = (why: string): Promise<void> => keepTyped().then(() => dropUnnamed(copied)).then(() => { session.open(date, old); ui.pin("couldn't move — " + why); });
-      const takeBack = (landed: boolean[]): Promise<void> => {
-        const live = session.surfaceMd();
-        const kept = live !== flushed ? layer.setEntry(from, live) : Promise.resolve(true);
-        return kept.then(() => Promise.all(moved.map((m) => m.to === to && plan.into ? layer.setEntry(to, there) : layer.removeEntry(m.to)))).then((undone) => dropUnnamed(copied, stillThere(moved.map((m) => m.to), undone, (i) => moved[i].md)).then(() => undone)).then((undone) => {
+      const refused = (why: string): Promise<void> => keepTyped().then(() => dropUnnamed(copied)).then(() => { session.open(date, old); ui.pin(couldnt + " — " + why); });
+      const takeBack = (landed: boolean[]): Promise<void> => keepTyped()
+        .then(() => Promise.all(moved.map((m) => m.to === to && plan.into ? layer.setEntry(to, there) : layer.removeEntry(m.to))))
+        .then((undone) => dropUnnamed(copied, stillThere(moved.map((m) => m.to), undone, (i) => moved[i].md)).then(() => undone))
+        .then((undone) => {
           const left = failed(moved.map((m) => m.to), undone).filter((_, i) => landed[i]);
           session.open(date, old);
-          ui.pin(left.length ? "couldn't move — copies left: " + left.join(", ") : "couldn't move — nothing was moved");
+          ui.pin(left.length ? couldnt + " — copies left: " + left.join(", ") : couldnt + " — nothing was moved");
         });
-      };
       return carryPictures(moved, copied).then((carried) => {
         if ("clash" in carried) return refused(carried.clash);
-        const lost = carried.lost;
         return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
           if (landed.includes(false)) return takeBack(landed);
           const twins = Object.keys(plan.twins);
           const linking = linkingKeys(layer.cache, date, plan.moves).filter((k) => !(k in plan.twins));
           const points = pointsInto(date, old);
-          const host = hostKey(date, old), newLeaf = pageParts(toTag!).leaf, oldLeaf = pageParts(old).leaf;
+          const host = hostKey(date, old), newLeaf = pageParts(toTag).leaf, oldLeaf = pageParts(old).leaf;
           const relabel = newLeaf !== oldLeaf ? { old: oldLeaf, new: newLeaf } : undefined;
           return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => moveLinks(md, from, plan, k === host ? relabel : undefined)))).then((results) => {
             const left = [
@@ -428,13 +365,15 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
               ...linking.filter((k, i) => results[i] === "failed" || points(layer.entryMd(k))),
             ];
             const updated = linking.filter((k, i) => results[i] === "landed" && left.indexOf(k) === -1).length;
-            const olds = [...Object.keys(plan.moves), ...twins];
+            const olds = [...Object.keys(plan.moves).filter((k) => !(pageless && k === from)), ...twins];
             const was = olds.map((k) => k === from ? flushed : layer.entryMd(k));
             return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
               const still = stillThere(olds, removed, (i) => was[i]);
+              /* typed into the surface while the writes ran: carried to the new key */
               const live = session.surfaceMd();
               return (live !== flushed ? layer.setEntry(to, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed([...carried.olds, ...twinPictures], still)).then(() => failed(olds, removed));
             }).then((stayed) => {
+              /* the kept state before the open, the places after it */
               const kept: Record<string, string> = Object.create(null);
               for (const k of Object.keys(plan.moves)) if (!(plan.into && k === from)) kept[k] = plan.moves[k];
               deps.moveKept(kept);
@@ -444,7 +383,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
               session.movePlaces(kept);
               for (const k of plan.into ? [...twins, from] : twins) session.movePlace(k, null);
               ui.redraw();
-              const text = movedText(to, moved.length, twins.length, lost, updated, left, stayed);
+              const count = moved.length - (pageless ? 1 : 0);
+              const text = mode === "refile" ? refiledText(toTag, count, updated, left, stayed, carried.lost) : movedText(to, count, twins.length, carried.lost, updated, left, stayed, mode === "rename" ? "renamed" : "moved");
               if (left.length || stayed.length) ui.pin(text); else ui.say(text);
             });
           });

@@ -1245,8 +1245,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type(" X");
   await log("typed into a margin-note in the margin", { lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1000, height: 600 });
-  await rest(page);
+  /* the resize's measuring pass run before the reading */
+  await R.settle(page);
   await page.keyboard.type("Y");
+  await still(page);
   await log("narrowed to 1000px, typed on", { ...(await R.margins(page)), lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("page/Margins");
@@ -2816,6 +2818,21 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("⌃⌘G past the last line where blocks repeat a number", await ask("9"));
   await page.keyboard.press("Escape");
   await rest(page);
+    }],
+    ["a page renamed with every link following", async () => {
+  /* Rename on a page with no sub-pages, a plain name typed: a link to it on another page follows, and the corner says so */
+  await A.foreignWrite(page, "page/Rename Me", "me\n");
+  await A.foreignWrite(page, "page/Rename Far", "See [it](#page/Rename%20Me) here.\n");
+  /* both read by the page before the rename, as entries written elsewhere are */
+  await go("page/Rename%20Far");
+  await go("page/Rename%20Me");
+  answer = "Renamed Me";
+  prompts.length = 0;
+  confirms.length = 0;
+  await page.click(S.renameSubPage);
+  await A.waitEntry(page, "page/Renamed Me", 5000).catch(() => {});
+  await page.waitForFunction((s) => /renamed to/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
+  await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await cornerText(), far: await A.stored(page, "page/Rename Far"), old: await A.stored(page, "page/Rename Me") });
     }],
     ["unused pictures", async () => {
   /* a picture pasted, then deleted from the text: the backups panel offers to remove it, and its button removes it */

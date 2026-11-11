@@ -574,11 +574,11 @@ is in the plan's record, under the phase named):
   (the bookshelf's shelves: the `Shelves` entry's `##` headings in order
   and the authors their links name, each author placed on one, the
   unlisted on the shelf with no list), `refile.ts`
-  (an author re-filed, pure: the keys that move, an address into the old
-  name moved by the key it names, the text test for one left behind, the
-  heading a pageless author is given), `move.ts` (a page moved with its
-  sub-pages to any place, pure: the keys that move, the twins the place holds
-  by title, the links rewritten, the texts joined), `pictures.ts` (the
+  (what an entry's change of key checks, pure: the text test for a link left
+  behind, the heading a pageless author is given, the entries to rewrite),
+  `move.ts` (a page or book to another key — renamed, re-filed or moved —
+  pure: the keys that move, the twins the place holds by title, the links
+  rewritten, the texts joined, the pictures renamed), `pictures.ts` (the
   pictures the entries name, those no entry names, and the sweep's plan with
   its belt). Tests beside
   them, ported from the current app's node suites where they had one.

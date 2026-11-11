@@ -74,6 +74,25 @@ describe("moveHref", () => {
   });
 });
 
+describe("moveHref under an author re-filed", () => {
+  const AUTHOR: Record<string, string> = { "bookshelf/C. P. Cavafy": "# C. P. Cavafy\n", "bookshelf/C. P. Cavafy/Walls": "w\n", "bookshelf/C. P. Cavafy/Walls/1": "1\n", "bookshelf/C. P. Cavafy Jr": "j\n" };
+  const cav = plan(AUTHOR, "bookshelf/C. P. Cavafy", "bookshelf/Cavafy, C. P");
+  it("the root and every key under it move to the same place under the new name, a name sharing its start left", () => {
+    expect(cav.moves).toEqual({ "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P", "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls", "bookshelf/C. P. Cavafy/Walls/1": "bookshelf/Cavafy, C. P/Walls/1" });
+  });
+  it("an encoded slash, a hand-spelled address, a highlight and a line all move by the key they name", () => {
+    const from = "bookshelf/C. P. Cavafy";
+    expect(moveHref("#bookshelf/C.%20P.%20Cavafy%2FWalls", from, cav)).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls");
+    expect(moveHref("#bookshelf/C. P. Cavafy/Walls", from, cav)).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls");
+    expect(moveHref("#bookshelf/C.%20P.%20Cavafy/Walls?h=the%20walls&n=2", from, cav)).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls?h=the%20walls&n=2");
+    expect(moveHref("#bookshelf/C.%20P.%20Cavafy/Walls?line=7", from, cav)).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls?line=7");
+  });
+  it("another author, a longer name, another namespace and an outside link are left", () => {
+    for (const href of ["#bookshelf/Carroll%2C%20Lewis", "#bookshelf/C.%20P.%20Cavafy%20Jr", "#page/C.%20P.%20Cavafy", "https://x.org/#bookshelf/C.%20P.%20Cavafy", "#2026-09-14"])
+      expect(moveHref(href, "bookshelf/C. P. Cavafy", cav)).toBeNull();
+  });
+});
+
 describe("moveLinks", () => {
   it("rewrites each link into the page, its label kept; null when there is none", () => {
     expect(moveLinks(CACHE["2026-09-01"], "page/Essays", plan())).toBe("See [birds](#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds?line=3).");

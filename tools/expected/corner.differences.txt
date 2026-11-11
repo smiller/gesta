@@ -330,3 +330,6 @@ after the click · text · a click on a whisper copies its words, the corner the
 after the click · show · a click on a whisper copies its words, the corner then saying copied; new here, the old app frozen
 + book with the caret in the heading · * · new here, the old app frozen
 the whisper clicked · * · new here, the old app frozen
+a page renamed with every link following: arrived at page/Rename Far · * · new here, the old app frozen
+a page renamed with every link following: arrived at page/Rename Me · * · new here, the old app frozen
+Rename, Renamed Me typed, Enter · * · new here, the old app frozen

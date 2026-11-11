@@ -307,23 +307,24 @@ describe("rename", () => {
     await same.life.rename();
     expect(same.log).toEqual(['alert A "C" sub-page already exists.']);
   });
-  it("flushes, suspends, writes the new key before clearing the old, retargets the host, carries what was typed meanwhile, then opens and moves the places", async () => {
-    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "body\n", "page/A/B/x": "" } });
+  it("flushes, suspends, writes the new keys before clearing the old, its parent's link and every other following, carries what was typed meanwhile, then opens, moves the places and says so", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "body\n", "page/A/B/x": "", "page/Q": "see [B](#page/A/B/x)\n" } });
     w.typeMeanwhile("body more\n");
     w.answer("C");
     await w.life.rename();
     const l = w.log;
     expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
     expect(before(l, "set page/A/C", "del page/A/B")).toBe(true);
-    expect(l).toContain("del page/A/B/x");
-    expect(l.slice(l.indexOf("del page/A/B") + 1)).toEqual([
-      "set page/A", "set page/A/C", "kept page/A/B → page/A/C", "hash #page/A/C", "open page/A/C",
-      "move page/A/B → page/A/C", "move page/A/B/x → null", "redraw",
+    expect(before(l, "set page/A", "del page/A/B")).toBe(true);
+    const moved = "page/A/B → page/A/C, page/A/B/x → page/A/C/x";
+    expect(l.slice(l.indexOf("del page/A/B/x") + 1)).toEqual([
+      "set page/A/C", "kept " + moved, "hash #page/A/C", "open page/A/C", "places " + moved, "redraw", "say renamed to page/A/C — 2 entries, links updated in 2 others",
     ]);
     expect(w.md("page/A/C")).toBe("body more\n");
+    expect(w.md("page/A/C/x")).toBe("");
     expect(w.md("page/A/B")).toBeNull();
-    expect(w.md("page/A/B/x")).toBeNull();
     expect(w.md("page/A")).toBe("- [C](#page/A/C)");
+    expect(w.md("page/Q")).toBe("see [B](#page/A/C/x)");
   });
   it("a page's links to its own lines move with it, and the host's to them, what was typed meanwhile included", async () => {
     const own = "[3-4](#page/A/B?line=3)\n";

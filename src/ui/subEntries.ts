@@ -88,8 +88,8 @@ export function refiledText(root: string, moved: number, updated: number, left: 
   return outcome("filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved" + lostText(lost), updated, left, stayed);
 }
 const lostText = (lost: number): string => lost ? ", " + lost + (lost === 1 ? " picture" : " pictures") + " not found" : "";
-export function movedText(to: string, moved: number, twins: number, lost: number, updated: number, left: string[], stayed: string[]): string {
-  let text = "moved to " + to + " — " + moved + (moved === 1 ? " entry" : " entries");
+export function movedText(to: string, moved: number, twins: number, lost: number, updated: number, left: string[], stayed: string[], verb = "moved"): string {
+  let text = verb + " to " + to + " — " + moved + (moved === 1 ? " entry" : " entries");
   if (twins) text += ", " + twins + " there already deleted";
   return outcome(text + lostText(lost), updated, left, stayed);
 }

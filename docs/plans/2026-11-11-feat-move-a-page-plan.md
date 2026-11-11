@@ -197,3 +197,28 @@ read the caret at the line's start once.
   hold still, and "a link to itself" for the click's caret — both were right
   alone before too, so only later full runs can show them fixed. A margin-note
   reading at 1000px was seen wrong once in a full run, 2 of 2 right alone.
+
+## Rename, re-file and move one path (2026-11-11)
+
+Finding 8 of review cycle 1, asked: the three made one, `relocate` in
+`lifecycle.ts`, in three modes. A move (an address typed, or a page whose
+sub-pages hold text) asks first, joins into a page there and deletes twins; a
+rename (a plain name, no sub-pages holding text) does not ask; a re-file (an
+author's rename) keeps the author's name as its heading and gives a pageless
+author a page. All three share the picture step, the link rewrite, the
+clean-up, the kept state and the failure paths. A day's tagged entry keeps its
+own rename (it hosts nothing, and its folder is the year's).
+
+Behaviour that changed: a plain rename of a page or book now moves every link
+to it, anywhere, where only its parent's followed; its blank sub-pages move
+with it rather than being swept; its pictures named for it are renamed; the
+corner says "renamed to … — N entries, links updated in M others". The
+re-file's own key and link functions went, their cases moved to move.test.
+
+MEASURED headless, the new step "a page renamed with every link following":
+the link on another page follows and the corner says so. The step first read
+the other page before the app had taken it from storage (written there by the
+harness, not typed), and the link was not followed; it now visits it first —
+INFERRED a harness timing, entries a reader writes being in the app already.
+The margin-note reading at 1000px, wrong once more in a full run, now waits for
+the resize to settle; 3 of 3 right alone.
