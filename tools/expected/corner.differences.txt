@@ -317,3 +317,6 @@ a page moved with its sub-pages: arrived at page/Move Source · * · new here, t
 Rename, an address in the bookshelf typed, Enter, the confirm accepted · * · new here, the old app frozen
 a page moved with its sub-pages: arrived at bookshelf/Mover, Test/Essays/Essay · * · new here, the old app frozen
 the moved essay, its picture · * · new here, the old app frozen
+a link's tooltip · title · a link into the journal names the last part of the entry it opens, new here, the old app frozen
+a link's tooltip · outside · new here, the old app frozen
+the place's links, hovered · * · new here, the old app frozen

@@ -2133,7 +2133,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.evaluate(() => { location.hash = "#page/Links"; });
   await page.waitForTimeout(800);
   await log("the copy button after a navigation", { over, after: await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn) });
-  await log("a link's tooltip", { title: await page.evaluate((s) => document.querySelector(s + " a")?.title ?? null, S.editor) });
+  await log("a link's tooltip", { title: await page.evaluate((s) => document.querySelector(s + " a")?.title ?? null, S.editor), outside: await page.evaluate((s) => document.querySelector(s + " a[href^='https:']")?.title ?? null, S.editor) });
   await R.selectBetween(page, "link", "link");
   await rest(page);
   await log("the Tag button's tooltip", { title: await page.evaluate((s) => document.querySelector(s)?.title ?? null, S.fmtTag) });
@@ -2816,6 +2816,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     there: await there(""), essay: await there("/Essay"), twin: await there("/2022-twin"), links: await A.stored(page, "page/Move Links"),
     left: [await A.stored(page, "page/Move Source"), await A.stored(page, "page/Move Source/Essay"), await A.stored(page, "page/Move Source/2026-twin")],
   });
+  await log("the place's links, hovered", { titles: await page.evaluate((s) => [...document.querySelectorAll(s + " a")].map((a) => a.title), S.editor) });
   await go("bookshelf/Mover%2C%20Test/Essays/Essay");
   await R.waitImg(page).catch(() => {});
   await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});

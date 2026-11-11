@@ -16,7 +16,7 @@ import { DOMSerializer, Fragment, type Node } from "prosemirror-model";
 import { inlineBlockStyles } from "./inlineStyles.ts";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
-import { linkClick } from "./links.ts";
+import { linkClick, linkTitle } from "./links.ts";
 import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
@@ -217,7 +217,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     /* the hint is drawn on screen alone, so no copy carries it (pin:
        notices and surfaces as the old app has them › a link's tooltip)
        (pin: schema.test › a link's DOM) */
-    markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = "⌘-click to open"; return { dom: a }; } },
+    markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = linkTitle(mark.attrs.href as string); return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },
     handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
