@@ -83,6 +83,10 @@ test("movedBookmarks: a bookmark moved onto a key the list holds already is drop
   const list = [{ key: "page/B", alias: "b" }, { key: "page/A", alias: "a" }];
   expect(movedBookmarks(list, { "page/A": "page/B" })).toEqual([{ key: "page/B", alias: "b" }]);
 });
+test("movedBookmarks: two bookmarks moved onto one key keep the first", () => {
+  const list = [{ key: "page/A", alias: "a" }, { key: "page/B", alias: "b" }];
+  expect(movedBookmarks(list, { "page/A": "page/C", "page/B": "page/C" })).toEqual([{ key: "page/C", alias: "a" }]);
+});
 test("movedBookmarks: each moved key's bookmark follows it, alias and place in the list kept", () => {
   const list = [{ key: "page/A", alias: "" }, { key: "bookshelf/C. P. Cavafy/Walls", alias: "w" }];
   expect(movedBookmarks(list, { "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls" })).toEqual([{ key: "page/A", alias: "" }, { key: "bookshelf/Cavafy, C. P/Walls", alias: "w" }]);

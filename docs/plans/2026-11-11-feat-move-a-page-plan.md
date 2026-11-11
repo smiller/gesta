@@ -143,3 +143,38 @@ and a delete should clean up their own, and the panel's sweep the rest.
 - Flakes seen, not caused here: "ArrowDown from a block's last sentence" (the
   dual-language section) read a note's cell once in a full run; 3 of 3 alone
   read the approved value.
+
+## Review cycle 2 and the confirmation pass of cycle 1 (2026-11-11)
+
+Two `/code-review` runs at high, findings the reviewers', none verified by them:
+the confirmation pass of cycle 1's fixes (`bd6793a..de6ae67`), MEASURED
+106,165 tokens; the review of the re-file's pictures and the picture clean-up
+(`de6ae67..dbfbcdd`), MEASURED 120,897 tokens. Merged into one list, the reader
+said to fix all of them:
+
+- A. The picture reader missed forms the editor shows (a name with brackets, a
+  title, brackets in the words), so the sweep could free a picture on screen —
+  fixed: the editor's parser reads them; the sweep also keeps what the syntax
+  alone reads. MEASURED over the backup's 178 entries with pictures: parser and
+  syntax read the same pictures, 0 apart, so the 193 removed were unnamed.
+- B, E. A delete, or a move's or re-file's old entry or left copy, whose
+  removal failed still freed its pictures — fixed.
+- C. The sweep counted before this tab's save landed — fixed: saved first.
+  Another tab's paste not yet landed stays a gap.
+- D. Two destinations of one picture got one copy — fixed: keyed by destination.
+- F, G. A failed clash read left saves off; a refusal dropped what was typed —
+  fixed: both keep it, reopen and say so.
+- H, I. The clash check read every picture at once and skipped renamed ones —
+  fixed: each copy checked just before it is made, one at a time.
+- J. An address with an empty part moved into the author or renamed — refused.
+- K. Two bookmarks moved onto one key — the first kept.
+- L. A blank twin refused as `“”` — its name.
+- M. The help's "more than half" said what the rule does once past 20.
+- N. The panel kept a stale count — reset before each count.
+- O. The picture keys of an entry folded once (`picturesOf`); the bare-name
+  label rule one function (`followedLabel`).
+- P. A comment above the wrong function moved; the bookmarks-only move its own
+  port.
+
+Flakes seen in this cycle's runs, each 3 of 3 right alone: "a link to itself"
+read the caret at the line's start once.

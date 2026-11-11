@@ -26,8 +26,11 @@ export function typedName(raw: string | null | undefined): Typed {
    spelled from its namespace (`bookshelf/Miller, Sean/Essays`), a
    page or book there; anything else is a name (pin: naming.test › a typed
    address names a page or book) */
-export function typedAddress(raw: string | null | undefined): { date: string; tag: string } | null {
+export const REFUSE_EMPTY_PART = "an address can’t have an empty part";
+export function typedAddress(raw: string | null | undefined): { date: string; tag: string } | { refuse: string } | null {
   const s = (raw || "").trim();
+  const path = s.replace(/^#/, "").split("?")[0];
+  if (NS_KEYS.some((n) => path.startsWith(n + "/")) && path.split("/").some((p) => !p)) return { refuse: REFUSE_EMPTY_PART };
   if (s.startsWith("#")) {
     if (!namesEntry(s.slice(1))) return null;
     const p = hashParts(s.slice(1));
@@ -37,8 +40,7 @@ export function typedAddress(raw: string | null | undefined): { date: string; ta
   const ns = NS_KEYS.find((n) => s.startsWith(n + "/"));
   if (!ns) return null;
   const parts = s.slice(ns.length + 1).split("/").map(pageName);
-  while (parts.length && !parts[parts.length - 1]) parts.pop();
-  return parts.length && parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : null;
+  return parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : { refuse: REFUSE_EMPTY };
 }
 
 const words = (s: string): string => s.trim().replace(/\s+/g, " ");

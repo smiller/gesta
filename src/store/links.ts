@@ -61,11 +61,12 @@ export function rewriteLinks(md: string, visit: Visit): string | null {
    the href moves, and a label that was the bare name follows it — a
    hand-written label stays, the accepted dangling-label class (pin:
    links.test › moves the href and a bare-name label) */
+export const followedLabel = (text: string, oldLabel: string, newLabel: string): string => text === oldLabel ? newLabel : text;
 export function retargetLinks(md: string, oldHref: string, newHref: string | null, oldLabel: string, newLabel: string | null): string | null {
   return rewriteLinks(md, (run) => {
     if (hashTarget(run.href) !== oldHref) return null;
     if (!newHref) return { remove: true };
-    return { href: newHref + run.href.slice(oldHref.length), text: run.text === oldLabel ? newLabel! : run.text };
+    return { href: newHref + run.href.slice(oldHref.length), text: followedLabel(run.text, oldLabel, newLabel!) };
   });
 }
 export function relabelLinks(md: string, href: string, sub: string, oldHeading: string, heading: string): string | null {

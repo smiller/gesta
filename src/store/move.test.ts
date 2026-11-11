@@ -38,6 +38,10 @@ describe("movePlan", () => {
     const other = { ...CACHE, "page/Essays/2022-07-31-essay": "# Something else\n" };
     expect(movePlan(other, "page/Essays", TO)).toEqual({ refuse: TO + "/2022-07-31-essay is there already" });
   });
+  it("a blank twin with pages of its own refuses by its name", () => {
+    const deep = { ...CACHE, "page/Essays/2022-07-31-essay": "", "page/Essays/2022-07-31-essay/more": "x\n" };
+    expect(movePlan(deep, "page/Essays", TO)).toEqual({ refuse: "“2022-07-31-essay” is there already and has pages of its own" });
+  });
   it("a twin with pages of its own refuses", () => {
     const deep = { ...CACHE, "page/Essays/2026-07-22-essay/more": "x\n" };
     expect(movePlan(deep, "page/Essays", TO)).toEqual({ refuse: "“On Growing Older” is there already and has pages of its own" });
@@ -115,9 +119,11 @@ describe("pictureNames", () => {
 });
 
 describe("renamePictures", () => {
-  it("each picture's address renamed, in angle brackets where the name holds a space; the rest left byte for byte", () => {
+  it("each picture the editor shows renamed, in angle brackets where the name holds a space; a link of the same name left", () => {
     const md = "Before ![a](x-img-1.webp) mid ![](<x-img-2.webp>) and [a link](x-img-1.webp)\n";
+    expect(renamePictures("![](Notes(2)-img-1.webp) and ![a](t.png \"title\")\n", { "Notes(2)-img-1.webp": "Notes(3)-img-1.webp", "t.png": "u.png" }))
+      .toBe("![](Notes(3)-img-1.webp) and ![a](u.png)");
     expect(renamePictures(md, { "x-img-1.webp": "Miller, Sean--x-img-1.webp", "x-img-2.webp": "y-img-2.webp" }))
-      .toBe("Before ![a](<Miller, Sean--x-img-1.webp>) mid ![](y-img-2.webp) and [a link](x-img-1.webp)\n");
+      .toBe("Before ![a](<Miller, Sean--x-img-1.webp>) mid ![](y-img-2.webp) and [a link](x-img-1.webp)");
   });
 });

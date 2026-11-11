@@ -20,6 +20,14 @@ describe("namedPictures", () => {
   });
 });
 
+describe("namedPictures, read twice", () => {
+  it("a picture only the syntax reads is named too, as is one only the parser reads", () => {
+    const named = namedPictures({ "page/A": "```\n![](in-code.png)\n```\n\n![](Notes(2)-img-1.webp)\n" });
+    expect(named.has("page/in-code.png")).toBe(true);
+    expect(named.has("page/Notes(2)-img-1.webp")).toBe(true);
+  });
+});
+
 describe("unnamed", () => {
   it("of the keys given, those no entry names, in their order", () => {
     expect(unnamed(["page/old.webp", "bookshelf/Miller, Sean/Essays/shared.webp", "page/gone.webp"], CACHE)).toEqual(["page/old.webp", "page/gone.webp"]);

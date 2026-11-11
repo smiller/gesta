@@ -9,7 +9,7 @@ import { refileKeys, refileLinks, pointsInto, withHeading, linkingKeys } from ".
 import { movePlan, moveLinks, joined, pictureNames, renamePictures } from "../store/move.ts";
 import { imageRefs, splitKey } from "../store/exportEntries.ts";
 import { pictureKey } from "../store/names.ts";
-import { unnamed } from "../store/pictures.ts";
+import { unnamed, picturesOf } from "../store/pictures.ts";
 import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
@@ -46,9 +46,9 @@ export interface LifecycleDeps {
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
-  /* the folded sections and bookmarks of each moved key; `merged` an entry
-     joined into one there already, whose bookmarks follow and folds do not */
-  moveKept(moves: Record<string, string>, merged?: Record<string, string>): void;
+  /* the folded sections and bookmarks of each moved key */
+  moveKept(moves: Record<string, string>): void;
+  moveBookmarks(moves: Record<string, string>): void;
   /* false when the store holds no picture under `from`; rejects when the write failed */
   copyPicture(from: string, to: string): Promise<boolean>;
   /* whether `to` holds a picture other than the one under `from` */
@@ -203,6 +203,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const raw = dialogs.prompt(deep ? movePrompt(date, old, shownName(date, old)) : renamePrompt(date, old, shownName(date, old)), filled);
     if ((raw || "").trim() === filled) return done;
     const addr = ns ? typedAddress(raw) : null;
+    if (addr && "refuse" in addr) { ui.say(addr.refuse); return done; }
     if (addr) return move(date, old, entryKey(addr.date, addr.tag));
     const typed = typedName(raw);
     if (!typed) return done;
@@ -241,37 +242,40 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     }).finally(() => { renaming = false; });
   }
 
+  /* the pictures no entry names any more, deleted; `still` the texts of
+     entries whose removal did not land, whose pictures stay. One that will
+     not go is left, and nothing is said (pin: lifecycle.test › a move deletes
+     the old copy) (pin: lifecycle.test › an old entry whose removal fails) */
+  const stillThere = (keys: string[], removed: boolean[], md: (i: number) => string): Record<string, string> => {
+    const out: Record<string, string> = Object.create(null);
+    keys.forEach((k, i) => { if (!removed[i]) out[k] = md(i); });
+    return out;
+  };
+  const dropUnnamed = (keys: string[], still: Record<string, string> = {}): Promise<void> => deps.removePictures(unnamed(keys, { ...layer.cache, ...still })).catch(() => {});
   /* THE PICTURES OF ENTRIES CHANGING KEY, copied before any entry is written,
-     so none lands where its pictures are not: one copy a picture, none where
-     it stays put, and one at a time, so a book's pictures are never all read
-     at once (pin: lifecycle.test › a picture two pages share is copied once).
-     A kept name the place holds for another picture would show that one in
-     its place, so nothing is copied and the clash is named (pin:
-     lifecycle.test › a picture whose name is kept); a failed copy rejects.
-     `copied` gathers each copy made, for a move that fails to take back; `olds`
-     the keys copied from */
-  /* the pictures no entry names any more, deleted; one that will not go
-     is left, and nothing is said (pin: lifecycle.test › a move deletes the old copy) */
-  const dropUnnamed = (keys: string[]): Promise<void> => deps.removePictures(unnamed(keys, layer.cache)).catch(() => {});
+     so none lands where its pictures are not: one copy for each new place,
+     none where a picture stays put, each checked and made one at a time, so a
+     book's pictures are never all read at once (pin: lifecycle.test › a
+     picture two pages share is copied once). A place holding another picture
+     under the new name would show that one in its place, so the copying stops
+     and the clash is named (pin: lifecycle.test › each copy is checked); a
+     failed read or copy rejects. `copied` gathers each copy made, to be taken
+     back; `olds` the keys copied from */
   function carryPictures(moved: { from: string; to: string; named: Record<string, string> }[], copied: string[]): Promise<{ lost: number; olds: string[] } | { clash: string }> {
-    const pairs: Record<string, { to: string; kept: boolean }> = Object.create(null);
+    const source: Record<string, string> = Object.create(null);
     for (const m of moved) {
       const [a, b] = [splitKey(m.from), splitKey(m.to)];
       for (const src of Object.keys(m.named)) {
         const pa = pictureKey(a[0], a[1], src), pb = pictureKey(b[0], b[1], m.named[src]);
-        if (pa !== pb) pairs[pa] = { to: pb, kept: m.named[src] === src };
+        if (pa !== pb) source[pb] = pa;
       }
     }
-    const pictures = Object.keys(pairs);
-    return Promise.all(pictures.map((pa) => pairs[pa].kept ? deps.pictureClash(pa, pairs[pa].to) : false)).then((clash) => {
-      const at = pictures.find((_, i) => clash[i]);
-      if (at) {
-        const dest = pairs[at].to, cut = dest.lastIndexOf("/");
-        return { clash: "a picture named " + dest.slice(cut + 1) + " is there already in " + dest.slice(0, cut) };
-      }
-      let lost = 0;
-      return pictures.reduce((chain, pa) => chain.then(() => deps.copyPicture(pa, pairs[pa].to)).then((f) => { if (f) copied.push(pairs[pa].to); else lost++; }), Promise.resolve()).then(() => ({ lost, olds: pictures }));
-    });
+    const dests = Object.keys(source);
+    let lost = 0, clash = "";
+    return dests.reduce((chain, pb) => chain.then(() => clash ? undefined : deps.pictureClash(source[pb], pb).then((taken) => {
+      if (taken) { const cut = pb.lastIndexOf("/"); clash = "a picture named " + pb.slice(cut + 1) + " is there already in " + pb.slice(0, cut); return; }
+      return deps.copyPicture(source[pb], pb).then((f) => { if (f) copied.push(pb); else lost++; });
+    })), Promise.resolve()).then(() => clash ? { clash } : { lost, olds: Array.from(new Set(dests.map((d) => source[d]))) });
   }
 
   /* AN AUTHOR RE-FILED, its books and their pictures with it: every copy
@@ -314,15 +318,17 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       });
       const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
       const copied: string[] = [];
+      const keepTyped = (): Promise<unknown> => { const live = session.surfaceMd(); return (live !== flushed ? layer.setEntry(oldKey, live) : Promise.resolve(true)).catch(() => {}); };
+      const refused = (why: string): Promise<void> => keepTyped().then(() => dropUnnamed(copied)).then(() => { session.open(date, old); ui.pin("couldn't re-file — " + why); });
       return carryPictures(moved, copied).then((carried) => {
-      if ("clash" in carried) { session.open(date, old); ui.pin("couldn't re-file — " + carried.clash); return; }
+      if ("clash" in carried) return refused(carried.clash);
       return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
         if (landed.includes(false)) {
           /* typed while the copies ran: kept under the old name, which the
              reopen reads (pin: lifecycle.test › a failed move keeps what was typed) */
           const live = session.surfaceMd();
           const kept = live !== flushed ? layer.setEntry(oldKey, live) : Promise.resolve(true);
-          return kept.then(() => Promise.all(moved.map((m) => layer.removeEntry(m.to)))).then((removed) => dropUnnamed(copied).then(() => removed)).then((removed) => {
+          return kept.then(() => Promise.all(moved.map((m) => layer.removeEntry(m.to)))).then((removed) => dropUnnamed(copied, stillThere(moved.map((m) => m.to), removed, (i) => moved[i].md)).then(() => removed)).then((removed) => {
             const left = failed(moved.map((m) => m.to), removed).filter((_, i) => landed[i]);
             session.open(date, old);
             ui.pin(left.length ? "couldn't re-file — copies left: " + left.join(", ") : "couldn't re-file — nothing was moved");
@@ -336,11 +342,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
           ];
           const updated = linking.filter((k, i) => results[i] === "landed" && left.indexOf(k) === -1).length;
           const olds = Object.keys(moves).filter((k) => !(pageless && k === oldKey));
+          const was = olds.map((k) => layer.entryMd(k));
           return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
             const stayed = failed(olds, removed);
+            const still = stillThere(olds, removed, (i) => was[i]);
             /* typed into the surface while the writes ran: carried to the new key */
             const live = session.surfaceMd();
-            return (live !== flushed ? layer.setEntry(newKey, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed(carried.olds)).then(() => stayed);
+            return (live !== flushed ? layer.setEntry(newKey, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed(carried.olds, still)).then(() => stayed);
           }).then((stayed) => {
             deps.moveKept(moves);
             ui.replaceHash(entryHash(date, root));
@@ -352,10 +360,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
           });
         });
       });
-      }, () => dropUnnamed(copied).then(() => {
-        session.open(date, old);
-        ui.pin("couldn't re-file — a picture could not be copied, nothing was moved");
-      }));
+      }, () => refused("a picture could not be copied, nothing was moved"));
     }).finally(() => { renaming = false; });
   }
 
@@ -395,18 +400,20 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       });
       const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
       const copied: string[] = [];
-      const twinPictures = Object.keys(plan.twins).flatMap((k) => { const [d, t] = splitKey(k); return imageRefs(layer.entryMd(k)).map((src) => pictureKey(d, t, src)); });
+      const twinPictures = Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k)));
+      const keepTyped = (): Promise<unknown> => { const live = session.surfaceMd(); return (live !== flushed ? layer.setEntry(from, live) : Promise.resolve(true)).catch(() => {}); };
+      const refused = (why: string): Promise<void> => keepTyped().then(() => dropUnnamed(copied)).then(() => { session.open(date, old); ui.pin("couldn't move — " + why); });
       const takeBack = (landed: boolean[]): Promise<void> => {
         const live = session.surfaceMd();
         const kept = live !== flushed ? layer.setEntry(from, live) : Promise.resolve(true);
-        return kept.then(() => Promise.all(moved.map((m) => m.to === to && plan.into ? layer.setEntry(to, there) : layer.removeEntry(m.to)))).then((undone) => dropUnnamed(copied).then(() => undone)).then((undone) => {
+        return kept.then(() => Promise.all(moved.map((m) => m.to === to && plan.into ? layer.setEntry(to, there) : layer.removeEntry(m.to)))).then((undone) => dropUnnamed(copied, stillThere(moved.map((m) => m.to), undone, (i) => moved[i].md)).then(() => undone)).then((undone) => {
           const left = failed(moved.map((m) => m.to), undone).filter((_, i) => landed[i]);
           session.open(date, old);
           ui.pin(left.length ? "couldn't move — copies left: " + left.join(", ") : "couldn't move — nothing was moved");
         });
       };
       return carryPictures(moved, copied).then((carried) => {
-        if ("clash" in carried) { session.open(date, old); ui.pin("couldn't move — " + carried.clash); return; }
+        if ("clash" in carried) return refused(carried.clash);
         const lost = carried.lost;
         return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
           if (landed.includes(false)) return takeBack(landed);
@@ -422,14 +429,16 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
             ];
             const updated = linking.filter((k, i) => results[i] === "landed" && left.indexOf(k) === -1).length;
             const olds = [...Object.keys(plan.moves), ...twins];
+            const was = olds.map((k) => k === from ? flushed : layer.entryMd(k));
             return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
+              const still = stillThere(olds, removed, (i) => was[i]);
               const live = session.surfaceMd();
-              return (live !== flushed ? layer.setEntry(to, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed([...carried.olds, ...twinPictures])).then(() => failed(olds, removed));
+              return (live !== flushed ? layer.setEntry(to, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed([...carried.olds, ...twinPictures], still)).then(() => failed(olds, removed));
             }).then((stayed) => {
               const kept: Record<string, string> = Object.create(null);
               for (const k of Object.keys(plan.moves)) if (!(plan.into && k === from)) kept[k] = plan.moves[k];
-              const merged: Record<string, string> = { ...plan.twins, ...(plan.into ? { [from]: to } : {}) };
-              deps.moveKept(kept, merged);
+              deps.moveKept(kept);
+              deps.moveBookmarks({ ...plan.twins, ...(plan.into ? { [from]: to } : {}) });
               ui.replaceHash(entryHash(toDate, toTag));
               session.open(toDate, toTag);
               session.movePlaces(kept);
@@ -440,10 +449,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
             });
           });
         });
-      }, () => dropUnnamed(copied).then(() => {
-        session.open(date, old);
-        ui.pin("couldn't move — a picture could not be copied, nothing was moved");
-      }));
+      }, () => refused("a picture could not be copied, nothing was moved"));
     }).finally(() => { renaming = false; });
   }
 
@@ -457,7 +463,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const sweptKeys = ns ? blankSubTree(keysNow(), key) : [];
     const sweep = sweptKeys.map((k) => layer.removeEntry(k));
     const back = deleteLanding(date, tag);
-    const pictures = imageRefs(layer.entryMd(key)).map((src) => pictureKey(date, tag, src));
+    const pictures = picturesOf(key, layer.entryMd(key));
     /* the landing FIRST, the remove after: a save still owed to the deleted
        entry, landing after its remove, resurrected it
        (pin: lifecycle.test › opens the landing and drops the places BEFORE removing) */
@@ -467,7 +473,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     /* the text typed on the entry landed on is saved BEFORE the retarget
        reads the host, and the repaint comes only where the store moved (a
        lost link) */
-    return Promise.all([layer.removeEntry(key), ...sweep]).then(() => dropUnnamed(pictures)).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
+    return Promise.all([layer.removeEntry(key), ...sweep]).then(([gone]) => gone ? dropUnnamed(pictures) : undefined).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
       ui.redraw();
       ui.focus();
     });

@@ -2,24 +2,34 @@ import { entryFile, collidingFile, pictureIn, RELATIVE_SRC } from "./names.ts";
 import { yieldToTaskQueue } from "./io.ts";
 import type { ExportFile } from "./files.ts";
 import type { ImageStore } from "./store.ts";
+import { parseMarkdown } from "../model/parse.ts";
+import { schema } from "../model/schema.ts";
 
 export function splitKey(ekey: string): [string, string | null] {
   const slash = ekey.indexOf("/");
   return slash === -1 ? [ekey, null] : [ekey.slice(0, slash), ekey.slice(slash + 1)];
 }
 export const imageLinks = (): RegExp => /!\[[^\]\n]*\]\((<[^>\n]*>|[^)\s]*)\)/g;
-export function imageRefs(md: string): string[] {
-  const out: string[] = [], seen: Record<string, true> = Object.create(null);
+const relative = (srcs: string[]): string[] => Array.from(new Set(srcs.filter((s) => s && RELATIVE_SRC.test(s))));
+/* the picture syntax alone: a name with brackets, a title or brackets in the
+   words misread (pin: exportEntries.test › imageRefs: a text the editor
+   cannot read) */
+export function patternRefs(md: string): string[] {
+  const out: string[] = [];
   if (md.indexOf("![") === -1) return out;
   const re = imageLinks();
   let m: RegExpExecArray | null;
-  while ((m = re.exec(md))) {
-    const src = m[1].charAt(0) === "<" ? m[1].slice(1, -1) : m[1];
-    if (!src || !RELATIVE_SRC.test(src) || seen[src]) continue;
-    seen[src] = true;
-    out.push(src);
-  }
-  return out;
+  while ((m = re.exec(md))) out.push(m[1].charAt(0) === "<" ? m[1].slice(1, -1) : m[1]);
+  return relative(out);
+}
+/* the pictures the editor shows, read by its own parser (pin:
+   exportEntries.test › imageRefs: every picture the editor shows) */
+export function imageRefs(md: string): string[] {
+  if (md.indexOf("![") === -1) return [];
+  const out: string[] = [];
+  try { parseMarkdown(md).descendants((n) => { if (n.type === schema.nodes.image) out.push(String(n.attrs.src)); return true; }); }
+  catch { return patternRefs(md); }
+  return relative(out);
 }
 /* MEASURED on HTML: 128 KB a batch ran a 5.8 ms mean */
 export const EXPORT_YIELD_BYTES = 128 * 1024;

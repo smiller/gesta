@@ -85,5 +85,12 @@ export function reachableBookmarks(list: Bookmark[], keys: string[]): Bookmark[]
 }
 export function movedBookmarks(list: Bookmark[], moves: Record<string, string>): Bookmark[] {
   const held = new Set(list.filter((b) => !Object.hasOwn(moves, b.key)).map((b) => b.key));
-  return list.filter((b) => !Object.hasOwn(moves, b.key) || !held.has(moves[b.key])).map((b) => (Object.hasOwn(moves, b.key) ? { key: moves[b.key], alias: b.alias } : b));
+  const out: Bookmark[] = [];
+  for (const b of list) {
+    if (!Object.hasOwn(moves, b.key)) { out.push(b); continue; }
+    if (held.has(moves[b.key])) continue;
+    held.add(moves[b.key]);
+    out.push({ key: moves[b.key], alias: b.alias });
+  }
+  return out;
 }

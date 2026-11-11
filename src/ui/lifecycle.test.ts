@@ -21,6 +21,7 @@ interface Opts {
   source?: boolean;
   pics?: Record<string, string>;
   failPic?: string;
+  failClash?: boolean;
 }
 async function world(o: Opts) {
   const log: string[] = [];
@@ -80,8 +81,9 @@ async function world(o: Opts) {
       return Promise.resolve(true);
     },
     removePictures: (keys) => { if (keys.length) log.push("unpic " + keys.join(", ")); for (const k of keys) delete pics[k]; return Promise.resolve(); },
-    pictureClash: (from, to) => Promise.resolve(to in pics && pics[to] !== pics[from]),
-    moveKept: (moves, merged) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ") + (merged && Object.keys(merged).length ? " | merged " + Object.entries(merged).map(([a, b]) => a + " → " + b).join(", ") : "")); },
+    pictureClash: (from, to) => { log.push("clash? " + to); return o.failClash ? Promise.reject(new Error("blocked")) : Promise.resolve(to in pics && pics[to] !== pics[from]); },
+    moveKept: (moves) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
+    moveBookmarks: (moves) => { if (Object.keys(moves).length) log.push("marks " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
     ui: {
       say: (text) => { log.push("say " + text); },
       pin: (text) => { log.push("pin " + text); },
@@ -374,6 +376,45 @@ describe("the pictures left behind", () => {
     ]);
     expect(before(w.log, "del page/Essays", "unpic page/page--Essays-img-1.webp, page/Essays/page--Essays--A-img-1.webp, page/Essays/twin.webp")).toBe(true);
   });
+  it("an old entry whose removal fails keeps its pictures, as does a copy a failed move could not take back", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: PICS, failDel: "page/Essays/A" });
+    w.answer("bookshelf/Miller, Sean/Letters", true);
+    await w.life.rename();
+    expect(w.pics["page/Essays/page--Essays--A-img-1.webp"]).toBe("a");
+    const back = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: PICS, failSet: "page/Letters/A", failDel: "page/Letters" });
+    back.answer("page/Letters", true);
+    await back.life.rename();
+    expect(back.log[back.log.length - 1]).toBe("pin couldn't move — copies left: page/Letters");
+    expect(back.pics["page/page--Letters-img-1.webp"]).toBe("e");
+  });
+  it("each copy is checked, renamed or not, one at a time just before it is made; a clash takes back those made, keeps what was typed, and names it", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: { ...PICS, "bookshelf/Miller, Sean/Letters/bookshelf--Miller, Sean--Letters--A-img-1.webp": "other" } });
+    w.typeMeanwhile("typed\n");
+    w.answer("bookshelf/Miller, Sean/Letters", true);
+    await w.life.rename();
+    const pics = w.log.filter((x) => /^(clash\?|pic) /.test(x));
+    expect(pics.slice(0, 4)).toEqual([
+      "clash? bookshelf/Miller, Sean/shared.webp", "pic page/shared.webp → bookshelf/Miller, Sean/shared.webp",
+      "clash? bookshelf/Miller, Sean/bookshelf--Miller, Sean--Letters-img-1.webp", "pic page/page--Essays-img-1.webp → bookshelf/Miller, Sean/bookshelf--Miller, Sean--Letters-img-1.webp",
+    ]);
+    expect(w.pics["bookshelf/Miller, Sean/shared.webp"]).toBeUndefined();
+    expect(w.md("page/Essays")).toBe("typed\n");
+    expect(w.log.slice(-2)).toEqual(["open page/Essays", "pin couldn't move — a picture named bookshelf--Miller, Sean--Letters--A-img-1.webp is there already in bookshelf/Miller, Sean/Letters"]);
+  });
+  it("a picture read that fails reopens the page, says so, and keeps what was typed", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: PICS, failClash: true });
+    w.typeMeanwhile("typed\n");
+    w.answer("bookshelf/Miller, Sean/Letters", true);
+    await w.life.rename();
+    expect(w.md("page/Essays")).toBe("typed\n");
+    expect(w.log.slice(-2)).toEqual(["open page/Essays", "pin couldn't move — a picture could not be copied, nothing was moved"]);
+  });
+  it("one picture two pages name under different new names is copied to each", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: { "page/Essays": "e", "page/Essays/A": "![](page--Essays--A-img-1.webp)\n", "page/Essays/B": "![](page--Essays--A-img-1.webp)\n" }, pics: { "page/Essays/page--Essays--A-img-1.webp": "a" } });
+    w.answer("page/Letters", true);
+    await w.life.rename();
+    expect(w.pics).toEqual({ "page/Letters/page--Letters--A-img-1.webp": "a", "page/Letters/page--Essays--A-img-1.webp": "a" });
+  });
   it("a move that fails deletes the copies it made, the old ones kept", async () => {
     const w = await world({ at: ["page", "Essays"], entries: ENTRIES, pics: PICS, failSet: "bookshelf/Miller, Sean/Letters/A" });
     w.answer("bookshelf/Miller, Sean/Letters", true);
@@ -385,6 +426,12 @@ describe("the pictures left behind", () => {
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     expect(w.pics).toEqual({ "bookshelf/Cavafy, C. P/map.png": "m" });
+  });
+  it("a delete whose removal fails keeps the entry's pictures", async () => {
+    const w = await world({ at: ["page", "Other"], entries: { "page/Other": "![](own.webp)\n" }, pics: { "page/own.webp": "o" }, failDel: "page/Other" });
+    w.answer(true);
+    await w.life.remove();
+    expect(w.pics).toEqual({ "page/own.webp": "o" });
   });
   it("a delete deletes the entry's pictures, but one another entry still names", async () => {
     const w = await world({ at: ["page", "Other"], entries: { "page/Other": "![](shared.webp) ![](own.webp)\n", "page/Essays": "![](shared.webp)" }, pics: { "page/shared.webp": "s", "page/own.webp": "o" } });
@@ -428,6 +475,14 @@ describe("rename moves a page with its sub-pages", () => {
     await w.life.rename();
     expect(w.md("page/A")).toBe("- [C](#page/A/C)\n- [my B](#page/A/C/x)");
   });
+  it("an address with an empty part is refused, not read as another place or a name", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: { "page/Essays": "e", "page/Essays/A": "a\n", "bookshelf/Miller, Sean": "# Sean Miller\n" } });
+    w.answer("bookshelf/Miller, Sean/", "page//Essays", "#page//Essays");
+    await w.life.rename();
+    await w.life.rename();
+    await w.life.rename();
+    expect(w.log).toEqual(Array(3).fill("say an address can’t have an empty part"));
+  });
   it("a twin matched by its name while blank is named by its name in the confirm", async () => {
     const w = await world({ at: ["page", "Essays"], entries: { "page/Essays": "e", "page/Essays/Old": "", "page/Essays/New": "n\n", "page/Letters": "l", "page/Letters/Old": "# The old one\n" } });
     w.answer("page/Letters", false);
@@ -463,8 +518,8 @@ describe("rename moves a page with its sub-pages", () => {
     }
     const kept = "page/Essays/2024-07-26-birds → " + TO + "/2024-07-26-birds";
     const merged = "page/Essays/2026-07-22-essay → " + TO + "/2022-07-31-essay, page/Essays → " + TO;
-    expect(l.slice(l.indexOf("kept " + kept + " | merged " + merged))).toEqual([
-      "kept " + kept + " | merged " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
+    expect(l.slice(l.indexOf("kept " + kept))).toEqual([
+      "kept " + kept, "marks " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
       "move page/Essays/2026-07-22-essay → null", "move page/Essays → null", "redraw",
       "say moved to " + TO + " — 2 entries, 1 there already deleted, links updated in 1 other",
     ]);
@@ -692,7 +747,7 @@ describe("rename re-files an author with books", () => {
     await w.life.rename();
     const now = "bookshelf/Cavafy, C. P/";
     expect([w.pics[now + "bookshelf--Cavafy, C. P--Walls-img-1.webp"], w.pics[now + "Walls-img-2.webp"], w.pics[now + "map.png"]]).toEqual(["1", "2", "m"]);
-    expect(w.md("bookshelf/Cavafy, C. P/Walls")).toBe("![](<bookshelf--Cavafy, C. P--Walls-img-1.webp>)\n\n![](<Walls-img-2.webp>)\n\n![](map.png)\n");
+    expect(w.md("bookshelf/Cavafy, C. P/Walls")).toBe("![](<bookshelf--Cavafy, C. P--Walls-img-1.webp>)\n\n![](Walls-img-2.webp)\n\n![](map.png)");
     expect(before(w.log, "pic " + old + "map.png → " + now + "map.png", "set bookshelf/Cavafy, C. P/Walls")).toBe(true);
   });
   it("a picture that cannot be copied stops the re-file before any entry is written", async () => {

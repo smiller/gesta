@@ -252,8 +252,10 @@ if (fixture && fixtures[fixture]) {
     screen.backups.configured = backup.configured;
     screen.backups.trouble = backup.trouble;
     screen.backups.warm = layer.storeReadFailed ? "failed" : layer.warmed ? "ok" : "loading";
+    screen.backups.unused = 0;
+    screen.backups.overHalf = 0;
     if (READER || screen.backups.warm !== "ok") return;
-    images.keys().then((keys) => {
+    session.flushSave().then(() => images.keys()).then((keys) => {
       const plan = sweepPlan(keys, layer.cache);
       screen.backups.unused = plan.drop.length;
       screen.backups.overHalf = plan.refused;
@@ -262,7 +264,7 @@ if (fixture && fixtures[fixture]) {
   /* counted again at the click, the journal having moved since the panel opened */
   acts.sweep = () => {
     if (refuseCold(layer, say)) return;
-    images.keys().then((keys) => {
+    session.flushSave().then(() => images.keys()).then((keys) => {
       const plan = sweepPlan(keys, layer.cache);
       const n = plan.drop.length;
       if (!n) { readBackups(); return; }
@@ -1159,13 +1161,14 @@ if (fixture && fixtures[fixture]) {
     caretInEntry,
     source: () => session.mdView ? sourcePort : null,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
-    moveKept: (moves, merged) => {
+    moveKept: (moves) => {
       session.moveFolds(moves);
-      marks.move({ ...moves, ...merged });
+      marks.move(moves);
     },
+    moveBookmarks: (moves) => { marks.move(moves); },
     removePictures: (keys) => Promise.all(keys.map((k) => images.del(k))).then(() => {}),
     copyPicture: (from, to) => images.get(from).then((row) => row ? images.set(to, row.bytes).then(() => true) : false),
-    pictureClash: (from, to) => Promise.all([images.get(from), images.get(to)]).then(([a, b]) => !!b && (!a || a.bytes.length !== b.bytes.length || a.bytes.some((x, i) => x !== b.bytes[i]))),
+    pictureClash: (from, to) => images.get(to).then((b) => !b ? false : images.get(from).then((a) => !a || a.bytes.length !== b.bytes.length || a.bytes.some((x, i) => x !== b.bytes[i]))),
     ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
   });
   acts.create = () => { life.create(); };

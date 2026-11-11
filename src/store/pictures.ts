@@ -1,15 +1,18 @@
 import { entryFile, pictureIn } from "./names.ts";
-import { imageRefs, splitKey } from "./exportEntries.ts";
+import { imageRefs, patternRefs, splitKey } from "./exportEntries.ts";
 
+/* what the parser reads and what the picture syntax alone reads, both: a
+   reading in doubt keeps a picture, never frees one (pin: pictures.test ›
+   a picture only the syntax reads) */
+export function picturesOf(key: string, md: string): string[] {
+  if (!md || md.indexOf("![") === -1) return [];
+  const [date, tag] = splitKey(key);
+  const at = entryFile(date, tag);
+  return Array.from(new Set([...imageRefs(md), ...patternRefs(md)])).map((ref) => pictureIn(at, ref));
+}
 export function namedPictures(cache: Record<string, string>): Set<string> {
   const out = new Set<string>();
-  for (const key of Object.keys(cache)) {
-    const md = cache[key];
-    if (!md || md.indexOf("![") === -1) continue;
-    const [date, tag] = splitKey(key);
-    const at = entryFile(date, tag);
-    for (const ref of imageRefs(md)) out.add(pictureIn(at, ref));
-  }
+  for (const key of Object.keys(cache)) for (const k of picturesOf(key, cache[key])) out.add(k);
   return out;
 }
 export function unnamed(keys: string[], cache: Record<string, string>): string[] {

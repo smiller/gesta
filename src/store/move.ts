@@ -1,12 +1,16 @@
-import { entryKey, entryHash, pageParts } from "./keys.ts";
+import { entryKey, entryHash, pageParts, hashTarget } from "./keys.ts";
 import { hashParts } from "./nav.ts";
-import { rewriteLinks } from "./links.ts";
+import { rewriteLinks, followedLabel } from "./links.ts";
 import { firstHeading } from "./headings.ts";
 import { childrenOf, registered } from "./lists.ts";
 import { entryFile } from "./names.ts";
 import { imageRefs, imageLinks, splitKey } from "./exportEntries.ts";
 import { under } from "./refile.ts";
-import { destination } from "../model/serialize.ts";
+import { destination, serializeMarkdown } from "../model/serialize.ts";
+import { parseMarkdown } from "../model/parse.ts";
+import { schema } from "../model/schema.ts";
+import { Transform } from "prosemirror-transform";
+import type { Node } from "prosemirror-model";
 
 /* `moves` every key that changes its name, the root included; `twins` a
    sub-page the place already holds by its title, which is deleted and whose
@@ -37,7 +41,7 @@ export function movePlan(cache: Record<string, string>, from: string, to: string
       const same = entryKey(to, leaf);
       const twin = same in cache && (!(cache[k] || "").trim() || (h && firstHeading(cache[same]) === h)) ? same : h ? there[h] : undefined;
       if (!twin) continue;
-      if (keys.some((x) => x !== k && under(x, k))) return { refuse: "“" + h + "” is there already and has pages of its own" };
+      if (keys.some((x) => x !== k && under(x, k))) return { refuse: "“" + (h || leaf) + "” is there already and has pages of its own" };
       twins[k] = twin;
     }
   }
@@ -69,9 +73,9 @@ export function moveLinks(md: string, from: string, plan: MovePlan, relabel?: { 
   return rewriteLinks(md, (run) => {
     const href = moveHref(run.href, from, plan);
     if (href === null) return null;
-    if (!relabel || run.text !== relabel.old) return { href };
-    const p = hashParts(run.href.slice(1));
-    return entryKey(p.date, p.tag) === from ? { href, text: relabel.new } : { href };
+    if (!relabel) return { href };
+    const [date, tag] = splitKey(plan.moves[from]);
+    return hashTarget(href) === entryHash(date, tag) ? { href, text: followedLabel(run.text, relabel.old, relabel.new) } : { href };
   });
 }
 export function joined(there: string, moved: string): string {
@@ -99,7 +103,23 @@ export function pictureNames(from: string, to: string, md: string, taken: string
   }
   return out;
 }
+/* each picture the editor shows renamed in the document, the text written
+   anew; a text the editor cannot read renamed by the syntax alone */
 export function renamePictures(md: string, names: Record<string, string>): string {
+  if (!Object.keys(names).some((k) => names[k] !== k)) return md;
+  let doc: Node;
+  try { doc = parseMarkdown(md); } catch { return renameBySyntax(md, names); }
+  const tr = new Transform(doc);
+  let changed = false;
+  doc.descendants((n, pos) => {
+    if (n.type !== schema.nodes.image) return true;
+    const src = String(n.attrs.src);
+    if (src in names && names[src] !== src) { tr.setNodeMarkup(pos, null, { ...n.attrs, src: names[src] }); changed = true; }
+    return true;
+  });
+  return changed ? serializeMarkdown(tr.doc) : md;
+}
+function renameBySyntax(md: string, names: Record<string, string>): string {
   return md.replace(imageLinks(), (all, s: string) => {
     const bare = s.charAt(0) === "<" ? s.slice(1, -1) : s;
     return bare in names && names[bare] !== bare ? all.slice(0, all.length - s.length - 1) + destination(names[bare]) + ")" : all;
