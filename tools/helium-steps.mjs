@@ -1364,8 +1364,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.act.create(page);
   await A.waitEntry(page, "bookshelf/Miller, Sean/Odes", 5000).catch(() => {});
   await page.click(S.editor);
-  await page.keyboard.type("A book.");
-  await page.waitForTimeout(1500);
+  await page.keyboard.type("A book. ");
+  await R.pastePng(page);
+  await R.waitImg(page);
+  await R.waitCorner(page, "saved");
   await go("bookshelf/Miller%2C%20Sean", 5000);
   answer = "Sean Miller";
   prompts.length = 0;
@@ -1376,6 +1378,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.booksOpener);
   await log("the bookshelf after the re-file", await R.panel(page));
   await page.keyboard.press("Escape");
+  await go("bookshelf/Sean%20Miller/Odes", 5000);
+  await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
+  await log("the re-filed book, its picture", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Sean Miller/Odes"), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
     }],
     ["replace", async () => {
   /* find and replace (2026-10-08, successor-only): ⌃⌘E in the rendered view switches to the source view and opens the bar, the corner whispering; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */

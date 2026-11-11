@@ -84,14 +84,14 @@ export function hostKey(date: string, tag: string): string | null {
   const pp = pageParts(tag);
   return pp.sub ? entryKey(date, pp.parent) : null;
 }
-export function refiledText(root: string, moved: number, updated: number, left: string[], stayed: string[] = []): string {
-  return outcome("filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved", updated, left, stayed);
+export function refiledText(root: string, moved: number, updated: number, left: string[], stayed: string[] = [], lost = 0): string {
+  return outcome("filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved" + lostText(lost), updated, left, stayed);
 }
+const lostText = (lost: number): string => lost ? ", " + lost + (lost === 1 ? " picture" : " pictures") + " not found" : "";
 export function movedText(to: string, moved: number, twins: number, lost: number, updated: number, left: string[], stayed: string[]): string {
   let text = "moved to " + to + " — " + moved + (moved === 1 ? " entry" : " entries");
   if (twins) text += ", " + twins + " there already deleted";
-  if (lost) text += ", " + lost + (lost === 1 ? " picture" : " pictures") + " not found";
-  return outcome(text, updated, left, stayed);
+  return outcome(text + lostText(lost), updated, left, stayed);
 }
 function outcome(text: string, updated: number, left: string[], stayed: string[]): string {
   if (updated) text += ", links updated in " + updated + (updated === 1 ? " other" : " others");

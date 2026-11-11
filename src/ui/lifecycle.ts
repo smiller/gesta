@@ -239,8 +239,36 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     }).finally(() => { renaming = false; });
   }
 
-  /* AN AUTHOR RE-FILED, its books with it: every copy lands before any
-     old key is cleared, and a copy that fails takes the others back, the
+  /* THE PICTURES OF ENTRIES CHANGING KEY, copied before any entry is written,
+     so none lands where its pictures are not: one copy a picture, none where
+     it stays put, and one at a time, so a book's pictures are never all read
+     at once (pin: lifecycle.test › a picture two pages share is copied once).
+     A kept name the place holds for another picture would show that one in
+     its place, so nothing is copied and the clash is named (pin:
+     lifecycle.test › a picture whose name is kept); a failed copy rejects */
+  function carryPictures(moved: { from: string; to: string; named: Record<string, string> }[]): Promise<{ lost: number } | { clash: string }> {
+    const pairs: Record<string, { to: string; kept: boolean }> = Object.create(null);
+    for (const m of moved) {
+      const [a, b] = [splitKey(m.from), splitKey(m.to)];
+      for (const src of Object.keys(m.named)) {
+        const pa = pictureKey(a[0], a[1], src), pb = pictureKey(b[0], b[1], m.named[src]);
+        if (pa !== pb) pairs[pa] = { to: pb, kept: m.named[src] === src };
+      }
+    }
+    const pictures = Object.keys(pairs);
+    return Promise.all(pictures.map((pa) => pairs[pa].kept ? deps.pictureClash(pa, pairs[pa].to) : false)).then((clash) => {
+      const at = pictures.find((_, i) => clash[i]);
+      if (at) {
+        const dest = pairs[at].to, cut = dest.lastIndexOf("/");
+        return { clash: "a picture named " + dest.slice(cut + 1) + " is there already in " + dest.slice(0, cut) };
+      }
+      let lost = 0;
+      return pictures.reduce((chain, pa) => chain.then(() => deps.copyPicture(pa, pairs[pa].to)).then((f) => { if (!f) lost++; }), Promise.resolve()).then(() => ({ lost }));
+    });
+  }
+
+  /* AN AUTHOR RE-FILED, its books and their pictures with it: every copy
+     lands before any old key is cleared, and a copy that fails takes the others back, the
      old author standing whole (pin: lifecycle.test › a failed move removes
      the copies made). The other entries' links are rewritten after the
      copies land, and one that cannot be is NAMED in a pin rather than
@@ -270,8 +298,16 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
          with no page of its own) */
       const pageless = !(oldKey in moves);
       if (pageless) moves[oldKey] = newKey;
-      const moved = Object.keys(moves).map((from) => ({ from, to: moves[from], md: from === oldKey ? headed(rewrite(layer.entryMd(from))) : rewrite(layer.entryMd(from)) }));
+      const named = (k: string): Record<string, string> => pictureNames(k, moves[k], layer.entryMd(k), []);
+      const rootNames = named(oldKey);
+      const rootMd = (md: string): string => renamePictures(headed(rewrite(md)), rootNames);
+      const moved = Object.keys(moves).map((from) => {
+        const names = from === oldKey ? rootNames : named(from);
+        return { from, to: moves[from], named: names, md: from === oldKey ? rootMd(layer.entryMd(from)) : renamePictures(rewrite(layer.entryMd(from)), names) };
+      });
       const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
+      return carryPictures(moved).then((carried) => {
+      if ("clash" in carried) { session.open(date, old); ui.pin("couldn't re-file — " + carried.clash); return; }
       return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
         if (landed.includes(false)) {
           /* typed while the copies ran: kept under the old name, which the
@@ -296,17 +332,21 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
             const stayed = failed(olds, removed);
             /* typed into the surface while the writes ran: carried to the new key */
             const live = session.surfaceMd();
-            return (live !== flushed ? layer.setEntry(newKey, headed(rewrite(live))) : Promise.resolve(true)).then(() => stayed);
+            return (live !== flushed ? layer.setEntry(newKey, rootMd(live)) : Promise.resolve(true)).then(() => stayed);
           }).then((stayed) => {
             deps.moveKept(moves);
             ui.replaceHash(entryHash(date, root));
             session.open(date, root);
             session.movePlaces(moves);
             ui.redraw();
-            const text = refiledText(root, moved.length - (pageless ? 1 : 0), updated, left, stayed);
+            const text = refiledText(root, moved.length - (pageless ? 1 : 0), updated, left, stayed, carried.lost);
             if (left.length || stayed.length) ui.pin(text); else ui.say(text);
           });
         });
+      });
+      }, () => {
+        session.open(date, old);
+        ui.pin("couldn't re-file — a picture could not be copied, nothing was moved");
       });
     }).finally(() => { renaming = false; });
   }
@@ -345,19 +385,6 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
         const named = k === from ? rootNames : names(k);
         return { from: k, to: plan.moves[k], named, md: k === from ? rootMd(flushed) : renamePictures(rewrite(layer.entryMd(k)), named) };
       });
-      /* one copy a picture, none where it stays put, and one at a time, so
-         a book's pictures are never all read at once (pin: lifecycle.test ›
-         a picture two pages share is copied once) */
-      const pairs: Record<string, { to: string; kept: boolean }> = Object.create(null);
-      for (const m of moved) {
-        const [a, b] = [splitKey(m.from), splitKey(m.to)];
-        for (const src of Object.keys(m.named)) {
-          const pa = pictureKey(a[0], a[1], src), pb = pictureKey(b[0], b[1], m.named[src]);
-          if (pa !== pb) pairs[pa] = { to: pb, kept: m.named[src] === src };
-        }
-      }
-      const pictures = Object.keys(pairs).map((pa) => [pa, pairs[pa].to]);
-      const clashes = Promise.all(pictures.map(([a, b]) => pairs[a].kept ? deps.pictureClash(a, b) : false));
       const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
       const takeBack = (landed: boolean[]): Promise<void> => {
         const live = session.surfaceMd();
@@ -368,10 +395,9 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
           ui.pin(left.length ? "couldn't move — copies left: " + left.join(", ") : "couldn't move — nothing was moved");
         });
       };
-      const copyAll = (): Promise<void> => {
-      const found: boolean[] = [];
-      return pictures.reduce((chain, [a, b]) => chain.then(() => deps.copyPicture(a, b)).then((f) => { found.push(f); }), Promise.resolve()).then(() => {
-        const lost = found.filter((f) => !f).length;
+      return carryPictures(moved).then((carried) => {
+        if ("clash" in carried) { session.open(date, old); ui.pin("couldn't move — " + carried.clash); return; }
+        const lost = carried.lost;
         return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
           if (landed.includes(false)) return takeBack(landed);
           const twins = Object.keys(plan.twins);
@@ -407,19 +433,6 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       }, () => {
         session.open(date, old);
         ui.pin("couldn't move — a picture could not be copied, nothing was moved");
-      });
-      };
-      /* a kept name the place holds for another picture would show that one
-         in its place, or the moved one in the other's (pin: lifecycle.test ›
-         a picture whose name is kept) */
-      return clashes.then((clash) => {
-        const at = pictures.find((_, i) => clash[i]);
-        if (at) {
-          session.open(date, old);
-          ui.pin("couldn't move — a picture named " + at[1].slice(at[1].lastIndexOf("/") + 1) + " is there already in " + at[1].slice(0, at[1].lastIndexOf("/")));
-          return;
-        }
-        return copyAll();
       });
     }).finally(() => { renaming = false; });
   }

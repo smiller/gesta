@@ -96,3 +96,19 @@ list, then made on the reader's word:
 A flaky step seen twice in this work, not caused by it: "Enter with the caret
 above the window" read `clear: -789` against the approved `24`, MEASURED 1 run
 in 3 alone; the replay passed.
+
+## The re-file's pictures (2026-11-11)
+
+READ before the fix: a re-file moved an author's books but not their pictures,
+which are keyed under the author's folder, so a re-filed author's book pictures
+read as missing; a sweep of unreferenced pictures would have made that loss
+final, so this comes first (asked). The re-file now carries them as the move
+does, through one helper both share: named for its book a picture is renamed
+for its new place, any other name kept, each copied once and one at a time, a
+kept name the place holds for another picture refusing, a failed copy stopping
+it before any entry is written, a picture not found counted in the corner.
+MEASURED, headless Helium, the "author filing" step with a pasted picture in
+its book: after the re-file the book's picture is drawn (a blob, 1400×700).
+
+Finding 7 of review cycle 1: the hand edit of `corner.writer.txt` kept, its
+exception noted in CLAUDE.md (asked). Finding 8 stays open.

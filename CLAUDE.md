@@ -96,7 +96,10 @@ here NOW, and what is not yet:
   from 2026-10-17 (asked, after two of its runs cost about 8 minutes each
   for one changed step): ../writer is never played again, and
   `corner.writer.txt` stands as last generated, still compared on every
-  verify. A step added after that date, or a field of an old one that
+  verify — but for one hand edit, 2026-11-11 (asked): a real person's name the
+  steps typed was replaced by the reader's own, "Sean Miller", in its two
+  readings, the row's place in the list inferred, not played. A step added
+  after 2026-10-17, or a field of an old one that
   changes, is judged by the approved copy alone and listed in
   `corner.differences.txt` as `<label> · * · new here, the old app
   frozen` (or its field, `· <field> ·`). A PASSING RUN IS NOT REPLAYED

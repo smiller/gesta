@@ -639,6 +639,25 @@ describe("rename re-files an author with books", () => {
     expect(w.md("bookshelf/Miller, Sean")).toBe("# Sean Miller\n\n- [Book](#bookshelf/Miller%2C%20Sean/Book)\n\nmore");
     expect(w.log[w.log.length - 1]).toBe("say filed under Miller, Sean — 2 entries moved");
   });
+  it("the books' pictures go with them, each named for its book renamed for its new place, the others kept", async () => {
+    const books = { ...CAVAFY, "bookshelf/C. P. Cavafy/Walls": "![](<bookshelf--C. P. Cavafy--Walls-img-1.webp>)\n\n![](<Walls-img-2.webp>)\n\n![](map.png)\n" };
+    const old = "bookshelf/C. P. Cavafy/";
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: books, pics: { [old + "bookshelf--C. P. Cavafy--Walls-img-1.webp"]: "1", [old + "Walls-img-2.webp"]: "2", [old + "map.png"]: "m" } });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    const now = "bookshelf/Cavafy, C. P/";
+    expect([w.pics[now + "bookshelf--Cavafy, C. P--Walls-img-1.webp"], w.pics[now + "Walls-img-2.webp"], w.pics[now + "map.png"]]).toEqual(["1", "2", "m"]);
+    expect(w.md("bookshelf/Cavafy, C. P/Walls")).toBe("![](<bookshelf--Cavafy, C. P--Walls-img-1.webp>)\n\n![](<Walls-img-2.webp>)\n\n![](map.png)\n");
+    expect(before(w.log, "pic " + old + "map.png → " + now + "map.png", "set bookshelf/Cavafy, C. P/Walls")).toBe(true);
+  });
+  it("a picture that cannot be copied stops the re-file before any entry is written", async () => {
+    const books = { ...CAVAFY, "bookshelf/C. P. Cavafy/Walls": "![](map.png)\n" };
+    const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: books, pics: { "bookshelf/C. P. Cavafy/map.png": "m" }, failPic: "bookshelf/Cavafy, C. P/map.png" });
+    w.answer("Cavafy, C. P.");
+    await w.life.rename();
+    expect(w.log.filter((x) => /^(set|del) /.test(x))).toEqual([]);
+    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn't re-file — a picture could not be copied, nothing was moved"]);
+  });
   it("a failed move removes the copies made and leaves the old author whole, opened again", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
     w.answer("Cavafy, C. P.");
