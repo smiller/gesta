@@ -28,10 +28,17 @@ export function typedName(raw: string | null | undefined): Typed {
    address names a page or book) */
 export function typedAddress(raw: string | null | undefined): { date: string; tag: string } | null {
   const s = (raw || "").trim();
-  const addr = s.startsWith("#") ? s.slice(1) : NS_KEYS.some((ns) => s.startsWith(ns + "/")) ? s : null;
-  if (!addr || !namesEntry(addr)) return null;
-  const p = hashParts(addr);
-  return nsOf(p.date) && p.tag ? { date: p.date, tag: p.tag } : null;
+  if (s.startsWith("#")) {
+    if (!namesEntry(s.slice(1))) return null;
+    const p = hashParts(s.slice(1));
+    return nsOf(p.date) && p.tag ? { date: p.date, tag: p.tag } : null;
+  }
+  /* typed as a key, not an address: nothing is decoded, so a `%` stays itself */
+  const ns = NS_KEYS.find((n) => s.startsWith(n + "/"));
+  if (!ns) return null;
+  const parts = s.slice(ns.length + 1).split("/").map(pageName);
+  while (parts.length && !parts[parts.length - 1]) parts.pop();
+  return parts.length && parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : null;
 }
 
 const words = (s: string): string => s.trim().replace(/\s+/g, " ");

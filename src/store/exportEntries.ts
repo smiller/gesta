@@ -7,10 +7,11 @@ export function splitKey(ekey: string): [string, string | null] {
   const slash = ekey.indexOf("/");
   return slash === -1 ? [ekey, null] : [ekey.slice(0, slash), ekey.slice(slash + 1)];
 }
+export const imageLinks = (): RegExp => /!\[[^\]\n]*\]\((<[^>\n]*>|[^)\s]*)\)/g;
 export function imageRefs(md: string): string[] {
   const out: string[] = [], seen: Record<string, true> = Object.create(null);
   if (md.indexOf("![") === -1) return out;
-  const re = /!\[[^\]\n]*\]\((<[^>\n]*>|[^)\s]*)\)/g;
+  const re = imageLinks();
   let m: RegExpExecArray | null;
   while ((m = re.exec(md))) {
     const src = m[1].charAt(0) === "<" ? m[1].slice(1, -1) : m[1];

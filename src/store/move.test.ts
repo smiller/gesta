@@ -77,6 +77,14 @@ describe("moveLinks", () => {
   });
 });
 
+describe("moveLinks relabelled", () => {
+  it("a link labelled with the page's old name takes the new; another label, or a link to a sub-page, is left", () => {
+    const p = plan(CACHE, "page/Essays", "page/Letters");
+    expect(moveLinks("[Essays](#page/Essays) [mine](#page/Essays) [Essays](#page/Essays/2024-07-26-birds)\n", "page/Essays", p, { old: "Essays", new: "Letters" }))
+      .toBe("[Letters](#page/Letters) [mine](#page/Letters) [Essays](#page/Letters/2024-07-26-birds)");
+  });
+});
+
 describe("joined", () => {
   it("the moved text after the text there, a blank line between; either blank leaves the other", () => {
     expect(joined("# A\n\nx\n\n", "\ny\n")).toBe("# A\n\nx\n\ny\n");

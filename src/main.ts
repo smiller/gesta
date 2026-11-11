@@ -1135,11 +1135,12 @@ if (fixture && fixtures[fixture]) {
     caretInEntry,
     source: () => session.mdView ? sourcePort : null,
     dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
-    moveKept: (moves) => {
+    moveKept: (moves, merged) => {
       session.moveFolds(moves);
-      marks.move(moves);
+      marks.move({ ...moves, ...merged });
     },
     copyPicture: (from, to) => images.get(from).then((row) => row ? images.set(to, row.bytes).then(() => true) : false),
+    pictureClash: (from, to) => Promise.all([images.get(from), images.get(to)]).then(([a, b]) => !!b && (!a || a.bytes.length !== b.bytes.length || a.bytes.some((x, i) => x !== b.bytes[i]))),
     ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
   });
   acts.create = () => { life.create(); };

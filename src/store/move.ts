@@ -4,11 +4,9 @@ import { rewriteLinks } from "./links.ts";
 import { firstHeading } from "./headings.ts";
 import { childrenOf, registered } from "./lists.ts";
 import { entryFile } from "./names.ts";
-import { imageRefs } from "./exportEntries.ts";
+import { imageRefs, imageLinks, splitKey } from "./exportEntries.ts";
+import { under } from "./refile.ts";
 import { destination } from "../model/serialize.ts";
-
-const under = (key: string, root: string): boolean => key === root || key.startsWith(root + "/");
-const splitKey = (key: string): [string, string | null] => { const cut = key.indexOf("/"); return cut === -1 ? [key, null] : [key.slice(0, cut), key.slice(cut + 1)]; };
 
 /* `moves` every key that changes its name, the root included; `twins` a
    sub-page the place already holds by its title, which is deleted and whose
@@ -64,11 +62,16 @@ export function moveHref(href: string, from: string, plan: MovePlan): string | n
   const [date, tag] = splitKey(dest);
   return entryHash(date, tag, p.hl || undefined);
 }
-/* labels are left: what a reader wrote stays */
-export function moveLinks(md: string, from: string, plan: MovePlan): string | null {
+/* labels are left, what a reader wrote staying, but for `relabel`: a link to
+   the page itself whose label is its old name takes the new (pin: move.test ›
+   a link labelled with the page's old name) */
+export function moveLinks(md: string, from: string, plan: MovePlan, relabel?: { old: string; new: string }): string | null {
   return rewriteLinks(md, (run) => {
     const href = moveHref(run.href, from, plan);
-    return href === null ? null : { href };
+    if (href === null) return null;
+    if (!relabel || run.text !== relabel.old) return { href };
+    const p = hashParts(run.href.slice(1));
+    return entryKey(p.date, p.tag) === from ? { href, text: relabel.new } : { href };
   });
 }
 export function joined(there: string, moved: string): string {
@@ -97,8 +100,8 @@ export function pictureNames(from: string, to: string, md: string, taken: string
   return out;
 }
 export function renamePictures(md: string, names: Record<string, string>): string {
-  return md.replace(/(!\[[^\]\n]*\]\()(<[^>\n]*>|[^)\s]*)\)/g, (all, head: string, s: string) => {
+  return md.replace(imageLinks(), (all, s: string) => {
     const bare = s.charAt(0) === "<" ? s.slice(1, -1) : s;
-    return bare in names && names[bare] !== bare ? head + destination(names[bare]) + ")" : all;
+    return bare in names && names[bare] !== bare ? all.slice(0, all.length - s.length - 1) + destination(names[bare]) + ")" : all;
   });
 }

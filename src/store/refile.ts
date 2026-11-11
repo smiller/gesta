@@ -5,7 +5,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { firstHeading } from "./headings.ts";
 import { escapeRe } from "./reference.ts";
 
-const under = (tag: string, root: string): boolean => tag === root || tag.startsWith(root + "/");
+export const under = (tag: string, root: string): boolean => tag === root || tag.startsWith(root + "/");
 
 export function refileKeys(keys: string[], ns: string, oldRoot: string, newRoot: string): Record<string, string> {
   const from = entryKey(ns, oldRoot), to = entryKey(ns, newRoot);

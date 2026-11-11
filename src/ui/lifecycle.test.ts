@@ -79,7 +79,8 @@ async function world(o: Opts) {
       pics[to] = pics[from];
       return Promise.resolve(true);
     },
-    moveKept: (moves) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
+    pictureClash: (from, to) => Promise.resolve(to in pics && pics[to] !== pics[from]),
+    moveKept: (moves, merged) => { log.push("kept " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ") + (merged && Object.keys(merged).length ? " | merged " + Object.entries(merged).map(([a, b]) => a + " → " + b).join(", ") : "")); },
     ui: {
       say: (text) => { log.push("say " + text); },
       pin: (text) => { log.push("pin " + text); },
@@ -350,6 +351,45 @@ const PIC = "page/Essays/page--Essays--2024-07-26-birds-img-1.webp";
 const PIC_THERE = "bookshelf/Miller, Sean/Essays/bookshelf--Miller, Sean--Essays--2024-07-26-birds-img-1.webp";
 const TO = "bookshelf/Miller, Sean/Essays";
 describe("rename moves a page with its sub-pages", () => {
+  it("Enter on the address it was filled with does nothing, whatever the name holds", async () => {
+    const w = await world({ at: ["page", "Growth 50%"], entries: { "page/Growth 50%": "g\n", "page/Growth 50%/A": "a\n" } });
+    w.answer("page/Growth 50%");
+    await w.life.rename();
+    expect(w.asked).toEqual(["Move the page “Growth 50%” and its sub-pages to: [page/Growth 50%]"]);
+    expect(w.log).toEqual([]);
+  });
+  it("a picture whose name is kept, where the place already holds another under that name, refuses before anything is written", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: { "page/Essays": "e", "page/Essays/A": "![](photo.jpg)\n", "page/Other": "o", "page/Other/B": "![](photo.jpg)\n" }, pics: { "page/Essays/photo.jpg": "mine", "page/Other/photo.jpg": "theirs" } });
+    w.answer("page/Other", true);
+    await w.life.rename();
+    expect(w.log.filter((x) => /^(set|del|pic) /.test(x))).toEqual([]);
+    expect(w.log.slice(-2)).toEqual(["open page/Essays", "pin couldn't move — a picture named photo.jpg is there already in page/Other"]);
+    expect(w.pics["page/Other/photo.jpg"]).toBe("theirs");
+  });
+  it("a picture two pages share is copied once, and one that stays where it is not at all", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: { "page/Essays": "e", "page/Essays/A": "![](shared.webp)\n", "page/Essays/B": "![](shared.webp)\n" }, pics: {} });
+    w.answer("page/Letters", true);
+    await w.life.rename();
+    expect(w.log.filter((x) => x.startsWith("pic "))).toEqual(["pic page/Essays/shared.webp → page/Letters/shared.webp"]);
+    expect(w.log[w.log.length - 1]).toBe("say moved to page/Letters — 3 entries, 1 picture not found");
+    const same = await world({ at: ["page", "A/B"], entries: { "page/A": "[B](#page/A/B)\n", "page/A/B": "![](shared.webp)\n", "page/A/B/x": "x\n" }, pics: { "page/A/shared.webp": "p" } });
+    same.answer("C", true);
+    await same.life.rename();
+    expect(same.log.filter((x) => x.startsWith("pic "))).toEqual([]);
+  });
+  it("renamed beside itself, the parent's link labelled with the old name takes the new one, as a plain rename's does", async () => {
+    const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n- [my B](#page/A/B/x)\n", "page/A/B": "b\n", "page/A/B/x": "x\n" } });
+    w.answer("C", true);
+    await w.life.rename();
+    expect(w.md("page/A")).toBe("- [C](#page/A/C)\n- [my B](#page/A/C/x)");
+  });
+  it("a twin matched by its name while blank is named by its name in the confirm", async () => {
+    const w = await world({ at: ["page", "Essays"], entries: { "page/Essays": "e", "page/Essays/Old": "", "page/Essays/New": "n\n", "page/Letters": "l", "page/Letters/Old": "# The old one\n" } });
+    w.answer("page/Letters", false);
+    await w.life.rename();
+    expect(w.asked[1]).toContain("its links going to the one there: “Old”.");
+  });
+
   it("asks where, filled with its own address; the same address or Escape does nothing; a taken name alerts", async () => {
     const w = await world({ at: ["page", "Essays"], entries: { ...ESSAYS, "page/Other": "o\n" } });
     w.answer(null, "page/Essays", "Other");
@@ -359,7 +399,7 @@ describe("rename moves a page with its sub-pages", () => {
     expect(w.asked).toEqual(Array(3).fill("Move the page “Essays” and its sub-pages to: [page/Essays]"));
     expect(w.log).toEqual(['alert A "Other" page already exists.']);
   });
-  it("into another namespace's page: the pictures copied under the new entry's name, its text joined after the text there, a twin deleted with its links going to the one there, the old removed after, the place opened", async () => {
+  it("into another namespace's page: the pictures copied under the new entry's name, its text joined after the text there, a twin deleted with its links and bookmarks going to the one there, the old removed after, the place opened", async () => {
     const w = await world({ at: ["page", "Essays"], entries: ESSAYS, pics: { [PIC]: "png" } });
     w.answer(TO, true);
     await w.life.rename();
@@ -377,8 +417,9 @@ describe("rename moves a page with its sub-pages", () => {
       expect(before(l, "set 2026-09-01", "del " + k)).toBe(true);
     }
     const kept = "page/Essays/2024-07-26-birds → " + TO + "/2024-07-26-birds";
-    expect(l.slice(l.indexOf("kept " + kept))).toEqual([
-      "kept " + kept, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
+    const merged = "page/Essays/2026-07-22-essay → " + TO + "/2022-07-31-essay, page/Essays → " + TO;
+    expect(l.slice(l.indexOf("kept " + kept + " | merged " + merged))).toEqual([
+      "kept " + kept + " | merged " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
       "move page/Essays/2026-07-22-essay → null", "move page/Essays → null", "redraw",
       "say moved to " + TO + " — 2 entries, 1 there already deleted, links updated in 1 other",
     ]);

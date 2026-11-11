@@ -64,3 +64,35 @@ bookshelf's.
   books but not their pictures. A book's pictures are keyed under the author's
   folder, so a re-filed author's book pictures would read as missing. The
   move's picture copy is the remedy, if wanted.
+
+## Review cycle 1 (2026-11-11)
+
+`/code-review` at high over `8087ca6..bd6793a` (the move, and the link's
+hover naming its entry). MEASURED cost: 138,152 tokens (its last message's
+input + cache creation + cache read + output, from its transcript). Ten
+findings, all the reviewer's; the fixes were held until the reader had the
+list, then made on the reader's word:
+
+1. Enter on the filled address could move the page (a `%`, or a part the
+   name rules change) — fixed: the filled text unchanged does nothing, and a
+   typed key is not URL-decoded.
+2. A picture whose name is kept could overwrite another picture of that name
+   in the new folder — fixed: the move refuses before writing anything.
+3. Copied pictures are never removed, on a failure or after a move — kept as
+   decided (the image store has no delete); the reader wants unreferenced
+   pictures deleted, to be discussed.
+4. A twin's and a merged root's bookmarks were dropped — fixed: they follow;
+   folds do not; a bookmark landing on one the list holds is dropped.
+5. Renamed beside itself, the parent's bare-name label stayed — fixed.
+6. A blank twin showed as `“”` in the confirm — fixed: its name.
+7. `corner.writer.txt`, the frozen old app's run, was edited by hand for the
+   name change — open, the reader's call.
+8. The move is a near copy of the re-file; two renames treat links
+   differently — open, the reader's call.
+9. `splitKey`, `under` and the picture pattern copied — fixed: one each.
+10. The picture copies repeated, copied onto themselves, and ran all at once
+    — fixed: once each, none in place, one at a time.
+
+A flaky step seen twice in this work, not caused by it: "Enter with the caret
+above the window" read `clear: -789` against the approved `24`, MEASURED 1 run
+in 3 alone; the replay passed.

@@ -55,6 +55,7 @@ describe("typedAddress", () => {
     expect(typedAddress(" bookshelf/Miller, Sean/Essays ")).toEqual({ date: "bookshelf", tag: "Miller, Sean/Essays" });
     expect(typedAddress("#bookshelf/Miller%2C%20Sean/Essays")).toEqual({ date: "bookshelf", tag: "Miller, Sean/Essays" });
     expect(typedAddress("page/Essays")).toEqual({ date: "page", tag: "Essays" });
+    expect(typedAddress("page/Growth 50%/A")).toEqual({ date: "page", tag: "Growth 50%/A" });
   });
   it("a name, a day, a namespace alone and nothing are no address", () => {
     for (const raw of ["Essays", "#2026-09-01", "bookshelf/", "#page", "pages/x", "", null]) expect(typedAddress(raw)).toBeNull();
