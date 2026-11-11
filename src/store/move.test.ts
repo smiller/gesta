@@ -138,6 +138,10 @@ describe("pictureNames", () => {
 });
 
 describe("renamePictures", () => {
+  it("picture syntax shown in code is left as written", () => {
+    expect(renamePictures("![a](x.png) and `![a](x.png)`\n\n```\n![a](x.png)\n```\n", { "x.png": "y.png" }))
+      .toBe("![a](y.png) and `![a](x.png)`\n\n```\n![a](x.png)\n```\n");
+  });
   it("a picture whose address cannot be found as written is renamed all the same, the text written anew", () => {
     expect(renamePictures("![a [b [c]]](x.png)\n", { "x.png": "y.png" })).toBe("![a [b [c]]](y.png)");
   });

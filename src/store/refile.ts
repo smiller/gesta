@@ -28,12 +28,23 @@ export function pointsInto(ns: string, root: string): (md: string) => boolean {
    An entry with none under `root` cannot link there, and is not parsed (pin:
    refile.test › mayName) */
 export function mayName(ns: string, root: string): (md: string) => boolean {
-  const re = new RegExp("<[^<>\\n]*#" + escapeRe(ns) + "/([^<>\\n]*)>|#" + escapeRe(ns) + "/([^\\s)\"'<>\\]]*)", "g");
+  const re = new RegExp("<[^<>\\n]*#" + escapeRe(ns) + "/([^<>\\n]*)>|#" + escapeRe(ns) + "/([^\\s\"<>\\]]*)", "g");
+  /* a bare address runs to the space after it, so where it ends is not
+     known: every stop at a closing bracket or a quote is tried, a name
+     holding either being read whole (pin: refile.test › a name with a
+     straight apostrophe or brackets) */
+  const stops = (run: string): string[] => {
+    const out = [run];
+    for (let i = run.length - 1; i > 0; i--) if (run[i] === ")" || run[i] === "'") out.push(run.slice(0, i));
+    return out;
+  };
   return (md) => {
     if (md.indexOf("#" + ns + "/") === -1) return false;
     re.lastIndex = 0;
     let m: RegExpExecArray | null;
-    while ((m = re.exec(md))) if (namesUnder("#" + ns + "/" + (m[1] ?? m[2]), ns, root)) return true;
+    while ((m = re.exec(md))) {
+      for (const path of m[1] !== undefined ? [m[1]] : stops(m[2])) if (namesUnder("#" + ns + "/" + path, ns, root)) return true;
+    }
     return false;
   };
 }
@@ -42,10 +53,11 @@ export function withHeading(md: string, name: string): string | null {
   if (firstHeading(md)) return null;
   return "# " + name + "\n" + (md.trim() ? "\n" + md : "");
 }
-/* wide on purpose: every entry naming the namespace at all, a narrower
-   text test having skipped links that did need rewriting (pin:
-   lifecycle.test › a link spelled with an encoded slash) */
-export function linkingKeys(cache: Record<string, string>, ns: string, moves: Record<string, string>): string[] {
+/* every entry outside the move holding an address under `root`, in any
+   spelling: a narrower text test once skipped links that did need rewriting
+   (pin: lifecycle.test › a link spelled with an encoded slash) */
+export function linkingKeys(cache: Record<string, string>, ns: string, root: string, moves: Record<string, string>): string[] {
   const copies = new Set(Object.values(moves));
-  return Object.keys(cache).filter((k) => !(k in moves) && !copies.has(k) && cache[k].includes("#" + ns + "/"));
+  const may = mayName(ns, root);
+  return Object.keys(cache).filter((k) => !(k in moves) && !copies.has(k) && may(cache[k]));
 }

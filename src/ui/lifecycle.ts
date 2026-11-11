@@ -5,7 +5,7 @@ import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
 import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
 import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, movePrompt, moveConfirm, deleteConfirm, deleteLanding, hostKey, refiledText, movedText } from "./subEntries.ts";
-import { pointsInto, mayName, withHeading, linkingKeys } from "../store/refile.ts";
+import { pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
 import { movePlan, moveLinks, joined, pictureNames, renamePictures } from "../store/move.ts";
 import { imageRefs, splitKey } from "../store/exportEntries.ts";
 import { pictureKey } from "../store/names.ts";
@@ -220,7 +220,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
       const followed = (text: string): string => retargetLinks(text, entryHash(date, old), entryHash(date, full), old, full) ?? text;
       return layer.setEntry(entryKey(date, full), followed(md)).then((landed) => {
-        if (!landed) { session.open(date, old); ui.pin("couldn't rename — nothing was moved"); return; }
+        if (!landed) {
+          const live = session.surfaceMd();
+          return (live !== md ? layer.setEntry(oldKey, live) : Promise.resolve(true)).then(() => { session.open(date, old); ui.pin("couldn't rename — nothing was moved"); });
+        }
         return layer.removeEntry(oldKey).then(() => retargetHost(date, old, full)).then(() => {
         /* typed into the surface while the writes ran: carried to the new key */
         const live = session.surfaceMd();
@@ -361,8 +364,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
         return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
           if (landed.includes(false)) return takeBack(landed);
           const twins = Object.keys(plan.twins);
-          const may = mayName(date, old);
-          const linking = linkingKeys(layer.cache, date, plan.moves).filter((k) => !(k in plan.twins) && may(layer.entryMd(k)));
+          const linking = linkingKeys(layer.cache, date, old, plan.moves).filter((k) => !(k in plan.twins));
           const points = pointsInto(date, old);
           const host = hostKey(date, old);
           return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => moveLinks(md, from, plan, k === host ? relabel : undefined)))).then((results) => {

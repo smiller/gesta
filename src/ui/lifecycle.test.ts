@@ -605,11 +605,18 @@ describe("rename moves a page with its sub-pages", () => {
 });
 
 describe("a day's tagged entry renamed", () => {
-  it("a write under the new name that does not land leaves the old entry standing, said in a pin", async () => {
+  it("a write under the new name that does not land keeps what was typed meanwhile under the old name", async () => {
     const w = await world({ at: ["2026-09-05", "draft"], entries: { "2026-09-05": "[draft](#2026-09-05/draft)\n", "2026-09-05/draft": "text\n" }, failSet: "2026-09-05/final" });
+    w.typeMeanwhile("text and more\n");
     w.answer("final");
     await w.life.rename();
-    expect(w.md("2026-09-05/draft")).toBe("text\n");
+    expect(w.md("2026-09-05/draft")).toBe("text and more\n");
+  });
+  it("a write under the new name that does not land leaves the old entry standing, said in a pin", async () => {
+    const w = await world({ at: ["2026-09-05", "draft"], entries: { "2026-09-05": "[draft](#2026-09-05/draft)\n", "2026-09-05/draft": "text" }, failSet: "2026-09-05/final" });
+    w.answer("final");
+    await w.life.rename();
+    expect(w.md("2026-09-05/draft")).toBe("text");
     expect(w.log).not.toContain("del 2026-09-05/draft");
     expect(w.log.slice(-2)).toEqual(["open 2026-09-05/draft", "pin couldn't rename — nothing was moved"]);
   });

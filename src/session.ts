@@ -1,6 +1,7 @@
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { imageView, pastedPictureBytes } from "./editor/images.ts";
+import { headingLineAt } from "./editor/sourceKeys.ts";
 import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
@@ -254,9 +255,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function sourceLineIsHeading(): boolean {
     const s = surface.current;
-    if (!s || !s.source) return false;
-    const md = s.md(), at = s.caret();
-    return /^#{1,6}\s/.test(md.slice(md.lastIndexOf("\n", at - 1) + 1));
+    return !!s && s.source && headingLineAt(s.md(), s.selectionEnd());
   }
   function insertText(text: string, after = false): boolean {
     if (!surface.current) return false;

@@ -156,6 +156,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     md: () => ta.value,
     flat: () => flattenText(ta.value),
     caret: () => ta.selectionStart,
+    selectionEnd: () => ta.selectionEnd,
     /* reported seen always, the switch back jumped to a caret a reader had
        scrolled away from (pin: source view › ⌃⌘M back, still scrolled away) */
     caretSeen: () => {

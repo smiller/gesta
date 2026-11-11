@@ -12,6 +12,7 @@
    shifts every line it touches) (pin: sourceKeys.test › an empty line gains
    nothing) */
 import { curlChar } from "./typing.ts";
+import { FENCE_LINE, HEADING_LINE } from "../model/grammar.ts";
 
 export interface Edit { value: string; start: number; end: number }
 export type TabResult = Edit | { refuse: string } | null;
@@ -70,4 +71,14 @@ export function sourceTyped(value: string, caret: number): { from: number; to: n
   if (prev === "’" && ch === "'") return { from: caret - 2, to: caret, text: "'" };
   if (prev === "‘" && ch === "'") return { from: caret - 2, to: caret, text: "’" };
   return { from: caret - 1, to: caret, text: curlChar(ch, prev) };
+}
+
+/* whether the line holding `pos` is a heading's, a fence's lines being
+   code (pin: sourceKeys.test › a heading's line) */
+export function headingLineAt(text: string, pos: number): boolean {
+  const start = pos === 0 ? 0 : text.lastIndexOf("\n", pos - 1) + 1;
+  const end = text.indexOf("\n", start);
+  let fenced = false;
+  for (const line of text.slice(0, start).split("\n")) if (FENCE_LINE.test(line)) fenced = !fenced;
+  return !fenced && HEADING_LINE.test(text.slice(start, end === -1 ? text.length : end));
 }

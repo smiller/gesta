@@ -22,10 +22,16 @@ describe("mayName", () => {
   const may = mayName("bookshelf", "C. P. Cavafy");
   it("an address under the name in any spelling: encoded, an encoded slash, lowercase hex, a letter in hex, in angle brackets, in a full URL, with a payload, or a link's definition", () => {
     for (const md of [
-      "[a](#bookshelf/C.%20P.%20Cavafy)", "[a](#bookshelf/C.%20P.%20Cavafy%2FWalls)", "[a](#bookshelf/C.%20p.%20Cavafy/Walls)".replace("p.", "P."),
+      "[a](#bookshelf/C.%20P.%20Cavafy)", "[a](#bookshelf/C.%20P.%20Cavafy%2FWalls)",
       "[a](#bookshelf/C.%20P.%20Cav%61fy)", "[a](<#bookshelf/C. P. Cavafy/Candles>)", "[a](file:///g/index.html#bookshelf/C.%20P.%20Cavafy)",
       "[a](#bookshelf/C.%20P.%20Cavafy/Walls?line=3)", "[a][r]\n\n[r]: #bookshelf/C.%20P.%20Cavafy/Walls", "[a](#bookshelf/C.%20P.%20Cavafy%2fWalls)",
     ]) expect(may(md)).toBe(true);
+  });
+  it("a name with a straight apostrophe or brackets is read whole, the link's closing bracket not taken for its end", () => {
+    expect(mayName("bookshelf", "O'Brien, Flann")("[x](#bookshelf/O'Brien%2C%20Flann) and more")).toBe(true);
+    expect(mayName("page", "Notes(2)")("see [x](#page/Notes(2)) here")).toBe(true);
+    expect(mayName("page", "Notes(2)")("see [x](#page/Notes%282%29/a) here")).toBe(true);
+    expect(mayName("page", "Notes")("see [x](#page/Notes(2)) here")).toBe(false);
   });
   it("another author, a longer name, another namespace and no address are not", () => {
     for (const md of ["[a](#bookshelf/Carroll%2C%20Lewis)", "[a](#bookshelf/C.%20P.%20Cavafy%20Jr)", "[a](#page/C.%20P.%20Cavafy)", "C. P. Cavafy wrote it"]) expect(may(md)).toBe(false);
@@ -42,8 +48,8 @@ describe("withHeading", () => {
 });
 
 describe("linkingKeys", () => {
-  it("the entries outside the moved set and its copies holding an address in the namespace at all", () => {
+  it("the entries outside the moved set and its copies holding an address under the name moved", () => {
     const cache = { "2026-09-14": "a [x](#bookshelf/C.%20P.%20Cavafy)", "2026-09-15": "plain bookshelf/ talk", "page/Links": "[y](#bookshelf/Horace)", "bookshelf/C. P. Cavafy": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)", "bookshelf/Cavafy, C. P": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)" };
-    expect(linkingKeys(cache, "bookshelf", { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" })).toEqual(["2026-09-14", "page/Links"]);
+    expect(linkingKeys(cache, "bookshelf", "C. P. Cavafy", { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" })).toEqual(["2026-09-14"]);
   });
 });

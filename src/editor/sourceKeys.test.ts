@@ -1,5 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { sourceTab, sourceTyped } from "./sourceKeys.ts";
+import { sourceTab, sourceTyped, headingLineAt } from "./sourceKeys.ts";
+
+describe("headingLineAt", () => {
+  it("a heading's line, at its start or end; not a line in a fence, nor the empty line before a heading", () => {
+    const text = "\n# Title\nbody\n```\n# comment\n```\n";
+    expect(headingLineAt(text, 1)).toBe(true);
+    expect(headingLineAt(text, 8)).toBe(true);
+    expect(headingLineAt(text, 0)).toBe(false);
+    expect(headingLineAt(text, 12)).toBe(false);
+    expect(headingLineAt(text, text.indexOf("# comment") + 3)).toBe(false);
+  });
+});
 
 describe("sourceTab", () => {
   it("a collapsed Tab inserts two spaces; Shift-Tab takes up to two back, or is left alone", () => {

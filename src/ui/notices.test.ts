@@ -63,7 +63,7 @@ describe("whisper", () => {
     expect(n.state.shown).toBe(false);
   });
   it("a routine whisper — saved, copied, a failed copy — only goes when clicked", async () => {
-    for (const text of ["saved", "copy failed — see console"]) {
+    for (const text of ["saved", "copied", "copy failed — see console"]) {
       n.whisper(text);
       n.click();
       await flush();

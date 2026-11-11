@@ -71,6 +71,7 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
       view.dispatch(tr);
       view.focus();
     },
+    selectionEnd: () => view.state.selection.to,
     insertText: (text, after) => {
       const tr = after ? view.state.tr.insertText(text, view.state.selection.to) : view.state.tr.insertText(text);
       if (after) tr.setSelection(TextSelection.create(tr.doc, view.state.selection.to + text.length));

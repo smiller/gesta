@@ -258,3 +258,33 @@ time two first.
   `Milton, John` 1,377 → 69, 1,282 ms → 97 ms; `Paradise Lost/Book 1` 1,383 →
   27, 1,284 ms → 60 ms; `page/Books/Books Lent` 19 → 1, 10 ms → 1 ms. 7 left as
   is (about 42 ms a backup, spread over its batches).
+
+## Confirmation pass of cycle 3 (2026-11-11)
+
+`/code-review` at high over `61a7a8a..59331c8`, run on the reader's word,
+MEASURED 107,566 tokens (its transcript). Ten findings, the reviewer's (it ran
+1, 2 and 4's picture rename under node); all fixed on the reader's word:
+
+1, 8. The quick check stopped an address at `'` or `)`, so a link to
+`O'Brien, Flann` or `Notes(2)` was skipped, never rewritten and never named as
+left — fixed: every stop is tried, the name read whole; the check now lives in
+`linkingKeys`, the one list of entries to rewrite. MEASURED: 33 of the
+backup's page and book names hold an apostrophe or brackets.
+2. The in-place picture rename changed picture syntax shown in code — fixed:
+code stretches (a fence, a backtick run) are left alone.
+3, 5. The markdown view's heading test read the selection's start, not where
+the link lands, saw a fence's `#` line as a heading and misread a caret at 0 —
+fixed: one test (`headingLineAt`) of the line the link lands on, using the
+grammar's heading and fence lines.
+4. A day's rename that failed lost what was typed meanwhile — fixed.
+6. The routine-whisper test now clicks "copied" too.
+7. A move parsed each pictured entry's text more than once — the last text's
+answer kept (`shownPictures`); entries without pictures are not parsed.
+9. The picture syntax one pattern (`imageLinks`), reading a title, brackets in
+the words and a name with brackets; the heading line the grammar's.
+10. A test case that undid itself, dropped.
+
+MEASURED after, under node over the backup: the same entries changed with and
+without the quick check in the four renames timed, the book's now 64 ms (the
+check reads every entry for an address); parser and syntax read the same
+pictures in all 178 pictured entries.

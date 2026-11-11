@@ -28,7 +28,7 @@ function world(y = 0) {
       end: () => source ? f.text.length : doc!.content.size,
       scrollToPos: (pos) => { log.push("align " + pos); },
       placeCaret: (pos, scroll) => { f.caretAt = pos ?? (source ? f.text.length : 0); log.push("caret " + pos + (scroll ? " scroll" : " still")); },
-      insertText: () => {}, insertPicture: () => {}, words: () => 0,
+      insertText: () => {}, selectionEnd: () => f.caretAt, insertPicture: () => {}, words: () => 0,
       destroy: () => { log.push("destroy " + (source ? "source" : "rendered")); },
     };
     built.push(f);

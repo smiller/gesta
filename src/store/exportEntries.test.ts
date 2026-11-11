@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { exportEntries, imageRefs, archiveRoots, splitKey, missingPictures } from "./exportEntries.ts";
+import { exportEntries, imageRefs, patternRefs, archiveRoots, splitKey, missingPictures } from "./exportEntries.ts";
 import { memImageStore } from "./store.ts";
 import { filePath } from "./files.ts";
 
@@ -12,6 +12,9 @@ test("imageRefs: relative refs, bare or <bracketed>, unwrapped and deduplicated;
 test("imageRefs: every picture the editor shows, read as the editor reads it — a name with brackets, a title, brackets in the words — and none in code", () => {
   expect(imageRefs("![](Notes(2)-img-1.webp) ![a](t.png \"title\") ![fig [1]](y.png)\n\n```\n![](code.png)\n```\n"))
     .toEqual(["Notes(2)-img-1.webp", "t.png", "y.png"]);
+});
+test("patternRefs: the picture syntax read whole — a title, brackets in the words, a name with brackets", () => {
+  expect(patternRefs("![a](t.png \"title\") ![fig [1]](y.png) ![](Notes(2)-img-1.webp)")).toEqual(["t.png", "y.png", "Notes(2)-img-1.webp"]);
 });
 test("imageRefs: a text the editor cannot read is read by its picture syntax, so nothing it may hold is missed", () => {
   expect(imageRefs("::: verse\n![](kept.png)\n:::\n:::\n")).toContain("kept.png");

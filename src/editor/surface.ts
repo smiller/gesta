@@ -30,6 +30,8 @@ export interface Surface {
   lock(on: boolean): void;
   /* `after`: at the selection's end, the caret after it */
   insertText(text: string, after?: boolean): void;
+  /* where a text inserted `after` lands */
+  selectionEnd(): number;
   insertPicture(name: string): void;
   words(): number;
   replace?: ReplacePort;
