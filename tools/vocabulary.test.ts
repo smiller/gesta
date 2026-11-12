@@ -17,8 +17,8 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-test("the app, its tools, its one-off scripts and CLAUDE.md say reference: no retired word anywhere", () => {
-  const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
+test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference: no retired word anywhere", () => {
+  const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retiredWord(t) ? [f + ":" + (i + 1)] : [])));
   expect(found).toEqual([]);
 });

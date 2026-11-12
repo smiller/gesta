@@ -1,6 +1,6 @@
 import { Plugin, PluginKey, Selection, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
-import type { Node, ResolvedPos } from "prosemirror-model";
+import type { Node } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { measurePass } from "./measurePass.ts";
 
@@ -48,59 +48,6 @@ export function noteColumns(block: Node): Map<number, "latin" | "english"> {
     out.set(i, n && english.has(superscript(n[1])) ? "english" : "latin");
   });
   return out;
-}
-
-/* the sentence whose English holds `pos`: its block's first position, its
-   row's index, and the last row it stands beside, before the next sentence
-   or a note */
-const inEnglishCell = ($p: ResolvedPos, d: number): boolean => $p.parent.type === N.cell && $p.node(d - 1).type === N.pair && $p.index(d - 1) === 1;
-const isDualBlock = (b: Node): boolean => b.type === N.verse && !!b.attrs.dual;
-const besideEnglish = (row: Node): boolean => row.type === N.line || (row.type === N.pair && !row.child(1).content.size);
-function lastBeside(block: Node, first: number): number {
-  let last = first;
-  for (let k = first + 1; k < block.childCount; k++) {
-    const row = block.child(k);
-    /* a skipped line number and a stanza gap stand in the Latin column under
-       the English as no row (pin: reference.test › a sentence's Latin runs on
-       past a skipped line number) */
-    if (row.type === N.skip || row.type === N.gap) continue;
-    if (!besideEnglish(row)) break;
-    last = k;
-  }
-  return last;
-}
-function sentenceAt(doc: Node, pos: number): { start: number; block: Node; first: number; last: number } | null {
-  const $p = doc.resolve(pos), d = $p.depth;
-  if (d < 3 || !inEnglishCell($p, d)) return null;
-  const block = $p.node(d - 2);
-  if (!isDualBlock(block)) return null;
-  const first = $p.index(d - 2);
-  return { start: $p.start(d - 2), block, first, last: lastBeside(block, first) };
-}
-const rowAt = (s: { start: number; block: Node }, i: number): number => {
-  let at = s.start;
-  for (let k = 0; k < i; k++) at += s.block.child(k).nodeSize;
-  return at;
-};
-
-/* an end widens only where the selection holds some of its cell's words:
-   one resting at a cell's edge pulled in a sentence no one selected (pin:
-   reference.test › an end resting at an English cell's edge) */
-function inked(doc: Node, end: number, from: number, to: number): boolean {
-  const $p = doc.resolve(end);
-  if ($p.parent.type !== N.cell) return false;
-  return !!doc.textBetween(Math.max(from, $p.start()), Math.min(to, $p.end())).trim();
-}
-
-/* a selection with an end in a sentence's English, widened to the Latin
-   the sentence stands beside: from its own row's start to the end of the
-   last row before the next sentence (pin: reference.test › a selection in
-   a sentence's English takes the Latin) */
-export function sentenceRange(doc: Node, from: number, to: number): [number, number] {
-  const a = inked(doc, from, from, to) ? sentenceAt(doc, from) : null, b = inked(doc, to, from, to) ? sentenceAt(doc, to) : null;
-  const start = a ? rowAt(a, a.first) + 2 : from;
-  const end = b ? Math.max(to, rowAt(b, b.last) + b.block.child(b.last).nodeSize - (b.block.child(b.last).type === N.pair ? 2 : 1)) : to;
-  return [start, end];
 }
 
 /* where an arrow goes from an English cell's edge, by the block's index:

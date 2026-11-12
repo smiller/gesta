@@ -2,8 +2,7 @@ import type { Node, ResolvedPos } from "prosemirror-model";
 import { Plugin } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import { schema } from "../model/schema.ts";
-import { sentenceRange } from "./dualLanguage.ts";
-import { wholeRows } from "./reference.ts";
+import { passageAt, marked } from "./passage.ts";
 
 const N = schema.nodes;
 
@@ -20,26 +19,15 @@ function pairedBlock($p: ResolvedPos): number | null {
   return null;
 }
 
-/* the rows the selection's ends widen to, less the selection itself: a
-   range per text; nothing outside one paired block, nor in a block
-   numbered on both sides (pin: pairMarks.test › a block numbered on both
-   sides) */
+/* what the passage's rows hold beyond the selection, inside one paired
+   block; nothing where the passage is refused, nor in a block numbered on both sides
+   (pin: pairMarks.test › a block numbered on both sides) */
 export function coveredMarks(doc: Node, from: number, to: number): [number, number][] {
-  if (from >= to) return [];
-  const block = pairedBlock(doc.resolve(from));
-  if (block == null || block !== pairedBlock(doc.resolve(to))) return [];
-  const [a, b] = wholeRows(doc, ...sentenceRange(doc, from, to));
-  const out: [number, number][] = [];
-  const add = (x: number, y: number) => { if (y > x && doc.textBetween(x, y).trim()) out.push([x, y]); };
-  doc.nodesBetween(a, b, (n, pos) => {
-    if (n.type === N.note || n.type === N.margin_note) return false;
-    if (!n.isTextblock) return true;
-    const s = Math.max(pos + 1, a), e = Math.min(pos + 1 + n.content.size, b);
-    add(s, Math.min(e, from));
-    add(Math.max(s, to), e);
-    return false;
-  });
-  return out;
+  const p = passageAt(doc, from, to);
+  if ("refused" in p) return [];
+  const block = pairedBlock(doc.resolve(p.from));
+  if (block == null || block !== pairedBlock(doc.resolve(p.to))) return [];
+  return marked(p, from, to);
 }
 
 /* (pin: pairMarks.test › a selection in one sentence's original marks its translation) */

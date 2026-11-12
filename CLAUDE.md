@@ -58,6 +58,7 @@ here NOW, and what is not yet:
     2026-09-28 (the plan's record); the checker's sweep reads 0 blocks
     naming another module and 0 carrying provenance, and a new comment
     is held to the same by the checker.
+- IN FORCE from 2026-11-12 — THE DOMAIN'S WORDS are in `GLOSSARY.md` (asked), the file `/improve-codebase-architecture` reads: a thing a reader of the app would recognise, never how the code does it; a word is added when a design names it.
 - IN FORCE from 2026-11-04 — THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in code, tests, help, tools and replies; a label is the link's text; `one-offs/shelfLines.ts` calls his own typed attribution a "source line". `tools/vocabulary.test.ts`, under `npm test`, fails on a retired word anywhere in src/, tools/ or this file; dated plan records keep their words.
 - IN FORCE from 2026-11-05 — A CHANGED COMMENT IS READ BEFORE IT IS COMMITTED (asked, after a review found a new comment describing another module in words the checker cannot see): `npm run test:comments`, under `verify`, fails while the ledger of added or changed blocks is not recorded as read; each is read against the comment standard, fixed if it fails, and `npm run comments:read` records the ledger. Changing a listed block clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
 - IN FORCE from 2026-11-05 — A TEST'S DESCRIPTION STATES THE RULE; the exact forms live only in its assertions, so there is less to go stale (asked).
@@ -533,7 +534,10 @@ is in the plan's record, under the phase named):
   `dual` form: the Latin's wait where a sentence runs long, the arithmetic
   pure, the measuring pass writing it on the rows; a note's column from
   where its mark stands, as node decorations), `pairMarks.ts` (a selection in one column of paired rows: the
-  other column of the rows it covers, marked as selected), `folios.ts` (the
+  rest of its passage's rows, marked as selected), `passage.ts` (THE
+  PASSAGE a selection makes, `GLOSSARY.md`'s word: the rows it lands in,
+  the refusal, one walk of their lines, the quotation and the marks'
+  ranges — what ⌃⌘R, the marks and Ref (all) all read, 2026-11-12), `folios.ts` (the
   gutter's switch: `foliopage` on the root where a leaf is the text's, and
   each label's drop to the line its leaf's first word starts on),
   `typing.ts` (markdown as you type: the input rules and the two Enter
@@ -715,8 +719,9 @@ is in the plan's record, under the phase named):
   the entry link to the clipboard, the builders of the two views the
   surface switches between (`src/editor/surface.ts`). `src/editor/images.ts` is the image node
   view it supplies, resolving a relative src from the store;
-  `src/editor/reference.ts` the selection half of a reference — the rows
-  covered, the line and leaf ranges, the highlight payload, the passage.
+  `src/editor/reference.ts` the selection half of a reference over the
+  passage — the line, stanza, paragraph and leaf ranges, the highlight
+  payload, the clipboard text.
 - `hooks/` — the gate (2026-09-08): `sig.sh` (the app tree's signature,
   shared), `accept.sh` (the reader's, records it), `pre-review.sh` (the
   PreToolUse refusal); and the test gates (2026-09-22): `stop.sh` (the

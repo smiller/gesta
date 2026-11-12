@@ -4,8 +4,8 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { referenceRange, stanzaRange, folioRange, selectionLink, passageMd, wordEdges, spansTwoBlocks, coversProse, referencePayload, entryLinkParts, referenceAnchorHTML, facingBlockOf, offersBoth } from "./reference.ts";
-import { sentenceRange } from "./dualLanguage.ts";
+import { selectionLink, referencePayload, entryLinkParts, referenceAnchorHTML, offersBoth } from "./reference.ts";
+import { passageAt, quotation } from "./passage.ts";
 import { journalOf } from "../store/headings.ts";
 
 interface Find { needle: string; end?: string; from: number; to: number }
@@ -33,28 +33,47 @@ function span(doc: Node, needle: string, end?: string): [number, number] {
   return [f.from, f.to];
 }
 const state = (doc: Node, from: number, to: number) => EditorState.create({ doc, selection: TextSelection.create(doc, from, to) });
+/* the passage a selection makes, quoted, or the refusal */
+function quote(doc: Node, a: number, b: number, how: { halves?: boolean; paragraphs?: boolean } = {}): string | null {
+  const p = passageAt(doc, a, b);
+  return "refused" in p ? p.refused : quotation(p, how);
+}
+/* the words the passage a selection makes runs over */
+function words(doc: Node, a: number, b: number): string {
+  const p = passageAt(doc, a, b);
+  return "refused" in p ? p.refused : doc.textBetween(p.from, p.to, "/");
+}
+function facingOf(doc: Node, a: number, b: number): { pos: number } | null {
+  const p = passageAt(doc, a, b);
+  return "refused" in p ? null : p.facing;
+}
+/* the range a plain work's reference label ends with */
+function rangeOf(doc: Node, a: number, b: number): string {
+  const out = referencePayload(state(doc, a, b), { date: "bookshelf", tag: "Somebody/A Work" }, journalOf({}));
+  return "refused" in out ? out.refused : out.label.replace(/^Somebody, \*A Work\*(, )?/, "");
+}
 const journal = journalOf({ "bookshelf/Milton, John/Paradise Lost": "# Paradise Lost", "bookshelf/Williams, Charles/Witchcraft": "# Witchcraft" });
 
 const verse = parseMarkdown("# Book 1\n\n::: verse\n**SPEAKER**\nOf man's first disobedience, and the fruit\nOf that forbidden tree, whose mortal taste\n\nBrought death into the World, and all our woe,\nWith loss of Eden\n:::\n\nA closing paragraph.");
 
 test("referenceRange over covered lines; a speaker label takes the line under it", () => {
   const [a, b] = span(verse, "forbidden", "Brought death");
-  expect(referenceRange(verse, a, b)).toBe("2-3");
+  expect(rangeOf(verse, a, b)).toBe("2-3");
   const [c, d] = span(verse, "SPEAKER", "disobedience");
-  expect(referenceRange(verse, c, d)).toBe("1");
+  expect(rangeOf(verse, c, d)).toBe("1");
   const [e, f] = span(verse, "closing");
-  expect(referenceRange(verse, e, f)).toBe("");
+  expect(rangeOf(verse, e, f)).toBe("");
 });
 
 test("a single-column passage quotes whole rows as its own fence numbered from the first quoted line, the stanza gap kept, apparatus and prose left out of the count", () => {
   const [a, b] = span(verse, "Of that forbidden", "and all our woe,");
-  expect(passageMd(verse, a, b)).toBe("> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::");
+  expect(quote(verse, a, b)).toBe("> ::: verse 2\n> Of that forbidden tree, whose mortal taste\n> \n> Brought death into the World, and all our woe,\n> :::");
 });
 
 test("a passage quoted from a dual-language block is a dual-language fence numbered from its first line, each quoted row keeping its sentence", () => {
   const doc = parseMarkdown("::: dual-language 568\nEst nemus Haemoniae | There is a vale.\nsilva:\n⟨…⟩vocant Tempe; | Men call it Tempe.\n:::");
   const [a, b] = span(doc, "Est nemus", "silva:");
-  expect(passageMd(doc, a, b)).toBe("> ::: dual-language 568\n> Est nemus Haemoniae | There is a vale.\n> silva:\n> :::");
+  expect(quote(doc, a, b)).toBe("> ::: dual-language 568\n> Est nemus Haemoniae | There is a vale.\n> silva:\n> :::");
 });
 
 const PISOS = parseMarkdown("# Ars Poetica\n\n::: dual-language\nHumano capiti cervicem pictor equinam | If a painter chose to join a human head to the neck of a horse, could you refrain from laughing?\nspectatum admissi risum teneatis, amici?\ncredite, Pisones, isti tabulae fore librum | Believe me, dear Pisos, quite like such pictures would be a book, so that neither head nor foot can be assigned to a single shape.\npersimilem, cuius, velut aegri somnia, vanae\nfingentur species, ut nec pes nec caput uni\nreddatur formae.\n⟨…⟩“pictoribus atque poetis | “Painters and poets,” you say, “have always had an equal right.”\nquidlibet audendi semper fuit aequa potestas.”\n:::");
@@ -85,66 +104,61 @@ test("an end resting at an English cell's edge, none of the English selected, ta
 test("a sentence's Latin runs on past a skipped line number to the line its English ends beside", () => {
   const doc = parseMarkdown("::: dual-language 542\nviribus absumptis | Now was her strength all gone, destroy this beauty.\nvicta labore fugae\n⟨skipped line number⟩\nqua nimium placui\nTellus, ait, hisce | Then Earth.\n:::");
   const [a, b] = span(doc, "strength all gone");
-  const [x, y] = sentenceRange(doc, a, b);
-  expect(doc.textBetween(x, y, " ")).toContain("qua nimium placui");
+  expect(words(doc, a, b)).toContain("qua nimium placui");
 });
 test("sentenceRange: a selection's English widens over the Latin it stands beside; a selection in the Latin or outside a dual-language block stays as it is", () => {
   const [a, b] = span(PISOS, "quite like such pictures");
-  const [x, y] = sentenceRange(PISOS, a, b);
-  const text = PISOS.textBetween(x, y, " ");
+  const text = words(PISOS, a, b);
   for (const latin of ["credite, Pisones", "persimilem, cuius", "fingentur species", "reddatur formae."]) expect(text).toContain(latin);
   const [c, d] = span(PISOS, "persimilem", "nec caput uni");
-  expect(sentenceRange(PISOS, c, d)).toEqual([c, d]);
+  expect(words(PISOS, c, d)).toBe(PISOS.textBetween(c, d, "/"));
   const [e, f] = span(verse, "forbidden", "Brought death");
-  expect(sentenceRange(verse, e, f)).toEqual([e, f]);
+  expect(words(verse, e, f)).toBe(verse.textBetween(e, f, "/"));
 });
 
 test("a passage across a skipped line number keeps it, numbered as the edition numbers it", () => {
   const doc = parseMarkdown("::: dual-language 544\nvicta labore fugae | Overcome\nqua nimium placui | Destroy\n⟨skipped line number⟩\nvix prece finita | Scarce\n:::");
   const [a, b] = span(doc, "qua nimium", "vix prece");
-  expect(passageMd(doc, a, b)).toBe("> ::: dual-language 545\n> qua nimium placui | Destroy\n> ⟨skipped line number⟩\n> vix prece finita | Scarce\n> :::");
-  expect(referenceRange(doc, a, b)).toBe("545-47");
+  expect(quote(doc, a, b)).toBe("> ::: dual-language 545\n> qua nimium placui | Destroy\n> ⟨skipped line number⟩\n> vix prece finita | Scarce\n> :::");
+  expect(rangeOf(doc, a, b)).toBe("545-47");
   const plain = parseMarkdown("::: verse 545\nqua nimium placui\n⟨skipped line number⟩\nvix prece finita\n:::");
   const [c, d] = span(plain, "qua nimium", "vix prece");
-  expect(passageMd(plain, c, d)).toBe("> ::: verse 545\n> qua nimium placui\n> ⟨skipped line number⟩\n> vix prece\n> :::");
+  expect(quote(plain, c, d)).toBe("> ::: verse 545\n> qua nimium placui\n> ⟨skipped line number⟩\n> vix prece\n> :::");
 });
 
 test("a passage starting or ending inside a line quotes from the word the selection starts in to the word it ends in, numbered as before", () => {
   const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\nHow tender ’tis to love the babe that milks me:\nI would, while it was smiling in my face,\n:::");
   const [a, b] = span(doc, "I have given", "smiling");
-  expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> I have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
+  expect(quote(doc, a, b)).toBe("> ::: verse 2\n> I have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
   const [c, d] = span(doc, "ave given", "smil");
-  expect(passageMd(doc, ...wordEdges(doc, c, d))).toBe("> ::: verse 2\n> have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
+  expect(quote(doc, c, d)).toBe("> ::: verse 2\n> have given suck, and know\n> How tender ’tis to love the babe that milks me:\n> I would, while it was smiling\n> :::");
   const [e, f] = span(doc, " I have", "and know");
-  expect(passageMd(doc, ...wordEdges(doc, e, f))).toBe("> ::: verse 2\n> I have given suck, and know\n> :::");
-  expect(referenceRange(doc, a, b)).toBe(referenceRange(doc, span(doc, "Does")[0], span(doc, "face,")[1]));
+  expect(quote(doc, e, f)).toBe("> ::: verse 2\n> I have given suck, and know\n> :::");
+  expect(rangeOf(doc, a, b)).toBe(rangeOf(doc, span(doc, "Does")[0], span(doc, "face,")[1]));
 });
 test("wordEdges: a selection is widened to whole words, past the spaces and punctuation it starts on, an opening mark before its first word kept", () => {
   const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\nHe said, “O soul, still in\n:::");
-  const words = (a: number, b: number): string => { const [x, y] = wordEdges(doc, a, b); return doc.textBetween(x, y, "/"); };
-  expect(words(...span(doc, "ave given", "suc"))).toBe("have given suck");
-  expect(words(span(doc, "you")[1], span(doc, "and know")[1])).toBe("I have given suck, and know");
-  expect(words(span(doc, "O soul")[0], span(doc, "O soul")[1])).toBe("“O soul");
-  expect(words(span(doc, "then,")[1], span(doc, "Does unmake")[1])).toBe("Does unmake");
-  expect(words(span(doc, "ve given ")[0], span(doc, "ve given ")[1])).toBe("have given");
+  expect(words(doc, ...span(doc, "ave given", "suc"))).toBe("have given suck");
+  expect(words(doc, span(doc, "you")[1], span(doc, "and know")[1])).toBe("I have given suck, and know");
+  expect(words(doc, span(doc, "O soul")[0], span(doc, "O soul")[1])).toBe("“O soul");
+  expect(words(doc, span(doc, "then,")[1], span(doc, "Does unmake")[1])).toBe("Does unmake");
+  expect(words(doc, span(doc, "ve given ")[0], span(doc, "ve given ")[1])).toBe("have given");
   /* nothing but punctuation and spaces selected: the selection as it was */
-  expect(words(span(doc, ". ")[0], span(doc, ". ")[1])).toBe(". ");
+  expect(words(doc, span(doc, ". ")[0], span(doc, ". ")[1])).toBe(". ");
 });
 test("a passage begun at the end of a line starts on the next, numbered from it", () => {
   const doc = parseMarkdown("::: verse\nWhat beast was’t, then,\nDoes unmake you. I have given suck, and know\n:::");
-  const [a, b] = wordEdges(doc, span(doc, "then,")[1], span(doc, "and know")[1]);
-  expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> Does unmake you. I have given suck, and know\n> :::");
-  expect(referenceRange(doc, a, b)).toBe(referenceRange(doc, ...span(doc, "Does", "know")));
+  const [a, b] = [span(doc, "then,")[1], span(doc, "and know")[1]];
+  expect(quote(doc, a, b)).toBe("> ::: verse 2\n> Does unmake you. I have given suck, and know\n> :::");
+  expect(rangeOf(doc, a, b)).toBe(rangeOf(doc, ...span(doc, "Does", "know")));
 });
 test("a passage begun at the end of a line ending in a letter starts on the next, never on that line's last word", () => {
   const doc = parseMarkdown("::: verse\nI would, while it was smiling\nHave pluck’d my nipple from his boneless gums\n:::");
-  const [a, b] = wordEdges(doc, span(doc, "smiling")[1], span(doc, "boneless")[1]);
-  expect(doc.textBetween(a, b, "/")).toBe("Have pluck’d my nipple from his boneless");
+  expect(words(doc, span(doc, "smiling")[1], span(doc, "boneless")[1])).toBe("Have pluck’d my nipple from his boneless");
 });
 test("a passage begun on an opening mark that ends its line starts on the next line; a mark before a word stays", () => {
   const doc = parseMarkdown("::: verse\nAnd then he cried, “\nO soul, still in\n:::");
-  const [a, b] = wordEdges(doc, span(doc, "cried,")[1], span(doc, "O soul")[1]);
-  expect(doc.textBetween(a, b, "/")).toBe("O soul");
+  expect(words(doc, span(doc, "cried,")[1], span(doc, "O soul")[1])).toBe("O soul");
 });
 test("a passage begun at the end of one verse block's last line lies in the next block alone: no refusal", () => {
   const doc = parseMarkdown("::: verse\na line of the first\n:::\n\n::: verse\nthe second block's line\n:::");
@@ -154,193 +168,190 @@ test("a passage begun at the end of one verse block's last line lies in the next
 test("a paired block copies as its own fence inside the quotation, numbered from the first quoted line", () => {
   const doc = parseMarkdown("::: verse\nMaecenas atavis | Maecenas, descended\nedite regibus | of kings\no et praesidium | my bulwark\n:::");
   const [a, b] = span(doc, "regibus", "bulwark");
-  expect(passageMd(doc, a, b)).toBe("> ::: verse 2\n> edite regibus | of kings\n> o et praesidium | my bulwark\n> :::");
+  expect(quote(doc, a, b)).toBe("> ::: verse 2\n> edite regibus | of kings\n> o et praesidium | my bulwark\n> :::");
   /* the quoted fence is the model's own shape: it parses back to a quotation holding the pair, the start kept, and a stanza gap survives the quote marks */
   const gapped = parseMarkdown("::: verse\na | b\nc | d\n\ne | f\n:::");
   const [c, d] = span(gapped, "c", "f");
-  const md = passageMd(gapped, c, d);
+  const md = quote(gapped, c, d);
   expect(md).toBe("> ::: verse 2\n> c | d\n> \n> e | f\n> :::");
-  expect(parseMarkdown(md).toString()).toBe("doc(blockquote(verse(pair(cell(\"c\"), cell(\"d\")), gap, pair(cell(\"e\"), cell(\"f\")))))");
+  expect(parseMarkdown(md!).toString()).toBe("doc(blockquote(verse(pair(cell(\"c\"), cell(\"d\")), gap, pair(cell(\"e\"), cell(\"f\")))))");
 });
 
 test("a paired reference referenced again: the quoted block walked whole, the number from its own start", () => {
   /* a paired reference inside a quotation: a cut through one cell of the pair could not be written */
   const doc = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::");
   const [a, b] = span(doc, "alph", "alph");
-  expect(passageMd(doc, a, b + 4)).toBe("> ::: verse 13\n> alpha beta | one two\n> :::");
+  expect(quote(doc, a, b + 4)).toBe("> ::: verse 13\n> alpha beta | one two\n> :::");
   const [c, d] = span(doc, "gamma", "four");
-  expect(passageMd(doc, c, d)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::");
+  expect(quote(doc, c, d)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::");
 });
 test("no cut through a pair, one quote level, a note kept, the block's own count", () => {
   const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
   /* one end outside the quoted pair: whole rows, no throw, and the quotation holding only that end STAYS, as the source had it */
   let [a, b] = span(q, "four", "After");
-  expect(passageMd(q, a, b)).toBe(">> ::: verse 14\n>> gamma delta | three four\n>> :::\n> After");   /* numbered from the row the cut opens on */
+  expect(quote(q, a, b)).toBe(">> ::: verse 14\n>> gamma delta | three four\n>> :::\n> After");   /* numbered from the row the cut opens on */
   [a, b] = span(q, "Horace", "alph");
-  expect(passageMd(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
+  expect(quote(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
   /* a note inside a quoted verse block: its text, as before */
   const noted = parseMarkdown("> ::: verse 13\n> alpha beta | one two\n> ::: note\n> a footnote here\n> :::\n> gamma delta | three four\n> :::");
   [a, b] = span(noted, "footnote", "footnote");
-  expect(passageMd(noted, a, b)).toBe("> ::: verse 14\n> ::: note\n> footnote\n> :::\n> :::");   /* the block's count at the note's row, as a direction alone is numbered */
+  expect(quote(noted, a, b)).toBe("> ::: verse 14\n> ::: note\n> footnote\n> :::\n> :::");   /* the block's count at the note's row, as a direction alone is numbered */
   /* two quoted fences are two blocks, refused as at the top level */
   const two = parseMarkdown("> ::: verse 13\n> alpha | one\n> beta | two\n> :::\n>\n> ::: verse 40\n> gamma | three\n> :::");
   [a, b] = span(two, "beta", "three");
-  expect(spansTwoBlocks(two, a, b)).toBe(true);
+  expect(quote(two, a, b)).toBe("two-blocks");
   /* a speaker row alone keeps the block's own count */
   const spoken = parseMarkdown("> ::: verse 13\n> **Duke** | **Duke**\n> alpha | one\n> :::");
   [a, b] = span(spoken, "Duke", "Duke");
-  expect(passageMd(spoken, a, b)).toBe("> ::: verse 13\n> **Duke** | **Duke**\n> :::");
+  expect(quote(spoken, a, b)).toBe("> ::: verse 13\n> **Duke** | **Duke**\n> :::");
   /* an ink-less pair row between plain lines does not make the passage paired */
   const stray = parseMarkdown("::: verse\nfirst line\n |\nsecond line\n:::");
   [a, b] = span(stray, "first", "second line");
-  expect(passageMd(stray, a, b)).toBe("> ::: verse\n> first line\n> \n> second line\n> :::");
+  expect(quote(stray, a, b)).toBe("> ::: verse\n> first line\n> \n> second line\n> :::");
   /* a quoted paragraph referenced again: one level */
   const para = parseMarkdown("[*M*](#x):\n\n> The mind is its own place\n\n[*H*](#y):\n\n> ::: verse 13\n> a | b\n> :::");
   [a, b] = span(para, "mind", "own");
-  expect(passageMd(para, a, b)).toBe("> mind is its own");
+  expect(quote(para, a, b)).toBe("> mind is its own");
   /* a top-level pair's cell into the paragraph after it: whole rows, no throw */
   const top = parseMarkdown("::: verse\nalpha | one\n:::\n\nAfter.");
   [a, b] = span(top, "one", "After");
-  expect(passageMd(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> After");
+  expect(quote(top, a, b)).toBe("> ::: verse\n> alpha | one\n> :::\n> After");
 });
 test("a block inside a note, the label's top level, an end resting on a row, blanks, depth, the count before", () => {
   /* a verse block inside a note inside a verse block is walked whole (Satires 1.10's shape) */
   const satires = parseMarkdown("::: verse\nLucili, quam sis mendosus, teste Catone,\n::: note\n::: verse\nquam sis mendosus, teste Catone,\ndefensore tuo, pervincam\n:::\n:::\n:::");
   let [a, b] = span(satires, "defensore", "pervincam");
-  expect(passageMd(satires, a, b)).toBe("> ::: verse 2\n> defensore tuo, pervincam\n> :::");
+  expect(quote(satires, a, b)).toBe("> ::: verse 2\n> defensore tuo, pervincam\n> :::");
   /* the label counts the entry's own lines, never a pasted reference's */
   const host = parseMarkdown("::: verse\nline one\nline two\n:::\n\n> ::: verse 13\n> a | b\n> c | d\n> :::");
   [a, b] = span(host, "a", "d");
-  expect(referenceRange(host, a, b)).toBe("");
-  expect(passageMd(host, a, b)).toBe("> ::: verse 13\n> a | b\n> c | d\n> :::");
+  expect(rangeOf(host, a, b)).toBe("");
+  expect(quote(host, a, b)).toBe("> ::: verse 13\n> a | b\n> c | d\n> :::");
   [a, b] = span(host, "line one", "line two");
-  expect(referenceRange(host, a, b)).toBe("1-2");
+  expect(rangeOf(host, a, b)).toBe("1-2");
   /* an end resting at a row's edge with none of its ink selected takes none of the row */
   const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> :::");
   [a] = span(q, "Horace", "Horace");
   let cellStart = 0; q.descendants((n, pos) => { if (n.type.name === "cell" && !cellStart) cellStart = pos + 1; });
-  expect(passageMd(q, a, cellStart)).toBe("> [*Horace*](#page/Horace?h=x):");
+  expect(quote(q, a, cellStart)).toBe("> [*Horace*](#page/Horace?h=x):");
   /* a quote body's blank line stays one blank once lifted */
   const blanks = parseMarkdown("> The mind\n>\n> ::: verse 13\n> a | b\n> :::\n> \n> After.");
   [a, b] = span(blanks, "mind", "After");
-  expect(passageMd(blanks, a, b)).toBe("> mind\n> ::: verse 13\n> a | b\n> :::\n> After");   /* no blank at a fence's edge: it painted an empty line */
+  expect(quote(blanks, a, b)).toBe("> mind\n> ::: verse 13\n> a | b\n> :::\n> After");   /* no blank at a fence's edge: it painted an empty line */
   /* two quotations deep, or inside a note: one level out */
   const deep = parseMarkdown("> > ::: verse 13\n> > alpha beta | one two\n> > gamma delta | three four\n> > :::\n> >\n> > After the quote.");
   [a, b] = span(deep, "four", "After");
-  expect(passageMd(deep, a, b)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::\n> After");   /* both ends in the inner quotation: both levels off */
+  expect(quote(deep, a, b)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::\n> After");   /* both ends in the inner quotation: both levels off */
   const noted = parseMarkdown("::: note\nfootnote here\n:::");
   [a, b] = span(noted, "footnote", "footnote");
-  expect(passageMd(noted, a, b)).toBe("> footnote");
+  expect(quote(noted, a, b)).toBe("> footnote");
   /* a direction alone carries the block's count at its row, as the last row too */
   const mid = parseMarkdown("::: verse 13\nalpha | one\n*exit* | *exit*\nbeta | two\n:::");
   [a, b] = span(mid, "exit", "exit");
-  expect(passageMd(mid, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
+  expect(quote(mid, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
   const last = parseMarkdown("::: verse 13\nalpha | one\n*exit* | *exit*\n:::");
   [a, b] = span(last, "exit", "exit");
-  expect(passageMd(last, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
+  expect(quote(last, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
 });
 test("the passage is a quotation node, serialized", () => {
   /* a stanza gap beside a note inside the fence is a row, kept through the cut arm */
   const gapped = parseMarkdown("Intro.\n\n::: verse\na | b\n\n::: note\nfoot\n:::\n\nc | d\n:::");
   let [a, b] = span(gapped, "Intro", "d");
-  expect(passageMd(gapped, a, b)).toBe("> Intro.\n> ::: verse\n> a | b\n> \n> ::: note\n> foot\n> :::\n> \n> c | d\n> :::");
+  expect(quote(gapped, a, b)).toBe("> Intro.\n> ::: verse\n> a | b\n> \n> ::: note\n> foot\n> :::\n> \n> c | d\n> :::");
   /* a refused `:::` line is a text line, its paragraph breaks kept */
   const refused = parseMarkdown("First para.\n\n::: verse x\n\nLast para.");
   [a, b] = span(refused, "First", "Last");
-  expect(passageMd(refused, a, b)).toBe("> First para.\n> \n> ::: verse x\n> \n> Last");
+  expect(quote(refused, a, b)).toBe("> First para.\n> \n> ::: verse x\n> \n> Last");
   /* a retained quotation's edge blank comes off inside the nested box */
   const edge = parseMarkdown("> The mind\n>\n\nAfter.");
   [a, b] = span(edge, "mind", "After");
-  expect(passageMd(edge, a, b)).toBe(">> mind\n> After");
+  expect(quote(edge, a, b)).toBe(">> mind\n> After");
   const mirror = parseMarkdown("Before.\n\n>\n> The mind");
   [a, b] = span(mirror, "Before", "mind");
-  expect(passageMd(mirror, a, b)).toBe("> Before.\n>> The mind");
+  expect(quote(mirror, a, b)).toBe("> Before.\n>> The mind");
   /* a top-level fence cut mid-way is numbered from the row the cut opens on */
   const top = parseMarkdown("::: verse 13\nalpha | one\ngamma | three\n:::\n\nAfter.");
   [a, b] = span(top, "three", "After");
-  expect(passageMd(top, a, b)).toBe("> ::: verse 14\n> gamma | three\n> :::\n> After");
+  expect(quote(top, a, b)).toBe("> ::: verse 14\n> gamma | three\n> :::\n> After");
 });
 test("the number on the right block at every depth, the nested box trimmed, an edge gap off, a note's paragraph kept", () => {
   /* the count lands on the block the cut opens in, not on the next block once an ink-less remainder is dropped */
   const two = parseMarkdown("::: verse 13\nalpha | one\n:::\n\n::: verse 40\nbeta | two\n:::\n\nAfter.");
   let [a, b] = span(two, "one", "After");
-  expect(passageMd(two, a + 3, b)).toBe("> ::: verse 40\n> beta | two\n> :::\n> After");
+  expect(quote(two, a + 3, b)).toBe("> ::: verse 40\n> beta | two\n> :::\n> After");
   /* a verse inside a note inside a verse: each block its own count at its own depth */
   const nested = parseMarkdown("::: verse 13\nline one\n::: note\n::: verse 5\nqa | qb\nqc | qd\n:::\n:::\n:::\n\nAfter.");
   [a, b] = span(nested, "qd", "After");
-  expect(passageMd(nested, a, b)).toBe("> ::: verse 14\n> ::: note\n> ::: verse 6\n> qc | qd\n> :::\n> :::\n> :::\n> After");
+  expect(quote(nested, a, b)).toBe("> ::: verse 14\n> ::: note\n> ::: verse 6\n> qc | qd\n> :::\n> :::\n> :::\n> After");
   /* an empty paragraph inside a retained quotation goes, as at the top */
   const empty = parseMarkdown("Intro.\n\n> ::: verse 13\n> a | b\n> :::\n>\n> ::: note\n> foot\n> :::");
   [a, b] = span(empty, "Intro", "foot");
-  expect(passageMd(empty, a, b)).toBe("> Intro.\n>> ::: verse 13\n>> a | b\n>> :::\n>> ::: note\n>> foot\n>> :::");
+  expect(quote(empty, a, b)).toBe("> Intro.\n>> ::: verse 13\n>> a | b\n>> :::\n>> ::: note\n>> foot\n>> :::");
   /* a gap row at a cut block's edge goes, as the row arm never quoted one */
   const gap = parseMarkdown("::: verse\na | b\n\nc | d\n:::\n\nAfter.");
   [a, b] = span(gap, "b", "After");
-  expect(passageMd(gap, a + 1, b)).toBe("> ::: verse 2\n> c | d\n> :::\n> After");
+  expect(quote(gap, a + 1, b)).toBe("> ::: verse 2\n> c | d\n> :::\n> After");
   /* every edge break comes off, not one */
   const twice = parseMarkdown("Before.\n\n>\n>\n> The mind");
   [a, b] = span(twice, "Before", "mind");
-  expect(passageMd(twice, a, b)).toBe("> Before.\n>> The mind");
+  expect(quote(twice, a, b)).toBe("> Before.\n>> The mind");
   /* a note's own paragraph outside the nested block is prose the cut arm keeps; a note passed over inside one block still stays behind */
   const notePara = parseMarkdown("::: verse 13\nline one\n::: note\n::: verse 5\nqa | qb\nqc | qd\n:::\n\nfoot text\n:::\nline two\n:::");
   [a, b] = span(notePara, "qd", "foot");
-  expect(coversProse(notePara, a, b)).toBe(true);
-  expect(passageMd(notePara, a, b)).toBe("> ::: verse 14\n> ::: note\n> ::: verse 6\n> qc | qd\n> :::\n> \n> foot\n> :::\n> :::");
+  expect(quote(notePara, a, b)).toBe("> ::: verse 14\n> ::: note\n> ::: verse 6\n> qc | qd\n> :::\n> \n> foot\n> :::\n> :::");
   const behind = parseMarkdown("::: verse\nalpha\n::: note\nfoot\n:::\nbeta\n:::");
   [a, b] = span(behind, "alpha", "beta");
-  expect(coversProse(behind, a, b)).toBe(false);
-  expect(passageMd(behind, a, b)).toBe("> ::: verse\n> alpha\n> beta\n> :::");
+  expect(quote(behind, a, b)).toBe("> ::: verse\n> alpha\n> beta\n> :::");
   const noted = parseMarkdown("::: verse\nalpha\n::: margin-note\nthe note\n:::\nbeta\n:::");
   [a, b] = span(noted, "alpha", "beta");
-  expect(coversProse(noted, a, b)).toBe(false);
-  expect(passageMd(noted, a, b)).toBe("> ::: verse\n> alpha\n> beta\n> :::");
+  expect(quote(noted, a, b)).toBe("> ::: verse\n> alpha\n> beta\n> :::");
 });
 test("loose prose quotes the selection itself, paragraph breaks kept", () => {
   const doc = parseMarkdown("First paragraph here.\n\nSecond one follows.");
   const [a, b] = span(doc, "paragraph", "Second");
-  expect(passageMd(doc, a, b)).toBe("> paragraph here.\n> \n> Second");
+  expect(quote(doc, a, b)).toBe("> paragraph here.\n> \n> Second");
 });
 
 test("a margin-note is left out of a passage in loose prose too, between paragraphs or in a block it runs into", () => {
   const between = parseMarkdown("First paragraph here.\n\n::: margin-note\nthe note\n:::\n\nSecond one follows.");
   let [a, b] = span(between, "paragraph", "Second");
-  expect(passageMd(between, a, b)).toBe("> paragraph here.\n> \n> Second");
+  expect(quote(between, a, b)).toBe("> paragraph here.\n> \n> Second");
   const into = parseMarkdown("Intro.\n\n::: verse\nalpha\n::: margin-note\nthe note\n:::\nbeta\n:::");
   [a, b] = span(into, "Intro", "beta");
-  expect(passageMd(into, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> beta\n> :::");
+  expect(quote(into, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> beta\n> :::");
 });
 
 test("a margin-note left out between two stanza gaps leaves one gap, not two", () => {
   const verse = parseMarkdown("::: verse\nalpha\n\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
   let [a, b] = span(verse, "alpha", "beta");
-  expect(passageMd(verse, a, b)).toBe("> ::: verse\n> alpha\n> \n> beta\n> :::");
+  expect(quote(verse, a, b)).toBe("> ::: verse\n> alpha\n> \n> beta\n> :::");
   const loose = parseMarkdown("Intro.\n\n::: verse\nalpha\n\n::: margin-note\nthe note\n:::\n\nbeta\n:::");
   [a, b] = span(loose, "Intro", "beta");
-  expect(passageMd(loose, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> \n> beta\n> :::");
+  expect(quote(loose, a, b)).toBe("> Intro.\n> ::: verse\n> alpha\n> \n> beta\n> :::");
   /* two gaps the text itself holds stay two */
   const twice = parseMarkdown("::: verse\nalpha\n\n\nbeta\n:::");
   [a, b] = span(twice, "alpha", "beta");
-  expect(passageMd(twice, a, b)).toBe("> ::: verse\n> alpha\n> \n> \n> beta\n> :::");
+  expect(quote(twice, a, b)).toBe("> ::: verse\n> alpha\n> \n> \n> beta\n> :::");
 });
 
 test("two verse blocks are a refusal", () => {
   const doc = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse\nc\n:::");
   const [a, b] = span(doc, "b", "c");
-  expect(spansTwoBlocks(doc, a, b)).toBe(true);
+  expect(quote(doc, a, b)).toBe("two-blocks");
   expect(referencePayload(state(doc, a, b), { date: "bookshelf", tag: "Milton, John/Paradise Lost/Book 1" }, journal)).toEqual({ refused: "two-blocks" });
 });
 
 test("the leaf range is read from the page the selection is on; a leaf inside a note turns no page", () => {
   const doc = parseMarkdown("⟨61⟩ Opening words of the leaf.\n\n::: note\n⟨99⟩ a note's own marker\n:::\n\nMore of it ⟨62⟩ and on it goes to the end.");
   const [a, b] = span(doc, "words", "More");
-  expect(folioRange(doc, a, b)).toEqual({ from: "61", to: "61" });
+  expect(rangeOf(doc, a, b)).toBe("p. 61");
   const noted = parseMarkdown("⟨61⟩ Opening words.\n\n::: margin-note\n⟨99⟩ a margin-note's marker\n:::\n\nMore of it.");
   const [g, h] = span(noted, "words", "More");
-  expect(folioRange(noted, g, h)).toEqual({ from: "61", to: "61" });
+  expect(rangeOf(noted, g, h)).toBe("p. 61");
   const [c, d] = span(doc, "words", "goes");
-  expect(folioRange(doc, c, d)).toEqual({ from: "61", to: "62" });
+  expect(rangeOf(doc, c, d)).toBe("pp. 61-62");
   const [e, f] = span(doc, "and on");
-  expect(folioRange(doc, e, f)).toEqual({ from: "62", to: "62" });
+  expect(rangeOf(doc, e, f)).toBe("p. 62");
 });
 
 test("selectionLink: the text and which occurrence it is", () => {
@@ -398,9 +409,9 @@ test("a passage in a grid's card refers as it does in a plain card: the grid is 
   const grid = parseMarkdown("::: grid\n::: card-red\nsome words here\n:::\n\n::: card-pink\nother words\n:::\n:::");
   const [a, b] = span(plain, "words");
   const [c, d] = span(grid, "words");
-  expect(passageMd(grid, c, d)).toBe(passageMd(plain, a, b));
+  expect(quote(grid, c, d)).toBe(quote(plain, a, b));
   const [e, f] = span(grid, "words", "other");
-  expect(passageMd(grid, e, f)).toBe("> ::: card-red\n> words here\n> :::\n> ::: card-pink\n> other\n> :::");
+  expect(quote(grid, e, f)).toBe("> ::: card-red\n> words here\n> :::\n> ::: card-pink\n> other\n> :::");
 });
 
 // The Faerie Queene: under the work's `roman book and canto`
@@ -416,7 +427,7 @@ const canto = parseMarkdown("# Book I, Canto i\n\n::: note\nThe Patron of true H
   "::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n" +
   "::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::");
 test("stanzaRange: a line, lines, a whole stanza, whole stanzas, a run across them", () => {
-  const r = (a: string, b?: string) => { const [x, y] = span(canto, a, b); return stanzaRange(canto, x, y); };
+  const r = (a: string, b?: string) => { const [x, y] = span(canto, a, b); return rangeOf(canto, x, y); };
   expect(r("bloudie Crosse")).toBe("2.1");
   expect(r("bloudie Crosse", "dying Lord")).toBe("2.1-2");
   expect(r("But on his brest", "badge he wore,")).toBe("2");
@@ -469,22 +480,22 @@ const oeLabel = (doc: Node, tag: string, page: Record<string, string>, [needle, 
 };
 test("a lettered line is referred to by its label, alone or at either end of a run; a run through it by its numbers", () => {
   const d = parseMarkdown("::: dual-language 155\nv\nvi\nrumor | Soon\n⟨line 157a⟩arma\ntum\ndevenio\n:::");
-  const range = (a: string, b?: string): string => referenceRange(d, ...span(d, a, b));
+  const range = (a: string, b?: string): string => rangeOf(d, ...span(d, a, b));
   expect(range("arma")).toBe("157a");
   expect(range("rumor", "arma")).toBe("157-157a");
   expect(range("arma", "devenio")).toBe("157a-59");
   expect(range("v", "arma")).toBe("155-57a");
   expect(range("v", "devenio")).toBe("155-59");
   const two = parseMarkdown("::: verse 157\nplain\n⟨line 157a⟩first\n⟨…⟩rest\n⟨line 157b⟩second\nnext\n:::");
-  expect(referenceRange(two, ...span(two, "first", "second"))).toBe("157a-157b");
-  expect(referenceRange(two, ...span(two, "rest"))).toBe("157a");
-  expect(referenceRange(two, ...span(two, "first", "rest"))).toBe("157a");
-  const quoted = passageMd(d, ...span(d, "arma", "tum"));
+  expect(rangeOf(two, ...span(two, "first", "second"))).toBe("157a-157b");
+  expect(rangeOf(two, ...span(two, "rest"))).toBe("157a");
+  expect(rangeOf(two, ...span(two, "first", "rest"))).toBe("157a");
+  const quoted = quote(d, ...span(d, "arma", "tum"));
   expect(quoted).toContain("::: dual-language 158\n> ⟨line 157a⟩arma\n> tum");
 });
 test("a bracketed line is referred to in its brackets, a run reaching one by both its ends whole", () => {
   const d = parseMarkdown("::: dual-language 370\nalpha\nbeta\n⟨line [378]⟩gamma\n⟨line [379]⟩delta\n⟨line [380]⟩epsilon\n:::");
-  const range = (a: string, b?: string): string => referenceRange(d, ...span(d, a, b));
+  const range = (a: string, b?: string): string => rangeOf(d, ...span(d, a, b));
   expect(range("gamma")).toBe("[378]");
   expect(range("gamma", "epsilon")).toBe("[378]-[380]");
   expect(range("beta", "delta")).toBe("371-[379]");
@@ -534,8 +545,7 @@ test("Old English verse said on a work's page reaches the entries below it; the 
   const doc = parseMarkdown("::: verse 1162\na b  c d\ne\nf\ng\nh\ni\nj k  l m\n:::");
   const p = referencePayload(state(doc, ...span(doc, "c d", "j k")), { date: "bookshelf", tag: "Cynewulf/Elene/Fitt 1" }, journalOf({ "bookshelf/Cynewulf": "# Cynewulf", "bookshelf/Cynewulf/Elene": work }));
   expect("label" in p && p.label).toBe("Cynewulf, *Elene*, 1.1162b-68a");
-  expect(referenceRange(doc, ...span(doc, "c d", "j k"), { halves: true })).toBe("1162b-68a");
-  expect(referenceRange(doc, ...span(doc, "c d", "j k"))).toBe("1162-68");
+  expect(rangeOf(doc, ...span(doc, "c d", "j k"))).toBe("1162-68");
 });
 
 test("under the directive a run reaching a plain verse block is still refused", () => {
@@ -546,31 +556,31 @@ test("under the directive a run reaching a plain verse block is still refused", 
 
 test("the quoted passage sheds its page markers and keeps its words", () => {
   const doc = parseMarkdown("::: prose\n⟨30⟩Beatrice ⟨31⟩was, in her degree ⟨32⟩ and on.\n:::");
-  expect(passageMd(doc, 3, doc.content.size - 3)).not.toMatch(/⟨/);
-  expect(passageMd(doc, 3, doc.content.size - 3)).toContain("Beatrice was, in her degree and on");
+  expect(quote(doc, 3, doc.content.size - 3)).not.toMatch(/⟨/);
+  expect(quote(doc, 3, doc.content.size - 3)).toContain("Beatrice was, in her degree and on");
 });
 test("a page-turn row in a quoted run is left out, its marker with it, no blank line in its place", () => {
   const doc = parseMarkdown("::: verse\nline one\n⟨32⟩\nline two\n:::");
   const [a, b] = span(doc, "line one", "line two");
-  expect(passageMd(doc, a, b)).toBe("> ::: verse\n> line one\n> line two\n> :::");
+  expect(quote(doc, a, b)).toBe("> ::: verse\n> line one\n> line two\n> :::");
 });
 test("a page-turn row is left out of a quoted run that starts in prose too", () => {
   const doc = parseMarkdown("a paragraph\n\n::: verse\nline one\n⟨32⟩\nline two\n:::");
   const [a, b] = span(doc, "a paragraph", "line two");
-  expect(passageMd(doc, a, b)).toContain("> line one\n> line two");
+  expect(quote(doc, a, b)).toContain("> line one\n> line two");
 });
 
 test("a passage starting on the line after a skipped line number is numbered from that line", () => {
   const doc = parseMarkdown("::: verse 545\nqua\n⟨skipped line number⟩\nvix\nnext\n:::");
   const [a, b] = span(doc, "vix", "next");
-  expect(referenceRange(doc, a, b)).toBe("547-48");
-  expect(passageMd(doc, a, b)).toBe("> ::: verse 547\n> vix\n> next\n> :::");
+  expect(rangeOf(doc, a, b)).toBe("547-48");
+  expect(quote(doc, a, b)).toBe("> ::: verse 547\n> vix\n> next\n> :::");
 });
 
 test("a stanza's quotation leaves a skipped line number out rather than drawing a gap that was never there", () => {
   const doc = parseMarkdown("::: stanza 2\na\nb\n⟨skipped line number⟩\nc\n:::");
   const [a, b] = span(doc, "b", "c");
-  expect(passageMd(doc, a, b)).not.toContain("> \n");
+  expect(quote(doc, a, b)).not.toContain("> \n");
 });
 // A block numbered on both sides: Golding's lines beside the Latin.
 const GOLDING_TAG = "Ovid/Metamorphoses (with Golding’s translation)/Book 7";
@@ -601,24 +611,23 @@ test("Ref (all): a passage from a block numbered on both sides quotes both colum
 });
 test("a block can be quoted by its translation alone only where the selection lies wholly inside one numbered on both sides", () => {
   const [a, b] = span(GOLDING, "Ye Ayres", "Of standing");
-  expect(facingBlockOf(GOLDING, a, b)?.pos).toBe(GOLDING.child(0).nodeSize);
+  expect(facingOf(GOLDING, a, b)?.pos).toBe(GOLDING.child(0).nodeSize);
   const [c, d] = span(GOLDING, "Book 7", "Ye Ayres");
-  expect(facingBlockOf(GOLDING, c, d)).toBeNull();
+  expect(facingOf(GOLDING, c, d)).toBeNull();
   const [e, f] = span(verse, "forbidden", "Brought death");
-  expect(facingBlockOf(verse, e, f)).toBeNull();
+  expect(facingOf(verse, e, f)).toBeNull();
   /* a block quoted inside an entry is that entry's passage, and a note in the block is no translation's */
   const nested = parseMarkdown("> ::: verse 197 265\n> auraeque | Ye Ayres\n> dique | Of standing\n> :::");
   const [g, h] = span(nested, "Ye Ayres", "Of standing");
-  expect(facingBlockOf(nested, g, h)).toBeNull();
+  expect(facingOf(nested, g, h)).toBeNull();
   const noted = parseMarkdown("::: verse 197 265\nauraeque | Ye Ayres\n::: note\n[1] An eclipse.\n:::\n:::");
   const [i, j] = span(noted, "An eclipse");
-  expect(facingBlockOf(noted, i, j)).toBeNull();
+  expect(facingOf(noted, i, j)).toBeNull();
   expect(referencePayload(state(noted, i, j), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal)).not.toHaveProperty("refused");
 });
 test("Ref (all) is offered for the selection ⌃⌘R reads, its ends drawn in to whole words", () => {
   const [a] = span(GOLDING, "Ye Ayres"), [, b] = span(GOLDING, "I have compelled streames"), [, end7] = span(GOLDING, "Book 7");
   /* begun at the end of the heading, the selection is read from the block's first word */
-  expect(facingBlockOf(GOLDING, end7, b)).toBeNull();
   expect(offersBoth(state(GOLDING, end7, b))).toBe(true);
   expect(offersBoth(state(GOLDING, a, b))).toBe(true);
   expect(offersBoth(EditorState.create({ doc: GOLDING }))).toBe(false);
@@ -754,4 +763,10 @@ test("without the directive the same chapter refers as every book does: 3.8, 3.1
   const plain = journalOf({ "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::" });
   expect(vnLabel(VN3, "3", ["cominciai"], plain)).toBe("Dante, *Vita Nuova*, 3.8");
   expect(vnLabel(VN3, "3", ["ciascun", "presente"], plain)).toBe("Dante, *Vita Nuova*, 3.1-2");
+});
+test("Ref (all) is not offered where ⌃⌘R refuses: a selection inside a margin-note of a block numbered on both sides", () => {
+  const doc = parseMarkdown("::: verse 197 265\nauraeque | Ye Ayres\n::: margin-note\nthe eclipse\n:::\ndique | Of standing\n:::");
+  const [a, b] = span(doc, "the eclipse");
+  expect(referencePayload(state(doc, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal)).toEqual({ refused: "margin-note" });
+  expect(offersBoth(state(doc, a, b))).toBe(false);
 });

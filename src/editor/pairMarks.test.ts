@@ -29,6 +29,9 @@ const VERSE = parseMarkdown("::: verse\nNel mezzo del cammin di nostra vita | Mi
 test("a verse pair's words mark the rest of their line and its translation", () => {
   expect(marked(VERSE, "ritrovai", "oscura")).toEqual(["mi ", "I woke to find myself in a dark wood,"]);
 });
+test("punctuation alone puts no row in: a drag from a line's closing comma marks only the rows a reference quotes", () => {
+  expect(marked(VERSE, ",", "ritrovai")).toEqual([" per una selva oscura", "I woke to find myself in a dark wood,"]);
+});
 test("a dual-language block's Latin marks the English its row carries; its English, the Latin the sentence stands beside", () => {
   const dual = parseMarkdown("::: dual-language\nArma virumque cano | I sing of arms and the man\nTroiae qui primus ab oris\n:::");
   expect(marked(dual, "Arma", "cano")).toEqual(["I sing of arms and the man"]);
