@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt } from "./kit.ts";
+import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt, view } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -283,6 +283,23 @@ section("a terminal's copy pasted", async () => {
   await caretAt("an item", 7);
   await pasteTerminal(terminal(" that " + run(CODE, "wraps") + " at the\n  window's width."), " that wraps at the\n  window's width.");
   await log("a terminal's copy pasted into a list item", { md: await A.stored(page), drawn: await drawn() });
+  await write("page/Terminal Code", "```\nfirst\n```\n");
+  await caretAt("first", 5);
+  await pasteTerminal(terminal("\n" + run(CODE, "const") + " a = 1\nconst b = 2"), "\nconst a = 1\nconst b = 2");
+  await log("a terminal's copy pasted into a code block", { md: await A.stored(page) });
+  await write("page/Terminal Source", "x\n");
+  await view(true);
+  await R.sourceCaretTo(page, "x");
+  await page.keyboard.press("End");
+  await page.evaluate(([html, plain]) => {
+    const dt = new DataTransfer();
+    dt.setData("text/html", html);
+    dt.setData("text/plain", plain);
+    document.querySelector("textarea.source").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, [terminal(" passed\n  before it landed."), " passed\n  before it landed."]);
+  await landed(page, 1200);
+  await log("a terminal's copy pasted in the source view", { md: await A.stored(page) });
+  await view(false);
 });
 async function pasteTerminal(html: string, plain: string): Promise<void> {
   await page.evaluate(([sel, html, plain]) => {

@@ -197,6 +197,11 @@ function pasteMarkdown(view: EditorView, plain: string, opts: EditorOptions): bo
   if (refused) opts.onPasteRefused?.(refused);
   return true;
 }
+function pasteTerminal(view: EditorView, text: string, opts: EditorOptions): boolean {
+  if (pasteMarkdown(view, text, opts)) return true;
+  view.dispatch(view.state.tr.replaceSelection(bareLinks(pasteSlice(text, view.state.selection.$from), location.href)).scrollIntoView());
+  return true;
+}
 function pasteText(view: EditorView, data: DataTransfer, opts: EditorOptions): boolean {
   const plain = data.getData("text/plain"), html = data.getData("text/html");
   const linked = linkSelection(view.state, plain, html) || referenceInLine(view.state, plain, html);
@@ -204,9 +209,12 @@ function pasteText(view: EditorView, data: DataTransfer, opts: EditorOptions): b
   /* line breaks alone are nothing to paste, from any app: they replaced a
      selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
   if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
-  /* text carrying HTML keeps the editor's paste, but for a terminal's copy:
-     its text, as blocks where they are taken, else as any plain text is */
-  if (terminalCopy(html)) return pasteMarkdown(view, unwrapped(plain), opts) || view.pasteText(unwrapped(plain));
+  /* text carrying HTML keeps the editor's paste, but for a terminal's copy
+     outside code: its text, as blocks where they are taken, else as any
+     plain text is (pin: a terminal's copy pasted › a terminal's one line
+     pasted) (pin: a terminal's copy pasted › a terminal's copy pasted into a
+     code block) */
+  if (terminalCopy(html) && !view.state.selection.$from.parent.type.spec.code) return pasteTerminal(view, unwrapped(plain), opts);
   if (data.types.includes("text/html")) return false;
   return pasteMarkdown(view, plain, opts);
 }

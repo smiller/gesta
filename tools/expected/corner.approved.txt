@@ -95,6 +95,10 @@ a terminal's copy pasted: arrived at page/Terminal Line: {"cursor":"at a line's 
 a terminal's one line pasted: {"md":"before git log shows the day","drawn":{"paragraphs":1,"items":0},"cursor":"at the end","screen":"page/Terminal Line · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a terminal's copy pasted: arrived at page/Terminal Item: {"cursor":"at a line's start"}
 a terminal's copy pasted into a list item: {"md":"- an item that wraps at the window's width.","drawn":{"paragraphs":1,"items":1},"cursor":"at the end","screen":"page/Terminal Item · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at page/Terminal Code: {"cursor":"at a line's start"}
+a terminal's copy pasted into a code block: {"md":"```\nfirst\nconst a = 1\nconst b = 2\n```","cursor":"at the end","screen":"page/Terminal Code · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at page/Terminal Source: {"cursor":"at a line's start"}
+a terminal's copy pasted in the source view: {"md":"x passed before it landed.","cursor":"at the end","screen":"page/Terminal Source · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 == shortcuts
 shortcuts: arrived at page/Expanded: {"cursor":"at a line's start"}
 ⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"page/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}

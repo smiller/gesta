@@ -329,6 +329,8 @@ test("a terminal's copy is styled preformatted text alone: one white-space: pre 
   expect(terminalCopy("")).toBe(false);
   expect(terminalCopy('<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>')).toBe(false);
   expect(terminalCopy(GHOSTTY + "<p>after</p>")).toBe(false);
+  expect(terminalCopy(GHOSTTY.replace("git log", '<a href="https://example.org/">git log</a>'))).toBe(true);
+  expect(terminalCopy(GHOSTTY.replace("display: inline;", "display: inline-block;"))).toBe(false);
 });
 
 test("a terminal's wrapped lines are joined: a line not ending a sentence runs on into the next, a list item or a new message always starts its own", () => {

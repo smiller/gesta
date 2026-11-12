@@ -172,7 +172,7 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
    preformatted text alone) */
 const TERMINAL_OPEN = /^\s*(?:<meta[^>]*>\s*|<html[^>]*>\s*|<head>[^]*?<\/head>\s*|<body[^>]*>\s*|<!--StartFragment-->\s*)*<div style="[^"]*white-space:\s*pre(?![\w-])[^"]*">/i;
 const TERMINAL_CLOSE = /<\/div>\s*(?:<!--EndFragment-->\s*|<\/body>\s*|<\/html>\s*)*$/i;
-const NOT_A_RUN = /<(?!div style="display: inline|\/div>)/i;
+const NOT_A_RUN = /<(?!div style="display: inline[;"]|\/div>|a\s|\/a>|span[\s>]|\/span>)/i;
 export function terminalCopy(html: string): boolean {
   const open = TERMINAL_OPEN.exec(html), close = TERMINAL_CLOSE.exec(html);
   return !!open && !!close && close.index >= open[0].length && !NOT_A_RUN.test(html.slice(open[0].length, close.index));
@@ -191,7 +191,6 @@ const BREAKS: ((prev: string, line: string) => boolean)[] = [
   (prev, line) => HOLDS.test(prev) || HOLDS.test(line),
 ];
 const runsOn = (prev: string, line: string): boolean => !BREAKS.some((b) => b(prev, line));
-/* the fences a line leaves open: a ``` toggles a code fence, a named ::: opens a block and a bare ::: closes one */
 function fencesAfter(open: { code: boolean; blocks: number }, line: string): { code: boolean; blocks: number } {
   const t = line.trim();
   if (t.startsWith("```")) return { ...open, code: !open.code };

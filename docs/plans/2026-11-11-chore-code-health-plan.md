@@ -967,3 +967,21 @@ investigate", then a mock-up to paste, then "build it".
      and a copy into a list item; on the editor before fix 1 they read
      "beforegit log" in 2 paragraphs and the item in 3 (MEASURED), with it
      one paragraph and one item.
+- CONFIRMATION PASS (asked): one `/code-review` at HIGH over
+  `2b90ab0..58d3d8a`, 85,838 tokens (MEASURED, the last message of
+  `agent-ad1036e5f3e0eada8.jsonl`: 2 input + 1,949 cache creation + 81,518
+  cache read + 2,369 output). Ten findings, held until the reader has the
+  list. Checked: `unwrapped` joins `const a = 1` / `const b = 2`, and in a
+  code block the joined text is what goes in (MEASURED and READ); the
+  source view's paste handles pictures alone (READ).
+- FIXED, 1–5 of the ten (asked: "go"); 6–8 kept as the limits of the
+  guess, the workaround ⌘⌥⇧V (plain text, no HTML, the lines as copied):
+  1. In a code block a terminal's copy keeps its lines, the editor's own
+     code paste taking it; joined before (MEASURED: `const a = 1 const b = 2`).
+  2. The fallback inserts the plain-text slice itself, its links made bare,
+     not a second paste.
+  3. A link or span inside counts as an inline run; `display: inline`
+     exactly, an inline-block refused (test-first).
+  4. The source view joins a terminal's copy too, through the browser's own
+     insert (Helium: "x" before, "x passed before it landed." after).
+  5. The pins named; the restating comment gone; `unwrapped` once.
