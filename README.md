@@ -1,5 +1,9 @@
 # Gesta
 
+[![CodeScene Average Code Health](https://codescene.io/projects/87675/status-badges/average-code-health)](https://codescene.io/projects/87675)
+
+[![CodeScene Hotspot Code Health](https://codescene.io/projects/87675/status-badges/hotspot-code-health)](https://codescene.io/projects/87675)
+
 The successor to `../writer`: a single-file journal app rebuilt on ProseMirror
 and Svelte with a build step. Read `CLAUDE.md` first, then the plan it points
 to.
