@@ -681,3 +681,42 @@ Eight findings, each read against the code:
 ALSO, asked: the dashboard read tools/ at 9.99. tools/residue.py, a phase-0
 Python script, scores 9.38 (MEASURED, `cs review`); the gate reads .ts and
 .mjs only. Left for the split of the one-off scripts.
+
+### The one-off scripts split into one-offs/ (2026-11-12)
+
+The reader's answers: the folder `one-offs/`; every check kept over it (tsc,
+the suite, the unused exports, the gate at 10, the two string rules off as for
+tools/); helium-probe.ts, importCorpus.ts, referenceCorpus.ts, readerBundle.ts
+and publishReader.sh stay in tools/; residue.py goes, ported; and the comment
+standard's checker extended to the daily tools/ ("Yes, with the split").
+
+- 83 files moved with `git mv` (MEASURED, git status): every transform, its
+  run and its 25 tests, the four runs with no transform of their own
+  (finnsburhWyattRun, miltonPsalmsRun, miltonSamsonRun, orgDrawersRun), and
+  the five data files they read. No import crosses the split (READ). The
+  caches moved from tools/out/{harvard,hwaet,wyatt} to one-offs/out/,
+  ignored.
+- The configs widened: tsconfig.json includes one-offs/ and leaves out
+  tools/out and one-offs/out, whose untracked scratch scripts tsc had begun
+  to read; Vitest reads one-offs/**/*.test.ts; the rules file gives
+  one-offs/** the two string rules off; codeHealth.ts scores one-offs/*.ts;
+  the unused-exports and vocabulary tests walk it.
+- one-offs/residue.ts, the port of residue.py: Code Health 10, its output
+  byte for byte the Python's over the plain report (209 lines) and the
+  `--writer` report (8,772 lines) (MEASURED, diff).
+- The nets: every run script played from one-offs/ under a scratch HOME,
+  passes A and B, identical to HEAD's from tools/ (MEASURED, same.sh).
+- The comment checker over src/ and tools/, tools/out and tools/expected
+  left out: 709 pins, all resolving. Its sweep flagged 62 blocks in tools/,
+  16 naming another module and 50 carrying provenance, four of them both
+  (dates, "the review", "the reader", a confirmation pass); every one cut to its own code, and the
+  comparison's leftovers the checker cannot see ("successor-only", "the
+  current app" in the steps) cut with them (MEASURED, the sweep reads 0 in
+  tools/). corpus.ts and referenceCorpus.ts keep "the current app": their
+  `--writer` and ⌃⌘C questions are that comparison. Two flagged blocks were
+  the checker's own subject (its provenance rule's banner, its known-bad
+  list), reworded.
+- Left for project 2: two sections are still named for the old app ("editing
+  as the old app does", "notices and surfaces as the old app has them"),
+  their names in src/'s pins and the approved copy; and references.ts's
+  `if (!inSource)` before the grid's ⌃⌘M, a hedge for the old app's view.

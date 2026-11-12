@@ -1,5 +1,5 @@
-/* `node tools/readerBundle.ts [dir] [out]`: the reader's bundle made from a
-   backup folder as the app's backup makes it, timed, and read back */
+/* `node tools/readerBundle.ts [dir] [out]`: the bundle `--mode reader`
+   opens, made from a backup folder, timed, and read back */
 import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";

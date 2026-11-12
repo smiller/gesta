@@ -34,7 +34,7 @@ async function referencePasted(): Promise<void> {
   await R.selectAll(page, S.editorCell);
   const barMissed = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
-  /* the HTML flavour is the paste's source and carries the full address, so a bare link stored is the paste's own doing; the old app's copy was still landing at the first read ("Clipboard data has changed") */
+  /* the HTML flavour is the paste's source and carries the full address, so a bare link stored is the paste's own doing */
   const copied = await page.evaluate(inPage(copiedLink, linkKind, htmlLink));
   await go("page/Referred");
   await page.click(S.editor);
@@ -140,10 +140,10 @@ section("card copy", async () => {
   { const md = await A.stored(page); console.log("pasted on a fresh page:", JSON.stringify({ fence: md.startsWith("::: card-light-blue"), lines: md.split("\n").length, ...(await R.cardsAndPairs(page)) })); }
 });
 section("grid", async () => {
-  /* a grid of cards (2026-09-22, successor-only): drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason pinned */
+  /* a grid of cards: drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason pinned */
   await go("page/Gridded");
   await page.click(S.editor);
-  await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid (the 2026-09-22 review) */
+  await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid */
   await rest(page);
   await log("a grid pasted", await R.gridLayout(page));
   const hover = await R.gridHover(page);
@@ -168,8 +168,8 @@ section("grid", async () => {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
   await log("a stray line in a grid, switched back", { corner: await R.gridCorner(page) });
-  /* the open path forces source over the stored fault (away and back, once the save has landed — a reload ended the old app's run); a refused ⌃⌘M leaves it forced, so the next entry opens rendered (the 2026-09-22 review) */
-  for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse (the confirmation pass) */
+  /* the open path forces source over the stored fault (away and back, once the save has landed); a refused ⌃⌘M leaves it forced, so the next entry opens rendered */
+  for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse */
   await go("page/Carded");
   await page.keyboard.press("Control+Meta+m");   /* back to the rendered view on a sound entry, so the faulty one is opened from it */
   await rest(page);
@@ -183,7 +183,7 @@ section("grid", async () => {
   await go("page/Gridded");
   await rest(page);
   /* the line fixed and the view restored: the pin released, the grid drawn */
-  if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await rest(page); }   /* the current app rendered the stray line as a paragraph and came back */
+  if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);

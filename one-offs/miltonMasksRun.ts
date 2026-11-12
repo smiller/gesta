@@ -1,6 +1,6 @@
 /* node tools/miltonMasksRun.ts — Arcades and Comus: their outline from
    Thurber's edition, their words from the Harvard Classics' two scans read
-   against each other (all cached under tools/out/harvard); written under
+   against each other (all cached under one-offs/out/harvard); written under
    OUT (default ~/Desktop/gesta-imports/gesta-milton-masks) for an import, a
    review page beside it, the counts printed; tools/miltonCapsRun.ts gives
    the pages Paradise Lost's capitals afterwards */

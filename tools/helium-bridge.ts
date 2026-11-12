@@ -10,7 +10,7 @@ import { TODAY } from "./helium-steps.ts";
 import type { Page } from "./heliumPage.ts";
 import { inPage } from "./adapters/inPage.ts";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
-const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: see adapters/successor.ts */
+const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: a profile there is held by the sync, and its delete failed */
 const PAGE = "file://" + resolve("dist/index.html");
 rmSync(PROFILE, { recursive: true, force: true });
 mkdirSync(PROFILE, { recursive: true });
@@ -42,7 +42,7 @@ function launchShows(): Record<string, unknown> {
 const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine));
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
-  await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed, since 2026-09-22 */
+  await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed */
   const page = await ctx.newPage();
   const logs: string[] = [];
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));

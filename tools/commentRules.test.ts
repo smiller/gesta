@@ -96,9 +96,9 @@ describe("the pins", () => {
   });
 });
 
-/* the blocks the reviews found asserting another module, verbatim from
-   the tree before each fix; `caught` is what this rule does with each,
-   the rest being the review's to find */
+/* known-bad blocks asserting another module, verbatim from the tree
+   before each fix; `caught` is what this rule does with each, the rest
+   being left to a reading by eye */
 const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] = [
   { at: "cc22c7f^:113", file: "src/editor/paste.ts", caught: ["the clipboard's"], raw: `/* the blocks, AND their rows: a selection inside one block slices to
    its rows with the block itself left out (measured: a drag across two

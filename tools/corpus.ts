@@ -1,22 +1,22 @@
 /* The whole-corpus round trip: every .md file in an export folder parsed,
-   serialized, parsed again. Three questions per file, in order of weight:
+   serialized, parsed again. The questions per file, in order of weight:
      1. FIXED POINT — serialize(parse(out)) === out, byte for byte. A grammar
         whose output it cannot read back stably loses data at every save.
      2. ROUND TRIP — out ~ src under the normalization the current app's own
-        round trip needed (measured 2026-09-07: blank-line and trailing-
-        newline counts, and a www. link target gaining https://).
+        round trip needed (measured: blank-line and trailing-newline
+        counts, and a www. link target gaining https://).
      3. NO FILE MADE WORSE — the literal asterisks in the parsed text of out
         do not outnumber those in the parsed text of src (a text-stable loss
         is invisible to a byte diff).
      4. With --writer only: the parsed text matches what the CURRENT app's
         parser reads from the same source, whitespace aside — except over a
         file holding a `::: grid` or a `::: stanza`, blocks the current app
-        does not have (2026-09-22, 2026-09-27); and a `###`–`######` heading
-        here, text there, and emphasis across a line break, are decided
-        differences, counted apart. Off by default: every form new here
-        reads as a difference there, and
-        the question it answered, that nothing was lost at the cutover, was
-        settled then; kept for a question about something ported.
+        does not have; and a `###`–`######` heading here, text there, and
+        emphasis across a line break, are decided differences, counted
+        apart. Off by default: every form new here reads as a difference
+        there, and the question it answered, that nothing was lost at the
+        cutover, was settled then; kept for a question about something
+        ported.
    Usage: node tools/corpus.ts [dir] [--writer] [--limit N] [--only substring] [--report file]
    The report lists every file that fails any question, with the first
    differing lines; the summary counts failures by question. Read-only. */
@@ -158,10 +158,10 @@ for (const path of walk(dir)) {
     if (norm(src) !== norm(out)) { counts.roundTrip++; bad.push("ROUND TRIP DIFFERS", ...firstDiffs(norm(src), norm(out))); }
     const t1 = visibleText(doc), t2 = visibleText(parseMarkdown(out));
     if (stars(t2) > stars(t1)) { counts.stars++; bad.push(`ASTERISKS GREW ${stars(t1)} -> ${stars(t2)}`, firstTextDiff(t1, t2)); }
-    /* a grid is successor-only (2026-09-22), and so is a stanza
-       (2026-09-27): the current app's parser reads `::: grid` and
-       `::: stanza` as text, so question 3's parity half would name every
-       such file for ever; the other questions still run over it */
+    /* a grid and a stanza are this app's alone: the current app's parser
+       reads `::: grid` and `::: stanza` as text, so question 3's parity
+       half would name every such file for ever; the other questions still
+       run over it */
     if (currentMdToHtml && !/^\s*:::\s*(?:grid|stanza)(?:\s|$)/m.test(src)) {
       let cur = collapse(htmlText(currentMdToHtml(src)));
       const mine = collapse(t1);

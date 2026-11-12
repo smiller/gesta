@@ -1,7 +1,6 @@
 import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, type Tree } from "./kit.ts";
 
 section("notices and surfaces as the old app has them", async () => {
-  /* the inventory's groups 5–7, each gesture read over both apps, the old app's reading the one to match */
   await noticesOpening();
   await importRefusedFilesOnly();
   await blockPictureHoverCopied();
@@ -242,8 +241,8 @@ section("pill", async () => {
   }
 });
 section("a rename keeps a label's marks", async () => {
-  /* last of all: the old app keeps a deleted page in its scope lists, so
-     the pages seeded here would show in any section after */
+  /* last of all: the pages seeded here would show in the lists of any
+     section after */
   /* a hand-written label part italic, its entry renamed: the label keeps its marks */
   await A.foreignWrite(page, "page/Rename Host", "See [the *Ideas* page](#page/Rename%20Host/Ideas) here.\n");
   await A.foreignWrite(page, "page/Rename Host/Ideas", "ideas\n");

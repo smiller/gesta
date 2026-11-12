@@ -2,7 +2,6 @@ import { section, caretAt, view, write, page, A, R, log, go, rest } from "./kit.
 import { inPage } from "../adapters/inPage.ts";
 
 section("editing as the old app does", async () => {
-  /* the inventory's group 4, where nothing promised either way: each gesture read over both apps, the old app's reading the one to match */
   /* a placed selection is read by the editor a moment later */
   /* the toolbar's button pressed as a click on it, shown or not: the selection is made by script */
   /* the stored text without its last line end: a seed left unedited keeps the one it was written with */

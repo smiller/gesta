@@ -1,7 +1,7 @@
 import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still } from "./kit.ts";
 
 section("places", async () => {
-  /* every entry returns to where it was left (2026-09-28, successor-only): Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it (the review at high, 2026-09-28) */
+  /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
   await pippaScrolledDown();
   await pippaPlaceReturned();
   await backPlaceClosedSection();
@@ -139,7 +139,7 @@ async function heldPlaceRenderedView(): Promise<void> {
   const heldLine = await rowUnderHead();
   await log("a held place in the rendered view, the masthead shrinking under it", await shrunk(async () => { const line = await rowUnderHead(); return { sameText: line === heldLine, line }; }));
   /* a scroll the page did not make and no hand did — the browser's find —
-     is the reader moving: the hold lets go */
+     is a reader moving: the hold lets go */
   await page.evaluate(() => window.scrollTo(0, window.scrollY + 400));
   await page.waitForTimeout(500);
   const foundLine = await rowUnderHead();
@@ -257,7 +257,7 @@ async function copyWithClipboardRefused(): Promise<void> {
   await blocked.close();
 }
 section("margin-note", async () => {
-  /* a margin-note set in the left margin beside the line after it (2026-09-29, successor-only): 15em in a 1500px window, pushed below a two-line margin-note a line above it, back in the text at the tools' 1000px; the caret typed into it at both widths */
+  /* a margin-note set in the left margin beside the line after it: 15em in a 1500px window, pushed below a two-line margin-note a line above it, back in the text at the tools' 1000px; the caret typed into it at both widths */
   await A.seedMargin(page, MARGIN_SEEDS);
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("bookshelf/Donne%2C%20John/Anniversaries/The%20First%20Anniversarie");
@@ -279,7 +279,7 @@ section("margin-note", async () => {
   await page.setViewportSize({ width: 1000, height: 600 });
 });
 section("footnote marks", async () => {
-  /* a footnote mark, a space and superscript digits after a word, is no break in a phrase search (2026-10-01): "Pedenteria in comparison" finds "Pedenteria ¹ in comparison", and Enter selects it, the mark inside; "m²" stays text */
+  /* a footnote mark, a space and superscript digits after a word, is no break in a phrase search: "Pedenteria in comparison" finds "Pedenteria ¹ in comparison", and Enter selects it, the mark inside; "m²" stays text */
   await go("page/Footnoted");
   /* the box holding the whole query (it keeps the last one while the entry stays open, so a new one is typed over ⌘A), then the scan's pause: a row from the query before can stand until it runs */
   await page.click(S.editor);
@@ -311,7 +311,7 @@ section("footnote marks", async () => {
 });
 const searched = async (q: string) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(400); };
 section("bookmarks from another window", async () => {
-  /* two windows (2026-10-01), last of the steps that read the page lists, the made page being known to the current app's first window and not to the successor's: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept — the current app's ⌃⌘B keeps the list it read at launch, and the × drops the other window's row */
+  /* two windows, last of the steps that read the page lists, the page made here joining them: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept */
   await secondWindow();
   await pageOpenFirstSaved();
 });

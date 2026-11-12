@@ -35,8 +35,8 @@ const ALLOWED: Record<string, string> = {
   "tools/unusedExports.ts unusedExports": "a checker's rule, run by its own test",
   "tools/vocabulary.ts retiredWord": "a checker's rule, run by its own test",
 };
-test("nothing in src/ or tools/ is exported that nothing uses", () => {
-  const paths = [...walk("src"), ...walk("tools")].filter((f) => /\.(ts|mjs|svelte)$/.test(f));
+test("nothing in src/, tools/ or one-offs/ is exported that nothing uses", () => {
+  const paths = [...walk("src"), ...walk("tools"), ...walk("one-offs")].filter((f) => /\.(ts|mjs|svelte)$/.test(f));
   const files = Object.fromEntries(paths.map((p) => [p, readFileSync(p, "utf8")]));
   for (const steps of paths.filter((p) => p.startsWith("tools/steps/"))) files[steps] = HANDED_TO_THE_STEPS + files[steps];
   const found = unusedExports(files).map((u) => u.file + " " + u.name);

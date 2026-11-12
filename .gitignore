@@ -2,5 +2,6 @@ node_modules
 dist
 dist-reader
 tools/out
+one-offs/out
 .DS_Store
 *.received.txt

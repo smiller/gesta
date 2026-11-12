@@ -5,7 +5,7 @@ export interface Scored { path: string; before: number | null; after: number; fi
 interface Fn { title: string; details?: string; "start-line"?: number }
 interface Smell { category: string; functions?: Fn[] }
 
-const SCORED = [/^src\/.*\.ts$/, /^tools\/(?!out\/).*\.(ts|mjs)$/];
+const SCORED = [/^src\/.*\.ts$/, /^tools\/(?!out\/).*\.(ts|mjs)$/, /^one-offs\/(?!out\/).*\.ts$/];
 export const inScope = (path: string): boolean => SCORED.some((re) => re.test(path)) && !path.endsWith(".d.ts");
 
 function fromStatus(line: string): Changed | null {

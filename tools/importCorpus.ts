@@ -1,8 +1,7 @@
 /* The import run over an export folder under node, into memory: every
-   file read as the browser pick would read it, then importFiles over the
+   file read as the browser pick would read it, then imported over the
    memory layer and image store. Prints the tally and names every failure
-   with its reason. The cutover criterion's first half, measurable without
-   a hand on the picker. Usage: node tools/importCorpus.ts [dir] */
+   with its reason. Usage: node tools/importCorpus.ts [dir] */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 import { importFiles } from "../src/store/importFiles.ts";

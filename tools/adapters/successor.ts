@@ -1,5 +1,3 @@
-// The app's adapter for the headless steps (helium-steps.ts): where the
-// page is, how it is seeded, and how each thing on its screen is read.
 import { resolve } from "node:path";
 import { NS } from "../../src/store/keys.ts";
 import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.ts";
@@ -10,13 +8,13 @@ import { inPage, textOf, whisperSince } from "./inPage.ts";
 export const name = "successor";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
-   three (measured 2026-09-12) */
+   three (measured) */
 export const profile = resolve(tmpdir(), "gesta-helium-corner-profile");
 const PAGE = "file://" + resolve("dist/index.html");
 export const ns = NS;
 export const bookmarksKey = NS + "bookmarks";
 export const url = (hash: string, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
-/* the seeds are written by the page itself under ?store=seed (main.ts) */
+/* the page seeds itself under ?store=seed: nothing is written here */
 export async function launch(page: Page, _seeds: Record<string, string>) {
   await page.goto(url("page/Horace", "store=seed"));
   await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
@@ -88,13 +86,13 @@ export const screen = (page: Page): Promise<string> => page.evaluate(inPage(scre
 const SAVED = ".saved.show";   /* the corner, for cornerAfter */
 export const read = {
   blankRow: blankRowReader("#editor .ProseMirror"),
-  /* the contents-folds step (2026-09-28): the headings that fold, which are open, their counts, the links showing, the followed link's place */
+  /* the contents-folds step: the headings that fold, which are open, their counts, the links showing, the followed link's place */
   folds: (page: Page) => page.evaluate(() => { const hs = [...document.querySelectorAll("#editor h2")]; const links = [...document.querySelectorAll("#editor a")].filter((a) => a.offsetParent); const canto = links.find((a) => (a.getAttribute("href") || "").endsWith("/1.1")); const r = canto?.getBoundingClientRect(); return { folds: hs.filter((h) => h.classList.contains("fold")).length, open: hs.filter((h) => h.getAttribute("aria-expanded") === "true").map((h) => h.textContent.slice(0, 12)), counts: hs.map((h) => h.dataset.count || null), linksShowing: links.length, cantoInView: r ? r.top >= 0 && r.bottom <= innerHeight : null }; }),
-  /* the triangle stands beside the heading's FIRST line: a two-line heading's middle is below it (the step's first aim, 2026-09-28) */
+  /* the triangle stands beside the heading's FIRST line: a two-line heading's middle is below it (the step's first aim) */
   clickFoldTriangle: async (page: Page, text: string) => { const at = await page.evaluate((t) => { const h = [...document.querySelectorAll("#editor h2")].find((x) => x.textContent.startsWith(t)); if (!h) return null; const r = h.getBoundingClientRect(); return { x: r.left - 12, y: r.top + 14 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(200); } },
-  /* the places step (2026-09-28): the line just under the masthead, and whether the window is at the top */
+  /* the places step: the line just under the masthead, and whether the window is at the top */
   place: (page: Page) => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
-  /* the margin-note step (2026-09-29): each margin-note's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which margin-note holds the caret */
+  /* the margin-note step: each margin-note's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which margin-note holds the caret */
   margins: (page: Page) => page.waitForFunction(() => [...document.querySelectorAll("#editor .margin-note")].every((n) => n.classList.contains("in-margin") === (n.style.getPropertyValue("--mn-w") !== "")), null, { timeout: 3000 }).catch(() => {}).then(() => page.evaluate(() => {
     const caret = getSelection().anchorNode;
     return { marginNotes: [...document.querySelectorAll("#editor .margin-note")].map((n) => {
@@ -107,7 +105,7 @@ export const read = {
     }), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) };
   })),
   clickMargin: async (page: Page, text: string) => { const at = await page.evaluate((t) => { const n = [...document.querySelectorAll("#editor .margin-note")].find((x) => x.textContent.startsWith(t)); if (!n) return null; const r = n.getBoundingClientRect(); return { x: r.right - 2, y: r.top + 8 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(150); } },
-  /* the stanza step (2026-09-28): the number each stanza DRAWS (its ::before), and the line numbers shown */
+  /* the stanza step: the number each stanza DRAWS (its ::before), and the line numbers shown */
   stanzas: (page: Page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
   selectBetween: (page: Page, a: string, b: string) => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n: string): [Node, number] | null => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),
   /* a hand's drag over one English cell of a dual-language block, its first letter to its last; then what is selected and what is marked beside it */
@@ -228,7 +226,7 @@ export const read = {
   copyLabel: (page: Page) => page.evaluate(() => document.querySelector(".copybtn").textContent),
   clipboardCard: (page: Page) => page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const bg = /background-color:\s*([^;"]+)/.exec(html); return { bg: bg && bg[1], grid: /grid-template-columns:/.test(html), card: /class="card-light-blue"/.test(html), raw: /background-color/.test(html) ? undefined : html.replace(/<meta[^>]*>/g, "").slice(0, 120) }; } catch (e) { return { clipboard: String(e) }; } }),
   cardLive: (page: Page) => page.evaluate(() => getComputedStyle(document.querySelector("#editor .card-light-blue")).backgroundColor),
-  /* the grid's readings (2026-09-22): the layout, the band above its corner, a selection across its cards, the corner's text */
+  /* the grid's readings: the layout, the band above its corner, a selection across its cards, the corner's text */
   gridLayout: (page: Page) => page.evaluate(() => { const g = document.querySelector("#editor div.grid"); if (!g) return { grid: false, columns: 0, cards: document.querySelectorAll("#editor [class^='card-']").length, wider: false, type: null }; const cs = getComputedStyle(g); return { grid: true, columns: cs.gridTemplateColumns.split(" ").length, cards: g.children.length, wider: g.getBoundingClientRect().width > document.querySelector("#editor .ProseMirror").getBoundingClientRect().width, type: cs.fontSize }; }),
   gridHover: async (page: Page) => { const r = await page.evaluate(() => { const g = document.querySelector("#editor div.grid"); return g ? g.getBoundingClientRect().toJSON() : null; }); if (!r) return { show: false, label: null, title: null }; await page.mouse.move(r.right - 30, r.top - 12); await page.waitForTimeout(150); return page.evaluate(() => { const b = document.querySelector(".copybtn"); return { show: b.classList.contains("show"), label: b.textContent, title: b.title }; }); },
   clipboardText: (page: Page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).slice(0, 40); } catch (e) { return String(e); } }),
@@ -316,12 +314,12 @@ export const read = {
   pasteText: (page: Page, text: string) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page: Page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise<Blob>((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),
   waitCorner: (page: Page, text: string, ms = 5000) => page.waitForFunction((t) => document.querySelector(".saved.show")?.textContent === t, text, { timeout: ms }).catch(() => {}),
-  /* the corner's FIRST new text after a gesture, matching or not. The wait
-     it replaces swallowed its timeout, and a refusal's 3s whisper had faded
-     by the 5s read, so a chord that did not take read as no corner and an
-     older clipboard, with nothing to say why (the pre-commit's refusal,
-     2026-09-22). "New": a whisper already standing — the warm's count — is
-     not the gesture's answer unless it is the one asked for. */
+  /* the corner's FIRST new text after a gesture, matching or not: a wait for
+     the match alone swallowed its timeout, and a refusal's 3s whisper had
+     faded by the 5s read, so a chord that did not take read as no corner and
+     an older clipboard, with nothing to say why. "New": a whisper already
+     standing — a count shown at launch — is not the gesture's answer unless
+     it is the one asked for. */
   cornerAfter: async (page: Page, gesture: () => Promise<unknown>, re: RegExp) => {
     const before = await page.evaluate(textOf, SAVED);
     await gesture();

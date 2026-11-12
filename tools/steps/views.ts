@@ -217,7 +217,7 @@ section("walk", async () => {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
 });
 section("stanza", async () => {
-  /* the Faerie Queene's stanzas (2026-09-28, successor-only): a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap referring to I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
+  /* the Faerie Queene's stanzas: a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap referring to I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
   await A.seedStanza(page, STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1");
   await R.settle(page);
@@ -247,7 +247,7 @@ section("stanza", async () => {
   await page.keyboard.press("Escape");
 });
 section("a blank row", async () => {
-  /* a blank row between stanzas is an empty line (2026-10-16): clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
+  /* a blank row between stanzas is an empty line: clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
   await go("2026-09-06");
   await R.settle(page);
   /* the locator's click, which waits for the row to stop moving: an arrival's
@@ -333,7 +333,7 @@ async function switchFrom20pxDown(): Promise<void> {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   await rest(page);
   await log("⌃⌘M from 20px down", { source: nearTop, back: await winY() });
-  /* a caret placed low in the source's window, then back: it is still in view */
+  /* a caret placed low in the source view's window, then back: it is still in view */
   await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -347,7 +347,7 @@ async function caretSeenSourceM(): Promise<void> {
   await log("a caret seen in the source, ⌃⌘M back", { caretInView: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) });
 }
 section("contents folds", async () => {
-  /* a work's contents folding under its headings (2026-09-28, successor-only): the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
+  /* a work's contents folding under its headings: the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
   await R.settle(page);
   await log("a contents page opened", await R.folds(page));

@@ -5,9 +5,8 @@
 // beside the approved one, prints the diff and exits 1; `--approve` makes
 // that received copy the approved one without playing again, which is a
 // judgement to be made after reading it, and refuses a run that failed or
-// whose inputs have moved. Decided 2026-09-12, asked: the tools printed and a
-// reader judged, so a seam only they cover (the walk's order from the
-// session) could move without warning under `npm test`.
+// whose inputs have moved. Without it a seam only these runs cover could
+// move without warning under `npm test`.
 // `node tools/helium-approve.ts [--approve] [corner|bridge|reader ...]`
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
@@ -21,10 +20,9 @@ const approve = args.includes("--approve");
 const names = args.filter((a) => a in TOOLS);
 const run = names.length ? names : Object.keys(TOOLS);
 
-/* today is not scrubbed: the drivers pin the page's clock to
-   helium-steps.ts's TODAY since 2026-09-22. The scrub used to rewrite
-   today's key, its crumb label and its day number, and the day number
-   was missed until the first verify on another day went red on it. */
+/* today is pinned, not scrubbed: a scrub of today's key, its crumb label
+   and its day number missed the day number until a verify on another day
+   went red on it */
 function scrub(text: string): string {
   return text
     .replace(/"opacity":"[0-9.e-]+"/g, '"opacity":"[fading]"')
@@ -39,10 +37,11 @@ function scrub(text: string): string {
 const env = { ...process.env, NODE_OPTIONS: "" };
 /* WHAT A RUN READS, fingerprinted after the build: the pages (every line of
    the app, its fixtures and its libraries), the drivers, steps and
-   adapters, the source files an adapter or the reader's bundle imports,
-   the approved copy, and the browser, node and playwright that play it. A run whose inputs
-   match a passing run's stamp is not played again; asked 2026-10-17, after
-   a commit replayed for seven minutes a run approved minutes before */
+   adapters, the source files an adapter or the `--mode reader` bundle
+   imports, the approved copy, and the browser, node and playwright that
+   play it. A run whose inputs match a passing run's stamp is not played
+   again: a commit replayed for seven minutes a run approved minutes
+   before */
 const HELIUM_PLIST = "/Applications/Helium.app/Contents/Info.plist";
 const file = (p: string) => ({ name: p, bytes: existsSync(p) ? readFileSync(p) : "(missing)" });
 function inputsFor(name: string) {

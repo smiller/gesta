@@ -1,8 +1,4 @@
-// The successor in headless Helium over a fresh profile: the shared steps
-// (helium-steps.ts) played over the successor's adapter. Prints each
-// step's reading and the screen after it, then the console; screenshots
-// when given a path. The approved output is tools/expected/corner.approved.txt
-// (helium-approve.ts). `node tools/helium-corner.ts [profileDir] [screenshot.png]`.
+// `node tools/helium-corner.ts [profileDir] [screenshot.png]`
 import { chromium } from "playwright-core";
 import * as A from "./adapters/successor.ts";
 import { runSteps, TODAY } from "./helium-steps.ts";
@@ -12,8 +8,8 @@ import { basename } from "node:path";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = process.argv[2] || A.profile;
 /* the tool's own profile starts empty, as the verdict's does: a development
-   run found the last run's entries still stored (2026-10-05, the
-   author-filing record); a profile passed in is the caller's to keep */
+   run found the last run's entries still stored; a profile passed in is the
+   caller's to keep */
 if (PROFILE === A.profile) {
   spawnSync("pkill", ["-f", basename(PROFILE)]);
   for (let i = 0; i < 20; i++) { try { rmSync(PROFILE, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
@@ -23,7 +19,7 @@ const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H,
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
 await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
 /* the last edit's time and the store writes still open, for a read of the
-   stored text to wait on rather than sleep (adapters/successor.ts, stored) */
+   stored text to wait on rather than sleep */
 await ctx.addInitScript(() => {
   window.__lastEdit = 0; window.__writes = 0;
   for (const t of ["keydown", "input", "paste", "drop", "cut", "pointerdown", "click"]) addEventListener(t, () => { window.__lastEdit = performance.now(); }, true);

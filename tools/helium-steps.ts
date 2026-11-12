@@ -1,8 +1,3 @@
-// THE STEPS: one list of gestures and readings played over the app's
-// ADAPTER (tools/adapters/successor.ts), which knows where the app is and
-// how its screen reads. Every step logs its label, its own reading and the
-// screen after it. The sections live in tools/steps/, imported here in the
-// order they play.
 import type { Page, BrowserContext } from "./heliumPage.ts";
 import { bind, setSection, SECTIONS, type Adapter, type RunOptions } from "./steps/kit.ts";
 import { startClock, report, type Clock } from "./steps/timing.ts";

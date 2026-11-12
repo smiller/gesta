@@ -1,7 +1,7 @@
 import { section, page, A, R, S, log, go, cursor, winY, cornerText, setAnswer, prompts, landed, rest } from "./kit.ts";
 
 section("author filing", async () => {
-  /* (2026-10-05) "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so; the current app asks once and files the name as typed, and refuses to rename an author with books */
+  /* "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so */
   await newAuthorSeanMiller();
   await bookCaretHeadingS();
   await renameAuthorTyped();
@@ -74,7 +74,7 @@ async function reFiledBookPicture(): Promise<void> {
   await log("the re-filed book, its picture", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Sean Miller/Odes"), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
 }
 section("replace", async () => {
-  /* find and replace (2026-10-08, successor-only): ⌃⌘E in the rendered view switches to the source view and opens the bar, the corner whispering; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
+  /* find and replace: ⌃⌘E in the rendered view switches to the source view and opens the bar, the corner whispering; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
   await replaceInRenderedView();
   await replaceInSourceView();
   await escapeSwitchBackRefused();
@@ -128,7 +128,7 @@ async function replaceInSourceView(): Promise<void> {
   await page.keyboard.press("Escape");
   await rest(page);
   await log("Escape, opened in the source view", await R.replaceBar(page));
-  /* a long entry: the layer the matches are drawn on keeps the text's line pitch to its last line, where 27.54px set it 79px low over 2,706 lines of Paradise Lost (2026-10-08) */
+  /* a long entry: the layer the matches are drawn on keeps the text's line pitch to its last line, where 27.54px set it 79px low over 2,706 lines of Paradise Lost */
   await R.setSource(page, Array.from({ length: 1500 }, (_, i) => "Line " + i + " of a long entry, with *-* in it and more words after it to wrap.").join("\n\n"));
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
@@ -217,7 +217,7 @@ async function fenceWordsBothViews(): Promise<void> {
   await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
-  await R.waitCorner(page, "saved");   /* the source's save landed first: its whisper would stand over the refusal's */
+  await R.waitCorner(page, "saved");   /* the save landed first: its whisper would stand over the refusal's */
   await R.selectBetween(page, "cap", "tion");
   await rest(page);
   await page.click(".fmt .code");

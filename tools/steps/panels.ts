@@ -65,7 +65,7 @@ section("bookmarks", async () => {
   await page.keyboard.press("Escape");
 });
 section("bookmarks damaged", async () => {
-  /* a damaged list (2026-10-01): ⌃⌘B says so and A is refused with its pin; repaired by hand, the next ⌃⌘B shows its rows without a reload — the current app keeps the latch until one — and A lands, releasing the pin; a reload ends the step so neither app carries the pin on, back on the day the next step reads */
+  /* a damaged list: ⌃⌘B says so and A is refused with its pin; repaired by hand, the next ⌃⌘B shows its rows without a reload, and A lands, releasing the pin; a reload ends the step so the pin is not carried on, back on the day the next step reads */
   await go("page/Horace", 5000);
   await page.evaluate((k) => localStorage.setItem(k, "not json"), A.bookmarksKey);
   await page.reload();
@@ -156,8 +156,8 @@ section("reference paste", async () => {
   await log("the reference link followed", await R.highlightFollowed(page));
   /* the link's passage is deep in a long entry: the jump must SCROLL to it,
      not only select it — the one-line case above never needed a scroll,
-     and the jump landed at the top of Paradise Lost (found by hand
-     2026-09-12); the bar stays off, the passage is to be read in context */
+     and the jump landed at the top of Paradise Lost (found by hand); the
+     bar stays off, the passage is to be read in context */
   await go("page/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Pippa*](#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed)");
@@ -166,18 +166,18 @@ section("reference paste", async () => {
   await R.waitEntryAndSelection(page, "bookshelf/Browning, Robert/Pippa Passes", "Power shall fall short in or exceed");
   await rest(page);
   await log("a link deep into a long entry followed", await R.highlightFollowed(page));
-  /* a paired reference is a fence inside the quotation (2026-09-12): its
-     pair stands where a quoted paragraph's text does, its cells unwrapped */
+  /* a paired reference is a fence inside the quotation: its pair stands
+     where a quoted paragraph's text does, its cells unwrapped */
   await go("page/Pasted Pair");
   await page.click(S.editor);
   await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#page/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
   await page.waitForTimeout(700);
   await log("a paired reference pasted", await R.quotedPair(page));
-  /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured 2026-09-12 with a longer phrase). READ WITHIN 400ms OF THE KEYS: a reading at 700ms proved nothing about the grow (the 2026-09-12 confirmation pass); the settled reading follows it */
+  /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured with a longer phrase). READ WITHIN 400ms OF THE KEYS: a reading at 700ms proved nothing about the grow; the settled reading follows it */
   const pasted = await R.quotedPair(page);
   await R.caretAfter(page, "rules the sea.", 14);
   await page.keyboard.type(" and every creature in it");
-  const grew = await R.waitPairGrew(page, pasted.cols, 400, "every creature in it");   /* the whole phrase present, the row grown AND unwrapped: the first column change is an early keystroke's, and a read then caught the row mid-fit, twice (verify, 2026-09-12) */
+  const grew = await R.waitPairGrew(page, pasted.cols, 400, "every creature in it");   /* the whole phrase present, the row grown AND unwrapped: the first column change is an early keystroke's, and a read then caught the row mid-fit, twice */
   await log("typed into the quoted pair", { grew, ...(await R.quotedPair(page)) });
   await page.waitForTimeout(600);
   await log("typed into the quoted pair, settled", await R.quotedPair(page));

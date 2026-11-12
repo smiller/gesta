@@ -1,6 +1,6 @@
 /* node tools/paradiseRegainedRun.ts — Paradise Regained: Gutenberg's #58
    read against the Harvard Classics' two scans (all cached under
-   tools/out/harvard), every word or mark they differ on settled on the
+   one-offs/out/harvard), every word or mark they differ on settled on the
    printed page; written under OUT (default
    ~/Desktop/gesta-imports/gesta-milton-regained) for an import, a review page
    beside it, the counts printed */

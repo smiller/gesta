@@ -1,10 +1,9 @@
-// The reader build in headless Helium over a fresh profile: launched with
-// nothing kept, a bundle picked through "open backup", then relaunched to
-// read what was kept and played. With no argument the bundle is made here
-// from fixtures/ and the run is helium-approve.ts's `reader`, under its
-// verdict; `node tools/helium-reader.ts <zip>` times a real one instead
-// (tools/readerBundle.ts writes it): the pick, the relaunch, the heap, the
-// first search's index.
+// The `--mode reader` build in headless Helium over a fresh profile:
+// launched with nothing kept, a bundle picked through "open backup", then
+// relaunched to read what was kept and played. With no argument the bundle
+// is made here from fixtures/ and the run is the one under a verdict;
+// `node tools/helium-reader.ts <zip>` times a real one instead: the pick,
+// the relaunch, the heap, the first search's index.
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -99,7 +98,7 @@ await page.click(".ProseMirror a");
 await rest();
 await look("a contents link clicked");
 /* a row's label clicked and, before the browser's toggle event, a value
-   its render reads changed, as the masthead's redraw at the warm did */
+   its render reads changed, as a redraw at launch did */
 const raced = (row: string, change: string) => page.evaluate(([row, change]) => {
   document.querySelector<HTMLElement>(row + " > summary")!.click();
   const el = document.querySelector<HTMLInputElement>(change)!;

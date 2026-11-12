@@ -92,7 +92,7 @@ async function linkParagraphBeforeWarm(): Promise<void> {
   await page.waitForFunction(() => document.querySelector("#editor .landed"), null, { timeout: 8000 }).catch(() => {});
   await rest(page);
   await log("a link to a paragraph before the warm", await page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null })));
-  /* a key before the warm: the landing owed is dropped, the warm's two seconds timed by the app's own clock */
+  /* a key before the warm ends: the landing owed is dropped, its two seconds timed by the app's own clock */
   await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
   await A.waitEntry(page, work2, 8000).catch(() => {});
   await page.keyboard.press("ArrowDown");

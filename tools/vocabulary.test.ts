@@ -9,7 +9,7 @@ test("retiredWord: the noun, the verb and an identifier built on either; never a
 });
 
 // Milton's own preface to Samson Agonistes uses the verb.
-const QUOTES_A_BOOK = new Set(["tools/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
+const QUOTES_A_BOOK = new Set(["one-offs/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
@@ -17,8 +17,8 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-test("the app, its tools and CLAUDE.md say reference: no retired word anywhere", () => {
-  const files = [...walk("src"), ...walk("tools"), "CLAUDE.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
+test("the app, its tools, its one-off scripts and CLAUDE.md say reference: no retired word anywhere", () => {
+  const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retiredWord(t) ? [f + ":" + (i + 1)] : [])));
   expect(found).toEqual([]);
 });

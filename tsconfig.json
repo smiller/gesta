@@ -24,9 +24,12 @@
   "include": [
     "src",
     "tools",
+    "one-offs",
     "vite.config.ts"
   ],
   "exclude": [
+    "tools/out",
+    "one-offs/out",
     "tools/helium-*.ts",
     "tools/adapters",
     "tools/heliumPage.ts",

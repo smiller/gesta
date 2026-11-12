@@ -1,5 +1,5 @@
 /* node tools/hwaetTextsRun.ts [id ...] — texts with their translations from
-   early-medieval-england.net (pages cached under tools/out/hwaet): Deor, The
+   early-medieval-england.net (pages cached under one-offs/out/hwaet): Deor, The
    Wanderer and The Seafarer (Deor, Wdr, Sfr) as whole lines, Hávamál (Hav)
    in stanzas; written under OUT (default ~/Desktop/gesta-imports/gesta-hwaet)
    for an import, a review page beside it, the counts printed */

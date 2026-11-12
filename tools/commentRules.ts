@@ -345,7 +345,7 @@ export function namesOther(block: Block, index: NameIndex): string[] {
   return [...new Set([...otherIdentifiers(text, own, index), ...otherPaths(text, block.file, own), ...otherRoles(text, own)])];
 }
 
-/* ---- provenance: the plan's record alone ---- */
+/* ---- provenance: dates and who asked, kept out of comments ---- */
 
 /* "asked" is left out: nearly every "asked" in a comment is prose ("the
    depth asked for"), and each one recording provenance carried a date.

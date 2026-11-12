@@ -2,11 +2,11 @@
 // playwright-core: opens the built page at each query string given, waits
 // for the root's data-store attribute, prints it with data-probe and the
 // console. `node tools/helium-probe.ts '?store=write' '' '?store=write'`
-// is phase 2's persistence question: write, relaunch and read, write.
-// Headless dumps could not answer it (MEASURED 2026-09-07):
-// --virtual-time-budget dumps before IndexedDB's real-time I/O settles,
-// and --timeout never exited. The profile lives under tools/out, so a run
-// never touches Sean's own Helium profile.
+// asks whether a write persists: write, relaunch and read, write.
+// Headless dumps could not answer it (MEASURED): --virtual-time-budget
+// dumps before IndexedDB's real-time I/O settles, and --timeout never
+// exited. The profile lives under tools/out, so a run never touches the
+// running Helium's profile.
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";

@@ -56,7 +56,7 @@ section("Old English verse", async () => {
   await page.keyboard.press("Escape");
 });
 section("split lines", async () => {
-  /* a verse line split between speakers is one line (2026-10-20, asked): Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." refers to 1563; a rest typed longer than its row has room for is set in less, not wrapped */
+  /* a verse line split between speakers is one line: Samson 1563, "Relate by whom." / "By Samson." / "That still lessens", each rest a space past the end of the half above and numbered with it, the 1671 margin's 1570 and 1580 where they stand; typed into the first half, the rests follow it; ⌃⌘R on "By Samson." refers to 1563; a rest typed longer than its row has room for is set in less, not wrapped */
   await A.foreignWrite(page, "bookshelf/Milton, John/Samson Agonistes", fixture("samson-split-lines.md"));
   const seeded = await seededIn("bookshelf/Milton, John/Samson Agonistes");
   await page.goto(A.url("bookshelf/Milton%2C%20John/Samson%20Agonistes"));
@@ -82,7 +82,7 @@ section("split lines", async () => {
   await log("a rest typed past its row's width", await R.splitRests(page));
 });
 section("dual-language", async () => {
-  /* Ovid's Latin beside Miller's prose (2026-10-22, asked): each sentence level with the row its Latin starts on, the Latin waiting where the English runs long, split lines set in (one opening a fence, past the half the fence before closes), a note under the column its mark is in, the English held to 30em; typed longer, a sentence still clears the next */
+  /* Ovid's Latin beside Miller's prose: each sentence level with the row its Latin starts on, the Latin waiting where the English runs long, split lines set in (one opening a fence, past the half the fence before closes), a note under the column its mark is in, the English held to 30em; typed longer, a sentence still clears the next */
   await dualLanguageOvid();
   await dualLanguageBlockNote();
 });
@@ -123,7 +123,7 @@ async function dualLanguageInOvid(): Promise<void> {
   await page.keyboard.press("ArrowUp");
   await rest(page);
   await log("ArrowUp from a block's first sentence", { cell: await R.caretCell(page) });
-  /* a line the Loeb leaves out but counts (2026-10-23, asked): nothing drawn, the line after it 547 (qua nimium placui), and ⌃⌘G for 546 lands there saying so */
+  /* a line the Loeb leaves out but counts: nothing drawn, the line after it 547 (qua nimium placui), and ⌃⌘G for 546 lands there saying so */
   await log("a skipped line number", await page.evaluate(() => { const row = [...document.querySelectorAll("#editor .vrow")].find((r) => r.textContent.startsWith("qua nimium placui")); return { line: row?.dataset.line ?? null, before: row?.previousElementSibling?.className, drawn: row?.previousElementSibling ? getComputedStyle(row.previousElementSibling).display : null }; }));
   await A.stored(page);   /* a save landing after the Enter takes the corner from the word this reads */
   await page.keyboard.press("Control+Meta+g");
@@ -136,7 +136,7 @@ async function lineBarSkippedLine(): Promise<void> {
   await log("⌃⌘G for a skipped line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
-  /* a drag over one sentence's English (2026-11-02, asked): it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R refers to and quotes that Latin */
+  /* a drag over one sentence's English: it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R refers to and quotes that Latin */
   await R.dragCell(page, "Through this the River Peneus");
   await rest(page);
   await log("a drag over one sentence's English", await R.dualSelection(page));
@@ -145,7 +145,7 @@ async function lineBarSkippedLine(): Promise<void> {
   await log("⌃⌘R on one sentence's English", { lines: await R.clipboardLines(page) });
   await page.keyboard.press("Escape");
   await rest(page);
-  /* quoted, the block stays dual-language (2026-10-23, asked): two Latin lines beside a six-line sentence keep together, the English held inside the quotation */
+  /* quoted, the block stays dual-language: two Latin lines beside a six-line sentence keep together, the English held inside the quotation */
   await R.selectBetween(page, "ut canis in vacuo", "ille salutem;");
   await R.waitBar(page);
   await page.keyboard.press("Control+Meta+r");
@@ -162,7 +162,7 @@ async function lineBarSkippedLine(): Promise<void> {
   await log("⌃⌘R across a long sentence, pasted", { lines: quoted, fitted, ...(await R.dualQuote(page)) });
 }
 async function dualLanguageBlockNote(): Promise<void> {
-  /* a dual-language block in a note (2026-11-02, asked): Satire 1.10's bracketed lines, their English at the page's English edge, each note under its own column, the Latin unwrapped */
+  /* a dual-language block in a note: Satire 1.10's bracketed lines, their English at the page's English edge, each note under its own column, the Latin unwrapped */
   await A.foreignWrite(page, "bookshelf/Horace/Satires/1.10", fixture("horace-satires-1.10.md"));
   await page.goto(A.url("bookshelf/Horace/Satires/1.10"));
   await A.waitEntry(page, "bookshelf/Horace/Satires/1.10", 5000).catch(() => {});
@@ -171,7 +171,7 @@ async function dualLanguageBlockNote(): Promise<void> {
   await log("a dual-language block in a note", await R.dualInset(page));
 }
 section("facing numbers", async () => {
-  /* Ovid's Latin beside Golding's verse (2026-10-23, asked): a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R refers to both */
+  /* Ovid's Latin beside Golding's verse: a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R refers to both */
   await facingNumbersOpening();
   await verseBlockNumberedBoth();
   await lineBarGoldingLine();

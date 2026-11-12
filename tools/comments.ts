@@ -1,4 +1,4 @@
-/* The comment checker, over src/ with its tests.
+/* The comment checker, over src/ and tools/ with their tests.
    Usage: node tools/comments.ts             the working tree against HEAD
           node tools/comments.ts --commit R  what commit R added
           node tools/comments.ts --sweep     every block, a reading list
@@ -21,22 +21,26 @@ const recording = args.includes("--read");
 const STAMP = join(root, "tools/out/comments-read");
 const git = (...a: string[]): string => execFileSync("git", a, { cwd: root, encoding: "utf8", maxBuffer: 1 << 28 });
 const SCANNED = /\.(ts|svelte|css|html)$/;
+/* the app and the tools used every day: the tools' output and approved runs aside */
+const ROOTS = ["src", "tools"];
+const LEFT_OUT = new Set(["tools/out", "tools/expected"]);
 
 function worktree(): Map<string, string> {
   const out = new Map<string, string>();
   const walk = (d: string): void => {
     for (const n of readdirSync(join(root, d))) {
       const p = d + "/" + n;
+      if (LEFT_OUT.has(p)) continue;
       if (statSync(join(root, p)).isDirectory()) walk(p);
       else if (SCANNED.test(n)) out.set(p, readFileSync(join(root, p), "utf8"));
     }
   };
-  walk("src");
+  ROOTS.forEach(walk);
   return out;
 }
 
 function atRevision(rev: string): Map<string, string> {
-  const names = git("ls-tree", "-r", "--name-only", rev, "--", "src").split("\n").filter((f) => SCANNED.test(f));
+  const names = git("ls-tree", "-r", "--name-only", rev, "--", ...ROOTS).split("\n").filter((f) => SCANNED.test(f) && ![...LEFT_OUT].some((d) => f.startsWith(d + "/")));
   const batch = execFileSync("git", ["cat-file", "--batch"], { cwd: root, input: names.map((f) => rev + ":" + f).join("\n") + "\n", maxBuffer: 1 << 28 });
   const out = new Map<string, string>();
   let at = 0;
@@ -85,9 +89,9 @@ if (!commit && !sweep) {
 let changed: Block[];
 if (sweep) changed = [...blocks.values()].flat();
 else {
-  const diff = commit ? git("diff", "--unified=0", "--no-color", "--no-ext-diff", "-M", commit + "^", commit, "--", "src") : git("diff", "--unified=0", "--no-color", "--no-ext-diff", "-M", "HEAD", "--", "src");
+  const diff = commit ? git("diff", "--unified=0", "--no-color", "--no-ext-diff", "-M", commit + "^", commit, "--", ...ROOTS) : git("diff", "--unified=0", "--no-color", "--no-ext-diff", "-M", "HEAD", "--", ...ROOTS);
   const added = addedLines(diff);
-  if (!commit) for (const f of git("ls-files", "--others", "--exclude-standard", "--", "src").split("\n").filter((f) => files.has(f))) added.set(f, new Set(files.get(f)!.split("\n").map((_, i) => i + 1)));
+  if (!commit) for (const f of git("ls-files", "--others", "--exclude-standard", "--", ...ROOTS).split("\n").filter((f) => files.has(f))) added.set(f, new Set(files.get(f)!.split("\n").map((_, i) => i + 1)));
   changed = [...blocks].flatMap(([f, bs]) => touched(bs, added.get(f)));
 }
 

@@ -26,8 +26,7 @@ export const STANZA_SEEDS = {
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
 };
-/* the margin-note step's seeds (2026-09-29): written by that step alone,
-   from the same files src/main.ts's `?store=seed-margin` imports */
+/* a fixture's text, for a step that writes its own seeds */
 export const fixture = (name: string) => readFileSync(new URL("../../fixtures/" + name, import.meta.url), "utf8");
 export const MARGIN_SEEDS = {
   "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
@@ -141,10 +140,10 @@ export const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { 
 export const winY = () => page.evaluate(() => Math.round(scrollY));
 export const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
 export const cornerText = () => page.evaluate((s) => document.querySelector(s)?.textContent || "", S.corner);
-/* a scroll BY THE READER'S HAND, a wheel over the page: a script's
-   scrollTo is no reader, and since 2026-09-28 an arrival holds the entry's
-   remembered place until a wheel, key, pointer or touch — the toolbar
-   step's scrollTo(0, 0) was undone by the held place and its double-click
+/* a scroll BY A READER'S HAND, a wheel over the page: a script's
+   scrollTo is no reader, and an arrival holds the entry's remembered
+   place until a wheel, key, pointer or touch — the toolbar step's
+   scrollTo(0, 0) was undone by the held place and its double-click
    missed the word */
 export const wheelTo = async (y: number) => {
   await page.mouse.move(500, 400);

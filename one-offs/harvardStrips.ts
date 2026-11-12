@@ -1,6 +1,6 @@
 /* A disputed line seen on the Harvard Classics' printed page: the line found
    in scan A's hOCR (harvardclassicsv0004milt), its page image fetched from
-   the Internet Archive (cached under tools/out/harvard/pages), and the lines
+   the Internet Archive (cached under one-offs/out/harvard/pages), and the lines
    asked for cut from their pages onto one sheet, screenshot by headless
    Helium, to be read by eye */
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";

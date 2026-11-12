@@ -1,5 +1,5 @@
 /* Wyatt's Beowulf (1894) as Wikisource transcribes it, pages first..last,
-   fetched fifty at a time and cached under tools/out/wyatt */
+   fetched fifty at a time and cached under one-offs/out/wyatt */
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join } from "node:path";
 

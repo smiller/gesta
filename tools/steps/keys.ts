@@ -2,13 +2,13 @@ import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, whee
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
-  /* a control the current app lacks fails its own step, not the section */
+  /* a missing control fails its own step, not the section */
   await keysOpening();
   await keysAfterSearch();
   await picturePastedSearchTyped();
 });
 async function keysOpening(): Promise<void> {
-  /* the view asked for, whichever the arrival brought: the current app's carries across entries */
+  /* the view asked for, whichever the arrival brought */
   await chordsPressedTwice();
   await bookmarkLinkPressed();
   await tabCodeBlock();
@@ -245,13 +245,13 @@ async function picturePastedSearchTyped(): Promise<void> {
   await page.keyboard.press("Escape");
 }
 section("editing as the help says", async () => {
-  /* help.html's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
+  /* the help card's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
   /* a placed selection is read by the editor a moment later: a Tab pressed at once went where the arrival had left the caret */
   await verseLines23Copied();
   await tabTableQuote();
 });
 async function verseLines23Copied(): Promise<void> {
-  /* an entry stored as another tab would, then opened: typed into the current app's source view, a list came back split at every line */
+  /* an entry stored as another tab would, then opened */
   /* the numbers on screen beside a list: each item's own value, else the list's count from its start */
   await verseLinesCopied();
   await enterListItemS();

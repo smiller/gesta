@@ -68,7 +68,7 @@ section("fence", async () => {
   await page.click(S.editor);
   await page.keyboard.type("start end");
   /* THE CARET PLACED THROUGH THE DOM SELECTION, not the keys: Home and the
-     arrows moved it on some runs and not others (measured 2026-09-12, three
+     arrows moved it on some runs and not others (measured over three
      runs), and the paste then landed at the paragraph's end */
   await rest(page);
   await R.caretAfter(page, "start end", 5);

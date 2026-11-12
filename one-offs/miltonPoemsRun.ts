@@ -1,6 +1,6 @@
 /* node tools/miltonPoemsRun.ts — Milton's shorter English poems from the
    Harvard Classics' two scans read against each other (all cached under
-   tools/out/harvard), a page each beside Lycidas; written under OUT
+   one-offs/out/harvard), a page each beside Lycidas; written under OUT
    (default ~/Desktop/gesta-imports/gesta-milton-poems) for an import, a
    review page beside it, the counts printed */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";

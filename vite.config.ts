@@ -28,5 +28,5 @@ export default defineConfig(({ mode }) => ({
   plugins: [svelte(), viteSingleFile()],
   define: { __PARSER__: JSON.stringify(PARSER) },
   build: { target: "esnext", assetsInlineLimit: 100_000_000, cssCodeSplit: false, outDir: mode === "reader" ? "dist-reader" : "dist" },
-  test: { include: ["src/**/*.test.ts", "tools/**/*.test.ts"], environment: "node" },
+  test: { include: ["src/**/*.test.ts", "tools/**/*.test.ts", "one-offs/**/*.test.ts"], environment: "node" },
 }));

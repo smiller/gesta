@@ -1,9 +1,9 @@
 import { test, expect } from "vitest";
 import { changedFiles, inScope, refusals, scoreOf, findingLines, cacheKey } from "./codeHealth.ts";
 
-test("inScope: a TypeScript file under src/, its tests included, and a TypeScript or module script under tools/; not a component, a declaration, a tool's output or another directory", () => {
-  expect(["src/a.ts", "src/x/b.test.ts", "src/ui/notices.svelte.ts", "tools/a.ts", "tools/a.test.ts", "tools/helium-steps.mjs", "tools/adapters/successor.mjs"].every(inScope)).toBe(true);
-  expect(["src/ui/Search.svelte", "src/env.d.ts", "index.html", "src/a.tsx", "src/a.mjs", "tools/hooks-test.sh", "tools/out/x.ts", "tools/out/y.mjs", "hooks/a.ts", "docs/a.ts"].some(inScope)).toBe(false);
+test("inScope: a TypeScript file under src/, its tests included, and a TypeScript or module script under tools/ or one-offs/; not a component, a declaration, a tool's output or another directory", () => {
+  expect(["src/a.ts", "src/x/b.test.ts", "src/ui/notices.svelte.ts", "tools/a.ts", "tools/a.test.ts", "tools/helium-steps.mjs", "tools/adapters/successor.mjs", "one-offs/a.ts", "one-offs/a.test.ts"].every(inScope)).toBe(true);
+  expect(["src/ui/Search.svelte", "src/env.d.ts", "index.html", "src/a.tsx", "src/a.mjs", "tools/hooks-test.sh", "tools/out/x.ts", "tools/out/y.mjs", "one-offs/out/x.ts", "one-offs/r.py", "hooks/a.ts", "docs/a.ts"].some(inScope)).toBe(false);
 });
 
 test("changedFiles: a modified, a new or an untracked file is measured against HEAD's copy of the same name, a renamed one against its old name, a deleted one not at all", () => {
