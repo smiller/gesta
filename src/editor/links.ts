@@ -23,8 +23,8 @@ export function linkAction(href: string | null, modified: boolean, docHref: stri
 export function linkTitle(href: string, docHref: string = location.href): string {
   const hint = "⌘-click to open";
   const frag = href ? internalHash(href, docHref) : null;
-  if (!frag || !namesEntry(frag.slice(1))) return hint;
-  const p = hashParts(frag.slice(1));
+  if (!frag || !namesEntry(frag)) return hint;
+  const p = hashParts(frag);
   return hint + " " + (p.tag ? p.tag.slice(p.tag.lastIndexOf("/") + 1) : p.date);
 }
 export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {

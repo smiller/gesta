@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import {
   isDayKey, PAGE_KEY, NS, NS_PAGE, NS_BOOK, NS_KEYS, nsOf,
-  pageParts, entryKey, encPart, entryHash, hashTarget,
+  pageParts, entryKey, encPart, entryHash, hashTarget, asAddress,
   capitalized, entryNoun, monthLabel, dateLabel,
   todayKey, prettyDate, byName, titlesRoots,
 } from "./keys.ts";
@@ -79,8 +79,8 @@ test("entryHash appends the highlight payload", () => {
 });
 
 test("hashTarget: the first ? ends the address", () => {
-  expect(hashTarget("#2026-01-05?h=q&n=1")).toBe("#2026-01-05");
-  expect(hashTarget("#page/A")).toBe("#page/A");
+  expect(hashTarget(asAddress("#2026-01-05?h=q&n=1"))).toBe("#2026-01-05");
+  expect(hashTarget(asAddress("#page/A"))).toBe("#page/A");
 });
 
 test("entryNoun reads the row and the level; a day has no noun", () => {

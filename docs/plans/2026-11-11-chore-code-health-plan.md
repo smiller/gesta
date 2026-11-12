@@ -818,3 +818,41 @@ moves is held there too.
 - KEPT in the components: the props, the elements and their focus, the
   bookmarks card's measured key column, the aria wording, the markup's
   choice of panel.
+
+### Project 3 — the string rules revisited (2026-11-12)
+
+Asked: "We're ignoring 'Primitive Obsession' and 'String Heavy Function
+Arguments' across the board. We probably want to revisit that."
+
+- UNDER THE DEFAULTS (the rules file set aside, every scored .ts reviewed,
+  the file restored): 63 of 323 below 10, 37 in src/, 5 in tools/, 21 in
+  one-offs/, every one at 9.38 or 9.69 and no other smell; four files score
+  None (MEASURED). In src/ the median file has 59% of its functions taking a
+  plain type against the rule's 30%, and half its arguments strings
+  (MEASURED).
+- THE RULES ARE LEXICAL: refile.ts as it stands 9.38 (81% and 81%); with
+  `type Text = string` written for its strings, 10; with a branded
+  `string & { readonly __brand }`, 10 (MEASURED). A rename meets them as
+  well as a type the compiler holds apart.
+- WHAT A BRAND WOULD HAVE CAUGHT, the plans and fix commits searched by the
+  kinds a brand separates (keys, names and labels, markdown and text, line
+  numbers and positions, encoded and decoded): one clear case, the move's
+  review finding 1 (2026-11-11), a key typed into the address box
+  URL-decoded as an address; one near case, a pixel offset carried from the
+  rendered view to the source (2026-09-28), a brand per view's offset more
+  ceremony than it was worth; and three that read like confusions and were
+  not — a typed name matched against keys alone, a text test missing a
+  key's escaped spellings, a test reading one column of two (READ). None
+  between the ProseMirror, stream and source positions.
+- DECIDED (asked): both rules stay off for src/, tools/ and one-offs/, for
+  the reason above. Sized next, on its merits: one brand, `Address`, the
+  encoded form a link carries, accepted only where it is decoded.
+- BUILT (asked: "build it"): `Address`, a branded string in keys.ts, the
+  `#…` form; `entryHash` and `internalHash` return one, `hashParts`,
+  `namesEntry` and `hashTarget` take one and the decoders drop the `#`
+  themselves, so the nine `x.slice(1)` before a decode are gone;
+  `asAddress` the one cast. Test-first (the new test and 35 rewritten calls
+  red before). tsc then named every place outside text met the decoder, 22
+  (MEASURED), each now an `asAddress` of the whole href, location.hash or
+  typed text, or the Address it already held. The suite 1,470, both tsc
+  programs clean, every touched file at 10 (MEASURED).

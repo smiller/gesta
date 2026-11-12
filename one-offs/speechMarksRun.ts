@@ -1,3 +1,4 @@
+import { asAddress } from "../src/store/keys.ts";
 /* node tools/speechMarksRun.ts [backup-dir] [out-dir] — the marks read in
    speechMarksRead.json set in their entries, the changed entries written
    under out-dir at their own paths for an import, a review page beside
@@ -55,7 +56,7 @@ let found = 0, kept = 0;
 const lost: string[] = [];
 for (const f of walk(SRC)) {
   for (const m of readFileSync(f, "utf8").matchAll(/\]\((#bookshelf\/[^)\s]+\?h=[^)\s]+)\)/g)) {
-    const h = hashParts(m[1].slice(1));
+    const h = hashParts(asAddress(m[1]));
     const key = h.date + "/" + h.tag + ".md";
     if (!h.hl?.q || !READ[key]) continue;
     if (!findHit(parseMarkdown(readFileSync(join(SRC, key), "utf8")), h.hl.q, h.hl.nth || 0, false)) continue;

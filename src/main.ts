@@ -38,7 +38,7 @@ import { pictureMoves } from "./store/pictures.ts";
 import { formatBar } from "./ui/formatBarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
 import { panelActs, type PanelName, type Ns } from "./ui/panelActs.ts";
-import { NS } from "./store/keys.ts";
+import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
@@ -515,7 +515,7 @@ if (fixture && fixtures[fixture]) {
   /* a bare launch names the day it opens in the address (pin: notices and
      surfaces › a bare launch) */
   if (!location.hash) history.replaceState(null, "", entryHash(todayKey()));
-  const h0 = hashParts(location.hash.slice(1));
+  const h0 = hashParts(asAddress(location.hash));
   const opensNow = (found: boolean): boolean => found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date);
   const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
     if (opensNow(found)) { session.openHash(); opened = true; stage("primed"); }

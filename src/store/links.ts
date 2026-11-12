@@ -8,7 +8,7 @@ import { Transform } from "prosemirror-transform";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { schema } from "../model/schema.ts";
-import { hashTarget } from "./keys.ts";
+import { hashTarget, asAddress } from "./keys.ts";
 import { mdLabel } from "./reference.ts";
 
 export interface LinkRun { href: string; text: string; from: number; to: number }
@@ -67,7 +67,7 @@ export const followedLabel = (text: string, oldLabel: string, newLabel: string):
 export interface LinkTarget { href: string; label: string }
 export function retargetLinks(md: string, from: LinkTarget, to: LinkTarget | null): string | null {
   return rewriteLinks(md, (run) => {
-    if (hashTarget(run.href) !== from.href) return null;
+    if (hashTarget(asAddress(run.href)) !== from.href) return null;
     if (!to) return { remove: true };
     return { href: to.href + run.href.slice(from.href.length), text: followedLabel(run.text, from.label, to.label) };
   });

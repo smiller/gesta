@@ -1,4 +1,4 @@
-import { isDayKey, nsOf, todayKey, hashTarget, type Highlight } from "./keys.ts";
+import { isDayKey, nsOf, todayKey, asAddress, type Address, type Highlight } from "./keys.ts";
 import { pageName } from "./names.ts";
 
 export interface HashParts { date: string; tag: string | null; hl: Highlight | null }
@@ -8,12 +8,12 @@ export interface HashParts { date: string; tag: string | null; hl: Highlight | n
    parent: #page/Name/ is the page itself.
    (pin: nav.test › hashParts: a page routes; anything less falls back)
    (pin: nav.test › hashParts: a page hierarchy at any depth) */
-export function hashParts(raw: string): HashParts {
-  return namedBy(raw) ?? { date: todayKey(), tag: null, hl: null };
+export function hashParts(a: Address): HashParts {
+  return namedBy(a.replace(/^#/, "")) ?? { date: todayKey(), tag: null, hl: null };
 }
-/* whether a hash names an entry at all, the fallback's cases being no */
-export function namesEntry(raw: string): boolean {
-  return namedBy(raw) !== null;
+/* whether an address names an entry at all, the fallback's cases being no */
+export function namesEntry(a: Address): boolean {
+  return namedBy(a.replace(/^#/, "")) !== null;
 }
 function searchedFor(query: string): Highlight | null {
   try {
@@ -35,7 +35,7 @@ function pagePath(tag: string | null): string | null {
 }
 function namedBy(whole: string): HashParts | null {
   const hl = highlightOf(whole);
-  const raw = whole.indexOf("?") === -1 ? whole : hashTarget(whole);
+  const raw = whole.split("?")[0];
   const slash = raw.indexOf("/");
   const date = slash === -1 ? raw : raw.slice(0, slash);
   let tag: string | null;
@@ -52,12 +52,12 @@ function namedBy(whole: string): HashParts | null {
    clothing; a link to a different deploy or file is genuinely external.
    The raw slice keeps the percent-escapes byte-intact.
    (pin: nav.test › internalHash: same origin and path is this document) */
-export function internalHash(href: string, docHref: string = location.href): string | null {
+export function internalHash(href: string, docHref: string = location.href): Address | null {
   const hashAt = href.indexOf("#");
   if (hashAt < 0) return null;
   try {
     const url = new URL(href, docHref), doc = new URL(docHref);
-    return url.origin === doc.origin && url.pathname === doc.pathname ? href.slice(hashAt) : null;
+    return url.origin === doc.origin && url.pathname === doc.pathname ? asAddress(href.slice(hashAt)) : null;
   } catch { return null; }
 }
 /* a same-document URL mints as its bare fragment, portable across deploys

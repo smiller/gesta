@@ -1,4 +1,4 @@
-import { entryKey, entryHash, pageParts, hashTarget } from "./keys.ts";
+import { entryKey, entryHash, pageParts, hashTarget, asAddress } from "./keys.ts";
 import { hashParts } from "./nav.ts";
 import { rewriteLinks, followedLabel } from "./links.ts";
 import { firstHeading } from "./headings.ts";
@@ -86,7 +86,7 @@ function destOf(key: string, from: string, plan: MovePlan): string | null {
 }
 export function moveHref(href: string, from: string, plan: MovePlan): string | null {
   if (!href.startsWith("#" + splitKey(from)[0] + "/")) return null;
-  const p = hashParts(href.slice(1));
+  const p = hashParts(asAddress(href));
   const dest = destOf(entryKey(p.date, p.tag), from, plan);
   if (!dest) return null;
   const [date, tag] = splitKey(dest);
@@ -101,7 +101,7 @@ export function moveLinks(md: string, from: string, plan: MovePlan, relabel?: { 
     if (href === null) return null;
     if (!relabel) return { href };
     const [date, tag] = splitKey(plan.moves[from]);
-    return hashTarget(href) === entryHash(date, tag) ? { href, text: followedLabel(run.text, relabel.old, relabel.new) } : { href };
+    return hashTarget(asAddress(href)) === entryHash(date, tag) ? { href, text: followedLabel(run.text, relabel.old, relabel.new) } : { href };
   });
 }
 export function joined(there: string, moved: string): string {

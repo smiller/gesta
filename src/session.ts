@@ -5,7 +5,7 @@ import { headingLineAt } from "./editor/sourceKeys.ts";
 import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
-import { entryKey, entryHash, todayKey, nsOf, pageParts, NS } from "./store/keys.ts";
+import { entryKey, entryHash, todayKey, nsOf, pageParts, NS, asAddress } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
@@ -319,7 +319,7 @@ export function startSession(opts: SessionOptions): Session {
   const unreadAfterWarm = (want: string): boolean => layer.warmed && !(want in layer.cache);
   function openAddress(primed: boolean): void {
     hashDeferred = false;
-    const h = hashParts(location.hash.slice(1));
+    const h = hashParts(asAddress(location.hash));
     /* AFTER THE WARM an address the cache lacks is read from the store
        first: another window may have written it since
        (pin: bookmarks from another window › its row's page opened from the first).
@@ -427,7 +427,7 @@ export function startSession(opts: SessionOptions): Session {
     opts.onHere?.();
     /* a link naming a line lands again where another says it is already here
        (pin: a link to a line › a link to a line, clicked again) */
-    const line = hashParts(hash.slice(1)).hl?.line;
+    const line = hashParts(asAddress(hash)).hl?.line;
     if (line) opts.onLine?.(line);
     else if (sameMsg) say(sameMsg, 1500);
     if (!opts.mount.contains(document.activeElement)) surface.current?.focus();

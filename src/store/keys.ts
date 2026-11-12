@@ -110,6 +110,12 @@ export function encPart(s: string): string {
   return encodeURIComponent(s).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
 export interface Highlight { q?: string; nth?: number; line?: string }
+/* an entry's address, the `#…` form a link carries, its parts escaped: a
+   type apart from a key, whose parts are not, so the one is never taken for
+   the other (pin: nav.test › an address is read with its #) */
+export type Address = string & { readonly __address: true };
+/* text from outside the app's own minting taken as an address */
+export const asAddress = (text: string): Address => text as Address;
 function encodedTag(date: string, tag: string): string {
   return nsOf(date) ? tag.split("/").map(encPart).join("/") : encodeURIComponent(tag);
 }
@@ -117,12 +123,12 @@ function hashQuery(hl?: Highlight): string {
   if (hl?.q) return "?h=" + encPart(hl.q) + (hl.nth ? "&n=" + hl.nth : "");
   return hl?.line ? "?line=" + hl.line : "";
 }
-export function entryHash(date: string, tag?: string | null, hl?: Highlight): string {
-  return "#" + date + (tag ? "/" + encodedTag(date, tag) : "") + hashQuery(hl);
+export function entryHash(date: string, tag?: string | null, hl?: Highlight): Address {
+  return asAddress("#" + date + (tag ? "/" + encodedTag(date, tag) : "") + hashQuery(hl));
 }
-export function hashTarget(raw: string): string {
-  const q = raw.indexOf("?");
-  return q === -1 ? raw : raw.slice(0, q);
+export function hashTarget(a: Address): Address {
+  const q = a.indexOf("?");
+  return q === -1 ? a : asAddress(a.slice(0, q));
 }
 export function capitalized(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);

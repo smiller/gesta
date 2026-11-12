@@ -1,4 +1,4 @@
-import { encPart } from "./keys.ts";
+import { encPart, asAddress } from "./keys.ts";
 import { hashParts } from "./nav.ts";
 import { linkRuns } from "./links.ts";
 import { parseMarkdown } from "../model/parse.ts";
@@ -9,7 +9,7 @@ export const under = (tag: string, root: string): boolean => tag === root || tag
 
 const namesUnder = (href: string, ns: string, root: string): boolean => {
   if (!href.startsWith("#" + ns + "/")) return false;
-  const p = hashParts(href.slice(1));
+  const p = hashParts(asAddress(href));
   return p.date === ns && !!p.tag && under(p.tag, root);
 };
 /* the links read by the key they name; then a

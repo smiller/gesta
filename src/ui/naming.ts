@@ -8,7 +8,7 @@
    pages, sub-pages and the bookshelf. */
 import { pageName, nameFromUrl } from "../store/names.ts";
 import { namesEntry, hashParts } from "../store/nav.ts";
-import { nsOf, NS_KEYS } from "../store/keys.ts";
+import { nsOf, NS_KEYS, asAddress } from "../store/keys.ts";
 
 export const REFUSE_URL = "that link's title can't be a name — type one instead";
 export const REFUSE_EMPTY = "that name leaves nothing a filename can keep";
@@ -30,8 +30,8 @@ export const REFUSE_EMPTY_PART = "an address can’t have an empty part";
 type TypedPlace = { date: string; tag: string } | { refuse: string } | null;
 const emptyPart = (path: string): boolean => NS_KEYS.some((n) => path.startsWith(n + "/")) && path.split("/").some((p) => !p);
 function addressed(s: string): TypedPlace {
-  if (!namesEntry(s.slice(1))) return null;
-  const p = hashParts(s.slice(1));
+  if (!namesEntry(asAddress(s))) return null;
+  const p = hashParts(asAddress(s));
   return nsOf(p.date) && p.tag ? { date: p.date, tag: p.tag } : null;
 }
 /* typed as a key, not an address: nothing is decoded, so a `%` stays itself */

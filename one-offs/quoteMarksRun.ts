@@ -10,7 +10,7 @@ import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 import { findHit } from "../src/editor/highlight.ts";
 import { hashParts } from "../src/store/nav.ts";
-import { entryHash } from "../src/store/keys.ts";
+import { entryHash, asAddress } from "../src/store/keys.ts";
 
 const HOME = process.env.HOME!;
 const SRC = process.argv[2] ?? join(HOME, "Library/CloudStorage/Dropbox/gesta-backups/current");
@@ -85,7 +85,7 @@ for (const f of walk(SRC)) {
   let next = text;
   const kinds = new Map<number, Kind>();
   for (const m of text.matchAll(/\]\((#bookshelf\/[^)\s]+\?h=[^)\s]+)\)/g)) {
-    const h = hashParts(m[1].slice(1));
+    const h = hashParts(asAddress(m[1]));
     if (!h.hl?.q) continue;
     const target = join(OUT, h.date + "/" + h.tag + ".md");
     if (!existsSync(target)) continue;

@@ -1,3 +1,4 @@
+import { asAddress } from "../store/keys.ts";
 import { Fragment, Slice, DOMParser, type ResolvedPos, type Node, type Mark, type ParseOptions } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection, Selection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
@@ -108,7 +109,7 @@ function pastedAddress(raw: string, html: string): { link: string; target: strin
   const ref = REFERENCE_HEAD_RE.exec(txt);
   const found = ref && ref[3].split("\n").every((l) => l.startsWith(">")) ? { link: ref[1], target: ref[2], reference: true }
     : INTERNAL_LINK_RE.test(txt) ? { link: txt, target: INTERNAL_LINK_RE.exec(txt)![1], reference: false } : null;
-  return found && namesEntry(found.target) ? found : null;
+  return found && namesEntry(asAddress("#" + found.target)) ? found : null;
 }
 const oneTextRun = (sel: Selection): boolean => !sel.empty && sel instanceof TextSelection && sel.$from.sameParent(sel.$to) && linkable(sel.$from);
 function trimmedRange(doc: Node, from: number, to: number): [number, number] {
@@ -145,7 +146,7 @@ function linkSlice(body: string, oneLine: boolean): Slice | null {
   if (url) return new Slice(Fragment.from(schema.text(body.trim(), [schema.marks.link.create({ href: url })])), 0, 0);
   const internal = INTERNAL_LINK_RE.exec(body.trim());
   if (!internal) return null;
-  return namesEntry(internal[1]) ? inlineSlice(body.trim()) : new Slice(Fragment.from(schema.text(body)), 0, 0);
+  return namesEntry(asAddress("#" + internal[1])) ? inlineSlice(body.trim()) : new Slice(Fragment.from(schema.text(body)), 0, 0);
 }
 function blockSlice(body: string, lines: string[], $context: ResolvedPos): Slice | null {
   if (inAny($context, FLAT_HOSTS)) return flat(lines);
