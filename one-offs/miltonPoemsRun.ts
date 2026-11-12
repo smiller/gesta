@@ -1,4 +1,4 @@
-/* node tools/miltonPoemsRun.ts — Milton's shorter English poems from the
+/* node one-offs/miltonPoemsRun.ts — Milton's shorter English poems from the
    Harvard Classics' two scans read against each other (all cached under
    one-offs/out/harvard), a page each beside Lycidas; written under OUT
    (default ~/Desktop/gesta-imports/gesta-milton-poems) for an import, a

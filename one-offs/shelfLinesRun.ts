@@ -1,4 +1,4 @@
-/* node tools/shelfLinesRun.ts [author-prefix,…] [backup-dir] [out-dir] — every
+/* node one-offs/shelfLinesRun.ts [author-prefix,…] [backup-dir] [out-dir] — every
    entry outside the bookshelf read, its runs of an author's verse quoted
    line for line made the references ⌃⌘R makes for them, the changed
    entries written under out-dir at their own paths for an import, a review

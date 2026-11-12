@@ -1,4 +1,4 @@
-/* node tools/elisionsRun.ts [backup-dir] [out-dir] — every bookshelf entry
+/* node one-offs/elisionsRun.ts [backup-dir] [out-dir] — every bookshelf entry
    read, its elisions' apostrophes turned, the changed entries written under
    out-dir at their own paths for an import, a review page beside out-dir,
    the counts printed */

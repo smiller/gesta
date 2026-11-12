@@ -126,10 +126,9 @@ function hashQuery(hl?: Highlight): string {
 export function entryHash(date: string, tag?: string | null, hl?: Highlight): Address {
   return asAddress("#" + date + (tag ? "/" + encodedTag(date, tag) : "") + hashQuery(hl));
 }
-export function hashTarget(a: Address): Address {
-  const q = a.indexOf("?");
-  return q === -1 ? a : asAddress(a.slice(0, q));
-}
+/* the first ? ends the address */
+export const beforeQuery = (s: string): string => s.split("?")[0];
+export const hashTarget = (a: Address): Address => asAddress(beforeQuery(a));
 export function capitalized(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }

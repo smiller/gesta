@@ -1,4 +1,4 @@
-/* node tools/commentHtmlRun.ts [backup-dir] [out-dir] — the chapter comment
+/* node one-offs/commentHtmlRun.ts [backup-dir] [out-dir] — the chapter comment
    pasted as HTML in 2024-04-01 made markdown, the entry written under
    out-dir for an import, a preview page beside out-dir */
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";

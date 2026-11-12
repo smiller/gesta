@@ -1,5 +1,5 @@
-/* node tools/miltonPsalmsRun.ts — Milton's Psalms I–VIII and LXXX–LXXXVIII
-   as the Oxford edition prints them (tools/miltonPsalms.txt, set from its
+/* node one-offs/miltonPsalmsRun.ts — Milton's Psalms I–VIII and LXXX–LXXXVIII
+   as the Oxford edition prints them (one-offs/miltonPsalms.txt, set from its
    pages), a page a psalm under Milton, John/Psalms, each line checked
    against Beeching's text (cached under one-offs/out/harvard) for a slip in the
    setting; written under OUT (default ~/Desktop/gesta-imports/gesta-milton-psalms)

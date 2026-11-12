@@ -1,4 +1,4 @@
-/* node tools/miltonSonnetsRun.ts — Milton's sonnets: the English from the
+/* node one-offs/miltonSonnetsRun.ts — Milton's sonnets: the English from the
    Harvard Classics' two scans read against each other, the Italian from the
    1645 Poems on Italian Wikisource with Cowper's translations (all cached
    under one-offs/out/harvard); written under OUT (default

@@ -1,4 +1,4 @@
-/* node tools/htmlTagsRun.ts [backup-dir] [out-dir] — the entries the HTML
+/* node one-offs/htmlTagsRun.ts [backup-dir] [out-dir] — the entries the HTML
    survey found typing HTML read, their tags and entities made markdown,
    the changed entries written under out-dir at their own paths for an
    import, a review page beside out-dir, the counts printed */

@@ -58,7 +58,7 @@ here NOW, and what is not yet:
     2026-09-28 (the plan's record); the checker's sweep reads 0 blocks
     naming another module and 0 carrying provenance, and a new comment
     is held to the same by the checker.
-- IN FORCE from 2026-11-04 — THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in code, tests, help, tools and replies; a label is the link's text; `tools/shelfLines.ts` calls his own typed attribution a "source line". `tools/vocabulary.test.ts`, under `npm test`, fails on a retired word anywhere in src/, tools/ or this file; dated plan records keep their words.
+- IN FORCE from 2026-11-04 — THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in code, tests, help, tools and replies; a label is the link's text; `one-offs/shelfLines.ts` calls his own typed attribution a "source line". `tools/vocabulary.test.ts`, under `npm test`, fails on a retired word anywhere in src/, tools/ or this file; dated plan records keep their words.
 - IN FORCE from 2026-11-05 — A CHANGED COMMENT IS READ BEFORE IT IS COMMITTED (asked, after a review found a new comment describing another module in words the checker cannot see): `npm run test:comments`, under `verify`, fails while the ledger of added or changed blocks is not recorded as read; each is read against the comment standard, fixed if it fails, and `npm run comments:read` records the ledger. Changing a listed block clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
 - IN FORCE from 2026-11-05 — A TEST'S DESCRIPTION STATES THE RULE; the exact forms live only in its assertions, so there is less to go stale (asked).
   `npm run test:titles`, under `verify`, fails when a test's code differs from HEAD under the same description, and lists them; each description is read against its assertions, fixed if out of step, and `npm run titles:read` records the list as read. Changing a listed test again clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
@@ -237,7 +237,8 @@ is in the plan's record, under the phase named):
   on is held by the step, not left to fall one way. EVERY COMMIT CHECKS IT
   (asked: "I want order independence checked on every commit"): the
   verdict's `order` run plays the steps last first beside `corner`, and a
-  section reading otherwise than corner's approved copy fails `verify`
+  section reading otherwise than the corner run played with it (corner's
+  approved copy where corner was not replayed) fails `verify`
   (`tools/heliumOrder.ts`, its test beside it); there is no copy of its own
   to approve, the remedy being the section's own setup.
 - THE ROWS OF A TEXT BLOCK ARE NOT ALL ONE SHAPE (2026-11-06, asked, after

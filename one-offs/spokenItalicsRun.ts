@@ -1,4 +1,4 @@
-/* node tools/spokenItalicsRun.ts [backup-dir] [out-dir] — Cyrano's scenes
+/* node one-offs/spokenItalicsRun.ts [backup-dir] [out-dir] — Cyrano's scenes
    read, their spoken rows wholly italic declared lines, the changed entries
    written under out-dir at their own paths for an import, a review page
    beside out-dir, the counts printed */

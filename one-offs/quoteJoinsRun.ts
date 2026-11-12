@@ -1,4 +1,4 @@
-/* node tools/quoteJoinsRun.ts [backup-dir] [out-dir] — every journal entry
+/* node one-offs/quoteJoinsRun.ts [backup-dir] [out-dir] — every journal entry
    before 2026 read, its quotes a blank line apart joined, the changed
    entries written under out-dir at their own paths for an import, a review
    page beside out-dir, the counts printed */

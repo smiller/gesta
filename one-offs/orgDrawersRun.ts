@@ -1,4 +1,4 @@
-/* node tools/orgDrawersRun.ts [backup-dir] [out-dir] — every entry in the
+/* node one-offs/orgDrawersRun.ts [backup-dir] [out-dir] — every entry in the
    backup read, an old `[[#anchor][label]]` link made a link to the place
    its anchor's property drawer marks, then every property drawer cleared;
    the changed entries written under out-dir at their own paths for an

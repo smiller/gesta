@@ -1,9 +1,9 @@
-/* node tools/miltonSamsonRun.ts — Samson Agonistes: its outline from
+/* node one-offs/miltonSamsonRun.ts — Samson Agonistes: its outline from
    Beeching's text (who speaks, the lines split between speakers), its words
    from the Harvard Classics' two scans read against each other, its front
    matter from scan A (all cached under one-offs/out/harvard); written under OUT
    (default ~/Desktop/gesta-imports/gesta-milton-samson) for an import, a
-   review page beside it, the counts printed; tools/miltonCapsRun.ts gives the
+   review page beside it, the counts printed; one-offs/miltonCapsRun.ts gives the
    page Paradise Lost's capitals afterwards */
 import { readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
 import { join, dirname, basename, resolve } from "node:path";

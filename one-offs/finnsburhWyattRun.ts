@@ -1,4 +1,4 @@
-/* node tools/finnsburhWyattRun.ts [out-dir] — the Finnsburh fragment from
+/* node one-offs/finnsburhWyattRun.ts [out-dir] — the Finnsburh fragment from
    Wyatt's appendix on Wikisource (pages cached under one-offs/out/wyatt),
    written under out-dir/bookshelf/ for an import, a review page beside
    out-dir, the counts printed */

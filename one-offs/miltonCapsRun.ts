@@ -1,4 +1,4 @@
-/* node tools/miltonCapsRun.ts — the capitals of the Milton pages made from
+/* node one-offs/miltonCapsRun.ts — the capitals of the Milton pages made from
    the Harvard Classics matched to the bookshelf's Paradise Lost: the pages
    read from the backup as they stand now (their own edits kept), Arcades and
    Comus from their import folder; the changed pages written under OUT

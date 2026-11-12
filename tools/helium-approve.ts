@@ -7,8 +7,9 @@
 // judgement to be made after reading it, and refuses a run that failed or
 // whose inputs have moved. Without it a seam only these runs cover could
 // move without warning under `npm test`.
-// `order` plays the steps last first beside `corner`, held to corner's
-// approved copy section by section; it has no copy of its own to approve.
+// `order` plays the steps last first beside `corner`, held section by
+// section to the corner run played with it, or to corner's approved copy
+// where corner was not played; it has no copy of its own to approve.
 // `node tools/helium-approve.ts [--approve] [corner|order|bridge|reader ...]`
 import { spawn, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
@@ -105,41 +106,57 @@ function clearProfile(name: string): void {
 }
 function play(tool: Tool): Promise<string> {
   return new Promise((done) => {
+    let out = "", err = "", settled = false;
+    const finish = (tail: string): void => { if (!settled) { settled = true; done(scrub(out + tail)); } };
     const child = spawn("node", [tool.script, ...(tool.args ?? [])], { env: { ...env, ...tool.env } });
-    let out = "", err = "";
     child.stdout.on("data", (b) => { out += b; });
     child.stderr.on("data", (b) => { err += b; });
-    child.on("close", (code, signal) => { const bad = code || signal; done(scrub(out + (bad ? "\nEXIT " + bad + "\n" + err : ""))); });
+    child.on("error", (e) => finish("\nEXIT " + e.message + "\n"));
+    child.on("close", (code, signal) => { const bad = code || signal; finish(bad ? "\nEXIT " + bad + "\n" + err : ""); });
   });
 }
-function differs(name: string, received: string, approved: string | null): string | null {
+function differs(name: string, received: string, baseline: string | null): string | null {
   if (TOOLS[name].heldTo) {
-    const off = approved === null ? ["(no approved copy)"] : orderDifferences(approved, received);
+    const off = baseline === null ? ["(no approved copy)"] : orderDifferences(baseline, received);
     return off.length ? name + ": DIFFERS in another order — " + off.join("; ") : null;
   }
-  if (approved === received) return null;
+  if (baseline === received) return null;
   const d = spawnSync("diff", ["-u", approvedOf(name), receivedOf(name)], { encoding: "utf8" });
   const diffLines = (d.stdout || "").split("\n");
-  return [name + ": DIFFERS from " + approvedOf(name) + (approved === null ? " (no approved copy yet)" : ""), ...diffLines.slice(0, 80),
+  return [name + ": DIFFERS from " + approvedOf(name) + (baseline === null ? " (no approved copy yet)" : ""), ...diffLines.slice(0, 80),
     ...(diffLines.length > 80 ? ["… " + (diffLines.length - 80) + " more lines of the diff: read the received copy whole"] : []),
     "read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
-async function verdictOne(name: string): Promise<void> {
-  if (mayReuse(readOrNull(stampPath(name)), fingerprint(inputsFor(name)), { steps: !!process.env.STEPS })) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return; }
+interface Playing { name: string; played: string }
+/* a run to play, its stamps cleared and its profile emptied before any run
+   of its group starts; null where a passing run's stamp stands */
+function prepare(name: string): Playing | null {
+  if (mayReuse(readOrNull(stampPath(name)), fingerprint(inputsFor(name)), { steps: !!process.env.STEPS })) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   rmSync(stampPath(name), { force: true });
   rmSync(playedPath(name), { force: true });
   clearProfile(name);
   /* an edit made while it plays is not what it played */
-  const played = fingerprint(inputsFor(name));
-  const received = await play(TOOLS[name]);
+  return { name, played: fingerprint(inputsFor(name)) };
+}
+/* a run held to another is held to that one's run played beside it, so a
+   reading changed on purpose is not taken for an order; else to its copy */
+const baselineOf = (name: string, played: Map<string, string>): string | null =>
+  played.get(TOOLS[name].heldTo ?? "") ?? readOrNull(approvedOf(name));
+function judge({ name, played }: Playing, received: string, baseline: string | null): void {
   if (!TOOLS[name].heldTo) writeFileSync(receivedOf(name), received);
-  const failure = differs(name, received, readOrNull(approvedOf(name)));
+  const failure = differs(name, received, baseline);
   if (!failure) { rmSync(receivedOf(name), { force: true }); if (!process.env.STEPS) stamp(name, played); console.log(name + ": ok"); return; }
   failed++;
   writeFileSync(receivedOf(name), received);
   if (!process.env.STEPS && !TOOLS[name].heldTo) { mkdirSync(STAMPS, { recursive: true }); writeFileSync(playedPath(name), played); }
   console.log(failure);
 }
+async function playGroup(group: string[]): Promise<void> {
+  const runs = group.filter((n) => run.includes(n)).map(prepare).filter((r): r is Playing => r !== null);
+  const outs = await Promise.all(runs.map((r) => play(TOOLS[r.name])));
+  const played = new Map(runs.map((r, i) => [r.name, outs[i]]));
+  for (const r of runs) judge(r, played.get(r.name)!, baselineOf(r.name, played));
+}
 if (approve) for (const name of run) approveOne(name);
-else for (const group of TOGETHER) await Promise.all(group.filter((n) => run.includes(n)).map(verdictOne));
+else for (const group of TOGETHER) await playGroup(group);
 process.exit(failed ? 1 : 0);

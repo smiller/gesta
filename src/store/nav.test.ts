@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { hashParts, namesEntry, internalHash, makeHref } from "./nav.ts";
+import { hashParts, namesEntry, entryAt, internalHash, makeHref } from "./nav.ts";
 import { todayKey, entryHash, asAddress } from "./keys.ts";
 
 const today = todayKey();
@@ -108,4 +108,16 @@ test("an address is read with its #, and one entryHash mints reads back as that 
   expect(namesEntry(asAddress("#2020-02-03/My%20Tag"))).toBe(true);
   expect(namesEntry(asAddress("#garbage"))).toBe(false);
   expect(namesEntry(asAddress(""))).toBe(false);
+});
+
+test("text without the # is no address: it names no entry, and hashParts falls back to today", () => {
+  expect(namesEntry(asAddress("2020-02-03/My%20Tag"))).toBe(false);
+  expect(namesEntry(asAddress("page/Books"))).toBe(false);
+  expect(dt(hashParts(asAddress("page/Books")))).toBe(today + "|null");
+});
+
+test("entryAt reads an address once: the entry it names, or null where hashParts would fall back", () => {
+  expect(entryAt(asAddress("#page/Books/Essay?h=x"))).toEqual({ date: "page", tag: "Books/Essay", hl: { q: "x", nth: 0 } });
+  expect(entryAt(asAddress("#garbage"))).toBeNull();
+  expect(entryAt(asAddress("page/Books"))).toBeNull();
 });

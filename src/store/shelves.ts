@@ -2,7 +2,7 @@ import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { linkRuns } from "./links.ts";
-import { namesEntry, hashParts } from "./nav.ts";
+import { entryAt } from "./nav.ts";
 import { NS_BOOK, asAddress } from "./keys.ts";
 
 export const SHELVES = "Shelves";
@@ -14,8 +14,8 @@ export interface ShelfGroup { shelf: string | null; roots: string[] }
    its authors were drawn under both (pin: shelves.test › read as the page
    renders) */
 function bookRoot(href: string): string | null {
-  if (!href.startsWith("#") || !namesEntry(asAddress(href))) return null;
-  const at = hashParts(asAddress(href));
+  const at = entryAt(asAddress(href));
+  if (!at) return null;
   return at.date === NS_BOOK.key && at.tag ? at.tag.split("/")[0] : null;
 }
 function shelfNamed(out: Shelf[], name: string): Shelf {

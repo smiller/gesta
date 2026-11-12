@@ -1,5 +1,5 @@
 import { asAddress } from "../src/store/keys.ts";
-/* node tools/speechMarksRun.ts [backup-dir] [out-dir] — the marks read in
+/* node one-offs/speechMarksRun.ts [backup-dir] [out-dir] — the marks read in
    speechMarksRead.json set in their entries, the changed entries written
    under out-dir at their own paths for an import, a review page beside
    out-dir, the highlighted links into them checked, the counts printed */

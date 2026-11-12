@@ -13,7 +13,7 @@ const N = schema.nodes;
 const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
 const ONE_HEADING_LINE = /^#{1,6} \S/;
 const ONE_QUOTE_LINE = /^>+ \S/;
-const INTERNAL_LINK_RE = /^\[[^\]]+\]\(#([^)\s]+)\)$/;
+const INTERNAL_LINK_RE = /^\[[^\]]+\]\((#[^)\s]+)\)$/;
 const FLAT_HOSTS = new Set([N.list_item, N.table_cell, N.line, N.cell]);
 function inAny($ctx: ResolvedPos, types: Set<unknown>): boolean {
   for (let d = $ctx.depth; d >= 0; d--) if (types.has($ctx.node(d).type)) return true;
@@ -95,7 +95,7 @@ export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(pos + frag.size, tr.doc.content.size)), -1));
   return tr;
 }
-const REFERENCE_HEAD_RE = /^(\[[^\]]+\]\(#([^)\s]+)\)):\n\n([^]*)$/;
+const REFERENCE_HEAD_RE = /^(\[[^\]]+\]\((#[^)\s]+)\)):\n\n([^]*)$/;
 const linkable = ($at: ResolvedPos): boolean => $at.parent.type.allowsMarkType(schema.marks.link);
 function inlineSlice(md: string): Slice | null {
   try { return new Slice(parseMarkdown(md).firstChild!.content, 0, 0); } catch { return null; }
@@ -109,7 +109,7 @@ function pastedAddress(raw: string, html: string): { link: string; target: strin
   const ref = REFERENCE_HEAD_RE.exec(txt);
   const found = ref && ref[3].split("\n").every((l) => l.startsWith(">")) ? { link: ref[1], target: ref[2], reference: true }
     : INTERNAL_LINK_RE.test(txt) ? { link: txt, target: INTERNAL_LINK_RE.exec(txt)![1], reference: false } : null;
-  return found && namesEntry(asAddress("#" + found.target)) ? found : null;
+  return found && namesEntry(asAddress(found.target)) ? found : null;
 }
 const oneTextRun = (sel: Selection): boolean => !sel.empty && sel instanceof TextSelection && sel.$from.sameParent(sel.$to) && linkable(sel.$from);
 function trimmedRange(doc: Node, from: number, to: number): [number, number] {
@@ -124,7 +124,7 @@ export function linkSelection(state: EditorState, raw: string, html = ""): Trans
   if (!pasted) return null;
   const [from, to] = trimmedRange(state.doc, sel.from, sel.to);
   if (from === to) return null;
-  const tr = state.tr.addMark(from, to, schema.marks.link.create({ href: "#" + pasted.target }));
+  const tr = state.tr.addMark(from, to, schema.marks.link.create({ href: pasted.target }));
   return tr.setSelection(TextSelection.create(tr.doc, sel.to));
 }
 const typedLine = (sel: Selection): boolean => sel.empty && linkable(sel.$from) && !!sel.$from.parent.textContent.trim();
@@ -146,7 +146,7 @@ function linkSlice(body: string, oneLine: boolean): Slice | null {
   if (url) return new Slice(Fragment.from(schema.text(body.trim(), [schema.marks.link.create({ href: url })])), 0, 0);
   const internal = INTERNAL_LINK_RE.exec(body.trim());
   if (!internal) return null;
-  return namesEntry(asAddress("#" + internal[1])) ? inlineSlice(body.trim()) : new Slice(Fragment.from(schema.text(body)), 0, 0);
+  return namesEntry(asAddress(internal[1])) ? inlineSlice(body.trim()) : new Slice(Fragment.from(schema.text(body)), 0, 0);
 }
 function blockSlice(body: string, lines: string[], $context: ResolvedPos): Slice | null {
   if (inAny($context, FLAT_HOSTS)) return flat(lines);

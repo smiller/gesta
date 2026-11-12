@@ -1,4 +1,4 @@
-/* node tools/quoteMarksRun.ts [backup-dir] [out-dir] — every bookshelf entry
+/* node one-offs/quoteMarksRun.ts [backup-dir] [out-dir] — every bookshelf entry
    read, its single quotation marks turned and closed up, the changed entries
    written under out-dir at their own paths for an import, a review page
    beside out-dir, the highlighted links into them checked, the counts

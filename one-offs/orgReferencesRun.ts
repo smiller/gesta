@@ -1,4 +1,4 @@
-/* node tools/orgReferencesRun.ts [backup-dir] [out-dir] — every entry in the
+/* node one-offs/orgReferencesRun.ts [backup-dir] [out-dir] — every entry in the
    backup read, its old `[[target][label]]` links made the links their
    targets now are, the changed entries written under out-dir at their own
    paths for an import, a review page beside out-dir, the counts printed */

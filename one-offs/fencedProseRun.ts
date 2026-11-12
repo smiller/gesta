@@ -1,4 +1,4 @@
-/* node tools/fencedProseRun.ts [backup-dir] [out-dir] — every entry in the
+/* node one-offs/fencedProseRun.ts [backup-dir] [out-dir] — every entry in the
    backup read, its prose fences made quotations, the changed entries
    written under out-dir at their own paths for an import, a review page
    beside out-dir, the counts printed */

@@ -1,4 +1,4 @@
-/* node tools/stageDirectionsRun.ts [out-dir] — the fourteen plays read from
+/* node one-offs/stageDirectionsRun.ts [out-dir] — the fourteen plays read from
    the backup, the changed entries written under out-dir/bookshelf/… for an
    import, a before-and-after page beside out-dir, the counts printed */
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";

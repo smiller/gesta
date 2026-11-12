@@ -25,14 +25,20 @@ async function settle(page: Page): Promise<void> {
   await page.keyboard.press("Escape").catch(() => {});
 }
 const skipped = (opts: RunOptions, name: string): boolean => !!opts.only && !opts.only.includes(name);
+const firstLine = (e: unknown): string => String(e).split("\n")[0].slice(0, 200);
+/* a start that throws fails its own section, not the run */
+async function started(page: Page, name: string): Promise<boolean> {
+  try { await settle(page); await freshStart(name); return true; }
+  catch (e) { console.log("FRESH START FAILED (" + name + "): " + firstLine(e)); return false; }
+}
 async function playSection(page: Page, [name, fn]: (typeof SECTIONS)[number], clock: Clock | null): Promise<void> {
   const t0 = Date.now(), s0 = clock?.slept ?? 0;
   console.log("== " + name);
-  await settle(page);
-  await freshStart(name);
   setSection(name);
-  try { await fn(); }
-  catch (e) { console.log("SECTION FAILED (" + name + "): " + String(e).split("\n")[0].slice(0, 200)); }
+  if (await started(page, name)) {
+    try { await fn(); }
+    catch (e) { console.log("SECTION FAILED (" + name + "): " + firstLine(e)); }
+  }
   clock?.sections.push([name, Date.now() - t0, clock.slept - s0]);
 }
 export async function runSteps(page: Page, ctx: BrowserContext, A: Adapter, opts: RunOptions = {}) {

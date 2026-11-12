@@ -1,4 +1,4 @@
-/* node tools/speechGapsRun.ts [backup-dir] [out-dir] — Cyrano's scenes and
+/* node one-offs/speechGapsRun.ts [backup-dir] [out-dir] — Cyrano's scenes and
    the journal entries that quote them read, a speech's lines closed up, the
    changed entries written under out-dir at their own paths for an import, a
    review page beside out-dir, the counts printed */

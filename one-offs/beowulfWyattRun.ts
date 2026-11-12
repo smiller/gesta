@@ -1,4 +1,4 @@
-/* node tools/beowulfWyattRun.ts [out-dir] — Wyatt's Beowulf from Wikisource
+/* node one-offs/beowulfWyattRun.ts [out-dir] — Wyatt's Beowulf from Wikisource
    (pages cached under one-offs/out/wyatt), written under out-dir/bookshelf/…
    for an import, a review page beside out-dir, the counts printed */
 import { writeFileSync, mkdirSync, rmSync, existsSync, readFileSync } from "node:fs";

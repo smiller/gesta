@@ -1,4 +1,4 @@
-/* node tools/pipeTablesRun.ts [backup-dir] [out-dir] — every entry in the
+/* node one-offs/pipeTablesRun.ts [backup-dir] [out-dir] — every entry in the
    backup read, its two-column pipe tables made verse blocks of pairs, the
    changed entries written under out-dir at their own paths for an import,
    a review page beside out-dir, the counts printed */

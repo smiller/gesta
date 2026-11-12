@@ -1,4 +1,4 @@
-import { isDayKey, nsOf, todayKey, asAddress, type Address, type Highlight } from "./keys.ts";
+import { isDayKey, nsOf, todayKey, asAddress, beforeQuery, type Address, type Highlight } from "./keys.ts";
 import { pageName } from "./names.ts";
 
 export interface HashParts { date: string; tag: string | null; hl: Highlight | null }
@@ -9,12 +9,14 @@ export interface HashParts { date: string; tag: string | null; hl: Highlight | n
    (pin: nav.test › hashParts: a page routes; anything less falls back)
    (pin: nav.test › hashParts: a page hierarchy at any depth) */
 export function hashParts(a: Address): HashParts {
-  return namedBy(a.replace(/^#/, "")) ?? { date: todayKey(), tag: null, hl: null };
+  return entryAt(a) ?? { date: todayKey(), tag: null, hl: null };
 }
-/* whether an address names an entry at all, the fallback's cases being no */
-export function namesEntry(a: Address): boolean {
-  return namedBy(a.replace(/^#/, "")) !== null;
+/* the entry an address names, or null where hashParts falls back; text
+   without the leading # names none */
+export function entryAt(a: Address): HashParts | null {
+  return a.startsWith("#") ? namedBy(a.slice(1)) : null;
 }
+export const namesEntry = (a: Address): boolean => entryAt(a) !== null;
 function searchedFor(query: string): Highlight | null {
   try {
     const m = query.match(/(?:^|&)h=([^&]*)(?:&n=(\d+))?/);
@@ -35,7 +37,7 @@ function pagePath(tag: string | null): string | null {
 }
 function namedBy(whole: string): HashParts | null {
   const hl = highlightOf(whole);
-  const raw = whole.split("?")[0];
+  const raw = beforeQuery(whole);
   const slash = raw.indexOf("/");
   const date = slash === -1 ? raw : raw.slice(0, slash);
   let tag: string | null;

@@ -856,3 +856,37 @@ Arguments' across the board. We probably want to revisit that."
   (MEASURED), each now an `asAddress` of the whole href, location.hash or
   typed text, or the Address it already held. The suite 1,470, both tsc
   programs clean, every touched file at 10 (MEASURED).
+
+### The review of the day's four commits (582c878..7b4a8e4)
+
+One `/code-review` at HIGH: 190,423 tokens (MEASURED, the last message of
+`agent-afb8e7de087624989.jsonl`: 2 input + 1,767 cache creation + 185,943
+cache read + 2,711 output). Nine findings, all the reviewer's, held until
+the reader has the list. Checked before handing over: the one-offs' stale
+paths, 26 scripts giving `node tools/…` and 29 paths no longer there
+(MEASURED); the clipboard half of the parallel-load finding is not so —
+headless Helium keeps its own clipboard, a page's write and read leaving
+the Mac's pasteboard as it was (MEASURED, saved and restored around the
+probe).
+- FIXED, 1–8 (asked: "Let's fix 1-8 in one commit"), the ninth the
+  clipboard half not so and the load half answered by 2 and 3:
+  1. A fresh start that throws fails its own section ("FRESH START
+     FAILED"), not the run.
+  2. `order` is held to the corner run played beside it, corner's approved
+     copy where corner was not replayed: a reading changed on purpose fails
+     corner alone.
+  3. The placing script arms its selectionchange watch in the same task as
+     its addRange.
+  4. Enter while a composition is open picks nothing in Search or the
+     Shortcuts popup (test-first).
+  5. The 26 moved scripts' usage lines and the 29 paths read
+     `one-offs/`, and CLAUDE.md's vocabulary rule names
+     `one-offs/shelfLines.ts`. The checker owed, `tools/paths.test.ts`:
+     a tools/ or one-offs/ file named in the code or CLAUDE.md is there,
+     a test's paths and another repository's aside; red before (MEASURED).
+  6. A group's profiles are emptied before any of its runs starts; a
+     spawn error settles the run.
+  7. Text without the leading # names no entry (test-first); the paste's
+     patterns capture the #.
+  8. The first-? rule once (`beforeQuery`); `entryAt` reads an address
+     once where three callers parsed it twice (test-first).

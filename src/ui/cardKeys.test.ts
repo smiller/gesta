@@ -1,13 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { listKey, enterKey, holdsFocus, focusLeaves } from "./cardKeys.ts";
 
-const key = (k: string, mods: Partial<{ shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean }> = {}) =>
-  ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, ...mods });
+const key = (k: string, mods: Partial<{ shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }> = {}) =>
+  ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false, ...mods });
 
 describe("a key in a list", () => {
   it("Enter picks, with or without a modifier", () => {
     expect(listKey(key("Enter"))).toBe("enter");
     expect(listKey(key("Enter", { shiftKey: true }))).toBe("enter");
+  });
+  it("Enter while a composition is open commits the composition and picks nothing", () => {
+    expect(listKey(key("Enter", { isComposing: true }))).toBeNull();
   });
   it("the arrows walk down and up; with a modifier, or any other key, nothing", () => {
     expect(listKey(key("ArrowDown"))).toBe(1);

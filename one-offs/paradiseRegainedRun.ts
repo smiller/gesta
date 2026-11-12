@@ -1,4 +1,4 @@
-/* node tools/paradiseRegainedRun.ts — Paradise Regained: Gutenberg's #58
+/* node one-offs/paradiseRegainedRun.ts — Paradise Regained: Gutenberg's #58
    read against the Harvard Classics' two scans (all cached under
    one-offs/out/harvard), every word or mark they differ on settled on the
    printed page; written under OUT (default

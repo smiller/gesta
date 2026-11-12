@@ -9,7 +9,7 @@
    external link). The plain click stays a click, so a drag that starts on
    a link routes nothing. */
 import type { EditorView } from "prosemirror-view";
-import { internalHash, namesEntry, hashParts } from "../store/nav.ts";
+import { internalHash, entryAt } from "../store/nav.ts";
 
 export type LinkAction = { kind: "open"; href: string } | { kind: "route"; frag: string } | null;
 export function linkAction(href: string | null, modified: boolean, docHref: string = location.href): LinkAction {
@@ -23,8 +23,8 @@ export function linkAction(href: string | null, modified: boolean, docHref: stri
 export function linkTitle(href: string, docHref: string = location.href): string {
   const hint = "⌘-click to open";
   const frag = href ? internalHash(href, docHref) : null;
-  if (!frag || !namesEntry(frag)) return hint;
-  const p = hashParts(frag);
+  const p = frag ? entryAt(frag) : null;
+  if (!p) return hint;
   return hint + " " + (p.tag ? p.tag.slice(p.tag.lastIndexOf("/") + 1) : p.date);
 }
 export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {

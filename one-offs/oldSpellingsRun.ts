@@ -1,4 +1,4 @@
-/* node tools/oldSpellingsRun.ts [backup-dir] [out-dir] — every entry in the
+/* node one-offs/oldSpellingsRun.ts [backup-dir] [out-dir] — every entry in the
    backup read, its Emacs links and slash italics respelled as markdown,
    the changed entries written under out-dir at their own paths for an
    import, a review page beside out-dir, the counts printed */
