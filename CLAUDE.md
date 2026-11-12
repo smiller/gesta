@@ -142,6 +142,16 @@ rule stands at CodeScene's default. Never edit that file to quiet a structural f
   reviewer finding a MECHANICAL class — a literal, a name that does not
   resolve, a comment shape — owes a checker under `tools/`, not just a
   fix: a grep runs free forever.
+  FROM 2026-11-12, BESIDE IT (asked): `/improve-codebase-architecture`,
+  once per batch, after the accept, alongside the `/code-review`, aimed
+  at the batch's files. Matt Pocock's, installed in `.claude/skills/`
+  with the three it calls (`codebase-design`, `grilling`,
+  `domain-modeling`), pinned at mattpocock/skills `7739eae`, never edited
+  here. Not in the Stop hook: it is an LLM judgement that always finds a
+  candidate, not a score that holds. Each candidate is built test-first
+  or refused with its reason as an ADR in `docs/adr/`, which the skill
+  reads so it does not suggest it again; "it suggests nothing" means
+  every candidate built or refused. Its cost is recorded like a review's.
 - IN FORCE from 2026-09-08 — THE GATE: no review-shaped call while
   `src/` or `index.html` has moved past the last acceptance. Finish the
   work, make the suite green, tell the reader what to look at, and STOP;
