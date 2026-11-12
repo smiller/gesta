@@ -1,6 +1,6 @@
-// The blank-row step's reading, the same over both apps but for the root
-// the text sits under: where the caret is, the first blank row's box and
-// drawn caret, the first verse's first two rows.
+// The blank-row step's reading under the root the text sits in: where the
+// caret is, the first blank row's box and drawn caret, the first verse's
+// first two rows.
 import type { Page } from "../heliumPage.ts";
 
 export const blankRowReader = (root: string) => (page: Page) => page.evaluate((root) => {

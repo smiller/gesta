@@ -1,8 +1,5 @@
-// The successor's adapter for the shared headless steps (helium-steps.ts):
-// where the page is, how it is seeded, and how each thing on its screen is
-// read. The writer's adapter (writer.ts) answers the same questions over
-// the current app, so one step list drives both and the two outputs diff.
-// Split out of helium-corner.ts 2026-09-12.
+// The app's adapter for the headless steps (helium-steps.ts): where the
+// page is, how it is seeded, and how each thing on its screen is read.
 import { resolve } from "node:path";
 import { NS } from "../../src/store/keys.ts";
 import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.ts";

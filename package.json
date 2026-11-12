@@ -11,7 +11,7 @@
     "check": "tsc --noEmit && tsc --noEmit -p tsconfig.helium.json",
     "test": "vitest run",
     "corpus": "node tools/corpus.ts",
-    "test:helium": "node tools/helium-approve.ts && node tools/helium-compare.ts",
+    "test:helium": "node tools/helium-approve.ts",
     "test:comments": "node tools/comments.ts",
     "comments:read": "node tools/comments.ts --read",
     "test:titles": "node tools/testTitlesRun.ts",

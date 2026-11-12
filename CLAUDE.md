@@ -12,9 +12,10 @@ into every session). This file holds what is IN FORCE — the process and
 the layout — and points at the record; a rule a record entry set that
 later work must keep is restated here, not only there. THIS IS THE RUNNING APP
 since 2026-09-22 (the reader said so that day: the export imported,
-real entries written here). `../writer` is the OLD app: kept as the
-comparison tools' other side and not maintained — a feature built here
-is never back-ported. Where this file, the plan's record and the tools
+real entries written here). `../writer` is the OLD app: kept for the
+corpus tool's `--writer` comparison of the parsers and for its process,
+not maintained, its Helium comparison retired 2026-11-12 — a feature
+built here is never back-ported. Where this file, the plan's record and the tools
 say "the current app" they mean `../writer`, the vocabulary of the days
 before the cutover.
 
@@ -80,30 +81,19 @@ here NOW, and what is not yet:
 - IN FORCE — new behaviour is built test-first (`npm test`, Vitest), and
   `npm run verify` — tsc, the suite, then the headless tools under their
   verdict — passes before work is called done. THE HEADLESS TOOLS HAVE A
-  VERDICT since 2026-09-12: `npm run test:helium` plays the shared steps
-  (`tools/helium-steps.ts`) over the successor and compares the whole
-  run, scrubbed, against `tools/expected/corner.approved.txt`, then
-  compares it step by step against THE CURRENT APP's run of the same
-  steps, `tools/expected/corner.writer.txt`, failing on any difference
-  not listed with its reason in `tools/expected/corner.differences.txt`.
-  `../writer` is the reference for what was PORTED; a feature new here
-  (the grid, 2026-09-22) has no reference there and lists every field
-  it reads differently with that reason. The approved copy is only a
-  fence against change. `--approve` makes the run
+  VERDICT since 2026-09-12: `npm run test:helium` plays the steps
+  (`tools/helium-steps.ts`) over the app and compares the whole run,
+  scrubbed, against `tools/expected/corner.approved.txt`, a fence against
+  change. `--approve` makes the run
   just played and read the approved copy, a judgement made after reading the
   whole diff, never to quiet it; since 2026-11-05 it does not play again, and
   refuses a run with a failed section, a run of some steps, or one whose inputs
-  have moved since it played (asked). A `.received.txt` is never committed. THE OLD APP IS FROZEN
-  from 2026-10-17 (asked, after two of its runs cost about 8 minutes each
-  for one changed step): ../writer is never played again, and
-  `corner.writer.txt` stands as last generated, still compared on every
-  verify — but for one hand edit, 2026-11-11 (asked): a real person's name the
-  steps typed was replaced by the reader's own, "Sean Miller", in its two
-  readings, the row's place in the list inferred, not played. A step added
-  after 2026-10-17, or a field of an old one that
-  changes, is judged by the approved copy alone and listed in
-  `corner.differences.txt` as `<label> · * · new here, the old app
-  frozen` (or its field, `· <field> ·`). A PASSING RUN IS NOT REPLAYED
+  have moved since it played (asked). A `.received.txt` is never committed. THE
+  COMPARISON WITH THE OLD APP IS RETIRED from 2026-11-12 (asked: "It's going
+  to get more and more out of date, surely?"): frozen since 2026-10-17, its run
+  pinned nothing the approved copy did not, and a third of its decided
+  differences said only that a step was new; its run, its decided
+  differences, its driver and its adapter are in git history. A PASSING RUN IS NOT REPLAYED
   from 2026-10-17 (asked): `helium-approve.ts` stamps the fingerprint of
   what a run reads (`tools/heliumStamp.ts`: the built page, the drivers,
   steps and adapters, the source an adapter imports, the approved copy,
@@ -428,20 +418,19 @@ is in the plan's record, under the phase named):
 - `tools/helium-bridge.ts` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
-- `tools/helium-steps.ts` — THE SHARED STEPS: one list of gestures and
+- `tools/helium-steps.ts` — THE STEPS: one list of gestures and
   readings, played over an adapter, and `TODAY`, the day the drivers
-  and the bridge pin the page's clock to (2026-09-22; never a seeded day); `tools/adapters/successor.ts` and
-  `tools/adapters/writer.ts` answer the same questions over this app
-  and over ../writer (its `window.gesta` seam seeds it, its own ids read
-  it). `tools/helium-approve.ts` runs a tool under its verdict against
-  `tools/expected/`; `tools/helium-compare.ts` reads the two runs step
-  by step, the decided differences listed in `corner.differences.txt`;
-  `tools/helium-writer.ts` is the current app's driver. The Helium files
+  and the bridge pin the page's clock to (2026-09-22; never a seeded day);
+  `tools/adapters/successor.ts` answers them over the app, with
+  `adapters/blankRow.ts` and `adapters/inPage.ts` (a reading of top-level
+  functions composed into the one script an evaluate runs).
+  `tools/helium-approve.ts` runs a tool under its verdict against
+  `tools/expected/`. The Helium files
   are TypeScript since 2026-11-12 (asked), checked by their own program,
   `tsconfig.helium.json`, under `npm run check`: strict but for null
   checks, a query answering with an element (`tools/heliumDom.d.ts`), the
   page's hooks and playwright's types in `tools/heliumPage.ts`, the steps
-  taking one `Adapter`, the successor's; `tsconfig.json` leaves these files
+  taking one `Adapter`; `tsconfig.json` leaves these files
   out, so the rest of the tree keeps its strict view of the DOM.
 - `tools/hooks-test.sh` — the hooks' self-test (2026-09-22): the five
   scripts under `hooks/` copied into a throwaway git repo and asserted

@@ -548,3 +548,21 @@ so the reading stays one evaluation at the same moment; a callback that
 needs nothing else passed by reference. The composed scripts parse (MEASURED).
 Both adapters to 10, inPage.ts new at 10, helium-probe.ts scored at 10 now its
 lines are typed; helium-steps.ts holds at 3.48 until 3b.
+
+### The comparison with the old app retired (2026-11-12)
+
+Asked, mid-3b: "Are we still comparing against the old app? It's going to get
+more and more out of date, surely?" The old app was frozen 2026-10-17 and
+never played since; its run `corner.writer.txt` stood as last generated,
+compared on every verify. MEASURED: of `corner.differences.txt`'s 324 decided
+differences, 112 said only "new here, the old app frozen"; the 271 steps it
+called identical were pinned reading for reading by `corner.approved.txt`
+already. What it added was a second signature on approving a changed ported
+behaviour (INFERRED, from how the two were wired); what it cost was a line
+for every new step, an adapter of 192 lines and its driver kept compiling,
+a cast in the steps' adapter type, a special case in the unused exports test.
+Retired before 3b, the reader agreeing: helium-compare.ts, helium-writer.ts,
+adapters/writer.ts, corner.writer.txt and corner.differences.txt removed (git
+history keeps them), `test:helium` the approve run alone, the approve script's
+`--writer` mode and the old app's seam types gone. corpus.ts's `--writer`
+parser comparison, off by default, stays.

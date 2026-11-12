@@ -16,10 +16,6 @@ import { tmpdir } from "node:os";
 import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
 
 const TOOLS: Record<string, string> = { corner: "tools/helium-corner.ts", bridge: "tools/helium-bridge.ts", reader: "tools/helium-reader.ts" };
-/* `--writer` runs the CURRENT APP's driver over the same steps and keeps
-   its scrubbed output as tools/expected/corner.writer.txt — the behaviour
-   the successor is measured against (helium-compare.ts) */
-const WRITER = "tools/helium-writer.ts";
 const args = process.argv.slice(2);
 const approve = args.includes("--approve");
 const names = args.filter((a) => a in TOOLS);
@@ -35,24 +31,12 @@ function scrub(text: string): string {
     /* the corner's text in the screen line is a whisper's clock against
        the tool's waits: the steps that care read the corner themselves */
     .replace(/· corner \\"(?:[^"\\]|\\.)*\\"/g, "· corner [whatever stood]")
-    .replace(/file:\/\/\/[^"\\ ]*\/(dist|writer)\/index\.html/g, "file:///[app]/index.html")
+    .replace(/file:\/\/\/[^"\\ ]*\/dist\/index\.html/g, "file:///[app]/index.html")
     /* a logged Error's frames are the minified build's line and column,
        moved by any change elsewhere in the bundle */
     .replace(/^ +at .*\n/gm, "");
 }
 const env = { ...process.env, NODE_OPTIONS: "" };
-if (args.includes("--writer")) {
-  spawnSync("pkill", ["-f", "gesta-helium-writer-profile"]);
-  const prof = resolve(tmpdir(), "gesta-helium-writer-profile");
-  for (let i = 0; i < 20; i++) { try { rmSync(prof, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
-  const r = spawnSync("node", [WRITER], { env, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
-  /* a child killed by a signal has a null status: read as clean, its
-     truncated run became the reference (the 2026-09-12 review) */
-  const bad = r.status || r.signal;
-  writeFileSync(resolve("tools/expected/corner.writer.txt"), scrub((r.stdout || "") + (bad ? "\nEXIT " + bad + "\n" + (r.stderr || "") : "")));
-  console.log("writer: " + (r.stdout || "").split("\n").length + " lines to tools/expected/corner.writer.txt" + (bad ? " — FAILED, " + bad : ""));
-  process.exit(bad ? (r.status || 1) : 0);
-}
 /* WHAT A RUN READS, fingerprinted after the build: the pages (every line of
    the app, its fixtures and its libraries), the drivers, steps and
    adapters, the source files an adapter or the reader's bundle imports,
