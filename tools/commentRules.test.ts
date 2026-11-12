@@ -43,8 +43,11 @@ describe("the scanner", () => {
 
 describe("the pins", () => {
   const sources: PinSources = {
-    steps: 'const sections = [\n  ["walk", async () => {\n  await log("⌃⌘. from 3pr1 over an index", 1);\n  }],\n  ["source view", async () => {\n  await log("⌃⌘W rendered", 2);\n  await log("never run", 3);\n  }],\n];\n',
-    corner: '⌃⌘. from 3pr1 over an index: {"entry":"x"}\n⌃⌘W rendered: {}\nconsole: error: cannot render page/Gridded a grid\nwarning: a later line\n',
+    steps: [
+      'import { section, log } from "./kit.ts";\n\nsection("walk", async () => {\n  await log("⌃⌘. from 3pr1 over an index", 1);\n  await walkOn();\n});\nasync function walkOn() {\n  await log("⌃⌘, back", 4);\n}\n',
+      'import { section, log } from "./kit.ts";\nconst ahead = "⌃⌘W rendered";\n\nsection("source view", async () => {\n  await log("⌃⌘W rendered", 2);\n  await log("never run", 3);\n});\n',
+    ],
+    corner: '⌃⌘. from 3pr1 over an index: {"entry":"x"}\n⌃⌘, back: {}\n⌃⌘W rendered: {}\nconsole: error: cannot render page/Gridded a grid\nwarning: a later line\n',
     bridge: 'say("an unknown book is refused", o);\n',
     bridgeRun: 'an unknown book is refused         {"entry":"2026-09-12"}\n',
     readerRun: 'Escape after the hit: {"hit":""}\nconsole: \n',
@@ -58,7 +61,11 @@ describe("the pins", () => {
   test("a Helium pin names its section and the whole reading label", () => {
     expect(why("(pin: walk › ⌃⌘. from 3pr1)")[0]).toBe('no reading "⌃⌘. from 3pr1" in the section "walk"');
     expect(why("(pin: source view › ⌃⌘. from 3pr1 over an index)")[0]).toBe('no reading "⌃⌘. from 3pr1 over an index" in the section "source view"');
-    expect(why("(pin: stanza › ⌃⌘W rendered)")[0]).toBe('no section "stanza" in tools/helium-steps.ts');
+    expect(why("(pin: stanza › ⌃⌘W rendered)")[0]).toBe('no section "stanza" in tools/steps/');
+  });
+  test("a section's readings run to the next section in its file, a helper written after it among them; never into the next file", () => {
+    expect(why("(pin: walk › ⌃⌘, back)")).toEqual([null]);
+    expect(why("(pin: walk › ⌃⌘W rendered)")[0]).toBe('no reading "⌃⌘W rendered" in the section "walk"');
   });
   test("a reading in the steps but not in the approved run does not resolve", () => {
     expect(why("(pin: source view › never run)")[0]).toBe('no reading "never run" in tools/expected/corner.approved.txt');

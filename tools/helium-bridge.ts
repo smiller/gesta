@@ -8,18 +8,38 @@ import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { TODAY } from "./helium-steps.ts";
 import type { Page } from "./heliumPage.ts";
+import { inPage } from "./adapters/inPage.ts";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: see adapters/successor.ts */
 const PAGE = "file://" + resolve("dist/index.html");
 rmSync(PROFILE, { recursive: true, force: true });
 mkdirSync(PROFILE, { recursive: true });
-const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(() => ({
-  entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
-  crumb: document.querySelector(".datelabel")?.textContent?.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent,
-  status: document.querySelector(".saved.show")?.textContent || "",
-  first: document.querySelector("#editor .ProseMirror")?.firstElementChild?.textContent?.slice(0, 60),
-  images: [...document.querySelectorAll<HTMLElement>("#editor img")].map((i) => (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "")),
-}));
+/* what a launch shows, read in the page: its parts top-level functions run there as one script */
+function imageLine(i: HTMLElement): string {
+  return (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "");
+}
+function crumbShown(): string | undefined {
+  return document.querySelector(".datelabel")?.textContent?.replace(/\s+/g, " ").trim();
+}
+function firstLineShown(): string | undefined {
+  return document.querySelector("#editor .ProseMirror")?.firstElementChild?.textContent?.slice(0, 60);
+}
+function textsShown(): Record<string, unknown> {
+  return {
+    crumb: crumbShown(), title: document.querySelector(".page-title")?.textContent,
+    status: document.querySelector(".saved.show")?.textContent || "",
+    first: firstLineShown(),
+  };
+}
+function launchShows(): Record<string, unknown> {
+  const { crumb, title, status, first } = textsShown() as Record<string, string>;
+  return {
+    entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
+    crumb, title, status, first,
+    images: [...document.querySelectorAll<HTMLElement>("#editor img")].map(imageLine),
+  };
+}
+const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine));
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
   await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed, since 2026-09-22 */

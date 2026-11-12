@@ -566,3 +566,80 @@ adapters/writer.ts, corner.writer.txt and corner.differences.txt removed (git
 history keeps them), `test:helium` the approve run alone, the approve script's
 `--writer` mode and the old app's seam types gone. corpus.ts's `--writer`
 parser comparison, off by default, stays.
+
+### Batch 3b — the steps cut into modules
+
+helium-steps.ts 3.48 → 10, 2,941 lines → 47, helium-bridge.ts 9.68 → 10; the
+sixty sections in twelve modules under tools/steps/, imported in their order,
+with the kit (`steps/kit.ts`: the run's page, context and adapter as live
+bindings set once by `bind`, the shared helpers, the dialogs, `section()` that
+registers a section) and the timing harness (`steps/timing.ts`); every new
+file at 10 (MEASURED, the gate: 21 files, none below HEAD).
+
+DONE IN STEPS, each one checked before the next. First the sections MOVED
+whole, their text as it stood but for an assignment to the dialogs' answer
+made `setAnswer()`: the corner, bridge and reader runs as approved over the
+moved tree (MEASURED). Then the big sections CUT by a parser (acorn over
+node's `stripTypeScriptTypes`, which keeps every position): a section's or a
+step's top-level statements made named steps where no local declared above is
+read below, never in a function that returns early; a helper arrow or a fixed
+value that reads none of its function's locals moved to module scope first,
+an identical one shared, a different one with the name numbered; a value read
+from the first statement to the last passed as a parameter (Horace's stored
+text). The steps are written between their section's header and the next, so
+the comment checker's pins still find each reading in its section's span. A
+reading run in the page whose own complexity was the finding made top-level
+functions, scored apart, composed into the one script an evaluate runs
+(`inPage`, `inPageWith` for one argument): the cursor, the copied link, the
+page labels, the bridge's launch reading.
+
+THE PIN RESOLVER followed, its test first: a section is `section("name", …)`
+in any file under tools/steps/, its span to the next header in its file and
+never into the next file; all 706 pins resolve (MEASURED).
+
+One slip, caught before any run: renaming a work's key in the scripture step
+by a pattern rewrote "work" inside five labels and a seed's text. The guard
+written for it reads every step label (each `log` and `section` name) as a
+multiset and every string literal as a set against HEAD's steps: 438 labels,
+the same, the only strings gained or lost the moved files' paths (MEASURED).
+
+A second slip, caught by the corner run (MEASURED, nine readings of two
+sections differing, `label` and `band` read as `selected` and `address`): two
+sections each had their own `seen`, and the hoist numbered the later ones
+`seen2` and `seen3` in the sections' bodies but not inside the helpers
+hoisted with them, and shared one `ask`, identical in text in both sections,
+though each section's `seen` meant another reading. Each section given its
+own `ask` again. A helper is safe to share only where every name it reads
+means the same thing in both places; numbered names occurred in lines.ts
+alone (READ, the tool's own report), so no other module is touched by it.
+
+A third difference, not a slip: the first full run after that fix read five
+asks in the lettered-line section with the corner saying "1611 entries
+stored", where the approved copy reads null. The section's own text and order
+were HEAD's (READ, its statements compared); played alone, and after the
+section before it, it read null from HEAD and from this tree, twice each; the
+next full run read as approved (MEASURED). A race: in a full run the store
+holds 1,611 entries, the reload's warm is slow, and the asks read the corner
+near the whisper's fade. NEXT, asked: the steps made independent of their
+order ("we have tests which are dependent on the order that they're run in,
+and that's very bad"), after the one-off scripts are split from tools/; this
+reading the first case.
+
+The nets: both tsc programs, the suite (1,446, the resolver's new case among
+them), the pins, the labels' guard, and the corner, bridge and reader runs
+played over the cut tree against their approved copies, twice for the corner
+run, its second play as approved (MEASURED).
+
+### Next, in order (asked, 2026-11-12)
+
+1. The one-off scripts split from the tools used every day: "everything in
+   src/ and tools/ is used every day, and the stuff in one-offs/ ... is, well,
+   one-offs" — after the review of the tools/ climb.
+2. The steps made independent of their order: "we have tests which are
+   dependent on the order that they're run in, and that's very bad"; the
+   lettered-line asks reading the reload's whisper in a full run the first
+   case.
+3. The string rules revisited: "We're ignoring 'Primitive Obsession' and
+   'String Heavy Function Arguments' across the board. We probably want to
+   revisit that." Decision 6's measurement stands as the starting point:
+   splitting a function, the cure for every other smell, set both off.

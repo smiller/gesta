@@ -64,7 +64,7 @@ if (!commit && !sweep) {
     if (m) tests.set(m[1], [...(tests.get(m[1]) ?? []), src]);
   }
   const sources: PinSources = {
-    steps: read("tools/helium-steps.ts"),
+    steps: readdirSync(join(root, "tools/steps")).filter((f) => f.endsWith(".ts")).map((f) => read("tools/steps/" + f)),
     corner: read("tools/expected/corner.approved.txt"),
     bridge: read("tools/helium-bridge.ts"),
     bridgeRun: read("tools/expected/bridge.approved.txt"),

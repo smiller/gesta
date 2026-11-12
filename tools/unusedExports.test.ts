@@ -25,8 +25,8 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-// A driver hands its adapter to the steps as a parameter named A.
-const HANDED_TO_THE_STEPS = 'import * as A from "./adapters/successor.ts";\n';
+// The steps reach the adapter through the kit's binding named A.
+const HANDED_TO_THE_STEPS = 'import * as A from "../adapters/successor.ts";\n';
 const ALLOWED: Record<string, string> = {
   "src/editor/folds.ts toggleFold": "the tests' way in by a section's key to the toggle a click makes by its position",
   "src/store/indexStore.ts memIndexKeeper": "the tests' memory fake",
@@ -38,8 +38,7 @@ const ALLOWED: Record<string, string> = {
 test("nothing in src/ or tools/ is exported that nothing uses", () => {
   const paths = [...walk("src"), ...walk("tools")].filter((f) => /\.(ts|mjs|svelte)$/.test(f));
   const files = Object.fromEntries(paths.map((p) => [p, readFileSync(p, "utf8")]));
-  const steps = "tools/helium-steps.ts";
-  files[steps] = HANDED_TO_THE_STEPS + files[steps];
+  for (const steps of paths.filter((p) => p.startsWith("tools/steps/"))) files[steps] = HANDED_TO_THE_STEPS + files[steps];
   const found = unusedExports(files).map((u) => u.file + " " + u.name);
   expect(found.filter((f) => !ALLOWED[f])).toEqual([]);
   expect(Object.keys(ALLOWED).filter((f) => !found.includes(f))).toEqual([]);

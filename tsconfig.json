@@ -30,6 +30,7 @@
     "tools/helium-*.ts",
     "tools/adapters",
     "tools/heliumPage.ts",
-    "tools/heliumDom.d.ts"
+    "tools/heliumDom.d.ts",
+    "tools/steps"
   ]
 }

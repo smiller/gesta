@@ -3,6 +3,12 @@
   "compilerOptions": {
     "strictNullChecks": false
   },
-  "include": ["tools/helium-*.ts", "tools/adapters/*.ts", "tools/heliumPage.ts", "tools/heliumDom.d.ts"],
+  "include": [
+    "tools/helium-*.ts",
+    "tools/adapters/*.ts",
+    "tools/heliumPage.ts",
+    "tools/heliumDom.d.ts",
+    "tools/steps/*.ts"
+  ],
   "exclude": []
 }

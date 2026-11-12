@@ -198,7 +198,7 @@ export function commentBlocks(file: string, src: string): Block[] {
 /* ---- the pins ---- */
 
 export interface PinSources {
-  steps: string;
+  steps: string[];
   corner: string;
   bridge: string;
   bridgeRun: string;
@@ -244,15 +244,18 @@ const testPin: Resolver = ({ head, label }, src) => {
   if (!files) return "no " + head + ".ts under src/";
   return files.some((t) => testTitles(t).some((x) => x.startsWith(label))) ? null : "no test in " + head + ".ts titled \"" + label + "…\"";
 };
-function sectionOf(steps: string, head: string): string | null {
-  const starts = [...steps.matchAll(/^\s*\[(["'])(.*?)\1, async \(\) => \{/gm)];
+/* a section's text, from its header to the next in its file, else to the file's end */
+function sectionIn(file: string, head: string): string | null {
+  const starts = [...file.matchAll(/^section\((["'])(.*?)\1, /gm)];
   const at = starts.findIndex((m) => m[2] === head);
   if (at < 0) return null;
-  return steps.slice(starts[at].index, at + 1 < starts.length ? starts[at + 1].index : undefined);
+  return file.slice(starts[at].index, at + 1 < starts.length ? starts[at + 1].index : undefined);
 }
+const sectionOf = (steps: string[], head: string): string | null =>
+  steps.map((f) => sectionIn(f, head)).find((span) => span !== null) ?? null;
 const stepPin: Resolver = ({ head, label }, src) => {
   const span = sectionOf(src.steps, head);
-  if (span === null) return "no section \"" + head + "\" in tools/helium-steps.ts";
+  if (span === null) return "no section \"" + head + "\" in tools/steps/";
   if (!literal(span, label)) return "no reading \"" + label + "\" in the section \"" + head + "\"";
   return src.corner.split("\n").some((l) => l.startsWith(label + ": ")) ? null : "no reading \"" + label + "\" in tools/expected/corner.approved.txt";
 };

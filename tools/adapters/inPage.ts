@@ -2,8 +2,10 @@
    part's source declared, then the first called. A function handed to an
    evaluate travels as its own source alone, so a part it calls must travel
    with it. */
-export const inPage = (main: Function, ...parts: Function[]): string =>
-  "(() => {\n" + parts.map((f) => f.toString()).join("\n") + "\nreturn (" + main.toString() + ")();\n})()";
+export const inPage = (main: Function, ...parts: Function[]): string => inPageWith(undefined, main, ...parts);
+/* the same, the first called with `arg`, which travels as JSON */
+export const inPageWith = (arg: unknown, main: Function, ...parts: Function[]): string =>
+  "(() => {\n" + parts.map((f) => f.toString()).join("\n") + "\nreturn (" + main.toString() + ")(" + (arg === undefined ? "" : JSON.stringify(arg)) + ");\n})()";
 
 export function textOf(s: string): string {
   return document.querySelector(s)?.textContent || "";
