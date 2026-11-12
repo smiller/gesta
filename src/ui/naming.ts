@@ -27,20 +27,24 @@ export function typedName(raw: string | null | undefined): Typed {
    page or book there; anything else is a name (pin: naming.test › a typed
    address names a page or book) */
 export const REFUSE_EMPTY_PART = "an address can’t have an empty part";
-export function typedAddress(raw: string | null | undefined): { date: string; tag: string } | { refuse: string } | null {
-  const s = (raw || "").trim();
-  const path = s.replace(/^#/, "").split("?")[0];
-  if (NS_KEYS.some((n) => path.startsWith(n + "/")) && path.split("/").some((p) => !p)) return { refuse: REFUSE_EMPTY_PART };
-  if (s.startsWith("#")) {
-    if (!namesEntry(s.slice(1))) return null;
-    const p = hashParts(s.slice(1));
-    return nsOf(p.date) && p.tag ? { date: p.date, tag: p.tag } : null;
-  }
-  /* typed as a key, not an address: nothing is decoded, so a `%` stays itself */
+type TypedPlace = { date: string; tag: string } | { refuse: string } | null;
+const emptyPart = (path: string): boolean => NS_KEYS.some((n) => path.startsWith(n + "/")) && path.split("/").some((p) => !p);
+function addressed(s: string): TypedPlace {
+  if (!namesEntry(s.slice(1))) return null;
+  const p = hashParts(s.slice(1));
+  return nsOf(p.date) && p.tag ? { date: p.date, tag: p.tag } : null;
+}
+/* typed as a key, not an address: nothing is decoded, so a `%` stays itself */
+function keyed(s: string): TypedPlace {
   const ns = NS_KEYS.find((n) => s.startsWith(n + "/"));
   if (!ns) return null;
   const parts = s.slice(ns.length + 1).split("/").map(pageName);
   return parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : { refuse: REFUSE_EMPTY };
+}
+export function typedAddress(raw: string | null | undefined): TypedPlace {
+  const s = (raw || "").trim();
+  if (emptyPart(s.replace(/^#/, "").split("?")[0])) return { refuse: REFUSE_EMPTY_PART };
+  return s.startsWith("#") ? addressed(s) : keyed(s);
 }
 
 const words = (s: string): string => s.trim().replace(/\s+/g, " ");

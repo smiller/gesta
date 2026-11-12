@@ -104,6 +104,11 @@ const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : isNaN(keptInterval) || keptInterval < 0 ? 5 : keptInterval);
 type Ns = "page" | "bookshelf";
 type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
+type Walk = "prev" | "next";
+function keepPicked(file: File): void {
+  const p = notices.progress("keeping the backup…");
+  keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn't keep the backup", err), errText(err)); });
+}
 const acts = {
   today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
   backupsPanel: () => {},
@@ -150,10 +155,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   /* a new pick is kept, then read as at any launch */
-  reader: READER ? { onOpen: (file: File) => {
-    const p = notices.progress("keeping the backup…");
-    keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn't keep the backup", err), errText(err)); });
-  }, onWalk: (dir: "prev" | "next") => acts.walk(dir) } : null,
+  reader: READER ? { onOpen: keepPicked, onWalk: (dir: Walk) => acts.walk(dir) } : null,
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
@@ -185,15 +187,18 @@ document.addEventListener("click", (e) => {
    (pin: where the keys go › ⌃⌘. held from 3pr1)
    (pin: where the keys go › Tab held from the bookshelf button) */
 const pressedIn = new Map<string, Element | null>();
+const bothMods = (e: KeyboardEvent): boolean => e.ctrlKey && e.metaKey;
+const plainChord = (e: KeyboardEvent): boolean => bothMods(e) && !e.shiftKey && !e.altKey;
+const heldElsewhere = (e: KeyboardEvent): boolean => pressedIn.has(e.code) && pressedIn.get(e.code) !== document.activeElement;
 document.addEventListener("keydown", (e) => {
   if (!e.repeat) { pressedIn.set(e.code, document.activeElement); return; }
-  if ((e.ctrlKey && e.metaKey) || (pressedIn.has(e.code) && pressedIn.get(e.code) !== document.activeElement)) { e.preventDefault(); e.stopImmediatePropagation(); }
+  if (bothMods(e) || heldElsewhere(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
 }, true);
 document.addEventListener("keyup", (e) => { pressedIn.delete(e.code); });
 window.addEventListener("blur", () => { pressedIn.clear(); });
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
-  if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
+  if (!plainChord(e)) return;
   /* a letter is matched in either case: Caps Lock leaves the chord a
      chord (pin: notices and surfaces as the old app has them › ⌃⌘K with Caps Lock) */
   const k = e.key.toLowerCase();
@@ -295,7 +300,7 @@ if (fixture && fixtures[fixture]) {
   let dropStaleCopy = (): void => {};
   const refreshMasthead = (): void => {
     const c = session.current;
-    screen.masthead = mastheadModel(c.date, c.tag, Object.keys(layer.cache), journal, todayKey());
+    screen.masthead = mastheadModel(c.date, c.tag, { keys: Object.keys(layer.cache), journal, today: todayKey() });
   };
   const session = startSession({
     mount: mountEl, layer, images, interval: screen.interval, say,
@@ -375,23 +380,42 @@ if (fixture && fixtures[fixture]) {
   const waiting = new Set<() => void>();
   let building = false;
   const answer = (): void => { const w = [...waiting]; waiting.clear(); for (const f of w) f(); };
+  const indexFailed = (err: unknown): void => {
+    building = false;
+    waiting.clear();
+    console.error("the search index could not be built", err);
+    indexing?.fail(failMsg("couldn't build the search index", err), errText(err));
+    indexing = null;
+  };
+  /* a throw ends this build and says so; the next search starts another */
+  const indexStep = (): { done: number; total: number } | null => {
+    try { return index.step(performance.now() + (waiting.size ? WAITED_MS : CHUNK_MS)); }
+    catch (err) { indexFailed(err); return null; }
+  };
+  const indexBuilt = (total: number): void => {
+    building = false;
+    indexing?.ok("indexed " + total + " entries", 1400);
+    indexing = null;
+    keepIndex();
+    answer();
+  };
+  const nextIndexRun = (run: () => void): void => {
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
+    if (waiting.size) setTimeout(run, 0);   /* wanted now: keep going, yielding only to paint */
+    else if (idle) idle(run);
+    else setTimeout(run, 50);
+  };
   const buildIndex = (then?: () => void): void => {
     if (then) waiting.add(then);
     if (index.complete) { answer(); return; }
     if (building) return;
     building = true;
     const run = (): void => {
-      /* a throw ends this build and says so; the next search starts another */
-      let step: { done: number; total: number };
-      try { step = index.step(performance.now() + (waiting.size ? WAITED_MS : CHUNK_MS)); }
-      catch (err) { building = false; waiting.clear(); console.error("the search index could not be built", err); indexing?.fail(failMsg("couldn't build the search index", err), errText(err)); indexing = null; return; }
-      const { done, total } = step;
-      if (indexing) indexing.step(done, total);
-      if (index.complete) { building = false; indexing?.ok("indexed " + total + " entries", 1400); indexing = null; keepIndex(); answer(); return; }
-      const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
-      if (waiting.size) setTimeout(run, 0);   /* wanted now: keep going, yielding only to paint */
-      else if (idle) idle(run);
-      else setTimeout(run, 50);
+      const step = indexStep();
+      if (!step) return;
+      indexing?.step(step.done, step.total);
+      if (index.complete) indexBuilt(step.total);
+      else nextIndexRun(run);
     };
     knownRead ??= keeper.load().then((k) => index.know(k)).catch((err: unknown) => console.error("the kept search index could not be read", err));
     knownRead.then(run);
@@ -435,7 +459,7 @@ if (fixture && fixtures[fixture]) {
     overlay.open("search");
     session.flushSave();
     const c = session.current;
-    sr.options = scopeOptions(c.date, c.tag, Object.keys(layer.cache), journal, layer.cache[entryKey(NS_BOOK.key, SHELVES)] || "");
+    sr.options = scopeOptions(c.date, c.tag, { keys: Object.keys(layer.cache), journal: journal, shelvesMd: layer.cache[entryKey(NS_BOOK.key, SHELVES)] || "" });
     const pre = defaultScope(c.date, c.tag);
     sr.scopeAt = Math.max(0, sr.options.findIndex((o) => sameScope(o.scope, pre)));
     setTimeout(() => masthead.focusSearch(), 0);
@@ -480,7 +504,7 @@ if (fixture && fixtures[fixture]) {
   acts.goto.pick = (level, value, ns) => {
     const c = session.current;
     gotoPicked = true;
-    const out = gotoPick(gotoWorld(), c.date, c.tag, screen.goto.levels, level, value, ns);
+    const out = gotoPick(gotoWorld(), { date: c.date, tag: c.tag }, screen.goto.levels, { level: level, value: value, ns: ns });
     if (!out) return;
     if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
     screen.goto.levels = out.levels;
@@ -505,8 +529,9 @@ if (fixture && fixtures[fixture]) {
     sc.empty = sc.rows.length ? "" : "No matches.";
     sc.active = 0;
   };
+  const editorIdle = (): boolean => !sc.editing && !sc.dirty;
   const showEditor = (on: boolean): void => {
-    if (on && !sc.editing && !sc.dirty) sc.draft = readRaw(SHORTCUTS_KEY) || "";
+    if (on && editorIdle()) sc.draft = readRaw(SHORTCUTS_KEY) || "";
     sc.editing = on;
   };
   /* WHERE THE KEYS WERE when a card opened or an act began: the window's
@@ -594,25 +619,38 @@ if (fixture && fixtures[fixture]) {
       if (next && marks.write(next)) renderBookmarks();
     });
   };
-  acts.bookmarks.key = (e) => {
-    if (e.key === "Escape") {
-      if (bm.editing) { e.stopPropagation(); bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
-      if (bm.buf) { e.stopPropagation(); bm.buf = ""; return; }
-      closePanel(); session.focusText(); return;
-    }
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
-    if (bm.editing) return;   /* the editor keeps every other key; its Enter is its own */
-    if (e.key === "Enter" && bm.buf) { e.preventDefault(); resolved(resolveAlias(marks.list(), bm.buf)); return; }
-    if (!bm.buf && (e.key === "a" || e.key === "A")) { e.preventDefault(); addOpenBookmark(); return; }
-    if (!bm.buf && e.key >= "1" && e.key <= "9" && e.key.length === 1) {
-      e.preventDefault();
-      const b = numberedBookmarks(marks.list())[+e.key - 1];
-      if (!b) say("no bookmark " + e.key, 2000); else jumpBookmark(b);
-      return;
-    }
+  const bookmarkEscape = (e: KeyboardEvent): void => {
+    if (bm.editing) { e.stopPropagation(); bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
+    if (bm.buf) { e.stopPropagation(); bm.buf = ""; return; }
+    closePanel();
+    session.focusText();
+  };
+  const modded = (e: KeyboardEvent): boolean => e.metaKey || e.ctrlKey || e.altKey;
+  const isDigit = (k: string): boolean => k.length === 1 && k >= "1" && k <= "9";
+  const jumpNumbered = (k: string): void => {
+    const b = numberedBookmarks(marks.list())[+k - 1];
+    if (!b) say("no bookmark " + k, 2000);
+    else jumpBookmark(b);
+  };
+  const firstKey = (e: KeyboardEvent): boolean => {
+    if (e.key.toLowerCase() === "a") { e.preventDefault(); addOpenBookmark(); return true; }
+    if (!isDigit(e.key)) return false;
+    e.preventDefault();
+    jumpNumbered(e.key);
+    return true;
+  };
+  const triggerKey = (e: KeyboardEvent): void => {
     const ch = e.key.length === 1 ? e.key.toLowerCase() : "";
     const r = ch ? typeAlias(marks.list(), bm.buf, ch) : null;
     if (r) { e.preventDefault(); resolved(r); }
+  };
+  acts.bookmarks.key = (e) => {
+    if (e.key === "Escape") { bookmarkEscape(e); return; }
+    if (modded(e)) return;
+    if (bm.editing) return;   /* the editor keeps every other key; its Enter is its own */
+    if (e.key === "Enter" && bm.buf) { e.preventDefault(); resolved(resolveAlias(marks.list(), bm.buf)); return; }
+    if (!bm.buf && firstKey(e)) return;
+    triggerKey(e);
   };
   acts.bookmarks.draft = (v) => { bm.draft = v; };
   acts.bookmarks.commit = (typed) => {
@@ -628,36 +666,44 @@ if (fixture && fixtures[fixture]) {
     bm.editing = ""; bm.draft = "";
     renderBookmarks();
   };
+  const deleteBookmark = (i: number): void => {
+    const next = marks.list().slice();
+    next.splice(i, 1);
+    if (marks.write(next)) renderBookmarks();
+  };
+  const editBookmarkKey = (b: Bookmark): void => {
+    bm.buf = ""; bm.editing = b.key; bm.draft = b.alias; bm.opening = 1;
+    renderBookmarks();
+  };
+  const nowhereToType = (view: typeof session.view): boolean => !view && !session.mdView;
+  /* the link after the caret the card opened on; every way it cannot
+     land says why, nothing is appended at the end, and the keys go back
+     to the text either way (pin: editing as the old app does › a
+     bookmark's link pressed in inline code); in the markdown view it is
+     typed there as markdown (pin: notices and surfaces as the old app
+     has them › a bookmark's link in the markdown view) */
+  const bookmarkLink = (key: string): void => {
+    if (warmBlock()) return;
+    closePanel();
+    session.focusText();
+    if (key === hereKey()) { say(alreadyOn(key, journal), 2000); return; }
+    const view = session.view;
+    if (!cardCaret || nowhereToType(view)) { say("place your cursor in the entry", 2000); return; }
+    const why = view && linkRefusal(view.state);
+    if (why) { say(why, 2000); return; }
+    const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
+    if (view) insertLinkAfter(view, href, label);
+    else session.insertText(linkMarkdown(href, label), true);
+    session.saveNow();
+  };
   acts.bookmarks.act = (key, what) => {
     const i = bookmarkIndex(marks.list(), key);
     if (i === -1) return;
     const b = marks.list()[i];
-    if (what === "del") {
-      const next = marks.list().slice(); next.splice(i, 1);
-      if (!marks.write(next)) return;
-      renderBookmarks();
-    } else if (what === "key") {
-      bm.buf = ""; bm.editing = key; bm.draft = b.alias; bm.opening = 1;
-      renderBookmarks();
-    } else if (what === "link") {
-      /* the link after the caret the card opened on; every way it cannot
-         land says why, nothing is appended at the end, and the keys go back
-         to the text either way (pin: editing as the old app does › a
-         bookmark's link pressed in inline code); in the markdown view it is
-         typed there as markdown (pin: notices and surfaces as the old app
-         has them › a bookmark's link in the markdown view) */
-      if (warmBlock()) return;
-      closePanel();
-      session.focusText();
-      if (key === hereKey()) { say(alreadyOn(key, journal), 2000); return; }
-      const view = session.view;
-      if (!cardCaret || (!view && !session.mdView)) { say("place your cursor in the entry", 2000); return; }
-      const why = view && linkRefusal(view.state);
-      if (why) { say(why, 2000); return; }
-      const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
-      if (view) insertLinkAfter(view, href, label); else session.insertText(linkMarkdown(href, label), true);
-      session.saveNow();
-    } else jumpBookmark(b);
+    if (what === "del") deleteBookmark(i);
+    else if (what === "key") editBookmarkKey(b);
+    else if (what === "link") bookmarkLink(key);
+    else jumpBookmark(b);
   };
   /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
      focus and Enter cycles through the blocks that hold that line. The
@@ -686,7 +732,8 @@ if (fixture && fixtures[fixture]) {
      followed) */
   function centreSelection(): void {
     const view = session.view;
-    if (!view || session.mdView || view.state.selection.empty) return;
+    if (!view || session.mdView) return;
+    if (view.state.selection.empty) return;
     const { from, to } = view.state.selection;
     const a = view.coordsAtPos(from), b = view.coordsAtPos(to);
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
@@ -720,9 +767,10 @@ if (fixture && fixtures[fixture]) {
     lineAsked = n;
     landOn(hit.pos);
     const word = landingWord(hit, { hits, blocks }, n, noun);
-    if (word && (!quiet || hit.skipped)) say(word, 2500);
+    if (word && spoken(quiet, hit.skipped)) say(word, 2500);
     return true;
   };
+  const spoken = (quiet: boolean, skipped?: boolean): boolean => !quiet || !!skipped;
   /* what the Line box's words name on this page, the box and a link to a line
      alike (pin: a link to a line › a link to a stanza, and line) */
   const askLine = (v: string, quiet: boolean): boolean => {
@@ -812,15 +860,21 @@ if (fixture && fixtures[fixture]) {
     if (had && pos !== null) caretOn(view, pos);
     view.focus();
   };
+  const askedFor = (): string => (asksParagraphs() ? "a paragraph" : asksVerses() ? "a verse" : "a line or a page");
+  const noNumbers = (): string => (asksParagraphs() ? "no paragraph numbers here" : asksVerses() ? "no verse numbers here" : "no line or page numbers here");
+  const freshAsk = (): void => {
+    const c = session.current, askKey = entryKey(c.date, c.tag);
+    if (askKey === lastAskKey) return;
+    lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0;
+  };
   acts.lineBar.toggle = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { say("Switch to the rendered view to go to " + (asksParagraphs() ? "a paragraph" : asksVerses() ? "a verse" : "a line or a page"), 3000); return; }
+    if (session.mdView) { say("Switch to the rendered view to go to " + askedFor(), 3000); return; }
     const view = session.view;
     if (!view) return;
     const kind = askKind(view.state.doc);
-    if (kind === "none") { say(asksParagraphs() ? "no paragraph numbers here" : asksVerses() ? "no verse numbers here" : "no line or page numbers here", 2000); return; }
-    const c = session.current, askKey = entryKey(c.date, c.tag);
-    if (askKey !== lastAskKey) { lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0; }
+    if (kind === "none") { say(noNumbers(), 2000); return; }
+    freshAsk();
     overlay.open("lineBar");
     lb.kind = kind;
     lb.lineLabel = lineLabel();
@@ -843,7 +897,8 @@ if (fixture && fixtures[fixture]) {
   };
   acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   acts.lineBar.enter = (kind, v, repeat) => {
-    if (repeat || session.mdView || !session.view) return;
+    if (repeat) return;
+    if (session.mdView || !session.view) return;
     if (kind === "line") { askLine(v, false); return; }
     const why = askCheck(v, kind, lineLabel().toLowerCase());
     if (why) { say(why, 2000); return; }
@@ -907,12 +962,13 @@ if (fixture && fixtures[fixture]) {
   acts.replace.dismiss = () => { dismissReplace(); fromRendered = false; };
   /* a rebuilt view's caret sits at its end: put back at the match the bar
      stood on (pin: replace › the entry saved in another window, the bar open) */
+  const freeOrInBar = (a: Element | null): boolean => !a || a === document.body || !!a.closest(".replacebar");
   acts.replace.check = () => {
     if (!rb.open) return;
     const was = at >= 0 ? hits[at] : 0;
     if (port()) return;
     const a = document.activeElement;
-    if (session.mdView && (!a || a === document.body || a.closest(".replacebar"))) session.replacer()?.place(was);
+    if (session.mdView && freeOrInBar(a)) session.replacer()?.place(was);
   };
   /* every close switches back to the view the bar was opened from, but a
      navigation or a rebuilt view, which only closes it
@@ -923,34 +979,36 @@ if (fixture && fixtures[fixture]) {
     if (!port()) return;
     const back = fromRendered;
     acts.replace.dismiss();
-    const inBar = !!document.activeElement?.closest(".replacebar");
+    const wanted = focus || !!document.activeElement?.closest(".replacebar");
     if (back) session.setView(false);
-    if (session.mdView && (focus || inBar)) session.replacer()?.focus();
+    if (session.mdView && wanted) session.replacer()?.focus();
   };
   acts.replace.close = () => closeBack(true);
   acts.replace.closeOver = () => closeBack(false);
+  const intoSource = (): "there" | "switched" | "refused" => {
+    if (session.mdView) return "there";
+    session.setView(true);
+    if (!session.mdView) return "refused";
+    say("Source view, to replace", 3000);
+    return "switched";
+  };
+  /* typing in the text recounts once a frame, a recount being the whole
+     text matched and laid out again */
+  const watchPort = (p: ReplacePort): (() => void) => p.watch(() => {
+    if (editing) return;
+    cancelAnimationFrame(counting);
+    counting = requestAnimationFrame(() => { const q = port(); if (q) recount(q); });
+  });
   acts.replace.open = () => {
     if (rb.open && port()) { masthead.focusReplace(); return; }
     overlay.open("replace");
-    let switched = false;
-    if (!session.mdView) {
-      session.setView(true);
-      if (!session.mdView) return;
-      switched = true;
-      say("Source view, to replace", 3000);
-    }
-    const p = session.replacer();
+    const how = intoSource();
+    const p = how === "refused" ? null : session.replacer();
     if (!p) return;
     rb.open = true;
     barPort = p;
-    fromRendered = switched;
-    /* typing in the text recounts once a frame, a recount being the whole
-       text matched and laid out again */
-    unwatch = p.watch(() => {
-      if (editing) return;
-      cancelAnimationFrame(counting);
-      counting = requestAnimationFrame(() => { const q = port(); if (q) recount(q); });
-    });
+    fromRendered = how === "switched";
+    unwatch = watchPort(p);
     seek(p, p.start(headFoot()));
     setTimeout(() => masthead.focusReplace(), 0);
   };
@@ -967,29 +1025,30 @@ if (fixture && fixtures[fixture]) {
     at = (at + (back ? hits.length - 1 : 1)) % hits.length;
     draw(p);
   };
-  const edit = (p: ReplacePort, from: number, to: number, text: string, caret: number): void => {
+  const edit = (p: ReplacePort, e: { from: number; to: number; text: string; caret: number }): void => {
     editing = true;
-    try { p.edit(from, to, text, caret); } finally { editing = false; }
+    try { p.edit(e.from, e.to, e.text, e.caret); } finally { editing = false; }
   };
+  const replaceable = (p: ReplacePort | null): p is ReplacePort => !!p && hits.length > 0 && !session.locked;
   acts.replace.one = () => {
     const p = port();
-    if (!p || !hits.length || session.locked) return;
+    if (!replaceable(p)) return;
     /* a keystroke not yet recounted moves the text under the offsets: the
        match sought again rather than written at the old place
        (pin: replace.test › whether the text still has the find) */
     if (at < 0 || !holds(p.text(), hits[at], rb.find)) { seek(p, at < 0 ? p.start(headFoot()) : hits[at]); return; }
     const r = replaceAt(p.text(), hits[at], rb.find, rb.with);
-    edit(p, hits[at], hits[at] + rb.find.length, rb.with, r.caret);
+    edit(p, { from: hits[at], to: hits[at] + rb.find.length, text: rb.with, caret: r.caret });
     seek(p, r.caret);
   };
   /* recounted after: a replacement holding the find leaves matches, and
      "none" disabled the buttons over them (pin: replace › Replace All, the replacement holding the find) */
   acts.replace.all = () => {
     const p = port();
-    if (!p || !hits.length || session.locked) return;
+    if (!replaceable(p)) return;
     const text = p.text();
     const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : p.start(headFoot()));
-    edit(p, 0, text.length, r.text, r.caret);
+    edit(p, { from: 0, to: text.length, text: r.text, caret: r.caret });
     recount(p);
   };
   /* THE COPY BUTTON: over whichever code block, quote, card, verse or
@@ -1018,21 +1077,31 @@ if (fixture && fixtures[fixture]) {
      not the window scrolled (pin: notices and surfaces as the old app has
      them › the copy button after a navigation) */
   dropStaleCopy = () => { if (copyTarget && !session.view?.dom.contains(copyTarget)) hideCopy(); };
+  const COPY_TITLES: [string, string][] = [["grid", "Copy this grid"], ["verse", "Copy this verse"], ["prose", "Copy this prose"], ["reference", "Copy this reference"], ["note", "Copy this note"]];
+  const copyTitle = (target: HTMLElement): string => {
+    if (target.tagName === "PRE") return "Copy this code block";
+    if (/^card-/.test(target.className || "")) return "Copy this card";
+    return COPY_TITLES.find(([cls]) => target.classList.contains(cls))?.[1] ?? "Copy this quote";
+  };
+  const codeCover = (target: HTMLElement): number => {
+    if (target.tagName !== "PRE" || !target.dataset.lang) return 0;
+    const cs = getComputedStyle(target, "::after");
+    return (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4;
+  };
+  const copyTop = (target: HTMLElement, rect: DOMRect): number =>
+    Math.max(target.classList.contains("grid") ? rect.top - 25 : rect.top + 5, (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 7);
+  const offScreen = (top: number, rect: DOMRect): boolean => top > rect.bottom - 27 || rect.top > window.innerHeight;
+  const newTarget = (target: HTMLElement): void => {
+    if (copyReset) clearTimeout(copyReset);
+    cp.label = idle(target);
+  };
   const showCopy = (target: HTMLElement): void => {
-    if (target !== copyTarget) { if (copyReset) clearTimeout(copyReset); cp.label = idle(target); }
+    if (target !== copyTarget) newTarget(target);
     copyTarget = target;
-    const rect = target.getBoundingClientRect();
-    const head = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 7;
-    const grid = target.classList.contains("grid");
-    const top = Math.max(grid ? rect.top - 25 : rect.top + 5, head);
-    if (top > rect.bottom - 27 || rect.top > window.innerHeight) { hideCopy(); return; }
-    let cover = 0;
-    const isPre = target.tagName === "PRE";
-    if (isPre && target.dataset.lang) { const cs = getComputedStyle(target, "::after"); cover = (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4; }
-    const cls = target.className || "";
-    cp.title = isPre ? "Copy this code block" : /^card-/.test(cls) ? "Copy this card" : target.classList.contains("grid") ? "Copy this grid" : target.classList.contains("verse") ? "Copy this verse"
-      : target.classList.contains("prose") ? "Copy this prose" : target.classList.contains("reference") ? "Copy this reference"
-      : target.classList.contains("note") ? "Copy this note" : "Copy this quote";
+    const rect = target.getBoundingClientRect(), top = copyTop(target, rect);
+    if (offScreen(top, rect)) { hideCopy(); return; }
+    const cover = codeCover(target);
+    cp.title = copyTitle(target);
     cp.minWidth = cover > 0 ? Math.ceil(cover) : 0;
     cp.top = top;
     cp.right = document.documentElement.clientWidth - rect.right + 8;
@@ -1047,24 +1116,29 @@ if (fixture && fixtures[fixture]) {
      an entry with one grid: 0.012 ms per move over a clean tree, 0.028 ms
      with the tree dirtied before each. */
   const GRID_BAND = { above: 26, wide: 140 };
+  const inBand = (x: number, y: number, r: DOMRect): boolean =>
+    x >= r.right - GRID_BAND.wide && x <= r.right + 8 && y >= r.top - GRID_BAND.above && y <= r.top + 2;
   const bandGrid = (x: number, y: number): HTMLElement | null => {
     const grids = session.view?.dom.getElementsByClassName("grid");
     if (!grids?.length) return null;
     for (const g of Array.from(grids) as HTMLElement[]) {
       const r = g.getBoundingClientRect();
-      if (x >= r.right - GRID_BAND.wide && x <= r.right + 8 && y >= r.top - GRID_BAND.above && y <= r.top + 2) return g;
+      if (inBand(x, y, r)) return g;
     }
     return null;
   };
+  const quoteInQuote = (el: HTMLElement | null): el is HTMLElement => !!el?.parentElement && el.tagName === "BLOCKQUOTE" && el.parentElement.tagName === "BLOCKQUOTE";
+  const shownBlock = (el: HTMLElement | null): el is HTMLElement => !!el && !!session.view?.dom.contains(el) && !session.mdView;
   const blockUnder = (t: Element): HTMLElement | null => {
     let target = t.closest(BLOCKS) as HTMLElement | null;
-    while (target && target.parentElement && target.tagName === "BLOCKQUOTE" && target.parentElement.tagName === "BLOCKQUOTE") target = target.parentElement;
-    return target && session.view?.dom.contains(target) && !session.mdView ? target : null;
+    while (quoteInQuote(target)) target = target.parentElement;
+    return shownBlock(target) ? target : null;
   };
   const point = (e: MouseEvent, t: Element): void => {
     const target = (session.view && !session.mdView && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
     if (target) { if (target !== copyTarget) showCopy(target); } else hideCopy();
   };
+  const gridsShown = (): boolean => !!session.view && !session.mdView && session.view.dom.getElementsByClassName("grid").length > 0;
   document.addEventListener("mouseover", (e) => {
     const t = e.target as Element | null;
     if (!t?.closest || t.closest(".copybtn")) return;
@@ -1073,7 +1147,7 @@ if (fixture && fixtures[fixture]) {
   document.addEventListener("mousemove", (e) => {
     const t = e.target as Element | null;
     if (!t?.closest || t.closest(".copybtn")) return;
-    if (session.view && !session.mdView && session.view.dom.getElementsByClassName("grid").length) point(e, t);
+    if (gridsShown()) point(e, t);
   });
   /* the layout viewport's width on the root, for the grid's break-out: 100vw
      counts a classic scrollbar's width and overflowed by it; observed on the
@@ -1092,22 +1166,23 @@ if (fixture && fixtures[fixture]) {
     const after = view.state.doc.nodeAt(pos);
     return after && view.nodeDOM(pos) === el ? after : null;
   };
+  const copyGone = (view: typeof session.view): boolean => !copyTarget || !view || !view.dom.contains(copyTarget);
   acts.copyBlock = () => {
     const view = session.view;
-    if (!copyTarget || !view || !view.dom.contains(copyTarget)) { hideCopy(); say("Nothing to copy", 2000); return; }
-    const mine = copyTarget, seq = ++copySeq;
+    if (copyGone(view)) { hideCopy(); say("Nothing to copy", 2000); return; }
+    const mine = copyTarget!, seq = ++copySeq;
     const done = (ok: boolean): void => {
       if (mine !== copyTarget || seq !== copySeq) return;
       cp.label = ok ? "copied" : "copy failed";
       if (copyReset) clearTimeout(copyReset);
       copyReset = setTimeout(() => { cp.label = idle(mine); }, 1200);
     };
-    const node = blockAt(copyTarget);
+    const node = blockAt(mine);
     if (!node) { done(false); say("Copy failed", 3000); return; }
     const written = node.type === schema.nodes.code_block ? writeClipboard(node.textContent.replace(/\n$/, ""))
       /* the swept HTML, not the raw: with the raw outerHTML a card pasted into
          Mail arrived as plain lines (pin: card copy › a card hover-copied) */
-      : withPictureBytes(richBlockHtml(copyTarget)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html }));
+      : withPictureBytes(richBlockHtml(mine)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html }));
     written.then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
   };
   /* THE FLOATING BAR: placed over the selection on every selection change
@@ -1116,10 +1191,25 @@ if (fixture && fixtures[fixture]) {
      touches the page — the bar is for text a reader chose to format (pin:
      toolbar › a word double-clicked) */
   let barSuppressed = false;
-  const placeBar = (): void => {
+  const barView = (): typeof session.view => {
     const view = session.view;
+    if (!view || session.mdView) return null;
+    return barSuppressed ? null : view;
+  };
+  const liveSelection = (): Selection | null => {
     const sel = document.getSelection();
-    if (!view || session.mdView || barSuppressed || !sel || sel.rangeCount === 0 || sel.isCollapsed || !view.dom.contains(sel.anchorNode) || blankRowSelected(view.state)) { screen.bar.show = false; return; }
+    if (!sel || sel.rangeCount === 0) return null;
+    return sel.isCollapsed ? null : sel;
+  };
+  const barSelection = (view: NonNullable<typeof session.view>): Selection | null => {
+    const sel = liveSelection();
+    if (!sel || !view.dom.contains(sel.anchorNode)) return null;
+    return blankRowSelected(view.state) ? null : sel;
+  };
+  const placeBar = (): void => {
+    const view = barView();
+    const sel = view ? barSelection(view) : null;
+    if (!view || !sel) { screen.bar.show = false; return; }
     const rect = sel.getRangeAt(0).getBoundingClientRect();
     if (!rect.width && !rect.height) { screen.bar.show = false; return; }
     const floor = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 8;
@@ -1283,8 +1373,9 @@ if (fixture && fixtures[fixture]) {
      surfaces as the old app has them › a bare launch) */
   if (!location.hash) history.replaceState(null, "", entryHash(todayKey()));
   const h0 = hashParts(location.hash.slice(1));
+  const opensNow = (found: boolean): boolean => found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date);
   const primed = wrote.then(() => layer.primeEntry(entryKey(h0.date, h0.tag))).then((found) => {
-    if (found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date)) { session.openHash(); opened = true; stage("primed"); }
+    if (opensNow(found)) { session.openHash(); opened = true; stage("primed"); }
   }, () => {});
   /* the one way a step opens a page before the warm lands (pin: places › before the warm),
      and one where it never does (pin: losing nothing › a store that never answers) */
@@ -1335,6 +1426,30 @@ if (fixture && fixtures[fixture]) {
      (pin: losing nothing › export pressed again while one runs) */
   let longRun: "an export" | "an import" | null = null;
   const stillRunning = (): boolean => { if (longRun) say(longRun + " is still running", 2000); return !!longRun; };
+  type ExportTally = { docs: number; missing: number; lostNote: string; lostList: string };
+  const exportTally = (files: Awaited<ReturnType<typeof exportEntries>>): ExportTally => {
+    const docs = files.filter(isDoc).length, missing = missingPictures(files);
+    const lostNote = missing ? " — " + missing + (missing === 1 ? " picture" : " pictures") + " missing" : "";
+    const lostList = files.filter((f) => f.picsMissing).map((f) => filePath(f) + ": " + f.picsMissing + " missing").join("\n");
+    return { docs, missing, lostNote, lostList };
+  };
+  const reportExport = (p: Progress, t: ExportTally, failures: Awaited<ReturnType<typeof writeFilesTo>>): void => {
+    if (!failures.length) {
+      if (t.missing) p.fail("exported " + t.docs + " entries" + t.lostNote, t.lostList);
+      else p.ok("exported " + t.docs + " entries");
+      return;
+    }
+    const lostDocs = failures.filter((x) => x.doc).length;
+    console.error("export: " + failures.length + " file(s) failed", failures);
+    const msg = "exported " + (t.docs - lostDocs) + " entries; " + failures.length + " file(s) failed" + t.lostNote;
+    p.fail(msg, failures.map((x) => x.name + ": " + (errText(x.error) || String(x.error))).join("\n") + (t.lostList ? "\n" + t.lostList : ""));
+  };
+  const exportFailed = (p: Progress, err: unknown): void => {
+    if ((err as Error)?.name === "AbortError") { p.cancel(); return; }
+    console.error("export failed", err);
+    const msg = (err as { collision?: boolean })?.collision ? "export failed — " + (err as Error).message : failMsg("export failed", err);
+    p.fail(msg, msg);
+  };
   acts.export = () => {
     /* the keys go back to the text: left on the button, a space pressed it
        again (pin: losing nothing › export pressed again while one runs) */
@@ -1348,30 +1463,60 @@ if (fixture && fixtures[fixture]) {
     const p = notices.progress("exporting…");
     session.flushSave().then(() => exportEntries(layer.cache, images)).then((files) => {
       if (!files.length) { p.ok("nothing to export"); return; }
-      const docs = files.filter(isDoc).length, missing = missingPictures(files);
-      const lostNote = missing ? " — " + missing + (missing === 1 ? " picture" : " pictures") + " missing" : "";
-      const lostList = files.filter((f) => f.picsMissing).map((f) => filePath(f) + ": " + f.picsMissing + " missing").join("\n");
-      return dirPicked.then((dir) => writeFilesTo(dir, files, p.step)).then((failures) => {
-        if (failures.length) {
-          const lostDocs = failures.filter((x) => x.doc).length;
-          console.error("export: " + failures.length + " file(s) failed", failures);
-          const msg = "exported " + (docs - lostDocs) + " entries; " + failures.length + " file(s) failed" + lostNote;
-          p.fail(msg, failures.map((x) => x.name + ": " + (errText(x.error) || String(x.error))).join("\n") + (lostList ? "\n" + lostList : ""));
-        } else if (missing) p.fail("exported " + docs + " entries" + lostNote, lostList);
-        else p.ok("exported " + docs + " entries");
-      });
-    }).catch((err: unknown) => {
-      if ((err as Error)?.name === "AbortError") { p.cancel(); return; }
-      console.error("export failed", err);
-      const msg = (err as { collision?: boolean })?.collision ? "export failed — " + (err as Error).message : failMsg("export failed", err);
-      p.fail(msg, msg);
-    }).finally(() => { longRun = null; });
+      const tally = exportTally(files);
+      return dirPicked.then((dir) => writeFilesTo(dir, files, p.step)).then((failures) => reportExport(p, tally, failures));
+    }).catch((err: unknown) => exportFailed(p, err)).finally(() => { longRun = null; });
   };
   /* the picker opens synchronously in the click, then: names, the refusal,
      the read, the count-then-confirm gate, the progress line, the
      sequential import, the tally. The import NEVER clears — it overwrites
      entry by entry and deletes nothing, so a subset folder lands only its
      own entries. */
+  const importAsked = (files: Awaited<ReturnType<typeof pickImportFiles>>): boolean => {
+    const n = entryDocs(files).length;
+    const refused = files.filter(isDoc).length - n;
+    const refusedNote = refused ? refused + " .md file" + (refused === 1 ? "" : "s") + " will NOT be imported." : "";
+    /* a folder whose every page is refused says so until clicked (pin:
+       notices and surfaces as the old app has them › an import of refused
+       files only) */
+    if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return false; }
+    if (!n) { say("nothing to import"); return false; }
+    const entries = n + (n === 1 ? " entry" : " entries");
+    return confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
+      " from this folder? Each one overwrites that entry in this journal, and there is no undo.");
+  };
+  const importTold = (p: Progress, tally: Awaited<ReturnType<typeof importFiles>>): void => {
+    const failures = tally.failures.map((x) => x.path + ": " + x.error).join("\n");
+    if (tally.full) {
+      console.error("import stopped, storage full", tally.failures);
+      p.fail("storage full — imported " + tally.imported + " of " + tally.attempted, failures);
+    } else if (tally.failed) {
+      console.error("import failures", tally.failures);
+      p.fail("imported " + tally.imported + ", " + tally.failed + " failed", failures);
+    } else p.ok("imported " + tally.imported + " entries");
+  };
+  const imported = (p: Progress, tally: Awaited<ReturnType<typeof importFiles>>): Promise<void> => {
+    session.lockEntries(null);
+    count();
+    importTold(p, tally);
+    /* the open entry may have been overwritten: repainted only where
+       the store differs from the surface, what was typed landing first */
+    /* a locked entry let its focus go: given back where nothing holds it
+       (pin: losing nothing › typed into an entry an import overwrites) */
+    return session.refresh().then(() => { refreshMasthead(); if (document.activeElement === document.body) session.focusText(); });   /* the key list moved under the tag bar */
+  };
+  const importFailed = (p: Progress | null, err: unknown): void => {
+    session.lockEntries(null);
+    if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
+    const msg = failMsg("import failed", err);
+    /* two files spelling one entry say which, on screen; any other
+       failure names its error there too (pin: notices and surfaces as the
+       old app has them › an import of two files for one entry) */
+    const merged = (err as Partial<Merged>)?.merged;
+    if (p) { console.error("import failed", err); p.fail(msg, msg); }
+    else if (merged) notices.stickErrIdle((err as Error).message, null, merged);
+    else notices.stickErrIdle(msg, err);
+  };
   acts.import = () => {
     session.focusText();
     if (!win.showDirectoryPicker) { say("import needs a folder picker"); return; }
@@ -1380,49 +1525,10 @@ if (fixture && fixtures[fixture]) {
     session.flushSave();
     let p: Progress | null = null;
     win.showDirectoryPicker().then(pickImportFiles).then((files) => {
-      const docs = entryDocs(files);
-      const n = docs.length;
-      const refused = files.filter(isDoc).length - n;
-      const refusedNote = refused ? refused + " .md file" + (refused === 1 ? "" : "s") + " will NOT be imported." : "";
-      /* a folder whose every page is refused says so until clicked (pin:
-         notices and surfaces as the old app has them › an import of refused
-         files only) */
-      if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return; }
-      if (!n) { say("nothing to import"); return; }
-      const entries = n + (n === 1 ? " entry" : " entries");
-      if (!confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
-          " from this folder? Each one overwrites that entry in this journal, and there is no undo.")) return;
+      if (!importAsked(files)) return;
       p = notices.progress("importing…");
       session.lockEntries(importKeys(files));
-      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, writeError: layer.writeError }, p.step).then((tally) => {
-        session.lockEntries(null);
-        count();
-        let msg = "imported " + tally.imported;
-        if (tally.full) {
-          console.error("import stopped, storage full", tally.failures);
-          p!.fail("storage full — imported " + tally.imported + " of " + tally.attempted, tally.failures.map((x) => x.path + ": " + x.error).join("\n"));
-        } else if (tally.failed) {
-          msg += ", " + tally.failed + " failed";
-          console.error("import failures", tally.failures);
-          p!.fail(msg, tally.failures.map((x) => x.path + ": " + x.error).join("\n"));
-        } else p!.ok(msg + " entries");
-        /* the open entry may have been overwritten: repainted only where
-           the store differs from the surface, what was typed landing first */
-        /* a locked entry let its focus go: given back where nothing holds it
-           (pin: losing nothing › typed into an entry an import overwrites) */
-        return session.refresh().then(() => { refreshMasthead(); if (document.activeElement === document.body) session.focusText(); });   /* the key list moved under the tag bar */
-      });
-    }).catch((err: unknown) => {
-      session.lockEntries(null);
-      if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
-      const msg = failMsg("import failed", err);
-      /* two files spelling one entry say which, on screen; any other
-         failure names its error there too (pin: notices and surfaces as the
-         old app has them › an import of two files for one entry) */
-      const merged = (err as Partial<Merged>)?.merged;
-      if (p) { console.error("import failed", err); p.fail(msg, msg); }
-      else if (merged) notices.stickErrIdle((err as Error).message, null, merged);
-      else notices.stickErrIdle(msg, err);
-    }).finally(() => { longRun = null; });
+      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, writeError: layer.writeError }, p.step).then((tally) => imported(p!, tally));
+    }).catch((err: unknown) => importFailed(p, err)).finally(() => { longRun = null; });
   };
 }

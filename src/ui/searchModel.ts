@@ -6,7 +6,7 @@
    name a row the list does not hold (pin: searchModel.test › the open
    unregistered book joins its own group) */
 import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, PAGE_KEY, capitalized } from "../store/keys.ts";
-import { rootGroups } from "../store/shelves.ts";
+import { rootGroups, type ShelfGroup } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_PAGES, bookScope, type Scope, type Result } from "../store/search.ts";
@@ -22,24 +22,28 @@ export function sameScope(a: Scope, b: Scope): boolean {
   return a.kind === b.kind;
 }
 export function nsGroupLabel(ns: string): string { return capitalized(KEYED_NS[ns].noun) + "s"; }
-export function scopeOptions(date: string, tag: string | null, keys: string[], journal: Journal, shelvesMd = ""): ScopeOption[] {
-  const out: ScopeOption[] = [
+export interface ScopeWorld { keys: string[]; journal: Journal; shelvesMd?: string }
+const openBook = (open: Scope, ns: string): string | null => (open.kind === "book" && open.ns === ns ? open.book : null);
+function groupOptions(ns: string, g: ShelfGroup, journal: Journal): ScopeOption[] {
+  const group = g.shelf === null ? nsGroupLabel(ns) : trimLabel(g.shelf, LABEL_CAP);
+  const books = g.roots.map((name): ScopeOption => ({ label: trimLabel(rootLabel(ns, name, journal), LABEL_CAP), scope: bookScope(ns, name), group }));
+  if (g.shelf === null || g.roots.length < 2) return books;
+  return [{ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: new Set(g.roots) }, group }, ...books];
+}
+function nsOptions(ns: string, open: Scope, w: ScopeWorld): ScopeOption[] {
+  const book = openBook(open, ns), roots = childrenOf(w.keys, ns);
+  if (book !== null && !roots.includes(book)) roots.push(book);
+  roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  return rootGroups(ns, roots, w.shelvesMd ?? "", book).flatMap((g) => groupOptions(ns, g, w.journal));
+}
+export function scopeOptions(date: string, tag: string | null, w: ScopeWorld): ScopeOption[] {
+  const open = defaultScope(date, tag);
+  return [
     { label: "Everything", scope: SCOPE_EVERYTHING, group: null },
     { label: "Journal", scope: SCOPE_JOURNAL, group: null },
     { label: "All " + nsGroupLabel(PAGE_KEY), scope: SCOPE_PAGES, group: null },
+    ...NS_KEYS.flatMap((ns) => nsOptions(ns, open, w)),
   ];
-  const open = defaultScope(date, tag);
-  for (const ns of NS_KEYS) {
-    const roots = childrenOf(keys, ns);
-    if (open.kind === "book" && open.ns === ns && roots.indexOf(open.book) === -1) roots.push(open.book);
-    roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    for (const g of rootGroups(ns, roots, shelvesMd, open.kind === "book" && open.ns === ns ? open.book : null)) {
-      const group = g.shelf === null ? nsGroupLabel(ns) : trimLabel(g.shelf, LABEL_CAP);
-      if (g.shelf !== null && g.roots.length > 1) out.push({ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: new Set(g.roots) }, group });
-      for (const name of g.roots) out.push({ label: trimLabel(rootLabel(ns, name, journal), LABEL_CAP), scope: bookScope(ns, name), group });
-    }
-  }
-  return out;
 }
 /* the dropdown's runs of options under one optgroup: a run breaks where
    its namespace does as well as its label, so a shelf named "Pages" is not
@@ -59,13 +63,16 @@ export function optionGroups(options: ScopeOption[]): { group: string | null; at
    tells siblings-of-siblings apart), the book dropped under a scope that
    already names it; every untrusted NAME bounded on its own (pin:
    searchModel.test › a day by its date and tag) */
+const scopeNames = (scope: Scope, date: string, name: string): boolean => scope.kind === "book" && scope.ns === date && scope.book === name;
+function pageLabel(date: string, tag: string, scope: Scope, journal: Journal): string {
+  const parts = pageParts(tag);
+  const book = trimLabel(rootLabel(date, parts.name, journal), LABEL_CAP);
+  if (!parts.sub) return book;
+  const leaf = trimLabel(journal.heading(entryKey(date, tag)) || parts.leaf, LABEL_CAP);
+  const mid = parts.parent === parts.name ? "" : trimLabel(pageParts(parts.parent!).leaf, LABEL_CAP) + " › ";
+  return scopeNames(scope, date, parts.name) ? mid + leaf : book + " › " + mid + leaf;
+}
 export function resultLabel(r: Result, scope: Scope, journal: Journal): string {
   if (isDayKey(r.date)) return r.tag ? r.date + " · " + trimLabel(r.tag, LABEL_CAP) : r.date;
-  if (!r.tag) return "";
-  const parts = pageParts(r.tag);
-  const book = trimLabel(rootLabel(r.date, parts.name, journal), LABEL_CAP);
-  if (!parts.sub) return book;
-  const leaf = trimLabel(journal.heading(entryKey(r.date, r.tag)) || parts.leaf, LABEL_CAP);
-  const mid = parts.parent === parts.name ? "" : trimLabel(pageParts(parts.parent!).leaf, LABEL_CAP) + " › ";
-  return scope.kind === "book" && scope.ns === r.date && scope.book === parts.name ? mid + leaf : book + " › " + mid + leaf;
+  return r.tag ? pageLabel(r.date, r.tag, scope, journal) : "";
 }

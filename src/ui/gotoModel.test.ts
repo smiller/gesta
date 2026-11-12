@@ -47,32 +47,32 @@ describe("gotoLevels", () => {
 describe("gotoPick", () => {
   it("a day pick jumps; a year pick refills the months placeholder-led; a tag pick carries the tag; the sentinel opens the day", () => {
     const L = gotoLevels(w, "2026-09-07", "Ideas");
-    expect(gotoPick(w, "2026-09-07", "Ideas", L, 3, "07")).toEqual({ jump: "#2026-09-07" });
-    const y = gotoPick(w, "2026-09-07", "Ideas", L, 1, "2025") as { levels: Level[] };
+    expect(gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, L, { level: 3, value: "07" })).toEqual({ jump: "#2026-09-07" });
+    const y = gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, L, { level: 1, value: "2025" }) as { levels: Level[] };
     expect(y.levels.map((l) => [l.aria, l.value])).toEqual([["Destination", ""], ["Year", "2025"], ["Month", null]]);
     expect(labels(y.levels[2])).toEqual(["December"]);
-    const m = gotoPick(w, "2026-09-07", "Ideas", y.levels, 2, "12") as { levels: Level[] };
+    const m = gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, y.levels, { level: 2, value: "12" }) as { levels: Level[] };
     expect(labels(m.levels[3])).toEqual(["25"]);
-    expect(gotoPick(w, "2026-09-07", "Ideas", m.levels, 3, "25")).toEqual({ jump: "#2025-12-25" });
-    expect(gotoPick(w, "2026-09-07", "Ideas", L, 4, "Ideas")).toEqual({ jump: "#2026-09-07/Ideas" });
-    expect(gotoPick(w, "2026-09-07", "Ideas", L, 4, "")).toEqual({ jump: "#2026-09-07" });
+    expect(gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, m.levels, { level: 3, value: "25" })).toEqual({ jump: "#2025-12-25" });
+    expect(gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, L, { level: 4, value: "Ideas" })).toEqual({ jump: "#2026-09-07/Ideas" });
+    expect(gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, L, { level: 4, value: "" })).toEqual({ jump: "#2026-09-07" });
   });
   it("a scope pick: a page with subs lists them placeholder-led, a page with none jumps, Journal opens today's shape from a page", () => {
     const L = gotoLevels(w, "page", "Books/Essay");
-    const b = gotoPick(w, "page", "Books/Essay", L, 0, "Books", "page") as { levels: Level[] };
+    const b = gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 0, value: "Books", ns: "page" }) as { levels: Level[] };
     expect(b.levels[1]).toMatchObject({ aria: "Sub-page", value: null, path: "Books" });
-    expect(gotoPick(w, "page", "Books/Essay", L, 0, "Empty", "page")).toEqual({ jump: "#page/Empty" });
-    const j = gotoPick(w, "page", "Books/Essay", L, 0, "", undefined) as { levels: Level[] };
+    expect(gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 0, value: "Empty", ns: "page" })).toEqual({ jump: "#page/Empty" });
+    const j = gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 0, value: "", ns: undefined }) as { levels: Level[] };
     expect(j.levels.map((l) => l.aria)).toEqual(["Destination", "Year", "Month", "Day", "Tagged entry"]);
     expect(j.levels[3].value).toBe("07");
   });
   it("in a chain: the sentinel opens the parent, a leaf descends or jumps, the collapsed work's own row opens", () => {
     const L = gotoLevels(w, "page", "Books/Essay");
-    expect(gotoPick(w, "page", "Books/Essay", L, 1, "")).toEqual({ jump: "#page/Books" });
-    expect(gotoPick(w, "page", "Books/Essay", L, 1, "Two")).toEqual({ jump: "#page/Books/Two" });
+    expect(gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 1, value: "" })).toEqual({ jump: "#page/Books" });
+    expect(gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 1, value: "Two" })).toEqual({ jump: "#page/Books/Two" });
     const V = gotoLevels(w, "bookshelf", "Virgil");
-    expect(gotoPick(w, "bookshelf", "Virgil", V, 1, "Aeneid")).toEqual({ jump: "#bookshelf/Virgil/Aeneid" });
-    expect(gotoPick(w, "bookshelf", "Virgil", V, 1, "Aeneid/1")).toEqual({ jump: "#bookshelf/Virgil/Aeneid/1" });
+    expect(gotoPick(w, { date: "bookshelf", tag: "Virgil" }, V, { level: 1, value: "Aeneid" })).toEqual({ jump: "#bookshelf/Virgil/Aeneid" });
+    expect(gotoPick(w, { date: "bookshelf", tag: "Virgil" }, V, { level: 1, value: "Aeneid/1" })).toEqual({ jump: "#bookshelf/Virgil/Aeneid/1" });
   });
 });
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
-import { lifecycle, coldRefusal, refuseCold } from "./lifecycle.ts";
+import { lifecycle, coldRefusal, refuseCold, type Dialogs, type LifecycleDeps, type UiPort } from "./lifecycle.ts";
 import { entryLayer } from "../store/entries.ts";
 import { memEntryStore, type EntryStore } from "../store/store.ts";
 import { journalOf } from "../store/headings.ts";
@@ -24,56 +24,42 @@ interface Opts {
   failClash?: boolean;
   sourceHeading?: boolean;
 }
-async function world(o: Opts) {
-  const log: string[] = [];
-  const mem = memEntryStore();
-  for (const [k, v] of Object.entries(o.entries ?? {})) await mem.set(k, v);
-  let onSet: ((key: string) => void) | null = null;
-  const store: EntryStore = {
+type EntryLayerOf = ReturnType<typeof entryLayer>;
+interface WorldState { current: { date: string; tag: string | null }; st: EditorState; typed: string | null; dropped: boolean; onFlush: (() => void) | null; onSet: ((key: string) => void) | null }
+const failing = (which: string | string[] | undefined, k: string): boolean => [which].flat().includes(k);
+function fakeStore(o: Opts, mem: ReturnType<typeof memEntryStore>, log: string[], s: WorldState): EntryStore {
+  return {
     ...mem,
-    set: (k, md) => { log.push("set " + k); onSet?.(k); return [o.failSet].flat().includes(k) ? Promise.reject(new Error("blocked")) : mem.set(k, md); },
-    del: (k) => { log.push("del " + k); return [o.failDel].flat().includes(k) ? Promise.reject(new Error("blocked")) : mem.del(k); },
-    all: () => o.warm === "failed" ? Promise.reject(new Error("blocked")) : mem.all(),
+    set: (k, md) => { log.push("set " + k); s.onSet?.(k); return failing(o.failSet, k) ? Promise.reject(new Error("blocked")) : mem.set(k, md); },
+    del: (k) => { log.push("del " + k); return failing(o.failDel, k) ? Promise.reject(new Error("blocked")) : mem.del(k); },
+    all: () => (o.warm === "failed" ? Promise.reject(new Error("blocked")) : mem.all()),
   };
-  const layer = entryLayer(store, { landed() {}, removed() {}, stuck() {}, stuckIdle() {} });
-  if (o.warm !== "no") await layer.warm();
-  let current = { date: o.at[0], tag: o.at[1] };
-  const here = (): string => entryKey(current.date, current.tag);
-  let st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here()] ?? "") });
-  const view = {
-    get state() { return st; },
-    dispatch: (tr: Transaction) => { log.push("edit"); st = st.apply(tr); },
+}
+const here = (s: WorldState): string => entryKey(s.current.date, s.current.tag);
+function fakeSession(log: string[], s: WorldState, layer: EntryLayerOf): LifecycleDeps["session"] {
+  return {
+    get current() { return s.current; },
+    flushSave: () => { log.push("flush"); s.onFlush?.(); return Promise.resolve(true); },
+    suspendSaves: () => { log.push("suspend"); },
+    surfaceMd: () => s.typed ?? serializeMarkdown(s.st.doc),
+    open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); s.current = { date, tag }; },
+    movePlace: (from, to) => { log.push("move " + from + " → " + to); },
+    movePlaces: (moves) => { log.push("places " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
+    refresh: () => { log.push("refresh"); return Promise.resolve(); },
+    goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
+    saveNow: () => { log.push("save"); return layer.setEntry(here(s), serializeMarkdown(s.st.doc)); },
   };
-  const answers: (string | null | boolean)[] = [];
-  const asked: string[] = [];
-  let onFlush: (() => void) | null = null;
-  let typed: string | null = null;
-  let dropped = false;
-  const source = { insertAfter: (text: string) => { log.push("type " + text); }, inHeading: () => !!o.sourceHeading };
-  const pics: Record<string, string> = { ...(o.pics ?? {}) };
-  const life = lifecycle({
-    layer,
-    journal: journalOf(layer.cache),
-    view: () => o.noView || dropped ? null : view,
-    caretInEntry: () => !o.noCaret,
-    source: () => o.source && !dropped ? source : null,
-    session: {
-      get current() { return current; },
-      flushSave: () => { log.push("flush"); onFlush?.(); return Promise.resolve(true); },
-      suspendSaves: () => { log.push("suspend"); },
-      surfaceMd: () => typed ?? serializeMarkdown(st.doc),
-      open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); current = { date, tag }; },
-      movePlace: (from, to) => { log.push("move " + from + " → " + to); },
-      movePlaces: (moves) => { log.push("places " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
-      refresh: () => { log.push("refresh"); return Promise.resolve(); },
-      goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
-      saveNow: () => { log.push("save"); return layer.setEntry(here(), serializeMarkdown(st.doc)); },
-    },
-    dialogs: {
-      prompt: (text, value) => { asked.push(text + (value !== undefined ? " [" + value + "]" : "")); return answers.shift() as string | null; },
-      confirm: (text) => { asked.push(text); return answers.shift() as boolean; },
-      alert: (text) => { log.push("alert " + text); },
-    },
+}
+function fakeDialogs(log: string[], asked: string[], answers: (string | null | boolean)[]): Dialogs {
+  return {
+    prompt: (text, value) => { asked.push(text + (value !== undefined ? " [" + value + "]" : "")); return answers.shift() as string | null; },
+    confirm: (text) => { asked.push(text); return answers.shift() as boolean; },
+    alert: (text) => { log.push("alert " + text); },
+  };
+}
+const otherPicture = (pics: Record<string, string>, from: string, to: string): boolean => to in pics && pics[to] !== pics[from];
+function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pick<LifecycleDeps, "copyPicture" | "removePictures" | "pictureClash"> {
+  return {
     copyPicture: (from, to) => {
       log.push("pic " + from + " → " + to);
       if (to === o.failPic) return Promise.reject(new Error("blocked"));
@@ -82,40 +68,62 @@ async function world(o: Opts) {
       return Promise.resolve(true);
     },
     removePictures: (keys) => { if (keys.length) log.push("unpic " + keys.join(", ")); for (const k of keys) delete pics[k]; return Promise.resolve(); },
-    pictureClash: (from, to) => { log.push("clash? " + to); return o.failClash ? Promise.reject(new Error("blocked")) : Promise.resolve(to in pics && pics[to] !== pics[from]); },
-    moveKept: (folds, marks) => {
-      const show = (m: Record<string, string>): string => Object.entries(m).map(([a, b]) => a + " → " + b).join(", ");
-      log.push("kept " + show(folds) + (show(marks) !== show(folds) ? " | marks " + show(marks) : ""));
-    },
-    ui: {
-      say: (text) => { log.push("say " + text); },
-      pin: (text) => { log.push("pin " + text); },
-      redraw: () => { log.push("redraw"); },
-      replaceHash: (hash) => { log.push("hash " + hash); },
-      hideBar: () => { log.push("hideBar"); },
-      focus: () => { log.push("focus"); },
-    },
+    pictureClash: (from, to) => { log.push("clash? " + to); return o.failClash ? Promise.reject(new Error("blocked")) : Promise.resolve(otherPicture(pics, from, to)); },
+  };
+}
+const shownMoves = (m: Record<string, string>): string => Object.entries(m).map(([a, b]) => a + " → " + b).join(", ");
+const fakeKept = (log: string[]): LifecycleDeps["moveKept"] => (folds, marks) => {
+  log.push("kept " + shownMoves(folds) + (shownMoves(marks) !== shownMoves(folds) ? " | marks " + shownMoves(marks) : ""));
+};
+function fakeUi(log: string[]): UiPort {
+  return {
+    say: (text) => { log.push("say " + text); },
+    pin: (text) => { log.push("pin " + text); },
+    redraw: () => { log.push("redraw"); },
+    replaceHash: (hash) => { log.push("hash " + hash); },
+    hideBar: () => { log.push("hideBar"); },
+    focus: () => { log.push("focus"); },
+  };
+}
+async function world(o: Opts) {
+  const log: string[] = [], answers: (string | null | boolean)[] = [], asked: string[] = [];
+  const mem = memEntryStore();
+  for (const [k, v] of Object.entries(o.entries ?? {})) await mem.set(k, v);
+  const s: WorldState = { current: { date: o.at[0], tag: o.at[1] }, st: EditorState.create({ doc: parseMarkdown("") }), typed: null, dropped: false, onFlush: null, onSet: null };
+  const layer = entryLayer(fakeStore(o, mem, log, s), { landed() {}, removed() {}, stuck() {}, stuckIdle() {} });
+  if (o.warm !== "no") await layer.warm();
+  s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
+  const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };
+  const source = { insertAfter: (text: string) => { log.push("type " + text); }, inHeading: () => !!o.sourceHeading };
+  const pics: Record<string, string> = { ...(o.pics ?? {}) };
+  const life = lifecycle({
+    layer, journal: journalOf(layer.cache),
+    view: () => (o.noView || s.dropped ? null : view),
+    caretInEntry: () => !o.noCaret,
+    source: () => (o.source && !s.dropped ? source : null),
+    session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
+    ...fakePictures(o, log, pics), moveKept: fakeKept(log), ui: fakeUi(log),
   });
   return {
     life, layer, log, asked, pics,
     foreign: (k: string, md: string) => mem.foreignSet(k, md),
     answer: (...a: (string | null | boolean)[]) => { answers.push(...a); },
-    md: (k: string) => k in layer.cache ? layer.cache[k] : null,
-    doc: () => st.doc,
-    select: (from: number, to = from) => { st = st.apply(st.tr.setSelection(TextSelection.create(st.doc, from, to))); },
-    typeMeanwhile: (md: string) => { typed = md; },
-    onFlush: (f: () => void) => { onFlush = f; },
-    onSet: (f: (key: string) => void) => { onSet = f; },
-    edit: (f: (s: EditorState) => Transaction) => { st = st.apply(f(st)); },
-    leave: (date: string, tag: string | null) => { current = { date, tag }; },
-    dropView: () => { dropped = true; },
+    md: (k: string) => (k in layer.cache ? layer.cache[k] : null),
+    doc: () => s.st.doc,
+    select: (from: number, to = from) => { s.st = s.st.apply(s.st.tr.setSelection(TextSelection.create(s.st.doc, from, to))); },
+    typeMeanwhile: (md: string) => { s.typed = md; },
+    onFlush: (f: () => void) => { s.onFlush = f; },
+    onSet: (f: (key: string) => void) => { s.onSet = f; },
+    edit: (f: (st: EditorState) => Transaction) => { s.st = s.st.apply(f(s.st)); },
+    leave: (date: string, tag: string | null) => { s.current = { date, tag }; },
+    dropView: () => { s.dropped = true; },
   };
 }
 /* the position just before the first occurrence of `text` in a textblock */
 const pos = (doc: Node, text: string, after = false): number => {
   let at = -1;
   doc.descendants((n, p) => {
-    if (at === -1 && n.isText && n.text!.includes(text)) at = p + n.text!.indexOf(text) + (after ? text.length : 0);
+    if (at === -1 && n.text?.includes(text)) at = p + n.text.indexOf(text) + (after ? text.length : 0);
     return at === -1;
   });
   return at;

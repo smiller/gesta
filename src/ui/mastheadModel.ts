@@ -34,40 +34,29 @@ export interface MastheadModel {
 export function rootLabel(ns: string, name: string, journal: Journal): string {
   return (titlesRoots(ns) && journal.heading(entryKey(ns, name))) || name;
 }
-export function mastheadModel(date: string, tag: string | null, keys: string[], journal: Journal, today: string): MastheadModel {
-  const crumbs: Crumb[] = [];
-  let leaf: string | null = null, title = "";
-  let tags: Link[] = [];
-  const ns = nsOf(date);
-  if (ns) {
-    const pp = pageParts(tag || "");
-    if (pp.sub) {
-      const path = pp.parent!.split("/");
-      path.forEach((name, i) => {
-        const label = i ? name : rootLabel(date, name, journal);
-        crumbs.push({ text: label, href: entryHash(date, path.slice(0, i + 1).join("/")), title: "Back to " + label });
-      });
-      leaf = romanWorkKey(date, tag, journal) ? romanKey(pp.leaf!) : pp.leaf;
-      title = journal.heading(entryKey(date, tag));
-    } else {
-      leaf = rootLabel(date, pp.name, journal);
-    }
-  } else {
-    /* date keys are YYYY-MM-DD, so a string compare is chronological */
-    const when = date === today ? "Today" : date < today ? "Past" : "Future";
-    const text = when + " — " + prettyDate(date);
-    if (tag) {
-      crumbs.push({ text, href: entryHash(date), title: "Back to the main entry" });
-      leaf = tag;
-    } else {
-      crumbs.push({ text, href: null, title: "" });
-      title = journal.heading(date);
-    }
-    if (isDayKey(date)) {
-      tags = childrenOf(keys, date).filter((t) => t !== tag).map((t) => ({ text: t, href: entryHash(date, t) }));
-    }
-  }
-  return { crumbs, leaf, title, tags, showToday: date !== today, buttons: subButtons(date, tag) };
+export interface Where { keys: string[]; journal: Journal; today: string }
+type Head = Pick<MastheadModel, "crumbs" | "leaf" | "title" | "tags">;
+function pageHead(date: string, tag: string | null, journal: Journal): Head {
+  const pp = pageParts(tag || "");
+  if (!pp.sub) return { crumbs: [], leaf: rootLabel(date, pp.name, journal), title: "", tags: [] };
+  const path = pp.parent!.split("/");
+  const crumbs: Crumb[] = path.map((name, i) => {
+    const label = i ? name : rootLabel(date, name, journal);
+    return { text: label, href: entryHash(date, path.slice(0, i + 1).join("/")), title: "Back to " + label };
+  });
+  return { crumbs, leaf: romanWorkKey(date, tag, journal) ? romanKey(pp.leaf!) : pp.leaf, title: journal.heading(entryKey(date, tag)), tags: [] };
+}
+/* date keys are YYYY-MM-DD, so a string compare is chronological */
+const whenOf = (date: string, today: string): string => (date === today ? "Today" : date < today ? "Past" : "Future");
+function dayHead(date: string, tag: string | null, w: Where): Head {
+  const text = whenOf(date, w.today) + " — " + prettyDate(date);
+  const tags: Link[] = isDayKey(date) ? childrenOf(w.keys, date).filter((t) => t !== tag).map((t) => ({ text: t, href: entryHash(date, t) })) : [];
+  if (tag) return { crumbs: [{ text, href: entryHash(date), title: "Back to the main entry" }], leaf: tag, title: "", tags };
+  return { crumbs: [{ text, href: null, title: "" }], leaf: null, title: w.journal.heading(date), tags };
+}
+export function mastheadModel(date: string, tag: string | null, w: Where): MastheadModel {
+  const head = nsOf(date) ? pageHead(date, tag, w.journal) : dayHead(date, tag, w);
+  return { ...head, showToday: date !== w.today, buttons: subButtons(date, tag) };
 }
 
 /* the row-label cap every list surface shares, so their truncation of an

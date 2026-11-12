@@ -159,7 +159,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
      (pin: surface.test › carries the top by the crossing) */
   function alignTop(from: { at: number; text: string }): void {
     if (!cur) return;
-    const flat = cur.flat(), count = crossViewOffset(from.text, flat.text, from.at, cur.source, false);
+    const flat = cur.flat(), count = crossViewOffset(from.text, flat.text, from.at, { toSource: cur.source, pastTail: false });
     if (count === 0) { win.scrollTo(0); return; }
     const pos = Math.min(positionAt(flat, count) ?? cur.end(), cur.end());
     if (cur.source) cur.scrollToPos(pos, win.under());

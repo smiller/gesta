@@ -18,14 +18,14 @@ describe("defaultScope", () => {
 });
 describe("scopeOptions", () => {
   it("the three fixed rows, then a labelled group per namespace of its roots by label", () => {
-    const o = scopeOptions("2026-09-07", null, keys, journal);
+    const o = scopeOptions("2026-09-07", null, { keys: keys, journal: journal });
     expect(o.map((x) => [x.label, x.group])).toEqual([
       ["Everything", null], ["Journal", null], ["All Pages", null], ["Books", "Pages"], ["John Milton", "Authors"],
     ]);
     expect(o[4].scope).toEqual({ kind: "book", ns: "bookshelf", book: "Milton, John" });
   });
   it("the open unregistered book joins its own group, so the preselect has a row", () => {
-    const o = scopeOptions("page", "Brand New", keys, journal);
+    const o = scopeOptions("page", "Brand New", { keys: keys, journal: journal });
     expect(o.filter((x) => x.group === "Pages").map((x) => x.label)).toEqual(["Books", "Brand New"]);
     expect(o.some((x) => sameScope(x.scope, defaultScope("page", "Brand New")))).toBe(true);
   });
@@ -47,18 +47,18 @@ describe("resultLabel", () => {
 describe("scopeOptions on the shelves", () => {
   it("the shelves entry is no book to search within", () => {
     const c = { "bookshelf/Horace": "# Horace", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)" };
-    expect(scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c)).map((o) => o.label)).toEqual(["Everything", "Journal", "All Pages", "Horace"]);
+    expect(scopeOptions("2026-09-07", null, { keys: Object.keys(c), journal: journalOf(c) }).map((o) => o.label)).toEqual(["Everything", "Journal", "All Pages", "Horace"]);
   });
   it("an author's group is its shelf, in the shelves' order, as in the go-to box", () => {
     const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n", "page/Notes": "n" };
-    expect(scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c), c["bookshelf/Shelves"]).map((o) => [o.group, o.label])).toEqual([
+    expect(scopeOptions("2026-09-07", null, { keys: Object.keys(c), journal: journalOf(c), shelvesMd: c["bookshelf/Shelves"] }).map((o) => [o.group, o.label])).toEqual([
       [null, "Everything"], [null, "Journal"], [null, "All Pages"], ["Pages", "Notes"], ["Latin", "Horace"], ["English", "John Milton"],
     ]);
-    expect(scopeOptions("bookshelf", "Shelves", Object.keys(c), journalOf(c), c["bookshelf/Shelves"]).map((o) => [o.group, o.label])).toContainEqual(["Authors", "Shelves"]);
+    expect(scopeOptions("bookshelf", "Shelves", { keys: Object.keys(c), journal: journalOf(c), shelvesMd: c["bookshelf/Shelves"] }).map((o) => [o.group, o.label])).toContainEqual(["Authors", "Shelves"]);
   });
   it("a shelf of more than one author opens with All <shelf>, searching those authors together", () => {
     const c = { "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Virgil](#bookshelf/Virgil)\n- [Horace](#bookshelf/Horace)\n\n## English\n" };
-    const o = scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c), c["bookshelf/Shelves"]);
+    const o = scopeOptions("2026-09-07", null, { keys: Object.keys(c), journal: journalOf(c), shelvesMd: c["bookshelf/Shelves"] });
     expect(o.map((x) => [x.group, x.label])).toEqual([
       [null, "Everything"], [null, "Journal"], [null, "All Pages"], ["Latin", "All Latin"], ["Latin", "Horace"], ["Latin", "Virgil"], ["English", "John Milton"],
     ]);
@@ -71,7 +71,7 @@ describe("scopeOptions on the shelves", () => {
 describe("optionGroups", () => {
   it("the dropdown's runs break where the namespace does as well as the label, keyed by where each starts", () => {
     const c = { "page/Notes": "n", "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Shelves": "# Shelves\n\n## Pages\n- [Horace](#bookshelf/Horace)\n- [Virgil](#bookshelf/Virgil)" };
-    const o = scopeOptions("2026-09-07", null, Object.keys(c), journalOf(c), c["bookshelf/Shelves"]);
+    const o = scopeOptions("2026-09-07", null, { keys: Object.keys(c), journal: journalOf(c), shelvesMd: c["bookshelf/Shelves"] });
     expect(optionGroups(o).map((g) => [g.group, g.at.map((i) => o[i].label)])).toEqual([
       [null, ["Everything", "Journal", "All Pages"]], ["Pages", ["Notes"]], ["Pages", ["All Pages", "Horace", "Virgil"]],
     ]);

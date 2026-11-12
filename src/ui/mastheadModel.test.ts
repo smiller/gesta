@@ -22,7 +22,7 @@ const cache: Record<string, string> = {
 const keys = Object.keys(cache);
 const journal = journalOf(cache);
 const TODAY = "2026-09-07";
-const m = (date: string, tag: string | null = null) => mastheadModel(date, tag, keys, journal, TODAY);
+const m = (date: string, tag: string | null = null) => mastheadModel(date, tag, { keys, journal, today: TODAY });
 
 describe("a day", () => {
   it("today's main entry: the era and the date, no link, its # heading as the title, every tag", () => {

@@ -189,20 +189,23 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
        can be pasted elsewhere; a routine one only goes, so a click to clear
        "saved" never takes the clipboard (pin: notices.test › a click on a
        whisper copies its words) (pin: notices.test › a routine whisper) */
-    const words = !stuckCopy && state.shown && !ROUTINE.has(state.text) ? state.text : "";
-    if (!stuckCopy && !words) {
-      if (timer) clearTimeout(timer);
-      hide();
-      replayIdleStick();
-      return;
-    }
-    const detail = stuckCopy || words, mine = gen;
+    const detail = stuckCopy || shownWords();
     stuckCopy = "";
+    if (detail) copyDetail(detail);
+    else dismiss();
+    replayIdleStick();
+  }
+  function dismiss(): void {
+    if (timer) clearTimeout(timer);
+    hide();
+  }
+  const shownWords = (): string => (state.shown && !ROUTINE.has(state.text) ? state.text : "");
+  function copyDetail(detail: string): void {
+    const mine = gen;
     copyText(detail).then(
       () => { if (mine === gen) whisper("copied", COPIED_MS); },
       (err: unknown) => { console.error("copy failed", err, detail); if (mine === gen) whisper(COPY_FAILED); },
     );
-    replayIdleStick();
   }
   function setTrouble(msg: string): void { state.trouble = msg || ""; }
   return {

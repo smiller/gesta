@@ -38,36 +38,45 @@ export function blankSubTree(keys: string[], listKey: string): string[] {
   return out;
 }
 export interface SubButtons { create: string; createTitle: string; tagTitle: string; canCreate: boolean; canEdit: boolean; renameTitle: string; deleteTitle: string }
-export function subButtons(date: string, tag: string | null): SubButtons {
-  const ns = nsOf(date);
+function pageButtons(date: string, tag: string | null, subNoun: string): SubButtons {
   const level = entryNoun(date, tag) || "";
   return {
-    create: ns ? "+ " + ns.subNoun : "+ tagged entry",
-    createTitle: ns ? "Create a " + ns.subNoun + " here" : "Create a tagged sub-entry for this day",
-    tagTitle: "Move selection to a new " + (ns ? ns.subNoun : "tagged entry"),
-    canCreate: (!!ns || !tag) && !(date === NS_BOOK.key && tag === SHELVES),
-    canEdit: !!tag,
-    renameTitle: ns ? "Rename this " + level : "Rename this entry's tag",
-    deleteTitle: ns ? "Delete this " + level : "Delete this tagged entry",
+    create: "+ " + subNoun, createTitle: "Create a " + subNoun + " here", tagTitle: "Move selection to a new " + subNoun,
+    canCreate: !(date === NS_BOOK.key && tag === SHELVES), canEdit: !!tag,
+    renameTitle: "Rename this " + level, deleteTitle: "Delete this " + level,
   };
+}
+const dayButtons = (tag: string | null): SubButtons => ({
+  create: "+ tagged entry", createTitle: "Create a tagged sub-entry for this day", tagTitle: "Move selection to a new tagged entry",
+  canCreate: !tag, canEdit: !!tag,
+  renameTitle: "Rename this entry's tag", deleteTitle: "Delete this tagged entry",
+});
+export function subButtons(date: string, tag: string | null): SubButtons {
+  const ns = nsOf(date);
+  return ns ? pageButtons(date, tag, ns.subNoun) : dayButtons(tag);
 }
 /* the noun leads the name, the reading not the key, and the prefill stays
    the key since that is what a rename changes (pin: subEntries.test › the
    prompt and the confirm lead with the noun) */
 export function renamePrompt(date: string, tag: string, shownLabel: string): string {
   const ns = nsOf(date);
-  if (ns && ns.titledRoots && !pageParts(tag).sub) return "File and sort “" + shownLabel + "” under:";
+  if (ns?.titledRoots && !pageParts(tag).sub) return "File and sort “" + shownLabel + "” under:";
   return "Rename the " + (ns ? entryNoun(date, tag) : "tag") + ' "' + shownLabel + '" to:';
 }
 export function movePrompt(date: string, tag: string, shownLabel: string): string {
   return "Move the " + entryNoun(date, tag) + " “" + shownLabel + "” and its " + nsOf(date)!.subNoun + "s to:";
 }
-export function moveConfirm(date: string, tag: string, shownLabel: string, to: string, plan: { moved: number; into: boolean; twins: string[] }): string {
-  const sub = nsOf(date)!.subNoun;
-  let text = "Move the " + entryNoun(date, tag) + " “" + shownLabel + "”" + (plan.moved ? " and its " + plan.moved + " " + sub + (plan.moved === 1 ? "" : "s") : "") + " to " + to + "?";
-  if (plan.into) text += " Its own text goes after the text there.";
-  if (plan.twins.length) text += " " + (plan.twins.length === 1 ? "1 " + sub + " is" : plan.twins.length + " " + sub + "s are") + " there already by title and " + (plan.twins.length === 1 ? "is" : "are") + " deleted, " + (plan.twins.length === 1 ? "its" : "their") + " links going to the one there: " + plan.twins.map((t) => "“" + t + "”").join(", ") + ".";
-  return text;
+const subsText = (sub: string, moved: number): string => (moved ? " and its " + moved + " " + sub + (moved === 1 ? "" : "s") : "");
+function twinsText(sub: string, twins: string[]): string {
+  if (!twins.length) return "";
+  const one = twins.length === 1;
+  return " " + (one ? "1 " + sub + " is" : twins.length + " " + sub + "s are") + " there already by title and " + (one ? "is" : "are") + " deleted, " + (one ? "its" : "their") + " links going to the one there: " + twins.map((t) => "“" + t + "”").join(", ") + ".";
+}
+export interface Shown { date: string; tag: string; shown: string }
+export function moveConfirm(e: Shown, to: string, plan: { moved: number; into: boolean; twins: string[] }): string {
+  const sub = nsOf(e.date)!.subNoun;
+  const into = plan.into ? " Its own text goes after the text there." : "";
+  return "Move the " + entryNoun(e.date, e.tag) + " “" + e.shown + "”" + subsText(sub, plan.moved) + " to " + to + "?" + into + twinsText(sub, plan.twins);
 }
 export function deleteConfirm(date: string, tag: string, shown: string): string {
   return nsOf(date) ? "Delete the " + entryNoun(date, tag) + ' "' + shown + '"?' : 'Delete the entry "' + shown + '" for this day?';
@@ -84,19 +93,23 @@ export function hostKey(date: string, tag: string): string | null {
   const pp = pageParts(tag);
   return pp.sub ? entryKey(date, pp.parent) : null;
 }
-export function refiledText(root: string, moved: number, updated: number, left: string[], stayed: string[] = [], lost = 0): string {
-  return outcome("filed under " + root + " — " + moved + (moved === 1 ? " entry" : " entries") + " moved" + lostText(lost), updated, left, stayed);
+export interface MoveOutcome { moved: number; updated: number; left: string[]; stayed?: string[]; lost?: number; twins?: number }
+const entriesText = (n: number): string => n + (n === 1 ? " entry" : " entries");
+export function refiledText(root: string, o: MoveOutcome): string {
+  return outcome("filed under " + root + " — " + entriesText(o.moved) + " moved" + lostText(o.lost ?? 0), o);
 }
 const lostText = (lost: number): string => lost ? ", " + lost + (lost === 1 ? " picture" : " pictures") + " not found" : "";
-export function movedText(to: string, moved: number, twins: number, lost: number, updated: number, left: string[], stayed: string[], verb = "moved"): string {
-  let text = verb + " to " + to + " — " + moved + (moved === 1 ? " entry" : " entries");
-  if (twins) text += ", " + twins + " there already deleted";
-  return outcome(text + lostText(lost), updated, left, stayed);
+export function movedText(to: string, o: MoveOutcome, verb = "moved"): string {
+  const twins = o.twins ? ", " + o.twins + " there already deleted" : "";
+  return outcome(verb + " to " + to + " — " + entriesText(o.moved) + twins + lostText(o.lost ?? 0), o);
 }
-function outcome(text: string, updated: number, left: string[], stayed: string[]): string {
-  if (updated) text += ", links updated in " + updated + (updated === 1 ? " other" : " others");
-  if (left.length === 1) text += "; 1 link not updated: " + left[0];
-  else if (left.length) text += "; links not updated in " + left.length + " entries: " + left.join(", ");
-  if (stayed.length) text += "; old " + (stayed.length === 1 ? "copy" : "copies") + " kept: " + stayed.join(", ");
-  return text;
+function leftText(left: string[]): string {
+  if (left.length === 1) return "; 1 link not updated: " + left[0];
+  return left.length ? "; links not updated in " + left.length + " entries: " + left.join(", ") : "";
+}
+function outcome(text: string, o: MoveOutcome): string {
+  const stayed = o.stayed ?? [];
+  const updated = o.updated ? ", links updated in " + o.updated + (o.updated === 1 ? " other" : " others") : "";
+  const kept = stayed.length ? "; old " + (stayed.length === 1 ? "copy" : "copies") + " kept: " + stayed.join(", ") : "";
+  return text + updated + leftText(o.left) + kept;
 }

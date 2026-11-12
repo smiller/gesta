@@ -48,20 +48,15 @@ export function positionAt(flat: Flat, at: number): number | null {
    stays ahead of the caret). Past the last rendered character the rest is
    source-only, and belongs behind a reader who was below it all (pin:
    viewCarets.test › past the last rendered character) */
-export function crossViewOffset(from: string, to: string, at: number, toSource: boolean, pastTail: boolean): number {
-  const sub = toSource ? from : to, sup = toSource ? to : from;
+function walked(sub: string, sup: string, at: number, toSource: boolean): { i: number; j: number } {
   let i = 0, j = 0;
   while (j < sup.length && (toSource ? i < at : j < at)) {
     if (sub.charAt(i) === sup.charAt(j)) i++;
     j++;
   }
-  if (!toSource) return i;
-  if (at >= sub.length) return pastTail ? sup.length : j;
-  const probe = sub.substr(at, 4);
-  /* the probe taken only where its characters next appear in order, markup
-     between them allowed: unbounded, a probe split by markup (" **Chr")
-     matched the same letters a paragraph down (pin: viewCarets.test › to the
-     source, the next words found only where they next appear) */
+  return { i, j };
+}
+function probeSpan(sup: string, probe: string, j: number): { first: number; last: number } {
   let first = -1, last = -1;
   for (let k = j, q = 0; k < sup.length && q < probe.length; k++) {
     if (sup.charAt(k) !== probe.charAt(q)) continue;
@@ -69,9 +64,26 @@ export function crossViewOffset(from: string, to: string, at: number, toSource: 
     last = k;
     q++;
   }
-  let after = sup.indexOf(probe, j);
-  if (after < 0 || after > last) after = first < 0 ? sup.length : first;
-  return /\s/.test(sup.slice(j, after)) ? after : j;
+  return { first, last };
+}
+/* the probe taken only where its characters next appear in order, markup
+   between them allowed: unbounded, a probe split by markup (" **Chr")
+   matched the same letters a paragraph down (pin: viewCarets.test › to the
+   source, the next words found only where they next appear) */
+function afterProbe(sup: string, probe: string, j: number): number {
+  const { first, last } = probeSpan(sup, probe, j), after = sup.indexOf(probe, j);
+  if (after >= 0 && after <= last) return after;
+  return first < 0 ? sup.length : first;
+}
+function intoSource(w: { sub: string; sup: string; j: number }, at: number, pastTail: boolean): number {
+  if (at >= w.sub.length) return pastTail ? w.sup.length : w.j;
+  const after = afterProbe(w.sup, w.sub.substr(at, 4), w.j);
+  return /\s/.test(w.sup.slice(w.j, after)) ? after : w.j;
+}
+export function crossViewOffset(from: string, to: string, at: number, { toSource, pastTail = false }: { toSource: boolean; pastTail?: boolean }): number {
+  const [sub, sup] = toSource ? [from, to] : [to, from];
+  const { i, j } = walked(sub, sup, at, toSource);
+  return toSource ? intoSource({ sub, sup, j }, at, pastTail) : i;
 }
 /* THE VISIBILITY BIT IS THE LEAVING VIEW'S, whichever count is used: an
    exact hold remembers where this view's caret WAS, but whether a reader
@@ -80,19 +92,28 @@ export function crossViewOffset(from: string, to: string, at: number, toSource: 
    to the top by a hold whose own bit was older than the scroll (pin: source
    view › ⌃⌘M back, still scrolled away) */
 export function arrivingCount(held: Hold | null, left: Hold | null, text: string, toSource: boolean): { at: number; tail: boolean; seen: boolean } | null {
-  if (held && held.text === text) return { at: held.at, tail: held.tail, seen: left ? left.seen : held.seen };
-  if (left) return { at: crossViewOffset(left.text, text, left.at, toSource, left.tail), tail: left.tail, seen: left.seen };
+  if (held?.text === text) return { at: held.at, tail: held.tail, seen: (left ?? held).seen };
+  if (left) return { at: crossViewOffset(left.text, text, left.at, { toSource: toSource, pastTail: left.tail }), tail: left.tail, seen: left.seen };
   return null;
 }
 /* one view's count across its own text changed under it: the edit is
    taken as the one region between the common head and the common tail,
    so a count before it stays, one after it moves by its length, and one
    inside it goes to its start */
-export function carriedCount(before: string, after: string, at: number): number {
+function commonHead(a: string, b: string): number {
+  const n = Math.min(a.length, b.length);
   let head = 0;
-  while (head < before.length && head < after.length && before[head] === after[head]) head++;
+  while (head < n && a[head] === b[head]) head++;
+  return head;
+}
+function commonTail(a: string, b: string, head: number): number {
+  const n = Math.min(a.length, b.length) - head;
   let tail = 0;
-  while (tail < before.length - head && tail < after.length - head && before[before.length - 1 - tail] === after[after.length - 1 - tail]) tail++;
+  while (tail < n && a[a.length - 1 - tail] === b[b.length - 1 - tail]) tail++;
+  return tail;
+}
+export function carriedCount(before: string, after: string, at: number): number {
+  const head = commonHead(before, after), tail = commonTail(before, after, head);
   if (at <= head) return at;
   if (at >= before.length - tail) return at + after.length - before.length;
   return head;

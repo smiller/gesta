@@ -74,13 +74,13 @@ describe("the move's texts", () => {
     expect(movePrompt("bookshelf", "Dante/Inferno", "Inferno")).toBe("Move the book “Inferno” and its books to:");
   });
   it("the confirm counts what moves, says where the text goes, and names each twin deleted", () => {
-    expect(moveConfirm("page", "Essays", "Essays", "bookshelf/Miller, Sean/Essays", { moved: 101, into: true, twins: ["On Growing Older"] }))
+    expect(moveConfirm({ date: "page", tag: "Essays", shown: "Essays" }, "bookshelf/Miller, Sean/Essays", { moved: 101, into: true, twins: ["On Growing Older"] }))
       .toBe("Move the page “Essays” and its 101 sub-pages to bookshelf/Miller, Sean/Essays? Its own text goes after the text there. 1 sub-page is there already by title and is deleted, its links going to the one there: “On Growing Older”.");
-    expect(moveConfirm("page", "A", "A", "page/B", { moved: 1, into: false, twins: [] })).toBe("Move the page “A” and its 1 sub-page to page/B?");
-    expect(moveConfirm("page", "A", "A", "page/B", { moved: 0, into: true, twins: ["X", "Y"] })).toBe("Move the page “A” to page/B? Its own text goes after the text there. 2 sub-pages are there already by title and are deleted, their links going to the one there: “X”, “Y”.");
+    expect(moveConfirm({ date: "page", tag: "A", shown: "A" }, "page/B", { moved: 1, into: false, twins: [] })).toBe("Move the page “A” and its 1 sub-page to page/B?");
+    expect(moveConfirm({ date: "page", tag: "A", shown: "A" }, "page/B", { moved: 0, into: true, twins: ["X", "Y"] })).toBe("Move the page “A” to page/B? Its own text goes after the text there. 2 sub-pages are there already by title and are deleted, their links going to the one there: “X”, “Y”.");
   });
   it("the outcome counts the entries, the twins, the pictures not found and the links, as the re-file does", () => {
-    expect(movedText("page/B", 3, 1, 2, 4, [], [])).toBe("moved to page/B — 3 entries, 1 there already deleted, 2 pictures not found, links updated in 4 others");
-    expect(movedText("page/B", 1, 0, 0, 0, ["page/C"], ["page/A"])).toBe("moved to page/B — 1 entry; 1 link not updated: page/C; old copy kept: page/A");
+    expect(movedText("page/B", { moved: 3, twins: 1, lost: 2, updated: 4, left: [], stayed: [] })).toBe("moved to page/B — 3 entries, 1 there already deleted, 2 pictures not found, links updated in 4 others");
+    expect(movedText("page/B", { moved: 1, twins: 0, lost: 0, updated: 0, left: ["page/C"], stayed: ["page/A"] })).toBe("moved to page/B — 1 entry; 1 link not updated: page/C; old copy kept: page/A");
   });
 });

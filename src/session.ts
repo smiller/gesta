@@ -127,24 +127,25 @@ export function startSession(opts: SessionOptions): Session {
      can navigate while the decode runs. Every way it cannot land sticks:
      the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */
   let decoding = false;
+  /* a write that fails is not a picture that could not be read, and only
+     a full store is said to be full; the pin copies the caught error
+     (pin: notices and surfaces as the old app has them › a picture whose write fails) */
+  function pictureNotSaved(err: unknown): void {
+    console.error("picture not saved", err);
+    opts.stick?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", errText(err));
+  }
+  function landPicture(bytes: Awaited<ReturnType<typeof pastedPictureBytes>>, aimedAt: string, aimedView: boolean): Promise<void> | void {
+    if (aimedAt !== ekeyOf() || aimedView !== surface.md) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
+    const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
+    return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); }, pictureNotSaved);
+  }
   function pasteFile(file: File): void {
     if (locked?.has(ekeyOf())) return;
     if (decoding) { say("picture not pasted — one at a time; paste it again", 2600); return; }
-    const aimedAt = ekeyOf(), aimedMd = surface.md;
+    const aimedAt = ekeyOf(), aimedView = surface.md;
     decoding = true;
-    pastedPictureBytes(file).then((bytes) => {
-      decoding = false;
-      if (aimedAt !== ekeyOf() || aimedMd !== surface.md) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
-      const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
-      /* a write that fails is not a picture that could not be read, and only
-         a full store is said to be full; the pin copies the caught error
-         (pin: notices and surfaces as the old app has them › a picture whose write fails) */
-      return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); },
-        (err: unknown) => {
-          console.error("picture not saved", err);
-          opts.stick?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", errText(err));
-        });
-    }).catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
+    pastedPictureBytes(file).then((bytes) => { decoding = false; return landPicture(bytes, aimedAt, aimedView); })
+      .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
   }
   const folds = stored(NS + "folds", parseFoldStore);
   const readFolds = (ekey: string): FoldPage => foldPage(folds.read(), ekey);
@@ -218,26 +219,31 @@ export function startSession(opts: SessionOptions): Session {
       const ext = (src.split(".").pop() || "").toLowerCase();
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
-  function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
-    cancelSave();
-    suspended = false;
+  function releaseDetached(): void {
     for (const g of detachedPins) opts.releasePin?.(g);
     detachedPins = [];
     detached = null;
+  }
+  const pendingNow = (): boolean => pending?.gen === navGen;
+  function replayPending(): void {
+    if (!pending || pending.gen !== navGen) return;
+    if (pending.hl.line) opts.onLine?.(pending.hl.line);
+    else highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor);
+    pending = null;
+  }
+  function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
+    cancelSave();
+    suspended = false;
+    releaseDetached();
     current = { date, tag };
     const ekey = ekeyOf();
     /* a highlight owed wins over the remembered place: it is what a reader
        asked to see (pin: reference paste › the reference link followed) */
-    const owed = how === "arrive" && !!pending && pending.gen === navGen;
+    const owed = how === "arrive" && pendingNow();
     keeper.open(ekey, owed ? "owed" : how, () => surface.show(layer.entryMd(ekey), ekey, how === "keep"));
     document.documentElement.dataset.entry = ekey;
     show();
-    if (surface.forced) return;
-    if (pending && pending.gen === navGen) {
-      if (pending.hl.line) opts.onLine?.(pending.hl.line);
-      else highlight(pending.hl.q || "", pending.hl.nth || 0, pending.honor);
-      pending = null;
-    }
+    if (!surface.forced) replayPending();
   }
   /* a page opened before the warm drew unfolded, its sub-entries not yet in
      the cache (pin: places › the warm landed) */
@@ -268,10 +274,11 @@ export function startSession(opts: SessionOptions): Session {
     if (did) opts.onHighlight?.();
     return did;
   }
+  const isOpen = (date: string, tag: string | null): boolean => date === current.date && (tag || null) === current.tag;
   function jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void {
     /* the open entry at once: a hash set to its own value fires no hashchange
        (pin: search › a jump to a hit in the entry already open) */
-    if (date === current.date && (tag || null) === current.tag) { navGen++; highlight(hl.q || "", hl.nth || 0, honorMarkers); return; }
+    if (isOpen(date, tag)) { navGen++; highlight(hl.q || "", hl.nth || 0, honorMarkers); return; }
     pending = { hl, honor: honorMarkers, gen: ++navGen };
     goto(entryHash(date, tag));
   }
@@ -280,6 +287,35 @@ export function startSession(opts: SessionOptions): Session {
      address put back (pin: bridge › an unknown book is refused) */
   let hashDeferred = false;
   function openHash(): void { openAddress(false); }
+  function readThenOpen(want: string): void {
+    hashDeferred = true;
+    const asked = location.hash;
+    const still = (): boolean => hashDeferred && location.hash === asked;
+    const then = (): void => { if (still()) flushSave().then(() => { if (still()) openAddress(true); }); };
+    layer.primeEntry(want).then(then, then);
+  }
+  const primedOrWarm = (want: string): boolean => layer.warmed || want in layer.cache;
+  function primeBeforeWarm(want: string): void {
+    hashDeferred = true;
+    layer.primeEntry(want).then(() => { if (hashDeferred && primedOrWarm(want)) openHash(); }, () => {});
+  }
+  /* the noun for what is MISSING: when the root is gone every segment
+     under it reads unregistered too, so the depth asked for would call a
+     vanished author a book (pin: bridge › an unknown book under a known author) */
+  function missingNoun(h: ReturnType<typeof hashParts>): string {
+    const pp = pageParts(h.tag!), ns = nsOf(h.date)!;
+    return pp.sub && registered(Object.keys(layer.cache), h.date, pp.name) ? ns.subNoun : ns.noun;
+  }
+  function refuseUnminted(h: ReturnType<typeof hashParts>, want: string): void {
+    /* BEFORE THE WARM an address the cache lacks is not yet refused: its
+       own row is primed, and failing that the warm answers
+       (pin: places › a contents link clicked before the warm) */
+    if (!layer.warmed) { primeBeforeWarm(want); return; }
+    say("no such " + missingNoun(h));
+    history.replaceState(null, "", entryHash(current.date, current.tag));
+    if (!surface.current) open(current.date, current.tag);
+  }
+  const unreadAfterWarm = (want: string): boolean => layer.warmed && !(want in layer.cache);
   function openAddress(primed: boolean): void {
     hashDeferred = false;
     const h = hashParts(location.hash.slice(1));
@@ -292,34 +328,8 @@ export function startSession(opts: SessionOptions): Session {
        before the open, whose first act cancels a pending save.
        Unpinned: races no step can hold open */
     const want = entryKey(h.date, h.tag);
-    if (!primed && layer.warmed && !(want in layer.cache)) {
-      hashDeferred = true;
-      const asked = location.hash;
-      const still = (): boolean => hashDeferred && location.hash === asked;
-      const then = (): void => { if (still()) flushSave().then(() => { if (still()) openAddress(true); }); };
-      layer.primeEntry(want).then(then, then);
-      return;
-    }
-    const keys = Object.keys(layer.cache);
-    if (unmintedKey(keys, h.date, h.tag)) {
-      /* BEFORE THE WARM an address the cache lacks is not yet refused: its
-         own row is primed, and failing that the warm answers
-         (pin: places › a contents link clicked before the warm) */
-      if (!layer.warmed) {
-        hashDeferred = true;
-        layer.primeEntry(want).then(() => { if (hashDeferred && (layer.warmed || want in layer.cache)) openHash(); }, () => {});
-        return;
-      }
-      /* the noun for what is MISSING: when the root is gone every segment
-         under it reads unregistered too, so the depth asked for would call a
-         vanished author a book (pin: bridge › an unknown book under a known author) */
-      const pp = pageParts(h.tag!);
-      const ns = nsOf(h.date)!;
-      say("no such " + (pp.sub && registered(keys, h.date, pp.name) ? ns.subNoun : ns.noun));
-      history.replaceState(null, "", entryHash(current.date, current.tag));
-      if (!surface.current) open(current.date, current.tag);
-      return;
-    }
+    if (!primed && unreadAfterWarm(want)) { readThenOpen(want); return; }
+    if (unmintedKey(Object.keys(layer.cache), h.date, h.tag)) { refuseUnminted(h, want); return; }
     /* a "?h=" payload replays LITERALLY: the passage is text, and an old
        link's nth, counted under substring rules, still lands
        (pin: reference paste › the reference link followed) */
@@ -336,17 +346,24 @@ export function startSession(opts: SessionOptions): Session {
   /* the notices of a deleted entry on screen last while it is on screen
      (pin: bookmarks from another window › the deleted page left for the day) */
   let detachedPins: number[] = [];
+  const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
+  const unsavedHere = (ekey: string): boolean => !!saveTimer || suspended || currentMd() !== layer.entryMd(ekey);
+  function noticeVerdict(ekey: string, md: string | null): ScreenNotice {
+    const verdict = screenNotice(onScreenKey(ekey), unsavedHere(ekey), md);
+    if (verdict === "deleted") detached = { ekey, md: currentMd() };
+    return verdict;
+  }
+  function afterNotice(ekey: string, verdict: ScreenNotice, moved: boolean): void {
+    if (!moved) return;
+    if (verdict === "deleted" && !opts.pinned?.()) detachedPins.push(opts.pin?.("deleted in another tab") || 0);
+    else if (onScreenKey(ekey)) redraw();
+  }
   function takeNotice(ekey: string): Promise<void> {
     let verdict: ScreenNotice = "take";
     return layer.takeNotice(ekey, (md) => {
-      const onScreen = !!surface.current && ekey === ekeyOf();
-      verdict = screenNotice(onScreen, !!saveTimer || suspended || currentMd() !== layer.entryMd(ekey), md);
-      if (verdict === "deleted") detached = { ekey, md: currentMd() };
+      verdict = noticeVerdict(ekey, md);
       return verdict !== "leave";
-    }).then((moved) => {
-      if (verdict === "deleted" && moved && !opts.pinned?.()) detachedPins.push(opts.pin?.("deleted in another tab") || 0);
-      else if (moved && surface.current && ekey === ekeyOf()) redraw();
-    });
+    }).then((moved) => afterNotice(ekey, verdict, moved));
   }
   /* the open entry drawn again from the cache, the caret where it was and
      the focus kept: a reader may be mid-sentence. Carried by its count
@@ -354,27 +371,34 @@ export function startSession(opts: SessionOptions): Session {
      link above the caret put the caret that many letters late
      (pin: viewCarets.test › keeps a caret before the change)
      (pin: sub-entries › deleted: back on the day, its link gone, the other tag left) */
-  function redraw(): void {
-    const view = surface.current;
-    const was = view ? { flat: view.flat(), at: view.caret() } : null, focused = !!view && opts.mount.contains(document.activeElement);
-    open(current.date, current.tag);
-    const s = surface.current;
-    if (!focused || !was || !s) return;
+  type Caret = { flat: ReturnType<Surface["flat"]>; at: number };
+  function caretCarried(s: Surface, was: Caret): void {
     const flat = s.flat();
     s.placeCaret(positionAt(flat, carriedCount(was.flat.text, flat.text, countBefore(was.flat, was.at))) ?? s.end(), false);
+  }
+  function redraw(): void {
+    const view = surface.current;
+    const was = view && opts.mount.contains(document.activeElement) ? { flat: view.flat(), at: view.caret() } : null;
+    open(current.date, current.tag);
+    const s = surface.current;
+    if (was && s) caretCarried(s, was);
+  }
+  function detachedSave(was: { md: string }, md: string): false {
+    if (md !== was.md) detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0);
+    return false;
+  }
+  /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
+  function nothingToSave(ekey: string, md: string): boolean {
+    const inStore = layer.entryMd(ekey);
+    return md === inStore || (!md.trim() && !inStore);
   }
   function saveNow(): Promise<boolean> {
     cancelSave();
     if (!surface.current || layer.storeReadFailed) return Promise.resolve(false);
     const ekey = ekeyOf();
     const md = currentMd();
-    if (detached && detached.ekey === ekey) {
-      if (md !== detached.md) detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0);
-      return Promise.resolve(false);
-    }
-    const inStore = layer.entryMd(ekey);
-    if (md === inStore) return Promise.resolve(true);
-    if (!md.trim() && !inStore) return Promise.resolve(true);   /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
+    if (detached?.ekey === ekey) return Promise.resolve(detachedSave(detached, md));
+    if (nothingToSave(ekey, md)) return Promise.resolve(true);
     return layer.setEntry(ekey, md).then((landed) => { if (landed) say("saved", SAVED_MS); show(); return landed; });
   }
   /* SUSPENDED while a rename moves the entry between keys: a debounce firing
@@ -394,22 +418,22 @@ export function startSession(opts: SessionOptions): Session {
   /* a navigation that lands where it already is SAYS so, when given the
      words: silence reads as a dead control
      (pin: launch, panels, the corner, links › a link to itself) */
+  /* the hash already there fires no hashchange: what stands over the
+     entry is closed and the focus given back here, the selection as it stood
+     (pin: bookmarks › b typed, already here) (pin: bookmarks › fb over a selection, already here)
+     (pin: where the keys go › ⌃⌘T on today from Search) */
+  function alreadyHere(hash: string, sameMsg?: string): void {
+    opts.onHere?.();
+    /* a link naming a line lands again where another says it is already here
+       (pin: a link to a line › a link to a line, clicked again) */
+    const line = hashParts(hash.slice(1)).hl?.line;
+    if (line) opts.onLine?.(line);
+    else if (sameMsg) say(sameMsg, 1500);
+    if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
+  }
   function goto(hash: string, sameMsg?: string): void {
-    /* the hash already there fires no hashchange: what stands over the
-       entry is closed and the focus given back here, the selection as it stood
-       (pin: bookmarks › b typed, already here) (pin: bookmarks › fb over a selection, already here)
-       (pin: where the keys go › ⌃⌘T on today from Search) */
-    if (location.hash === hash) {
-      opts.onHere?.();
-      /* a link naming a line lands again where another says it is already here
-         (pin: a link to a line › a link to a line, clicked again) */
-      const line = hashParts(hash.slice(1)).hl?.line;
-      if (line) opts.onLine?.(line);
-      else if (sameMsg) say(sameMsg, 1500);
-      if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
-      return;
-    }
-    location.hash = hash;
+    if (location.hash === hash) alreadyHere(hash, sameMsg);
+    else location.hash = hash;
   }
   /* the walk follows the parent's index where it states one
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2) */
@@ -474,16 +498,21 @@ export function startSession(opts: SessionOptions): Session {
   /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
      excluded (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
      (pin: source view › ⌃⌘W rendered) */
+  const chord = (e: KeyboardEvent): boolean => e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey;
+  function switchView(): void {
+    if (opts.readOnly) { say("no markdown view here", 2000); return; }
+    opts.onSwitch?.();
+    surface.switchTo(!surface.md);
+  }
+  const chords = new Map<string, () => void>([
+    [",", () => step("prev")], [".", () => step("next")], ["t", today], ["r", () => copyReference()],
+    ["c", copyEntryLink], ["m", switchView], ["w", showWordCount],
+  ]);
   document.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey)) return;
-    const k = e.key.toLowerCase();
-    if (k === ",") { e.preventDefault(); step("prev"); }
-    else if (k === ".") { e.preventDefault(); step("next"); }
-    else if (k === "t") { e.preventDefault(); today(); }
-    else if (k === "r") { e.preventDefault(); copyReference(); }
-    else if (k === "c") { e.preventDefault(); copyEntryLink(); }
-    else if (k === "m") { e.preventDefault(); if (opts.readOnly) say("no markdown view here", 2000); else { opts.onSwitch?.(); surface.switchTo(!surface.md); } }
-    else if (k === "w") { e.preventDefault(); showWordCount(); }
+    const act = chord(e) ? chords.get(e.key.toLowerCase()) : undefined;
+    if (!act) return;
+    e.preventDefault();
+    act();
   });
   return {
     get current() { return current; },

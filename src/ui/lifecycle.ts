@@ -1,12 +1,12 @@
 import type { EditorView } from "prosemirror-view";
-import type { EntryLayer } from "../store/entries.ts";
+import type { EntryLayer, Rewrite } from "../store/entries.ts";
 import type { Session } from "../session.ts";
 import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
 import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
 import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, renamePrompt, movePrompt, moveConfirm, deleteConfirm, deleteLanding, hostKey, refiledText, movedText } from "./subEntries.ts";
 import { pointsInto, withHeading, linkingKeys } from "../store/refile.ts";
-import { movePlan, moveLinks, joined, pictureNames, renamePictures } from "../store/move.ts";
+import { movePlan, moveLinks, joined, pictureNames, renamePictures, type MovePlan } from "../store/move.ts";
 import { imageRefs, splitKey } from "../store/exportEntries.ts";
 import { pictureKey } from "../store/names.ts";
 import { unnamed, picturesOf } from "../store/pictures.ts";
@@ -77,6 +77,9 @@ export function refuseCold(layer: Pick<EntryLayer, "warmed" | "storeReadFailed">
   return !!why;
 }
 
+type Current = SessionPort["current"];
+type Spec = Exclude<ReturnType<typeof subEntrySpec>, null | { refuse: string }>;
+const failedOf = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
 export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const { layer, journal, session, dialogs, ui } = deps;
   const done = Promise.resolve();
@@ -108,6 +111,46 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return out === null ? Promise.resolve() : layer.setEntry(host, out);
   };
   const newName = (ns: ReturnType<typeof nsOf>): string => ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:";
+  const refused = (why: string, ms?: number): Promise<void> => {
+    ui.say(why, ms);
+    return done;
+  };
+  function typedNameAt(raw: string | null): string | null {
+    const typed = typedName(raw);
+    if (!typed) return null;
+    if ("refuse" in typed) { ui.say(typed.refuse); return null; }
+    return typed.name;
+  }
+  function askSpec(c: Current): Spec | null {
+    const name = typedNameAt(dialogs.prompt(newName(nsOf(c.date))));
+    if (name === null) return null;
+    const spec = subEntrySpec(c.date, c.tag, name);
+    if (!spec) return null;
+    if ("refuse" in spec) { ui.say(spec.refuse); return null; }
+    return spec;
+  }
+  function createRefusal(c: Current): string | null {
+    /* the one leaf: a day's tagged entry hosts nothing, and ⌃⌘N reaches it all the same */
+    if (!nsOf(c.date) && c.tag) return "a tagged entry holds no entries of its own";
+    return onShelves(c.date, c.tag) ? SHELVES_EMPTY : null;
+  }
+  const nowhere = (view: EditorPort | null, source: SourcePort | null): boolean => !view && !source;
+  function placeRefusal(inEntry: boolean, view: EditorPort | null, source: SourcePort | null): string {
+    if (!inEntry || nowhere(view, source)) return "place your cursor in the entry";
+    if (view) return linkRefusal(view.state) || headingRefusal(view.state);
+    return source!.inHeading() ? HEADING_REFUSAL : "";
+  }
+  interface Placing { c: Current; spec: Spec; view: EditorPort | null; source: SourcePort | null }
+  const placeMoved = (p: Placing): boolean =>
+    (p.view ? p.view !== deps.view() : p.source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
+  function linkPlaced(p: Placing, landed: boolean): Promise<void> | void {
+    if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
+    if (placeMoved(p)) { ui.say("the entry was made — the link was not placed", 3000); return; }
+    const label = mdLabel(p.spec.tag, "entry");
+    if (p.view) insertLinkAfter(p.view, p.spec.href, label);
+    else p.source!.insertAfter(linkMarkdown(p.spec.href, label));
+    return session.saveNow().then(() => { ui.redraw(); session.goto(p.spec.href); });
+  }
 
   /* A NEW NAME'S LINK GOES AFTER THE CARET THE ACT BEGAN WITH: none in the
      entry refuses before anything is minted, and an existing name just
@@ -116,59 +159,25 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      anywhere (pin: lifecycle.test › in the markdown view the link is typed) */
   function create(): Promise<void> {
     if (cold()) return done;
-    const inEntry = deps.caretInEntry();
-    const c = session.current;
-    const ns = nsOf(c.date);
-    /* the one leaf: a day's tagged entry hosts nothing, and ⌃⌘N reaches it all the same */
-    if (!ns && c.tag) { ui.say("a tagged entry holds no entries of its own", 2500); return done; }
-    if (onShelves(c.date, c.tag)) { ui.say(SHELVES_EMPTY, 2500); return done; }
-    const typed = typedName(dialogs.prompt(newName(ns)));
-    if (!typed) return done;
-    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
-    const spec = subEntrySpec(c.date, c.tag, typed.name);
+    const inEntry = deps.caretInEntry(), c = session.current;
+    const no = createRefusal(c);
+    if (no) return refused(no, 2500);
+    const spec = askSpec(c);
     if (!spec) return done;
-    if ("refuse" in spec) { ui.say(spec.refuse); return done; }
-    const key = entryKey(c.date, spec.full);
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return done; }
     const view = deps.view(), source = view ? null : deps.source();
-    if (!inEntry || (!view && !source)) { ui.say("place your cursor in the entry", 2000); return done; }
-    const why = view ? linkRefusal(view.state) || headingRefusal(view.state) : source!.inHeading() ? HEADING_REFUSAL : "";
-    if (why) { ui.say(why, 2000); return done; }
+    const why = placeRefusal(inEntry, view, source);
+    if (why) return refused(why, 2000);
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
        (pin: lifecycle.test › says a registration that did not land) */
-    return layer.setEntry(key, "").then((landed) => {
-      if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
-      const moved = view ? view !== deps.view() : source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(c.date, c.tag);
-      if (moved) { ui.say("the entry was made — the link was not placed", 3000); return; }
-      if (view) insertLinkAfter(view, spec.href, mdLabel(spec.tag, "entry"));
-      else source!.insertAfter(linkMarkdown(spec.href, mdLabel(spec.tag, "entry")));
-      return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
-    });
+    return layer.setEntry(entryKey(c.date, spec.full), "").then((landed) => linkPlaced({ c, spec, view, source }, landed));
   }
 
-  /* the selection into a new sub-entry, the link left in its place: the
-     new entry is born WITH its heading, so the link is labelled by it at
-     birth where a later relabel would never see the change
-     (pin: lifecycle.test › moves the selection into the new entry) */
-  function extract(): Promise<void> {
-    const view = deps.view();
-    if (!view || view.state.selection.empty || cold()) return done;
+  function cutToEntry(view: EditorPort, c: Current, spec: Spec): Promise<void> {
     const { from, to } = view.state.selection;
-    const c = session.current;
-    const ns = nsOf(c.date);
-    if (onShelves(c.date, c.tag)) { ui.say(SHELVES_EMPTY, 2500); return done; }
-    if (cutsHeading(view.state)) { ui.say(HEADING_REFUSAL, 2000); return done; }
-    const typed = typedName(dialogs.prompt(newName(ns)));
-    if (!typed) return done;
-    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
-    const spec = subEntrySpec(c.date, c.tag, typed.name);
-    if (!spec) return done;
-    if ("refuse" in spec) { ui.say(spec.refuse); return done; }
-    if (childrenOf(keysNow(), spec.listKey).indexOf(spec.tag) !== -1) { dialogs.alert(takenText(spec.listKey, spec.tag)); return done; }
-    const md = cutMd(view.state.doc, from, to);
-    const cutText = view.state.doc.textBetween(from, to, " ", " ");
-    const label = ns ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
+    const md = cutMd(view.state.doc, from, to), cutText = view.state.doc.textBetween(from, to, " ", " ");
+    const label = nsOf(c.date) ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
     return layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
       if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
       /* the positions were taken before the write: a document that moved
@@ -179,6 +188,22 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       ui.hideBar();
       return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
     });
+  }
+  /* the selection into a new sub-entry, the link left in its place: the
+     new entry is born WITH its heading, so the link is labelled by it at
+     birth where a later relabel would never see the change
+     (pin: lifecycle.test › moves the selection into the new entry) */
+  function extract(): Promise<void> {
+    const view = deps.view();
+    if (!view || view.state.selection.empty) return done;
+    if (cold()) return done;
+    const c = session.current;
+    if (onShelves(c.date, c.tag)) return refused(SHELVES_EMPTY, 2500);
+    if (cutsHeading(view.state)) return refused(HEADING_REFUSAL, 2000);
+    const spec = askSpec(c);
+    if (!spec) return done;
+    if (childrenOf(keysNow(), spec.listKey).includes(spec.tag)) { dialogs.alert(takenText(spec.listKey, spec.tag)); return done; }
+    return cutToEntry(view, c, spec);
   }
 
   /* a rename is in flight from the prompt until its writes land: a second
@@ -192,56 +217,71 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   let renaming = false;
   function rename(): Promise<void> {
     const c = session.current;
-    if (!c.tag || renaming || cold()) return done;
-    const date = c.date, old = c.tag, ns = nsOf(date), pp = ns ? pageParts(old) : null;
-    if (onShelves(date, old)) { ui.say(SHELVES_KEEP, 2500); return done; }
-    if (ns && ns.titledRoots && !pp!.sub) return refile(date, old);
-    const deep = !!ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old));
-    const oldLeaf = pp ? pp.leaf : old;
-    const filled = deep ? entryKey(date, old) : oldLeaf;
-    const raw = dialogs.prompt(deep ? movePrompt(date, old, shownName(date, old)) : renamePrompt(date, old, shownName(date, old)), filled);
+    if (!c.tag || renaming) return done;
+    if (cold()) return done;
+    const date = c.date, old = c.tag;
+    if (onShelves(date, old)) return refused(SHELVES_KEEP, 2500);
+    if (nsOf(date)?.titledRoots && !pageParts(old).sub) return refile(date, old);
+    return renameAsked(date, old);
+  }
+  interface Renaming { date: string; old: string; pp: ReturnType<typeof pageParts> | null; deep: boolean; oldLeaf: string }
+  function renamingOf(date: string, old: string): Renaming {
+    const ns = nsOf(date), pp = ns ? pageParts(old) : null;
+    return { date, old, pp, deep: !!ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old)), oldLeaf: pp ? pp.leaf : old };
+  }
+  function renameTyped(r: Renaming, raw: string | null): Promise<void> {
+    const addr = r.pp ? typedAddress(raw) : null;
+    if (addr) return "refuse" in addr ? refused(addr.refuse) : relocate(r.date, r.old, entryKey(addr.date, addr.tag), "move");
+    const leaf = typedNameAt(raw);
+    if (leaf === null || leaf === r.oldLeaf) return done;
+    return renameLeaf(r, leaf);
+  }
+  function renameAsked(date: string, old: string): Promise<void> {
+    const r = renamingOf(date, old), filled = r.deep ? entryKey(date, old) : r.oldLeaf;
+    const raw = dialogs.prompt((r.deep ? movePrompt : renamePrompt)(date, old, shownName(date, old)), filled);
     if ((raw || "").trim() === filled) return done;
-    const addr = ns ? typedAddress(raw) : null;
-    if (addr && "refuse" in addr) { ui.say(addr.refuse); return done; }
-    if (addr) return relocate(date, old, entryKey(addr.date, addr.tag), "move");
-    const typed = typedName(raw);
-    if (!typed) return done;
-    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
-    const leaf = typed.name;
-    if (leaf === oldLeaf) return done;
-    const listKey = pp && pp.sub ? entryKey(date, pp.parent) : date;
-    if (childrenOf(keysNow(), listKey).indexOf(leaf) !== -1) { dialogs.alert(takenText(listKey, leaf)); return done; }
-    const full = pp && pp.sub ? pp.parent + "/" + leaf : leaf;
-    if (ns) return relocate(date, old, entryKey(date, full), deep ? "move" : "rename");
+    return renameTyped(r, raw);
+  }
+  function renameLeaf(r: Renaming, leaf: string): Promise<void> {
+    const listKey = r.pp?.sub ? entryKey(r.date, r.pp.parent) : r.date;
+    if (childrenOf(keysNow(), listKey).includes(leaf)) { dialogs.alert(takenText(listKey, leaf)); return done; }
+    const full = r.pp?.sub ? r.pp.parent + "/" + leaf : leaf;
+    if (r.pp) return relocate(r.date, r.old, entryKey(r.date, full), r.deep ? "move" : "rename");
+    return renameTagged(r.date, r.old, full);
+  }
+  interface TagMove { date: string; old: string; full: string; md: string }
+  const followedTag = (t: TagMove, text: string): string =>
+    retargetLinks(text, { href: entryHash(t.date, t.old), label: t.old }, { href: entryHash(t.date, t.full), label: t.full }) ?? text;
+  function tagRenameFailed(t: TagMove): Promise<void> {
+    const live = session.surfaceMd();
+    return (live !== t.md ? layer.setEntry(entryKey(t.date, t.old), live) : Promise.resolve(true)).then(() => { session.open(t.date, t.old); ui.pin("couldn't rename — nothing was moved"); });
+  }
+  function tagRenamed(t: TagMove): Promise<void> {
+    const oldKey = entryKey(t.date, t.old), newKey = entryKey(t.date, t.full);
+    return layer.removeEntry(oldKey).then(() => retargetHost(t.date, t.old, t.full)).then(() => {
+      /* typed into the surface while the writes ran: carried to the new key */
+      const live = session.surfaceMd();
+      return live !== t.md ? layer.setEntry(newKey, followedTag(t, live)) : true;
+    }).then(() => {
+      /* the kept state before the open, the place after it (pin:
+         lifecycle.test › flushes, suspends, writes the new key) */
+      const kept = { [oldKey]: newKey };
+      deps.moveKept(kept, kept);
+      ui.replaceHash(entryHash(t.date, t.full));
+      session.open(t.date, t.full);
+      session.movePlace(oldKey, newKey);
+      ui.redraw();
+    });
+  }
+  function renameTagged(date: string, old: string, full: string): Promise<void> {
     renaming = true;
     return session.flushSave().then(() => {
       if (session.current.date !== date || session.current.tag !== old) return;
       session.suspendSaves();   /* nothing lands under the old key from here on */
-      const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
-      const followed = (text: string): string => retargetLinks(text, { href: entryHash(date, old), label: old }, { href: entryHash(date, full), label: full }) ?? text;
-      return layer.setEntry(entryKey(date, full), followed(md)).then((landed) => {
-        if (!landed) {
-          const live = session.surfaceMd();
-          return (live !== md ? layer.setEntry(oldKey, live) : Promise.resolve(true)).then(() => { session.open(date, old); ui.pin("couldn't rename — nothing was moved"); });
-        }
-        return layer.removeEntry(oldKey).then(() => retargetHost(date, old, full)).then(() => {
-        /* typed into the surface while the writes ran: carried to the new key */
-        const live = session.surfaceMd();
-        return live !== md ? layer.setEntry(entryKey(date, full), followed(live)) : true;
-      }).then(() => {
-        /* the kept state before the open, the place after it (pin:
-           lifecycle.test › flushes, suspends, writes the new key) */
-        const kept = { [oldKey]: entryKey(date, full) };
-        deps.moveKept(kept, kept);
-        ui.replaceHash(entryHash(date, full));
-        session.open(date, full);
-        session.movePlace(oldKey, entryKey(date, full));
-        ui.redraw();
-        });
-      });
+      const t: TagMove = { date, old, full, md: layer.entryMd(entryKey(date, old)) };
+      return layer.setEntry(entryKey(date, full), followedTag(t, t.md)).then((landed) => (landed ? tagRenamed(t) : tagRenameFailed(t)));
     }).finally(() => { renaming = false; });
   }
-
   /* the pictures no entry names any more, deleted; `still` the texts of
      entries whose removal did not land, whose pictures stay. One that will
      not go is left, and nothing is said (pin: lifecycle.test › a move deletes
@@ -281,13 +321,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   /* AN AUTHOR RE-FILED, its books and their pictures with it, a name typed
      in the filing form */
   function refile(date: string, old: string): Promise<void> {
-    const typed = typedName(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), old));
-    if (!typed) return done;
-    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
-    const root = typed.name;
-    if (root === old) return done;
-    if (onShelves(date, root)) { ui.say(SHELVES_TAKEN, 2500); return done; }
-    if (childrenOf(keysNow(), date).indexOf(root) !== -1) { dialogs.alert(takenText(date, root)); return done; }
+    const root = typedNameAt(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), old));
+    if (root === null || root === old) return done;
+    if (onShelves(date, root)) return refused(SHELVES_TAKEN, 2500);
+    if (childrenOf(keysNow(), date).includes(root)) { dialogs.alert(takenText(date, root)); return done; }
     return relocate(date, old, entryKey(date, root), "refile");
   }
 
@@ -308,106 +345,149 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      an author with no page of its own) */
   type Mode = "move" | "rename" | "refile";
   const COULDNT: Record<Mode, string> = { move: "couldn't move", rename: "couldn't rename", refile: "couldn't re-file" };
+  interface Move { date: string; old: string; to: string; toDate: string; toTag: string; from: string; mode: Mode }
+  interface Moved { from: string; to: string; named: Record<string, string>; md: string }
+  interface Relocation extends Move {
+    plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; flushed: string; there: string;
+    rootNames: Record<string, string>; moved: Moved[]; copied: string[]; twinPictures: string[]; couldnt: string;
+  }
+  type Carried = { lost: number; olds: string[] };
+  interface Tally { left: string[]; updated: number; stayed: string[] }
+  const shelvesPlace = (date: string, tag: string): boolean => date === NS_BOOK.key && pageParts(tag).name === SHELVES;
+  function moveAsked(date: string, old: string, to: string, plan: MovePlan): boolean {
+    const twinTitles = Object.keys(plan.twins).map((k) => firstHeading(layer.entryMd(k)) || pageParts(splitKey(k)[1]!).leaf);
+    return dialogs.confirm(moveConfirm({ date, tag: old, shown: shownName(date, old) }, to, { moved: Object.keys(plan.moves).length - 1, into: plan.into, twins: twinTitles }));
+  }
   function relocate(date: string, old: string, to: string, mode: Mode): Promise<void> {
     const from = entryKey(date, old);
     if (to === from) return done;
     const [toDate, toTag] = splitKey(to) as [string, string];
-    if (toDate === NS_BOOK.key && pageParts(toTag).name === SHELVES) { ui.say(pageParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500); return done; }
+    if (shelvesPlace(toDate, toTag)) return refused(pageParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500);
     const first = movePlan(layer.cache, from, to);
-    if ("refuse" in first) { ui.say(first.refuse, 3000); return done; }
-    if (mode === "move") {
-      const twinTitles = Object.keys(first.twins).map((k) => firstHeading(layer.entryMd(k)) || pageParts(splitKey(k)[1]!).leaf);
-      if (!dialogs.confirm(moveConfirm(date, old, shownName(date, old), to, { moved: Object.keys(first.moves).length - 1, into: first.into, twins: twinTitles }))) return done;
-    }
-    const couldnt = COULDNT[mode];
+    if ("refuse" in first) return refused(first.refuse, 3000);
+    if (mode === "move" && !moveAsked(date, old, to, first)) return done;
+    return flushedMove({ date, old, to, toDate, toTag, from, mode });
+  }
+  function flushedMove(m: Move): Promise<void> {
     renaming = true;
     return session.flushSave().then(() => {
-      if (session.current.date !== date || session.current.tag !== old) return;
+      if (session.current.date !== m.date || session.current.tag !== m.old) return;
       session.suspendSaves();   /* nothing lands under the old key from here on */
-      const plan = movePlan(layer.cache, from, to);
-      if ("refuse" in plan) { session.open(date, old); ui.pin(couldnt + " — " + plan.refuse); return; }
-      const pageless = !(from in plan.moves);
-      if (pageless) plan.moves[from] = to;
-      const headed = (md: string): string => mode === "refile" ? withHeading(md, old) ?? md : md;
-      const newLeaf = pageParts(toTag).leaf, oldLeaf = pageParts(old).leaf;
-      const relabel = newLeaf !== oldLeaf ? { old: oldLeaf, new: newLeaf } : undefined;
-      const rewrite = (md: string): string => moveLinks(md, from, plan) ?? md;
-      const rewriteOwn = (md: string): string => moveLinks(md, from, plan, relabel) ?? md;
-      const flushed = layer.entryMd(from), there = plan.into ? layer.entryMd(to) : "";
-      const names = (k: string): Record<string, string> => pictureNames(k, plan.moves[k], layer.entryMd(k), k === from && plan.into ? imageRefs(there) : []);
-      const rootNames = names(from);
-      const rootMd = (md: string): string => {
-        const own = renamePictures(headed(rewriteOwn(md)), rootNames);
-        return plan.into ? joined(rewrite(there), own) : own;
-      };
-      const moved = Object.keys(plan.moves).map((k) => {
-        const named = k === from ? rootNames : names(k);
-        return { from: k, to: plan.moves[k], named, md: k === from ? rootMd(flushed) : renamePictures(rewrite(layer.entryMd(k)), named) };
-      });
-      const failed = (keys: string[], results: boolean[]): string[] => keys.filter((_, i) => !results[i]);
-      const copied: string[] = [];
-      const twinPictures = Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k)));
-      /* typed while the copies ran: kept under the old name (pin:
-         lifecycle.test › a failed move keeps what was typed) */
-      const keepTyped = (): Promise<unknown> => { const live = session.surfaceMd(); return (live !== flushed ? layer.setEntry(from, live) : Promise.resolve(true)).catch(() => {}); };
-      const refused = (why: string): Promise<void> => keepTyped().then(() => dropUnnamed(copied)).then(() => { session.open(date, old); ui.pin(couldnt + " — " + why); });
-      const takeBack = (landed: boolean[]): Promise<void> => keepTyped()
-        .then(() => Promise.all(moved.map((m) => m.to === to && plan.into ? layer.setEntry(to, there) : layer.removeEntry(m.to))))
-        .then((undone) => dropUnnamed(copied, stillThere(moved.map((m) => m.to), undone, (i) => moved[i].md)).then(() => undone))
-        .then((undone) => {
-          const left = failed(moved.map((m) => m.to), undone).filter((_, i) => landed[i]);
-          session.open(date, old);
-          ui.pin(left.length ? couldnt + " — copies left: " + left.join(", ") : couldnt + " — nothing was moved");
-        });
-      return carryPictures(moved, copied).then((carried) => {
-        if ("clash" in carried) return refused(carried.clash);
-        return Promise.all(moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => {
-          if (landed.includes(false)) return takeBack(landed);
-          const twins = Object.keys(plan.twins);
-          const linking = linkingKeys(layer.cache, date, old, plan.moves).filter((k) => !(k in plan.twins));
-          const points = pointsInto(date, old);
-          const host = hostKey(date, old);
-          return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => moveLinks(md, from, plan, k === host ? relabel : undefined)))).then((results) => {
-            const left = [
-              ...moved.filter((m) => points(m.md)).map((m) => m.to),
-              ...linking.filter((k, i) => results[i] === "failed" || points(layer.entryMd(k))),
-            ];
-            const updated = linking.filter((k, i) => results[i] === "landed" && left.indexOf(k) === -1).length;
-            const olds = [...Object.keys(plan.moves).filter((k) => !(pageless && k === from)), ...twins];
-            const was = olds.map((k) => k === from ? flushed : layer.entryMd(k));
-            return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
-              const still = stillThere(olds, removed, (i) => was[i]);
-              /* typed into the surface while the writes ran: carried to the new key */
-              const live = session.surfaceMd();
-              return (live !== flushed ? layer.setEntry(to, rootMd(live)) : Promise.resolve(true)).then(() => dropUnnamed([...carried.olds, ...twinPictures], still)).then(() => failed(olds, removed));
-            }).then((stayed) => {
-              /* the kept state before the open, the places after it */
-              const kept: Record<string, string> = Object.create(null);
-              for (const k of Object.keys(plan.moves)) if (!(plan.into && k === from)) kept[k] = plan.moves[k];
-              deps.moveKept(kept, { ...kept, ...plan.twins, ...(plan.into ? { [from]: to } : {}) });
-              ui.replaceHash(entryHash(toDate, toTag));
-              session.open(toDate, toTag);
-              session.movePlaces(kept);
-              for (const k of plan.into ? [...twins, from] : twins) session.movePlace(k, null);
-              ui.redraw();
-              const count = moved.length - (pageless ? 1 : 0);
-              const text = mode === "refile" ? refiledText(toTag, count, updated, left, stayed, carried.lost) : movedText(to, count, twins.length, carried.lost, updated, left, stayed, mode === "rename" ? "renamed" : "moved");
-              if (left.length || stayed.length) ui.pin(text); else ui.say(text);
-            });
-          });
-        });
-      }, () => refused("a picture could not be copied, nothing was moved"));
+      return relocateNow(m);
     }).finally(() => { renaming = false; });
   }
+  function relabelOf(m: Move): { old: string; new: string } | undefined {
+    const newLeaf = pageParts(m.toTag).leaf, oldLeaf = pageParts(m.old).leaf;
+    return newLeaf !== oldLeaf ? { old: oldLeaf, new: newLeaf } : undefined;
+  }
+  const headedMd = (r: Relocation, md: string): string => (r.mode === "refile" ? withHeading(md, r.old) ?? md : md);
+  const otherText = (r: Relocation, md: string): string => moveLinks(md, r.from, r.plan) ?? md;
+  const picturesFor = (r: Relocation, k: string): Record<string, string> =>
+    pictureNames(k, r.plan.moves[k], layer.entryMd(k), k === r.from && r.plan.into ? imageRefs(r.there) : []);
+  function rootText(r: Relocation, md: string): string {
+    const own = renamePictures(headedMd(r, moveLinks(md, r.from, r.plan, r.relabel) ?? md), r.rootNames);
+    return r.plan.into ? joined(otherText(r, r.there), own) : own;
+  }
+  function movedOf(r: Relocation, k: string): Moved {
+    if (k === r.from) return { from: k, to: r.plan.moves[k], named: r.rootNames, md: rootText(r, r.flushed) };
+    const named = picturesFor(r, k);
+    return { from: k, to: r.plan.moves[k], named, md: renamePictures(otherText(r, layer.entryMd(k)), named) };
+  }
+  function relocation(m: Move, plan: MovePlan): Relocation {
+    const pageless = !(m.from in plan.moves);
+    if (pageless) plan.moves[m.from] = m.to;
+    const r: Relocation = {
+      ...m, plan, pageless, relabel: relabelOf(m), flushed: layer.entryMd(m.from), there: plan.into ? layer.entryMd(m.to) : "",
+      rootNames: {}, moved: [], copied: [], twinPictures: Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k))), couldnt: COULDNT[m.mode],
+    };
+    r.rootNames = picturesFor(r, m.from);
+    r.moved = Object.keys(plan.moves).map((k) => movedOf(r, k));
+    return r;
+  }
+  function relocateNow(m: Move): Promise<void> {
+    const plan = movePlan(layer.cache, m.from, m.to);
+    if ("refuse" in plan) { session.open(m.date, m.old); ui.pin(COULDNT[m.mode] + " — " + plan.refuse); return done; }
+    const r = relocation(m, plan);
+    return carryPictures(r.moved, r.copied).then(
+      (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),
+      () => moveRefused(r, "a picture could not be copied, nothing was moved"),
+    );
+  }
+  /* typed while the copies ran: kept under the old name (pin:
+     lifecycle.test › a failed move keeps what was typed) */
+  function keepTyped(r: Relocation): Promise<unknown> {
+    const live = session.surfaceMd();
+    return (live !== r.flushed ? layer.setEntry(r.from, live) : Promise.resolve(true)).catch(() => {});
+  }
+  function moveRefused(r: Relocation, why: string): Promise<void> {
+    return keepTyped(r).then(() => dropUnnamed(r.copied)).then(() => { session.open(r.date, r.old); ui.pin(r.couldnt + " — " + why); });
+  }
+  const undoCopy = (r: Relocation, m: Moved): Promise<boolean> => (m.to === r.to && r.plan.into ? layer.setEntry(r.to, r.there) : layer.removeEntry(m.to));
+  function takeBack(r: Relocation, landed: boolean[]): Promise<void> {
+    const tos = r.moved.map((m) => m.to);
+    return keepTyped(r)
+      .then(() => Promise.all(r.moved.map((m) => undoCopy(r, m))))
+      .then((undone) => dropUnnamed(r.copied, stillThere(tos, undone, (i) => r.moved[i].md)).then(() => undone))
+      .then((undone) => {
+        const left = failedOf(tos, undone).filter((_, i) => landed[i]);
+        session.open(r.date, r.old);
+        ui.pin(left.length ? r.couldnt + " — copies left: " + left.join(", ") : r.couldnt + " — nothing was moved");
+      });
+  }
+  function writeMoved(r: Relocation, carried: Carried): Promise<void> {
+    return Promise.all(r.moved.map((m) => layer.setEntry(m.to, m.md))).then((landed) => (landed.includes(false) ? takeBack(r, landed) : linksAfter(r, carried)));
+  }
+  function tallied(r: Relocation, linking: string[], results: Rewrite[]): Omit<Tally, "stayed"> {
+    const points = pointsInto(r.date, r.old);
+    const left = [
+      ...r.moved.filter((m) => points(m.md)).map((m) => m.to),
+      ...linking.filter((k, i) => results[i] === "failed" || points(layer.entryMd(k))),
+    ];
+    return { left, updated: linking.filter((k, i) => results[i] === "landed" && !left.includes(k)).length };
+  }
+  function linksAfter(r: Relocation, carried: Carried): Promise<void> {
+    const linking = linkingKeys(layer.cache, r.date, r.old, r.plan.moves).filter((k) => !(k in r.plan.twins));
+    const host = hostKey(r.date, r.old);
+    return Promise.all(linking.map((k) => layer.rewriteEntry(k, (md) => moveLinks(md, r.from, r.plan, k === host ? r.relabel : undefined))))
+      .then((results) => clearOlds(r, carried, tallied(r, linking, results)));
+  }
+  function clearOlds(r: Relocation, carried: Carried, t: Omit<Tally, "stayed">): Promise<void> {
+    const olds = [...Object.keys(r.plan.moves).filter((k) => !(r.pageless && k === r.from)), ...Object.keys(r.plan.twins)];
+    const was = olds.map((k) => (k === r.from ? r.flushed : layer.entryMd(k)));
+    return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
+      const still = stillThere(olds, removed, (i) => was[i]);
+      /* typed into the surface while the writes ran: carried to the new key */
+      const live = session.surfaceMd();
+      return (live !== r.flushed ? layer.setEntry(r.to, rootText(r, live)) : Promise.resolve(true)).then(() => dropUnnamed([...carried.olds, ...r.twinPictures], still)).then(() => failedOf(olds, removed));
+    }).then((stayed) => arrived(r, carried, { ...t, stayed }));
+  }
+  function keptMoves(r: Relocation): Record<string, string> {
+    const kept: Record<string, string> = Object.create(null);
+    for (const k of Object.keys(r.plan.moves)) if (!(r.plan.into && k === r.from)) kept[k] = r.plan.moves[k];
+    return kept;
+  }
+  function outcomeText(r: Relocation, carried: Carried, t: Tally): string {
+    const o = { moved: r.moved.length - (r.pageless ? 1 : 0), updated: t.updated, left: t.left, stayed: t.stayed, lost: carried.lost };
+    if (r.mode === "refile") return refiledText(r.toTag, o);
+    return movedText(r.to, { ...o, twins: Object.keys(r.plan.twins).length }, r.mode === "rename" ? "renamed" : "moved");
+  }
+  /* the kept state before the open, the places after it */
+  function arrived(r: Relocation, carried: Carried, t: Tally): void {
+    const twins = Object.keys(r.plan.twins), kept = keptMoves(r);
+    deps.moveKept(kept, { ...kept, ...r.plan.twins, ...(r.plan.into ? { [r.from]: r.to } : {}) });
+    ui.replaceHash(entryHash(r.toDate, r.toTag));
+    session.open(r.toDate, r.toTag);
+    session.movePlaces(kept);
+    for (const k of r.plan.into ? [...twins, r.from] : twins) session.movePlace(k, null);
+    ui.redraw();
+    const text = outcomeText(r, carried, t);
+    if (t.left.length || t.stayed.length) ui.pin(text);
+    else ui.say(text);
+  }
 
-  function remove(): Promise<void> {
-    const c = session.current;
-    if (!c.tag || cold()) return done;
-    const date = c.date, tag = c.tag, ns = nsOf(date);
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) { ui.say("delete the " + ns.subNoun + "s first", 2500); return done; }
-    if (!dialogs.confirm(deleteConfirm(date, tag, shownName(date, tag)))) return done;
+  function removeAt(date: string, tag: string): Promise<void> {
     const key = entryKey(date, tag);
-    const sweptKeys = ns ? blankSubTree(keysNow(), key) : [];
+    const sweptKeys = nsOf(date) ? blankSubTree(keysNow(), key) : [];
     const sweep = sweptKeys.map((k) => layer.removeEntry(k));
     const back = deleteLanding(date, tag);
     const pictures = picturesOf(key, layer.entryMd(key));
@@ -425,7 +505,30 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       ui.focus();
     });
   }
-
+  function remove(): Promise<void> {
+    const c = session.current;
+    if (!c.tag || cold()) return done;
+    const date = c.date, tag = c.tag, ns = nsOf(date);
+    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) return refused("delete the " + ns.subNoun + "s first", 2500);
+    if (!dialogs.confirm(deleteConfirm(date, tag, shownName(date, tag)))) return done;
+    return removeAt(date, tag);
+  }
+  const goRoot = (ns: string, root: string): void => session.goto(entryHash(ns, root), "already on " + trimLabel(rootLabel(ns, root, journal), ECHO_CAP));
+  function knownRoot(ns: string, name: string, raw: string | null): string | null {
+    if (registered(keysNow(), ns, name)) return name;
+    const asTyped = [(raw || "").trim().toLowerCase(), name.toLowerCase()];
+    return childrenOf(keysNow(), ns).find((root) => asTyped.includes(rootLabel(ns, root, journal).toLowerCase())) ?? null;
+  }
+  /* a root whose label is its heading is asked a second name, the one it
+     is filed under (pin: lifecycle.test › asks the name, then where it sorts) */
+  function filedRoot(ns: string, raw: string): Promise<void> {
+    const shown = shownForm(raw);
+    const filed = typedNameAt(dialogs.prompt("Sorted under:", filingForm(shown)));
+    if (filed === null) return done;
+    if (onShelves(ns, filed)) return refused(SHELVES_TAKEN, 2500);
+    if (registered(keysNow(), ns, filed)) { goRoot(ns, filed); return done; }
+    return layer.setEntry(entryKey(ns, filed), "# " + shown + "\n").then((landed) => { if (landed) goRoot(ns, filed); });
+  }
   /* create a namespace ROOT: prompt → the naming rule → register → go. An
      existing name just opens; a new one is stored with an empty body at
      once so the list holds it while it is empty, and the address opens. The
@@ -439,26 +542,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   function newRoot(ns: string): Promise<void> {
     const desc = KEYED_NS[ns];
     const raw = dialogs.prompt("Name for the new " + desc.noun + ":");
-    const typed = typedName(raw);
-    if (!typed) return done;
-    if ("refuse" in typed) { ui.say(typed.refuse); return done; }
-    const name = typed.name;
-    const asTyped = [(raw || "").trim().toLowerCase(), name.toLowerCase()];
-    const go = (root: string): void => session.goto(entryHash(ns, root), "already on " + trimLabel(rootLabel(ns, root, journal), ECHO_CAP));
+    const name = typedNameAt(raw);
+    if (name === null) return done;
     if (cold()) return done;   /* a name checked against one primed row could store an empty body over a real one */
-    if (registered(keysNow(), ns, name)) { go(name); return done; }
-    const labelled = childrenOf(keysNow(), ns).find((root) => asTyped.includes(rootLabel(ns, root, journal).toLowerCase()));
-    if (labelled !== undefined) { go(labelled); return done; }
-    if (!desc.titledRoots) return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) go(name); });
-    /* a root whose label is its heading is asked a second name, the one it
-       is filed under (pin: lifecycle.test › asks the name, then where it sorts) */
-    const shown = shownForm(raw!);
-    const filed = typedName(dialogs.prompt("Sorted under:", filingForm(shown)));
-    if (!filed) return done;
-    if ("refuse" in filed) { ui.say(filed.refuse); return done; }
-    if (onShelves(ns, filed.name)) { ui.say(SHELVES_TAKEN, 2500); return done; }
-    if (registered(keysNow(), ns, filed.name)) { go(filed.name); return done; }
-    return layer.setEntry(entryKey(ns, filed.name), "# " + shown + "\n").then((landed) => { if (landed) go(filed.name); });
+    const known = knownRoot(ns, name, raw);
+    if (known !== null) { goRoot(ns, known); return done; }
+    if (!desc.titledRoots) return layer.setEntry(entryKey(ns, name), "").then((landed) => { if (landed) goRoot(ns, name); });
+    return filedRoot(ns, raw!);
   }
 
   /* the parent's index link reads as a sub-page's TITLE: when a landed
@@ -476,7 +566,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const heading = journal.heading(ekey);
     const before = ekey in headingSeen ? headingSeen[ekey] : heading;
     headingSeen[ekey] = heading;
-    if (!pp.sub || before === heading || !stored) return;
+    if (!pp.sub || !stored) return;
+    if (before === heading) return;
     const parent = entryKey(date, pp.parent);
     const out = relabelLinks(layer.entryMd(parent), entryHash(date, tag), pp.leaf, { was: before, now: heading });
     if (out !== null) layer.setEntry(parent, out);

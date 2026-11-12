@@ -284,3 +284,40 @@ bridge, reader ok; 544 steps, 0 open); the ledger's 48 blocks read, two new
 comments that only restated their code removed (placeKeeper.test's helper,
 sourceKeys' quote table), two merged on the step they describe; the 46 tests
 whose code changed read, their assertions untouched.
+
+### 2026-11-11 — src/ui/, session.ts, main.ts
+
+177 of the 178 scored .ts files under src/ at 10, tests included (MEASURED);
+the one left is main.ts, 5.13 → 6.92. The batch: lifecycle.ts 6.19 → 10
+(relocate cc 45 cut into stages over one relocation: the plan with its
+pictures and texts, the take-back, the link rewrite and its tally, the old
+keys cleared, the arrival; create and extract sharing one prompt-and-read),
+gotoModel.ts 7.23, session.ts 7.00, viewCarets.ts 8.51, searchModel.ts 8.95,
+subEntries.ts 9.09, mastheadModel.ts 9.24, clipboard.ts, naming.ts,
+notices.svelte.ts 9.68, lifecycle.test.ts 8.03 (its world built from small
+fakes) — all to 10.
+
+Signatures changed, callers following: gotoPick takes the entry and the pick
+as two values, subLevel what is wanted as one; scopeOptions the keys, journal
+and shelves page as one; crossViewOffset `{ toSource, pastTail }`;
+mastheadModel `{ keys, journal, today }`; moveConfirm the entry as one value,
+refiledText and movedText one MoveOutcome.
+
+MAIN.TS STOPS SHORT: its compound conditions and long handlers fixed, it then
+reads Code Duplication over 26 functions, most of them untouched (readBackups,
+acts.sweep, renderSearch, openRow, acts.panel) and none reported at HEAD — the
+smell latent, as the string rule was, surfacing as the others clear
+(INFERRED). The CLI names the functions but not the pairs. Ten there likely
+means main.ts's 1,500 lines of wiring split into modules — the bookmarks
+card, the line bar, the replace bar, the copy button, the format bar, import
+and export — a design change for a batch of its own. CodeScene's function
+names in this file are off: an anonymous `acts.x = () =>` handler is reported
+under the named function above it (`acts.replace.open` read as 5 arguments,
+`edit`'s count).
+
+The nets: tsc, the suite (1437), `npm run verify` with the Helium runs played
+(corner, bridge, reader ok; 544 steps, 0 open); the ledger's 33 blocks read,
+two new comments removed (one restating its code; one explaining a
+`boolean | null` answer, the answer made `"there" | "switched" | "refused"`
+instead); the 15 tests whose calls changed shape read, their assertions
+untouched.
