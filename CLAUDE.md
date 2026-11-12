@@ -423,9 +423,9 @@ is in the plan's record, under the phase named):
   a module a group, each `section("name", …)` with its named steps written
   after it before the next (a pin finds its reading in that span), over
   `steps/kit.ts` (the run's page and adapter as bindings, the shared helpers,
-  the dialogs, the seeds and `TODAY`, the day the drivers and the bridge pin
-  the page's clock to, 2026-09-12: never a seeded day, pinned since
-  2026-09-22) and `steps/timing.ts`
+  the dialogs, the seeds and `TODAY`, the fixed date the drivers set the
+  page's clock to, so a reading that spells today reads the same on any
+  day; never a seeded day) and `steps/timing.ts`
   (TIMING=1);
   `tools/adapters/successor.ts` answers them over the app, with
   `adapters/blankRow.ts` and `adapters/inPage.ts` (a reading of top-level
