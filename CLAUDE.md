@@ -581,8 +581,8 @@ is in the plan's record, under the phase named):
   `move.ts` (a page or book to another key — renamed, re-filed or moved —
   pure: the keys that move, the twins the place holds by title, the links
   rewritten, the texts joined, the pictures renamed), `pictures.ts` (the
-  pictures the entries name, those no entry names, and the sweep's plan with
-  its belt). Tests beside
+  pictures the entries name, those no entry names, the sweep's plan with
+  its belt, and a move's copy, clash and removal over the image store). Tests beside
   them, ported from the current app's node suites where they had one.
 - `src/ui/` — the UI, Svelte 5 (`src/chrome/` until 2026-09-30, and
   "chrome" its word for the UI in code and prose, both renamed because the
@@ -629,7 +629,23 @@ is in the plan's record, under the phase named):
   the staged passage, over `editor/inlineStyles.ts`, the inline-style
   sweep over a live twin that ⌘C and the hover copy share),
   `Masthead.svelte` (the sticky bar drawing it), `ui.css` (the bar's
-  tokens, global). Tests beside them: the ledger's and the model's under
+  tokens, global). THE ACTS, the page's handlers split out of main.ts
+  (2026-11-11), each a factory over the parts main.ts hands it, its
+  listeners registered by itself: `searchActs.ts` (the Search row: the
+  index, its build and its keeping, the scan, the walk and the pick),
+  `gotoActs.ts` (the Go to row), `lineBarActs.ts` (⌃⌘G's bar: the asks,
+  the landing and its centring a frame later, the caret hand-back, a link
+  to a line and the landing owed before the warm), `replaceActs.ts` (⌃⌘E's
+  bar over the view it opened on), `bookmarkActs.ts` (the bookmarks card:
+  its keys, the alias editor, the link placed), `formatBarActs.ts` (the
+  floating format bar: its place over the selection and its acts),
+  `copyButtonActs.ts` (the hover copy button: the block under the mouse,
+  the grid's band, the two-flavour write), `folderActs.ts` (the manual
+  export and import), `panelActs.ts` (the panels: the opener's toggle,
+  the page and bookshelf lists, their answer after the warm),
+  `backupsPanelActs.ts` (the backups panel's status and the picture
+  sweep), `heldKeys.ts` (a held key acting once where its press moved the
+  keys, a held ⌃⌘ chord always; the plain chord). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
   component never shares a stem with a module (the disk is
   case-insensitive; the plan's phase 3 record has the failure).

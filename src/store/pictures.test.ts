@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR } from "./pictures.ts";
+import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR, pictureMoves } from "./pictures.ts";
 import { memImageStore } from "./store.ts";
 
 const CACHE: Record<string, string> = {
@@ -54,5 +54,37 @@ describe("the image store's list and delete", () => {
     await images.set("page/b.webp", new Uint8Array([2]));
     await images.del("page/a.webp");
     expect(await images.keys()).toEqual(["page/b.webp"]);
+  });
+});
+
+describe("pictureMoves", () => {
+  const stocked = async () => {
+    const images = memImageStore();
+    await images.set("a.webp", new Uint8Array([1, 2]));
+    await images.set("same.webp", new Uint8Array([1, 2]));
+    await images.set("other.webp", new Uint8Array([1, 3]));
+    await images.set("longer.webp", new Uint8Array([1, 2, 3]));
+    return images;
+  };
+  it("copies a picture under a new key, and answers false when there is none to copy", async () => {
+    const images = await stocked();
+    const moves = pictureMoves(images);
+    expect(await moves.copyPicture("a.webp", "b.webp")).toBe(true);
+    expect((await images.get("b.webp"))?.bytes).toEqual(new Uint8Array([1, 2]));
+    expect(await moves.copyPicture("none.webp", "c.webp")).toBe(false);
+    expect(await images.get("c.webp")).toBe(null);
+  });
+  it("a clash is a different picture already at the destination; an empty one or the same bytes is none", async () => {
+    const moves = pictureMoves(await stocked());
+    expect(await moves.pictureClash("a.webp", "empty.webp")).toBe(false);
+    expect(await moves.pictureClash("a.webp", "same.webp")).toBe(false);
+    expect(await moves.pictureClash("a.webp", "other.webp")).toBe(true);
+    expect(await moves.pictureClash("a.webp", "longer.webp")).toBe(true);
+    expect(await moves.pictureClash("none.webp", "same.webp")).toBe(true);
+  });
+  it("removes every picture named", async () => {
+    const images = await stocked();
+    await pictureMoves(images).removePictures(["a.webp", "other.webp"]);
+    expect((await images.keys()).sort()).toEqual(["longer.webp", "same.webp"]);
   });
 });

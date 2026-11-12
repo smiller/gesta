@@ -321,3 +321,58 @@ two new comments removed (one restating its code; one explaining a
 `boolean | null` answer, the answer made `"there" | "switched" | "refused"`
 instead); the 15 tests whose calls changed shape read, their assertions
 untouched.
+
+### 2026-11-11 — main.ts split (the reader: "Split main.ts, then review")
+
+main.ts 6.92 → 10.00, 1,534 lines → 559 (MEASURED, `cs review`, `wc -l`).
+Eleven modules under src/ui/, each a factory over a deps object that main.ts
+builds, the moved body kept verbatim where it scored and cut into named steps
+where it did not: searchActs, gotoActs, lineBarActs, replaceActs, bookmarkActs,
+formatBarActs, copyButtonActs, folderActs, panelActs, backupsPanelActs, and
+heldKeys (the held-key guard made a pure `swallows` over the code, the repeat
+and the focused element, under test, with `listenHeldKeys` the DOM's half); and
+in src/store/pictures.ts `pictureMoves`, the lifecycle's three picture ports
+over the image store, under test. The chords are a table; the entry-shown
+handler two named steps. Every new file scores 10 on its first commit.
+
+THE DUPLICATION FINDING IN A WIRING FILE: main.ts read Code Duplication over
+five "functions" after the moves (the session's, the lifecycle's and the
+folders' deps objects, the warm's callback, the key listeners), and removing
+any ONE of the five cleared it, while removing any single line inside one did
+not (MEASURED, a scored copy per removal). Naming the warm's callback in four
+steps made it worse, 8.81 over seven, and was reverted; a comment added inside
+the session's deps object pulled the entry-shown steps into the set. The
+finding behaves as a threshold over many short call sequences, not as a pair
+of copied blocks (INFERRED). main.ts sits at 10 just under it: a new handler
+written in main.ts may tip it, and the ratchet will say so; the cure is the
+one used here, the handler in a module of its own.
+
+The comment ledger, 61 blocks, read against the standard with the moved-comment
+re-read: five moved comments spoke of another module's mechanism and were cut
+to their own code — the export's "the sweep belongs to the backup tiers", the
+import's description of what the session's refresh repaints, the search's
+"kicked off after the warm" and "a real navigation drops its query" (both
+main.ts's now), the progress line's retirement (now its pin,
+`notices.test › a newer progress retires the older handle`); the centring's
+frame moved into lineBarActs with its MEASURED comment (`centreSoon`,
+`landSoon`), the frame having been main.ts's. One comment found stale and cut:
+the Go to row's "No save flush: it would rewrite an untouched entry", over the
+`flushSave()` that aa3a4f3 added (READ; `flushSave` writes only with a save
+pending).
+
+THE SPLIT'S ONE REGRESSION, caught by the corner run (MEASURED, verify exit 1,
+five readings changed): main.ts handed folderActs `win.showDirectoryPicker`
+as a value at launch, where it had read it at the click. The steps install
+their picker after the launch, so export and import found none ("pickers":0,
+the import's refusals unsaid), and in a real browser the method called off
+`window` would have been an illegal invocation (INFERRED, not played). The
+picker is now a getter bound to `window`, read at the click, and the backups
+panel's `canPick` read at each read of the panel as it was. No other deps
+member holds a value read at launch that main.ts read at use (READ: every
+`screen.*` part handed over is mutated in place, never reassigned).
+
+The nets after the fix: tsc, the suite (1445, eight new: `pictureMoves` and
+`heldKeys`), the comment ledger recorded as read, the titles check, the code
+health gate (15 files, main.ts 6.92 → 10, every new file 10), the hooks'
+self-test 46/46, and the Helium runs played (corner, bridge, reader ok; 544
+steps, 0 open; 399 fields decided, 0 open) — MEASURED, `npm run verify` exit 0.

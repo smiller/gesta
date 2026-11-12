@@ -9,66 +9,46 @@ import "./editor/editor.css";
 import "./ui/ui.css";
 import { mount } from "svelte";
 import { parseMarkdown } from "./model/parse.ts";
-import { serializeMarkdown } from "./model/serialize.ts";
 import { createEditor } from "./editor/editor.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
 import { idbEntryStore, idbImageStore, idbBackupStore, memEntryStore, dexieKeyedStore, type ImageStore } from "./store/store.ts";
-import { dexieIndexKeeper } from "./store/indexStore.ts";
 import { readBundle, bundleImages, bundleKeeper, heldLabel, READER_DB, READER_STORE, type BundleRow } from "./store/bundle.ts";
-import { exportEntries, missingPictures } from "./store/exportEntries.ts";
-import { writeFilesTo } from "./store/io.ts";
 import { backupRunner, PAUSED_MSG } from "./store/backup.ts";
 import { entryLayer } from "./store/entries.ts";
-import { pickImportFiles } from "./store/pick.ts";
 import type { Dir } from "./store/fsa.ts";
-import { importFiles, importKeys } from "./store/importFiles.ts";
-import { entryDocs, isDoc, failMsg, errText, filePath, type Merged } from "./store/files.ts";
+import { failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
 import { readRaw, writeRaw } from "./store/local.ts";
 import { bookmarkStore } from "./store/bookmarkStore.ts";
-import { noticeLedger, type Progress } from "./ui/notices.svelte.ts";
+import { noticeLedger } from "./ui/notices.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
 import { screenState, EMPTY_MASTHEAD } from "./ui/screen.svelte.ts";
-import { mastheadModel, panelRows, trimLabel, ECHO_CAP } from "./ui/mastheadModel.ts";
+import { mastheadModel } from "./ui/mastheadModel.ts";
 import { lifecycle, refuseCold } from "./ui/lifecycle.ts";
 import { overlays } from "./ui/overlays.ts";
-import { scopeOptions, defaultScope, sameScope, resultLabel } from "./ui/searchModel.ts";
-import { searchIndex } from "./store/searchIndex.ts";
-import { sweepPlan } from "./store/pictures.ts";
-import { searchEntries, snippetRuns, SEARCH_CAP } from "./store/search.ts";
-import { flattenDocText } from "./model/flatten.ts";
-import { linkRefusal, insertLinkAfter, linkMarkdown } from "./editor/insertLink.ts";
-import { mdLabel } from "./store/reference.ts";
-import { gotoLevels, gotoPick } from "./ui/gotoModel.ts";
-import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, askedLabel, stanzaAskCheck, stanzaHit, hasStanzas } from "./editor/goto.ts";
-import { openFoldAt } from "./editor/folds.ts";
-import { endsLineMark, landingPos, setLanding } from "./editor/landing.ts";
-import { caretNear } from "./editor/rowKeys.ts";
-import { Fragment } from "prosemirror-model";
-import { dropFolios } from "./editor/paste.ts";
-import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "./editor/replace.ts";
-import type { ReplacePort } from "./editor/surface.ts";
-import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "./store/bookmarks.ts";
-import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates } from "./ui/bookmarksModel.ts";
+import { bookmarkActs } from "./ui/bookmarkActs.ts";
+import { replaceActs } from "./ui/replaceActs.ts";
+import { copyButton } from "./ui/copyButtonActs.ts";
+import { lineBarActs } from "./ui/lineBarActs.ts";
+import { folderActs } from "./ui/folderActs.ts";
+import { searchActs } from "./ui/searchActs.ts";
+import { gotoActs } from "./ui/gotoActs.ts";
+import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
+import { pictureMoves } from "./store/pictures.ts";
+import { formatBar } from "./ui/formatBarActs.ts";
+import { backupsPanel } from "./ui/backupsPanelActs.ts";
+import { panelActs, type PanelName } from "./ui/panelActs.ts";
 import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
-import { refersByBookChapterParagraph, refersAsScripture } from "./store/reference.ts";
-import { todayKey, entryKey, entryHash, NS_BOOK } from "./store/keys.ts";
-import { SHELVES } from "./store/shelves.ts";
+import { todayKey, entryKey, entryHash } from "./store/keys.ts";
 import { hashParts } from "./store/nav.ts";
 import Corner from "./ui/Corner.svelte";
 import Masthead from "./ui/Masthead.svelte";
 import Toolbar from "./ui/Toolbar.svelte";
 import CopyButton from "./ui/CopyButton.svelte";
-import { writeClipboard } from "./ui/clipboard.ts";
-import { richBlockHtml, withPictureBytes } from "./ui/richCopy.ts";
 import icon from "./favicon.ico?inline";
-import { schema } from "./model/schema.ts";
-import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "./editor/format.ts";
-import { blankRowSelected } from "./editor/rowKeys.ts";
-import { offersBoth } from "./editor/reference.ts";
 import horace from "../fixtures/horace-odes-1.1.md?raw";
 import pippa from "../fixtures/pippa-passes-intro.md?raw";
 import twelfth from "../fixtures/twelfth-night-1.1.md?raw";
@@ -103,7 +83,6 @@ const LINES_KEY = NS + "lineinterval";
 const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : isNaN(keptInterval) || keptInterval < 0 ? 5 : keptInterval);
 type Ns = "page" | "bookshelf";
-type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 type Walk = "prev" | "next";
 function keepPicked(file: File): void {
   const p = notices.progress("keeping the backup…");
@@ -178,24 +157,22 @@ document.addEventListener("click", (e) => {
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
-/* A HELD KEY ACTS ONCE where its press moved the keys elsewhere — the Enter
-   or digit that chose a search result, a shortcut or a bookmark went on
-   into the text it opened, splitting it — and a held ⌃⌘ chord always: a
-   walk went on entry after entry. A held Tab moves one control, by
-   decision (pin: where the keys go › Enter held on a search result)
-   (pin: where the keys go › a digit held on the bookmarks card)
-   (pin: where the keys go › ⌃⌘. held from 3pr1)
-   (pin: where the keys go › Tab held from the bookshelf button) */
-const pressedIn = new Map<string, Element | null>();
-const bothMods = (e: KeyboardEvent): boolean => e.ctrlKey && e.metaKey;
-const plainChord = (e: KeyboardEvent): boolean => bothMods(e) && !e.shiftKey && !e.altKey;
-const heldElsewhere = (e: KeyboardEvent): boolean => pressedIn.has(e.code) && pressedIn.get(e.code) !== document.activeElement;
-document.addEventListener("keydown", (e) => {
-  if (!e.repeat) { pressedIn.set(e.code, document.activeElement); return; }
-  if (bothMods(e) || heldElsewhere(e)) { e.preventDefault(); e.stopImmediatePropagation(); }
-}, true);
-document.addEventListener("keyup", (e) => { pressedIn.delete(e.code); });
-window.addEventListener("blur", () => { pressedIn.clear(); });
+listenHeldKeys(document, window);
+/* ⌃⌘N is "new": a tagged entry, a sub-page, a book; ⌃⌘L toggles the Line
+   numbering row — L for lines; Tab belongs to indent, so no masthead row is
+   reachable from the editor without a chord of its own; ⌃⌘R is the
+   reference, so replace is ⌃⌘E, for exchange */
+const CHORDS: Record<string, () => void> = {
+  k: () => acts.search.toggle(!screen.search.open),
+  j: () => acts.goto.toggle(!screen.goto.open),
+  g: () => acts.lineBar.toggle(),
+  h: () => acts.panel("help", true),
+  b: () => acts.panel("bookmarks", true),
+  s: () => acts.panel("shortcuts", true),
+  l: () => acts.lines(!screen.linesOpen),
+  n: () => acts.create(),
+  e: () => acts.replace.open(),
+};
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
   if (!plainChord(e)) return;
@@ -203,20 +180,10 @@ document.addEventListener("keydown", (e) => {
      chord (pin: notices and surfaces as the old app has them › ⌃⌘K with Caps Lock) */
   const k = e.key.toLowerCase();
   if (READER && "hbsne".includes(k)) return;
-  /* ⌃⌘N is "new": a tagged entry, a sub-page, a book */
-  if (k === "k") { e.preventDefault(); acts.search.toggle(!screen.search.open); }
-  else if (k === "j") { e.preventDefault(); acts.goto.toggle(!screen.goto.open); }
-  else if (k === "g") { e.preventDefault(); acts.lineBar.toggle(); }
-  else if (k === "h") { e.preventDefault(); acts.panel("help", true); }
-  else if (k === "b") { e.preventDefault(); acts.panel("bookmarks", true); }
-  else if (k === "s") { e.preventDefault(); acts.panel("shortcuts", true); }
-  /* ⌃⌘L toggles the Line numbering row — L for lines; Tab belongs to
-     indent, so no masthead row is reachable from the editor without a
-     chord of its own */
-  else if (k === "l") { e.preventDefault(); acts.lines(!screen.linesOpen); }
-  else if (k === "n") { e.preventDefault(); acts.create(); }
-  /* ⌃⌘R is the reference, so replace is ⌃⌘E, for exchange */
-  else if (k === "e") { e.preventDefault(); acts.replace.open(); }
+  const chord = CHORDS[k];
+  if (!chord) return;
+  e.preventDefault();
+  chord();
 });
 
 const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;
@@ -252,35 +219,12 @@ if (fixture && fixtures[fixture]) {
      an autosave "saved" may overwrite "backing up…" (a background backup
      must not suppress the user's own save feedback), and a pin outranks
      both */
-  const readBackups = (): void => {
-    screen.backups.canPick = !!win.showDirectoryPicker;
-    screen.backups.configured = backup.configured;
-    screen.backups.trouble = backup.trouble;
-    screen.backups.warm = layer.storeReadFailed ? "failed" : layer.warmed ? "ok" : "loading";
-    screen.backups.unused = 0;
-    screen.backups.overHalf = 0;
-    if (READER || screen.backups.warm !== "ok") return;
-    session.flushSave().then(() => images.keys()).then((keys) => {
-      const plan = sweepPlan(keys, layer.cache);
-      screen.backups.unused = plan.drop.length;
-      screen.backups.overHalf = plan.refused;
-    }, () => {});
-  };
-  /* counted again at the click, the journal having moved since the panel opened */
-  acts.sweep = () => {
-    if (refuseCold(layer, say)) return;
-    session.flushSave().then(() => images.keys()).then((keys) => {
-      const plan = sweepPlan(keys, layer.cache);
-      const n = plan.drop.length;
-      if (!n) { readBackups(); return; }
-      if (!confirm("Remove the " + n + " picture" + (n === 1 ? "" : "s") + " no entry names? This can’t be undone.")) return;
-      return Promise.all(plan.drop.map((k) => images.del(k).then(() => true, () => false))).then((gone) => {
-        const removed = gone.filter(Boolean).length;
-        say(removed === n ? "removed " + n + " unused picture" + (n === 1 ? "" : "s") : "removed " + removed + " of " + n + " unused pictures — the rest would not go", 3000);
-        readBackups();
-      });
-    }, () => { say("couldn’t read the pictures", 3000); });
-  };
+  const bkPanel = backupsPanel({
+    bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
+    layer, images, say, confirm: (text) => confirm(text), flushSave: () => session.flushSave(),
+  });
+  const readBackups = bkPanel.read;
+  acts.sweep = bkPanel.sweep;
   const backup = backupRunner({
     layer, images, store: idbBackupStore(),
     picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
@@ -302,24 +246,33 @@ if (fixture && fixtures[fixture]) {
     const c = session.current;
     screen.masthead = mastheadModel(c.date, c.tag, { keys: Object.keys(layer.cache), journal, today: todayKey() });
   };
+  /* the search's query belongs to the entry left */
+  const leftEntry = (): void => {
+    Object.assign(screen.search, { query: "", rows: [], empty: "" });
+    overlay.open("navigated");
+  };
+  const entryShown = (stored: string, ekey: string): void => {
+    dropStaleCopy();
+    screen.gutter = !!session.view && offersInterval(session.view.dom);
+    if (ekey !== shown.ekey) leftEntry();
+    else acts.replace.check();
+    if (screen.lineBar.open) acts.lineBar.reask();
+    if (ekey === shown.ekey && stored === shown.stored) return;
+    shown = { ekey, stored };
+    refreshMasthead();
+    life.shown(ekey, stored);
+  };
   const session = startSession({
     mount: mountEl, layer, images, interval: screen.interval, say,
     stick: (text, copy) => { notices.stick(text, copy); },
     pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
-    onShow: (stored, ekey) => {
-      dropStaleCopy();
-      screen.gutter = !!session.view && offersInterval(session.view.dom);
-      if (ekey !== shown.ekey) { sr.query = ""; sr.rows = []; sr.empty = ""; overlay.open("navigated"); }   /* the search's query belongs to the entry left */
-      else acts.replace.check();
-      if (screen.lineBar.open) acts.lineBar.reask();
-      if (ekey !== shown.ekey || stored !== shown.stored) { shown = { ekey, stored }; refreshMasthead(); life.shown(ekey, stored); }
-    },
+    onShow: (stored, ekey) => entryShown(stored, ekey),
     onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
     onSwitch: () => overlay.open("view"),
     onHere: () => overlay.open("here"),
-    onSelect: () => requestAnimationFrame(placeBar),
-    onHighlight: () => { suppressBar(); requestAnimationFrame(centreSelection); },
-    onLine: (line) => { requestAnimationFrame(() => landFromLink(line)); },
+    onSelect: () => requestAnimationFrame(() => fmt.place()),
+    onHighlight: () => { fmt.suppress(); lineActs.centreSoon(); },
+    onLine: (line) => lineActs.landSoon(line),
     readOnly: READER,
   });
   /* gathered for a beat and the masthead redrawn once: an import in
@@ -348,167 +301,19 @@ if (fixture && fixtures[fixture]) {
     if (open) { overlay.open("lines"); setTimeout(() => masthead.focusLines(), 0); }
     else session.focusText();
   };
-  /* SEARCH. The index is built from the parsed text, once per session:
-     MEASURED 4.4 s over the whole mirror under node, so it is built in
-     chunks that yield — kicked off in idle time after the warm, and
-     finished on demand under a progress line when a search comes first.
-     After that every scan is a walk over the memo. The scan runs 150 ms
-     after the last keystroke, off the query as TYPED; Enter and the
-     arrows flush a pending scan first, so type-then-Enter opens the top
-     row. A real navigation collapses the row and drops its query; a
-     same-entry re-render leaves an open row alone. */
-  const index = searchIndex(layer.cache, (md) => flattenDocText(parseMarkdown(md)), undefined, __PARSER__);
-  let indexing: Progress | null = null;
-  const CHUNK_MS = 12;
-  /* a reader waiting on a search: longer slices, the progress line still
-     repainting between them */
-  const WAITED_MS = 50;
-  /* the texts an earlier launch parsed, read once before the build's first
-     step; a failed read is an empty one, the build parsing everything as
-     before (pin: searchIndex.test › an entry whose fingerprint is known) */
-  const keeper = dexieIndexKeeper(READER ? READER_DB + ".index" : NS + "index");
-  let knownRead: Promise<void> | null = null;
-  const keepIndex = (): void => {
-    const made = index.made(), stale = index.stale();
-    if (!made.length && !stale.length) return;
-    keeper.save(made).then(() => keeper.drop(stale)).catch((err: unknown) => console.error("the search index could not be kept", err));
-  };
-  /* texts parsed after the build, an edited entry's, kept as the window goes */
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && index.complete) keepIndex(); });
-  /* ONE build, whoever asks: each search waiting on it is answered once when
-     it completes */
-  const waiting = new Set<() => void>();
-  let building = false;
-  const answer = (): void => { const w = [...waiting]; waiting.clear(); for (const f of w) f(); };
-  const indexFailed = (err: unknown): void => {
-    building = false;
-    waiting.clear();
-    console.error("the search index could not be built", err);
-    indexing?.fail(failMsg("couldn't build the search index", err), errText(err));
-    indexing = null;
-  };
-  /* a throw ends this build and says so; the next search starts another */
-  const indexStep = (): { done: number; total: number } | null => {
-    try { return index.step(performance.now() + (waiting.size ? WAITED_MS : CHUNK_MS)); }
-    catch (err) { indexFailed(err); return null; }
-  };
-  const indexBuilt = (total: number): void => {
-    building = false;
-    indexing?.ok("indexed " + total + " entries", 1400);
-    indexing = null;
-    keepIndex();
-    answer();
-  };
-  const nextIndexRun = (run: () => void): void => {
-    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback;
-    if (waiting.size) setTimeout(run, 0);   /* wanted now: keep going, yielding only to paint */
-    else if (idle) idle(run);
-    else setTimeout(run, 50);
-  };
-  const buildIndex = (then?: () => void): void => {
-    if (then) waiting.add(then);
-    if (index.complete) { answer(); return; }
-    if (building) return;
-    building = true;
-    const run = (): void => {
-      const step = indexStep();
-      if (!step) return;
-      indexing?.step(step.done, step.total);
-      if (index.complete) indexBuilt(step.total);
-      else nextIndexRun(run);
-    };
-    knownRead ??= keeper.load().then((k) => index.know(k)).catch((err: unknown) => console.error("the kept search index could not be read", err));
-    knownRead.then(run);
-  };
-  let searchTimer: ReturnType<typeof setTimeout> | null = null;
-  const sr = screen.search;
-  const scopeNow = () => sr.options[sr.scopeAt]?.scope || defaultScope(session.current.date, session.current.tag);
-  /* the query the rows on screen were built for: a row clicked after the
-     query was typed on highlights what it was found for (pin: notices and
-     surfaces as the old app has them › a result clicked after more typing) */
-  let builtFor = "";
-  const renderSearch = (): void => {
-    if (!sr.open) return;
-    const q = sr.query.trim();
-    sr.rows = []; sr.capped = false; sr.active = -1; sr.empty = "";
-    if (!q) return;
-    if (!layer.warmed) { sr.empty = layer.storeReadFailed ? "Couldn’t load entries." : "Still loading…"; return; }
-    if (!index.complete) {
-      /* not while an op holds the line: progress() retires the live
-         handle, and an export's failed writes would end unshown */
-      if (!indexing && !notices.state.busy) indexing = notices.progress("indexing…");
-      buildIndex(renderSearch);
-      return;
-    }
-    const scope = scopeNow();
-    let results = searchEntries(index.rows(), q, scope);
-    if (!results.length) { sr.empty = "No matches."; return; }
-    sr.capped = results.length > SEARCH_CAP;
-    if (sr.capped) results = results.slice(0, SEARCH_CAP);
-    sr.rows = results.map((result) => ({ result, where: resultLabel(result, scope, journal), runs: snippetRuns(result.snippet, q) }));
-    builtFor = q;
-    sr.active = 0;
-  };
-  const cancelScan = (): void => { if (searchTimer) clearTimeout(searchTimer); searchTimer = null; };
-  const flushScan = (): void => { if (searchTimer) { cancelScan(); renderSearch(); } };
-  const openRow = (open: boolean): void => {
-    if (sr.open === open) return;
-    cancelScan();
-    sr.open = open;
-    if (!open) { session.focusText(); return; }
-    overlay.open("search");
-    session.flushSave();
-    const c = session.current;
-    sr.options = scopeOptions(c.date, c.tag, { keys: Object.keys(layer.cache), journal: journal, shelvesMd: layer.cache[entryKey(NS_BOOK.key, SHELVES)] || "" });
-    const pre = defaultScope(c.date, c.tag);
-    sr.scopeAt = Math.max(0, sr.options.findIndex((o) => sameScope(o.scope, pre)));
-    setTimeout(() => masthead.focusSearch(), 0);
-    renderSearch();
-  };
-  acts.search.toggle = openRow;
-  acts.search.query = (q) => { sr.query = q; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
-  acts.search.scope = (at) => { sr.scopeAt = at; cancelScan(); renderSearch(); };
-  acts.search.walk = (dir) => {
-    flushScan();
-    if (!sr.rows.length) return;
-    sr.active = (sr.active + dir + sr.rows.length) % sr.rows.length;
-    document.querySelectorAll(".search-results li.hit")[sr.active]?.scrollIntoView({ block: "nearest" });
-  };
-  acts.search.pick = (i) => {
-    const row = sr.rows[i];
-    if (!row) return;
-    const q = builtFor;
-    openRow(false);
-    session.jump(row.result.date, row.result.tag, { q, nth: row.result.nth }, true);
-  };
-  acts.search.enter = () => { flushScan(); if (sr.active >= 0) acts.search.pick(sr.active); };
-  /* THE GO TO ROW: built fresh on every open — the lazy fill that keeps
-     the list walks off the navigation hot path — with the first select
-     focused; emptied on close. A terminal pick closes the row BEFORE the
-     hash write, since a pick of the open entry moves no hash. No save
-     flush: it would rewrite an untouched entry. */
-  const gotoWorld = () => ({ keys: keysNow(), cache: layer.cache, journal });
-  let gotoPicked = false;
-  const gotoRow = (open: boolean): void => {
-    if (screen.goto.open === open) return;
-    screen.goto.open = open;
-    if (!open) { screen.goto.levels = []; session.focusText(); return; }
-    gotoPicked = false;
-    overlay.open("goto");
-    session.flushSave();
-    const c = session.current;
-    screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
-    setTimeout(() => masthead.focusGoto(), 0);
-  };
-  acts.goto.toggle = gotoRow;
-  acts.goto.pick = (level, value, ns) => {
-    const c = session.current;
-    gotoPicked = true;
-    const out = gotoPick(gotoWorld(), { date: c.date, tag: c.tag }, screen.goto.levels, { level: level, value: value, ns: ns });
-    if (!out) return;
-    if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
-    screen.goto.levels = out.levels;
-  };
+  const search = searchActs({
+    sr: screen.search, session, layer, journal, notices, reader: READER,
+    opened: () => overlay.open("search"),
+    focusRow: () => masthead.focusSearch(),
+  });
+  Object.assign(acts.search, { toggle: search.toggle, query: search.query, scope: search.scope, walk: search.walk, pick: search.pick, enter: search.enter });
+  const goRow = gotoActs({
+    gt: screen.goto, session, layer, journal,
+    opened: () => overlay.open("goto"),
+    focusRow: () => masthead.focusGoto(),
+  });
+  acts.goto.toggle = goRow.toggle;
+  acts.goto.pick = goRow.pick;
   /* CUSTOM SHORTCUTS (⌃⌘S): a code → text table in ONE localStorage key,
      raw text verbatim, device-local. The popup filters by prefix as you
      type and Enter or a row inserts the highlighted expansion at the
@@ -578,673 +383,39 @@ if (fixture && fixtures[fixture]) {
     release: (gen) => notices.releasePin(gen),
     storedKeys: () => layer.storedKeys(),
   });
-  const hereKey = (): string => entryKey(session.current.date, session.current.tag);
-  /* every render hands focus back: a delete removes the row its own
-     button sits in, and "open" and "listening" must not disagree */
-  const renderBookmarks = (): void => {
-    const bookmarks = marks.list();
-    bm.unreadable = marks.unreadable();
-    if (bm.editing && bookmarkIndex(bookmarks, bm.editing) === -1) { bm.editing = ""; bm.draft = ""; }
-    bm.rows = bookmarkRows(bookmarks, hereKey(), journal);
-    bm.foot = bookmarkFoot(bookmarks, hereKey(), journal);
-    if (bm.buf && !aliasCandidates(bookmarks, bm.buf).length) bm.buf = "";
-    setTimeout(() => { masthead.focusBookmarks(); bm.opening = 0; }, 0);
-  };
-  const openBookmarks = (): void => {
-    cardCaret = caretInEntry();
-    overlay.open("bookmarks");
-    marks.open(layer.warmed ? keysNow : null).then((wrote) => { if (wrote && screen.panel === "bookmarks") renderBookmarks(); });
-    bm.editing = ""; bm.draft = ""; bm.buf = "";
-    screen.panel = "bookmarks";
-    renderBookmarks();
-  };
-  const jumpBookmark = (b: Bookmark): void => {
-    const p = bookmarkParts(b.key);
-    closePanel();
-    session.goto(entryHash(p.date, p.tag), alreadyOn(b.key, journal));
-  };
-  const resolved = (r: { buf: string; jump?: Bookmark; say?: string }): void => {
-    bm.buf = r.buf;
-    if (r.jump) jumpBookmark(r.jump);
-    else if (r.say) say(r.say, 2000);
-  };
-  const addOpenBookmark = (): void => {
-    const here = hereKey();
-    if (bookmarkIndex(marks.list(), here) !== -1) { say("already bookmarked", 2000); return; }
-    if (bookmarksFull(marks.list())) { say("bookmarks full — delete one, or give one its own key", 3000); return; }
-    session.flushSave().then(() => {
-      if (screen.panel !== "bookmarks") return;
-      if (!reachableBookmarks([{ key: here, alias: "" }], keysNow()).length) { if (!warmBlock()) say("nothing to bookmark here yet", 2500); return; }
-      const next = addBookmark(marks.list(), here);
-      if (next && marks.write(next)) renderBookmarks();
-    });
-  };
-  const bookmarkEscape = (e: KeyboardEvent): void => {
-    if (bm.editing) { e.stopPropagation(); bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
-    if (bm.buf) { e.stopPropagation(); bm.buf = ""; return; }
-    closePanel();
-    session.focusText();
-  };
-  const modded = (e: KeyboardEvent): boolean => e.metaKey || e.ctrlKey || e.altKey;
-  const isDigit = (k: string): boolean => k.length === 1 && k >= "1" && k <= "9";
-  const jumpNumbered = (k: string): void => {
-    const b = numberedBookmarks(marks.list())[+k - 1];
-    if (!b) say("no bookmark " + k, 2000);
-    else jumpBookmark(b);
-  };
-  const firstKey = (e: KeyboardEvent): boolean => {
-    if (e.key.toLowerCase() === "a") { e.preventDefault(); addOpenBookmark(); return true; }
-    if (!isDigit(e.key)) return false;
-    e.preventDefault();
-    jumpNumbered(e.key);
-    return true;
-  };
-  const triggerKey = (e: KeyboardEvent): void => {
-    const ch = e.key.length === 1 ? e.key.toLowerCase() : "";
-    const r = ch ? typeAlias(marks.list(), bm.buf, ch) : null;
-    if (r) { e.preventDefault(); resolved(r); }
-  };
-  acts.bookmarks.key = (e) => {
-    if (e.key === "Escape") { bookmarkEscape(e); return; }
-    if (modded(e)) return;
-    if (bm.editing) return;   /* the editor keeps every other key; its Enter is its own */
-    if (e.key === "Enter" && bm.buf) { e.preventDefault(); resolved(resolveAlias(marks.list(), bm.buf)); return; }
-    if (!bm.buf && firstKey(e)) return;
-    triggerKey(e);
-  };
-  acts.bookmarks.draft = (v) => { bm.draft = v; };
-  acts.bookmarks.commit = (typed) => {
-    const key = bm.editing, alias = typed.trim().toLowerCase();
-    if (!key) return;
-    const holder = aliasHolder(marks.list(), alias);
-    if (holder && holder.key !== key) { say("“" + alias + "” already goes to " + trimLabel(bookmarkLabel(holder.key, journal), ECHO_CAP), 2500); return; }
-    const why = aliasRefusal(alias);
-    if (why) { say(why, 2500); return; }
-    const next = setBookmarkAlias(marks.list(), key, alias);
-    if (!next) { bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
-    if (!marks.write(next)) { renderBookmarks(); return; }
-    bm.editing = ""; bm.draft = "";
-    renderBookmarks();
-  };
-  const deleteBookmark = (i: number): void => {
-    const next = marks.list().slice();
-    next.splice(i, 1);
-    if (marks.write(next)) renderBookmarks();
-  };
-  const editBookmarkKey = (b: Bookmark): void => {
-    bm.buf = ""; bm.editing = b.key; bm.draft = b.alias; bm.opening = 1;
-    renderBookmarks();
-  };
-  const nowhereToType = (view: typeof session.view): boolean => !view && !session.mdView;
-  /* the link after the caret the card opened on; every way it cannot
-     land says why, nothing is appended at the end, and the keys go back
-     to the text either way (pin: editing as the old app does › a
-     bookmark's link pressed in inline code); in the markdown view it is
-     typed there as markdown (pin: notices and surfaces as the old app
-     has them › a bookmark's link in the markdown view) */
-  const bookmarkLink = (key: string): void => {
-    if (warmBlock()) return;
-    closePanel();
-    session.focusText();
-    if (key === hereKey()) { say(alreadyOn(key, journal), 2000); return; }
-    const view = session.view;
-    if (!cardCaret || nowhereToType(view)) { say("place your cursor in the entry", 2000); return; }
-    const why = view && linkRefusal(view.state);
-    if (why) { say(why, 2000); return; }
-    const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
-    if (view) insertLinkAfter(view, href, label);
-    else session.insertText(linkMarkdown(href, label), true);
-    session.saveNow();
-  };
-  acts.bookmarks.act = (key, what) => {
-    const i = bookmarkIndex(marks.list(), key);
-    if (i === -1) return;
-    const b = marks.list()[i];
-    if (what === "del") deleteBookmark(i);
-    else if (what === "key") editBookmarkKey(b);
-    else if (what === "link") bookmarkLink(key);
-    else jumpBookmark(b);
-  };
-  /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
-     focus and Enter cycles through the blocks that hold that line. The
-     landing is CENTRED in the readable band under the masthead — a
-     reader who asked for line 254 wants the lines around it, and so does
-     one following a reference link, which lands the same way. The three
-     routes aimed at the bar (Escape, the ×, ⌃⌘G again) hand the caret
-     back to the landed row, the first cell of a pair, or just after a
-     leaf marker; a navigation and a click outside take the plain close.
-     A number is a coordinate into ONE text, so the boxes empty when the
-     bar opens on another entry. */
-  const lb = screen.lineBar;
-  let lineAsked: number | string = 0, lastAskKey = "";
-  function scrollIntoBand(rect: { top: number; bottom: number }): void {
-    const top = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
-    const mid = top + (document.documentElement.clientHeight - top) / 2;
-    window.scrollBy(0, (rect.top + rect.bottom) / 2 - mid);
-  }
-  /* a jump's selection centred A FRAME AFTER it was placed: the fit's
-     first pass runs on the frame after a mount, and a paired entry's rows
-     re-wrap under it — centred at once, a passage in Horace sat exactly
-     mid-band, then the fit shrank the page from 6611px to 2065px, the
-     scroll clamped and the passage sat 304px above centre, under the
-     masthead (MEASURED in headless Helium). A frame queued after the fit's
-     measures the settled box (pin: reference paste › the reference link
-     followed) */
-  function centreSelection(): void {
-    const view = session.view;
-    if (!view || session.mdView) return;
-    if (view.state.selection.empty) return;
-    const { from, to } = view.state.selection;
-    const a = view.coordsAtPos(from), b = view.coordsAtPos(to);
-    scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
-  }
-  const landOn = (pos: number): void => {
-    const view = session.view!;
-    /* a landing inside a closed contents section opens it first: it stayed
-       hidden and scrolled to nothing (pin: folds.test › openFoldAt opens the
-       section a position is in) */
-    openFoldAt(pos)(view.state, view.dispatch);
-    setLanding(view, pos);
-    const node = view.state.doc.nodeAt(pos)!;
-    const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));
-    scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
-  };
-  const asksParagraphs = (): boolean => refersByBookChapterParagraph(session.current.date, session.current.tag, journal);
-  const asksVerses = (): boolean => refersAsScripture(session.current.date, session.current.tag, journal);
-  const lineLabel = (): string => (asksParagraphs() ? "Paragraph" : asksVerses() ? "Verse" : "Line");
-  const goToLine = (n: number | string, quiet: boolean): boolean => {
-    const view = session.view!;
-    if (typeof n === "number" && asksParagraphs()) {
-      const hit = paragraphHit(view.state.doc, n);
-      if (typeof hit === "string") { say(hit, 3000); return false; }
-      landOn(hit.pos);
-      return true;
-    }
-    const { hits, blocks } = lineHits(view.state.doc, n);
-    const noun = asksVerses() ? "verse" : undefined;
-    if (!hits.length) { say(lineRefusal(blocks, n, noun), 3000); return false; }
-    const hit = nextHit(hits, landingPos(view.state), n === lineAsked);
-    lineAsked = n;
-    landOn(hit.pos);
-    const word = landingWord(hit, { hits, blocks }, n, noun);
-    if (word && spoken(quiet, hit.skipped)) say(word, 2500);
-    return true;
-  };
-  const spoken = (quiet: boolean, skipped?: boolean): boolean => !quiet || !!skipped;
-  /* what the Line box's words name on this page, the box and a link to a line
-     alike (pin: a link to a line › a link to a stanza, and line) */
-  const askLine = (v: string, quiet: boolean): boolean => {
-    const doc = session.view!.state.doc;
-    /* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and
-       line, one place each; a plain verse page keeps the line ask (pin:
-       stanza › ⌃⌘G 2.1) */
-    if (hasStanzas(doc)) {
-      const bad = stanzaAskCheck(v);
-      if (bad) { say(bad, 2000); return false; }
-      const hit = stanzaHit(doc, v);
-      if (typeof hit === "string") { say(hit, 3000); return false; }
-      landOn(hit.pos);
-      return true;
-    }
-    const label = askedLabel(doc, v);
-    if (label) return goToLine(label, quiet);
-    const why = askCheck(v, "line", lineLabel().toLowerCase());
-    if (why) { say(why, 2000); return false; }
-    return goToLine(parseInt(v.trim(), 10), quiet);
-  };
-  /* before the warm a work's own page, which says how it is referred to, may
-     not be read (pin: a link to a line › a link to a paragraph before the warm) */
-  let lineOwed: { v: string; key: string } | null = null;
-  let endLinkMark: (() => void) | null = null;
-  const untilHand = (act: () => void): (() => void) => {
-    const onKey = (e: KeyboardEvent): void => { if (endsLineMark(e.key, e.metaKey)) stop(); };
-    const stop = (): void => {
-      removeEventListener("click", stop, true);
-      removeEventListener("keydown", onKey, true);
-      endLinkMark = null;
-      act();
-    };
-    addEventListener("click", stop, true);
-    addEventListener("keydown", onKey, true);
-    return stop;
-  };
-  const landFromLink = (v: string): void => {
-    const view = session.view;
-    if (!view || session.mdView) return;
-    endLinkMark?.();
-    if (!layer.warmed) {
-      lineOwed = { v, key: entryKey(session.current.date, session.current.tag) };
-      /* what the hand does meanwhile stands: a landing owed moves no caret (pin:
-         a link to a line › a key before the warm) */
-      endLinkMark = untilHand(() => { lineOwed = null; });
-      return;
-    }
-    if (!askLine(v, true)) return;
-    /* the next key goes from the line, not the page's top (pin: a link to a
-       line › a link to a line, a key after arriving) */
-    const landed = landingPos(view.state);
-    if (landed !== null) caretOn(view, landed);
-    view.focus();
-    /* no bar stands open to end the mark: a click or a key that moves does, a
-       scrollbar's press and a tap's scroll not
-       (pin: a link to a line › a link to a line, the next click)
-       (pin: landing.test › a key that moves or writes) */
-    endLinkMark = untilHand(() => { if (session.view) setLanding(session.view, null); });
-  };
-  const goToFolio = (tok: string): void => {
-    const view = session.view!;
-    const hit = folioHit(view.state.doc, tok);
-    if (!hit) { say(folioRefusal(view.state.doc, tok), 3000); return; }
-    landOn(hit.pos);
-  };
-  const closeLineBar = (): void => {
-    if (!lb.open) return;
-    if (session.view) setLanding(session.view, null);
-    lb.open = false;
-  };
-  acts.lineBar.dismiss = closeLineBar;
-  /* the caret hand-back: only the routes aimed at the bar */
-  const caretOn = (view: NonNullable<typeof session.view>, pos: number): void => {
-    const node = view.state.doc.nodeAt(pos);
-    if (!node) return;
-    const at = node.isLeaf ? pos + 1 : pos + 1 + (node.type.name === "pair" ? 1 : 0);
-    view.dispatch(view.state.tr.setSelection(caretNear(view.state.doc, at)));
-  };
-  const putLineCaret = (): void => {
-    if (!lb.open) return;
-    const view = session.view;
-    const had = document.querySelector(".linebar")?.contains(document.activeElement);
-    const pos = view ? landingPos(view.state) : null;
-    closeLineBar();
-    if (!view) return;
-    if (had && pos !== null) caretOn(view, pos);
-    view.focus();
-  };
-  const askedFor = (): string => (asksParagraphs() ? "a paragraph" : asksVerses() ? "a verse" : "a line or a page");
-  const noNumbers = (): string => (asksParagraphs() ? "no paragraph numbers here" : asksVerses() ? "no verse numbers here" : "no line or page numbers here");
-  const freshAsk = (): void => {
-    const c = session.current, askKey = entryKey(c.date, c.tag);
-    if (askKey === lastAskKey) return;
-    lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0;
-  };
-  acts.lineBar.toggle = () => {
-    if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { say("Switch to the rendered view to go to " + askedFor(), 3000); return; }
-    const view = session.view;
-    if (!view) return;
-    const kind = askKind(view.state.doc);
-    if (kind === "none") { say(noNumbers(), 2000); return; }
-    freshAsk();
-    overlay.open("lineBar");
-    lb.kind = kind;
-    lb.lineLabel = lineLabel();
-    lb.open = true;
-    setTimeout(() => masthead.focusLineBar(), 0);
-  };
-  /* the boxes follow the entry under the open bar, and a box hidden under
-     the focus hands it to the one shown; an entry that answers neither keeps
-     both (pin: notices and surfaces as the old app has them › the line bar
-     re-asked when the entry gains a page marker) */
-  acts.lineBar.reask = () => {
-    const view = session.view;
-    if (!lb.open || !view) return;
-    lb.lineLabel = lineLabel();
-    const asked = askKind(view.state.doc), kind = asked === "none" ? "both" : asked;
-    if (kind === lb.kind) return;
-    const held = document.activeElement?.closest(".linebar") ? document.activeElement : null;
-    lb.kind = kind;
-    if (held) setTimeout(() => { if (held.closest("[hidden]")) masthead.focusLineBar(); }, 0);
-  };
-  acts.lineBar.input = (kind, v) => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
-  acts.lineBar.enter = (kind, v, repeat) => {
-    if (repeat) return;
-    if (session.mdView || !session.view) return;
-    if (kind === "line") { askLine(v, false); return; }
-    const why = askCheck(v, kind, lineLabel().toLowerCase());
-    if (why) { say(why, 2000); return; }
-    goToFolio(v.trim());
-  };
-  acts.lineBar.close = putLineCaret;
-  /* a click whose press began in the bar is a drag out of a box, not a
-     click away (pin: notices and surfaces as the old app has them › a drag
-     from the Line box out over the entry) */
-  let pressedInBar = false;
-  document.addEventListener("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".linebar"); }, true);
-  document.addEventListener("click", (e) => {
-    const fromBar = pressedInBar;
-    pressedInBar = false;
-    if (!lb.open || fromBar) return;
-    if (e.clientX > document.documentElement.clientWidth || e.clientY > document.documentElement.clientHeight) return;
-    if ((e.target as Element).closest(".linebar")) return;
-    closeLineBar();
+  const card = bookmarkActs({
+    bm, marks, session, journal, say, overlay, closePanel, caretInEntry,
+    panel: { isOpen: () => screen.panel === "bookmarks", show: () => { screen.panel = "bookmarks"; } },
+    focusCard: () => masthead.focusBookmarks(),
+    keysNow: () => Object.keys(layer.cache),
+    warmBlock: () => refuseCold(layer, say),
+    warmed: () => layer.warmed,
   });
-  /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
-     to the source view first, and closing the bar switches back */
-  const rb = screen.replace;
-  let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
-  /* THE BAR HOLDS THE VIEW IT OPENED ON: the offsets are that text's, and
-     a save from another window rebuilt the view under them, so a Replace
-     wrote at the old offsets into the new text
-     (pin: replace › the entry saved in another window, the bar open) */
-  let barPort: ReplacePort | null = null;
-  const headFoot = (): number => document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
-  const draw = (port: ReplacePort): void => {
-    rb.count = countLabel(rb.find, hits.length, at);
-    rb.any = hits.length > 0;
-    port.show(hits, rb.find.length, at, headFoot());
-  };
-  const seek = (port: ReplacePort, from: number): void => {
-    hits = matches(port.text(), rb.find);
-    at = nearest(hits, from);
-    draw(port);
-  };
-  const recount = (port: ReplacePort): void => {
-    hits = matches(port.text(), rb.find);
-    at = -1;
-    draw(port);
-  };
-  const dismissReplace = (): void => {
-    if (!rb.open) return;
-    rb.open = false;
-    unwatch?.(); unwatch = null;
-    cancelAnimationFrame(counting);
-    barPort?.clear();
-    barPort = null;
-    hits = []; at = -1;
-  };
-  /* the port the bar opened on, or null with the bar closed when the view was replaced */
-  const port = (): ReplacePort | null => {
-    if (!rb.open) return null;
-    if (session.replacer() === barPort) return barPort;
-    acts.replace.dismiss();
-    return null;
-  };
-  acts.replace.dismiss = () => { dismissReplace(); fromRendered = false; };
-  /* a rebuilt view's caret sits at its end: put back at the match the bar
-     stood on (pin: replace › the entry saved in another window, the bar open) */
-  const freeOrInBar = (a: Element | null): boolean => !a || a === document.body || !!a.closest(".replacebar");
-  acts.replace.check = () => {
-    if (!rb.open) return;
-    const was = at >= 0 ? hits[at] : 0;
-    if (port()) return;
-    const a = document.activeElement;
-    if (session.mdView && freeOrInBar(a)) session.replacer()?.place(was);
-  };
-  /* every close switches back to the view the bar was opened from, but a
-     navigation or a rebuilt view, which only closes it
-     (pin: replace › ⌃⌘H over the bar). A switch back the parse refuses
-     leaves the source view open and the cursor in its text, not in the
-     hidden Find box (pin: replace › Escape, the switch back refused) */
-  const closeBack = (focus: boolean): void => {
-    if (!port()) return;
-    const back = fromRendered;
-    acts.replace.dismiss();
-    const wanted = focus || !!document.activeElement?.closest(".replacebar");
-    if (back) session.setView(false);
-    if (session.mdView && wanted) session.replacer()?.focus();
-  };
-  acts.replace.close = () => closeBack(true);
-  acts.replace.closeOver = () => closeBack(false);
-  const intoSource = (): "there" | "switched" | "refused" => {
-    if (session.mdView) return "there";
-    session.setView(true);
-    if (!session.mdView) return "refused";
-    say("Source view, to replace", 3000);
-    return "switched";
-  };
-  /* typing in the text recounts once a frame, a recount being the whole
-     text matched and laid out again */
-  const watchPort = (p: ReplacePort): (() => void) => p.watch(() => {
-    if (editing) return;
-    cancelAnimationFrame(counting);
-    counting = requestAnimationFrame(() => { const q = port(); if (q) recount(q); });
+  acts.bookmarks.key = card.key;
+  acts.bookmarks.draft = card.draft;
+  acts.bookmarks.commit = card.commit;
+  acts.bookmarks.act = card.act;
+  const openBookmarks = card.open;
+  const lineActs = lineBarActs({
+    lb: screen.lineBar, session, journal, say,
+    opened: () => overlay.open("lineBar"),
+    focusBar: () => masthead.focusLineBar(),
+    warmed: () => layer.warmed,
   });
-  acts.replace.open = () => {
-    if (rb.open && port()) { masthead.focusReplace(); return; }
-    overlay.open("replace");
-    const how = intoSource();
-    const p = how === "refused" ? null : session.replacer();
-    if (!p) return;
-    rb.open = true;
-    barPort = p;
-    fromRendered = how === "switched";
-    unwatch = watchPort(p);
-    seek(p, p.start(headFoot()));
-    setTimeout(() => masthead.focusReplace(), 0);
-  };
-  acts.replace.find = (v) => {
-    rb.find = v;
-    const p = port();
-    if (p) seek(p, at >= 0 ? hits[at] : p.start(headFoot()));
-  };
-  acts.replace.with = (v) => { rb.with = v; };
-  acts.replace.next = (back) => {
-    const p = port();
-    if (!p || !hits.length) return;
-    if (at < 0) { seek(p, p.start(headFoot())); return; }
-    at = (at + (back ? hits.length - 1 : 1)) % hits.length;
-    draw(p);
-  };
-  const edit = (p: ReplacePort, e: { from: number; to: number; text: string; caret: number }): void => {
-    editing = true;
-    try { p.edit(e.from, e.to, e.text, e.caret); } finally { editing = false; }
-  };
-  const replaceable = (p: ReplacePort | null): p is ReplacePort => !!p && hits.length > 0 && !session.locked;
-  acts.replace.one = () => {
-    const p = port();
-    if (!replaceable(p)) return;
-    /* a keystroke not yet recounted moves the text under the offsets: the
-       match sought again rather than written at the old place
-       (pin: replace.test › whether the text still has the find) */
-    if (at < 0 || !holds(p.text(), hits[at], rb.find)) { seek(p, at < 0 ? p.start(headFoot()) : hits[at]); return; }
-    const r = replaceAt(p.text(), hits[at], rb.find, rb.with);
-    edit(p, { from: hits[at], to: hits[at] + rb.find.length, text: rb.with, caret: r.caret });
-    seek(p, r.caret);
-  };
-  /* recounted after: a replacement holding the find leaves matches, and
-     "none" disabled the buttons over them (pin: replace › Replace All, the replacement holding the find) */
-  acts.replace.all = () => {
-    const p = port();
-    if (!replaceable(p)) return;
-    const text = p.text();
-    const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : p.start(headFoot()));
-    edit(p, { from: 0, to: text.length, text: r.text, caret: r.caret });
-    recount(p);
-  };
-  /* THE COPY BUTTON: over whichever code block, quote, card, verse or
-     prose block, note or reference the mouse is nearest inside; a quote
-     inside a quote is ONE block with levels, so the copy is the whole
-     nest, a card or a code block between them stopping the climb. It
-     copies a code block's lines, or the block's FULL markdown — fences
-     and "> " markers included — with the rendered HTML beside it. The
-     label says "copied" only for the block it is still over, keyed on
-     the element and a click counter, since a two-flavour write does not
-     settle at once. */
-  const cp = screen.copy;
-  let copyTarget: HTMLElement | null = null, copySeq = 0, copyReset: ReturnType<typeof setTimeout> | null = null;
-  const BLOCKS = "pre, blockquote, div.note, div.reference, div[class^='card-'], div.verse, div.prose, div.grid";
-  /* THE GRID'S BUTTON: a card wins while the mouse is
-     over it, so the grid's own corner is a card's. Its button is drawn
-     ABOVE the top-right corner, and appears when the mouse comes to the
-     band just above that corner — the way every block's appears at its
-     corner — or is in a gap between the cards: drawn inside the corner it
-     could not be reached from a gap without crossing the card, which took
-     it over. Its idle label says which one it is (pin: grid › hovered above
-     its corner). */
-  const idle = (t: HTMLElement | null): string => t?.classList.contains("grid") ? "copy grid" : "copy";
-  const hideCopy = (): void => { copyTarget = null; cp.show = false; if (copyReset) clearTimeout(copyReset); cp.label = "copy"; };
-  /* a block gone from the screen takes its copy button with it, whether or
-     not the window scrolled (pin: notices and surfaces as the old app has
-     them › the copy button after a navigation) */
-  dropStaleCopy = () => { if (copyTarget && !session.view?.dom.contains(copyTarget)) hideCopy(); };
-  const COPY_TITLES: [string, string][] = [["grid", "Copy this grid"], ["verse", "Copy this verse"], ["prose", "Copy this prose"], ["reference", "Copy this reference"], ["note", "Copy this note"]];
-  const copyTitle = (target: HTMLElement): string => {
-    if (target.tagName === "PRE") return "Copy this code block";
-    if (/^card-/.test(target.className || "")) return "Copy this card";
-    return COPY_TITLES.find(([cls]) => target.classList.contains(cls))?.[1] ?? "Copy this quote";
-  };
-  const codeCover = (target: HTMLElement): number => {
-    if (target.tagName !== "PRE" || !target.dataset.lang) return 0;
-    const cs = getComputedStyle(target, "::after");
-    return (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4;
-  };
-  const copyTop = (target: HTMLElement, rect: DOMRect): number =>
-    Math.max(target.classList.contains("grid") ? rect.top - 25 : rect.top + 5, (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 7);
-  const offScreen = (top: number, rect: DOMRect): boolean => top > rect.bottom - 27 || rect.top > window.innerHeight;
-  const newTarget = (target: HTMLElement): void => {
-    if (copyReset) clearTimeout(copyReset);
-    cp.label = idle(target);
-  };
-  const showCopy = (target: HTMLElement): void => {
-    if (target !== copyTarget) newTarget(target);
-    copyTarget = target;
-    const rect = target.getBoundingClientRect(), top = copyTop(target, rect);
-    if (offScreen(top, rect)) { hideCopy(); return; }
-    const cover = codeCover(target);
-    cp.title = copyTitle(target);
-    cp.minWidth = cover > 0 ? Math.ceil(cover) : 0;
-    cp.top = top;
-    cp.right = document.documentElement.clientWidth - rect.right + 8;
-    cp.show = true;
-  };
-  /* the band above a grid's top-right corner: 26px tall, the rightmost
-     140px. The band is asked first, on mouseover and on mousemove alike, because a card
-     directly above a grid covers most of it and the band wins there; and
-     leaving the band falls back to the block under the mouse, so the card
-     above keeps its own button. The grid list is read afresh each time:
-     MEASURED in headless Helium, 1,000 synthetic moves over
-     an entry with one grid: 0.012 ms per move over a clean tree, 0.028 ms
-     with the tree dirtied before each. */
-  const GRID_BAND = { above: 26, wide: 140 };
-  const inBand = (x: number, y: number, r: DOMRect): boolean =>
-    x >= r.right - GRID_BAND.wide && x <= r.right + 8 && y >= r.top - GRID_BAND.above && y <= r.top + 2;
-  const bandGrid = (x: number, y: number): HTMLElement | null => {
-    const grids = session.view?.dom.getElementsByClassName("grid");
-    if (!grids?.length) return null;
-    for (const g of Array.from(grids) as HTMLElement[]) {
-      const r = g.getBoundingClientRect();
-      if (inBand(x, y, r)) return g;
-    }
-    return null;
-  };
-  const quoteInQuote = (el: HTMLElement | null): el is HTMLElement => !!el?.parentElement && el.tagName === "BLOCKQUOTE" && el.parentElement.tagName === "BLOCKQUOTE";
-  const shownBlock = (el: HTMLElement | null): el is HTMLElement => !!el && !!session.view?.dom.contains(el) && !session.mdView;
-  const blockUnder = (t: Element): HTMLElement | null => {
-    let target = t.closest(BLOCKS) as HTMLElement | null;
-    while (quoteInQuote(target)) target = target.parentElement;
-    return shownBlock(target) ? target : null;
-  };
-  const point = (e: MouseEvent, t: Element): void => {
-    const target = (session.view && !session.mdView && bandGrid(e.clientX, e.clientY)) || blockUnder(t);
-    if (target) { if (target !== copyTarget) showCopy(target); } else hideCopy();
-  };
-  const gridsShown = (): boolean => !!session.view && !session.mdView && session.view.dom.getElementsByClassName("grid").length > 0;
-  document.addEventListener("mouseover", (e) => {
-    const t = e.target as Element | null;
-    if (!t?.closest || t.closest(".copybtn")) return;
-    point(e, t);
+  Object.assign(acts.lineBar, { toggle: lineActs.toggle, reask: lineActs.reask, input: lineActs.input, enter: lineActs.enter, close: lineActs.close, dismiss: lineActs.dismiss });
+  Object.assign(acts.replace, replaceActs({
+    rb: screen.replace, session, say,
+    opened: () => overlay.open("replace"),
+    focusBar: () => masthead.focusReplace(),
+  }));
+  const copy = copyButton({ cp: screen.copy, session, say });
+  acts.copyBlock = copy.copyBlock;
+  dropStaleCopy = copy.dropStale;
+  const fmt = formatBar({
+    bar: screen.bar, buttons: () => screen.masthead.buttons, session, say, mountEl,
+    extract: () => life.extract(), head: document.querySelector(".site-head")!,
   });
-  document.addEventListener("mousemove", (e) => {
-    const t = e.target as Element | null;
-    if (!t?.closest || t.closest(".copybtn")) return;
-    if (gridsShown()) point(e, t);
-  });
-  /* the layout viewport's width on the root, for the grid's break-out: 100vw
-     counts a classic scrollbar's width and overflowed by it; observed on the
-     root element, not the window's resize, because a scrollbar's arrival
-     changes the width and fires no resize */
-  const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
-  clientW();
-  new ResizeObserver(clientW).observe(document.documentElement);
-  window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
-  const blockAt = (el: HTMLElement): import("prosemirror-model").Node | null => {
-    const view = session.view;
-    if (!view) return null;
-    const pos = view.posAtDOM(el, 0);
-    const $pos = view.state.doc.resolve(pos);
-    for (let d = $pos.depth; d >= 1; d--) if (view.nodeDOM($pos.before(d)) === el) return $pos.node(d);
-    const after = view.state.doc.nodeAt(pos);
-    return after && view.nodeDOM(pos) === el ? after : null;
-  };
-  const copyGone = (view: typeof session.view): boolean => !copyTarget || !view || !view.dom.contains(copyTarget);
-  acts.copyBlock = () => {
-    const view = session.view;
-    if (copyGone(view)) { hideCopy(); say("Nothing to copy", 2000); return; }
-    const mine = copyTarget!, seq = ++copySeq;
-    const done = (ok: boolean): void => {
-      if (mine !== copyTarget || seq !== copySeq) return;
-      cp.label = ok ? "copied" : "copy failed";
-      if (copyReset) clearTimeout(copyReset);
-      copyReset = setTimeout(() => { cp.label = idle(mine); }, 1200);
-    };
-    const node = blockAt(mine);
-    if (!node) { done(false); say("Copy failed", 3000); return; }
-    const written = node.type === schema.nodes.code_block ? writeClipboard(node.textContent.replace(/\n$/, ""))
-      /* the swept HTML, not the raw: with the raw outerHTML a card pasted into
-         Mail arrived as plain lines (pin: card copy › a card hover-copied) */
-      : withPictureBytes(richBlockHtml(mine)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html }));
-    written.then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
-  };
-  /* THE FLOATING BAR: placed over the selection on every selection change
-     (a frame later) and scroll, clamped under the masthead; hidden in the
-     source view and over a search jump's selection until a reader next
-     touches the page — the bar is for text a reader chose to format (pin:
-     toolbar › a word double-clicked) */
-  let barSuppressed = false;
-  const barView = (): typeof session.view => {
-    const view = session.view;
-    if (!view || session.mdView) return null;
-    return barSuppressed ? null : view;
-  };
-  const liveSelection = (): Selection | null => {
-    const sel = document.getSelection();
-    if (!sel || sel.rangeCount === 0) return null;
-    return sel.isCollapsed ? null : sel;
-  };
-  const barSelection = (view: NonNullable<typeof session.view>): Selection | null => {
-    const sel = liveSelection();
-    if (!sel || !view.dom.contains(sel.anchorNode)) return null;
-    return blankRowSelected(view.state) ? null : sel;
-  };
-  const placeBar = (): void => {
-    const view = barView();
-    const sel = view ? barSelection(view) : null;
-    if (!view || !sel) { screen.bar.show = false; return; }
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
-    if (!rect.width && !rect.height) { screen.bar.show = false; return; }
-    const floor = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 8;
-    screen.bar.left = rect.left + rect.width / 2;
-    screen.bar.top = Math.max(rect.top, floor);
-    screen.bar.incode = inCode(view.state);
-    screen.bar.on = formatState(view.state);
-    screen.bar.canTag = screen.masthead.buttons.canCreate;
-    screen.bar.canRefAll = offersBoth(view.state);
-    screen.bar.tagTitle = screen.masthead.buttons.tagTitle;
-    screen.bar.show = true;
-  };
-  document.addEventListener("selectionchange", () => requestAnimationFrame(placeBar));
-  window.addEventListener("scroll", placeBar, { passive: true });
-  /* a header row opening or closing moves the text under the bar (pin:
-     notices and surfaces as the old app has them › the format bar after
-     Line numbering opens) */
-  new ResizeObserver(() => requestAnimationFrame(placeBar)).observe(document.querySelector(".site-head")!);
-  document.addEventListener("mousedown", () => { barSuppressed = false; });
-  mountEl.addEventListener("keydown", () => { barSuppressed = false; });
-  const suppressBar = (): void => { barSuppressed = true; screen.bar.show = false; };
-  acts.bar = (act) => {
-    const view = session.view;
-    if (!view) return;
-    if (act === "reference") { session.copyReference(); return; }
-    if (act === "referenceAll") { session.copyReference(true); return; }
-    if (act === "words") { session.showWordCount(); return; }
-    if (act === "tag") { life.extract(); return; }
-    const cmd = { bold, italic, underline, strike, heading, quote, code: codeBlock, curl: curlSelection }[act];
-    if (cmd && !cmd(view.state, view.dispatch)) say((act === "code" && codeBlockRefusal(view.state)) || "nothing to change there", 2000);
-    view.focus();
-    placeBar();
-  };
-  const warmBlock = (): boolean => refuseCold(layer, say);
-  const keysNow = (): string[] => Object.keys(layer.cache);
+  acts.bar = fmt.act;
   const life = lifecycle({
     layer, journal, session,
     view: () => session.view,
@@ -1255,40 +426,17 @@ if (fixture && fixtures[fixture]) {
       session.moveFolds(folds);
       marks.move(bookmarks);
     },
-    removePictures: (keys) => Promise.all(keys.map((k) => images.del(k))).then(() => {}),
-    copyPicture: (from, to) => images.get(from).then((row) => row ? images.set(to, row.bytes).then(() => true) : false),
-    pictureClash: (from, to) => images.get(to).then((b) => !b ? false : images.get(from).then((a) => !a || a.bytes.length !== b.bytes.length || a.bytes.some((x, i) => x !== b.bytes[i]))),
+    ...pictureMoves(images),
     ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
   });
   acts.create = () => { life.create(); };
   acts.rename = () => { life.rename(); };
   acts.delete = () => { life.remove(); };
-  /* an opener TOGGLES its own panel and displaces any other: the rows are
-     built per open and never rebuilt while open — a live rebuild would
-     detach a mid-click target. "No authors" is a claim about the journal,
-     not made before the warm has read it. */
-  /* the chord that opened a card closes it with the keys back in the text;
-     an opener clicked again keeps them (pin: where the keys go › ⌃⌘B pressed twice)
-     (pin: launch, panels, the corner, links › its own opener again) */
-  acts.panel = (ns, byKey = false) => {
-    if (screen.panel === ns) { closePanel(); if (byKey) session.focusText(); return; }
-    if (ns === "help") { overlay.open("help"); screen.panel = "help"; return; }
-    if (ns === "bookmarks") { openBookmarks(); return; }
-    if (ns === "shortcuts") { openShortcuts(); return; }
-    if (ns === "backups") { overlay.open("backups"); readBackups(); screen.panel = "backups"; return; }
-    overlay.open("pages");
-    /* the list reads the text as typed (pin: shelves › a shelf renamed, the list opened at once) */
-    session.flushSave();
-    answerPanel(ns);
-    screen.panel = ns;
-  };
-  function answerPanel(ns: Ns): void {
-    const shelvesKey = entryKey(NS_BOOK.key, SHELVES);
-    screen.panelRows = panelRows(ns, Object.keys(layer.cache), journal, layer.cache[shelvesKey] || "");
-    screen.panelEmpty = ns !== "bookshelf" ? ""
-      : !layer.warmed ? (layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…")
-      : "No authors yet — import a folder, or start one below.";
-  }
+  const panels = panelActs({
+    screen, layer, journal, session, closePanel, openBookmarks, openShortcuts, readBackups,
+    open: (opening) => overlay.open(opening),
+  });
+  acts.panel = panels.panel;
   /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
      read ends, well or badly: the search; the Go to row while nothing has
      been picked in it, its focus put back on its first select; an open
@@ -1299,20 +447,9 @@ if (fixture && fixtures[fixture]) {
      app has them › Go to opened before the warm) (pin: notices and
      surfaces as the old app has them › the bookshelf opened before the warm, the keys on its button) */
   const reanswerOpen = (): void => {
-    if (sr.open) renderSearch();
-    if (screen.goto.open && !gotoPicked) {
-      const held = !!document.activeElement?.closest(".page-goto"), c = session.current;
-      screen.goto.levels = gotoLevels(gotoWorld(), c.date, c.tag);
-      if (held) setTimeout(() => masthead.focusGoto(), 0);
-    }
-    const ns = screen.panel;
-    if (ns === "page" || ns === "bookshelf") {
-      const el = document.querySelector(".pages");
-      const answer = (): void => { if (screen.panel === ns) answerPanel(ns); };
-      if (el?.matches(":hover")) el.addEventListener("mouseleave", answer, { once: true });
-      else answer();
-    }
-    if (ns === "backups") readBackups();
+    search.reanswer();
+    goRow.reanswer();
+    panels.reanswer();
   };
   acts.newRoot = (ns) => {
     closePanel();
@@ -1405,130 +542,18 @@ if (fixture && fixtures[fixture]) {
        places › the warm landed) */
     if (!opened || session.hashDeferred) session.openHash(); else { refreshMasthead(); session.refreshFolds(); }
     reanswerOpen();
-    if (lineOwed) {
-      const owed = lineOwed;
-      endLinkMark?.();
-      if (owed.key === entryKey(session.current.date, session.current.tag)) landFromLink(owed.v);
-    }
-    buildIndex();
+    lineActs.replayOwed();
+    search.buildIndex();
     /* `?corner=pill` draws the paused pill on a profile with no backup
        folder, AFTER the launch run, which clears the trouble of an
        unconfigured backup: the one state no headless run reaches */
     if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") notices.setTrouble(PAUSED_MSG); });
   });
-  /* the manual export: a folder the user picks, filled with the journal as
-     it stands. The picker opens FIRST, in the click, and so does the
-     progress line; the flush and the walk run alongside. Nothing here
-     deletes: the sweep belongs to the backup tiers, whose names this app
-     reserves. A dismissed picker cancels the line silently. */
-  /* one export or import at a time: a second one's progress line retired
-     the first's, and its report was lost
-     (pin: losing nothing › export pressed again while one runs) */
-  let longRun: "an export" | "an import" | null = null;
-  const stillRunning = (): boolean => { if (longRun) say(longRun + " is still running", 2000); return !!longRun; };
-  type ExportTally = { docs: number; missing: number; lostNote: string; lostList: string };
-  const exportTally = (files: Awaited<ReturnType<typeof exportEntries>>): ExportTally => {
-    const docs = files.filter(isDoc).length, missing = missingPictures(files);
-    const lostNote = missing ? " — " + missing + (missing === 1 ? " picture" : " pictures") + " missing" : "";
-    const lostList = files.filter((f) => f.picsMissing).map((f) => filePath(f) + ": " + f.picsMissing + " missing").join("\n");
-    return { docs, missing, lostNote, lostList };
-  };
-  const reportExport = (p: Progress, t: ExportTally, failures: Awaited<ReturnType<typeof writeFilesTo>>): void => {
-    if (!failures.length) {
-      if (t.missing) p.fail("exported " + t.docs + " entries" + t.lostNote, t.lostList);
-      else p.ok("exported " + t.docs + " entries");
-      return;
-    }
-    const lostDocs = failures.filter((x) => x.doc).length;
-    console.error("export: " + failures.length + " file(s) failed", failures);
-    const msg = "exported " + (t.docs - lostDocs) + " entries; " + failures.length + " file(s) failed" + t.lostNote;
-    p.fail(msg, failures.map((x) => x.name + ": " + (errText(x.error) || String(x.error))).join("\n") + (t.lostList ? "\n" + t.lostList : ""));
-  };
-  const exportFailed = (p: Progress, err: unknown): void => {
-    if ((err as Error)?.name === "AbortError") { p.cancel(); return; }
-    console.error("export failed", err);
-    const msg = (err as { collision?: boolean })?.collision ? "export failed — " + (err as Error).message : failMsg("export failed", err);
-    p.fail(msg, msg);
-  };
-  acts.export = () => {
-    /* the keys go back to the text: left on the button, a space pressed it
-       again (pin: losing nothing › export pressed again while one runs) */
-    session.focusText();
-    if (!win.showDirectoryPicker) { say("export needs a browser that can open a folder to write into"); return; }
-    if (warmBlock()) return;
-    if (stillRunning()) return;
-    longRun = "an export";
-    const dirPicked = win.showDirectoryPicker({ mode: "readwrite" });
-    dirPicked.catch(() => {});
-    const p = notices.progress("exporting…");
-    session.flushSave().then(() => exportEntries(layer.cache, images)).then((files) => {
-      if (!files.length) { p.ok("nothing to export"); return; }
-      const tally = exportTally(files);
-      return dirPicked.then((dir) => writeFilesTo(dir, files, p.step)).then((failures) => reportExport(p, tally, failures));
-    }).catch((err: unknown) => exportFailed(p, err)).finally(() => { longRun = null; });
-  };
-  /* the picker opens synchronously in the click, then: names, the refusal,
-     the read, the count-then-confirm gate, the progress line, the
-     sequential import, the tally. The import NEVER clears — it overwrites
-     entry by entry and deletes nothing, so a subset folder lands only its
-     own entries. */
-  const importAsked = (files: Awaited<ReturnType<typeof pickImportFiles>>): boolean => {
-    const n = entryDocs(files).length;
-    const refused = files.filter(isDoc).length - n;
-    const refusedNote = refused ? refused + " .md file" + (refused === 1 ? "" : "s") + " will NOT be imported." : "";
-    /* a folder whose every page is refused says so until clicked (pin:
-       notices and surfaces as the old app has them › an import of refused
-       files only) */
-    if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return false; }
-    if (!n) { say("nothing to import"); return false; }
-    const entries = n + (n === 1 ? " entry" : " entries");
-    return confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + entries +
-      " from this folder? Each one overwrites that entry in this journal, and there is no undo.");
-  };
-  const importTold = (p: Progress, tally: Awaited<ReturnType<typeof importFiles>>): void => {
-    const failures = tally.failures.map((x) => x.path + ": " + x.error).join("\n");
-    if (tally.full) {
-      console.error("import stopped, storage full", tally.failures);
-      p.fail("storage full — imported " + tally.imported + " of " + tally.attempted, failures);
-    } else if (tally.failed) {
-      console.error("import failures", tally.failures);
-      p.fail("imported " + tally.imported + ", " + tally.failed + " failed", failures);
-    } else p.ok("imported " + tally.imported + " entries");
-  };
-  const imported = (p: Progress, tally: Awaited<ReturnType<typeof importFiles>>): Promise<void> => {
-    session.lockEntries(null);
-    count();
-    importTold(p, tally);
-    /* the open entry may have been overwritten: repainted only where
-       the store differs from the surface, what was typed landing first */
-    /* a locked entry let its focus go: given back where nothing holds it
-       (pin: losing nothing › typed into an entry an import overwrites) */
-    return session.refresh().then(() => { refreshMasthead(); if (document.activeElement === document.body) session.focusText(); });   /* the key list moved under the tag bar */
-  };
-  const importFailed = (p: Progress | null, err: unknown): void => {
-    session.lockEntries(null);
-    if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
-    const msg = failMsg("import failed", err);
-    /* two files spelling one entry say which, on screen; any other
-       failure names its error there too (pin: notices and surfaces as the
-       old app has them › an import of two files for one entry) */
-    const merged = (err as Partial<Merged>)?.merged;
-    if (p) { console.error("import failed", err); p.fail(msg, msg); }
-    else if (merged) notices.stickErrIdle((err as Error).message, null, merged);
-    else notices.stickErrIdle(msg, err);
-  };
-  acts.import = () => {
-    session.focusText();
-    if (!win.showDirectoryPicker) { say("import needs a folder picker"); return; }
-    if (stillRunning()) return;
-    longRun = "an import";
-    session.flushSave();
-    let p: Progress | null = null;
-    win.showDirectoryPicker().then(pickImportFiles).then((files) => {
-      if (!importAsked(files)) return;
-      p = notices.progress("importing…");
-      session.lockEntries(importKeys(files));
-      return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, writeError: layer.writeError }, p.step).then((tally) => imported(p!, tally));
-    }).catch((err: unknown) => importFailed(p, err)).finally(() => { longRun = null; });
-  };
+  const folders = folderActs({
+    session, layer, images, notices, say, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
+    warmBlock: () => refuseCold(layer, say),
+  });
+  acts.export = folders.exportAll;
+  acts.import = folders.importFolder;
+
 }
