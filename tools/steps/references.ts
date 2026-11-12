@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, page, A, R, S, log, go, cornerText, landed, rest } from "./kit.ts";
+import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -270,18 +270,32 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await page.click(S.corner).catch(() => {});
 }
 section("a terminal's copy pasted", async () => {
-  /* a terminal's copy, its HTML one white-space: pre block of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending in a full stop running on into the next, a list item starting its own */
+  /* a terminal's copy, its HTML one white-space: pre block of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same */
   await go("page/Terminal%20Paste");
   await page.click(S.editor);
-  await page.evaluate(([html, plain]) => {
+  await pasteTerminal(TERMINAL_HTML, TERMINAL_TEXT);
+  await log("a terminal's copy pasted", { md: await A.stored(page), drawn: await drawn() });
+  await write("page/Terminal Line", "before\n");
+  await caretAt("before", 6);
+  await pasteTerminal(terminal(" " + run(CODE, "git log") + " shows the day"), " git log shows the day");
+  await log("a terminal's one line pasted", { md: await A.stored(page), drawn: await drawn() });
+  await write("page/Terminal Item", "- an item\n");
+  await caretAt("an item", 7);
+  await pasteTerminal(terminal(" that " + run(CODE, "wraps") + " at the\n  window's width."), " that wraps at the\n  window's width.");
+  await log("a terminal's copy pasted into a list item", { md: await A.stored(page), drawn: await drawn() });
+});
+async function pasteTerminal(html: string, plain: string): Promise<void> {
+  await page.evaluate(([sel, html, plain]) => {
     const dt = new DataTransfer();
     dt.setData("text/html", html);
     dt.setData("text/plain", plain);
-    document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
-  }, [TERMINAL_HTML, TERMINAL_TEXT]);
+    document.querySelector(sel).dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, [S.editor, html, plain]);
   await landed(page, 1200);
-  await log("a terminal's copy pasted", { md: await A.stored(page), drawn: await page.evaluate(() => ({ paragraphs: document.querySelectorAll("#editor p").length, items: document.querySelectorAll("#editor li").length })) });
-});
+}
+const drawn = () => page.evaluate((sel) => ({ paragraphs: document.querySelectorAll(sel + " p").length, items: document.querySelectorAll(sel + " li").length }), S.editor);
+const CODE = "color: rgb(177, 185, 249);";
 const run = (style: string, text: string): string => '<div style="display: inline;' + style + '">' + text + "</div>";
-const TERMINAL_HTML = '<div style="font-family: monospace; white-space: pre;">' + run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run("color: rgb(177, 185, 249);", "npm run verify") + " passed\n  before each landed.\n\n  - " + run("color: rgb(177, 185, 249);", "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run("color: rgb(177, 185, 249);", "7603f25") + ": the steps made independent.</div>";
+const terminal = (inner: string): string => '<div style="font-family: monospace; white-space: pre;">' + inner + "</div>";
+const TERMINAL_HTML = terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run(CODE, "npm run verify") + " passed\n  before each landed.\n\n  - " + run(CODE, "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run(CODE, "7603f25") + ": the steps made independent.");
 const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";

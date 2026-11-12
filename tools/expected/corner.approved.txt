@@ -91,6 +91,10 @@ a picture pasted, then another entry at once: {"entry":"page/Horace","picturesHe
 == a terminal's copy pasted
 a terminal's copy pasted: arrived at page/Terminal Paste: {"cursor":"at a line's start"}
 a terminal's copy pasted: {"md":"⏺ Two commits today, and npm run verify passed before each landed.\n\n- f2db598: the one-offs split, with every check still covering them.\n- 7603f25: the steps made independent.","drawn":{"paragraphs":3,"items":2},"cursor":"at the end","screen":"page/Terminal Paste · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at page/Terminal Line: {"cursor":"at a line's start"}
+a terminal's one line pasted: {"md":"before git log shows the day","drawn":{"paragraphs":1,"items":0},"cursor":"at the end","screen":"page/Terminal Line · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at page/Terminal Item: {"cursor":"at a line's start"}
+a terminal's copy pasted into a list item: {"md":"- an item that wraps at the window's width.","drawn":{"paragraphs":1,"items":1},"cursor":"at the end","screen":"page/Terminal Item · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == shortcuts
 shortcuts: arrived at page/Expanded: {"cursor":"at a line's start"}
 ⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"page/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}

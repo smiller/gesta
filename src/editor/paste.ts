@@ -167,22 +167,45 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
 /* A TERMINAL'S COPY IS TEXT, NOT STRUCTURE: its HTML is one white-space: pre
-   block whose coloured runs are inline divs, and read as HTML every run was a
+   block of text and coloured inline runs, and read as HTML every run was a
    paragraph of its own (pin: paste.test › a terminal's copy is styled
    preformatted text alone) */
-const TERMINAL_HTML = /^\s*(?:<meta[^>]*>\s*|<html[^>]*>\s*|<head>[^]*?<\/head>\s*|<body[^>]*>\s*|<!--StartFragment-->\s*)*<div style="[^"]*white-space:\s*pre(?![\w-])/i;
-export const terminalCopy = (html: string): boolean => TERMINAL_HTML.test(html);
-/* the terminal breaks its lines at the window's width: a line not ending in
-   a full stop runs on into the next, unless that one starts a list item
-   (pin: paste.test › a terminal's wrapped lines are joined) */
-const LIST_ITEM = /^\s*(?:[-*+]|\d+\.)\s/;
-const runsOn = (prev: string, line: string): boolean =>
-  /\S/.test(prev) && /\S/.test(line) && !prev.trimEnd().endsWith(".") && !LIST_ITEM.test(line);
+const TERMINAL_OPEN = /^\s*(?:<meta[^>]*>\s*|<html[^>]*>\s*|<head>[^]*?<\/head>\s*|<body[^>]*>\s*|<!--StartFragment-->\s*)*<div style="[^"]*white-space:\s*pre(?![\w-])[^"]*">/i;
+const TERMINAL_CLOSE = /<\/div>\s*(?:<!--EndFragment-->\s*|<\/body>\s*|<\/html>\s*)*$/i;
+const NOT_A_RUN = /<(?!div style="display: inline|\/div>)/i;
+export function terminalCopy(html: string): boolean {
+  const open = TERMINAL_OPEN.exec(html), close = TERMINAL_CLOSE.exec(html);
+  return !!open && !!close && close.index >= open[0].length && !NOT_A_RUN.test(html.slice(open[0].length, close.index));
+}
+/* the terminal breaks its lines at the window's width: a line not ending a
+   sentence runs on into the next, unless that one starts a list item or a
+   message (pin: paste.test › a terminal's wrapped lines are joined); markdown
+   copied out stays as it was (pin: paste.test › a terminal's copy of markdown
+   keeps its structure) */
+const STARTS_ITS_OWN = /^\s*(?:[-*+•]|\d+[.)]|⏺)\s/;
+const ENDS_A_SENTENCE = /[.?!:…]["'”’)\]]*$/;
+const HOLDS = /^\s*(?:```|:::|#{1,6}\s|>|\|)/;
+const BREAKS: ((prev: string, line: string) => boolean)[] = [
+  (prev, line) => !/\S/.test(prev) || !/\S/.test(line),
+  (prev, line) => ENDS_A_SENTENCE.test(prev.trimEnd()) || STARTS_ITS_OWN.test(line),
+  (prev, line) => HOLDS.test(prev) || HOLDS.test(line),
+];
+const runsOn = (prev: string, line: string): boolean => !BREAKS.some((b) => b(prev, line));
+/* the fences a line leaves open: a ``` toggles a code fence, a named ::: opens a block and a bare ::: closes one */
+function fencesAfter(open: { code: boolean; blocks: number }, line: string): { code: boolean; blocks: number } {
+  const t = line.trim();
+  if (t.startsWith("```")) return { ...open, code: !open.code };
+  if (open.code || !t.startsWith(":::")) return open;
+  return { ...open, blocks: t === ":::" ? Math.max(0, open.blocks - 1) : open.blocks + 1 };
+}
 export function unwrapped(text: string): string {
   const out: string[] = [];
+  let open = { code: false, blocks: 0 };
   for (const line of text.split("\n")) {
-    if (out.length && runsOn(out[out.length - 1], line)) out[out.length - 1] = out[out.length - 1].trimEnd() + " " + line.trimStart();
+    const last = open.code || open.blocks > 0 ? undefined : out.at(-1);
+    if (last !== undefined && runsOn(last, line)) out[out.length - 1] = last.trimEnd() + " " + line.trimStart();
     else out.push(line);
+    open = fencesAfter(open, line);
   }
   return out.join("\n");
 }

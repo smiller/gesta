@@ -204,8 +204,9 @@ function pasteText(view: EditorView, data: DataTransfer, opts: EditorOptions): b
   /* line breaks alone are nothing to paste, from any app: they replaced a
      selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
   if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
-  /* text carrying HTML keeps the editor's paste, but for a terminal's copy */
-  if (terminalCopy(html)) return pasteMarkdown(view, unwrapped(plain), opts);
+  /* text carrying HTML keeps the editor's paste, but for a terminal's copy:
+     its text, as blocks where they are taken, else as any plain text is */
+  if (terminalCopy(html)) return pasteMarkdown(view, unwrapped(plain), opts) || view.pasteText(unwrapped(plain));
   if (data.types.includes("text/html")) return false;
   return pasteMarkdown(view, plain, opts);
 }

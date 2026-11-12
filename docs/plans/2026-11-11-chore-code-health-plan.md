@@ -942,3 +942,28 @@ investigate", then a mock-up to paste, then "build it".
   plain text, unwrapped, as markdown. A Helium section, "a terminal's copy
   pasted", pastes a terminal-shaped copy: stored as two sentences joined
   and a two-item list, 3 paragraphs and 2 items drawn (MEASURED).
+- REVIEWED (asked: "review"): one `/code-review` at HIGH over
+  `0ea826f..2b90ab0`, 87,498 tokens (MEASURED, the last message of
+  `agent-a87bed4357a01802b.jsonl`: 2 input + 610 cache creation + 84,522
+  cache read + 2,364 output). Seven findings, held until the reader has the
+  list. Checked: a one-line paste, or one into a list item, verse line or
+  cell, gets nothing from `pasteBlocks` and falls back to the HTML route;
+  `unwrapped` makes `::: verse a | one b | two :::` of a verse fence and runs
+  "Shall I commit?" into the next sentence (MEASURED).
+- FIXED, 1–5 of the seven (asked: "go"); the parser-level rewrite declined
+  (it would not join the wrapped lines, and a terminal copying no HTML is
+  not told from any plain text); the VS Code half of 4 answered by its fix:
+  1. A terminal's copy never takes the HTML route: where the blocks route
+     declines it (one line; a list item, verse line or cell), its unwrapped
+     text goes through `view.pasteText`, the editor's own plain-text paste.
+  2. Markdown copied out of the terminal keeps its structure: nothing in a
+     ``` or ::: fence joins, and a fence, heading, quote or table line is
+     never joined (test-first).
+  3. A sentence ends at . ? ! : or …, a closing quote or bracket after it;
+     a line starting •, `1)` or ⏺ starts its own (test-first).
+  4. `terminalCopy` checks what its title says: the block holds only text
+     and inline runs, and nothing follows it.
+  5. The Helium section reads the kit's selector and plays a one-line copy
+     and a copy into a list item; on the editor before fix 1 they read
+     "beforegit log" in 2 paragraphs and the item in 3 (MEASURED), with it
+     one paragraph and one item.

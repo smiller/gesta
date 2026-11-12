@@ -327,12 +327,25 @@ test("a terminal's copy is styled preformatted text alone: one white-space: pre 
   expect(terminalCopy("<p>a</p><ul><li>b</li></ul>")).toBe(false);
   expect(terminalCopy('<blockquote ' + COPY_MARK + '=""><p>a</p></blockquote>')).toBe(false);
   expect(terminalCopy("")).toBe(false);
+  expect(terminalCopy('<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>')).toBe(false);
+  expect(terminalCopy(GHOSTTY + "<p>after</p>")).toBe(false);
 });
 
-test("a terminal's wrapped lines are joined: a line not ending in a full stop runs on into the next, a list item always starts its own", () => {
+test("a terminal's wrapped lines are joined: a line not ending a sentence runs on into the next, a list item or a new message always starts its own", () => {
   expect(unwrapped("Every one passed\n  npm run verify before it landed.")).toBe("Every one passed npm run verify before it landed.");
   expect(unwrapped("found nine things.\n    Eight were fixed")).toBe("found nine things.\n    Eight were fixed");
   expect(unwrapped("the string rules:\n  - Kept off\n  1. First")).toBe("the string rules:\n  - Kept off\n  1. First");
   expect(unwrapped("a paragraph\n\nanother")).toBe("a paragraph\n\nanother");
   expect(unwrapped("- outside text reaches the\n    decoder.")).toBe("- outside text reaches the decoder.");
+  for (const end of ["Shall I commit?", "Done!", "Summary:", "And so…", "it said “stop.”", "(see above.)"]) expect(unwrapped(end + "\nNext line.")).toBe(end + "\nNext line.");
+  expect(unwrapped("first\n• second\n1) third\n⏺ Next step")).toBe("first\n• second\n1) third\n⏺ Next step");
+});
+
+test("a terminal's copy of markdown keeps its structure: nothing in a fence is joined, nor a fence, heading, quote or table line", () => {
+  expect(unwrapped("::: verse\na | one\nb | two\n:::")).toBe("::: verse\na | one\nb | two\n:::");
+  expect(unwrapped("```\nnpm test\nnpm run verify\n```")).toBe("```\nnpm test\nnpm run verify\n```");
+  expect(unwrapped("# A heading\nits text runs\non")).toBe("# A heading\nits text runs on");
+  expect(unwrapped("> quoted\n> lines")).toBe("> quoted\n> lines");
+  expect(unwrapped("| a | b |\n| c | d |")).toBe("| a | b |\n| c | d |");
+  expect(unwrapped("words before\n```\ncode\n```")).toBe("words before\n```\ncode\n```");
 });
