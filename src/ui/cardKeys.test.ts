@@ -9,8 +9,10 @@ describe("a key in a list", () => {
     expect(listKey(key("Enter"))).toBe("enter");
     expect(listKey(key("Enter", { shiftKey: true }))).toBe("enter");
   });
-  it("Enter while a composition is open commits the composition and picks nothing", () => {
+  it("while a composition is open no key acts on the list: Enter commits it, the arrows choose its candidates", () => {
     expect(listKey(key("Enter", { isComposing: true }))).toBeNull();
+    expect(listKey(key("ArrowDown", { isComposing: true }))).toBeNull();
+    expect(listKey(key("ArrowUp", { isComposing: true }))).toBeNull();
   });
   it("the arrows walk down and up; with a modifier, or any other key, nothing", () => {
     expect(listKey(key("ArrowDown"))).toBe(1);

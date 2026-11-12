@@ -168,10 +168,10 @@ export const prompts: string[] = [], confirms: string[] = [];
 export const setAnswer = (a: typeof answer): void => { answer = a; };
 /* nothing a section did reaches the next: the store reseeded, the dialogs'
    answers dropped */
-export async function freshStart(name: string): Promise<void> {
+export async function freshStart(): Promise<void> {
   answer = null; prompts.length = 0; confirms.length = 0;
   stages = await A.fresh(page);
-  if (!stages.includes("seed;")) console.log("FRESH START FAILED (" + name + "): " + stages);
+  if (!stages.includes("seed;")) throw new Error("not seeded: " + stages);
 }
 function answerDialog(d: Dialog): void {
   if (d.type() === "confirm") { confirms.push(d.message()); d.accept(); return; }

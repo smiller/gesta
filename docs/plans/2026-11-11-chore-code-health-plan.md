@@ -890,3 +890,31 @@ probe).
      patterns capture the #.
   8. The first-? rule once (`beforeQuery`); `entryAt` reads an address
      once where three callers parsed it twice (test-first).
+
+### The confirmation pass (7b4a8e4..893cbc0)
+
+One `/code-review` at HIGH over the fix commit, on the reader's word:
+121,828 tokens (MEASURED, the last message of `agent-a59eea3d8b054a0ef.jsonl`:
+2 input + 2,567 cache creation + 116,544 cache read + 2,715 output). Ten
+findings, held until the reader has the list. Checked: the approval's
+refusal matches SECTION FAILED and EXIT and not FRESH START FAILED; three
+steps arm the selection watch a script before their placement or click
+(keys.ts:50, views.ts:23, views.ts:121); typedAddress keeps its own
+`split("?")`; every tools/ path package.json names is there today (READ and
+MEASURED).
+- FIXED, all ten (asked: "go"), no further pass:
+  1–3. One `failedRun` (heliumStamp.ts, test-first) for a section failed,
+     a fresh start failed or a bad exit: the approval refuses such a run,
+     and `order` is no pass when its own run failed, so two runs failing
+     alike are not stamped; a start not seeded throws, the one path.
+  4–5. `watchSelection` and `selectionMoved` in the adapter: where the
+     selection stands is noted, and the wait ends at a selectionchange
+     that finds it moved, so an event queued earlier is passed over;
+     `placed()` and the three steps use them, the six copied arms gone.
+  6–7. While a composition is open no key acts on a list (test-first), and
+     the bookmark key's field takes Enter through `enterKey`.
+  8. typedAddress reads `beforeQuery`.
+  9. The path checker reads package.json, .claude/settings.json and
+     hooks/ too, and takes `./tools/…`; probed: package.json names 8, the
+     hooks and settings none, the old app's path passed over (MEASURED).
+  10. The paste's pattern run once.

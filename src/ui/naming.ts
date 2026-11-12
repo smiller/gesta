@@ -8,7 +8,7 @@
    pages, sub-pages and the bookshelf. */
 import { pageName, nameFromUrl } from "../store/names.ts";
 import { entryAt } from "../store/nav.ts";
-import { nsOf, NS_KEYS, asAddress } from "../store/keys.ts";
+import { nsOf, NS_KEYS, asAddress, beforeQuery } from "../store/keys.ts";
 
 export const REFUSE_URL = "that link's title can't be a name — type one instead";
 export const REFUSE_EMPTY = "that name leaves nothing a filename can keep";
@@ -43,7 +43,7 @@ function keyed(s: string): TypedPlace {
 }
 export function typedAddress(raw: string | null | undefined): TypedPlace {
   const s = (raw || "").trim();
-  if (emptyPart(s.replace(/^#/, "").split("?")[0])) return { refuse: REFUSE_EMPTY_PART };
+  if (emptyPart(beforeQuery(s.replace(/^#/, "")))) return { refuse: REFUSE_EMPTY_PART };
   return s.startsWith("#") ? addressed(s) : keyed(s);
 }
 

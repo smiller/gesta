@@ -4,6 +4,7 @@
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   import { typedToward, rowAct } from "./bookmarksModel.ts";
+  import { enterKey } from "./cardKeys.ts";
   let { bookmarks, onKey, onAct, onDraft, onCommit, onLeave }: {
     bookmarks: Screen["bookmarks"];
     onLeave: (e: FocusEvent) => void;
@@ -55,7 +56,7 @@
       <li class="hit" class:bookmark-keyed={r.keyed} class:bookmark-cut={r.cut} class:bookmark-typing={typedToward(bookmarks.buf, r)} data-key={r.key} onclick={(e) => click(e, r.key)}>
         <span class="bookmark-key">
           {#if bookmarks.editing === r.key}
-            <input class="bookmark-aliasinput" type="text" value={bookmarks.draft} aria-label={"Key for " + r.label} oninput={(e) => onDraft(e.currentTarget.value)} onkeydown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); onCommit(e.currentTarget.value); } }}>
+            <input class="bookmark-aliasinput" type="text" value={bookmarks.draft} aria-label={"Key for " + r.label} oninput={(e) => onDraft(e.currentTarget.value)} onkeydown={(e) => { if (enterKey(e)) { e.preventDefault(); e.stopPropagation(); onCommit(e.currentTarget.value); } }}>
           {:else}{r.trigger}{/if}
         </span>
         <span class="bookmark-label">{r.label}</span>

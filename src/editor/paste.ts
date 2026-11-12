@@ -107,8 +107,9 @@ function pastedAddress(raw: string, html: string): { link: string; target: strin
   if (html.includes("data-pm-slice")) return null;
   const txt = raw.replace(LINE_BREAK_RE, "\n").trim();
   const ref = REFERENCE_HEAD_RE.exec(txt);
+  const link = INTERNAL_LINK_RE.exec(txt);
   const found = ref && ref[3].split("\n").every((l) => l.startsWith(">")) ? { link: ref[1], target: ref[2], reference: true }
-    : INTERNAL_LINK_RE.test(txt) ? { link: txt, target: INTERNAL_LINK_RE.exec(txt)![1], reference: false } : null;
+    : link ? { link: txt, target: link[1], reference: false } : null;
   return found && namesEntry(asAddress(found.target)) ? found : null;
 }
 const oneTextRun = (sel: Selection): boolean => !sel.empty && sel instanceof TextSelection && sel.$from.sameParent(sel.$to) && linkable(sel.$from);

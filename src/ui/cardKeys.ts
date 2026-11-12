@@ -1,7 +1,8 @@
 interface Mods { shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean }
 
 export function listKey(e: { key: string; isComposing: boolean } & Mods): "enter" | 1 | -1 | null {
-  if (e.key === "Enter") return e.isComposing ? null : "enter";
+  if (e.isComposing) return null;
+  if (e.key === "Enter") return "enter";
   if (e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return null;
   return e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : null;
 }

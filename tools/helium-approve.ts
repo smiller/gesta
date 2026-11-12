@@ -15,7 +15,7 @@ import { spawn, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { fingerprint, mayReuse, approvalRefusal, stamped } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal, stamped, failedRun } from "./heliumStamp.ts";
 import { orderDifferences } from "./heliumOrder.ts";
 
 const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
@@ -115,11 +115,14 @@ function play(tool: Tool): Promise<string> {
     child.on("close", (code, signal) => { const bad = code || signal; finish(bad ? "\nEXIT " + bad + "\n" + err : ""); });
   });
 }
+function orderFailure(name: string, received: string, baseline: string | null): string | null {
+  /* two runs failing alike read the same: a failed run is no pass */
+  if (failedRun(received)) return name + ": FAILED — " + received.split("\n").find((l) => failedRun(l));
+  const off = baseline === null ? ["(no approved copy)"] : orderDifferences(baseline, received);
+  return off.length ? name + ": DIFFERS in another order — " + off.join("; ") : null;
+}
 function differs(name: string, received: string, baseline: string | null): string | null {
-  if (TOOLS[name].heldTo) {
-    const off = baseline === null ? ["(no approved copy)"] : orderDifferences(baseline, received);
-    return off.length ? name + ": DIFFERS in another order — " + off.join("; ") : null;
-  }
+  if (TOOLS[name].heldTo) return orderFailure(name, received, baseline);
   if (baseline === received) return null;
   const d = spawnSync("diff", ["-u", approvedOf(name), receivedOf(name)], { encoding: "utf8" });
   const diffLines = (d.stdout || "").split("\n");

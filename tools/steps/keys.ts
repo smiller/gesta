@@ -47,11 +47,11 @@ async function chordsPressedTwice(): Promise<void> {
   for (let i = 0; i < 20; i++) { await rest(page); const again = await R.wordAt(page, "Maecenas atavis", 8); if (again.x === at.x && again.y === at.y) break; at = again; }
   /* the click's caret is the editor's only once its selectionchange has
      reached it: under a full run's load the link landed at the caret before */
-  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
+  await A.watchSelection(page);
   await page.mouse.click(at.x + 30, at.y);
 }
 async function bookmarkLinkPressed(): Promise<void> {
-  await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
+  await A.selectionMoved(page, 2000);
   await rest(page);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);

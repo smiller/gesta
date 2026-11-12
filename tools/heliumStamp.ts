@@ -21,11 +21,12 @@ export function mayReuse(stamp: string | null, fp: string, opts: { steps: boolea
 }
 /* APPROVING TAKES THE RUN THAT WAS READ, it does not play again: a replay wrote
    whatever it met, a flaky section's timeout included, over a run read and good */
+export const failedRun = (run: string): boolean => /^(SECTION FAILED|FRESH START FAILED|EXIT )/m.test(run);
 export function approvalRefusal(received: string | null, playedOver: string | null, fp: string): string | null {
   if (received === null) return "no run to approve: play it, and read what differs";
   if (playedOver === null) return "that was not a whole run: play it without STEPS";
   if (playedOver !== fp) return "what the run reads has changed since it played: play it again";
-  if (/^SECTION FAILED|^EXIT /m.test(received)) return "a section of that run failed: play it again";
+  if (failedRun(received)) return "a section of that run failed: play it again";
   return null;
 }
 

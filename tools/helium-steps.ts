@@ -28,7 +28,7 @@ const skipped = (opts: RunOptions, name: string): boolean => !!opts.only && !opt
 const firstLine = (e: unknown): string => String(e).split("\n")[0].slice(0, 200);
 /* a start that throws fails its own section, not the run */
 async function started(page: Page, name: string): Promise<boolean> {
-  try { await settle(page); await freshStart(name); return true; }
+  try { await settle(page); await freshStart(); return true; }
   catch (e) { console.log("FRESH START FAILED (" + name + "): " + firstLine(e)); return false; }
 }
 async function playSection(page: Page, [name, fn]: (typeof SECTIONS)[number], clock: Clock | null): Promise<void> {

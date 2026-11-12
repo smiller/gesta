@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join, normalize } from "node:path";
-import { fingerprint, mayReuse, approvalRefusal, stamped } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal, stamped, failedRun } from "./heliumStamp.ts";
 
 const inputs = [
   { name: "dist/index.html", bytes: "<html>page</html>" },
@@ -56,4 +56,12 @@ test("every tools/ file a Helium run's driver reads, through its imports, is in 
   expect(read.filter((f) => !stamped(f))).toEqual([]);
   expect(["tools/steps/kit.ts", "tools/heliumDom.d.ts", "tools/adapters/inPage.ts"].every(stamped)).toBe(true);
   expect(["tools/corpus.ts", "tools/out/x.ts", "tools/expected/corner.approved.txt"].some(stamped)).toBe(false);
+});
+
+test("a run failed where a section failed, its fresh start failed, or it exited badly; and such a run is not approved", () => {
+  expect(failedRun("== a\nx: 1\nSECTION FAILED (a): boom\n")).toBe(true);
+  expect(failedRun("== a\nFRESH START FAILED (a): no seed\n")).toBe(true);
+  expect(failedRun("x: 1\n\nEXIT 1\nboom\n")).toBe(true);
+  expect(failedRun("== a\nx: the words FRESH START FAILED in a reading\n")).toBe(false);
+  expect(approvalRefusal("== a\nFRESH START FAILED (a): no seed\n", "print", "print")).toMatch(/failed/);
 });

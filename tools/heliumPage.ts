@@ -13,6 +13,7 @@ declare global {
     __pickerAbort: () => void;
     __releaseTyped: () => void;
     __selSeen: boolean;
+    __selFrom: unknown[];
     __persistAsked: boolean;
     __clip: [Clipboard["write"], Clipboard["writeText"], Document["execCommand"]];
     __idb: [IDBObjectStore["put"], IDBObjectStore["add"]];

@@ -20,9 +20,9 @@ async function sourceViewOpening(): Promise<void> {
 }
 async function sourceViewFollowing(): Promise<void> {
   for (let tries = 0; tries < 3; tries++) {
-    await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
+    await A.watchSelection(page);
     await R.caretBefore(page, "food of love");
-    await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
+    await A.selectionMoved(page, 2000);
     await rest(page);
     await rest(page);
     if (await page.evaluate(() => { const s = document.getSelection(); return !!s.anchorNode?.textContent.slice(s.anchorOffset).startsWith("food of love"); })) break;
@@ -118,9 +118,9 @@ section("sub-entries", async () => {
      once its selectionchange has reached it. ⌘↓ takes it to the body's end;
      End moves no caret on a Mac, and the click alone left it mid-heading,
      the link splitting a word, once the heading ran past the click's point */
-  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
+  await A.watchSelection(page);
   await page.click(S.editorFirst);
-  await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
+  await A.selectionMoved(page, 2000);
   await page.keyboard.press("Meta+ArrowDown");
   await rest(page);
   await log("a day's tools", await R.tools(page));
