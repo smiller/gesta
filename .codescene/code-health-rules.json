@@ -3,8 +3,27 @@
     {
       "matching_content_path": "src/**",
       "rules": [
-        { "name": "Primitive Obsession", "weight": 0.0 },
-        { "name": "String Heavy Function Arguments", "weight": 0.0 }
+        {
+          "name": "Primitive Obsession",
+          "weight": 0.0
+        },
+        {
+          "name": "String Heavy Function Arguments",
+          "weight": 0.0
+        }
+      ]
+    },
+    {
+      "matching_content_path": "tools/**",
+      "rules": [
+        {
+          "name": "Primitive Obsession",
+          "weight": 0.0
+        },
+        {
+          "name": "String Heavy Function Arguments",
+          "weight": 0.0
+        }
       ]
     }
   ]

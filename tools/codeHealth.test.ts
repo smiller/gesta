@@ -1,13 +1,13 @@
 import { test, expect } from "vitest";
 import { changedFiles, inScope, refusals, scoreOf, findingLines, cacheKey } from "./codeHealth.ts";
 
-test("inScope: a TypeScript file under src/, its tests included; not a component, a declaration or another directory", () => {
-  expect(["src/a.ts", "src/x/b.test.ts", "src/ui/notices.svelte.ts"].every(inScope)).toBe(true);
-  expect(["src/ui/Search.svelte", "src/env.d.ts", "tools/a.ts", "index.html", "src/a.tsx"].some(inScope)).toBe(false);
+test("inScope: a TypeScript file under src/, its tests included, and a TypeScript or module script under tools/; not a component, a declaration, a tool's output or another directory", () => {
+  expect(["src/a.ts", "src/x/b.test.ts", "src/ui/notices.svelte.ts", "tools/a.ts", "tools/a.test.ts", "tools/helium-steps.mjs", "tools/adapters/successor.mjs"].every(inScope)).toBe(true);
+  expect(["src/ui/Search.svelte", "src/env.d.ts", "index.html", "src/a.tsx", "src/a.mjs", "tools/hooks-test.sh", "tools/out/x.ts", "tools/out/y.mjs", "hooks/a.ts", "docs/a.ts"].some(inScope)).toBe(false);
 });
 
 test("changedFiles: a modified, a new or an untracked file is measured against HEAD's copy of the same name, a renamed one against its old name, a deleted one not at all", () => {
-  const status = "M\tsrc/a.ts\nA\tsrc/new.ts\nD\tsrc/gone.ts\nR096\tsrc/old.ts\tsrc/moved.ts\nM\ttools/t.ts\nC100\tsrc/c.ts\tsrc/copy.ts\n";
+  const status = "M\tsrc/a.ts\nA\tsrc/new.ts\nD\tsrc/gone.ts\nR096\tsrc/old.ts\tsrc/moved.ts\nM\tdocs/t.ts\nC100\tsrc/c.ts\tsrc/copy.ts\n";
   expect(changedFiles(status, ["src/untracked.test.ts", "src/Card.svelte"])).toEqual([
     { path: "src/a.ts", was: "src/a.ts" },
     { path: "src/new.ts", was: null },

@@ -93,28 +93,37 @@ function htmlText(html: string): string {
     .replace(/!\[[^\]]*\]\((?:<[^>]*>|[^)]*)\)/g, "");
 }
 
+const sameLine = (x: string | undefined, y: string | undefined): boolean => x !== undefined && x === y;
+/* resync on the next line both share, so one insertion does not report every line after it */
+function resynced(la: string[], lb: string[], i: number, j: number): [number, number] {
+  for (let k = 1; k < 6; k++) {
+    if (sameLine(la[i + k], lb[j])) return [i + k, j];
+    if (sameLine(lb[j + k], la[i])) return [i, j + k];
+    if (sameLine(la[i + k], lb[j + k])) return [i + k, j + k];
+  }
+  return [i + 1, j + 1];
+}
 /* the first few places two texts part, as "line N: a | b" */
 function firstDiffs(a: string, b: string, max = 3): string[] {
   const la = a.split("\n"), lb = b.split("\n");
   const out: string[] = [];
   let i = 0, j = 0;
-  while ((i < la.length || j < lb.length) && out.length < max) {
+  const more = (): boolean => (i < la.length || j < lb.length) && out.length < max;
+  while (more()) {
     if (la[i] === lb[j]) { i++; j++; continue; }
     out.push(`  line ${i + 1}: ${JSON.stringify(la[i] ?? "<end>")}\n  became: ${JSON.stringify(lb[j] ?? "<end>")}`);
-    /* resync on the next line both share, so one insertion does not report every line after it */
-    let k = 1, found = false;
-    for (; k < 6 && !found; k++) {
-      if (la[i + k] !== undefined && la[i + k] === lb[j]) { i += k; found = true; }
-      else if (lb[j + k] !== undefined && lb[j + k] === la[i]) { j += k; found = true; }
-      else if (la[i + k] !== undefined && la[i + k] === lb[j + k]) { i += k; j += k; found = true; }
-    }
-    if (!found) { i++; j++; }
+    [i, j] = resynced(la, lb, i, j);
   }
   return out;
 }
-function firstTextDiff(a: string, b: string): string {
+function commonPrefix(a: string, b: string): number {
+  const same = (k: number): boolean => k < a.length && k < b.length && a[k] === b[k];
   let k = 0;
-  while (k < a.length && k < b.length && a[k] === b[k]) k++;
+  while (same(k)) k++;
+  return k;
+}
+function firstTextDiff(a: string, b: string): string {
+  const k = commonPrefix(a, b);
   const from = Math.max(0, k - 30);
   return `  at ${k}: ${JSON.stringify(a.slice(from, k + 40))}\n  read as: ${JSON.stringify(b.slice(from, k + 40))}`;
 }

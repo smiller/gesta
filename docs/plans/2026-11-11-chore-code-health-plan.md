@@ -409,3 +409,49 @@ commit:
 None is a mechanical class a grep would hold (READ), so no checker is owed. No
 finding changed behaviour but the masthead's clamp at 0, which a sticky bar's
 bottom never goes below (INFERRED), so no confirmation pass is owed.
+
+## tools/ (2026-11-12)
+
+Asked: "Everything under src/ is at 10. The overall score is 9.23, brought down
+by tools/ ... let's run the same process to get tools/ also up to CodeHealth
+10." Decided by the reader the same day: the gate covers tools/'s .ts and .mjs
+scripts too, not tools/out; Primitive Obsession and String Heavy Function
+Arguments off for tools/** as for src/**; a batch at a time, committed on the
+reader's word, one `/code-review` at HIGH after the last.
+
+THE BASELINE (MEASURED, `cs review` over the 111 tracked .ts and .mjs scripts):
+72 at 10, 38 below, helium-probe.mjs unscored; with the string rules off for
+tools/, 37 below, 213 function findings. The worst: shelfLines.ts 3.42,
+helium-steps.mjs 3.48 (2,941 lines, 29 findings, among them Large Method and
+Number of Functions in a Single Module), commentRules.ts 5.55, quoteMarks.ts
+6.69, harvardMilton.ts 6.89, stageDirections.ts 7.21.
+
+THE NET for the run scripts, which have no tests of their own: every
+`*Run.ts`, corpus.ts and importCorpus.ts played under a scratch HOME holding
+a frozen copy of the backup and of `~/Desktop/gesta-imports` (each script's
+default output is a Desktop folder it clears, so the real one is never
+touched), once from a worktree of HEAD and once from the tree being changed,
+the outputs and logs compared with their clocks masked. Two HEAD passes come
+out identical (MEASURED). Of the 28, 16 run to their end over the backup; six
+the backup already holds stop at their guard ("the backup has these
+already"), so a second pass plays them over a copy without those pages, where
+all six run to their end; six stop where HEAD stops, their work done in the
+backup (a passage already set right, a reading the backup no longer has), and
+are compared on that path alone. corpus.ts is compared with `--writer` too,
+the only path that reaches its text diff.
+
+### Batch 1 — the checkers
+
+The gate's scope (`inScope` in tools/codeHealth.ts) widened, its test first;
+the rules file a second rule set for tools/**, validated by the CLI.
+commentRules.ts 5.55 → 10: the JavaScript comment scanner, one loop of
+43 branches, made a lexer of steps over one state, tried in the old order (a
+comment, a string, a template, a regex, the rest), the string and block ends
+shared with the CSS scanner; a pin's resolver a function per kind; the
+other-module test its three collectors; the block join a named predicate.
+unusedExports.ts 9.12 → 10 and its test 9.68 → 10: the three import readers
+and the per-file check apart. corpus.ts 8.95 → 10: the line resync and the
+common prefix apart. The nets: the self-tests (commentRules 47, unusedExports
+3, the live check over the tree finding the same allowed list); the comment
+checker's sweep and its ledgers of the last six commits identical to HEAD's;
+the corpus report identical with and without `--writer` (MEASURED).

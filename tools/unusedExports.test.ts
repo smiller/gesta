@@ -17,10 +17,11 @@ test("unusedExports: used by an import, by a namespace, by a re-export, in its o
     "src/a.ts local nowhere", "src/a.ts nobody nowhere", "src/a.ts sameNameElsewhere nowhere", "src/a.ts testOnly tests only",
   ].sort());
 });
+const SKIPPED = new Set(["out", "node_modules", "expected"]);
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
-    if (name === "out" || name === "node_modules" || name === "expected") return [];
+    if (SKIPPED.has(name)) return [];
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }

@@ -5,7 +5,8 @@ export interface Scored { path: string; before: number | null; after: number; fi
 interface Fn { title: string; details?: string; "start-line"?: number }
 interface Smell { category: string; functions?: Fn[] }
 
-export const inScope = (path: string): boolean => /^src\/.*\.ts$/.test(path) && !path.endsWith(".d.ts");
+const SCORED = [/^src\/.*\.ts$/, /^tools\/(?!out\/).*\.(ts|mjs)$/];
+export const inScope = (path: string): boolean => SCORED.some((re) => re.test(path)) && !path.endsWith(".d.ts");
 
 function fromStatus(line: string): Changed | null {
   const [code = "", first = "", second] = line.split("\t");
