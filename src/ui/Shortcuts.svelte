@@ -1,6 +1,7 @@
 <!-- A row takes the MOUSEDOWN, not the click, so focus never leaves the box. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
+  import { listKey } from "./cardKeys.ts";
   let { shortcuts, onQuery, onPick, onWalk, onEnter, onEdit, onDraft, onSave, onEscape, onLeave }: {
     shortcuts: Screen["shortcuts"];
     onLeave: (e: FocusEvent) => void;
@@ -13,10 +14,10 @@
     if (e.key === "Escape") { onEscape(); return; }
     const t = e.target as HTMLElement;
     if (t.tagName === "TEXTAREA" || t.tagName === "BUTTON") return;
-    if (e.key === "Enter") { e.preventDefault(); onEnter(); return; }
-    if (e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
-    const dir = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
-    if (dir) { e.preventDefault(); onWalk(dir); }
+    const k = listKey(e);
+    if (k === null) return;
+    e.preventDefault();
+    if (k === "enter") onEnter(); else onWalk(k);
   };
 </script>
 

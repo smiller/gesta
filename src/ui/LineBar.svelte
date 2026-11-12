@@ -5,6 +5,7 @@
      input or its label is swallowed. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
+  import { enterKey, holdsFocus } from "./cardKeys.ts";
   let { lineBar, onInput, onEnter, onClose }: {
     lineBar: Screen["lineBar"];
     onInput: (kind: "line" | "page", value: string) => void;
@@ -18,13 +19,12 @@
     el?.focus(); el?.select();
   }
   const key = (kind: "line" | "page") => (e: KeyboardEvent): void => {
-    if (e.key !== "Enter" || e.isComposing) return;
+    if (!enterKey(e)) return;
     e.preventDefault();
     onEnter(kind, (e.currentTarget as HTMLInputElement).value, e.repeat);
   };
   const press = (e: MouseEvent): void => {
-    const t = e.target as HTMLElement;
-    if (t.tagName !== "INPUT" && t.tagName !== "LABEL") e.preventDefault();
+    if (holdsFocus((e.target as HTMLElement).tagName)) e.preventDefault();
   };
 </script>
 

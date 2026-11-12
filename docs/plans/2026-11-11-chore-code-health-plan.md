@@ -794,3 +794,27 @@ order-dependent failures here?" — yes: the work below removes them.
   first) now wait for the browser's selectionchange, a second at most, and
   that step waits for the format bar; the verdict after: all four ok, no
   reading moved, 5:25 (MEASURED).
+
+### The logic out of the components (2026-11-12)
+
+Asked: CodeScene does not score `.svelte`; "keep the .svelte files lean ...
+and extract business logic into .ts files", before project 3, so that what
+moves is held there too.
+
+- THE SURVEY: twelve components, 1,132 lines; 225 of them script, 54 its
+  branches (an if, a ternary, an && or ||) over eight of them (MEASURED, a
+  count over the scripts). The state, the decisions and the acts already
+  stood in `.ts` (screen.svelte.ts, the models, the acts); what remained in
+  the scripts was prop types, element bindings and focus methods, and
+  seven small decisions (READ).
+- MOVED, test-first (14 tests, red first): the backups status line
+  (`backupsModel.ts`, its plural through `counted`); the list keys Search
+  and Shortcuts each held a copy of, Enter in a bar's field and the press
+  that holds the focus ReplaceBar and LineBar each held, and the focus
+  leaving a card (`cardKeys.ts`); the row lit while its key is typed, once
+  inline in the markup, and a click's act (`bookmarksModel.ts`); the option
+  a Go to level shows picked (`gotoModel.ts`). The branches left in the
+  eight scripts: 23 of 54 (MEASURED), each a call's own guard.
+- KEPT in the components: the props, the elements and their focus, the
+  bookmarks card's measured key column, the aria wording, the markup's
+  choice of panel.

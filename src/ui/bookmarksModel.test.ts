@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { bookmarkLabel, bookmarkLinkLabel, bookmarkRows, bookmarkFoot, typeAlias, resolveAlias, aliasCandidates } from "./bookmarksModel.ts";
+import { bookmarkLabel, bookmarkLinkLabel, bookmarkRows, bookmarkFoot, typeAlias, resolveAlias, aliasCandidates, typedToward, rowAct } from "./bookmarksModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache = { "2026-09-07": "d", "page/Books": "b", "page/Books/Essay": "# The essay", "bookshelf/Milton, John": "# John Milton", "bookshelf/Milton, John/PL": "# Paradise Lost" };
@@ -43,5 +43,24 @@ describe("the typed key", () => {
     expect(resolveAlias(list, "purg")).toEqual({ buf: "purg", say: "finish the key" });
     expect(resolveAlias(list, "q")).toEqual({ buf: "", say: "no bookmark q" });
     expect(aliasCandidates(list, "purg").map((b) => b.alias)).toEqual(["purg2", "purg19"]);
+  });
+});
+
+describe("a row under the keys and the pointer", () => {
+  const keyed = { key: "page/Books", trigger: "fb", label: "Books", keyed: true, here: false, cut: false };
+  it("a keyed row lights while what is typed so far begins its key", () => {
+    expect(typedToward("f", keyed)).toBe(true);
+    expect(typedToward("fb", keyed)).toBe(true);
+    expect(typedToward("b", keyed)).toBe(false);
+    expect(typedToward("", keyed)).toBe(false);
+    expect(typedToward("1", { ...keyed, trigger: "1", keyed: false })).toBe(false);
+  });
+  it("a click is the act of the button it lands in, the row's jump elsewhere, and nothing in the key's field", () => {
+    const on = (...classes: string[]) => (sel: string) => classes.some((c) => sel === "." + c);
+    expect(rowAct(on("bookmark-del"))).toBe("del");
+    expect(rowAct(on("bookmark-setalias"))).toBe("key");
+    expect(rowAct(on("bookmark-link"))).toBe("link");
+    expect(rowAct(on("bookmark-aliasinput"))).toBeNull();
+    expect(rowAct(on())).toBe("jump");
   });
 });

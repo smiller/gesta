@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { gotoLevels, gotoPick, destinationRows, rowGroups, type Level } from "./gotoModel.ts";
+import { gotoLevels, gotoPick, destinationRows, rowGroups, isPicked, type Level } from "./gotoModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache: Record<string, string> = {
@@ -92,5 +92,18 @@ describe("rowGroups", () => {
     expect(rowGroups(destinationRows(world, "2026-09-07", null)).map((g) => [g.group, g.at, g.rows.map((r) => r.v)])).toEqual([
       [null, 0, [""]], ["Pages", 1, ["Notes"]], ["Pages", 2, ["Horace"]], ["Latin", 3, ["Virgil"]],
     ]);
+  });
+});
+
+describe("the option a level shows picked", () => {
+  const level = (value: string | null, valueNs?: string): Level => ({ level: 0, aria: "a", rows: [], value, valueNs, sentinel: null, path: null });
+  it("the row whose value is the level's, and in its namespace where the level names one", () => {
+    expect(isPicked(level("Books"), { v: "Books", label: "Books" })).toBe(true);
+    expect(isPicked(level("Books"), { v: "Essay", label: "Essay" })).toBe(false);
+    expect(isPicked(level("Milton", "bookshelf"), { v: "Milton", label: "Milton", ns: "page" })).toBe(false);
+    expect(isPicked(level("Milton", "bookshelf"), { v: "Milton", label: "Milton", ns: "bookshelf" })).toBe(true);
+  });
+  it("nothing picked at a level not yet chosen", () => {
+    expect(isPicked(level(null), { v: "", label: "" })).toBe(false);
   });
 });

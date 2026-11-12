@@ -60,3 +60,11 @@ export function typeAlias(list: Bookmark[], buf: string, ch: string): Resolved |
   const canGrow = aliasCandidates(list, next).some((b) => b.alias.length > next.length);
   return canGrow ? { buf: next } : resolveAlias(list, next);
 }
+export const typedToward = (buf: string, r: BookmarkRow): boolean => !!buf && r.keyed && r.trigger.startsWith(buf);
+/* `within(selector)`: whether the click landed inside an element it matches */
+export function rowAct(within: (selector: string) => boolean): "del" | "key" | "link" | "jump" | null {
+  if (within(".bookmark-del")) return "del";
+  if (within(".bookmark-setalias")) return "key";
+  if (within(".bookmark-link")) return "link";
+  return within(".bookmark-aliasinput") ? null : "jump";
+}

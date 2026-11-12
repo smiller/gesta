@@ -11,6 +11,7 @@
   import type { SearchState } from "./screen.svelte.ts";
   import { SEARCH_CAP } from "../store/search.ts";
   import { optionGroups } from "./searchModel.ts";
+  import { listKey } from "./cardKeys.ts";
   let { search, onToggle, onQuery, onScope, onWalk, onEnter, onPick }: {
     search: SearchState;
     onToggle: (open: boolean) => void;
@@ -23,10 +24,10 @@
   let input: HTMLInputElement | undefined = $state();
   export function focusInput(): void { input?.focus(); }
   const keydown = (e: KeyboardEvent): void => {
-    if (e.key === "Enter") { e.preventDefault(); onEnter(); return; }
-    if (e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
-    const dir = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
-    if (dir) { e.preventDefault(); onWalk(dir); }
+    const k = listKey(e);
+    if (k === null) return;
+    e.preventDefault();
+    if (k === "enter") onEnter(); else onWalk(k);
   };
   const groups = $derived(optionGroups(search.options));
 </script>

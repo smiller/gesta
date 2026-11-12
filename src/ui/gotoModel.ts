@@ -185,3 +185,4 @@ export function gotoPick(w: GotoWorld, at: { date: string; tag: string | null },
   if (p.level === 0) return destinationPick(c);
   return val(next, 0) !== "" ? pagePick(c) : journalPick(c);
 }
+export const isPicked = (l: Level, r: Row): boolean => l.value !== null && r.v === l.value && (!l.valueNs || r.ns === l.valueNs);

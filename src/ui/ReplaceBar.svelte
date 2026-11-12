@@ -2,6 +2,7 @@
      Skip, Replace or Replace All leaves the cursor in the box it was in. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
+  import { enterKey, holdsFocus } from "./cardKeys.ts";
   let { replace, onFind, onWith, onNext, onOne, onAll, onClose }: {
     replace: Screen["replace"];
     onFind: (value: string) => void;
@@ -16,18 +17,17 @@
   export function focusFind(): void { findInput?.focus(); findInput?.select(); }
   export function focusWith(): void { withInput?.focus(); }
   const findKey = (e: KeyboardEvent): void => {
-    if (e.key !== "Enter" || e.isComposing) return;
+    if (!enterKey(e)) return;
     e.preventDefault();
     onNext(e.shiftKey);
   };
   const withKey = (e: KeyboardEvent): void => {
-    if (e.key !== "Enter" || e.isComposing) return;
+    if (!enterKey(e)) return;
     e.preventDefault();
     onOne();
   };
   const press = (e: MouseEvent): void => {
-    const t = e.target as HTMLElement;
-    if (t.tagName !== "INPUT" && t.tagName !== "LABEL") e.preventDefault();
+    if (holdsFocus((e.target as HTMLElement).tagName)) e.preventDefault();
   };
 </script>
 

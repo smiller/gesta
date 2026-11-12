@@ -648,10 +648,14 @@ is in the plan's record, under the phase named):
   selection), `LineBar.svelte` (⌃⌘G's find bar: the Line and Page boxes),
   `Help.svelte` over `help.html` (the help card and its text, the
   acceptance list carried whole), `bookmarksModel.ts` (the card's
-  decisions: the rows, the foot line, the typed-key grammar),
+  decisions: the rows, the foot line, the typed-key grammar, the row lit
+  while its key is typed, a click's act),
   `Bookmarks.svelte` (the card), `Shortcuts.svelte` (the text expander's
   popup with its editor), `Backups.svelte` (the backups panel: setup,
-  resume, the status line, the recovery note), `CopyButton.svelte` (the
+  resume, the status line, the recovery note), `backupsModel.ts` (what its
+  status line says), `cardKeys.ts` (what a key or a press means in a card
+  or a bar: the list keys, Enter in a field, the press that holds the
+  focus, the focus leaving a card), `CopyButton.svelte` (the
   one hover copy button over a block), `richCopy.ts` (the HTML flavour:
   the staged passage, over `editor/inlineStyles.ts`, the inline-style
   sweep over a live twin that ⌘C and the hover copy share),
@@ -676,6 +680,9 @@ is in the plan's record, under the phase named):
   sticky bar's bottom edge, the one reading every placement under it shares),
   `counted.ts` (a count and its noun). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
+  component holds its props, its elements and their focus, what it
+  measures and its markup; a decision in it moves to a module, where
+  CodeScene scores it and a node test reads it (2026-11-12, asked). A
   component never shares a stem with a module (the disk is
   case-insensitive; the plan's phase 3 record has the failure).
 - `src/session.ts` — THE BRIDGE, DOM-facing: the editor over the journal —

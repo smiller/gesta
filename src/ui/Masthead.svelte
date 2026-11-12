@@ -7,6 +7,7 @@
      focusout. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
+  import { focusLeaves } from "./cardKeys.ts";
   import Search from "./Search.svelte";
   import Goto from "./Goto.svelte";
   import LineBar from "./LineBar.svelte";
@@ -53,7 +54,7 @@
      the pages panel's is the window left */
   const leaving = (nowhere: boolean) => (e: FocusEvent): void => {
     const to = e.relatedTarget;
-    if (to instanceof Node ? !(e.currentTarget as HTMLElement).contains(to) : nowhere) onClosePanel();
+    if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) onClosePanel();
   };
   const leave = leaving(true), leaveCard = leaving(false);
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;

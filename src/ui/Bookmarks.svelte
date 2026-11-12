@@ -3,6 +3,7 @@
      and the ceiling stated in the cell's own rule. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
+  import { typedToward, rowAct } from "./bookmarksModel.ts";
   let { bookmarks, onKey, onAct, onDraft, onCommit, onLeave }: {
     bookmarks: Screen["bookmarks"];
     onLeave: (e: FocusEvent) => void;
@@ -35,10 +36,8 @@
   const click = (e: MouseEvent, key: string): void => {
     const t = e.target as HTMLElement;
     e.stopPropagation();
-    if (t.closest(".bookmark-del")) onAct(key, "del");
-    else if (t.closest(".bookmark-setalias")) onAct(key, "key");
-    else if (t.closest(".bookmark-link")) onAct(key, "link");
-    else if (!t.closest(".bookmark-aliasinput")) onAct(key, "jump");
+    const act = rowAct((s) => !!t.closest(s));
+    if (act) onAct(key, act);
   };
 </script>
 
@@ -53,7 +52,7 @@
     {#each bookmarks.rows as r (r.key)}
       <!-- a row is the jump the pointer cursor promises; the keys reach it through the card -->
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-      <li class="hit" class:bookmark-keyed={r.keyed} class:bookmark-cut={r.cut} class:bookmark-typing={bookmarks.buf && r.keyed && r.trigger.indexOf(bookmarks.buf) === 0} data-key={r.key} onclick={(e) => click(e, r.key)}>
+      <li class="hit" class:bookmark-keyed={r.keyed} class:bookmark-cut={r.cut} class:bookmark-typing={typedToward(bookmarks.buf, r)} data-key={r.key} onclick={(e) => click(e, r.key)}>
         <span class="bookmark-key">
           {#if bookmarks.editing === r.key}
             <input class="bookmark-aliasinput" type="text" value={bookmarks.draft} aria-label={"Key for " + r.label} oninput={(e) => onDraft(e.currentTarget.value)} onkeydown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); onCommit(e.currentTarget.value); } }}>
