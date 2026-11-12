@@ -2,7 +2,7 @@
    fence escalation — and the mark hoist are the rules the stored corpus was
    written under: a change to one respells every entry it touches (pin:
    roundtrip.test › round trips: every form survives) */
-import type { Node, Mark, MarkType } from "prosemirror-model";
+import type { Node, Mark, MarkType, NodeType } from "prosemirror-model";
 import { schema, MARK_ORDER } from "./schema.ts";
 import {
   LIST_LINE, ITEM_BLOCK_INDENT, FENCE_CLOSE, blockLineAt, escapeProse, escapeIndent,
@@ -23,20 +23,23 @@ function markAround(marker: string, inner: string): string {
   return edge[1] + marker + edge[2] + marker + edge[3];
 }
 
+function linkMd(mark: Mark, inner: string): string {
+  const href = String(mark.attrs.href);
+  if ([inner, "https://" + inner, "http://" + inner].includes(href)) return inner;
+  return inner && "[" + inner + "](" + destination(href) + ")";
+}
+const MARK_WRITERS = new Map<string, (mark: Mark, inner: string) => string>([
+  ["strong", (_, inner) => markAround("**", inner)],
+  ["em", (_, inner) => markAround("*", inner)],
+  ["strike", (_, inner) => markAround("~~", inner)],
+  ["underline", (_, inner) => inner && "<u>" + inner + "</u>"],
+  ["code", (_, inner) => inner && "`" + inner + "`"],
+  ["link", linkMd],
+]);
 function wrapMark(mark: Mark, inner: string): string {
-  switch (mark.type.name) {
-    case "strong": return markAround("**", inner);
-    case "em": return markAround("*", inner);
-    case "strike": return markAround("~~", inner);
-    case "underline": return inner && "<u>" + inner + "</u>";
-    case "code": return inner && "`" + inner + "`";
-    case "link": {
-      const href = String(mark.attrs.href);
-      if (inner === href || href === "https://" + inner || href === "http://" + inner) return inner;
-      return inner && "[" + inner + "](" + destination(href) + ")";
-    }
-    default: throw new Error(`mark the serializer does not know: ${mark.type.name}`);
-  }
+  const write = MARK_WRITERS.get(mark.type.name);
+  if (!write) throw new Error(`mark the serializer does not know: ${mark.type.name}`);
+  return write(mark, inner);
 }
 
 /* bare, or in <…> when it holds whitespace or an unbalanced paren —
@@ -69,21 +72,27 @@ function leafMd(node: Node): string {
 function markOf(node: Node, type: MarkType): Mark | undefined {
   return node.marks.find((m) => m.type === type);
 }
+function stretchOf(nodes: readonly Node[], i: number, mark: Mark): number {
+  let j = i;
+  while (j < nodes.length && nodes[j].marks.some((m) => m.eq(mark))) j++;
+  return j - i;
+}
+function longestAt(nodes: readonly Node[], i: number, here: Mark[]): { mark: Mark; len: number } {
+  let best = { mark: here[0], len: stretchOf(nodes, i, here[0]) };
+  for (const mark of here.slice(1)) {
+    const len = stretchOf(nodes, i, mark);
+    if (len > best.len) best = { mark, len };
+  }
+  return best;
+}
 function runMd(nodes: readonly Node[], remaining: readonly MarkType[]): string {
   let out = "";
   let i = 0;
   while (i < nodes.length) {
     const here = remaining.map((t) => markOf(nodes[i], t)).filter((m): m is Mark => !!m);
     if (!here.length) { out += leafMd(nodes[i]); i++; continue; }
-    const stretch = (mark: Mark): number => {
-      let j = i;
-      while (j < nodes.length && nodes[j].marks.some((m) => m.eq(mark))) j++;
-      return j - i;
-    };
-    let mark = here[0], len = stretch(mark);
-    for (const m of here.slice(1)) { const l = stretch(m); if (l > len) { mark = m; len = l; } }
-    const inner = runMd(nodes.slice(i, i + len), remaining.filter((t) => t !== mark.type));
-    out += wrapMark(mark, inner);
+    const { mark, len } = longestAt(nodes, i, here);
+    out += wrapMark(mark, runMd(nodes.slice(i, i + len), remaining.filter((t) => t !== mark.type)));
     i += len;
   }
   return out;
@@ -147,26 +156,36 @@ function quoteBodyMd(parent: Node): string {
   return lines.join("\n");
 }
 
+const fenced = (opener: string, node: Node): string => opener + "\n" + blocksMd(node) + "\n:::";
+/* a bare opener stays bare: a normalised count would respell every such
+   entry. An empty grid is written as nothing (pin: roundtrip.test › an
+   empty grid serializes to nothing) */
+function gridMd(node: Node): string {
+  if (!node.childCount) return "";
+  return fenced("::: grid" + (node.attrs.n == null ? "" : " " + String(node.attrs.n)), node);
+}
+const referenceMd = (node: Node): string => (node.textContent ? "::: reference\n" + node.textContent + "\n:::" : "::: reference\n:::");
+const listBlockMd = (node: Node): string => listMd(node, 0).join("\n");
+const BLOCK_WRITERS = new Map<NodeType, (node: Node, escaping: boolean) => string>([
+  [N.paragraph, paragraphMd],
+  [N.heading, headingMd],
+  [N.blockquote, (node) => quoteBodyMd(node).split("\n").map(quotePrefix).join("\n")],
+  [N.bullet_list, listBlockMd],
+  [N.ordered_list, listBlockMd],
+  [N.code_block, fenceMd],
+  [N.table, tableMd],
+  [N.card, (node) => fenced("::: " + String(node.attrs.colour), node)],
+  [N.note, (node) => fenced("::: note", node)],
+  [N.margin_note, (node) => fenced("::: margin-note", node)],
+  [N.grid, gridMd],
+  [N.reference, referenceMd],
+  [N.verse, (node) => rowsMd(node, node.attrs.dual ? "dual-language" : "verse")],
+  [N.prose, (node) => rowsMd(node, "prose")],
+]);
 function blockMd(node: Node, escaping: boolean): string {
-  switch (node.type) {
-    case N.paragraph: return paragraphMd(node, escaping);
-    case N.heading: return headingMd(node);
-    case N.blockquote: return quoteBodyMd(node).split("\n").map(quotePrefix).join("\n");
-    case N.bullet_list: case N.ordered_list: return listMd(node, 0).join("\n");
-    case N.code_block: return fenceMd(node);
-    case N.table: return tableMd(node);
-    case N.card: return "::: " + String(node.attrs.colour) + "\n" + blocksMd(node) + "\n:::";
-    case N.note: return "::: note\n" + blocksMd(node) + "\n:::";
-    case N.margin_note: return "::: margin-note\n" + blocksMd(node) + "\n:::";
-    /* a bare opener stays bare: a normalised count would respell every such
-       entry. An empty grid, which the parse refuses, is written as nothing
-       (pin: roundtrip.test › an empty grid serializes to nothing) */
-    case N.grid: return node.childCount ? "::: grid" + (node.attrs.n == null ? "" : " " + String(node.attrs.n)) + "\n" + blocksMd(node) + "\n:::" : "";
-    case N.reference: return node.textContent ? "::: reference\n" + node.textContent + "\n:::" : "::: reference\n:::";
-    case N.verse: return rowsMd(node, node.attrs.dual ? "dual-language" : "verse");
-    case N.prose: return rowsMd(node, "prose");
-    default: throw new Error(`block the serializer does not know: ${node.type.name}`);
-  }
+  const write = BLOCK_WRITERS.get(node.type);
+  if (!write) throw new Error(`block the serializer does not know: ${node.type.name}`);
+  return write(node, escaping);
 }
 
 /* the fence outgrows any line of nothing but backticks, else the block
@@ -208,19 +227,31 @@ function rowHead(row: Node, text: string): string {
   const kind = rowKindToken(row.attrs.kind as string | null);
   return kind || (readsAsRowToken(text) ? ROW_TOKEN_ESCAPE : "");
 }
+function lineRowMd(row: Node): string {
+  if (row.type !== N.pair) { const a = cellMd(row); return rowHead(row, a) + a; }
+  const a = cellMd(row.child(0));
+  return rowHead(row, a) + (row.childCount > 1 ? pairMd(a, cellMd(row.child(1))) : a);
+}
+function rowMd(row: Node): string {
+  if (row.type === N.gap) return "";
+  if (row.type === N.skip) return ROW_SKIP_TOKEN;
+  if (row.type === N.note || row.type === N.margin_note) return blockMd(row, true);
+  return lineRowMd(row);
+}
+function rowNumbers(block: Node, start: number, stanza: number | null | undefined): string {
+  const facing = block.attrs.dual || stanza != null ? null : block.attrs.facing as number | null | undefined;
+  if (facing != null) return " " + start + " " + facing;
+  return start > 1 ? " " + start : "";
+}
+function rowsOpener(block: Node, word: string): string {
+  const start = block.attrs.start as number, stanza = block.attrs.stanza as number | null | undefined;
+  if (stanza != null && start === 1) return "::: stanza " + stanza;
+  return "::: " + word + rowNumbers(block, start, stanza) + (block.attrs.numbered ? " numbered" : "");
+}
 function rowsMd(block: Node, word: string): string {
   const rows: string[] = [];
-  block.forEach((row) => {
-    if (row.type === N.gap) rows.push("");
-    else if (row.type === N.skip) rows.push(ROW_SKIP_TOKEN);
-    else if (row.type === N.note || row.type === N.margin_note) rows.push(blockMd(row, true));
-    else if (row.type === N.pair) { const a = cellMd(row.child(0)); rows.push(rowHead(row, a) + (row.childCount > 1 ? pairMd(a, cellMd(row.child(1))) : a)); }
-    else { const a = cellMd(row); rows.push(rowHead(row, a) + a); }
-  });
-  const start = block.attrs.start as number, stanza = block.attrs.stanza as number | null | undefined;
-  const facing = block.attrs.dual || stanza != null ? null : block.attrs.facing as number | null | undefined;
-  const numbers = facing != null ? " " + start + " " + facing : start > 1 ? " " + start : "";
-  const open = (stanza != null && start === 1 ? "::: stanza " + stanza : "::: " + word + numbers + (block.attrs.numbered ? " numbered" : "")) + "\n";
+  block.forEach((row) => { rows.push(rowMd(row)); });
+  const open = rowsOpener(block, word) + "\n";
   return rows.length ? open + rows.join("\n") + "\n:::" : open + ":::";
 }
 
@@ -237,37 +268,37 @@ export function itemNumbers(list: Node): number[] {
   });
   return out;
 }
+/* an empty line is not indented: trailing whitespace would take two
+   passes to settle (pin: roundtrip.test › a list item's empty
+   continuation line is written unindented); nor a block-shaped one, which
+   the indent would destroy */
+function pushContinuation(lines: string[], contPad: string, mdLines: string[]): void {
+  mdLines.forEach((l, k) => { lines.push(l && !blockLineAt(mdLines, k) ? contPad + l : l); });
+}
+function itemChildMd(lines: string[], child: Node, contPad: string, depth: number): void {
+  if (child.type !== N.paragraph) { lines.push(...listMd(child, depth + 1)); return; }
+  const text = inlineMd(child).replace(/\n+$/, "");
+  if (!text) return;
+  lines.push("");
+  pushContinuation(lines, contPad, text.split("\n"));
+}
+function itemMd(li: Node, pad: string, marker: string, depth: number): string[] {
+  const body = inlineMd(li.child(0)).replace(/\n+$/, "").split("\n");
+  const head = pad + marker + body[0];
+  const hm = head.match(LIST_LINE);
+  const contCol = hm ? head.length - hm[3].length : pad.length + marker.length;
+  const contPad = " ".repeat(Math.max(pad.length + ITEM_BLOCK_INDENT.length, contCol));
+  const lines = [head];
+  pushContinuation(lines, contPad, body.slice(1));
+  for (let k = 1; k < li.childCount; k++) itemChildMd(lines, li.child(k), contPad, depth);
+  return lines;
+}
 function listMd(list: Node, depth: number): string[] {
   const ordered = list.type === N.ordered_list;
   const pad = "  ".repeat(depth);
   const numbers = itemNumbers(list);
   const lines: string[] = [];
-  list.forEach((li, _, i) => {
-    const marker = ordered ? numbers[i] + ". " : "- ";
-    const body = inlineMd(li.child(0)).replace(/\n+$/, "").split("\n");
-    const head = pad + marker + body[0];
-    const hm = head.match(LIST_LINE);
-    const contCol = hm ? head.length - hm[3].length : pad.length + marker.length;
-    const contPad = " ".repeat(Math.max(pad.length + ITEM_BLOCK_INDENT.length, contCol));
-    /* an empty line is not indented: trailing whitespace would take two
-       passes to settle (pin: roundtrip.test › a list item's empty
-       continuation line is written unindented); nor a block-shaped one, which
-       the indent would destroy */
-    const pushCont = (mdLines: string[]) => {
-      mdLines.forEach((l, k) => { lines.push(l && !blockLineAt(mdLines, k) ? contPad + l : l); });
-    };
-    lines.push(head);
-    pushCont(body.slice(1));
-    for (let k = 1; k < li.childCount; k++) {
-      const child = li.child(k);
-      if (child.type === N.paragraph) {
-        const blockMdText = inlineMd(child).replace(/\n+$/, "");
-        if (!blockMdText) continue;
-        lines.push("");
-        pushCont(blockMdText.split("\n"));
-      } else lines.push(...listMd(child, depth + 1));
-    }
-  });
+  list.forEach((li, _, i) => { lines.push(...itemMd(li, pad, ordered ? numbers[i] + ". " : "- ", depth)); });
   return lines;
 }
 

@@ -48,40 +48,51 @@ class Sink {
 function emitBlocks(sink: Sink, lines: string[], quote: boolean): void {
   let i = 0;
   while (i < lines.length) {
-    const line = lines[i];
-    if (!quote && !line.trim()) { i++; continue; }
-    if (FENCE_LINE.test(line)) i = emitFence(sink, lines, i);
-    else if (CARD_OPEN.test(line)) i = emitCard(sink, lines, i);
-    else if (VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line)) i = emitRows(sink, lines, i, "verse");
-    else if (PROSE_OPEN.test(line)) i = emitRows(sink, lines, i, "prose");
-    else if (REFERENCE_OPEN.test(line)) i = emitReference(sink, lines, i);
-    else if (NOTE_OPEN.test(line)) i = emitNote(sink, lines, i, "note");
-    else if (MARGIN_NOTE_OPEN.test(line)) i = emitNote(sink, lines, i, "margin_note");
-    else if (GRID_OPEN.test(line)) i = emitGrid(sink, lines, i);
-    else if (HEADING_LINE.test(line)) { emitHeading(sink, line); i++; }
-    else if (QUOTE_LINE.test(line)) {
-      const inner: string[] = [];
-      while (i < lines.length && QUOTE_LINE.test(lines[i])) inner.push(lines[i++].replace(QUOTE_LINE, ""));
-      sink.push("blockquote_open", "blockquote", 1);
-      emitBlocks(sink, inner, true);
-      sink.push("blockquote_close", "blockquote", -1);
-    }
-    else if (LIST_LINE.test(line)) i = emitList(sink, lines, i);
-    else if (isTableStart(lines, i)) i = emitTable(sink, lines, i);
-    else if (quote) {
-      const txt: string[] = [];
-      while (i < lines.length && !blockLineAt(lines, i)) txt.push(lines[i++]);
-      emitParagraph(sink, txt.map(unescapeProse));
-    }
-    else {
-      /* the current line first: it may be block-start-like (a pipe row with
-         no divider under it) yet land here, and the loop must advance (pin:
-         parse.test › a pipe row with no divider under it is a paragraph) */
-      const p = [lines[i++]];
-      while (i < lines.length && lines[i].trim() && !blockLineAt(lines, i)) p.push(lines[i++]);
-      emitParagraph(sink, p.map(unescapeProse));
-    }
+    if (!quote && !lines[i].trim()) { i++; continue; }
+    const arm = BLOCK_ARMS.find(([opens]) => opens(lines, i));
+    if (arm) i = arm[1](sink, lines, i);
+    else i = quote ? emitQuoteText(sink, lines, i) : emitText(sink, lines, i);
   }
+}
+type Arm = [opens: (lines: string[], i: number) => boolean, emit: (sink: Sink, lines: string[], i: number) => number];
+const lineIs = (...res: RegExp[]) => (lines: string[], i: number): boolean => res.some((re) => re.test(lines[i]));
+const BLOCK_ARMS: Arm[] = [
+  [lineIs(FENCE_LINE), emitFence],
+  [lineIs(CARD_OPEN), emitCard],
+  [lineIs(VERSE_OPEN, STANZA_OPEN, DUAL_OPEN), (sink, lines, i) => emitRows(sink, lines, i, "verse")],
+  [lineIs(PROSE_OPEN), (sink, lines, i) => emitRows(sink, lines, i, "prose")],
+  [lineIs(REFERENCE_OPEN), emitReference],
+  [lineIs(NOTE_OPEN), (sink, lines, i) => emitNote(sink, lines, i, "note")],
+  [lineIs(MARGIN_NOTE_OPEN), (sink, lines, i) => emitNote(sink, lines, i, "margin_note")],
+  [lineIs(GRID_OPEN), emitGrid],
+  [lineIs(HEADING_LINE), (sink, lines, i) => { emitHeading(sink, lines[i]); return i + 1; }],
+  [lineIs(QUOTE_LINE), emitQuote],
+  [lineIs(LIST_LINE), emitList],
+  [isTableStart, emitTable],
+];
+function emitQuote(sink: Sink, lines: string[], i: number): number {
+  const inner: string[] = [];
+  while (i < lines.length && QUOTE_LINE.test(lines[i])) inner.push(lines[i++].replace(QUOTE_LINE, ""));
+  sink.push("blockquote_open", "blockquote", 1);
+  emitBlocks(sink, inner, true);
+  sink.push("blockquote_close", "blockquote", -1);
+  return i;
+}
+function emitQuoteText(sink: Sink, lines: string[], i: number): number {
+  const txt: string[] = [];
+  while (i < lines.length && !blockLineAt(lines, i)) txt.push(lines[i++]);
+  emitParagraph(sink, txt.map(unescapeProse));
+  return i;
+}
+const paragraphGoesOn = (lines: string[], i: number): boolean => i < lines.length && !!lines[i].trim() && !blockLineAt(lines, i);
+/* the current line first: it may be block-start-like (a pipe row with
+   no divider under it) yet land here, and the loop must advance (pin:
+   parse.test › a pipe row with no divider under it is a paragraph) */
+function emitText(sink: Sink, lines: string[], i: number): number {
+  const p = [lines[i++]];
+  while (paragraphGoesOn(lines, i)) p.push(lines[i++]);
+  emitParagraph(sink, p.map(unescapeProse));
+  return i;
 }
 
 function emitParagraph(sink: Sink, lines: string[]): void {
@@ -131,18 +142,24 @@ function emitCard(sink: Sink, lines: string[], from: number): number {
    generic "cannot build". It throws: left as paragraphs, the opener would
    be escaped on the next save (pin: parse.test › a grid holding anything but
    cards is refused at the parse, the offending line quoted) */
+function notACard(l: string): Error {
+  const why = fenceLineReason(l);
+  return new Error(`a grid holds only cards; "${l.trim().slice(0, 60)}" is not a card` + (why ? " — " + why : ""));
+}
+function countCards(body: string[]): number {
+  let cards = 0;
+  for (let i = 0; i < body.length;) {
+    if (!body[i].trim()) { i++; continue; }
+    if (!CARD_OPEN.test(body[i])) throw notACard(body[i]);
+    cards++;
+    i = fenceBody(body, i + 1).next;
+  }
+  return cards;
+}
 function emitGrid(sink: Sink, lines: string[], from: number): number {
   const typed = lines[from].match(/\s(\d+)\s*$/);
   const box = fenceBody(lines, from + 1);
-  let cards = 0;
-  for (let i = 0; i < box.body.length;) {
-    const l = box.body[i];
-    if (!l.trim()) { i++; continue; }
-    if (CARD_OPEN.test(l)) { cards++; i = fenceBody(box.body, i + 1).next; continue; }
-    const why = fenceLineReason(l);
-    throw new Error(`a grid holds only cards; "${l.trim().slice(0, 60)}" is not a card` + (why ? " — " + why : ""));
-  }
-  if (!cards) throw new Error("a grid holds at least one card");
+  if (!countCards(box.body)) throw new Error("a grid holds at least one card");
   emitBody(sink, "grid", { n: typed ? parseInt(typed[1], 10) : null }, box.body);
   return box.next;
 }
@@ -206,24 +223,25 @@ function emitRows(sink: Sink, lines: string[], from: number, cls: "verse" | "pro
 
 interface Item { indent: number; ordered: boolean; num: number; text: string; cont: string[]; blocks: string[][] }
 
+const indentOf = (l: string): number => l.match(/^\s*/)![0].length;
+const continuesAt = (lines: string[], j: number, col: number): boolean =>
+  j < lines.length && !!lines[j].trim() && !blockLineAt(lines, j) && indentOf(lines[j]) >= col;
+function takeRun(lines: string[], j: number, col: number): string[] {
+  const run: string[] = [];
+  for (; continuesAt(lines, j, col); j++) run.push(lines[j].replace(/^\s+/, ""));
+  return run;
+}
+function skipBlank(lines: string[], j: number): number {
+  while (j < lines.length && !lines[j].trim()) j++;
+  return j;
+}
 function takeItemBlocks(item: Item, lines: string[], from: number, col: number): number {
-  const indentOf = (l: string): number => l.match(/^\s*/)![0].length;
-  const continues = (j: number): boolean =>
-    j < lines.length && !!lines[j].trim() && !blockLineAt(lines, j) && indentOf(lines[j]) >= col;
-  const take = (j: number): string[] => {
-    const run: string[] = [];
-    while (continues(j)) { run.push(lines[j].replace(/^\s+/, "")); j++; }
-    return run;
-  };
-  if (continues(from)) {
-    item.cont = take(from);
-    from += item.cont.length;
-  }
+  item.cont = takeRun(lines, from, col);
+  from += item.cont.length;
   for (;;) {
-    let j = from;
-    while (j < lines.length && !lines[j].trim()) j++;
-    if (j === from || !continues(j)) return from;
-    const block = take(j);
+    const j = skipBlank(lines, from);
+    if (j === from || !continuesAt(lines, j, col)) return from;
+    const block = takeRun(lines, j, col);
     item.blocks.push(block);
     from = j + block.length;
   }
@@ -239,32 +257,49 @@ function emitList(sink: Sink, lines: string[], from: number): number {
     items.push(item);
     from = takeItemBlocks(item, lines, from + 1, lines[from].length - lm[3].length);
   }
-  buildList(sink, items);
+  new ListWriter(sink, items).all();
   return from;
 }
 
-function buildList(sink: Sink, items: Item[]): void {
-  let pos = 0;
-  function level(): void {
-    const L = items[pos].indent, ordered = items[pos].ordered;
-    const open = sink.push(ordered ? "ordered_list_open" : "bullet_list_open", ordered ? "ol" : "ul", 1);
-    if (ordered && items[pos].num !== 1) open.meta = { start: items[pos].num };
-    let want = ordered ? items[pos].num : 0;
-    while (pos < items.length && items[pos].indent >= L) {
-      const it = items[pos];
-      if (it.ordered !== ordered) break;
-      const li = sink.push("list_item_open", "li", 1);
-      if (ordered && it.num !== want) li.meta = { value: it.num };
-      if (ordered) want = it.num + 1;
-      emitParagraph(sink, [it.text, ...it.cont]);
-      it.blocks.forEach((b) => emitParagraph(sink, b));
-      pos++;
-      while (pos < items.length && items[pos].indent > L) level();
-      sink.push("list_item_close", "li", -1);
-    }
-    sink.push(ordered ? "ordered_list_close" : "bullet_list_close", ordered ? "ol" : "ul", -1);
+class ListWriter {
+  sink: Sink;
+  items: Item[];
+  pos = 0;
+  constructor(sink: Sink, items: Item[]) {
+    this.sink = sink;
+    this.items = items;
   }
-  while (pos < items.length) level();
+  all(): void {
+    while (this.pos < this.items.length) this.level();
+  }
+  private inLevel(indent: number, ordered: boolean): boolean {
+    const it = this.items[this.pos];
+    return !!it && it.indent >= indent && it.ordered === ordered;
+  }
+  private deeper(indent: number): boolean {
+    const it = this.items[this.pos];
+    return !!it && it.indent > indent;
+  }
+  private level(): void {
+    const first = this.items[this.pos], ordered = first.ordered;
+    const name = ordered ? "ordered_list" : "bullet_list", tag = ordered ? "ol" : "ul";
+    const open = this.sink.push(name + "_open", tag, 1);
+    if (ordered && first.num !== 1) open.meta = { start: first.num };
+    let want = first.num;
+    while (this.inLevel(first.indent, ordered)) want = this.item(first.indent, ordered, want);
+    this.sink.push(name + "_close", tag, -1);
+  }
+  private item(indent: number, ordered: boolean, want: number): number {
+    const it = this.items[this.pos];
+    const li = this.sink.push("list_item_open", "li", 1);
+    if (ordered && it.num !== want) li.meta = { value: it.num };
+    emitParagraph(this.sink, [it.text, ...it.cont]);
+    it.blocks.forEach((b) => emitParagraph(this.sink, b));
+    this.pos++;
+    while (this.deeper(indent)) this.level();
+    this.sink.push("list_item_close", "li", -1);
+    return it.num + 1;
+  }
 }
 
 function emitTable(sink: Sink, lines: string[], from: number): number {
@@ -316,21 +351,23 @@ function backticks(state: StateInline, silent: boolean): boolean {
 /* the one inline HTML form the grammar reads. Every other angle bracket is
    text: the 1998–99 chat transcripts carry ~8,000 <name> tags (pin:
    parse.test › the underline tag is read only as a matched pair) */
+type UnderlineState = StateInline & { uOpen?: number };
+function underlineOpen(state: UnderlineState, silent: boolean): boolean {
+  const close = state.src.indexOf("</u>", state.pos + 3);
+  if (close < 0 || close >= state.posMax) return false;
+  if (!silent) { state.push("u_open", "u", 1); state.uOpen = (state.uOpen ?? 0) + 1; }
+  state.pos += 3;
+  return true;
+}
+function underlineClose(state: UnderlineState, silent: boolean): boolean {
+  if (!state.uOpen) return false;
+  if (!silent) { state.push("u_close", "u", -1); state.uOpen -= 1; }
+  state.pos += 4;
+  return true;
+}
 function underline(state: StateInline, silent: boolean): boolean {
-  const src = state.src, pos = state.pos;
-  if (src.charCodeAt(pos) !== 0x3c) return false;
-  const st = state as StateInline & { uOpen?: number };
-  if (src.startsWith("<u>", pos)) {
-    if (src.indexOf("</u>", pos + 3) < 0 || src.indexOf("</u>", pos + 3) >= state.posMax) return false;
-    if (!silent) { state.push("u_open", "u", 1); st.uOpen = (st.uOpen ?? 0) + 1; }
-    state.pos += 3;
-    return true;
-  }
-  if (src.startsWith("</u>", pos) && (st.uOpen ?? 0) > 0) {
-    if (!silent) { state.push("u_close", "u", -1); st.uOpen! -= 1; }
-    state.pos += 4;
-    return true;
-  }
+  if (state.src.startsWith("<u>", state.pos)) return underlineOpen(state, silent);
+  if (state.src.startsWith("</u>", state.pos)) return underlineClose(state, silent);
   return false;
 }
 
@@ -344,9 +381,9 @@ const TERMINATORS = new Set([0x0a, 0x21, 0x23, 0x24, 0x25, 0x26, 0x2a, 0x2b, 0x2
    inside an address is IPv6-only (pin: roundtrip.test › round trips: every
    form survives) */
 export const URL_START = /^(?:https?:\/\/|www\.)[^\s<>⟨\]]+/i;
+const URL_FIRST = new Set([0x68, 0x48, 0x77, 0x57]);
 function urlAt(src: string, pos: number, max: number): RegExpExecArray | null {
-  const c = src.charCodeAt(pos);
-  if (c !== 0x68 && c !== 0x48 && c !== 0x77 && c !== 0x57) return null;
+  if (!URL_FIRST.has(src.charCodeAt(pos))) return null;
   return URL_START.exec(src.slice(pos, max));
 }
 function text(state: StateInline, silent: boolean): boolean {
@@ -372,17 +409,17 @@ function text(state: StateInline, silent: boolean): boolean {
    trailing punctuation stays outside, and a folio ends the run) */
 const URL_BOUNDARY = /[\s([{“‘"'>⟩*_~]/;
 const URL_TRAIL_CHAR = /[.,;:!?…'")\]}»”’]/;
+const countOf = (s: string, re: RegExp): number => (s.match(re) || []).length;
+function trailsUrl(run: string, end: number): boolean {
+  const c = run.charAt(end - 1);
+  if (!URL_TRAIL_CHAR.test(c)) return false;
+  if (c !== ")") return true;
+  const body = run.slice(0, end - 1);
+  return countOf(body, /\(/g) <= countOf(body, /\)/g);
+}
 export function trimUrl(run: string): string {
   let end = run.length;
-  while (end > 0) {
-    const c = run.charAt(end - 1);
-    if (!URL_TRAIL_CHAR.test(c)) break;
-    if (c === ")") {
-      const body = run.slice(0, end - 1);
-      if ((body.match(/\(/g) || []).length > (body.match(/\)/g) || []).length) break;
-    }
-    end--;
-  }
+  while (end > 0 && trailsUrl(run, end)) end--;
   return run.slice(0, end);
 }
 function autolink(state: StateInline, silent: boolean): boolean {
@@ -436,86 +473,101 @@ md.inline.ruler.disable(["linkify", "escape", "autolink", "html_inline", "entity
 
 /* ---------- tokens -> document ---------- */
 
-function buildDoc(tokens: Token[]): Node {
-  const stack: { type: NodeType; attrs: Record<string, unknown> | null; content: Node[] }[] = [
-    { type: schema.nodes.doc, attrs: null, content: [] },
-  ];
-  let marks: readonly Mark[] = Mark.none;
-  const top = () => stack[stack.length - 1];
-  const add = (node: Node) => top().content.push(node);
-  const text = (s: string, ms: readonly Mark[] = marks) => { if (s) add(schema.text(s, ms)); };
-  const open = (type: NodeType, attrs: Record<string, unknown> | null = null) => stack.push({ type, attrs, content: [] });
-  const close = () => {
-    const { type, attrs, content } = stack.pop()!;
+type Attrs = Record<string, unknown> | null;
+const rowKind = (t: Token): Attrs => ({ kind: (t.meta?.kind as string) ?? null, label: (t.meta?.label as string) ?? null });
+const NODE_OPENS = new Map<string, [NodeType, (t: Token) => Attrs]>([
+  ["paragraph_open", [schema.nodes.paragraph, () => null]],
+  ["heading_open", [schema.nodes.heading, (t) => ({ level: +t.tag.slice(1) })]],
+  ["blockquote_open", [schema.nodes.blockquote, () => null]],
+  ["bullet_list_open", [schema.nodes.bullet_list, () => null]],
+  ["ordered_list_open", [schema.nodes.ordered_list, (t) => ({ start: (t.meta?.start as number) ?? 1 })]],
+  ["list_item_open", [schema.nodes.list_item, (t) => ({ value: (t.meta?.value as number) ?? null })]],
+  ["table_open", [schema.nodes.table, () => null]],
+  ["table_row_open", [schema.nodes.table_row, () => null]],
+  ["table_cell_open", [schema.nodes.table_cell, (t) => ({ header: !!t.meta?.header })]],
+  ["card_open", [schema.nodes.card, (t) => ({ colour: t.meta!.colour })]],
+  ["note_open", [schema.nodes.note, () => null]],
+  ["margin_note_open", [schema.nodes.margin_note, () => null]],
+  ["grid_open", [schema.nodes.grid, (t) => ({ n: t.meta!.n })]],
+  ["verse_open", [schema.nodes.verse, (t) => ({ start: t.meta!.start, stanza: t.meta!.stanza ?? null, dual: !!t.meta!.dual, facing: t.meta!.facing ?? null, numbered: !!t.meta!.numbered })]],
+  ["prose_open", [schema.nodes.prose, (t) => ({ start: t.meta!.start, numbered: !!t.meta!.numbered })]],
+  ["line_open", [schema.nodes.line, rowKind]],
+  ["pair_open", [schema.nodes.pair, rowKind]],
+  ["cell_open", [schema.nodes.cell, () => null]],
+]);
+const NODE_CLOSES = new Set([
+  "paragraph_close", "heading_close", "blockquote_close", "bullet_list_close", "ordered_list_close", "list_item_close",
+  "table_close", "table_row_close", "table_cell_close", "card_close", "note_close", "margin_note_close", "grid_close",
+  "verse_close", "prose_close", "line_close", "pair_close", "cell_close",
+]);
+const MARK_OPENS = new Map([["em_open", "em"], ["strong_open", "strong"], ["s_open", "strike"], ["u_open", "underline"]]);
+const MARK_CLOSES = new Map([["em_close", "em"], ["strong_close", "strong"], ["s_close", "strike"], ["u_close", "underline"], ["link_close", "link"]]);
+const textOf = (t: Token): Node | null => (t.content ? schema.text(t.content) : null);
+function linkHref(t: Token): string {
+  const href = String(t.attrGet("href") ?? "");
+  return /^www\./i.test(href) ? "https://" + href : href;
+}
+const hardBreak = (b: DocBuilder): void => b.add(schema.nodes.hard_break.create(null, null, b.marks));
+const LEAVES = new Map<string, (b: DocBuilder, t: Token) => void>([
+  ["inline", (b, t) => b.walk(t.children!)],
+  ["text", (b, t) => b.text(t.content)],
+  ["softbreak", hardBreak],
+  ["hardbreak", hardBreak],
+  ["code_inline", (b, t) => b.text(t.content, schema.marks.code.create().addToSet(b.marks))],
+  ["link_open", (b, t) => b.mark("link", { href: linkHref(t) })],
+  ["image", (b, t) => b.add(schema.nodes.image.create({ src: String(t.attrGet("src") ?? ""), alt: t.content }, null, b.marks))],
+  ["folio", (b, t) => b.add(schema.nodes.folio.create({ label: t.meta!.label }, null, b.marks))],
+  ["gap", (b) => b.add(schema.nodes.gap.create())],
+  ["skip", (b) => b.add(schema.nodes.skip.create())],
+  ["fence", (b, t) => b.add(schema.nodes.code_block.create({ lang: t.info, rest: (t.meta?.rest as string) ?? "" }, textOf(t)))],
+  ["reference", (b, t) => b.add(schema.nodes.reference.create(null, textOf(t)))],
+]);
+
+class DocBuilder {
+  stack: { type: NodeType; attrs: Attrs; content: Node[] }[] = [{ type: schema.nodes.doc, attrs: null, content: [] }];
+  marks: readonly Mark[] = Mark.none;
+  add(node: Node): void {
+    this.stack[this.stack.length - 1].content.push(node);
+  }
+  text(s: string, ms: readonly Mark[] = this.marks): void {
+    if (s) this.add(schema.text(s, ms));
+  }
+  mark(name: string, attrs: Attrs = null): void {
+    this.marks = schema.marks[name].create(attrs).addToSet(this.marks);
+  }
+  private open(type: NodeType, attrs: Attrs): void {
+    this.stack.push({ type, attrs, content: [] });
+  }
+  private close(): void {
+    const { type, attrs, content } = this.stack.pop()!;
     const node = type.createAndFill(attrs, Fragment.fromArray(content));
     if (!node) throw new Error(`cannot build a ${type.name} from its content`);
-    add(node);
-  };
-  const mark = (name: string, attrs: Record<string, unknown> | null = null) => { marks = schema.marks[name].create(attrs).addToSet(marks); };
-  const unmark = (name: string) => { marks = schema.marks[name].removeFromSet(marks); };
-
-  const walk = (toks: Token[]): void => {
-    for (const t of toks) {
-      switch (t.type) {
-        case "inline": walk(t.children!); break;
-        case "text": text(t.content); break;
-        case "softbreak": case "hardbreak": add(schema.nodes.hard_break.create(null, null, marks)); break;
-        case "code_inline": text(t.content, schema.marks.code.create().addToSet(marks)); break;
-        case "em_open": mark("em"); break;
-        case "em_close": unmark("em"); break;
-        case "strong_open": mark("strong"); break;
-        case "strong_close": unmark("strong"); break;
-        case "s_open": mark("strike"); break;
-        case "s_close": unmark("strike"); break;
-        case "u_open": mark("underline"); break;
-        case "u_close": unmark("underline"); break;
-        case "link_open": {
-          let href = String(t.attrGet("href") ?? "");
-          if (/^www\./i.test(href)) href = "https://" + href;
-          mark("link", { href });
-          break;
-        }
-        case "link_close": unmark("link"); break;
-        case "image": add(schema.nodes.image.create({ src: String(t.attrGet("src") ?? ""), alt: t.content }, null, marks)); break;
-        case "folio": add(schema.nodes.folio.create({ label: t.meta!.label }, null, marks)); break;
-        case "paragraph_open": open(schema.nodes.paragraph); break;
-        case "heading_open": open(schema.nodes.heading, { level: +t.tag.slice(1) }); break;
-        case "blockquote_open": open(schema.nodes.blockquote); break;
-        case "bullet_list_open": open(schema.nodes.bullet_list); break;
-        case "ordered_list_open": open(schema.nodes.ordered_list, { start: (t.meta?.start as number) ?? 1 }); break;
-        case "list_item_open": open(schema.nodes.list_item, { value: (t.meta?.value as number) ?? null }); break;
-        case "table_open": open(schema.nodes.table); break;
-        case "table_row_open": open(schema.nodes.table_row); break;
-        case "table_cell_open": open(schema.nodes.table_cell, { header: !!t.meta?.header }); break;
-        case "card_open": open(schema.nodes.card, { colour: t.meta!.colour }); break;
-        case "note_open": open(schema.nodes.note); break;
-        case "margin_note_open": open(schema.nodes.margin_note); break;
-        case "grid_open": open(schema.nodes.grid, { n: t.meta!.n }); break;
-        case "verse_open": open(schema.nodes.verse, { start: t.meta!.start, stanza: t.meta!.stanza ?? null, dual: !!t.meta!.dual, facing: t.meta!.facing ?? null, numbered: !!t.meta!.numbered }); break;
-        case "prose_open": open(schema.nodes.prose, { start: t.meta!.start, numbered: !!t.meta!.numbered }); break;
-        case "line_open": open(schema.nodes.line, { kind: (t.meta?.kind as string) ?? null, label: (t.meta?.label as string) ?? null }); break;
-        case "pair_open": open(schema.nodes.pair, { kind: (t.meta?.kind as string) ?? null, label: (t.meta?.label as string) ?? null }); break;
-        case "cell_open": open(schema.nodes.cell); break;
-        case "gap": add(schema.nodes.gap.create()); break;
-        case "skip": add(schema.nodes.skip.create()); break;
-        case "fence": add(schema.nodes.code_block.create({ lang: t.info, rest: (t.meta?.rest as string) ?? "" }, t.content ? schema.text(t.content) : null)); break;
-        case "reference": add(schema.nodes.reference.create(null, t.content ? schema.text(t.content) : null)); break;
-        case "paragraph_close": case "heading_close": case "blockquote_close":
-        case "bullet_list_close": case "ordered_list_close": case "list_item_close":
-        case "table_close": case "table_row_close": case "table_cell_close":
-        case "card_close": case "note_close": case "margin_note_close": case "grid_close": case "verse_close": case "prose_close":
-        case "line_close": case "pair_close": case "cell_close":
-          close(); break;
-        default:
-          throw new Error(`markdown token the schema does not know: ${t.type}`);
-      }
-    }
-  };
-  walk(tokens);
-  if (stack.length !== 1) throw new Error("unbalanced markdown tokens");
-  const doc = schema.nodes.doc.createAndFill(null, Fragment.fromArray(stack[0].content));
-  if (!doc) throw new Error("cannot build the document");
-  return doc;
+    this.add(node);
+  }
+  private token(t: Token): void {
+    const opens = NODE_OPENS.get(t.type), leaf = LEAVES.get(t.type);
+    const marked = MARK_OPENS.get(t.type), unmarked = MARK_CLOSES.get(t.type);
+    if (opens) this.open(opens[0], opens[1](t));
+    else if (NODE_CLOSES.has(t.type)) this.close();
+    else if (marked) this.mark(marked);
+    else if (unmarked) this.marks = schema.marks[unmarked].removeFromSet(this.marks);
+    else if (leaf) leaf(this, t);
+    else throw new Error(`markdown token the schema does not know: ${t.type}`);
+  }
+  walk(toks: Token[]): void {
+    for (const t of toks) this.token(t);
+  }
+  doc(): Node {
+    if (this.stack.length !== 1) throw new Error("unbalanced markdown tokens");
+    const doc = schema.nodes.doc.createAndFill(null, Fragment.fromArray(this.stack[0].content));
+    if (!doc) throw new Error("cannot build the document");
+    return doc;
+  }
+}
+function buildDoc(tokens: Token[]): Node {
+  const builder = new DocBuilder();
+  builder.walk(tokens);
+  return builder.doc();
 }
 
 export function tokenize(src: string): Token[] {

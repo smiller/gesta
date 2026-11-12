@@ -75,7 +75,18 @@ the reader's look and accept, a review where a batch touches a seam.
 
 ### Waivers (string smells)
 
-None yet.
+`.codescene/code-health-rules.json`, a rule set per file (the CLI's
+`set-rule` edits a rule set that exists and cannot add one, so the file is
+written by hand and checked with `cs rules-config validate`):
+
+- `src/model/grammar.ts` — Primitive Obsession and String Heavy Function
+  Arguments: every argument is a markdown line, the text's lines, a position
+  in them or a backtick run; nothing else could be passed for one.
+- `src/model/serialize.ts` — Primitive Obsession: every string argument is
+  markdown being written (a marker, a mark's inner text, a cell, an indent),
+  every number a count or a line number.
+- `src/model/parse.ts` — Primitive Obsession: the text's lines, a position in
+  them and the token sink.
 
 ### The baseline, 2026-11-11
 
@@ -170,3 +181,25 @@ None yet.
 | 9.68 | `src/store/pick.test.ts` | Complex Conditional |
 
 ## Record
+
+### 2026-11-11 — src/model/
+
+Every file at 10, its six tests already there (13 of 13, MEASURED):
+
+| File | Before | After | What changed |
+|---|---|---|---|
+| tokens.ts | 9.68 | 10 | the language lookup and the matched group's class split out of `tokenize` |
+| schema.ts | 9.60 | 10 | a row block's attributes read and drawn by two functions, not inline in `rowBlock` |
+| fenceRefusals.ts | 9.31 | 10 | the 11-arm ternary of `fenceLineReason` an ordered list of reasons over one read of the opener |
+| flatten.ts | 7.66 | 10 | the two flatteners share one collector; a footnote mark's start a named test |
+| grammar.ts | 8.09 | 10 | the opener tests lists of regexes; `fenceBody` split into the code fence, the rows and a note inside them; waiver above |
+| serialize.ts | 7.80 | 10 | the mark and block writers tables; the longest mark, a row, the opener's numbers and an item's continuation named functions; waiver above |
+| parse.ts | 5.46 | 10 | the token walker a builder over tables (complexity 71 before); the block arms an ordered list; the list levels a writer; waiver above |
+
+HEAD's scores under the waivers: grammar.ts 8.61, serialize.ts 8.05, parse.ts
+5.62. The nets: tsc, the suite (1437), the corpus round trip over the backup
+(17,347 files; its report identical to HEAD's but for the time, 61 round trip
+differs in both), `npm run verify` with the Helium runs played (corner, bridge,
+reader ok; 544 steps, 0 open). One moved comment failed the standard
+(serialize.ts's grid: "which the parse refuses", another module's refusal) and
+lost the clause.

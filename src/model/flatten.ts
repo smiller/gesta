@@ -13,39 +13,53 @@ export interface Flat { text: string; pos: (number | null)[] }
    (pin: flatten.test › a superscript joined to its word stays)
    (pin: flatten.test › a superscript opening a block is not a mark) */
 const SUPERSCRIPT = /[⁰¹²³⁴⁵⁶⁷⁸⁹]/;
-function marks(chars: string[], pos: (number | null)[], spaceInText: (at: number) => boolean): (ch: string) => boolean {
+type Pos = (number | null)[];
+function startsMark(chars: string[], pos: Pos, spaceInText: (at: number) => boolean): boolean {
+  const n = chars.length, at = pos[n - 1];
+  if (n < 2 || chars[n - 1] !== " ") return false;
+  if (at == null || /\s/.test(chars[n - 2])) return false;
+  return spaceInText(at);
+}
+function marks(chars: string[], pos: Pos, spaceInText: (at: number) => boolean): (ch: string) => boolean {
   let inMark = false;
   return (ch) => {
     if (!SUPERSCRIPT.test(ch)) { inMark = false; return false; }
     if (inMark) return true;
-    const n = chars.length;
-    if (n < 2 || chars[n - 1] !== " " || /\s/.test(chars[n - 2]) || pos[n - 1] == null || !spaceInText(pos[n - 1]!)) return false;
+    if (!startsMark(chars, pos, spaceInText)) return false;
     chars.pop(); pos.pop();
     inMark = true;
     return true;
   };
 }
-export function flattenDoc(doc: Node): Flat {
-  const chars: string[] = [], pos: (number | null)[] = [];
-  let first = true;
-  const mark = marks(chars, pos, () => true);
-  const push = (ch: string, at: number | null): void => {
+type Push = (ch: string, at: number | null) => void;
+function collector(spaceInText: (at: number) => boolean): { push: Push; flat: () => Flat } {
+  const chars: string[] = [], pos: Pos = [];
+  const mark = marks(chars, pos, spaceInText);
+  const push: Push = (ch, at) => {
     if (mark(ch)) return;
     const ws = /\s/.test(ch);
-    if (ws && chars.length && /\s/.test(chars[chars.length - 1])) return;
+    if (ws && chars[chars.length - 1] === " ") return;
     chars.push(ws ? " " : ch);
     pos.push(at);
   };
+  return { push, flat: () => ({ text: chars.join(""), pos }) };
+}
+const opensUnit = (node: Node): boolean => node.isBlock && (node.isTextblock || node.isLeaf);
+function pushText(push: Push, s: string, at: number): void {
+  for (let i = 0; i < s.length; i++) push(s.charAt(i), at + i);
+}
+export function flattenDoc(doc: Node): Flat {
+  const c = collector(() => true);
+  let first = true;
   doc.nodesBetween(0, doc.content.size, (node, at) => {
-    if (node.isBlock && (node.isTextblock || node.isLeaf) && !first) push(" ", null);
-    if (node.isBlock && (node.isTextblock || node.isLeaf)) first = false;
-    if (node.isText) {
-      const s = node.text!;
-      for (let i = 0; i < s.length; i++) push(s.charAt(i), at + i);
-    } else if (node.isLeaf) push(" ", null);
+    const unit = opensUnit(node);
+    if (unit && !first) c.push(" ", null);
+    first &&= !unit;
+    if (node.isText) pushText(c.push, node.text!, at);
+    else if (node.isLeaf) c.push(" ", null);
     return true;
   });
-  return { text: chars.join(""), pos };
+  return c.flat();
 }
 /* flattenDoc's text without the position map, from string operations:
    equal to it on all 17,128 entries of a library, 1.3 s against 7.1 s over
@@ -56,7 +70,9 @@ export function flattenDocText(doc: Node): string {
   const parts: string[] = [];
   let first = true;
   doc.nodesBetween(0, doc.content.size, (node) => {
-    if (node.isBlock && (node.isTextblock || node.isLeaf)) { if (!first) parts.push("\u0001"); first = false; }
+    const unit = opensUnit(node);
+    if (unit && !first) parts.push("\u0001");
+    first &&= !unit;
     if (node.isText) parts.push(node.text!);
     else if (node.isLeaf) parts.push("\u0001");
     return true;
@@ -74,16 +90,9 @@ export function flatRange(flat: Flat, at: number, len: number): { from: number; 
   return { from: s, to: e + 1 };
 }
 export function flattenText(s: string): Flat {
-  const chars: string[] = [], pos: (number | null)[] = [];
-  const mark = marks(chars, pos, (at) => s.charAt(at) === " ");
-  for (let i = 0; i < s.length; i++) {
-    const ch = s.charAt(i), ws = /\s/.test(ch);
-    if (mark(ch)) continue;
-    if (ws && chars.length && chars[chars.length - 1] === " ") continue;
-    chars.push(ws ? " " : ch);
-    pos.push(i);
-  }
-  return { text: chars.join(""), pos };
+  const c = collector((at) => s.charAt(at) === " ");
+  for (let i = 0; i < s.length; i++) c.push(s.charAt(i), i);
+  return c.flat();
 }
 export function lastMapped(flat: Flat, before: number): number {
   for (let i = Math.min(before, flat.pos.length) - 1; i >= 0; i--) if (flat.pos[i] != null) return i;

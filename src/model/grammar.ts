@@ -100,29 +100,48 @@ export function stanzaNumber(line: string): number | null {
   const m = line.match(STANZA_OPEN);
   return m ? parseInt(m[1], 10) : null;
 }
-export function opensFence(line: string): boolean {
-  return CARD_OPEN.test(line) || VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line) ||
-    REFERENCE_OPEN.test(line) || NOTE_OPEN.test(line) || MARGIN_NOTE_OPEN.test(line) || PROSE_OPEN.test(line) || GRID_OPEN.test(line);
-}
+const testsAny = (openers: RegExp[]) => (line: string): boolean => openers.some((re) => re.test(line));
+export const opensFence = testsAny([CARD_OPEN, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, PROSE_OPEN, GRID_OPEN]);
 /* the openers whose body is NOT blocks */
-export function flatFence(line: string): boolean {
-  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line) || REFERENCE_OPEN.test(line) || PROSE_OPEN.test(line);
-}
-export function opensNoteRow(line: string): boolean {
-  return NOTE_OPEN.test(line) || MARGIN_NOTE_OPEN.test(line);
-}
+export const flatFence = testsAny([VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, REFERENCE_OPEN, PROSE_OPEN]);
+export const opensNoteRow = testsAny([NOTE_OPEN, MARGIN_NOTE_OPEN]);
 /* the openers whose body is ROWS — narrower than flatFence by the reference
    block, whose one directive admits no nested note */
-export function rowFence(line: string): boolean {
-  return VERSE_OPEN.test(line) || STANZA_OPEN.test(line) || DUAL_OPEN.test(line) || PROSE_OPEN.test(line);
-}
+export const rowFence = testsAny([VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, PROSE_OPEN]);
+const closesCode = (line: string, run: string): boolean => (line.match(FENCE_CLOSE)?.[1].length ?? -1) >= run.length;
 export function codeCloses(lines: string[], at: number, run: string): boolean {
-  for (let i = at; i < lines.length; i++) {
-    const m = lines[i].match(FENCE_CLOSE);
-    if (m && m[1].length >= run.length) return true;
-  }
-  return false;
+  return lines.slice(at).some((line) => closesCode(line, run));
 }
+function codeRun(lines: string[], from: number): string | null {
+  const open = FENCE_TICKS.exec(lines[from]);
+  return open && codeCloses(lines, from + 1, open[1]) ? open[1] : null;
+}
+function takeCode(lines: string[], from: number, run: string, body: string[]): number {
+  body.push(lines[from++]);
+  while (!closesCode(lines[from], run)) body.push(lines[from++]);
+  body.push(lines[from]);
+  return from + 1;
+}
+function takeNote(lines: string[], from: number, body: string[]): number {
+  const note = fenceBody(lines, from + 1);
+  body.push(...lines.slice(from + 1, note.next));
+  return note.next;
+}
+function takeRows(lines: string[], from: number, nests: boolean, body: string[]): number {
+  while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
+    body.push(lines[from]);
+    from = nests && opensNoteRow(lines[from]) ? takeNote(lines, from, body) : from + 1;
+  }
+  return from;
+}
+function takeFlat(lines: string[], from: number, body: string[]): number {
+  body.push(lines[from]);
+  const end = takeRows(lines, from + 1, rowFence(lines[from]), body);
+  if (end >= lines.length) return end;
+  body.push(lines[end]);
+  return end + 1;
+}
+const depthStep = (line: string): number => (opensFence(line) ? 1 : CARD_CLOSE.test(line) ? -1 : 0);
 /* depth counts for the recursing forms; a code fence's body is shielded
    only when that fence closes; a row fence's rows are taken raw, a ::: note
    row's extent handed back to this scan. An unclosed opener swallows the
@@ -131,35 +150,13 @@ export function codeCloses(lines: string[], at: number, run: string): boolean {
 export function fenceBody(lines: string[], from: number): { body: string[]; next: number } {
   const body: string[] = [];
   let depth = 1;
-  let code: string | null = null;
   while (from < lines.length) {
     const line = lines[from];
-    let open: RegExpExecArray | null;
-    if (code) {
-      const close = line.match(FENCE_CLOSE);
-      if (close && close[1].length >= code.length) code = null;
-    } else if ((open = FENCE_TICKS.exec(line)) && codeCloses(lines, from + 1, open[1])) {
-      code = open[1];
-    } else if (flatFence(line)) {
-      body.push(line);
-      from++;
-      const nests = rowFence(line);
-      while (from < lines.length && !CARD_CLOSE.test(lines[from])) {
-        body.push(lines[from]);
-        if (!nests || !opensNoteRow(lines[from])) { from++; continue; }
-        const note = fenceBody(lines, from + 1);
-        body.push(...lines.slice(from + 1, note.next));
-        from = note.next;
-      }
-      if (from >= lines.length) return { body, next: from };
-      body.push(lines[from]);
-      from++;
-      continue;
-    } else if (opensFence(line)) {
-      depth++;
-    } else if (CARD_CLOSE.test(line)) {
-      if (!--depth) return { body, next: from + 1 };
-    }
+    const run = codeRun(lines, from);
+    if (run) { from = takeCode(lines, from, run, body); continue; }
+    if (flatFence(line)) { from = takeFlat(lines, from, body); continue; }
+    depth += depthStep(line);
+    if (!depth) return { body, next: from + 1 };
     body.push(line);
     from++;
   }

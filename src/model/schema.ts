@@ -23,27 +23,28 @@ const rowBlock = (cls: string, stanzas = false): NodeSpec => ({
   content: stanzas ? "(line | pair | gap | skip | note | margin_note)*" : "(line | pair | gap | note | margin_note)*",
   group: "block",
   defining: true,
-  parseDOM: [{
-    tag: "div." + cls,
-    getAttrs: (dom) => {
-      const start = dom.hasAttribute("data-start") ? +dom.getAttribute("data-start")! : 1;
-      const dual = dom.className.split(/\s+/).includes("dual-language");
-      const stanza = dom.hasAttribute("data-stanza") ? +dom.getAttribute("data-stanza")! : null;
-      /* only a plain verse block numbers its right column apart (pin: schema.test › a verse block numbered on both sides) */
-      const facing = !dual && stanza === null && dom.hasAttribute("data-facing") ? +dom.getAttribute("data-facing")! : null;
-      const numbered = dom.hasAttribute("data-numbered");
-      return stanzas ? { start, stanza, dual, facing, numbered } : { start, numbered };
-    },
-  }],
-  toDOM: (n) => {
-    const attrs: Record<string, string> = { class: n.attrs.dual ? cls + " dual-language" : cls };
-    if (n.attrs.start > 1) attrs["data-start"] = String(n.attrs.start);
-    if (n.attrs.stanza != null) attrs["data-stanza"] = String(n.attrs.stanza);
-    if (n.attrs.facing != null) attrs["data-facing"] = String(n.attrs.facing);
-    if (n.attrs.numbered) attrs["data-numbered"] = "";
-    return ["div", attrs, 0];
-  },
+  parseDOM: [{ tag: "div." + cls, getAttrs: (dom) => rowBlockAttrs(dom, stanzas) }],
+  toDOM: (n) => ["div", rowBlockDOM(cls, n), 0],
 });
+const numberAttr = (dom: HTMLElement, name: string): number | null => (dom.hasAttribute(name) ? +dom.getAttribute(name)! : null);
+function rowBlockAttrs(dom: HTMLElement, stanzas: boolean) {
+  const start = numberAttr(dom, "data-start") ?? 1;
+  const numbered = dom.hasAttribute("data-numbered");
+  if (!stanzas) return { start, numbered };
+  const dual = dom.className.split(/\s+/).includes("dual-language");
+  const stanza = numberAttr(dom, "data-stanza");
+  /* only a plain verse block numbers its right column apart (pin: schema.test › a verse block numbered on both sides) */
+  const facing = !dual && stanza === null ? numberAttr(dom, "data-facing") : null;
+  return { start, stanza, dual, facing, numbered };
+}
+function rowBlockDOM(cls: string, n: PMNode): Record<string, string> {
+  const attrs: Record<string, string> = { class: n.attrs.dual ? cls + " dual-language" : cls };
+  if (n.attrs.start > 1) attrs["data-start"] = String(n.attrs.start);
+  if (n.attrs.stanza != null) attrs["data-stanza"] = String(n.attrs.stanza);
+  if (n.attrs.facing != null) attrs["data-facing"] = String(n.attrs.facing);
+  if (n.attrs.numbered) attrs["data-numbered"] = "";
+  return attrs;
+}
 const kindOf = (dom: HTMLElement): { kind: string | null; label: string | null } => ({ kind: dom.getAttribute("data-kind") || null, label: dom.getAttribute("data-label") || null });
 
 const rowAttrs = (cls: string, n: PMNode): Record<string, string> => ({

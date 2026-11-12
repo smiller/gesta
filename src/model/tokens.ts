@@ -34,19 +34,22 @@ function compileLang(def: LangDef): void {
   def.re = new RegExp(groups.map((g) => "(" + g.src + ")").join("|"), def.ci ? "gi" : "g");
 }
 export interface Token { from: number; to: number; cls: string }
+function langDef(lang: string): LangDef | undefined {
+  const key = (lang || "").toLowerCase();
+  const def = LANG_DEFS[LANG_ALIAS[key] || key];
+  if (def && !def.re) compileLang(def);
+  return def;
+}
+const matchedClass = (m: RegExpExecArray, cls: string[]): string => cls[m.findIndex((g, i) => i > 0 && g != null) - 1] ?? "";
 export function tokenize(code: string, lang: string): Token[] {
-  lang = (lang || "").toLowerCase();
-  const def = LANG_DEFS[LANG_ALIAS[lang] || lang];
+  const def = langDef(lang);
   if (!def) return [];
-  if (!def.re) compileLang(def);
   const out: Token[] = [];
   const re = def.re!;
   re.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(code))) {
-    let cls = "";
-    for (let g = 1; g < m.length; g++) if (m[g] != null) { cls = def.cls![g - 1]; break; }
-    if (m[0]) out.push({ from: m.index, to: m.index + m[0].length, cls });
+    if (m[0]) out.push({ from: m.index, to: m.index + m[0].length, cls: matchedClass(m, def.cls!) });
     if (m.index === re.lastIndex) re.lastIndex++;
   }
   return out;

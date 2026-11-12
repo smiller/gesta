@@ -28,30 +28,51 @@ export function fenceRefusals(doc: Node): FenceRefusal[] {
   });
   return out;
 }
+interface Spec { text: string; kind: string | null; rest: string; numbers: string }
+function specOf(text: string): Spec {
+  const raw = text.match(/^(verse|prose|dual-language)\s+(.+)$/);
+  if (!raw) return { text, kind: null, rest: "", numbers: "" };
+  /* the numbers alone: `numbered` read on either side of them is never part of one */
+  return { text, kind: raw[1], rest: raw[2], numbers: raw[2].replace(/^numbered\s+|\s+numbered$/g, "") };
+}
+const numberedWord = (s: Spec): string | null =>
+  /\bnumbered\b/.test(s.text) && /^(dual-language|stanza)\b/.test(s.text) ? s.text.split(/\s/)[0] + " takes no numbered: the word is verse's and prose's" : null;
+const numberedFirst = (s: Spec): string | null =>
+  s.kind && s.kind !== "dual-language" && /^numbered\s+[1-9]\d*$/.test(s.rest) ? "numbered goes after the number, like ::: " + s.kind + " " + s.numbers + " numbered" : null;
+function twoNumbers(s: Spec): string | null {
+  const two = s.kind && s.numbers.match(/^(\d+)\s+(\d+)$/);
+  if (!two) return null;
+  if (s.kind !== "verse") return s.kind + " takes one number; a second, for the right column, is verse's alone";
+  return +two[1] > 0 ? two[2] + " is not a starting line for the right column" : two[1] + " is not a starting line";
+}
+function startNumber(s: Spec): string | null {
+  if (!s.kind) return null;
+  if (s.kind === "verse" && /^\d+\s+\d+\s+\d/.test(s.numbers)) return "verse takes two numbers at most: its first line, and its right column's";
+  return s.numbers + " is not a starting " + (s.kind === "prose" ? "sentence" : "line");
+}
+const WORDS: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^stanza(?:\s+(.+))?$/, (m) => (m[1] ? m[1] + " is not a stanza number" : "stanza needs its number, like ::: stanza 2")],
+  [/^(note|margin-note|reference|card-[\w-]+)\s+\S/, (m) => m[1] + " takes nothing after it"],
+  [/^grid\s+(.+)$/, (m) => m[1] + " is not a count"],
+  [/^card(?:[\s-]|$)/, () => "card blocks must include a colour, like card-light-green"],
+];
+function wordTaken(s: Spec): string | null {
+  for (const [re, why] of WORDS) {
+    const m = s.text.match(re);
+    if (m) return why(m);
+  }
+  return null;
+}
+const REASONS = [numberedWord, numberedFirst, twoNumbers, startNumber, wordTaken];
 export function fenceLineReason(l: string): string | null {
   const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
   if (!m || opensFence(l)) return null;
-  const raw = m[1].match(/^(verse|prose|dual-language)\s+(.+)$/);
-  const word = /\bnumbered\b/.test(m[1]);
-  /* the numbers alone: `numbered` read on either side of them is never part of one */
-  const tok = raw && [raw[0], raw[1], raw[2].replace(/^numbered\s+|\s+numbered$/g, "")];
-  const before = !!raw && /^numbered\s+[1-9]\d*$/.test(raw[2]) && raw[1] !== "dual-language";
-  const tail = m[1].match(/^(note|margin-note|reference|card-[\w-]+)\s+\S/);
-  const count = m[1].match(/^grid\s+(.+)$/);
-  const stanza = m[1].match(/^stanza(?:\s+(.+))?$/);
-  const two = tok && tok[2].match(/^(\d+)\s+(\d+)$/);
-  return word && /^(dual-language|stanza)\b/.test(m[1]) ? m[1].split(/\s/)[0] + " takes no numbered: the word is verse's and prose's"
-    : before ? "numbered goes after the number, like ::: " + raw![1] + " " + tok![2] + " numbered"
-    : two && tok[1] !== "verse" ? tok[1] + " takes one number; a second, for the right column, is verse's alone"
-    : two && +two[1] > 0 ? two[2] + " is not a starting line for the right column"
-    : two ? two[1] + " is not a starting line"
-    : tok && tok[1] === "verse" && /^\d+\s+\d+\s+\d/.test(tok[2]) ? "verse takes two numbers at most: its first line, and its right column's"
-    : tok ? tok[2] + " is not a starting " + (tok[1] === "prose" ? "sentence" : "line")
-    : stanza ? (stanza[1] ? stanza[1] + " is not a stanza number" : "stanza needs its number, like ::: stanza 2")
-    : tail ? tail[1] + " takes nothing after it"
-    : count ? count[1] + " is not a count"
-    : /^card(?:[\s-]|$)/.test(m[1]) ? "card blocks must include a colour, like card-light-green"
-    : "not a block Gesta knows";
+  const spec = specOf(m[1]);
+  for (const reason of REASONS) {
+    const why = reason(spec);
+    if (why) return why;
+  }
+  return "not a block Gesta knows";
 }
 export function refusalsText(r: FenceRefusal[]): string {
   const lines = r.map((x) => x.line + " — " + x.reason);
