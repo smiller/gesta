@@ -38,11 +38,7 @@ function world(): World {
       };
       return f;
     },
-    source: (): Fake => {
-      const f: Fake = { source: true, at: null, size: 100, throws: false, top: 7, carets: [], placeAt: () => null, topAt: () => f.top, lineStart: (p) => p, reveal: () => {}, scrollToPos: () => {}, end: () => 100,
-        placeCaret: (p, scroll) => { f.carets.push(p + (scroll ? " scrolled" : "")); } };
-      return f;
-    },
+    source: (): Fake => Object.assign(w.rendered(null, 100), { source: true, placeAt: () => null, reveal: () => {}, scrollToPos: () => {} }),
     keeper: placeKeeper({
       surface: (): PlaceSurface | null => w.surf,
       window: win,
@@ -54,14 +50,24 @@ function world(): World {
   return w;
 }
 
+function arrived(): World {
+  const w = world();
+  w.seed("page/A", 40, 400);
+  w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+  return w;
+}
+function opened(view: (w: World) => Fake | null = (w) => w.rendered()): World {
+  const w = world();
+  w.keeper.open("page/A", "keep", w.show(view(w)));
+  return w;
+}
+
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
 
 describe("arriving", () => {
   it("an arrival holds its stored place, anchoring off, revealed before it is scrolled to; a first visit goes to the top; keep moves nothing", () => {
-    const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+    const w = arrived();
     expect(w.log).toEqual(["anchoring false", "reveal 40", "to 40"]);
     const first = world();
     first.keeper.open("page/B", "arrive", first.show(first.rendered()));
@@ -84,9 +90,7 @@ describe("arriving", () => {
 
 describe("the hold", () => {
   it("is set again on every resize until a hand moves, which turns anchoring back on", () => {
-    const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+    const w = arrived();
     w.log.length = 0;
     w.fire("resize");
     expect(w.log).toEqual(["reveal 40", "to 40"]);
@@ -95,9 +99,7 @@ describe("the hold", () => {
     expect(w.log).toEqual(["reveal 40", "to 40", "anchoring true"]);
   });
   it("survives a scroll landing 1px from where it put the window, and lets go at 2px", () => {
-    const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+    const w = arrived();
     w.win.at = 401;
     w.fire("scroll");
     w.log.length = 0;
@@ -108,9 +110,7 @@ describe("the hold", () => {
     expect(w.log[w.log.length - 1]).toBe("anchoring true");
   });
   it("is dropped by opening another entry, and kept by opening the same one", () => {
-    const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+    const w = arrived();
     w.keeper.open("page/A", "keep", w.show(w.rendered()));
     w.log.length = 0;
     w.fire("resize");
@@ -120,9 +120,7 @@ describe("the hold", () => {
     expect(w.log).toEqual(["reveal 40", "to 40", "anchoring true"]);
   });
   it("reapply sets it again at once, and nothing once let go", () => {
-    const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+    const w = arrived();
     w.log.length = 0;
     w.keeper.reapply();
     expect(w.log).toEqual(["reveal 40", "to 40"]);
@@ -134,33 +132,27 @@ describe("the hold", () => {
 
 describe("recording", () => {
   it("is skipped while held; the source view records the window's offset, the rendered view the position at the masthead, or 0; no view, nothing", () => {
-    const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+    const w = arrived();
     w.win.at = 999;
     w.fire("leave");
     expect(w.place("page/A")).toEqual({ pos: 40, y: 400 });
-    const src = world();
-    src.keeper.open("page/A", "keep", src.show(src.source()));
+    const src = opened((x) => x.source());
     src.win.at = 250;
     src.fire("leave");
     expect(src.place("page/A")).toEqual({ pos: -1, y: 250 });
-    const r = world();
-    r.keeper.open("page/A", "keep", r.show(r.rendered(7)));
+    const r = opened((x) => x.rendered(7));
     r.win.at = 300;
     r.fire("leave");
     expect(r.place("page/A")).toEqual({ pos: 7, y: 300 });
     r.surf!.at = null;
     r.fire("leave");
     expect(r.place("page/A")).toEqual({ pos: 0, y: 300 });
-    const none = world();
-    none.keeper.open("page/A", "keep", none.show(null));
+    const none = opened(() => null);
     none.fire("leave");
     expect(none.sets).toBe(0);
   });
   it("waits 400ms after the last scroll", () => {
-    const w = world();
-    w.keeper.open("page/A", "keep", w.show(w.rendered(7)));
+    const w = opened((x) => x.rendered(7));
     w.win.at = 300;
     w.fire("scroll");
     vi.advanceTimersByTime(300);
@@ -180,8 +172,7 @@ describe("recording", () => {
     expect(w.place("page/B")).toBeNull();
   });
   it("skips a write the same as the last; a move forgets the last", () => {
-    const w = world();
-    w.keeper.open("page/A", "keep", w.show(w.rendered(7)));
+    const w = opened((x) => x.rendered(7));
     w.win.at = 300;
     w.fire("leave");
     w.fire("leave");
@@ -255,8 +246,7 @@ describe("moves", () => {
 
 describe("carry, the switch's place", () => {
   it("holds the position, applies it, and remembers the window's offset after, at least 1; the hold sees that offset", () => {
-    const w = world();
-    w.keeper.open("page/A", "keep", w.show(w.rendered()));
+    const w = opened();
     w.keeper.carry(30);
     expect(w.log).toEqual(["anchoring false", "reveal 30", "to 30"]);
     expect(w.place("page/A")).toEqual({ pos: 30, y: 300 });
@@ -264,8 +254,7 @@ describe("carry, the switch's place", () => {
     w.log.length = 0;
     w.fire("resize");
     expect(w.log).toEqual(["reveal 30", "scroll 300"]);
-    const top = world();
-    top.keeper.open("page/A", "keep", top.show(top.rendered()));
+    const top = opened();
     top.surf!.scrollToPos = () => {};
     top.keeper.carry(30);
     expect(top.place("page/A")).toEqual({ pos: 30, y: 1 });

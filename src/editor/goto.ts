@@ -49,17 +49,20 @@ export function askedLabel(doc: Node, ask: string): string | null {
   const a = ask.trim().toLowerCase();
   return /^(?:\d+[a-z]|\[\d+\])$/.test(a) && askedUnits(doc).some((u) => u.label) ? a : null;
 }
-export function lineHits(doc: Node, n: number | string): { hits: Hit[]; blocks: Unit[][] } {
+const answers = (u: Unit, n: number | string): boolean => (typeof n === "string" ? u.label === n : u.line === n && !u.label);
+function blockHits(rows: Unit[], i: number, n: number | string): Hit[] {
+  const lines = rows.filter((u) => !u.rest && !u.skip), out: Hit[] = [];
+  for (const u of rows) {
+    if (u.rest || !answers(u, n)) continue;
+    const at = u.skip ? lines.find((v) => v.pos > u.pos) ?? lines[lines.length - 1] : u;
+    if (at) out.push({ pos: at.pos, nth: i + 1, block: rows, skipped: u.skip });
+  }
+  return out;
+}
+export interface LineHits { hits: Hit[]; blocks: Unit[][] }
+export function lineHits(doc: Node, n: number | string): LineHits {
   const blocks = blocksOf(askedUnits(doc));
-  const hits: Hit[] = [];
-  blocks.forEach((rows, i) => {
-    const lines = rows.filter((u) => !u.rest && !u.skip);
-    for (const u of rows) {
-      if (u.rest || (typeof n === "string" ? u.label !== n : u.line !== n || u.label)) continue;
-      const at = u.skip ? lines.find((v) => v.pos > u.pos) ?? lines[lines.length - 1] : u;
-      if (at) hits.push({ pos: at.pos, nth: i + 1, block: rows, skipped: u.skip });
-    }
-  });
+  const hits = blocks.flatMap((rows, i) => blockHits(rows, i, n));
   /* a block opening part-way along a line holds that line's rest: the line is
      where it begins, unless the page has only the rest (pin: goto.test › a
      line a block opens part-way along) */
@@ -75,25 +78,38 @@ const repeatsANumber = (blocks: Unit[][]): boolean => {
     return repeats;
   });
 };
-export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
-  let longest = 0, longBlock: Unit[] | null = null, lowest = 0;
-  /* a line printed moved under its old number does not end the count (pin:
-     goto.test › is no number repeated) */
-  const inPlace = (rows: Unit[]): Unit[] => { const own = rows.filter((u) => !u.label?.startsWith("[")); return own.length ? own : rows; };
+/* a line printed moved under its old number does not end the count (pin:
+   goto.test › is no number repeated) */
+function inPlace(rows: Unit[]): Unit[] {
+  const own = rows.filter((u) => !u.label?.startsWith("["));
+  return own.length ? own : rows;
+}
+interface Longest { longest: number; block: Unit[]; lowest: number }
+function longestBlock(blocks: Unit[][]): Longest | null {
+  let best: Longest | null = null;
   for (const rows of blocks) {
-    const last = inPlace(rows).at(-1)!.line;
-    if (last > longest) { longest = last; longBlock = inPlace(rows); lowest = longBlock[0].line; }
+    const own = inPlace(rows), last = own.at(-1)!.line;
+    if (last > (best?.longest ?? 0)) best = { longest: last, block: own, lowest: own[0].line };
   }
-  const lastName = longBlock ? longBlock.at(-1)!.label ?? longest : longest, firstName = longBlock ? longBlock[0].label ?? lowest : lowest;
-  const unit = (rows: Unit[]): string => noun ?? unitNoun(rows);
-  if (typeof n === "number" && n < 1) return "no " + (noun ?? (longBlock ? unitNoun(longBlock) : "line")) + " " + n + " here";
-  if (!longest || !longBlock) return "no numbered " + (noun ?? "line") + "s here";
-  /* the last line says why only a number past it is not there (pin: goto.test ›
-     on a page of several blocks) */
-  if (blocks.length > 1 && (typeof n === "number" ? n : parseInt(n.replace("[", ""), 10)) < longest) return "no " + unit(longBlock) + " " + n;
-  if (blocks.length > 1 && !repeatsANumber(blocks)) return "no " + unit(longBlock) + " " + n + ", the last " + unit(longBlock) + " is " + lastName;
-  if (blocks.length > 1) return "no " + unit(longBlock) + " " + n + " — the longest " + (noun ? "block" : formNoun(longBlock)) + (lowest > 1 ? " ends at " : " has ") + lastName;
-  return firstName === lastName ? "the only " + unit(longBlock) + " here is " + lastName : "the " + unit(longBlock) + "s here are " + firstName + "–" + lastName;
+  return best;
+}
+const askedNumber = (n: number | string): number => (typeof n === "number" ? n : parseInt(n.replace("[", ""), 10));
+/* the last line says why only a number past it is not there (pin: goto.test ›
+   on a page of several blocks) */
+function severalRefusal(blocks: Unit[][], n: number | string, l: Longest, noun?: string): string {
+  const unit = noun ?? unitNoun(l.block), lastName = l.block.at(-1)!.label ?? l.longest;
+  if (askedNumber(n) < l.longest) return "no " + unit + " " + n;
+  if (!repeatsANumber(blocks)) return "no " + unit + " " + n + ", the last " + unit + " is " + lastName;
+  return "no " + unit + " " + n + " — the longest " + (noun ? "block" : formNoun(l.block)) + (l.lowest > 1 ? " ends at " : " has ") + lastName;
+}
+export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
+  const l = longestBlock(blocks);
+  if (typeof n === "number" && n < 1) return "no " + (noun ?? (l ? unitNoun(l.block) : "line")) + " " + n + " here";
+  if (!l) return "no numbered " + (noun ?? "line") + "s here";
+  if (blocks.length > 1) return severalRefusal(blocks, n, l, noun);
+  const unit = noun ?? unitNoun(l.block);
+  const firstName = l.block[0].label ?? l.lowest, lastName = l.block.at(-1)!.label ?? l.longest;
+  return firstName === lastName ? "the only " + unit + " here is " + lastName : "the " + unit + "s here are " + firstName + "–" + lastName;
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
@@ -118,7 +134,7 @@ export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean):
 /* the ordinal is said only where the number names several places: a page of
    many blocks numbered straight on has one place for each (pin: goto.test ›
    says nothing of the blocks) */
-export function landingWord(hit: Hit, hits: Hit[], blocks: Unit[][], n: number | string, noun?: string): string | null {
+export function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, noun?: string): string | null {
   const several = hits.length > 1;
   if (hit.skipped) return (noun ?? "line") + " " + n + " is omitted in this edition" + (several ? " — " + (noun ? "block" : formNoun(hit.block)) + " " + hit.nth + " of " + blocks.length : "");
   if (!several) return null;
@@ -159,19 +175,26 @@ export function hasStanzas(doc: Node): boolean {
   doc.forEach((block) => { if (block.attrs.stanza != null) yes = true; });
   return yes;
 }
-export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
-  const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
-  let last = 0, found: { node: Node; pos: number } | null = null;
+interface Found { node: Node; pos: number }
+function findStanza(doc: Node, s: number): { last: number; found: Found | null } {
+  let last = 0, found: Found | null = null;
   doc.forEach((block, pos) => {
     const n = block.attrs.stanza as number | null | undefined;
     if (n == null) return;
-    if (n > last) last = n;
+    last = Math.max(last, n);
     if (n === s && !found) found = { node: block, pos };
   });
-  if (!last) return "no stanzas here";
-  if (!found) return "no stanza " + s + " here — the last is " + last;
-  const { node, pos } = found as { node: Node; pos: number };
-  const lines = blockUnits(node, pos, 0).filter((u) => u.line && !u.rest && !u.skip);
+  return { last, found: found as Found | null };
+}
+function stanzaLine(found: Found, s: number, l: number | undefined): { pos: number } | string {
+  const lines = blockUnits(found.node, found.pos, 0).filter((u) => u.line && !u.rest && !u.skip);
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
   return want ? { pos: want.pos } : "stanza " + s + " has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
+}
+export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
+  const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
+  const { last, found } = findStanza(doc, s);
+  if (!last) return "no stanzas here";
+  if (!found) return "no stanza " + s + " here — the last is " + last;
+  return stanzaLine(found, s, l);
 }

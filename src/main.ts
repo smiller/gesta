@@ -719,7 +719,7 @@ if (fixture && fixtures[fixture]) {
     const hit = nextHit(hits, landingPos(view.state), n === lineAsked);
     lineAsked = n;
     landOn(hit.pos);
-    const word = landingWord(hit, hits, blocks, n, noun);
+    const word = landingWord(hit, { hits, blocks }, n, noun);
     if (word && (!quiet || hit.skipped)) say(word, 2500);
     return true;
   };

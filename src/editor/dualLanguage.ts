@@ -1,6 +1,6 @@
 import { Plugin, PluginKey, Selection, TextSelection } from "prosemirror-state";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
-import type { Node } from "prosemirror-model";
+import type { Node, ResolvedPos } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { measurePass } from "./measurePass.ts";
 
@@ -53,12 +53,10 @@ export function noteColumns(block: Node): Map<number, "latin" | "english"> {
 /* the sentence whose English holds `pos`: its block's first position, its
    row's index, and the last row it stands beside, before the next sentence
    or a note */
-function sentenceAt(doc: Node, pos: number): { start: number; block: Node; first: number; last: number } | null {
-  const $p = doc.resolve(pos), d = $p.depth;
-  if (d < 3 || $p.parent.type !== N.cell || $p.node(d - 1).type !== N.pair || $p.index(d - 1) !== 1) return null;
-  const block = $p.node(d - 2);
-  if (block.type !== N.verse || !block.attrs.dual) return null;
-  const first = $p.index(d - 2);
+const inEnglishCell = ($p: ResolvedPos, d: number): boolean => $p.parent.type === N.cell && $p.node(d - 1).type === N.pair && $p.index(d - 1) === 1;
+const isDualBlock = (b: Node): boolean => b.type === N.verse && !!b.attrs.dual;
+const besideEnglish = (row: Node): boolean => row.type === N.line || (row.type === N.pair && !row.child(1).content.size);
+function lastBeside(block: Node, first: number): number {
   let last = first;
   for (let k = first + 1; k < block.childCount; k++) {
     const row = block.child(k);
@@ -66,10 +64,18 @@ function sentenceAt(doc: Node, pos: number): { start: number; block: Node; first
        the English as no row (pin: reference.test › a sentence's Latin runs on
        past a skipped line number) */
     if (row.type === N.skip || row.type === N.gap) continue;
-    if (row.type === N.line || row.type === N.pair && !row.child(1).content.size) last = k;
-    else break;
+    if (!besideEnglish(row)) break;
+    last = k;
   }
-  return { start: $p.start(d - 2), block, first, last };
+  return last;
+}
+function sentenceAt(doc: Node, pos: number): { start: number; block: Node; first: number; last: number } | null {
+  const $p = doc.resolve(pos), d = $p.depth;
+  if (d < 3 || !inEnglishCell($p, d)) return null;
+  const block = $p.node(d - 2);
+  if (!isDualBlock(block)) return null;
+  const first = $p.index(d - 2);
+  return { start: $p.start(d - 2), block, first, last: lastBeside(block, first) };
 }
 const rowAt = (s: { start: number; block: Node }, i: number): number => {
   let at = s.start;
@@ -146,36 +152,41 @@ function clear(el: HTMLElement): void {
    column moves with the entry's split while the block's width stands */
 const placed = new WeakMap<HTMLElement, { node: Node; width: string }>();
 const widthOf = (dom: HTMLElement): string => dom.clientWidth + " " + (dom.querySelector<HTMLElement>(":scope > .vpair > .vcell + .vcell")?.clientWidth ?? 0);
-function place(view: EditorView): void {
-  const blocks = dualBlocks(view).map((b) => ({ ...b, width: widthOf(b.dom) })).filter(({ node, dom, width }) => {
+function changedBlocks(view: EditorView): { node: Node; dom: HTMLElement; width: string }[] {
+  return dualBlocks(view).map((b) => ({ ...b, width: widthOf(b.dom) })).filter(({ node, dom, width }) => {
     const was = placed.get(dom);
     return !was || was.node !== node || was.width !== width;
   });
+}
+const englishHeight = (el: HTMLElement): number | null =>
+  (el.classList.contains("vpair") ? (el.children[1] as HTMLElement | undefined)?.scrollHeight ?? null : null);
+const ownMargin = (el: HTMLElement): number => (isNote(el) ? parseFloat(getComputedStyle(el).marginTop) || 0 : 0);
+function readWaits(dom: HTMLElement) {
+  const els = rowsOf(dom);
+  if (!els.length) return null;
+  const base = els[0].getBoundingClientRect().top;
+  const rows: DualRow[] = els.map((el) => ({ top: el.getBoundingClientRect().top - base, english: englishHeight(el), clears: isNote(el) }));
+  return { els, own: els.map(ownMargin), ...dualWaits(rows, els[els.length - 1].getBoundingClientRect().bottom - base) };
+}
+type Waits = NonNullable<ReturnType<typeof readWaits>>;
+function writeWait(a: Waits, i: number, m: number): void {
+  if (isNote(a.els[i])) a.els[i].style.marginTop = a.own[i] + m + "px";
+  else a.els[i].style.paddingTop = m + "px";
+}
+function writeWaits(a: Waits): void {
+  a.margins.forEach((m, i) => { if (m) writeWait(a, i, m); });
+  const last = a.els[a.els.length - 1];
+  if (a.foot && !isNote(last)) last.style.paddingBottom = a.foot + "px";
+}
+function place(view: EditorView): void {
+  const blocks = changedBlocks(view);
   if (!blocks.length) return;
   const scroller = document.scrollingElement || document.documentElement;
   const held = scroller.scrollTop;
   for (const { dom } of blocks) for (const r of rowsOf(dom)) clear(r);
-  const answers = blocks.map(({ dom }) => {
-    const els = rowsOf(dom);
-    if (!els.length) return null;
-    const base = els[0].getBoundingClientRect().top;
-    const own = els.map((el) => (isNote(el) ? parseFloat(getComputedStyle(el).marginTop) || 0 : 0));
-    const rows: DualRow[] = els.map((el) => {
-      const english = el.classList.contains("vpair") ? (el.children[1] as HTMLElement | undefined)?.scrollHeight ?? null : null;
-      return { top: el.getBoundingClientRect().top - base, english, clears: isNote(el) };
-    });
-    return { els, own, ...dualWaits(rows, els[els.length - 1].getBoundingClientRect().bottom - base) };
-  });
+  const answers = blocks.map(({ dom }) => readWaits(dom));
   answers.forEach((a, k) => {
-    if (a) {
-      a.margins.forEach((m, i) => {
-        if (!m) return;
-        if (isNote(a.els[i])) a.els[i].style.marginTop = a.own[i] + m + "px";
-        else a.els[i].style.paddingTop = m + "px";
-      });
-      const last = a.els[a.els.length - 1];
-      if (a.foot && !isNote(last)) last.style.paddingBottom = a.foot + "px";
-    }
+    if (a) writeWaits(a);
     placed.set(blocks[k].dom, { node: blocks[k].node, width: blocks[k].width });
   });
   scroller.scrollTop = held;
@@ -253,6 +264,8 @@ function englishCaret(view: EditorView, dir: "up" | "down"): boolean {
   return true;
 }
 
+const modified = (e: KeyboardEvent): boolean => e.shiftKey || e.altKey || e.metaKey || e.ctrlKey;
+const ARROW_DIRS = new Map<string, "up" | "down">([["ArrowDown", "down"], ["ArrowUp", "up"]]);
 export function dualLanguage(): Plugin[] {
   return [
     new Plugin({ key: new PluginKey("dualWaits"), view: measurePass(place) }),
@@ -262,8 +275,8 @@ export function dualLanguage(): Plugin[] {
       props: {
         decorations: (s) => notesKey.getState(s),
         handleKeyDown: (view, e) => {
-          if (e.shiftKey || e.altKey || e.metaKey || e.ctrlKey) return false;
-          return e.key === "ArrowDown" ? englishCaret(view, "down") : e.key === "ArrowUp" ? englishCaret(view, "up") : false;
+          const dir = modified(e) ? undefined : ARROW_DIRS.get(e.key);
+          return dir ? englishCaret(view, dir) : false;
         },
       },
     }),

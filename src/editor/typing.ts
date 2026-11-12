@@ -3,7 +3,7 @@
 import { InputRule, inputRules, undoInputRule } from "prosemirror-inputrules";
 import { type Command, type EditorState, type Transaction, Selection, Plugin } from "prosemirror-state";
 import { findWrapping, canJoin } from "prosemirror-transform";
-import type { MarkType, NodeType, Node, Attrs } from "prosemirror-model";
+import type { MarkType, NodeType, Node, Attrs, ResolvedPos } from "prosemirror-model";
 import { keymap } from "prosemirror-keymap";
 import { schema } from "../model/schema.ts";
 import { trimUrl, URL_START } from "../model/parse.ts";
@@ -37,47 +37,59 @@ const prose = (s: EditorState): boolean => !inCode(s);
    A `>` behind a break inside a quote stays text: it would nest the quote
    (pin: typing.test › a marker on a middle line takes that line alone). */
 type LineHandler = (tr: Transaction, match: RegExpMatchArray, start: number, end: number) => Transaction | null;
+const breakAfter = (c: Node, offset: number, $at: ResolvedPos): boolean => c.type === N.hard_break && offset >= $at.parentOffset;
+function nextBreak($at: ResolvedPos): number {
+  let next = -1;
+  $at.parent.forEach((c, offset) => { if (next < 0 && breakAfter(c, offset, $at)) next = $at.start() + offset; });
+  return next;
+}
+function peelLine(tr: Transaction, $at: ResolvedPos, start: number): void {
+  const next = nextBreak($at);
+  if (next >= 0) tr.delete(next, next + 1).split(next);
+  tr.delete(start, start + 1).split(start);
+}
 function blockRule(re: RegExp, handler: LineHandler, inQuoteAfterBreak = true): InputRule {
   return new InputRule(new RegExp("(?:^|￼)" + re.source.slice(1)), (state, m, start, end) => {
     if (!inParagraph(state)) return null;
     const tr = state.tr;
-    if (m[0].startsWith("￼")) {
-      const $at = state.selection.$from;
-      if (!inQuoteAfterBreak && $at.node(-1).type === N.blockquote) return null;
-      let next = -1;
-      $at.parent.forEach((c, offset) => { if (next < 0 && c.type === N.hard_break && offset >= $at.parentOffset) next = $at.start() + offset; });
-      if (next >= 0) tr.delete(next, next + 1).split(next);
-      tr.delete(start, start + 1).split(start);
-      start += 2;
-      end += 1;
-    }
-    return handler(tr, m, start, end);
+    if (!m[0].startsWith("￼")) return handler(tr, m, start, end);
+    const $at = state.selection.$from;
+    if (!inQuoteAfterBreak && $at.node(-1).type === N.blockquote) return null;
+    peelLine(tr, $at, start);
+    return handler(tr, m, start + 2, end + 1);
   });
 }
-function wrapIn(tr: Transaction, pos: number, type: NodeType, attrs: Attrs | null, joins?: (before: Node) => boolean): Transaction | null {
+type Joins = (before: Node) => boolean;
+function joinsBefore(tr: Transaction, at: number, type: NodeType, joins?: Joins): boolean {
+  const before = at > 0 ? tr.doc.resolve(at).nodeBefore : null;
+  if (before?.type !== type) return false;
+  return canJoin(tr.doc, at) && (!joins || joins(before));
+}
+function wrapIn(tr: Transaction, pos: number, type: NodeType, opts: { attrs?: Attrs; joins?: Joins } = {}): Transaction | null {
   const range = tr.doc.resolve(pos).blockRange();
   if (!range) return null;
-  const wrapping = findWrapping(range, type, attrs);
+  const wrapping = findWrapping(range, type, opts.attrs ?? null);
   if (!wrapping) return null;
   tr.wrap(range, wrapping);
-  const before = range.start > 0 ? tr.doc.resolve(range.start).nodeBefore : null;
-  if (before && before.type === type && canJoin(tr.doc, range.start) && (!joins || joins(before))) tr.join(range.start);
+  if (joinsBefore(tr, range.start, type, opts.joins)) tr.join(range.start);
   return tr;
 }
 const heading = blockRule(/^(#{1,6})\s$/, (tr, m, start, end) =>
   tr.delete(start, end).setBlockType(start, start, N.heading, { level: m[1].length }));
-const quote = blockRule(/^>\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.blockquote, null), false);
+const quote = blockRule(/^>\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.blockquote), false);
 const nestedQuote = blockRule(/^>>\s$/, (tr, _m, start, end) => {
   tr.delete(start, end);
   const range = tr.doc.resolve(start).blockRange()!;
   return tr.wrap(range, [{ type: N.blockquote }, { type: N.blockquote }]);
 }, false);
-const bullets = blockRule(/^([-*])\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.bullet_list, null, () => true));
+const bullets = blockRule(/^([-*])\s$/, (tr, _m, start, end) => wrapIn(tr.delete(start, end), start, N.bullet_list, { joins: () => true }));
 /* a numbered marker opens the list AT its number, so a countdown typed
    here reads as typed; it joins the list above only where it continues it */
 const numbers = blockRule(/^(\d+)[.)]\s$/, (tr, m, start, end) =>
-  wrapIn(tr.delete(start, end), start, N.ordered_list, { start: +m[1] },
-    (before) => before.childCount + (before.attrs.start as number) === +m[1]));
+  wrapIn(tr.delete(start, end), start, N.ordered_list, {
+    attrs: { start: +m[1] },
+    joins: (before) => before.childCount + (before.attrs.start as number) === +m[1],
+  }));
 
 /* ---------- inline marks, on the closing marker ---------- */
 /* \ufffc is a line break's stand-in in the text before the caret: a mark
@@ -131,17 +143,20 @@ export function bareUrl(text: string): string | null {
   const run = URL_START.exec(text);
   return run && trimUrl(run[0]) === text ? href(text) : null;
 }
-export function autolinkTr(state: EditorState): Transaction | null {
+const linkable = (state: EditorState): boolean => {
   const $f = state.selection.$from;
-  if (!state.selection.empty || !$f.parent.isTextblock || $f.parent.type.spec.code || inCode(state)) return null;
-  if (M.link.isInSet($f.marks())) return null;
-  const before = $f.parent.textBetween(0, $f.parentOffset, undefined, "￼");
-  const m = /(\S+)$/.exec(before);
-  if (!m || !URL_HEAD.test(m[1])) return null;
-  const run = URL_START.exec(m[1]);
-  if (!run) return null;
-  const url = trimUrl(run[0]);
-  const start = $f.pos - m[1].length;
+  return state.selection.empty && $f.parent.isTextblock && !$f.parent.type.spec.code && !inCode(state) && !M.link.isInSet($f.marks());
+};
+function urlWordBefore($f: ResolvedPos): string | null {
+  const m = /(\S+)$/.exec($f.parent.textBetween(0, $f.parentOffset, undefined, "￼"));
+  return m && URL_HEAD.test(m[1]) ? m[1] : null;
+}
+export function autolinkTr(state: EditorState): Transaction | null {
+  if (!linkable(state)) return null;
+  const $f = state.selection.$from, word = urlWordBefore($f);
+  const run = word ? URL_START.exec(word) : null;
+  if (!word || !run) return null;
+  const url = trimUrl(run[0]), start = $f.pos - word.length;
   return state.tr.addMark(start, start + url.length, M.link.create({ href: href(url) }));
 }
 const autolink = new InputRule(/\S\s$/, (state, _m, _start, end) => {
@@ -169,23 +184,30 @@ export const typingRules = [
 export function typing() { return inputRules({ rules: typingRules }); }
 
 /* ---------- the Enter arms ---------- */
-export const fenceEnter: Command = (state, dispatch) => {
+const atParagraphEnd = (state: EditorState): boolean => {
   const { $from, empty } = state.selection;
-  if (!empty || $from.parent.type !== N.paragraph || $from.parentOffset !== $from.parent.content.size) return false;
+  return empty && $from.parent.type === N.paragraph && $from.parentOffset === $from.parent.content.size;
+};
+function lastLineStart(para: Node): number {
   let lineStart = 0;
-  $from.parent.forEach((child, offset) => { if (child.type === N.hard_break) lineStart = offset + 1; });
+  para.forEach((child, offset) => { if (child.type === N.hard_break) lineStart = offset + 1; });
+  return lineStart;
+}
+function placeCodeBlock(tr: Transaction, $from: ResolvedPos, lineStart: number, block: Node): number {
+  const pStart = $from.before(), pEnd = $from.after();
+  if (lineStart === 0) { tr.replaceWith(pStart, pEnd, block); return pStart; }
+  tr.delete(pStart + lineStart, pEnd - 1);
+  const at = tr.mapping.map(pEnd);
+  tr.insert(at, block);
+  return at;
+}
+export const fenceEnter: Command = (state, dispatch) => {
+  if (!atParagraphEnd(state)) return false;
+  const $from = state.selection.$from, lineStart = lastLineStart($from.parent);
   const m = $from.parent.textBetween(lineStart, $from.parent.content.size).trim().match(/^```[ \t]*(\S*)$/);
   if (!m) return false;
-  const block = N.code_block.create({ lang: m[1].replace(/`/g, "").toLowerCase() });
-  const pStart = $from.before(), pEnd = $from.after();
   const tr = state.tr;
-  let at = pStart;
-  if (lineStart === 0) tr.replaceWith(pStart, pEnd, block);
-  else {
-    tr.delete(pStart + lineStart, pEnd - 1);
-    at = tr.mapping.map(pEnd);
-    tr.insert(at, block);
-  }
+  const at = placeCodeBlock(tr, $from, lineStart, N.code_block.create({ lang: m[1].replace(/`/g, "").toLowerCase() }));
   dispatch?.(tr.setSelection(Selection.near(tr.doc.resolve(at + 1))).scrollIntoView());
   return true;
 };
@@ -194,10 +216,11 @@ export const fenceEnter: Command = (state, dispatch) => {
    chain. A command calling the base Enter itself split a bare URL's list
    item inside the item instead of making the next one (pin: editor.test ›
    Enter after a bare URL links it, then does what Enter does there) */
+const plainEnter = (e: KeyboardEvent): boolean => e.key === "Enter" && !e.shiftKey && !e.altKey && !e.ctrlKey && !e.metaKey;
 export const autolinkEnter = new Plugin({
   props: {
     handleKeyDown(view, event) {
-      if (event.key !== "Enter" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return false;
+      if (!plainEnter(event)) return false;
       const tr = autolinkTr(view.state);
       if (tr) view.dispatch(tr);
       return false;

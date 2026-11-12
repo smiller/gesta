@@ -23,12 +23,13 @@ interface Row {
   cell: -1 | 0 | 1;
 }
 
+const isRowBlock = (n: Node): boolean => n.type === N.verse || n.type === N.prose;
 function rowOf($pos: ResolvedPos): Row | null {
   for (let d = $pos.depth; d > 0; d--) {
     const n = $pos.node(d);
     if (n.type === N.line || n.type === N.pair) {
       const block = $pos.node(d - 1);
-      if (block.type !== N.verse && block.type !== N.prose) return null;
+      if (!isRowBlock(block)) return null;
       return { row: n, rowDepth: d, block, blockDepth: d - 1, cell: n.type === N.pair ? ($pos.index(d) as 0 | 1) : -1 };
     }
     if (n.type !== N.cell) return null;
@@ -119,78 +120,95 @@ function joinAcrossSkips(tr: Transaction, block: Node, blockStart: number, idx: 
   return caretAt(tr, upperEnd);
 }
 
+const spansRows = (sel: Selection): boolean => !sel.empty && !sel.$from.sameParent(sel.$to);
+function rowAfterBlank(state: EditorState): Transaction {
+  const sel = state.selection, row = freshRow(sel.$from.parent);
+  return caretAt(state.tr.insert(sel.to, row), sel.to + textStart(row));
+}
+/* skipped line numbers after it are no rows of its (pin: rowKeys.test ›
+   an empty last line before a trailing skipped line number) */
+function lastRowAt(block: Node, idx: number): boolean {
+  for (let k = idx + 1; k < block.childCount; k++) if (block.child(k).type !== N.skip) return false;
+  return true;
+}
+/* THE WAY OUT: an empty last row is taken away and the caret steps
+   into a paragraph below the block, so a block ending an entry is
+   never a trap (pin: rowKeys.test › Enter at the end of the last line
+   makes an empty line) */
+function wayOut(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
+  const start = $c.before(r.rowDepth), end = $c.after(r.rowDepth);
+  const after = tr.mapping.map($c.after(r.blockDepth));
+  tr.delete(start, end);
+  const at = after - (end - start);
+  tr.insert(at, N.paragraph.create());
+  return caretAt(tr, at + 1);
+}
+function enterBlank(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
+  const block = $c.node(r.blockDepth);
+  if (lastRowAt(block, $c.index(r.blockDepth))) return wayOut(tr, $c, r);
+  const start = $c.before(r.rowDepth), fresh = freshRow(block);
+  tr.replaceWith(start, $c.after(r.rowDepth), [N.gap.create(), fresh]);
+  return caretAt(tr, start + 1 + textStart(fresh));
+}
+/* text carried off the rest of a split line begins a line of its own;
+   a row opened above it is a plain one (pin: rowKeys.test › a ⟨…⟩ row
+   split keeps the rest of the line) (pin: rowKeys.test › a lettered line
+   split) */
+function enterLine(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
+  const atEnd = $c.parentOffset === r.row.content.size, rest = r.row.attrs.kind === "cont" || !!r.row.attrs.label;
+  if (rest && $c.parentOffset === 0) {
+    tr.split($c.pos, 1, [{ type: N.line, attrs: r.row.attrs }]);
+    tr.setNodeMarkup($c.before(r.rowDepth), undefined, { ...r.row.attrs, kind: null, label: null });
+  } else tr.split($c.pos, 1, atEnd || rest ? [{ type: N.line }] : undefined);
+  return caretAt(tr, $c.pos + 2);
+}
+function splitPair(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
+  const start = $c.before(r.rowDepth), k = $c.parentOffset, a = r.row.child(0).content, b = r.row.child(1).content;
+  const first = r.cell === 0, moved = (first ? a : b).size > k;
+  const row1 = first ? pair(r.row.attrs, a.cut(0, k), b) : pair(r.row.attrs, a, b.cut(0, k));
+  const carried = moved && !r.row.attrs.label ? r.row.attrs : null;
+  const row2 = first ? pair(carried, a.cut(k), Fragment.empty) : pair(carried, Fragment.empty, b.cut(k));
+  tr.replaceWith(start, $c.after(r.rowDepth), [row1, row2]);
+  const row2Start = start + row1.nodeSize;
+  return caretAt(tr, moved && !first ? row2Start + 2 + row2.child(0).nodeSize : row2Start + 2);
+}
+const opensLettered = (r: Row, k: number): boolean => !!r.row.attrs.label && r.cell === 0 && k === 0;
+/* a lettered line stays on its words, a row opened above them a plain one
+   (pin: rowKeys.test › a lettered line split) */
+function enterPair(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
+  if (!opensLettered(r, $c.parentOffset)) return splitPair(tr, $c, r);
+  const start = $c.before(r.rowDepth), above = pair(null, Fragment.empty, Fragment.empty);
+  tr.replaceWith(start, $c.after(r.rowDepth), [above, r.row]);
+  return caretAt(tr, start + above.nodeSize + 2);
+}
+function rowEnter(tr: Transaction, $c: ResolvedPos, r: Row): Transaction {
+  if (blank(r.row)) return enterBlank(tr, $c, r);
+  return r.cell < 0 ? enterLine(tr, $c, r) : enterPair(tr, $c, r);
+}
 export const enterInRow: Command = (state, dispatch) => {
-  const sel = state.selection;
   if (blankRowSelected(state)) {
-    const row = freshRow(sel.$from.parent);
-    if (dispatch) dispatch(caretAt(state.tr.insert(sel.to, row), sel.to + textStart(row)));
+    dispatch?.(rowAfterBlank(state));
     return true;
   }
-  const r0 = rowOf(sel.$from);
-  if (!r0 || (!sel.empty && !sel.$from.sameParent(sel.$to))) return false;
+  const sel = state.selection;
+  if (!rowOf(sel.$from) || spansRows(sel)) return false;
   const tr = state.tr;
   if (!sel.empty) tr.deleteSelection();
   const $c = tr.selection.$from;
-  const r = rowOf($c)!;
-  const start = $c.before(r.rowDepth), end = $c.after(r.rowDepth);
-  if (blank(r.row)) {
-    const block = $c.node(r.blockDepth), idx = $c.index(r.blockDepth);
-    /* skipped line numbers after it are no rows of its (pin: rowKeys.test ›
-       an empty last line before a trailing skipped line number) */
-    let lastRow = true;
-    for (let k = idx + 1; k < block.childCount; k++) if (block.child(k).type !== N.skip) lastRow = false;
-    if (lastRow) {
-      /* THE WAY OUT: an empty last row is taken away and the caret steps
-         into a paragraph below the block, so a block ending an entry is
-         never a trap (pin: rowKeys.test › Enter at the end of the last line
-         makes an empty line) */
-      const after = tr.mapping.map($c.after(r.blockDepth));
-      tr.delete(start, end);
-      const at = after - (end - start);
-      tr.insert(at, N.paragraph.create());
-      if (dispatch) dispatch(caretAt(tr, at + 1));
-      return true;
-    }
-    const fresh = freshRow(block);
-    tr.replaceWith(start, end, [N.gap.create(), fresh]);
-    if (dispatch) dispatch(caretAt(tr, start + 1 + textStart(fresh)));
-    return true;
-  }
-  if (r.cell < 0) {
-    const atEnd = $c.parentOffset === r.row.content.size, rest = r.row.attrs.kind === "cont" || !!r.row.attrs.label;
-    /* text carried off the rest of a split line begins a line of its own;
-       a row opened above it is a plain one (pin: rowKeys.test › a ⟨…⟩ row
-       split keeps the rest of the line) (pin: rowKeys.test › a lettered line
-       split) */
-    if (rest && $c.parentOffset === 0) {
-      tr.split($c.pos, 1, [{ type: N.line, attrs: r.row.attrs }]);
-      tr.setNodeMarkup(start, undefined, { ...r.row.attrs, kind: null, label: null });
-    } else tr.split($c.pos, 1, atEnd || rest ? [{ type: N.line }] : undefined);
-    if (dispatch) dispatch(caretAt(tr, $c.pos + 2));
-    return true;
-  }
-  const k = $c.parentOffset, a = r.row.child(0).content, b = r.row.child(1).content;
-  /* a lettered line stays on its words, a row opened above them a plain one
-     (pin: rowKeys.test › a lettered line split) */
-  if (r.row.attrs.label && r.cell === 0 && k === 0) {
-    const above = pair(null, Fragment.empty, Fragment.empty);
-    tr.replaceWith(start, end, [above, r.row]);
-    if (dispatch) dispatch(caretAt(tr, start + above.nodeSize + 2));
-    return true;
-  }
-  const own = r.cell === 0 ? a : b;
-  const moved = own.size > k;
-  const row1 = r.cell === 0 ? pair(r.row.attrs, a.cut(0, k), b) : pair(r.row.attrs, a, b.cut(0, k));
-  const carried = moved && !r.row.attrs.label ? r.row.attrs : null;
-  const row2 = r.cell === 0 ? pair(carried, a.cut(k), Fragment.empty)
-                            : pair(carried, Fragment.empty, b.cut(k));
-  tr.replaceWith(start, end, [row1, row2]);
-  const row2Start = start + row1.nodeSize;
-  const caret = moved && r.cell === 1 ? row2Start + 2 + row2.child(0).nodeSize : row2Start + 2;
-  if (dispatch) dispatch(caretAt(tr, caret));
+  dispatch?.(rowEnter(tr, $c, rowOf($c)!));
   return true;
 };
 
+const emptyParagraphAt = ($c: ResolvedPos): boolean => $c.depth >= 2 && $c.parent.type === N.paragraph && !$c.parent.content.size;
+const isNote = (n: Node): boolean => n.type === N.note || n.type === N.margin_note;
+function leaveNote(state: EditorState, $c: ResolvedPos): Transaction {
+  const note = $c.node(-1), tr = state.tr, after = $c.after(-1);
+  if (note.childCount === 1) tr.delete($c.before(-1), after);
+  else tr.delete($c.before(), $c.after());
+  const at = tr.mapping.map(after, -1), row = freshRow($c.node(-2));
+  tr.insert(at, row);
+  return caretAt(tr, at + textStart(row));
+}
 /* THE EXIT FROM A NOTE THAT IS A ROW. Inside a nested note Enter is the
    note's — the base keymap splits its paragraph — and the way out is the
    family's second Enter on the empty last paragraph. The exit lands in the
@@ -203,93 +221,68 @@ export const enterInRow: Command = (state, dispatch) => {
    paragraph after the note (pin: rowKeys.test › Enter inside a nested note
    is the note's) */
 export const exitNoteRow: Command = (state, dispatch) => {
-  const sel = state.selection;
-  if (!sel.empty) return false;
-  const $c = sel.$from;
-  if ($c.depth < 2 || $c.parent.type !== N.paragraph || $c.parent.content.size) return false;
-  const note = $c.node(-1), block = $c.node(-2);
-  if ((note.type !== N.note && note.type !== N.margin_note) || (block.type !== N.verse && block.type !== N.prose)) return false;
+  const sel = state.selection, $c = sel.$from;
+  if (!sel.empty || !emptyParagraphAt($c)) return false;
+  const note = $c.node(-1);
+  if (!isNote(note) || !isRowBlock($c.node(-2))) return false;
   if ($c.index(-1) !== note.childCount - 1) return false;
-  const tr = state.tr;
-  const after = $c.after(-1);
-  if (note.childCount === 1) tr.delete($c.before(-1), after);
-  else tr.delete($c.before(), $c.after());
-  const at = tr.mapping.map(after, -1);
-  const row = freshRow(block);
-  tr.insert(at, row);
-  if (dispatch) dispatch(caretAt(tr, at + textStart(row)));
+  dispatch?.(leaveNote(state, $c));
   return true;
 };
 
 export const pipeInLine: Command = (state, dispatch) => {
   const sel = state.selection;
   const r = rowOf(sel.$from);
-  if (!r || r.cell >= 0 || (!sel.empty && !sel.$from.sameParent(sel.$to))) return false;
+  if (!r || r.cell >= 0) return false;
+  if (spansRows(sel)) return false;
   const tr = state.tr;
   if (!sel.empty) tr.deleteSelection();
   const $c = tr.selection.$from, line = $c.parent, k = $c.parentOffset;
   const start = $c.before($c.depth);
   tr.replaceWith(start, $c.after($c.depth), pair(line.attrs, line.content.cut(0, k), line.content.cut(k)));
-  if (dispatch) dispatch(caretAt(tr, start + k + 4));
+  dispatch?.(caretAt(tr, start + k + 4));
   return true;
 };
 
-export const backspaceInRow: Command = (state, dispatch) => {
-  const sel = state.selection;
-  if (blankRowSelected(state)) {
-    if (dispatch) dispatch(dropBlankRow(state, -1));
+interface EdgeAt { $c: ResolvedPos; r: Row; idx: number; at: number; dir: 1 | -1 }
+function joinedAt(tr: Transaction, e: EdgeAt, other: Node): Transaction | null {
+  if (other.type === N.line) return tr.join(e.at);
+  if (other.type === N.skip) return joinAcrossSkips(tr, e.r.block, e.$c.start(e.r.blockDepth), e.idx, e.dir);
+  return null;
+}
+function besideTr(tr: Transaction, e: EdgeAt, other: Node): Transaction {
+  if (other.type === N.gap) return (e.dir < 0 ? tr.delete(e.at - 1, e.at) : tr.delete(e.at, e.at + 1)).scrollIntoView();
+  const joined = e.r.cell < 0 ? joinedAt(tr, e, other) : null;
+  if (joined) return joined.scrollIntoView();
+  /* a different shape beside it: the caret goes to its edge, nothing joins */
+  return tr.setSelection(Selection.near(tr.doc.resolve(e.at), e.dir)).scrollIntoView();
+}
+/* the block's first row going back, its last going forward: nothing beyond
+   it is a row, and the heading above the fence is not to be joined into */
+function edgeTr(tr: Transaction, $c: ResolvedPos, r: Row, dir: 1 | -1): Transaction | null {
+  if (r.cell === (dir < 0 ? 1 : 0)) return unpair(tr, $c, r);
+  const idx = $c.index(r.blockDepth), other = r.block.maybeChild(idx + dir);
+  if (!other) return null;
+  return besideTr(tr, { $c, r, idx, at: dir < 0 ? $c.before(r.rowDepth) : $c.after(r.rowDepth), dir }, other);
+}
+const atRowEdge = ($c: ResolvedPos, dir: 1 | -1): boolean => (dir < 0 ? $c.parentOffset === 0 : $c.parentOffset >= $c.parent.content.size);
+function edgeKey(dir: 1 | -1): Command {
+  return (state, dispatch) => {
+    if (blankRowSelected(state)) {
+      dispatch?.(dropBlankRow(state, dir));
+      return true;
+    }
+    const sel = state.selection;
+    if (!sel.empty || !(sel instanceof TextSelection)) return false;
+    const $c = sel.$from, r = rowOf($c);
+    if (!r || !atRowEdge($c, dir)) return false;
+    const tr = edgeTr(state.tr, $c, r, dir);
+    if (tr) dispatch?.(tr);
     return true;
-  }
-  if (!sel.empty || !(sel instanceof TextSelection)) return false;
-  const $c = sel.$from, r = rowOf($c);
-  if (!r || $c.parentOffset > 0) return false;
-  const tr = state.tr;
-  if (r.cell === 1) {
-    if (dispatch) dispatch(unpair(tr, $c, r));
-    return true;
-  }
-  const idx = $c.index(r.blockDepth), start = $c.before(r.rowDepth);
-  const prev = idx > 0 ? r.block.child(idx - 1) : null;
-  /* the block's first row: nothing above it is a row, and the heading above
-     the fence is not to be joined into */
-  if (!prev) return true;
-  if (prev.type === N.gap) { if (dispatch) dispatch(tr.delete(start - 1, start).scrollIntoView()); return true; }
-  if (prev.type === N.line && r.cell < 0) { if (dispatch) dispatch(tr.join(start).scrollIntoView()); return true; }
-  if (prev.type === N.skip && r.cell < 0) {
-    const joined = joinAcrossSkips(tr, r.block, $c.start(r.blockDepth), idx, -1);
-    if (joined) { if (dispatch) dispatch(joined.scrollIntoView()); return true; }
-  }
-  /* a different shape above: the caret goes to its end, nothing joins */
-  if (dispatch) dispatch(tr.setSelection(Selection.near(tr.doc.resolve(start), -1)).scrollIntoView());
-  return true;
-};
-
-export const deleteInRow: Command = (state, dispatch) => {
-  const sel = state.selection;
-  if (blankRowSelected(state)) {
-    if (dispatch) dispatch(dropBlankRow(state, 1));
-    return true;
-  }
-  if (!sel.empty || !(sel instanceof TextSelection)) return false;
-  const $c = sel.$from, r = rowOf($c);
-  if (!r || $c.parentOffset < $c.parent.content.size) return false;
-  const tr = state.tr;
-  if (r.cell === 0) {
-    if (dispatch) dispatch(unpair(tr, $c, r));
-    return true;
-  }
-  const idx = $c.index(r.blockDepth), end = $c.after(r.rowDepth);
-  const next = r.block.maybeChild(idx + 1);
-  if (!next) return true;
-  if (next.type === N.gap) { if (dispatch) dispatch(tr.delete(end, end + 1).scrollIntoView()); return true; }
-  if (next.type === N.line && r.cell < 0) { if (dispatch) dispatch(tr.join(end).scrollIntoView()); return true; }
-  if (next.type === N.skip && r.cell < 0) {
-    const joined = joinAcrossSkips(tr, r.block, $c.start(r.blockDepth), idx, 1);
-    if (joined) { if (dispatch) dispatch(joined.scrollIntoView()); return true; }
-  }
-  if (dispatch) dispatch(tr.setSelection(Selection.near(tr.doc.resolve(end), 1)).scrollIntoView());
-  return true;
-};
+  };
+}
+export const backspaceInRow: Command = edgeKey(-1);
+export const deleteInRow: Command = edgeKey(1);
 
 /* in a line both are consumed, so the key never leaves the editor from
    inside a fence (pin: rowKeys.test › Tab moves from the original to its
@@ -313,16 +306,18 @@ export const shiftTabInRow: Command = (state, dispatch) => {
    the caret's row alone because a song is several lines, and marking it
    is one gesture. Rows in the selection that are gaps or notes are passed
    over; outside a fence the command is not this editor's. */
-export const toggleDeclaredLine: Command = (state, dispatch) => {
-  const { from, to } = state.selection;
+const rowInBlock = (node: Node, parent: Node | null): boolean => isRow(node) && !!parent && isRowBlock(parent);
+function rowsIn(state: EditorState): { pos: number; node: Node }[] {
   const rows: { pos: number; node: Node }[] = [];
-  state.doc.nodesBetween(from, to, (node, pos, parent) => {
-    if ((node.type === N.line || node.type === N.pair) && parent && (parent.type === N.verse || parent.type === N.prose)) {
-      rows.push({ pos, node });
-      return false;
-    }
-    return true;
+  state.doc.nodesBetween(state.selection.from, state.selection.to, (node, pos, parent) => {
+    if (!rowInBlock(node, parent)) return true;
+    rows.push({ pos, node });
+    return false;
   });
+  return rows;
+}
+export const toggleDeclaredLine: Command = (state, dispatch) => {
+  const rows = rowsIn(state);
   if (!rows.length) return false;
   /* the rest of a split line is a line already, and keeps its kind (pin:
      rowKeys.test › ⌃⌘I declares the selection's rows lines) */

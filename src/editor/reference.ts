@@ -1,4 +1,4 @@
-import { Fragment, type Node } from "prosemirror-model";
+import { Fragment, type Node, type ResolvedPos } from "prosemirror-model";
 import { Selection, type EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -38,15 +38,10 @@ function rowBlocks(doc: Node, topOnly = false): { node: Node; pos: number }[] {
   });
   return out;
 }
-export function coveredUnits(doc: Node, from: number, to: number, topOnly = false, side: Side = "left"): Unit[] {
-  const out: Unit[] = [];
-  for (const b of rowBlocks(doc, topOnly)) {
-    if (b.pos + b.node.nodeSize <= from || b.pos >= to) continue;
-    for (const u of blockUnits(b.node, b.pos, 0, side)) {
-      if (inkBetween(doc, Math.max(from, u.pos), Math.min(to, u.pos + u.node.nodeSize))) out.push(u);
-    }
-  }
-  return out;
+const overlaps = (b: { node: Node; pos: number }, from: number, to: number): boolean => b.pos + b.node.nodeSize > from && b.pos < to;
+export function coveredUnits(doc: Node, from: number, to: number, { topOnly = false, side = "left" as Side } = {}): Unit[] {
+  const inked = (u: Unit): boolean => inkBetween(doc, Math.max(from, u.pos), Math.min(to, u.pos + u.node.nodeSize));
+  return rowBlocks(doc, topOnly).filter((b) => overlaps(b, from, to)).flatMap((b) => blockUnits(b.node, b.pos, 0, side).filter(inked));
 }
 /* a line's original text: a pair's first cell, and where it starts */
 const original = (u: Unit): { cell: Node; start: number } => u.node.type === N.pair ? { cell: u.node.child(0), start: u.pos + 2 } : { cell: u.node, start: u.pos + 1 };
@@ -72,57 +67,62 @@ function halvesInked(u: Unit, from: number, to: number): { a: boolean; b: boolea
 }
 /* a lettered line says its label at the end of a run it stands at (pin:
    reference.test › a lettered line) */
+const bracketed = (u: Unit): boolean => !!u.label?.startsWith("[");
+const pairedLabels = (lo: Unit, hi: Unit): boolean => lo.line === hi.line || bracketed(lo) || bracketed(hi);
 function labelledRange(lo: Unit, hi: Unit, range: string): string {
   if (lo.label === hi.label) return lo.label!;
-  if (lo.line === hi.line || lo.label?.startsWith("[") || hi.label?.startsWith("[")) return (lo.label ?? lo.line) + "-" + (hi.label ?? hi.line);
+  if (pairedLabels(lo, hi)) return (lo.label ?? lo.line) + "-" + (hi.label ?? hi.line);
   const [x, y] = range.split("-");
   return (lo.label ?? x) + "-" + y + (hi.label ? hi.label.slice(-1) : "");
+}
+interface Ends { lo: Unit; hi: Unit }
+const laterLine = (u: Unit, hi: Unit): boolean => u.line > hi.line || (u.line === hi.line && !!u.label);
+function lineEnds(units: Unit[]): Ends | null {
+  const lines = units.filter((u) => u.line);
+  if (!lines.length) return null;
+  return { lo: lines.reduce((lo, u) => (u.line < lo.line ? u : lo)), hi: lines.reduce((hi, u) => (laterLine(u, hi) ? u : hi)) };
+}
+const oneHalf = (h: { a: boolean; b: boolean } | null): string => (h && h.a !== h.b ? (h.a ? "a" : "b") : "");
+function halfRange(range: string, e: Ends, from: number, to: number): string {
+  const first = halvesInked(e.lo, from, to), last = halvesInked(e.hi, from, to);
+  if (e.lo === e.hi) return range + oneHalf(first);
+  const [x, y] = range.split("-");
+  return x + (first && !first.a ? "b" : "") + "-" + y + (last && !last.b ? "a" : "");
 }
 /* with `halves`, Old English verse's: a run starting on a line's second half
    or ending on its first says so, 50b-52, 49-50a, a half alone 50a (pin:
    reference.test › Old English verse refers to a half-line) */
-export function referenceRange(doc: Node, from: number, to: number, halves = false, side: Side = "left"): string {
-  let lo: Unit | null = null, hi: Unit | null = null;
+export function referenceRange(doc: Node, from: number, to: number, { halves = false, side = "left" as Side } = {}): string {
   /* THE TOP LEVEL ALONE: a pasted reference's own fence numbers are not the
      host's — a quoted Horace pair in Paradise Lost labelled the reference
      "1.13-14" (pin: reference.test › a block inside a note, the label's top
      level) */
-  for (const u of coveredUnits(doc, from, to, true, side)) {
-    if (!u.line) continue;
-    if (!lo || u.line < lo.line) lo = u;
-    if (!hi || u.line > hi.line || (u.line === hi.line && u.label)) hi = u;
-  }
-  if (!lo || !hi) return "";
-  const range = elideRange(lo.line, hi.line);
-  if (lo.label || hi.label) return labelledRange(lo, hi, range);
-  if (!halves) return range;
-  const first = halvesInked(lo, from, to), last = halvesInked(hi, from, to);
-  if (lo === hi) return range + (first && first.a !== first.b ? (first.a ? "a" : "b") : "");
-  const [x, y] = range.split("-");
-  return x + (first && !first.a ? "b" : "") + "-" + y + (last && !last.b ? "a" : "");
+  const e = lineEnds(coveredUnits(doc, from, to, { topOnly: true, side }));
+  if (!e) return "";
+  const range = elideRange(e.lo.line, e.hi.line);
+  if (e.lo.label || e.hi.label) return labelledRange(e.lo, e.hi, range);
+  return halves ? halfRange(range, e, from, to) : range;
+}
+const stanzaOf = (doc: Node, u: Unit): number | null => doc.nodeAt(u.blockPos)!.attrs.stanza ?? null;
+const lastLineOf = (doc: Node, u: Unit): number => Math.max(0, ...blockUnits(doc.nodeAt(u.blockPos)!, u.blockPos, 0).map((v) => v.line));
+interface StanzaEnd { stanza: number; line: number }
+function stanzaLabel(a: StanzaEnd, b: StanzaEnd, whole: boolean): string {
+  if (a.stanza === b.stanza) return whole ? String(a.stanza) : a.stanza + "." + elideRange(a.line, b.line);
+  return whole ? a.stanza + "–" + b.stanza : a.stanza + "." + a.line + "–" + b.stanza + "." + b.line;
 }
 export function stanzaRange(doc: Node, from: number, to: number): string {
-  const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
-  if (!lines.length) return "";
-  const stanzaOf = (u: Unit): number | null => doc.nodeAt(u.blockPos)!.attrs.stanza ?? null;
-  if (lines.some((u) => stanzaOf(u) === null)) return "";
-  const lastLine = (u: Unit): number => {
-    let n = 0;
-    for (const v of blockUnits(doc.nodeAt(u.blockPos)!, u.blockPos, 0)) if (v.line > n) n = v.line;
-    return n;
-  };
+  const lines = coveredUnits(doc, from, to, { topOnly: true }).filter((u) => u.line);
+  if (!lines.length || lines.some((u) => stanzaOf(doc, u) === null)) return "";
   const a = lines[0], b = lines[lines.length - 1];
-  const sa = stanzaOf(a)!, sb = stanzaOf(b)!;
-  const whole = a.line === 1 && b.line === lastLine(b);
-  if (sa === sb) return whole ? String(sa) : sa + "." + elideRange(a.line, b.line);
-  return whole ? sa + "–" + sb : sa + "." + a.line + "–" + sb + "." + b.line;
+  const whole = a.line === 1 && b.line === lastLineOf(doc, b);
+  return stanzaLabel({ stanza: stanzaOf(doc, a)!, line: a.line }, { stanza: stanzaOf(doc, b)!, line: b.line }, whole);
 }
 /* a prosimetrum's chapter: its prose by paragraph, a poem by its lines, and
    by its place among the chapter's poems where there is more than one (pin:
    reference.test › a prosimetrum chapter with two poems) */
 export function prosimetrumRange(doc: Node, from: number, to: number): string {
   const range = referenceRange(doc, from, to);
-  const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
+  const lines = coveredUnits(doc, from, to, { topOnly: true }).filter((u) => u.line);
   const first = lines[0];
   if (!range || !first) return "";
   if (doc.nodeAt(first.blockPos)!.type === N.prose) return "prose, " + paragraphRange(doc, lines);
@@ -130,24 +130,32 @@ export function prosimetrumRange(doc: Node, from: number, to: number): string {
   doc.forEach((n, pos) => { if (n.type === N.verse) poems.push(pos); });
   return "verse " + (poems.length > 1 ? poems.indexOf(first.blockPos) + 1 + "." : "") + range;
 }
+function paragraphIn(doc: Node, from: number, lines: Unit[]): string {
+  if (lines[0]) return paragraphRange(doc, lines);
+  const $from = doc.resolve(from);
+  if ($from.depth < 2 || $from.node(1).type !== N.prose) return "";
+  return "para " + paragraphAt($from.node(1), $from.before(1), $from.before(2));
+}
+function chapterSpan(doc: Node, from: number, to: number): string | null {
+  const a = chapterAt(doc, from), b = chapterAt(doc, to);
+  if (!a) return null;
+  return a === b || !b ? "chapter " + a : "chapters " + a + "-" + b;
+}
 /* (pin: reference.test › a work by book, chapter, and paragraph refers) (pin:
    reference.test › by book, chapter, and paragraph: text under a chapter) */
 function byBookChapterParagraphRange(doc: Node, from: number, to: number): string {
-  const lines = coveredUnits(doc, from, to, true).filter((u) => u.line);
+  const lines = coveredUnits(doc, from, to, { topOnly: true }).filter((u) => u.line);
   if (lines[0] && doc.nodeAt(lines[0].blockPos)!.type !== N.prose) return referenceRange(doc, from, to);
-  const $from = doc.resolve(from);
-  const inBlock = $from.depth >= 2 && $from.node(1).type === N.prose ? paragraphAt($from.node(1), $from.before(1), $from.before(2)) : null;
-  const para = lines[0] ? paragraphRange(doc, lines) : inBlock === null ? "" : "para " + inBlock;
-  const a = chapterAt(doc, from), b = chapterAt(doc, to);
-  if (!a) return para;
-  const chapter = a === b || !b ? "chapter " + a : "chapters " + a + "-" + b;
+  const para = paragraphIn(doc, from, lines), chapter = chapterSpan(doc, from, to);
+  if (!chapter) return para;
   return para ? chapter + " (" + para + ")" : chapter;
 }
 /* the last `##` at or above the position that names a chapter: one naming none leaves it standing */
+const isChapterHeading = (n: Node): boolean => n.type === N.heading && n.attrs.level === 2;
 function chapterAt(doc: Node, at: number): string | null {
   let found: string | null = null;
   doc.forEach((n, pos) => {
-    if (pos < at && n.type === N.heading && n.attrs.level === 2) found = /^Chapter\s+(\d+|[IVXLCDM]+)\b/i.exec(n.textContent)?.[1] ?? found;
+    if (pos < at && isChapterHeading(n)) found = /^Chapter\s+(\d+|[IVXLCDM]+)\b/i.exec(n.textContent)?.[1] ?? found;
   });
   return found;
 }
@@ -163,10 +171,10 @@ const paragraphOf = (doc: Node, u: Unit): number => paragraphAt(doc.nodeAt(u.blo
 export function spansTwoBlocks(doc: Node, from: number, to: number): boolean {
   /* a row with nothing on the left is in its block by the right column (pin:
      reference.test › a passage running from one block numbered on both sides) */
-  const units = [...coveredUnits(doc, from, to), ...coveredUnits(doc, from, to, false, "right")];
+  const units = [...coveredUnits(doc, from, to), ...coveredUnits(doc, from, to, { topOnly: false, side: "right" })];
   const blocks = new Set(units.map((u) => u.blockPos));
   if (blocks.size <= 1) return false;
-  const top = new Set(coveredUnits(doc, from, to, true).map((u) => u.blockPos));
+  const top = new Set(coveredUnits(doc, from, to, { topOnly: true }).map((u) => u.blockPos));
   return [...blocks].some((p) => !top.has(p) || doc.nodeAt(p)!.attrs.stanza == null);
 }
 export function folioLeaves(doc: Node): { pos: number; label: string }[] {
@@ -178,27 +186,31 @@ export function folioLeaves(doc: Node): { pos: number; label: string }[] {
   });
   return out;
 }
+type Leaf = { pos: number; label: string };
+function startLeaf(doc: Node, leaves: Leaf[], from: number, to: number): Leaf | null {
+  let at: Leaf | null = null;
+  for (const leaf of leaves) {
+    if (from >= leaf.pos) { at = leaf; continue; }
+    if (to <= leaf.pos || inkBetween(doc, from, leaf.pos)) break;
+    at = leaf;
+  }
+  return at;
+}
+function throughLeaf(doc: Node, leaves: Leaf[], from: number, to: number): Leaf | null {
+  for (let i = leaves.length - 1; i >= 0; i--) {
+    const leaf = leaves[i];
+    if (to > leaf.pos && inkBetween(doc, Math.max(from, leaf.pos), to)) return leaf;
+  }
+  return null;
+}
 /* the leaf the selection STARTS on, read from the page it is on rather
    than any marker inside it: the last leaf at or before the start, or the
    next one when nothing but whitespace stands between; and the last leaf
    the selection reaches ink past */
 export function folioRange(doc: Node, from: number, to: number): FolioRange | null {
-  const leaves = folioLeaves(doc);
-  let at: { pos: number; label: string } | null = null;
-  for (const leaf of leaves) {
-    if (from >= leaf.pos) { at = leaf; continue; }
-    if (to <= leaf.pos) break;
-    if (inkBetween(doc, from, leaf.pos)) break;
-    at = leaf;
-  }
+  const leaves = folioLeaves(doc), at = startLeaf(doc, leaves, from, to);
   if (!at) return null;
-  let through: { pos: number; label: string } | null = null;
-  for (let i = leaves.length - 1; i >= 0; i--) {
-    const leaf = leaves[i];
-    if (to <= leaf.pos) continue;
-    if (inkBetween(doc, Math.max(from, leaf.pos), to)) { through = leaf; break; }
-  }
-  return { from: at.label, to: (through || at).label };
+  return { from: at.label, to: (throughLeaf(doc, leaves, from, to) || at).label };
 }
 /* counted as a literal substring (pin: reference.test › selectionLink) */
 export function selectionLink(doc: Node, from: number, to: number): Highlight | null {
@@ -281,20 +293,29 @@ function withoutMarginNotes(rows: Node[]): Node[] {
   }
   return out;
 }
-function trimmed(b: Node): Node {
-  if (CONTAINERS.has(b.type.name)) { const inner: Node[] = []; b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); }); return b.copy(Fragment.from(inner)); }
-  if (b.type === N.verse || b.type === N.prose) {
-    const all: Node[] = []; b.forEach((row) => { all.push(row); });
-    const rows = withoutMarginNotes(all);
-    while (rows.length && rows[0].type === N.gap) rows.shift();
-    while (rows.length && rows[rows.length - 1].type === N.gap) rows.pop();
-    return b.copy(Fragment.from(rows));
-  }
-  if (b.type !== N.paragraph) return b;
+function trimmedContainer(b: Node): Node {
+  const inner: Node[] = [];
+  b.forEach((c) => { const t = trimmed(c); if (keep(t)) inner.push(t); });
+  return b.copy(Fragment.from(inner));
+}
+function trimmedRows(b: Node): Node {
+  const all: Node[] = [];
+  b.forEach((row) => { all.push(row); });
+  const rows = withoutMarginNotes(all);
+  while (rows.length && rows[0].type === N.gap) rows.shift();
+  while (rows.length && rows[rows.length - 1].type === N.gap) rows.pop();
+  return b.copy(Fragment.from(rows));
+}
+function trimmedParagraph(b: Node): Node {
   let c = b.content;
   while (c.firstChild?.type === N.hard_break) c = c.cut(c.firstChild.nodeSize);
   while (c.lastChild?.type === N.hard_break) c = c.cut(0, c.size - c.lastChild.nodeSize);
   return b.copy(c);
+}
+function trimmed(b: Node): Node {
+  if (CONTAINERS.has(b.type.name)) return trimmedContainer(b);
+  if (b.type === N.verse || b.type === N.prose) return trimmedRows(b);
+  return b.type === N.paragraph ? trimmedParagraph(b) : b;
 }
 function unquoted(cut: Node): Node[] {
   let n = cut;
@@ -333,31 +354,36 @@ function dropTurns(frag: Fragment): Fragment {
   });
   return Fragment.from(out);
 }
-/* `paragraphs`: a prose fence that counts paragraphs */
-export function passageMd(doc: Node, from: number, to: number, halves = false, paragraphs = false): string {
-  let units = coveredUnits(doc, from, to);
-  if (units.length && coversProse(doc, from, to)) units = [];
-  if (!units.length) {
-    const [a, b] = wholeRows(doc, from, to);
-    const cut = doc.cut(a, b);
-    /* renumbered BEFORE anything is unwrapped or dropped: after, the number
-       landed on the wrong block once a truncated remainder had been
-       dropped, and on the outer block of a verse inside a note inside a
-       verse (pin: reference.test › the number on the right block at every depth) */
-    return quoted(unquoted(renumbered(doc, a, cut.copy(dropFolios(dropTurns(cut.content))), paragraphs)));
+interface Passage { doc: Node; from: number; to: number; halves: boolean; paragraphs: boolean }
+function loosePassage(p: Passage): string {
+  const [a, b] = wholeRows(p.doc, p.from, p.to);
+  const cut = p.doc.cut(a, b);
+  /* renumbered BEFORE anything is unwrapped or dropped: after, the number
+     landed on the wrong block once a truncated remainder had been
+     dropped, and on the outer block of a verse inside a note inside a
+     verse (pin: reference.test › the number on the right block at every depth) */
+  return quoted(unquoted(renumbered(p.doc, a, cut.copy(dropFolios(dropTurns(cut.content))), p.paragraphs)));
+}
+function byBlock(units: Unit[]): Unit[][] {
+  const groups: Unit[][] = [];
+  for (const u of units) {
+    const last = groups[groups.length - 1];
+    if (last && last[0].blockPos === u.blockPos) last.push(u);
+    else groups.push([u]);
   }
+  return groups;
+}
+/* `paragraphs`: a prose fence that counts paragraphs */
+export function passageMd(doc: Node, from: number, to: number, { halves = false, paragraphs = false } = {}): string {
+  const p: Passage = { doc, from, to, halves, paragraphs };
+  const units = coveredUnits(doc, from, to);
+  if (!units.length || coversProse(doc, from, to)) return loosePassage(p);
   /* a run across stanzas:
      each stanza's rows quoted as one block's are, a blank quoted line
      between them, as the stanza gap stands in print (pin: reference.test ›
    referencePayload under the directive: I.i.2.1, a run across a stanza gap
    allowed and quoted whole) */
-  const byBlock: Unit[][] = [];
-  for (const u of units) {
-    const last = byBlock[byBlock.length - 1];
-    if (last && last[0].blockPos === u.blockPos) last.push(u); else byBlock.push([u]);
-  }
-  if (byBlock.length > 1) return byBlock.map((group) => blockPassage(doc, from, to, group, halves, paragraphs)).join("\n" + quotePrefix("") + "\n");
-  return blockPassage(doc, from, to, units, halves, paragraphs);
+  return byBlock(units).map((group) => blockPassage(p, group)).join("\n" + quotePrefix("") + "\n");
 }
 /* A SELECTION WIDENED TO WHOLE WORDS, what ⌃⌘R quotes and highlights both:
    back to the start of the word it starts in and on to the end of the word
@@ -369,34 +395,48 @@ export function passageMd(doc: Node, from: number, to: number, halves = false, p
    (pin: reference.test › a passage begun on an opening mark) */
 const inWord = (ch: string): boolean => /[\p{L}\p{N}’'-]/u.test(ch);
 const opening = (ch: string): boolean => /[“‘«(\[]/.test(ch);
-export function wordEdges(doc: Node, from: number, to: number): [number, number] {
-  const text = (n: Node): string => n.textBetween(0, n.content.size, undefined, "\ufffc");
-  let a = from, b = to;
+const textOf = (n: Node): string => n.textBetween(0, n.content.size, undefined, "￼");
+const midWord = (t: string, i: number): boolean => i > 0 && i < t.length && inWord(t[i - 1]) && inWord(t[i]);
+const opensWord = (t: string, i: number): boolean => opening(t[i]) && inWord(t[i + 1] ?? "");
+const passedAtStart = (t: string, i: number): boolean => i < t.length && !inWord(t[i]) && !opensWord(t, i);
+const markBefore = (t: string, i: number): boolean => i > 0 && i < t.length && opening(t[i - 1]) && inWord(t[i]);
+function startIndex(t: string, i: number): number {
+  while (midWord(t, i)) i--;
+  while (passedAtStart(t, i)) i++;
+  return markBefore(t, i) ? i - 1 : i;
+}
+const passedAtEnd = (ch: string): boolean => /\s/.test(ch) || opening(ch);
+function endIndex(t: string, j: number): number {
+  while (midWord(t, j)) j++;
+  while (j > 0 && passedAtEnd(t[j - 1])) j--;
+  return j;
+}
+function startEdge(doc: Node, a: number, b: number): number {
   for (let $a = doc.resolve(a); $a.parent.isTextblock && a < b;) {
-    const t = text($a.parent), start = a - $a.parentOffset;
-    let i = $a.parentOffset;
-    while (i > 0 && i < t.length && inWord(t[i - 1]) && inWord(t[i])) i--;
-    while (i < t.length && !inWord(t[i]) && !(opening(t[i]) && inWord(t[i + 1] ?? ""))) i++;
-    if (i > 0 && opening(t[i - 1]) && i < t.length && inWord(t[i])) i--;
-    a = start + i;
+    const t = textOf($a.parent), i = startIndex(t, $a.parentOffset);
+    a = a - $a.parentOffset + i;
     if (i < t.length) break;
     const next = Selection.findFrom(doc.resolve($a.after()), 1, true);
     if (!next || next.from >= b) break;
     a = next.from;
     $a = doc.resolve(a);
   }
+  return a;
+}
+function endEdge(doc: Node, a: number, b: number): number {
   for (let $b = doc.resolve(b); $b.parent.isTextblock && b > a;) {
-    const t = text($b.parent), start = b - $b.parentOffset;
-    let j = $b.parentOffset;
-    while (j < t.length && j > 0 && inWord(t[j - 1]) && inWord(t[j])) j++;
-    while (j > 0 && (/\s/.test(t[j - 1]) || opening(t[j - 1]))) j--;
-    b = start + j;
+    const t = textOf($b.parent), j = endIndex(t, $b.parentOffset);
+    b = b - $b.parentOffset + j;
     if (j > 0) break;
     const prev = Selection.findFrom(doc.resolve($b.before()), -1, true);
     if (!prev || prev.from <= a) break;
     b = prev.from;
     $b = doc.resolve(b);
   }
+  return b;
+}
+export function wordEdges(doc: Node, from: number, to: number): [number, number] {
+  const a = startEdge(doc, from, to), b = endEdge(doc, a, to);
   return a < b ? [a, b] : [from, to];
 }
 /* a line the selection starts or ends inside is quoted from where it
@@ -407,78 +447,98 @@ function partOf(row: Node, pos: number, from: number, to: number): Fragment {
   const start = pos + 1, end = start + row.content.size;
   return row.content.cut(Math.max(from, start) - start, Math.min(to, end) - start);
 }
+type RowEnds = [Unit | null, Unit | null];
 /* Old English verse beside its translation: the original quoted from the half
    the reference starts on to the half it ends on, the translation whole, as it
    cannot be divided by half-lines (pin: reference.test › Old English verse with
    its translation quotes the original) */
-function fromTheHalf(row: Node, first: Unit | null, last: Unit | null, from: number, to: number): Node {
-  const u = first || last!;
-  const c = caesura(row.child(0)), h = halvesInked(u, from, to);
+function fromTheHalf(row: Node, [first, last]: RowEnds, from: number, to: number): Node {
+  const c = caesura(row.child(0)), h = halvesInked(first || last!, from, to);
   if (!c || !h) return row;
   const a = first && !h.a ? c.rest : 0, b = last && !h.b ? c.cut : row.child(0).content.size;
   return row.copy(Fragment.from([row.child(0).copy(row.child(0).content.cut(a, b)), row.child(1)]));
 }
-function blockPassage(doc: Node, from: number, to: number, units: Unit[], halves = false, paragraphs = false): string {
-  const blockPos = units[0].blockPos, block = doc.nodeAt(blockPos)!;
-  const paired = units.some((u) => u.node.type === N.pair);
-  const rows: { node: Node; pos: number }[] = [];
+type RowAt = { node: Node; pos: number };
+interface BlockRun { p: Passage; units: Unit[]; block: Node; blockPos: number; rows: RowAt[]; paired: boolean }
+function rowsAt(block: Node, blockPos: number): RowAt[] {
+  const rows: RowAt[] = [];
   block.forEach((row, offset) => rows.push({ node: row, pos: blockPos + 1 + offset }));
-  let first = rows.findIndex((r) => r.pos === units[0].pos);
-  let last = rows.findIndex((r) => r.pos === units[units.length - 1].pos);
-  /* the run's ends widen to covered non-unit rows (a prose block's heading
-     row), stepping over ink-less rows */
-  const covered = (r: { node: Node; pos: number }) => drawsInk(r.node) && inkBetween(doc, Math.max(from, r.pos), Math.min(to, r.pos + r.node.nodeSize));
-  const widened = (i: number, step: number): number => {
-    let end = i;
-    for (let j = i + step; j >= 0 && j < rows.length; j += step) {
-      if (!drawsInk(rows[j].node)) continue;
-      if (!covered(rows[j])) break;
-      end = j;
-    }
-    return end;
-  };
-  first = widened(first, -1);
-  last = widened(last, 1);
+  return rows;
+}
+const coveredRow = (p: Passage, r: RowAt): boolean => drawsInk(r.node) && inkBetween(p.doc, Math.max(p.from, r.pos), Math.min(p.to, r.pos + r.node.nodeSize));
+/* the run's ends widen to covered non-unit rows (a prose block's heading
+   row), stepping over ink-less rows */
+function widened(c: BlockRun, i: number, step: number): number {
+  let end = i;
+  for (let j = i + step; j >= 0 && j < c.rows.length; j += step) {
+    if (!drawsInk(c.rows[j].node)) continue;
+    if (!coveredRow(c.p, c.rows[j])) break;
+    end = j;
+  }
+  return end;
+}
+function rowEnds(c: BlockRun, i: number): RowEnds {
+  const row = c.rows[i];
+  if (!c.p.halves || row.node.type !== N.pair) return [null, null];
+  const at = (u: Unit): Unit | null => (u.pos === row.pos ? u : null);
+  return [at(c.units[0]), at(c.units[c.units.length - 1])];
+}
+function runRow(c: BlockRun, i: number): Node | null {
+  const row = c.rows[i].node;
+  if (row.type === N.note || isTurn(row)) return null;
+  const ends = rowEnds(c, i);
+  const cut = ends[0] || ends[1] ? fromTheHalf(row, ends, c.p.from, c.p.to) : row;
+  return row.copy(dropFolios(c.paired ? cut.content : partOf(row, c.rows[i].pos, c.p.from, c.p.to)));
+}
+/* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
+const asFenceRow = (row: Node): Node => (row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
+/* the block's own count at the first kept row, whatever the row is: a
+   direction alone as the block's last row was numbered 1 (pin:
+   reference.test › a block inside a note, the label's top level, an end
+   resting on a row, blanks, depth, the count before) */
+function fencedRun(c: BlockRun, kept: Node[], first: number): string {
+  const rows = c.paired ? kept : kept.map(asFenceRow);
+  /* (pin: reference.test › a prosimetrum's sentence quotes that sentence) */
+  const at = c.p.paragraphs && c.block.type === N.prose ? { start: paragraphOf(c.p.doc, c.units[0]) } : fenceAt(c.block, c.blockPos, c.rows[first].pos);
+  return quoted([c.block.type.create({ ...c.block.attrs, ...at }, rows)]);
+}
+function lineQuote(row: Node): string {
+  if (row.type === N.gap || !drawsInk(row)) return quotePrefix("");
+  const line = serializeMarkdown(schema.nodes.doc.create(null, [N.paragraph.create(null, row.content)]));
+  return "> " + line.replace(/\s*\n\s*/g, " ").trim();
+}
+/* a stanza's own count is its stanza's, so a run from inside one quotes as lines */
+const quotesAsFence = (c: BlockRun): boolean => c.paired || (c.block.type === N.verse && c.block.attrs.stanza == null);
+function blockPassage(p: Passage, units: Unit[]): string {
+  const blockPos = units[0].blockPos, block = p.doc.nodeAt(blockPos)!, rows = rowsAt(block, blockPos);
+  const c: BlockRun = { p, units, block, blockPos, rows, paired: units.some((u) => u.node.type === N.pair) };
+  const first = widened(c, rows.findIndex((r) => r.pos === units[0].pos), -1);
+  const last = widened(c, rows.findIndex((r) => r.pos === units[units.length - 1].pos), 1);
   const run: Node[] = [];
   for (let i = first; i <= last; i++) {
-    const row = rows[i].node;
-    if (row.type === N.note) continue;
-    if (isTurn(row)) continue;
-    const ends = halves && row.type === N.pair ? [units[0], units[units.length - 1]].map((u) => u.pos === rows[i].pos ? u : null) : [null, null];
-    const cut = ends[0] || ends[1] ? fromTheHalf(row, ends[0], ends[1], from, to) : row;
-    run.push(row.copy(dropFolios(paired ? cut.content : partOf(row, rows[i].pos, from, to))));
+    const row = runRow(c, i);
+    if (row) run.push(row);
   }
   const kept = withoutMarginNotes(run);
-  /* a stanza's own count is its stanza's, so a run from inside one quotes as lines */
-  if (paired || block.type === N.verse && block.attrs.stanza == null) {
-    /* the block's own count at the first kept row, whatever the row is: a
-       direction alone as the block's last row was numbered 1 (pin:
-       reference.test › a block inside a note, the label's top level, an end
-       resting on a row, blanks, depth, the count before) */
-    /* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
-    const rowsKept = paired ? kept : kept.map((row) => row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
-    /* (pin: reference.test › a prosimetrum's sentence quotes that sentence) */
-    const at = paragraphs && block.type === N.prose ? { start: paragraphOf(doc, units[0]) } : fenceAt(block, blockPos, rows[first].pos);
-    const fence = block.type.create({ ...block.attrs, ...at }, rowsKept);
-    return quoted([fence]);
-  }
+  if (quotesAsFence(c)) return fencedRun(c, kept, first);
   /* quoted as lines a skipped line number has no place, and a blank would
      read as a stanza gap (pin: reference.test › a stanza's quotation leaves
      a skipped line number out) */
-  return kept.filter((row) => row.type !== N.skip).map((row) => {
-    if (row.type === N.gap || !drawsInk(row)) return quotePrefix("");
-    const line = serializeMarkdown(schema.nodes.doc.create(null, [N.paragraph.create(null, row.content)]));
-    return "> " + line.replace(/\s*\n\s*/g, " ").trim();
-  }).join("\n");
+  return kept.filter((row) => row.type !== N.skip).map(lineQuote).join("\n");
 }
 /* the block numbered on both sides holding the whole selection, outside a
    note. THE TOP LEVEL ALONE, as every reference's numbers are: a block
    quoted inside an entry is that entry's passage (pin: reference.test › a
    block can be quoted by its translation alone only where) */
+const inNote = ($x: ResolvedPos): boolean => {
+  for (let d = 2; d <= $x.depth; d++) if ($x.node(d).type === N.note) return true;
+  return false;
+};
+const oneTopBlock = ($a: ResolvedPos, $b: ResolvedPos): boolean => $a.depth >= 1 && $b.depth >= 1 && $a.before(1) === $b.before(1);
+const outsideOneBlock = ($a: ResolvedPos, $b: ResolvedPos): boolean => !oneTopBlock($a, $b) || inNote($a) || inNote($b);
 export function facingBlockOf(doc: Node, from: number, to: number): { node: Node; pos: number } | null {
   const $a = doc.resolve(from), $b = doc.resolve(to);
-  if ($a.depth < 1 || $b.depth < 1 || $a.before(1) !== $b.before(1)) return null;
-  for (const $x of [$a, $b]) for (let d = 2; d <= $x.depth; d++) if ($x.node(d).type === N.note) return null;
+  if (outsideOneBlock($a, $b)) return null;
   const node = $a.node(1);
   return node.type === N.verse && node.attrs.facing != null ? { node, pos: $a.before(1) } : null;
 }
@@ -496,22 +556,38 @@ export function offersBoth(state: EditorState): boolean {
    apparatus alone declared a line, or the lines after it lose a number
    (pin: reference.test › the translation alone keeps its verse
    paragraphs' gaps) */
+interface TranslationRun { doc: Node; from: number; to: number; units: Unit[]; rows: Node[] }
+function rightWords(c: TranslationRun, row: Node, pos: number): Fragment {
+  const start = pos + 1 + row.child(0).nodeSize + 1, end = start + row.child(1).content.size;
+  const lo = Math.max(c.from, start), hi = Math.min(c.to, end);
+  return inkBetween(c.doc, lo, hi) ? row.child(1).content.cut(lo - start, hi - start) : row.child(1).content;
+}
+function lineKind(c: TranslationRun, line: Node, pos: number): string | null {
+  const u = c.units.find((v) => v.pos === pos);
+  if (!u) return null;
+  if (u.rest && c.rows.some((r) => r.type === N.line)) return "cont";
+  return whollyIn(line, schema.marks.strong) || whollyIn(line, schema.marks.em) ? "line" : null;
+}
+function translationRow(c: TranslationRun, row: Node, pos: number): void {
+  if (row.type === N.gap) {
+    if (c.rows.length && c.rows[c.rows.length - 1].type !== N.gap) c.rows.push(row);
+    return;
+  }
+  if (row.type !== N.pair || !drawsInk(row.child(1))) return;
+  const line = N.line.create(null, dropFolios(rightWords(c, row, pos)));
+  const kind = lineKind(c, line, pos);
+  c.rows.push(kind ? N.line.create({ kind }, line.content) : line);
+}
 function translationPassage(doc: Node, from: number, to: number, block: { node: Node; pos: number }): string | null {
-  const units = coveredUnits(doc, from, to, true, "right").filter((u) => u.blockPos === block.pos);
+  const units = coveredUnits(doc, from, to, { topOnly: true, side: "right" }).filter((u) => u.blockPos === block.pos);
   if (!units.length) return null;
-  const rows: Node[] = [];
+  const c: TranslationRun = { doc, from, to, units, rows: [] };
+  const lo = units[0].pos, hi = units[units.length - 1].pos;
   block.node.forEach((row, offset) => {
     const pos = block.pos + 1 + offset;
-    if (pos < units[0].pos || pos > units[units.length - 1].pos) return;
-    if (row.type === N.gap) { if (rows.length && rows[rows.length - 1].type !== N.gap) rows.push(row); return; }
-    if (row.type !== N.pair || !drawsInk(row.child(1))) return;
-    const start = pos + 1 + row.child(0).nodeSize + 1, end = start + row.child(1).content.size;
-    const words = inkBetween(doc, Math.max(from, start), Math.min(to, end)) ? row.child(1).content.cut(Math.max(from, start) - start, Math.min(to, end) - start) : row.child(1).content;
-    const line = N.line.create(null, dropFolios(words)), u = units.find((v) => v.pos === pos);
-    const kind = !u ? null : u.rest && rows.some((r) => r.type === N.line) ? "cont" : whollyIn(line, schema.marks.strong) || whollyIn(line, schema.marks.em) ? "line" : null;
-    rows.push(kind ? N.line.create({ kind }, line.content) : line);
+    if (pos >= lo && pos <= hi) translationRow(c, row, pos);
   });
-  return quoted([N.verse.create({ start: units[0].line }, rows)]);
+  return quoted([N.verse.create({ start: units[0].line }, c.rows)]);
 }
 /* the entry's hash as a markdown link TARGET: a paren in a tag would close
    the (url) early on paste */
@@ -537,34 +613,45 @@ export function referenceAnchorHTML(url: string, label: string): string {
   return '<a href="' + escapeHtml(url) + '">' + escapeHtml(label).replace(/\*([^*]+)\*/g, "<em>$1</em>") + "</a>";
 }
 export interface Payload { text: string; label: string; url: string; passage: string }
+export interface EntryAt { date: string; tag: string | null }
+function refusalOver(doc: Node, from: number, to: number): Refusal | null {
+  let inCode = false;
+  doc.nodesBetween(from, to, (n) => { if (n.type === N.code_block) inCode = true; return !inCode; });
+  if (inCode) return "code";
+  const $from = doc.resolve(from);
+  for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return "margin-note";
+  return spansTwoBlocks(doc, from, to) ? "two-blocks" : null;
+}
 /* `all`: a block numbered on both sides quoted with both its columns */
-export function referencePayload(state: EditorState, date: string, tag: string | null, journal: Journal, all = false): Payload | { refused: Refusal } {
+export function referencePayload(state: EditorState, at: EntryAt, journal: Journal, all = false): Payload | { refused: Refusal } {
   if (state.selection.empty) return { refused: "select" };
   const doc = state.doc;
   /* the refusals read the words quoted, not the selection as made (pin:
      reference.test › a passage begun at the end of one verse block's) */
   const [from, to] = wordEdges(doc, ...sentenceRange(doc, state.selection.from, state.selection.to));
-  let inCode = false;
-  doc.nodesBetween(from, to, (n) => { if (n.type === N.code_block) inCode = true; return !inCode; });
-  if (inCode) return { refused: "code" };
-  const $from = doc.resolve(from);
-  for (let d = $from.sharedDepth(to); d > 0; d--) if ($from.node(d).type === N.margin_note) return { refused: "margin-note" };
-  if (spansTwoBlocks(doc, from, to)) return { refused: "two-blocks" };
-  return payloadOver(doc, from, to, date, tag, journal, all);
+  const refused = refusalOver(doc, from, to);
+  return refused ? { refused } : payloadOver({ doc, from, to }, at, journal, all);
 }
-function payloadOver(doc: Node, from: number, to: number, date: string, tag: string | null, journal: Journal, all: boolean): Payload | { refused: Refusal } {
-  const hl = selectionLink(doc, from, to);
+interface Span { doc: Node; from: number; to: number }
+/* a passage in stanza fences refers by stanza, in any work (pin: reference.test › a work in stanza fences refers by stanza) */
+function rangeOver(s: Span, at: EntryAt, journal: Journal, halves: boolean): string {
+  if (refersByBookChapterParagraph(at.date, at.tag, journal)) return byBookChapterParagraphRange(s.doc, s.from, s.to);
+  if (refersAsProsimetrum(at.date, at.tag, journal)) return prosimetrumRange(s.doc, s.from, s.to);
+  return stanzaRange(s.doc, s.from, s.to) || referenceRange(s.doc, s.from, s.to, { halves });
+}
+const facingRange = (s: Span): string => (hasFacing(s.doc) ? referenceRange(s.doc, s.from, s.to, { side: "right" }) : "");
+function payloadOver(s: Span, at: EntryAt, journal: Journal, all: boolean): Payload | { refused: Refusal } {
+  const hl = selectionLink(s.doc, s.from, s.to);
   if (!hl) return { refused: "select" };
-  /* a passage in stanza fences refers by stanza, in any work (pin: reference.test › a work in stanza fences refers by stanza) */
-  const halves = refersByHalfLine(date, tag, journal);
-  const byBookChapterParagraph = refersByBookChapterParagraph(date, tag, journal);
-  const range = byBookChapterParagraph ? byBookChapterParagraphRange(doc, from, to) : refersAsProsimetrum(date, tag, journal) ? prosimetrumRange(doc, from, to) : stanzaRange(doc, from, to) || referenceRange(doc, from, to, halves);
-  const block = all ? null : facingBlockOf(doc, from, to);
-  const alone = block && translationPassage(doc, from, to, block);
+  const halves = refersByHalfLine(at.date, at.tag, journal);
+  const range = rangeOver(s, at, journal, halves);
+  const block = all ? null : facingBlockOf(s.doc, s.from, s.to);
+  const alone = block && translationPassage(s.doc, s.from, s.to, block);
   if (block && !alone) return { refused: "no-translation" };
-  const label = referenceLabel(date, tag, { range: range, folio: folioRange(doc, from, to), facing: hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "" }, journal);
-  const url = entryLinkUrl(date, tag, hl);
-  const passage = alone || passageMd(doc, from, to, halves, byBookChapterParagraph || refersAsProsimetrum(date, tag, journal));
+  const label = referenceLabel(at.date, at.tag, { range, folio: folioRange(s.doc, s.from, s.to), facing: facingRange(s) }, journal);
+  const url = entryLinkUrl(at.date, at.tag, hl);
+  const paragraphs = refersByBookChapterParagraph(at.date, at.tag, journal) || refersAsProsimetrum(at.date, at.tag, journal);
+  const passage = alone || passageMd(s.doc, s.from, s.to, { halves, paragraphs });
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {

@@ -11,7 +11,7 @@ describe("the noun a work asks by", () => {
   it("names an omitted line and a page with no numbers in that noun, and a block as a block", () => {
     const skips = parseMarkdown("::: verse\na\n⟨skipped line number⟩\nc\n:::\n\n::: verse\nx\ny\nz\n:::");
     const { hits, blocks } = lineHits(skips, 2);
-    expect(landingWord(hits[0], hits, blocks, 2, "verse")).toMatch(/^verse 2 is omitted .* block 1 of 2$/);
+    expect(landingWord(hits[0], { hits: hits, blocks: blocks }, 2, "verse")).toMatch(/^verse 2 is omitted .* block 1 of 2$/);
     expect(lineRefusal([], 2, "verse")).toMatch(/numbered verses/);
   });
 });
@@ -45,16 +45,16 @@ describe("lineHits and the cycle", () => {
   });
   it("says where it landed only where the number is in several blocks, form-neutral in a prosimetrum", () => {
     const { hits, blocks } = lineHits(two, 3);
-    expect(landingWord(hits[1], hits, blocks, 3)).toBe("line 3 — verse block 2 of 2");
+    expect(landingWord(hits[1], { hits: hits, blocks: blocks }, 3)).toBe("line 3 — verse block 2 of 2");
     const one = lineHits(parseMarkdown(horace), 2);
-    expect(landingWord(one.hits[0], one.hits, one.blocks, 2)).toBeNull();
+    expect(landingWord(one.hits[0], { hits: one.hits, blocks: one.blocks }, 2)).toBeNull();
     const m = lineHits(mixed, 2);
-    expect(landingWord(m.hits[0], m.hits, m.blocks, 2)).toBe("sentence 2 — block 1 of 2");
+    expect(landingWord(m.hits[0], { hits: m.hits, blocks: m.blocks }, 2)).toBe("sentence 2 — block 1 of 2");
   });
   it("says nothing of the blocks where the page has several and the number is in one", () => {
     const { hits, blocks } = lineHits(two, 1);
     expect(blocks.length).toBe(2);
-    expect(landingWord(hits[0], hits, blocks, 1)).toBeNull();
+    expect(landingWord(hits[0], { hits: hits, blocks: blocks }, 1)).toBeNull();
   });
 });
 describe("a line a block opens part-way along", () => {
@@ -62,7 +62,7 @@ describe("a line a block opens part-way along", () => {
   it("names one place, where the line begins", () => {
     const { hits, blocks } = lineHits(split, 2);
     expect(hits.map((h) => split.nodeAt(h.pos)!.textContent)).toEqual(["b"]);
-    expect(landingWord(hits[0], hits, blocks, 2)).toBeNull();
+    expect(landingWord(hits[0], { hits: hits, blocks: blocks }, 2)).toBeNull();
   });
   it("is not a number repeated", () => {
     expect(lineRefusal(lineHits(split, 9).blocks, 9)).toBe("no line 9, the last line is 3");
@@ -210,17 +210,17 @@ describe("a skipped line number", () => {
     for (const n of [597, 598]) {
       const { hits, blocks } = lineHits(d, n);
       expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
-      expect(landingWord(hits[0], hits, blocks, n)).toBe("line " + n + " is omitted in this edition");
+      expect(landingWord(hits[0], { hits: hits, blocks: blocks }, n)).toBe("line " + n + " is omitted in this edition");
     }
     const { hits, blocks } = lineHits(d, 599);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["c"]);
-    expect(landingWord(hits[0], hits, blocks, 599)).toBeNull();
+    expect(landingWord(hits[0], { hits: hits, blocks: blocks }, 599)).toBeNull();
   });
   it("one ending its block lands on the line before it, and alone on the page says so plainly", () => {
     const d = parseMarkdown("::: verse 10\na\n⟨skipped line number⟩\n:::");
     const { hits, blocks } = lineHits(d, 11);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["a"]);
-    expect(landingWord(hits[0], hits, blocks, 11)).toBe("line 11 is omitted in this edition");
+    expect(landingWord(hits[0], { hits: hits, blocks: blocks }, 11)).toBe("line 11 is omitted in this edition");
   });
 });
 
@@ -229,7 +229,7 @@ describe("a skipped line number in more than one block", () => {
     const d = parseMarkdown("::: verse\na\n⟨skipped line number⟩\nb\n:::\n\n::: verse\nx\n⟨skipped line number⟩\ny\n:::");
     const { hits, blocks } = lineHits(d, 2);
     expect(hits.map((h) => d.nodeAt(h.pos)!.textContent)).toEqual(["b", "y"]);
-    expect(landingWord(hits[1], hits, blocks, 2)).toBe("line 2 is omitted in this edition — verse block 2 of 2");
+    expect(landingWord(hits[1], { hits: hits, blocks: blocks }, 2)).toBe("line 2 is omitted in this edition — verse block 2 of 2");
   });
 });
 describe("a page of blocks numbered on both sides", () => {
@@ -284,7 +284,7 @@ describe("the words of a box that asks for a verse", () => {
   it("on a page of several blocks the refusal, and the landing where the number is in several, say verse and block, not the form's own words", () => {
     const { hits, blocks } = lineHits(two, 1);
     expect(lineRefusal(blocks, 9, "verse")).toMatch(/^no verse 9 — the longest block /);
-    expect(landingWord(hits[0], hits, blocks, 1, "verse")).toMatch(/^verse 1 — block 1 of 2$/);
+    expect(landingWord(hits[0], { hits: hits, blocks: blocks }, 1, "verse")).toMatch(/^verse 1 — block 1 of 2$/);
   });
   it("a page with no noun given keeps its own words", () => {
     expect(lineRefusal(lineHits(prose, 9).blocks, 9)).toMatch(/sentences here/);

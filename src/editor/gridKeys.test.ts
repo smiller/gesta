@@ -11,7 +11,7 @@ import { enterOutOfGrid, atCardEdge, GRID_JOIN } from "./gridKeys.ts";
 function caret(md: string, needle: string, after = false): EditorState {
   const doc = parseMarkdown(md);
   let pos = -1;
-  doc.descendants((node, p) => { if (pos < 0 && node.isText && node.text!.indexOf(needle) >= 0) pos = p + node.text!.indexOf(needle) + (after ? needle.length : 0); return pos < 0; });
+  doc.descendants((node, p) => { if (pos < 0 && node.text?.includes(needle)) pos = p + node.text!.indexOf(needle) + (after ? needle.length : 0); return pos < 0; });
   if (pos < 0) throw new Error(needle);
   return EditorState.create({ doc, selection: TextSelection.create(doc, pos) });
 }

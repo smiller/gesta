@@ -451,7 +451,7 @@ export function startSession(opts: SessionOptions): Session {
     if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
     if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
-    const out = referencePayload(view.state, current.date, current.tag, journal, all);
+    const out = referencePayload(view.state, { date: current.date, tag: current.tag }, journal, all);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
     try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }

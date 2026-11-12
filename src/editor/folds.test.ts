@@ -39,7 +39,7 @@ test("the decorations: every heading marked with its count and state, a closed s
 });
 test("sectionAt: the section a position's body belongs to, null above the first heading or on a heading", () => {
   let inCanto = -1;
-  doc.descendants((n, pos) => { if (inCanto < 0 && n.isText && n.text === "Canto ii") inCanto = pos + 1; return inCanto < 0; });
+  doc.descendants((n, pos) => { if (inCanto < 0 && n.text === "Canto ii") inCanto = pos + 1; return inCanto < 0; });
   expect(sectionAt(foldSections(doc), inCanto)?.key).toBe("Book I: The Legende of the Knight");
   expect(sectionAt(foldSections(doc), 3)).toBe(null);
 });
@@ -61,7 +61,7 @@ test("the plugin: off draws nothing; on starts from the open set it is given; a 
 test("a selection landing inside a closed section opens it (a search result, a highlight, a caret moved there)", () => {
   let s = stateWith({ on: true, open: [] });
   let pos = -1;
-  doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text === "Canto i") pos = p + 2; return pos < 0; });
+  doc.descendants((n, p) => { if (pos < 0 && n.text === "Canto i") pos = p + 2; return pos < 0; });
   s = s.apply(s.tr.setSelection(TextSelection.create(s.doc, pos)));
   expect(openKeys(s)).toEqual(["Book I: The Legende of the Knight"]);
 });
@@ -70,7 +70,7 @@ test("a selection landing inside a closed section opens it (a search result, a h
 // by its heading's text, twins numbered.
 const at = (d: typeof doc, text: string, offset = 0): number => {
   let pos = -1;
-  d.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.includes(text)) pos = p + n.text!.indexOf(text) + offset; return pos < 0; });
+  d.descendants((n, p) => { if (pos < 0 && n.text?.includes(text)) pos = p + n.text!.indexOf(text) + offset; return pos < 0; });
   if (pos < 0) throw new Error("not found: " + text);
   return pos;
 };

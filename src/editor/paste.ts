@@ -1,4 +1,4 @@
-import { Fragment, Slice, DOMParser, type ResolvedPos, type Node, type ParseOptions } from "prosemirror-model";
+import { Fragment, Slice, DOMParser, type ResolvedPos, type Node, type Mark, type ParseOptions } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection, Selection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
@@ -39,6 +39,17 @@ export function onlyLineBreaks(raw: string, $context: ResolvedPos, html = ""): b
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   return txt.includes("\n") && !txt.trim();
 }
+const blockShaped = (body: string, lines: string[], $context: ResolvedPos): boolean =>
+  lines.length > 1 || ONE_HEADING_LINE.test(body) || oneQuoteLine(body, $context);
+function parsedBlocks(body: string, oneLine: boolean): Node[] | null {
+  try {
+    const doc = parseMarkdown(body);
+    if (!draws(doc) && oneLine) return null;
+    const blocks: Node[] = [];
+    doc.forEach((b) => blocks.push(b));
+    return blocks;
+  } catch { return null; }
+}
 export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
   const body = raw.replace(LINE_BREAK_RE, "\n").replace(/\n$/, "");
   /* every code-shaped textblock is literal — the reference block too: a
@@ -46,15 +57,8 @@ export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
      reference block every character is literal) */
   if ($context.parent.type.spec.code || inAny($context, FLAT_HOSTS)) return null;
   const lines = body.split("\n");
-  if (!(lines.length > 1 || ONE_HEADING_LINE.test(body) || oneQuoteLine(body, $context))) return null;
-  if (INTERNAL_LINK_RE.test(body.trim())) return null;
-  try {
-    const doc = parseMarkdown(body);
-    if (!draws(doc) && lines.length === 1) return null;
-    const blocks: Node[] = [];
-    doc.forEach((b) => blocks.push(b));
-    return blocks;
-  } catch { return null; }
+  if (!blockShaped(body, lines, $context) || INTERNAL_LINK_RE.test(body.trim())) return null;
+  return parsedBlocks(body, lines.length === 1);
 }
 /* a pasted fence the model refuses is named with its reason (pin:
    paste.test › a pasted fence the model refuses is named)
@@ -68,19 +72,25 @@ export function pastedRefusal(blocks: Node[]): string | null {
    a pasted verse fence lost its first original line to the paragraph
    above) (pin: paste.test › a verse fence pasted as text is set down
    whole) */
+function insertedAt(tr: Transaction, pos: number, frag: Fragment): number {
+  tr.insert(pos, frag);
+  return pos;
+}
+function placeAt(tr: Transaction, $at: ResolvedPos, frag: Fragment): number {
+  if (!$at.parent.isTextblock) return insertedAt(tr, $at.pos, frag);
+  if (!$at.parent.content.size && $at.depth >= 1) {
+    tr.replaceWith($at.before(), $at.after(), frag);
+    return $at.before();
+  }
+  if ($at.parentOffset === 0) return insertedAt(tr, $at.before(), frag);
+  if ($at.parentOffset === $at.parent.content.size) return insertedAt(tr, $at.after(), frag);
+  tr.split($at.pos);
+  return insertedAt(tr, tr.doc.resolve(tr.mapping.map($at.pos)).before(), frag);
+}
 export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   const tr = state.tr.deleteSelection();
-  const $at = tr.selection.$from;
   const frag = Fragment.from(blocks);
-  let pos: number;
-  if ($at.parent.isTextblock && $at.parent.content.size === 0 && $at.depth >= 1) {
-    pos = $at.before();
-    tr.replaceWith(pos, $at.after(), frag);
-  } else if ($at.parent.isTextblock) {
-    if ($at.parentOffset === 0) { pos = $at.before(); tr.insert(pos, frag); }
-    else if ($at.parentOffset === $at.parent.content.size) { pos = $at.after(); tr.insert(pos, frag); }
-    else { tr.split($at.pos); pos = tr.mapping.map($at.pos, 1) - 1; pos = tr.doc.resolve(tr.mapping.map($at.pos)).before(); tr.insert(pos, frag); }
-  } else { pos = $at.pos; tr.insert(pos, frag); }
+  const pos = placeAt(tr, tr.selection.$from, frag);
   tr.setSelection(TextSelection.near(tr.doc.resolve(Math.min(pos + frag.size, tr.doc.content.size)), -1));
   return tr;
 }
@@ -100,74 +110,81 @@ function pastedAddress(raw: string, html: string): { link: string; target: strin
     : INTERNAL_LINK_RE.test(txt) ? { link: txt, target: INTERNAL_LINK_RE.exec(txt)![1], reference: false } : null;
   return found && namesEntry(found.target) ? found : null;
 }
+const oneTextRun = (sel: Selection): boolean => !sel.empty && sel instanceof TextSelection && sel.$from.sameParent(sel.$to) && linkable(sel.$from);
+function trimmedRange(doc: Node, from: number, to: number): [number, number] {
+  while (from < to && /\s/.test(doc.textBetween(from, from + 1))) from++;
+  while (to > from && /\s/.test(doc.textBetween(to - 1, to))) to--;
+  return [from, to];
+}
 export function linkSelection(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
-  if (sel.empty || !(sel instanceof TextSelection) || !sel.$from.sameParent(sel.$to) || !linkable(sel.$from)) return null;
+  if (!oneTextRun(sel)) return null;
   const pasted = pastedAddress(raw, html);
   if (!pasted) return null;
-  let from = sel.from, to = sel.to;
-  while (from < to && /\s/.test(state.doc.textBetween(from, from + 1))) from++;
-  while (to > from && /\s/.test(state.doc.textBetween(to - 1, to))) to--;
+  const [from, to] = trimmedRange(state.doc, sel.from, sel.to);
   if (from === to) return null;
   const tr = state.tr.addMark(from, to, schema.marks.link.create({ href: "#" + pasted.target }));
   return tr.setSelection(TextSelection.create(tr.doc, sel.to));
 }
+const typedLine = (sel: Selection): boolean => sel.empty && linkable(sel.$from) && !!sel.$from.parent.textContent.trim();
 export function referenceInLine(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
-  if (!sel.empty || !linkable(sel.$from) || !sel.$from.parent.textContent.trim()) return null;
+  if (!typedLine(sel)) return null;
   const pasted = pastedAddress(raw, html);
   const slice = pasted?.reference ? inlineSlice(pasted.link) : null;
   return slice && state.tr.replaceSelection(slice);
 }
 /* only PLAIN text is asked of this parser: HTML carries its own structure */
+/* a link to an address naming no entry stays as typed: a dead link looked
+   like a live one (pin: paste.test › a pasted link to an address that
+   names no entry stays as typed); a bare URL alone is a link at once, not
+   on the space typed after it (pin: paste.test › a bare URL pasted alone is
+   a link at once) */
+function linkSlice(body: string, oneLine: boolean): Slice | null {
+  const url = oneLine ? bareUrl(body.trim()) : null;
+  if (url) return new Slice(Fragment.from(schema.text(body.trim(), [schema.marks.link.create({ href: url })])), 0, 0);
+  const internal = INTERNAL_LINK_RE.exec(body.trim());
+  if (!internal) return null;
+  return namesEntry(internal[1]) ? inlineSlice(body.trim()) : new Slice(Fragment.from(schema.text(body)), 0, 0);
+}
+function blockSlice(body: string, lines: string[], $context: ResolvedPos): Slice | null {
+  if (inAny($context, FLAT_HOSTS)) return flat(lines);
+  try {
+    const doc = parseMarkdown(body);
+    if (draws(doc) || lines.length > 1) return new Slice(doc.content, 0, 0);
+  } catch { /* a form the schema refuses stays as typed */ }
+  return null;
+}
 export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   const body = txt.replace(/\n$/, "");
   if ($context.parent.type.spec.code) return new Slice(Fragment.from(schema.text(txt)), 0, 0);
   const lines = body.split("\n");
-  const blockShaped = lines.length > 1 || ONE_HEADING_LINE.test(body);
-  /* a link to an address naming no entry stays as typed: a dead link looked
-     like a live one (pin: paste.test › a pasted link to an address that
-     names no entry stays as typed) */
-  /* a bare URL alone is a link at once, not on the space typed after it
-     (pin: paste.test › a bare URL pasted alone is a link at once) */
-  const url = lines.length === 1 ? bareUrl(body.trim()) : null;
-  if (url) return new Slice(Fragment.from(schema.text(body.trim(), [schema.marks.link.create({ href: url })])), 0, 0);
-  const internal = INTERNAL_LINK_RE.exec(body.trim());
-  if (internal && !namesEntry(internal[1])) return new Slice(Fragment.from(schema.text(body)), 0, 0);
-  if (internal) {
-    const slice = inlineSlice(body.trim());
-    if (slice) return slice;
-  }
-  if (blockShaped || oneQuoteLine(body, $context)) {
-    if (inAny($context, FLAT_HOSTS)) return flat(lines);
-    try {
-      const doc = parseMarkdown(body);
-      if (draws(doc) || lines.length > 1) return new Slice(doc.content, 0, 0);
-    } catch { /* a form the schema refuses stays as typed */ }
-  }
+  const slice = linkSlice(body, lines.length === 1) ?? (blockShaped(body, lines, $context) ? blockSlice(body, lines, $context) : null);
+  if (slice) return slice;
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
 /* A PASTED LINK TO THIS PAGE KEEPS ITS BARE ADDRESS: pasted HTML carries the
    page's full file address, which breaks when the page moves; a link whose
    words are its address stays whole (pin: paste.test › a pasted link to this
    page) (pin: paste.test › a link to this page in pasted markdown) */
+const keepsAddress = (m: Mark, n: Node, docHref: string): boolean =>
+  m.type !== schema.marks.link || (n.isText && n.text === m.attrs.href) || !internalHash(m.attrs.href as string, docHref);
+function bareMark(m: Mark, n: Node, docHref: string): Mark {
+  if (keepsAddress(m, n, docHref)) return m;
+  const href = m.attrs.href as string, bare = makeHref(href, docHref);
+  return bare === href ? m : schema.marks.link.create({ ...m.attrs, href: bare });
+}
+function barePiece(n: Node, docHref: string): Node {
+  const marks = n.marks.map((m) => bareMark(m, n, docHref));
+  const content = n.isText ? n.content : bareFragment(n.content, docHref);
+  if (content === n.content && marks.every((m, i) => m === n.marks[i])) return n;
+  return n.isText ? n.mark(marks) : n.copy(content).mark(marks);
+}
 function bareFragment(frag: Fragment, docHref: string): Fragment {
-  let changed = false;
   const out: Node[] = [];
-  frag.forEach((n) => {
-    const marks = n.marks.map((m) => {
-      const href = m.attrs.href as string;
-      if (m.type !== schema.marks.link || (n.isText && n.text === href) || !internalHash(href, docHref)) return m;
-      const bare = makeHref(href, docHref);
-      return bare === href ? m : schema.marks.link.create({ ...m.attrs, href: bare });
-    });
-    const content = n.isText ? n.content : bareFragment(n.content, docHref);
-    const same = content === n.content && marks.every((m, i) => m === n.marks[i]);
-    if (!same) changed = true;
-    out.push(same ? n : n.isText ? n.mark(marks) : n.copy(content).mark(marks));
-  });
-  return changed ? Fragment.fromArray(out) : frag;
+  frag.forEach((n) => { out.push(barePiece(n, docHref)); });
+  return out.every((n, i) => n === frag.child(i)) ? frag : Fragment.fromArray(out);
 }
 export function bareLinks(slice: Slice, docHref: string): Slice {
   const content = bareFragment(slice.content, docHref);
@@ -209,14 +226,19 @@ export const clipboardParser = new SpaceKeepingParser(schema, DOMParser.fromSche
 /* NO PAGE MARKER LEAVES IN A COPY: pasted into a journal entry it made a
    page number with no book behind it. Where one stood between two spaces,
    one space goes with it (pin: paste.test › a copy carries no page marker out) */
+const spacesMeet = (prev: Node | undefined, kept: Node): boolean =>
+  !!prev?.isText && prev.text!.endsWith(" ") && kept.isText && kept.text!.startsWith(" ");
+function afterFolio(kept: Node, prev: Node | undefined): Node | null {
+  if (!spacesMeet(prev, kept)) return kept;
+  return kept.text!.length > 1 ? kept.cut(1) : null;
+}
 export function dropFolios(frag: Fragment): Fragment {
   const out: Node[] = [];
   let dropped = false;
   frag.forEach((n) => {
     if (n.type === N.folio) { dropped = true; return; }
-    let kept: Node | null = n.isLeaf ? n : n.copy(dropFolios(n.content));
-    const prev = out[out.length - 1];
-    if (dropped && kept.isText && prev?.isText && prev.text!.endsWith(" ") && kept.text!.startsWith(" ")) kept = kept.text!.length > 1 ? kept.cut(1) : null;
+    const copy = n.isLeaf ? n : n.copy(dropFolios(n.content));
+    const kept = dropped ? afterFolio(copy, out[out.length - 1]) : copy;
     if (kept) out.push(kept);
     dropped = false;
   });
@@ -229,27 +251,33 @@ export function dropFolios(frag: Fragment): Fragment {
    paste.test › a copy whose selection opens at the end of a line); so does
    one opening at a list item's end, which copied an empty item (pin:
    paste.test › list items copied from the middle keep their own numbers) */
+/* a pair's row ends with its last cell (pin: paste.test › a copy opening at the end of a pair's right cell) */
+const inLastCell = ($from: ResolvedPos): boolean => $from.parent.type === N.cell && $from.index(-1) === $from.node(-1).childCount - 1;
+const inListParagraph = ($from: ResolvedPos): boolean => $from.parent.type === N.paragraph && $from.depth > 1 && $from.node(-1).type === N.list_item;
+const atRowEnd = ($from: ResolvedPos): boolean =>
+  ($from.parent.type === N.line || inLastCell($from) || inListParagraph($from)) && $from.parentOffset === $from.parent.content.size;
+function pastRowEnd(doc: Node, from: number, to: number | undefined, slice: Slice): { from: number; slice: Slice } {
+  const $from = doc.resolve(from);
+  if (to === undefined || !atRowEnd($from)) return { from, slice };
+  const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
+  return next && next.from < to ? { from: next.from, slice: doc.slice(next.from, to, true) } : { from, slice };
+}
 export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number): Slice {
   if (!doc || from === undefined) return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
-  const $from = doc.resolve(from);
-  /* a pair's row ends with its last cell (pin: paste.test › a copy opening at the end of a pair's right cell) */
-  const lastCell = $from.parent.type === N.cell && $from.index(-1) === $from.node(-1).childCount - 1;
-  const rowEnd = $from.parent.type === N.line || lastCell || ($from.parent.type === N.paragraph && $from.depth > 1 && $from.node(-1).type === N.list_item);
-  if (to !== undefined && rowEnd && $from.parentOffset === $from.parent.content.size) {
-    const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
-    if (next && next.from < to) { from = next.from; slice = doc.slice(from, to, true); }
-  }
-  const cut = keepRightCell(doc, from, renumbered(doc, from, doc.copy(slice.content)));
-  return closeRowSlice(new Slice(dropFolios(cut.content), slice.openStart, slice.openEnd));
+  const at = pastRowEnd(doc, from, to, slice);
+  const cut = keepRightCell(doc, at.from, renumbered(doc, at.from, doc.copy(at.slice.content)));
+  return closeRowSlice(new Slice(dropFolios(cut.content), at.slice.openStart, at.slice.openEnd));
 }
 /* a cut opening inside a pair's right cell keeps the left one, empty:
    without it the right column's text read back as the left's (pin:
    paste.test › lines copied from a block numbered on both sides) */
+const rightCellAlone = (node: Node, $at: ResolvedPos, d: number): boolean =>
+  node.type === N.pair && $at.node(d).type === N.pair && $at.index(d) === 1 && node.childCount === 1;
 function keepRightCell(doc: Node, at: number, cut: Node): Node {
   const $at = doc.resolve(at);
   const mend = (node: Node, d: number): Node => {
     if (d > $at.depth || !node.firstChild) return node;
-    if (node.type === N.pair && $at.node(d).type === N.pair && $at.index(d) === 1 && node.childCount === 1) {
+    if (rightCellAlone(node, $at, d)) {
       return node.copy(Fragment.from([N.cell.create(), node.firstChild]));
     }
     return node.copy(Fragment.from([mend(node.firstChild, d + 1), ...node.content.content.slice(1)]));
@@ -293,11 +321,10 @@ export function copyMd(slice: Slice): string {
    row) */
 const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.skip, N.list_item, N.table_row, N.grid]);
 const rowish = (n: Node): boolean => ROW_BLOCKS.has(n.type) && !(n.type === N.grid && n.childCount < 2);
+const closedAt = (open: number, edge: Node): number => (open && rowish(edge) ? 0 : open);
 export function closeRowSlice(slice: Slice): Slice {
   const first = slice.content.firstChild, last = slice.content.lastChild;
   if (!first || !last) return slice;
-  if ((slice.openStart && rowish(first)) || (slice.openEnd && rowish(last))) {
-    return new Slice(slice.content, rowish(first) ? 0 : slice.openStart, rowish(last) ? 0 : slice.openEnd);
-  }
-  return slice;
+  const start = closedAt(slice.openStart, first), end = closedAt(slice.openEnd, last);
+  return start === slice.openStart && end === slice.openEnd ? slice : new Slice(slice.content, start, end);
 }

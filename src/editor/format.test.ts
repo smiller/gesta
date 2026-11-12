@@ -8,7 +8,7 @@ function sel(md: string, a: string, b?: string): EditorState {
   const doc = parseMarkdown(md);
   const find = (n: string, end: boolean): number => {
     let pos = -1;
-    doc.descendants((node, p) => { if (pos < 0 && node.isText && node.text!.indexOf(n) >= 0) pos = p + node.text!.indexOf(n) + (end ? n.length : 0); return pos < 0; });
+    doc.descendants((node, p) => { if (pos < 0 && node.text?.includes(n)) pos = p + node.text!.indexOf(n) + (end ? n.length : 0); return pos < 0; });
     if (pos < 0) throw new Error("needle not found: " + n);
     return pos;
   };

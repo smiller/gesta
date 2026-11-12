@@ -14,6 +14,8 @@ export interface SourceOptions {
 const MIRROR = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const;
 const mirror = (from: HTMLElement, to: HTMLElement): void => { const cs = getComputedStyle(from); for (const p of MIRROR) to.style[p] = cs[p]; };
 
+const typedOne = (ie: InputEvent, ta: HTMLTextAreaElement): boolean =>
+  ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd;
 export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions): Surface {
   const ta = document.createElement("textarea");
   ta.className = "source";
@@ -28,7 +30,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   let replacing = false;
   ta.addEventListener("input", (e) => {
     const ie = e as InputEvent;
-    if (!replacing && ie.inputType === "insertText" && !ie.isComposing && ie.data?.length === 1 && ta.selectionStart === ta.selectionEnd) {
+    if (!replacing && typedOne(ie, ta)) {
       const caret = ta.selectionStart, r = sourceTyped(ta.value, caret);
       if (r) {
         /* through the browser's own insert, so ⌘Z takes the curl back first;

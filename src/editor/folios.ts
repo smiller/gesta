@@ -5,12 +5,13 @@ import { schema } from "../model/schema.ts";
 import { measurePass } from "./measurePass.ts";
 
 const N = schema.nodes;
+const isNote = (n: Node): boolean => n.type === N.note || n.type === N.margin_note;
 
 export function hasFolios(doc: Node): boolean {
   let found = false;
   const walk = (node: Node): void => {
     node.forEach((child) => {
-      if (found || child.type === N.note || child.type === N.margin_note) return;
+      if (found || isNote(child)) return;
       if (child.type === N.folio) found = true;
       else walk(child);
     });

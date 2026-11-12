@@ -11,7 +11,7 @@ import { journalOf } from "../store/headings.ts";
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
   let pos = -1;
-  doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.indexOf(needle) >= 0) pos = p + n.text!.indexOf(needle) + needle.length; return pos < 0; });
+  doc.descendants((n, p) => { if (pos < 0 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle) + needle.length; return pos < 0; });
   return EditorState.create({ doc, selection: TextSelection.create(doc, pos) });
 }
 const paste = (s: EditorState, text: string): string => serializeMarkdown(s.apply(s.tr.replaceSelection(pasteSlice(text, s.selection.$from))).doc);
@@ -83,7 +83,7 @@ test("inside a reference block every character is literal, as in a code block: t
    a grid slices to the GRID, open three deep — never to open cards */
 function across(md: string, from: string, to: string): EditorState {
   const doc = parseMarkdown(md);
-  const find = (n: string): number => { let pos = -1; doc.descendants((node, p) => { if (pos < 0 && node.isText && node.text!.indexOf(n) >= 0) pos = p + node.text!.indexOf(n); return pos < 0; }); if (pos < 0) throw new Error(n); return pos; };
+  const find = (n: string): number => { let pos = -1; doc.descendants((node, p) => { if (pos < 0 && node.text?.includes(n)) pos = p + node.text!.indexOf(n); return pos < 0; }); if (pos < 0) throw new Error(n); return pos; };
   return EditorState.create({ doc, selection: TextSelection.create(doc, find(from), find(to) + to.length) });
 }
 const pasteAt = (s: EditorState, slice: ReturnType<typeof closeRowSlice>): string => serializeMarkdown(s.apply(s.tr.replaceSelection(slice)).doc);
@@ -133,7 +133,7 @@ const sel = (md: string, a: string, b: string): EditorState => {
   const doc = parseMarkdown(md);
   const find = (needle: string, end: boolean): number => {
     let pos = -1;
-    doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.indexOf(needle) >= 0) pos = p + n.text!.indexOf(needle) + (end ? needle.length : 0); return pos < 0; });
+    doc.descendants((n, p) => { if (pos < 0 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle) + (end ? needle.length : 0); return pos < 0; });
     return pos;
   };
   return EditorState.create({ doc, selection: TextSelection.create(doc, find(a, false), find(b, true)) });
@@ -237,7 +237,11 @@ test("pasted HTML keeps its spaces only when every block in it is one this page 
 function over(md: string, words: string): EditorState {
   const doc = parseMarkdown(md);
   let from = -1;
-  doc.descendants((n, p) => { if (from < 0 && n.isTextblock && n.textContent.indexOf(words) >= 0) from = p + 1 + n.textContent.indexOf(words); return from < 0; });
+  doc.descendants((n, p) => {
+    if (from >= 0) return false;
+    if (n.isTextblock && n.textContent.includes(words)) from = p + 1 + n.textContent.indexOf(words);
+    return from < 0;
+  });
   return EditorState.create({ doc, selection: TextSelection.create(doc, from, from + words.length) });
 }
 const REF = "[*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0):\n\n> ::: verse 78\n> Woriað þa winsalo | The halls decay\n> :::";
@@ -293,7 +297,7 @@ test("text after a reference's first line that is no quoted passage, or a copy m
 });
 test("the reference ⌃⌘R copies is the one a paste onto words or into a line reads", () => {
   const doc = parseMarkdown("::: verse\nOf man's first disobedience, and the fruit\n:::");
-  const out = referencePayload(EditorState.create({ doc, selection: TextSelection.create(doc, 3, 20) }), "bookshelf", "Milton, John/Paradise Lost/Book 1", journalOf({ "bookshelf/Milton, John/Paradise Lost": "# Paradise Lost" }));
+  const out = referencePayload(EditorState.create({ doc, selection: TextSelection.create(doc, 3, 20) }), { date: "bookshelf", tag: "Milton, John/Paradise Lost/Book 1" }, journalOf({ "bookshelf/Milton, John/Paradise Lost": "# Paradise Lost" }));
   if (!("text" in out)) throw new Error("refused");
   expect(serializeMarkdown(referenceInLine(at("as he says ", "says "), out.text)!.doc)).toBe("as he says [" + out.label + "](" + out.url + ")");
   expect(serializeMarkdown(linkSelection(over("as he says so", "so"), out.text)!.doc)).toBe("as he says [so](" + out.url + ")");

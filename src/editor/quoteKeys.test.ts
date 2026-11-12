@@ -6,7 +6,7 @@ import { tabInQuote, shiftTabInQuote, enterInQuote, quoteRefusal, QUOTE_FLOOR } 
 
 function at(md: string, needle: string, to?: string): EditorState {
   const doc = parseMarkdown(md);
-  const find = (n: string): number => { let pos = -1; doc.descendants((node, p) => { if (pos < 0 && node.isText && node.text!.indexOf(n) >= 0) pos = p + node.text!.indexOf(n) + n.length; return pos < 0; }); if (pos < 0) throw new Error(n); return pos; };
+  const find = (n: string): number => { let pos = -1; doc.descendants((node, p) => { if (pos < 0 && node.text?.includes(n)) pos = p + node.text!.indexOf(n) + n.length; return pos < 0; }); if (pos < 0) throw new Error(n); return pos; };
   const a = find(needle);
   return EditorState.create({ doc, selection: TextSelection.create(doc, a, to ? find(to) : a) });
 }

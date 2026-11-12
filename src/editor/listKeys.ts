@@ -32,7 +32,8 @@ function nested(state: EditorState): boolean {
    Enter in a countdown counts on down) */
 const numbered = (tr: Transaction): Transaction => {
   const $at = tr.selection.$from, d = $at.depth - 1;
-  if (d < 1 || $at.node(d).type !== item || $at.node(d - 1).type !== schema.nodes.ordered_list) return tr;
+  if (d < 1) return tr;
+  if ($at.node(d).type !== item || $at.node(d - 1).type !== schema.nodes.ordered_list) return tr;
   const list = $at.node(d - 1), i = $at.index(d - 1);
   if (i < 1) return tr;
   const shown = itemNumbers(list), prev = shown[i - 1], step = i >= 2 ? prev - shown[i - 2] : 1;
@@ -47,7 +48,8 @@ const splitNumbered: Command = (state, dispatch) =>
 const inLaterParagraph = (state: EditorState): boolean => state.selection.$from.index(-1) > 0;
 const stepOut: Command = (state, dispatch) => {
   const $f = state.selection.$from;
-  if ($f.parent.content.size || $f.indexAfter(-1) !== $f.node(-1).childCount || !state.selection.empty) return false;
+  if ($f.parent.content.size || !state.selection.empty) return false;
+  if ($f.indexAfter(-1) !== $f.node(-1).childCount) return false;
   if (dispatch) {
     const tr = state.tr.delete($f.before(), $f.after());
     const at = tr.mapping.map($f.after(-1));

@@ -15,7 +15,7 @@ const plugin = typing();
 function state(md = "", needle?: string, offset = needle?.length ?? 0): EditorState {
   const doc = parseMarkdown(md);
   let pos = doc.content.size - 1;
-  if (needle) doc.descendants((n, p) => { if (n.isText && n.text!.includes(needle) && pos === doc.content.size - 1) pos = p + n.text!.indexOf(needle) + offset; return true; });
+  if (needle) doc.descendants((n, p) => { if (pos === doc.content.size - 1 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle) + offset; return true; });
   return EditorState.create({ doc, plugins: [plugin], selection: TextSelection.create(doc, pos) });
 }
 /* one character typed: the plugin's handler first, the plain insertion when no rule claims it */

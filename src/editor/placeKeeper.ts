@@ -31,6 +31,9 @@ export interface PlaceKeeper extends PlacePort {
   moveAll(moves: Record<string, string>): void;
 }
 
+const samePlace = (was: (Place & { key: string }) | null, k: string, place: Place): boolean =>
+  !!was && was.key === k && was.pos === place.pos && was.y === place.y;
+const atTopOnly = (s: { source: boolean }, p: Place): boolean => s.source || p.pos < 0 || p.y <= 0;
 export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   const { window: win, page } = opts;
   const places = stored(NS + "places", parsePlaces, opts.storage);
@@ -40,7 +43,7 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
      (pin: placeKeeper.test › skips a write the same as the last) */
   let lastWritten: (Place & { key: string }) | null = null;
   const write = (k: string, place: Place): void => {
-    if (lastWritten && lastWritten.key === k && lastWritten.pos === place.pos && lastWritten.y === place.y) return;
+    if (samePlace(lastWritten, k, place)) return;
     places.write((s) => withPlace(s, k, place));
     lastWritten = { key: k, ...place };
   };
@@ -84,7 +87,7 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
     const s = opts.surface();
     /* left at the top, back at the top: the text position under the
        masthead lies below the page's top padding (pin: places › Horace followed) */
-    if (!s || s.source || p.pos < 0 || p.y <= 0) win.scrollTo(Math.max(0, p.y));
+    if (!s || atTopOnly(s, p)) win.scrollTo(Math.max(0, p.y));
     else {
       const pos = Math.min(p.pos, s.end());
       s.reveal(pos);

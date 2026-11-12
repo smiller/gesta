@@ -104,7 +104,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        entry drawn again or renamed keeps the view chosen
        (pin: surface.test › a show of another entry is in the rendered view)
        (pin: surface.test › a renamed entry) */
-    if (key !== ekey && !keepView && mdView) { mdView = false; opts.onView(false); }
+    const another = key !== ekey && !keepView;
+    if (another && mdView) { mdView = false; opts.onView(false); }
     ekey = key;
     /* the carets and a pinned fence refusal belong to the entry left
        (pin: surface.test › a show releases the entry left's fence pin) */
@@ -166,11 +167,11 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   }
   function placeCaret(): void {
     if (!cur) return;
-    const here = mdView ? "source" : "rendered", other = mdView ? "rendered" : "source";
-    const flat = cur.flat();
+    const [here, other] = mdView ? (["source", "rendered"] as const) : (["rendered", "source"] as const);
+    const flat = cur.flat(), end = cur.end();
     const arriving = arrivingCount(carets[here], carets[other], flat.text, cur.source);
-    placedAt = arriving ? arriving.at : null;
-    const pos = arriving ? (positionAt(flat, arriving.at) ?? cur.end()) : null;
+    placedAt = arriving?.at ?? null;
+    const pos = arriving ? (positionAt(flat, arriving.at) ?? end) : null;
     /* KEEP THE CARET AS VISIBLE AS IT WAS: a reader who scrolled away from
        the caret stays where they scrolled; a miss scrolls, having no bit to
        follow (pin: source view › ⌃⌘M scrolled away from the caret). A seen
@@ -179,6 +180,26 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     const scroll = !arriving || arriving.seen;
     if (!cur.source && scroll) places.release();
     cur.placeCaret(pos, scroll);
+  }
+  function rendered(text: string, wasForced: boolean): boolean {
+    let doc;
+    try { doc = parseMarkdown(text); }
+    catch (err) {
+      /* PINNED, in the show path's words: the writer stays in source to fix
+         the line the message quotes, and a whisper faded before a slow
+         reader found it; released by the clean parse below
+         (pin: grid › a stray line in a grid, switched back) */
+      if (fencePin) opts.releasePin(fencePin);
+      fencePin = refusedPin(err);
+      forced = wasForced;   /* a forced source view stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
+      return false;
+    }
+    mdView = false;
+    mount(() => build.rendered(doc));
+    const refused = fenceRefusals(doc);
+    if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
+    if (refused.length) fencePin = opts.pin(refusalsText(refused));
+    return true;
   }
   function switchTo(md: boolean): void {
     if (md === mdView) return;
@@ -202,25 +223,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     if (md) {
       mdView = true;
       mount(() => build.source(text));
-    } else {
-      let doc;
-      try { doc = parseMarkdown(text); }
-      catch (err) {
-        /* PINNED, in the show path's words: the writer stays in source to fix
-           the line the message quotes, and a whisper faded before a slow
-           reader found it; released by the clean parse below
-           (pin: grid › a stray line in a grid, switched back) */
-        if (fencePin) opts.releasePin(fencePin);
-        fencePin = refusedPin(err);
-        forced = wasForced;   /* a forced source view stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
-        return;
-      }
-      mdView = false;
-      mount(() => build.rendered(doc));
-      const refused = fenceRefusals(doc);
-      if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
-      if (refused.length) fencePin = opts.pin(refusalsText(refused));
-    }
+    } else if (!rendered(text, wasForced)) return;
     win.scrollTo(y);
     if (top !== null) alignTop(top);
     opts.onView(mdView);

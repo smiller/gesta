@@ -22,18 +22,23 @@ export interface FoldSection {
   key: string;
   count: string;
 }
-export function foldSections(doc: Node): FoldSection[] {
-  const heads: { pos: number; end: number; level: number; text: string }[] = [];
+interface Head { pos: number; end: number; level: number; text: string }
+function headsOf(doc: Node): Head[] {
+  const heads: Head[] = [];
   doc.forEach((block, pos) => {
     if (block.type === schema.nodes.heading) heads.push({ pos, end: pos + block.nodeSize, level: block.attrs.level as number, text: block.textContent.trim() });
   });
+  return heads;
+}
+const sectionEnd = (heads: Head[], i: number, size: number): number => heads.slice(i + 1).find((h) => h.level <= 2)?.pos ?? size;
+export function foldSections(doc: Node): FoldSection[] {
+  const heads = headsOf(doc);
   const runs = linkRuns(doc);
   const seen: Record<string, number> = Object.create(null);
   const out: FoldSection[] = [];
   heads.forEach((h, i) => {
     if (h.level !== 2) return;
-    let to = doc.content.size;
-    for (let j = i + 1; j < heads.length; j++) if (heads[j].level <= 2) { to = heads[j].pos; break; }
+    const to = sectionEnd(heads, i, doc.content.size);
     const n = runs.filter((r) => r.from >= h.end && r.to <= to).length;
     const nth = (seen[h.text] = (seen[h.text] || 0) + 1);
     out.push({ heading: h.pos, from: h.end, to, key: nth > 1 ? h.text + "\u0001" + nth : h.text, count: n + (n === 1 ? " entry" : " entries") });
@@ -84,13 +89,14 @@ const positionsOf = (sections: FoldSection[], keys: string[]): Set<number> =>
    anchored there, stayed in the hidden blocks, and the next keys edited
    what no one could see (pin: folds.test › closing a section collapses a
    selection that reaches into it from anywhere) */
+const reaches = (from: number, to: number, s: FoldSection): boolean => from < s.to && to > s.from;
 function toggleAt(state: EditorState, s: FoldSection, dispatch?: (tr: Transaction) => void): boolean {
   const st = foldsKey.getState(state);
   if (!st) return false;
   const tr = state.tr.setMeta(foldsKey, { toggle: s.heading } satisfies FoldMeta);
   const closing = st.open.has(s.heading);
   const { from, to } = state.selection;
-  if (closing && from < s.to && to > s.from) tr.setSelection(TextSelection.create(state.doc, s.from - 1));
+  if (closing && reaches(from, to, s)) tr.setSelection(TextSelection.create(state.doc, s.from - 1));
   dispatch?.(tr);
   return true;
 }
@@ -114,6 +120,46 @@ export function openFoldAt(pos: number): Command {
 export function setFolds(on: boolean, open: string[]): Command {
   return (state, dispatch) => { dispatch?.(state.tr.setMeta(foldsKey, { set: { on, open } } satisfies FoldMeta)); return true; };
 }
+type Folding = { on: boolean; open: Set<number>; sections: FoldSection[] };
+function remapped(tr: Transaction, prev: FoldState, doc: Node): { open: Set<number>; sections: FoldSection[] } {
+  const sections = foldSections(doc);
+  const heads = new Set(sections.map((s) => s.heading));
+  /* a heading SURVIVES an edit while its mapped start stays before
+     its mapped end; a deleted one collapses, and mapped by its start
+     alone it landed on the next heading and opened it (pin:
+     folds.test › deleting an open section does not open the one after
+     it) */
+  const moved = new Map<number, number>();
+  for (const s of prev.sections) {
+    const a = tr.mapping.map(s.heading, 1), b = tr.mapping.map(s.from, -1);
+    if (b > a && heads.has(a)) moved.set(s.heading, a);
+  }
+  const before = new Set(moved.values());
+  const open = new Set([...prev.open].filter((p) => moved.has(p)).map((p) => moved.get(p)!));
+  /* a section MADE by an edit opens: a `##` typed inside an open
+     section would otherwise hide everything below the caret */
+  for (const s of sections) if (!before.has(s.heading)) open.add(s.heading);
+  return { open, sections };
+}
+function toggled(open: Set<number>, at: number): Set<number> {
+  const out = new Set(open);
+  if (out.has(at)) out.delete(at);
+  else out.add(at);
+  return out;
+}
+function afterMeta(meta: FoldMeta | undefined, s: Folding, doc: Node): Folding {
+  if (!meta) return s;
+  if ("toggle" in meta) return { ...s, open: toggled(s.open, meta.toggle) };
+  const sections = meta.set.on ? foldSections(doc) : [];
+  return { on: meta.set.on, sections, open: positionsOf(sections, meta.set.open) };
+}
+const touches = (tr: Transaction, meta: FoldMeta | undefined): boolean => tr.selectionSet || tr.docChanged || !!meta;
+function openedAt(open: Set<number>, sections: FoldSection[], head: number): Set<number> {
+  const s = sectionAt(sections, head);
+  if (!s || open.has(s.heading)) return open;
+  return new Set(open).add(s.heading);
+}
+const unchanged = (prev: FoldState, s: Folding): boolean => s.on === prev.on && s.open === prev.open && s.sections === prev.sections;
 export interface FoldOptions {
   on: boolean;
   open: string[];
@@ -132,38 +178,12 @@ export function folds(opts: FoldOptions = { on: false, open: [] }): Plugin<FoldS
       },
       apply(tr, prev, _old, next: EditorState) {
         const meta = tr.getMeta(foldsKey) as FoldMeta | undefined;
-        let { on, open, sections } = prev;
-        if (tr.docChanged && on) {
-          sections = foldSections(next.doc);
-          const heads = new Set(sections.map((s) => s.heading));
-          /* a heading SURVIVES an edit while its mapped start stays before
-             its mapped end; a deleted one collapses, and mapped by its start
-             alone it landed on the next heading and opened it (pin:
-             folds.test › deleting an open section does not open the one after
-             it) */
-          const moved = new Map<number, number>();
-          for (const s of prev.sections) {
-            const a = tr.mapping.map(s.heading, 1), b = tr.mapping.map(s.from, -1);
-            if (b > a && heads.has(a)) moved.set(s.heading, a);
-          }
-          const before = new Set(moved.values());
-          open = new Set([...prev.open].filter((p) => moved.has(p)).map((p) => moved.get(p)!));
-          /* a section MADE by an edit opens: a `##` typed inside an open
-             section would otherwise hide everything below the caret */
-          for (const s of sections) if (!before.has(s.heading)) open.add(s.heading);
-        }
-        if (meta && "set" in meta) {
-          on = meta.set.on;
-          sections = on ? foldSections(next.doc) : [];
-          open = positionsOf(sections, meta.set.open);
-        }
-        else if (meta && "toggle" in meta) { open = new Set(open); if (open.has(meta.toggle)) open.delete(meta.toggle); else open.add(meta.toggle); }
-        if (on && (tr.selectionSet || tr.docChanged || meta)) {
-          const s = sectionAt(sections, next.selection.head);
-          if (s && !open.has(s.heading)) { open = new Set(open); open.add(s.heading); }
-        }
-        if (on === prev.on && open === prev.open && sections === prev.sections) return prev;
-        return draw(next.doc, on, open, sections);
+        let s: Folding = { on: prev.on, open: prev.open, sections: prev.sections };
+        if (tr.docChanged && s.on) s = { on: true, ...remapped(tr, prev, next.doc) };
+        s = afterMeta(meta, s, next.doc);
+        if (s.on && touches(tr, meta)) s = { ...s, open: openedAt(s.open, s.sections, next.selection.head) };
+        if (unchanged(prev, s)) return prev;
+        return draw(next.doc, s.on, s.open, s.sections);
       },
     },
     props: {

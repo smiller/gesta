@@ -53,6 +53,35 @@ export interface Fit { width: number; col: number | null }
    so it never wraps under the caret, while narrowing waits for the settle,
    so a deletion cannot yank the column in mid-keystroke (pin: fit.test › a
    grow only widens) */
+function entryWidth(m: Measured, c1: number, c2: number, held: Fit | null): number {
+  const width = Math.ceil(Math.min(Math.max(m.floor, c1 + c2 + m.gap + m.frame, m.prose ?? 0), m.cap));
+  /* clamped to the cap even while growing: the window can have narrowed */
+  return held ? Math.min(m.cap, Math.max(width, held.width)) : width;
+}
+/* past the cap the two give way in proportion, and the original takes no
+   more than two thirds however lopsided the proportion — one over-wide
+   line (a URL) must not set the split for every row (pin: fit.test › past
+   the cap the two give way in proportion) */
+const splitCol = (room: number, c1: number, c2: number): number =>
+  (c1 + c2 > room ? Math.min(Math.round(room * c1 / (c1 + c2)), Math.round(room * 2 / 3)) : c1);
+/* a verse line wrapped beside prose loses its row: the Latin keeps its
+   width while the English has room for a reading line, or for its widest
+   sentence where that is less, and one over-wide line still takes no more
+   than two thirds (pin: fit.test › past the cap a dual-language block's
+   Latin keeps its width) (pin: fit.test › a dual-language block whose
+   sentences are all short) (pin: fit.test › beside a dual-language block
+   one over-wide line) */
+function wholeCol(room: number, c1: number, c2: number, kept: number | null): number {
+  const most = Math.max(MIN_COL, Math.round(Math.min(room * 2 / 3, room - Math.min(DUAL_MIN_ENGLISH, c2))));
+  const whole = Math.min(c1, most);
+  /* (pin: fit.test › a dual-language block's grow only widens) */
+  return kept == null ? whole : Math.min(Math.max(whole, kept), Math.max(whole, most));
+}
+/* the remembered column, and what this room affords: never less than the
+   root carries, never more than the room holds — and the room holds more
+   than the fresh answer wherever the translation only needs c2 */
+const keptCol = (col: number, room: number, c2: number, kept: number | null): number =>
+  (kept == null ? col : Math.min(Math.max(col, kept), Math.max(col, Math.round(room * 2 / 3), room - c2)));
 export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit | null {
   /* an entry the layout cannot place measures 0 at every level; the last
      good answer is left standing (pin: fit.test › a settle narrows again, and
@@ -60,38 +89,10 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
   if (!m.floor) return null;
   const c1 = Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK;
   const c2 = Math.ceil(m.c2) + FIT_SLACK;
-  const extra = m.gap + m.frame;
-  let width = Math.ceil(Math.min(Math.max(m.floor, c1 + c2 + extra, m.prose ?? 0), m.cap));
-  /* clamped to the cap even while growing: the window can have narrowed */
-  if (growOnly && prev) width = Math.min(m.cap, Math.max(width, prev.width));
-  const room = width - extra;
-  let col = c1;
-  /* past the cap the two give way in proportion, and the original takes no
-     more than two thirds however lopsided the proportion — one over-wide
-     line (a URL) must not set the split for every row (pin: fit.test › past
-     the cap the two give way in proportion) */
-  if (c1 + c2 > room) col = Math.min(Math.round(room * c1 / (c1 + c2)), Math.round(room * 2 / 3));
-  /* a verse line wrapped beside prose loses its row: the Latin keeps its
-     width while the English has room for a reading line, or for its widest
-     sentence where that is less, and one over-wide line still takes no more
-     than two thirds (pin: fit.test › past the cap a dual-language block's
-     Latin keeps its width) (pin: fit.test › a dual-language block whose
-     sentences are all short) (pin: fit.test › beside a dual-language block
-     one over-wide line) */
-  if (m.whole) {
-    const most = Math.max(MIN_COL, Math.round(Math.min(room * 2 / 3, room - Math.min(DUAL_MIN_ENGLISH, c2))));
-    let whole = Math.min(c1, most);
-    /* (pin: fit.test › a dual-language block's grow only widens) */
-    if (growOnly && prev && prev.col != null) whole = Math.min(Math.max(whole, prev.col), Math.max(whole, most));
-    return { width, col: whole };
-  }
-  /* the remembered column, and what this room affords: never less than the
-     root carries, never more than the room holds — and the room holds more
-     than the fresh answer wherever the translation only needs c2 */
-  if (growOnly && prev && prev.col != null) {
-    col = Math.min(Math.max(col, prev.col), Math.max(col, Math.round(room * 2 / 3), room - c2));
-  }
-  return { width, col };
+  const held = growOnly ? prev : null, kept = held?.col ?? null;
+  const width = entryWidth(m, c1, c2, held), room = width - m.gap - m.frame;
+  if (m.whole) return { width, col: wholeCol(room, c1, c2, kept) };
+  return { width, col: keptCol(splitCol(room, c1, c2), room, c2, kept) };
 }
 
 /* a card's or a note's own split, its width being the box's and not the
@@ -116,9 +117,10 @@ export function insetCol(room: number, c1: number, c2: number): number {
    the page has none, equal halves, widened to the Latin's widest line up to
    two thirds (pin: fit.test › a dual-language block in a note: halves that
    would wrap the Latin) */
+const edgeFits = (edge: number | null, latin: number, most: number): edge is number => edge != null && edge >= latin && edge <= most;
 export function insetDualCol(room: number, edge: number | null, c1: number, minEnglish: number): number {
   const a = Math.max(Math.ceil(c1), MIN_COL) + FIT_SLACK;
-  if (edge != null && edge >= a && room - edge >= minEnglish) return Math.round(edge);
+  if (edgeFits(edge, a, room - minEnglish)) return Math.round(edge);
   return Math.round(Math.max(room / 2, Math.min(a, room * 2 / 3)));
 }
 
@@ -177,58 +179,59 @@ export function measure(host: HTMLElement): Measured | number | null {
   if (!verse.length) return prose || null;
   const scroller = document.scrollingElement || document.documentElement;
   const held = scroller.scrollTop;
-  let floor = 0, c1 = 0, c2 = 0, gap = 0, frame = 0, whole = false;
-  let gapRow: HTMLElement | null = null;
+  const cols: Columns = { c1: 0, c2: 0, frame: 0, whole: false, gapRow: null };
+  let floor = 0, gap = 0;
   host.classList.add("fitting");
   try {
     floor = host.getBoundingClientRect().width;
-    for (const b of verse) {
-      /* the block's own box, and in a book that includes the line-number
-         gutter, so a four-digit number sits inside the fitted width; and
-         a quoted block pays its quotation's padding and rule: the columns
-         have the entry's measure less that box, and a reference's English
-         column wrapped by exactly it (found by hand) */
-      let own = sideBox(getComputedStyle(b));
-      for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
-        if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
-      }
-      frame = Math.max(frame, own);
-      /* a dual-language block's English is prose, held to a reading measure
-         however long its sentences run */
-      const measureCap = b.classList.contains("dual-language") ? parseFloat(getComputedStyle(b).fontSize) * DUAL_MEASURE_EM : Infinity;
-      b.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
-        gapRow ??= r;
-        const cells = r.children;
-        if (cells[0]) c1 = Math.max(c1, cells[0].getBoundingClientRect().width);
-        if (cells[1]) c2 = Math.max(c2, Math.min(measureCap, cells[1].getBoundingClientRect().width));
-      });
-      /* most of a dual-language block's lines carry no English: the Latin
-         column is as wide as the widest of them too, or a long one wraps */
-      if (measureCap !== Infinity) {
-        whole = true;
-        b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, r.getBoundingClientRect().width); });
-      }
-    }
+    for (const b of verse) readBlock(b, host, cols);
     /* the gap is the row's, not the block's, read once off the first pair */
-    if (gapRow) gap = parseFloat(getComputedStyle(gapRow).columnGap) || 0;
+    if (cols.gapRow) gap = parseFloat(getComputedStyle(cols.gapRow).columnGap) || 0;
   } finally {
     host.classList.remove("fitting");
     scroller.scrollTop = held;
   }
-  return { floor, c1, c2, gap, frame, cap: fitCap(), whole, prose };
+  return { floor, c1: cols.c1, c2: cols.c2, gap, frame: cols.frame, cap: fitCap(), whole: cols.whole, prose };
+}
+/* the block's own box, and in a book that includes the line-number
+   gutter, so a four-digit number sits inside the fitted width; and
+   a quoted block pays its quotation's padding and rule: the columns
+   have the entry's measure less that box, and a reference's English
+   column wrapped by exactly it (found by hand) */
+function ownBox(b: HTMLElement, host: HTMLElement): number {
+  let own = sideBox(getComputedStyle(b));
+  for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
+    if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
+  }
+  return own;
+}
+interface Columns { c1: number; c2: number; frame: number; whole: boolean; gapRow: HTMLElement | null }
+function readPairs(b: HTMLElement, cols: Columns, measureCap: number): void {
+  b.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
+    cols.gapRow ??= r;
+    const cells = r.children;
+    if (cells[0]) cols.c1 = Math.max(cols.c1, cells[0].getBoundingClientRect().width);
+    if (cells[1]) cols.c2 = Math.max(cols.c2, Math.min(measureCap, cells[1].getBoundingClientRect().width));
+  });
+}
+function readBlock(b: HTMLElement, host: HTMLElement, cols: Columns): void {
+  cols.frame = Math.max(cols.frame, ownBox(b, host));
+  /* a dual-language block's English is prose, held to a reading measure
+     however long its sentences run */
+  const measureCap = b.classList.contains("dual-language") ? parseFloat(getComputedStyle(b).fontSize) * DUAL_MEASURE_EM : Infinity;
+  readPairs(b, cols, measureCap);
+  /* most of a dual-language block's lines carry no English: the Latin
+     column is as wide as the widest of them too, or a long one wraps */
+  if (measureCap === Infinity) return;
+  cols.whole = true;
+  b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { cols.c1 = Math.max(cols.c1, r.getBoundingClientRect().width); });
 }
 
 /* the widest paired prose block's ask: its columns at their measure, and its
    own box with a quotation's around it, as a verse block pays them */
 function proseNeed(host: HTMLElement): number {
   let need = 0;
-  for (const b of pairedBlocksIn(host, "div.prose")) {
-    let own = sideBox(getComputedStyle(b));
-    for (let el = b.parentElement; el && el !== host; el = el.parentElement) {
-      if (el.tagName === "BLOCKQUOTE") own += sideBox(getComputedStyle(el));
-    }
-    need = Math.max(need, proseWidth(parseFloat(getComputedStyle(b).fontSize), own));
-  }
+  for (const b of pairedBlocksIn(host, "div.prose")) need = Math.max(need, proseWidth(parseFloat(getComputedStyle(b).fontSize), ownBox(b, host)));
   return need;
 }
 
@@ -315,29 +318,33 @@ function sameInsets(set: DecorationSet, cols: { pos: number; col: number }[]): b
    asked for is not a wrap: lines are counted against the breaks that earn
    one, and the LAST break earns one only if something stands on it — the
    trailing break ProseMirror keeps in an empty textblock earns nothing. */
-export function rowSpills(row: HTMLElement): boolean {
-  if (row.scrollWidth > row.clientWidth + 1) return true;
-  const r = document.createRange();
-  for (const c of Array.from(row.children) as HTMLElement[]) {
-    if (c.scrollWidth > c.clientWidth + 1) return true;
-    r.selectNodeContents(c);
-    let bottom: number | null = null, lines = 0;
-    for (const rect of Array.from(r.getClientRects())) {
-      if (!rect.height) continue;
-      if (bottom === null) bottom = rect.bottom;
-      else if (rect.top >= bottom - 1) { lines++; bottom = rect.bottom; }
-      else bottom = Math.max(bottom, rect.bottom);
-    }
-    if (!lines) continue;
-    const brs = c.getElementsByTagName("br");
-    let earned = brs.length;
-    if (earned) {
-      r.setStartAfter(brs[earned - 1]);
-      if (!Array.from(r.getClientRects()).some((x) => x.height)) earned--;
-    }
-    if (lines > earned) return true;
+function wrappedLines(r: Range, c: HTMLElement): number {
+  r.selectNodeContents(c);
+  let bottom: number | null = null, lines = 0;
+  for (const rect of Array.from(r.getClientRects())) {
+    if (!rect.height) continue;
+    if (bottom === null) bottom = rect.bottom;
+    else if (rect.top >= bottom - 1) { lines++; bottom = rect.bottom; }
+    else bottom = Math.max(bottom, rect.bottom);
   }
-  return false;
+  return lines;
+}
+function earnedBreaks(r: Range, c: HTMLElement): number {
+  const brs = c.getElementsByTagName("br");
+  if (!brs.length) return 0;
+  r.setStartAfter(brs[brs.length - 1]);
+  return Array.from(r.getClientRects()).some((x) => x.height) ? brs.length : brs.length - 1;
+}
+const overflows = (el: HTMLElement): boolean => el.scrollWidth > el.clientWidth + 1;
+function cellSpills(r: Range, c: HTMLElement): boolean {
+  if (overflows(c)) return true;
+  const lines = wrappedLines(r, c);
+  return lines > 0 && lines > earnedBreaks(r, c);
+}
+export function rowSpills(row: HTMLElement): boolean {
+  if (overflows(row)) return true;
+  const r = document.createRange();
+  return (Array.from(row.children) as HTMLElement[]).some((c) => cellSpills(r, c));
 }
 
 function caretRow(view: EditorView): HTMLElement | null {
@@ -346,6 +353,20 @@ function caretRow(view: EditorView): HTMLElement | null {
   const row = el?.closest<HTMLElement>(":is(.verse, .prose) > .vpair") ?? null;
   return row && row.closest(".page") === view.dom ? row : null;
 }
+
+/* THE GROW SIDE, gated on the caret being in a row the fit measures
+   and on that row having spilled: a grow can only raise the width,
+   only this row can raise it, and asking it is cheap where the pass
+   is not. Unfitted, there is nothing to compare and the pass must run
+   (pin: reference paste › typed into the quoted pair). A box's rows ask
+   nothing of a keystroke: they may wrap by design, and the settle
+   measures the boxes (pin: paired card › typed on in the note's last row) */
+function growAsked(view: EditorView): boolean {
+  const row = caretRow(view);
+  if (!row || row.parentElement!.closest(INSET)) return false;
+  return row.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row));
+}
+const flatFit = (m: number | null): Fit | null => (m === null ? null : { width: Math.min(m, fitCap()), col: null });
 
 const SETTLE_MS = 500;
 
@@ -380,16 +401,7 @@ class FitView implements PluginView {
   }
   update(view: EditorView, prev: { doc: unknown }): void {
     if (view.state.doc === prev.doc) return;
-    /* THE GROW SIDE, gated on the caret being in a row the fit measures
-       and on that row having spilled: a grow can only raise the width,
-       only this row can raise it, and asking it is cheap where the pass
-       is not. Unfitted, there is nothing to compare and the pass must run
-       (pin: reference paste › typed into the quoted pair) */
-    /* a box's rows ask nothing of a keystroke: they may wrap by design,
-       and the settle measures the boxes
-       (pin: paired card › typed on in the note's last row) */
-    const row = caretRow(view);
-    if (row && !row.parentElement!.closest(INSET) && row.parentElement!.matches(".verse") && (!readFit(view.dom) || rowSpills(row))) this.schedule(true);
+    if (growAsked(view)) this.schedule(true);
     clearTimeout(this.settle);
     this.settle = window.setTimeout(() => this.schedule(false), SETTLE_MS);
   }
@@ -435,16 +447,19 @@ class FitView implements PluginView {
        the boxes are measured after the entry is written */
     queueMicrotask(() => this.fitInsets());
     const m = measure(host);
-    if (m === null) { writeFit(host, null); if (!growOnly) this.window = window.innerWidth; return; }
     /* paired prose alone asks its measure, not a measurement: its cells wrap */
-    if (typeof m === "number") { writeFit(host, { width: Math.min(m, fitCap()), col: null }); if (!growOnly) this.window = window.innerWidth; return; }
+    if (typeof m !== "object" || m === null) writeFit(host, flatFit(m));
+    else if (!this.fitPairs(host, m, growOnly)) return;
+    if (!growOnly) this.window = window.innerWidth;
+  }
+  private fitPairs(host: HTMLElement, m: Measured, growOnly: boolean): boolean {
     const fit = fitWidth(m, readFit(host), growOnly);
-    if (!fit) return;
+    if (!fit) return false;
     writeFit(host, fit);
     /* the inputs, readable off the DOM: what a headless dump or the
        inspector can compare against the answer */
     host.dataset.fit = [m.floor, m.c1, m.c2, m.gap, m.frame, m.cap].map((n) => Math.round(n * 10) / 10).join(" ");
-    if (!growOnly) this.window = window.innerWidth;
+    return true;
   }
 }
 

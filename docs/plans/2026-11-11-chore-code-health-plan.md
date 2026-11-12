@@ -254,3 +254,33 @@ reader ok; 544 steps, 0 open); the comment ledger's 25 moved blocks read,
 all keeping to the standard, one gaining "nothing is swept" for what its own
 function now does, two merged on withFirst; the 32 tests whose call shape
 changed read, their assertions untouched.
+
+### 2026-11-11 — src/editor/
+
+Every file at 10, 65 of 65 with its tests (MEASURED); 34 were below. The
+largest: editor/reference.ts 4.56 (wordEdges cc 31, blockPassage 26),
+rowKeys.ts 5.06 (enterInRow 32, Backspace and Delete duplicated), paste.ts
+6.09, typing.ts 7.00, fit.ts 7.25, numbering.ts 7.32 (blockUnits 30),
+quoteKeys.ts 7.56 (shiftTabInQuote 29), continuations.ts 8.48 (place 36).
+Shapes as in src/store/, and two of their own: Backspace and Delete made one
+edge command in two directions; a measuring pass split into its reads and
+its writes, every read still before every write and inside the measuring
+class.
+
+Signatures changed, callers following: coveredUnits, referenceRange and
+passageMd take their trailing flags as an options object (a three-argument
+call unchanged); referencePayload takes the entry as `{ date, tag }`
+(callers in session.ts, tools/bookshelfQuotes.ts, two tests' files);
+landingWord takes `lineHits`'s `{ hits, blocks }` (main.ts); wrapIn its
+attributes and join test as options. The test calls rewritten by an argument
+parser (scratchpad recall.py), one spread call by hand; the scratch files
+under tools/out that tsc reads kept compiling the same way.
+
+Read on the way: continuations' block step returns the carry unchanged for a
+block with no rest, as the loop's early return left it; format's and the row
+commands' `dispatch?.(build())` build nothing without a dispatch. The nets:
+tsc, the suite (1437), `npm run verify` with the Helium runs played (corner,
+bridge, reader ok; 544 steps, 0 open); the ledger's 48 blocks read, two new
+comments that only restated their code removed (placeKeeper.test's helper,
+sourceKeys' quote table), two merged on the step they describe; the 46 tests
+whose code changed read, their assertions untouched.

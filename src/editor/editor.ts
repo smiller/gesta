@@ -95,23 +95,29 @@ function inReference(state: EditorState): boolean {
   if (sel instanceof NodeSelection) return sel.node.type === schema.nodes.reference;
   return sel.$from.parent.type === schema.nodes.reference || sel.$to.parent.type === schema.nodes.reference;
 }
-function reachesIntoReference(tr: Transaction): boolean {
-  return tr.steps.some((step, i) => {
-    const doc = tr.docs[i], ranges: [number, number][] = [];
-    step.getMap().forEach((from, to) => { ranges.push([from, to]); });
-    const marked = step as unknown as { from?: number; to?: number };
-    if (!ranges.length && typeof marked.from === "number" && typeof marked.to === "number") ranges.push([marked.from, marked.to]);
-    return ranges.some(([from, to]) => {
-      let hit = false;
-      doc.nodesBetween(from, Math.min(Math.max(to, from + 1), doc.content.size), (node, pos) => {
-        if (hit || node.type !== schema.nodes.reference) return !hit;
-        const end = pos + node.nodeSize;
-        hit = from < end && to > pos && !(from <= pos && to >= end);
-        return false;
-      });
-      return hit;
-    });
+type Step = Transaction["steps"][number];
+function markedRange(step: Step): [number, number] | null {
+  const marked = step as unknown as { from?: number; to?: number };
+  return typeof marked.from === "number" && typeof marked.to === "number" ? [marked.from, marked.to] : null;
+}
+function stepRanges(step: Step): [number, number][] {
+  const ranges: [number, number][] = [];
+  step.getMap().forEach((from, to) => { ranges.push([from, to]); });
+  const marked = ranges.length ? null : markedRange(step);
+  return marked ? [marked] : ranges;
+}
+const cutsAcross = (from: number, to: number, pos: number, end: number): boolean => from < end && to > pos && !(from <= pos && to >= end);
+function cutsReference(doc: Node, from: number, to: number): boolean {
+  let hit = false;
+  doc.nodesBetween(from, Math.min(Math.max(to, from + 1), doc.content.size), (node, pos) => {
+    if (hit || node.type !== schema.nodes.reference) return !hit;
+    hit = cutsAcross(from, to, pos, pos + node.nodeSize);
+    return false;
   });
+  return hit;
+}
+function reachesIntoReference(tr: Transaction): boolean {
+  return tr.steps.some((step, i) => stepRanges(step).some(([from, to]) => cutsReference(tr.docs[i], from, to)));
 }
 const inertReference = (say?: (why: string) => void): Plugin => new Plugin({
   filterTransaction: (tr) => !tr.docChanged || !reachesIntoReference(tr),
@@ -182,6 +188,37 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
   });
 }
 
+function pasteMarkdown(view: EditorView, plain: string, opts: EditorOptions): boolean {
+  const parsed = pasteBlocks(plain, view.state.selection.$from);
+  if (!parsed) return false;
+  const blocks = bareBlocks(parsed, location.href);
+  view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
+  const refused = pastedRefusal(blocks);
+  if (refused) opts.onPasteRefused?.(refused);
+  return true;
+}
+function pasteText(view: EditorView, data: DataTransfer, opts: EditorOptions): boolean {
+  const plain = data.getData("text/plain"), html = data.getData("text/html");
+  const linked = linkSelection(view.state, plain, html) || referenceInLine(view.state, plain, html);
+  if (linked) { view.dispatch(linked.scrollIntoView()); return true; }
+  /* line breaks alone are nothing to paste, from any app: they replaced a
+     selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
+  if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
+  /* text carrying HTML keeps the editor's paste */
+  if (data.types.includes("text/html")) return false;
+  return pasteMarkdown(view, plain, opts);
+}
+type Edges = { top: number; bottom: number; left: number; right: number };
+function readyScroll(view: EditorView, opts: EditorOptions, edges: { threshold: Edges; margin: Edges }): void {
+  if (!view.hasFocus()) view.focus();
+  if (!opts.clearOf) return;
+  edges.threshold.top = opts.clearOf();
+  edges.margin.top = edges.threshold.top + 24;
+}
+function tell(view: EditorView, told: { changed: boolean; selected: boolean }, opts: EditorOptions): void {
+  if (told.changed) opts.onChange?.(view);
+  if (told.selected) opts.onSelect?.(view);
+}
 export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions): EditorView {
   const base = DOMSerializer.fromSchema(schema);
   /* A CARET SCROLLED INTO VIEW STOPS 24px CLEAR of what covers the window's
@@ -224,23 +261,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     handlePaste: (view, event) => {
       const file = pastedImageFile(event.clipboardData);
       if (file) { opts.onPasteFile?.(file); return true; }
-      const data = event.clipboardData;
-      if (!data) return false;
-      const plain = data.getData("text/plain"), html = data.getData("text/html");
-      const linked = linkSelection(view.state, plain, html) || referenceInLine(view.state, plain, html);
-      if (linked) { view.dispatch(linked.scrollIntoView()); return true; }
-      /* line breaks alone are nothing to paste, from any app: they replaced a
-         selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
-      if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
-      /* text carrying HTML keeps the editor's paste */
-      if (data.types.includes("text/html")) return false;
-      const parsed = pasteBlocks(plain, view.state.selection.$from);
-      if (!parsed) return false;
-      const blocks = bareBlocks(parsed, location.href);
-      view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
-      const refused = pastedRefusal(blocks);
-      if (refused) opts.onPasteRefused?.(refused);
-      return true;
+      return event.clipboardData ? pasteText(view, event.clipboardData, opts) : false;
     },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
     clipboardParser,
@@ -259,13 +280,10 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
          here, once, rather than at each site: the rule applied by hand at
          five sites missed the sixth. Gated on the scroll: an unconditional
          focus would take it from a panel's input on a background dispatch. */
-      if (tr.scrolledIntoView && !this.hasFocus()) this.focus();
-      if (tr.scrolledIntoView && opts.clearOf) { threshold.top = opts.clearOf(); margin.top = threshold.top + 24; }
+      if (tr.scrolledIntoView) readyScroll(this, opts, { threshold, margin });
       const before = this.state;
       this.updateState(this.state.apply(tr));
-      const told = landed(before, this.state);
-      if (told.changed) opts.onChange?.(this);
-      if (told.selected) opts.onSelect?.(this);
+      tell(this, landed(before, this.state), opts);
     },
   });
   return view;

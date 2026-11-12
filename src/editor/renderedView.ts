@@ -12,6 +12,8 @@ import type { Surface } from "./surface.ts";
 
 export interface RenderedView extends Surface { readonly view: EditorView }
 
+const within = (y: number, r: { top: number; bottom: number }): boolean => y > r.top && y < r.bottom;
+const focusElsewhere = (at: Element | null, dom: Element): boolean => !!at && at !== document.body && !dom.contains(at);
 export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions): RenderedView {
   const view = createEditor(mount, doc, opts);
   view.setProps({ editable: (state) => !lockKey.getState(state) });
@@ -49,7 +51,7 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
         let p = $pos.pos;
         while (p > $pos.start()) {
           const c = view.coordsAtPos(p - 1), cMid = (c.top + c.bottom) / 2;
-          if (!(cMid > line.top && cMid < line.bottom) && !(mid > c.top && mid < c.bottom)) break;
+          if (!within(cMid, line) && !within(mid, c)) break;
           p--;
         }
         return p;
@@ -92,7 +94,7 @@ export function renderedView(mount: HTMLElement, doc: Node, opts: EditorOptions)
          field lands without taking the focus from it, nor scrolling to itself
          (pin: where the keys go › a picture pasted, then Search typed in) */
       const at = document.activeElement;
-      if (at && at !== document.body && !view.dom.contains(at)) { view.dispatch(tr); return; }
+      if (focusElsewhere(at, view.dom)) { view.dispatch(tr); return; }
       view.dispatch(tr.scrollIntoView());
       view.focus();
     },

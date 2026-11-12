@@ -47,34 +47,37 @@ function write(n: HTMLElement, name: string, value: string): void {
 
 /* written only where a value differs, so a keystroke that moves no note
    invalidates nothing */
+interface Host { left: number; font: number; inset: number }
+interface Form { w: string; x: string }
+function measureHost(el: HTMLElement): Host {
+  const cs = getComputedStyle(el);
+  return { left: el.getBoundingClientRect().left, font: parseFloat(cs.fontSize), inset: parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) };
+}
+/* a card in a grid can have a neighbour to its left (pin: margin-note ›
+   margin-notes between paragraphs and in a grid at 1500px) */
+function noteForm(n: HTMLElement, hostOf: (el: HTMLElement) => Host): Form | null {
+  if (n.closest(".grid")) return null;
+  const host = hostOf(n.parentElement!), noteFont = parseFloat(getComputedStyle(n).fontSize);
+  const w = marginWidth(host.left, host.font, noteFont);
+  return w == null ? null : { w: w + "em", x: marginShift(w, host.font, noteFont, host.inset) + "px" };
+}
+function writeForm(n: HTMLElement, f: Form | null): void {
+  n.classList.toggle("in-margin", !!f);
+  write(n, "--mn-w", f ? f.w : "");
+  write(n, "--mn-x", f ? f.x : "");
+  if (!f) write(n, "--mn-push", "");
+}
 function place(root: HTMLElement): void {
   const notes = Array.from(root.querySelectorAll<HTMLElement>("div.margin-note"));
   if (!notes.length) return;
-  const hosts = new Map<HTMLElement, { left: number; font: number; inset: number }>();
-  const hostOf = (el: HTMLElement) => {
+  const hosts = new Map<HTMLElement, Host>();
+  const hostOf = (el: HTMLElement): Host => {
     let h = hosts.get(el);
-    if (!h) {
-      const cs = getComputedStyle(el);
-      h = { left: el.getBoundingClientRect().left, font: parseFloat(cs.fontSize), inset: parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth) };
-      hosts.set(el, h);
-    }
+    if (!h) hosts.set(el, h = measureHost(el));
     return h;
   };
-  const forms = notes.map((n) => {
-    /* a card in a grid can have a neighbour to its left (pin: margin-note ›
-       margin-notes between paragraphs and in a grid at 1500px) */
-    if (n.closest(".grid")) return null;
-    const host = hostOf(n.parentElement!), noteFont = parseFloat(getComputedStyle(n).fontSize);
-    const w = marginWidth(host.left, host.font, noteFont);
-    return w == null ? null : { w: w + "em", x: marginShift(w, host.font, noteFont, host.inset) + "px" };
-  });
-  notes.forEach((n, i) => {
-    const f = forms[i];
-    n.classList.toggle("in-margin", !!f);
-    write(n, "--mn-w", f ? f.w : "");
-    write(n, "--mn-x", f ? f.x : "");
-    if (!f) write(n, "--mn-push", "");
-  });
+  const forms = notes.map((n) => noteForm(n, hostOf));
+  notes.forEach((n, i) => writeForm(n, forms[i]));
   const inMargin = notes.filter((_, i) => forms[i]);
   const boxes = inMargin.map((n) => {
     const r = n.getBoundingClientRect();

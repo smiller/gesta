@@ -38,9 +38,10 @@ const jumpKey = new PluginKey<Jump | null>("jump");
 export function jumpTo(state: EditorState, from: number, to: number, drawn = false): Transaction {
   return state.tr.setSelection(TextSelection.create(state.doc, from, to)).setMeta(jumpKey, drawn ? { from, to, drawn } : { from, to });
 }
+const selects = (state: EditorState, hit: { from: number; to: number }): boolean => state.selection.from === hit.from && state.selection.to === hit.to;
 export const escapeJump: Command = (state, dispatch) => {
   const hit = jumpKey.getState(state);
-  if (!hit || state.selection.from !== hit.from || state.selection.to !== hit.to) return false;
+  if (!hit || !selects(state, hit)) return false;
   dispatch?.(state.tr.setSelection(TextSelection.create(state.doc, hit.to)));
   return true;
 };

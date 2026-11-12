@@ -17,7 +17,7 @@ const keymapTab = (s: EditorState, dispatch: (tr: Transaction) => void): boolean
 function at(md: string, needle: string): EditorState {
   const s = editorState(parseMarkdown(md), 5);
   let pos = -1;
-  s.doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.includes(needle)) pos = p + n.text!.indexOf(needle) + needle.length; return pos < 0; });
+  s.doc.descendants((n, p) => { if (pos < 0 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle) + needle.length; return pos < 0; });
   if (pos < 0) throw new Error("needle not found: " + needle);
   return s.apply(s.tr.setSelection(TextSelection.create(s.doc, pos)));
 }
@@ -94,7 +94,7 @@ function keyed(s: EditorState, key: string, o: { shift?: boolean; mod?: boolean;
 /* the caret before `a`, or a selection from before `a` to after `b` */
 function sel(md: string, said: string[], a: string, b?: string): EditorState {
   const s = editorState(parseMarkdown(md), 5, (why) => said.push(why));
-  const find = (needle: string): number => { let pos = -1; s.doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.includes(needle)) pos = p + n.text!.indexOf(needle); return pos < 0; }); if (pos < 0) throw new Error("needle not found: " + needle); return pos; };
+  const find = (needle: string): number => { let pos = -1; s.doc.descendants((n, p) => { if (pos < 0 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle); return pos < 0; }); if (pos < 0) throw new Error("needle not found: " + needle); return pos; };
   const from = find(a);
   return s.apply(s.tr.setSelection(TextSelection.create(s.doc, from, b ? find(b) + b.length : from)));
 }

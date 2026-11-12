@@ -8,7 +8,7 @@ import { schema } from "../model/schema.ts";
 function at(md: string, needle: string): EditorState {
   const doc = parseMarkdown(md);
   let pos = -1;
-  doc.descendants((n, p) => { if (pos < 0 && n.isText && n.text!.indexOf(needle) >= 0) pos = p + n.text!.indexOf(needle) + needle.length; return pos < 0; });
+  doc.descendants((n, p) => { if (pos < 0 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle) + needle.length; return pos < 0; });
   return EditorState.create({ doc, selection: TextSelection.create(doc, pos) });
 }
 test("linkRefusal: a code block and a link refuse, prose does not", () => {

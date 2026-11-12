@@ -5,7 +5,7 @@
    line of the LAST card places a paragraph after the grid, there being no
    gap cursor; on any other card the command declines and a line is added
    (pin: gridKeys.test › the way out is the LAST card's) */
-import { type Command, type EditorState, type Plugin, TextSelection } from "prosemirror-state";
+import { type Command, type EditorState, type Plugin, type Transaction, TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import type { ResolvedPos } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
@@ -29,21 +29,25 @@ export function atCardEdge(state: EditorState, backward: boolean): boolean {
     : $from.parentOffset === $from.parent.content.size && index === $from.node(cd).childCount - 1;
 }
 
-export const enterOutOfGrid: Command = (state, dispatch) => {
+const onEmptyParagraph = (state: EditorState): boolean => {
   const { $from, empty } = state.selection;
-  if (!empty || $from.parent.type !== P || $from.parent.content.size) return false;
+  return empty && $from.parent.type === P && !$from.parent.content.size;
+};
+const inLastCard = ($from: ResolvedPos, cd: number): boolean =>
+  $from.index(cd) === $from.node(cd).childCount - 1 && $from.index(cd - 1) === $from.node(cd - 1).childCount - 1;
+function outOfGrid(state: EditorState, cd: number): Transaction {
+  const { $from } = state.selection, tr = state.tr;
+  if ($from.node(cd).childCount > 1) tr.delete($from.before(), $from.after());
+  const at = tr.mapping.map($from.after(cd - 1));
+  tr.insert(at, P.create());
+  return tr.setSelection(TextSelection.create(tr.doc, at + 1));
+}
+export const enterOutOfGrid: Command = (state, dispatch) => {
+  if (!onEmptyParagraph(state)) return false;
+  const { $from } = state.selection;
   const cd = cardInGrid($from);
-  if (!cd) return false;
-  const card = $from.node(cd), grid = $from.node(cd - 1);
-  if ($from.index(cd) !== card.childCount - 1 || $from.index(cd - 1) !== grid.childCount - 1) return false;
-  if (dispatch) {
-    const tr = state.tr;
-    if (card.childCount > 1) tr.delete($from.before(), $from.after());
-    const at = tr.mapping.map($from.after(cd - 1));
-    tr.insert(at, P.create());
-    tr.setSelection(TextSelection.create(tr.doc, at + 1));
-    dispatch(tr.scrollIntoView());
-  }
+  if (!cd || !inLastCard($from, cd)) return false;
+  dispatch?.(outOfGrid(state, cd).scrollIntoView());
   return true;
 };
 

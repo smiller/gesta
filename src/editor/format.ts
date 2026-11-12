@@ -1,7 +1,7 @@
 /* inside a code block only the toggle back out is offered: the block
    commands corrupt code */
-import { type Command, type EditorState, TextSelection } from "prosemirror-state";
-import type { Node, ResolvedPos } from "prosemirror-model";
+import { type Command, type EditorState, type Transaction, TextSelection } from "prosemirror-state";
+import type { Node, NodeRange, ResolvedPos } from "prosemirror-model";
 import { toggleMark, setBlockType, wrapIn, lift } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
@@ -26,6 +26,7 @@ export const heading: Command = (state, dispatch) =>
 export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote) ? lift : wrapIn(N.blockquote))(state, dispatch);
 /* a code block holds text alone: a picture or a page marker in the range
    was dropped by the change (pin: format.test › code refuses a paragraph holding a picture or a page marker anywhere in it) */
+const isAtom = (c: Node): boolean => c.isInline && c.isLeaf && !c.isText && c.type !== N.hard_break;
 export function codeBlockRefusal(state: EditorState): string | null {
   if (inCode(state)) return null;
   const from = state.selection.from, to = codeEnd(state).pos;
@@ -33,7 +34,7 @@ export function codeBlockRefusal(state: EditorState): string | null {
   /* every textblock the change reaches, whole: it converts them whole */
   state.doc.nodesBetween(from, to, (n) => {
     if (!n.isTextblock) return !atom;
-    n.forEach((c) => { if (c.isInline && c.isLeaf && !c.isText && c.type !== N.hard_break) atom = true; });
+    n.forEach((c) => { if (isAtom(c)) atom = true; });
     return false;
   });
   return atom ? "can't make a code block from that" : null;
@@ -43,30 +44,37 @@ export function codeBlockRefusal(state: EditorState): string | null {
    (pin: format.test › code over several paragraphs makes one block); where
    nothing would change, the press is refused (pin: format.test › code
    refuses where it changes nothing) */
+const endsAtNextStart = ($from: ResolvedPos, $to: ResolvedPos): boolean =>
+  $to.parentOffset === 0 && !$to.sameParent($from) && $to.index($to.depth - 1) > 0 && $to.node($to.depth - 1).child($to.index($to.depth - 1) - 1).isTextblock;
 function codeEnd(state: EditorState): ResolvedPos {
   const $from = state.selection.$from, $to = state.selection.$to;
-  if ($to.parentOffset === 0 && !$to.sameParent($from) && $to.index($to.depth - 1) > 0 && $to.node($to.depth - 1).child($to.index($to.depth - 1) - 1).isTextblock) return state.doc.resolve($to.before() - 1);
-  return $to;
+  return endsAtNextStart($from, $to) ? state.doc.resolve($to.before() - 1) : $to;
+}
+function childrenIn(range: NodeRange): Node[] {
+  const blocks: Node[] = [];
+  for (let i = range.startIndex; i < range.endIndex; i++) blocks.push(range.parent.child(i));
+  return blocks;
+}
+const paragraphsOnly = (blocks: Node[]): boolean => blocks.length >= 2 && blocks.every((b) => b.type === N.paragraph);
+function asCodeBlocks(state: EditorState, from: number, to: number, dispatch?: (tr: Transaction) => void): boolean {
+  const tr = state.tr.setBlockType(from, to, N.code_block);
+  if (!tr.docChanged) return false;
+  dispatch?.(tr.scrollIntoView());
+  return true;
+}
+function joinedCode(state: EditorState, range: NodeRange, blocks: Node[]): Transaction {
+  const text = blocks.map((b) => b.textBetween(0, b.content.size, undefined, "\n")).join("\n");
+  const tr = state.tr.replaceWith(range.start, range.end, N.code_block.create(null, text ? state.schema.text(text) : null));
+  /* the block's text left selected, as the paragraphs were */
+  return tr.setSelection(TextSelection.create(tr.doc, range.start + 1, range.start + 1 + text.length)).scrollIntoView();
 }
 const toCode: Command = (state, dispatch) => {
   const $from = state.selection.$from, $to = codeEnd(state);
   const range = $from.blockRange($to);
   if (!range) return false;
-  const blocks: Node[] = [];
-  for (let i = range.startIndex; i < range.endIndex; i++) blocks.push(range.parent.child(i));
-  if (blocks.length < 2 || !blocks.every((b) => b.type === N.paragraph)) {
-    const tr = state.tr.setBlockType($from.pos, $to.pos, N.code_block);
-    if (!tr.docChanged) return false;
-    if (dispatch) dispatch(tr.scrollIntoView());
-    return true;
-  }
-  if (dispatch) {
-    const text = blocks.map((b) => b.textBetween(0, b.content.size, undefined, "\n")).join("\n");
-    const tr = state.tr.replaceWith(range.start, range.end, N.code_block.create(null, text ? state.schema.text(text) : null));
-    /* the block's text left selected, as the paragraphs were */
-    tr.setSelection(TextSelection.create(tr.doc, range.start + 1, range.start + 1 + text.length));
-    dispatch(tr.scrollIntoView());
-  }
+  const blocks = childrenIn(range);
+  if (!paragraphsOnly(blocks)) return asCodeBlocks(state, $from.pos, $to.pos, dispatch);
+  dispatch?.(joinedCode(state, range, blocks));
   return true;
 };
 export const codeBlock: Command = (state, dispatch) =>
@@ -91,25 +99,33 @@ export function curlQuotes(text: string, prev: string): string {
   out = out.replace(DASH_CLOSE_RE, (_, dash: string, quotes: string) => dash + quotes.replace(/“/g, "”").replace(/‘/g, "’"));
   return out.replace(ELISION_RE, "’");
 }
-export const curlSelection: Command = (state, dispatch) => {
-  const { from, to, empty } = state.selection;
-  if (empty) return false;
-  const edits: { from: number; to: number; text: string }[] = [];
-  let prevBlock = -1, prev = "";
+interface CurlWalk { from: number; to: number; prev: string; prevBlock: number; edits: { from: number; to: number; text: string }[] }
+function curlText(w: CurlWalk, doc: Node, n: Node, pos: number): void {
+  const $pos = doc.resolve(pos), block = $pos.before($pos.depth);
+  if (block !== w.prevBlock) { w.prev = ""; w.prevBlock = block; }
+  const s = Math.max(w.from, pos) - pos, e = Math.min(w.to, pos + n.nodeSize) - pos;
+  if (s > 0) w.prev = n.text!.charAt(s - 1);
+  const seg = n.text!.slice(s, e), curled = curlQuotes(seg, w.prev);
+  if (curled !== seg) w.edits.push({ from: pos + s, to: pos + e, text: curled });
+  w.prev = curled.slice(-1) || w.prev;
+}
+const codeText = (n: Node, parent: Node | null): boolean => !!M.code.isInSet(n.marks) || parent?.type === N.code_block;
+function curlEdits(state: EditorState): CurlWalk["edits"] {
+  const { from, to } = state.selection;
+  const w: CurlWalk = { from, to, prev: "", prevBlock: -1, edits: [] };
   state.doc.nodesBetween(from, to, (n, pos, parent) => {
     if (n.type === N.code_block) return false;
     if (!n.isText) return true;
-    if (M.code.isInSet(n.marks) || parent?.type === N.code_block) { prev = ""; return true; }
-    const $pos = state.doc.resolve(pos), block = $pos.before($pos.depth);
-    if (block !== prevBlock) { prev = ""; prevBlock = block; }
-    const s = Math.max(from, pos) - pos, e = Math.min(to, pos + n.nodeSize) - pos;
-    if (s > 0) prev = n.text!.charAt(s - 1);
-    const seg = n.text!.slice(s, e);
-    const curled = curlQuotes(seg, prev);
-    if (curled !== seg) edits.push({ from: pos + s, to: pos + e, text: curled });
-    prev = curled.slice(-1) || prev;
+    if (codeText(n, parent)) w.prev = "";
+    else curlText(w, state.doc, n, pos);
     return true;
   });
+  return w.edits;
+}
+export const curlSelection: Command = (state, dispatch) => {
+  const { from, to, empty } = state.selection;
+  if (empty) return false;
+  const edits = curlEdits(state);
   if (!edits.length) return false;
   if (dispatch) {
     const tr = state.tr;
@@ -131,9 +147,10 @@ export function wordCount(doc: Node, from: number, to: number): number {
    a paragraph, a tagged heading lost its "#"; across blocks, the covered
    structure cut (pin: format.test › cutMd and replaceWithLink)
    (pin: format.test › cutMd: a whole heading selected alone) */
+const inOneTextblock = ($from: ResolvedPos, $to: ResolvedPos): boolean => $from.sameParent($to) && $from.parent.isTextblock && $from.parent.type !== N.code_block;
 export function cutMd(doc: Node, from: number, to: number): string {
   const $from = doc.resolve(from), $to = doc.resolve(to);
-  if ($from.sameParent($to) && $from.parent.isTextblock && $from.parent.type !== N.code_block) {
+  if (inOneTextblock($from, $to)) {
     const block = $from.parent, content = block.slice($from.parentOffset, $to.parentOffset).content;
     const whole = $from.parentOffset === 0 && $to.parentOffset === block.content.size;
     const piece = whole && block.type === N.heading ? block.copy(content) : N.paragraph.create(null, content);
@@ -141,6 +158,7 @@ export function cutMd(doc: Node, from: number, to: number): string {
   }
   return serializeMarkdown(doc.cut(from, to)).trim();
 }
+const LINK_HOSTS = new Set([N.paragraph, N.line, N.cell]);
 export function replaceWithLink(state: EditorState, from: number, to: number, href: string, label: string): EditorState["tr"] {
   const tr = state.tr;
   const link = schema.text(label, [M.link.create({ href })]);
@@ -149,7 +167,7 @@ export function replaceWithLink(state: EditorState, from: number, to: number, hr
   const $at = tr.doc.resolve(at);
   if ($at.parent.isTextblock) {
     tr.insert(at, link);
-    if ($at.parent.type !== N.paragraph && $at.parent.type !== N.line && $at.parent.type !== N.cell && $at.parent.textContent === "") {
+    if (!LINK_HOSTS.has($at.parent.type) && $at.parent.textContent === "") {
       tr.setBlockType($at.before(), $at.before() + 1, N.paragraph);
     }
   } else {
