@@ -269,3 +269,19 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await cornerText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "page/Pictured Away")) || "") });
   await page.click(S.corner).catch(() => {});
 }
+section("a terminal's copy pasted", async () => {
+  /* a terminal's copy, its HTML one white-space: pre block of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending in a full stop running on into the next, a list item starting its own */
+  await go("page/Terminal%20Paste");
+  await page.click(S.editor);
+  await page.evaluate(([html, plain]) => {
+    const dt = new DataTransfer();
+    dt.setData("text/html", html);
+    dt.setData("text/plain", plain);
+    document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true }));
+  }, [TERMINAL_HTML, TERMINAL_TEXT]);
+  await landed(page, 1200);
+  await log("a terminal's copy pasted", { md: await A.stored(page), drawn: await page.evaluate(() => ({ paragraphs: document.querySelectorAll("#editor p").length, items: document.querySelectorAll("#editor li").length })) });
+});
+const run = (style: string, text: string): string => '<div style="display: inline;' + style + '">' + text + "</div>";
+const TERMINAL_HTML = '<div style="font-family: monospace; white-space: pre;">' + run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run("color: rgb(177, 185, 249);", "npm run verify") + " passed\n  before each landed.\n\n  - " + run("color: rgb(177, 185, 249);", "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run("color: rgb(177, 185, 249);", "7603f25") + ": the steps made independent.</div>";
+const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";

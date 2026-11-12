@@ -166,6 +166,26 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   if (slice) return slice;
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
+/* A TERMINAL'S COPY IS TEXT, NOT STRUCTURE: its HTML is one white-space: pre
+   block whose coloured runs are inline divs, and read as HTML every run was a
+   paragraph of its own (pin: paste.test › a terminal's copy is styled
+   preformatted text alone) */
+const TERMINAL_HTML = /^\s*(?:<meta[^>]*>\s*|<html[^>]*>\s*|<head>[^]*?<\/head>\s*|<body[^>]*>\s*|<!--StartFragment-->\s*)*<div style="[^"]*white-space:\s*pre(?![\w-])/i;
+export const terminalCopy = (html: string): boolean => TERMINAL_HTML.test(html);
+/* the terminal breaks its lines at the window's width: a line not ending in
+   a full stop runs on into the next, unless that one starts a list item
+   (pin: paste.test › a terminal's wrapped lines are joined) */
+const LIST_ITEM = /^\s*(?:[-*+]|\d+\.)\s/;
+const runsOn = (prev: string, line: string): boolean =>
+  /\S/.test(prev) && /\S/.test(line) && !prev.trimEnd().endsWith(".") && !LIST_ITEM.test(line);
+export function unwrapped(text: string): string {
+  const out: string[] = [];
+  for (const line of text.split("\n")) {
+    if (out.length && runsOn(out[out.length - 1], line)) out[out.length - 1] = out[out.length - 1].trimEnd() + " " + line.trimStart();
+    else out.push(line);
+  }
+  return out.join("\n");
+}
 /* A PASTED LINK TO THIS PAGE KEEPS ITS BARE ADDRESS: pasted HTML carries the
    page's full file address, which breaks when the page moves; a link whose
    words are its address stays whole (pin: paste.test › a pasted link to this

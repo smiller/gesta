@@ -918,3 +918,27 @@ MEASURED).
      hooks/ too, and takes `./tools/…`; probed: package.json names 8, the
      hooks and settings none, the old app's path passed over (MEASURED).
   10. The paste's pattern run once.
+
+### A terminal's copy pasted (2026-11-12)
+
+Found by the reader: today's summary copied from the terminal and pasted
+into Gesta came in as a paragraph per coloured run. Asked: "please
+investigate", then a mock-up to paste, then "build it".
+
+- THE CAUSE (MEASURED, the clipboard read after a fresh copy): Ghostty
+  copies one `<div style="…white-space: pre;">` holding the text and a
+  `<div style="display: inline">` per coloured or bold run, its line breaks
+  where the window wrapped. ProseMirror's HTML parser takes every div for a
+  block. Replayed headless: 234 stored lines with the HTML, 58 from its
+  plain text alone.
+- THE MOCK-UPS, pasted by the reader from the plain text put on the
+  clipboard: the list right, but a break wherever the terminal wrapped
+  ("are / spelled", "the / decoder"); the reader's rule — a line not ending
+  in a full stop runs on into the next — kept a list item starting its own
+  line, 54 lines to 33, stored as 37 (MEASURED); "That looks right".
+- BUILT, test-first (two tests red first): `terminalCopy` (that one
+  white-space: pre block, a `<pre>` and pre-wrap and Gesta's own copy not
+  it) and `unwrapped` in paste.ts; the editor's paste takes such a copy's
+  plain text, unwrapped, as markdown. A Helium section, "a terminal's copy
+  pasted", pastes a terminal-shaped copy: stored as two sentences joined
+  and a two-item list, 3 paragraphs and 2 items drawn (MEASURED).

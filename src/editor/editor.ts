@@ -23,7 +23,7 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks, bareBlocks, clipboardParser, linkSelection, referenceInLine } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks, bareBlocks, clipboardParser, linkSelection, referenceInLine, terminalCopy, unwrapped } from "./paste.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
 import { pastedImageFile } from "./images.ts";
@@ -204,7 +204,8 @@ function pasteText(view: EditorView, data: DataTransfer, opts: EditorOptions): b
   /* line breaks alone are nothing to paste, from any app: they replaced a
      selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
   if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
-  /* text carrying HTML keeps the editor's paste */
+  /* text carrying HTML keeps the editor's paste, but for a terminal's copy */
+  if (terminalCopy(html)) return pasteMarkdown(view, unwrapped(plain), opts);
   if (data.types.includes("text/html")) return false;
   return pasteMarkdown(view, plain, opts);
 }

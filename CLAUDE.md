@@ -543,7 +543,8 @@ is in the plan's record, under the phase named):
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code
   block's empty last line, the way out; Tab, Shift-Tab and ⌘A there), `paste.ts` (what pasted text
-  becomes and what copied text says), `goto.ts` (⌃⌘G's decisions over a
+  becomes and what copied text says; a terminal's copy taken as its text,
+  its wrapped lines joined), `goto.ts` (⌃⌘G's decisions over a
   document: what the entry can be asked for, the hits and the cycle, the
   refusals), `landing.ts` (the landing mark as a plugin: a position that
   maps through edits, drawn as a node decoration), `codeHighlight.ts`

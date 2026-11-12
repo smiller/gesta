@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection, referenceInLine } from "./paste.ts";
+import { pasteSlice, pasteBlocks, placeBlocks, copyMd, closeRowSlice, onlyLineBreaks, copiedSlice, pastedRefusal, bareLinks, bareBlocks, keepsSpaces, COPY_MARK, linkSelection, referenceInLine, terminalCopy, unwrapped } from "./paste.ts";
 import { Slice } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { referencePayload } from "./reference.ts";
@@ -315,4 +315,24 @@ test("a copy opening at the end of a pair's right cell starts at the next row, n
   expect(copied(atEnd)).toBe("::: verse 180 245\n | So softly\nvivaque\nsidera | The starres\n:::");
   const plain = sel("::: verse\na | one\nb | two\n:::", "one", "two");
   expect(copied(EditorState.create({ doc: plain.doc, selection: TextSelection.create(plain.doc, plain.selection.from + 3, plain.selection.to) }))).toBe("::: verse 2\nb | two\n:::");
+});
+
+const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;color: rgb(177, 185, 249);">git log</div> ran, and\n  <div style="display: inline;font-weight: bold;">bold</div> words.</div>';
+
+test("a terminal's copy is styled preformatted text alone: one white-space: pre block of inline runs", () => {
+  expect(terminalCopy(GHOSTTY)).toBe(true);
+  expect(terminalCopy("<meta charset='utf-8'>" + GHOSTTY)).toBe(true);
+  expect(terminalCopy("<pre>let x = 1;</pre>")).toBe(false);
+  expect(terminalCopy('<div style="white-space: pre-wrap;">a</div>')).toBe(false);
+  expect(terminalCopy("<p>a</p><ul><li>b</li></ul>")).toBe(false);
+  expect(terminalCopy('<blockquote ' + COPY_MARK + '=""><p>a</p></blockquote>')).toBe(false);
+  expect(terminalCopy("")).toBe(false);
+});
+
+test("a terminal's wrapped lines are joined: a line not ending in a full stop runs on into the next, a list item always starts its own", () => {
+  expect(unwrapped("Every one passed\n  npm run verify before it landed.")).toBe("Every one passed npm run verify before it landed.");
+  expect(unwrapped("found nine things.\n    Eight were fixed")).toBe("found nine things.\n    Eight were fixed");
+  expect(unwrapped("the string rules:\n  - Kept off\n  1. First")).toBe("the string rules:\n  - Kept off\n  1. First");
+  expect(unwrapped("a paragraph\n\nanother")).toBe("a paragraph\n\nanother");
+  expect(unwrapped("- outside text reaches the\n    decoder.")).toBe("- outside text reaches the decoder.");
 });

@@ -88,6 +88,9 @@ picture: arrived at page/Pictured End: {"cursor":"at a line's start"}
 a picture pasted at the entry's end: {"md":"Last line\n\n![](<Pictured End-img-1.webp>)","lineBelowPicture":true,"caretBelowPicture":true,"cursor":"at the end","screen":"page/Pictured End · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 picture: arrived at page/Pictured Away: {"cursor":"at a line's start"}
 a picture pasted, then another entry at once: {"entry":"page/Horace","picturesHere":0,"corner":"the picture had nowhere to land — paste it again (click to copy)","aimedAtHasOne":false,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+== a terminal's copy pasted
+a terminal's copy pasted: arrived at page/Terminal Paste: {"cursor":"at a line's start"}
+a terminal's copy pasted: {"md":"⏺ Two commits today, and npm run verify passed before each landed.\n\n- f2db598: the one-offs split, with every check still covering them.\n- 7603f25: the steps made independent.","drawn":{"paragraphs":3,"items":2},"cursor":"at the end","screen":"page/Terminal Paste · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == shortcuts
 shortcuts: arrived at page/Expanded: {"cursor":"at a line's start"}
 ⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"page/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
