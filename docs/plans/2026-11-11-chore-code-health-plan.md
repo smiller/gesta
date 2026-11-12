@@ -643,3 +643,41 @@ run, its second play as approved (MEASURED).
    'String Heavy Function Arguments' across the board. We probably want to
    revisit that." Decision 6's measurement stands as the starting point:
    splitting a function, the cure for every other smell, set both off.
+
+### The review of the tools/ climb (4fe38e4^..6ff6d29)
+
+One `/code-review` at HIGH: 245,807 tokens (MEASURED, the last message of
+`agent-aa4449da1f4fae8ce.jsonl`: 2 input + 178 cache creation + 243,131 cache
+read + 2,496 output). The 29 transform refactors read as faithful, line by
+line against the old code; corner.approved.txt unchanged across the range.
+Eight findings, each read against the code:
+
+1. THE STAMP MISSED THE STEP MODULES (behaviour): the run's fingerprint read
+   tools/helium-*.ts and tools/adapters/ but not tools/steps/, so an edit to a
+   step module alone would have printed "ok — not replayed". Every run in this
+   climb was played after its last step edit (READ, the order of the runs), so
+   none passed unplayed. Fixed by `stamped()` in heliumStamp.ts, a pure
+   predicate the approve script filters by, and a test that walks the
+   drivers' imports through tools/ and fails on any file left out — the
+   checker a mechanical class is owed.
+2. The pin resolver relies on each section opening `section("name", ` at a
+   line's start: `stepsLayout.test.ts` fails on any other form and on two
+   sections of one name.
+3. The failure hint named the retired compare tool: dropped.
+4. CLAUDE.md read as if TODAY were 2026-09-22: it is 2026-09-12, pinned since
+   2026-09-22.
+5. Moved comments with dates and another module's mechanism: the three named
+   cut to their own code. The comment checker reads src/ alone; whether its
+   standard should hold over tools/ is offered as a decision, not taken here.
+6. A part left out of an in-page reading would show only in Helium:
+   `adapters/inPage.test.ts` fails on any top-level function a listed part
+   calls that is not listed with it (probed: leaving out textareaFocused
+   names it).
+7. `view`, `write` and `caretAt` copied into three modules: one each in the kit.
+8. The cut's debris: 51 lines holding only `;` or spaces removed; 52 step
+   names chosen by hand from what each step does, the labels unchanged
+   (MEASURED, the labels' guard: 438, the same).
+
+ALSO, asked: the dashboard read tools/ at 9.99. tools/residue.py, a phase-0
+Python script, scores 9.38 (MEASURED, `cs review`); the gate reads .ts and
+.mjs only. Left for the split of the one-off scripts.

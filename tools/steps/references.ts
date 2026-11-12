@@ -11,7 +11,6 @@ section("reference copy", async () => {
      replays: its cause unknown, a miss is selected again once and appended
      to tools/out/flakes.log, outside the verdict; a second miss reads as
      itself */
-  
   let barMissed = await barMiss();
   if (barMissed) {
     mkdirSync(new URL("../out/", import.meta.url), { recursive: true });
@@ -28,7 +27,7 @@ section("a reference pasted", async () => {
   await referencePasted();
   await proseTwoSpacesPasted();
   await referencePastedMidSentence();
-  await pageSOwnReference();
+  await pageOwnReferencePasted();
 });
 async function referencePasted(): Promise<void> {
   await go("page/Horace");
@@ -88,14 +87,13 @@ async function referencePastedMidSentence(): Promise<void> {
   await page.keyboard.press("Meta+v");
   await rest(page);
   /* the paste may not have landed in two frames, and no edit is then there to wait on: the reading says what stood when the wait ran out */
-  
   { const md = await landedAfter((m) => /greater\.\[\*Williams/.test(m)); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
   /* the page's reference copied with ⌘C, then pasted mid-sentence: a copy made in the page pastes whole */
   await page.click(S.editor);
   await page.keyboard.press("Meta+a");
   await page.keyboard.press("Meta+c");
 }
-async function pageSOwnReference(): Promise<void> {
+async function pageOwnReferencePasted(): Promise<void> {
   const copiedHere = await page.evaluate(async () => { for (let i = 0; i < 40; i++) { try { const it = (await navigator.clipboard.read())[0]; if (it.types.includes("text/html") && (await (await it.getType("text/html")).text()).includes("data-pm-slice")) return "in-page"; } catch { /* read again */ } await new Promise((r) => setTimeout(r, 50)); } return "not landed"; });
   await R.caretAfter(page, "greater.", 8);
   await page.keyboard.press("Meta+v");
@@ -194,19 +192,17 @@ section("grid", async () => {
 });
 section("paired card", async () => {
   /* a card's and a note's paired verse split by their own widest lines: equal halves wrapped four lines of a card whose translation needed a third of it */
-  await pairedCardAfter();
+  await pairedCardOpening();
   await cardNotePairedVerse();
 });
-async function pairedCardAfter(): Promise<void> {
+async function pairedCardOpening(): Promise<void> {
   await go("page/Paired%20Card");
   await page.click(S.editor);
-  
   await R.pasteText(page, "::: card-light-blue\n" + pairs + "\n:::\n\n::: note\n" + pairs + "\n:::");
   await page.waitForTimeout(700);
 }
 const pairs = "::: verse\n*This is what was bequeathed us* | Death of the body —\n | How many poems\nNo other shore, only this bank | In the Book\nOn which the living gather. | Urge us\n\nNo meaning but what we find here. |\nNo purpose but what we make. | Death of the heart —\n\nThat, and the beloved’s clear instructions: | Insisting\nTurn me into song; sing me awake. | We'd better not.\n:::";
 async function cardNotePairedVerse(): Promise<void> {
-  
   await log("a card and a note of paired verse", { blocks: await split() });
   await page.keyboard.press("End");
   await page.keyboard.type(" and on, and on, and on");

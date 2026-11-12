@@ -8,11 +8,9 @@ export type Adapter = typeof Successor & { pill?: boolean };
 export type Tree = { name: string; text?: string; kids?: Tree[] };
 export interface RunOptions { screenshot?: string; only?: string[] | null }
 /* the day the drivers pin the page's clock to (context.clock.setFixedTime,
-   Date only; the timers run): the day the reference run was made. A
-   reading that spells today — the Go to row's Day select — was scrubbed by
-   the day number until 2026-09-22, when a run on a day whose number a
-   seeded day shares (the 5th, the 6th) would have read one option fewer
-   and no scrub could say so. Never a seeded day. */
+   Date only; the timers run). Never a seeded day: a run on a day whose
+   number a seeded day shares (the 5th, the 6th) read one Day option fewer,
+   and no scrub of the day number could say so. */
 export const TODAY = "2026-09-12";
 export const SEEDS = {
   "2026-09-06": "twelfth", "2026-09-05": "williams", "page/Horace": "horace", "page/Williams/Witchcraft 3": "williams",
@@ -21,9 +19,8 @@ export const SEEDS = {
   "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
   "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
 };
-/* the stanza step's seeds (2026-09-28): written by that step alone, so no
-   earlier reading moves; src/main.ts's `?store=seed-stanza` holds the
-   same text for the successor */
+/* the stanza step's seeds: written by that step alone, so no earlier
+   reading moves */
 export const STANZA_SEEDS = {
     "bookshelf/Spenser, Edmund": "# Edmund Spenser\n\n- [The Faerie Queene](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
@@ -157,6 +154,11 @@ export const wheelTo = async (y: number) => {
 /* the dialogs, answered by the harness: `answer` is what a prompt gets
    (a list: one per prompt, in turn), a confirm is accepted; `prompts`
    keeps each prompt's text and what it held */
+/* the rendered view (false) or the source view (true), switched to if not showing */
+export const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
+/* another tab's write landed, then the entry opened in the rendered view */
+export const write = async (key: string, text: string | null) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
+export const caretAt = async (needle: string, offset: number) => { await R.caretAfter(page, needle, offset); await rest(page); };
 let answer: string | (string | null)[] | null = null;
 export const prompts: string[] = [], confirms: string[] = [];
 export const setAnswer = (a: typeof answer): void => { answer = a; };

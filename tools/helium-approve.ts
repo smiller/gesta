@@ -13,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal, stamped } from "./heliumStamp.ts";
 
 const TOOLS: Record<string, string> = { corner: "tools/helium-corner.ts", bridge: "tools/helium-bridge.ts", reader: "tools/helium-reader.ts" };
 const args = process.argv.slice(2);
@@ -49,8 +49,7 @@ function inputsFor(name: string) {
   const helium = (/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/.exec(readFileSync(HELIUM_PLIST, "utf8")) ?? [])[1] ?? "(unknown)";
   return [
     file("dist/index.html"), file("dist-reader/index.html"),
-    ...readdirSync("tools").filter((f) => /^helium-.*\.ts$/.test(f)).map((f) => file("tools/" + f)),
-    ...readdirSync("tools/adapters").map((f) => file("tools/adapters/" + f)),
+    ...["tools", "tools/steps", "tools/adapters"].flatMap((d) => readdirSync(d).map((f) => d + "/" + f)).filter(stamped).map(file),
     file("src/store/keys.ts"), file("src/store/store.ts"),
     ...["io", "zip", "files", "plans", "names"].map((m) => file("src/store/" + m + ".ts")),
     file("tools/expected/" + name + ".approved.txt"),
@@ -109,6 +108,6 @@ for (const name of run) {
   const diffLines = (d.stdout || "").split("\n");
   console.log(diffLines.slice(0, 80).join("\n"));
   if (diffLines.length > 80) console.log("… " + (diffLines.length - 80) + " more lines of the diff: read the received copy whole");
-  console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.ts --approve " + name + "`" + (name === "corner" ? "; to compare it as it stands, `node tools/helium-compare.ts tools/expected/corner.received.txt`" : ""));
+  console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.ts --approve " + name + "`");
 }
 process.exit(failed ? 1 : 0);

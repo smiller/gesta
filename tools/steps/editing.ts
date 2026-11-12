@@ -1,29 +1,25 @@
-import { section, page, A, R, log, go, rest } from "./kit.ts";
+import { section, caretAt, view, write, page, A, R, log, go, rest } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("editing as the old app does", async () => {
   /* the inventory's group 4, where nothing promised either way: each gesture read over both apps, the old app's reading the one to match */
-  
   /* a placed selection is read by the editor a moment later */
-  
   /* the toolbar's button pressed as a click on it, shown or not: the selection is made by script */
-  
   /* the stored text without its last line end: a seed left unedited keeps the one it was written with */
-  
   await enterInsideQuoteNew();
   await whollyBoldItalicRow();
   await quotationInsideNote();
-  await pictureSGapsQuotation();
-  await referenceBlockClickedQ();
+  await pictureGapsAndQuotation();
+  await referenceBlockClicked();
   await pageLabelsBesideTheir();
   await nearMissEntryLink();
 });
 async function enterInsideQuoteNew(): Promise<void> {
-  await enterInsideQuoteNew2();
-  await typedQuoteSLater();
-  await bookmarkSLinkPressed();
+  await enterInsideQuoteTyped();
+  await quoteMarkOnLaterLine();
+  await bookmarkLinkInCode();
 }
-async function enterInsideQuoteNew2(): Promise<void> {
+async function enterInsideQuoteTyped(): Promise<void> {
   await write("page/Quote Enter", "> one\n> two\n");
   await caretAt("one", 3);
   await page.keyboard.press("Enter");
@@ -65,7 +61,7 @@ async function enterInsideQuoteNew2(): Promise<void> {
   await caretAt("a", 1);
   await page.keyboard.press("Enter");
 }
-async function typedQuoteSLater(): Promise<void> {
+async function quoteMarkOnLaterLine(): Promise<void> {
   await page.keyboard.type("> b");
   await log("> typed on a quote's later line", { md: await stored() });
   await write("page/List From Three", "3. x\n4. y\n5. z\n");
@@ -107,7 +103,7 @@ async function typedQuoteSLater(): Promise<void> {
   await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
 }
-async function bookmarkSLinkPressed(): Promise<void> {
+async function bookmarkLinkInCode(): Promise<void> {
   await rest(page);
   await log("a bookmark's link pressed in inline code", { md: await stored(), corner: await corner() });
   await page.keyboard.press("Escape");
@@ -140,7 +136,7 @@ async function quotationInsideNote(): Promise<void> {
   await write("page/Spacing", `early light:\n\n![](${box})\n\n~ ~\n\nA paragraph.\n\n> ::: verse 265\n> ye Elves of Hilles,\n> :::\n\n> ::: verse 197 265\n> auraeque | Ye Ayres\n> :::\n\n> A quoted paragraph.\n`);
   await page.waitForFunction(() => [...document.querySelectorAll("#editor img:not(.ProseMirror-separator)")].every((i) => i.complete), null, { timeout: 2000 }).catch(() => {});
 }
-async function pictureSGapsQuotation(): Promise<void> {
+async function pictureGapsAndQuotation(): Promise<void> {
   await log("a picture's gaps and a quotation's top", await page.evaluate(() => {
     const R = (e: Element) => e.getBoundingClientRect();
     const top = [...document.querySelectorAll("#editor .ProseMirror > *")];
@@ -155,7 +151,7 @@ async function pictureSGapsQuotation(): Promise<void> {
     };
   }));
 }
-async function referenceBlockClickedQ(): Promise<void> {
+async function referenceBlockClicked(): Promise<void> {
   await write("page/Reference Block", "::: reference\nroman book and canto\n:::\n\nafter\n");
   await page.click("#editor .reference, #page .reference", { timeout: 2000 }).catch(() => {});
   await rest(page);
@@ -203,9 +199,6 @@ async function nearMissEntryLink(): Promise<void> {
   await rest(page);
   await log("a near-miss entry link pasted", { md: await stored(), links: await page.evaluate(() => document.querySelectorAll("#editor a, #page a").length) });
 }
-const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
-const write = async (key: string, text: string | null) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
-const caretAt = async (needle: string, offset: number) => { await R.caretAfter(page, needle, offset); await rest(page); };
 const between = async (a: string, b: string) => { await R.selectBetween(page, a, b); await rest(page); };
 const button = async (title: string) => { await page.evaluate((t) => document.querySelector(".fmt button[title='" + t + "']")?.click(), title); await rest(page); };
 const copied = async () => { await page.keyboard.press("Meta+c"); await rest(page); return R.clipboardLines(page); };

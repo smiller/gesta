@@ -28,3 +28,6 @@ export function approvalRefusal(received: string | null, playedOver: string | nu
   if (/^SECTION FAILED|^EXIT /m.test(received)) return "a section of that run failed: play it again";
   return null;
 }
+
+/* the tools/ files a run reads: the drivers and their types, the steps, the adapters */
+export const stamped = (path: string): boolean => /^tools\/(helium[^/]*\.ts|steps\/[^/]+\.ts|adapters\/[^/]+\.ts)$/.test(path);

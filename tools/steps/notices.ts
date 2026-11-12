@@ -1,19 +1,16 @@
-import { section, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, type Tree } from "./kit.ts";
+import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, type Tree } from "./kit.ts";
 
 section("notices and surfaces as the old app has them", async () => {
   /* the inventory's groups 5–7, each gesture read over both apps, the old app's reading the one to match */
-  
-  
-  await kCapsLock();
+  await noticesOpening();
   await importRefusedFilesOnly();
   await blockPictureHoverCopied();
 });
-async function kCapsLock(): Promise<void> {
-  
-  await kCapsLock2();
+async function noticesOpening(): Promise<void> {
+  await chordWithCapsLock();
   await lineNumberingKeptAcross();
 }
-async function kCapsLock2(): Promise<void> {
+async function chordWithCapsLock(): Promise<void> {
   await go("page/Horace");
   await view(false);
   await dismiss();
@@ -28,7 +25,6 @@ async function kCapsLock2(): Promise<void> {
   await log("a bare launch", { hash: await page.evaluate(() => location.hash) });
   await go("page/Horace");
   await view(false);
-  
   /* picked with the row open, as a hand picks it */
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
@@ -51,7 +47,6 @@ async function importRefusedFilesOnly(): Promise<void> {
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
   /* a folder picker answering with what each import reads */
-  
   await picked({ name: "export", kids: [{ name: "stray.md", text: "x\n" }] });
   await page.click(importButton);
   await page.waitForTimeout(500);
@@ -85,10 +80,10 @@ async function importRefusedFilesOnly(): Promise<void> {
 }
 const importButton = ".toolbtn[title^='Import'], #importbtn";
 async function blockPictureHoverCopied(): Promise<void> {
-  await blockPictureHoverCopied2();
-  await bookmarkSLinkMarkdown();
+  await pictureBlockHoverCopied();
+  await bookmarkLinkInMarkdownView();
 }
-async function blockPictureHoverCopied2(): Promise<void> {
+async function pictureBlockHoverCopied(): Promise<void> {
   await log("a block with a picture hover-copied", { pictureCarried: await page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; return /<img[^>]+src="data:image\//.test(html); } catch (e) { return String(e); } }) });
   await go("page/Horace");
   await view(false);
@@ -103,7 +98,6 @@ async function blockPictureHoverCopied2(): Promise<void> {
 async function lineBarReasked(before: string): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  
   const asked = await boxes();
   await A.foreignWrite(page, "page/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
   await page.waitForTimeout(1200);
@@ -135,7 +129,6 @@ async function formatBarUnderMasthead(): Promise<void> {
   await R.selectBetween(page, "Maecenas", "Maecenas");
   await rest(page);
   /* the bar over the first line, under the masthead: a row opening grows the masthead down over it */
-  
   const was = await underHeader();
   await page.keyboard.press("Control+Meta+l");
   await page.waitForTimeout(400);
@@ -159,7 +152,6 @@ async function copyButtonAfterNavigation(): Promise<void> {
 }
 async function failedCopyPinClicked(): Promise<void> {
   await page.click(S.editor);
-  
   await refuse();
   await page.keyboard.press("Control+Meta+c");
   await rest(page);
@@ -182,7 +174,7 @@ async function shortcutWithNoCursor(before: string): Promise<void> {
   await rest(page);
   await log("a shortcut chosen with no cursor in the entry", { corner: await corner(), unchanged: (await A.stored(page, "page/Horace")) === before });
 }
-async function bookmarkSLinkMarkdown(): Promise<void> {
+async function bookmarkLinkInMarkdownView(): Promise<void> {
   await page.keyboard.press("Escape");
   await write("page/Source Link", "x\n");
   await view(true);
@@ -225,8 +217,6 @@ async function bookmarkSLinkMarkdown(): Promise<void> {
   await log("the bookshelf opened before the warm, the keys on its button", { before: shelfBefore, after: await shelf(), keysOnButton: await slow.evaluate(() => !!document.activeElement?.matches(".panel-new")) });
   await slow.close();
 }
-const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
-const write = async (key: string, text: string | null) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
 const corner = () => page.evaluate(() => document.querySelector(".saved.show, #saved.show")?.textContent || "");
 const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
@@ -270,8 +260,8 @@ section("shelves", async () => {
   /* the bookshelf's shelves: an entry Shelves names them in order and the authors on each; the list heads each shelf and sets its authors in, the go-to box groups by shelf */
   await bookshelfShelves();
   await goBoxShelves();
-  await goBoxShelvesAfter();
-  await goBoxShelvesAfter2();
+  await shelvesSearched();
+  await shelvesSearchedFollowing();
 });
 async function bookshelfShelves(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Shelves", "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Browning](#bookshelf/Browning%2C%20Robert)\n\n## English\n");
@@ -282,7 +272,6 @@ async function bookshelfShelves(): Promise<void> {
   await page.click(S.booksOpener);
   /* the list is answered again when the store's read ends: the shelves come with it */
   const shelvesShown = await page.waitForSelector(".pages .shelf", { timeout: 5000 }).then(() => true, () => false);
-  
   await log("the bookshelf on its shelves", { seeded, shelvesShown, rows: await list() });
   await page.click(".pages button.panel-new:has-text('Shelves…')");
   await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
@@ -304,7 +293,6 @@ async function goBoxShelves(): Promise<void> {
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+j");
   await rest(page);
-  
   await log("the go-to box on its shelves", await groups(S.gotoDestination));
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+Meta+k");
@@ -313,7 +301,7 @@ async function goBoxShelves(): Promise<void> {
   await page.selectOption(S.searchScope, { label: "All Classical" });
 }
 const groups = (sel: string) => page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), sel);
-async function goBoxShelvesAfter(): Promise<void> {
+async function shelvesSearched(): Promise<void> {
   /* a word only one author's book holds, then one only the other's: each found under the shelf */
   for (const q of ["uisu", "silk-mills"]) {
     await page.click(".page-search input");
@@ -324,6 +312,6 @@ async function goBoxShelvesAfter(): Promise<void> {
     await log("searched " + q + " under All Classical", await page.evaluate(() => ({ scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, where: [...document.querySelectorAll(".search-results .where")].map((w) => w.textContent) })));
   }
 }
-async function goBoxShelvesAfter2(): Promise<void> {
+async function shelvesSearchedFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
 }

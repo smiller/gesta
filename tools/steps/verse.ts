@@ -87,10 +87,10 @@ section("dual-language", async () => {
   await dualLanguageBlockNote();
 });
 async function dualLanguageOvid(): Promise<void> {
-  await dualLanguageOvid2();
-  await gSkippedLine();
+  await dualLanguageInOvid();
+  await lineBarSkippedLine();
 }
-async function dualLanguageOvid2(): Promise<void> {
+async function dualLanguageInOvid(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses/Book 1", fixture("ovid-metamorphoses-1.md"));
   const seeded = await seededIn("bookshelf/Ovid/Metamorphoses/Book 1");
   await page.goto(A.url("bookshelf/Ovid/Metamorphoses/Book%201"));
@@ -131,7 +131,7 @@ async function dualLanguageOvid2(): Promise<void> {
   await page.keyboard.type("546");
   await page.keyboard.press("Enter");
 }
-async function gSkippedLine(): Promise<void> {
+async function lineBarSkippedLine(): Promise<void> {
   await rest(page);
   await log("⌃⌘G for a skipped line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
   await page.keyboard.press("Escape");
@@ -172,12 +172,12 @@ async function dualLanguageBlockNote(): Promise<void> {
 }
 section("facing numbers", async () => {
   /* Ovid's Latin beside Golding's verse (2026-10-23, asked): a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R refers to both */
-  await facingNumbersAfter();
+  await facingNumbersOpening();
   await verseBlockNumberedBoth();
-  await gGoldingLine();
-  await gGoldingLineAfter();
+  await lineBarGoldingLine();
+  await goldingLineFollowing();
 });
-async function facingNumbersAfter(): Promise<void> {
+async function facingNumbersOpening(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)", "# *Metamorphoses* (with Golding’s translation)\n\n- [Book 7](#bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207)\n");
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", fixture("ovid-golding-7.md"));
   await page.goto(A.url("bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207"));
@@ -207,7 +207,7 @@ async function verseBlockNumberedBoth(): Promise<void> {
     };
   }));
 }
-async function gGoldingLine(): Promise<void> {
+async function lineBarGoldingLine(): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   await page.keyboard.type("265");
@@ -218,7 +218,6 @@ async function gGoldingLine(): Promise<void> {
   await rest(page);
   await R.selectBetween(page, "Ye Ayres and windes", "darkes the Sun at Noone.");
   await R.waitBar(page);
-  
   const shown = await refAll();
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
@@ -235,7 +234,7 @@ async function gGoldingLine(): Promise<void> {
   await log("Ref (all) across Prospero's borrowing", { label: all[0], fence: all.find((l) => l.includes(":::")), rows: all.length, refAllOverHeading: await refAll() });
 }
 const refAll = () => page.evaluate(() => { const b = document.querySelector(".fmt button[title='Copy a reference to both columns']"); return b ? !b.hidden && getComputedStyle(b).display !== "none" : null; });
-async function gGoldingLineAfter(): Promise<void> {
+async function goldingLineFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
 }
 section("scripture's Verse box", async () => {
@@ -266,19 +265,19 @@ section("scripture's Verse box", async () => {
 });
 section("by book, chapter, and paragraph", async () => {
   /* the Line box takes a paragraph on such a work, and ⌃⌘R names the book, the chapter and the paragraph */
-  await g61WorkParagraph();
-  await g61WorkParagraph2();
+  await byParagraphOpening();
+  await byParagraphFollowing();
 });
-async function g61WorkParagraph(): Promise<void> {
-  await g61WorkParagraph3();
+async function byParagraphOpening(): Promise<void> {
+  await byParagraphWork();
   await backWorkParagraph();
 }
 const AUGUSTINE = "bookshelf/Augustine/De Doctrina Christiana", AUGUSTINE_BOOK = AUGUSTINE + "/Book 2";
-async function g61WorkParagraph3(): Promise<void> {
+async function byParagraphWork(): Promise<void> {
   await lineBarOnWorkByParagraph();
   await escapeOnWorkByParagraph();
   await referenceOnWorkByParagraph();
-  await gNextPageAfter();
+  await lineBarNextPageAfterWork();
 }
 async function lineBarOnWorkByParagraph(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Augustine", "# Augustine\n");
@@ -288,13 +287,11 @@ async function lineBarOnWorkByParagraph(): Promise<void> {
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
   await R.settle(page);
   await rest(page);
-  
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   await page.keyboard.type("61");
   await page.keyboard.press("Enter");
   await rest(page);
-  
   await log("⌃⌘G 61 on a work by paragraph", { ...(await R.linebar(page)), landedOn: await landed(), box: await boxLabel() });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("61x");
@@ -323,7 +320,7 @@ async function referenceOnWorkByParagraph(): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
 }
-async function gNextPageAfter(): Promise<void> {
+async function lineBarNextPageAfterWork(): Promise<void> {
   await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".linebar").hidden), box: await boxLabel() });
   await page.evaluate((h) => { location.hash = h; }, "#" + AUGUSTINE_BOOK.replace(/ /g, "%20"));
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
@@ -337,7 +334,7 @@ async function backWorkParagraph(): Promise<void> {
 }
 const landed = () => page.evaluate(() => document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null);
 const boxLabel = () => page.evaluate(() => document.querySelector("label[for=lineinput]").textContent);
-async function g61WorkParagraph2(): Promise<void> {
+async function byParagraphFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
   await rest(page);
 }

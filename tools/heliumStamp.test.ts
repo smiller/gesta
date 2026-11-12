@@ -1,5 +1,7 @@
 import { test, expect } from "vitest";
-import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
+import { readFileSync } from "node:fs";
+import { dirname, join, normalize } from "node:path";
+import { fingerprint, mayReuse, approvalRefusal, stamped } from "./heliumStamp.ts";
 
 const inputs = [
   { name: "dist/index.html", bytes: "<html>page</html>" },
@@ -36,4 +38,22 @@ test("approving refuses when no run is there, it was a run of some steps, or wha
 test("approving refuses a run in which a section failed or the tool died", () => {
   expect(approvalRefusal("x\nSECTION FAILED (toolbar): TimeoutError\ny\n", "print", "print")).toMatch(/failed/);
   expect(approvalRefusal("x\n\nEXIT 1\n", "print", "print")).toMatch(/failed/);
+});
+
+/* the tools/ files one file imports */
+const toolImports = (f: string): string[] =>
+  [...readFileSync(f, "utf8").matchAll(/(?:from|import)\s+"(\.{1,2}\/[^"]+\.ts)"/g)].map((m) => normalize(join(dirname(f), m[1]))).filter((p) => p.startsWith("tools/"));
+/* the tools/ files a driver imports, followed through their own imports */
+function importsOf(start: string): Set<string> {
+  const seen = new Set<string>(), todo = [start];
+  for (let f = todo.pop(); f !== undefined; f = todo.pop()) {
+    if (!seen.has(f)) { seen.add(f); todo.push(...toolImports(f)); }
+  }
+  return seen;
+}
+test("every tools/ file a Helium run's driver reads, through its imports, is in the run's fingerprint", () => {
+  const read = ["tools/helium-corner.ts", "tools/helium-bridge.ts", "tools/helium-reader.ts", "tools/helium-approve.ts"].flatMap((d) => [...importsOf(d)]);
+  expect(read.filter((f) => !stamped(f))).toEqual([]);
+  expect(["tools/steps/kit.ts", "tools/heliumDom.d.ts", "tools/adapters/inPage.ts"].every(stamped)).toBe(true);
+  expect(["tools/corpus.ts", "tools/out/x.ts", "tools/expected/corner.approved.txt"].some(stamped)).toBe(false);
 });

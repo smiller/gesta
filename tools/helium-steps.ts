@@ -23,7 +23,7 @@ export { TODAY, type Adapter, type RunOptions } from "./steps/kit.ts";
 
 /* each section starts from the one window, in front, nothing open over
    it: windows a section left open held the focus, and a click in the
-   next section moved no caret (2026-10-05, the author-filing record) */
+   next section moved no caret */
 async function settle(page: Page): Promise<void> {
   for (const p of page.context().pages()) if (p !== page) await p.close().catch(() => {});
   await page.bringToFront();

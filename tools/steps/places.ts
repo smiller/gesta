@@ -3,14 +3,13 @@ import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo
 section("places", async () => {
   /* every entry returns to where it was left (2026-09-28, successor-only): Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it (the review at high, 2026-09-28) */
   await pippaScrolledDown();
-  await pippaScrolledDownAfter();
+  await pippaPlaceReturned();
   await backPlaceClosedSection();
-  await contentsLinkClickedBefore();
+  await contentsLinkBeforeWarm();
   await forcedEntryLeftScrolled();
-  await backLinesOpeningInline();
+  await backToInlineCodeLines();
 });
 async function pippaScrolledDown(): Promise<void> {
-  
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await wheelTo(1200);
   await page.waitForTimeout(700);
@@ -52,7 +51,7 @@ async function pippaScrolledDown(): Promise<void> {
   await R.pasteText(page, consolatio);
 }
 const pippa = "bookshelf/Browning, Robert/Pippa Passes";
-async function pippaScrolledDownAfter(): Promise<void> {
+async function pippaPlaceReturned(): Promise<void> {
   await page.waitForTimeout(900);
   for (let b = 1; b <= 6; b++) await R.clickFoldTriangle(page, "Book " + b);
   const toFiller = await page.evaluate((s) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith("Filler 5.4")); return p ? Math.round(p.getBoundingClientRect().top - (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) - 4) : 0; }, S.editor);
@@ -79,7 +78,7 @@ async function backPlaceClosedSection(): Promise<void> {
   /* Book 5's link, beside the held place: Book 1's lies far above it, and the held place moved the page under the click */
   await page.locator(S.editorLink("#bookshelf/Boethius/Consolatio/3pr1")).nth(4).click().catch(() => {});
 }
-async function contentsLinkClickedBefore(): Promise<void> {
+async function contentsLinkBeforeWarm(): Promise<void> {
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000).catch(() => {});
   await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await cornerText()) });
   await A.waitWarm(page).catch(() => {});
@@ -102,10 +101,10 @@ async function contentsLinkClickedBefore(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
 }
 async function forcedEntryLeftScrolled(): Promise<void> {
-  await forcedEntryLeftScrolled2();
+  await forcedEntryReturned();
   await heldPlaceRenderedView();
 }
-async function forcedEntryLeftScrolled2(): Promise<void> {
+async function forcedEntryReturned(): Promise<void> {
   await R.setSource(page, Array.from({ length: 90 }, (_, i) => "Line " + (i + 1) + " of a long refused entry.").join("\n\n") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
@@ -124,7 +123,6 @@ async function forcedEntryLeftScrolled2(): Promise<void> {
   /* the masthead changing height under a held place, as it does when the
      entry arrived from had a taller one: the place is set again, in the
      source view by its offset and in the rendered one by its text */
-  
   await log("a held place, the masthead shrinking under it", await shrunk(async () => ({ stayed: Math.abs((await winY()) - leftAt) < 3 })));
   await go("page/Horace");
 }
@@ -138,7 +136,6 @@ async function heldPlaceRenderedView(): Promise<void> {
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
   /* the row under the masthead, read mid-column: 40px in is the gutter */
-  
   const heldLine = await rowUnderHead();
   await log("a held place in the rendered view, the masthead shrinking under it", await shrunk(async () => { const line = await rowUnderHead(); return { sameText: line === heldLine, line }; }));
   /* a scroll the page did not make and no hand did — the browser's find —
@@ -159,7 +156,7 @@ const shrunk = async (fn: () => Promise<unknown>) => {
     finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await rest(page); }
   };
 const rowUnderHead = () => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
-async function backLinesOpeningInline(): Promise<void> {
+async function backToInlineCodeLines(): Promise<void> {
   await go("page/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   /* a place held on lines that open on inline code, one paragraph so the window's top always falls on text: the caret at the line's start, the code run no stop on the way */
@@ -207,11 +204,11 @@ async function backLinesOpeningInline(): Promise<void> {
 }
 section("entries left and renamed", async () => {
   /* what leaving, renaming and deleting do to an entry, a clipboard that refuses, and a page whose site data is blocked */
-  await unknownPageVisitedLeft();
+  await unknownPageLeftUntouched();
   await deletedScrolledPlaceDropped();
-  await cClipboardRefused();
+  await copyWithClipboardRefused();
 });
-async function unknownPageVisitedLeft(): Promise<void> {
+async function unknownPageLeftUntouched(): Promise<void> {
   await go("page/Never%20Typed");
   await go("page/Horace");
   await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "page/Never Typed")) ?? null });
@@ -242,7 +239,7 @@ async function deletedScrolledPlaceDropped(): Promise<void> {
   await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) || "[]").some((r: { key: string }) => r.key === "2026-09-05/Longer"); } catch { return null; } }, A.ns + "places") });
   setAnswer(null);
 }
-async function cClipboardRefused(): Promise<void> {
+async function copyWithClipboardRefused(): Promise<void> {
   await page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
   await page.keyboard.press("Control+Meta+c");
   await rest(page);
@@ -285,7 +282,6 @@ section("footnote marks", async () => {
   /* a footnote mark, a space and superscript digits after a word, is no break in a phrase search (2026-10-01): "Pedenteria in comparison" finds "Pedenteria ¹ in comparison", and Enter selects it, the mark inside; "m²" stays text */
   await go("page/Footnoted");
   /* the box holding the whole query (it keeps the last one while the entry stays open, so a new one is typed over ⌘A), then the scan's pause: a row from the query before can stand until it runs */
-  
   await page.click(S.editor);
   await page.keyboard.type("Skill of government was but a Pedenteria ¹ in comparison, so as Amphion, ³ was said; an area of 4 m² here.");
   await page.waitForTimeout(1500);
@@ -348,7 +344,6 @@ async function secondWindow(): Promise<void> {
   await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
 }
 async function pageOpenFirstSaved(): Promise<void> {
-  
   const again = await page.context().newPage();
   await again.goto(A.url("page/Made%20Elsewhere"));
   await A.waitEntry(again, "page/Made Elsewhere").catch(() => {});

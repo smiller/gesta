@@ -4,8 +4,8 @@ section("author filing", async () => {
   /* (2026-10-05) "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so; the current app asks once and files the name as typed, and refuses to rename an author with books */
   await newAuthorSeanMiller();
   await bookCaretHeadingS();
-  await renameSeanMillerTyped();
-  await renameSeanMillerTyped2();
+  await renameAuthorTyped();
+  await renameAuthorFollowing();
   await reFiledBookPicture();
 });
 async function newAuthorSeanMiller(): Promise<void> {
@@ -48,7 +48,7 @@ async function bookCaretHeadingS(): Promise<void> {
   setAnswer("Odes");
   await A.act.create(page);
 }
-async function renameSeanMillerTyped(): Promise<void> {
+async function renameAuthorTyped(): Promise<void> {
   await A.waitEntry(page, "bookshelf/Miller, Sean/Odes", 5000).catch(() => {});
   await page.click(S.editor);
   await page.keyboard.type("A book. ");
@@ -67,7 +67,7 @@ async function renameSeanMillerTyped(): Promise<void> {
   await page.keyboard.press("Escape");
   await go("bookshelf/Sean%20Miller/Odes", 5000);
 }
-async function renameSeanMillerTyped2(): Promise<void> {
+async function renameAuthorFollowing(): Promise<void> {
   await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
 }
 async function reFiledBookPicture(): Promise<void> {
@@ -75,13 +75,13 @@ async function reFiledBookPicture(): Promise<void> {
 }
 section("replace", async () => {
   /* find and replace (2026-10-08, successor-only): ⌃⌘E in the rendered view switches to the source view and opens the bar, the corner whispering; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
-  await eRenderedView();
-  await eSourceView();
+  await replaceInRenderedView();
+  await replaceInSourceView();
   await escapeSwitchBackRefused();
   await entrySavedAnotherWindow();
-  await entrySavedAnotherWindow2();
+  await savedElsewhereFollowing();
 });
-async function eRenderedView(): Promise<void> {
+async function replaceInRenderedView(): Promise<void> {
   await go("page/Replaced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
@@ -120,7 +120,7 @@ async function eRenderedView(): Promise<void> {
   await log("Escape, opened in the rendered view", await R.replaceBar(page));
   await page.keyboard.press("Control+Meta+m");
 }
-async function eSourceView(): Promise<void> {
+async function replaceInSourceView(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
@@ -192,19 +192,19 @@ async function entrySavedAnotherWindow(): Promise<void> {
     await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
     await other.close(); }
 }
-async function entrySavedAnotherWindow2(): Promise<void> {
+async function savedElsewhereFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {}); }
 }
 section("losing nothing", async () => {
   /* what was lost and is kept now: a fence's words after its language, a picture under the code button, a selection under a paste of line breaks, page markers in a copy, a second export's report, a store that never answers */
-  await fenceSWordsAfter();
-  await exportPressedAgainWhile();
-  await exportPressedAgainWhile2();
+  await fenceWordsBothViews();
+  await exportPressedTwice();
+  await exportPressedTwiceFollowing();
   await typedIntoEntryImport();
   await storeThatNeverAnswers();
 });
-async function fenceSWordsAfter(): Promise<void> {
+async function fenceWordsBothViews(): Promise<void> {
   await go("page/Kept");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
@@ -237,7 +237,7 @@ async function fenceSWordsAfter(): Promise<void> {
   await rest(page);
   await log("a note with a page marker hover-copied", { text: await R.clipboardText(page) });
 }
-async function exportPressedAgainWhile(): Promise<void> {
+async function exportPressedTwice(): Promise<void> {
   /* a folder picker that answers only when told: the export stays running */
   await page.evaluate(() => { window.__pickers = 0; window.showDirectoryPicker = () => new Promise((_, reject) => { window.__pickers++; window.__pickerAbort = () => reject(new DOMException("dismissed", "AbortError")); }); });
   await page.click(".toolbtn[title^='Export every entry']");
@@ -253,7 +253,7 @@ async function exportPressedAgainWhile(): Promise<void> {
   await page.keyboard.type("before the import. ");
   await landed(page, 1200);
 }
-async function exportPressedAgainWhile2(): Promise<void> {
+async function exportPressedTwiceFollowing(): Promise<void> {
   await page.evaluate(() => {
     const file = (name: string, text: string) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
     const dir = (name: string, kids: unknown[]) => ({ kind: "directory", name, values: async function* () { for (const k of kids) yield k; } });

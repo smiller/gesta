@@ -50,11 +50,11 @@ async function whisperClicked(): Promise<void> {
 }
 section("a page moved with its sub-pages", async () => {
   /* Rename on a page whose sub-pages hold text asks where; an address in the bookshelf moves it there with its picture, its text after the text there, a sub-page there already by its title deleted, its links going to that one; a link from elsewhere follows */
-  await renameAddressBookshelfTyped();
+  await renameToBookshelfAddress();
   await picturesUnderOldPage();
   await movedEssayPicture();
 });
-async function renameAddressBookshelfTyped(): Promise<void> {
+async function renameToBookshelfAddress(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Mover, Test", "# Test Mover\n");
   await A.foreignWrite(page, "bookshelf/Mover, Test/Essays", "# Essays\n\n[The Twin](#bookshelf/Mover%2C%20Test/Essays/2022-twin)\n");
   await A.foreignWrite(page, "bookshelf/Mover, Test/Essays/2022-twin", "# The Twin\n\nThe longer copy.\n");
@@ -73,7 +73,6 @@ async function renameAddressBookshelfTyped(): Promise<void> {
   confirms.length = 0;
   await page.click(S.renameSubPage);
   await page.waitForFunction((s) => /moved to/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 5000 }).catch(() => {});
-  
   await log("Rename, an address in the bookshelf typed, Enter, the confirm accepted", {
     prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), hash: page.url().split("#")[1], corner: await cornerText(),
     there: await there(""), essay: await there("/Essay"), twin: await there("/2022-twin"), links: await A.stored(page, "page/Move Links"),

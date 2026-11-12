@@ -1,32 +1,29 @@
-import { section, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest } from "./kit.ts";
+import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest } from "./kit.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
   /* a control the current app lacks fails its own step, not the section */
-  await sPressedTwice();
-  await sPressedTwiceAfter();
+  await keysOpening();
+  await keysAfterSearch();
   await picturePastedSearchTyped();
 });
-async function sPressedTwice(): Promise<void> {
-  
+async function keysOpening(): Promise<void> {
   /* the view asked for, whichever the arrival brought: the current app's carries across entries */
-  
-  await sPressedTwice2();
-  await bookmarkSLinkPressed();
+  await chordsPressedTwice();
+  await bookmarkLinkPressed();
   await tabCodeBlock();
   await tabTwelveTimesBookmarks();
   await enterHeldShortcut();
-  await enterHeldShortcutAfter();
+  await enterHeldFollowing();
   await enterCaretAboveWindow();
   await digitHeldBookmarksCard();
   await refusedEntryRedrawnUnder();
 }
-async function sPressedTwice2(): Promise<void> {
+async function chordsPressedTwice(): Promise<void> {
   await go("page/Horace");
   await view(false);
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's pin, dismissed as a reader does: the whispers below yield to it */
   await tap(S.editor);
-  
   await twice("Control+Meta+s");
   await log("⌃⌘S pressed twice", {});
   await twice("Control+Meta+b");
@@ -53,7 +50,7 @@ async function sPressedTwice2(): Promise<void> {
   await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
   await page.mouse.click(at.x + 30, at.y);
 }
-async function bookmarkSLinkPressed(): Promise<void> {
+async function bookmarkLinkPressed(): Promise<void> {
   await page.waitForFunction(() => window.__selSeen, null, { timeout: 2000 }).catch(() => {});
   await rest(page);
   await page.keyboard.press("Control+Meta+b");
@@ -74,7 +71,6 @@ async function bookmarkSLinkPressed(): Promise<void> {
   /* clicked until the caret stands in the word: a click measured while the
      page settled after a view switch landed at the entry's end
      (pin: where the keys go › Tab held in a quote) */
-  
   await clickWord("one");
   await page.keyboard.press("Tab");
   await rest(page);
@@ -144,7 +140,6 @@ async function tabTwelveTimesBookmarks(): Promise<void> {
   await log("Shift-Tab from the shortcuts popup", {});
   await page.keyboard.press("Escape");
   /* held keys: a key down again before it is up is the browser's auto-repeat */
-  
   await page.focus(S.booksOpener);
   await hold("Tab", 11);
   await rest(page);
@@ -188,7 +183,7 @@ async function enterHeldShortcut(): Promise<void> {
   await wheelTo((await page.evaluate(() => scrollY)) + 900);
   await page.keyboard.press("Enter");
 }
-async function enterHeldShortcutAfter(): Promise<void> {
+async function enterHeldFollowing(): Promise<void> {
   await page.waitForFunction(() => { const s = getSelection(); const r = s.rangeCount && (s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect()); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r && r.top >= head; }, null, { timeout: 2000 }).catch(() => {});
 }
 async function enterCaretAboveWindow(): Promise<void> {
@@ -225,7 +220,6 @@ async function refusedEntryRedrawnUnder(): Promise<void> {
   await tap(S.editor);
 }
 const tap = (sel: string) => page.click(sel, { timeout: 3000 }).catch(() => {});
-const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
 const twice = async (chord: string) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await rest(page); } };
 const clickWord = async (w: string) => {
     for (let i = 0; i < 3; i++) {
@@ -240,7 +234,7 @@ const hold = async (key: string, times: number, mods: string[] = []) => {
     await page.keyboard.up(key);
     for (const m of mods.reverse()) await page.keyboard.up(m);
   };
-async function sPressedTwiceAfter(): Promise<void> {
+async function keysAfterSearch(): Promise<void> {
   await page.evaluate(() => { const own = window.createImageBitmap; window.createImageBitmap = ((...a: [ImageBitmapSource]) => new Promise<ImageBitmap>((r) => setTimeout(() => r(own(...a)), 800))) as typeof own; });
   await R.pastePng(page);
   await searchFor(page, "abc");
@@ -257,15 +251,12 @@ section("editing as the help says", async () => {
   await tabTableQuote();
 });
 async function verseLines23Copied(): Promise<void> {
-  
   /* an entry stored as another tab would, then opened: typed into the current app's source view, a list came back split at every line */
-  
   /* the numbers on screen beside a list: each item's own value, else the list's count from its start */
-  
-  await verseLines23Copied2();
+  await verseLinesCopied();
   await enterListItemS();
 }
-async function verseLines23Copied2(): Promise<void> {
+async function verseLinesCopied(): Promise<void> {
   await write("page/Verse Copied", "::: verse\none line\ntwo line\nthree line\nfour line\nfive line\nsix line\nseven line\neight line\nnine line\nten line\neleven line\n:::\n");
   await R.selectBetween(page, "two line", "three line");
   await page.keyboard.press("Meta+c");
@@ -324,12 +315,6 @@ async function enterListItemS(): Promise<void> {
   await write("page/Quoted Table", "> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |\n");
   await caretAt("1", 1);
 }
-const caretAt = async (needle: string, offset: number) => { await R.caretAfter(page, needle, offset); await rest(page); };
-const write = async (key: string, text: string | null) => {
-    await A.foreignWrite(page, key, text);
-    await go(key);
-    await view(false);
-  };
 const numbers = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln.shown, #page .ln.shown")].filter((r) => getComputedStyle(r, "::before").content.replace(/"/g, "") !== "none").map((r) => r.dataset.line + ":" + r.textContent.trim().slice(0, 10)).join(" "));
 const listNumbers = () => page.evaluate(() => [...document.querySelectorAll("#editor ol li, #page ol li")].map((li) => li.getAttribute("value") ?? "·").join(" ") + " (start " + (document.querySelector("#editor ol, #page ol")?.getAttribute("start") ?? "1") + (document.querySelector("#editor ol, #page ol")?.reversed ? ", reversed" : "") + ")");
 async function tabTableQuote(): Promise<void> {

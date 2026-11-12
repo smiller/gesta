@@ -7,10 +7,10 @@ section("a link to a line", async () => {
   await keyBeforeWarm();
 });
 async function linkLineClicked(): Promise<void> {
-  await linkLineClicked2();
+  await linkToLineClicked();
   await linkLineAnotherNo();
 }
-async function linkLineClicked2(): Promise<void> {
+async function linkToLineClicked(): Promise<void> {
   const work = "bookshelf/Statius", book = work + "/Book 1", href = "#bookshelf/Statius/Book%201?line=";
   await A.foreignWrite(page, work, "# Statius\n\n- [To line 3](" + href + "3)\n");
   await A.foreignWrite(page, book, "# Book 1\n\n::: note\n[3-4](" + href + "3) and [nowhere](" + href + "99)\n:::\n\n::: verse\none\ntwo\n:::\n\n::: verse 3\nthree\nfour\n:::\n\n[Five](" + href + "5)\n\n::: dual-language 5\nquinque | Five, a sentence that runs on over the lines it translates.\nsex\nseptem\n:::\n");
@@ -18,7 +18,6 @@ async function linkLineClicked2(): Promise<void> {
   await A.waitEntry(page, book, 5000).catch(() => {});
   await R.settle(page);
   await rest(page);
-  
   await click("3-4");
   await log("a link to a line, clicked", await seen());
   await page.locator("#editor .vrow", { hasText: "one" }).first().click();
@@ -43,7 +42,6 @@ async function linkLineClicked2(): Promise<void> {
   await rest(page);
   await rest(page);
   await log("a link to a line, from another page", await seen());
-  
   await page.keyboard.press("Meta");
   await rest(page);
   await page.keyboard.press("Meta+c");
@@ -88,7 +86,6 @@ const click = async (text: string) => { await page.locator("#editor a", { hasTex
 const top = () => page.evaluate(() => { const s = getSelection(); return { row: s.anchorNode?.parentElement?.closest(".vrow")?.textContent ?? null, focused: document.activeElement?.closest("#editor") ? "the text" : "elsewhere" }; });
 async function linkParagraphBeforeWarm(): Promise<void> {
   /* opened before the warm: the work's own page says how it counts, and a rename follows */
-  
   await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
   await A.waitEntry(page, work2, 8000).catch(() => {});
   await R.settle(page);
@@ -107,18 +104,16 @@ async function keyBeforeWarm(): Promise<void> {
 }
 section("a lettered line", async () => {
   /* a row saying its own number, 157a: every kind it can stand as, the gutter at every interval, the box, a link and a reference */
-  await gutterPageSSetting();
+  await letteredLineGutter();
   await linkLetteredLine();
 });
-async function gutterPageSSetting(): Promise<void> {
+async function letteredLineGutter(): Promise<void> {
   const work = "bookshelf/Statius/Thebaid", key = work + "/Book 8", href = "#bookshelf/Statius/Thebaid/Book%208?line=";
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, work, "# Thebaid\n");
   await A.foreignWrite(page, key, "# Book 8\n\n[To the letter](" + href + "157a)\n\n::: dual-language 155\nquintus | Five, a sentence that runs on down beside the lines after it, and past them.\nsextus\nseptimus\n⟨line 157a⟩littera sola\n⟨line 157b⟩littera par | Its own English.\noctavus\n:::\n\n::: verse 200\nplanus\n⟨line 200a⟩littera in versu\n:::\n");
   const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
   await open();
-  
-  
   await log("the gutter at the page's setting", { drawn: await gutter() });
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
@@ -130,10 +125,8 @@ async function gutterPageSSetting(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Escape");
   await rest(page);
-  ;
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  ;
   await log("⌃⌘G 157a, a lettered line with no English", await ask("157a"));
   await log("⌃⌘G 157, the line before it", await ask("157"));
   await log("⌃⌘G 157b, a lettered line with its own English", await ask("157b"));
@@ -166,17 +159,13 @@ const seen2 = () => page.evaluate(() => { const m = document.querySelector("#edi
 const ask = async (n: string) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen2(); };
 section("a bracketed line", async () => {
   /* a line printed moved under its old number in brackets: drawn with it, asked with it, the plain number the plain line's */
-  
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, "bookshelf/Statius/Thebaid", "# Thebaid\n");
   await A.foreignWrite(page, key, "# Book 16\n\n[To the bracket](#bookshelf/Statius/Thebaid/Book%2016?line=[378])\n\n::: dual-language 370\nseptuagesimus | Seventy, a sentence that runs on down beside the lines after it, and past them.\nunus\n⟨line [378]⟩translata prima\n⟨line [379]⟩translata altera\n:::\n\n::: dual-language 375\nquintus | Five\nsextus\nseptimus\noctavus\n:::\n");
-  
   await open();
   await log("the gutter by a bracketed line", { drawn: await page.evaluate(() => [...document.querySelectorAll("#editor .ln")].map((r) => getComputedStyle(r, "::before").content.replace(/"/g, "")).filter((c) => c && c !== "none")) });
-  ;
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  ;
   await log("⌃⌘G [378], a bracketed line", await askBracketed("[378]"));
   await log("⌃⌘G 378, the plain line of that number", await askBracketed("378"));
   await log("⌃⌘G 372, a number not printed", await askBracketed("372"));
@@ -203,7 +192,6 @@ const askBracketed = async (n: string) => { await page.keyboard.press("Meta+a");
 const seen3 = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null, said: document.querySelector(".saved.show")?.textContent || null }; });
 section("a line with no English of its own", async () => {
   /* the mark is the row's band across both columns on every row of a dual-language block, the rows the English runs down beside included; nothing moves */
-  
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, band, "# Band\n\n[The second](#bookshelf/Statius/Band?line=2)\n\n::: dual-language\nprimus | First, a sentence that runs on down over the lines it translates, and past them.\nsecundus, a Latin line long enough to measure\ntertius\n:::\n");
   await page.goto(A.url(band));
@@ -211,7 +199,6 @@ section("a line with no English of its own", async () => {
   await R.settle(page);
   await rest(page);
   await rest(page);
-  
   await log("a line with no English, unmarked", await geometry());
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
@@ -239,14 +226,12 @@ const geometry = () => page.evaluate(() => {
   });
 section("the block a line is in", async () => {
   /* the corner names the block only where the number is in more than one */
-  
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, twice, "# Twice\n\n::: verse\nalpha\nbeta\n:::\n\n::: verse\ngamma\n:::\n");
   await page.goto(A.url(twice));
   await A.waitEntry(page, twice, 5000).catch(() => {});
   await R.settle(page);
   await rest(page);
-  ;
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   await log("⌃⌘G for a line in one of two blocks", await ask2("2"));

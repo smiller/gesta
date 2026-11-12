@@ -2,12 +2,12 @@ import { section, page, A, R, S, log, go, winY, cornerText, wheelTo, setAnswer, 
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
-  await sourceViewAfter();
-  await sourceViewAfterAfter();
-  await m();
-  await wSourceView();
+  await sourceViewOpening();
+  await sourceViewFollowing();
+  await switchViews();
+  await wordCountInSourceView();
 });
-async function sourceViewAfter(): Promise<void> {
+async function sourceViewOpening(): Promise<void> {
   await go("2026-09-06");
   /* the editor reads the DOM selection when the browser's selectionchange
      reaches it: waited for, not a fixed beat — a 100 ms beat left the caret
@@ -18,7 +18,7 @@ async function sourceViewAfter(): Promise<void> {
      screen, so it is placed until it stays */
   await page.waitForFunction((ed) => document.querySelector(ed)?.contains(document.activeElement), S.editor, { timeout: 2000 }).catch(() => {});
 }
-async function sourceViewAfterAfter(): Promise<void> {
+async function sourceViewFollowing(): Promise<void> {
   for (let tries = 0; tries < 3; tries++) {
     await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
     await R.caretBefore(page, "food of love");
@@ -28,7 +28,7 @@ async function sourceViewAfterAfter(): Promise<void> {
     if (await page.evaluate(() => { const s = document.getSelection(); return !!s.anchorNode?.textContent.slice(s.anchorOffset).startsWith("food of love"); })) break;
   }
 }
-async function m(): Promise<void> {
+async function switchViews(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 });
   await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
@@ -74,7 +74,7 @@ async function m(): Promise<void> {
   await log("⌃⌘W rendered", { corner: await cornerText() });
   await page.keyboard.press("Control+Meta+m");
 }
-async function wSourceView(): Promise<void> {
+async function wordCountInSourceView(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+w");
   await rest(page);
@@ -252,7 +252,6 @@ section("a blank row", async () => {
   await R.settle(page);
   /* the locator's click, which waits for the row to stop moving: an arrival's
      restored place scrolled it between a position read and a click */
-  
   await clickBlank();
   await log("a blank row clicked", await R.blankRow(page));
   await searchFor(page, "");
@@ -282,12 +281,12 @@ section("a blank row", async () => {
 const clickBlank = async () => { const g = page.locator(S.editor + " .vgap").first(); const b = await g.boundingBox(); await g.click({ position: { x: 60, y: b.height / 2 } }); await rest(page); };
 section("the switch carries the text", async () => {
   /* ⌃⌘M carries the TEXT at the window's top across the switch, not its pixel offset: a long canto switched at its middle and at its end */
-  await switchCarriesTextAfter();
-  await switchSPlaceRemembered();
-  await m20pxDown();
+  await switchCarriesTextOpening();
+  await switchPlaceRemembered();
+  await switchFrom20pxDown();
   await caretSeenSourceM();
 });
-async function switchCarriesTextAfter(): Promise<void> {
+async function switchCarriesTextOpening(): Promise<void> {
   const canto = Array.from({ length: 40 }, (_, k) => "::: stanza " + (k + 1) + "\n" + Array.from({ length: 9 }, (_, j) => "Stanza " + (k + 1) + ", line " + (j + 1) + ", set down to fill the measure").join("\n") + "\n:::").join("\n\n") + "\n";
   await go("page/Long%20Canto");
   await page.click(S.editor);
@@ -300,7 +299,7 @@ async function switchCarriesTextAfter(): Promise<void> {
   await wheelTo(0);
   await page.click(S.editorFirst);
 }
-async function switchSPlaceRemembered(): Promise<void> {
+async function switchPlaceRemembered(): Promise<void> {
   for (const [label, where] of [["a long canto switched at its middle", 0.5], ["a long canto switched at its end", 1]] as [string, number][]) {
     await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) * where));
     const rendered = await R.topStanza(page), renderedEnd = await R.lastStanzaShowing(page);
@@ -324,7 +323,7 @@ async function switchSPlaceRemembered(): Promise<void> {
     }
   }
 }
-async function m20pxDown(): Promise<void> {
+async function switchFrom20pxDown(): Promise<void> {
   await wheelTo(20);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
