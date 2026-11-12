@@ -645,7 +645,9 @@ is in the plan's record, under the phase named):
   the page and bookshelf lists, their answer after the warm),
   `backupsPanelActs.ts` (the backups panel's status and the picture
   sweep), `heldKeys.ts` (a held key acting once where its press moved the
-  keys, a held ⌃⌘ chord always; the plain chord). Tests beside them: the ledger's and the model's under
+  keys, a held ⌃⌘ chord always; the plain chord), `mastheadBottom.ts` (the
+  sticky bar's bottom edge, the one reading every placement under it shares),
+  `counted.ts` (a count and its noun). Tests beside them: the ledger's and the model's under
   node, the components' rendered to a string by svelte/server. A
   component never shares a stem with a module (the disk is
   case-insensitive; the plan's phase 3 record has the failure).

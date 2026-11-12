@@ -5,6 +5,7 @@ import type { Backup } from "../store/backup.ts";
 import type { Screen } from "./screen.svelte.ts";
 import { sweepPlan } from "../store/pictures.ts";
 import { refuseCold } from "./lifecycle.ts";
+import { counted } from "./counted.ts";
 
 export interface BackupsPanelDeps {
   bk: Screen["backups"];
@@ -19,9 +20,8 @@ export interface BackupsPanelDeps {
 }
 export interface BackupsPanel { read(): void; sweep(): void }
 
-const plural = (n: number): string => (n === 1 ? "" : "s");
 const sweptLine = (removed: number, n: number): string =>
-  removed === n ? "removed " + n + " unused picture" + plural(n) : "removed " + removed + " of " + n + " unused pictures — the rest would not go";
+  removed === n ? "removed " + counted(n, " unused picture", " unused pictures") : "removed " + removed + " of " + n + " unused pictures — the rest would not go";
 
 export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
   const { bk, layer, images, flushSave, say } = d;
@@ -51,7 +51,7 @@ export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
     plannedSweep().then((plan) => {
       const n = plan.drop.length;
       if (!n) { read(); return; }
-      if (!d.confirm("Remove the " + n + " picture" + plural(n) + " no entry names? This can’t be undone.")) return;
+      if (!d.confirm("Remove the " + counted(n, " picture", " pictures") + " no entry names? This can’t be undone.")) return;
       return remove(plan.drop);
     }, () => { say("couldn’t read the pictures", 3000); });
   };

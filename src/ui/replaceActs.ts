@@ -2,6 +2,7 @@ import type { Session } from "../session.ts";
 import type { Screen } from "./screen.svelte.ts";
 import type { ReplacePort } from "../editor/surface.ts";
 import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "../editor/replace.ts";
+import { mastheadBottom } from "./mastheadBottom.ts";
 
 export interface ReplaceDeps {
   rb: Screen["replace"];
@@ -24,11 +25,10 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
      wrote at the old offsets into the new text
      (pin: replace › the entry saved in another window, the bar open) */
   let barPort: ReplacePort | null = null;
-  const headFoot = (): number => document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
   const draw = (port: ReplacePort): void => {
     rb.count = countLabel(rb.find, hits.length, at);
     rb.any = hits.length > 0;
-    port.show(hits, rb.find.length, at, headFoot());
+    port.show(hits, rb.find.length, at, mastheadBottom());
   };
   const seek = (port: ReplacePort, from: number): void => {
     hits = matches(port.text(), rb.find);
@@ -106,19 +106,19 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     barPort = p;
     fromRendered = how === "switched";
     unwatch = watchPort(p);
-    seek(p, p.start(headFoot()));
+    seek(p, p.start(mastheadBottom()));
     setTimeout(() => focusBar(), 0);
   };
   const find = (v: string): void => {
     rb.find = v;
     const p = port();
-    if (p) seek(p, at >= 0 ? hits[at] : p.start(headFoot()));
+    if (p) seek(p, at >= 0 ? hits[at] : p.start(mastheadBottom()));
   };
   const withText = (v: string): void => { rb.with = v; };
   const next = (back: boolean): void => {
     const p = port();
     if (!p || !hits.length) return;
-    if (at < 0) { seek(p, p.start(headFoot())); return; }
+    if (at < 0) { seek(p, p.start(mastheadBottom())); return; }
     at = (at + (back ? hits.length - 1 : 1)) % hits.length;
     draw(p);
   };
@@ -133,7 +133,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     /* a keystroke not yet recounted moves the text under the offsets: the
        match sought again rather than written at the old place
        (pin: replace.test › whether the text still has the find) */
-    if (at < 0 || !holds(p.text(), hits[at], rb.find)) { seek(p, at < 0 ? p.start(headFoot()) : hits[at]); return; }
+    if (at < 0 || !holds(p.text(), hits[at], rb.find)) { seek(p, at < 0 ? p.start(mastheadBottom()) : hits[at]); return; }
     const r = replaceAt(p.text(), hits[at], rb.find, rb.with);
     edit(p, { from: hits[at], to: hits[at] + rb.find.length, text: rb.with, caret: r.caret });
     seek(p, r.caret);
@@ -144,7 +144,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     const p = port();
     if (!replaceable(p)) return;
     const text = p.text();
-    const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : p.start(headFoot()));
+    const r = replaceEvery(text, rb.find, rb.with, at >= 0 ? hits[at] : p.start(mastheadBottom()));
     edit(p, { from: 0, to: text.length, text: r.text, caret: r.caret });
     recount(p);
   };

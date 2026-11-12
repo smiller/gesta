@@ -7,6 +7,7 @@ import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, fol
 import { openFoldAt } from "../editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
+import { mastheadBottom } from "./mastheadBottom.ts";
 
 export interface LineBarDeps {
   lb: Screen["lineBar"];
@@ -35,7 +36,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
      bar opens on another entry. */
   let lineAsked: number | string = 0, lastAskKey = "";
   function scrollIntoBand(rect: { top: number; bottom: number }): void {
-    const top = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0;
+    const top = mastheadBottom();
     const mid = top + (document.documentElement.clientHeight - top) / 2;
     window.scrollBy(0, (rect.top + rect.bottom) / 2 - mid);
   }

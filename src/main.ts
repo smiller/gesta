@@ -37,7 +37,7 @@ import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
 import { pictureMoves } from "./store/pictures.ts";
 import { formatBar } from "./ui/formatBarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
-import { panelActs, type PanelName } from "./ui/panelActs.ts";
+import { panelActs, type PanelName, type Ns } from "./ui/panelActs.ts";
 import { NS } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -82,8 +82,7 @@ const say = notices.whisper;
 const LINES_KEY = NS + "lineinterval";
 const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : isNaN(keptInterval) || keptInterval < 0 ? 5 : keptInterval);
-type Ns = "page" | "bookshelf";
-type Walk = "prev" | "next";
+type WalkDir = "prev" | "next";
 function keepPicked(file: File): void {
   const p = notices.progress("keeping the backup…");
   keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn't keep the backup", err), errText(err)); });
@@ -134,7 +133,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   /* a new pick is kept, then read as at any launch */
-  reader: READER ? { onOpen: keepPicked, onWalk: (dir: Walk) => acts.walk(dir) } : null,
+  reader: READER ? { onOpen: keepPicked, onWalk: (dir: WalkDir) => acts.walk(dir) } : null,
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
   lineBar: { onInput: (kind: "line" | "page", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
@@ -306,7 +305,7 @@ if (fixture && fixtures[fixture]) {
     opened: () => overlay.open("search"),
     focusRow: () => masthead.focusSearch(),
   });
-  Object.assign(acts.search, { toggle: search.toggle, query: search.query, scope: search.scope, walk: search.walk, pick: search.pick, enter: search.enter });
+  Object.assign(acts.search, search);
   const goRow = gotoActs({
     gt: screen.goto, session, layer, journal,
     opened: () => overlay.open("goto"),
@@ -402,12 +401,19 @@ if (fixture && fixtures[fixture]) {
     focusBar: () => masthead.focusLineBar(),
     warmed: () => layer.warmed,
   });
-  Object.assign(acts.lineBar, { toggle: lineActs.toggle, reask: lineActs.reask, input: lineActs.input, enter: lineActs.enter, close: lineActs.close, dismiss: lineActs.dismiss });
+  Object.assign(acts.lineBar, lineActs);
   Object.assign(acts.replace, replaceActs({
     rb: screen.replace, session, say,
     opened: () => overlay.open("replace"),
     focusBar: () => masthead.focusReplace(),
   }));
+  /* the layout viewport's width on the root, as --client-w: 100vw
+     counts a classic scrollbar's width and overflowed by it; observed on the
+     root element, not the window's resize, because a scrollbar's arrival
+     changes the width and fires no resize */
+  const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
+  clientW();
+  new ResizeObserver(clientW).observe(document.documentElement);
   const copy = copyButton({ cp: screen.copy, session, say });
   acts.copyBlock = copy.copyBlock;
   dropStaleCopy = copy.dropStale;

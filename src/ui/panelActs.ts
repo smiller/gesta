@@ -7,7 +7,7 @@ import { panelRows } from "./mastheadModel.ts";
 import { entryKey, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 
-type Ns = "page" | "bookshelf";
+export type Ns = "page" | "bookshelf";
 export type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 
 export interface PanelDeps {

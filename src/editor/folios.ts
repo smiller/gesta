@@ -1,11 +1,10 @@
 import { Plugin, PluginKey } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
-import { schema } from "../model/schema.ts";
+import { schema, isNote } from "../model/schema.ts";
 import { measurePass } from "./measurePass.ts";
 
 const N = schema.nodes;
-const isNote = (n: Node): boolean => n.type === N.note || n.type === N.margin_note;
 
 export function hasFolios(doc: Node): boolean {
   let found = false;

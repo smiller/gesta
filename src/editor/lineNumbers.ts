@@ -7,7 +7,7 @@
 import { Plugin, PluginKey, type Command } from "prosemirror-state";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
-import { schema } from "../model/schema.ts";
+import { schema, isRowBlock } from "../model/schema.ts";
 import { lineUnits, blockUnits, paintsLines, countsSentences, hasFacing, ownNumbers, type Unit } from "./numbering.ts";
 
 export interface LineNumbersState {
@@ -42,7 +42,6 @@ function nestedRows(rows: Rows, n: Node, pos: number): void {
   for (const u of blockUnits(n, pos, 1)) if (u.shown) rows.set(u.pos, { end: u.pos + u.node.nodeSize, attrs: { class: "ln shown", "data-line": u.label ?? String(u.line) } });
   if (n.attrs.facing != null) for (const u of blockUnits(n, pos, 1, "right")) addFacing(rows, u, true);
 }
-const isRowBlock = (n: Node): boolean => n.type === schema.nodes.verse || n.type === schema.nodes.prose;
 const guttered = (n: Node, parent: Node | null): boolean => !!n.attrs.numbered && !!parent && GUTTERED.has(parent.type.name);
 /* a numbered block quoted, or in a note or a card, carries its numbers
    with it (pin: lineNumbers.test › a numbered block quoted in an entry) */

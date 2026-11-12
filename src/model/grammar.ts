@@ -110,7 +110,8 @@ export const opensNoteRow = testsAny([NOTE_OPEN, MARGIN_NOTE_OPEN]);
 export const rowFence = testsAny([VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, PROSE_OPEN]);
 const closesCode = (line: string, run: string): boolean => (line.match(FENCE_CLOSE)?.[1].length ?? -1) >= run.length;
 export function codeCloses(lines: string[], at: number, run: string): boolean {
-  return lines.slice(at).some((line) => closesCode(line, run));
+  for (let i = at; i < lines.length; i++) if (closesCode(lines[i], run)) return true;
+  return false;
 }
 function codeRun(lines: string[], from: number): string | null {
   const open = FENCE_TICKS.exec(lines[from]);

@@ -7,6 +7,7 @@ import { serializeMarkdown } from "../model/serialize.ts";
 import { dropFolios } from "../editor/paste.ts";
 import { writeClipboard } from "./clipboard.ts";
 import { richBlockHtml, withPictureBytes } from "./richCopy.ts";
+import { mastheadBottom } from "./mastheadBottom.ts";
 
 export interface CopyDeps {
   cp: Screen["copy"];
@@ -52,7 +53,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     return (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4;
   };
   const copyTop = (target: HTMLElement, rect: DOMRect): number =>
-    Math.max(target.classList.contains("grid") ? rect.top - 25 : rect.top + 5, (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 7);
+    Math.max(target.classList.contains("grid") ? rect.top - 25 : rect.top + 5, mastheadBottom() + 7);
   const offScreen = (top: number, rect: DOMRect): boolean => top > rect.bottom - 27 || rect.top > window.innerHeight;
   const newTarget = (target: HTMLElement): void => {
     if (copyReset) clearTimeout(copyReset);
@@ -112,13 +113,6 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     if (!t?.closest || t.closest(".copybtn")) return;
     if (gridsShown()) point(e, t);
   });
-  /* the layout viewport's width on the root, for the grid's break-out: 100vw
-     counts a classic scrollbar's width and overflowed by it; observed on the
-     root element, not the window's resize, because a scrollbar's arrival
-     changes the width and fires no resize */
-  const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
-  clientW();
-  new ResizeObserver(clientW).observe(document.documentElement);
   window.addEventListener("scroll", () => { if (copyTarget) showCopy(copyTarget); }, { passive: true });
   const blockAt = (el: HTMLElement): Node | null => {
     const view = session.view;

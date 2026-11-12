@@ -4,6 +4,7 @@ import type { Screen } from "./screen.svelte.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "../editor/format.ts";
 import { blankRowSelected } from "../editor/rowKeys.ts";
 import { offersBoth } from "../editor/reference.ts";
+import { mastheadBottom } from "./mastheadBottom.ts";
 
 type BarView = NonNullable<Session["view"]>;
 type Command = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
@@ -48,7 +49,7 @@ export function formatBar(d: FormatBarDeps): FormatBar {
     return barSuppressed ? null : view;
   };
   const showAt = (view: BarView, rect: DOMRect): void => {
-    const floor = (head.getBoundingClientRect().bottom || 0) + 8;
+    const floor = mastheadBottom() + 8;
     bar.left = rect.left + rect.width / 2;
     bar.top = Math.max(rect.top, floor);
     bar.incode = inCode(view.state);

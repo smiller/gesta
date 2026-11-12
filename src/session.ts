@@ -28,6 +28,8 @@ import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
+import { plainChord } from "./ui/heldKeys.ts";
+import { mastheadBottom } from "./ui/mastheadBottom.ts";
 
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
@@ -150,14 +152,13 @@ export function startSession(opts: SessionOptions): Session {
   const folds = stored(NS + "folds", parseFoldStore);
   const readFolds = (ekey: string): FoldPage => foldPage(folds.read(), ekey);
   const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => folds.write((s) => withFoldPage(s, ekey, patch));
-  /* the masthead is sticky over the page's top: a place is read, and set,
-     just under it (pin: places › Back) */
-  const mastheadBottom = (): number => Math.max(0, document.querySelector(".site-head")?.getBoundingClientRect().bottom ?? 0);
   /* read at every scroll to the caret, a keystroke's included: a cached
      height, not a layout forced on the page the keystroke just changed */
   let mastheadHeight = 0;
   const head = document.querySelector(".site-head");
   if (head && typeof ResizeObserver === "function") new ResizeObserver(() => { mastheadHeight = (head as HTMLElement).offsetHeight; }).observe(head);
+  /* the masthead is sticky over the page's top: a place is read, and set,
+     just under it (pin: places › Back) */
   const underMasthead = (): number => mastheadBottom() + 4;
   const viewport: Viewport = { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead };
   function browserPage(): Page {
@@ -495,21 +496,20 @@ export function startSession(opts: SessionOptions): Session {
     const view = live();
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
-  /* the current app's chords, silent in Helium; both modifiers, ⇧ and ⌥
-     excluded (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-     (pin: source view › ⌃⌘W rendered) */
-  const chord = (e: KeyboardEvent): boolean => e.ctrlKey && e.metaKey && !e.shiftKey && !e.altKey;
   function switchView(): void {
     if (opts.readOnly) { say("no markdown view here", 2000); return; }
     opts.onSwitch?.();
     surface.switchTo(!surface.md);
   }
+  /* the current app's chords, silent in Helium
+     (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
+     (pin: source view › ⌃⌘W rendered) */
   const chords = new Map<string, () => void>([
     [",", () => step("prev")], [".", () => step("next")], ["t", today], ["r", () => copyReference()],
     ["c", copyEntryLink], ["m", switchView], ["w", showWordCount],
   ]);
   document.addEventListener("keydown", (e) => {
-    const act = chord(e) ? chords.get(e.key.toLowerCase()) : undefined;
+    const act = plainChord(e) ? chords.get(e.key.toLowerCase()) : undefined;
     if (!act) return;
     e.preventDefault();
     act();

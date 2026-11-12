@@ -376,3 +376,36 @@ The nets after the fix: tsc, the suite (1445, eight new: `pictureMoves` and
 health gate (15 files, main.ts 6.92 → 10, every new file 10), the hooks'
 self-test 46/46, and the Helium runs played (corner, bridge, reader ok; 544
 steps, 0 open; 399 fields decided, 0 open) — MEASURED, `npm run verify` exit 0.
+
+### 2026-11-12 — the review of the whole climb (6840333..0d35cd7)
+
+One `/code-review` at HIGH over five commits, 113 files, as decided: 414,844
+tokens (MEASURED, the last message of `agent-abe739057cb17f3d2.jsonl`: 2 input
++ 2,035 cache creation + 409,548 cache read + 3,259 output). No correctness
+regression found, every extracted function read against what it replaced; ten
+findings, every one read against the code and held (READ), all ten fixed in one
+commit:
+
+1. `codeCloses` copied the rest of the lines on every code fence in a `:::`
+   body: a loop again, stopping at the close.
+2. `sectionEnd` copied the tail of the heading list on every `##`, rerun on
+   every change with folds on: a loop again.
+3. The root's `--client-w` observer had moved into the copy button's factory,
+   where only the factory's being built kept the grid's break-out: back in
+   main.ts. 4. Its comment re-read there, cut to its own code.
+5. session.ts kept its own ⌃⌘ test beside `plainChord`: it imports it; the
+   chord comment's "⇧ and ⌥ excluded" left with the line it described.
+6. Four reads of the masthead's bottom, two forms (`?? 0` clamped, `|| 0`):
+   one, `ui/mastheadBottom.ts`, the clamped form, the format bar keeping its
+   element for its observer.
+7. `acts.search` and `acts.lineBar` filled by a hand-written list over no-op
+   stubs: the factory's whole result, as replace's.
+8. Three count-and-plural helpers: one, `ui/counted.ts`, in folderActs,
+   backupsPanelActs and subEntries.
+9. `isRowBlock` and `isNote` twice each: exported once from schema.ts.
+10. main.ts's second `Ns` and a `Walk` beside store/lists.ts's unrelated one:
+    `Ns` exported from panelActs, main.ts's `WalkDir`.
+
+None is a mechanical class a grep would hold (READ), so no checker is owed. No
+finding changed behaviour but the masthead's clamp at 0, which a sticky bar's
+bottom never goes below (INFERRED), so no confirmation pass is owed.

@@ -10,7 +10,7 @@ import { type Command, type EditorState, TextSelection, NodeSelection, Selection
 import { chainCommands } from "prosemirror-commands";
 import { Fragment, type Node, type ResolvedPos } from "prosemirror-model";
 import { keymap } from "prosemirror-keymap";
-import { schema } from "../model/schema.ts";
+import { schema, isRowBlock, isNote } from "../model/schema.ts";
 
 const N = schema.nodes;
 
@@ -23,7 +23,6 @@ interface Row {
   cell: -1 | 0 | 1;
 }
 
-const isRowBlock = (n: Node): boolean => n.type === N.verse || n.type === N.prose;
 function rowOf($pos: ResolvedPos): Row | null {
   for (let d = $pos.depth; d > 0; d--) {
     const n = $pos.node(d);
@@ -200,7 +199,6 @@ export const enterInRow: Command = (state, dispatch) => {
 };
 
 const emptyParagraphAt = ($c: ResolvedPos): boolean => $c.depth >= 2 && $c.parent.type === N.paragraph && !$c.parent.content.size;
-const isNote = (n: Node): boolean => n.type === N.note || n.type === N.margin_note;
 function leaveNote(state: EditorState, $c: ResolvedPos): Transaction {
   const note = $c.node(-1), tr = state.tr, after = $c.after(-1);
   if (note.childCount === 1) tr.delete($c.before(-1), after);

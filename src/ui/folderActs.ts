@@ -8,6 +8,7 @@ import { writeFilesTo } from "../store/io.ts";
 import { pickImportFiles } from "../store/pick.ts";
 import { importFiles, importKeys } from "../store/importFiles.ts";
 import { entryDocs, isDoc, failMsg, errText, filePath, type Merged } from "../store/files.ts";
+import { counted } from "./counted.ts";
 
 export interface FolderDeps {
   session: Pick<Session, "flushSave" | "focusText" | "lockEntries" | "refresh">;
@@ -32,8 +33,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
   let longRun: "an export" | "an import" | null = null;
   const stillRunning = (): boolean => { if (longRun) say(longRun + " is still running", 2000); return !!longRun; };
   type ExportTally = { docs: number; missing: number; lostNote: string; lostList: string };
-  const plural = (n: number, one: string, many: string): string => n + (n === 1 ? one : many);
-  const lostNoteOf = (missing: number): string => (missing ? " — " + plural(missing, " picture", " pictures") + " missing" : "");
+  const lostNoteOf = (missing: number): string => (missing ? " — " + counted(missing, " picture", " pictures") + " missing" : "");
   const lostListOf = (files: Awaited<ReturnType<typeof exportEntries>>): string =>
     files.filter((f) => f.picsMissing).map((f) => filePath(f) + ": " + f.picsMissing + " missing").join("\n");
   const exportTally = (files: Awaited<ReturnType<typeof exportEntries>>): ExportTally => {
@@ -83,13 +83,13 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
   const importAsked = (files: Awaited<ReturnType<typeof pickImportFiles>>): boolean => {
     const n = entryDocs(files).length;
     const refused = files.filter(isDoc).length - n;
-    const refusedNote = refused ? plural(refused, " .md file", " .md files") + " will NOT be imported." : "";
+    const refusedNote = refused ? counted(refused, " .md file", " .md files") + " will NOT be imported." : "";
     /* a folder whose every page is refused says so until clicked (pin:
        notices and surfaces as the old app has them › an import of refused
        files only) */
     if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return false; }
     if (!n) { say("nothing to import"); return false; }
-    return confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + plural(n, " entry", " entries") +
+    return confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + counted(n, " entry", " entries") +
       " from this folder? Each one overwrites that entry in this journal, and there is no undo.");
   };
   const importTold = (p: Progress, tally: Awaited<ReturnType<typeof importFiles>>): void => {

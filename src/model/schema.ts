@@ -166,3 +166,5 @@ const marks: Record<(typeof MARK_ORDER)[number], MarkSpec> = {
 };
 
 export const schema = new Schema({ nodes, marks });
+export const isRowBlock = (n: PMNode): boolean => n.type === schema.nodes.verse || n.type === schema.nodes.prose;
+export const isNote = (n: PMNode): boolean => n.type === schema.nodes.note || n.type === schema.nodes.margin_note;

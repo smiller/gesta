@@ -30,7 +30,10 @@ function headsOf(doc: Node): Head[] {
   });
   return heads;
 }
-const sectionEnd = (heads: Head[], i: number, size: number): number => heads.slice(i + 1).find((h) => h.level <= 2)?.pos ?? size;
+function sectionEnd(heads: Head[], i: number, size: number): number {
+  for (let j = i + 1; j < heads.length; j++) if (heads[j].level <= 2) return heads[j].pos;
+  return size;
+}
 export function foldSections(doc: Node): FoldSection[] {
   const heads = headsOf(doc);
   const runs = linkRuns(doc);
