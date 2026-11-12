@@ -66,15 +66,16 @@ export function isWordChar(text: string, i: number): boolean {
    has always used); bounded, by 1, so a valid hit overlapping a rejected
    one is kept ("ana_" in "banana") (pin: search.test › boundaries, the
    stride, and the limit) */
-export function searchHits(hay: string, needle: string, left: boolean, right: boolean, limit?: number): number[] {
+const holds = (hay: string, at: number, q: Query): boolean =>
+  (!q.left || !isWordChar(hay, at - 1)) && (!q.right || !isWordChar(hay, at + q.needle.length));
+export function searchHits(hay: string, q: Query, limit?: number): number[] {
   const out: number[] = [];
-  if (!needle) return out;
-  const step = left || right ? 1 : needle.length;
-  for (let at = hay.indexOf(needle); at !== -1; at = hay.indexOf(needle, at + step)) {
-    if ((!left || !isWordChar(hay, at - 1)) && (!right || !isWordChar(hay, at + needle.length))) {
-      out.push(at);
-      if (limit && out.length >= limit) break;
-    }
+  if (!q.needle) return out;
+  const step = q.left || q.right ? 1 : q.needle.length;
+  for (let at = hay.indexOf(q.needle); at !== -1; at = hay.indexOf(q.needle, at + step)) {
+    if (!holds(hay, at, q)) continue;
+    out.push(at);
+    if (limit && out.length >= limit) break;
   }
   return out;
 }
@@ -91,17 +92,18 @@ export function searchEntries(index: IndexRow[], query: string, scope: Scope): R
   const p = parseSearchQuery(query);
   const results: Result[] = [];
   if (!p.needle) return results;
-  for (let i = 0; i < index.length && results.length <= SEARCH_CAP; i++) {
-    const e = index[i];
-    if (!inScope(e, scope)) continue;
-    const hits = searchHits(e.lower, p.needle, p.left, p.right, SEARCH_CAP + 1 - results.length);
-    for (let h = 0; h < hits.length && results.length <= SEARCH_CAP; h++) {
-      const at = hits[h];
-      const start = Math.max(0, at - 30), end = Math.min(e.text.length, at + p.needle.length + 30);
-      results.push({ date: e.date, tag: e.tag, nth: h, snippet: (start > 0 ? "…" : "") + e.text.slice(start, end) + (end < e.text.length ? "…" : "") });
-    }
-  }
+  for (let i = 0; i < index.length && results.length <= SEARCH_CAP; i++) if (inScope(index[i], scope)) collect(results, index[i], p);
   return results;
+}
+function snippetAt(text: string, at: number, len: number): string {
+  const start = Math.max(0, at - 30), end = Math.min(text.length, at + len + 30);
+  return (start > 0 ? "…" : "") + text.slice(start, end) + (end < text.length ? "…" : "");
+}
+function collect(results: Result[], e: IndexRow, p: Query): void {
+  const hits = searchHits(e.lower, p, SEARCH_CAP + 1 - results.length);
+  for (let h = 0; h < hits.length && results.length <= SEARCH_CAP; h++) {
+    results.push({ date: e.date, tag: e.tag, nth: h, snippet: snippetAt(e.text, hits[h], p.needle.length) });
+  }
 }
 /* a snippet cut into plain and marked runs under the SAME parse the row
    was built under — best-effort at the "…" edges, cosmetic, never nth (pin:
@@ -111,7 +113,7 @@ export function snippetRuns(snippet: string, query: string): { text: string; mar
   if (!p.needle) return [{ text: snippet, mark: false }];
   const out: { text: string; mark: boolean }[] = [];
   let i = 0;
-  for (const at of searchHits(searchFold(snippet), p.needle, p.left, p.right)) {
+  for (const at of searchHits(searchFold(snippet), p)) {
     if (at < i) continue;
     if (at > i) out.push({ text: snippet.slice(i, at), mark: false });
     out.push({ text: snippet.slice(at, at + p.needle.length), mark: true });

@@ -94,12 +94,12 @@ export function subLevel(w: GotoWorld, ns: string, path: string, sub: string | n
   let listKey = entryKey(ns, path);
   const memo = new Map();
   const segs0 = sub;
-  let order = subPageOrder(w.keys, listKey, w.cache[listKey] || "", bearing, memo);
+  let order = subPageOrder({ keys: w.keys, bearing }, listKey, w.cache[listKey] || "", memo);
   let subs = subPageDisplayList(order, listKey, bearing, sub).filter((s) => bearing(entryKey(listKey, s)));
   let group: string | null = null, took = 1;
   if (subs.length === 1) {
     const only = subs[0], onlyKey = entryKey(listKey, only);
-    const deeperOrder = subPageOrder(w.keys, onlyKey, w.cache[onlyKey] || "", bearing, memo);
+    const deeperOrder = subPageOrder({ keys: w.keys, bearing }, onlyKey, w.cache[onlyKey] || "", memo);
     const deeper = subPageDisplayList(deeperOrder, onlyKey, bearing, deep).filter((s) => bearing(entryKey(onlyKey, s)));
     if (deeper.length) {
       group = only; took = 2; listKey = onlyKey; order = deeperOrder;

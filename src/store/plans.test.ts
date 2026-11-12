@@ -66,11 +66,11 @@ test("dedupFiles: a zero-byte file needs no special case", () => {
 });
 
 test("backupPlan: the mirror on signature, the archives once per day, the reconcile only ours", () => {
-  expect(backupPlan("2026-08-25", null, "s1", null, false)).toEqual({ writeMirror: true, dated: "2026-08-25", reconcile: false });
-  expect(backupPlan("2026-08-25", "2026-08-24", "s2", "s1", true)).toEqual({ writeMirror: true, dated: "2026-08-25", reconcile: true });
-  expect(backupPlan("2026-08-25", "2026-08-25", "s1", "s1", true)).toEqual({ writeMirror: false, dated: null, reconcile: false });
-  expect(backupPlan("2026-08-25", "2026-08-25", "s2", "s1", false)).toEqual({ writeMirror: true, dated: null, reconcile: false });
-  expect(backupPlan("2026-08-25", "2026-08-24", "s1", "s1", true)).toEqual({ writeMirror: false, dated: "2026-08-25", reconcile: false });
+  expect(backupPlan("2026-08-25", "s1", { dated: null, sig: null, ours: false })).toEqual({ writeMirror: true, dated: "2026-08-25", reconcile: false });
+  expect(backupPlan("2026-08-25", "s2", { dated: "2026-08-24", sig: "s1", ours: true })).toEqual({ writeMirror: true, dated: "2026-08-25", reconcile: true });
+  expect(backupPlan("2026-08-25", "s1", { dated: "2026-08-25", sig: "s1", ours: true })).toEqual({ writeMirror: false, dated: null, reconcile: false });
+  expect(backupPlan("2026-08-25", "s2", { dated: "2026-08-25", sig: "s1", ours: false })).toEqual({ writeMirror: true, dated: null, reconcile: false });
+  expect(backupPlan("2026-08-25", "s1", { dated: "2026-08-24", sig: "s1", ours: true })).toEqual({ writeMirror: false, dated: "2026-08-25", reconcile: false });
 });
 
 test("sidecarOfOurs: the stem must name an entry we have seen", () => {

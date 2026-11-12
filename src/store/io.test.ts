@@ -231,8 +231,8 @@ function fakeSub(prefix: string, sink: Sink, failIf?: ((name: string) => boolean
       return Promise.resolve();
     },
     getFileHandle(name: string, opts?: { create?: boolean }) {
-      if (failIf && failIf(name)) return Promise.reject(new Error("bad " + name));
-      if (!(opts && opts.create) && !(prefix + "/" + name in sink)) { const gone = new Error("no such file"); gone.name = "NotFoundError"; return Promise.reject(gone); }
+      if (failIf?.(name)) return Promise.reject(new Error("bad " + name));
+      if (!opts?.create && !(prefix + "/" + name in sink)) { const gone = new Error("no such file"); gone.name = "NotFoundError"; return Promise.reject(gone); }
       return Promise.resolve({ createWritable: () => Promise.resolve({
         write(b: string | Uint8Array) { sink[prefix + "/" + name] = b; if (log) log.push(prefix + "/" + name); return Promise.resolve(); },
         close: () => Promise.resolve(),
@@ -449,26 +449,31 @@ test("writeBackup, dedup: a ghost that will not delete is reported under the swe
 
 // read a zip back through its CENTRAL DIRECTORY, the structure unzip trusts
 interface Member { name: string; madeBy: number; attrs: number; method: number; crc: number; size: number; utf8: boolean; data: Uint8Array }
+function endRecord(dv: DataView, length: number): number {
+  for (let i = length - 22; i >= 0; i--) if (dv.getUint32(i, true) === 0x06054b50) return i;
+  throw new Error("no end-of-central-directory record");
+}
+function memberAt(bytes: Uint8Array, dv: DataView, at: number, i: number): Member {
+  if (dv.getUint32(at, true) !== 0x02014b50) throw new Error("central record " + i + " has no signature");
+  const nameLen = dv.getUint16(at + 28, true), lho = dv.getUint32(at + 42, true);
+  if (dv.getUint32(lho, true) !== 0x04034b50) throw new Error("local header " + i + " has no signature");
+  const dataAt = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+  return {
+    name: new TextDecoder().decode(bytes.subarray(at + 46, at + 46 + nameLen)),
+    madeBy: dv.getUint16(at + 4, true), attrs: dv.getUint32(at + 38, true), method: dv.getUint16(at + 10, true),
+    crc: dv.getUint32(at + 16, true), size: dv.getUint32(at + 24, true), utf8: !!(dv.getUint16(at + 8, true) & 0x800),
+    data: bytes.subarray(dataAt, dataAt + dv.getUint32(at + 20, true)),
+  };
+}
 function readZip(bytes: Uint8Array): Member[] {
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  let end = -1;
-  for (let i = bytes.length - 22; i >= 0; i--) if (dv.getUint32(i, true) === 0x06054b50) { end = i; break; }
-  if (end < 0) throw new Error("no end-of-central-directory record");
+  const end = endRecord(dv, bytes.length);
   const n = dv.getUint16(end + 10, true), out: Member[] = [];
   let at = dv.getUint32(end + 16, true);
   if (dv.getUint32(end + 12, true) !== end - at) throw new Error("the central directory's size disagrees with its offset");
   for (let i = 0; i < n; i++) {
-    if (dv.getUint32(at, true) !== 0x02014b50) throw new Error("central record " + i + " has no signature");
-    const nameLen = dv.getUint16(at + 28, true), lho = dv.getUint32(at + 42, true);
-    if (dv.getUint32(lho, true) !== 0x04034b50) throw new Error("local header " + i + " has no signature");
-    const dataAt = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
-    out.push({
-      name: new TextDecoder().decode(bytes.subarray(at + 46, at + 46 + nameLen)),
-      madeBy: dv.getUint16(at + 4, true), attrs: dv.getUint32(at + 38, true), method: dv.getUint16(at + 10, true),
-      crc: dv.getUint32(at + 16, true), size: dv.getUint32(at + 24, true), utf8: !!(dv.getUint16(at + 8, true) & 0x800),
-      data: bytes.subarray(dataAt, dataAt + dv.getUint32(at + 20, true)),
-    });
-    at += 46 + nameLen + dv.getUint16(at + 30, true) + dv.getUint16(at + 32, true);
+    out.push(memberAt(bytes, dv, at, i));
+    at += 46 + dv.getUint16(at + 28, true) + dv.getUint16(at + 30, true) + dv.getUint16(at + 32, true);
   }
   return out;
 }
@@ -629,7 +634,7 @@ test("writeBundle writes the whole export as one zip in megabyte writes, stamped
   for (let i = 0; i < big.length; i += 65536) crypto.getRandomValues(big.subarray(i, i + 65536));
   const files: ExportFile[] = [docFor("2026-01-01", "one"), { name: "p.webp", dir: "journal/2026/", bytes: big }];
   const disk: Record<string, Uint8Array> = {}, log: string[] = [], manifest: Manifest = {};
-  expect(await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT)).toEqual([]);
+  expect(await writeBundle(bundleDir(disk, log), files, manifest, { day: "2026-10-31", written: AT })).toEqual([]);
   expect(log).toEqual(["write " + READER_ZIP + " in 2"]);
   const parts: Uint8Array[] = [];
   await zipTo(files, "2026-10-31", (c) => { parts.push(c); }, "2026-11-01T11:57:03.000Z");
@@ -639,7 +644,7 @@ test("writeBundle writes the whole export as one zip in megabyte writes, stamped
 
 test("writeBundle abandons the file when a write fails partway, and records nothing", async () => {
   const log: string[] = [], manifest: Manifest = {}, err = new Error("quota");
-  const failures = await writeBundle(bundleDir({}, log, undefined, err), [docFor("2026-01-01", "one")], manifest, "2026-10-31", AT);
+  const failures = await writeBundle(bundleDir({}, log, undefined, err), [docFor("2026-01-01", "one")], manifest, { day: "2026-10-31", written: AT });
   expect(failures).toEqual([{ name: READER_ZIP, error: err, doc: false }]);
   expect(log).toEqual(["abort " + READER_ZIP]);
   expect(manifest[READER_ZIP]).toBeUndefined();
@@ -648,25 +653,25 @@ test("writeBundle abandons the file when a write fails partway, and records noth
 test("writeBundle skips a bundle the record and the folder vouch for, and rewrites one either doubts", async () => {
   const files: ExportFile[] = [docFor("2026-01-01", "one")];
   const disk: Record<string, Uint8Array> = {}, log: string[] = [], manifest: Manifest = {};
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
+  await writeBundle(bundleDir(disk, log), files, manifest, { day: "2026-10-31", written: AT });
+  await writeBundle(bundleDir(disk, log), files, manifest, { day: "2026-10-31", written: AT });
   expect(log.length).toBe(1);
   disk[READER_ZIP] = new Uint8Array(3);
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
+  await writeBundle(bundleDir(disk, log), files, manifest, { day: "2026-10-31", written: AT });
   expect(log.length).toBe(2);
   delete disk[READER_ZIP];
-  await writeBundle(bundleDir(disk, log), files, manifest, "2026-10-31", AT);
+  await writeBundle(bundleDir(disk, log), files, manifest, { day: "2026-10-31", written: AT });
   expect(log.length).toBe(3);
-  await writeBundle(bundleDir(disk, log), [docFor("2026-01-01", "changed")], manifest, "2026-10-31", AT);
+  await writeBundle(bundleDir(disk, log), [docFor("2026-01-01", "changed")], manifest, { day: "2026-10-31", written: AT });
   expect(log.length).toBe(4);
 });
 
 test("writeBundle collects a refused write without a record; a session-fatal one rejects", async () => {
   const files: ExportFile[] = [docFor("2026-01-01", "one")];
   const manifest: Manifest = {}, err = new Error("held open");
-  const failures = await writeBundle(bundleDir({}, [], err), files, manifest, "2026-10-31", AT);
+  const failures = await writeBundle(bundleDir({}, [], err), files, manifest, { day: "2026-10-31", written: AT });
   expect(failures).toEqual([{ name: READER_ZIP, error: err, doc: false }]);
   expect(manifest[READER_ZIP]).toBeUndefined();
   const fatal = Object.assign(new Error("no"), { name: "NotAllowedError" });
-  await expect(writeBundle(bundleDir({}, [], fatal), files, manifest, "2026-10-31", AT)).rejects.toBe(fatal);
+  await expect(writeBundle(bundleDir({}, [], fatal), files, manifest, { day: "2026-10-31", written: AT })).rejects.toBe(fatal);
 });

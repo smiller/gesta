@@ -104,7 +104,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!host) return Promise.resolve();
     const oldLabel = nsOf(date) ? pageParts(oldTag).leaf : oldTag;
     const newLabel = newTag ? (nsOf(date) ? pageParts(newTag).leaf : newTag) : null;
-    const out = retargetLinks(layer.entryMd(host), entryHash(date, oldTag), newTag ? entryHash(date, newTag) : null, oldLabel, newLabel);
+    const out = retargetLinks(layer.entryMd(host), { href: entryHash(date, oldTag), label: oldLabel }, newTag ? { href: entryHash(date, newTag), label: newLabel! } : null);
     return out === null ? Promise.resolve() : layer.setEntry(host, out);
   };
   const newName = (ns: ReturnType<typeof nsOf>): string => ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:";
@@ -218,7 +218,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       if (session.current.date !== date || session.current.tag !== old) return;
       session.suspendSaves();   /* nothing lands under the old key from here on */
       const oldKey = entryKey(date, old), md = layer.entryMd(oldKey);
-      const followed = (text: string): string => retargetLinks(text, entryHash(date, old), entryHash(date, full), old, full) ?? text;
+      const followed = (text: string): string => retargetLinks(text, { href: entryHash(date, old), label: old }, { href: entryHash(date, full), label: full }) ?? text;
       return layer.setEntry(entryKey(date, full), followed(md)).then((landed) => {
         if (!landed) {
           const live = session.surfaceMd();
@@ -478,7 +478,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     headingSeen[ekey] = heading;
     if (!pp.sub || before === heading || !stored) return;
     const parent = entryKey(date, pp.parent);
-    const out = relabelLinks(layer.entryMd(parent), entryHash(date, tag), pp.leaf, before, heading);
+    const out = relabelLinks(layer.entryMd(parent), entryHash(date, tag), pp.leaf, { was: before, now: heading });
     if (out !== null) layer.setEntry(parent, out);
   }
 

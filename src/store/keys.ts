@@ -110,15 +110,15 @@ export function encPart(s: string): string {
   return encodeURIComponent(s).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
 export interface Highlight { q?: string; nth?: number; line?: string }
+function encodedTag(date: string, tag: string): string {
+  return nsOf(date) ? tag.split("/").map(encPart).join("/") : encodeURIComponent(tag);
+}
+function hashQuery(hl?: Highlight): string {
+  if (hl?.q) return "?h=" + encPart(hl.q) + (hl.nth ? "&n=" + hl.nth : "");
+  return hl?.line ? "?line=" + hl.line : "";
+}
 export function entryHash(date: string, tag?: string | null, hl?: Highlight): string {
-  const enc = !tag ? "" : nsOf(date)
-    ? tag.split("/").map(encPart).join("/")
-    : encodeURIComponent(tag);
-  const h = "#" + date + (tag ? "/" + enc : "");
-  let p = "";
-  if (hl && hl.q) p += "&h=" + encPart(hl.q) + (hl.nth ? "&n=" + hl.nth : "");
-  else if (hl && hl.line) p += "&line=" + hl.line;
-  return p ? h + "?" + p.slice(1) : h;
+  return "#" + date + (tag ? "/" + encodedTag(date, tag) : "") + hashQuery(hl);
 }
 export function hashTarget(raw: string): string {
   const q = raw.indexOf("?");

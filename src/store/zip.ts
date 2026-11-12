@@ -39,7 +39,8 @@ export const ZIP_FILE_MODE = 0x81A40000;
    for field. `stored` is the deflated bytes or `raw` ITSELF when deflating
    would have grown them, so identity says which and the two cannot
    disagree (pin: zip.test › emitZipEntry: the header pair agrees) */
-export function emitZipEntry(path: string, raw: Uint8Array, stored: Uint8Array, day: number, at: number): { local: Uint8Array; central: Uint8Array } {
+export interface ZipMember { path: string; raw: Uint8Array; stored: Uint8Array }
+export function emitZipEntry({ path, raw, stored }: ZipMember, day: number, at: number): { local: Uint8Array; central: Uint8Array } {
   const name = utf8.encode(path), crc = crc32(raw);
   const method = stored === raw ? 0 : 8;
   function head(size: number, extra: number): { bytes: Uint8Array; view: DataView } {

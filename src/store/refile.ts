@@ -23,28 +23,25 @@ export function pointsInto(ns: string, root: string): (md: string) => boolean {
     try { return linkRuns(parseMarkdown(md)).some((r) => namesUnder(r.href, ns, root)); } catch { return false; }
   };
 }
+/* a bare address runs to the space after it, so where it ends is not
+   known: every stop at a closing bracket or a quote is tried, a name
+   holding either being read whole (pin: refile.test › a name with a
+   straight apostrophe or brackets) */
+function readings(m: RegExpMatchArray): string[] {
+  if (m[1] !== undefined) return [m[1]];
+  const run = m[2], out = [run];
+  for (let i = run.length - 1; i > 0; i--) if (run[i] === ")" || run[i] === "'") out.push(run.slice(0, i));
+  return out;
+}
 /* every address in the namespace the text holds, read as an address without
    parsing the text: a link, a link's definition, a full URL, bracketed or not.
    An entry with none under `root` cannot link there, and is not parsed (pin:
    refile.test › mayName) */
 export function mayName(ns: string, root: string): (md: string) => boolean {
   const re = new RegExp("<[^<>\\n]*#" + escapeRe(ns) + "/([^<>\\n]*)>|#" + escapeRe(ns) + "/([^\\s\"<>\\]]*)", "g");
-  /* a bare address runs to the space after it, so where it ends is not
-     known: every stop at a closing bracket or a quote is tried, a name
-     holding either being read whole (pin: refile.test › a name with a
-     straight apostrophe or brackets) */
-  const stops = (run: string): string[] => {
-    const out = [run];
-    for (let i = run.length - 1; i > 0; i--) if (run[i] === ")" || run[i] === "'") out.push(run.slice(0, i));
-    return out;
-  };
   return (md) => {
     if (md.indexOf("#" + ns + "/") === -1) return false;
-    re.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = re.exec(md))) {
-      for (const path of m[1] !== undefined ? [m[1]] : stops(m[2])) if (namesUnder("#" + ns + "/" + path, ns, root)) return true;
-    }
+    for (const m of md.matchAll(re)) if (readings(m).some((path) => namesUnder("#" + ns + "/" + path, ns, root))) return true;
     return false;
   };
 }

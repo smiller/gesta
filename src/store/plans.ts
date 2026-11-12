@@ -25,17 +25,22 @@ export function fileSig(f: ExportFile): string {
    COUNTED, NOT ENCODED: a surrogate pair is one four-byte code point, a lone
    half a three-byte replacement (pin: plans.test › fileSize counts UTF-8
    bytes as the folder will report them) */
+const isHighSurrogate = (c: number): boolean => c >= 0xD800 && c < 0xDC00;
+const isLowSurrogate = (c: number): boolean => c >= 0xDC00 && c < 0xE000;
+function utf8Width(body: string, i: number): number {
+  const c = body.charCodeAt(i);
+  if (c < 0x80) return 1;
+  if (c < 0x800) return 2;
+  return isHighSurrogate(c) && isLowSurrogate(body.charCodeAt(i + 1)) ? 4 : 3;
+}
 export function fileSize(f: ExportFile): number {
   const body = fileBody(f);
   if (typeof body !== "string") return body.length;
   let n = 0;
   for (let i = 0; i < body.length; i++) {
-    const c = body.charCodeAt(i);
-    if (c < 0x80) n += 1;
-    else if (c < 0x800) n += 2;
-    else if (c >= 0xD800 && c < 0xDC00 && i + 1 < body.length &&
-             body.charCodeAt(i + 1) >= 0xDC00 && body.charCodeAt(i + 1) < 0xE000) { n += 4; i++; }
-    else n += 3;
+    const w = utf8Width(body, i);
+    n += w;
+    if (w === 4) i++;
   }
   return n;
 }
@@ -72,29 +77,39 @@ export interface Reconcile { drop: string[]; refused: number }
    and its files under both stems are spared. The tier ROOT is not swept
    here: a flat copy there is under a stricter test (pin: plans.test ›
    reconcilePlan drops only nested ghosts of ours, and spares the unread) */
-export function reconcilePlan(present: Record<string, number>, expected: ExportFile[], unread?: EntryFile[] | null): Reconcile {
-  const here = Object.keys(present), keep: Record<string, true> = Object.create(null);
-  for (const f of expected) keep[filePath(f)] = true;
-  const spared: Record<string, true> = Object.create(null);
+type PathSet = Record<string, true>;
+function sparedPaths(unread?: EntryFile[] | null): PathSet {
+  const spared: PathSet = Object.create(null);
   for (const target of unread || []) {
     spared[target.dir + target.base + ".md"] = true;
     spared[target.dir + target.flatBase] = true;
     spared[target.dir + target.base] = true;
   }
-  /* every .md we know of, live or ghost, by the import's own question: a
-     foreign notes/page/Ideas.md is nobody's (pin: plans.test › reconcilePlan:
-     a namespace word below the tier root is not ours) */
-  const known: Record<string, true> = Object.create(null);
+  return spared;
+}
+/* every .md we know of, live or ghost, by the import's own question: a
+   foreign notes/page/Ideas.md is nobody's (pin: plans.test › reconcilePlan:
+   a namespace word below the tier root is not ours) */
+function knownDocs(here: string[], keep: PathSet): PathSet {
+  const known: PathSet = Object.create(null);
   for (const path of here) if (importTarget(path)) known[path] = true;
   for (const path of Object.keys(keep)) if (/\.md$/i.test(path)) known[path] = true;
-  const drop = here.filter((path) => {
-    if (keep[path]) return false;
-    if (path.indexOf("/") === -1) return false;
-    if (spared[path]) return false;
-    const at = path.lastIndexOf("/"), stem = SIDECAR.exec(path.slice(at + 1));
-    if (stem && spared[path.slice(0, at + 1) + stem[1]]) return false;
-    return !!known[path] || sidecarOfOurs(path, known);
-  });
+  return known;
+}
+function sparedSidecar(path: string, spared: PathSet): boolean {
+  const at = path.lastIndexOf("/"), stem = SIDECAR.exec(path.slice(at + 1));
+  return !!stem && !!spared[path.slice(0, at + 1) + stem[1]];
+}
+function isGhost(path: string, sets: { keep: PathSet; spared: PathSet; known: PathSet }): boolean {
+  if (sets.keep[path] || !path.includes("/")) return false;
+  if (sets.spared[path] || sparedSidecar(path, sets.spared)) return false;
+  return !!sets.known[path] || sidecarOfOurs(path, sets.known);
+}
+export function reconcilePlan(present: Record<string, number>, expected: ExportFile[], unread?: EntryFile[] | null): Reconcile {
+  const here = Object.keys(present), keep: PathSet = Object.create(null);
+  for (const f of expected) keep[filePath(f)] = true;
+  const sets = { keep, spared: sparedPaths(unread), known: knownDocs(here, keep) };
+  const drop = here.filter((path) => isGhost(path, sets));
   const over = drop.length > Math.max(RECONCILE_FLOOR, here.length / 2);
   return { drop: over ? [] : drop, refused: over ? drop.length : 0 };
 }
@@ -120,9 +135,10 @@ export interface BackupPlan { writeMirror: boolean; dated: string | null; reconc
    committed only if no one else has committed since (pin: plans.test ›
    backupPlan: the mirror on signature, the archives once per day, the
    reconcile only ours) */
-export function backupPlan(today: string, lastDated: string | null, sig: string, lastSig: string | null, oursLast: boolean): BackupPlan {
-  const writeMirror = sig !== lastSig;
-  return { writeMirror, dated: today !== lastDated ? today : null, reconcile: writeMirror && !!oursLast };
+export interface LastRun { dated: string | null; sig: string | null; ours: boolean }
+export function backupPlan(today: string, sig: string, last: LastRun): BackupPlan {
+  const writeMirror = sig !== last.sig;
+  return { writeMirror, dated: today !== last.dated ? today : null, reconcile: writeMirror && !!last.ours };
 }
 /* the archive a file belongs to; a key that is neither a day nor a
    namespace with a tag takes none, and that is reported rather than only
@@ -154,17 +170,23 @@ export interface ArchiveGroup { root: string; sig: string; files: ExportFile[] }
    witnesses, as the mirror's dedup takes: what we last WROTE and what is
    THERE; anything not corroborated is archived (pin: plans.test ›
    archivePlan writes anything not positively corroborated) */
-export function archivePlan(files: ExportFile[], archived: Archived, present: Record<string, unknown>): ArchiveGroup[] {
-  const by: Record<string, ExportFile[]> = Object.create(null), out: ArchiveGroup[] = [];
+function byRoot(files: ExportFile[]): Record<string, ExportFile[]> {
+  const by: Record<string, ExportFile[]> = Object.create(null);
   for (const f of files) {
     const at = rootOf(f);
-    if (!at) continue;
-    (by[at] || (by[at] = [])).push(f);
+    if (at) (by[at] ??= []).push(f);
   }
+  return by;
+}
+function corroborated(was: ArchiveRecord | string | undefined, sig: string, present: Record<string, unknown>): boolean {
+  if (!was || typeof was !== "object") return false;
+  return was.sig === sig && !!was.at && present[was.at] !== undefined;
+}
+export function archivePlan(files: ExportFile[], archived: Archived, present: Record<string, unknown>): ArchiveGroup[] {
+  const by = byRoot(files), out: ArchiveGroup[] = [];
   for (const at of Object.keys(by).sort()) {
-    const sig = rootSig(by[at]), was = archived[at];
-    if (was && typeof was === "object" && was.sig === sig && was.at && present[was.at] !== undefined) continue;
-    out.push({ root: at, sig, files: by[at] });
+    const sig = rootSig(by[at]);
+    if (!corroborated(archived[at], sig, present)) out.push({ root: at, sig, files: by[at] });
   }
   return out;
 }

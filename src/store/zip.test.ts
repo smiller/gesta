@@ -9,7 +9,7 @@ test("crc32 matches the standard check vector, and empty input is zero", () => {
 
 test("emitZipEntry: the header pair agrees, and identity says stored-vs-deflated", () => {
   const raw = utf8.encode("héllo.md content");
-  const e = emitZipEntry("journal/2026/héllo.md", raw, raw, 0x5911, 1234);
+  const e = emitZipEntry({ path: "journal/2026/héllo.md", raw, stored: raw }, 0x5911, 1234);
   const name = utf8.encode("journal/2026/héllo.md");
   const lv = new DataView(e.local.buffer), cv = new DataView(e.central.buffer);
   expect(lv.getUint32(0, true)).toBe(0x04034b50);
@@ -33,7 +33,7 @@ test("emitZipEntry: the header pair agrees, and identity says stored-vs-deflated
 test("emitZipEntry: a distinct stored buffer means method 8, deflated", () => {
   const raw = utf8.encode("aaaaaaaaaaaaaaaaaaaaaaaa");
   const packed = utf8.encode("shorter");
-  const e = emitZipEntry("a.md", raw, packed, 0x5911, 0);
+  const e = emitZipEntry({ path: "a.md", raw, stored: packed }, 0x5911, 0);
   const lv = new DataView(e.local.buffer);
   expect(lv.getUint16(8, true)).toBe(8);
   expect(lv.getUint32(14, true)).toBe(crc32(raw));

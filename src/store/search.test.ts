@@ -38,13 +38,13 @@ describe("isWordChar", () => {
 });
 describe("searchHits", () => {
   it("boundaries, the stride, and the limit", () => {
-    expect(searchHits("aa aa", "aa", true, true)).toEqual([0, 3]);
-    expect(searchHits("aaa", "aa", true, true)).toEqual([]);
-    expect(searchHits("banana", "ana", false, true)).toEqual([3]);
-    expect(searchHits("aaaa", "aa", false, false)).toEqual([0, 2]);
-    expect(searchHits("_port_ important", "port", true, true)).toEqual([1]);
-    expect(searchHits("x x x", "x", false, false, 2)).toEqual([0, 2]);
-    expect(searchHits("anything", "", false, false)).toEqual([]);
+    expect(searchHits("aa aa", { needle: "aa", left: true, right: true })).toEqual([0, 3]);
+    expect(searchHits("aaa", { needle: "aa", left: true, right: true })).toEqual([]);
+    expect(searchHits("banana", { needle: "ana", left: false, right: true })).toEqual([3]);
+    expect(searchHits("aaaa", { needle: "aa", left: false, right: false })).toEqual([0, 2]);
+    expect(searchHits("_port_ important", { needle: "port", left: true, right: true })).toEqual([1]);
+    expect(searchHits("x x x", { needle: "x", left: false, right: false }, 2)).toEqual([0, 2]);
+    expect(searchHits("anything", { needle: "", left: false, right: false })).toEqual([]);
   });
 });
 describe("inScope", () => {

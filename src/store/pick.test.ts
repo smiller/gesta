@@ -4,13 +4,14 @@ import { test, expect } from "vitest";
 import { walkFolder, pickImportFiles, type DirHandle, type FileHandle } from "./pick.ts";
 
 type Tree = { [name: string]: string | Uint8Array | Tree | Error };
+const isTree = (v: Tree[string]): v is Tree => typeof v === "object" && !(v instanceof Uint8Array) && !(v instanceof Error);
 function fakeDir(tree: Tree, name = ""): DirHandle {
   return {
     kind: "directory", name,
     async *values() {
       for (const n of Object.keys(tree)) {
         const v = tree[n];
-        if (typeof v === "object" && !(v instanceof Uint8Array) && !(v instanceof Error)) yield fakeDir(v, n);
+        if (isTree(v)) yield fakeDir(v, n);
         else yield fakeFile(n, v);
       }
     },

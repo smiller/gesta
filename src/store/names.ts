@@ -135,35 +135,32 @@ export function importTarget(path: string): Target | null {
    want, `flatBase` the stem carrying the whole key (the sidecar's, and the
    collision check's), `root` which ARCHIVE the entry belongs to */
 export interface EntryFile { dir: string; base: string; flatBase: string; root: string }
+const safe = (s: string): string => s.replace(FILE_UNSAFE_RE, "-");
+/* the same fold plus the one thing a folder name cannot end in, for the
+   archive alone: nothing reads an archive's folder name back as a key, so
+   it may be normalised where an entry's own path may not */
+const dirSafe = (s: string): string => safe(s).replace(/\.+$/, "") || "-";
+function keyedFile(date: string, tag: string): EntryFile {
+  const pp = pageParts(tag);
+  const anc = pp.parent ? pp.parent.split("/").map(safe) : [];
+  const leaf = safe(pp.leaf);
+  /* EVERY separator becomes "--": a single String.replace substitutes only
+     the first, which let two deep keys mint one filename with nothing
+     reported (pin: names.test › entryFile: a keyed entry's folder IS its
+     key, its flat stem opens with its namespace) */
+  const flat = date + "--" + anc.concat(leaf).join("--");
+  const root = date + "/" + dirSafe(pp.name);
+  /* AN ANCESTOR ENDING IN A DOT CANNOT BE A DIRECTORY ("." and ".." are
+     refused by getDirectoryHandle; any other dot-suffixed name succeeds and
+     the folder is then skipped whole on import), so the entry takes the
+     flat spelling. It lands at the export's root and does NOT round-trip
+     (pin: names.test › entryFile: an ancestor ending in a dot flattens the
+     entry, never its root) */
+  if (anc.some((s) => /\.$/.test(s))) return { dir: "", base: flat, flatBase: flat, root };
+  return { dir: date + "/" + (anc.length ? anc.join("/") + "/" : ""), base: leaf, flatBase: flat, root };
+}
 export function entryFile(date: string, tag?: string | null): EntryFile {
-  const safe = (s: string): string => s.replace(FILE_UNSAFE_RE, "-");
-  /* the same fold plus the one thing a folder name cannot end in, for the
-     archive alone: nothing reads an archive's folder name back as a key, so
-     it may be normalised where an entry's own path may not */
-  const dirSafe = (s: string): string => safe(s).replace(/\.+$/, "") || "-";
-  if (nsOf(date) && tag) {
-    const pp = pageParts(tag);
-    const anc = pp.parent ? pp.parent.split("/").map(safe) : [];
-    const leaf = safe(pp.leaf);
-    /* EVERY separator becomes "--": a single String.replace substitutes only
-       the first, which let two deep keys mint one filename with nothing
-       reported (pin: names.test › entryFile: a keyed entry's folder IS its
-       key, its flat stem opens with its namespace) */
-    const flat = date + "--" + anc.concat(leaf).join("--");
-    const root = date + "/" + dirSafe(pp.name);
-    /* AN ANCESTOR ENDING IN A DOT CANNOT BE A DIRECTORY ("." and ".." are
-       refused by getDirectoryHandle; any other dot-suffixed name succeeds and
-       the folder is then skipped whole on import), so the entry takes the
-       flat spelling. It lands at the export's root and does NOT round-trip
-       (pin: names.test › entryFile: an ancestor ending in a dot flattens the
-       entry, never its root) */
-    if (anc.some((s) => /\.$/.test(s)))
-      return { dir: "", base: flat, flatBase: flat, root };
-    return {
-      dir: date + "/" + (anc.length ? anc.join("/") + "/" : ""),
-      base: leaf, flatBase: flat, root,
-    };
-  }
+  if (nsOf(date) && tag) return keyedFile(date, tag);
   const base = safe(tag ? date + "--" + tag : date);
   const year = isDayKey(date) ? dayDir(date) : "";
   return { dir: year && year + "/", base, flatBase: base, root: year };

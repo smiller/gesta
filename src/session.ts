@@ -417,7 +417,7 @@ export function startSession(opts: SessionOptions): Session {
   function step(dir: "prev" | "next"): void {
     if (!layer.warmed) { say("still loading — try that again in a moment", 2500); return; }
     const keys = Object.keys(layer.cache), bearing = (k: string) => !!layer.entryMd(k).trim();
-    const nb = navNeighbors(keys, current.date, current.tag, bearing, (pk) => subPageOrder(keys, pk, layer.entryMd(pk), bearing, orderMemo).names)[dir];
+    const nb = navNeighbors({ keys, bearing }, current.date, current.tag, (pk) => subPageOrder({ keys, bearing }, pk, layer.entryMd(pk), orderMemo).names)[dir];
     if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
   }

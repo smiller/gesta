@@ -8,7 +8,7 @@
 import { parseMarkdown } from "../model/parse.ts";
 import { entryKey } from "./keys.ts";
 import { importTarget } from "./names.ts";
-import { entryDocs, filePath, type ImportFile } from "./files.ts";
+import { entryDocs, filePath, type DocFile, type ImportFile, type UnreadDoc } from "./files.ts";
 
 export interface ImportSink {
   setEntry(ekey: string, md: string): Promise<boolean>;
@@ -29,18 +29,22 @@ export type Outcome = "imported" | "skipped" | "failed";
    BOTH spellings, bare and CommonMark's <name> form. A ref is RELATIVE, so
    it resolves in its entry's OWN folder and the map is keyed by path (pin:
    importFiles.test › a sidecar is filed under the path its ref resolves to) */
+function relativeIn(dir: string, s: string): string | null {
+  if (!s.startsWith(dir)) return null;
+  const rel = s.slice(dir.length);
+  return rel.includes("/") ? null : rel;
+}
+const namesPicture = (text: string, rel: string): boolean => text.includes("](" + rel + ")") || text.includes("](<" + rel + ">)");
 export function sidecarRefs(path: string, text: string, sidecars: Sidecars): { refs: string[]; blocked: boolean } {
   const dir = path.slice(0, path.lastIndexOf("/") + 1);
   const refs: string[] = [];
   let blocked = false;
-  if (text.indexOf("![") === -1) return { refs, blocked };
+  if (!text.includes("![")) return { refs, blocked };
   for (const s of Object.keys(sidecars)) {
-    if (s.slice(0, dir.length) !== dir) continue;
-    const rel = s.slice(dir.length);
-    if (rel.indexOf("/") !== -1) continue;
-    if (text.indexOf("](" + rel + ")") === -1 && text.indexOf("](<" + rel + ">)") === -1) continue;
-    if (sidecars[s] === null) { blocked = true; continue; }
-    refs.push(s);
+    const rel = relativeIn(dir, s);
+    if (rel === null || !namesPicture(text, rel)) continue;
+    if (sidecars[s] === null) blocked = true;
+    else refs.push(s);
   }
   return { refs, blocked };
 }
@@ -55,15 +59,20 @@ export function importEntry(path: string, text: string, sidecars: Sidecars, sink
   if (blocked) return Promise.reject(new Error("a picture this entry needs could not be read"));
   return Promise.resolve().then(() => {
     parseMarkdown(text);
-    /* a full store met mid-way names the pictures it kept, standing with no
-       entry to show them (pin: importFiles.test › storage full on a later picture) */
-    const written: string[] = [];
-    return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)).then(() => { written.push(s); }), Promise.resolve())
-      .catch((err: unknown) => { throw isQuota(err) ? new StorageFull("storage full" + (written.length ? "; pictures written for it: " + written.join(", ") : "")) : err; });
-  }).then(() => sink.setEntry(ekey, text)).then((landed) => {
-    if (!landed && isQuota(sink.writeError?.(ekey))) throw new StorageFull("storage full");
-    return landed ? "imported" : "failed";
-  });
+    return writePictures(refs, sidecars, sink);
+  }).then(() => sink.setEntry(ekey, text)).then((landed) => outcomeOf(landed, sink, ekey));
+}
+/* a full store met mid-way names the pictures it kept, standing with no
+   entry to show them (pin: importFiles.test › storage full on a later picture) */
+function writePictures(refs: string[], sidecars: Sidecars, sink: ImportSink): Promise<void> {
+  const written: string[] = [];
+  const kept = (): string => (written.length ? "; pictures written for it: " + written.join(", ") : "");
+  return refs.reduce((chain, s) => chain.then(() => sink.setImage(s, sidecars[s]!)).then(() => { written.push(s); }), Promise.resolve())
+    .catch((err: unknown) => { throw isQuota(err) ? new StorageFull("storage full" + kept()) : err; });
+}
+function outcomeOf(landed: boolean, sink: ImportSink, ekey: string): Outcome {
+  if (!landed && isQuota(sink.writeError?.(ekey))) throw new StorageFull("storage full");
+  return landed ? "imported" : "failed";
 }
 export function importKeys(files: ImportFile[]): Set<string> {
   const keys = new Set<string>();
@@ -85,16 +94,23 @@ export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: 
   const docs = entryDocs(files);
   const tally: Tally = { imported: 0, failed: 0, attempted: docs.length, failures: [] };
   let done = 0;
-  return docs.reduce((chain, f) => chain.then(() => {
-    if (tally.full) return;
-    const path = filePath(f);
-    if (f.unread) { tally.failed++; tally.failures.push({ path, error: "could not be read" }); return; }
-    return importEntry(path, f.text, sidecars, sink).then(
-      (outcome) => {
-        if (outcome === "imported") tally.imported++;
-        else if (outcome === "failed") { tally.failed++; tally.failures.push({ path, error: "the write did not land" }); }
-      },
-      (err: unknown) => { tally.failed++; tally.failures.push({ path, error: String((err as Error)?.message ?? err) }); if (err instanceof StorageFull) tally.full = true; },
-    );
-  }).then(() => { if (onProgress) onProgress(++done, docs.length); }), Promise.resolve()).then(() => tally);
+  return docs.reduce((chain, f) => chain.then(() => importOne(f, sidecars, sink, tally))
+    .then(() => { onProgress?.(++done, docs.length); }), Promise.resolve()).then(() => tally);
+}
+function failed(tally: Tally, path: string, error: string): void {
+  tally.failed++;
+  tally.failures.push({ path, error });
+}
+function counted(tally: Tally, path: string, outcome: Outcome): void {
+  if (outcome === "imported") tally.imported++;
+  else if (outcome === "failed") failed(tally, path, "the write did not land");
+}
+function importOne(f: DocFile | UnreadDoc, sidecars: Sidecars, sink: ImportSink, tally: Tally): Promise<void> | void {
+  if (tally.full) return;
+  const path = filePath(f);
+  if (f.unread) return failed(tally, path, "could not be read");
+  return importEntry(path, f.text, sidecars, sink).then((outcome) => counted(tally, path, outcome), (err: unknown) => {
+    failed(tally, path, String((err as Error)?.message ?? err));
+    if (err instanceof StorageFull) tally.full = true;
+  });
 }

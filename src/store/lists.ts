@@ -47,23 +47,33 @@ export function unmintedKey(keys: string[], date: string, tag: string | null): b
    Consolatio the prose and the verse alternate, 3pr1 then 3m1; by name, ⌃⌘.
    from 3pr1 went to 3pr2 (pin: lists.test › subPageNeighbors walks the
    order it is given) */
-export function subPageNeighbors(keys: string[], parentKey: string, sub: string, bearing: (key: string) => boolean, order?: string[]): Neighbors {
-  const subs = order || childrenOf(keys, parentKey);
-  let at = subs.indexOf(sub);
-  if (at < 0) { if (order) at = subs.length; else { at = 0; while (at < subs.length && byName(subs[at], sub) < 0) at++; } }
-  let prev: string | null = null, next: string | null = null;
-  for (let i = at - 1; i >= 0 && !prev; i--) if (bearing(entryKey(parentKey, subs[i]))) prev = subs[i];
-  for (let i = at; i < subs.length && !next; i++) if (subs[i] !== sub && bearing(entryKey(parentKey, subs[i]))) next = subs[i];
-  return { prev, next };
+export interface Walk { keys: string[]; bearing: (key: string) => boolean }
+function startAt(subs: string[], sub: string, stated: boolean): number {
+  const at = subs.indexOf(sub);
+  if (at >= 0) return at;
+  if (stated) return subs.length;
+  let i = 0;
+  while (i < subs.length && byName(subs[i], sub) < 0) i++;
+  return i;
 }
-export function navNeighbors(keys: string[], date: string, tag: string | null, bearing: (key: string) => boolean, orderOf?: (parentKey: string) => string[]): { prev: [string, string | null] | null; next: [string, string | null] | null } {
+export function subPageNeighbors(walk: Walk, parentKey: string, sub: string, order?: string[]): Neighbors {
+  const subs = order || childrenOf(walk.keys, parentKey);
+  const at = startAt(subs, sub, !!order);
+  const bears = (s: string): boolean => s !== sub && walk.bearing(entryKey(parentKey, s));
+  return { prev: subs.slice(0, at).reverse().find(bears) ?? null, next: subs.slice(at).find(bears) ?? null };
+}
+type Step = [string, string | null] | null;
+export interface NavSteps { prev: Step; next: Step }
+function subNeighbors(walk: Walk, date: string, pp: ReturnType<typeof pageParts>, orderOf?: (parentKey: string) => string[]): NavSteps {
+  const parentKey = entryKey(date, pp.parent);
+  const nb = subPageNeighbors(walk, parentKey, pp.leaf, orderOf?.(parentKey));
+  const at = (s: string | null): Step => (s ? [date, pp.parent + "/" + s] : null);
+  return { prev: at(nb.prev), next: at(nb.next) };
+}
+export function navNeighbors(walk: Walk, date: string, tag: string | null, orderOf?: (parentKey: string) => string[]): NavSteps {
   const pp = nsOf(date) && tag ? pageParts(tag) : null;
-  if (pp && pp.sub) {
-    const parentKey = entryKey(date, pp.parent);
-    const nb = subPageNeighbors(keys, parentKey, pp.leaf, bearing, orderOf?.(parentKey));
-    return { prev: nb.prev ? [date, pp.parent + "/" + nb.prev] : null, next: nb.next ? [date, pp.parent + "/" + nb.next] : null };
-  }
+  if (pp?.sub) return subNeighbors(walk, date, pp, orderOf);
   if (tag) return { prev: null, next: null };
-  const nb = entryNeighbors(keys, date);
+  const nb = entryNeighbors(walk.keys, date);
   return { prev: nb.prev ? [nb.prev, null] : null, next: nb.next ? [nb.next, null] : null };
 }

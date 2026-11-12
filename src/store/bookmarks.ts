@@ -14,29 +14,37 @@ export const BOOKMARK_CAP = 9;
    (pin: bookmarks.test › aliasRefusal: the pattern) */
 export const ALIAS_RE = /^[b-z][a-z0-9]*$/;
 export interface Bookmark { key: string; alias: string }
+function jsonArray(text: string): unknown[] | null {
+  try {
+    const raw: unknown = JSON.parse(text);
+    return Array.isArray(raw) ? raw : null;
+  } catch { return null; }
+}
+const strayField = (f: string): boolean => f !== "key" && f !== "alias";
+const isPlain = (m: unknown): m is Record<string, unknown> => !!m && typeof m === "object" && !Array.isArray(m);
+function readRow(m: unknown): Bookmark | null {
+  if (typeof m === "string") return { key: m, alias: "" };
+  if (!isPlain(m)) return null;
+  if (Object.keys(m).some(strayField)) return null;
+  const key = m.key, alias = m.alias === undefined ? "" : m.alias;
+  return typeof key === "string" && typeof alias === "string" ? { key, alias } : null;
+}
+function admits(rows: Bookmark[], row: Bookmark): boolean {
+  if (!row.key) return false;
+  if (row.alias && !ALIAS_RE.test(row.alias)) return false;
+  return bookmarkIndex(rows, row.key) === -1 && !aliasHolder(rows, row.alias);
+}
 export function parseBookmarks(text: string | null | undefined): Bookmark[] | null {
   if (!text) return [];
-  let raw: unknown;
-  try { raw = JSON.parse(text); } catch { return null; }
-  if (!Array.isArray(raw)) return null;
+  const raw = jsonArray(text);
+  if (!raw) return null;
   const rows: Bookmark[] = [];
   for (const m of raw) {
-    let key: unknown, alias: unknown;
-    if (typeof m === "string") { key = m; alias = ""; }
-    else if (m && typeof m === "object" && !Array.isArray(m)) {
-      for (const f in m as Record<string, unknown>) if (f !== "key" && f !== "alias") return null;
-      key = (m as { key?: unknown }).key;
-      alias = (m as { alias?: unknown }).alias === undefined ? "" : (m as { alias?: unknown }).alias;
-      if (typeof key !== "string" || typeof alias !== "string") return null;
-    } else return null;
-    if (!key) return null;
-    if (alias && !ALIAS_RE.test(alias as string)) return null;
-    if (bookmarkIndex(rows, key as string) !== -1) return null;
-    if (aliasHolder(rows, alias as string)) return null;
-    rows.push({ key: key as string, alias: alias as string });
+    const row = readRow(m);
+    if (!row || !admits(rows, row)) return null;
+    rows.push(row);
   }
-  if (numberedBookmarks(rows).length > BOOKMARK_CAP) return null;
-  return rows;
+  return numberedBookmarks(rows).length > BOOKMARK_CAP ? null : rows;
 }
 export function serializeBookmarks(list: Bookmark[]): (string | Bookmark)[] {
   return list.map((b) => (b.alias ? { key: b.key, alias: b.alias } : b.key));

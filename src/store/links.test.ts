@@ -11,38 +11,38 @@ describe("linkRuns", () => {
 describe("retargetLinks", () => {
   it("an address that names a place in the entry moves with it, or goes with it, keeping what it names", () => {
     const md = "[a](#bookshelf/A/One?line=7) and [b](#bookshelf/A/One?h=x) and [c](#bookshelf/A/Oneself?line=7).";
-    expect(retargetLinks(md, "#bookshelf/A/One", "#bookshelf/A/Two", "One", "Two"))
+    expect(retargetLinks(md, { href: "#bookshelf/A/One", label: "One" }, { href: "#bookshelf/A/Two", label: "Two" }))
       .toBe("[a](#bookshelf/A/Two?line=7) and [b](#bookshelf/A/Two?h=x) and [c](#bookshelf/A/Oneself?line=7).");
-    expect(retargetLinks(md, "#bookshelf/A/One", null, "One", null)).toBe(" and  and [c](#bookshelf/A/Oneself?line=7).");
+    expect(retargetLinks(md, { href: "#bookshelf/A/One", label: "One" }, null)).toBe(" and  and [c](#bookshelf/A/Oneself?line=7).");
   });
   it("moves the href and a bare-name label; keeps a hand-written label; leaves other links alone", () => {
     const md = "Notes: [Ideas](#2026-09-07/Ideas) and [my thoughts](#2026-09-07/Ideas), [other](#2026-09-07/Other).";
-    expect(retargetLinks(md, "#2026-09-07/Ideas", "#2026-09-07/Plans", "Ideas", "Plans"))
+    expect(retargetLinks(md, { href: "#2026-09-07/Ideas", label: "Ideas" }, { href: "#2026-09-07/Plans", label: "Plans" }))
       .toBe("Notes: [Plans](#2026-09-07/Plans) and [my thoughts](#2026-09-07/Plans), [other](#2026-09-07/Other).");
   });
   it("drops the links of a deleted entry, and an emptied paragraph with them; null when nothing pointed there", () => {
     const md = "Before.\n\n[Ideas](#2026-09-07/Ideas)\n\nAfter [Ideas](#2026-09-07/Ideas) here.";
-    expect(retargetLinks(md, "#2026-09-07/Ideas", null, "Ideas", null)).toBe("Before.\n\nAfter  here.");
-    expect(retargetLinks(md, "#nowhere", null, "x", null)).toBeNull();
+    expect(retargetLinks(md, { href: "#2026-09-07/Ideas", label: "Ideas" }, null)).toBe("Before.\n\nAfter  here.");
+    expect(retargetLinks(md, { href: "#nowhere", label: "x" }, null)).toBeNull();
   });
   it("a sub-page's link is retargeted by its full hash", () => {
-    expect(retargetLinks("- [1](#page/Book/1)\n- [2](#page/Book/2)", "#page/Book/1", "#page/Book/One", "1", "One")).toBe("- [One](#page/Book/One)\n- [2](#page/Book/2)");
+    expect(retargetLinks("- [1](#page/Book/1)\n- [2](#page/Book/2)", { href: "#page/Book/1", label: "1" }, { href: "#page/Book/One", label: "One" })).toBe("- [One](#page/Book/One)\n- [2](#page/Book/2)");
   });
 });
 describe("retargetLinks, a label's own marks", () => {
   it("keeps the marks inside a hand-written label when only the href moves", () => {
-    expect(retargetLinks("See [the *Ideas* page](#2026-09-06/Ideas) and [**bold** and *it*](#2026-09-06/Ideas).", "#2026-09-06/Ideas", "#2026-09-06/Plans", "Ideas", "Plans"))
+    expect(retargetLinks("See [the *Ideas* page](#2026-09-06/Ideas) and [**bold** and *it*](#2026-09-06/Ideas).", { href: "#2026-09-06/Ideas", label: "Ideas" }, { href: "#2026-09-06/Plans", label: "Plans" }))
       .toBe("See [the *Ideas* page](#2026-09-06/Plans) and [**bold** and *it*](#2026-09-06/Plans).");
   });
 });
 describe("relabelLinks", () => {
   it("relabels a minted label to the new heading, leaves a hand-written one, returns to the bare name when the heading goes", () => {
     const href = "#page/Book/1";
-    expect(relabelLinks("[1](#page/Book/1) and [read this](#page/Book/1)", href, "1", "", "The Essay")).toBe("[The Essay](#page/Book/1) and [read this](#page/Book/1)");
-    expect(relabelLinks("[The Essay](#page/Book/1)", href, "1", "The Essay", "A New Title")).toBe("[A New Title](#page/Book/1)");
-    expect(relabelLinks("[A New Title](#page/Book/1)", href, "1", "A New Title", "")).toBe("[1](#page/Book/1)");
-    expect(relabelLinks("[1](#page/Book/1)", href, "1", "same", "same")).toBeNull();
-    expect(relabelLinks("[Title: a] b](#page/Book/1)", href, "1", "", "Title: a] b")).toBeNull();
+    expect(relabelLinks("[1](#page/Book/1) and [read this](#page/Book/1)", href, "1", { was: "", now: "The Essay" })).toBe("[The Essay](#page/Book/1) and [read this](#page/Book/1)");
+    expect(relabelLinks("[The Essay](#page/Book/1)", href, "1", { was: "The Essay", now: "A New Title" })).toBe("[A New Title](#page/Book/1)");
+    expect(relabelLinks("[A New Title](#page/Book/1)", href, "1", { was: "A New Title", now: "" })).toBe("[1](#page/Book/1)");
+    expect(relabelLinks("[1](#page/Book/1)", href, "1", { was: "same", now: "same" })).toBeNull();
+    expect(relabelLinks("[Title: a] b](#page/Book/1)", href, "1", { was: "", now: "Title: a] b" })).toBeNull();
   });
 });
 describe("rewriteLinks", () => {

@@ -1,22 +1,10 @@
 {
   "rule_sets": [
     {
-      "matching_content_path": "src/model/grammar.ts",
+      "matching_content_path": "src/**",
       "rules": [
         { "name": "Primitive Obsession", "weight": 0.0 },
         { "name": "String Heavy Function Arguments", "weight": 0.0 }
-      ]
-    },
-    {
-      "matching_content_path": "src/model/serialize.ts",
-      "rules": [
-        { "name": "Primitive Obsession", "weight": 0.0 }
-      ]
-    },
-    {
-      "matching_content_path": "src/model/parse.ts",
-      "rules": [
-        { "name": "Primitive Obsession", "weight": 0.0 }
       ]
     }
   ]

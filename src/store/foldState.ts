@@ -4,15 +4,17 @@
 export interface FoldPage { open: string[] }
 export type FoldStore = Record<string, FoldPage>;
 
+function readJson(raw: string | null): unknown {
+  try { return JSON.parse(raw || "{}"); } catch { return null; }
+}
+const isRecord = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
+const stringsIn = (x: unknown): string[] => (Array.isArray(x) ? x.filter((s): s is string => typeof s === "string") : []);
 export function parseFoldStore(raw: string | null): FoldStore {
   const out: FoldStore = Object.create(null);
-  let data: unknown;
-  try { data = JSON.parse(raw || "{}"); } catch { return out; }
-  if (!data || typeof data !== "object" || Array.isArray(data)) return out;
-  for (const [k, v] of Object.entries(data as Record<string, unknown>)) {
-    if (!v || typeof v !== "object") continue;
-    const rec = v as { open?: unknown };
-    out[k] = { open: Array.isArray(rec.open) ? rec.open.filter((x): x is string => typeof x === "string") : [] };
+  const data = readJson(raw);
+  if (!isRecord(data)) return out;
+  for (const [k, v] of Object.entries(data)) {
+    if (v && typeof v === "object") out[k] = { open: stringsIn((v as { open?: unknown }).open) };
   }
   return out;
 }

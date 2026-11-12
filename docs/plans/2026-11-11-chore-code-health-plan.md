@@ -73,7 +73,23 @@ then the DOM seams (main.ts, session.ts, editor.ts, paste.ts, renderedView.ts,
 sourceView.ts) under the review shape. Each batch: refactor, `npm run verify`,
 the reader's look and accept, a review where a batch touches a seam.
 
-### Waivers (string smells)
+### Decided again (the reader, 2026-11-11, after src/model/)
+
+5. Branded keys after the structural work, as a batch of their own
+   (superseded by 6 the same hour).
+6. Primitive Obsession and String Heavy Function Arguments OFF for `src/**`,
+   one rule set, the per-file waivers below folded into it; every structural
+   rule at CodeScene's default. Measured first: the TypeScript thresholds
+   (`cs rules-config list-thresholds`) put Primitive Obsession at 30% of a
+   file's functions taking any plain type, string, number or boolean;
+   HEAD's headings.ts plus one function taking only a Node went 9.68 → 9.38,
+   String Heavy set off; importFiles.ts with every complex function split
+   went 9.39 → 9.38, flagged at 44% of functions and 41% of arguments
+   strings. Ten under the defaults meant branded line numbers and positions
+   as well as keys across most of src/. Branded keys now stand only on their
+   merits as a safety change.
+
+### Waivers (string smells), folded into decision 6
 
 `.codescene/code-health-rules.json`, a rule set per file (the CLI's
 `set-rule` edits a rule set that exists and cannot add one, so the file is
@@ -203,3 +219,38 @@ differs in both), `npm run verify` with the Helium runs played (corner, bridge,
 reader ok; 544 steps, 0 open). One moved comment failed the standard
 (serialize.ts's grid: "which the parse refuses", another module's refusal) and
 lost the clause.
+
+### 2026-11-11 — src/store/
+
+Every file at 10, 64 of 64 with its tests (MEASURED), under decision 6. The
+shapes the fixes took: a long function cut into named steps sharing one
+context object (the backup run, the move plan, the reference label, the
+entry layer's write paths, inside their factories where they read its
+state); a compound condition named or split; a five- or six-argument
+function given one object for the arguments that travel together, its
+callers following:
+
+| Function | Was | Now |
+|---|---|---|
+| referenceLabel | (date, tag, range, folio, journal, facing) | (date, tag, { range, folio?, facing? }, journal) |
+| retargetLinks | (md, oldHref, newHref, oldLabel, newLabel) | (md, { href, label }, { href, label } \| null) |
+| relabelLinks | (md, href, sub, oldHeading, heading) | (md, href, sub, { was, now }) |
+| searchHits | (hay, needle, left, right, limit?) | (hay, query, limit?) |
+| subPageOrder, subPageNeighbors, navNeighbors | keys and bearing apart | one `Walk` { keys, bearing } |
+| backupPlan | (today, lastDated, sig, lastSig, oursLast) | (today, sig, { dated, sig, ours }) |
+| writeBundle | (dir, files, manifest, day, written) | (dir, files, manifest, { day, written }) |
+| emitZipEntry | (path, raw, stored, day, at) | ({ path, raw, stored }, day, at) |
+
+Callers outside src/store/: session.ts (navNeighbors, subPageOrder),
+ui/gotoModel.ts, ui/lifecycle.ts, editor/highlight.ts, editor/reference.ts,
+tools/referenceCorpus.ts; the 61 referenceLabel calls in its test rewritten
+by an argument parser, the rest by pattern, each count checked.
+
+Read on the way: refile.ts's mayName first came out building every match
+before testing one, losing the early exit 59331c8 measured (1,338 ms to 28
+ms); put back as a loop that stops at the first hit. The nets: tsc, the
+suite (1437), `npm run verify` with the Helium runs played (corner, bridge,
+reader ok; 544 steps, 0 open); the comment ledger's 25 moved blocks read,
+all keeping to the standard, one gaining "nothing is swept" for what its own
+function now does, two merged on withFirst; the 32 tests whose call shape
+changed read, their assertions untouched.

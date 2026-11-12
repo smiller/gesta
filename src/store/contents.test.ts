@@ -20,18 +20,18 @@ describe("subPageOrder", () => {
   const keys = Object.keys(cache);
   const bearing = (k: string) => !!(cache[k] || "").trim();
   it("a book that links every content-bearing sub states its order; a blank gets no vote and rides the end", () => {
-    const o = subPageOrder(keys, "bookshelf/Dante", cache["bookshelf/Dante"], bearing);
+    const o = subPageOrder({ keys, bearing }, "bookshelf/Dante", cache["bookshelf/Dante"]);
     expect(o.stated).toBe(true);
     expect(o.names).toEqual(["Inferno", "Purgatorio", "Paradiso", "Notes"]);
   });
   it("a page mentioning one sub mid-sentence keeps the alphabet", () => {
-    const o = subPageOrder(keys, "page/Plain", cache["page/Plain"], bearing);
+    const o = subPageOrder({ keys, bearing }, "page/Plain", cache["page/Plain"]);
     expect(o).toEqual({ names: ["One", "Two"], rows: null, stated: false });
-    expect(subPageOrder(keys, "page/None", "", bearing)).toEqual({ names: [], rows: null, stated: false });
+    expect(subPageOrder({ keys, bearing }, "page/None", "")).toEqual({ names: [], rows: null, stated: false });
   });
   it("the memo answers by the parent's text, not its name", () => {
     const memo = new Map();
-    subPageOrder(keys, "bookshelf/Dante", cache["bookshelf/Dante"], bearing, memo);
+    subPageOrder({ keys, bearing }, "bookshelf/Dante", cache["bookshelf/Dante"], memo);
     expect(memo.get("bookshelf/Dante").links.length).toBe(3);
   });
 });

@@ -1,9 +1,9 @@
 /* Restore is not new code: the import, pointed at an unzipped archive */
 import { NS, todayKey } from "./keys.ts";
 import { readRaw, writeRaw } from "./local.ts";
-import { imgHash } from "./names.ts";
-import { filePath, errText, failMsg, fsaFatal } from "./files.ts";
-import { backupPlan, withheld, READER_ZIP, type Manifest, type Archived } from "./plans.ts";
+import { imgHash, type EntryFile } from "./names.ts";
+import { filePath, errText, failMsg, fsaFatal, type ExportFile } from "./files.ts";
+import { backupPlan, withheld, READER_ZIP, type Manifest, type Archived, type BackupPlan } from "./plans.ts";
 import { writeBackup, writeBundle, type Failure } from "./io.ts";
 import { exportEntries, archiveRoots } from "./exportEntries.ts";
 import type { EntryLayer } from "./entries.ts";
@@ -47,6 +47,25 @@ export interface Backup {
   setupBackupFolder(): Promise<void>;
   resumeBackups(): Promise<void>;
 }
+interface RunCtx {
+  h: Dir; today: string; sig: string; datedWas: string | null; plan: BackupPlan;
+  files: ExportFile[]; roots: (string | null)[]; manifest: Manifest; archived: Archived;
+}
+/* ONE WALK, TWO ANSWERS: a NAME is spared when its pictures did not
+   arrive; a FAULT joins the failures, to be answered there */
+function pictureTrouble(files: ExportFile[]): { spare: EntryFile[]; picFaults: Failure[] } {
+  const spare: EntryFile[] = [], picFaults: Failure[] = [];
+  for (const f of files) {
+    if (f.picsLost) spare.push(f.picsLost);
+    if (f.picsFaulted) picFaults.push({ name: filePath(f), error: new Error("this entry's pictures could not be read"), doc: true });
+  }
+  return { spare, picFaults };
+}
+function logFailures(failures: Failure[]): void {
+  if (!failures.length) return;
+  console.error("backup: " + failures.length + " file(s) failed\n" + failures.map((x) => x.name + " — " + (errText(x.error) || x.error)).join("\n"), failures);
+}
+const isCollision = (err: unknown): boolean => !!err && !!(err as { collision?: boolean }).collision;
 export function backupRunner(opts: BackupOptions): Backup {
   const { layer, images, store, picker, say, stick } = opts;
   /* the signature THIS TAB last committed, never stored: equal to the
@@ -65,93 +84,107 @@ export function backupRunner(opts: BackupOptions): Backup {
      idle callers need no catch. Gated on the warm: never back up a blank
      or unread cache. */
   function runBackup(): Promise<void> {
-    if (running || !layer.warmed || layer.storeReadFailed) return running || Promise.resolve();
-    const run = (handle ? Promise.resolve(handle) : store.get() as Promise<Dir | null>).then((h) => {
-      /* a folder picked while we read: the newer pick wins, and this run
-         is dropped rather than guarded line by line */
-      if (handle && handle !== h) return;
-      handle = h;
-      configured = !!h;
-      if (!h) { writeRaw(BACKUP_ON, null); setTrouble(""); return; }
-      /* no gesture behind a launch or idle run, so only a handle already
-         granted writes; a 'prompt' handle (a file:// tab after a restart)
-         surfaces the paused affordance, whose click is the gesture */
-      return h.queryPermission({ mode: "readwrite" }).then((perm) => {
-        if (perm !== "granted") { setTrouble(PAUSED_MSG); return; }
-        const today = todayKey(), sig = backupSig(layer.cache), lastSig = readRaw(BACKUP_SIG) ?? null;
-        const datedWas = readRaw(BACKUP_DATED) ?? null;
-        const plan = backupPlan(today, datedWas, sig, lastSig, committedSig !== null && lastSig === committedSig);
-        if (!plan.writeMirror && !plan.dated) { setTrouble(""); return; }
-        say("backing up…");
-        /* the census's walk in the SAME tick as the export's snapshot: the
-           export yields for seconds, and a walk taken after it reads the
-           keys seconds of live typing later than the files it describes */
-        const roots = archiveRoots(Object.keys(layer.cache));
-        return Promise.all([exportEntries(layer.cache, images), store.getManifest(), store.getArchives()]).then(([files, m, a]) => {
-          const manifest = (m || {}) as Manifest, archived = (a || {}) as Archived;
-          /* ONE WALK, TWO ANSWERS: a NAME is spared when its pictures did not
-             arrive; a FAULT joins the failures, to be answered there */
-          const spare = [], picFaults: Failure[] = [];
-          for (const f of files) {
-            if (f.picsLost) spare.push(f.picsLost);
-            if (f.picsFaulted) picFaults.push({ name: filePath(f), error: new Error("this entry's pictures could not be read"), doc: true });
-          }
-          return writeBackup({ dir: h, files, plan, manifest, archived, roots, unread: plan.reconcile ? spare : null,
-            onProgress: (done, total) => say("backing up… " + done + " / " + total) })
-            .then((written) => plan.writeMirror && h === handle ? writeBundle(h, files, manifest, today, Date.now()).then((b) => written.concat(b)) : written)
-            .then((written) => {
-            const failures = written.concat(picFaults);
-            /* a folder change repointed the handle mid-run: this run wrote
-               the OLD folder, so commit nothing and claim nothing */
-            if (h !== handle) return;
-            const { lostWrite, blind } = withheld(failures);
-            const datedThen = readRaw(BACKUP_DATED) ?? null;   /* sampled BEFORE our own write */
-            if (plan.dated && !lostWrite) writeRaw(BACKUP_DATED, plan.dated);
-            if (plan.writeMirror && !lostWrite && !blind) { writeRaw(BACKUP_SIG, sig); committedSig = sig; }
-            if (failures.length) {
-              console.error("backup: " + failures.length + " file(s) failed\n" + failures.map((x) => x.name + " — " + (errText(x.error) || x.error)).join("\n"), failures);
-            }
-            if (lostWrite || blind) setTrouble("backup incomplete — click to retry");
-            else if (failures.length) {
-              /* a delete-only failure is not backup trouble: a resume click
-                 could do nothing against a file something else holds open;
-                 nor is the bundle's, retried when the mirror next moves */
-              setTrouble("");
-              const bundle = failures.find((x) => x.name === READER_ZIP), swept = failures.filter((x) => x !== bundle);
-              if (swept.length) stick("backup couldn't remove " + swept.length + " old file(s)", swept[0].error, swept.map((x) => x.name).join(", "));
-              if (bundle) stick("backed up, but gesta.zip for the reader couldn't be written", bundle.error, errText(bundle.error) || READER_ZIP);
-            } else { setTrouble(""); say("backed up"); }
-            /* the commits, ONE AFTER THE OTHER: both ride in the same record.
-               Another tab's dated run voids ours: the shared scalar moved
-               under us, so we record nothing and the next dated run archives
-               again. */
-            let commits: Promise<void> = Promise.resolve();
-            if (plan.writeMirror) commits = commits.then(() => {
-              if (h !== handle) return;
-              return store.setManifest(manifest).catch((err: unknown) => { console.error("backup: could not store the file manifest — the next run will rewrite everything", err); });
-            });
-            if (plan.dated && datedThen !== datedWas) return commits;
-            if (plan.dated) commits = commits.then(() => {
-              if (h !== handle) return;
-              return store.setArchives(archived).catch((err: unknown) => { console.error("backup: could not store the archive signatures — the next dated run will re-archive everything", err); });
-            });
-            return commits;
-          });
-        });
-      });
-    }).catch((err: unknown) => {
-      /* a DETERMINISTIC failure gets no retry affordance: the same journal
-         throws the same error on every retry */
-      if (err && (err as { collision?: boolean }).collision) {
-        setTrouble("backup blocked — two entries share a filename");
-        stick("backup blocked — " + (err as Error).message, err, (err as Error).message);
-        return;
-      }
-      console.error("backup failed", err);
-      setTrouble(fsaFatal(err) ? PAUSED_MSG : "backup failed — click to retry");
-    }).then(() => { running = null; }, () => { running = null; });
+    if (running) return running;
+    if (!layer.warmed || layer.storeReadFailed) return Promise.resolve();
+    const run = (handle ? Promise.resolve(handle) : store.get() as Promise<Dir | null>).then(withFolder).catch(runFailed)
+      .then(() => { running = null; }, () => { running = null; });
     running = run;
     return run;
+  }
+  function withFolder(h: Dir | null): Promise<void> | void {
+    /* a folder picked while we read: the newer pick wins, and this run
+       is dropped rather than guarded line by line */
+    if (handle && handle !== h) return;
+    handle = h;
+    configured = !!h;
+    if (!h) { writeRaw(BACKUP_ON, null); setTrouble(""); return; }
+    /* no gesture behind a launch or idle run, so only a handle already
+       granted writes; a 'prompt' handle (a file:// tab after a restart)
+       surfaces the paused affordance, whose click is the gesture */
+    return h.queryPermission({ mode: "readwrite" }).then((perm) => (perm === "granted" ? granted(h) : setTrouble(PAUSED_MSG)));
+  }
+  function granted(h: Dir): Promise<void> | void {
+    const today = todayKey(), sig = backupSig(layer.cache), lastSig = readRaw(BACKUP_SIG) ?? null;
+    const datedWas = readRaw(BACKUP_DATED) ?? null;
+    const plan = backupPlan(today, sig, { dated: datedWas, sig: lastSig, ours: committedSig !== null && lastSig === committedSig });
+    if (!plan.writeMirror && !plan.dated) { setTrouble(""); return; }
+    say("backing up…");
+    /* the census's walk in the SAME tick as the export's snapshot: the
+       export yields for seconds, and a walk taken after it reads the
+       keys seconds of live typing later than the files it describes */
+    const roots = archiveRoots(Object.keys(layer.cache));
+    return Promise.all([exportEntries(layer.cache, images), store.getManifest(), store.getArchives()]).then(([files, m, a]) =>
+      writeRun({ h, today, sig, datedWas, plan, files, roots, manifest: (m || {}) as Manifest, archived: (a || {}) as Archived }));
+  }
+  function writeRun(c: RunCtx): Promise<void> {
+    const { spare, picFaults } = pictureTrouble(c.files);
+    return writeBackup({ dir: c.h, files: c.files, plan: c.plan, manifest: c.manifest, archived: c.archived, roots: c.roots,
+      unread: c.plan.reconcile ? spare : null, onProgress: (done, total) => say("backing up… " + done + " / " + total) })
+      .then((written) => withBundle(c, written))
+      .then((written) => settle(c, written.concat(picFaults)));
+  }
+  function withBundle(c: RunCtx, written: Failure[]): Promise<Failure[]> | Failure[] {
+    if (!c.plan.writeMirror || c.h !== handle) return written;
+    return writeBundle(c.h, c.files, c.manifest, { day: c.today, written: Date.now() }).then((b) => written.concat(b));
+  }
+  function settle(c: RunCtx, failures: Failure[]): Promise<void> | void {
+    /* a folder change repointed the handle mid-run: this run wrote
+       the OLD folder, so commit nothing and claim nothing */
+    if (c.h !== handle) return;
+    const { lostWrite, blind } = withheld(failures);
+    const datedThen = readRaw(BACKUP_DATED) ?? null;   /* sampled BEFORE our own write */
+    commitScalars(c, lostWrite, !lostWrite && !blind);
+    logFailures(failures);
+    report(failures, lostWrite || blind);
+    return commitRecords(c, datedThen);
+  }
+  function commitScalars(c: RunCtx, lostWrite: boolean, whole: boolean): void {
+    if (c.plan.dated && !lostWrite) writeRaw(BACKUP_DATED, c.plan.dated);
+    if (c.plan.writeMirror && whole) { writeRaw(BACKUP_SIG, c.sig); committedSig = c.sig; }
+  }
+  function report(failures: Failure[], incomplete: boolean): void {
+    if (incomplete) { setTrouble("backup incomplete — click to retry"); return; }
+    setTrouble("");
+    if (failures.length) reportLeftovers(failures);
+    else say("backed up");
+  }
+  /* a delete-only failure is not backup trouble: a resume click
+     could do nothing against a file something else holds open;
+     nor is the bundle's, retried when the mirror next moves */
+  function reportLeftovers(failures: Failure[]): void {
+    const bundle = failures.find((x) => x.name === READER_ZIP), swept = failures.filter((x) => x !== bundle);
+    if (swept.length) stick("backup couldn't remove " + swept.length + " old file(s)", swept[0].error, swept.map((x) => x.name).join(", "));
+    if (bundle) stick("backed up, but gesta.zip for the reader couldn't be written", bundle.error, errText(bundle.error) || READER_ZIP);
+  }
+  /* the commits, ONE AFTER THE OTHER: both ride in the same record.
+     Another tab's dated run voids ours: the shared scalar moved
+     under us, so we record nothing and the next dated run archives
+     again. */
+  function commitRecords(c: RunCtx, datedThen: string | null): Promise<void> {
+    let commits: Promise<void> = Promise.resolve();
+    if (c.plan.writeMirror) commits = commits.then(() => storeManifest(c));
+    if (c.plan.dated && datedThen !== c.datedWas) return commits;
+    if (c.plan.dated) commits = commits.then(() => storeArchives(c));
+    return commits;
+  }
+  function storeManifest(c: RunCtx): Promise<void> | void {
+    if (c.h !== handle) return;
+    return store.setManifest(c.manifest).catch((err: unknown) => { console.error("backup: could not store the file manifest — the next run will rewrite everything", err); });
+  }
+  function storeArchives(c: RunCtx): Promise<void> | void {
+    if (c.h !== handle) return;
+    return store.setArchives(c.archived).catch((err: unknown) => { console.error("backup: could not store the archive signatures — the next dated run will re-archive everything", err); });
+  }
+  /* a DETERMINISTIC failure gets no retry affordance: the same journal
+     throws the same error on every retry */
+  function runFailed(err: unknown): void {
+    if (isCollision(err)) {
+      setTrouble("backup blocked — two entries share a filename");
+      stick("backup blocked — " + (err as Error).message, err, (err as Error).message);
+      return;
+    }
+    console.error("backup failed", err);
+    setTrouble(fsaFatal(err) ? PAUSED_MSG : "backup failed — click to retry");
   }
   function scheduleBackup(): void {
     if (!configured || !picker) return;

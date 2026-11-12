@@ -44,5 +44,5 @@ const keys = args.length ? args : [
 ];
 for (const key of keys) {
   const [date, tag] = splitKey(key);
-  console.log((key in cache ? "  " : "? ") + key + "\n    " + referenceLabel(date, tag, "", null, journal));
+  console.log((key in cache ? "  " : "? ") + key + "\n    " + referenceLabel(date, tag, { range: "" }, journal));
 }

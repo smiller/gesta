@@ -2,7 +2,7 @@
    pass fakes */
 import { utf8, type EntryFile } from "./names.ts";
 import { isDoc, fileBody, filePath, flatName, fsaFatal, type ExportFile } from "./files.ts";
-import { fileSig, fileSize, MIRROR_DIR, ARCHIVE_DIR, MANIFESTS_DIR, READER_ZIP, bundleDue, rootSig, dedupFiles, reconcilePlan, archivePlan, rootManifest, type Manifest, type Archived, type BackupPlan, type ArchiveGroup } from "./plans.ts";
+import { fileSig, fileSize, MIRROR_DIR, ARCHIVE_DIR, MANIFESTS_DIR, READER_ZIP, bundleDue, rootSig, dedupFiles, reconcilePlan, archivePlan, rootManifest, type Manifest, type Archived, type ArchiveRecord, type BackupPlan, type ArchiveGroup } from "./plans.ts";
 import { emitZipEntry, deflateRaw } from "./zip.ts";
 import type { Dir, WritableFile } from "./fsa.ts";
 
@@ -105,7 +105,7 @@ export function zipTo(files: ExportFile[], day: string, put: (chunk: Uint8Array)
       /* STORE WHAT DEFLATING WOULD GROW: a third of this corpus by size is
          already-compressed pictures */
       const use = packed.length < raw.length ? packed : raw;
-      const e = emitZipEntry(filePath(f), raw, use, stamp, at);
+      const e = emitZipEntry({ path: filePath(f), raw, stored: use }, stamp, at);
       central.push(e.central);
       at += e.local.length + use.length;
       if (at > ZIP_MAX_BYTES) throw new Error("archive too large for one zip file");
@@ -140,45 +140,55 @@ export interface Failure { name: string; error: unknown; doc: boolean; sweep?: b
    FOLDER and that write SUCCEEDED; the ENTRY is the unit — a doc whose
    nested write failed keeps its flat copy AND its flat sidecars (pin:
    io.test › writeBackup: the sweep's unit of safety is the ENTRY) */
-export function sweepFlatCopies(dir: Dir, files: ExportFile[], failures: Failure[]): Promise<void> {
-  const lost: Record<string, true> = Object.create(null), nested: Record<string, true> = Object.create(null);
-  const lostEntry: Record<string, true> = Object.create(null);
-  const doomed: string[] = [];
-  for (const x of failures) lost[x.name] = true;
-  for (const f of files) if (f.entry && lost[filePath(f)]) lostEntry[f.entry] = true;
-  for (const f of files) if (f.dir && !lost[filePath(f)] && !(f.entry && lostEntry[f.entry])) nested[flatName(f)] = true;
-  const it = dir.values();
-  function scan(): Promise<void> {
-    return it.next().then((res) => {
-      if (res.done) return;
-      const v = res.value;
-      if (v.kind === "file" && nested[v.name]) doomed.push(v.name);
-      return scan();
-    });
-  }
-  return scan().catch((err: unknown) => {
-    /* the LISTING failed. Every write already landed, so rejecting would
-       report a wholly successful write as a failure. NotFound means the
-       FOLDER went between the writes landing and the scan — a lost write
-       in everything but the error's origin; any other name means the
-       folder is there and merely would not enumerate, so only the sweep is
-       unknown: `blind` (pin: io.test › writeBackup: a non-fatal listing
-       failure is collected and the landed writes stand) */
+const isNotFound = (err: unknown): boolean => !!err && (err as { name?: string }).name === "NotFoundError";
+const landedNested = (f: ExportFile, lost: Set<string>, lostEntry: Set<string>): boolean =>
+  !!f.dir && !lost.has(filePath(f)) && !(f.entry && lostEntry.has(f.entry));
+function sweptNames(files: ExportFile[], failures: Failure[]): Set<string> {
+  const lost = new Set(failures.map((x) => x.name)), lostEntry = new Set<string>();
+  for (const f of files) if (f.entry && lost.has(filePath(f))) lostEntry.add(f.entry);
+  return new Set(files.filter((f) => landedNested(f, lost, lostEntry)).map(flatName));
+}
+function listDoomed(dir: Dir, nested: Set<string>): Promise<string[]> {
+  const it = dir.values(), doomed: string[] = [];
+  const scan = (): Promise<string[]> => it.next().then((res) => {
+    if (res.done) return doomed;
+    if (res.value.kind === "file" && nested.has(res.value.name)) doomed.push(res.value.name);
+    return scan();
+  });
+  return scan();
+}
+/* the LISTING failed. Every write already landed, so rejecting would
+   report a wholly successful write as a failure. NotFound means the
+   FOLDER went between the writes landing and the scan — a lost write
+   in everything but the error's origin; any other name means the
+   folder is there and merely would not enumerate, so only the sweep is
+   unknown: `blind`; nothing is swept (pin: io.test › writeBackup: a
+   non-fatal listing failure is collected and the landed writes stand) */
+function listingFailed(err: unknown, failures: Failure[]): string[] {
+  if (fsaFatal(err)) throw err;
+  failures.push({ name: "(listing)", error: err, doc: false, blind: !isNotFound(err) });
+  return [];
+}
+/* the scan SAW this file, so NotFound means something else removed
+   it — the goal, reached by other means. Anything else is a real
+   refusal (a sync client holding the file open), reported under the
+   `sweep` mark that keeps it distinguishable from a lost write (pin:
+   io.test › writeBackup: a sweep delete that genuinely fails is
+   collected) */
+function removeSwept(dir: Dir, n: string, failures: Failure[]): Promise<void> {
+  return Promise.resolve().then(() => dir.removeEntry(n)).catch((err: unknown) => {
+    if (isNotFound(err)) return;
     if (fsaFatal(err)) throw err;
-    failures.push({ name: "(listing)", error: err, doc: false, blind: !(err && (err as { name?: string }).name === "NotFoundError") });
-    doomed.length = 0;
-  }).then(() => doomed.reduce((chain, n) => chain.then(() =>
-    Promise.resolve().then(() => dir.removeEntry(n)).catch((err: unknown) => {
-      /* the scan SAW this file, so NotFound means something else removed
-         it — the goal, reached by other means. Anything else is a real
-         refusal (a sync client holding the file open), reported under the
-         `sweep` mark that keeps it distinguishable from a lost write (pin:
-         io.test › writeBackup: a sweep delete that genuinely fails is
-         collected) */
-      if (err && (err as { name?: string }).name === "NotFoundError") return;
-      if (fsaFatal(err)) throw err;
-      failures.push({ name: n, error: err, doc: false, sweep: true });
-    })), Promise.resolve()));
+    failures.push({ name: n, error: err, doc: false, sweep: true });
+  });
+}
+export function sweepFlatCopies(dir: Dir, files: ExportFile[], failures: Failure[]): Promise<void> {
+  return listDoomed(dir, sweptNames(files, failures)).catch((err: unknown) => listingFailed(err, failures))
+    .then((doomed) => doomed.reduce((chain, n) => chain.then(() => removeSwept(dir, n, failures)), Promise.resolve()));
+}
+function archivedAt(was: ArchiveRecord | string | undefined): string | null {
+  if (!was || typeof was !== "object") return null;
+  return was.at || null;
 }
 export interface BackupRun {
   dir: Dir; files: ExportFile[]; plan: BackupPlan;
@@ -203,9 +213,8 @@ export function writeBackup(run: BackupRun): Promise<Failure[]> {
   function archiveListing(): Promise<Record<string, true>> {
     const present: Record<string, true> = Object.create(null), folderOf = folderMemo(dir);
     return Object.keys(sigs).reduce((chain, root) => {
-      const was = sigs[root];
-      if (!was || typeof was !== "object" || !was.at) return chain;
-      const at = was.at;
+      const at = archivedAt(sigs[root]);
+      if (!at) return chain;
       return chain.then(() => {
         const cut = at.lastIndexOf("/");
         return folderOf(cut < 0 ? "" : at.slice(0, cut))
@@ -377,36 +386,42 @@ export function writeFilesTo(dir: Dir, files: ExportFile[], onProgress?: (done: 
 /* the zip's pieces gathered into writes of about this size: a write a piece
    was three to a file, some 44,000 for the whole corpus */
 export const BUNDLE_WRITE_BYTES = 1 << 20;
-export function writeBundle(dir: Dir, files: ExportFile[], manifest: Manifest, day: string, written: number): Promise<Failure[]> {
+function bufferedWriter(opened: WritableFile): { put: (chunk: Uint8Array) => Promise<void> | void; flush: () => Promise<void> } {
+  let held: Uint8Array[] = [], heldBytes = 0;
+  const flush = (): Promise<void> => {
+    if (!heldBytes) return Promise.resolve();
+    const out = new Uint8Array(heldBytes);
+    let o = 0;
+    for (const c of held) { out.set(c, o); o += c.length; }
+    held = []; heldBytes = 0;
+    return opened.write(out);
+  };
+  const put = (chunk: Uint8Array): Promise<void> | void => {
+    held.push(chunk); heldBytes += chunk.length;
+    if (heldBytes >= BUNDLE_WRITE_BYTES) return flush();
+  };
+  return { put, flush };
+}
+/* a stream left open keeps its swap file beside the bundle */
+function bundleFailed(err: unknown, w: WritableFile | null): Failure[] {
+  if (w) w.abort().catch(() => {});
+  if (fsaFatal(err)) throw err;
+  return [{ name: READER_ZIP, error: err, doc: false }];
+}
+const sizeOn = (sub: Dir, name: string): Promise<number | null> => sub.getFileHandle(name).then((h) => h.getFile()).then((f) => f.size, () => null);
+export interface BundleTime { day: string; written: number }
+export function writeBundle(dir: Dir, files: ExportFile[], manifest: Manifest, when: BundleTime): Promise<Failure[]> {
   const cut = READER_ZIP.lastIndexOf("/"), name = READER_ZIP.slice(cut + 1);
   let w: WritableFile | null = null;
-  return folderMemo(dir, { create: true })(READER_ZIP.slice(0, cut)).then((sub) =>
-    sub.getFileHandle(name).then((h) => h.getFile()).then((f) => f.size, () => null).then((present) => {
-      if (!bundleDue(files, manifest[READER_ZIP], present)) return [];
-      return sub.getFileHandle(name, { create: true }).then((h) => h.createWritable()).then((opened) => {
-        w = opened;
-        let held: Uint8Array[] = [], heldBytes = 0;
-        const flush = (): Promise<void> => {
-          if (!heldBytes) return Promise.resolve();
-          const out = new Uint8Array(heldBytes);
-          let o = 0;
-          for (const c of held) { out.set(c, o); o += c.length; }
-          held = []; heldBytes = 0;
-          return opened.write(out);
-        };
-        const put = (chunk: Uint8Array): Promise<void> | void => {
-          held.push(chunk); heldBytes += chunk.length;
-          if (heldBytes >= BUNDLE_WRITE_BYTES) return flush();
-        };
-        return zipTo(files, day, put, new Date(written).toISOString()).then((size) => flush().then(() => opened.close()).then(() => {
-          manifest[READER_ZIP] = { sig: rootSig(files), size };
-          return [] as Failure[];
-        }));
-      });
-    })).catch((err: unknown) => {
-    /* a stream left open keeps its swap file beside the bundle */
-    if (w) (w as WritableFile).abort().catch(() => {});
-    if (fsaFatal(err)) throw err;
-    return [{ name: READER_ZIP, error: err, doc: false }];
-  });
+  return folderMemo(dir, { create: true })(READER_ZIP.slice(0, cut)).then((sub) => sizeOn(sub, name).then((present) => {
+    if (!bundleDue(files, manifest[READER_ZIP], present)) return [];
+    return sub.getFileHandle(name, { create: true }).then((h) => h.createWritable()).then((opened) => {
+      w = opened;
+      const out = bufferedWriter(opened);
+      return zipTo(files, when.day, out.put, new Date(when.written).toISOString()).then((size) => out.flush().then(() => opened.close()).then(() => {
+        manifest[READER_ZIP] = { sig: rootSig(files), size };
+        return [] as Failure[];
+      }));
+    });
+  })).catch((err: unknown) => bundleFailed(err, w));
 }

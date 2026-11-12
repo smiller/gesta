@@ -10,13 +10,14 @@ import type { Journal } from "./reference.ts";
 const N = schema.nodes;
 /* the first level-one heading's text, "" when none; a cheap probe keeps
    the headingless majority off the parser */
+const isTitle = (block: Node): boolean => block.type === N.heading && block.attrs.level === 1;
 export function firstHeading(md: string): string {
   if (!/^# /m.test(md)) return "";
   let doc: Node;
   try { doc = parseMarkdown(md); } catch { return ""; }
   let found = "";
   doc.forEach((block) => {
-    if (!found && block.type === N.heading && block.attrs.level === 1) found = block.textContent.trim();
+    if (!found && isTitle(block)) found = block.textContent.trim();
   });
   return found;
 }

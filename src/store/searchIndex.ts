@@ -30,23 +30,27 @@ export function fingerprint(s: string): string {
    entry of its own stands in date order among the days (pin:
    searchIndex.test › keyed namespaces first by name, then the days newest
    first) */
-export function indexOrder(keys: string[]): string[] {
-  const ns: Record<string, string[]> = Object.create(null);
-  for (const n of NS_KEYS) ns[n] = [];
-  const dayMain = new Set<string>(), dayTags: Record<string, string[]> = Object.create(null);
-  for (const k of keys) {
-    if (isDayKey(k)) { dayMain.add(k); if (!dayTags[k]) dayTags[k] = []; continue; }
-    const cut = k.indexOf("/"), head = cut === -1 ? k : k.slice(0, cut);
-    if (head in ns) ns[head].push(k);
-    else if (cut !== -1 && isDayKey(head)) (dayTags[head] || (dayTags[head] = [])).push(k);
-  }
+interface Sorted { ns: Record<string, string[]>; dayMain: Set<string>; dayTags: Record<string, string[]> }
+function placeKey(s: Sorted, k: string): void {
+  if (isDayKey(k)) { s.dayMain.add(k); s.dayTags[k] ??= []; return; }
+  const cut = k.indexOf("/"), head = cut === -1 ? k : k.slice(0, cut);
+  if (head in s.ns) s.ns[head].push(k);
+  else if (cut !== -1 && isDayKey(head)) (s.dayTags[head] ??= []).push(k);
+}
+function inOrder(s: Sorted): string[] {
   const out: string[] = [];
-  for (const n of NS_KEYS) out.push(...ns[n].sort(byName));
-  for (const d of Object.keys(dayTags).sort().reverse()) {
-    if (dayMain.has(d)) out.push(d);
-    out.push(...dayTags[d].sort(byName));
+  for (const n of NS_KEYS) out.push(...s.ns[n].sort(byName));
+  for (const d of Object.keys(s.dayTags).sort().reverse()) {
+    if (s.dayMain.has(d)) out.push(d);
+    out.push(...s.dayTags[d].sort(byName));
   }
   return out;
+}
+export function indexOrder(keys: string[]): string[] {
+  const s: Sorted = { ns: Object.create(null), dayMain: new Set(), dayTags: Object.create(null) };
+  for (const n of NS_KEYS) s.ns[n] = [];
+  for (const k of keys) placeKey(s, k);
+  return inOrder(s);
 }
 export interface SearchIndex {
   /* flatten until the deadline; how far it got. Repeated until done. */

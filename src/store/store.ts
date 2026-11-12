@@ -196,31 +196,32 @@ export interface EntryStore {
   rebase(key: string, md: string | null): void;
   clear(): Promise<void>;
 }
+function verdictOn(row: EntryRow | null, base: string, record: EntryRow | null): Verdict<EntryRow> {
+  const stored = row?.md ?? "";
+  if (stored !== base) return { refuse: staleWriteErr(stored, record?.md ?? "", !row) };
+  return record ? { put: record } : { del: true };
+}
+/* one spelling for a write and a delete, since both destroy what they land
+   on. With NO base the read is skipped entirely (pin: store.test › a write
+   with no base lands unjudged). The ledger
+   is only touched after the verdict settles: a base recorded ahead of the
+   store refuses every later write to that key for the session, turning one
+   transient failure into a permanent notice blaming a tab that does not
+   exist. TWO OBLIGATIONS ride on the caller: await get/all before writing
+   (an unawaited read writes unjudged), and serialize same-key writes from
+   ONE handle (two in flight and the second is refused as if foreign). */
+function judgedWrite(store: KeyedStore<EntryRow>, base: string | null, key: string, record: EntryRow | null): Promise<void> {
+  if (base === null) return record ? store.put(record) : store.del(key);
+  return store.update(key, (row) => verdictOn(row, base, record)).then((verdict) => {
+    if (verdict?.refuse) throw verdict.refuse;
+  });
+}
 export function entryStoreOver(store: KeyedStore<EntryRow>): EntryStore {
   let bases = baseLedger();
-  /* one spelling for a write and a delete, since both destroy what they land
-     on. With NO base the read is skipped entirely (pin: store.test › a write
-     with no base lands unjudged). The ledger
-     is only touched after the verdict settles: a base recorded ahead of the
-     store refuses every later write to that key for the session, turning one
-     transient failure into a permanent notice blaming a tab that does not
-     exist. TWO OBLIGATIONS ride on the caller: await get/all before writing
-     (an unawaited read writes unjudged), and serialize same-key writes from
-     ONE handle (two in flight and the second is refused as if foreign). */
-  function judged(key: string, record: EntryRow | null): Promise<void> {
-    const base = bases.base(key);
-    if (base === null) return record ? store.put(record) : store.del(key);
-    return store.update(key, (row) => {
-      const stored = row ? row.md : "";
-      if (stored !== base) return { refuse: staleWriteErr(stored, record ? record.md : "", !row) };
-      return record ? { put: record } : { del: true };
-    }).then((verdict) => {
-      if (verdict && verdict.refuse) throw verdict.refuse;
-    });
-  }
+  const judged = (key: string, record: EntryRow | null): Promise<void> => judgedWrite(store, bases.base(key), key, record);
   return {
     get: (key) => store.get(key).then((row) => {
-      bases.saw(key, row ? row.md : "");
+      bases.saw(key, row?.md ?? "");
       return row;
     }),
     set: (key, md) => judged(key, { key, md }).then(() => { bases.wrote(key, md); }),

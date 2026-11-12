@@ -562,11 +562,11 @@ function payloadOver(doc: Node, from: number, to: number, date: string, tag: str
   const block = all ? null : facingBlockOf(doc, from, to);
   const alone = block && translationPassage(doc, from, to, block);
   if (block && !alone) return { refused: "no-translation" };
-  const label = referenceLabel(date, tag, range, folioRange(doc, from, to), journal, hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "");
+  const label = referenceLabel(date, tag, { range: range, folio: folioRange(doc, from, to), facing: hasFacing(doc) ? referenceRange(doc, from, to, false, "right") : "" }, journal);
   const url = entryLinkUrl(date, tag, hl);
   const passage = alone || passageMd(doc, from, to, halves, byBookChapterParagraph || refersAsProsimetrum(date, tag, journal));
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + passage, label, url, passage };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
-  return { label: mdLabel(referenceLabel(date, tag, "", null, journal), "entry"), url: entryLinkUrl(date, tag) };
+  return { label: mdLabel(referenceLabel(date, tag, { range: "" }, journal), "entry"), url: entryLinkUrl(date, tag) };
 }

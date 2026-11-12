@@ -107,55 +107,55 @@ const journal: Journal = journalOf({
 
 test("referenceLabel: a work headed as given with a translation refers to the title, and the translation's own lines after it", () => {
   const golding = "Ovid/Metamorphoses (with Golding’s translation)";
-  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "197-208", null, journal, "265-77")).toBe("Ovid, *Metamorphoses*, 7.197-208 (Golding, 7.265-77)");
-  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "", null, journal, "265-66")).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.265-66)");
-  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", "", null, journal)).toBe("Ovid, *Metamorphoses*, 7 (Golding)");
-  expect(referenceLabel(NS_BOOK.key, golding, "", null, journal)).toBe("Ovid, *Metamorphoses* (Golding)");
-  expect(referenceLabel(NS_BOOK.key, "Ovid/Metamorphoses", "", null, journal)).toBe("Ovid, *Metamorphoses*");
+  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", { range: "197-208", facing: "265-77" }, journal)).toBe("Ovid, *Metamorphoses*, 7.197-208 (Golding, 7.265-77)");
+  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", { range: "", facing: "265-66" }, journal)).toBe("Ovid, *Metamorphoses*, 7 (Golding, 7.265-66)");
+  expect(referenceLabel(NS_BOOK.key, golding + "/Book 7", { range: "" }, journal)).toBe("Ovid, *Metamorphoses*, 7 (Golding)");
+  expect(referenceLabel(NS_BOOK.key, golding, { range: "" }, journal)).toBe("Ovid, *Metamorphoses* (Golding)");
+  expect(referenceLabel(NS_BOOK.key, "Ovid/Metamorphoses", { range: "" }, journal)).toBe("Ovid, *Metamorphoses*");
   // a page with no translation in its heading is the translator's own: its right column's lines are referred to
-  expect(referenceLabel(NS_BOOK.key, "Milton, John/The Fifth Ode of Horace", "2", null, journal, "4")).toBe("Milton, *The Fifth Ode of Horace*, 4");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/The Fifth Ode of Horace", { range: "2", facing: "4" }, journal)).toBe("Milton, *The Fifth Ode of Horace*, 4");
   // a title below the work that the label starts from keeps the translation's lines
-  expect(referenceLabel(NS_BOOK.key, "Dante/Commedia (with Longfellow’s translation)/Inferno/7", "121-6", null, journal, "130-5")).toBe("Dante, *Inferno*, 7.121-6 (Longfellow, 7.130-5)");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Commedia (with Longfellow’s translation)/Inferno/7", { range: "121-6", facing: "130-5" }, journal)).toBe("Dante, *Inferno*, 7.121-6 (Longfellow, 7.130-5)");
 });
 
 test("referenceLabel: the corpus table, author then pieces", () => {
-  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", "", null, journal)).toBe("Milton, *Paradise Lost*, 1");
-  expect(referenceLabel(NS_BOOK.key, "Shakespeare, William/King John/3.1", "", null, journal)).toBe("Shakespeare, *King John*, 3.1");
-  expect(referenceLabel(NS_BOOK.key, "Rostand, Edmond/Cyrano de Bergerac/Acte 2/Scène 2", "", null, journal)).toBe("Rostand, *Cyrano de Bergerac*, 2.2");
-  expect(referenceLabel(NS_BOOK.key, "Boethius/Consolatio/Book 3/3m9", "", null, journal)).toBe("Boethius, *De consolatione philosophiae*, 3m9");
-  expect(referenceLabel(NS_BOOK.key, "Housman, A. E/Last Poems/25. The Oracles", "", null, journal)).toBe("Housman, *Last Poems*, *25. The Oracles*");
-  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", "", null, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "" }, journal)).toBe("Milton, *Paradise Lost*, 1");
+  expect(referenceLabel(NS_BOOK.key, "Shakespeare, William/King John/3.1", { range: "" }, journal)).toBe("Shakespeare, *King John*, 3.1");
+  expect(referenceLabel(NS_BOOK.key, "Rostand, Edmond/Cyrano de Bergerac/Acte 2/Scène 2", { range: "" }, journal)).toBe("Rostand, *Cyrano de Bergerac*, 2.2");
+  expect(referenceLabel(NS_BOOK.key, "Boethius/Consolatio/Book 3/3m9", { range: "" }, journal)).toBe("Boethius, *De consolatione philosophiae*, 3m9");
+  expect(referenceLabel(NS_BOOK.key, "Housman, A. E/Last Poems/25. The Oracles", { range: "" }, journal)).toBe("Housman, *Last Poems*, *25. The Oracles*");
+  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "" }, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*");
 });
 
 test("referenceLabel: the line range dots onto a numeral run and commas after a title; a leaf stands in only for a titled division", () => {
-  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", "254-55", null, journal)).toBe("Milton, *Paradise Lost*, 1.254-55");
-  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", "1-4", null, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*, 1-4");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "254-55" }, journal)).toBe("Milton, *Paradise Lost*, 1.254-55");
+  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "1-4" }, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*, 1-4");
   // a numbered division stands and the leaf drops (Screwtape)
-  expect(referenceLabel(NS_BOOK.key, "Lewis, C. S/The Screwtape Letters/Letter 12", "", { from: "60", to: "62" }, journal)).toBe("Lewis, *The Screwtape Letters*, 12");
+  expect(referenceLabel(NS_BOOK.key, "Lewis, C. S/The Screwtape Letters/Letter 12", { range: "", folio: { from: "60", to: "62" } }, journal)).toBe("Lewis, *The Screwtape Letters*, 12");
   // a titled division drops, with any numbered level above it, and the leaf stands in
-  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", "", { from: "22", to: "25" }, journal)).toBe("Blake, *Songs of Innocence*, pp. 22-25");
+  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "", folio: { from: "22", to: "25" } }, journal)).toBe("Blake, *Songs of Innocence*, pp. 22-25");
   // a line range wins over a leaf one
-  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", "3", { from: "9", to: "9" }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "3", folio: { from: "9", to: "9" } }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
 });
 
 test("referenceLabel: from the last title, a day, a page", () => {
-  expect(referenceLabel(NS_BOOK.key, "Dante/Commedia/Inferno/7", "121-6", null, journal)).toBe("Dante, *Inferno*, 7.121-6");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Commedia/Inferno/7", { range: "121-6" }, journal)).toBe("Dante, *Inferno*, 7.121-6");
   // a day names itself by its date and refers to no locator
-  expect(referenceLabel("2021-06-22", null, "3-5", null, journal)).toBe("*Gesta*, 22 June 2021");
-  expect(referenceLabel("2021-06-22", "Walk", "", null, journal)).toBe("*Gesta*, 22 June 2021, *Walk*");
+  expect(referenceLabel("2021-06-22", null, { range: "3-5" }, journal)).toBe("*Gesta*, 22 June 2021");
+  expect(referenceLabel("2021-06-22", "Walk", { range: "" }, journal)).toBe("*Gesta*, 22 June 2021, *Walk*");
   // a page stands on its own name; a numbered sub-page shows its name after a colon
-  expect(referenceLabel(NS_PAGE.key, "Sean's Books/1", "", null, journal)).toBe("*Sean's Books*, 1: *The Figure of Beatrice*");
-  expect(referenceLabel(NS_PAGE.key, "Sean's Books/2", "", null, journal)).toBe("*Sean's Books*, 2: *Witchcraft*");
-  expect(referenceLabel(NS_PAGE.key, "Notes", "", null, journal)).toBe("*Notes*");
-  expect(referenceLabel(NS_PAGE.key, "Notes", "", { from: "3", to: "4" }, journal)).toBe("*Notes*");
+  expect(referenceLabel(NS_PAGE.key, "Sean's Books/1", { range: "" }, journal)).toBe("*Sean's Books*, 1: *The Figure of Beatrice*");
+  expect(referenceLabel(NS_PAGE.key, "Sean's Books/2", { range: "" }, journal)).toBe("*Sean's Books*, 2: *Witchcraft*");
+  expect(referenceLabel(NS_PAGE.key, "Notes", { range: "" }, journal)).toBe("*Notes*");
+  expect(referenceLabel(NS_PAGE.key, "Notes", { range: "", folio: { from: "3", to: "4" } }, journal)).toBe("*Notes*");
 });
 
 test("referenceLabel: a root whose page says no author is named in no reference; the root itself stands on its title", () => {
-  expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", "50-52", null, journal)).toBe("*Beowulf*, 50-52");
-  expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", "", null, journal)).toBe("*Beowulf*");
-  expect(referenceLabel(NS_BOOK.key, "Old English", "", null, journal)).toBe("*Old English*");
-  expect(referenceLabel(NS_BOOK.key, "Old English", "1-3", null, journal)).toBe("*Old English*, 1-3");
-  expect(referenceLabel(NS_BOOK.key, "Old English", "", { from: "3", to: "3" }, journal)).toBe("*Old English*, p. 3");
+  expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", { range: "50-52" }, journal)).toBe("*Beowulf*, 50-52");
+  expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", { range: "" }, journal)).toBe("*Beowulf*");
+  expect(referenceLabel(NS_BOOK.key, "Old English", { range: "" }, journal)).toBe("*Old English*");
+  expect(referenceLabel(NS_BOOK.key, "Old English", { range: "1-3" }, journal)).toBe("*Old English*, 1-3");
+  expect(referenceLabel(NS_BOOK.key, "Old English", { range: "", folio: { from: "3", to: "3" } }, journal)).toBe("*Old English*, p. 3");
   expect(says("noAuthor", "# Old English\n\n::: reference\nno author\n:::")).toBe(true);
   expect(says("noAuthor", "# W\n\n> ::: reference\n> no author\n> :::")).toBe(false);
   expect(says("noAuthor", "# Dante\n\n::: reference\nfrom the last title\n:::")).toBe(false);
@@ -212,15 +212,15 @@ test("the directive is read off the work's page, top level only", () => {
   expect(romanWorkKey(NS_PAGE.key, "Notes", fq)).toBe(null);
 });
 test("referenceLabel under the directive: I.i.2.1, the proem, whole stanzas, a run across them", () => {
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", "2.1", null, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2.1");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", "2", null, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", "2–3", null, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2–3");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", "2.8–3.2", null, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2.8–3.2");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.pr", "1–4", null, fq)).toBe("Spenser, *The Faerie Queene*, I.pr.1–4");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", "", null, fq)).toBe("Spenser, *The Faerie Queene*, I.i");
-  expect(referenceLabel(NS_BOOK.key, FQ + "7.8", "2.9", null, fq)).toBe("Spenser, *The Faerie Queene*, VII.viii.2.9");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.1" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2.1");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2–3" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2–3");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.8–3.2" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2.8–3.2");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.pr", { range: "1–4" }, fq)).toBe("Spenser, *The Faerie Queene*, I.pr.1–4");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i");
+  expect(referenceLabel(NS_BOOK.key, FQ + "7.8", { range: "2.9" }, fq)).toBe("Spenser, *The Faerie Queene*, VII.viii.2.9");
   /* a work without the directive refers as every book does */
-  expect(referenceLabel(NS_BOOK.key, "Spenser, Edmund/Amoretti/1", "3", null, fq)).toBe("Spenser, *Amoretti*, 1.3");
+  expect(referenceLabel(NS_BOOK.key, "Spenser, Edmund/Amoretti/1", { range: "3" }, fq)).toBe("Spenser, *Amoretti*, 1.3");
 });
 
 // The Vita Nuova: under the work's `prosimetrum` directive a reference names
@@ -238,10 +238,10 @@ test("the prosimetrum directive is read off the work's page, a line of its own, 
   expect(vn.prosimetrum("bookshelf/Dante/Commedia")).toBe(false);
 });
 test("referenceLabel: a worded range is comma-joined after the chapter, a numeral range still dots on", () => {
-  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "prose, para 4", null, vn)).toBe("Dante, *Vita Nuova*, 3, prose, para 4");
-  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/8", "verse 2.1-4", null, vn)).toBe("Dante, *Vita Nuova*, 8, verse 2.1-4");
-  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "", null, vn)).toBe("Dante, *Vita Nuova*, 3");
-  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "4", null, vn)).toBe("Dante, *Vita Nuova*, 3.4");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "prose, para 4" }, vn)).toBe("Dante, *Vita Nuova*, 3, prose, para 4");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/8", { range: "verse 2.1-4" }, vn)).toBe("Dante, *Vita Nuova*, 8, verse 2.1-4");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "" }, vn)).toBe("Dante, *Vita Nuova*, 3");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "4" }, vn)).toBe("Dante, *Vita Nuova*, 3.4");
 });
 
 // De Doctrina Christiana: all prose, so under `by book, chapter, and paragraph` a reference names
@@ -259,9 +259,9 @@ test("the by book, chapter, and paragraph directive is read off the work's page,
   expect(vn.byBookChapterParagraph("bookshelf/Dante/Vita Nuova")).toBe(false);
 });
 test("referenceLabel by book, chapter, and paragraph: the book named as a book, the chapter and its paragraph after it, a titled part and the paragraph alone", () => {
-  expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Book 2", "chapter 40 (para 60)", null, ddc)).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
-  expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Book 2", "", null, ddc)).toBe("Augustine, *De Doctrina Christiana*, book 2");
-  expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Preface", "paras 1-2", null, ddc)).toBe("Augustine, *De Doctrina Christiana*, *Preface*, paras 1-2");
+  expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Book 2", { range: "chapter 40 (para 60)" }, ddc)).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 60)");
+  expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Book 2", { range: "" }, ddc)).toBe("Augustine, *De Doctrina Christiana*, book 2");
+  expect(referenceLabel(NS_BOOK.key, "Augustine/De Doctrina Christiana/Preface", { range: "paras 1-2" }, ddc)).toBe("Augustine, *De Doctrina Christiana*, *Preface*, paras 1-2");
 });
 
 const works = journalOf({
@@ -270,14 +270,14 @@ const works = journalOf({
   "bookshelf/Pius 2/W": "# W\n\n::: reference\nby book, chapter, and paragraph\n:::",
 });
 test("referenceLabel by book, chapter, and paragraph over other pages: the division's own word, a title in the key left out, the author never taken for it", () => {
-  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2. The Art of Signs", "chapter 4 (para 6)", null, works)).toBe("A, *W*, book 2, chapter 4 (para 6)");
-  expect(referenceLabel(NS_BOOK.key, "Pius 2/W/Book 2", "chapter 1 (para 1)", null, works)).toBe("Pius 2, *W*, book 2, chapter 1 (para 1)");
-  expect(referenceLabel(NS_BOOK.key, "A/W/2", "chapter 40 (para 60)", null, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
-  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2/Chapter 40", "para 60", null, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2. The Art of Signs", { range: "chapter 4 (para 6)" }, works)).toBe("A, *W*, book 2, chapter 4 (para 6)");
+  expect(referenceLabel(NS_BOOK.key, "Pius 2/W/Book 2", { range: "chapter 1 (para 1)" }, works)).toBe("Pius 2, *W*, book 2, chapter 1 (para 1)");
+  expect(referenceLabel(NS_BOOK.key, "A/W/2", { range: "chapter 40 (para 60)" }, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2/Chapter 40", { range: "para 60" }, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
 });
 test("referenceLabel by book, chapter, and paragraph: a numbered book stands and the leaf drops; a translator's locator keeps its book", () => {
-  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2", "", { from: "14", to: "14" }, works)).toBe("A, *W*, book 2");
-  expect(referenceLabel(NS_BOOK.key, "A/Y (with Shaw’s translation)/Book 2", "5", null, works, "7")).toBe("A, *Y*, book 2.5 (Shaw, 2.7)");
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2", { range: "", folio: { from: "14", to: "14" } }, works)).toBe("A, *W*, book 2");
+  expect(referenceLabel(NS_BOOK.key, "A/Y (with Shaw’s translation)/Book 2", { range: "5", facing: "7" }, works)).toBe("A, *Y*, book 2.5 (Shaw, 2.7)");
 });
 
 // Scripture: under the root's `scripture` directive a book is named plainly
@@ -302,14 +302,14 @@ test("a page refers as scripture when its root's page says so, whatever its dept
   expect(refersAsScripture("2026-09-22", null, bible)).toBe(false);
 });
 test("referenceLabel under scripture: KJV, Genesis 1.3; a range; a chapter; a book; a book whose name opens with a number", () => {
-  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "3", null, bible)).toBe("KJV, Genesis 1.3");
-  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "3-5", null, bible)).toBe("KJV, Genesis 1.3-5");
-  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", "", null, bible)).toBe("KJV, Genesis 1");
-  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis", "", null, bible)).toBe("KJV, Genesis");
-  expect(referenceLabel(NS_BOOK.key, "KJV/1 Samuel/17", "49", null, bible)).toBe("KJV, 1 Samuel 17.49");
-  expect(referenceLabel(NS_BOOK.key, "Douay-Rheims/Psalms/22", "1", null, bible)).toBe("Douay-Rheims, Psalms 22.1");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", { range: "3" }, bible)).toBe("KJV, Genesis 1.3");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", { range: "3-5" }, bible)).toBe("KJV, Genesis 1.3-5");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", { range: "" }, bible)).toBe("KJV, Genesis 1");
+  expect(referenceLabel(NS_BOOK.key, "KJV/Genesis", { range: "" }, bible)).toBe("KJV, Genesis");
+  expect(referenceLabel(NS_BOOK.key, "KJV/1 Samuel/17", { range: "49" }, bible)).toBe("KJV, 1 Samuel 17.49");
+  expect(referenceLabel(NS_BOOK.key, "Douay-Rheims/Psalms/22", { range: "1" }, bible)).toBe("Douay-Rheims, Psalms 22.1");
   /* a root without the directive refers as every book does */
-  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", "", null, vn)).toBe("Dante, *Vita Nuova*, 3");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "" }, vn)).toBe("Dante, *Vita Nuova*, 3");
 });
 
 // Chaucer: under the work's `parts in roman` directive a tale is named in
@@ -325,9 +325,9 @@ test("the parts-in-roman directive is read off the work's page, a line of its ow
   expect(ct.partsInRoman("bookshelf/Chaucer, Geoffrey/Canterbury Tales")).toBe(true);
 });
 test("referenceLabel under parts in roman: Chaucer, *Canterbury Tales*, The Knight's Tale, 859-62; a work without it as before", () => {
-  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", "859-62", null, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale, 859-62");
-  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", "", null, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale");
-  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Troilus and Criseyde/1", "1-7", null, ct)).toBe("Chaucer, *Troilus and Criseyde*, 1.1-7");
+  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", { range: "859-62" }, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale, 859-62");
+  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", { range: "" }, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale");
+  expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Troilus and Criseyde/1", { range: "1-7" }, ct)).toBe("Chaucer, *Troilus and Criseyde*, 1.1-7");
 });
 
 test("mdLabel keeps a bracket that closes one opened in the label, and drops a bracket that would end the link", () => {

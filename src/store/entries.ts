@@ -1,4 +1,4 @@
-import { type EntryStore, isStale } from "./store.ts";
+import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
 
 export interface EntryNotices {
   /* a durable landing under ekey: release any pin owed under it */
@@ -55,6 +55,8 @@ export interface LayerOptions {
 }
 /* an op's answer that nothing landed: the row was already gone */
 const GONE = Symbol("gone");
+const rewriteOutcome = (ok: boolean, unchanged: boolean): Rewrite => (!ok ? "failed" : unchanged ? "unchanged" : "landed");
+interface RewriteTry { ekey: string; edit: (md: string) => string | null; seqAt: number | undefined; writeAt: number; unchanged: boolean }
 export function entryLayer(store: EntryStore, notices: EntryNotices, opts: LayerOptions = {}): EntryLayer {
   const cache: Record<string, string> = Object.create(null);
   const saveSeq: Record<string, number> = Object.create(null);
@@ -92,39 +94,43 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
      entries.test › rewriteEntry leaves a key whose own save was refused).
      A row gone from the store is taken as a delete, with no landing told
      (pin: entries.test › rewriteEntry refused over a row deleted elsewhere) */
+  function rowGone(w: RewriteTry, ours: boolean): typeof GONE {
+    w.unchanged = true;
+    store.rebase(w.ekey, null);
+    if (ours) forgetRow(w.ekey);
+    return GONE;
+  }
+  function staleRewrite(w: RewriteTry, err: unknown): unknown {
+    if (!isStale(err)) throw err;
+    const ours = saveSeq[w.ekey] === w.seqAt && writeSeq[w.ekey] === w.writeAt;
+    if (err.absent) return rowGone(w, ours);
+    store.rebase(w.ekey, err.stored);
+    const again = w.edit(err.stored);
+    if (ours) cache[w.ekey] = again ?? err.stored;
+    if (again === null) { w.unchanged = true; return; }
+    return store.set(w.ekey, again);
+  }
   function rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite> {
     const run = (): Promise<Rewrite> => {
       if (unlanded.has(ekey)) return Promise.resolve("failed");
       const first = edit(entryMd(ekey));
       if (first === null) return Promise.resolve("unchanged");
-      const seqAt = saveSeq[ekey], writeAt = (writeSeq[ekey] || 0) + 1;
-      writeSeq[ekey] = writeAt;
+      const w: RewriteTry = { ekey, edit, seqAt: saveSeq[ekey], writeAt: (writeSeq[ekey] || 0) + 1, unchanged: false };
+      writeSeq[ekey] = w.writeAt;
       cache[ekey] = first;
-      let unchanged = false;
-      const op = (): Promise<unknown> => store.set(ekey, first).catch((err: unknown): unknown => {
-        if (!isStale(err)) throw err;
-        const ours = saveSeq[ekey] === seqAt && writeSeq[ekey] === writeAt;
-        if (err.absent) {
-          unchanged = true;
-          store.rebase(ekey, null);
-          if (ours) { saveSeq[ekey] = (saveSeq[ekey] || 0) + 1; delete cache[ekey]; unlanded.delete(ekey); notices.removed(ekey); }
-          return GONE;
-        }
-        store.rebase(ekey, err.stored);
-        const again = edit(err.stored);
-        if (ours) cache[ekey] = again ?? err.stored;
-        if (again === null) { unchanged = true; return; }
-        return store.set(ekey, again);
-      });
-      return persistEntry(ekey, op).then((ok) => !ok ? "failed" : unchanged ? "unchanged" : "landed");
+      const op = (): Promise<unknown> => store.set(ekey, first).catch((err: unknown) => staleRewrite(w, err));
+      return persistEntry(ekey, op).then((ok) => rewriteOutcome(ok, w.unchanged));
     };
     return (chain[ekey] || Promise.resolve()).then(run, run);
   }
-  function removeEntry(ekey: string): Promise<boolean> {
+  function forgetRow(ekey: string): void {
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
     delete cache[ekey];
     unlanded.delete(ekey);
     notices.removed(ekey);
+  }
+  function removeEntry(ekey: string): Promise<boolean> {
+    forgetRow(ekey);
     return persistEntry(ekey, () => store.del(ekey), true);
   }
   /* serialize the async store writes for one key: two quick saves of one
@@ -136,32 +142,40 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
      float unhandled. The store is the only durable copy, so a failed write
      is real data loss: stick it, keyed; a success is the durable landing
      and releases the pin. */
+  function landed(ekey: string, v: unknown): boolean {
+    if (v === GONE) return true;
+    unlanded.delete(ekey);
+    writeErrors.delete(ekey);
+    notices.landed(ekey);
+    opts.announce?.(ekey);
+    opts.onLanded?.(ekey);
+    return true;
+  }
+  /* PUT THE CACHE BACK: a refused write left there would go out over the
+     backup folder at the next run (pin: entries.test › a stale write
+     restores the cache). Guarded by the counter — a delete mutates the
+     cache synchronously and queues its own op, and an unguarded restore
+     would land the row again after the entry was retired. A REFUSED DELETE
+     restores it too: its row survives in the store (pin: entries.test › a
+     stale delete restores the cache) */
+  function staleRefusal(ekey: string, err: StaleWriteError, seqAt: number | undefined, isDel: boolean): void {
+    if (saveSeq[ekey] === seqAt) cache[ekey] = err.stored;
+    if (isDel) { notices.stuck("not deleted — changed in another tab, reload", err, ekey); return; }
+    unlanded.add(ekey);
+    notices.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
+  }
+  function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
+    writeErrors.set(ekey, err);
+    if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
+    else if (isDel) notices.stuckIdle("couldn't delete — reload", err);
+    else { unlanded.add(ekey); notices.stuck("not saved", err, ekey); }
+    return false;
+  }
   function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {
     const seqAt = saveSeq[ekey];
     const tail = (chain[ekey] || Promise.resolve()).then(op, op);
     chain[ekey] = tail;
-    return tail.then(
-      (v) => { if (v === GONE) return true; unlanded.delete(ekey); writeErrors.delete(ekey); notices.landed(ekey); opts.announce?.(ekey); opts.onLanded?.(ekey); return true; },
-      (err: unknown) => {
-        writeErrors.set(ekey, err);
-        /* PUT THE CACHE BACK: a refused write left there would go out over the
-           backup folder at the next run (pin: entries.test › a stale write
-           restores the cache). Guarded by the counter — a delete mutates the
-           cache synchronously and queues its own op, and an unguarded restore
-           would land the row again after the entry was retired. A REFUSED DELETE
-           restores it too: its row survives in the store (pin: entries.test › a
-           stale delete restores the cache) */
-        if (isStale(err)) {
-          if (saveSeq[ekey] === seqAt) cache[ekey] = err.stored;
-          if (!isDel) unlanded.add(ekey);
-          if (isDel) notices.stuck("not deleted — changed in another tab, reload", err, ekey);
-          else notices.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
-        }
-        else if (isDel) notices.stuckIdle("couldn't delete — reload", err);
-        else { unlanded.add(ekey); notices.stuck("not saved", err, ekey); }
-        return false;
-      },
-    );
+    return tail.then((v) => landed(ekey, v), (err: unknown) => refused(ekey, err, seqAt, isDel));
   }
   function clear(): Promise<void> {
     for (const k of Object.keys(cache)) delete cache[k];
@@ -177,7 +191,8 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     if (ekey in cache) return Promise.resolve(false);
     const seqAt = saveSeq[ekey];
     const read = (): Promise<boolean> => store.get(ekey).then((row) => {
-      if (!row || !row.md || (ekey in cache) || saveSeq[ekey] !== seqAt) return false;
+      if (!row?.md) return false;
+      if (ekey in cache || saveSeq[ekey] !== seqAt) return false;
       cache[ekey] = row.md;
       return true;
     });
@@ -195,19 +210,20 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   function takeNotice(ekey: string, accept: (md: string | null) => boolean = () => true): Promise<boolean> {
     if (!warmed) return storeReadFailed ? Promise.resolve(false) : afterWarm.then(() => warmed ? takeNotice(ekey, accept) : false);
     const seqAt = saveSeq[ekey], writeAt = writeSeq[ekey];
+    const moved = (): boolean => saveSeq[ekey] !== seqAt || writeSeq[ekey] !== writeAt || unlanded.has(ekey);
     const read = (): Promise<boolean> => store.peek(ekey).then((row) => {
-      if (saveSeq[ekey] !== seqAt || writeSeq[ekey] !== writeAt || unlanded.has(ekey)) return false;
+      if (moved()) return false;
       const md = row ? row.md : null, held = ekey in cache ? cache[ekey] : null;
-      if (md === held) return false;
-      if (!accept(md)) return false;
-      store.rebase(ekey, md);
-      if (md !== null) { cache[ekey] = md; return true; }
-      saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
-      delete cache[ekey];
-      notices.removed(ekey);
-      return true;
+      if (md === held || !accept(md)) return false;
+      return noticeTaken(ekey, md);
     });
     return (chain[ekey] || Promise.resolve()).then(read, read);
+  }
+  function noticeTaken(ekey: string, md: string | null): true {
+    store.rebase(ekey, md);
+    if (md !== null) cache[ekey] = md;
+    else forgetRow(ekey);
+    return true;
   }
   function warm(): Promise<void> {
     storeReadFailed = false;

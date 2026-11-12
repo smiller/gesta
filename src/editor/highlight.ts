@@ -14,7 +14,7 @@ export function findHit(doc: Node, query: string, nth: number, honorMarkers: boo
   const p = honorMarkers ? parseSearchQuery(query) : { needle: searchFold(withoutNoteMarks(query || "").trim()), left: false, right: false };
   if (!p.needle) return null;
   const flat = flattenDoc(doc);
-  const hits = searchHits(searchFold(flat.text), p.needle, p.left, p.right, nth + 1);
+  const hits = searchHits(searchFold(flat.text), p, nth + 1);
   if (nth >= hits.length) return null;
   return flatRange(flat, hits[nth], p.needle.length);
 }

@@ -15,29 +15,35 @@ export function hashParts(raw: string): HashParts {
 export function namesEntry(raw: string): boolean {
   return namedBy(raw) !== null;
 }
-function namedBy(raw: string): HashParts | null {
-  let hl: Highlight | null = null;
+function searchedFor(query: string): Highlight | null {
+  try {
+    const m = query.match(/(?:^|&)h=([^&]*)(?:&n=(\d+))?/);
+    return m?.[1] ? { q: decodeURIComponent(m[1]), nth: parseInt(m[2], 10) || 0 } : null;
+  } catch { return null; }
+}
+function highlightOf(raw: string): Highlight | null {
   const qpos = raw.indexOf("?");
-  if (qpos !== -1) {
-    const query = raw.slice(qpos + 1);
-    try {
-      const m = query.match(/(?:^|&)h=([^&]*)(?:&n=(\d+))?/);
-      if (m && m[1]) hl = { q: decodeURIComponent(m[1]), nth: parseInt(m[2], 10) || 0 };
-    } catch { hl = null; }
-    const line = query.match(/(?:^|&)line=([1-9]\d*(?:\.\d+|[a-z])?|\[\d+\])(?:&|$)/);
-    if (!hl && line) hl = { q: "", nth: 0, line: line[1] };
-    raw = hashTarget(raw);
-  }
+  if (qpos === -1) return null;
+  const query = raw.slice(qpos + 1);
+  const line = query.match(/(?:^|&)line=([1-9]\d*(?:\.\d+|[a-z])?|\[\d+\])(?:&|$)/);
+  return searchedFor(query) ?? (line ? { q: "", nth: 0, line: line[1] } : null);
+}
+function pagePath(tag: string | null): string | null {
+  const parts = (tag || "").split("/").map(pageName);
+  while (parts.length > 1 && !parts[parts.length - 1]) parts.pop();
+  return parts.indexOf("") === -1 ? parts.join("/") : null;
+}
+function namedBy(whole: string): HashParts | null {
+  const hl = highlightOf(whole);
+  const raw = whole.indexOf("?") === -1 ? whole : hashTarget(whole);
   const slash = raw.indexOf("/");
   const date = slash === -1 ? raw : raw.slice(0, slash);
   let tag: string | null;
   try { tag = slash === -1 ? null : decodeURIComponent(raw.slice(slash + 1)); }
   catch { return null; }
   if (nsOf(date)) {
-    const parts = (tag || "").split("/").map(pageName);
-    while (parts.length > 1 && !parts[parts.length - 1]) parts.pop();
-    if (parts.indexOf("") !== -1) return null;
-    return { date, tag: parts.join("/"), hl };
+    const path = pagePath(tag);
+    return path === null ? null : { date, tag: path, hl };
   }
   if (!isDayKey(date)) return null;
   return { date, tag: tag || null, hl };

@@ -60,36 +60,41 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
     .filter((key) => cache[key].trim())
     .map((key) => { const [date, tag] = splitKey(key); return { key, at: entryFile(date, tag), md: cache[key] }; });
   const clash = collidingFile(jobs);
-  if (clash) {
-    const err = new Error("two entries would write one file — " + clash.name + " is claimed by " + clash.keys.join(" and ") + ". Rename one of them.") as Collision;
-    err.collision = true;
-    return Promise.reject(err);
-  }
-  function oneJob(job: { at: ReturnType<typeof entryFile>; md: string }): Promise<ExportFile[]> {
-    const doc: ExportFile = { dir: job.at.dir, name: job.at.base + ".md", flat: job.at.flatBase + ".md", text: job.md, entry: job.at.flatBase, root: job.at.root };
-    const files: ExportFile[] = [doc];
-    let lost = 0, faulted = 0;
-    return Promise.all(imageRefs(job.md).map((ref) => images.get(pictureIn(job.at, ref)).then((row) => {
-      if (row) files.push({ dir: job.at.dir, name: ref, bytes: row.bytes, entry: job.at.flatBase, root: job.at.root });
-      else lost++;
-    }, () => { lost++; faulted++; }))).then(() => {
-      if (lost) { doc.picsLost = job.at; doc.picsMissing = lost; }
-      if (faulted) doc.picsFaulted = true;
-      return files;
-    });
-  }
-  const batches: typeof jobs[] = [];
-  let batch: typeof jobs = [], since = 0;
+  if (clash) return Promise.reject(collisionError(clash));
+  const all: ExportFile[] = [];
+  return batchesOf(jobs).reduce((chain, group) => chain.then(() =>
+    Promise.all(group.map((job) => exportJob(job, images))).then((lists) => { for (const l of lists) all.push(...l); return yieldToTaskQueue(); })),
+    Promise.resolve()).then(() => all);
+}
+function collisionError(clash: { name: string; keys: string[] }): Collision {
+  const err = new Error("two entries would write one file — " + clash.name + " is claimed by " + clash.keys.join(" and ") + ". Rename one of them.") as Collision;
+  err.collision = true;
+  return err;
+}
+interface ExportJob { at: ReturnType<typeof entryFile>; md: string }
+function exportJob(job: ExportJob, images: ImageStore): Promise<ExportFile[]> {
+  const doc: ExportFile = { dir: job.at.dir, name: job.at.base + ".md", flat: job.at.flatBase + ".md", text: job.md, entry: job.at.flatBase, root: job.at.root };
+  const files: ExportFile[] = [doc];
+  let lost = 0, faulted = 0;
+  return Promise.all(imageRefs(job.md).map((ref) => images.get(pictureIn(job.at, ref)).then((row) => {
+    if (row) files.push({ dir: job.at.dir, name: ref, bytes: row.bytes, entry: job.at.flatBase, root: job.at.root });
+    else lost++;
+  }, () => { lost++; faulted++; }))).then(() => {
+    if (lost) { doc.picsLost = job.at; doc.picsMissing = lost; }
+    if (faulted) doc.picsFaulted = true;
+    return files;
+  });
+}
+function batchesOf<J extends ExportJob>(jobs: J[]): J[][] {
+  const batches: J[][] = [];
+  let batch: J[] = [], since = 0;
   for (const job of jobs) {
     batch.push(job);
     since += job.md.length;
     if (since >= EXPORT_YIELD_BYTES) { batches.push(batch); batch = []; since = 0; }
   }
   if (batch.length) batches.push(batch);
-  const all: ExportFile[] = [];
-  return batches.reduce((chain, group) => chain.then(() =>
-    Promise.all(group.map(oneJob)).then((lists) => { for (const l of lists) all.push(...l); return yieldToTaskQueue(); })),
-    Promise.resolve()).then(() => all);
+  return batches;
 }
 /* the pictures an export's text names and could not carry (pin:
    exportEntries.test › exportEntries: a doc per non-blank entry) */

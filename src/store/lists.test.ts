@@ -43,27 +43,27 @@ test("subPageNeighbors walks the order it is given — a book's index order, pro
   const keys = ["bookshelf/Boethius/Consolatio", "bookshelf/Boethius/Consolatio/3pr1", "bookshelf/Boethius/Consolatio/3m1", "bookshelf/Boethius/Consolatio/3pr2", "bookshelf/Boethius/Consolatio/3m2"];
   const order = ["3pr1", "3m1", "3pr2", "3m2"];
   const parent = "bookshelf/Boethius/Consolatio";
-  expect(subPageNeighbors(keys, parent, "3pr1", () => true, order)).toEqual({ prev: null, next: "3m1" });
-  expect(subPageNeighbors(keys, parent, "3m1", () => true, order)).toEqual({ prev: "3pr1", next: "3pr2" });
-  expect(subPageNeighbors(keys, parent, "3m2", () => true, order)).toEqual({ prev: "3pr2", next: null });
+  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3pr1", order)).toEqual({ prev: null, next: "3m1" });
+  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3m1", order)).toEqual({ prev: "3pr1", next: "3pr2" });
+  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3m2", order)).toEqual({ prev: "3pr2", next: null });
   /* a blank in the order is skipped as before */
-  expect(subPageNeighbors(keys, parent, "3pr1", (k) => k !== parent + "/3m1", order)).toEqual({ prev: null, next: "3pr2" });
+  expect(subPageNeighbors({ keys, bearing: (k) => k !== parent + "/3m1" }, parent, "3pr1", order)).toEqual({ prev: null, next: "3pr2" });
   /* a sub the stated order lacks — open, not yet saved — stands at its end */
-  expect(subPageNeighbors(keys, parent, "3m1a", () => true, order)).toEqual({ prev: "3m2", next: null });
+  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3m1a", order)).toEqual({ prev: "3m2", next: null });
   /* by name, the same keys walk 3m1, 3m2, 3pr1, 3pr2 */
-  expect(subPageNeighbors(keys, parent, "3pr1", () => true)).toEqual({ prev: "3m2", next: "3pr2" });
-  expect(navNeighbors(keys, "bookshelf", "Boethius/Consolatio/3pr1", () => true, () => order)).toEqual({ prev: null, next: ["bookshelf", "Boethius/Consolatio/3m1"] });
+  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3pr1")).toEqual({ prev: "3m2", next: "3pr2" });
+  expect(navNeighbors({ keys, bearing: () => true }, "bookshelf", "Boethius/Consolatio/3pr1", () => order)).toEqual({ prev: null, next: ["bookshelf", "Boethius/Consolatio/3m1"] });
 });
 test("subPageNeighbors: siblings in reading order, blanks skipped, an unlisted sub placed by comparison", () => {
   const bearing = (k: string) => k !== "bookshelf/Dante/Inferno/2";
-  expect(subPageNeighbors(keys, "bookshelf/Dante/Inferno", "1", bearing)).toEqual({ prev: null, next: "10" });
-  expect(subPageNeighbors(keys, "bookshelf/Dante/Inferno", "10", () => true)).toEqual({ prev: "2", next: null });
-  expect(subPageNeighbors(keys, "bookshelf/Dante/Inferno", "3", () => true)).toEqual({ prev: "2", next: "10" });
+  expect(subPageNeighbors({ keys, bearing }, "bookshelf/Dante/Inferno", "1")).toEqual({ prev: null, next: "10" });
+  expect(subPageNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "10")).toEqual({ prev: "2", next: null });
+  expect(subPageNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "3")).toEqual({ prev: "2", next: "10" });
 });
 
 test("navNeighbors: a day walks days, a sub-page its siblings, a tagged day and a root nowhere", () => {
-  expect(navNeighbors(keys, "2026-01-02", null, () => true)).toEqual({ prev: ["2025-12-31", null], next: ["2026-01-05", null] });
-  expect(navNeighbors(keys, "2026-01-05", "morning", () => true)).toEqual({ prev: null, next: null });
-  expect(navNeighbors(keys, "page", "Recipes", () => true)).toEqual({ prev: null, next: null });
-  expect(navNeighbors(keys, "page", "Recipes/Bread", () => true)).toEqual({ prev: null, next: ["page", "Recipes/Soup"] });
+  expect(navNeighbors({ keys, bearing: () => true }, "2026-01-02", null)).toEqual({ prev: ["2025-12-31", null], next: ["2026-01-05", null] });
+  expect(navNeighbors({ keys, bearing: () => true }, "2026-01-05", "morning")).toEqual({ prev: null, next: null });
+  expect(navNeighbors({ keys, bearing: () => true }, "page", "Recipes")).toEqual({ prev: null, next: null });
+  expect(navNeighbors({ keys, bearing: () => true }, "page", "Recipes/Bread")).toEqual({ prev: null, next: ["page", "Recipes/Soup"] });
 });

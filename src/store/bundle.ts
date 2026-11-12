@@ -17,43 +17,51 @@ const decoder = new TextDecoder();
 const bytesOf = (b: Blob): Promise<Uint8Array> => b.arrayBuffer().then((buf) => new Uint8Array(buf));
 /* the end record and the central directory read from the file's tail alone,
    the members in file order */
+const viewOf = (b: Uint8Array): DataView => new DataView(b.buffer, b.byteOffset, b.byteLength);
+function endRecordAt(tail: Uint8Array): number {
+  const dv = viewOf(tail);
+  for (let i = tail.length - 22; i >= 0; i--) if (dv.getUint32(i, true) === EOCD) return i;
+  throw new Error("not a zip file");
+}
+const directoryDamaged = (): Error => new Error("the zip's directory is damaged");
+function centralMembers(cd: Uint8Array, n: number, cdAt: number): Member[] {
+  const cv = viewOf(cd), members: Member[] = [];
+  let at = 0;
+  for (let i = 0; i < n; i++) {
+    if (at + 46 > cd.length) throw directoryDamaged();
+    if (cv.getUint32(at, true) !== CENTRAL) throw directoryDamaged();
+    const nameLen = cv.getUint16(at + 28, true);
+    members.push({
+      path: decoder.decode(cd.subarray(at + 46, at + 46 + nameLen)),
+      method: cv.getUint16(at + 10, true), at: cv.getUint32(at + 42, true), end: cdAt,
+      size: cv.getUint32(at + 20, true),
+    });
+    at += 46 + nameLen + cv.getUint16(at + 30, true) + cv.getUint16(at + 32, true);
+  }
+  members.sort((a, b) => a.at - b.at);
+  for (let i = 0; i + 1 < members.length; i++) members[i].end = members[i + 1].at;
+  return members;
+}
 export function zipDirectory(file: Blob): Promise<{ members: Member[]; comment: string }> {
   const from = Math.max(0, file.size - 22 - 0xFFFF);
   return bytesOf(file.slice(from)).then((tail) => {
-    const dv = new DataView(tail.buffer, tail.byteOffset, tail.byteLength);
-    let end = -1;
-    for (let i = tail.length - 22; i >= 0; i--) if (dv.getUint32(i, true) === EOCD) { end = i; break; }
-    if (end < 0) throw new Error("not a zip file");
+    const end = endRecordAt(tail), dv = viewOf(tail);
     const n = dv.getUint16(end + 10, true), cdSize = dv.getUint32(end + 12, true), cdAt = dv.getUint32(end + 16, true);
     const comment = decoder.decode(tail.subarray(end + 22, end + 22 + dv.getUint16(end + 20, true)));
-    if (cdAt + cdSize > file.size) throw new Error("the zip's directory is damaged");
-    return bytesOf(file.slice(cdAt, cdAt + cdSize)).then((cd) => {
-      const cv = new DataView(cd.buffer, cd.byteOffset, cd.byteLength), members: Member[] = [];
-      let at = 0;
-      for (let i = 0; i < n; i++) {
-        if (at + 46 > cd.length || cv.getUint32(at, true) !== CENTRAL) throw new Error("the zip's directory is damaged");
-        const nameLen = cv.getUint16(at + 28, true);
-        members.push({
-          path: decoder.decode(cd.subarray(at + 46, at + 46 + nameLen)),
-          method: cv.getUint16(at + 10, true), at: cv.getUint32(at + 42, true), end: cdAt,
-          size: cv.getUint32(at + 20, true),
-        });
-        at += 46 + nameLen + cv.getUint16(at + 30, true) + cv.getUint16(at + 32, true);
-      }
-      members.sort((a, b) => a.at - b.at);
-      for (let i = 0; i + 1 < members.length; i++) members[i].end = members[i + 1].at;
-      return { members, comment };
-    });
+    if (cdAt + cdSize > file.size) throw directoryDamaged();
+    return bytesOf(file.slice(cdAt, cdAt + cdSize)).then((cd) => ({ members: centralMembers(cd, n, cdAt), comment }));
   });
 }
 /* a member's packed bytes out of a chunk read from `base`: the local
    header's own name and extra lengths say where its data starts, an extra
    field there being free to differ from the directory's */
 export function memberData(chunk: Uint8Array, base: number, m: Member): Uint8Array {
-  const o = m.at - base, dv = new DataView(chunk.buffer, chunk.byteOffset, chunk.byteLength);
-  if (o < 0 || o + 30 > chunk.length || dv.getUint32(o, true) !== LOCAL) throw new Error("the zip's member " + m.path + " is damaged");
+  const o = m.at - base, dv = viewOf(chunk);
+  const damaged = (): Error => new Error("the zip's member " + m.path + " is damaged");
+  if (o < 0 || o + 30 > chunk.length) throw damaged();
+  if (dv.getUint32(o, true) !== LOCAL) throw damaged();
   const from = o + 30 + dv.getUint16(o + 26, true) + dv.getUint16(o + 28, true);
-  if (from + m.size > chunk.length) throw new Error("the zip's member " + m.path + " is damaged");
+  if (from + m.size > chunk.length) throw damaged();
   return chunk.subarray(from, from + m.size);
 }
 export function inflated(m: Member, packed: Uint8Array): Promise<Uint8Array> {
@@ -71,35 +79,46 @@ const RUN_BYTES = 1 << 20;
 /* every entry's text by its key (pin: bundle.test › readBundle keys every
    entry); a picture is kept as its place in the file, read when an entry
    shows it */
-export function readBundle(file: Blob, onProgress?: (done: number, total: number) => void): Promise<Bundle> {
-  return zipDirectory(file).then(({ members, comment }) => {
-    const entries: Record<string, string> = Object.create(null), pictures: Record<string, Member> = Object.create(null);
-    const runs: { key: string; m: Member }[][] = [];
-    let run: { key: string; m: Member }[] = [], skipped = 0, total = 0;
-    const close = () => { if (run.length) runs.push(run); run = []; };
-    for (const m of members) {
-      const t = importTarget(m.path);
-      if (!t) {
-        close();
-        if (/\.md$/i.test(m.path) || m.path.endsWith("/")) skipped++;
-        else pictures[m.path] = m;
-        continue;
-      }
-      if (run.length && (run.length >= AT_ONCE || m.end - run[0].m.at > RUN_BYTES)) close();
-      run.push({ key: entryKey(t.date, t.tag), m });
-      total++;
+type Run = { key: string; m: Member }[];
+type Progress = (done: number, total: number) => void;
+const notPicture = (path: string): boolean => /\.md$/i.test(path) || path.endsWith("/");
+const runFull = (run: Run, m: Member): boolean => run.length >= AT_ONCE || m.end - run[0].m.at > RUN_BYTES;
+function planRuns(members: Member[]): { runs: Run[]; pictures: Record<string, Member>; skipped: number } {
+  const pictures: Record<string, Member> = Object.create(null), runs: Run[] = [];
+  let run: Run = [], skipped = 0;
+  const close = (): void => { if (run.length) runs.push(run); run = []; };
+  for (const m of members) {
+    const t = importTarget(m.path);
+    if (!t) {
+      close();
+      if (notPicture(m.path)) skipped++;
+      else pictures[m.path] = m;
+      continue;
     }
-    close();
-    let done = 0;
-    const next = (i: number): Promise<void> => {
-      if (i >= runs.length) return Promise.resolve();
-      const r = runs[i], base = r[0].m.at;
-      return bytesOf(file.slice(base, r[r.length - 1].m.end)).then((chunk) =>
-        Promise.all(r.map(({ key, m }) => inflated(m, memberData(chunk, base, m)).then((raw) => { entries[key] = decoder.decode(raw); }))))
-        .then(() => { done += r.length; onProgress?.(done, total); return next(i + 1); });
-    };
+    if (run.length && runFull(run, m)) close();
+    run.push({ key: entryKey(t.date, t.tag), m });
+  }
+  close();
+  return { runs, pictures, skipped };
+}
+function readRuns(file: Blob, runs: Run[], onProgress?: Progress): Promise<Record<string, string>> {
+  const entries: Record<string, string> = Object.create(null);
+  const total = runs.reduce((n, r) => n + r.length, 0);
+  let done = 0;
+  const next = (i: number): Promise<void> => {
+    if (i >= runs.length) return Promise.resolve();
+    const r = runs[i], base = r[0].m.at;
+    return bytesOf(file.slice(base, r[r.length - 1].m.end)).then((chunk) =>
+      Promise.all(r.map(({ key, m }) => inflated(m, memberData(chunk, base, m)).then((raw) => { entries[key] = decoder.decode(raw); }))))
+      .then(() => { done += r.length; onProgress?.(done, total); return next(i + 1); });
+  };
+  return next(0).then(() => entries);
+}
+export function readBundle(file: Blob, onProgress?: Progress): Promise<Bundle> {
+  return zipDirectory(file).then(({ members, comment }) => {
+    const { runs, pictures, skipped } = planRuns(members);
     const written = Date.parse(comment);
-    return next(0).then(() => ({ entries, pictures, skipped, written: isNaN(written) ? null : written }));
+    return readRuns(file, runs, onProgress).then((entries) => ({ entries, pictures, skipped, written: isNaN(written) ? null : written }));
   });
 }
 /* the pictures, read from the file as an entry asks for one; nothing is
