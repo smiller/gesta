@@ -10,8 +10,11 @@ cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/..}" || exit 1
 APP_PATHS="src index.html"
 ACCEPTMARK="$(git rev-parse --git-dir 2>/dev/null)/gesta-accepted"
 app_sig() {
-  git ls-files -co --exclude-standard -- $APP_PATHS | LC_ALL=C sort | while IFS= read -r f; do
-    [ -f "$f" ] && { printf '%s ' "$f"; shasum -a 256 < "$f" | cut -c1-64; }
-  done | shasum -a 256 | cut -c1-64
+    files=$(git ls-files -co --exclude-standard -- src index.html) || return 1
+    [ -n "$files" ] || { echo "sig: no files under src/ or index.html in $(pwd) — no
+  signature" >&2; return 1; }
+    printf '%s\n' "$files" | LC_ALL=C sort | while IFS= read -r f; do
+        [ -f "$f" ] && { printf '%s ' "$f"; shasum -a 256 < "$f" | cut -c1-64; }
+    done | shasum -a 256 | cut -c1-64
 }
 accepted_sig() { [ -f "$ACCEPTMARK" ] && sed -n 's/^sig=//p' "$ACCEPTMARK"; }

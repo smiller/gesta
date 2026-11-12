@@ -71,6 +71,7 @@ green check.sh; green test.sh; green comments.sh; green health.sh; green verify.
 echo app > index.html
 echo 'export const a = 1;' > src/a.ts
 echo tool > tools/t.mjs
+cp "$REPO/tools/accepted.sh" tools/ || exit 1
 git add -A && git commit -qm "init" >/dev/null
 git config core.hooksPath hooks
 
@@ -162,6 +163,32 @@ echo 'export const b = 2;' > src/new.ts
 sh hooks/accept.sh >/dev/null 2>&1
 rm src/new.ts
 call "an untracked src file removed after acceptance: refused" 2 "$SKILL_REVIEW" "REFUSED"
+
+# === tools/accepted.sh, the agent's question ===============================
+# asks <name> <want-exit> <output-substring> <command...>
+asks() {
+  n=$1; want=$2; sub=$3; shift 3
+  aout=$("$@" 2>&1); rc=$?
+  if [ "$rc" != "$want" ]; then bad "$n — want exit $want, got $rc: $aout"; return 0; fi
+  case "$aout" in *"$sub"*) ok "$n" ;; *) bad "$n — exit $want but output lacked \"$sub\": $aout" ;; esac
+}
+clean
+asks "accepted.sh, nothing accepted: not accepted" 1 "NOT accepted" sh tools/accepted.sh
+sh hooks/accept.sh >/dev/null 2>&1
+asks "accepted.sh after accept: accepted" 0 "accepted:" sh tools/accepted.sh
+asks "accepted.sh from a subdirectory: accepted" 0 "accepted:" sh -c 'cd src && sh ../tools/accepted.sh'
+asks "accepted.sh from outside the repository: accepted" 0 "accepted:" sh -c "cd / && sh '$WORK/tools/accepted.sh'"
+if command -v zsh >/dev/null; then
+  asks "accepted.sh under zsh: sig.sh reads the files" 0 "accepted:" zsh tools/accepted.sh
+fi
+touch_src
+asks "accepted.sh after a src/ edit: not accepted" 1 "NOT accepted" sh tools/accepted.sh
+clean
+git rm -rq src index.html
+asks "accepted.sh with no app files: cannot tell" 2 "cannot tell" sh tools/accepted.sh
+sigerr=$(app_sig 2>&1 >/dev/null); src=$?
+[ "$src" != 0 ] && case "$sigerr" in *"no files under src/"*) true ;; *) false ;; esac && ok "sig over no app files: no signature, and says so" || bad "sig over no app files: exit $src, said: $sigerr"
+git reset -q --hard; clean
 
 # === stop.sh ===============================================================
 clean

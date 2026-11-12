@@ -484,6 +484,11 @@ is in the plan's record, under the phase named):
   on their exit codes, then the wiring — settings.json, `core.hooksPath`,
   the executable bits — read from this repo; `npm run test:hooks`,
   under `verify`.
+- `tools/accepted.sh` — whether the tree is the accepted one, asked as the
+  hooks ask it (exit 0 accepted, 1 not, 2 cannot tell): the agent's only way
+  to ask. Sourcing `hooks/sig.sh` from zsh or `sh -c` read zero files and
+  said "not accepted" over an accepted tree (2026-11-12); a signature over no
+  files is refused. Its cases are in `tools/hooks-test.sh`.
 - `tools/testTitles.ts` — a test file's descriptions and their code, what changed under the same description, pure, its test beside it; `tools/testTitlesRun.ts` the check over the tree against HEAD, its record under `tools/out`.
 - `tools/vocabulary.ts` — the retired words, pure, checked over the tree by `tools/vocabulary.test.ts`.
 - `tools/codeHealth.ts` — the code health gate's rules, pure: the files in scope, the git status read, the refusal, the findings' lines, the cache key; its test beside it; `tools/codeHealthRun.ts` the check against HEAD with the CodeScene CLI, its cache under `tools/out`.
