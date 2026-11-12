@@ -1,29 +1,30 @@
 // The bridge in headless Helium over one fresh profile: seed the fixtures
 // as entries, open each by hash and compare the editor's markdown with the
 // store's, refuse an unknown book, then TYPE into an entry, wait past the
-// debounce, relaunch and read the text back. `node tools/helium-bridge.mjs`
+// debounce, relaunch and read the text back. `node tools/helium-bridge.ts`
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
-import { TODAY } from "./helium-steps.mjs";
+import { TODAY } from "./helium-steps.ts";
+import type { Page } from "./heliumPage.ts";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
-const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: see adapters/successor.mjs */
+const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: see adapters/successor.ts */
 const PAGE = "file://" + resolve("dist/index.html");
 rmSync(PROFILE, { recursive: true, force: true });
 mkdirSync(PROFILE, { recursive: true });
-const read = (page) => page.evaluate(() => ({
+const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
   crumb: document.querySelector(".datelabel")?.textContent?.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent,
   status: document.querySelector(".saved.show")?.textContent || "",
   first: document.querySelector("#editor .ProseMirror")?.firstElementChild?.textContent?.slice(0, 60),
-  images: [...document.querySelectorAll("#editor img")].map((i) => (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "")),
+  images: [...document.querySelectorAll<HTMLElement>("#editor img")].map((i) => (i.getAttribute("src") || "").slice(0, 30) + (i.dataset.missing ? " MISSING" : "")),
 }));
-async function launch(url, fn) {
+async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
   await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed, since 2026-09-22 */
   const page = await ctx.newPage();
-  const logs = [];
+  const logs: string[] = [];
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
   page.on("console", (m) => { if (m.type() === "error") logs.push(m.text()); });
   await page.goto(url);
@@ -34,7 +35,7 @@ async function launch(url, fn) {
   await ctx.close();
   return out;
 }
-const say = (label, o) => console.log(label.padEnd(34), JSON.stringify(o));
+const say = (label: string, o: unknown): void => console.log(label.padEnd(34), JSON.stringify(o));
 say("seed, open #page/Horace", await launch(PAGE + "?store=seed#page/Horace", read));
 say("open a book page", await launch(PAGE + "#bookshelf/Browning,%20Robert/Pippa%20Passes", read));
 say("open a day", await launch(PAGE + "#2026-09-06", read));

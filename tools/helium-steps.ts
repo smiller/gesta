@@ -1,8 +1,8 @@
 // THE STEPS, shared: one list of gestures and readings played over an
-// ADAPTER (tools/adapters/*.mjs) that knows where the app is and how its
+// ADAPTER (tools/adapters/*.ts) that knows where the app is and how its
 // screen reads, so the successor and the current app answer the same
 // questions in the same order and their outputs diff line by line. Split
-// out of helium-corner.mjs 2026-09-12, asked: the approved output should
+// out of helium-corner.ts 2026-09-12, asked: the approved output should
 // be what the current app does, not what the successor did on the day.
 // Every step logs its label, its own reading and the screen after it.
 /* the day both drivers pin the page's clock to (context.clock.setFixedTime,
@@ -12,6 +12,12 @@
    seeded day shares (the 5th, the 6th) would have read one option fewer
    and no scrub could say so. Never a seeded day. */
 import { readFileSync, appendFileSync, mkdirSync } from "node:fs";
+import type { Page, BrowserContext } from "./heliumPage.ts";
+import type * as Successor from "./adapters/successor.ts";
+
+export type Adapter = typeof Successor & { pill?: boolean };
+type Tree = { name: string; text?: string; kids?: Tree[] };
+export interface RunOptions { screenshot?: string; only?: string[] | null }
 export const TODAY = "2026-09-12";
 export const SEEDS = {
   "2026-09-06": "twelfth", "2026-09-05": "williams", "page/Horace": "horace", "page/Williams/Witchcraft 3": "williams",
@@ -30,7 +36,7 @@ export const STANZA_SEEDS = {
 };
 /* the margin-note step's seeds (2026-09-29): written by that step alone,
    from the same files src/main.ts's `?store=seed-margin` imports */
-const fixture = (name) => readFileSync(new URL("../fixtures/" + name, import.meta.url), "utf8");
+const fixture = (name: string) => readFileSync(new URL("../fixtures/" + name, import.meta.url), "utf8");
 export const MARGIN_SEEDS = {
   "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
   "page/Margins": fixture("margins-prose.md"),
@@ -41,31 +47,31 @@ export const MARGIN_SEEDS = {
 /* a pause for the save after typing: 650 ms past the last edit and no
    store write open, where the page carries the watcher the corner driver
    installs; else the sleep it replaced */
-async function landed(p, ms) {
+async function landed(p: Page, ms: number) {
   if (!(await p.evaluate(() => "__writes" in window).catch(() => false))) return p.waitForTimeout(ms);
   await p.waitForFunction(() => performance.now() - window.__lastEdit > 650 && !window.__writes, null, { timeout: ms + 2000, polling: 25 }).catch(() => {});
 }
 /* ⌃⌘K, then the words once the box holds the focus: typed at once, they
    went to the entry under it (pin: where the keys go › ⌃⌘T on today from Search) */
-async function searchFor(p, words) {
+async function searchFor(p: Page, words: string) {
   await p.keyboard.press("Control+Meta+k");
   await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
   await p.keyboard.type(words);
 }
-async function rest(p) {
+async function rest(p: Page) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }
 /* the page held still: the scroll and the layout's height the same over four
    frames, a measuring pass a frame after a change having run */
-async function still(p) {
-  await p.evaluate(() => new Promise((done) => {
+async function still(p: Page) {
+  await p.evaluate(() => new Promise<void>((done) => {
     let last = "", same = 0, frames = 0;
     const tick = () => { const now = scrollY + ":" + document.documentElement.scrollHeight; same = now === last ? same + 1 : 0; last = now; if (same >= 4 || ++frames > 120) done(); else requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
   })).catch(() => {});
 }
 
-export async function runSteps(page, ctx, A, opts = {}) {
+export async function runSteps(page: Page, ctx: BrowserContext, A: Adapter, opts: RunOptions = {}) {
   const shot = opts.screenshot;
   const R = A.read, S = A.sel;
   /* where the keys go, read the same way over both apps: a caret by the
@@ -87,7 +93,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     if (!s.rangeCount || !root.contains(s.anchorNode)) return "focus, no caret";
     if (!s.isCollapsed) return "selected " + s.toString().length;
     const caret = s.getRangeAt(0);
-    const box = (t, i) => { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 1); const b = r.getClientRects()[0]; return b && b.height ? b : null; };
+    const box = (t: Node, i: number) => { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 1); const b = r.getClientRects()[0]; return b && b.height ? b : null; };
     let prev = null, next = null;
     const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     for (let t = w.nextNode(); t && !next; t = w.nextNode()) for (let i = 0; i < t.data.length; i++) {
@@ -99,28 +105,28 @@ export async function runSteps(page, ctx, A, opts = {}) {
     if (!next) return prev ? "at the end" : "at a line's start";
     return !prev || prev.bottom - 2 <= next.top ? "at a line's start" : "inside a line";
   }, [S.editor, S.source]);
-  const log = async (label, x) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); };
+  const log = async (label: string, x: unknown) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); };
   /* an arrival is read before the step's own gestures, whose helpers focus
      the text themselves; a focus that never comes reads as "none" after
      the wait. No screen: the last section's bar may still be fading */
   let section = "";
-  const go = async (hash, ms = 15000) => {
+  const go = async (hash: string, ms = 15000) => {
     await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms);
     await page.waitForFunction(([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source], { timeout: 1000 }).catch(() => {});
     console.log(section + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
   };
   /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
-  const seededIn = async (key) => { for (let i = 0; i < 30; i++) { if (await A.stored(page, key)) return true; await rest(page); } return false; };
+  const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { if (await A.stored(page, key)) return true; await rest(page); } return false; };
   /* the window, a paragraph by its first words, the corner's text */
   const winY = () => page.evaluate(() => Math.round(scrollY));
-  const inView = (start) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
+  const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
   const cornerText = () => page.evaluate((s) => document.querySelector(s)?.textContent || "", S.corner);
   /* a scroll BY THE READER'S HAND, a wheel over the page: a script's
      scrollTo is no reader, and since 2026-09-28 an arrival holds the entry's
      remembered place until a wheel, key, pointer or touch — the toolbar
      step's scrollTo(0, 0) was undone by the held place and its double-click
      missed the word */
-  const wheelTo = async (y) => {
+  const wheelTo = async (y: number) => {
     await page.mouse.move(500, 400);
     await page.mouse.wheel(0, y - (await page.evaluate(() => scrollY)));
     await page.waitForFunction((y) => Math.abs(scrollY - Math.min(y, document.documentElement.scrollHeight - innerHeight)) < 2, y, { timeout: 3000 }).catch(() => {});
@@ -128,8 +134,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the dialogs, answered by the harness: `answer` is what a prompt gets
      (a list: one per prompt, in turn), a confirm is accepted; `prompts`
      keeps each prompt's text and what it held */
-  let answer = null;
-  const prompts = [], confirms = [];
+  let answer: string | (string | null)[] | null = null;
+  const prompts: string[] = [], confirms: string[] = [];
   page.on("dialog", (d) => {
     if (d.type() === "confirm") { confirms.push(d.message()); d.accept(); return; }
     prompts.push(d.message() + " [" + d.defaultValue() + "]");
@@ -140,7 +146,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
      each in its own try: a selector the app lacks fails that section's
      remaining steps as one line and the run goes on, so a whole
      comparison comes out of one run */
-  const sections = [
+  const sections: [string, () => Promise<void>][] = [
     ["launch, panels, the corner, links", async () => {
   const stages = await A.launch(page, SEEDS);
   console.log("the launch's stages:", JSON.stringify(stages));
@@ -272,7 +278,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
      replays: its cause unknown, a miss is selected again once and appended
      to tools/out/flakes.log, outside the verdict; a second miss reads as
      itself */
-  const barMiss = () => R.waitBar(page).then(() => null, (e) => e.message);
+  const barMiss = () => R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
   let barMissed = await barMiss();
   if (barMissed) {
     mkdirSync(new URL("out/", import.meta.url), { recursive: true });
@@ -287,7 +293,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* ⌃⌘R's reference pasted with ⌘V into another entry: the link stored by its bare address (#page/…), never the page's full file address */
   await go("page/Horace");
   await R.selectAll(page, S.editorCell);
-  const barMissed = await R.waitBar(page).then(() => null, (e) => e.message);
+  const barMissed = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   /* the HTML flavour is the paste's source and carries the full address, so a bare link stored is the paste's own doing; the old app's copy was still landing at the first read ("Clipboard data has changed") */
   const copied = await page.evaluate(async () => { let last = ""; for (let i = 0; i < 10; i++) { try { const item = (await navigator.clipboard.read())[0]; if (!item.types.includes("text/html")) return "no html"; const href = (/<a href="([^"]*)"/.exec(await (await item.getType("text/html")).text()) ?? [])[1] ?? ""; return href.startsWith("#") ? "bare" : href.startsWith("file:") ? "file address" : href ? "other" : "no link"; } catch (e) { last = String(e); await new Promise((r) => setTimeout(r, 50)); } } return last; });
@@ -299,7 +305,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* prose with two spaces after a full stop: the paste keeps them as the entry has them */
   await go("page/Williams/Witchcraft 3");
   const spanned = await R.selectBetween(page, "though they were not vampires", "could take again");
-  const barMissedProse = await R.waitBar(page).then(() => null, (e) => e.message);
+  const barMissedProse = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
   const saidProse = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   await go("page/Referred");
   /* over the whole page: a paste at a paragraph's start joins its last line to that paragraph */
@@ -318,7 +324,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Meta+v");
   await rest(page);
   /* the paste may not have landed in two frames, and no edit is then there to wait on: the reading says what stood when the wait ran out */
-  const landedAfter = async (done) => { let md = await A.stored(page); for (let i = 0; i < 60 && !done(md); i++) { await page.waitForTimeout(50); md = await A.stored(page); } return md; };
+  const landedAfter = async (done: (md: string) => boolean) => { let md = await A.stored(page); for (let i = 0; i < 60 && !done(md); i++) { await page.waitForTimeout(50); md = await A.stored(page); } return md; };
   { const md = await landedAfter((m) => /greater\.\[\*Williams/.test(m)); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
   /* the page's reference copied with ⌘C, then pasted mid-sentence: a copy made in the page pastes whole */
   await page.click(S.editor);
@@ -459,7 +465,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.pastePng(page);
   await R.waitImg(page);
   await R.waitCorner(page, "saved");
-  await log("a picture pasted at the entry's end", { md: await A.stored(page), lineBelowPicture: await page.evaluate((s) => { const last = document.querySelector(s)?.lastElementChild; const prev = last?.previousElementSibling; return !!last && !last.textContent.trim() && !last.querySelector("img") && !!prev?.querySelector("img"); }, S.editor), caretBelowPicture: await page.evaluate((s) => { const n = getSelection().anchorNode; const el = n && (n.nodeType === 1 ? n : n.parentElement); const root = document.querySelector(s); let b = el; while (b && b.parentElement !== root) b = b.parentElement; return !!b && b === root.lastElementChild && !!b.previousElementSibling?.querySelector("img"); }, S.editor) });
+  await log("a picture pasted at the entry's end", { md: await A.stored(page), lineBelowPicture: await page.evaluate((s) => { const last = document.querySelector(s)?.lastElementChild; const prev = last?.previousElementSibling; return !!last && !last.textContent.trim() && !last.querySelector("img") && !!prev?.querySelector("img"); }, S.editor), caretBelowPicture: await page.evaluate((s) => { const n = getSelection().anchorNode; const el = n && (n.nodeType === 1 ? n : n.parentElement); const root = document.querySelector(s); let b = el; while (b && b.parentElement !== root) b = b.parentElement; return !!b && b === root.lastElementChild && !!(b as Element).previousElementSibling?.querySelector("img"); }, S.editor) });
   await go("page/Pictured%20Away");
   await page.click(S.editor);
   await page.keyboard.type("Aimed here");
@@ -952,7 +958,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.waitForTimeout(600);
   await wheelTo(0);
   await page.click(S.editorFirst);
-  for (const [label, where] of [["a long canto switched at its middle", 0.5], ["a long canto switched at its end", 1]]) {
+  for (const [label, where] of [["a long canto switched at its middle", 0.5], ["a long canto switched at its end", 1]] as [string, number][]) {
     await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) * where));
     const rendered = await R.topStanza(page), renderedEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
@@ -965,7 +971,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
     if (where < 1) {
-      await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
+      await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x: { key: string }) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
       /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
       await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);
       await rest(page);
@@ -1112,7 +1118,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the masthead changing height under a held place, as it does when the
      entry arrived from had a taller one: the place is set again, in the
      source view by its offset and in the rendered one by its text */
-  const shrunk = async (fn) => {
+  const shrunk = async (fn: () => Promise<unknown>) => {
     await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = "50px"; h.style.overflow = "hidden"; });
     try { await rest(page); return await fn(); }
     finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await rest(page); }
@@ -1176,10 +1182,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const onScreenStart = await page.evaluate((src) => {
     const ta = document.querySelector(src); if (!ta) return null;
     const cs = getComputedStyle(ta), d = document.createElement("div");
-    for (const k of ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth", "boxSizing", "tabSize"]) d.style[k] = cs[k];
+    for (const k of ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth", "boxSizing", "tabSize"] as const) d.style[k] = cs[k];
     Object.assign(d.style, { position: "absolute", visibility: "hidden", left: "-9999px", top: "0", whiteSpace: "pre-wrap", overflowWrap: "break-word", width: ta.getBoundingClientRect().width + "px" });
     const t = d.appendChild(document.createTextNode(ta.value + "\u200b")); document.body.append(d);
-    const top = (k) => { const r = document.createRange(); r.setStart(t, k); r.setEnd(t, k + 1); return r.getBoundingClientRect().top; };
+    const top = (k: number) => { const r = document.createRange(); r.setStart(t, k); r.setEnd(t, k + 1); return r.getBoundingClientRect().top; };
     const i = ta.selectionStart, at = i === 0 || top(i - 1) < top(i) - 2;
     d.remove(); return at;
   }, S.source);
@@ -1214,7 +1220,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.click(S.deleteButton);
   await A.waitEntry(page, "2026-09-05", 5000).catch(() => {});
   await rest(page);
-  await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) || "[]").some((r) => r.key === "2026-09-05/Longer"); } catch { return null; } }, A.ns + "places") });
+  await log("deleted scrolled: its place dropped", { entry: await A.entry(page), placeKept: await page.evaluate((k) => { try { return JSON.parse(localStorage.getItem(k) || "[]").some((r: { key: string }) => r.key === "2026-09-05/Longer"); } catch { return null; } }, A.ns + "places") });
   answer = null;
   await page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
   await page.keyboard.press("Control+Meta+c");
@@ -1258,7 +1264,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* a footnote mark, a space and superscript digits after a word, is no break in a phrase search (2026-10-01): "Pedenteria in comparison" finds "Pedenteria ¹ in comparison", and Enter selects it, the mark inside; "m²" stays text */
   await go("page/Footnoted");
   /* the box holding the whole query (it keeps the last one while the entry stays open, so a new one is typed over ⌘A), then the scan's pause: a row from the query before can stand until it runs */
-  const searched = async (q) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(400); };
+  const searched = async (q: string) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(400); };
   await page.click(S.editor);
   await page.keyboard.type("Skill of government was but a Pedenteria ¹ in comparison, so as Amphion, ³ was said; an area of 4 m² here.");
   await page.waitForTimeout(1500);
@@ -1570,8 +1576,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.type("before the import. ");
   await landed(page, 1200);
   await page.evaluate(() => {
-    const file = (name, text) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
-    const dir = (name, kids) => ({ kind: "directory", name, values: async function* () { for (const k of kids) yield k; } });
+    const file = (name: string, text: string) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
+    const dir = (name: string, kids: unknown[]) => ({ kind: "directory", name, values: async function* () { for (const k of kids) yield k; } });
     const fillers = Array.from({ length: 1500 }, (_, i) => file("Filler " + String(i).padStart(4, "0") + ".md", "# Filler " + i + "\n"));
     window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("page", [...fillers, file("Typed.md", "IMPORTED TEXT\n")])]));
   });
@@ -1597,14 +1603,14 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["where the keys go", async () => {
   /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
   /* a control the current app lacks fails its own step, not the section */
-  const tap = (sel) => page.click(sel, { timeout: 3000 }).catch(() => {});
+  const tap = (sel: string) => page.click(sel, { timeout: 3000 }).catch(() => {});
   /* the view asked for, whichever the arrival brought: the current app's carries across entries */
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
+  const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
   await go("page/Horace");
   await view(false);
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's pin, dismissed as a reader does: the whispers below yield to it */
   await tap(S.editor);
-  const twice = async (chord) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await rest(page); } };
+  const twice = async (chord: string) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await rest(page); } };
   await twice("Control+Meta+s");
   await log("⌃⌘S pressed twice", {});
   await twice("Control+Meta+b");
@@ -1650,7 +1656,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* clicked until the caret stands in the word: a click measured while the
      page settled after a view switch landed at the entry's end
      (pin: where the keys go › Tab held in a quote) */
-  const clickWord = async (w) => {
+  const clickWord = async (w: string) => {
     for (let i = 0; i < 3; i++) {
       const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await rest(page);
       if (await page.evaluate((w) => (getSelection().anchorNode?.textContent || "").includes(w), w)) return;
@@ -1722,7 +1728,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("Shift-Tab from the shortcuts popup", {});
   await page.keyboard.press("Escape");
   /* held keys: a key down again before it is up is the browser's auto-repeat */
-  const hold = async (key, times, mods = []) => {
+  const hold = async (key: string, times: number, mods: string[] = []) => {
     for (const m of mods) await page.keyboard.down(m);
     for (let i = 0; i < times; i++) { await page.keyboard.down(key); await page.waitForTimeout(i ? 50 : 400); }
     await page.keyboard.up(key);
@@ -1796,7 +1802,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   /* the picture's preparation held 800ms, so it lands after the keys are in Search */
   await go("page/Pictured%20Late");
   await tap(S.editor);
-  await page.evaluate(() => { const own = window.createImageBitmap; window.createImageBitmap = (...a) => new Promise((r) => setTimeout(() => r(own(...a)), 800)); });
+  await page.evaluate(() => { const own = window.createImageBitmap; window.createImageBitmap = ((...a: [ImageBitmapSource]) => new Promise<ImageBitmap>((r) => setTimeout(() => r(own(...a)), 800))) as typeof own; });
   await R.pastePng(page);
   await searchFor(page, "abc");
   await page.waitForTimeout(2000);
@@ -1806,10 +1812,10 @@ export async function runSteps(page, ctx, A, opts = {}) {
     ["editing as the help says", async () => {
   /* help.html's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
   /* a placed selection is read by the editor a moment later: a Tab pressed at once went where the arrival had left the caret */
-  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await rest(page); };
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
+  const caretAt = async (needle: string, offset: number) => { await R.caretAfter(page, needle, offset); await rest(page); };
+  const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
   /* an entry stored as another tab would, then opened: typed into the current app's source view, a list came back split at every line */
-  const write = async (key, text) => {
+  const write = async (key: string, text: string | null) => {
     await A.foreignWrite(page, key, text);
     await go(key);
     await view(false);
@@ -1878,13 +1884,13 @@ export async function runSteps(page, ctx, A, opts = {}) {
     }],
     ["editing as the old app does", async () => {
   /* the inventory's group 4, where nothing promised either way: each gesture read over both apps, the old app's reading the one to match */
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
-  const write = async (key, text) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
+  const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
+  const write = async (key: string, text: string | null) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
   /* a placed selection is read by the editor a moment later */
-  const caretAt = async (needle, offset) => { await R.caretAfter(page, needle, offset); await rest(page); };
-  const between = async (a, b) => { await R.selectBetween(page, a, b); await rest(page); };
+  const caretAt = async (needle: string, offset: number) => { await R.caretAfter(page, needle, offset); await rest(page); };
+  const between = async (a: string, b: string) => { await R.selectBetween(page, a, b); await rest(page); };
   /* the toolbar's button pressed as a click on it, shown or not: the selection is made by script */
-  const button = async (title) => { await page.evaluate((t) => document.querySelector(".fmt button[title='" + t + "']")?.click(), title); await rest(page); };
+  const button = async (title: string) => { await page.evaluate((t) => document.querySelector(".fmt button[title='" + t + "']")?.click(), title); await rest(page); };
   const copied = async () => { await page.keyboard.press("Meta+c"); await rest(page); return R.clipboardLines(page); };
   /* the stored text without its last line end: a seed left unedited keeps the one it was written with */
   const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
@@ -1987,21 +1993,21 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("-- and quotes typed in the markdown view", { md: await stored() });
   await write("page/Bold Italic Row", "::: verse\n**SPEAKER**\n*Stage direction*\n***KING JOHN***\nDeath.\n:::\n");
   await log("a wholly bold-italic row", await page.evaluate(() => {
-    const colour = (t) => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror") || document.getElementById("page"), NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) if (n.data === t) return getComputedStyle(n.parentElement).color; return null; };
+    const colour = (t: string) => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror") || document.getElementById("page"), NodeFilter.SHOW_TEXT); for (let n = w.nextNode(); n; n = w.nextNode()) if (n.data === t) return getComputedStyle(n.parentElement).color; return null; };
     const king = colour("KING JOHN");
     return { king: king === colour("SPEAKER") ? "as the speaker" : king === colour("Stage direction") ? "as the stage direction" : king };
   }));
   await write("page/Note Quote", "::: note\n> quoted in a note\n:::\n");
-  await log("a quotation inside a note", await page.evaluate(() => { const q = document.querySelector("#editor .note blockquote, #page .note blockquote"); if (!q) return { quote: null }; const cs = getComputedStyle(q); return { fill: cs.backgroundColor !== "rgba(0, 0, 0, 0)", rule: parseFloat(cs.borderLeftWidth) > 0 || getComputedStyle(q, "::before").content !== "none" }; }));
+  await log("a quotation inside a note", await page.evaluate(() => { const q = document.querySelector("#editor .note blockquote, #page .note blockquote"); if (!q) return { quote: null as string | null }; const cs = getComputedStyle(q); return { fill: cs.backgroundColor !== "rgba(0, 0, 0, 0)", rule: parseFloat(cs.borderLeftWidth) > 0 || getComputedStyle(q, "::before").content !== "none" }; }));
   const box = "data:image/svg+xml;base64," + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120"><rect width="300" height="120" fill="#ccc"/></svg>').toString("base64");
   await write("page/Spacing", `early light:\n\n![](${box})\n\n~ ~\n\nA paragraph.\n\n> ::: verse 265\n> ye Elves of Hilles,\n> :::\n\n> ::: verse 197 265\n> auraeque | Ye Ayres\n> :::\n\n> A quoted paragraph.\n`);
   await page.waitForFunction(() => [...document.querySelectorAll("#editor img:not(.ProseMirror-separator)")].every((i) => i.complete), null, { timeout: 2000 }).catch(() => {});
   await log("a picture's gaps and a quotation's top", await page.evaluate(() => {
-    const R = (e) => e.getBoundingClientRect();
+    const R = (e: Element) => e.getBoundingClientRect();
     const top = [...document.querySelectorAll("#editor .ProseMirror > *")];
-    const at = (t) => top.find((e) => e.textContent === t);
+    const at = (t: string) => top.find((e) => e.textContent === t);
     const img = document.querySelector("#editor .ProseMirror > p > img:not(.ProseMirror-separator)");
-    if (!img) return { picture: null };
+    if (!img) return { picture: null as string | null };
     return {
       abovePicture: Math.round(R(img).top - R(at("early light:")).bottom),
       belowPicture: Math.round(R(at("~ ~")).top - R(img).bottom),
@@ -2046,8 +2052,8 @@ export async function runSteps(page, ctx, A, opts = {}) {
     }],
     ["notices and surfaces as the old app has them", async () => {
   /* the inventory's groups 5–7, each gesture read over both apps, the old app's reading the one to match */
-  const view = async (source) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
-  const write = async (key, text) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
+  const view = async (source: boolean) => { if ((await R.inSource(page)) !== source) { await page.keyboard.press("Control+Meta+m"); await rest(page); } };
+  const write = async (key: string, text: string | null) => { await A.foreignWrite(page, key, text); await go(key); await view(false); };
   const corner = () => page.evaluate(() => document.querySelector(".saved.show, #saved.show")?.textContent || "");
   const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
   const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
@@ -2066,7 +2072,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await log("a bare launch", { hash: await page.evaluate(() => location.hash) });
   await go("page/Horace");
   await view(false);
-  const setLines = (v) => page.evaluate(([s, v]) => { const e = document.querySelector(s); if (!e) return; e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); }, [LINES, v]);
+  const setLines = (v: string) => page.evaluate(([s, v]) => { const e = document.querySelector(s); if (!e) return; e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); }, [LINES, v]);
   /* picked with the row open, as a hand picks it */
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
@@ -2083,9 +2089,9 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
   /* a folder picker answering with what each import reads */
-  const picked = (tree) => page.evaluate((tree) => {
-    const file = (name, text) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
-    const build = (n) => n.text !== undefined ? file(n.name, n.text) : { kind: "directory", name: n.name, values: async function* () { for (const k of n.kids) yield build(k); } };
+  const picked = (tree: Tree) => page.evaluate((tree) => {
+    const file = (name: string, text: string) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
+    const build = (n: Tree): unknown => n.text !== undefined ? file(n.name, n.text) : { kind: "directory", name: n.name, values: async function* () { for (const k of n.kids) yield build(k); } };
     window.showDirectoryPicker = () => Promise.resolve(build(tree));
     window.confirm = () => false;
   }, tree);
@@ -2126,7 +2132,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const before = await A.stored(page, "page/Horace");
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  const boxes = () => page.evaluate(() => { const v = (s) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; }; return { line: v("#lineinput"), page: v("#folioinput") }; });
+  const boxes = () => page.evaluate(() => { const v = (s: string) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; }; return { line: v("#lineinput"), page: v("#folioinput") }; });
   const asked = await boxes();
   await A.foreignWrite(page, "page/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
   await page.waitForTimeout(1200);
@@ -2292,7 +2298,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+j");
   await rest(page);
-  const groups = (sel) => page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), sel);
+  const groups = (sel: string) => page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), sel);
   await log("the go-to box on its shelves", await groups(S.gotoDestination));
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+Meta+k");
@@ -2480,7 +2486,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
     const block = document.querySelector("#editor .verse[data-facing]");
     if (!block) return { block: false };
     const rows = [...block.querySelectorAll(":scope > .vrow")];
-    const lines = (el) => { const g = document.createRange(); g.selectNodeContents(el); return new Set([...g.getClientRects()].filter((x) => x.width).map((x) => Math.round(x.top))).size; };
+    const lines = (el: Element) => { const g = document.createRange(); g.selectNodeContents(el); return new Set([...g.getClientRects()].filter((x) => x.width).map((x) => Math.round(x.top))).size; };
     const golding = rows.map((r) => r.querySelector(".vcell + .vcell")).filter(Boolean);
     const widest = Math.max(...golding.map((c) => { const g = document.createRange(); g.selectNodeContents(c); return g.getBoundingClientRect().right; }));
     const first = rows.find((r) => r.classList.contains("rshown"));
@@ -2610,7 +2616,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await R.settle(page);
   await rest(page);
   const seen = () => page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent ?? null, selected: getSelection().toString(), address: location.hash.split("?")[1] ?? null, said: document.querySelector(".saved.show")?.textContent ?? null }));
-  const click = async (text) => { await page.locator("#editor a", { hasText: text }).first().click(); await rest(page); await rest(page); };
+  const click = async (text: string) => { await page.locator("#editor a", { hasText: text }).first().click(); await rest(page); await rest(page); };
   await click("3-4");
   await log("a link to a line, clicked", await seen());
   await page.locator("#editor .vrow", { hasText: "one" }).first().click();
@@ -2624,7 +2630,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await click("nowhere");
   await log("a link to a line the page lacks", await seen());
   await click("Five");
-  await log("a link to a line in a dual-language block", await page.evaluate(() => { const r = document.querySelector("#editor .landed"), on = (e) => getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)"; return { row: on(r), latin: on(r.children[0]), english: on(r.children[1]), latinText: r.children[0].textContent }; }));
+  await log("a link to a line in a dual-language block", await page.evaluate(() => { const r = document.querySelector("#editor .landed"), on = (e: Element) => getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)"; return { row: on(r), latin: on(r.children[0]), english: on(r.children[1]), latinText: r.children[0].textContent }; }));
   await page.goto(A.url(work));
   await A.waitEntry(page, work, 5000).catch(() => {});
   await R.settle(page);
@@ -2696,7 +2702,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
   await open();
   const LINES = ".page-lines select, #pagelines select";
-  const setLines = (v) => page.evaluate(([s, v]) => { const e = document.querySelector(s); if (!e) return false; e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); return true; }, [LINES, v]);
+  const setLines = (v: string) => page.evaluate(([s, v]) => { const e = document.querySelector(s); if (!e) return false; e.value = v; e.dispatchEvent(new Event("change", { bubbles: true })); return true; }, [LINES, v]);
   const gutter = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln")].map((r) => getComputedStyle(r, "::before").content.replace(/"/g, "")).filter((c) => c && c !== "none"));
   await log("the gutter at the page's setting", { drawn: await gutter() });
   await page.keyboard.press("Control+Meta+l");
@@ -2712,7 +2718,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const seen = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? (m.closest(".dual-language") ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null) : null, said: document.querySelector(".saved.show")?.textContent || null }; });
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  const ask = async (n) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen(); };
+  const ask = async (n: string) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen(); };
   await log("⌃⌘G 157a, a lettered line with no English", await ask("157a"));
   await log("⌃⌘G 157, the line before it", await ask("157"));
   await log("⌃⌘G 157b, a lettered line with its own English", await ask("157b"));
@@ -2748,7 +2754,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   const seen = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null, said: document.querySelector(".saved.show")?.textContent || null }; });
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  const ask = async (n) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen(); };
+  const ask = async (n: string) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen(); };
   await log("⌃⌘G [378], a bracketed line", await ask("[378]"));
   await log("⌃⌘G 378, the plain line of that number", await ask("378"));
   await log("⌃⌘G 372, a number not printed", await ask("372"));
@@ -2812,7 +2818,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   await A.waitEntry(page, twice, 5000).catch(() => {});
   await R.settle(page);
   await rest(page);
-  const ask = async (n) => {
+  const ask = async (n: string) => {
     if (n) { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); }
     await page.keyboard.press("Enter");
     await rest(page);
@@ -2886,7 +2892,7 @@ export async function runSteps(page, ctx, A, opts = {}) {
   confirms.length = 0;
   await page.click(S.renameSubPage);
   await page.waitForFunction((s) => /moved to/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 5000 }).catch(() => {});
-  const there = (k) => A.stored(page, "bookshelf/Mover, Test/Essays" + k);
+  const there = (k: string) => A.stored(page, "bookshelf/Mover, Test/Essays" + k);
   await log("Rename, an address in the bookshelf typed, Enter, the confirm accepted", {
     prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), hash: page.url().split("#")[1], corner: await cornerText(),
     there: await there(""), essay: await there("/Essay"), twin: await there("/2022-twin"), links: await A.stored(page, "page/Move Links"),
@@ -2909,17 +2915,17 @@ export async function runSteps(page, ctx, A, opts = {}) {
     await page.keyboard.press("Escape").catch(() => {});
   };
   /* TIMING=1: each section's time and the fixed waits within it, to stderr */
-  const timing = process.env.TIMING ? [] : null;
+  const timing: [string, number, number][] | null = process.env.TIMING ? [] : null;
   let slept = 0;
-  const counted = new Set();
+  const counted = new Set<Page>();
   let expired = 0;
-  const sites = {};
-  const lapses = {};
-  const count = (p) => {
+  const sites: Record<string, number> = {};
+  const lapses: Record<string, number> = {};
+  const count = (p: Page) => {
     if (counted.has(p)) return; counted.add(p);
-    const w = p.waitForTimeout.bind(p); p.waitForTimeout = (ms) => { slept += ms; const at = (new Error().stack.split("\n").filter((l) => /helium-steps|adapters/.test(l))[1] || "").replace(/.*\/(tools\/[^:]+:\d+).*/, "$1"); sites[at] = (sites[at] || 0) + ms; return w(ms); };
+    const w = p.waitForTimeout.bind(p); p.waitForTimeout = (ms: number) => { slept += ms; const at = (new Error().stack.split("\n").filter((l) => /helium-steps|adapters/.test(l))[1] || "").replace(/.*\/(tools\/[^:]+:\d+).*/, "$1"); sites[at] = (sites[at] || 0) + ms; return w(ms); };
     const f = p.waitForFunction.bind(p);
-    p.waitForFunction = async (...a) => { const t = Date.now(); try { return await f(...a); } catch (e) { const ms = Date.now() - t; expired += ms; const k = section + " · " + String(a[0]).slice(0, 70).replace(/\s+/g, " "); lapses[k] = (lapses[k] || 0) + ms; throw e; } };
+    p.waitForFunction = (async (...a: Parameters<Page["waitForFunction"]>) => { const t = Date.now(); try { return await f(...a); } catch (e) { const ms = Date.now() - t; expired += ms; const k = section + " · " + String(a[0]).slice(0, 70).replace(/\s+/g, " "); lapses[k] = (lapses[k] || 0) + ms; throw e; } }) as Page["waitForFunction"];
   };
   if (timing) { for (const p of ctx.pages()) count(p); ctx.on("page", count); }
   for (const [name, fn] of sections) {

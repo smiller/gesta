@@ -496,3 +496,55 @@ renamed for its function; and the three passes from the changed tree against
 HEAD's — A and B identical, C's 816 entries and its 2.3 MB review page
 identical byte for byte, its summary line differing in the output folder's
 name alone (MEASURED).
+
+### Batch 3a — the Helium files made TypeScript
+
+Asked, on the reader's question whether there was a reason the Helium files
+were still .mjs: no decision in the record said so (READ, the plans grepped),
+node had run .ts here since phase 0, and the .mjs files were the only code no
+type checker read — tsconfig.json includes tools/ but sets no allowJs
+(MEASURED). Converted first, so the restructure that follows has tsc as a
+net. The eleven files renamed with `git mv`, every reference to them
+following (the pin resolver's file names, the stamp's file filter, the unused
+exports test's special case, package.json, CLAUDE.md); left as they were: the
+old app's own md.mjs in corpus.ts, the hooks self-test's throwaway t.mjs, the
+code health test's .mjs cases.
+
+A function handed to `page.evaluate` travels to the browser as its source:
+node's type stripping leaves each annotation as spaces, and the source still
+parses as JavaScript (MEASURED, a probe printing a stripped function's
+`toString()`).
+
+1,169 errors at the first strict check (MEASURED): 513 parameters with no
+type, 216 properties tsc did not know, some 280 possible nulls, nearly all of
+them reads of the page inside the browser callbacks. DECIDED: the Helium
+files are their own program, `tsconfig.helium.json`, strict but for null
+checks, a query answering with an element that carries what the steps read
+(`tools/heliumDom.d.ts`); `tsconfig.json` leaves them out, so src/ and the
+rest of tools/ keep the strict DOM. `npm run check` runs both. The reason: a
+`!` on each read is an assertion, no safer than the run itself, where a
+missing element fails its step; the checking worth having is the node side,
+the parameters, the steps' one `Adapter` (the successor's), every function's
+name and arity. That checking found, while typing: the successor's
+`seedStanza` and `seedMargin` took no seeds where the steps pass them and the
+writer's take them; its `launch` never read its seeds; a forEach index never
+read; `waitPairGrew`'s `prev` a string of column widths where I had first
+guessed a number. The old app's adapter lacks `pictureKeys` and eight readers,
+all added after it was frozen: its driver hands it over by a cast, the
+decision commented. One src/ file changed: three inferences in
+src/store/io.ts that fell back to any once null checks were off in the Helium
+program, which imports it, given explicit types.
+
+The gate saw the two adapters as new files: typing their one-line readers
+changed most lines, below git's rename threshold (MEASURED, `git diff -M`:
+blankRow R060, the drivers R070–R096, the adapters D and A), so each had to
+reach 10 now. Their two functions over the limit each, `screen` and
+`cornerAfter`, could not be cut the usual way: a function an evaluate runs
+carries everything it calls, and CodeScene counts its inner helpers against
+it. THE SHAPE FOR THE PAGE'S CODE, the one batch 3b uses: each part of a
+reading a top-level function, scored on its own, the parts' sources composed
+into the one script an evaluate runs (`inPage` in tools/adapters/inPage.ts),
+so the reading stays one evaluation at the same moment; a callback that
+needs nothing else passed by reference. The composed scripts parse (MEASURED).
+Both adapters to 10, inPage.ts new at 10, helium-probe.ts scored at 10 now its
+lines are typed; helium-steps.ts holds at 3.48 until 3b.

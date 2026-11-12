@@ -227,7 +227,7 @@ function literal(span: string, text: string): boolean {
 type Resolver = (pin: Pin, src: PinSources) => string | null;
 const bridgeLine = (label: string) => (l: string): boolean => l === label || l.startsWith(label + " ");
 const bridgePin: Resolver = ({ label }, src) => {
-  if (!literal(src.bridge, label)) return "no step \"" + label + "\" in tools/helium-bridge.mjs";
+  if (!literal(src.bridge, label)) return "no step \"" + label + "\" in tools/helium-bridge.ts";
   return src.bridgeRun.split("\n").some(bridgeLine(label)) ? null : "no line \"" + label + "\" in tools/expected/bridge.approved.txt";
 };
 const readerPin: Resolver = ({ label }, src) =>
@@ -252,7 +252,7 @@ function sectionOf(steps: string, head: string): string | null {
 }
 const stepPin: Resolver = ({ head, label }, src) => {
   const span = sectionOf(src.steps, head);
-  if (span === null) return "no section \"" + head + "\" in tools/helium-steps.mjs";
+  if (span === null) return "no section \"" + head + "\" in tools/helium-steps.ts";
   if (!literal(span, label)) return "no reading \"" + label + "\" in the section \"" + head + "\"";
   return src.corner.split("\n").some((l) => l.startsWith(label + ": ")) ? null : "no reading \"" + label + "\" in tools/expected/corner.approved.txt";
 };

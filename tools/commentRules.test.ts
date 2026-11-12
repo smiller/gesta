@@ -58,7 +58,7 @@ describe("the pins", () => {
   test("a Helium pin names its section and the whole reading label", () => {
     expect(why("(pin: walk › ⌃⌘. from 3pr1)")[0]).toBe('no reading "⌃⌘. from 3pr1" in the section "walk"');
     expect(why("(pin: source view › ⌃⌘. from 3pr1 over an index)")[0]).toBe('no reading "⌃⌘. from 3pr1 over an index" in the section "source view"');
-    expect(why("(pin: stanza › ⌃⌘W rendered)")[0]).toBe('no section "stanza" in tools/helium-steps.mjs');
+    expect(why("(pin: stanza › ⌃⌘W rendered)")[0]).toBe('no section "stanza" in tools/helium-steps.ts');
   });
   test("a reading in the steps but not in the approved run does not resolve", () => {
     expect(why("(pin: source view › never run)")[0]).toBe('no reading "never run" in tools/expected/corner.approved.txt');

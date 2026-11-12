@@ -42,7 +42,7 @@ export function folderNames(dir: Dir): Promise<Record<string, number>> {
         if (res.done) return;
         const v = res.value;
         if (v.kind === "directory") return walk(v, at + v.name + "/").then(step);
-        return v.getFile().then((file) => { out[at + v.name] = file.size; }).then(step);
+        return v.getFile().then((file: { size: number }) => { out[at + v.name] = file.size; }).then(step);
       });
     }
     return step();
@@ -408,12 +408,12 @@ function bundleFailed(err: unknown, w: WritableFile | null): Failure[] {
   if (fsaFatal(err)) throw err;
   return [{ name: READER_ZIP, error: err, doc: false }];
 }
-const sizeOn = (sub: Dir, name: string): Promise<number | null> => sub.getFileHandle(name).then((h) => h.getFile()).then((f) => f.size, () => null);
+const sizeOn = (sub: Dir, name: string): Promise<number | null> => sub.getFileHandle(name).then((h) => h.getFile()).then((f) => f.size, (): number | null => null);
 export interface BundleTime { day: string; written: number }
 export function writeBundle(dir: Dir, files: ExportFile[], manifest: Manifest, when: BundleTime): Promise<Failure[]> {
   const cut = READER_ZIP.lastIndexOf("/"), name = READER_ZIP.slice(cut + 1);
   let w: WritableFile | null = null;
-  return folderMemo(dir, { create: true })(READER_ZIP.slice(0, cut)).then((sub) => sizeOn(sub, name).then((present) => {
+  return folderMemo(dir, { create: true })(READER_ZIP.slice(0, cut)).then((sub) => sizeOn(sub, name).then((present): Failure[] | Promise<Failure[]> => {
     if (!bundleDue(files, manifest[READER_ZIP], present)) return [];
     return sub.getFileHandle(name, { create: true }).then((h) => h.createWritable()).then((opened) => {
       w = opened;

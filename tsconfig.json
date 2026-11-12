@@ -25,5 +25,11 @@
     "src",
     "tools",
     "vite.config.ts"
+  ],
+  "exclude": [
+    "tools/helium-*.ts",
+    "tools/adapters",
+    "tools/heliumPage.ts",
+    "tools/heliumDom.d.ts"
   ]
 }

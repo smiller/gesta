@@ -1,11 +1,11 @@
 // The successor in headless Helium over a fresh profile: the shared steps
-// (helium-steps.mjs) played over the successor's adapter. Prints each
+// (helium-steps.ts) played over the successor's adapter. Prints each
 // step's reading and the screen after it, then the console; screenshots
 // when given a path. The approved output is tools/expected/corner.approved.txt
-// (helium-approve.mjs). `node tools/helium-corner.mjs [profileDir] [screenshot.png]`.
+// (helium-approve.ts). `node tools/helium-corner.ts [profileDir] [screenshot.png]`.
 import { chromium } from "playwright-core";
-import * as A from "./adapters/successor.mjs";
-import { runSteps, TODAY } from "./helium-steps.mjs";
+import * as A from "./adapters/successor.ts";
+import { runSteps, TODAY } from "./helium-steps.ts";
 import { rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { basename } from "node:path";
@@ -18,17 +18,17 @@ if (PROFILE === A.profile) {
   spawnSync("pkill", ["-f", basename(PROFILE)]);
   for (let i = 0; i < 20; i++) { try { rmSync(PROFILE, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
 }
-const logs = [];
+const logs: string[] = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
 await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
 /* the last edit's time and the store writes still open, for a read of the
-   stored text to wait on rather than sleep (adapters/successor.mjs, stored) */
+   stored text to wait on rather than sleep (adapters/successor.ts, stored) */
 await ctx.addInitScript(() => {
   window.__lastEdit = 0; window.__writes = 0;
   for (const t of ["keydown", "input", "paste", "drop", "cut", "pointerdown", "click"]) addEventListener(t, () => { window.__lastEdit = performance.now(); }, true);
   const put = IDBObjectStore.prototype.put;
-  IDBObjectStore.prototype.put = function (...args) {
+  IDBObjectStore.prototype.put = function (this: IDBObjectStore, ...args: Parameters<IDBObjectStore["put"]>) {
     window.__writes++;
     const tx = this.transaction, done = () => { window.__writes--; tx.removeEventListener("complete", done); tx.removeEventListener("error", done); tx.removeEventListener("abort", done); };
     tx.addEventListener("complete", done); tx.addEventListener("error", done); tx.addEventListener("abort", done);

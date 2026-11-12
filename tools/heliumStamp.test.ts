@@ -3,7 +3,7 @@ import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
 
 const inputs = [
   { name: "dist/index.html", bytes: "<html>page</html>" },
-  { name: "tools/helium-steps.mjs", bytes: "steps" },
+  { name: "tools/helium-steps.ts", bytes: "steps" },
   { name: "helium", bytes: "0.14.8.1" },
 ];
 
@@ -12,7 +12,7 @@ test("a run's inputs fingerprint the same in any order, and differently for any 
   expect(fingerprint([...inputs].reverse())).toBe(fp);
   expect(fingerprint([inputs[0], inputs[1], { name: "helium", bytes: "0.14.9.0" }])).not.toBe(fp);
   expect(fingerprint([{ name: "dist/index.html", bytes: "<html>page</html> " }, inputs[1], inputs[2]])).not.toBe(fp);
-  expect(fingerprint([inputs[0], { name: "tools/helium-steps2.mjs", bytes: "steps" }, inputs[2]])).not.toBe(fp);
+  expect(fingerprint([inputs[0], { name: "tools/helium-steps2.ts", bytes: "steps" }, inputs[2]])).not.toBe(fp);
   // a byte moved between two inputs is a change
   expect(fingerprint([{ name: "a", bytes: "xy" }, { name: "b", bytes: "z" }])).not.toBe(fingerprint([{ name: "a", bytes: "x" }, { name: "b", bytes: "yz" }]));
 });

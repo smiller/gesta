@@ -8,28 +8,28 @@
 // whose inputs have moved. Decided 2026-09-12, asked: the tools printed and a
 // reader judged, so a seam only they cover (the walk's order from the
 // session) could move without warning under `npm test`.
-// `node tools/helium-approve.mjs [--approve] [corner|bridge|reader ...]`
+// `node tools/helium-approve.ts [--approve] [corner|bridge|reader ...]`
 import { spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fingerprint, mayReuse, approvalRefusal } from "./heliumStamp.ts";
 
-const TOOLS = { corner: "tools/helium-corner.mjs", bridge: "tools/helium-bridge.mjs", reader: "tools/helium-reader.mjs" };
+const TOOLS: Record<string, string> = { corner: "tools/helium-corner.ts", bridge: "tools/helium-bridge.ts", reader: "tools/helium-reader.ts" };
 /* `--writer` runs the CURRENT APP's driver over the same steps and keeps
    its scrubbed output as tools/expected/corner.writer.txt — the behaviour
-   the successor is measured against (helium-compare.mjs) */
-const WRITER = "tools/helium-writer.mjs";
+   the successor is measured against (helium-compare.ts) */
+const WRITER = "tools/helium-writer.ts";
 const args = process.argv.slice(2);
 const approve = args.includes("--approve");
 const names = args.filter((a) => a in TOOLS);
 const run = names.length ? names : Object.keys(TOOLS);
 
 /* today is not scrubbed: the drivers pin the page's clock to
-   helium-steps.mjs's TODAY since 2026-09-22. The scrub used to rewrite
+   helium-steps.ts's TODAY since 2026-09-22. The scrub used to rewrite
    today's key, its crumb label and its day number, and the day number
    was missed until the first verify on another day went red on it. */
-function scrub(text) {
+function scrub(text: string): string {
   return text
     .replace(/"opacity":"[0-9.e-]+"/g, '"opacity":"[fading]"')
     /* the corner's text in the screen line is a whisper's clock against
@@ -60,12 +60,12 @@ if (args.includes("--writer")) {
    match a passing run's stamp is not played again; asked 2026-10-17, after
    a commit replayed for seven minutes a run approved minutes before */
 const HELIUM_PLIST = "/Applications/Helium.app/Contents/Info.plist";
-const file = (p) => ({ name: p, bytes: existsSync(p) ? readFileSync(p) : "(missing)" });
-function inputsFor(name) {
+const file = (p: string) => ({ name: p, bytes: existsSync(p) ? readFileSync(p) : "(missing)" });
+function inputsFor(name: string) {
   const helium = (/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/.exec(readFileSync(HELIUM_PLIST, "utf8")) ?? [])[1] ?? "(unknown)";
   return [
     file("dist/index.html"), file("dist-reader/index.html"),
-    ...readdirSync("tools").filter((f) => /^helium-.*\.mjs$/.test(f)).map((f) => file("tools/" + f)),
+    ...readdirSync("tools").filter((f) => /^helium-.*\.ts$/.test(f)).map((f) => file("tools/" + f)),
     ...readdirSync("tools/adapters").map((f) => file("tools/adapters/" + f)),
     file("src/store/keys.ts"), file("src/store/store.ts"),
     ...["io", "zip", "files", "plans", "names"].map((m) => file("src/store/" + m + ".ts")),
@@ -76,15 +76,15 @@ function inputsFor(name) {
   ];
 }
 const STAMPS = resolve("tools/out/helium-pass");
-const stampPath = (name) => resolve(STAMPS, name + ".txt");
-const stamp = (name, print = fingerprint(inputsFor(name))) => { mkdirSync(STAMPS, { recursive: true }); writeFileSync(stampPath(name), print); };
+const stampPath = (name: string): string => resolve(STAMPS, name + ".txt");
+const stamp = (name: string, print = fingerprint(inputsFor(name))): void => { mkdirSync(STAMPS, { recursive: true }); writeFileSync(stampPath(name), print); };
 let failed = 0;
 for (const script of ["build", "build:reader"]) {
   const build = spawnSync("npm", ["run", script], { env, encoding: "utf8" });
   if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
 }
-const readOrNull = (p) => (existsSync(p) ? readFileSync(p, "utf8") : null);
-const playedPath = (name) => resolve(STAMPS, name + ".played.txt");
+const readOrNull = (p: string): string | null => (existsSync(p) ? readFileSync(p, "utf8") : null);
+const playedPath = (name: string): string => resolve(STAMPS, name + ".played.txt");
 for (const name of run) {
   const approvedPath = resolve("tools/expected/" + name + ".approved.txt"), receivedPath = resolve("tools/expected/" + name + ".received.txt");
   if (approve) {
@@ -94,11 +94,11 @@ for (const name of run) {
     if (refusal) { failed++; console.log(name + ": not approved — " + refusal); continue; }
     const d = spawnSync("diff", ["-u", approvedPath, receivedPath], { encoding: "utf8" });
     console.log(d.stdout || "");
-    writeFileSync(approvedPath, received);
+    writeFileSync(approvedPath, received!);
     rmSync(receivedPath, { force: true });
     rmSync(playedPath(name), { force: true });
     stamp(name);
-    console.log(name + ": approved, the run that was played (" + received.split("\n").length + " lines)");
+    console.log(name + ": approved, the run that was played (" + received!.split("\n").length + " lines)");
     continue;
   }
   const before = readOrNull(stampPath(name));
@@ -125,6 +125,6 @@ for (const name of run) {
   const diffLines = (d.stdout || "").split("\n");
   console.log(diffLines.slice(0, 80).join("\n"));
   if (diffLines.length > 80) console.log("… " + (diffLines.length - 80) + " more lines of the diff: read the received copy whole");
-  console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.mjs --approve " + name + "`" + (name === "corner" ? "; to compare it as it stands, `node tools/helium-compare.mjs tools/expected/corner.received.txt`" : ""));
+  console.log("read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.ts --approve " + name + "`" + (name === "corner" ? "; to compare it as it stands, `node tools/helium-compare.ts tools/expected/corner.received.txt`" : ""));
 }
 process.exit(failed ? 1 : 0);

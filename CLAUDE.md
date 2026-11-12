@@ -61,7 +61,7 @@ here NOW, and what is not yet:
 - IN FORCE from 2026-11-05 — A CHANGED COMMENT IS READ BEFORE IT IS COMMITTED (asked, after a review found a new comment describing another module in words the checker cannot see): `npm run test:comments`, under `verify`, fails while the ledger of added or changed blocks is not recorded as read; each is read against the comment standard, fixed if it fails, and `npm run comments:read` records the ledger. Changing a listed block clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
 - IN FORCE from 2026-11-05 — A TEST'S DESCRIPTION STATES THE RULE; the exact forms live only in its assertions, so there is less to go stale (asked).
   `npm run test:titles`, under `verify`, fails when a test's code differs from HEAD under the same description, and lists them; each description is read against its assertions, fixed if out of step, and `npm run titles:read` records the list as read. Changing a listed test again clears the record. It is a promise like the accept, not a proof: the review stays the net for the reading itself.
-- IN FORCE from 2026-11-11 — CODE HEALTH 10, AND HELD THERE (asked): every TypeScript file under src/, its tests included, and from 2026-11-12 every .ts and .mjs script under tools/ (asked, the one-off tools with the shared steps), is brought to CodeScene's Code Health 10, and no change lowers one. `npm run test:health`, under `verify` and the Stop hook, scores each such file that differs from HEAD — modified, new, untracked, renamed — with the CodeScene CLI the MCP installs, and refuses one scoring below its HEAD copy or a new one below 10, naming its smells. The Stop hook's refusal is the loop: restructure until the suite is green and the score held, then the turn may end. A CLI that cannot measure fails `verify` but lets a Stop through; it is signed in with `! ~/Library/Caches/codehealth-mcp/MCP-*/cs auth login`. Primitive Obsession and String Heavy Function Arguments are OFF for src/ and tools/ (`.codescene/code-health-rules.json`): the first fires at 30% of a file's functions taking a string, number or boolean, and splitting a function, the cure for every other smell, set both off (MEASURED); every structural rule stands at CodeScene's default. Never edit that file to quiet a structural finding. `.svelte` is not scored, CodeScene refusing the type. While restructuring, `code_health_review` (the MCP) or `cs review <file>` reads a file's smells. The measurements, the decisions, the baseline and the climb: docs/plans/2026-11-11-chore-code-health-plan.md.
+- IN FORCE from 2026-11-11 — CODE HEALTH 10, AND HELD THERE (asked): every TypeScript file under src/, its tests included, and from 2026-11-12 every .ts script under tools/ (asked, the one-off tools with the shared steps), is brought to CodeScene's Code Health 10, and no change lowers one. `npm run test:health`, under `verify` and the Stop hook, scores each such file that differs from HEAD — modified, new, untracked, renamed — with the CodeScene CLI the MCP installs, and refuses one scoring below its HEAD copy or a new one below 10, naming its smells. The Stop hook's refusal is the loop: restructure until the suite is green and the score held, then the turn may end. A CLI that cannot measure fails `verify` but lets a Stop through; it is signed in with `! ~/Library/Caches/codehealth-mcp/MCP-*/cs auth login`. Primitive Obsession and String Heavy Function Arguments are OFF for src/ and tools/ (`.codescene/code-health-rules.json`): the first fires at 30% of a file's functions taking a string, number or boolean, and splitting a function, the cure for every other smell, set both off (MEASURED); every structural rule stands at CodeScene's default. Never edit that file to quiet a structural finding. `.svelte` is not scored, CodeScene refusing the type. While restructuring, `code_health_review` (the MCP) or `cs review <file>` reads a file's smells. The measurements, the decisions, the baseline and the climb: docs/plans/2026-11-11-chore-code-health-plan.md.
 - IN FORCE — Sean runs Gesta in HELIUM (`/Applications/Helium.app`, a
   Chromium fork), from `file://`. Every real-behaviour question is answered
   there; a synthetic event proves only that a handler is reachable.
@@ -81,7 +81,7 @@ here NOW, and what is not yet:
   `npm run verify` — tsc, the suite, then the headless tools under their
   verdict — passes before work is called done. THE HEADLESS TOOLS HAVE A
   VERDICT since 2026-09-12: `npm run test:helium` plays the shared steps
-  (`tools/helium-steps.mjs`) over the successor and compares the whole
+  (`tools/helium-steps.ts`) over the successor and compares the whole
   run, scrubbed, against `tools/expected/corner.approved.txt`, then
   compares it step by step against THE CURRENT APP's run of the same
   steps, `tools/expected/corner.writer.txt`, failing on any difference
@@ -104,7 +104,7 @@ here NOW, and what is not yet:
   changes, is judged by the approved copy alone and listed in
   `corner.differences.txt` as `<label> · * · new here, the old app
   frozen` (or its field, `· <field> ·`). A PASSING RUN IS NOT REPLAYED
-  from 2026-10-17 (asked): `helium-approve.mjs` stamps the fingerprint of
+  from 2026-10-17 (asked): `helium-approve.ts` stamps the fingerprint of
   what a run reads (`tools/heliumStamp.ts`: the built page, the drivers,
   steps and adapters, the source an adapter imports, the approved copy,
   Helium's version, node's and playwright's) under `tools/out/helium-pass`
@@ -419,24 +419,30 @@ is in the plan's record, under the phase named):
   line break here, its delimiters text there.
   Phase 0's gate: nothing in later phases is worth building until it is
   green over the corpus.
-- `tools/helium-probe.mjs` — the built page opened in headless Helium by
+- `tools/helium-probe.ts` — the built page opened in headless Helium by
   executable path, one persistent profile, one launch per query string
   given; prints the root's `data-store`, `data-probe` and the console.
 - `tools/importCorpus.ts` — the import run over an export folder under
   node into memory, `node tools/importCorpus.ts [dir]`; prints the tally
   and names every failure with its reason.
-- `tools/helium-bridge.mjs` — the bridge in headless Helium over a fresh
+- `tools/helium-bridge.ts` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
-- `tools/helium-steps.mjs` — THE SHARED STEPS: one list of gestures and
+- `tools/helium-steps.ts` — THE SHARED STEPS: one list of gestures and
   readings, played over an adapter, and `TODAY`, the day the drivers
-  and the bridge pin the page's clock to (2026-09-22; never a seeded day); `tools/adapters/successor.mjs` and
-  `tools/adapters/writer.mjs` answer the same questions over this app
+  and the bridge pin the page's clock to (2026-09-22; never a seeded day); `tools/adapters/successor.ts` and
+  `tools/adapters/writer.ts` answer the same questions over this app
   and over ../writer (its `window.gesta` seam seeds it, its own ids read
-  it). `tools/helium-approve.mjs` runs a tool under its verdict against
-  `tools/expected/`; `tools/helium-compare.mjs` reads the two runs step
+  it). `tools/helium-approve.ts` runs a tool under its verdict against
+  `tools/expected/`; `tools/helium-compare.ts` reads the two runs step
   by step, the decided differences listed in `corner.differences.txt`;
-  `tools/helium-writer.mjs` is the current app's driver.
+  `tools/helium-writer.ts` is the current app's driver. The Helium files
+  are TypeScript since 2026-11-12 (asked), checked by their own program,
+  `tsconfig.helium.json`, under `npm run check`: strict but for null
+  checks, a query answering with an element (`tools/heliumDom.d.ts`), the
+  page's hooks and playwright's types in `tools/heliumPage.ts`, the steps
+  taking one `Adapter`, the successor's; `tsconfig.json` leaves these files
+  out, so the rest of the tree keeps its strict view of the DOM.
 - `tools/hooks-test.sh` — the hooks' self-test (2026-09-22): the five
   scripts under `hooks/` copied into a throwaway git repo and asserted
   on their exit codes, then the wiring — settings.json, `core.hooksPath`,
@@ -452,9 +458,9 @@ is in the plan's record, under the phase named):
   the provenance rule, the diff's added lines; `tools/commentRules.test.ts` the self-test,
   the known-bad blocks verbatim from git and real quiet ones (Vitest
   reads `tools/**/*.test.ts` too).
-- `tools/helium-corner.mjs` — the shared steps played over the successor
+- `tools/helium-corner.ts` — the shared steps played over the successor
   in headless Helium over a fresh profile, a 19-line driver since
-  2026-09-12: the steps and their readings are `tools/helium-steps.mjs`'s
+  2026-09-12: the steps and their readings are `tools/helium-steps.ts`'s
   (above); this prints each reading and the console, and screenshots
   when given a path. `STEPS=a,b` runs the first section and the named
   ones, a development run only (2026-09-28). `TIMING=1` prints to stderr
@@ -688,9 +694,9 @@ is in the plan's record, under the phase named):
   markdown view, format bar, copy button, lifecycle, import/export,
   backups, shortcuts, bookmarks or replace. The backup writes the bundle
   (`writeBundle` in io.ts) after the mirror. `tools/readerBundle.ts` makes
-  one from a backup folder; `tools/helium-reader.mjs` plays the reader
+  one from a backup folder; `tools/helium-reader.ts` plays the reader
   headless over a bundle it makes from `fixtures/`, `reader` under
-  helium-approve.mjs's verdict (`tools/expected/reader.approved.txt`), or
+  helium-approve.ts's verdict (`tools/expected/reader.approved.txt`), or
   times a real bundle given as its argument; `tools/publishReader.sh` pushes the page to the
   `gh-pages` branch, run only on the reader's word. The plan:
   docs/plans/2026-10-31-feat-reader-plan.md.
