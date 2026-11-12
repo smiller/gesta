@@ -1,5 +1,5 @@
 import type { Page, BrowserContext } from "./heliumPage.ts";
-import { bind, setSection, SECTIONS, type Adapter, type RunOptions } from "./steps/kit.ts";
+import { bind, setSection, freshStart, SECTIONS, type Adapter, type RunOptions } from "./steps/kit.ts";
 import { startClock, report, type Clock } from "./steps/timing.ts";
 import "./steps/launch.ts";
 import "./steps/references.ts";
@@ -24,11 +24,12 @@ async function settle(page: Page): Promise<void> {
   await page.bringToFront();
   await page.keyboard.press("Escape").catch(() => {});
 }
-/* STEPS=a,b: the first section and the named ones */
-const skipped = (opts: RunOptions, name: string): boolean => !!opts.only && name !== SECTIONS[0][0] && !opts.only.includes(name);
+const skipped = (opts: RunOptions, name: string): boolean => !!opts.only && !opts.only.includes(name);
 async function playSection(page: Page, [name, fn]: (typeof SECTIONS)[number], clock: Clock | null): Promise<void> {
   const t0 = Date.now(), s0 = clock?.slept ?? 0;
+  console.log("== " + name);
   await settle(page);
+  await freshStart(name);
   setSection(name);
   try { await fn(); }
   catch (e) { console.log("SECTION FAILED (" + name + "): " + String(e).split("\n")[0].slice(0, 200)); }
@@ -37,6 +38,7 @@ async function playSection(page: Page, [name, fn]: (typeof SECTIONS)[number], cl
 export async function runSteps(page: Page, ctx: BrowserContext, A: Adapter, opts: RunOptions = {}) {
   bind(page, ctx, A, opts);
   const clock = process.env.TIMING ? startClock(ctx) : null;
-  for (const s of SECTIONS) if (!skipped(opts, s[0])) await playSection(page, s, clock);
+  const order = opts.reverse ? [...SECTIONS].reverse() : SECTIONS;
+  for (const s of order) if (!skipped(opts, s[0])) await playSection(page, s, clock);
   if (clock) report(clock);
 }

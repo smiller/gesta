@@ -34,7 +34,8 @@ await ctx.addInitScript(() => {
 const page = await ctx.newPage();
 page.on("console", (m) => logs.push(m.type() + ": " + m.text()));
 page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
-/* STEPS=a,b runs the first section and the named ones: a development run, never the verdict's */
-await runSteps(page, ctx, { ...A, pill: true }, { screenshot: process.argv[3], only: process.env.STEPS ? process.env.STEPS.split(",") : null });
+/* STEPS=a,b runs the named sections, a development run never the verdict's;
+   ORDER=reverse all of them last first */
+await runSteps(page, ctx, { ...A, pill: true }, { screenshot: process.argv[3], only: process.env.STEPS ? process.env.STEPS.split(",") : null, reverse: process.env.ORDER === "reverse" });
 await ctx.close();
 console.log("console:", logs.length ? logs.join("\n") : "(nothing)");

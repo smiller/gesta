@@ -1,4 +1,4 @@
-import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest } from "./kit.ts";
+import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, keep } from "./kit.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
@@ -194,6 +194,7 @@ async function digitHeldBookmarksCard(): Promise<void> {
   /* a picture that finishes preparing while Search is typed in */
   /* the digit that opens a bookmark, held: nothing typed into the entry it opened */
   await page.evaluate(() => { window.__typed = 0; document.addEventListener("beforeinput", () => { window.__typed++; }, true); });
+  await keep("bookmarks", '["page/Horace","2026-09-06"]');
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await hold("1", 4);

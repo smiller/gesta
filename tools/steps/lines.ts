@@ -1,4 +1,4 @@
-import { section, page, A, R, log, rest } from "./kit.ts";
+import { section, page, A, R, log, rest, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
 
 section("a link to a line", async () => {
   /* an address naming a line marks it as ⌃⌘G does: no selection, no format bar, and gone at the next press */
@@ -86,6 +86,7 @@ const click = async (text: string) => { await page.locator("#editor a", { hasTex
 const top = () => page.evaluate(() => { const s = getSelection(); return { row: s.anchorNode?.parentElement?.closest(".vrow")?.textContent ?? null, focused: document.activeElement?.closest("#editor") ? "the text" : "elsewhere" }; });
 async function linkParagraphBeforeWarm(): Promise<void> {
   /* opened before the warm: the work's own page says how it counts, and a rename follows */
+  await writeAll(AUGUSTINE_SEEDS);
   await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
   await A.waitEntry(page, work2, 8000).catch(() => {});
   await R.settle(page);

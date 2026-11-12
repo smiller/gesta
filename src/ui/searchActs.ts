@@ -104,7 +104,7 @@ export function searchActs(d: SearchDeps): SearchRow {
   const scopeNow = () => sr.options[sr.scopeAt]?.scope || defaultScope(session.current.date, session.current.tag);
   /* the query the rows on screen were built for: a row clicked after the
      query was typed on highlights what it was found for (pin: notices and
-     surfaces as the old app has them › a result clicked after more typing) */
+     surfaces › a result clicked after more typing) */
   let builtFor = "";
   const notReady = (): boolean => {
     if (!layer.warmed) { sr.empty = layer.storeReadFailed ? "Couldn’t load entries." : "Still loading…"; return true; }

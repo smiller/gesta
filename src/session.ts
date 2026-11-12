@@ -131,7 +131,7 @@ export function startSession(opts: SessionOptions): Session {
   let decoding = false;
   /* a write that fails is not a picture that could not be read, and only
      a full store is said to be full; the pin copies the caught error
-     (pin: notices and surfaces as the old app has them › a picture whose write fails) */
+     (pin: notices and surfaces › a picture whose write fails) */
   function pictureNotSaved(err: unknown): void {
     console.error("picture not saved", err);
     opts.stick?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", errText(err));

@@ -6,25 +6,24 @@ import { inPageWith } from "../adapters/inPage.ts";
 
 export type Adapter = typeof Successor & { pill?: boolean };
 export type Tree = { name: string; text?: string; kids?: Tree[] };
-export interface RunOptions { screenshot?: string; only?: string[] | null }
+export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean }
 /* the day the drivers pin the page's clock to (context.clock.setFixedTime,
    Date only; the timers run). Never a seeded day: a run on a day whose
    number a seeded day shares (the 5th, the 6th) read one Day option fewer,
    and no scrub of the day number could say so. */
 export const TODAY = "2026-09-12";
-export const SEEDS = {
-  "2026-09-06": "twelfth", "2026-09-05": "williams", "page/Horace": "horace", "page/Williams/Witchcraft 3": "williams",
-  "bookshelf/Browning, Robert/Pippa Passes": "pippa",
-  "page/Links": "A link to [Horace](#page/Horace), one to [itself](#page/Links), and one [outside](https://example.org/).\n",
-  "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
-  "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
-};
 /* the stanza step's seeds: written by that step alone, so no earlier
    reading moves */
 export const STANZA_SEEDS = {
     "bookshelf/Spenser, Edmund": "# Edmund Spenser\n\n- [The Faerie Queene](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n\n- [Canto i](#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1)\n",
     "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\nFoule Errour doth defeate:\n:::\n\n::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n::: stanza 3\nVpon a great aduenture he was bond,\nThat greatest Gloriana to him gaue,\nThat greatest Glorious Queene of Faerie lond,\n:::\n",
+};
+/* a work counted by book, chapter and paragraph */
+export const AUGUSTINE_SEEDS = {
+  "bookshelf/Augustine": "# Augustine\n",
+  "bookshelf/Augustine/De Doctrina Christiana": "# De Doctrina Christiana\n\n::: reference\nby book, chapter, and paragraph\n:::\n",
+  "bookshelf/Augustine/De Doctrina Christiana/Book 2": "# Book 2\n\n## Chapter 40\n\n::: prose 60\n60. Philosophi autem. | 60. Moreover the philosophers.\nSicut enim Aegyptii. | For as the Egyptians.\n\n61. Nam quid aliud. | 61. And what else.\n:::\n\n## Chapter 41\n\n::: prose 62\n62. Meminerint ergo. | 62. Let them remember.\n:::\n",
 };
 /* a fixture's text, for a step that writes its own seeds */
 export const fixture = (name: string) => readFileSync(new URL("../../fixtures/" + name, import.meta.url), "utf8");
@@ -67,6 +66,8 @@ export let page: Page, ctx: BrowserContext, A: Adapter, R: Adapter["read"], S: A
 /* the section playing, which an arrival's line names */
 export let current = "";
 export const setSection = (name: string): void => { current = name; };
+/* what the section's fresh start printed in its probe */
+export let stages = "";
 /* where the keys go: a caret by the
    kind of place it stands, "selected" and a length, "on" the element
    holding the focus outside the text, or "none". The screen's "sel none"
@@ -134,6 +135,10 @@ export const go = async (hash: string, ms = 15000) => {
   await page.waitForFunction(([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source], { timeout: 1000 }).catch(() => {});
   console.log(current + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
 };
+/* entries written as another tab would, in turn */
+export const writeAll = async (seeds: Record<string, string>) => { for (const [k, md] of Object.entries(seeds)) await A.foreignWrite(page, k, md); };
+/* a list or table kept in localStorage, written before the section reads it */
+export const keep = (name: string, value: string) => page.evaluate(([k, v]) => localStorage.setItem(k, v), [A.ns + name, value]);
 /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
 export const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { if (await A.stored(page, key)) return true; await rest(page); } return false; };
 /* the window, a paragraph by its first words, the corner's text */
@@ -161,6 +166,13 @@ export const caretAt = async (needle: string, offset: number) => { await R.caret
 let answer: string | (string | null)[] | null = null;
 export const prompts: string[] = [], confirms: string[] = [];
 export const setAnswer = (a: typeof answer): void => { answer = a; };
+/* nothing a section did reaches the next: the store reseeded, the dialogs'
+   answers dropped */
+export async function freshStart(name: string): Promise<void> {
+  answer = null; prompts.length = 0; confirms.length = 0;
+  stages = await A.fresh(page);
+  if (!stages.includes("seed;")) console.log("FRESH START FAILED (" + name + "): " + stages);
+}
 function answerDialog(d: Dialog): void {
   if (d.type() === "confirm") { confirms.push(d.message()); d.accept(); return; }
   prompts.push(d.message() + " [" + d.defaultValue() + "]");
@@ -168,9 +180,9 @@ function answerDialog(d: Dialog): void {
   if (a !== null) d.accept(a); else d.dismiss();
 }
 
-/* ONE SECTION PER FEATURE, each opening its own entry, run in order and
-   each in its own try: a selector the app lacks fails that section's
-   remaining steps as one line and the run goes on */
+/* ONE SECTION PER FEATURE, each from a fresh start and in its own try: a
+   selector the app lacks fails that section's remaining steps as one line
+   and the run goes on */
 export const SECTIONS: [string, () => Promise<void>][] = [];
 export const section = (name: string, fn: () => Promise<void>): void => { SECTIONS.push([name, fn]); };
 

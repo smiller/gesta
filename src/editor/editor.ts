@@ -252,7 +252,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     state: editorState(doc, opts.interval, opts.onRefuse, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     /* the hint is drawn on screen alone, so no copy carries it (pin:
-       notices and surfaces as the old app has them › a link's tooltip)
+       notices and surfaces › a link's tooltip)
        (pin: schema.test › a link's DOM) */
     markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = linkTitle(mark.attrs.href as string); return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },

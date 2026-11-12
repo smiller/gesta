@@ -1,6 +1,6 @@
-import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, type Tree } from "./kit.ts";
+import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
-section("notices and surfaces as the old app has them", async () => {
+section("notices and surfaces", async () => {
   await noticesOpening();
   await importRefusedFilesOnly();
   await blockPictureHoverCopied();
@@ -161,6 +161,9 @@ async function failedCopyPinClicked(): Promise<void> {
   await log("the tab's icon", { icon: await page.evaluate(() => !!document.querySelector("link[rel~='icon']")?.getAttribute("href")) });
 }
 async function shortcutWithNoCursor(before: string): Promise<void> {
+  await keep("shortcuts", "sig: Sean Miller\nmd: markdown");
+  await page.reload();
+  await A.waitWarm(page);
   await go("page/Horace");
   await view(false);
   await page.click(".page-title, #pagetitle, .site-head, header", { timeout: 1000 }).catch(() => {});
@@ -179,6 +182,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await view(true);
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");
+  await keep("bookmarks", '["2026-09-06","page/Horace","page/Links"]');
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
@@ -263,6 +267,8 @@ section("shelves", async () => {
   await shelvesSearchedFollowing();
 });
 async function bookshelfShelves(): Promise<void> {
+  /* an author the Shelves entry does not list, for the shelf with no list */
+  await A.foreignWrite(page, "bookshelf/Spenser, Edmund", STANZA_SEEDS["bookshelf/Spenser, Edmund"]);
   await A.foreignWrite(page, "bookshelf/Shelves", "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Browning](#bookshelf/Browning%2C%20Robert)\n\n## English\n");
   /* read back before the reload: a reload during the write's commit read the store without it */
   const seeded = await seededIn("bookshelf/Shelves");

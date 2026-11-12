@@ -15,10 +15,22 @@ export const ns = NS;
 export const bookmarksKey = NS + "bookmarks";
 export const url = (hash: string, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
 /* the page seeds itself under ?store=seed: nothing is written here */
-export async function launch(page: Page, _seeds: Record<string, string>) {
+async function launch(page: Page) {
   await page.goto(url("page/Horace", "store=seed"));
   await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
   return page.evaluate(() => document.documentElement.dataset.probe);
+}
+/* a section's start: the origin's storage cleared — the entries, the
+   pictures, the index, localStorage — the clipboard emptied, and the
+   fixtures seeded again, the page warm on Horace */
+export async function fresh(page: Page) {
+  await page.goto("about:blank");
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Storage.clearDataForOrigin", { origin: "file://", storageTypes: "all" });
+  await cdp.detach();
+  const stages = await launch(page);
+  await page.evaluate(() => navigator.clipboard.writeText("")).catch(() => {});
+  return stages;
 }
 /* the stanza step's seed, written by the page under ?store=seed-stanza */
 export async function seedStanza(page: Page, _seeds: Record<string, string>) {
@@ -84,6 +96,15 @@ function screenLine(): string {
 }
 export const screen = (page: Page): Promise<string> => page.evaluate(inPage(screenLine, pageShows, selectedNow, openPanel, openRows));
 const SAVED = ".saved.show";   /* the corner, for cornerAfter */
+/* a selection a script places is the editor's once the browser's
+   selectionchange has run: two frames after it, under the load of two runs
+   at once, a chord took the caret before it */
+async function placed<T>(page: Page, place: () => Promise<T>): Promise<T> {
+  await page.evaluate(() => { window.__selSeen = false; document.addEventListener("selectionchange", () => { window.__selSeen = true; }, { once: true }); });
+  const out = await place();
+  await page.waitForFunction(() => window.__selSeen, null, { timeout: 1000 }).catch(() => {});
+  return out;
+}
 export const read = {
   blankRow: blankRowReader("#editor .ProseMirror"),
   /* the contents-folds step: the headings that fold, which are open, their counts, the links showing, the followed link's place */
@@ -107,7 +128,7 @@ export const read = {
   clickMargin: async (page: Page, text: string) => { const at = await page.evaluate((t) => { const n = [...document.querySelectorAll("#editor .margin-note")].find((x) => x.textContent.startsWith(t)); if (!n) return null; const r = n.getBoundingClientRect(); return { x: r.right - 2, y: r.top + 8 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(150); } },
   /* the stanza step: the number each stanza DRAWS (its ::before), and the line numbers shown */
   stanzas: (page: Page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
-  selectBetween: (page: Page, a: string, b: string) => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n: string): [Node, number] | null => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]),
+  selectBetween: (page: Page, a: string, b: string) => placed(page, () => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n: string): [Node, number] | null => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b])),
   /* a hand's drag over one English cell of a dual-language block, its first letter to its last; then what is selected and what is marked beside it */
   dragCell: async (page: Page, start: string) => {
     const at = await page.evaluate((s) => {
@@ -309,8 +330,8 @@ export const read = {
   searchOpen: (page: Page) => page.evaluate(() => document.querySelector(".page-search")?.open),
   selectionText: (page: Page) => page.evaluate(() => document.getSelection()?.toString()),
   pill: (page: Page) => page.evaluate(() => { const b = document.querySelector(".backup-paused"); const r = b.getBoundingClientRect(); return { text: b.textContent, hidden: b.hidden, display: getComputedStyle(b).display, right: innerWidth - r.right, bottom: innerHeight - r.bottom }; }),
-  selectAll: (page: Page, sel: string) => page.evaluate((sel) => { const v = document.querySelector(sel); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }, sel),
-  caretAfter: (page: Page, needle: string, offset: number) => page.evaluate(([needle, offset]) => { const walker = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let t; while ((t = walker.nextNode())) if (t.textContent.includes(needle)) break; const r = document.createRange(); r.setStart(t, t.textContent.indexOf(needle) + offset); r.collapse(true); const sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(r); }, [needle, offset] as [string, number]),
+  selectAll: (page: Page, sel: string) => placed(page, () => page.evaluate((sel) => { const v = document.querySelector(sel); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }, sel)),
+  caretAfter: (page: Page, needle: string, offset: number) => placed(page, () => page.evaluate(([needle, offset]) => { const walker = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let t; while ((t = walker.nextNode())) if (t.textContent.includes(needle)) break; const r = document.createRange(); r.setStart(t, t.textContent.indexOf(needle) + offset); r.collapse(true); const sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(r); }, [needle, offset] as [string, number])),
   pasteText: (page: Page, text: string) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page: Page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise<Blob>((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),
   waitCorner: (page: Page, text: string, ms = 5000) => page.waitForFunction((t) => document.querySelector(".saved.show")?.textContent === t, text, { timeout: ms }).catch(() => {}),

@@ -108,7 +108,10 @@ section("go to", async () => {
   await log("Escape", await R.goto(page));
 });
 section("sub-entries", async () => {
-  /* the sub-entries: the dialogs answered by the harness (declared above) */
+  /* the sub-entries: the dialogs answered by the harness; the day holding
+     one already, Music, linked from its text, so a delete leaves a tag */
+  await A.foreignWrite(page, "2026-09-06/Music", "**music**\n");
+  await A.foreignWrite(page, "2026-09-06", (await A.stored(page, "2026-09-06")) + "\n[Music](#2026-09-06/Music)\n");
   await go("2026-09-06");
   await log("the masthead over the day after the rows closed", await R.rowsClosed(page));
   /* the link goes in at the caret: the click's caret is the editor's only
@@ -347,7 +350,8 @@ async function caretSeenSourceM(): Promise<void> {
   await log("a caret seen in the source, ⌃⌘M back", { caretInView: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) });
 }
 section("contents folds", async () => {
-  /* a work's contents folding under its headings: the stanza step's Faerie Queene seeds its contents page with a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
+  /* a work's contents folding under its headings: the stanza seeds' Faerie Queene, its contents page a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
+  await A.seedStanza(page, STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
   await R.settle(page);
   await log("a contents page opened", await R.folds(page));

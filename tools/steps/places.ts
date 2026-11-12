@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still } from "./kit.ts";
+import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -316,6 +316,7 @@ section("bookmarks from another window", async () => {
   await pageOpenFirstSaved();
 });
 async function secondWindow(): Promise<void> {
+  await keep("bookmarks", '["2026-09-06","page/Horace"]');
   await go("2026-09-06");
   const other = await page.context().newPage();
   await other.goto(A.url("page/Made%20Elsewhere"));

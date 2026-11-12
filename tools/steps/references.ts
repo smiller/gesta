@@ -183,7 +183,6 @@ section("grid", async () => {
   await go("page/Gridded");
   await rest(page);
   /* the line fixed and the view restored: the pin released, the grid drawn */
-  if (!(await R.inSource(page))) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);

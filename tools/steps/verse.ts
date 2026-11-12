@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, seededIn, rest, still, fixture } from "./kit.ts";
+import { section, page, A, R, S, log, go, seededIn, rest, still, fixture, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
@@ -280,9 +280,7 @@ async function byParagraphWork(): Promise<void> {
   await lineBarNextPageAfterWork();
 }
 async function lineBarOnWorkByParagraph(): Promise<void> {
-  await A.foreignWrite(page, "bookshelf/Augustine", "# Augustine\n");
-  await A.foreignWrite(page, AUGUSTINE, "# De Doctrina Christiana\n\n::: reference\nby book, chapter, and paragraph\n:::\n");
-  await A.foreignWrite(page, AUGUSTINE_BOOK, "# Book 2\n\n## Chapter 40\n\n::: prose 60\n60. Philosophi autem. | 60. Moreover the philosophers.\nSicut enim Aegyptii. | For as the Egyptians.\n\n61. Nam quid aliud. | 61. And what else.\n:::\n\n## Chapter 41\n\n::: prose 62\n62. Meminerint ergo. | 62. Let them remember.\n:::\n");
+  await writeAll(AUGUSTINE_SEEDS);
   await page.goto(A.url(AUGUSTINE_BOOK.replace(/ /g, "%20")));
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
   await R.settle(page);

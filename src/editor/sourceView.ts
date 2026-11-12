@@ -38,7 +38,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
            replacement stands before (MEASURED: the next letter went in
            front of the space). That insert raises its own input event,
            which must not curl the straight quote it puts back (pin:
-           editing as the old app does › -- and quotes typed in the markdown view) */
+           editing › -- and quotes typed in the markdown view) */
         replacing = true;
         try { typeInto(r.text, r.from, r.to); } finally { replacing = false; }
         const at = caret - (r.to - r.from) + r.text.length;
@@ -146,7 +146,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
   /* `after`: typed at the selection's end, the caret after it (pin: notices
-     and surfaces as the old app has them › a bookmark's link in the markdown view) */
+     and surfaces › a bookmark's link in the markdown view) */
   const insertText = (text: string, after = false): void => {
     if (ta.readOnly) return;
     ta.focus({ preventScroll: true });

@@ -71,13 +71,13 @@ const q = new URLSearchParams(location.search);
 /* ms before a store that has not answered is said not to have loaded */
 const LOAD_PATIENCE_MS = 8000;
 
-/* the tab's icon, inlined: the page is one file (pin: notices and surfaces
-   as the old app has them › the tab's icon) */
+/* the tab's icon, inlined: the page is one file (pin: notices and surfaces ›
+   the tab's icon) */
 document.head.append(Object.assign(document.createElement("link"), { rel: "icon", href: icon }));
 const notices = noticeLedger(copyText);
 const say = notices.whisper;
 /* the Line numbering choice is kept in this browser, out of the entries, so
-   no backup carries it (pin: notices and surfaces as the old app has them ›
+   no backup carries it (pin: notices and surfaces ›
    Line numbering kept across a reload) */
 const LINES_KEY = NS + "lineinterval";
 const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
@@ -176,7 +176,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
   if (!plainChord(e)) return;
   /* a letter is matched in either case: Caps Lock leaves the chord a
-     chord (pin: notices and surfaces as the old app has them › ⌃⌘K with Caps Lock) */
+     chord (pin: notices and surfaces › ⌃⌘K with Caps Lock) */
   const k = e.key.toLowerCase();
   if (READER && "hbsne".includes(k)) return;
   const chord = CHORDS[k];
@@ -341,8 +341,8 @@ if (fixture && fixtures[fixture]) {
   /* WHERE THE KEYS WERE when a card opened or an act began: the window's
      selection, which a button's press leaves where it was. A card that
      inserts reads it at its opening, so a card opened from outside the
-     entry inserts nothing (pin: notices and surfaces as the old app has
-     them › a shortcut chosen with no cursor in the entry) */
+     entry inserts nothing (pin: notices and surfaces › a shortcut chosen with
+     no cursor in the entry) */
   const caretInEntry = (): boolean => { const a = document.getSelection()?.anchorNode; return !!a && mountEl.contains(a); };
   const sourcePort = { insertAfter: (text: string) => { session.insertText(text, true); }, inHeading: () => session.sourceLineIsHeading() };
   let cardCaret = false;
@@ -448,10 +448,10 @@ if (fixture && fixtures[fixture]) {
      been picked in it, its focus put back on its first select; an open
      panel once the pointer has left it, so no row is rebuilt under a
      click, its rows keyed so the keys stay where they were; and the
-     backups status (pin: notices and surfaces as the old app has them ›
-     Search opened before the warm) (pin: notices and surfaces as the old
-     app has them › Go to opened before the warm) (pin: notices and
-     surfaces as the old app has them › the bookshelf opened before the warm, the keys on its button) */
+     backups status (pin: notices and surfaces ›
+     Search opened before the warm) (pin: notices and surfaces › Go to opened
+     before the warm) (pin: notices and
+     surfaces › the bookshelf opened before the warm, the keys on its button) */
   const reanswerOpen = (): void => {
     search.reanswer();
     goRow.reanswer();
@@ -513,7 +513,7 @@ if (fixture && fixtures[fixture]) {
      whole cache, so they are redrawn when the warm lands. */
   let opened = false;
   /* a bare launch names the day it opens in the address (pin: notices and
-     surfaces as the old app has them › a bare launch) */
+     surfaces › a bare launch) */
   if (!location.hash) history.replaceState(null, "", entryHash(todayKey()));
   const h0 = hashParts(location.hash.slice(1));
   const opensNow = (found: boolean): boolean => found || entryKey(h0.date, h0.tag) in layer.cache || !nsOf(h0.date);

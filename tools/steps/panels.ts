@@ -51,7 +51,9 @@ section("bookmarks", async () => {
   await log("b typed, already here", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
   /* the same press over a selection: the focus back, the selection as it stood */
   await R.selectBetween(page, "food", "love");
-  await rest(page);
+  /* the bar shown before the chord: two frames after the selection, under
+     load, the chord came first and the reading lost the selection */
+  await R.waitBar(page);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.keyboard.type("fb");

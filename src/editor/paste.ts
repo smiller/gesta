@@ -62,7 +62,7 @@ export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
 }
 /* a pasted fence the model refuses is named with its reason (pin:
    paste.test › a pasted fence the model refuses is named)
-   (pin: editing as the old app does › a refused fence pasted) */
+   (pin: editing › a refused fence pasted) */
 export function pastedRefusal(blocks: Node[]): string | null {
   const refused = fenceRefusals(N.doc.create(null, blocks));
   return refused.length ? refusalsText(refused) : null;

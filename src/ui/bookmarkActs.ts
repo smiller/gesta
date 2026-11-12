@@ -129,10 +129,10 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
   const nowhereToType = (view: typeof session.view): boolean => !view && !session.mdView;
   /* the link after the caret the card opened on; every way it cannot
      land says why, nothing is appended at the end, and the keys go back
-     to the text either way (pin: editing as the old app does › a
+     to the text either way (pin: editing › a
      bookmark's link pressed in inline code); in the markdown view it is
-     typed there as markdown (pin: notices and surfaces as the old app
-     has them › a bookmark's link in the markdown view) */
+     typed there as markdown (pin: notices and surfaces › a bookmark's link in
+     the markdown view) */
   const bookmarkLink = (key: string): void => {
     if (warmBlock()) return;
     closePanel();

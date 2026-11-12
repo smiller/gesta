@@ -1,11 +1,10 @@
-import { section, page, ctx, A, R, S, shot, log, go, SEEDS, rest } from "./kit.ts";
+import { section, page, ctx, A, R, S, shot, log, go, stages, rest } from "./kit.ts";
 
 section("launch, panels, the corner, links", async () => {
   await afterWarm();
   await plainClickExternalLink();
 });
 async function afterWarm(): Promise<void> {
-  const stages = await A.launch(page, SEEDS);
   console.log("the launch's stages:", JSON.stringify(stages));
   await log("after warm", await R.corner(page));
   await log("masthead over Horace", await R.masthead(page));

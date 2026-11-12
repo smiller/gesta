@@ -85,7 +85,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     const refused = files.filter(isDoc).length - n;
     const refusedNote = refused ? counted(refused, " .md file", " .md files") + " will NOT be imported." : "";
     /* a folder whose every page is refused says so until clicked (pin:
-       notices and surfaces as the old app has them › an import of refused
+       notices and surfaces › an import of refused
        files only) */
     if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return false; }
     if (!n) { say("nothing to import"); return false; }
@@ -116,8 +116,8 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
     const msg = failMsg("import failed", err);
     /* two files spelling one entry say which, on screen; any other
-       failure names its error there too (pin: notices and surfaces as the
-       old app has them › an import of two files for one entry) */
+       failure names its error there too (pin: notices and surfaces › an
+       import of two files for one entry) */
     const merged = (err as Partial<Merged>)?.merged;
     if (p) { console.error("import failed", err); p.fail(msg, msg); }
     else if (merged) notices.stickErrIdle((err as Error).message, null, merged);

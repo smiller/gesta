@@ -11,6 +11,7 @@ declare global {
     __walks: number;
     __pickers: number;
     __pickerAbort: () => void;
+    __releaseTyped: () => void;
     __selSeen: boolean;
     __persistAsked: boolean;
     __clip: [Clipboard["write"], Clipboard["writeText"], Document["execCommand"]];

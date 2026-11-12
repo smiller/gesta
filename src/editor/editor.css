@@ -41,7 +41,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page img { max-width: 100%; height: auto; display: block; margin: 0.8em 0; border: 1px solid var(--rule); border-radius: 3px; }
 /* a picture ending its paragraph is followed by ProseMirror's caret
    placeholder, an empty line under a block picture: 77px below it against
-   18 above (pin: editing as the old app does › a picture's gaps and a
+   18 above (pin: editing › a picture's gaps and a
    quotation's top) */
 .page img:not(.ProseMirror-separator) + img.ProseMirror-separator,
 .page img:not(.ProseMirror-separator) + img.ProseMirror-separator + br.ProseMirror-trailingBreak { display: none; }
@@ -58,7 +58,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page blockquote blockquote { margin: 0.6em 0; background: rgba(30, 51, 32, 0.05); }
 /* a quotation inside a note takes no fill and no rule, only the indent the
    padding keeps: the note's box, size and colour already set it apart
-   (pin: editing as the old app does › a quotation inside a note) */
+   (pin: editing › a quotation inside a note) */
 .page div.note blockquote { background: none; border-left: none; }
 /* the last block in a quotation drops its bottom margin: a paragraph's em
    sat inside the box's own padding, so every quotation had more room below
@@ -68,8 +68,8 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .page blockquote > :last-child,
 .page blockquote > :is(div.note, div[class^="card-"], div.reference):last-child { margin-bottom: 0; }
 /* and the first its top margin: a single-column verse block's stood its
-   text 29px into the box against a paragraph's 7 (pin: editing as the old
-   app does › a picture's gaps and a quotation's top) */
+   text 29px into the box against a paragraph's 7 (pin: editing › a picture's
+   gaps and a quotation's top) */
 .page blockquote > :first-child,
 .page blockquote > :is(div.note, div[class^="card-"], div.reference):first-child { margin-top: 0; }
 .page ul, .page ol { margin: 0 0 1em; padding-left: 1.6em; }

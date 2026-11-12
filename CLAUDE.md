@@ -221,6 +221,20 @@ is in the plan's record, under the phase named):
 - The stored text is markdown, the field `md`; a save is serialize and
   compare, and an entry the model refuses is shown as source, never
   edited as a lossy document (phases 2 and 3).
+- EVERY HELIUM SECTION STARTS FRESH (2026-11-12, asked: "we have tests
+  which are dependent on the order that they're run in, and that's very
+  bad"): before each, the `file://` origin's storage is cleared (the
+  entries, the pictures, the index, localStorage), the clipboard emptied,
+  the dialogs' answers dropped and the fixtures seeded again, about 0.1 s
+  (MEASURED). A section needing an entry, a bookmark list or a shortcut
+  table writes it itself (`writeAll`, `keep` in the kit); reading what
+  another section left is the failure. A race a section's reading depends
+  on is held by the step, not left to fall one way. EVERY COMMIT CHECKS IT
+  (asked: "I want order independence checked on every commit"): the
+  verdict's `order` run plays the steps last first beside `corner`, and a
+  section reading otherwise than corner's approved copy fails `verify`
+  (`tools/heliumOrder.ts`, its test beside it); there is no copy of its own
+  to approve, the remedy being the section's own setup.
 - THE ROWS OF A TEXT BLOCK ARE NOT ALL ONE SHAPE (2026-11-06, asked, after
   the line mark was called fixed having been read on one row). In
   `::: dual-language`, N lines of verse starting at line X are translated by
@@ -427,8 +441,10 @@ is in the plan's record, under the phase named):
 - `tools/helium-bridge.ts` — the bridge in headless Helium over a fresh
   profile: seed the fixtures (`?store=seed`), open by hash, refuse, type,
   relaunch, walk; prints what each launch found.
-- `tools/helium-steps.ts` — THE STEPS: the run of the sections, in order,
-  each from one window in front; the sections themselves in `tools/steps/`,
+- `tools/helium-steps.ts` — THE STEPS: the run of the sections, each from
+  a fresh start (`freshStart` in the kit, the adapter's `fresh`) and one
+  window in front, each opening with a `== name` line; the sections
+  themselves in `tools/steps/`,
   a module a group, each `section("name", …)` with its named steps written
   after it before the next (a pin finds its reading in that span), over
   `steps/kit.ts` (the run's page and adapter as bindings, the shared helpers,
@@ -440,7 +456,7 @@ is in the plan's record, under the phase named):
   `adapters/blankRow.ts` and `adapters/inPage.ts` (a reading of top-level
   functions composed into the one script an evaluate runs).
   `tools/helium-approve.ts` runs a tool under its verdict against
-  `tools/expected/`. The Helium files
+  `tools/expected/`, `corner` and `order` side by side. The Helium files
   are TypeScript since 2026-11-12 (asked), checked by their own program,
   `tsconfig.helium.json`, under `npm run check`: strict but for null
   checks, a query answering with an element (`tools/heliumDom.d.ts`), the
@@ -466,8 +482,9 @@ is in the plan's record, under the phase named):
   in headless Helium over a fresh profile, a 19-line driver since
   2026-09-12: the steps and their readings are `tools/helium-steps.ts`'s
   (above); this prints each reading and the console, and screenshots
-  when given a path. `STEPS=a,b` runs the first section and the named
-  ones, a development run only (2026-09-28). `TIMING=1` prints to stderr
+  when given a path. `STEPS=a,b` runs the named sections alone, a
+  development run only; `ORDER=reverse` all of them last first, the
+  verdict's `order` run. `TIMING=1` prints to stderr
   each section's time, the fixed sleeps by call site and the condition
   waits that ran out (2026-10-13). A pause after a gesture is `rest()`,
   two frames; a read of the stored text waits on the page's watcher of

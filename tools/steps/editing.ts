@@ -1,7 +1,7 @@
 import { section, caretAt, view, write, page, A, R, log, go, rest } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
-section("editing as the old app does", async () => {
+section("editing", async () => {
   /* a placed selection is read by the editor a moment later */
   /* the toolbar's button pressed as a click on it, shown or not: the selection is made by script */
   /* the stored text without its last line end: a seed left unedited keeps the one it was written with */

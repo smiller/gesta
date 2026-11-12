@@ -41,7 +41,7 @@ export function leafStarts(doc: Node): { pos: number; at: number | null }[] {
    from it, a line high — 8 of 60 markers followed by a space (MEASURED).
    The drop is measured and written on the marker as --folio-drop, every
    reading first, then every write
-   (pin: editing as the old app does › page labels beside their leaf's first word) */
+   (pin: editing › page labels beside their leaf's first word) */
 function place(view: EditorView): void {
   const drops: [HTMLElement, number][] = [];
   for (const { pos, at } of leafStarts(view.state.doc)) {

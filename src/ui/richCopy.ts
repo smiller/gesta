@@ -33,7 +33,7 @@ export function richBlockHtml(el: Element): string {
 }
 /* a picture's address on screen is one this tab alone can read: the copy
    carries its bytes instead, so it survives a paste into another app (pin:
-   notices and surfaces as the old app has them › a block with a picture
+   notices and surfaces › a block with a picture
    hover-copied) */
 export function withPictureBytes(html: string): Promise<string> {
   if (!html.includes("blob:")) return Promise.resolve(html);

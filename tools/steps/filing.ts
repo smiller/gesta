@@ -258,24 +258,28 @@ async function exportPressedTwiceFollowing(): Promise<void> {
     const file = (name: string, text: string) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });
     const dir = (name: string, kids: unknown[]) => ({ kind: "directory", name, values: async function* () { for (const k of kids) yield k; } });
     const fillers = Array.from({ length: 1500 }, (_, i) => file("Filler " + String(i).padStart(4, "0") + ".md", "# Filler " + i + "\n"));
-    window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("page", [...fillers, file("Typed.md", "IMPORTED TEXT\n")])]));
+    /* the entry open is read only once the typing over it has saved:
+       whether that save or the import's write landed first was a race */
+    const held = new Promise<void>((go) => { window.__releaseTyped = go; });
+    const typed = { kind: "file", name: "Typed.md", getFile: () => held.then(() => new File(["IMPORTED TEXT\n"], "Typed.md")) };
+    window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("page", [...fillers, typed])]));
   });
 }
 async function typedIntoEntryImport(): Promise<void> {
   await page.click(".toolbtn[title^='Import']");
-  await rest(page);
-  const afterButton = await cursor();
   await page.waitForFunction(importing, S.corner, { timeout: 10000 }).catch(() => {});
+  const afterButton = await cursor();
   await page.click(S.editor);
   await page.keyboard.type("T0 T1 T2 ");
-  /* the import's end: its tally, or a failure still owed from an earlier section, which every operation's end puts back */
-  await page.waitForFunction(imported, S.corner, { timeout: 30000 }).catch(() => {});
-  const tallied = await cornerText();
+  await landed(page, 1200);
+  await page.evaluate(() => window.__releaseTyped());
+  await page.waitForFunction(tallied, S.corner, { timeout: 30000 }).catch(() => {});
+  const tally = await cornerText();
   await page.waitForTimeout(1000);
-  await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tallied });
+  await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tally });
 }
 const importing = (c: string): boolean => /^importing/.test(document.querySelector(c)?.textContent || "");
-const imported = (c: string): boolean => !/^importing/.test(document.querySelector(c)?.textContent || "");
+const tallied = (c: string): boolean => /^imported /.test(document.querySelector(c)?.textContent || "");
 const textStart = (e: string): string => (document.querySelector(e)?.textContent || "").slice(0, 40);
 async function storeThatNeverAnswers(): Promise<void> {
   /* a page of its own, the persist call watched from before the app's first line */

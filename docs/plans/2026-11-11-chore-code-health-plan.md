@@ -720,3 +720,77 @@ standard's checker extended to the daily tools/ ("Yes, with the split").
   as the old app does", "notices and surfaces as the old app has them"),
   their names in src/'s pins and the approved copy; and references.ts's
   `if (!inSource)` before the grid's ⌃⌘M, a hedge for the old app's view.
+
+### Project 2 — the Helium steps independent of their order (2026-11-12)
+
+Asked: "we have tests which are dependent on the order that they're run in,
+and that's very bad", and, mid-way, "Aren't we trying to get rid of
+order-dependent failures here?" — yes: the work below removes them.
+
+- THE FRESH START. Before each section the adapter's `fresh` goes to
+  about:blank, clears the `file://` origin's storage through the DevTools
+  protocol (`Storage.clearDataForOrigin`, every type: the entries, the
+  pictures, the index, localStorage), seeds the fixtures again and empties
+  the clipboard; the kit's `freshStart` drops the dialogs' answers. Probed
+  first: after the clear no database and no localStorage key is left, and
+  the reseed brings the fixtures back; clear and reseed 98–155 ms, five
+  times (MEASURED). Each section's output opens with a `== name` line.
+  `STEPS=` now plays the named sections alone; `ORDER=reverse` plays them
+  all last first.
+- WHAT IT FOUND. The first full run with the fresh start: one section
+  failed and 79 lines moved (MEASURED). Nine readings leaned on an earlier
+  section, each now given its own setup: contents folds (the stanza seeds),
+  a link to a paragraph before the warm (the Augustine work, now
+  `AUGUSTINE_SEEDS` in the kit, shared with the section that wrote it), the
+  sub-entries' "other tag" (a Music sub-entry written first), the digit
+  held on the bookmarks card, a bookmark's link in the markdown view and the
+  second window's rows (a bookmark list kept first), a shortcut chosen with
+  no cursor (the table kept, then a reload), and the shelf with no list (an
+  unlisted author written first). Played alone, 14 of their readings matched
+  the old approved copy exactly; the shelves read the one author written
+  for them (MEASURED).
+- A RACE MADE A HOLD. `losing nothing` typed into an entry an import was
+  about to overwrite: whether the typing's save (0.5 s after the last key)
+  or the import's write of that entry (after 1,500 fillers) landed first
+  decided between the tally and a refusal. The old run read the refusal
+  every time, the fresh store the tally every time (four runs), the step's
+  own comment promising the tally. The fake folder now holds that one
+  file's read until the typing has saved; the tally is waited for by its
+  own words (a "saved" whisper had passed the old wait), and the caret is
+  read once the import shows. Three runs alone: the tally (MEASURED).
+- THE PROOF. The whole run forward and the whole run reversed, in parallel
+  on their own profiles: 60 sections of 60 the same, no section failed
+  (MEASURED, a section-by-section compare). After the approval, the
+  reversed run against the approved copy: 60 of 60 (MEASURED).
+- THE APPROVAL, read whole before it was made: 50 lines moved besides the
+  60 headers (MEASURED). The lists (go-to, search scopes, the bookshelf,
+  the shelves) no longer carry other sections' entries ("1570 pages" is "3
+  pages"); arrivals no longer carry an earlier caret; the walk from 3pr1
+  lands on 3m1, the next in the Consolatio's contents, where an earlier
+  section's save had left 3pr2; the import's tally and the caret back in
+  the text, and the two refusals gone from the console.
+- The side list's two items: the two sections still named for the old app
+  are `editing` and `notices and surfaces`, their 29 pins in src/ renamed
+  with them, all 709 resolving (MEASURED); the grid step's hedge for the
+  old app's view, a ⌃⌘M pressed only if the view was not source, removed,
+  the reading before it showing the view forced to source.
+- EVERY COMMIT CHECKS IT (asked: "I want order independence checked on
+  every commit. I was going to ask how we avoided adding new
+  order-dependent browser tests"). The verdict's `order` run plays the steps
+  reversed on its own profile beside `corner`, and `tools/heliumOrder.ts`
+  (test-first, five tests) names each section, and the console taken as a
+  set of lines, reading otherwise than corner's approved copy; a difference
+  fails `verify` and there is nothing to approve. The verdict with it: 5:25,
+  against 5:26 without it (MEASURED, `time`), the two played side by side.
+  Over the real runs it named nothing; with one reading changed, its section
+  (MEASURED). A leak planted to prove it (a count in the kit surviving the
+  fresh start, logged by `pill`): the verdict failed, `order` naming `pill`
+  alone (MEASURED); the leak removed.
+- ITS FIRST CATCH, on the next verify: `order` named `bookmarks` (MEASURED),
+  corner passing. Not a leak: a selection placed by script and a chord two
+  frames later, the editor not yet holding the selection under the load of
+  two runs at once, so the card read the caret. The adapter's three
+  placements (`selectBetween`, `selectAll`, `caretAfter`, 22 uses of the
+  first) now wait for the browser's selectionchange, a second at most, and
+  that step waits for the format bar; the verdict after: all four ok, no
+  reading moved, 5:25 (MEASURED).
