@@ -10,17 +10,24 @@ export interface Mark { line: number; row: string }
 
 const spoken = (t: string): boolean => /^\*[^*].*\*$/.test(t) && !/^\*\*/.test(t) && !/^\*\(.*\)\*$/.test(t);
 
+interface Scan { verse: boolean; first: boolean }
+/* a fence row, or a row outside a block or blank: none is a candidate */
+function passed(s: Scan, t: string): boolean {
+  if (/^::: ?verse\b/.test(t)) { s.verse = true; s.first = true; return true; }
+  if (s.verse && t === ":::") { s.verse = false; return true; }
+  return !s.verse || !t;
+}
+
 export function declareLines(md: string, directions: string[]): { text: string; marks: Mark[] } {
   const lines = md.split("\n"), marks: Mark[] = [];
-  let verse = false, first = false;
+  const s: Scan = { verse: false, first: false };
+  const declared = (t: string): boolean => spoken(t) && !directions.includes(t);
   for (let i = 0; i < lines.length; i++) {
     const t = lines[i].trim();
-    if (/^::: ?verse\b/.test(t)) { verse = true; first = true; continue; }
-    if (verse && t === ":::") { verse = false; continue; }
-    if (!verse || !t) continue;
-    const cast = first;
-    first = false;
-    if (cast || !spoken(t) || directions.includes(t)) continue;
+    if (passed(s, t)) continue;
+    const cast = s.first;
+    s.first = false;
+    if (cast || !declared(t)) continue;
     marks.push({ line: i, row: lines[i] });
     lines[i] = ROW_LINE_TOKEN + lines[i];
   }

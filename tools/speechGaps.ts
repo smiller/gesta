@@ -13,23 +13,39 @@ const isLine = (l: string): boolean => {
   return !!t && !/^\*\*.*\*\*$/.test(t) && !/^\*\(.*\)\*$/.test(t) && !t.startsWith(":::");
 };
 
-export function closeSpeeches(md: string, apart: string[]): { text: string; changes: Change[] } {
-  const lines = md.split("\n"), out: string[] = [], changes: Change[] = [];
-  let verse = false;
-  for (let i = 0; i < lines.length; i++) {
-    const l = lines[i];
-    if (/^::: ?verse\b/.test(body(l))) verse = true;
-    else if (verse && body(l) === ":::") verse = false;
-    if (!verse || !blank(l)) { out.push(l); continue; }
-    let j = i;
-    while (j + 1 < lines.length && blank(lines[j + 1])) j++;
-    const above = lines[i - 1] ?? "", below = lines[j + 1] ?? "";
-    if (isLine(above) && isLine(below) && !apart.includes(above)) changes.push({ line: i, above, below, kind: "joined" });
-    else {
-      out.push(l);
-      if (j > i) changes.push({ line: i, above, below, kind: "collapsed" });
-    }
-    i = j;
+function inVerse(verse: boolean, l: string): boolean {
+  if (/^::: ?verse\b/.test(body(l))) return true;
+  return verse && body(l) !== ":::";
+}
+function gapEnd(lines: string[], i: number): number {
+  let j = i;
+  while (j + 1 < lines.length && blank(lines[j + 1])) j++;
+  return j;
+}
+
+interface Closing { lines: string[]; out: string[]; changes: Change[]; apart: string[] }
+const joins = (c: Closing, above: string, below: string): boolean => isLine(above) && isLine(below) && !c.apart.includes(above);
+/* the blank run from line i closed or kept as one; the index of its last line */
+function closeGap(c: Closing, i: number): number {
+  const j = gapEnd(c.lines, i);
+  const above = c.lines[i - 1] ?? "", below = c.lines[j + 1] ?? "";
+  if (joins(c, above, below)) {
+    c.changes.push({ line: i, above, below, kind: "joined" });
+    return j;
   }
-  return { text: out.join("\n"), changes };
+  c.out.push(c.lines[i]);
+  if (j > i) c.changes.push({ line: i, above, below, kind: "collapsed" });
+  return j;
+}
+
+export function closeSpeeches(md: string, apart: string[]): { text: string; changes: Change[] } {
+  const c: Closing = { lines: md.split("\n"), out: [], changes: [], apart };
+  let verse = false;
+  for (let i = 0; i < c.lines.length; i++) {
+    const l = c.lines[i];
+    verse = inVerse(verse, l);
+    if (verse && blank(l)) i = closeGap(c, i);
+    else c.out.push(l);
+  }
+  return { text: c.out.join("\n"), changes: c.changes };
 }

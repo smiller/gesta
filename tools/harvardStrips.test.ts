@@ -33,6 +33,6 @@ test("the hOCR's lines with their page and box, the words joined and the entitie
 test("a line found by its words and the line after, within the pages asked, else none", () => {
   const lines = hocrLines(HOCR);
   expect(findLine(lines, "Sorrows and fears", "Sorrows and tears")?.box).toEqual([397, 169, 1153, 218]);
-  expect(findLine(lines, "Sorrows and fears", "", 416)?.page).toBe(416);
+  expect(findLine(lines, "Sorrows and fears", "", { first: 416 })?.page).toBe(416);
   expect(findLine(lines, "Of man’s first disobedience, and the fruit")).toBe(null);
 });

@@ -61,7 +61,7 @@ test("a note's mark after its half-line in the text, numbered within its stanza,
   expect(serializeMarkdown(parseMarkdown(md))).toBe(md);
   const doc = parseMarkdown(md);
   const kinds: string[] = [];
-  doc.descendants((n) => { if (n.type.name === "pair" || n.type.name === "note" || n.type.name === "gap") kinds.push(n.type.name); return n.type.name !== "note"; });
+  doc.descendants((n) => { if (["pair", "note", "gap"].includes(n.type.name)) kinds.push(n.type.name); return n.type.name !== "note"; });
   expect(kinds).toEqual(["note", "pair", "pair", "note", "gap", "pair"]);
   // a note named by a mark the notes do not hold is an error, not a silent drop
   expect(() => wholeLines(half, {})).toThrow(/1\.1/);

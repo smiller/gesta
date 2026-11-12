@@ -37,23 +37,22 @@ const CODE_SIGNS = [
 ];
 const width = (lead: string): number => [...lead].reduce((n, c) => n + (c === "\t" ? 4 : 1), 0);
 
-export function fenceKind(lang: string, body: string[]): FenceKind {
-  if (lang) return "code";
-  const lines = body.filter((l) => l.trim());
-  if (!lines.length) return "code";
-  if (lines.some((l) => /\S\t/.test(l) || /^\s*\|/.test(l)) || lines.filter((l) => /\S {3,}\S/.test(l)).length >= 2) return "aligned";
+/* columns set by tabs, a table's bar, runs of spaces, or lines starting at different depths */
+const columned = (lines: string[]): boolean =>
+  lines.some((l) => /\S\t/.test(l) || /^\s*\|/.test(l)) || lines.filter((l) => /\S {3,}\S/.test(l)).length >= 2;
+function aligned(lines: string[]): boolean {
+  if (columned(lines)) return true;
   const leads = lines.map((l) => width(/^\s*/.exec(l)![0]));
-  if (Math.min(...leads) !== Math.max(...leads)) return "aligned";
-  for (const l of lines) {
-    const t = l.trim();
-    if (COMMANDS.has(t.split(/\s+/)[0])) return "code";
-    if (CODE_SIGNS.some((re) => re.test(t))) return "code";
-  }
-  const wordy = lines.some((l) => {
-    const words = l.trim().split(/\s+/).filter((w) => /\p{L}{2,}/u.test(w));
-    return words.length >= 4;
-  });
-  return wordy ? "prose" : "code";
+  return Math.min(...leads) !== Math.max(...leads);
+}
+const codeLine = (t: string): boolean => COMMANDS.has(t.split(/\s+/)[0]) || CODE_SIGNS.some((re) => re.test(t));
+const wordy = (l: string): boolean => l.trim().split(/\s+/).filter((w) => /\p{L}{2,}/u.test(w)).length >= 4;
+export function fenceKind(lang: string, body: string[]): FenceKind {
+  const lines = body.filter((l) => l.trim());
+  if (lang || !lines.length) return "code";
+  if (aligned(lines)) return "aligned";
+  if (lines.some((l) => codeLine(l.trim()))) return "code";
+  return lines.some(wordy) ? "prose" : "code";
 }
 
 /* PROSE WRAPPED AT A MEASURE IS ONE LINE A PARAGRAPH: a run whose every
@@ -82,22 +81,26 @@ function unwrapped(lines: string[]): string[] {
    text between slashes is italic) */
 const ORG = /\[\[([^\]\s]+)\](?:\[([^\]]+)\])?\]/;
 const ITALIC = /(^|[\s([“‘"'—–-])\/(?=[^\s/])([^/\n]*?[\p{L}\p{N}][^/\n]*?[^\s/]|[\p{L}\p{N}])\/(?=$|[\s.,;:!?)\]”’"'—–-])/u;
+interface Token { at: number; length: number; node: Node }
+const linkToken = (o: RegExpExecArray): Token =>
+  ({ at: o.index, length: o[0].length, node: schema.text(o[2] ?? o[1], [schema.marks.link.create({ href: o[1] })]) });
+const italicToken = (it: RegExpExecArray): Token =>
+  ({ at: it.index + it[1].length, length: it[2].length + 2, node: schema.text(it[2], [schema.marks.em.create()]) });
+/* the first link or italic in the text, a link where both start together */
+function nextToken(rest: string): Token | null {
+  const o = ORG.exec(rest), it = ITALIC.exec(rest);
+  const link = o ? linkToken(o) : null, italic = it ? italicToken(it) : null;
+  if (!link || !italic) return link ?? italic;
+  return link.at <= italic.at ? link : italic;
+}
 function inline(line: string): Node[] {
   const out: Node[] = [];
   let rest = line;
-  while (rest) {
-    const o = ORG.exec(rest), it = ITALIC.exec(rest);
-    const oAt = o ? o.index : Infinity, iAt = it ? it.index + it[1].length : Infinity;
-    if (oAt === Infinity && iAt === Infinity) { out.push(schema.text(rest)); break; }
-    if (oAt <= iAt) {
-      if (oAt) out.push(schema.text(rest.slice(0, oAt)));
-      out.push(schema.text(o![2] ?? o![1], [schema.marks.link.create({ href: o![1] })]));
-      rest = rest.slice(oAt + o![0].length);
-    } else {
-      if (iAt) out.push(schema.text(rest.slice(0, iAt)));
-      out.push(schema.text(it![2], [schema.marks.em.create()]));
-      rest = rest.slice(iAt + it![2].length + 2);
-    }
+  for (let t = nextToken(rest); rest; t = nextToken(rest)) {
+    if (!t) { out.push(schema.text(rest)); break; }
+    if (t.at) out.push(schema.text(rest.slice(0, t.at)));
+    out.push(t.node);
+    rest = rest.slice(t.at + t.length);
   }
   return out;
 }
@@ -136,35 +139,46 @@ function rows(body: string[], layout: boolean): string[] {
    its indented lines a quotation inside it, or a list of its unindented
    lines with the indented ones their sub-items */
 export type Shape = "layout" | "nest" | "outline";
+function outline(lines: string[]): Node[] {
+  const items: Node[][] = [];
+  for (const l of lines.filter((l) => l)) {
+    if (/^\s/.test(l) && items.length) items[items.length - 1].push(schema.nodes.list_item.create(null, paragraph([l.trimStart()])));
+    else items.push([paragraph([l])]);
+  }
+  return [schema.nodes.bullet_list.create(null, items.map(([head, ...subs]) =>
+    schema.nodes.list_item.create(null, subs.length ? [head, schema.nodes.bullet_list.create(null, subs)] : [head])))];
+}
+/* a line joins the group before it when blank or indented as its first line is */
+const joinsGroup = (last: string[] | undefined, l: string): last is string[] => !!last && (!l || /^\s/.test(last[0]) === /^\s/.test(l));
+function nest(lines: string[]): Node[] {
+  const groups: string[][] = [];
+  for (const l of lines) {
+    const last = groups[groups.length - 1];
+    if (joinsGroup(last, l)) last.push(l); else groups.push([l]);
+  }
+  return groups.map((g) => /^\s/.test(g[0]) ? schema.nodes.blockquote.create(null, paragraph(rows(g, true))) : paragraph(g));
+}
+const SHAPES: Record<Shape, (lines: string[]) => Node[]> = { outline, nest, layout: (lines) => indentedWhole(lines) };
 function shaped(body: string[], shape?: Shape): Node[] {
   const lines = rows(body, !!shape);
-  if (shape === "outline") {
-    const items: Node[][] = [];
-    for (const l of lines.filter((l) => l)) {
-      if (/^\s/.test(l) && items.length) items[items.length - 1].push(schema.nodes.list_item.create(null, paragraph([l.trimStart()])));
-      else items.push([paragraph([l])]);
-    }
-    return [schema.nodes.bullet_list.create(null, items.map(([head, ...subs]) =>
-      schema.nodes.list_item.create(null, subs.length ? [head, schema.nodes.bullet_list.create(null, subs)] : [head])))];
-  }
-  if (shape === "nest") {
-    const groups: string[][] = [];
-    for (const l of lines) {
-      const inner = /^\s/.test(l), last = groups[groups.length - 1];
-      if (last && (!l || /^\s/.test(last[0]) === inner)) last.push(l); else groups.push([l]);
-    }
-    return groups.map((g) => /^\s/.test(g[0]) ? schema.nodes.blockquote.create(null, paragraph(rows(g, true))) : paragraph(g));
-  }
-  return shape === "layout" ? indentedWhole(lines) : [paragraph(lines)];
+  return shape ? SHAPES[shape](lines) : [paragraph(lines)];
 }
 /* a layout's paragraph indented whole is a quotation inside it, the
    indented paragraphs in a row one quotation, their blank lines kept; a
    paragraph only partly indented is verse, and keeps its indents (pin:
    fencedProse.test › quoteFencedProse: in a layout a paragraph indented
    whole) */
-function indentedWhole(lines: string[]): Node[] {
+function paragraphsOf(lines: string[]): string[][] {
   const paras: string[][] = [[]];
-  for (const l of lines) { if (l) paras[paras.length - 1].push(l); else if (paras[paras.length - 1].length) paras.push([]); }
+  for (const l of lines) {
+    const last = paras[paras.length - 1];
+    if (l) last.push(l);
+    else if (last.length) paras.push([]);
+  }
+  return paras;
+}
+function indentedWhole(lines: string[]): Node[] {
+  const paras = paragraphsOf(lines);
   const out: Node[] = [];
   let run: string[] = [], inner = false;
   const flush = (): void => {

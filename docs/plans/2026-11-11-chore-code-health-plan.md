@@ -455,3 +455,44 @@ common prefix apart. The nets: the self-tests (commentRules 47, unusedExports
 3, the live check over the tree finding the same allowed list); the comment
 checker's sweep and its ledgers of the last six commits identical to HEAD's;
 the corpus report identical with and without `--writer` (MEASURED).
+
+### Batch 2 — the text transforms and their run scripts
+
+29 files to 10 (MEASURED, `cs review`): shelfLines.ts 3.42, quoteMarks.ts
+6.69, harvardMilton.ts 6.89, stageDirections.ts 7.21, bookshelfQuotes.ts 7.76,
+elisions.ts 7.9, fencedProse.ts 7.96, miltonPoems.ts 8.35,
+orgReferencesRun.ts 8.42, orgReferences.ts 8.55, hwaetTexts.ts 8.59,
+quoteJoins.ts 8.67, miltonMasks.ts 8.82, miltonSonnets.ts 8.95, pipeTables.ts
+9.01, miltonCaps.ts 9.09, orgDrawersRun.ts and speechGaps.ts 9.24,
+htmlTags.ts, miltonPoemsRun.ts and spokenItalics.ts 9.38, wyattPages.ts 9.51,
+miltonSamsonRun.ts 9.6, elisionsRun.ts, harvardStrips.ts, hwaetTexts.test.ts,
+shelfLinesRun.ts and speechMarks.ts 9.68, beowulfWyatt.ts 9.84; seven more
+changed at their calls alone, held at 10.
+
+The shapes: a function of many branches made an ordered list of rules, each
+its own function, the first that answers deciding, in the old order
+(elisions, the spaced quotation mark, a link's resolver, the Harvard line's
+verdicts); a scan's closures lifted to functions over one state (shelfLines'
+run search, its letter-by-letter follow, its joins and speakers,
+withinQuotation, the play's directions, Thurber's outline). Four signatures of
+five arguments made smaller: `readLine(a, b, { witness, known, n })`,
+`referenceAt(index, key, { from, to, …cut })`, `findLine(…, { first, last })`,
+and `quotedProse` with no fifth argument, `quotedProseByEnds` its other mode;
+every call rewritten by a parser, an untracked scratch file under tools/out
+among them. One slip, caught by the self-test: `carried`'s loop read a line
+before checking it was in range (the original checked first), and failed
+three tests until put back in order.
+
+THE NET widened for shelfLines.ts, whose Milton run makes 35 runs references:
+a third pass, the shelf lines run over every author on the shelf, 1,514 runs
+in 816 entries from HEAD, 808 s (MEASURED). The comparison masks the clocks,
+the repo's path, and a stack trace's frames and source excerpt, the error's
+message compared: a refactored file's throw comes from another frame.
+
+The nets: the transforms' self-tests (the suite, 1,445); the test titles read,
+eleven whose calls changed shape, one assertion restored that the rewrite had
+made compare a call with itself (an empty cut against none), the ends test
+renamed for its function; and the three passes from the changed tree against
+HEAD's — A and B identical, C's 816 entries and its 2.3 MB review page
+identical byte for byte, its summary line differing in the output folder's
+name alone (MEASURED).

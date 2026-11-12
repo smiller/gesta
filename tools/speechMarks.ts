@@ -6,16 +6,22 @@
 
 export interface Reading { find: string; to: string }
 
+interface Spot { at: number; len: number; to: string }
+function placesOf(md: string, plain: string): number[] {
+  const places: number[] = [];
+  for (let i = md.indexOf(plain); i >= 0; i = md.indexOf(plain, i + 1)) places.push(i);
+  return places;
+}
+function spotOf(md: string, { find, to }: Reading): Spot {
+  const m = /^([^]*)⟦([^]*)⟧([^]*)$/.exec(find);
+  if (!m) throw new Error(`no ⟦ ⟧ in “${find}”`);
+  const places = placesOf(md, m[1] + m[2] + m[3]);
+  if (places.length !== 1) throw new Error(`“${find}” found in ${places.length} places`);
+  return { at: places[0] + m[1].length, len: m[2].length, to };
+}
+
 export function speechMarks(md: string, readings: Reading[]): { out: string; marks: number[] } {
-  const spots = readings.map(({ find, to }) => {
-    const m = /^([^]*)⟦([^]*)⟧([^]*)$/.exec(find);
-    if (!m) throw new Error(`no ⟦ ⟧ in “${find}”`);
-    const plain = m[1] + m[2] + m[3];
-    const places: number[] = [];
-    for (let i = md.indexOf(plain); i >= 0; i = md.indexOf(plain, i + 1)) places.push(i);
-    if (places.length !== 1) throw new Error(`“${find}” found in ${places.length} places`);
-    return { at: places[0] + m[1].length, len: m[2].length, to };
-  }).sort((a, b) => a.at - b.at);
+  const spots = readings.map((r) => spotOf(md, r)).sort((a, b) => a.at - b.at);
   let out = "", from = 0;
   const marks: number[] = [];
   for (const s of spots) {

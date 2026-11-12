@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { shelfIndex, quotedFrom, referenceAt, quotedProse } from "./bookshelfQuotes.ts";
+import { shelfIndex, quotedFrom, referenceAt, quotedProse, quotedProseByEnds } from "./bookshelfQuotes.ts";
 
 const cache: Record<string, string> = {
   "bookshelf/Horace": "# Horace\n\n- [Odes](#bookshelf/Horace/Odes)\n",
@@ -47,16 +47,16 @@ test("quotedFrom: a passage of three lines or more may differ from the bookshelf
 });
 test("referenceAt: a passage named by its entry and lines is the reference a copy of those lines makes, the same quotedFrom finds", () => {
   const found = quotedFrom(index, [{ left: "sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }]);
-  expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", 3, 4)).toEqual(found);
-  expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", 3, 99)).toEqual({ why: "bookshelf/Horace/Odes/1.1 has no lines 3-99" });
+  expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", { from: 3, to: 4 })).toEqual(found);
+  expect(referenceAt(index, "bookshelf/Horace/Odes/1.1", { from: 3, to: 99 })).toEqual({ why: "bookshelf/Horace/Odes/1.1 has no lines 3-99" });
 });
 test("referenceAt: a passage whose first line is quoted from mid-line, and its last line to mid-line, is quoted and highlighted from that word to that word, its closing mark kept, the line numbers standing; a cut inside a word takes the word", () => {
-  const r = referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3, { head: 20, tail: 16 }) as { text: string; passage: string; url: string };
+  const r = referenceAt(index, "bookshelf/Horace/Odes/1.9", { from: 1, to: 3, head: 20, tail: 16 }) as { text: string; passage: string; url: string };
   expect(r.text.split("\n")[0]).toMatch(/^\[Horace, \*Odes\*, 1\.9\.1-3\]\(#bookshelf\/Horace\/Odes\/1\.9\?h=alta%20stet/);
   expect(r.url).toMatch(/silvae%20laborantes%2C$/);
   expect(r.passage).toBe("> ::: verse\n> alta stet nive candidum\n> Soracte, nec iam sustineant onus\n> silvae laborantes,\n> :::");
-  expect((referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3, { head: 20, tail: 13 }) as { passage: string }).passage).toBe(r.passage);
-  expect(referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3, {})).toEqual(referenceAt(index, "bookshelf/Horace/Odes/1.9", 1, 3));
+  expect((referenceAt(index, "bookshelf/Horace/Odes/1.9", { from: 1, to: 3, head: 20, tail: 13 }) as { passage: string }).passage).toBe(r.passage);
+  expect(referenceAt(index, "bookshelf/Horace/Odes/1.9", { from: 1, to: 3, head: undefined, tail: undefined })).toEqual(referenceAt(index, "bookshelf/Horace/Odes/1.9", { from: 1, to: 3 }));
 });
 test("quotedFrom: an entry's own lines are not a quotation of itself", () => {
   expect(quotedFrom(index, [{ left: "sunt quos curriculo pulverem Olympicum" }, { left: "collegisse iuvat metaque fervidis" }], "bookshelf/Horace/Odes/1.1")).toBeNull();
@@ -89,16 +89,16 @@ test("quotedProse: a quotation differing from the entry within a line is placed 
   const r = quotedProse(ix, "bookshelf/Lewis, C. S/The Four Loves/Eros", ["> Can we be in this selfless liberation for a lifetime?  Hardly for a week. Between the best possible lovers the high condition is intermittent.", "", "> But these lapses will not destroy a marriage between two decent people, seen from one particular angle."]);
   expect(r && r.passage).toBe("> Can we be in this selfless liberation for a lifetime?  Hardly for a week.  Between the best possible lovers this high condition is intermittent.\n> \n> But these lapses will not destroy a marriage between two decent people, seen from one particular angle.");
 });
-test("quotedProse: a passage named by its first and last words may run any length between them", () => {
+test("quotedProseByEnds: a passage named by its first and last words may run any length between them", () => {
   const long = "Between them, " + "a long stretch of words. ".repeat(40);
   const ix = shelfIndex({ ...cache, "2016-02-22": "# x\n\nAnd what did they both see in that moment? " + long + "\n\nWhat if she saw him only to dismiss him as none of her concern?\n" });
   expect(quotedProse(ix, "2016-02-22", ["And what did they both see in that moment", "saw him only to dismiss him as none of her concern?"], ["2016-02-22"])).toBeNull();
-  const r = quotedProse(ix, "2016-02-22", ["And what did they both see in that moment", "saw him only to dismiss him as none of her concern?"], ["2016-02-22"], true);
+  const r = quotedProseByEnds(ix, "2016-02-22", ["And what did they both see in that moment", "saw him only to dismiss him as none of her concern?"], ["2016-02-22"]);
   expect(r && r.passage.split("\n").length).toBe(3);
 });
 
 test("referenceAt: a passage of a block numbered on both sides is minted with both its columns, the shape the quotation takes", () => {
   const golding = shelfIndex({ "bookshelf/Ovid/Metamorphoses (with Golding’s translation)": "# *Metamorphoses* (with Golding’s translation)", "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7": "# Book 7\n\n::: verse 197 265\nauraeque et venti | Ye Ayres and windes:\ndique omnes nemorum | Of standing Lakes,\n:::" });
-  const r = referenceAt(golding, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", 197, 198);
+  const r = referenceAt(golding, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", { from: 197, to: 198 });
   expect("passage" in r && r.passage).toBe("> ::: verse 197 265\n> auraeque et venti | Ye Ayres and windes:\n> dique omnes nemorum | Of standing Lakes,\n> :::");
 });

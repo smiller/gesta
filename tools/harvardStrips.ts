@@ -29,7 +29,7 @@ export function hocrLines(html: string): HocrLine[] {
 /* the hOCR line most like a line of the text, read with the line after
    it so a line repeated or near-repeated elsewhere is not taken, among
    pages first..last */
-export function findLine(lines: HocrLine[], text: string, next = "", first = 0, last = Infinity): HocrLine | null {
+export function findLine(lines: HocrLine[], text: string, next = "", { first = 0, last = Infinity } = {}): HocrLine | null {
   let best = 0, at: HocrLine | null = null;
   const want = letters(text + " " + next);
   lines.forEach((l, i) => {

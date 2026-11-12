@@ -6,7 +6,7 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, statSync } from "node:fs";
 import { join, dirname, basename, relative } from "node:path";
 import { referOrgLinks, anchoredParagraph, clearDrawers, repointed, type OrgLink, type Resolved, type Referred } from "./orgReferences.ts";
-import { shelfIndex, quotedProse } from "./bookshelfQuotes.ts";
+import { shelfIndex, quotedProse, quotedProseByEnds } from "./bookshelfQuotes.ts";
 import { parseMarkdown } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
 import { importTarget } from "../src/store/names.ts";
@@ -56,7 +56,7 @@ let current = "";
 const resolve = (l: OrgLink): Resolved => {
   const span = SPANS.get(current + ":" + l.line);
   if (!span) return anchored(l);
-  const r = quotedProse(spans, span.key, [span.first, span.last], [span.key], true);
+  const r = quotedProseByEnds(spans, span.key, [span.first, span.last], [span.key]);
   if (!r) throw new Error(`${current}:${l.line}: the passage named is not in ${span.key}`);
   return { href: r.url };
 };
@@ -66,14 +66,21 @@ const resolve = (l: OrgLink): Resolved => {
 const QUOTED = new Map([["journal/2015/2015-07-20.md", { heading: "## C. S. Lewis, *The Four Loves*, pp. 138-40", key: "bookshelf/Lewis, C. S/The Four Loves/Eros" }]]);
 const shelf = shelfIndex(cache);
 const made: { file: string; before: string[]; after: string[] }[] = [];
+/* a quoted line, or a blank line with a quoted one after it */
+const quoting = (lines: string[], b: number): boolean => /^>/.test(lines[b]) || (!lines[b].trim() && /^>/.test(lines[b + 1] ?? ""));
+/* the quotation's lines after the heading at h, its blank lines before it skipped */
+function quotationAfter(lines: string[], h: number): [number, number] {
+  let a = h + 1;
+  while (a < lines.length && !lines[a].trim()) a++;
+  let b = a;
+  while (b < lines.length && quoting(lines, b)) b++;
+  return [a, b];
+}
 function referred(file: string, md: string): string {
   const q = QUOTED.get(file);
   if (!q) return md;
   const lines = md.split("\n"), h = lines.indexOf(q.heading);
-  let a = h + 1;
-  while (a < lines.length && !lines[a].trim()) a++;
-  let b = a;
-  while (b < lines.length && (/^>/.test(lines[b]) || !lines[b].trim() && /^>/.test(lines[b + 1] ?? ""))) b++;
+  const [a, b] = quotationAfter(lines, h);
   const r = h >= 0 && b > a ? quotedProse(shelf, q.key, lines.slice(a, b), [q.key]) : null;
   if (!r) throw new Error(`${file}: the quotation under ${q.heading} is not placed in ${q.key}`);
   made.push({ file, before: [q.heading, "", ...lines.slice(a, b)], after: [q.heading, "", ...r.text.split("\n")] });

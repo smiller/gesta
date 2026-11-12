@@ -23,16 +23,24 @@ export const unspecked = (l: string): string => l.replace(/(\p{L})\d+(?=\P{L}|$)
 export function witnessGaps(lines: string[], first: string, count: number, verse: (l: string) => boolean): { lines: string[]; gaps: boolean[] } | null {
   const at = findStart(lines.map((l) => l || "\u0000"), first);
   if (at == null) return null;
-  const out: string[] = [], gaps: boolean[] = [];
-  let gap = false, note = false;
-  for (let k = at; k < lines.length && out.length < count; k++) {
-    const l = lines[k];
-    if (/^Note:/.test(l)) note = true;
-    if (note) { note = !!l; continue; }
-    if (!l || !verse(l)) { gap = true; continue; }
-    out.push(l); gaps.push(gap && out.length > 1); gap = false;
-  }
-  return { lines: out, gaps };
+  const w: Witness = { lines: [], gaps: [], gap: false, note: false };
+  for (let k = at; k < lines.length && w.lines.length < count; k++) if (!inNote(w, lines[k])) taken(w, lines[k], verse);
+  return { lines: w.lines, gaps: w.gaps };
+}
+interface Witness { lines: string[]; gaps: boolean[]; gap: boolean; note: boolean }
+/* a line of verse taken with whether a gap stood before it; anything else a gap */
+function taken(w: Witness, l: string, verse: (l: string) => boolean): void {
+  if (!l || !verse(l)) { w.gap = true; return; }
+  w.lines.push(l);
+  w.gaps.push(w.gap && w.lines.length > 1);
+  w.gap = false;
+}
+/* a note runs from its "Note:" to its paragraph's blank line */
+function inNote(s: { note: boolean }, l: string): boolean {
+  if (/^Note:/.test(l)) s.note = true;
+  if (!s.note) return false;
+  s.note = !!l;
+  return true;
 }
 
 /* each line's place among a page's OCR lines: the one among the next few
@@ -66,7 +74,8 @@ export function indents(placed: HocrLine[]): number[] {
    first ten lines of L'Allegro) is passed by */
 export function paragraphs(ind: number[]): boolean[] {
   const flush = (i: number): boolean => i < 0 || i >= ind.length || Math.abs(ind[i]) < 20;
-  return ind.map((x, i) => i > 0 && x >= 30 && x <= 70 && flush(i - 1) && flush(i + 1) && flush(i - 2) && flush(i + 2));
+  const alone = (i: number): boolean => [-2, -1, 1, 2].every((d) => flush(i + d));
+  return ind.map((x, i) => i > 0 && x >= 30 && x <= 70 && alone(i));
 }
 
 /* an apostrophe at a word's head is an elision, never a quotation's
@@ -90,14 +99,16 @@ export interface PoemPage {
   /* the stanza numerals as italic rows, the count starting again after a row */
   numerals?: boolean;
 }
+const parted = (p: PoemPage, i: number, before: unknown): boolean => i > 0 && !!(p.opens[i] || before);
+const numbered = (p: PoemPage, i: number): boolean => !!p.numerals && (!i || p.opens[i]);
 export function poemPage(p: PoemPage): string {
   const rows: string[] = [];
   let stanza = 0;
   p.lines.forEach((l, i) => {
     const before = p.rows?.find((r) => r.before === i + 1);
-    if ((p.opens[i] || before) && i) rows.push("");
+    if (parted(p, i, before)) rows.push("");
     if (before) { rows.push(`*${before.text}*`, ""); stanza = 0; }
-    if (p.numerals && (!i || p.opens[i])) rows.push(`*${roman(++stanza)}*`);
+    if (numbered(p, i)) rows.push(`*${roman(++stanza)}*`);
     rows.push(l);
   });
   if (p.after) rows.push("", `*${p.after}*`);

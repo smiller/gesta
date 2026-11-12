@@ -28,38 +28,66 @@ const OLD_LINK = /\[\[[^\]\s]+\]\[([^\]]+)\]\]/g;
    they do not, or why they are not one; `line`, the table's first */
 export type Refer = (lines: Quoted[], line: number) => Referred | { why: string } | null;
 
-/* the verse a run of table lines reads as, or why it is left */
-function verse(lines: string[], prefix: string, refer: Refer, line: number): { out?: string[]; why?: string; shelf?: Referred } {
+type Line = Exclude<Row, "break">;
+type Why = { why: string };
+/* a third column first is the lines' labels: a number, an anchor, a
+   numbered place, or nothing (pin: pipeTables.test › versePipeTables: a
+   first column labelling the lines) */
+const labelled = (c: string[]): boolean => (c.length === 3 && LABEL.test(c[0])) || (c.length === 2 && /^\d+$/.test(c[0]) && !/^\d+$/.test(c[1]));
+function rowOf(c: string[]): Line | Why {
+  if (c.some((x) => /<img\b/i.test(x))) return { why: "a picture" };
+  const lab = labelled(c);
+  const rest = lab ? c.slice(1) : c;
+  if (rest.length > 2) return { why: "more than two columns" };
+  return { num: lab && /^\d+$/.test(c[0]) ? parseInt(c[0], 10) : undefined, left: rest[0], right: rest.length === 2 ? rest[1] : undefined };
+}
+function pushBreak(rows: Row[]): void {
+  if (rows.length && rows[rows.length - 1] !== "break") rows.push("break");
+}
+function rowsOf(lines: string[]): Row[] | Why {
   const rows: Row[] = [];
   for (const l of lines.map((l) => PREFIX.exec(l)![2])) {
     /* a blank line only parts the pieces of one table; an empty row is the stanza break */
     if (DIVIDER.test(l) || !l.trim()) continue;
     const c = cells(l);
-    if (c.every((x) => !x)) { if (rows.length && rows[rows.length - 1] !== "break") rows.push("break"); continue; }
-    if (c.some((x) => /<img\b/i.test(x))) return { why: "a picture" };
-    /* a third column first is the lines' labels: a number, an anchor, a
-       numbered place, or nothing (pin: pipeTables.test › versePipeTables: a
-       first column labelling the lines) */
-    const labelled = c.length === 3 && LABEL.test(c[0]) || c.length === 2 && /^\d+$/.test(c[0]) && !/^\d+$/.test(c[1]);
-    const rest = labelled ? c.slice(1) : c;
-    if (rest.length > 2) return { why: "more than two columns" };
-    rows.push({ num: labelled && /^\d+$/.test(c[0]) ? parseInt(c[0], 10) : undefined, left: rest[0], right: rest.length === 2 ? rest[1] : undefined });
+    const r: Row | Why = c.every((x) => !x) ? "break" : rowOf(c);
+    if (r === "break") pushBreak(rows);
+    else if ("why" in r) return r;
+    else rows.push(r);
   }
   while (rows[rows.length - 1] === "break") rows.pop();
-  const lines2 = rows.filter((r): r is Exclude<Row, "break"> => r !== "break");
-  if (lines2.length < 2) return { why: "a single row" };
-  if (new Set(lines2.map((r) => r.right === undefined)).size > 1) return { why: "pairs and single lines mixed" };
-  const starts = new Set(lines2.flatMap((r, i) => r.num === undefined ? [] : [r.num - i]));
+  return rows;
+}
+/* the block's first line number, or why its rows are not one block */
+function firstNumber(lines: Line[]): number | Why {
+  if (lines.length < 2) return { why: "a single row" };
+  if (new Set(lines.map((r) => r.right === undefined)).size > 1) return { why: "pairs and single lines mixed" };
+  const starts = new Set(lines.flatMap((r, i) => r.num === undefined ? [] : [r.num - i]));
   if (starts.size > 1) return { why: "its line numbers do not run on" };
-  const start = starts.size ? [...starts][0] : 1;
+  return starts.size ? [...starts][0] : 1;
+}
+function blockOf(rows: Row[], q: string, start: number): string[] {
+  const body = rows.map((r) => r === "break" ? q.trimEnd() : q + escapeCell(r.left) + (r.right === undefined ? "" : " | " + escapeCell(r.right)));
+  return [q + "::: verse" + (start > 1 ? " " + start : ""), ...body, q + ":::"];
+}
+/* the block must read back as the cells' own words */
+function readsBack(out: string[], q: string, lines: Line[]): boolean {
+  const read = parseMarkdown(out.map((l) => l.slice(q.length)).join("\n") + "\n").textContent;
+  return words(read) === words(lines.map((r) => r.left + (r.right ?? "")).join(""));
+}
+
+/* the verse a run of table lines reads as, or why it is left */
+function verse(lines: string[], prefix: string, refer: Refer, line: number): { out?: string[]; why?: string; shelf?: Referred } {
+  const rows = rowsOf(lines);
+  if ("why" in rows) return rows;
+  const lines2 = rows.filter((r): r is Line => r !== "break");
+  const start = firstNumber(lines2);
+  if (typeof start !== "number") return start;
   const q = quote(prefix);
   const shelved = refer(lines2.map((r) => ({ left: r.left, right: r.right })), line);
   if (shelved && "text" in shelved) return { out: shelved.text.split("\n").map((l) => l ? q + l : q.trimEnd()), shelf: shelved };
-  const body = rows.map((r) => r === "break" ? q.trimEnd() : q + escapeCell(r.left) + (r.right === undefined ? "" : " | " + escapeCell(r.right)));
-  const out = [q + "::: verse" + (start > 1 ? " " + start : ""), ...body, q + ":::"];
-  /* the block must read back as the cells' own words */
-  const read = parseMarkdown(out.map((l) => l.slice(q.length)).join("\n") + "\n").textContent;
-  if (words(read) !== words(lines2.map((r) => r.left + (r.right ?? "")).join(""))) return { why: "the verse would read as other words" };
+  const out = blockOf(rows, q, start);
+  if (!readsBack(out, q, lines2)) return { why: "the verse would read as other words" };
   return { out, why: shelved ? shelved.why : undefined };
 }
 

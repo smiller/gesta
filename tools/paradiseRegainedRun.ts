@@ -112,7 +112,7 @@ books.forEach((lines, bi) => {
   if (ca.lines.length !== w.length || cb.lines.length !== w.length) throw new Error(`book ${bi + 1}: ${ca.lines.length} and ${cb.lines.length} lines, not ${w.length}`);
   out.push(lines.map((l, i) => {
     const at = `${bi + 1}.${i + 1}`;
-    const scans = readLine(ca.lines[i], cb.lines[i], w[i], KNOWN, i + 1).text;
+    const scans = readLine(ca.lines[i], cb.lines[i], { witness: w[i], known: KNOWN, n: i + 1 }).text;
     const g = readAgainst(scans, w[i], SEEN[at], STRESS);
     const hard = g.diffs.filter((d) => d.kind === "WORD" || d.kind === "MARK" || d.kind === "turn's hyphen");
     if (hard.length !== (SEEN[at]?.length ?? 0)) throw new Error(`${at}: ${hard.length} places to read on the page, ${SEEN[at]?.length ?? 0} read: ${JSON.stringify(hard)}`);

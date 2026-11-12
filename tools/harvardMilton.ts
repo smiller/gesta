@@ -124,51 +124,67 @@ export function ligatures(w: string): string[] {
 }
 const keyed = (w: string): string => w.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-zæœ]/g, "");
 
+interface Reading { wit: string[]; witKeys: Set<string>; witMarks: Map<string, string>; known: Set<string> }
+/* a word put as it stands, or a choice made and named: `chose` null drops it */
+type Verdict = { put: string } | { chose: string | null; why: string };
+const short = (k: string): boolean => !k || k.length < 3;
+/* each part of a compound the edition prints elsewhere */
+const knownParts = (x: string, known: Set<string>): boolean => {
+  const parts = x.split(/[-—]/).map(letters).filter(Boolean);
+  return parts.length > 1 && parts.every((p) => knows(known, p));
+};
+/* a word both scans read that needs no settling: short, the witness's, or one the edition prints */
+const settled = (r: Reading, x: string, k: string): boolean => short(k) || r.witKeys.has(k) || knows(r.known, k) || knownParts(x, r.known);
+function agreed(r: Reading, x: string): Verdict {
+  const k = letters(x);
+  if (settled(r, x, k)) return { put: x };
+  const lig = ligatures(x).find((v) => r.known.has(keyed(v)));
+  return { chose: lig ?? x, why: lig ? "the edition's ligature, a word it prints elsewhere" : "UNCONFIRMED: both scans, a word printed nowhere else" };
+}
+function oneSided(r: Reading, only: string): Verdict {
+  if (!letters(only)) return { chose: null, why: "a speck in one scan" };
+  return r.witKeys.has(letters(only)) ? { chose: only, why: "in one scan and the witness" } : { chose: null, why: "in one scan only, left out" };
+}
+/* the marks of one, the other's with some dropped: the fuller kept */
+const holdsMarks = (mx: string, my: string): boolean => mx.startsWith(my) || mx.endsWith(my) || (my === "" && !!mx);
+function sameLetters(r: Reading, x: string, y: string): Verdict {
+  const mx = marks(x), my = marks(y);
+  if (mx === my) return { put: accented(x) || !accented(y) ? x : y };
+  if (holdsMarks(mx, my)) return { chose: x, why: "a mark the other scan dropped" };
+  if (holdsMarks(my, mx)) return { chose: y, why: "a mark the other scan dropped" };
+  const wm = r.witMarks.get(letters(x));
+  if (wm === mx) return { chose: x, why: "the witness's mark" };
+  if (wm === my) return { chose: y, why: "the witness's mark" };
+  return { chose: x, why: "UNSETTLED: the marks differ" };
+}
+function differing(r: Reading, x: string, y: string): Verdict {
+  const kx = letters(x), ky = letters(y);
+  const both = ligatures(x).find((v) => ligatures(y).includes(v));
+  if (both) return { chose: both, why: "the edition's ligature, read two ways" };
+  if (r.witKeys.has(kx) !== r.witKeys.has(ky)) return { chose: r.witKeys.has(kx) ? x : y, why: "the witness's word" };
+  if (r.known.has(kx) !== r.known.has(ky)) return { chose: r.known.has(kx) ? x : y, why: "the word the edition prints elsewhere" };
+  return { chose: x, why: "UNSETTLED: the words differ" };
+}
+function verdictOf(r: Reading, x: string | null, y: string | null): Verdict {
+  if (x != null && x === y) return agreed(r, x);
+  if (x == null || y == null) return oneSided(r, (x ?? y)!);
+  return letters(x) === letters(y) ? sameLetters(r, x, y) : differing(r, x, y);
+}
+
 /* one line read from both scans: their agreement taken, a mark one of
    them dropped kept, a word settled by the witness's line or by the words
    the edition prints elsewhere (`known`), the rest left for a hand */
-export function readLine(a: string, b: string, witness: string, known: Set<string>, n: number): { text: string; decisions: Decision[] } {
+export function readLine(a: string, b: string, { witness, known, n }: { witness: string; known: Set<string>; n: number }): { text: string; decisions: Decision[] } {
   const wit = words(witness);
-  const witKeys = new Set(wit.map(letters));
-  const witMarks = new Map(wit.map((w) => [letters(w), marks(w)]));
+  const r: Reading = { wit, witKeys: new Set(wit.map(letters)), witMarks: new Map(wit.map((w) => [letters(w), marks(w)])), known };
   const decisions: Decision[] = [];
   const out: string[] = [];
-  const pairs = align(words(a), words(b));
-  pairs.forEach(([x, y], i) => {
-    const first = n === 1 && i < 3;
-    const put = (w: string) => out.push(first ? recase(w, i, wit) : w);
-    const say = (chose: string | null, why: string) => {
-      if (chose) put(chose);
-      decisions.push({ line: n, a: x ?? "", b: y ?? "", chose: chose ? out[out.length - 1] : "", why });
-    };
-    if (x != null && y != null && x === y) {
-      const k = letters(x);
-      const parts = x.split(/[-—]/).map(letters).filter(Boolean);
-      if (!k || k.length < 3 || witKeys.has(k) || knows(known, k) || (parts.length > 1 && parts.every((p) => knows(known, p)))) return void put(x);
-      const lig = ligatures(x).find((v) => known.has(keyed(v)));
-      return void say(lig ?? x, lig ? "the edition's ligature, a word it prints elsewhere" : "UNCONFIRMED: both scans, a word printed nowhere else");
-    }
-    if (x == null || y == null) {
-      const only = (x ?? y)!;
-      if (!letters(only)) return void say(null, "a speck in one scan");
-      return void say(witKeys.has(letters(only)) ? only : null, witKeys.has(letters(only)) ? "in one scan and the witness" : "in one scan only, left out");
-    }
-    if (letters(x) === letters(y)) {
-      const mx = marks(x), my = marks(y);
-      if (mx === my) return void put(accented(x) ? x : accented(y) ? y : x);
-      if (mx.startsWith(my) || mx.endsWith(my) || (my === "" && mx)) return void say(x, "a mark the other scan dropped");
-      if (my.startsWith(mx) || my.endsWith(mx) || (mx === "" && my)) return void say(y, "a mark the other scan dropped");
-      const wm = witMarks.get(letters(x));
-      if (wm === mx) return void say(x, "the witness's mark");
-      if (wm === my) return void say(y, "the witness's mark");
-      return void say(x, "UNSETTLED: the marks differ");
-    }
-    const kx = letters(x), ky = letters(y);
-    const both = ligatures(x).find((v) => ligatures(y).includes(v));
-    if (both) return void say(both, "the edition's ligature, read two ways");
-    if (witKeys.has(kx) !== witKeys.has(ky)) return void say(witKeys.has(kx) ? x : y, "the witness's word");
-    if (known.has(kx) !== known.has(ky)) return void say(known.has(kx) ? x : y, "the word the edition prints elsewhere");
-    say(x, "UNSETTLED: the words differ");
+  align(words(a), words(b)).forEach(([x, y], i) => {
+    const put = (w: string): void => { out.push(n === 1 && i < 3 ? recase(w, i, wit) : w); };
+    const v = verdictOf(r, x, y);
+    if ("put" in v) { put(v.put); return; }
+    if (v.chose) put(v.chose);
+    decisions.push({ line: n, a: x ?? "", b: y ?? "", chose: v.chose ? out[out.length - 1] : "", why: v.why });
   });
   return { text: out.join(" "), decisions };
 }
@@ -186,6 +202,7 @@ export const vocabulary = (...texts: string[]): Set<string> => new Set(texts.fla
    line is for the page image, `seen` the side read there, in order
    (malecontent, one word on the page, typed male-content) */
 export type Against = "accent" | "nested quote" | "ligature" | "speck" | "turn's hyphen" | "MARK" | "WORD";
+const READ_ON_PAGE = new Set<Against>(["WORD", "MARK", "turn's hyphen"]);
 export function readAgainst(scans: string, typed: string, seen: ("scans" | "typed")[] = [], stress = false): { text: string; diffs: { kind: Against; scans: string; typed: string }[] } {
   const out: string[] = [], diffs: { kind: Against; scans: string; typed: string }[] = [];
   let hard = 0;
@@ -195,7 +212,7 @@ export function readAgainst(scans: string, typed: string, seen: ("scans" | "type
     /* a word or a mark read on the page: `seen` the side it is, in order */
     const say = (kind: Against, take: string | null) => {
       diffs.push({ kind, scans: x ?? "", typed: y ?? "" });
-      if (kind === "WORD" || kind === "MARK" || kind === "turn's hyphen") { const side = seen[hard++]; if (side) take = side === "scans" ? x : y; }
+      if (READ_ON_PAGE.has(kind)) { const side = seen[hard++]; if (side) take = side === "scans" ? x : y; }
       if (take) out.push(take);
     };
     if (x == null) { say(letters(y!) ? "WORD" : "MARK", y); continue; }

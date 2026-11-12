@@ -23,13 +23,15 @@ function prose(text: string): string {
     .replace(/&(#[0-9]+|#x[0-9a-fA-F]+|[a-zA-Z]+);/g, entity);
 }
 
+const closes = (open: string | undefined, fence: string): boolean => !!open && open[0] === fence[0] && open.length >= fence.length;
+
 export function untag(md: string): string {
   const out: string[] = [];
   let run: string[] = [], fence = "";
   const flush = () => { if (run.length) out.push(prose(run.join("\n"))); run = []; };
   for (const line of md.split("\n")) {
     const open = FENCE.exec(line)?.[1];
-    if (fence) { out.push(line); if (open && open[0] === fence[0] && open.length >= fence.length) fence = ""; continue; }
+    if (fence) { out.push(line); if (closes(open, fence)) fence = ""; continue; }
     if (open) { flush(); fence = open; out.push(line); continue; }
     run.push(line);
   }

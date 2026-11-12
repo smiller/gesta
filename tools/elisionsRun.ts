@@ -26,10 +26,12 @@ const walk = (dir: string): string[] => readdirSync(dir).flatMap((n) => {
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 /* a line as it will read: each mark turned green, each weighed and left
    red, every other opening mark amber, a long line cut to its marks */
+function cutTo(from: number, to: number, ats: number[]): [number, number] {
+  if (!ats.length || to - from <= 700) return [from, to];
+  return [Math.max(from, Math.min(...ats) - 120), Math.min(to, Math.max(...ats) + 120)];
+}
 function shown(out: string, from: number, to: number, kinds: Map<number, string>): string {
-  const ats = [...kinds.keys()];
-  const a = ats.length && to - from > 700 ? Math.max(from, Math.min(...ats) - 120) : from;
-  const b = ats.length && to - from > 700 ? Math.min(to, Math.max(...ats) + 120) : to;
+  const [a, b] = cutTo(from, to, [...kinds.keys()]);
   let html = a > from ? "…" : "";
   for (let i = a; i < b; i++) html += kinds.has(i) ? `<b class="${kinds.get(i)}">${out[i]}</b>` : esc(out[i]);
   return html + (b < to ? "…" : "");

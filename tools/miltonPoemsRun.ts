@@ -60,18 +60,35 @@ const B = scanLines(read("completepoems00miltuoft.txt")).map(unspecked);
 
 const witnessGaps = (lines: string[], p: Poem) => gapsOf(lines, p.witnessFirst ?? p.first, p.lines, verse(p));
 
+type Witnessed = { lines: string[]; gaps: boolean[] };
+/* scan A's own lines, its stanzas every p.stanza lines, where the poem has no other witness */
+function scanWitness(p: Poem, a: string[], sa: number): Witnessed {
+  const lines = a.slice(sa, sa + p.lines);
+  return { lines, gaps: lines.map((_, i) => !!p.stanza && i > 0 && i % p.stanza === 0) };
+}
+function witnessOf(p: Poem, a: string[], sa: number): Witnessed {
+  if (!p.witness) return scanWitness(p, a, sa);
+  const w = witnessGaps(p.witness === "Thurber" ? THURBER : BEECHING, p);
+  if (!w) throw new Error(`${p.key}: not in ${p.witness}`);
+  return w;
+}
+function starts(p: Poem, a: string[], b: string[]): [number, number] {
+  const sa = findStart(a, p.first), sb = findStart(b, p.first);
+  if (sa == null || sb == null) throw new Error(`${p.key}: first line not found (A ${sa}, B ${sb})`);
+  return [sa, sb];
+}
+function counted(p: Poem, ...cuts: string[][]): void {
+  if (cuts.some((c) => c.length !== p.lines)) throw new Error(`${p.key}: ${cuts[0].length}, ${cuts[1].length} and ${cuts[2].length} lines, not ${p.lines}`);
+}
 /* a poem cut from both scans, a line for each of its witness's */
 function cut(p: Poem): { a: string[]; b: string[]; w: string[]; gaps: boolean[] } {
   const whole = (ls: string[]): string[] => ls.filter(verse(p)).flatMap((l) => (p.refrain?.at.test(l) ? p.refrain.lines : [l]));
   const a = whole(A), b = whole(B);
-  const sa = findStart(a, p.first), sb = findStart(b, p.first);
-  if (sa == null || sb == null) throw new Error(`${p.key}: first line not found (A ${sa}, B ${sb})`);
-  const w = p.witness ? witnessGaps(p.witness === "Thurber" ? THURBER : BEECHING, p)
-    : { lines: a.slice(sa, sa + p.lines), gaps: a.slice(sa, sa + p.lines).map((_, i) => !!p.stanza && i > 0 && i % p.stanza === 0) };
-  if (!w) throw new Error(`${p.key}: not in ${p.witness}`);
+  const [sa, sb] = starts(p, a, b);
+  const w = witnessOf(p, a, sa);
   const ca = cutPoem(a, sa, w.lines), cb = cutPoem(b, sb, w.lines);
   if (process.env.SHOW === p.key) ca.lines.forEach((l, i) => console.log(i + 1, "A:", l, "| B:", cb.lines[i], "| W:", w.lines[i]));
-  if (ca.lines.length !== p.lines || cb.lines.length !== p.lines || w.lines.length !== p.lines) throw new Error(`${p.key}: ${ca.lines.length}, ${cb.lines.length} and ${w.lines.length} lines, not ${p.lines}`);
+  counted(p, ca.lines, cb.lines, w.lines);
   return { a: ca.lines, b: cb.lines, w: w.lines, gaps: w.gaps };
 }
 
@@ -178,7 +195,7 @@ for (const p of POEMS) {
   const lines: string[] = [], decided: string[] = [];
   c.a.forEach((la, i) => {
     const id = `${p.key} ${i + 1}`;
-    const r = readLine(la, c.b[i], p.witness ? c.w[i] : "", KNOWN, i + 1);
+    const r = readLine(la, c.b[i], { witness: p.witness ? c.w[i] : "", known: KNOWN, n: i + 1 });
     const seen = SEEN[id];
     if (seen && similar(letters(seen), letters(r.text)) < 0.85) throw new Error(`${id}: the line read on the page is not this one: ${r.text}`);
     unused.delete(id);

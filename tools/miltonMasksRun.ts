@@ -159,7 +159,7 @@ for (const m of MASKS) {
     const base = `${m.key} ${it.kind === "line" ? n + (it.rest ? " ⟨…⟩" : "") : it.kind === "direction" ? "direction before " + (n + 1) : it.text}`;
     ids.set(base, (ids.get(base) ?? 0) + 1);
     const id = ids.get(base)! > 1 ? `${base} (${ids.get(base)})` : base;
-    const r = readLine(ca.lines[k], cb.lines[k], w[k], KNOWN, k ? 2 : 1);
+    const r = readLine(ca.lines[k], cb.lines[k], { witness: w[k], known: KNOWN, n: k ? 2 : 1 });
     const seen = SEEN[id];
     if (seen && similar(letters(seen), letters(r.text)) < 0.85) throw new Error(`${id}: the line read on the page is not this one: ${r.text}`);
     unused.delete(id);

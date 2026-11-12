@@ -32,8 +32,7 @@ export const readKey = (md: string, at: number): string => md.slice(Math.max(0, 
 /* a word clipped at both ends, ‘avin’, and the words it may stand for without the h */
 const gDropped = (w: string): string[] => /in$/.test(w) ? [w + "g", w.slice(0, -2), w.slice(0, -2) + "e"] : [];
 
-export function elisions(md: string, dict: Set<string>, read: Record<string, boolean> = {}): Elision[] {
-  const found: Elision[] = [];
+function codeMask(md: string): boolean[] {
   const code = new Array(md.length).fill(false);
   let fence = false, pos = 0;
   for (const line of md.split("\n")) {
@@ -42,51 +41,80 @@ export function elisions(md: string, dict: Set<string>, read: Record<string, boo
     if (edge) fence = !fence;
     pos += line.length + 1;
   }
-  const paragraphEnd = (at: number): number => { const m = /\n\s*\n/.exec(md.slice(at)); return m ? at + m.index : md.length; };
-  const closes = (i: number): boolean => {
-    if (md[i] !== "’" || LETTER.test(md[i + 1] ?? "") || /\s/.test(md[i - 1] ?? " ")) return false;
-    const word = /\p{L}*$/u.exec(md.slice(Math.max(0, i - 12), i))![0].toLowerCase();
-    return !word || !CLIPPED_END.test(word);
-  };
-  /* a closing mark after at, before the paragraph ends or another opening mark */
-  const closed = (at: number): boolean => {
-    const end = paragraphEnd(at);
-    for (let i = at + 1; i < end; i++) {
-      if (md[i] === "‘" && !LETTER.test(md[i - 1] ?? "")) return false;
-      if (closes(i)) return true;
-    }
-    return false;
-  };
+  return code;
+}
+const paragraphEnd = (md: string, at: number): number => { const m = /\n\s*\n/.exec(md.slice(at)); return m ? at + m.index : md.length; };
+const closingMark = (md: string, i: number): boolean => md[i] === "’" && !LETTER.test(md[i + 1] ?? "") && !/\s/.test(md[i - 1] ?? " ");
+function closes(md: string, i: number): boolean {
+  if (!closingMark(md, i)) return false;
+  const word = /\p{L}*$/u.exec(md.slice(Math.max(0, i - 12), i))![0].toLowerCase();
+  return !word || !CLIPPED_END.test(word);
+}
+/* a closing mark after at, before the paragraph ends or another opening mark */
+function closed(md: string, at: number): boolean {
+  const end = paragraphEnd(md, at);
+  for (let i = at + 1; i < end; i++) {
+    if (md[i] === "‘" && !LETTER.test(md[i - 1] ?? "")) return false;
+    if (closes(md, i)) return true;
+  }
+  return false;
+}
+
+interface Scan { md: string; dict: Set<string>; read: Record<string, boolean>; found: Elision[]; open: boolean }
+interface Mark { s: Scan; at: number; before: string; after: string; w: string }
+const markAt = (s: Scan, at: number): Mark => {
+  const after = /^\p{L}*/u.exec(s.md.slice(at + 1))![0];
+  return { s, at, before: s.md[at - 1] ?? "", after, w: after.toLowerCase() };
+};
+const opens = (m: Mark): boolean => { m.s.open = true; return true; };
+const sure = (m: Mark): boolean => { m.s.found.push({ at: m.at, word: m.after, turn: true, sure: true, read: false }); return true; };
+const apostropheAfter = (m: Mark): boolean => m.s.md[m.at + 1 + m.after.length] === "’";
+/* a judgement made reading the mark in its sentence stands over the rules below */
+function judged(m: Mark): boolean {
+  const key = readKey(m.s.md, m.at);
+  if (!(key in m.s.read)) return false;
+  m.s.found.push({ at: m.at, word: m.after, turn: m.s.read[key], sure: false, read: true });
+  if (!m.s.read[key]) m.s.open = true;
+  return true;
+}
+const hDropped = (w: string, dict: Set<string>): boolean => w.length > 1 && !dict.has(w) && stems(w).some((t) => !dict.has(t) && dict.has("h" + t));
+const gClipped = (m: Mark): boolean => apostropheAfter(m) && gDropped(m.w).some((t) => m.s.dict.has("h" + t));
+const doubtfulWord = (m: Mark): boolean => WORDS.has(m.w) || gClipped(m) || hDropped(m.w, m.s.dict);
+/* a clip that is also a word, or a dropped h: turned unless a closing mark follows */
+function doubtful(m: Mark): boolean {
+  if (!doubtfulWord(m)) return false;
+  const turn = m.s.open || !closed(m.s.md, m.at);
+  m.s.found.push({ at: m.at, word: m.after, turn, sure: false, read: false });
+  if (!turn) m.s.open = true;
+  return true;
+}
+/* the rules for an opening mark, in order, the first that answers deciding */
+const RULES: ((m: Mark) => boolean)[] = [
+  (m) => !!m.after && LETTER.test(m.before) && sure(m),
+  (m) => !!m.after && OPENS.test(m.before) && CLIPS.has(m.w) && sure(m),
+  judged,
+  (m) => !m.after && opens(m),
+  (m) => !OPENS.test(m.before),
+  /* ‘D’you, ‘e’: a quotation opening on a word with its own apostrophe */
+  (m) => apostropheAfter(m) && m.after.length < 3 && opens(m),
+  doubtful,
+  opens,
+];
+
+export function elisions(md: string, dict: Set<string>, read: Record<string, boolean> = {}): Elision[] {
+  const code = codeMask(md);
+  const s: Scan = { md, dict, read, found: [], open: false };
   /* a quotation open in the paragraph: no single quotation opens inside
      another, so a clip met inside one is an elision (pin: elisions.test ›
      elisions: inside a quotation already open) */
-  let open = false;
   for (const m of md.matchAll(/‘|’|\n\s*\n/g)) {
     const at = m.index!;
-    if (m[0] !== "‘" && m[0] !== "’") { open = false; continue; }
-    if (code[at]) continue;
-    if (m[0] === "’") { if (closes(at)) open = false; continue; }
-    const before = md[at - 1] ?? "", after = /^\p{L}*/u.exec(md.slice(at + 1))![0];
-    const w = after.toLowerCase();
-    if (after && LETTER.test(before)) { found.push({ at, word: after, turn: true, sure: true, read: false }); continue; }
-    if (after && OPENS.test(before) && CLIPS.has(w)) { found.push({ at, word: after, turn: true, sure: true, read: false }); continue; }
-    /* a judgement made reading the mark in its sentence stands over the rules below */
-    const key = readKey(md, at);
-    if (key in read) { found.push({ at, word: after, turn: read[key], sure: false, read: true }); if (!read[key]) open = true; continue; }
-    if (!after) { open = true; continue; }
-    if (!OPENS.test(before)) continue;
-    /* ‘D’you, ‘e’: a quotation opening on a word with its own apostrophe */
-    if (md[at + 1 + after.length] === "’" && after.length < 3) { open = true; continue; }
-    const clipped = md[at + 1 + after.length] === "’" ? gDropped(w).some((t) => dict.has("h" + t)) : false;
-    if (WORDS.has(w) || clipped || w.length > 1 && !dict.has(w) && stems(w).some((t) => !dict.has(t) && dict.has("h" + t))) {
-      const turn = open || !closed(at);
-      found.push({ at, word: after, turn, sure: false, read: false });
-      if (!turn) open = true;
-      continue;
-    }
-    open = true;
+    if (m[0] !== "‘" && m[0] !== "’") s.open = false;
+    else if (code[at]) continue;
+    else if (m[0] === "’") s.open = s.open && !closes(md, at);
+    else RULES.some((rule) => rule(markAt(s, at)));
   }
-  return found;
+  return s.found;
 }
 
 export function respell(md: string, turned: Elision[]): string {

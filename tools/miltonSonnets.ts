@@ -5,21 +5,20 @@
 
 /* the poem's lines from its section of the transcription's pages: the
    indent, the line numbers, the italics and the drop capital gone */
+function plainLine(raw: string): string {
+  const l = raw.replace(/\{\{R\|\d+\}\}/g, "").replace(/\{\{Capolettera\|(\p{L})\}\}/u, "$1").replace(/''/g, "").replace(/\s+/g, " ").trim();
+  if (/[{}<>|]/.test(l)) throw new Error("markup left in a line: " + l);
+  return l;
+}
+function poemsIn(page: string, section: string): string[] {
+  const re = new RegExp(`<section begin="${section}" />([\\s\\S]*?)<section end="${section}" />`, "g");
+  return [...page.matchAll(re)].flatMap((m) => {
+    const poem = /<poem>([\s\S]*?)<\/poem>/.exec(m[1]);
+    return poem ? [poem[1]] : [];
+  });
+}
 export function italianPoem(pages: string[], section: string): string[] {
-  const lines: string[] = [];
-  for (const page of pages) {
-    const re = new RegExp(`<section begin="${section}" />([\\s\\S]*?)<section end="${section}" />`, "g");
-    for (const m of page.matchAll(re)) {
-      const poem = /<poem>([\s\S]*?)<\/poem>/.exec(m[1]);
-      if (!poem) continue;
-      for (const raw of poem[1].split("\n")) {
-        const l = raw.replace(/\{\{R\|\d+\}\}/g, "").replace(/\{\{Capolettera\|(\p{L})\}\}/u, "$1").replace(/''/g, "").replace(/\s+/g, " ").trim();
-        if (/[{}<>|]/.test(l)) throw new Error("markup left in a line: " + l);
-        if (l) lines.push(l);
-      }
-    }
-  }
-  return lines;
+  return pages.flatMap((page) => poemsIn(page, section)).flatMap((poem) => poem.split("\n").map(plainLine)).filter(Boolean);
 }
 
 /* Cowper's translations of the Italian poems, by their numeral there (I to
@@ -31,16 +30,19 @@ export function cowperItalian(text: string): Map<string, string[]> {
   const end = text.indexOf("Appendix", start);
   if (start < 0 || end < 0) throw new Error("the translations of the Italian poems not found");
   const out = new Map<string, string[]>();
-  let at: string | null = null, inNote = false;
+  const s = { at: null as string | null, inNote: false };
   for (const raw of text.slice(start, end).split("\n").slice(1)) {
     const head = /^\s{10,}([IVX]+)\.?\d?\s*$/.exec(raw);
-    if (head) { at = head[1]; inNote = false; out.set(at, []); continue; }
-    if (!at || /^\s{10,}\S/.test(raw)) continue;
-    if (/^\d \S/.test(raw)) inNote = true;
-    if (inNote || !raw.trim()) continue;
-    out.get(at)!.push(curl(raw.replace(/\s+\d{1,2}\s*$/, "").trim()));
+    if (head) { s.at = head[1]; s.inNote = false; out.set(s.at, []); continue; }
+    if (translated(s, raw)) out.get(s.at!)!.push(curl(raw.replace(/\s+\d{1,2}\s*$/, "").trim()));
   }
   return out;
+}
+/* a line of a translation: under a numeral, not set in as a heading, not in or after a note's mark */
+function translated(s: { at: string | null; inNote: boolean }, raw: string): boolean {
+  if (!s.at || /^\s{10,}\S/.test(raw)) return false;
+  if (/^\d \S/.test(raw)) s.inNote = true;
+  return !s.inNote && !!raw.trim();
 }
 
 export const curl = (s: string): string => s.replace(/--/g, "—").replace(/(\w)'(\w)/g, "$1’$2").replace(/(^|[\s(—])'/g, "$1‘").replace(/'/g, "’")

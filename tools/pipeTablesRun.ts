@@ -54,7 +54,7 @@ for (const path of walk(SRC).sort()) {
   const self = importTarget(file);
   const r = versePipeTables(md, (lines, line) => {
     const named = REFER.get(file + ":" + line);
-    return named ? referenceAt(index, named.key, named.from, named.to) : quotedFrom(index, lines, self ? entryKey(self.date, self.tag) : undefined);
+    return named ? referenceAt(index, named.key, { from: named.from, to: named.to }) : quotedFrom(index, lines, self ? entryKey(self.date, self.tag) : undefined);
   });
   let out = md, changed = false;
   for (const t of r.tables) {

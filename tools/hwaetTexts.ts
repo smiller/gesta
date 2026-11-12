@@ -24,20 +24,17 @@ type Half = { text: string; tr: string; n: string; note?: string };
 
 /* each stanza's half-lines, an empty row a half-line the poem has lost; a
    table's first row only sets its widths */
+function halfOf(tr: string): Half[] {
+  const cells = [...tr.matchAll(/<td([^>]*)>([\s\S]*?)<\/td>/g)];
+  if (cells.length !== 3 || /width=/.test(cells[0][1])) return [];
+  const note = /href="#note([\d.]+)"/.exec(cells[1][2])?.[1];
+  return [{ n: cell(cells[0][2]), text: cell(cells[1][2]), tr: cell(cells[2][2]), ...(note ? { note } : {}) }];
+}
 export function hwaetStanzas(html: string): Half[][] {
   const main = html.slice(html.indexOf('<div class="main">'));
-  const stanzas: Half[][] = [];
-  for (const table of main.match(/<table[\s\S]*?<\/table>/g) || []) {
-    const rows: Half[] = [];
-    for (const tr of table.match(/<tr>[\s\S]*?<\/tr>/g) || []) {
-      const cells = [...tr.matchAll(/<td([^>]*)>([\s\S]*?)<\/td>/g)];
-      if (cells.length !== 3 || /width=/.test(cells[0][1])) continue;
-      const note = /href="#note([\d.]+)"/.exec(cells[1][2])?.[1];
-      rows.push({ n: cell(cells[0][2]), text: cell(cells[1][2]), tr: cell(cells[2][2]), ...(note ? { note } : {}) });
-    }
-    if (rows.length) stanzas.push(rows);
-  }
-  return stanzas;
+  return (main.match(/<table[\s\S]*?<\/table>/g) || [])
+    .map((table) => (table.match(/<tr>[\s\S]*?<\/tr>/g) || []).flatMap(halfOf))
+    .filter((rows) => rows.length);
 }
 
 /* the notes under the poem by the place they belong to ("7.2", line 7's
@@ -69,6 +66,14 @@ function marked(h: Half, notes: Record<string, string>, said: string[]): string 
 const noteLines = (said: string[]): string[] => ["::: note", ...said.map((t, k) => `[${k + 1}] ${t}`).join("\n\n").split("\n"), ":::"];
 const pageHead = (title: string, note: string): string => `# ${title}\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n`;
 
+const NO_HALF: Half = { text: "", tr: "", n: "" };
+const joinedText = (a: Half, b: Half): string => (a.text && b.text ? a.text + "  " + b.text : a.text || b.text);
+/* the line's numbers: the site's "16a" where a line starts, and -1 where its second half is numbered */
+function numberLine(a: Half, b: Half, line: number, numbered: Numbered[]): void {
+  const m = /^(\d+)a$/.exec(a.n);
+  if (m) numbered.push({ n: +m[1], at: line });
+  if (b.n) numbered.push({ n: -1, at: line });
+}
 /* two half-lines a line: the text's two spaces apart, the translation one;
    the site's numbers ("16a") are where a line starts, checked by the caller */
 export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}): { stanzas: string[][]; numbered: Numbered[]; odd: number[] } {
@@ -78,15 +83,12 @@ export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}
     if (rows.length % 2) odd.push(s + 1);
     /* a mark after its half-line in the text, the stanza's notes after its last line */
     const lines: string[] = [], said: string[] = [];
+    const withMark = (h: Half | undefined): Half => (h ? { ...h, text: marked(h, notes, said) } : NO_HALF);
     for (let i = 0; i < rows.length; i += 2) {
       line++;
-      const a = { ...rows[i], text: marked(rows[i], notes, said) }, b = rows[i + 1] ? { ...rows[i + 1], text: marked(rows[i + 1], notes, said) } : { text: "", tr: "", n: "" };
-      const m = /^(\d+)a$/.exec(a.n);
-      if (m) numbered.push({ n: +m[1], at: line });
-      if (b.n) numbered.push({ n: -1, at: line });
-      const text = a.text && b.text ? a.text + "  " + b.text : a.text || b.text;
-      const tr = [a.tr, b.tr].filter(Boolean).join(" ");
-      lines.push(text + " | " + tr);
+      const a = withMark(rows[i]), b = withMark(rows[i + 1]);
+      numberLine(a, b, line, numbered);
+      lines.push(joinedText(a, b) + " | " + [a.tr, b.tr].filter(Boolean).join(" "));
     }
     if (said.length) lines.push(...noteLines(said));
     return lines;
@@ -97,13 +99,14 @@ export function wholeLines(stanzas: Half[][], notes: Record<string, string> = {}
 /* a poem in stanzas (Hávamál): a row a line, referred to stanza and line, so
    each stanza keeps its own fence and number; the site heads a stanza "76."
    and numbers a line within it ("4"), both checked against their place */
+const misnumberedRow = (r: Half, i: number): boolean => i > 0 && !!r.n && +r.n !== i + 1;
 export function stanzaLines(stanzas: Half[][], notes: Record<string, string>): { stanzas: { n: number; lines: string[] }[]; off: string[] } {
   const off: string[] = [];
   const out = stanzas.map((rows, s) => {
     if (rows[0].n !== `${s + 1}.`) off.push(`stanza ${s + 1} headed ${rows[0].n}`);
     const said: string[] = [];
     const lines = rows.map((r, i) => {
-      if (i && r.n && +r.n !== i + 1) off.push(`stanza ${s + 1} row ${i + 1} numbered ${r.n}`);
+      if (misnumberedRow(r, i)) off.push(`stanza ${s + 1} row ${i + 1} numbered ${r.n}`);
       const text = marked(r, notes, said);
       return r.tr ? text + " | " + r.tr : text + " |";
     });

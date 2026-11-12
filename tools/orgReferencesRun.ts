@@ -68,54 +68,78 @@ const under = (prefix: string, label = ""): string[] => Object.keys(index.texts)
 /* links given their place by name, asked: the passage each was kept for */
 const NAMED = new Map(Object.entries(JSON.parse(readFileSync(new URL("./orgReferencesNamed.json", import.meta.url), "utf8")) as Record<string, string>));
 let current = "";
+/* the paragraph after the property drawer the anchor stood in, highlighted */
+function highlighted(drawn: string | undefined, anchor: string): ReturnType<typeof quotedProse> {
+  const para = drawn ? anchoredParagraph(cache[drawn], anchor) : null;
+  return drawn && para ? quotedProse(index, drawn, para, [drawn]) : null;
+}
+function dayLink(l: OrgLink, anchor: string): Resolved {
+  const named = dayNamed(l.label) ?? dayNamed(anchor);
+  const days = Object.keys(cache).filter((k) => /^\d{4}-\d{2}-\d{2}/.test(k));
+  const drawn = anchor ? days.find((k) => cache[k].includes(`:CUSTOM_ID: ${anchor}`)) : undefined;
+  const lit = highlighted(drawn, anchor);
+  if (lit) return { href: lit.url };
+  const held = anchor ? days.find((k) => cache[k].includes(`<<${anchor}>>`)) : undefined;
+  const day = named && cache[named] !== undefined ? named : held ?? drawn;
+  return day ? { href: linkOf(day) } : { why: "the day it names is not in its label, and its anchor is gone" };
+}
+interface Asked { l: OrgLink; anchor: string; shelf: string }
+type Attempt = (a: Asked) => Resolved | null;
+type Placed = ReturnType<typeof quotedFrom>;
+const shelved = (verse: Placed, shelf: string): verse is Extract<NonNullable<Placed>, { url: string }> =>
+  !!verse && "url" in verse && verse.key.startsWith(shelf);
+const byQuote: Attempt = ({ l, shelf }) => {
+  if (!l.quote.length) return null;
+  const verse = quotedFrom(index, l.quote.map((q) => q.replace(/^>\s?/, "")).filter((q) => q.trim()).map((left) => ({ left })));
+  if (shelved(verse, shelf)) return { href: verse.url, passage: verse.passage };
+  const prose = quotedProse(index, shelf, l.quote, under(shelf, l.label));
+  return prose ? { href: prose.url, passage: prose.passage } : null;
+};
+const byLine: Attempt = ({ l, anchor, shelf }) => {
+  const line = /^(?:(inf|purg|par)-)?(\d+)-(\d+)$/.exec(anchor);
+  if (!line) return null;
+  const [, cantica, part, from] = line;
+  const key = cantica ? `${shelf}/${CANTICA[cantica]}/${part}`
+    : under(shelf).find((k) => new RegExp(`/(?:Book |Scene )?${part}(?:\\.|$)`).test(k.slice(shelf.length)));
+  const r = key ? referenceAt(index, key, { from: +from, to: rangeEnd(l.label, +from) }) : null;
+  return r && "url" in r ? { href: r.url } : null;
+};
+/* a heading or a line named in the label, or in the anchor's own words */
+const byWords: Attempt = ({ l, anchor, shelf }) => {
+  for (const words of [l.label, anchor.replace(/-/g, " ")]) {
+    const named = words ? quotedProse(index, shelf, [words]) : null;
+    if (named) return { href: named.url };
+  }
+  return null;
+};
+/* an episode named by its number: 32-7 */
+const byEpisode: Attempt = ({ anchor, shelf }) => {
+  const numbered = /^(\d+-\d+)-/.exec(anchor);
+  const episode = numbered ? under(shelf).find((k) => k.split("/").pop()!.startsWith(numbered[1] + " ")) : undefined;
+  return episode ? { href: linkOf(episode) } : null;
+};
+const byTitle: Attempt = ({ l, anchor, shelf }) => {
+  const titled = under(shelf).find((k) => squash(k.split("/").pop()!) === squash(anchor || l.label));
+  return titled ? { href: linkOf(titled) } : null;
+};
+const byShelf: Attempt = ({ anchor, shelf }) => (anchor ? null : { href: linkOf(shelf) });
+const ATTEMPTS = [byQuote, byLine, byWords, byEpisode, byTitle, byShelf];
+function onShelf(a: Asked): Resolved {
+  for (const attempt of ATTEMPTS) {
+    const r = attempt(a);
+    if (r) return r;
+  }
+  return { why: `not placed in ${a.shelf.replace(/^bookshelf\//, "")}` };
+}
 function resolve(l: OrgLink): Resolved {
   const given = NAMED.get(current + ":" + l.line);
   if (given) return { href: given };
   const [file, rawAnchor = ""] = l.target.replace(/^file:/, "").split("::");
   const anchor = decodeURIComponent(rawAnchor).replace(/^#/, "");
   if (!/\.org$/.test(file)) return { why: "not a link to a file" };
-  const year = /(?:^|\/)(\d{4})\.org$/.exec(file);
-  if (year) {
-    const named = dayNamed(l.label) ?? dayNamed(anchor);
-    const days = Object.keys(cache).filter((k) => /^\d{4}-\d{2}-\d{2}/.test(k));
-    /* the paragraph after the property drawer the anchor stood in, highlighted */
-    const drawn = anchor ? days.find((k) => cache[k].includes(`:CUSTOM_ID: ${anchor}`)) : undefined;
-    const para = drawn ? anchoredParagraph(cache[drawn], anchor) : null;
-    const lit = drawn && para ? quotedProse(index, drawn, para, [drawn]) : null;
-    if (lit) return { href: lit.url };
-    const held = anchor ? days.find((k) => cache[k].includes(`<<${anchor}>>`)) : undefined;
-    const day = named && cache[named] !== undefined ? named : held ?? drawn;
-    return day ? { href: linkOf(day) } : { why: "the day it names is not in its label, and its anchor is gone" };
-  }
+  if (/(?:^|\/)(\d{4})\.org$/.test(file)) return dayLink(l, anchor);
   const shelf = FILES.find(([re]) => re.test(file))?.[1];
-  if (!shelf) return { why: "its text is not on the bookshelf" };
-  if (l.quote.length) {
-    const verse = quotedFrom(index, l.quote.map((q) => q.replace(/^>\s?/, "")).filter((q) => q.trim()).map((left) => ({ left })));
-    if (verse && "url" in verse && verse.key.startsWith(shelf)) return { href: verse.url, passage: verse.passage };
-    const prose = quotedProse(index, shelf, l.quote, under(shelf, l.label));
-    if (prose) return { href: prose.url, passage: prose.passage };
-  }
-  const line = /^(?:(inf|purg|par)-)?(\d+)-(\d+)$/.exec(anchor);
-  if (line) {
-    const [, cantica, part, from] = line;
-    const key = cantica ? `${shelf}/${CANTICA[cantica]}/${part}`
-      : under(shelf).find((k) => new RegExp(`/(?:Book |Scene )?${part}(?:\\.|$)`).test(k.slice(shelf.length)));
-    const r = key ? referenceAt(index, key, +from, rangeEnd(l.label, +from)) : null;
-    if (r && "url" in r) return { href: r.url };
-  }
-  /* a heading or a line named in the label, or in the anchor's own words */
-  for (const words of [l.label, anchor.replace(/-/g, " ")]) {
-    const named = words ? quotedProse(index, shelf, [words]) : null;
-    if (named) return { href: named.url };
-  }
-  /* an episode named by its number: 32-7 */
-  const numbered = /^(\d+-\d+)-/.exec(anchor);
-  const episode = numbered ? under(shelf).find((k) => k.split("/").pop()!.startsWith(numbered[1] + " ")) : undefined;
-  if (episode) return { href: linkOf(episode) };
-  const titled = under(shelf).find((k) => k.split("/").pop()!.toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, "") === (anchor || l.label).toLowerCase().replace(/[^\p{L}\p{Nd}]+/gu, ""));
-  if (titled) return { href: linkOf(titled) };
-  if (!anchor) return { href: linkOf(shelf) };
-  return { why: `not placed in ${shelf.replace(/^bookshelf\//, "")}` };
+  return shelf ? onShelf({ l, anchor, shelf }) : { why: "its text is not on the bookshelf" };
 }
 
 rmSync(OUT, { recursive: true, force: true });

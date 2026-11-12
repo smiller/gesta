@@ -33,6 +33,22 @@ const SPEAKERS: Record<string, string> = {
 const RESTS = ["Mess: By Samson.", "Man: That still lessens", "Man: Self-violence?", "Mess: Inevitable cause"];
 const PREFIX = /^(Sams?|Chor|Man|Dal|Har|Off|Mess|Messenger|Semichor|S?AMSON)\.\s+/;
 
+function beechingRow(text: string): Item[] {
+  const sp = /^(\w+):\s*(.*)$/.exec(text);
+  const name = sp ? SPEAKERS[sp[1]] : undefined;
+  const rest = RESTS.some((r) => text.replace(/\s+/g, " ").startsWith(r));
+  const line: Item = { kind: "line", text: name ? sp![2] : text, rest, opens: false };
+  return name ? [{ kind: "speaker", name }, line] : [line];
+}
+/* two lines Beeching sets in the other order (282–283), taken in Harvard's */
+function harvardOrder(out: Item[]): void {
+  const at = out.findIndex((i) => i.kind === "line" && i.text.startsWith("Not worse then by his shield"));
+  if (at < 0 || (out[at + 1] as { text?: string }).text?.startsWith("Had dealt with Jephtha") !== true) throw new Error("Beeching's 282–283 not as expected");
+  [out[at], out[at + 1]] = [out[at + 1], out[at]];
+}
+const unnumbered = (raw: string): string => (/^(.*?\S)\s{3,}(\d+)$/.exec(raw)?.[1] ?? raw).trim();
+const numbered = (items: Item[]): boolean => !(items.at(-1) as { rest?: boolean }).rest;
+
 /* Beeching's Samson from the Scene to the last line: a speaker's prefix a
    speaker, the rest of a split line marked */
 function beechingItems(): Item[] {
@@ -40,20 +56,13 @@ function beechingItems(): Item[] {
   const out: Item[] = [];
   let n = 0;
   for (let k = a + 1; n < LINES; k++) {
-    const raw = BEECHING[k];
-    const m = /^(.*?\S)\s{3,}(\d+)$/.exec(raw);
-    const text = (m ? m[1] : raw).trim();
+    const text = unnumbered(BEECHING[k]);
     if (!text) continue;
-    const sp = /^(\w+):\s*(.*)$/.exec(text);
-    const rest = RESTS.some((r) => text.replace(/\s+/g, " ").startsWith(r));
-    if (sp && SPEAKERS[sp[1]]) out.push({ kind: "speaker", name: SPEAKERS[sp[1]] });
-    if (!rest) n++;
-    out.push({ kind: "line", text: sp && SPEAKERS[sp[1]] ? sp[2] : text, rest, opens: false });
+    const items = beechingRow(text);
+    if (numbered(items)) n++;
+    out.push(...items);
   }
-  /* two lines Beeching sets in the other order (282–283), taken in Harvard's */
-  const at = out.findIndex((i) => i.kind === "line" && i.text.startsWith("Not worse then by his shield"));
-  if (at < 0 || (out[at + 1] as { text?: string }).text?.startsWith("Had dealt with Jephtha") !== true) throw new Error("Beeching's 282–283 not as expected");
-  [out[at], out[at + 1]] = [out[at + 1], out[at]];
+  harvardOrder(out);
   return out;
 }
 
@@ -220,7 +229,7 @@ for (const it of items) {
   if (it.kind !== "line") continue;
   if (!it.rest) n++;
   const id = `${n}${it.rest ? " ⟨…⟩" : ""}`;
-  const r = readLine(ca.lines[k], cb.lines[k], w[k], KNOWN, k + 1);
+  const r = readLine(ca.lines[k], cb.lines[k], { witness: w[k], known: KNOWN, n: k + 1 });
   const seen = SEEN[id];
   if (seen && similar(letters(seen), letters(r.text)) < 0.75) throw new Error(`${id}: the line read on the page is not this one: ${r.text}`);
   unused.delete(id);

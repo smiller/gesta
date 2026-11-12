@@ -79,15 +79,18 @@ const SOURCE_LINES: { file: string; at: number; words: string; key: string; from
 ];
 /* the hand's places belong to the works this run reads */
 const read = (key: string): boolean => index.entries.some((e) => e.key === key);
-const placed = (file: string): Run[] => PLACED.filter((x) => x.file === file && read(x.key)).map((x) => {
+type Shelved = (typeof index.entries)[number];
+/* a half-line's letters, the original's halves two spaces apart */
+const halves = (sh: Shelved, u: number): string[] => (sh.units[u].node.type.name === "pair" ? sh.units[u].node.child(0) : sh.units[u].node).textContent.split(/ {2,}/).map(norm);
+function placedRun(file: string, x: (typeof PLACED)[number]): Run {
   const sh = index.entries.find((e) => e.key === x.key)!;
-  const first = sh.units.findIndex((u) => u.line === x.from), last = sh.units.findIndex((u) => u.line === (x.to ?? x.from));
-  /* a half-line's letters, the original's halves two spaces apart */
-  const halves = (u: number): string[] => (sh.units[u].node.type.name === "pair" ? sh.units[u].node.child(0) : sh.units[u].node).textContent.split(/ {2,}/).map(norm);
+  const to = x.to ?? x.from;
+  const first = sh.units.findIndex((u) => u.line === x.from), last = sh.units.findIndex((u) => u.line === to);
   if (first < 0 || last < 0) throw new Error(`${file}: ${x.key} has no line ${x.from}`);
-  return { start: x.at - 1, end: (x.end ?? x.at) - 1, key: x.key, first, last, from: x.from, to: x.to ?? x.from,
-    ...(x.half?.from && { head: halves(first)[1].length }), ...(x.half?.to && { tail: halves(last)[0].length }) };
-});
+  return { start: x.at - 1, end: (x.end ?? x.at) - 1, key: x.key, first, last, from: x.from, to,
+    ...(x.half?.from && { head: halves(sh, first)[1].length }), ...(x.half?.to && { tail: halves(sh, last)[0].length }) };
+}
+const placed = (file: string): Run[] => PLACED.filter((x) => x.file === file && read(x.key)).map((x) => placedRun(file, x));
 
 rmSync(OUT, { recursive: true, force: true });
 const counts = { entries: 0, changed: 0, runs: 0, lines: 0 };

@@ -7,8 +7,11 @@ export interface Numbered { n: number; at: number }
 function balanced(text: string, from: number): number {
   let depth = 0;
   for (let i = from; i < text.length - 1; i++) {
-    if (text[i] === "{" && text[i + 1] === "{") { depth++; i++; }
-    else if (text[i] === "}" && text[i + 1] === "}") { depth--; i++; if (!depth) return i + 1; }
+    const two = text.slice(i, i + 2);
+    if (two !== "{{" && two !== "}}") continue;
+    depth += two === "{{" ? 1 : -1;
+    i++;
+    if (!depth) return i + 1;
   }
   throw new Error("unclosed template at " + text.slice(from, from + 40));
 }

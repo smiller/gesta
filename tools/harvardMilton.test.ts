@@ -57,43 +57,43 @@ test("the OCR's straight marks curled, a mark spaced off its word put back, the 
 const KNOWN = vocabulary("Phœbus Cæsar my nigh rescued", "lady");
 
 test("both scans agreeing is the text; a mark one dropped is kept; a word is settled by the witness's line", () => {
-  expect(readLine("Brought to me like Alcestis from the grave,", "Brought  to  me  like  Alcestis  from  the  grave,", "Brought to me like Alcestis from the grave,", KNOWN, 2)).toEqual({ text: "Brought to me like Alcestis from the grave,", decisions: [] });
-  const faint = readLine("Rescued from Death by force, though pale and faint.", "Rescued  from  Death  by  force,  though  pale  and  faint", "Rescu'd from death by force though pale and faint.", KNOWN, 4);
+  expect(readLine("Brought to me like Alcestis from the grave,", "Brought  to  me  like  Alcestis  from  the  grave,", { witness: "Brought to me like Alcestis from the grave,", known: KNOWN, n: 2 })).toEqual({ text: "Brought to me like Alcestis from the grave,", decisions: [] });
+  const faint = readLine("Rescued from Death by force, though pale and faint.", "Rescued  from  Death  by  force,  though  pale  and  faint", { witness: "Rescu'd from death by force though pale and faint.", known: KNOWN, n: 4 });
   expect(faint.text).toBe("Rescued from Death by force, though pale and faint.");
   expect(faint.decisions).toEqual([{ line: 4, a: "faint.", b: "faint", chose: "faint.", why: "a mark the other scan dropped" }]);
-  const ray = readLine("Foretell ray hopeless doom, in some grove nigh;", "Foretell  my  hopeless  doom,  in  some  grove  nighj", "Foretell my hopeless doom, in some grove nigh;", KNOWN, 10);
+  const ray = readLine("Foretell ray hopeless doom, in some grove nigh;", "Foretell  my  hopeless  doom,  in  some  grove  nighj", { witness: "Foretell my hopeless doom, in some grove nigh;", known: KNOWN, n: 10 });
   expect(ray.text).toBe("Foretell my hopeless doom, in some grove nigh;");
   expect(ray.decisions.map((d) => d.why)).toEqual(["the witness's word", "the witness's word"]);
 });
 
 test("a mark the two read differently is settled by the witness's, else left for a hand", () => {
-  expect(readLine("Who lived in both unstained with gold or fee,", "Who  lived  in  both  unstained  with  gold  or  fee.", "Who lived in both unstained with gold or fee,", KNOWN, 3).decisions[0].why).toBe("the witness's mark");
-  expect(readLine("of fee,", "of fee.", "of fee;", KNOWN, 3).decisions[0]).toEqual({ line: 3, a: "fee,", b: "fee.", chose: "fee,", why: "UNSETTLED: the marks differ" });
+  expect(readLine("Who lived in both unstained with gold or fee,", "Who  lived  in  both  unstained  with  gold  or  fee.", { witness: "Who lived in both unstained with gold or fee,", known: KNOWN, n: 3 }).decisions[0].why).toBe("the witness's mark");
+  expect(readLine("of fee,", "of fee.", { witness: "of fee;", known: KNOWN, n: 3 }).decisions[0]).toEqual({ line: 3, a: "fee,", b: "fee.", chose: "fee,", why: "UNSETTLED: the marks differ" });
 });
 
 test("the small capitals that open a poem take the witness's case, or a capital first letter; inside the first line a word is lower case", () => {
-  expect(readLine("Mertuoucnt I saw my late espouséd saint", "METHOUGHT  I  saw  my  late  espoused  saint", "Methought I saw my late espoused Saint", KNOWN, 1).text).toBe("Methought I saw my late espouséd saint");
-  expect(readLine("I pip but prompt the age to quit their clogs", "I  DID  but  prompt  the  age  to  quit  their  clogs", "I did but prompt the age to quit their cloggs", KNOWN, 1).text).toBe("I did but prompt the age to quit their clogs");
-  expect(readLine("AvENGE, O Lord", "AVENGE,  O  Lord", "Avenge O Lord", KNOWN, 1).text).toBe("Avenge, O Lord");
+  expect(readLine("Mertuoucnt I saw my late espouséd saint", "METHOUGHT  I  saw  my  late  espoused  saint", { witness: "Methought I saw my late espoused Saint", known: KNOWN, n: 1 }).text).toBe("Methought I saw my late espouséd saint");
+  expect(readLine("I pip but prompt the age to quit their clogs", "I  DID  but  prompt  the  age  to  quit  their  clogs", { witness: "I did but prompt the age to quit their cloggs", known: KNOWN, n: 1 }).text).toBe("I did but prompt the age to quit their clogs");
+  expect(readLine("AvENGE, O Lord", "AVENGE,  O  Lord", { witness: "Avenge O Lord", known: KNOWN, n: 1 }).text).toBe("Avenge, O Lord");
 });
 
 test("æ and œ, which neither scan reads: read two ways it is the ligature; read the same way, the ligature where the edition prints the word elsewhere", () => {
   expect(ligatures("Chaeronea")).toContain("Chæronea");
-  expect(readLine("At Chzronea, fatal to liberty,", "At  Chaeronea,  fatal  to  liberty,", "At Chaeronea, fatal to liberty,", KNOWN, 7).text).toBe("At Chæronea, fatal to liberty,");
-  expect(readLine("the priest of Pheebus’ quire,", "the  priest  of  Phoebus'  quire,", "the priest of Phoebus' quire,", KNOWN, 10).text).toBe("the priest of Phœbus’ quire,");
-  expect(readLine("of Phcebus here", "of Phcebus here", "of Phoebus here", KNOWN, 5).decisions[0].why).toBe("the edition's ligature, a word it prints elsewhere");
+  expect(readLine("At Chzronea, fatal to liberty,", "At  Chaeronea,  fatal  to  liberty,", { witness: "At Chaeronea, fatal to liberty,", known: KNOWN, n: 7 }).text).toBe("At Chæronea, fatal to liberty,");
+  expect(readLine("the priest of Pheebus’ quire,", "the  priest  of  Phoebus'  quire,", { witness: "the priest of Phoebus' quire,", known: KNOWN, n: 10 }).text).toBe("the priest of Phœbus’ quire,");
+  expect(readLine("of Phcebus here", "of Phcebus here", { witness: "of Phoebus here", known: KNOWN, n: 5 }).decisions[0].why).toBe("the edition's ligature, a word it prints elsewhere");
 });
 
 test("a word both scans read alike but found nowhere else is named; a word known once an ending is off, or a compound of known words, is not", () => {
-  expect(readLine("spirits indu’th.", "spirits indu'th.", "spirits endu'th.", vocabulary("spirits"), 8).decisions[0].why).toBe("UNCONFIRMED: both scans, a word printed nowhere else");
+  expect(readLine("spirits indu’th.", "spirits indu'th.", { witness: "spirits endu'th.", known: vocabulary("spirits"), n: 8 }).decisions[0].why).toBe("UNCONFIRMED: both scans, a word printed nowhere else");
   expect(knows(vocabulary("lady"), "ladys")).toBe(true);
-  expect(readLine("a lady-love", "a lady-love", "", vocabulary("lady love"), 2).decisions).toEqual([]);
+  expect(readLine("a lady-love", "a lady-love", { witness: "", known: vocabulary("lady love"), n: 2 }).decisions).toEqual([]);
 });
 
 test("a speck one scan reads is dropped; a word in one scan only stands when the witness has it, else is left out", () => {
-  expect(readLine("| How soon hath Time", "How  soon  hath  Time", "How soon hath Time", KNOWN, 2).text).toBe("How soon hath Time");
-  expect(readLine("form, and style;", "form,  and  style  J", "form, and style;", KNOWN, 2).text).toBe("form, and style;");
-  expect(readLine("the lady wise", "the wise", "the lady wise", KNOWN, 2).text).toBe("the lady wise");
+  expect(readLine("| How soon hath Time", "How  soon  hath  Time", { witness: "How soon hath Time", known: KNOWN, n: 2 }).text).toBe("How soon hath Time");
+  expect(readLine("form, and style;", "form,  and  style  J", { witness: "form, and style;", known: KNOWN, n: 2 }).text).toBe("form, and style;");
+  expect(readLine("the lady wise", "the wise", { witness: "the lady wise", known: KNOWN, n: 2 }).text).toBe("the lady wise");
 });
 
 test("against a typed text of the edition: what the scans cannot read is the typed text's, the kind named; a word or a mark is the side read on the page", () => {

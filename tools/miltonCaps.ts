@@ -27,10 +27,12 @@ export function positions(line: string): { word: string; at: number; opening: bo
 }
 
 /* mid-sentence usage of each word over a text's lines, by its lower case */
+type Position = ReturnType<typeof positions>[number];
+const unweighed = (p: Position): boolean => p.opening || /^(I|O)$/.test(p.word) || /^I’/.test(p.word);
 export function usage(lines: string[]): Map<string, Usage> {
   const table = new Map<string, Usage>();
   for (const l of lines) for (const p of positions(l)) {
-    if (p.opening || /^(I|O)$/.test(p.word) || /^I’/.test(p.word)) continue;
+    if (unweighed(p)) continue;
     const k = p.word.toLowerCase(), e = table.get(k) ?? { cap: 0, low: 0 };
     if (/^\p{Lu}/u.test(p.word)) e.cap++; else e.low++;
     table.set(k, e);
@@ -42,15 +44,17 @@ export interface Change { at: number; from: string; to: string; usage: Usage }
 /* the words of a line Paradise Lost's usage would recase: a capital it
    writes lower nine times in ten or more, or a lower case it capitalises
    nine times in ten or more and at least three times */
+function recased(word: string, e: Usage): string | null {
+  const share = e.cap / (e.cap + e.low);
+  if (/^\p{Lu}/u.test(word)) return share <= 0.1 ? word[0].toLowerCase() + word.slice(1) : null;
+  return share >= 0.9 && e.cap >= 3 ? word[0].toUpperCase() + word.slice(1) : null;
+}
 export function recasings(line: string, table: Map<string, Usage>): Change[] {
   const out: Change[] = [];
   for (const p of positions(line)) {
-    if (p.opening || /^(I|O)$/.test(p.word) || /^I’/.test(p.word)) continue;
-    const e = table.get(p.word.toLowerCase());
-    if (!e) continue;
-    const share = e.cap / (e.cap + e.low), cap = /^\p{Lu}/u.test(p.word);
-    if (cap && share <= 0.1) out.push({ at: p.at, from: p.word, to: p.word[0].toLowerCase() + p.word.slice(1), usage: e });
-    else if (!cap && share >= 0.9 && e.cap >= 3) out.push({ at: p.at, from: p.word, to: p.word[0].toUpperCase() + p.word.slice(1), usage: e });
+    const e = unweighed(p) ? undefined : table.get(p.word.toLowerCase());
+    const to = e ? recased(p.word, e) : null;
+    if (to !== null) out.push({ at: p.at, from: p.word, to, usage: e! });
   }
   return out;
 }

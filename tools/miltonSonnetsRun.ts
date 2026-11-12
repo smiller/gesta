@@ -84,7 +84,7 @@ for (const s of ENGLISH) {
   if (ca.lines.length !== s.lines || cb.lines.length !== s.lines) throw new Error(`${s.n || s.title}: ${ca.lines.length} and ${cb.lines.length} lines, not ${s.lines}`);
   const lines: string[] = [], decisions: Decision[] = [];
   ca.lines.forEach((la, i) => {
-    const r = readLine(la, cb.lines[i], witness[i], KNOWN, i + 1);
+    const r = readLine(la, cb.lines[i], { witness: witness[i], known: KNOWN, n: i + 1 });
     /* the stress marks left off, as the bookshelf's Paradise Lost has them (asked) */
     let text = unstressed(r.text);
     for (const r of READINGS.filter((r) => r.poem === (s.n || s.title) && r.line === i + 1)) {
