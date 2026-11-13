@@ -85,7 +85,7 @@ Three shapes were weighed on 2026-09-22:
   a text with no grid parses as it did.
 - **This app's alone.** The `../writer` version has no grid word (READ
   ../writer/src/js/md.mjs:508–515, its refusal list knows note, reference
-  and card-). What the running app shows for an entry holding a grid is
+  and card-). What the `../writer` version shows for an entry holding a grid is
   NOT MEASURED; it matters only after the cutover, and the shared Helium
   steps list a grid step, if one is added, as a decided difference.
 
