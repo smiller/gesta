@@ -157,6 +157,13 @@ must keep is restated here.
   `npm run verify` before any commit. `tools/hooks-test.sh`, under
   `verify`, asserts every hook's exit codes over a throwaway repo and reads
   the wiring from this one.
+- COMMITS follow Conventional Commits v1.0.0
+  (https://www.conventionalcommits.org/en/v1.0.0/): a subject line
+  `type(scope)!: summary`, the type one of build, chore, ci, docs, feat,
+  fix, perf, refactor, revert, style or test, the scope optional, `!` for a
+  breaking change, the whole line 72 characters at most; then a blank line
+  and a body with the detail (what changed, what was measured, "asked");
+  then the trailers (`Co-Authored-By:`).
 - DEPENDENCIES: `node_modules` carries the Dropbox-ignore attribute; a
   clean reinstall runs `mkdir -p node_modules && xattr -w com.dropbox.ignored 1 node_modules`
   FIRST. Versions are pinned exact (`npm install --save-exact`).
