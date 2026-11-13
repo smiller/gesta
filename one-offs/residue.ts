@@ -77,8 +77,8 @@ function sitesByClass(blocks: Block[], corpus: string): Map<string, Site[]> {
   return out;
 }
 
-/* shapes that need no hand: the successor's own canonical spelling, or a
-   reading that is right where the current parser's was not */
+/* shapes that need no hand: the app's own canonical spelling, or a reading
+   that is right where the `../writer` version's parser's was not */
 const SETTLED: [RegExp, string][] = [
   [/^\*\[[^\]]*\]\([^)]*\)\*$/, "emphasis and link on one title: written [*t*](u)"],
   [/^\*{5,}\s*$/, "a rule of asterisks"],
@@ -87,7 +87,7 @@ const SETTLED: [RegExp, string][] = [
   [/^\[(20\d\d-\d\d-\d\d|From |Yes, |Greek )/, "a bracketed note holding a link, read right"],
 ];
 /* an italic run that opens on this line and closes on a later one: the
-   current app shows the stars, the successor reads the italics */
+   `../writer` version shows the stars, the app reads the italics */
 function settledWhy(cls: string, text: string): string | null {
   const why = SETTLED.find(([rx]) => rx.test(text))?.[1];
   if (why) return why;

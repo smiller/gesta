@@ -70,7 +70,7 @@ All by the reader, 2026-09-28, over the mockup.
 - tools/helium-steps.mjs: one successor-only section — seed a work with
   two `##` sections, read the folds closed, click a triangle, read it
   open, follow a link and come back, read the open set and the scroll —
-  its differences from the current app listed.
+  its differences from the `../writer` version listed.
 
 ## Batches
 
@@ -159,12 +159,12 @@ and editor.ts, DOM seams).
   which stands beside the first line — `elementFromPoint` there read
   `MAIN`. The step now aims beside the first line.
 - MEASURED: the successor's run gained exactly the four new lines, read
-  and approved (112 lines). The current app's run, regenerated twice, read
+  and approved (112 lines). The `../writer` version's run, regenerated twice, read
   the list step's "saved" whisper as `show: false` where this morning's
   record and the successor read `true` — the whisper racing the read, in
   an app this plan does not touch; the record keeps its earlier `true`
   rather than list a difference whose cause is timing. Ten fields decided
-  in corner.differences.txt, the current app having no folds: 109 steps,
+  in corner.differences.txt, the `../writer` version having no folds: 109 steps,
   0 open.
 
 ### The review — 2026-09-28, /code-review at HIGH and at MEDIUM over 04435e9..d1deeb7
@@ -378,7 +378,7 @@ judged real and fixed in one commit:
   scroll is no reader's; the three `scrollTo`s in the steps are wheels.
 - Two timing flakes on the way to the commit, neither in this change's
   code (MEASURED): `searchIndex.test.ts`'s rows() reuse took 67 ms against
-  its 50 ms bound in one pre-commit run; the current app's regenerated run
+  its 50 ms bound in one pre-commit run; the `../writer` version's regenerated run
   read its "saved" whisper faded at "a list typed" once and showing on the
   next regeneration, which is the copy kept.
 

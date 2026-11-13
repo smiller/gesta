@@ -44,7 +44,7 @@ Questions), with the decisions added 2026-09-22 after the two passes:
 | The grid widens to the window; each card capped at 650px; the count steps down below a 240px card | brainstorm, Resolved Questions (measured on the mockup) |
 | The type inside a grid is 0.8em; a short card stretches to its row | brainstorm, Resolved Questions |
 | The hyphenated card word stays required | brainstorm, Key Decisions |
-| Successor-only; the current app has no grid word | brainstorm, Key Decisions |
+| Successor-only; the `../writer` version has no grid word | brainstorm, Key Decisions |
 | A bad grid shows THE ENTRY as source with a parse-time reason that quotes the offending line, through the throw path that exists; ONE wording on both paths (open and ⌃⌘M), pinned while the entry sits in source | asked and chosen 2026-09-22 after the research pass found the paragraph path would escape the opener on the next save; the one wording and the pin from the flow analysis (flow 1, 8) |
 | A grid's shape (add or remove a card, change the count) is edited in the source view only; no new chord | asked and chosen 2026-09-22 |
 | The grid is ISOLATING, with one way out: no lift or join crosses its edge; Backspace or Delete that would merge two cards is refused with a whisper naming ⌃⌘M; Enter on the empty last line of the LAST card places a paragraph after the grid | asked and chosen 2026-09-22 after the flow analysis traced the base keymap reshaping a grid silently (flow 3) |
@@ -346,21 +346,21 @@ The listKeys/quoteKeys shape (READ CLAUDE.md's layout: commands with an
   `grid-template-columns`, then a search hit in the second card, and the
   screen after each. Every reading needs BOTH adapters (READ
   adapters/successor.mjs:41-74, adapters/writer.mjs:58-93); the writer's
-  returns what the current app draws, and each field it draws
+  returns what the `../writer` version draws, and each field it draws
   differently is one line in `tools/expected/corner.differences.txt`
   with the date and "successor-only" (READ :1-10 for the format).
   `--approve` after reading the diff.
-- The current app MEASURED once, by hand, five minutes, and recorded
+- The `../writer` version MEASURED once, by hand, five minutes, and recorded
   here: what it shows for an entry holding a grid (INFERRED from
   ../writer/src/js/md.mjs:508-515 and its escape rule: the opener a
   paragraph pinned `not a block Gesta knows`, the cards rendered, the
   closer a stray `:::` that a save there writes `\:::` — which,
   re-imported here, no longer closes the grid, so the grid swallows to
   the end and the entry is refused; flow 10). The help says: a grid is
-  successor-only, and an entry with a grid SAVED in the current app comes
+  successor-only, and an entry with a grid SAVED in the `../writer` version comes
   back refused.
 - The corpus tool (READ tools/corpus.ts:113-125): question 3 compares the
-  parsed text with the CURRENT app's parser, which reads `::: grid 3` as
+  parsed text with the `../writer` version's parser, which reads `::: grid 3` as
   text, so the first grid to reach the mirror would turn that file red
   under `TEXT DIFFERS FROM THE CURRENT PARSER` for ever. The tool skips
   question 3 for a file holding a grid opener and says why in its header;
@@ -440,7 +440,7 @@ release). Every new key behaviour is named for a hand to try (CLAUDE.md).
 ### Batch 3 — the tools and the docs
 
 - The shared step, both adapters, the differences lines, the approved
-  copy regenerated after reading the diff; the current app measured
+  copy regenerated after reading the diff; the `../writer` version measured
   once; `npm run verify` green.
 - help.html, CLAUDE.md's layout words, the brainstorm's example.
 - Then the acceptance, then the one review at medium over batches 1-3.
@@ -469,7 +469,7 @@ release). Every new key behaviour is named for a hand to try (CLAUDE.md).
   and the hand readings: the grid's break-out under `.fitted` and beside
   a scrollbar; the grid's columns in the HTML flavour on the clipboard;
   the way out after a grid; the refusal's pin on the switch back; the
-  current app over a grid entry.
+  `../writer` version over a grid entry.
 
 ## Acceptance criteria
 
@@ -511,7 +511,7 @@ release). Every new key behaviour is named for a hand to try (CLAUDE.md).
       `grid-template-columns` (read headless); the hover button above the
       corner copies the whole grid. The shared step reads them (batch 3).
 - [x] Both adapters answer the grid step; the differences are listed;
-      the current app's reading is recorded; `npm run verify` green; the
+      the `../writer` version's reading is recorded; `npm run verify` green; the
       record in this plan carries every measurement with its date (batch
       3, 2026-09-22).
 
@@ -707,7 +707,7 @@ measured, what the reader was told to look at, what the review found.
   until switched back — and five sections failed on selectors the source
   view lacks. The step now ends by fixing the line and switching back,
   which is a reading worth having (the pin's release, the grid drawn).
-  And the current app, which rendered the stray line and came back,
+  And the `../writer` version, which rendered the stray line and came back,
   needs a second ⌃⌘M before the fix, so the step asks `inSource` first.
 - MEASURED, the successor's run: `{"grid":true,"columns":2,"cards":2,
   "wider":true,"type":"14.4px"}`; the band `copy grid` / `Copy this grid`;
@@ -718,7 +718,7 @@ measured, what the reader was told to look at, what the review found.
   drawn 3 across (a bare count). Approved after reading the diff: the six
   readings and the page `Gridded` in the Go to and Search lists, nothing
   else.
-- MEASURED, THE CURRENT APP over the same steps (`npm run compare:writer`,
+- MEASURED, THE `../writer` VERSION over the same steps (`npm run compare:writer`,
   the measurement the plan asked for): it draws the two cards loose
   (`grid: false`, `cards: 2`, not wider, no type change), shows no button
   above where a grid's corner would be, its ⌘C carries no columns, and on
@@ -727,7 +727,7 @@ measured, what the reader was told to look at, what the review found.
   the pin stands after the fix, the word still unknown to it. Sixteen
   fields over six steps, each listed in corner.differences.txt with its
   reason; the compare then passes. The INFERRED consequence in the plan —
-  a save in the current app writing the grid's closer as `\:::` — was not
+  a save in the `../writer` version writing the grid's closer as `\:::` — was not
   exercised by the step and stays inferred.
 - VOCABULARY, and THE CUTOVER (2026-09-22, the reader's word after this
   batch): "the current app" in this plan, in CLAUDE.md and in the tools
@@ -738,7 +738,7 @@ measured, what the reader was told to look at, what the review found.
   its reference rule were rewritten, dated.
 - The docs: help.html gains a grid sentence after the card's (the fence,
   the count, cards only, the refusal and ⌃⌘M, the shape edited in source,
-  the nesting, the current app), Enter's clause for a grid's cards, the
+  the nesting, the `../writer` version), Enter's clause for a grid's cards, the
   copy button's `copy grid`, the paste sentence, and Tab in a quote
   moving a grid; CLAUDE.md's layout names the grid under grammar.ts,
   gridKeys.ts and editor.css; the brainstorm's example is the canonical

@@ -37,4 +37,4 @@ was"). A search for "Pedenteria in comparison" then found nothing.
   query while the entry stays open, so a second query was typed onto the
   first. It now waits for the box to hold the whole query and types over
   ⌘A.
-- The current app finds none of the three; four differences listed.
+- The `../writer` version finds none of the three; four differences listed.

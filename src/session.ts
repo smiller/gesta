@@ -501,7 +501,7 @@ export function startSession(opts: SessionOptions): Session {
     opts.onSwitch?.();
     surface.switchTo(!surface.md);
   }
-  /* the current app's chords, silent in Helium
+  /* the ⌃⌘ chords the page answers, each one Helium lets through
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
      (pin: source view › ⌃⌘W rendered) */
   const chords = new Map<string, () => void>([

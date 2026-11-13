@@ -72,7 +72,7 @@ at once, with no wait at an open.
   nothing stored. The other tab's write in the last two is made straight
   to the store and announced (`foreignWrite`), to land inside the first's
   save delay. Every other reading unchanged.
-- The current app (MEASURED): its first window never reached the page in
+- The `../writer` version (MEASURED): its first window never reached the page in
   the first two (the row missing earlier in the step); typing into a page
   another tab deleted is saved there, bringing the page back. Four
   differences listed.
@@ -114,7 +114,7 @@ read against the code:
     storage and channel names from src/; THE CHECKER OWED is
     `tools/appNames.test.ts`, failing on a spelled one in those files.
 
-The current app's run now stops at reopening the deleted page (its wait
+The `../writer` version's run now stops at reopening the deleted page (its wait
 times out); the reading listed. Its two older section failures (places,
 entries left and renamed) predate this.
 
@@ -129,6 +129,6 @@ entries left and renamed) predate this.
   drops the refused typing's copy with them.
 - A new reading, "the deleted page left for the day", red first (the
   refusal still in the corner, MEASURED), then green (no corner,
-  MEASURED); every other reading unchanged. The current app's corner
+  MEASURED); every other reading unchanged. The `../writer` version's corner
   there says "saved", its typing into the deleted page landing on the way
   out (MEASURED); listed.

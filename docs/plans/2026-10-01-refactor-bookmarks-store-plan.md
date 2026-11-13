@@ -54,7 +54,7 @@ draft rule is screen state, so the deletion test fails there.
   reload, ⌃⌘B, A, the list repaired to `["2026-09-06"]` by hand, ⌃⌘B, A,
   a reload. The successor's run differed from the approved copy by those
   four readings and their console line only (MEASURED); approved. The
-  current app read the same on the damaged list and kept the latch over
+  `../writer` version read the same on the damaged list and kept the latch over
   the repaired one (MEASURED); two differences listed.
 - The approve tool's scrub drops a logged Error's stack frames: the
   minified line and column move with any change to the bundle.
@@ -68,7 +68,7 @@ draft rule is screen state, so the deletion test fails there.
 - The new Helium step `bookmarks from another window`: Pippa added in a
   second page of the same profile, ⌃⌘B in the first, × on its first row.
   The successor's first window showed the row and stored it after the ×
-  (MEASURED). The current app's showed only the row it read at launch,
+  (MEASURED). The `../writer` version's showed only the row it read at launch,
   and its × wrote `[]`, dropping Pippa (MEASURED): the loss this decision
   fixes, seen. Three differences listed.
 
@@ -87,13 +87,13 @@ draft rule is screen state, so the deletion test fails there.
   14 green (MEASURED).
 - The `bookmarks from another window` step now makes its page in the
   second window, and stands last of the steps that read the page lists:
-  the current app's first window learns of a page made in another (its
+  the `../writer` version's first window learns of a page made in another (its
   lists live in localStorage, which every window shares), the successor's
   does not, and placed before them it changed five readings of ⌃⌘J and
   ⌃⌘K (MEASURED). That gap is older than this work and is put to the
   reader, not listed as decided.
 - The successor's first window kept the made page's row and stored it
-  after its × (MEASURED); the current app's dropped it, writing `[]`
+  after its × (MEASURED); the `../writer` version's dropped it, writing `[]`
   (MEASURED).
 
 ### 2026-10-01 — the review at high over b3bfd91^..095ecd0
@@ -152,7 +152,7 @@ No mechanical class among them, so no checker is owed.
   the review's fix run); after, it opened with "made in the second
   window" and the typing landed after it (MEASURED). Every other reading,
   the bridge's unknown-book refusal included, unchanged (MEASURED).
-- The current app's run, regenerated: one difference in "a list typed"
+- The `../writer` version's run, regenerated: one difference in "a list typed"
   (its corner not showing) on the first run, gone on the second
   (MEASURED, 1 in 2), outside this change.
 
@@ -201,7 +201,7 @@ findings, each read against the code:
    older multi-window gap, not this batch's.
 4. FIXED: `waitBar` throws again on its timeout, now with what the page
    held in the message; only "reference copy" catches it.
-5. FIXED: the two listed reasons for the current app's readings said
+5. FIXED: the two listed reasons for the `../writer` version's readings said
    what was never read; they now say what its run shows.
 6. NOT TAKEN: one store read per open of an address the cache lacks,
    after the warm. Its cost was not measured; an open is one
@@ -239,7 +239,7 @@ read unchanged, 0 open, no miss logged (MEASURED).
   while the first holds its older copy, then opened and typed into in
   the first. On 2bbf4c3's code the first opened its old copy and the
   typing was refused; after, it opened with the edit and the typing
-  landed (MEASURED). The current app's first window opens its own copy
+  landed (MEASURED). The `../writer` version's first window opens its own copy
   and refuses the typing (MEASURED); two differences listed.
 
 ### 2026-10-01 — the review of decision 7, and its revert

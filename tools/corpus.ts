@@ -2,35 +2,23 @@
    serialized, parsed again. The questions per file, in order of weight:
      1. FIXED POINT — serialize(parse(out)) === out, byte for byte. A grammar
         whose output it cannot read back stably loses data at every save.
-     2. ROUND TRIP — out ~ src under the normalization the current app's own
-        round trip needed (measured: blank-line and trailing-newline
-        counts, and a www. link target gaining https://).
+     2. ROUND TRIP — out ~ src under the normalization a round trip needs
+        (measured: blank-line and trailing-newline counts, and a www. link
+        target gaining https://).
      3. NO FILE MADE WORSE — the literal asterisks in the parsed text of out
         do not outnumber those in the parsed text of src (a text-stable loss
         is invisible to a byte diff).
-     4. With --writer only: the parsed text matches what the CURRENT app's
-        parser reads from the same source, whitespace aside — except over a
-        file holding a `::: grid` or a `::: stanza`, blocks the current app
-        does not have; and a `###`–`######` heading here, text there, and
-        emphasis across a line break, are decided differences, counted
-        apart. Off by default: every form new here reads as a difference
-        there, and the question it answered, that nothing was lost at the
-        cutover, was settled then; kept for a question about something
-        ported.
-   Usage: node tools/corpus.ts [dir] [--writer] [--limit N] [--only substring] [--report file]
+   Usage: node tools/corpus.ts [dir] [--limit N] [--only substring] [--report file]
    The report lists every file that fails any question, with the first
    differing lines; the summary counts failures by question. Read-only. */
 import { readdirSync, readFileSync, statSync, writeFileSync, mkdirSync } from "node:fs";
 import { join, relative, dirname } from "node:path";
 import { parseMarkdown, visibleText } from "../src/model/parse.ts";
 import { serializeMarkdown } from "../src/model/serialize.ts";
-import { deeperHeadings, spanningEmphasis, type Heading, type Run } from "./corpusRules.ts";
-import type { Node } from "prosemirror-model";
 
 const args = process.argv.slice(2);
 const flag = (name: string): string | undefined => { const i = args.indexOf(name); return i < 0 ? undefined : args[i + 1]; };
-const writer = args.includes("--writer");
-const dir = args.find((a, i) => !a.startsWith("--") && (i === 0 || !args[i - 1].startsWith("--") || args[i - 1] === "--writer"))
+const dir = args.find((a, i) => !a.startsWith("--") && (i === 0 || !args[i - 1].startsWith("--")))
   ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const limit = flag("--limit") ? +flag("--limit")! : Infinity;
 const only = flag("--only");
@@ -48,51 +36,7 @@ function norm(s: string): string {
   return s.replace(/\r\n?/g, "\n").replace(/^\n+/, "").replace(/\n+$/, "").replace(/\n{3,}/g, "\n\n")
     .replace(/\]\(www\./g, "](https://www.");
 }
-const collapse = (s: string): string => s.replace(/\s+/g, " ").trim();
 const stars = (s: string): number => (s.match(/\*/g) || []).length;
-function deepHeadings(doc: Node): Heading[] {
-  const out: Heading[] = [];
-  doc.descendants((n) => { if (n.type.name === "heading" && n.attrs.level >= 3) out.push({ level: n.attrs.level, text: n.textContent }); });
-  return out;
-}
-function spanningRuns(doc: Node): Run[] {
-  const found: { at: number; run: Run }[] = [];
-  doc.descendants((block, pos) => {
-    if (!block.isTextblock) return true;
-    for (const mark of ["em", "strong"] as const) {
-      let start = -1, text = "", crosses = false;
-      const close = () => { if (start >= 0 && crosses) found.push({ at: start, run: { mark, text } }); start = -1; text = ""; crosses = false; };
-      block.forEach((n, off) => {
-        if (!n.marks.some((m) => m.type.name === mark)) return close();
-        if (start < 0) start = pos + off;
-        if (n.type.name === "hard_break") { crosses = true; text += "\n"; } else text += n.textContent;
-      });
-      close();
-    }
-    return false;
-  });
-  return found.sort((a, b) => a.at - b.at).map((f) => f.run);
-}
-
-/* the current app's parse arm, for question 4, under --writer; skipped
-   when the sibling repository is not there */
-let currentMdToHtml: ((md: string) => string) | null = null;
-if (writer) try {
-  const mod = await import(new URL("../../writer/src/js/md.mjs", import.meta.url).href) as { mdToHtml: (md: string) => string };
-  currentMdToHtml = mod.mdToHtml;
-} catch (e) {
-  console.error("current parser not importable, skipping the text comparison:", (e as Error).message);
-}
-function htmlText(html: string): string {
-  return html.replace(/!<a [^>]*>[^<]*<\/a>/g, "").replace(/<br>/g, "\n")
-    .replace(/<\/?(?:p|div|li|ul|ol|h\d|table|tr|td|th|pre|blockquote)(?:\s[^>]*)?>/g, "\n")
-    .replace(/<[^>]*>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&amp;/g, "&")
-    .replace(/\u200B/g, "")
-    /* the current parser under node reads a relative or <bracketed> image
-       source as literal text; the running app resolves it at import */
-    .replace(/!\[[^\]]*\]\((?:<[^>]*>|[^)]*)\)/g, "");
-}
-
 const sameLine = (x: string | undefined, y: string | undefined): boolean => x !== undefined && x === y;
 /* resync on the next line both share, so one insertion does not report every line after it */
 function resynced(la: string[], lb: string[], i: number, j: number): [number, number] {
@@ -128,7 +72,7 @@ function firstTextDiff(a: string, b: string): string {
   return `  at ${k}: ${JSON.stringify(a.slice(from, k + 40))}\n  read as: ${JSON.stringify(b.slice(from, k + 40))}`;
 }
 
-const counts = { files: 0, ok: 0, fixedPoint: 0, docChanged: 0, roundTrip: 0, stars: 0, text: 0, deeperHeadings: 0, spanningEmphasis: 0, textStarsMore: 0, textStarsFewer: 0, threw: 0 };
+const counts = { files: 0, ok: 0, fixedPoint: 0, docChanged: 0, roundTrip: 0, stars: 0, threw: 0 };
 const lines: string[] = [];
 const t0 = Date.now();
 for (const path of walk(dir)) {
@@ -158,33 +102,6 @@ for (const path of walk(dir)) {
     if (norm(src) !== norm(out)) { counts.roundTrip++; bad.push("ROUND TRIP DIFFERS", ...firstDiffs(norm(src), norm(out))); }
     const t1 = visibleText(doc), t2 = visibleText(parseMarkdown(out));
     if (stars(t2) > stars(t1)) { counts.stars++; bad.push(`ASTERISKS GREW ${stars(t1)} -> ${stars(t2)}`, firstTextDiff(t1, t2)); }
-    /* a grid and a stanza are this app's alone: the current app's parser
-       reads `::: grid` and `::: stanza` as text, so question 3's parity
-       half would name every such file for ever; the other questions still
-       run over it */
-    if (currentMdToHtml && !/^\s*:::\s*(?:grid|stanza)(?:\s|$)/m.test(src)) {
-      let cur = collapse(htmlText(currentMdToHtml(src)));
-      const mine = collapse(t1);
-      if (cur !== mine) {
-        const deeper = deeperHeadings(cur, deepHeadings(doc));
-        const spanning = spanningEmphasis(deeper.text, spanningRuns(doc));
-        if (spanning.text === mine) {
-          if (deeper.n) counts.deeperHeadings++;
-          if (spanning.n) counts.spanningEmphasis++;
-        }
-        cur = spanning.text;
-      }
-      if (cur !== mine) {
-        counts.text++;
-        /* the asterisk delta names the class: more here than the current app
-           shows means a marker it read as emphasis stays literal here; fewer
-           means the reverse */
-        const d = stars(mine) - stars(cur);
-        const cls = d > 0 ? "MORE ASTERISKS THAN THE CURRENT PARSER" : d < 0 ? "FEWER ASTERISKS THAN THE CURRENT PARSER" : "TEXT DIFFERS FROM THE CURRENT PARSER";
-        if (d > 0) counts.textStarsMore++; else if (d < 0) counts.textStarsFewer++;
-        bad.push(cls + (d ? ` (${stars(cur)} -> ${stars(mine)})` : ""), firstTextDiff(cur, mine));
-      }
-    }
   } catch (e) {
     counts.threw++;
     bad.push("THREW " + ((e as Error).stack ?? String(e)).split("\n").slice(0, 3).join(" | "));
@@ -194,8 +111,7 @@ for (const path of walk(dir)) {
 }
 const summary = [
   `corpus: ${dir}`,
-  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, threw ${counts.threw}` +
-    (currentMdToHtml ? `; with the current parser: text differs ${counts.text} (of which asterisks more ${counts.textStarsMore}, fewer ${counts.textStarsFewer}), decided: a ### heading here ${counts.deeperHeadings}, emphasis across a line ${counts.spanningEmphasis}` : ""),
+  `files ${counts.files}, clean ${counts.ok}, not a fixed point ${counts.fixedPoint}, document changed ${counts.docChanged}, round trip differs ${counts.roundTrip}, asterisks grew ${counts.stars}, threw ${counts.threw}`,
   `${((Date.now() - t0) / 1000).toFixed(1)}s`,
 ];
 mkdirSync(dirname(reportPath), { recursive: true });

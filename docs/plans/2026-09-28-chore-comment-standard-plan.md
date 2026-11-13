@@ -99,24 +99,24 @@ pinned (a performance choice), 2 pinned with a neighbour.
     jumps to the caret ("⌃⌘M back, still scrolled away": false): the
     source's hold reports the caret seen, always (READ, holdViewCaret).
     The way in keeps the window (27px move). A question for the reader.
-  - A refused clipboard: the current app pins "Couldn't copy the link
+  - A refused clipboard: the `../writer` version pins "Couldn't copy the link
     (click to copy)"; the successor whispers it, the markdown only in the
-    console. The one open difference against the current app's run; a
+    console. The one open difference against the `../writer` version's run; a
     question for the reader.
 - The steps: 138 readings; the approved copy grew by 30 lines (25
   readings, 3 console lines, 2 lists that now name the two new pages).
 - DECIDED by the reader, the same day, on the three questions:
   - An error message ends "(click to copy)", so it can be clicked and
     pasted into a bug report: the failed copy is now pinned (`stick`),
-    and matches the current app's run.
+    and matches the `../writer` version's run.
   - Both directions of the view switch keep a reader who scrolled away
     from the caret: the textarea's caret is measured on a hidden twin
     that wraps as it does (`sourceCaretSeen`); "⌃⌘M back, still scrolled
-    away" reads true, where the current app jumps (listed as decided).
+    away" reads true, where the `../writer` version jumps (listed as decided).
   - The caret moves to the line made below a picture pasted at the
     entry's end — otherwise there is no way to write on after it;
     "a picture pasted at the entry's end" reads caretBelowPicture true,
-    as the current app's run does.
+    as the `../writer` version's run does.
   Each reading stood at the failing value before the change (MEASURED
   above) and at the passing one after.
 

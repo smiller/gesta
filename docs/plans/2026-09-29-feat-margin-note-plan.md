@@ -130,7 +130,7 @@ was built as its initial assumption; none was decided anew.
   from 30 lines on so that it is pushed, and a prose page); its four
   readings are successor-only, listed in `corner.differences.txt`.
   Approved after reading the diff: the four readings added, no earlier
-  reading moved. The current app's run was regenerated; it also gained
+  reading moved. The `../writer` version's run was regenerated; it also gained
   two lines in its `places` section, READ as the steps' change in
   f352e3f, made after that run was last regenerated (573fcff).
 - NOT DONE: the Donne folder's rebuild to write `::: margin-note`.
@@ -178,7 +178,7 @@ holding against the code; all fixed in one commit:
 
 The fix's only change to the verdict run: the prose page's reading
 gained the grid card's gloss, in the text (read, then approved); the
-current app's run was regenerated and did not change.
+`../writer` version's run was regenerated and did not change.
 
 After the fixes, decided by the reader: a confirmation pass over the fix
 commit, its findings listed by significance before any is fixed; the
@@ -212,7 +212,7 @@ any was fixed; the reader chose:
   (the 1621 book's printed glosses excepted, as the source). Renamed in
   the help card, the tests, the step's labels and reading, the fixtures;
   the verdict run's diff was the renames alone.
-- The current app's run, regenerated for the labels, read a fading
+- The `../writer` version's run, regenerated for the labels, read a fading
   corner as gone in an untouched list step once in two runs (a timing
   flake in the old app); the second run matched.
 

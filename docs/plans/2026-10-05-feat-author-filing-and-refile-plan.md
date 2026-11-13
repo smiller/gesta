@@ -157,7 +157,7 @@ it sorts; Rename on an author re-files it, books and links with it.
 - A step: the seeded Boethius re-filed (or a seeded two-word author with
   a book): the hash, the stored keys, a link from a page rewritten, the
   corner's notice, the panel order.
-- The current app has neither; each field it reads differently is
+- The `../writer` version has neither; each field it reads differently is
   listed in `corner.differences.txt` with that reason.
 
 ## Hand-check (to be played headless first, then handed over)
@@ -231,7 +231,7 @@ Not covered by hand: a failed write mid-re-file (the tests' alone).
   `File and sort “Harley Price” under:` holding `Price, Harley`; typed
   `Harley Price`, the corner reads `filed under Harley Price — 2 entries
   moved`, the author page's link to the book follows, the old keys are
-  gone. The current app asks once and files as typed: three readings
+  gone. The `../writer` version asks once and files as typed: three readings
   listed in `corner.differences.txt`.
 - The step's first drafts read wrong three times, each the step's fault:
   a profile left from a development run (the tool's profile persists
@@ -353,8 +353,7 @@ causes were the tools'. Built, in `tools/` only:
   author-filing section's own `bringToFront` is gone; played after the
   two-window section it reads right (MEASURED). Full isolation per
   section was not built: sections seed for later ones by design, and the
-  current app's driver plays the same steps.
-- The verdict unchanged: corner ok, bridge ok (MEASURED). The current
-  app's run read one field differently once — the list section's corner
+  `../writer` version's driver plays the same steps.
+- The verdict unchanged: corner ok, bridge ok (MEASURED). The `../writer` version's run read one field differently once — the list section's corner
   `show` false, against true — and true on the two runs after (MEASURED,
-  1 in 3): the current app's "saved" whisper timing, not the change.
+  1 in 3): the `../writer` version's "saved" whisper timing, not the change.

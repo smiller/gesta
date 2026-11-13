@@ -1,11 +1,11 @@
-# Gesta (the successor)
+# Gesta
 
-Gesta rebuilt with a build step: the editor on ProseMirror, the UI on
-Svelte 5, the output still ONE `index.html` that opens from `file://`. THIS
-IS THE RUNNING APP since 2026-09-22. `../writer` is the OLD app, kept for its
-process and the corpus tool's `--writer` comparison, never maintained; a
-feature built here is never back-ported. "The current app" in older plans
-and tools means `../writer`.
+Gesta: a journal and bookshelf in one page. The editor on ProseMirror, the
+UI on Svelte 5, built by Vite into ONE `index.html` that opens from
+`file://`. It began as a rebuild of the `../writer` version, recorded in
+the conversion plan, and has been the running app since 2026-09-22; that
+version is not maintained, nothing built here is carried back, and only the
+conversion plan calls it "the current app".
 
 This file holds what is IN FORCE: the process and the layout. Why each rule
 exists, and the measurements behind it, live in THE RECORD: `docs/plans/`,
@@ -18,13 +18,22 @@ must keep is restated here.
 
 ## The process in force
 
-The process is `../writer/CLAUDE.md`'s, carried over per checker as each
-becomes relevant. In force now:
-
-- REPORTING — the whole "Reporting" section of ../writer/CLAUDE.md,
-  verbatim: every factual sentence tagged MEASURED / READ / INFERRED, no
-  connective tissue, hand over the artifact not the claim, report who
-  found what.
+- REPORTING — what is SAID about the work, which no checker reads:
+  - Every factual sentence is tagged MEASURED (naming the command), READ
+    (file:line) or INFERRED. One that fits none of the three is deleted,
+    not hedged.
+  - No connective tissue: a sentence written to make another one land is
+    cut. Fabrications sit in those, never in a number.
+  - A rate, an interval or a trend needs two dated readings and the gap
+    between them.
+  - Hand over the artifact, not the claim: a command and its output, a
+    probe to paste, a file:line.
+  - Report who found what, exactly.
+  - A reply's first and last sentences carry something not already in it,
+    or they go; a restated fact is the commonest filler.
+  - A correct criticism is never softened into a position to be contested.
+  - The object is the best version of the project, not being right about
+    it.
 - THE COMMENT STANDARD (record: docs/plans/2026-09-28-chore-comment-standard-plan.md):
   - NO COMMENT BY DEFAULT. One stays only if someone changing this code
     would get it wrong without it, in a way the code, its names, types and
@@ -67,6 +76,11 @@ becomes relevant. In force now:
   `one-offs/shelfLines.ts` calls a typed attribution a "source line".
   `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
   one-offs/, this file or the glossary; dated plan records keep their words.
+- THE APP IS NEVER NAMED BY ITS AGE: not "the current app", not "the old
+  app". Where the version it was rebuilt from must be named, it is "the
+  `../writer` version". `tools/vocabulary.test.ts` holds this over src/,
+  tools/, one-offs/, this file, the glossary and every plan but the
+  conversion plan, a quotation of the words excepted.
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
   `/improve-codebase-architecture` reads: things a reader of the app would
   recognise, never how the code does them; a word is added when a design
@@ -110,8 +124,8 @@ becomes relevant. In force now:
   played. A `.received.txt` is never committed. A PASSING RUN IS NOT
   REPLAYED: `tools/heliumStamp.ts` fingerprints what a run reads, and a
   run with the same fingerprint prints "ok — not replayed"; `STEPS=` always
-  plays. The comparison with the old app is retired (its files are in git
-  history).
+  plays. The comparisons with the `../writer` version, in Helium and in
+  the corpus tool, are retired; git history has them.
 - REVIEWS, BY BATCH: the free checkers first, then ONE `/code-review` at
   HIGH over a commit range, when a batch touches a DOM seam (main.ts,
   session.ts, editor.ts, paste.ts, renderedView.ts, sourceView.ts) or
@@ -152,11 +166,11 @@ becomes relevant. In force now:
   clean reinstall runs `mkdir -p node_modules && xattr -w com.dropbox.ignored 1 node_modules`
   FIRST. Versions are pinned exact (`npm install --save-exact`).
 - STORAGE: names live OUTSIDE `page750.*` (every `file://` page shares one
-  storage origin); the old app's databases are never read; data arrives by
+  storage origin); the `../writer` version's databases are never read; data arrives by
   import of the export folder.
-- NOT YET — the other prose checkers (`tools/*.sh` in ../writer), each
-  re-aimed when its class first shows up in a review, keeping its self-test,
-  its hit count measured before its rule is chosen.
+- NOT YET — more prose checkers: one is added when its class first shows
+  up in a review, with its self-test, its hit count measured before its
+  rule is chosen.
 - NEVER — the single-file checkers (the vocabulary index, check-sync,
   map.sh, names.sh, the concatenating build): TypeScript and the import
   graph answer their question.
@@ -172,7 +186,7 @@ becomes relevant. In force now:
   is case-insensitive). svelte-check is not installed; a component is
   checked by its compile and its test. A decision in a component moves to
   a module, where CodeScene scores it and a node test reads it.
-- Every ⌃⌘ chord is the old app's or was asked for (⌃⌘I "italic, but a
+- Every ⌃⌘ chord was carried from the `../writer` version or asked for (⌃⌘I "italic, but a
   line", ⌃⌘N "new"). Whether Helium passes a chord through is answered
   only by pressing it there; every new chord is named for a hand to try.
 - A headless step reads THE SCREEN after a gesture (the entry, the
@@ -204,7 +218,7 @@ becomes relevant. In force now:
 Tests sit beside their modules as `*.test.ts`; Vitest also reads
 `tools/**` and `one-offs/**`. THE CORPUS is
 `~/Library/CloudStorage/Dropbox/gesta-backups/current`, this app's backup
-(`gesta-snapshots` is the old app's and is never read).
+(`gesta-snapshots` is the `../writer` version's and is never read).
 
 - `src/model/` — the document model, no DOM: `schema.ts` (nodes, marks,
   `MARK_ORDER`), `grammar.ts` (the line regexes and the pure string
@@ -287,9 +301,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `tools/readerBundle.ts` makes one; `tools/publishReader.sh` publishes it,
   only on the reader's word. Record: docs/plans/2026-10-31-feat-reader-plan.md.
 - `tools/` — what is used every day:
-  - The corpus: `corpus.ts` (the round trip over the corpus, report in
-    `tools/out`; `--writer` adds the old parser's comparison, with
-    `corpusRules.ts`), `importCorpus.ts`, `referenceCorpus.ts`.
+  - The corpus: `corpus.ts` (the round trip over the corpus: a fixed
+    point, the document unchanged, no asterisk gained; its report in
+    `tools/out`), `importCorpus.ts` (the import over it, into memory).
   - Helium: `helium-steps.ts` (THE STEPS; sections in `tools/steps/`, a
     module a group, over `steps/kit.ts` and `steps/timing.ts`; `TODAY` the
     fixed date the page's clock is set to), `adapters/successor.ts` (the

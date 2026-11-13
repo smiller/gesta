@@ -710,10 +710,12 @@ standard's checker extended to the daily tools/ ("Yes, with the split").
   left out: 709 pins, all resolving. Its sweep flagged 62 blocks in tools/,
   16 naming another module and 50 carrying provenance, four of them both
   (dates, "the review", "the reader", a confirmation pass); every one cut to its own code, and the
-  comparison's leftovers the checker cannot see ("successor-only", "the
-  current app" in the steps) cut with them (MEASURED, the sweep reads 0 in
-  tools/). corpus.ts and referenceCorpus.ts keep "the current app": their
-  `--writer` and ⌃⌘C questions are that comparison. Two flagged blocks were
+  comparison's leftovers the checker cannot see ("successor-only",
+  "the current app" in the steps) cut with them (MEASURED, the sweep reads 0
+  in tools/). corpus.ts and referenceCorpus.ts keep "the current app": their
+  `--writer` and ⌃⌘C questions are that comparison. (Reversed 2026-11-12,
+  asked: both questions retired, and the app named by its age nowhere but
+  the conversion plan — "the `../writer` version" where it must be named.) Two flagged blocks were
   the checker's own subject (its provenance rule's banner, its known-bad
   list), reworded.
 - Left for project 2: two sections are still named for the old app ("editing
