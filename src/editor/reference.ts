@@ -1,7 +1,7 @@
 import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
-import { blockUnits, paragraphAt, hasFacing, type Unit, type Side } from "./numbering.ts";
+import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, refersByHalfLine, refersAsProsimetrum, refersByBookChapterParagraph, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { passageAt, quotation, inkBetween, type Passage, type Refusal as PassageRefusal } from "./passage.ts";
@@ -105,7 +105,6 @@ function paragraphRange(doc: Node, lines: Unit[]): string {
   const a = paragraphOf(doc, lines[0]), b = paragraphOf(doc, lines[lines.length - 1]);
   return a === b ? "para " + a : "paras " + elideRange(a, b);
 }
-const paragraphOf = (doc: Node, u: Unit): number => paragraphAt(doc.nodeAt(u.blockPos)!, u.blockPos, u.pos);
 export function folioLeaves(doc: Node): { pos: number; label: string }[] {
   const out: { pos: number; label: string }[] = [];
   doc.descendants((n, pos) => {
@@ -196,7 +195,7 @@ const facingRange = (p: Passage): string => (hasFacing(p.doc) ? referenceRange(p
    column alone, unless both columns were asked for */
 function quotedFor(p: Passage, all: boolean, how: { halves: boolean; paragraphs: boolean }): { passage: string } | { refused: Refusal } {
   if (all || !p.facing) return { passage: quotation(p, how)! };
-  const alone = quotation(p, { column: "translation" });
+  const alone = quotation(p, { translation: true });
   return alone ? { passage: alone } : { refused: "no-translation" };
 }
 function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): Payload | { refused: Refusal } {

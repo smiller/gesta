@@ -88,3 +88,28 @@ makes", its top recommendation. Candidates 2 (the paste decision) and 3 (the
   `dl-covered`); a section "column marks" added, a mouse drag from closing
   punctuation on each kind, its eleven lines the corner run's only
   difference, order ok — held for the reader's approval.
+
+## The batch's review (candidates 1–3, `ea6a8d8..75311de`)
+
+- One `/code-review` at HIGH: 180,974 tokens (MEASURED, the last message of
+  its transcript: 2 input + 402 cache creation + 178,098 cache read + 2,472
+  output), 32 tool uses, 637 s. Nine findings; the ⌃⌘G move read as keeping
+  its behaviour.
+- 1–3, speed: `coveredMarks` and `offersBoth` worked out the whole passage,
+  its two-block check walking every line, before their cheap tests; over a
+  3000-line plain verse page selected whole, 16.1 and 15.7 ms a call
+  (MEASURED, re-run of the review's script), on every drag step and, for
+  the offer, every scroll. Fixed in passage.ts: the two-block check skips
+  the walk where the span touches one block at most; 0.30 and 0.23 ms after
+  (MEASURED).
+- 4: `paragraphOf` copied into passage.ts and reference.ts; one now, in
+  numbering.ts.
+- 5: a terminal's copy with no plain text went to ProseMirror's HTML paste,
+  each coloured run a paragraph; now nothing (test-first, failing first).
+- 6: `plainPaste`'s comment claimed ProseMirror's own paste, which also opens
+  a closed slice; the comment now says what it does.
+- 7: ⌃⌘G in the markdown view walked the document before its words; the
+  view checked first.
+- 8: `Standing.asked` typed without the null the acts never hold.
+- 9: `quotation`'s `column: "both"` never passed; `translation?: boolean`.
+- All in one fix commit; the suite 1484, Code Health held, Helium unchanged.

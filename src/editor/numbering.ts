@@ -260,3 +260,4 @@ export function renumbered(doc: Node, at: number, cut: Node, paragraphs = false)
   };
   return stamp(cut, 1);
 }
+export const paragraphOf = (doc: Node, u: Unit): number => paragraphAt(doc.nodeAt(u.blockPos)!, u.blockPos, u.pos);

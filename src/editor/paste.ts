@@ -273,8 +273,8 @@ export function clipboardOf(data: DataTransfer | null): Clipboard {
   return { plain: data?.getData("text/plain") ?? "", html: data?.getData("text/html") ?? "", types: data ? Array.from(data.types) : [], file: pastedImageFile(data) };
 }
 export type Pasted = { tr: Transaction; refused: string | null } | { file: File } | "nothing" | "editor's own";
-/* as ProseMirror pastes plain text: the parsed slice, its links made bare, a
-   single node set in whole, the transaction marked as a paste */
+/* plain text as one slice: its links made bare, a single node set in whole,
+   the transaction tagged a paste */
 function plainPaste(state: EditorState, text: string, href: string): Pasted {
   if (!text) return "editor's own";
   const slice = bareLinks(pasteSlice(text, state.selection.$from), href);
@@ -303,7 +303,7 @@ const ROUTES: Route[] = [
   (_s, clip) => (clip.file ? { file: clip.file } : null),
   (s, clip) => { const tr = linked(s, clip); return tr ? { tr: tr.scrollIntoView(), refused: null } : null; },
   (s, clip) => (onlyLineBreaks(clip.plain, s.selection.$from, clip.html) ? "nothing" : null),
-  (s, clip, href) => (terminalCopy(clip.html) && outsideCode(s) ? asText(s, unwrapped(clip.plain), href) : null),
+  (s, clip, href) => (terminalCopy(clip.html) && outsideCode(s) ? (clip.plain ? asText(s, unwrapped(clip.plain), href) : "nothing") : null),
   (_s, clip) => (clip.types.includes("text/html") ? "editor's own" : null),
   (s, clip, href) => asText(s, clip.plain, href),
 ];

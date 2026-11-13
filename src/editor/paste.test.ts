@@ -261,3 +261,6 @@ test("a terminal's copy that is not blocks is pasted as plain text is: one node 
   expect([r.tr.getMeta("paste"), r.tr.getMeta("uiEvent")]).toEqual([true, "paste"]);
   expect(serializeMarkdown(r.tr.doc)).toBe("- item one line");
 });
+test("a terminal's copy with no text is nothing: never the editor's paste of its HTML", () => {
+  expect(after(over("some words", "words"), "", GHOSTTY)).toBe("nothing");
+});

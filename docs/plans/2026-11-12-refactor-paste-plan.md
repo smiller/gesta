@@ -60,3 +60,7 @@ landed; the source view's terminal route a second copy of the rule.
 - The suite 1481 tests; every changed file Code Health 10, copy.ts and
   copy.test.ts new at 10; the approved Helium run unchanged (corner, order,
   bridge, reader ok, MEASURED).
+
+## The batch's review
+
+Recorded in docs/plans/2026-11-12-refactor-passage-plan.md, "The batch's review".

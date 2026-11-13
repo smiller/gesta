@@ -64,7 +64,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   const asked = (box: "line" | "page", v: string, from: "bar" | "link"): boolean => {
     const view = session.view!;
     const a = ask(view.state.doc, conventions(), box, v, { pos: landingPos(view.state), asked: lineAsked }, from);
-    if ("pos" in a) { lineAsked = a.asked ?? 0; landOn(a.pos); }
+    if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
     if (a.said) say(a.said.text, SAID_MS[a.said.kind]);
     return "pos" in a;
   };
@@ -137,9 +137,10 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    const view = session.view, b = bar(view?.state.doc ?? null, conventions());
-    if (session.mdView) { say(b.inSource, 3000); return; }
+    if (session.mdView) { say(bar(null, conventions()).inSource, 3000); return; }
+    const view = session.view;
     if (!view) return;
+    const b = bar(view.state.doc, conventions());
     if (b.kind === "none") { say(b.none, 2000); return; }
     freshAsk();
     opened();

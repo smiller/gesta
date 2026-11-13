@@ -2,7 +2,7 @@ import { Fragment, type Node, type ResolvedPos } from "prosemirror-model";
 import { Selection } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { blockUnits, fenceAt, paragraphAt, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
+import { blockUnits, fenceAt, paragraphOf, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
 import { quotePrefix } from "../model/grammar.ts";
 import { dropFolios } from "./copy.ts";
 
@@ -121,6 +121,9 @@ function sentenceRange(doc: Node, from: number, to: number): [number, number] {
    numbering its own lines (pin: reference.test › a work in stanza fences
    refers by stanza) */
 function spansTwoBlocks(p: Passage): boolean {
+  /* a span touching one block at most is in one: the walk of every line it
+     holds took 16 ms over a 3000-line page selected whole (MEASURED) */
+  if (rowBlocks(p.doc).filter((b) => overlaps(b, p.from, p.to)).length <= 1) return false;
   /* a row with nothing on the left is in its block by the right column (pin:
      reference.test › a passage running from one block numbered on both sides) */
   const units = [...p.lines(), ...p.lines({ side: "right" })];
@@ -263,7 +266,6 @@ function dropTurns(frag: Fragment): Fragment {
   return Fragment.from(out);
 }
 interface Quoting extends Passage { byHalves: boolean; paragraphs: boolean }
-const paragraphOf = (doc: Node, u: Unit): number => paragraphAt(doc.nodeAt(u.blockPos)!, u.blockPos, u.pos);
 function loosePassage(p: Quoting): string {
   const [a, b] = wholeRows(p.doc, p.from, p.to);
   const cut = p.doc.cut(a, b);
@@ -534,8 +536,8 @@ export function passageAt(doc: Node, from: number, to: number): Passage | { refu
 }
 /* `paragraphs`: a prose fence that counts paragraphs; the translation
    column alone is null where the passage inks none of it */
-export function quotation(p: Passage, how: { halves?: boolean; paragraphs?: boolean; column?: "both" | "translation" }): string | null {
-  if (how.column === "translation") return p.facing && translationPassage(p, p.facing);
+export function quotation(p: Passage, how: { halves?: boolean; paragraphs?: boolean; translation?: boolean }): string | null {
+  if (how.translation) return p.facing && translationPassage(p, p.facing);
   return passageMd(p, !!how.halves, !!how.paragraphs);
 }
 /* what the passage's rows hold beyond the selection: a range per text, a

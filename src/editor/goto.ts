@@ -208,9 +208,9 @@ const noNumbers = (c: Conventions): string => (c.paragraphs ? "no paragraph numb
 export function bar(doc: Node | null, c: Conventions): { kind: AskKind; label: "Line" | "Verse" | "Paragraph"; none: string; inSource: string } {
   return { kind: doc ? askKind(doc) : "none", label: lineLabel(c), none: noNumbers(c), inSource: "Switch to the rendered view to go to " + askedFor(c) };
 }
-export interface Standing { pos: number | null; asked: number | string | null }
+export interface Standing { pos: number | null; asked: number | string }
 export interface Said { text: string; kind: "typed" | "absent" | "landing" }
-export type Answer = { pos: number; asked: number | string | null; said: Said | null } | { said: Said };
+export type Answer = { pos: number; asked: number | string; said: Said | null } | { said: Said };
 const typedWrong = (text: string): Answer => ({ said: { text, kind: "typed" } });
 const absent = (text: string): Answer => ({ said: { text, kind: "absent" } });
 const placed = (hit: { pos: number } | string, standing: Standing): Answer => (typeof hit === "string" ? absent(hit) : { pos: hit.pos, asked: standing.asked, said: null });
