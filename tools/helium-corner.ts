@@ -1,6 +1,6 @@
 // `node tools/helium-corner.ts [profileDir] [screenshot.png]`
 import { chromium } from "playwright-core";
-import * as A from "./adapters/successor.ts";
+import * as A from "./adapters/app.ts";
 import { runSteps, TODAY } from "./helium-steps.ts";
 import { rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";

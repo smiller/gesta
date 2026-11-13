@@ -123,8 +123,8 @@ All from the grilling of 2026-09-27, by the reader, unless marked.
 
 - `.page .verse[data-stanza]::before { content: attr(data-stanza) }`,
   absolute at `top: 0; right: calc(100% - var(--ln-column) + 3.2ch)`,
-  bold, the sans face, ink colour — variant D as mocked over the
-  successor's own stylesheet (MEASURED 2026-09-27 in headless Helium, no
+  bold, the sans face, ink colour — variant D as mocked over this
+  app's own stylesheet (MEASURED 2026-09-27 in headless Helium, no
   overlap with line numbers at "every line").
 - The column needs room: a root class (`stanzapage`) set by the
   lineNumbers plugin's `attributes` prop (:59-62) where a top-level
@@ -181,7 +181,7 @@ All from the grilling of 2026-09-27, by the reader, unless marked.
 - tools/corpus.ts:120-123 skips question 3 (the `../writer` version's parse) for a
   file holding `::: grid`; `::: stanza` joins that exception, since
   ../writer's parser reads it as text (READ, the research pass).
-- tools/helium-steps.mjs: one successor-only step, the grid step's shape
+- tools/helium-steps.mjs: one step of this app's alone, the grid step's shape
   (:203-250): seed a two-stanza entry under the directive, read the
   drawn stanza column, ⌃⌘R across the stanza gap and read the label;
   every field ../writer reads differently listed in
@@ -260,7 +260,7 @@ Checks before handing over, the prior art's (../writer/docs/
 source-to-bookshelf.md §5): the word multiset against the source; the
 per-canto stanza counts against the witness; hygiene (no `[`, no
 straight quote, no "Renascence"); tools/corpus.ts clean over the folder;
-tools/importCorpus.ts; the real import through the successor's own act
+tools/importCorpus.ts; the real import through this app's own act
 in headless Helium; then the reader opens a canto, the contents and a
 Mutabilitie canto and reads them.
 
@@ -290,7 +290,7 @@ Mutabilitie canto and reads them.
 - A pasted stanza in an entry WITHOUT the directive draws its number but
   cites plainly — by design (the last row of the decisions table).
 - The `../writer` version reads `::: stanza` as text; nothing is back-ported,
-  and the export's stanza fences are the successor's alone (CLAUDE.md).
+  and the export's stanza fences are this app's alone (CLAUDE.md).
 
 ## Questions still open
 
@@ -415,13 +415,13 @@ decisions table.
 - tools/helium-steps.mjs: a "stanza" section, run last before "pill",
   seeding its own Faerie Queene work (`STANZA_SEEDS`: the author, the
   work page with the directive, a three-stanza I.i) through a new adapter
-  call, `seedStanza` — `?store=seed-stanza` in the successor (main.ts,
+  call, `seedStanza` — `?store=seed-stanza` in this app (main.ts,
   beside `?store=seed`), the `window.gesta` seam in the `../writer` version — so
   no earlier step's reading moves. It reads the drawn numbers and the
   crumb, ⌃⌘R on a line and across a stanza gap, and ⌃⌘G `2.1` and `2.9`;
   new readers `stanzas`, `selectBetween`, `clipboardLines`, `landedText`
   in both adapters.
-- MEASURED: the successor's received run differed from the approved copy
+- MEASURED: this app's received run differed from the approved copy
   by exactly the five new lines, read and approved (108 lines); the
   `../writer` version's run, regenerated (`npm run compare:writer`), by the same
   five. The compare then listed 19 open fields, every one the `../writer` version's want of the stanza fence (its fences read as text, its citation

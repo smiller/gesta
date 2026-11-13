@@ -100,7 +100,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
     source's hold reports the caret seen, always (READ, holdViewCaret).
     The way in keeps the window (27px move). A question for the reader.
   - A refused clipboard: the `../writer` version pins "Couldn't copy the link
-    (click to copy)"; the successor whispers it, the markdown only in the
+    (click to copy)"; this app whispers it, the markdown only in the
     console. The one open difference against the `../writer` version's run; a
     question for the reader.
 - The steps: 138 readings; the approved copy grew by 30 lines (25
@@ -466,7 +466,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
   is set after the launch's backup run, which ends after the warm the
   step waited on. The step now waits for the pill, its timeout swallowed
   so a missing pill still reads as missing.
-- The new reading is the successor's alone, listed in
+- The new reading is this app's alone, listed in
   corner.differences.txt ("the current app keeps no place").
 - MEASURED after both fixes: the whole Helium verdict ok in 8 runs of 8
   (4 flips in 10 before). The stripped-of-comments diff: session.ts's

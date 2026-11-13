@@ -36,3 +36,8 @@ test("the app, its tools, its one-off scripts, CLAUDE.md, the glossary and the p
   const inPlans = plans.filter((f) => f.endsWith(".md")).flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retiredName(t, age(f)) ? [f + ":" + (i + 1)] : [])));
   expect([...found, ...inPlans]).toEqual([]);
 });
+test("retiredName: the successor, for this app, in any case and any form; never a path or a file name holding the word, nor a quotation of it", () => {
+  for (const bad of ["the successor's run", "Successor-only; the grid", "readings are successor-only", "THE SUCCESSOR"]) expect(retiredName(bad), bad).toBe(true);
+  for (const good of ["tools/adapters/successor.mjs", "`2026-09-07-feat-successor-app-prosemirror-svelte-plan.md`", 'the leftovers ("successor-only", the steps)', "a successful run"]) expect(retiredName(good), good).toBe(false);
+  expect(retiredName("the successor's run", "old")).toBe(false);
+});

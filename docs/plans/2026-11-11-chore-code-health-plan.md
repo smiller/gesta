@@ -524,8 +524,8 @@ checks, a query answering with an element that carries what the steps read
 rest of tools/ keep the strict DOM. `npm run check` runs both. The reason: a
 `!` on each read is an assertion, no safer than the run itself, where a
 missing element fails its step; the checking worth having is the node side,
-the parameters, the steps' one `Adapter` (the successor's), every function's
-name and arity. That checking found, while typing: the successor's
+the parameters, the steps' one `Adapter` (this app's), every function's
+name and arity. That checking found, while typing: this app's
 `seedStanza` and `seedMargin` took no seeds where the steps pass them and the
 writer's take them; its `launch` never read its seeds; a forEach index never
 read; `waitPairGrew`'s `prev` a string of column widths where I had first

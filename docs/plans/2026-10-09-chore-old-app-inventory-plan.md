@@ -482,7 +482,7 @@ after, test-first unless named a step:
     `../writer` version skipped code there too — not played).
 39. A wholly bold-italic row: a stage direction → a speaker (numbering.test).
 40. NOT CHANGED, decided: an entry's title is its first level-one heading
-    everywhere (the successor plan's decision 5, the Horace shelf corrected
+    everywhere (the conversion plan's decision 5, the Horace shelf corrected
     in the data to it).
 41. A quotation in a note: filled and ruled → neither (the step).
 42. A reference block in the rendered view: editable → inert, a click
@@ -589,7 +589,7 @@ unfixed src, every step's reading moving with its change (MEASURED):
 Committed f5b97a0. The compare: 419 steps, 0 open; seven differences
 listed with their reasons (two cursor arrivals, the Import button's
 hand-back, 56a as asked, the line bar's re-ask on another tab's write,
-?warm=slow being the successor's probe). One gap the compare found and
+?warm=slow being this app's probe). One gap the compare found and
 fixed before the commit: a shortcut refused for want of a caret left the
 keys nowhere; they go back to the entry, as the `../writer` version's did. Seen in
 the hand-check probe and not taken: the hover copy button can stand over
@@ -1614,7 +1614,7 @@ the fix (MEASURED), noted, not changed.
 ### 2026-10-17 — the `../writer` version frozen; a passing run not replayed
 
 Asked, after 37 minutes of one fix were mostly headless runs (MEASURED:
-the `../writer` version's whole run 7m57s, again with the successor's 11m27s, a
+the `../writer` version's whole run 7m57s, again with this app's 11m27s, a
 flake's rerun 3m30s, the commit's verify 6m59s). The `../writer` version frozen
 (462eca2): never replayed, its stored run still compared. A passing run
 not replayed: the fingerprint of everything a run reads stamped when it

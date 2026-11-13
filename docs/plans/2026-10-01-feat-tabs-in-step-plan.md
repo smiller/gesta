@@ -110,7 +110,7 @@ read against the code:
 8. FIXED: a notice after a failed warm answers false (a test, red then
    green).
 9. FIXED with 3.
-10. FIXED, a literal: the successor adapter and the shared steps take the
+10. FIXED, a literal: this app's adapter and the shared steps take the
     storage and channel names from src/; THE CHECKER OWED is
     `tools/appNames.test.ts`, failing on a spelled one in those files.
 

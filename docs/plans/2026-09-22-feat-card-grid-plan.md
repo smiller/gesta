@@ -28,7 +28,7 @@ Index cards get arranged in threes on the desk (the photo of
 2026-09-22, nine cards, 3x3). Gesta has the card — `::: card-<colour>`,
 689 of them in 65 export files (MEASURED in the brainstorm) — but no way
 to place cards beside each other; nine files hold cards back to back
-that would read as a grid. The successor's document model is where a new
+that would read as a grid. This app's document model is where a new
 block is cheap: one regex, one node, one serializer case, one stylesheet
 rule, and one small keymap for the edges.
 
@@ -44,7 +44,7 @@ Questions), with the decisions added 2026-09-22 after the two passes:
 | The grid widens to the window; each card capped at 650px; the count steps down below a 240px card | brainstorm, Resolved Questions (measured on the mockup) |
 | The type inside a grid is 0.8em; a short card stretches to its row | brainstorm, Resolved Questions |
 | The hyphenated card word stays required | brainstorm, Key Decisions |
-| Successor-only; the `../writer` version has no grid word | brainstorm, Key Decisions |
+| This app's alone; the `../writer` version has no grid word | brainstorm, Key Decisions |
 | A bad grid shows THE ENTRY as source with a parse-time reason that quotes the offending line, through the throw path that exists; ONE wording on both paths (open and ⌃⌘M), pinned while the entry sits in source | asked and chosen 2026-09-22 after the research pass found the paragraph path would escape the opener on the next save; the one wording and the pin from the flow analysis (flow 1, 8) |
 | A grid's shape (add or remove a card, change the count) is edited in the source view only; no new chord | asked and chosen 2026-09-22 |
 | The grid is ISOLATING, with one way out: no lift or join crosses its edge; Backspace or Delete that would merge two cards is refused with a whisper naming ⌃⌘M; Enter on the empty last line of the LAST card places a paragraph after the grid | asked and chosen 2026-09-22 after the flow analysis traced the base keymap reshaping a grid silently (flow 3) |
@@ -357,7 +357,7 @@ The listKeys/quoteKeys shape (READ CLAUDE.md's layout: commands with an
   closer a stray `:::` that a save there writes `\:::` — which,
   re-imported here, no longer closes the grid, so the grid swallows to
   the end and the entry is refused; flow 10). The help says: a grid is
-  successor-only, and an entry with a grid SAVED in the `../writer` version comes
+  this app's alone, and an entry with a grid SAVED in the `../writer` version comes
   back refused.
 - The corpus tool (READ tools/corpus.ts:113-125): question 3 compares the
   parsed text with the `../writer` version's parser, which reads `::: grid 3` as
@@ -561,7 +561,7 @@ measured, what the reader was told to look at, what the review found.
 - MEASURED: `node tools/corpus.ts` over the mirror, 13,565 files: clean
   13,497, not a fixed point 0, document changed 0, round trip differs
   31, asterisks grew 0, text differs from the current parser 44 (15 more,
-  16 fewer), threw 0, 20.8 s — the same counts the successor plan's record
+  16 fewer), threw 0, 20.8 s — the same counts the conversion plan's record
   last carried (its line 1760: 31 and 44). The parity half of question 3
   now skips a file holding a grid opener; no file in the mirror does.
 - MEASURED: `npm run check` clean; `npm test` 63 files, 491 tests, all
@@ -592,7 +592,7 @@ measured, what the reader was told to look at, what the review found.
   rather than merging the first card's tail into the target paragraph;
   no test pinned the old behaviour, and the row precedent says whole.
 - MEASURED in headless Helium over the built page (a scratch script over
-  the successor's own paste seam, 2026-09-22): at a 1493px window a
+  this app's own paste seam, 2026-09-22): at a 1493px window a
   four-card `::: grid` drew 1445px wide, 3 across, its left edge at 24px,
   the page 712px wide at 391px, the cards' type 14.4px (0.8 × 18); at
   760px the grid was 712px at 2 across; with sixty paragraphs below it no
@@ -686,7 +686,7 @@ measured, what the reader was told to look at, what the review found.
   typing.ts:8-27; fit.ts:77-86; main.ts:612-637; importFiles.ts:59;
   tools/corpus.ts:113-125; helium-steps.mjs:15-22, :181-202;
   corner.differences.txt:1-10; ../writer/src/js/md.mjs:508-515.
-- The successor plan and its record:
+- The conversion plan and its record:
   docs/plans/2026-09-07-feat-successor-app-prosemirror-svelte-plan.md.
 
 ### Batch 3 — 2026-09-22, the tools and the docs
@@ -709,7 +709,7 @@ measured, what the reader was told to look at, what the review found.
   which is a reading worth having (the pin's release, the grid drawn).
   And the `../writer` version, which rendered the stray line and came back,
   needs a second ⌃⌘M before the fix, so the step asks `inSource` first.
-- MEASURED, the successor's run: `{"grid":true,"columns":2,"cards":2,
+- MEASURED, this app's run: `{"grid":true,"columns":2,"cards":2,
   "wider":true,"type":"14.4px"}`; the band `copy grid` / `Copy this grid`;
   the click `copied` with `::: grid 2\n::: card-light-blue\nalpha…` on
   the clipboard; ⌘C's HTML `grid: true`; the stray line's corner

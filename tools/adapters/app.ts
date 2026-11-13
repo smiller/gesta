@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { blankRowReader } from "./blankRow.ts";
 import type { Page } from "../heliumPage.ts";
 import { inPage, textOf, whisperSince } from "./inPage.ts";
-export const name = "successor";
+export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
    three (measured) */

@@ -83,7 +83,7 @@ Three shapes were weighed on 2026-09-22:
   two lines by another card opener — the entries a grid could one day
   rearrange, by hand, never by migration. The corpus gate is untouched:
   a text with no grid parses as it did.
-- **Successor-only.** The running app has no grid word (READ
+- **This app's alone.** The `../writer` version has no grid word (READ
   ../writer/src/js/md.mjs:508–515, its refusal list knows note, reference
   and card-). What the running app shows for an entry holding a grid is
   NOT MEASURED; it matters only after the cutover, and the shared Helium

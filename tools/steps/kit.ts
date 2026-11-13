@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import type { Page, BrowserContext } from "../heliumPage.ts";
 import type { Dialog } from "playwright-core";
-import type * as Successor from "../adapters/successor.ts";
+import type * as App from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
 
-export type Adapter = typeof Successor & { pill?: boolean };
+export type Adapter = typeof App & { pill?: boolean };
 export type Tree = { name: string; text?: string; kids?: Tree[] };
 export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean }
 /* the day the drivers pin the page's clock to (context.clock.setFixedTime,

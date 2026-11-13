@@ -52,7 +52,7 @@ draft rule is screen state, so the deletion test fails there.
   left `ui/bookmarksModel.ts`, the sweep now being the store's.
 - The new Helium step `bookmarks damaged`: the list set to `not json`, a
   reload, ⌃⌘B, A, the list repaired to `["2026-09-06"]` by hand, ⌃⌘B, A,
-  a reload. The successor's run differed from the approved copy by those
+  a reload. This app's run differed from the approved copy by those
   four readings and their console line only (MEASURED); approved. The
   `../writer` version read the same on the damaged list and kept the latch over
   the repaired one (MEASURED); two differences listed.
@@ -67,7 +67,7 @@ draft rule is screen state, so the deletion test fails there.
   list was not re-read was removed with the rule it pinned.
 - The new Helium step `bookmarks from another window`: Pippa added in a
   second page of the same profile, ⌃⌘B in the first, × on its first row.
-  The successor's first window showed the row and stored it after the ×
+  This app's first window showed the row and stored it after the ×
   (MEASURED). The `../writer` version's showed only the row it read at launch,
   and its × wrote `[]`, dropping Pippa (MEASURED): the loss this decision
   fixes, seen. Three differences listed.
@@ -88,11 +88,11 @@ draft rule is screen state, so the deletion test fails there.
 - The `bookmarks from another window` step now makes its page in the
   second window, and stands last of the steps that read the page lists:
   the `../writer` version's first window learns of a page made in another (its
-  lists live in localStorage, which every window shares), the successor's
+  lists live in localStorage, which every window shares), this app's
   does not, and placed before them it changed five readings of ⌃⌘J and
   ⌃⌘K (MEASURED). That gap is older than this work and is put to the
   reader, not listed as decided.
-- The successor's first window kept the made page's row and stored it
+- This app's first window kept the made page's row and stored it
   after its × (MEASURED); the `../writer` version's dropped it, writing `[]`
   (MEASURED).
 

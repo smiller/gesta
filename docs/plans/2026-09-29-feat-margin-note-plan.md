@@ -18,7 +18,7 @@ between two lines (READ, the import's screenshots 2026-09-29), which
 reads as a stanza break. The reader asked for them in the margin, and
 settled the look over a mockup drawn on the app's own captured page:
 `2026-09-29-margin-note-mockup.html` beside this file (the First
-Anniversarie as the successor rendered it, with a switch strip).
+Anniversarie as this app rendered it, with a switch strip).
 
 A new fence, `::: margin-note`, says where the thing goes, not what it
 is: a note to be set in the margin when the margin is wide enough, and a
@@ -128,7 +128,7 @@ was built as its initial assumption; none was decided anew.
 - THE STEP. `margin-note` in `tools/helium-steps.mjs`, seeded by
   `?store=seed-margin` (the passage, with "Shortnesse of life." moved up
   from 30 lines on so that it is pushed, and a prose page); its four
-  readings are successor-only, listed in `corner.differences.txt`.
+  readings are this app's alone, listed in `corner.differences.txt`.
   Approved after reading the diff: the four readings added, no earlier
   reading moved. The `../writer` version's run was regenerated; it also gained
   two lines in its `places` section, READ as the steps' change in

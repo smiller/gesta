@@ -4,7 +4,10 @@ export const retiredWord = (line: string): boolean => words(line).some((w) => RE
 /* the app named by its age reads differently once there is a newer one; a
    quotation of the words keeps them */
 const unquoted = (line: string): string => line.replace(/"[^"]*"|“[^”]*”/g, "");
+/* a path or a file name keeps the word it was given */
+const SUCCESSOR = /(?<![-/])\bsuccessor\b(?!\.\w)/i;
 export const retiredName = (line: string, age: "current" | "old" | "either" = "either"): boolean => {
   const ages = age === "either" ? "current|old|new" : age === "old" ? "old|new" : age;
-  return new RegExp("\\b(?:" + ages + ")\\s+app\\b", "i").test(unquoted(line));
+  const text = unquoted(line);
+  return new RegExp("\\b(?:" + ages + ")\\s+app\\b", "i").test(text) || (age === "either" && SUCCESSOR.test(text));
 };

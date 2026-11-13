@@ -14,7 +14,7 @@ The Faerie Queene's contents page runs several screens: seven books, six
 of them with a proem and twelve cantos under their `##` heading. On a
 WORK'S contents page each `##` section folds under its heading, so the
 page closes to its headings — the reader's mockup of 2026-09-28
-(scratchpad `contents-accordion-mockup.html`, drawn over the successor's
+(scratchpad `contents-accordion-mockup.html`, drawn over this app's
 own stylesheets) settled the look. The text is not touched: folding is
 how the page is drawn. Every factual sentence is tagged READ / MEASURED /
 INFERRED as CLAUDE.md's reporting rule asks.
@@ -67,7 +67,7 @@ All by the reader, 2026-09-28, over the mockup.
   as `::after` from `data-count` (small, sans, muted, hidden when open),
   `.folded { display: none }`, a closed heading's tighter bottom margin.
 - `src/chrome/help.html`: a sentence on folding contents.
-- tools/helium-steps.mjs: one successor-only section — seed a work with
+- tools/helium-steps.mjs: one section of this app's alone — seed a work with
   two `##` sections, read the folds closed, click a triangle, read it
   open, follow a link and come back, read the open set and the scroll —
   its differences from the `../writer` version listed.
@@ -158,10 +158,10 @@ and editor.ts, DOM seams).
   the step aimed at a two-line heading's MIDDLE, below the triangle,
   which stands beside the first line — `elementFromPoint` there read
   `MAIN`. The step now aims beside the first line.
-- MEASURED: the successor's run gained exactly the four new lines, read
+- MEASURED: this app's run gained exactly the four new lines, read
   and approved (112 lines). The `../writer` version's run, regenerated twice, read
   the list step's "saved" whisper as `show: false` where this morning's
-  record and the successor read `true` — the whisper racing the read, in
+  record and this app read `true` — the whisper racing the read, in
   an app this plan does not touch; the record keeps its earlier `true`
   rather than list a difference whose cause is timing. Ten fields decided
   in corner.differences.txt, the `../writer` version having no folds: 109 steps,
@@ -359,7 +359,7 @@ judged real and fixed in one commit:
   the paragraph in view at the page's clamped bottom (612 of 612).
 - (7) the comment asserting main's centring reworded as a decision; the
   foldState header's claim about placeState reworded as history.
-- (8) the shared step "places" (six readings, successor-only, listed in
+- (8) the shared step "places" (six readings, this app's alone, listed in
   corner.differences.txt); the `../writer` version's run regenerated: 115 steps, 0 open.
 - (9) one `stored(key, parse)` helper under both keys; a place equal to
   the last written is not written.
