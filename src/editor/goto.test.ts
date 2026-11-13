@@ -11,26 +11,26 @@ const VERSES: Conventions = { paragraphs: false, verses: true };
 const FRESH: Standing = { pos: null, asked: 0 };
 /* the text of the row an ask lands on, or what it says instead */
 function lands(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string {
-  const a = ask(doc, c, box, typed, FRESH, "bar");
+  const a = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "bar");
   return "pos" in a ? doc.nodeAt(a.pos)!.textContent : a.said.text;
 }
 /* what an ask says, landing or not */
 function says(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null {
-  return ask(doc, c, box, typed, FRESH, "bar").said?.text ?? null;
+  return ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "bar").said?.text ?? null;
 }
 /* Enter pressed again and again on the same ask: what each press says and where it lands */
 function presses(doc: Node, typed: string, times: number, c = LINES): { at: string; said: string | null }[] {
   const out: { at: string; said: string | null }[] = [];
   let standing: Standing = FRESH;
   for (let i = 0; i < times; i++) {
-    const a: Answer = ask(doc, c, "line", typed, standing, "bar");
+    const a: Answer = ask(doc, c, { line: typed }, standing, "bar");
     if (!("pos" in a)) throw new Error(a.said.text);
     out.push({ at: doc.nodeAt(a.pos)!.textContent, said: a.said?.text ?? null });
     standing = { pos: a.pos, asked: a.asked };
   }
   return out;
 }
-const kindOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box, typed, FRESH, "bar").said?.kind ?? null;
+const kindOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "bar").said?.kind ?? null;
 
 const two = parseMarkdown("::: verse\na\nb\nc\nd\n:::\n\nprose between\n\n::: verse 2\nx\ny\n:::");
 const mixed = parseMarkdown("::: prose\nSentence one. | Un.\nSentence two. | Deux.\n:::\n\n::: verse\nline one\nline two\nline three\n:::");
@@ -65,15 +65,15 @@ describe("lineHits and the cycle", () => {
   it("a split line is one hit, on its first half; a stanza counts it once", () => {
     const split = parseMarkdown("::: verse 1562\nRelate by whom.\n**Messenger**\n⟨…⟩By Samson.\nThe sorrow\n:::");
     expect(presses(split, "1562", 2).map((p) => p.at)).toEqual(["Relate by whom.", "Relate by whom."]);
-    expect(says(parseMarkdown("::: stanza 1\na\n⟨…⟩b\nc\n:::"), "1.9")).toBe("stanza 1 has 2 lines");
+    expect(says(parseMarkdown("::: stanza 1\na\n⟨…⟩b\nc\n:::"), "1.9")).toBe("no line 9 in stanza 1 — it has 2 lines");
   });
   it("a line in two blocks is two hits; Enter again cycles and wraps; an edit between presses keeps the standing row", () => {
     expect(presses(two, "3", 3).map((p) => p.said)).toEqual(["line 3 — verse block 1 of 2", "line 3 — verse block 2 of 2", "line 3 — verse block 1 of 2"]);
-    const [first, second] = [ask(two, LINES, "line", "3", FRESH, "bar"), ask(two, LINES, "line", "3", { pos: null, asked: 3 }, "bar")];
+    const [first, second] = [ask(two, LINES, { line: "3" }, FRESH, "bar"), ask(two, LINES, { line: "3" }, { pos: null, asked: 3 }, "bar")];
     if (!("pos" in first) || !("pos" in second)) throw new Error("no landing");
     /* a different number asked, or a standing row that is no hit, starts again at the first */
-    expect(ask(two, LINES, "line", "3", { pos: first.pos, asked: 2 }, "bar")).toMatchObject({ pos: first.pos });
-    expect(ask(two, LINES, "line", "3", { pos: 9999, asked: 3 }, "bar")).toMatchObject({ pos: first.pos });
+    expect(ask(two, LINES, { line: "3" }, { pos: first.pos, asked: 2 }, "bar")).toMatchObject({ pos: first.pos });
+    expect(ask(two, LINES, { line: "3" }, { pos: 9999, asked: 3 }, "bar")).toMatchObject({ pos: first.pos });
     expect(second).toMatchObject({ pos: first.pos });
   });
   it("says where it landed only where the number is in several blocks, form-neutral in a prosimetrum", () => {
@@ -164,8 +164,8 @@ describe("the refusals", () => {
   it("a leaf is found case-blind and named back when missing", () => {
     const w = parseMarkdown(williams);
     expect(kindOf(w, "61", LINES, "page")).toBeNull();
-    expect(ask(w, LINES, "page", "61", FRESH, "bar")).toHaveProperty("pos");
-    expect(ask(parseMarkdown("⟨xiv⟩ text"), LINES, "page", "XIV", FRESH, "bar")).toHaveProperty("pos");
+    expect(ask(w, LINES, { page: "61" }, FRESH, "bar")).toHaveProperty("pos");
+    expect(ask(parseMarkdown("⟨xiv⟩ text"), LINES, { page: "XIV" }, FRESH, "bar")).toHaveProperty("pos");
     expect(says(w, "999", LINES, "page")).toBe("no page 999 here");
     expect(says(parseMarkdown("plain"), "9", LINES, "page")).toBe("no page numbers here");
   });
@@ -192,7 +192,7 @@ describe("stanza.line", () => {
   });
   it("a stanza that is not there, or a line past a stanza's end, is refused in words", () => {
     expect(says(canto, "4")).toBe("no stanza 4 here — the last is 3");
-    expect(says(canto, "2.9")).toBe("stanza 2 has 3 lines");
+    expect(says(canto, "2.9")).toBe("no line 9 in stanza 2 — it has 3 lines");
     expect(says(canto, "0")).toBe("no stanza 0 here — the last is 3");
   });
   it("the ask is a stanza or stanza.line, named back as typed when it is neither", () => {
@@ -201,6 +201,33 @@ describe("stanza.line", () => {
     expect(says(canto, "")).toBe("type a stanza, or stanza.line");
     expect(says(canto, "I.i.2")).toBe("I.i.2 is not a stanza or stanza.line, like 2.1");
     expect(says(canto, "2.")).toBe("2. is not a stanza or stanza.line, like 2.1");
+  });
+});
+
+describe("a page in stanzas: the Stanza and Line boxes", () => {
+  const canto = parseMarkdown("# Book I, Canto i\n\n::: stanza 1\na1\na2\na3\n:::\n\n::: stanza 2\nb1\nb2\nb3\n:::\n\n::: stanza 3\nc1\nc2\nc3\n:::");
+  const boxes = (stanza: string, line: string): string => { const a = ask(canto, LINES, { stanza, line }, FRESH, "bar"); return "pos" in a ? canto.nodeAt(a.pos)!.textContent : a.said.text; };
+  it("the bar shows a Stanza box and a Line box", () => {
+    expect(bar(canto, LINES).kind).toBe("stanza");
+  });
+  it("a stanza alone lands on its first line, a stanza and a line on that line; the stanza in arabic or roman", () => {
+    expect(boxes("2", "")).toBe("b1");
+    expect(boxes("2", "3")).toBe("b3");
+    expect(boxes("ii", "3")).toBe("b3");
+    expect(boxes(" III ", "")).toBe("c1");
+  });
+  it("a line with no stanza, a stanza that is not there and a line not in that stanza are each said", () => {
+    expect(boxes("", "3")).toBe("type a stanza for line 3");
+    expect(boxes("", "")).toBe("type a stanza number");
+    expect(boxes("4", "")).toBe("no stanza 4 here — the last is 3");
+    expect(boxes("2", "9")).toBe("no line 9 in stanza 2 — it has 3 lines");
+  });
+  it("each box takes its own kind of number, named back as typed when it is not one", () => {
+    expect(boxes("5-az", "")).toBe("5-az is not a stanza number");
+    expect(boxes("iiv", "1")).toBe("iiv is not a stanza number");
+    expect(boxes("2", "2.1")).toBe("2.1 is not a line number");
+    expect(boxes("2", "iii")).toBe("iii is not a line number");
+    expect(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "bar").said?.kind).toBe("typed");
   });
 });
 
@@ -233,8 +260,8 @@ describe("a skipped line number", () => {
   });
   it("says so where the landing came from a link, which says no other landing word", () => {
     const d = parseMarkdown("::: verse 10\na\n⟨skipped line number⟩\n:::");
-    expect(ask(d, LINES, "line", "11", FRESH, "link").said?.text).toBe("line 11 is omitted in this edition");
-    expect(ask(two, LINES, "line", "3", FRESH, "link").said).toBeNull();
+    expect(ask(d, LINES, { line: "11" }, FRESH, "link").said?.text).toBe("line 11 is omitted in this edition");
+    expect(ask(two, LINES, { line: "3" }, FRESH, "link").said).toBeNull();
   });
 });
 

@@ -3,7 +3,7 @@ import type { Screen } from "./screen.svelte.ts";
 import type { Journal } from "../store/reference.ts";
 import { refersByBookChapterParagraph, refersAsScripture } from "../store/reference.ts";
 import { entryKey } from "../store/keys.ts";
-import { ask, bar, type Conventions } from "../editor/goto.ts";
+import { ask, bar, type Conventions, type Words } from "../editor/goto.ts";
 import { openFoldAt } from "../editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
@@ -19,7 +19,7 @@ export interface LineBarDeps {
   warmed(): boolean;
 }
 export interface LineBar {
-  toggle(): void; reask(): void; input(kind: "line" | "page", v: string): void; enter(kind: "line" | "page", v: string, repeat: boolean): void;
+  toggle(): void; reask(): void; input(kind: "line" | "page" | "stanza", v: string): void; enter(kind: "line" | "page" | "stanza", v: string, repeat: boolean): void;
   close(): void; dismiss(): void; landSoon(v: string): void; centreSoon(): void; replayOwed(): void;
 }
 export function lineBarActs(d: LineBarDeps): LineBar {
@@ -61,9 +61,9 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const conventions = (): Conventions => ({ paragraphs: refersByBookChapterParagraph(session.current.date, session.current.tag, journal), verses: refersAsScripture(session.current.date, session.current.tag, journal) });
   const SAID_MS = { typed: 2000, absent: 3000, landing: 2500 };
-  const asked = (box: "line" | "page", v: string, from: "bar" | "link"): boolean => {
+  const asked = (words: Words, from: "bar" | "link"): boolean => {
     const view = session.view!;
-    const a = ask(view.state.doc, conventions(), box, v, { pos: landingPos(view.state), asked: lineAsked }, from);
+    const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
     if (a.said) say(a.said.text, SAID_MS[a.said.kind]);
     return "pos" in a;
@@ -95,7 +95,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
       endLinkMark = untilHand(() => { lineOwed = null; });
       return;
     }
-    if (!asked("line", v, "link")) return;
+    if (!asked({ line: v }, "link")) return;
     /* the next key goes from the line, not the page's top (pin: a link to a
        line › a link to a line, a key after arriving) */
     const landed = landingPos(view.state);
@@ -133,7 +133,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   const freshAsk = (): void => {
     const c = session.current, askKey = entryKey(c.date, c.tag);
     if (askKey === lastAskKey) return;
-    lastAskKey = askKey; lb.line = ""; lb.page = ""; lineAsked = 0;
+    lastAskKey = askKey; lb.line = ""; lb.page = ""; lb.stanza = ""; lineAsked = 0;
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
@@ -166,11 +166,18 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const kind = b.kind === "none" ? "both" : b.kind;
     if (kind !== lb.kind) switchKind(kind);
   };
-  const inputBar = (kind: "line" | "page", v: string): void => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
-  const enterBar = (kind: "line" | "page", v: string, repeat: boolean): void => {
+  const inputBar = (kind: "line" | "page" | "stanza", v: string): void => {
+    if (kind === "line") { lb.line = v; lineAsked = 0; } else lb[kind] = v;
+  };
+  /* on a page in stanzas Enter in either box asks with both */
+  const wordsOf = (kind: "line" | "page" | "stanza", v: string): Words => {
+    if (lb.kind === "stanza") return { stanza: kind === "stanza" ? v : lb.stanza, line: kind === "line" ? v : lb.line };
+    return kind === "page" ? { page: v } : { line: v };
+  };
+  const enterBar = (kind: "line" | "page" | "stanza", v: string, repeat: boolean): void => {
     if (repeat) return;
     if (session.mdView || !session.view) return;
-    asked(kind, v, "bar");
+    asked(wordsOf(kind, v), "bar");
   };
   const closeBar = putLineCaret;
   /* a click whose press began in the bar is a drag out of a box, not a

@@ -113,3 +113,16 @@ makes", its top recommendation. Candidates 2 (the paste decision) and 3 (the
 - 8: `Standing.asked` typed without the null the acts never hold.
 - 9: `quotation`'s `column: "both"` never passed; `translation?: boolean`.
 - All in one fix commit; the suite 1484, Code Health held, Helium unchanged.
+
+## The batch's architecture re-scan
+
+- `/improve-codebase-architecture`'s exploration over `ea6a8d8..51e7a6a`:
+  160,171 tokens (MEASURED, the last message of its transcript: 2 input +
+  1,660 cache creation + 154,342 cache read + 4,167 output), 29 tool uses,
+  259 s. Its verdict: the three deepenings landed, small interfaces, thin
+  callers, tests across the interfaces. Three small candidates: the
+  facing-block rule split between passage.ts and reference.ts (`offersBoth` a
+  pass-through, `quotedFor` and the no-translation refusal outside the
+  passage); the passage's tests filed in reference.test.ts (29 of its pins
+  resolve there, MEASURED); a page's leaves walked by folios.ts and
+  reference.ts both, goto.ts importing each.

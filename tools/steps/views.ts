@@ -220,7 +220,7 @@ section("walk", async () => {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
 });
 section("stanza", async () => {
-  /* the Faerie Queene's stanzas: a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap referring to I.i.1.3–2.1 and quoting both, ⌃⌘G taking stanza.line */
+  /* the Faerie Queene's stanzas: a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap referring to I.i.1.3–2.1 and quoting both, ⌃⌘G asking by a Stanza box and a Line box */
   await A.seedStanza(page, STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1");
   await R.settle(page);
@@ -238,15 +238,30 @@ section("stanza", async () => {
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await page.keyboard.type("2.1");
+  await page.keyboard.type("2");
+  await page.keyboard.press("Tab");
+  await page.keyboard.type("1");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 2.1", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza 2, line 1", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Meta+a");
-  await page.keyboard.type("2.9");
+  await page.keyboard.type("9");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 2.9", await R.linebar(page));
+  await log("⌃⌘G stanza 2, line 9", await R.linebar(page));
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("3");
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.type("ii");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G stanza ii, line 3", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await page.keyboard.press("Meta+a");
+  await page.keyboard.press("Backspace");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("⌃⌘G line 3, no stanza", await R.linebar(page));
   await page.keyboard.press("Escape");
 });
 section("a blank row", async () => {

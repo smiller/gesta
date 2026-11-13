@@ -62,3 +62,26 @@ the bar.
 ## The batch's review
 
 Recorded in docs/plans/2026-11-12-refactor-passage-plan.md, "The batch's review".
+
+## The Stanza box (asked, 2026-11-12)
+
+On a page in stanzas the Line box took `N` or `N.M`, and `2` landing on
+stanza 2's first line "isn't obvious from the context" (asked). Decided by
+grilling: the bar shows `Stanza [ ] Line [ ]` (a page in stanzas has no
+leaves, so no Page box); a stanza alone lands on its first line, a stanza and
+a line on that line; a line alone says "type a stanza for line 3"; a missing
+stanza "no stanza 4 here — the last is 3"; a missing line "no line 9 in
+stanza 2 — it has 3 lines", the link's `N.M` too; the Stanza box takes arabic
+or roman (`ii`, read back through the roman it writes), the Line box arabic
+alone; a link keeps `?line=N.M`; the focus starts in the Stanza box.
+
+- `ask()` takes the boxes' words as a record, `{ line }`, `{ page }` or
+  `{ stanza, line }`; `bar()` answers `"stanza"` for a page holding a
+  top-level stanza. Test-first: the new tests failed before the module
+  took the record (MEASURED). The suite 1488.
+- Helium: the two steps typing `2.1` and `77.4` into the bar now type into
+  the two boxes, plus a missing line, `ii` and a line with no stanza; the
+  bar's reader names the Stanza box only where it is shown, so no other
+  step's line moved (MEASURED, the diff is those two steps' lines alone);
+  the link to a stanza unchanged; held for the reader's approval.
+- The help card says it, in the stanza paragraph.

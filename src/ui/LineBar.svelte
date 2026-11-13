@@ -8,17 +8,18 @@
   import { enterKey, holdsFocus } from "./cardKeys.ts";
   let { lineBar, onInput, onEnter, onClose }: {
     lineBar: Screen["lineBar"];
-    onInput: (kind: "line" | "page", value: string) => void;
-    onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void;
+    onInput: (kind: "line" | "page" | "stanza", value: string) => void;
+    onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void;
     onClose: () => void;
   } = $props();
   let lineInput: HTMLInputElement | undefined = $state();
   let pageInput: HTMLInputElement | undefined = $state();
+  let stanzaInput: HTMLInputElement | undefined = $state();
   export function focusAsk(): void {
-    const el = lineBar.kind === "page" ? pageInput : lineInput;
+    const el = lineBar.kind === "page" ? pageInput : lineBar.kind === "stanza" ? stanzaInput : lineInput;
     el?.focus(); el?.select();
   }
-  const key = (kind: "line" | "page") => (e: KeyboardEvent): void => {
+  const key = (kind: "line" | "page" | "stanza") => (e: KeyboardEvent): void => {
     if (!enterKey(e)) return;
     e.preventDefault();
     onEnter(kind, (e.currentTarget as HTMLInputElement).value, e.repeat);
@@ -30,12 +31,16 @@
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="linebar" hidden={!lineBar.open} onmousedown={press} role="search">
+  <span class="ask" hidden={lineBar.kind !== "stanza"}>
+    <label for="stanzainput">Stanza</label>
+    <input id="stanzainput" type="text" autocomplete="off" spellcheck="false" bind:this={stanzaInput} value={lineBar.stanza} oninput={(e) => onInput("stanza", e.currentTarget.value)} onkeydown={key("stanza")}>
+  </span>
   <span class="ask" hidden={lineBar.kind === "page"}>
     <label for="lineinput">{lineBar.lineLabel}</label>
     <input id="lineinput" type="text" autocomplete="off" spellcheck="false" bind:this={lineInput} value={lineBar.line} oninput={(e) => onInput("line", e.currentTarget.value)} onkeydown={key("line")}>
   </span>
   <span class="askor" hidden={lineBar.kind !== "both"}>, or</span>
-  <span class="ask" hidden={lineBar.kind === "line"}>
+  <span class="ask" hidden={lineBar.kind === "line" || lineBar.kind === "stanza"}>
     <label for="folioinput">Page</label>
     <input id="folioinput" type="text" autocomplete="off" spellcheck="false" bind:this={pageInput} value={lineBar.page} oninput={(e) => onInput("page", e.currentTarget.value)} onkeydown={key("page")}>
   </span>

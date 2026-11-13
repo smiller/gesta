@@ -19,10 +19,12 @@ section("a work in stanzas", async () => {
   await log("⌃⌘R across two stanzas", { lines: await R.clipboardLines(page) });
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await page.keyboard.type("77.4");
+  await page.keyboard.type("77");
+  await page.keyboard.press("Tab");
+  await page.keyboard.type("4");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 77.4", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza 77, line 4", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Escape");
 });
 section("Old English verse", async () => {

@@ -17,16 +17,18 @@ import { schema } from "../model/schema.ts";
 import { hasFolios } from "./folios.ts";
 import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
+import { roman } from "../store/reference.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 
 const N = schema.nodes;
-export type AskKind = "none" | "line" | "page" | "both";
+export type AskKind = "none" | "line" | "page" | "both" | "stanza";
 const prose = (block: Unit[]): boolean => block[0].kind === "sentence";
 const unitNoun = (block: Unit[]): string => prose(block) ? "sentence" : "line";
 const formNoun = (block: Unit[]): string => prose(block) ? "prose block" : "verse block";
 /* what this entry can be asked for: the line box answers for sentences
    too, though a prose book paints nothing */
 function askKind(doc: Node): AskKind {
+  if (hasStanzas(doc)) return "stanza";
   const lines = paintsLines(doc) || blocksOf(lineUnits(doc, 0)).length > 0;
   return lines ? (hasFolios(doc) ? "both" : "line") : hasFolios(doc) ? "page" : "none";
 }
@@ -189,14 +191,17 @@ function findStanza(doc: Node, s: number): { last: number; found: Found | null }
 function stanzaLine(found: Found, s: number, l: number | undefined): { pos: number } | string {
   const lines = blockUnits(found.node, found.pos, 0).filter((u) => u.line && !u.rest && !u.skip);
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
-  return want ? { pos: want.pos } : "stanza " + s + " has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
+  return want ? { pos: want.pos } : "no line " + l + " in stanza " + s + " — it has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
 }
-function stanzaHit(doc: Node, ask: string): { pos: number } | string {
-  const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
+function stanzaAt(doc: Node, s: number, l: number | undefined): { pos: number } | string {
   const { last, found } = findStanza(doc, s);
   if (!last) return "no stanzas here";
   if (!found) return "no stanza " + s + " here — the last is " + last;
   return stanzaLine(found, s, l);
+}
+function stanzaHit(doc: Node, ask: string): { pos: number } | string {
+  const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
+  return stanzaAt(doc, s, l);
 }
 
 export interface Conventions { paragraphs: boolean; verses: boolean }
@@ -220,11 +225,31 @@ function pageAnswer(doc: Node, c: Conventions, typed: string, standing: Standing
   const tok = typed.trim(), hit = folioHit(doc, tok);
   return hit ? placed(hit, standing) : absent(folioRefusal(doc, tok));
 }
-/* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and line,
-   one place each (pin: stanza › ⌃⌘G 2.1) */
+/* a link's words on a page holding stanzas are `N` or `N.M`, stanza and line,
+   one place each (pin: a link to a line › a link to a stanza, and line) */
 function stanzaAnswer(doc: Node, typed: string, standing: Standing): Answer {
   const bad = stanzaAskCheck(typed);
   return bad ? typedWrong(bad) : placed(stanzaHit(doc, typed), standing);
+}
+/* a stanza in arabic or roman, read back to the number it writes */
+function stanzaNumber(typed: string): number | null {
+  if (/^\d+$/.test(typed)) return parseInt(typed, 10);
+  const r = typed.toLowerCase();
+  if (!/^[ivxlcdm]+$/.test(r)) return null;
+  const value: Record<string, number> = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
+  const n = [...r].reduce((sum, ch, i) => sum + (value[ch] < (value[r[i + 1]] ?? 0) ? -value[ch] : value[ch]), 0);
+  return roman(n, true) === r ? n : null;
+}
+/* the bar on a page in stanzas: a Stanza box and a Line box, a stanza alone
+   its first line; each box names back what is not its number (pin: stanza ›
+   ⌃⌘G stanza 2, line 1) (pin: stanza › ⌃⌘G line 3, no stanza) */
+function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing): Answer {
+  const st = stanza.trim(), ln = line.trim();
+  if (ln && !/^\d+$/.test(ln)) return typedWrong(trimLabel(ln, ECHO_CAP) + " is not a line number");
+  if (!st) return typedWrong(ln ? "type a stanza for line " + ln : "type a stanza number");
+  const n = stanzaNumber(st);
+  if (n === null) return typedWrong(trimLabel(st, ECHO_CAP) + " is not a stanza number");
+  return placed(stanzaAt(doc, n, ln ? parseInt(ln, 10) : undefined), standing);
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only
    where the same number is asked again */
@@ -244,7 +269,9 @@ function lineAnswer(doc: Node, c: Conventions, typed: string, standing: Standing
 }
 /* what a box's words name on this page, typed or followed from a link (pin:
    a link to a line › a link to a stanza, and line) */
-export function ask(doc: Node, c: Conventions, box: "line" | "page", typed: string, standing: Standing, from: "bar" | "link"): Answer {
-  if (box === "page") return pageAnswer(doc, c, typed, standing);
-  return hasStanzas(doc) ? stanzaAnswer(doc, typed, standing) : lineAnswer(doc, c, typed, standing, from);
+export type Words = { line: string } | { page: string } | { stanza: string; line: string };
+export function ask(doc: Node, c: Conventions, words: Words, standing: Standing, from: "bar" | "link"): Answer {
+  if ("page" in words) return pageAnswer(doc, c, words.page, standing);
+  if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
+  return hasStanzas(doc) ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);
 }

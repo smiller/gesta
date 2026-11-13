@@ -30,7 +30,7 @@
     onShelves: () => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
-    lineBar: { onInput: (kind: "line" | "page", value: string) => void; onEnter: (kind: "line" | "page", value: string, repeat: boolean) => void; onClose: () => void };
+    lineBar: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
     replace: { onFind: (value: string) => void; onWith: (value: string) => void; onNext: (back: boolean) => void; onOne: () => void; onAll: () => void; onClose: () => void };
     bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
     shortcuts: { onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void };
