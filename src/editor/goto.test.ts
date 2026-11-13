@@ -229,6 +229,14 @@ describe("a page in stanzas: the Stanza and Line boxes", () => {
     expect(boxes("2", "iii")).toBe("iii is not a line number");
     expect(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "bar").said?.kind).toBe("typed");
   });
+  it("a roman stanza is read in the modern form or the old print's additive one: iv and iiii are 4; a numeral in neither is not a number", () => {
+    expect(boxes("iv", "")).toBe("no stanza 4 here — the last is 3");
+    expect(boxes("iiii", "")).toBe("no stanza 4 here — the last is 3");
+    expect(boxes("VIIII", "")).toBe("no stanza 9 here — the last is 3");
+    expect(boxes("XII", "")).toBe("no stanza 12 here — the last is 3");
+    expect(boxes("vx", "")).toBe("vx is not a stanza number");
+    expect(boxes("vv", "")).toBe("vv is not a stanza number");
+  });
 });
 
 // The stanza ask was once taken on every entry of the Faerie Queene, so a plain verse page there — the commendatory

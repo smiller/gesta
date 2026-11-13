@@ -65,8 +65,7 @@ editor/reference.ts:193).
   assertions kept; the masthead's Roman test went, Milton's leaf test
   standing for a leaf as keyed; the top-level-only directive test reads
   `by book, chapter, and paragraph`; the reference-block tests and the
-  editing step use that directive as their example text. The suite 1479
-  tests (MEASURED, `npx vitest run`).
+  editing step use that directive as their example text.
 - The approved Helium run: four lines changed — the canto's crumb `1.1`,
   ⌃⌘R `1.1.2.1` and `1.1.1.3–2.1`, the reference block's example text;
   approved by the reader after reading the diff (643 lines). Order,
@@ -100,7 +99,7 @@ editor/reference.ts:193).
 - Test-first: conventions.test.ts (six tests) failed on the missing module
   before it was written; the six directive tests in reference.test.ts moved
   there, its label tests unchanged; goto.test.ts's three records are full
-  `Conventions`. The suite 1479 tests; Code Health 10 on all nine changed
+  `Conventions`. Code Health 10 on all nine changed
   files, the two new ones included; the approved Helium run unchanged
   (corner, order, bridge, reader ok) (MEASURED, `npm run verify`).
 - GLOSSARY.md: **Reference directive**.
@@ -138,4 +137,35 @@ code, all nine stand:
 9. `as unknown as Conventions` — the record is a typed literal, one field
    a line.
 
-The suite 1480 tests.
+## The confirmation pass (5fe90db..1529929)
+
+`/code-review` at high, asked: 81,815 tokens (MEASURED: the last message
+of subagents/agent-af6c1e6c2009413f5.jsonl, input 2 + cache creation
+2,113 + cache read 77,435 + output 2,265). Nine findings, all stand:
+
+1. `from the last title` matched as "last title" anywhere in the block —
+   predates the batch (the regex moved unchanged); left as it is, the
+   reader choosing instead to rename the directives so each says what it
+   does, matched from the start of its line (side list).
+2. `line()` silently never matched mixed-case words — it lower-cases them.
+3. The help test's title claimed every directive the help names; it reads
+   one phrasing — retitled to what it checks. The help naming no `from the
+   last title` goes with the Help's rewrite.
+4. main.ts's seed comment stated a contract with the Helium steps — cut;
+   one copy of the seeds is candidate 6's.
+5. The glossary's "not inside a quote or a note" — the block stands at the
+   page's top level, inside no other block.
+6. An unknown directive line is ignored silently — side list.
+7. A reference builds the record twice — kept, as in the review's 4.
+8. `type Asked` between two imports — below them.
+9. CLAUDE.md's layout lacked conventions.ts — added; headings.ts is
+   "titles and a page's directive text".
+
+## The architecture run (decided: none for this batch)
+
+Skipped for this batch; the scan waits for candidates 5–7. Its one known
+candidate settled directly: `roman()` moved from store/reference.ts into
+goto.ts, the Stanza box its only caller, and is tested through the box.
+
+Stanza box. Confirmed the box should accept both modern forms and old
+additive forms (both `iv` and `iiii`).

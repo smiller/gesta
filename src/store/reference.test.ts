@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import {
   REFERENCE_DATED, REFERENCE_TOKEN, REFERENCE_DIVISION, referenceNumeral,
   referenceAbsorbs, elideRange, folioLabel, referenceAuthor, referenceLabel, mdLabel, type Journal,
-  roman } from "./reference.ts";
+} from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
 import { journalOf, firstHeading } from "./headings.ts";
 
@@ -181,10 +181,6 @@ const fq = journalOf({
   "bookshelf/Spenser, Edmund/The Faerie Queene/1.pr": "# Book I, Proem",
 });
 const FQ = "Spenser, Edmund/The Faerie Queene/";
-test("roman: upper or lower case, subtractive", () => {
-  expect([1, 4, 6, 7, 9, 12].map((n) => roman(n))).toEqual(["I", "IV", "VI", "VII", "IX", "XII"]);
-  expect(roman(9, true)).toBe("ix");
-});
 test("referenceLabel of a canto: book and canto as keyed, the proem's pr, whole stanzas, a run across them", () => {
   expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.1" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1.2.1");
   expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1.2");

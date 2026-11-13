@@ -16,7 +16,7 @@ export interface Directives {
 /* a line of its own: "no author" inside another directive's words is not
    one (pin: conventions.test › a directive is a line of its own in a
    top-level reference block) */
-const line = (words: string) => (d: string): boolean => d.split("\n").some((l) => l.trim().toLowerCase() === words);
+const line = (words: string) => (d: string): boolean => d.split("\n").some((l) => l.trim().toLowerCase() === words.toLowerCase());
 const lastTitle = (d: string): boolean => /last title/i.test(d);
 const root = (segs: string[]): string[] => segs.slice(0, 1);
 const work = (segs: string[]): string[] => (segs.length >= 3 ? [segs[0] + "/" + segs[1]] : []);

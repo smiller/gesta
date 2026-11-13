@@ -17,10 +17,9 @@ import { schema } from "../model/schema.ts";
 import { hasFolios } from "./folios.ts";
 import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
-import { roman } from "../store/reference.ts";
 import type { Conventions } from "../store/conventions.ts";
-type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "scripture">;
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
+type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "scripture">;
 
 const N = schema.nodes;
 export type AskKind = "none" | "line" | "page" | "both" | "stanza";
@@ -232,14 +231,25 @@ function stanzaAnswer(doc: Node, typed: string, standing: Standing): Answer {
   const bad = stanzaAskCheck(typed);
   return bad ? typedWrong(bad) : placed(stanzaHit(doc, typed), standing);
 }
-/* a stanza in arabic or roman, read back to the number it writes */
+/* a stanza in arabic, or in roman in the modern form (iv, ix) or the old
+   print's additive one (iiii, viiii): its digits never rising, v, l and d
+   once each (pin: goto.test › a roman stanza is read in the modern form or
+   the old print's additive one) */
+const ROMAN: [number, string][] = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
+const VALUE: Record<string, number> = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
+function modern(n: number): string {
+  let out = "";
+  for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
+  return out;
+}
+const additive = (r: string): boolean => [...r].every((ch, i) => i === 0 || VALUE[r[i - 1]] >= VALUE[ch]) && !/([vld]).*\1/.test(r);
 function stanzaNumber(typed: string): number | null {
   if (/^\d+$/.test(typed)) return parseInt(typed, 10);
   const r = typed.toLowerCase();
   if (!/^[ivxlcdm]+$/.test(r)) return null;
-  const value: Record<string, number> = { i: 1, v: 5, x: 10, l: 50, c: 100, d: 500, m: 1000 };
-  const n = [...r].reduce((sum, ch, i) => sum + (value[ch] < (value[r[i + 1]] ?? 0) ? -value[ch] : value[ch]), 0);
-  return roman(n, true) === r ? n : null;
+  if (additive(r)) return [...r].reduce((sum, ch) => sum + VALUE[ch], 0);
+  const n = [...r].reduce((sum, ch, i) => sum + (VALUE[ch] < (VALUE[r[i + 1]] ?? 0) ? -VALUE[ch] : VALUE[ch]), 0);
+  return modern(n) === r ? n : null;
 }
 /* the bar on a page in stanzas: a Stanza box and a Line box, a stanza alone
    its first line; each box names back what is not its number (pin: stanza ›

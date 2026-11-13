@@ -69,14 +69,6 @@ export interface Journal extends Directives {
   heading(ekey: string): string;
 }
 
-/* subtractive, the modern form (IV, ix), not the print's IIII (pin:
-   reference.test › roman: upper or lower case, subtractive) */
-const ROMAN: [number, string][] = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
-export function roman(n: number, lower = false): string {
-  let out = "";
-  for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
-  return lower ? out : out.toUpperCase();
-}
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string; division?: string }
 /* a work headed "Metamorphoses (with Golding’s translation)": the title,
    and the translator a reference names its own lines by (pin:
