@@ -276,7 +276,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `searchIndex.ts`, `indexStore.ts`, `bookmarks.ts`, `bookmarkStore.ts`,
   `shortcuts.ts`, `contents.ts`, `foldState.ts`, `placeState.ts`,
   `links.ts` (links rewritten on a rename or delete), `shelves.ts`,
-  `refile.ts`, `move.ts` (a page or book to another key), `pictures.ts`.
+  `refile.ts`, `move.ts` (a page or book to another key), `pictures.ts`,
+  `entrySave.ts` (the open entry's save: the debounce, a rename's
+  suspension, an entry deleted elsewhere).
 - `src/ui/` — the UI, Svelte 5. The models, pure and node-tested:
   `notices.svelte.ts` (the notice ledger), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
@@ -293,7 +295,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   (over `help.html`), `Bookmarks`, `Shortcuts`, `Backups`, `CopyButton`;
   `ui.css`.
 - `src/session.ts` — THE BRIDGE: the editor over the journal; open by
-  hash, the debounced save, the flush on leave, the walk, the reference and
+  hash, the save's flush on leave, the walk, the reference and
   entry link to the clipboard, the two views' builders.
 - `index.html` + `src/main.ts` — the page Vite builds into one
   `dist/index.html` (the favicon inlined by main.ts); main.ts is the

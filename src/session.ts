@@ -19,6 +19,7 @@ import { referencePayload, entryLinkParts, referenceAnchorHTML, REFUSAL_TEXT } f
 import { writeClipboard } from "./ui/clipboard.ts";
 import { richReferenceHtml } from "./ui/richCopy.ts";
 import type { EntryLayer } from "./store/entries.ts";
+import { entrySave } from "./store/entrySave.ts";
 import type { ImageStore } from "./store/store.ts";
 import { highlightIn, escapeJump } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
@@ -101,7 +102,6 @@ export interface Session {
   jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
   setInterval(n: number): void;
 }
-export const SAVE_DEBOUNCE_MS = 500;
 export const SAVED_MS = 1400;
 const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
 
@@ -112,7 +112,6 @@ export function startSession(opts: SessionOptions): Session {
   let current = { date: todayKey(), tag: null as string | null };
   let rendered: RenderedView | null = null;
   const live = (): EditorView | null => rendered && surface.current === rendered ? rendered.view : null;
-  let saveTimer: ReturnType<typeof setTimeout> | null = null;
   /* the highlight owed to the next paint, and the navigation it belongs
      to: a later navigation drops it, or it would select against the wrong
      entry. Unpinned: a race between two tasks no step can order */
@@ -124,7 +123,13 @@ export function startSession(opts: SessionOptions): Session {
     if (!surface.current || !opts.onShow) return;
     opts.onShow(layer.entryMd(ekeyOf()), ekeyOf());
   };
-  const edited = (): void => { scheduleSave(); show(); };
+  const save = entrySave({
+    screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
+    layer,
+    wrote: (landed) => { if (landed) say("saved", SAVED_MS); show(); },
+    refused: (md) => { detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0); },
+  });
+  const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
      can navigate while the decode runs. Every way it cannot land sticks:
      the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */
@@ -212,7 +217,7 @@ export function startSession(opts: SessionOptions): Session {
     pin: (text) => opts.pin?.(text) || 0,
     releasePin: (gen) => opts.releasePin?.(gen),
     onView: (md) => opts.onView?.(md),
-    switched: () => { scheduleSave(); show(); },
+    switched: () => { save.edited(); show(); },
   });
   const resolver = (date: string, tag: string | null) => (src: string): Promise<string | null> =>
     images.get(pictureKey(date, tag, src)).then((row) => {
@@ -223,7 +228,6 @@ export function startSession(opts: SessionOptions): Session {
   function releaseDetached(): void {
     for (const g of detachedPins) opts.releasePin?.(g);
     detachedPins = [];
-    detached = null;
   }
   const pendingNow = (): boolean => pending?.gen === navGen;
   function replayPending(): void {
@@ -233,8 +237,7 @@ export function startSession(opts: SessionOptions): Session {
     pending = null;
   }
   function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
-    cancelSave();
-    suspended = false;
+    save.opened();
     releaseDetached();
     current = { date, tag };
     const ekey = ekeyOf();
@@ -292,7 +295,7 @@ export function startSession(opts: SessionOptions): Session {
     hashDeferred = true;
     const asked = location.hash;
     const still = (): boolean => hashDeferred && location.hash === asked;
-    const then = (): void => { if (still()) flushSave().then(() => { if (still()) openAddress(true); }); };
+    const then = (): void => { if (still()) save.flush().then(() => { if (still()) openAddress(true); }); };
     layer.primeEntry(want).then(then, then);
   }
   const primedOrWarm = (want: string): boolean => layer.warmed || want in layer.cache;
@@ -326,8 +329,8 @@ export function startSession(opts: SessionOptions): Session {
        A read answers only while its own address is still the one asked
        for: a later address opened by an earlier read went unread. What was
        typed into the entry still on screen during the read is saved
-       before the open, whose first act cancels a pending save.
-       Unpinned: races no step can hold open */
+       before the open, whose first act cancels a pending save (pin:
+       entrySave.test › text typed while a read is out) */
     const want = entryKey(h.date, h.tag);
     if (!primed && unreadAfterWarm(want)) { readThenOpen(want); return; }
     if (unmintedKey(Object.keys(layer.cache), h.date, h.tag)) { refuseUnminted(h, want); return; }
@@ -343,15 +346,13 @@ export function startSession(opts: SessionOptions): Session {
      (pin: tabNotice.test › the entry on screen)
      (pin: bookmarks from another window › the page open in the first, saved in the second)
      (pin: bookmarks from another window › typed into the page deleted in the second) */
-  let detached: { ekey: string; md: string } | null = null;
   /* the notices of a deleted entry on screen last while it is on screen
      (pin: bookmarks from another window › the deleted page left for the day) */
   let detachedPins: number[] = [];
   const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
-  const unsavedHere = (ekey: string): boolean => !!saveTimer || suspended || currentMd() !== layer.entryMd(ekey);
   function noticeVerdict(ekey: string, md: string | null): ScreenNotice {
-    const verdict = screenNotice(onScreenKey(ekey), unsavedHere(ekey), md);
-    if (verdict === "deleted") detached = { ekey, md: currentMd() };
+    const verdict = screenNotice(onScreenKey(ekey), save.unsaved(), md);
+    if (verdict === "deleted") save.deleted();
     return verdict;
   }
   function afterNotice(ekey: string, verdict: ScreenNotice, moved: boolean): void {
@@ -384,37 +385,11 @@ export function startSession(opts: SessionOptions): Session {
     const s = surface.current;
     if (was && s) caretCarried(s, was);
   }
-  function detachedSave(was: { md: string }, md: string): false {
-    if (md !== was.md) detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0);
-    return false;
-  }
-  /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
-  function nothingToSave(ekey: string, md: string): boolean {
-    const inStore = layer.entryMd(ekey);
-    return md === inStore || (!md.trim() && !inStore);
-  }
-  function saveNow(): Promise<boolean> {
-    cancelSave();
-    if (!surface.current || layer.storeReadFailed) return Promise.resolve(false);
-    const ekey = ekeyOf();
-    const md = currentMd();
-    if (detached?.ekey === ekey) return Promise.resolve(detachedSave(detached, md));
-    if (nothingToSave(ekey, md)) return Promise.resolve(true);
-    return layer.setEntry(ekey, md).then((landed) => { if (landed) say("saved", SAVED_MS); show(); return landed; });
-  }
-  /* SUSPENDED while a rename moves the entry between keys: a debounce firing
-     then wrote the surface back under the old key, and the entry stood under
-     both; the next open() lifts it. Unpinned: a race no step can hold open */
-  let suspended = false;
-  function suspendSaves(): void { cancelSave(); suspended = true; }
-  function scheduleSave(): void { if (suspended) return; cancelSave(); saveTimer = setTimeout(() => { saveNow(); }, SAVE_DEBOUNCE_MS); }
-  function cancelSave(): void { if (saveTimer) clearTimeout(saveTimer); saveTimer = null; }
-  function flushSave(): Promise<boolean> { return saveTimer ? saveNow() : Promise.resolve(true); }
   /* repainted from the store ONLY where the store moved under it, after the
      debounce has landed: a reopen after an async write threw away keystrokes
-     typed in the window. Unpinned: a race no step can hold open */
+     typed in the window (pin: entrySave.test › a repaint after the flush) */
   function refresh(): Promise<void> {
-    return flushSave().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) redraw(); });
+    return save.flush().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) redraw(); });
   }
   /* a navigation that lands where it already is SAYS so, when given the
      words: silence reads as a dead control
@@ -487,9 +462,9 @@ export function startSession(opts: SessionOptions): Session {
     const p = entryLinkParts(current.date, current.tag, journal);
     copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }
-  window.addEventListener("hashchange", () => { flushSave().then(openHash); });
-  window.addEventListener("beforeunload", () => { saveNow(); });
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
+  window.addEventListener("hashchange", () => { save.flush().then(openHash); });
+  window.addEventListener("beforeunload", () => { save.now(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") save.now(); });
   /* a view that is not editable never holds the keys, so its own keymap
      never sees Escape (pin: reader › Escape after the hit) */
   if (opts.readOnly) document.addEventListener("keydown", (e) => {
@@ -520,7 +495,7 @@ export function startSession(opts: SessionOptions): Session {
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeNotice, saveNow, flushSave, refresh, suspendSaves, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
+    open, openHash, takeNotice, saveNow: save.now, flushSave: save.flush, refresh, suspendSaves: save.suspend, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },
