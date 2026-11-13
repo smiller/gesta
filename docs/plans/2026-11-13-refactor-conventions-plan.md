@@ -74,3 +74,32 @@ editor/reference.ts:193).
 - Code Health 10 on all 13 changed files (MEASURED, `npm run test:health`,
   after the CodeScene MCP fetched the CLI again: the OS update had emptied
   `~/Library/Caches/codehealth-mcp`).
+
+### Step 2: the record
+
+- `src/store/conventions.ts` (42 lines): `conventionsOf(date, tag,
+  journal)` returns `Conventions`, seven booleans named by the directives'
+  words, each read at its level (the root; the work, for the entries below
+  it; the entry's own page or any above it, for `Old English verse`), in
+  the namespaces that title their roots only. The seven regexes moved in
+  from headings.ts.
+- `Journal` is `heading` and `directives(ekey)`; journalOf hands out the
+  memoised directive text. The five `refers…` functions and `workKeyOf`
+  gone from store/reference.ts (289 → 255 lines, MEASURED `wc -l`); the
+  label reads the record through its context, where it resolved four
+  directives by hand.
+- goto.ts takes the record (`byBookChapterAndParagraph`, `scripture`); its
+  own `{ paragraphs, verses }` gone. lineBarActs.ts and editor/reference.ts
+  build the record once per ask and per reference.
+- One reading differs from before, in no entry: an entry with no tag under
+  the bookshelf read its root-level directives off the namespace's own key,
+  `bookshelf`, in the label but not in ⌃⌘G; the record reads none there.
+  The backup holds no entry at that key (MEASURED, `ls` of
+  gesta-backups/current: bookshelf/, journal/, page/ and no `.md`).
+- Test-first: conventions.test.ts (six tests) failed on the missing module
+  before it was written; the six directive tests in reference.test.ts moved
+  there, its label tests unchanged; goto.test.ts's three records are full
+  `Conventions`. The suite 1479 tests; Code Health 10 on all nine changed
+  files, the two new ones included; the approved Helium run unchanged
+  (corner, order, bridge, reader ok) (MEASURED, `npm run verify`).
+- GLOSSARY.md: **Reference directive**.

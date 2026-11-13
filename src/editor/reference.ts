@@ -2,7 +2,8 @@ import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, refersByHalfLine, refersAsProsimetrum, refersByBookChapterParagraph, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
+import { conventionsOf, type Conventions } from "../store/conventions.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { passageAt, quotation, inkBetween, type Passage, type Refusal } from "./passage.ts";
 
@@ -180,20 +181,19 @@ export function referencePayload(state: EditorState, at: EntryAt, journal: Journ
   return "refused" in p ? p : payloadOver(p, at, journal, all);
 }
 /* a passage in stanza fences refers by stanza, in any work (pin: reference.test › a work in stanza fences refers by stanza) */
-function rangeOver(p: Passage, at: EntryAt, journal: Journal, halves: boolean): string {
-  if (refersByBookChapterParagraph(at.date, at.tag, journal)) return byBookChapterParagraphRange(p);
-  if (refersAsProsimetrum(at.date, at.tag, journal)) return prosimetrumRange(p);
-  return stanzaRange(p) || referenceRange(p, { halves });
+function rangeOver(p: Passage, said: Conventions): string {
+  if (said.byBookChapterAndParagraph) return byBookChapterParagraphRange(p);
+  if (said.prosimetrum) return prosimetrumRange(p);
+  return stanzaRange(p) || referenceRange(p, { halves: said.oldEnglishVerse });
 }
 const facingRange = (p: Passage): string => (hasFacing(p.doc) ? referenceRange(p, { side: "right" }) : "");
 function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): Payload | { refused: Refusal } {
   const hl = selectionLink(p.doc, p.from, p.to);
   if (!hl) return { refused: "select" };
-  const halves = refersByHalfLine(at.date, at.tag, journal);
-  const paragraphs = refersByBookChapterParagraph(at.date, at.tag, journal) || refersAsProsimetrum(at.date, at.tag, journal);
-  const quoted = quotation(p, { halves, paragraphs, all });
+  const said = conventionsOf(at.date, at.tag, journal);
+  const quoted = quotation(p, { halves: said.oldEnglishVerse, paragraphs: said.byBookChapterAndParagraph || said.prosimetrum, all });
   if ("refused" in quoted) return quoted;
-  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, at, journal, halves), folio: folioRange(p), facing: facingRange(p) }, journal);
+  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), folio: folioRange(p), facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }

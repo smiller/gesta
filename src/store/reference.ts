@@ -1,5 +1,6 @@
 import { isDayKey, titlesRoots, nsOf, entryKey, dateLabel } from "./keys.ts";
 import { FOLIO_ARABIC } from "./folio.ts";
+import { conventionsOf, type Conventions, type Directives } from "./conventions.ts";
 
 /* WHAT STANDS BEFORE THE PIECES, three answers: a BOOK names its author as
    the SURNAME off the KEY (a root key is surname-first so it sorts by surname; a
@@ -64,20 +65,8 @@ export function folioLabel(from: string, to?: string | null): string {
   return "pp. " + ([from, to].every(plainArabic) ? elideRange(+from, +to) : from + "-" + to);
 }
 
-export interface Journal {
+export interface Journal extends Directives {
   heading(ekey: string): string;
-  fromLastTitle(rootKey: string): boolean;
-  /* the ROOT's page carries `no author`: a heading that gathers works, not a person */
-  noAuthor(rootKey: string): boolean;
-  /* the page carries `Old English verse`: its lines are referred to by half-line */
-  oldEnglishVerse(ekey: string): boolean;
-  /* the WORK's page carries `prosimetrum`: a chapter's prose and its poems are referred to apart */
-  prosimetrum(workKey: string): boolean;
-  byBookChapterParagraph(workKey: string): boolean;
-  /* the ROOT's page carries `scripture`: a book named plainly, its chapter and verse after a space */
-  scripture(rootKey: string): boolean;
-  /* the WORK's page carries `parts in roman`: its tales and parts named in roman after its italic title */
-  partsInRoman(workKey: string): boolean;
 }
 
 /* subtractive, the modern form (IV, ix), not the print's IIII (pin:
@@ -87,28 +76,6 @@ export function roman(n: number, lower = false): string {
   let out = "";
   for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
   return lower ? out : out.toUpperCase();
-}
-/* a book entry refers to half-lines when its own page or any above it says
-   `Old English verse`: a root of works with no author says it once for all
-   of them, an author's work for its parts */
-export function refersByHalfLine(date: string, tag: string | null, journal: Journal): boolean {
-  const segs = tag ? tag.split("/") : [];
-  return titlesRoots(date) && segs.some((_, i) => journal.oldEnglishVerse(entryKey(date, segs.slice(0, i + 1).join("/"))));
-}
-const workKeyOf = (date: string, tag: string | null): string | null => {
-  const segs = tag ? tag.split("/") : [];
-  return titlesRoots(date) && segs.length >= 3 ? entryKey(date, segs[0] + "/" + segs[1]) : null;
-};
-export function refersAsProsimetrum(date: string, tag: string | null, journal: Journal): boolean {
-  const work = workKeyOf(date, tag);
-  return !!work && journal.prosimetrum(work);
-}
-export function refersByBookChapterParagraph(date: string, tag: string | null, journal: Journal): boolean {
-  const work = workKeyOf(date, tag);
-  return !!work && journal.byBookChapterParagraph(work);
-}
-export function refersAsScripture(date: string, tag: string | null, journal: Journal): boolean {
-  return titlesRoots(date) && !!tag && journal.scripture(entryKey(date, tag.split("/")[0]));
 }
 export interface Piece { t?: string; n?: string; plain?: string; after?: string | null; translator?: string; division?: string }
 /* a work headed "Metamorphoses (with Golding’s translation)": the title,
@@ -186,13 +153,12 @@ export interface FolioRange { from: string; to: string }
    leaf replaces every level below the work (pin: reference.test ›
    referenceLabel: the line range dots onto a numeral run) */
 export interface Locator { range: string; folio?: FolioRange | null; facing?: string }
-interface LabelCtx { date: string; tag: string | null; root: string; books: boolean; locates: boolean; journal: Journal }
+interface LabelCtx { date: string; tag: string | null; root: string; books: boolean; locates: boolean; journal: Journal; said: Conventions }
 function labelParts(c: LabelCtx): Piece[] {
   /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
-  const parts = referenceParts(c.date, c.tag, c.journal, refersByBookChapterParagraph(c.date, c.tag, c.journal));
+  const parts = referenceParts(c.date, c.tag, c.journal, c.said.byBookChapterAndParagraph);
   /* (pin: reference.test › referenceLabel under parts in roman) */
-  const work = workKeyOf(c.date, c.tag);
-  if (!work || !c.journal.partsInRoman(work)) return parts;
+  if (!c.said.partsInRoman) return parts;
   return parts.map((p, i) => (i > 0 && titledWork(p) ? { plain: p.t! } : p));
 }
 const titledWork = (p: Piece): boolean => p.t !== undefined && !p.translator;
@@ -232,7 +198,7 @@ function located(parts: Piece[], at: Locator, c: LabelCtx, numbered: string | un
    that names no author still names itself where no title stands below it
    (pin: reference.test › referenceLabel: a root whose page says no author) */
 function withFirst(parts: Piece[], c: LabelCtx): Piece[] {
-  const unnamed = c.books && c.journal.noAuthor(entryKey(c.date, c.root));
+  const unnamed = c.said.noAuthor;
   const first = unnamed ? "" : referenceAuthor(c.date, c.root);
   if (first) parts.unshift(c.books ? { plain: first } : { t: first });
   else if (unnamed && !hasTitle(parts)) parts.unshift({ t: c.journal.heading(entryKey(c.date, c.root)) || c.root });
@@ -250,10 +216,10 @@ function joinParts(parts: Piece[], plainTitles: boolean): string {
   return parts.map((p, i) => sep(i) + pieceText(p, plainTitles)).join("");
 }
 const labelCtx = (date: string, tag: string | null, journal: Journal): LabelCtx =>
-  ({ date, tag, root: (tag || "").split("/")[0], books: titlesRoots(date), locates: !!nsOf(date)?.refersWithLocator, journal });
+  ({ date, tag, root: (tag || "").split("/")[0], books: titlesRoots(date), locates: !!nsOf(date)?.refersWithLocator, journal, said: conventionsOf(date, tag, journal) });
 function framed(parts: Piece[], c: LabelCtx): Piece[] {
   if (isDayKey(c.date)) parts.unshift({ plain: dateLabel(c.date) });
-  return c.books && c.journal.fromLastTitle(entryKey(c.date, c.root)) ? fromLastTitle(parts) : parts;
+  return c.said.lastTitle ? fromLastTitle(parts) : parts;
 }
 function translatorNote(c: LabelCtx, translator: string, facing: string, numbered: string | undefined): string {
   const division = numbered !== undefined ? numbered + "." : "";
@@ -271,7 +237,7 @@ export function referenceLabel(date: string, tag: string | null, at: Locator, jo
   const range = !translator && facing ? facing : at.range;
   const parts = framed(pieces, c);
   const numbered = numberedDeepest(parts);
-  const label = joinParts(withFirst(located(parts, { ...at, range }, c, numbered), c), c.books && journal.scripture(entryKey(date, c.root)));
+  const label = joinParts(withFirst(located(parts, { ...at, range }, c, numbered), c), c.said.scripture);
   return translator ? label + translatorNote(c, translator, facing, numbered) : label;
 }
 export function mdLabel(text: string, fallback: string): string {

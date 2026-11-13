@@ -1,13 +1,14 @@
 import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { ask, bar, type Conventions, type Standing, type Answer } from "./goto.ts";
+import { ask, bar, type Standing, type Answer } from "./goto.ts";
+import type { Conventions } from "../store/conventions.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
-const LINES: Conventions = { paragraphs: false, verses: false };
-const PARAGRAPHS: Conventions = { paragraphs: true, verses: false };
-const VERSES: Conventions = { paragraphs: false, verses: true };
+const LINES: Conventions = { lastTitle: false, noAuthor: false, scripture: false, partsInRoman: false, prosimetrum: false, byBookChapterAndParagraph: false, oldEnglishVerse: false };
+const PARAGRAPHS: Conventions = { ...LINES, byBookChapterAndParagraph: true };
+const VERSES: Conventions = { ...LINES, scripture: true };
 const FRESH: Standing = { pos: null, asked: 0 };
 /* the text of the row an ask lands on, or what it says instead */
 function lands(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string {

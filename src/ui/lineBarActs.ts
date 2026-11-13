@@ -1,9 +1,9 @@
 import type { Session } from "../session.ts";
 import type { Screen } from "./screen.svelte.ts";
 import type { Journal } from "../store/reference.ts";
-import { refersByBookChapterParagraph, refersAsScripture } from "../store/reference.ts";
+import { conventionsOf } from "../store/conventions.ts";
 import { entryKey } from "../store/keys.ts";
-import { ask, bar, type Conventions, type Words } from "../editor/goto.ts";
+import { ask, bar, type Words } from "../editor/goto.ts";
 import { openFoldAt } from "../editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
@@ -59,7 +59,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
-  const conventions = (): Conventions => ({ paragraphs: refersByBookChapterParagraph(session.current.date, session.current.tag, journal), verses: refersAsScripture(session.current.date, session.current.tag, journal) });
+  const conventions = () => conventionsOf(session.current.date, session.current.tag, journal);
   const SAID_MS = { typed: 2000, absent: 3000, landing: 2500 };
   const asked = (words: Words, from: "bar" | "link"): boolean => {
     const view = session.view!;

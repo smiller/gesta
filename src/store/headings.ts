@@ -32,15 +32,6 @@ export function referenceDirectives(md: string): string {
   doc.forEach((block) => { if (block.type === N.reference) out.push(block.textContent); });
   return out.join("\n");
 }
-const lastTitle = (d: string): boolean => /last title/i.test(d);
-/* a line of its own: "no author" inside another directive's words is not one
-   (pin: reference.test › referenceLabel: a root whose page says no author) */
-const noAuthor = (d: string): boolean => /^\s*no author\s*$/im.test(d);
-const oldEnglishVerse = (d: string): boolean => /^\s*old english verse\s*$/im.test(d);
-const prosimetrum = (d: string): boolean => /^\s*prosimetrum\s*$/im.test(d);
-const byBookChapterParagraph = (d: string): boolean => /^\s*by book, chapter, and paragraph\s*$/im.test(d);
-const scripture = (d: string): boolean => /^\s*scripture\s*$/im.test(d);
-const partsInRoman = (d: string): boolean => /^\s*parts in roman\s*$/im.test(d);
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
   const said: Record<string, { md: string; directives: string }> = Object.create(null);
@@ -61,12 +52,6 @@ export function journalOf(cache: Record<string, string>): Journal {
       memo[ekey] = { md, heading };
       return heading;
     },
-    fromLastTitle: (rootKey) => lastTitle(directives(rootKey)),
-    noAuthor: (rootKey) => noAuthor(directives(rootKey)),
-    oldEnglishVerse: (ekey) => oldEnglishVerse(directives(ekey)),
-    prosimetrum: (workKey) => prosimetrum(directives(workKey)),
-    byBookChapterParagraph: (workKey) => byBookChapterParagraph(directives(workKey)),
-    scripture: (rootKey) => scripture(directives(rootKey)),
-    partsInRoman: (workKey) => partsInRoman(directives(workKey)),
+    directives,
   };
 }
