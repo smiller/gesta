@@ -1,4 +1,4 @@
-import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
+import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, keep, STANZA_SEEDS, type Tree, pill } from "./kit.ts";
 
 section("notices and surfaces", async () => {
   await noticesOpening();
@@ -234,7 +234,7 @@ const underHeader = () => page.evaluate(() => { const b = document.querySelector
 const refuse = () => page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
 const restore = () => page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
 section("pill", async () => {
-  if (A.pill) {
+  if (pill) {
     await page.goto(A.url("page/Horace", "corner=pill"));
     await A.waitWarm(page);
     /* the pill is set after the launch's backup run, which ends after the

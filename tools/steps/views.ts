@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest } from "./kit.ts";
+import { section, page, A, R, S, log, go, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -221,7 +221,7 @@ section("walk", async () => {
 });
 section("stanza", async () => {
   /* the Faerie Queene's stanzas, each a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb the canto's key, ⌃⌘R across a stanza gap referring to 1.1.1.3–2.1 and quoting both, ⌃⌘G asking by a Stanza box and a Line box */
-  await A.seedStanza(page, STANZA_SEEDS);
+  await seed(STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1");
   await R.settle(page);
   await log("a canto opened", { ...(await R.stanzas(page)), crumb: (await R.masthead(page)).crumb, title: (await R.masthead(page)).title });
@@ -366,7 +366,7 @@ async function caretSeenSourceM(): Promise<void> {
 }
 section("contents folds", async () => {
   /* a work's contents folding under its headings: the stanza seeds' Faerie Queene, its contents page a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
-  await A.seedStanza(page, STANZA_SEEDS);
+  await seed(STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");
   await R.settle(page);
   await log("a contents page opened", await R.folds(page));

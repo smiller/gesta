@@ -14,33 +14,32 @@ const PAGE = "file://" + resolve("dist/index.html");
 export const ns = NS;
 export const bookmarksKey = NS + "bookmarks";
 export const url = (hash: string, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
-/* the page seeds itself under ?store=seed: nothing is written here */
-async function launch(page: Page) {
-  await page.goto(url("page/Horace", "store=seed"));
-  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
+/* the page opened once to make its store, the seeds written into it, and
+   the page opened again over them, under a query no address carries: the
+   next goto then loads the page anew and reads what was written since; on
+   the address alone it moved only the hash, and an entry written before it
+   went unread (pin: shelves › the bookshelf on its shelves) */
+export const LANDING = "fresh";
+async function launch(page: Page, seeds: Record<string, string>) {
+  await page.goto(url("page/Horace"));
+  await waitWarm(page);
+  for (const [k, md] of Object.entries(seeds)) await foreignWrite(page, k, md);
+  await page.goto("about:blank");
+  await page.goto(url("page/Horace", LANDING));
+  await waitWarm(page);
   return page.evaluate(() => document.documentElement.dataset.probe);
 }
 /* a section's start: the origin's storage cleared — the entries, the
    pictures, the index, localStorage — the clipboard emptied, and the
    fixtures seeded again, the page warm on Horace */
-export async function fresh(page: Page) {
+export async function fresh(page: Page, seeds: Record<string, string>) {
   await page.goto("about:blank");
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Storage.clearDataForOrigin", { origin: "file://", storageTypes: "all" });
   await cdp.detach();
-  const stages = await launch(page);
+  const stages = await launch(page, seeds);
   await page.evaluate(() => navigator.clipboard.writeText("")).catch(() => {});
   return stages;
-}
-/* the stanza step's seed, written by the page under ?store=seed-stanza */
-export async function seedStanza(page: Page, _seeds: Record<string, string>) {
-  await page.goto(url("page/Horace", "store=seed-stanza"));
-  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
-}
-/* the margin-note step's seed, written by the page under ?store=seed-margin */
-export async function seedMargin(page: Page, _seeds: Record<string, string>) {
-  await page.goto(url("page/Horace", "store=seed-margin"));
-  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 }
 export const entry = (page: Page) => page.evaluate(() => document.documentElement.dataset.entry);
 export const waitEntry = (page: Page, key: string, ms = 15000) => page.waitForFunction((k) => document.documentElement.dataset.entry === k, key, { timeout: ms });

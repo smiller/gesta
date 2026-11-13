@@ -299,9 +299,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   entry link to the clipboard, the two views' builders.
 - `index.html` + `src/main.ts` — the page Vite builds into one
   `dist/index.html` (the favicon inlined by main.ts); main.ts is the
-  wiring. Query strings for the headless tools: `?store=seed`,
-  `?store=seed-stanza`, `?store=write`, `?corner=pill`;
-  `?fixture=pippa&interval=1` opens a fixture with no store.
+  wiring. Query strings for the headless tools: `?store=write`,
+  `?corner=pill`, `?warm=slow`; the steps write their own entries into the
+  store (`SEEDS` and the rest in `tools/steps/kit.ts`).
 - THE READER: `npm run build:reader` builds `dist-reader/index.html`, a
   picked bundle's entries read-only; the backup writes the bundle;
   `tools/readerBundle.ts` makes one; `tools/publishReader.sh` publishes it,

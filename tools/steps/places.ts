@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep } from "./kit.ts";
+import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep, seed } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -258,7 +258,7 @@ async function copyWithClipboardRefused(): Promise<void> {
 }
 section("margin-note", async () => {
   /* a margin-note set in the left margin beside the line after it: 15em in a 1500px window, pushed below a two-line margin-note a line above it, back in the text at the tools' 1000px; the caret typed into it at both widths */
-  await A.seedMargin(page, MARGIN_SEEDS);
+  await seed(MARGIN_SEEDS);
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("bookshelf/Donne%2C%20John/Anniversaries/The%20First%20Anniversarie");
   await R.settle(page);

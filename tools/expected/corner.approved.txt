@@ -1,5 +1,5 @@
 == launch, panels, the corner, links
-the launch's stages: "start;seed;primed;all;"
+the launch's stages: "start;primed;all;"
 after warm: {"text":"10 entries stored","show":true,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 masthead over Horace: {"crumb":"Horace","title":"","titleHidden":true,"lines":true,"today":true,"backups":"backups","height":111.21875,"sticky":"sticky","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 pages panel: {"rows":["Horace","Links","Williams"],"create":"New page…","cursor":"on button","screen":"page/Horace · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}

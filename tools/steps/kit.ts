@@ -1,12 +1,11 @@
 import { readFileSync } from "node:fs";
 import type { Page, BrowserContext } from "../heliumPage.ts";
 import type { Dialog } from "playwright-core";
-import type * as App from "../adapters/app.ts";
+import * as A from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
 
-export type Adapter = typeof App & { pill?: boolean };
 export type Tree = { name: string; text?: string; kids?: Tree[] };
-export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean }
+export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean; pill?: boolean }
 /* the day the drivers pin the page's clock to (context.clock.setFixedTime,
    Date only; the timers run). Never a seeded day: a run on a day whose
    number a seeded day shares (the 5th, the 6th) read one Day option fewer,
@@ -27,6 +26,13 @@ export const AUGUSTINE_SEEDS = {
 };
 /* a fixture's text, for a step that writes its own seeds */
 export const fixture = (name: string) => readFileSync(new URL("../../fixtures/" + name, import.meta.url), "utf8");
+export const SEEDS: Record<string, string> = {
+  "page/Horace": fixture("horace-odes-1.1.md"), "bookshelf/Browning, Robert/Pippa Passes": fixture("pippa-passes-intro.md"),
+  "2026-09-06": fixture("twelfth-night-1.1.md"), "2026-09-05": fixture("williams-witchcraft-3.md"), "page/Williams/Witchcraft 3": fixture("williams-witchcraft-3.md"),
+  "page/Links": "A link to [Horace](#page/Horace), one to [itself](#page/Links), and one [outside](https://example.org/).\n",
+  "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
+  "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
+};
 export const MARGIN_SEEDS = {
   "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
   "page/Margins": fixture("margins-prose.md"),
@@ -61,8 +67,10 @@ export async function still(p: Page) {
   })).catch(() => {});
 }
 
-/* the run's page, context and adapter, bound before the first section */
-export let page: Page, ctx: BrowserContext, A: Adapter, R: Adapter["read"], S: Adapter["sel"], shot: string | undefined;
+export { A };
+export const R = A.read, S = A.sel;
+/* the run's page and context, bound before the first section */
+export let page: Page, ctx: BrowserContext, shot: string | undefined, pill = false;
 /* the section playing, which an arrival's line names */
 export let current = "";
 export const setSection = (name: string): void => { current = name; };
@@ -137,6 +145,7 @@ export const go = async (hash: string, ms = 15000) => {
 };
 /* entries written as another tab would, in turn */
 export const writeAll = async (seeds: Record<string, string>) => { for (const [k, md] of Object.entries(seeds)) await A.foreignWrite(page, k, md); };
+export const seed = async (seeds: Record<string, string>) => { await writeAll(seeds); await page.goto("about:blank"); await page.goto(A.url("page/Horace", A.LANDING)); await A.waitWarm(page); };
 /* a list or table kept in localStorage, written before the section reads it */
 export const keep = (name: string, value: string) => page.evaluate(([k, v]) => localStorage.setItem(k, v), [A.ns + name, value]);
 /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
@@ -170,8 +179,8 @@ export const setAnswer = (a: typeof answer): void => { answer = a; };
    answers dropped */
 export async function freshStart(): Promise<void> {
   answer = null; prompts.length = 0; confirms.length = 0;
-  stages = await A.fresh(page);
-  if (!stages.includes("seed;")) throw new Error("not seeded: " + stages);
+  stages = await A.fresh(page, SEEDS);
+  if (!(await seededIn("page/Horace"))) throw new Error("not seeded: " + stages);
 }
 function answerDialog(d: Dialog): void {
   if (d.type() === "confirm") { confirms.push(d.message()); d.accept(); return; }
@@ -186,7 +195,7 @@ function answerDialog(d: Dialog): void {
 export const SECTIONS: [string, () => Promise<void>][] = [];
 export const section = (name: string, fn: () => Promise<void>): void => { SECTIONS.push([name, fn]); };
 
-export function bind(p: Page, c: BrowserContext, adapter: Adapter, opts: RunOptions): void {
-  page = p; ctx = c; A = adapter; R = adapter.read; S = adapter.sel; shot = opts.screenshot;
+export function bind(p: Page, c: BrowserContext, opts: RunOptions): void {
+  page = p; ctx = c; shot = opts.screenshot; pill = !!opts.pill;
   page.on("dialog", answerDialog);
 }

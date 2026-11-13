@@ -1,5 +1,5 @@
 import type { Page, BrowserContext } from "./heliumPage.ts";
-import { bind, setSection, freshStart, SECTIONS, type Adapter, type RunOptions } from "./steps/kit.ts";
+import { bind, setSection, freshStart, SECTIONS, type RunOptions } from "./steps/kit.ts";
 import { startClock, report, type Clock } from "./steps/timing.ts";
 import "./steps/launch.ts";
 import "./steps/references.ts";
@@ -14,7 +14,7 @@ import "./steps/verse.ts";
 import "./steps/lines.ts";
 import "./steps/moving.ts";
 
-export { TODAY, type Adapter, type RunOptions } from "./steps/kit.ts";
+export { TODAY, type RunOptions } from "./steps/kit.ts";
 
 /* each section starts from the one window, in front, nothing open over
    it: windows a section left open held the focus, and a click in the
@@ -41,8 +41,8 @@ async function playSection(page: Page, [name, fn]: (typeof SECTIONS)[number], cl
   }
   clock?.sections.push([name, Date.now() - t0, clock.slept - s0]);
 }
-export async function runSteps(page: Page, ctx: BrowserContext, A: Adapter, opts: RunOptions = {}) {
-  bind(page, ctx, A, opts);
+export async function runSteps(page: Page, ctx: BrowserContext, opts: RunOptions = {}) {
+  bind(page, ctx, opts);
   const clock = process.env.TIMING ? startClock(ctx) : null;
   const order = opts.reverse ? [...SECTIONS].reverse() : SECTIONS;
   for (const s of order) if (!skipped(opts, s[0])) await playSection(page, s, clock);

@@ -25,7 +25,7 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-// The steps reach the adapter through the kit's binding named A.
+// The steps reach the app's readings through the kit's re-export named A.
 const HANDED_TO_THE_STEPS = 'import * as A from "../adapters/app.ts";\n';
 const ALLOWED: Record<string, string> = {
   "src/editor/folds.ts toggleFold": "the tests' way in by a section's key to the toggle a click makes by its position",
