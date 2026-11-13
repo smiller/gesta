@@ -2,11 +2,11 @@ import { test, expect } from "vitest";
 import {
   REFERENCE_DATED, REFERENCE_TOKEN, REFERENCE_DIVISION, referenceNumeral,
   referenceAbsorbs, elideRange, folioLabel, referenceAuthor, referenceLabel, mdLabel, type Journal,
-  roman, romanKey, romanWorkKey, refersAsScripture } from "./reference.ts";
+  roman, refersAsScripture } from "./reference.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
 import { journalOf, firstHeading } from "./headings.ts";
 
-const says = (word: "fromLastTitle" | "romanBookCanto" | "noAuthor" | "prosimetrum" | "byBookChapterParagraph" | "scripture" | "partsInRoman", md: string): boolean => journalOf({ "bookshelf/W": md })[word]("bookshelf/W");
+const says = (word: "fromLastTitle" | "noAuthor" | "prosimetrum" | "byBookChapterParagraph" | "scripture" | "partsInRoman", md: string): boolean => journalOf({ "bookshelf/W": md })[word]("bookshelf/W");
 
 test("referenceNumeral: a digit-led token or a division word is a numeral, everything else a title", () => {
   expect(referenceNumeral("19", true)).toBe("19");
@@ -178,49 +178,32 @@ test("mdLabel: no stray ] and no newline in a link text, and a fallback for none
   expect(mdLabel("", "entry")).toBe("entry");
 });
 
-// The Faerie Queene's reference: a directive on the WORK's page, `roman book
-// and canto`, respells the key's numerals — the book upper-case Roman, the
-// canto lower-case, the proem's `pr` kept; the line range comes in already
-// stanza-shaped ("2.1", "2", "2–3").
+// the range comes in already stanza-shaped ("2.1", "2", "2–3")
 const fq = journalOf({
   "bookshelf/Spenser, Edmund": "# Edmund Spenser",
-  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n",
+  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n## Book I: The Legende of the Knight of the Red Crosse, or of Holinesse\n",
   "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i",
   "bookshelf/Spenser, Edmund/The Faerie Queene/1.pr": "# Book I, Proem",
-  "bookshelf/Spenser, Edmund/Amoretti": "# Amoretti",
-  "bookshelf/Spenser, Edmund/Amoretti/1": "# Sonnet 1",
 });
 const FQ = "Spenser, Edmund/The Faerie Queene/";
-test("roman: upper case for a book, lower for a canto, subtractive", () => {
+test("roman: upper or lower case, subtractive", () => {
   expect([1, 4, 6, 7, 9, 12].map((n) => roman(n))).toEqual(["I", "IV", "VI", "VII", "IX", "XII"]);
   expect(roman(9, true)).toBe("ix");
-  expect(romanKey("1.1")).toBe("I.i");
-  expect(romanKey("1.pr")).toBe("I.pr");
-  expect(romanKey("7.8")).toBe("VII.viii");
-  expect(romanKey("4.12")).toBe("IV.xii");
-  expect(romanKey("Book 1")).toBe("Book 1");   /* not a digit-led key: as it stands */
 });
 test("the directive is read off the work's page, top level only", () => {
-  expect(says("romanBookCanto", "# W\n\n::: reference\nroman book and canto\n:::")).toBe(true);
-  expect(says("romanBookCanto", "# W\n\n::: reference\nfrom the last title\n:::")).toBe(false);
-  expect(says("romanBookCanto", "# W\n\n> ::: reference\n> roman book and canto\n> :::")).toBe(false);
-  expect(says("romanBookCanto", "no directive")).toBe(false);
-  expect(fq.romanBookCanto("bookshelf/Spenser, Edmund/The Faerie Queene")).toBe(true);
-  expect(fq.romanBookCanto("bookshelf/Spenser, Edmund/Amoretti")).toBe(false);
-  expect(romanWorkKey(NS_BOOK.key, FQ + "1.1", fq)).toBe("bookshelf/Spenser, Edmund/The Faerie Queene");
-  expect(romanWorkKey(NS_BOOK.key, "Spenser, Edmund/Amoretti/1", fq)).toBe(null);
-  expect(romanWorkKey(NS_PAGE.key, "Notes", fq)).toBe(null);
+  expect(says("byBookChapterParagraph", "# W\n\n::: reference\nby book, chapter, and paragraph\n:::")).toBe(true);
+  expect(says("byBookChapterParagraph", "# W\n\n::: reference\nfrom the last title\n:::")).toBe(false);
+  expect(says("byBookChapterParagraph", "# W\n\n> ::: reference\n> by book, chapter, and paragraph\n> :::")).toBe(false);
+  expect(says("byBookChapterParagraph", "no directive")).toBe(false);
 });
-test("referenceLabel under the directive: I.i.2.1, the proem, whole stanzas, a run across them", () => {
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.1" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2.1");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2–3" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2–3");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.8–3.2" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i.2.8–3.2");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.pr", { range: "1–4" }, fq)).toBe("Spenser, *The Faerie Queene*, I.pr.1–4");
-  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "" }, fq)).toBe("Spenser, *The Faerie Queene*, I.i");
-  expect(referenceLabel(NS_BOOK.key, FQ + "7.8", { range: "2.9" }, fq)).toBe("Spenser, *The Faerie Queene*, VII.viii.2.9");
-  /* a work without the directive refers as every book does */
-  expect(referenceLabel(NS_BOOK.key, "Spenser, Edmund/Amoretti/1", { range: "3" }, fq)).toBe("Spenser, *Amoretti*, 1.3");
+test("referenceLabel of a canto: book and canto as keyed, the proem's pr, whole stanzas, a run across them", () => {
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.1" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1.2.1");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1.2");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2–3" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1.2–3");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "2.8–3.2" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1.2.8–3.2");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.pr", { range: "1–4" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.pr.1–4");
+  expect(referenceLabel(NS_BOOK.key, FQ + "1.1", { range: "" }, fq)).toBe("Spenser, *The Faerie Queene*, 1.1");
+  expect(referenceLabel(NS_BOOK.key, FQ + "7.8", { range: "2.9" }, fq)).toBe("Spenser, *The Faerie Queene*, 7.8.2.9");
 });
 
 // The Vita Nuova: under the work's `prosimetrum` directive a reference names

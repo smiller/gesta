@@ -33,7 +33,6 @@ export function referenceDirectives(md: string): string {
   return out.join("\n");
 }
 const lastTitle = (d: string): boolean => /last title/i.test(d);
-const romanBookCanto = (d: string): boolean => /roman book and canto/i.test(d);
 /* a line of its own: "no author" inside another directive's words is not one
    (pin: reference.test › referenceLabel: a root whose page says no author) */
 const noAuthor = (d: string): boolean => /^\s*no author\s*$/im.test(d);
@@ -63,7 +62,6 @@ export function journalOf(cache: Record<string, string>): Journal {
       return heading;
     },
     fromLastTitle: (rootKey) => lastTitle(directives(rootKey)),
-    romanBookCanto: (workKey) => romanBookCanto(directives(workKey)),
     noAuthor: (rootKey) => noAuthor(directives(rootKey)),
     oldEnglishVerse: (ekey) => oldEnglishVerse(directives(ekey)),
     prosimetrum: (workKey) => prosimetrum(directives(workKey)),

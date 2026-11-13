@@ -15,7 +15,7 @@ const cache: Record<string, string> = {
   "bookshelf/Milton, John": "# John Milton\n\n- Paradise Lost",
   "bookshelf/Milton, John/Paradise Lost/1": "# Book 1\n\n::: verse\nOf Man's first disobedience\n:::",
   "bookshelf/Spenser, Edmund": "# Edmund Spenser",
-  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::",
+  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene",
   "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i",
   "bookshelf/Spenser, Edmund/The Faerie Queene/1.pr": "# Book I, Proem",
 };
@@ -92,18 +92,6 @@ describe("the bookshelf", () => {
     expect(x.crumbs[0].href).toBe("#bookshelf/Milton%2C%20John");
     expect(x.leaf).toBe("1");
     expect(x.title).toBe("Book 1");
-  });
-});
-
-describe("a work referring to book and canto in Roman", () => {
-  it("the leaf is the key respelled as the reference spells it; the title row stays the heading", () => {
-    const x = m("bookshelf", "Spenser, Edmund/The Faerie Queene/1.1");
-    expect(x.crumbs.map((c) => c.text)).toEqual(["Edmund Spenser", "The Faerie Queene"]);
-    expect(x.leaf).toBe("I.i");
-    expect(x.title).toBe("Book I, Canto i");
-    expect(m("bookshelf", "Spenser, Edmund/The Faerie Queene/1.pr").leaf).toBe("I.pr");
-    /* the work's own page names itself as ever */
-    expect(m("bookshelf", "Spenser, Edmund/The Faerie Queene").leaf).toBe("The Faerie Queene");
   });
 });
 

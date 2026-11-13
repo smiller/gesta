@@ -213,7 +213,7 @@ test("Tab in a code block changes only the touched lines: a position on a line b
 });
 test("a reference block takes no typing in the rendered view; a click puts the caret at its start and says where it is edited", () => {
   const said: string[] = [];
-  const s = sel("::: reference\nroman book and canto\n:::\n\nafter", said, "book");
+  const s = sel("::: reference\nby book, chapter, and paragraph\n:::\n\nafter", said, "book");
   const typedIn = (t: EditorState): boolean => t.plugins.some((p) => p.props.handleTextInput?.call(p, { state: t, dispatch: () => {} } as unknown as EditorView, t.selection.from, t.selection.to, "Q", () => t.tr));
   expect(typedIn(s)).toBe(true);
   for (const key of ["Enter", "Backspace", "Delete"]) {
@@ -229,10 +229,10 @@ test("a reference block takes no typing in the rendered view; a click puts the c
   expect(said).toEqual(["Reference style is edited in the markdown view (⌃⌘M)"]);
   expect(state.selection.empty && state.selection.from).toBe(refPos + 1);
   expect(typedIn(state)).toBe(true);
-  expect(typedIn(sel("::: reference\nroman book and canto\n:::\n\nafter", [], "after"))).toBe(false);
+  expect(typedIn(sel("::: reference\nby book, chapter, and paragraph\n:::\n\nafter", [], "after"))).toBe(false);
 });
 test("no change from outside a reference block reaches into it: a join from either side, a cut, a mark; the whole block still goes with a wider selection", () => {
-  const md = "before\n\n::: reference\nroman book and canto\n:::\n\nafter";
+  const md = "before\n\n::: reference\nby book, chapter, and paragraph\n:::\n\nafter";
   const s = sel(md, [], "after");
   let ref = -1, end = -1;
   s.doc.forEach((n, p) => { if (n.type.name === "reference") { ref = p; end = p + n.nodeSize; } });

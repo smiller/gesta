@@ -4,7 +4,7 @@ import type { Decoration } from "prosemirror-view";
 import { parseMarkdown } from "../model/parse.ts";
 import { foldSections, foldDecorations, sectionAt, folds, foldsKey, toggleFold, setFolds, openFoldAt, openKeys } from "./folds.ts";
 
-const CONTENTS = "# The Faerie Queene\n\n*Disposed into twelue bookes*\n\n::: reference\nroman book and canto\n:::\n\n" +
+const CONTENTS = "# The Faerie Queene\n\n*Disposed into twelue bookes*\n\n" +
   "## Dedications\n\nTo the most high, mightie and magnificent empresse\n\n- [Letter to Raleigh](#bookshelf/S/W/Letter)\n- [Commendatory Verses](#bookshelf/S/W/CV)\n\n" +
   "## Book I: The Legende of the Knight\n\n- [Proem](#bookshelf/S/W/1.pr)\n- [Canto i](#bookshelf/S/W/1.1)\n- [Canto ii](#bookshelf/S/W/1.2)\n\n" +
   "### a sub-heading inside Book I\n\ntext\n\n" +

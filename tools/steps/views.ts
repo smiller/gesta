@@ -220,7 +220,7 @@ section("walk", async () => {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
 });
 section("stanza", async () => {
-  /* the Faerie Queene's stanzas: a work whose page says `roman book and canto`, each stanza a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb respelled, ⌃⌘R across a stanza gap referring to I.i.1.3–2.1 and quoting both, ⌃⌘G asking by a Stanza box and a Line box */
+  /* the Faerie Queene's stanzas, each a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb the canto's key, ⌃⌘R across a stanza gap referring to 1.1.1.3–2.1 and quoting both, ⌃⌘G asking by a Stanza box and a Line box */
   await A.seedStanza(page, STANZA_SEEDS);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1");
   await R.settle(page);

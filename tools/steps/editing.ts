@@ -151,7 +151,7 @@ async function pictureGapsAndQuotation(): Promise<void> {
   }));
 }
 async function referenceBlockClicked(): Promise<void> {
-  await write("page/Reference Block", "::: reference\nroman book and canto\n:::\n\nafter\n");
+  await write("page/Reference Block", "::: reference\nby book, chapter, and paragraph\n:::\n\nafter\n");
   await page.click("#editor .reference, #page .reference", { timeout: 2000 }).catch(() => {});
   await rest(page);
   await page.keyboard.type("Q");

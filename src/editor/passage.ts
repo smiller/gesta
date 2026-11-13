@@ -292,8 +292,8 @@ function passageMd(passage: Passage, byHalves: boolean, paragraphs: boolean): st
   /* a run across stanzas:
      each stanza's rows quoted as one block's are, a blank quoted line
      between them, as the stanza gap stands in print (pin: reference.test ›
-   referencePayload under the directive: I.i.2.1, a run across a stanza gap
-   allowed and quoted whole) */
+   stanzas refer by stanza under the canto's key, and a run across a stanza
+   gap is allowed and quoted whole) */
   return byBlock(units).map((group) => blockPassage(p, group)).join("\n" + quotePrefix("") + "\n");
 }
 /* A SELECTION WIDENED TO WHOLE WORDS: back to the start of the word it starts in and on to the end of the word

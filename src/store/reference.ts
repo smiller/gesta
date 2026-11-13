@@ -67,8 +67,6 @@ export function folioLabel(from: string, to?: string | null): string {
 export interface Journal {
   heading(ekey: string): string;
   fromLastTitle(rootKey: string): boolean;
-  /* the WORK's page carries `roman book and canto` */
-  romanBookCanto(workKey: string): boolean;
   /* the ROOT's page carries `no author`: a heading that gathers works, not a person */
   noAuthor(rootKey: string): boolean;
   /* the page carries `Old English verse`: its lines are referred to by half-line */
@@ -82,35 +80,13 @@ export interface Journal {
   partsInRoman(workKey: string): boolean;
 }
 
-/* THE FAERIE QUEENE'S SPELLING: its keys stay digit-led so book and canto
-   join as numerals (`1.1`, `1.pr`), and a
-   work whose page says `roman book and canto` refers to them as Spenserians
-   do — the book upper-case Roman, the canto lower-case, `pr` (the proem)
-   as it stands: I.i.2.1. Subtractive, the modern reference's form (IV, ix),
-   not the print's IIII (pin: reference.test › roman: upper case for a book,
-   lower for a canto, subtractive) */
+/* subtractive, the modern form (IV, ix), not the print's IIII (pin:
+   reference.test › roman: upper or lower case, subtractive) */
 const ROMAN: [number, string][] = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]];
 export function roman(n: number, lower = false): string {
   let out = "";
   for (const [v, s] of ROMAN) while (n >= v) { out += s; n -= v; }
   return lower ? out : out.toUpperCase();
-}
-export function romanKey(seg: string): string {
-  const m = seg.match(/^(\d+)(?:\.(\d+|pr))?$/);
-  if (!m) return seg;
-  return roman(+m[1]) + cantoPart(m[2]);
-}
-function cantoPart(canto: string | undefined): string {
-  if (canto === undefined) return "";
-  return "." + (canto === "pr" ? "pr" : roman(+canto, true));
-}
-/* the work's key when an entry below it sits under the directive, else
-   null: a book's author/work/leaf, the work being the second level */
-export function romanWorkKey(date: string, tag: string | null, journal: Journal): string | null {
-  const segs = tag ? tag.split("/") : [];
-  if (!titlesRoots(date) || segs.length < 3) return null;
-  const work = entryKey(date, segs[0] + "/" + segs[1]);
-  return journal.romanBookCanto(work) ? work : null;
 }
 /* a book entry refers to half-lines when its own page or any above it says
    `Old English verse`: a root of works with no author says it once for all
@@ -226,9 +202,8 @@ function fromLastTitle(parts: Piece[]): Piece[] {
   parts.forEach((p, i) => { if (p.t !== undefined) at = i; });
   return at >= 0 ? parts.slice(at) : parts;
 }
-function numberedDeepest(parts: Piece[], c: LabelCtx): string | undefined {
+function numberedDeepest(parts: Piece[]): string | undefined {
   const deepest = parts[parts.length - 1];
-  if (deepest?.n !== undefined && romanWorkKey(c.date, c.tag, c.journal)) deepest.n = romanKey(deepest.n);
   return deepest?.n ?? deepest?.division;
 }
 const wordedChapterRange = (deepest: Piece | undefined, range: string): boolean =>
@@ -295,7 +270,7 @@ export function referenceLabel(date: string, tag: string | null, at: Locator, jo
   const facing = at.facing ?? "";
   const range = !translator && facing ? facing : at.range;
   const parts = framed(pieces, c);
-  const numbered = numberedDeepest(parts, c);
+  const numbered = numberedDeepest(parts);
   const label = joinParts(withFirst(located(parts, { ...at, range }, c, numbered), c), c.books && journal.scripture(entryKey(date, c.root)));
   return translator ? label + translatorNote(c, translator, facing, numbered) : label;
 }

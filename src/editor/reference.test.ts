@@ -225,14 +225,6 @@ test("referenceAnchorHTML: the label's italics as em, everything else escaped, t
 });
 
 
-// The Faerie Queene: under the work's `roman book and canto`
-// directive a reference names the stanza — I.i.2.1 — and a selection may run
-// across stanzas, which a plain verse fence refuses.
-const fqJournal = journalOf({
-  "bookshelf/Spenser, Edmund/The Faerie Queene": "# The Faerie Queene\n\n::: reference\nroman book and canto\n:::",
-  "bookshelf/Spenser, Edmund/The Faerie Queene/1.1": "# Book I, Canto i",
-});
-const FQ1 = "Spenser, Edmund/The Faerie Queene/1.1";
 const canto = parseMarkdown("# Book I, Canto i\n\n::: note\nThe Patron of true Holinesse,\n:::\n\n" +
   "::: stanza 1\nA Gentle Knight was pricking on the plaine,\nYcladd in mightie armes and siluer shielde,\nWherein old dints of deepe wounds did remaine,\n:::\n\n" +
   "::: stanza 2\nBut on his brest a bloudie Crosse he bore,\nThe deare remembrance of his dying Lord,\nFor whose sweete sake that glorious badge he wore,\n:::\n\n" +
@@ -246,25 +238,19 @@ test("stanzaRange: a line, lines, a whole stanza, whole stanzas, a run across th
   expect(r("deepe wounds", "dying Lord")).toBe("1.3–2.2");
   expect(r("Patron")).toBe("");
 });
-test("referencePayload under the directive: I.i.2.1, a run across a stanza gap allowed and quoted whole", () => {
-  const [a, b] = span(canto, "bloudie Crosse");
-  const one = referencePayload(state(canto, a, b), { date: "bookshelf", tag: FQ1 }, fqJournal);
-  expect("label" in one && one.label).toBe("Spenser, *The Faerie Queene*, I.i.2.1");
-  const [c, d] = span(canto, "Wherein old dints", "dying Lord,");
-  const run = referencePayload(state(canto, c, d), { date: "bookshelf", tag: FQ1 }, fqJournal);
-  expect("label" in run && run.label).toBe("Spenser, *The Faerie Queene*, I.i.1.3–2.2");
-  expect("passage" in run && run.passage).toBe("> Wherein old dints of deepe wounds did remaine,\n> \n> But on his brest a bloudie Crosse he bore,\n> The deare remembrance of his dying Lord,");
-  const [e, f] = span(canto, "A Gentle Knight", "Faerie lond,");
-  const all = referencePayload(state(canto, e, f), { date: "bookshelf", tag: FQ1 }, fqJournal);
-  expect("label" in all && all.label).toBe("Spenser, *The Faerie Queene*, I.i.1–3");
-});
-test("without the directive stanzas still refer by stanza, the numbers as keyed, and a run across them is allowed", () => {
+test("stanzas refer by stanza under the canto's key, and a run across a stanza gap is allowed and quoted whole", () => {
   const [a, b] = span(canto, "bloudie Crosse");
   const plain = referencePayload(state(canto, a, b), { date: "bookshelf", tag: "Somebody/A Work/1.1" }, journalOf({}));
   expect("label" in plain && plain.label).toBe("Somebody, *A Work*, 1.1.2.1");
   const [c, d] = span(canto, "deepe wounds", "dying Lord");
   const run = referencePayload(state(canto, c, d), { date: "bookshelf", tag: "Somebody/A Work/1.1" }, journalOf({}));
   expect("label" in run && run.label).toBe("Somebody, *A Work*, 1.1.1.3–2.2");
+  const [e, f] = span(canto, "Wherein old dints", "dying Lord,");
+  const gap = referencePayload(state(canto, e, f), { date: "bookshelf", tag: "Somebody/A Work/1.1" }, journalOf({}));
+  expect("passage" in gap && gap.passage).toBe("> Wherein old dints of deepe wounds did remaine,\n> \n> But on his brest a bloudie Crosse he bore,\n> The deare remembrance of his dying Lord,");
+  const [g, h] = span(canto, "A Gentle Knight", "Faerie lond,");
+  const all = referencePayload(state(canto, g, h), { date: "bookshelf", tag: "Somebody/A Work/1.1" }, journalOf({}));
+  expect("label" in all && all.label).toBe("Somebody, *A Work*, 1.1.1–3");
 });
 // Any work whose verse is in stanza fences refers by stanza: Hávamál, a root
 // with no author, its stanzas paired with a translation.
@@ -359,10 +345,10 @@ test("Old English verse said on a work's page reaches the entries below it; the 
   expect(rangeOf(doc, ...span(doc, "c d", "j k"))).toBe("1162-68");
 });
 
-test("under the directive a run reaching a plain verse block is still refused", () => {
+test("a run from a stanza into a plain verse block is refused", () => {
   const mixed = parseMarkdown("::: stanza 1\na\nb\n:::\n\n::: verse\nc\n:::");
   const [a, b] = span(mixed, "b", "c");
-  expect(referencePayload(state(mixed, a, b), { date: "bookshelf", tag: FQ1 }, fqJournal)).toEqual({ refused: "two-blocks" });
+  expect(referencePayload(state(mixed, a, b), { date: "bookshelf", tag: "Somebody/A Work/1.1" }, journalOf({}))).toEqual({ refused: "two-blocks" });
 });
 
 test("a passage starting on the line after a skipped line number is numbered from that line", () => {

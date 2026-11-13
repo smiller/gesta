@@ -13,7 +13,7 @@
    its own link) */
 import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
-import { romanKey, romanWorkKey, type Journal } from "../store/reference.ts";
+import type { Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
 import { rootGroups } from "../store/shelves.ts";
 
@@ -44,7 +44,7 @@ function pageHead(date: string, tag: string | null, journal: Journal): Head {
     const label = i ? name : rootLabel(date, name, journal);
     return { text: label, href: entryHash(date, path.slice(0, i + 1).join("/")), title: "Back to " + label };
   });
-  return { crumbs, leaf: romanWorkKey(date, tag, journal) ? romanKey(pp.leaf!) : pp.leaf, title: journal.heading(entryKey(date, tag)), tags: [] };
+  return { crumbs, leaf: pp.leaf, title: journal.heading(entryKey(date, tag)), tags: [] };
 }
 /* date keys are YYYY-MM-DD, so a string compare is chronological */
 const whenOf = (date: string, today: string): string => (date === today ? "Today" : date < today ? "Past" : "Future");
