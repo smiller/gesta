@@ -3,7 +3,7 @@ import type { Screen } from "./screen.svelte.ts";
 import type { Journal } from "../store/reference.ts";
 import { refersByBookChapterParagraph, refersAsScripture } from "../store/reference.ts";
 import { entryKey } from "../store/keys.ts";
-import { paragraphHit, askKind, lineHits, lineRefusal, nextHit, landingWord, folioHit, folioRefusal, askCheck, askedLabel, stanzaAskCheck, stanzaHit, hasStanzas } from "../editor/goto.ts";
+import { ask, bar, type Conventions } from "../editor/goto.ts";
 import { openFoldAt } from "../editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
@@ -59,48 +59,14 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
-  const asksParagraphs = (): boolean => refersByBookChapterParagraph(session.current.date, session.current.tag, journal);
-  const asksVerses = (): boolean => refersAsScripture(session.current.date, session.current.tag, journal);
-  const lineLabel = (): string => (asksParagraphs() ? "Paragraph" : asksVerses() ? "Verse" : "Line");
-  const goToLine = (n: number | string, quiet: boolean): boolean => {
+  const conventions = (): Conventions => ({ paragraphs: refersByBookChapterParagraph(session.current.date, session.current.tag, journal), verses: refersAsScripture(session.current.date, session.current.tag, journal) });
+  const SAID_MS = { typed: 2000, absent: 3000, landing: 2500 };
+  const asked = (box: "line" | "page", v: string, from: "bar" | "link"): boolean => {
     const view = session.view!;
-    if (typeof n === "number" && asksParagraphs()) {
-      const hit = paragraphHit(view.state.doc, n);
-      if (typeof hit === "string") { say(hit, 3000); return false; }
-      landOn(hit.pos);
-      return true;
-    }
-    const { hits, blocks } = lineHits(view.state.doc, n);
-    const noun = asksVerses() ? "verse" : undefined;
-    if (!hits.length) { say(lineRefusal(blocks, n, noun), 3000); return false; }
-    const hit = nextHit(hits, landingPos(view.state), n === lineAsked);
-    lineAsked = n;
-    landOn(hit.pos);
-    const word = landingWord(hit, { hits, blocks }, n, noun);
-    if (word && spoken(quiet, hit.skipped)) say(word, 2500);
-    return true;
-  };
-  const spoken = (quiet: boolean, skipped?: boolean): boolean => !quiet || !!skipped;
-  /* what the Line box's words name on this page, the box and a link to a line
-     alike (pin: a link to a line › a link to a stanza, and line) */
-  const askLine = (v: string, quiet: boolean): boolean => {
-    const doc = session.view!.state.doc;
-    /* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and
-       line, one place each; a plain verse page keeps the line ask (pin:
-       stanza › ⌃⌘G 2.1) */
-    if (hasStanzas(doc)) {
-      const bad = stanzaAskCheck(v);
-      if (bad) { say(bad, 2000); return false; }
-      const hit = stanzaHit(doc, v);
-      if (typeof hit === "string") { say(hit, 3000); return false; }
-      landOn(hit.pos);
-      return true;
-    }
-    const label = askedLabel(doc, v);
-    if (label) return goToLine(label, quiet);
-    const why = askCheck(v, "line", lineLabel().toLowerCase());
-    if (why) { say(why, 2000); return false; }
-    return goToLine(parseInt(v.trim(), 10), quiet);
+    const a = ask(view.state.doc, conventions(), box, v, { pos: landingPos(view.state), asked: lineAsked }, from);
+    if ("pos" in a) { lineAsked = a.asked ?? 0; landOn(a.pos); }
+    if (a.said) say(a.said.text, SAID_MS[a.said.kind]);
+    return "pos" in a;
   };
   /* before the warm a work's own page, which says how it is referred to, may
      not be read (pin: a link to a line › a link to a paragraph before the warm) */
@@ -129,7 +95,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
       endLinkMark = untilHand(() => { lineOwed = null; });
       return;
     }
-    if (!askLine(v, true)) return;
+    if (!asked("line", v, "link")) return;
     /* the next key goes from the line, not the page's top (pin: a link to a
        line › a link to a line, a key after arriving) */
     const landed = landingPos(view.state);
@@ -140,12 +106,6 @@ export function lineBarActs(d: LineBarDeps): LineBar {
        (pin: a link to a line › a link to a line, the next click)
        (pin: landing.test › a key that moves or writes) */
     endLinkMark = untilHand(() => { if (session.view) setLanding(session.view, null); });
-  };
-  const goToFolio = (tok: string): void => {
-    const view = session.view!;
-    const hit = folioHit(view.state.doc, tok);
-    if (!hit) { say(folioRefusal(view.state.doc, tok), 3000); return; }
-    landOn(hit.pos);
   };
   const closeLineBar = (): void => {
     if (!lb.open) return;
@@ -170,8 +130,6 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     if (had && pos !== null) caretOn(view, pos);
     view.focus();
   };
-  const askedFor = (): string => (asksParagraphs() ? "a paragraph" : asksVerses() ? "a verse" : "a line or a page");
-  const noNumbers = (): string => (asksParagraphs() ? "no paragraph numbers here" : asksVerses() ? "no verse numbers here" : "no line or page numbers here");
   const freshAsk = (): void => {
     const c = session.current, askKey = entryKey(c.date, c.tag);
     if (askKey === lastAskKey) return;
@@ -179,15 +137,14 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { say("Switch to the rendered view to go to " + askedFor(), 3000); return; }
-    const view = session.view;
+    const view = session.view, b = bar(view?.state.doc ?? null, conventions());
+    if (session.mdView) { say(b.inSource, 3000); return; }
     if (!view) return;
-    const kind = askKind(view.state.doc);
-    if (kind === "none") { say(noNumbers(), 2000); return; }
+    if (b.kind === "none") { say(b.none, 2000); return; }
     freshAsk();
     opened();
-    lb.kind = kind;
-    lb.lineLabel = lineLabel();
+    lb.kind = b.kind;
+    lb.lineLabel = b.label;
     lb.open = true;
     setTimeout(() => focusBar(), 0);
   };
@@ -203,18 +160,16 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   const reaskBar = (): void => {
     const view = session.view;
     if (!lb.open || !view) return;
-    lb.lineLabel = lineLabel();
-    const asked = askKind(view.state.doc), kind = asked === "none" ? "both" : asked;
+    const b = bar(view.state.doc, conventions());
+    lb.lineLabel = b.label;
+    const kind = b.kind === "none" ? "both" : b.kind;
     if (kind !== lb.kind) switchKind(kind);
   };
   const inputBar = (kind: "line" | "page", v: string): void => { if (kind === "line") { lb.line = v; lineAsked = 0; } else lb.page = v; };
   const enterBar = (kind: "line" | "page", v: string, repeat: boolean): void => {
     if (repeat) return;
     if (session.mdView || !session.view) return;
-    if (kind === "line") { askLine(v, false); return; }
-    const why = askCheck(v, kind, lineLabel().toLowerCase());
-    if (why) { say(why, 2000); return; }
-    goToFolio(v.trim());
+    asked(kind, v, "bar");
   };
   const closeBar = putLineCaret;
   /* a click whose press began in the bar is a drag out of a box, not a

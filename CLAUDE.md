@@ -568,9 +568,12 @@ is in the plan's record, under the phase named):
   joined, other HTML the editor's own, plain text as blocks or as
   ProseMirror pastes it — and `pasteProps`, the rendered view's paste as
   props, 2026-11-12), `copy.ts` (what copied text says: the markdown, the
-  slice cut from where the selection stands, no page marker, as `copyProps`), `goto.ts` (⌃⌘G's decisions over a
-  document: what the entry can be asked for, the hits and the cycle, the
-  refusals), `landing.ts` (the landing mark as a plugin: a position that
+  slice cut from where the selection stands, no page marker, as `copyProps`), `goto.ts` (⌃⌘G's ask, the bar and a
+  link to a line alike: `ask` over the document, the work's conventions, the
+  words typed and where the reader stands — a stanza page first, a lettered
+  label, a paragraph or a line, the cycle, the landing word, a leaf, every
+  refusal — and `bar`, the boxes, the Line box's label and the words where
+  nothing can be asked, 2026-11-12), `landing.ts` (the landing mark as a plugin: a position that
   maps through edits, drawn as a node decoration), `codeHighlight.ts`
   (the tokens drawn as inline decorations over every code block),
   `quoteKeys.ts` (Tab and Shift-Tab in a quote: the run between blank
@@ -697,9 +700,11 @@ is in the plan's record, under the phase named):
   (2026-11-11), each a factory over the parts main.ts hands it, its
   listeners registered by itself: `searchActs.ts` (the Search row: the
   index, its build and its keeping, the scan, the walk and the pick),
-  `gotoActs.ts` (the Go to row), `lineBarActs.ts` (⌃⌘G's bar: the asks,
-  the landing and its centring a frame later, the caret hand-back, a link
-  to a line and the landing owed before the warm), `replaceActs.ts` (⌃⌘E's
+  `gotoActs.ts` (the Go to row), `lineBarActs.ts` (⌃⌘G's bar on screen:
+  the conventions read from the journal, the cycle's last ask held, each
+  answer's time in the corner, the landing and its centring a frame later,
+  the caret hand-back, a link to a line and the landing owed before the
+  warm), `replaceActs.ts` (⌃⌘E's
   bar over the view it opened on), `bookmarkActs.ts` (the bookmarks card:
   its keys, the alias editor, the link placed), `formatBarActs.ts` (the
   floating format bar: its place over the selection and its acts),

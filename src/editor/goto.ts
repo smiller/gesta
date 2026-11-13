@@ -26,11 +26,11 @@ const unitNoun = (block: Unit[]): string => prose(block) ? "sentence" : "line";
 const formNoun = (block: Unit[]): string => prose(block) ? "prose block" : "verse block";
 /* what this entry can be asked for: the line box answers for sentences
    too, though a prose book paints nothing */
-export function askKind(doc: Node): AskKind {
+function askKind(doc: Node): AskKind {
   const lines = paintsLines(doc) || blocksOf(lineUnits(doc, 0)).length > 0;
   return lines ? (hasFolios(doc) ? "both" : "line") : hasFolios(doc) ? "page" : "none";
 }
-export interface Hit { pos: number; nth: number; block: Unit[]; skipped?: boolean }
+interface Hit { pos: number; nth: number; block: Unit[]; skipped?: boolean }
 /* a skipped line number lands where the line would stand, on the line after
    the gap, or before it where the gap ends its block (pin: goto.test › a
    skipped line number) */
@@ -45,7 +45,7 @@ function askedUnits(doc: Node): Unit[] {
 /* what the box's words name beyond a number: a lettered line, only on a page
    that has one, so a half-line's `50b` is no ask on Beowulf (pin: goto.test ›
    a box takes a label only) */
-export function askedLabel(doc: Node, ask: string): string | null {
+function askedLabel(doc: Node, ask: string): string | null {
   const a = ask.trim().toLowerCase();
   return /^(?:\d+[a-z]|\[\d+\])$/.test(a) && askedUnits(doc).some((u) => u.label) ? a : null;
 }
@@ -59,8 +59,8 @@ function blockHits(rows: Unit[], i: number, n: number | string): Hit[] {
   }
   return out;
 }
-export interface LineHits { hits: Hit[]; blocks: Unit[][] }
-export function lineHits(doc: Node, n: number | string): LineHits {
+interface LineHits { hits: Hit[]; blocks: Unit[][] }
+function lineHits(doc: Node, n: number | string): LineHits {
   const blocks = blocksOf(askedUnits(doc));
   const hits = blocks.flatMap((rows, i) => blockHits(rows, i, n));
   /* a block opening part-way along a line holds that line's rest: the line is
@@ -102,7 +102,7 @@ function severalRefusal(blocks: Unit[][], n: number | string, l: Longest, noun?:
   if (!repeatsANumber(blocks)) return "no " + unit + " " + n + ", the last " + unit + " is " + lastName;
   return "no " + unit + " " + n + " — the longest " + (noun ? "block" : formNoun(l.block)) + (l.lowest > 1 ? " ends at " : " has ") + lastName;
 }
-export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
+function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
   const l = longestBlock(blocks);
   if (typeof n === "number" && n < 1) return "no " + (noun ?? (l ? unitNoun(l.block) : "line")) + " " + n + " here";
   if (!l) return "no numbered " + (noun ?? "line") + "s here";
@@ -113,7 +113,7 @@ export function lineRefusal(blocks: Unit[][], n: number | string, noun?: string)
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
-export function paragraphHit(doc: Node, n: number): { pos: number } | string {
+function paragraphHit(doc: Node, n: number): { pos: number } | string {
   let hit: number | null = null, low = Infinity, high = -Infinity;
   doc.forEach((block, blockPos) => {
     if (block.type !== N.prose) return;
@@ -127,29 +127,29 @@ export function paragraphHit(doc: Node, n: number): { pos: number } | string {
   if (hit !== null) return { pos: hit };
   return high === -Infinity ? "no numbered paragraphs here" : "no paragraph " + n + " — the paragraphs here are " + low + "–" + high;
 }
-export function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
+function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);
   return hits[sameAsk && was !== -1 ? (was + 1) % hits.length : 0];
 }
 /* the ordinal is said only where the number names several places: a page of
    many blocks numbered straight on has one place for each (pin: goto.test ›
    says nothing of the blocks) */
-export function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, noun?: string): string | null {
+function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, noun?: string): string | null {
   const several = hits.length > 1;
   if (hit.skipped) return (noun ?? "line") + " " + n + " is omitted in this edition" + (several ? " — " + (noun ? "block" : formNoun(hit.block)) + " " + hit.nth + " of " + blocks.length : "");
   if (!several) return null;
   const oneForm = !noun && blocks.every((rows) => prose(rows) === prose(hit.block));
   return (noun ?? unitNoun(hit.block)) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
 }
-export function folioHit(doc: Node, tok: string): { pos: number } | null {
+function folioHit(doc: Node, tok: string): { pos: number } | null {
   const want = tok.toLowerCase();
   const leaf = folioLeaves(doc).find((l) => l.label.toLowerCase() === want);
   return leaf ? { pos: leaf.pos } : null;
 }
-export function folioRefusal(doc: Node, tok: string): string {
+function folioRefusal(doc: Node, tok: string): string {
   return !folioLeaves(doc).length ? "no page numbers here" : "no page " + trimLabel(tok, ECHO_CAP) + " here";
 }
-export function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string | null {
+function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string | null {
   const a = ask.trim();
   const noun = kind === "page" ? "page" : lineNoun;
   if (!a) return "type a " + noun + " number";
@@ -162,7 +162,7 @@ export function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"):
    A stanza number names one place — the stanzas are numbered in the text,
    each once — so there is nothing to cycle (pin: goto.test › a stanza
    lands on its first line) */
-export function stanzaAskCheck(ask: string): string | null {
+function stanzaAskCheck(ask: string): string | null {
   const a = ask.trim();
   if (!a) return "type a stanza, or stanza.line";
   return /^\d+(?:\.\d+)?$/.test(a) ? null : trimLabel(a, ECHO_CAP) + " is not a stanza or stanza.line, like 2.1";
@@ -170,7 +170,7 @@ export function stanzaAskCheck(ask: string): string | null {
 /* the page, not its work: a plain verse entry beside stanza entries (the
    commendatory verses) has none (pin: goto.test › a page holding a
    top-level stanza asks by stanza) */
-export function hasStanzas(doc: Node): boolean {
+function hasStanzas(doc: Node): boolean {
   let yes = false;
   doc.forEach((block) => { if (block.attrs.stanza != null) yes = true; });
   return yes;
@@ -191,10 +191,60 @@ function stanzaLine(found: Found, s: number, l: number | undefined): { pos: numb
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
   return want ? { pos: want.pos } : "stanza " + s + " has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
 }
-export function stanzaHit(doc: Node, ask: string): { pos: number } | string {
+function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
   const { last, found } = findStanza(doc, s);
   if (!last) return "no stanzas here";
   if (!found) return "no stanza " + s + " here — the last is " + last;
   return stanzaLine(found, s, l);
+}
+
+export interface Conventions { paragraphs: boolean; verses: boolean }
+const lineLabel = (c: Conventions): "Line" | "Verse" | "Paragraph" => (c.paragraphs ? "Paragraph" : c.verses ? "Verse" : "Line");
+const askedFor = (c: Conventions): string => (c.paragraphs ? "a paragraph" : c.verses ? "a verse" : "a line or a page");
+const noNumbers = (c: Conventions): string => (c.paragraphs ? "no paragraph numbers here" : c.verses ? "no verse numbers here" : "no line or page numbers here");
+/* the bar as this entry asks it: which boxes, the Line box's label, what is
+   said where nothing can be asked, and where there is no document to ask */
+export function bar(doc: Node | null, c: Conventions): { kind: AskKind; label: "Line" | "Verse" | "Paragraph"; none: string; inSource: string } {
+  return { kind: doc ? askKind(doc) : "none", label: lineLabel(c), none: noNumbers(c), inSource: "Switch to the rendered view to go to " + askedFor(c) };
+}
+export interface Standing { pos: number | null; asked: number | string | null }
+export interface Said { text: string; kind: "typed" | "absent" | "landing" }
+export type Answer = { pos: number; asked: number | string | null; said: Said | null } | { said: Said };
+const typedWrong = (text: string): Answer => ({ said: { text, kind: "typed" } });
+const absent = (text: string): Answer => ({ said: { text, kind: "absent" } });
+const placed = (hit: { pos: number } | string, standing: Standing): Answer => (typeof hit === "string" ? absent(hit) : { pos: hit.pos, asked: standing.asked, said: null });
+function pageAnswer(doc: Node, c: Conventions, typed: string, standing: Standing): Answer {
+  const why = askCheck(typed, "page", lineLabel(c).toLowerCase());
+  if (why) return typedWrong(why);
+  const tok = typed.trim(), hit = folioHit(doc, tok);
+  return hit ? placed(hit, standing) : absent(folioRefusal(doc, tok));
+}
+/* on a page holding stanzas the Line box takes `N` or `N.M`, stanza and line,
+   one place each (pin: stanza › ⌃⌘G 2.1) */
+function stanzaAnswer(doc: Node, typed: string, standing: Standing): Answer {
+  const bad = stanzaAskCheck(typed);
+  return bad ? typedWrong(bad) : placed(stanzaHit(doc, typed), standing);
+}
+/* a link's landing says only an omitted line's word; the cycle goes on only
+   where the same number is asked again */
+function numberAnswer(doc: Node, c: Conventions, n: number | string, standing: Standing, from: "bar" | "link"): Answer {
+  if (typeof n === "number" && c.paragraphs) return placed(paragraphHit(doc, n), standing);
+  const found = lineHits(doc, n), noun = c.verses ? "verse" : undefined;
+  if (!found.hits.length) return absent(lineRefusal(found.blocks, n, noun));
+  const hit = nextHit(found.hits, standing.pos, n === standing.asked);
+  const word = landingWord(hit, found, n, noun);
+  return { pos: hit.pos, asked: n, said: word && (from === "bar" || hit.skipped) ? { text: word, kind: "landing" } : null };
+}
+function lineAnswer(doc: Node, c: Conventions, typed: string, standing: Standing, from: "bar" | "link"): Answer {
+  const label = askedLabel(doc, typed);
+  if (label) return numberAnswer(doc, c, label, standing, from);
+  const why = askCheck(typed, "line", lineLabel(c).toLowerCase());
+  return why ? typedWrong(why) : numberAnswer(doc, c, parseInt(typed.trim(), 10), standing, from);
+}
+/* what a box's words name on this page, typed or followed from a link (pin:
+   a link to a line › a link to a stanza, and line) */
+export function ask(doc: Node, c: Conventions, box: "line" | "page", typed: string, standing: Standing, from: "bar" | "link"): Answer {
+  if (box === "page") return pageAnswer(doc, c, typed, standing);
+  return hasStanzas(doc) ? stanzaAnswer(doc, typed, standing) : lineAnswer(doc, c, typed, standing, from);
 }
