@@ -2,6 +2,7 @@ import { test, expect } from "vitest";
 import { conventionsOf, type Conventions } from "./conventions.ts";
 import { journalOf } from "./headings.ts";
 import { NS_BOOK, NS_PAGE } from "./keys.ts";
+import help from "../ui/help.html?raw";
 
 const NONE: Conventions = { lastTitle: false, noAuthor: false, scripture: false, partsInRoman: false, prosimetrum: false, byBookChapterAndParagraph: false, oldEnglishVerse: false };
 const block = (...lines: string[]): string => "# W\n\n::: reference\n" + lines.join("\n") + "\n:::\n";
@@ -53,4 +54,10 @@ test("a directive is a line of its own in a top-level reference block; from the 
   expect(work(block("not parts in roman here")).partsInRoman).toBe(false);
   expect(work("# W\n\n> ::: reference\n> prosimetrum\n> :::\n").prosimetrum).toBe(false);
   expect(work(block("OLD ENGLISH VERSE")).oldEnglishVerse).toBe(true);
+});
+test("every directive the help names is one the record reads, on a root's page or a work's", () => {
+  const named = [...help.matchAll(/<code>::: reference<\/code>, <code>([^<]+)<\/code>, <code>:::<\/code>/g)].map((m) => m[1]);
+  expect(named.length).toBeGreaterThan(0);
+  const read = (words: string): boolean => [under(block(words), "# W"), under("# A", block(words))].some((c) => Object.values(c).some(Boolean));
+  expect(named.filter((words) => !read(words))).toEqual([]);
 });

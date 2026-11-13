@@ -28,8 +28,6 @@ const cache: Record<string, string> = Object.create(null);
 for (const path of walk(SRC)) { const t = importTarget(relative(SRC, path)); if (t) cache[entryKey(t.date, t.tag)] = readFileSync(path, "utf8"); }
 /* a comma and a space is inside a filed name (Spenser, Edmund); a bare comma parts two */
 const PREFIXES = AUTHOR.split(/,(?! )/);
-/* a work referred to in roman book and canto by its own page is referred to in arabic all the same, asked: Spenser, The Faerie Queene, 2.7.5.8-9 */
-for (const k of Object.keys(cache)) if (/^bookshelf\//.test(k)) cache[k] = cache[k].replace(/^::: reference\nroman book and canto\n:::\n\n?/m, "");
 const index = shelfIndex(Object.fromEntries(Object.entries(cache).filter(([k]) => PREFIXES.some((p) => k === p || k.startsWith(p + "/")))));
 
 /* entries that quote the bookshelf as the reference feature's test data, left */

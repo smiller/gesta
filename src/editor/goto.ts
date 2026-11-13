@@ -19,6 +19,7 @@ import { folioLeaves } from "./reference.ts";
 import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
 import { roman } from "../store/reference.ts";
 import type { Conventions } from "../store/conventions.ts";
+type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "scripture">;
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 
 const N = schema.nodes;
@@ -205,12 +206,12 @@ function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   return stanzaAt(doc, s, l);
 }
 
-const lineLabel = (c: Conventions): "Line" | "Verse" | "Paragraph" => (c.byBookChapterAndParagraph ? "Paragraph" : c.scripture ? "Verse" : "Line");
-const askedFor = (c: Conventions): string => (c.byBookChapterAndParagraph ? "a paragraph" : c.scripture ? "a verse" : "a line or a page");
-const noNumbers = (c: Conventions): string => (c.byBookChapterAndParagraph ? "no paragraph numbers here" : c.scripture ? "no verse numbers here" : "no line or page numbers here");
+const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => (c.byBookChapterAndParagraph ? "Paragraph" : c.scripture ? "Verse" : "Line");
+const askedFor = (c: Asked): string => (c.byBookChapterAndParagraph ? "a paragraph" : c.scripture ? "a verse" : "a line or a page");
+const noNumbers = (c: Asked): string => (c.byBookChapterAndParagraph ? "no paragraph numbers here" : c.scripture ? "no verse numbers here" : "no line or page numbers here");
 /* the bar as this entry asks it: which boxes, the Line box's label, what is
    said where nothing can be asked, and where there is no document to ask */
-export function bar(doc: Node | null, c: Conventions): { kind: AskKind; label: "Line" | "Verse" | "Paragraph"; none: string; inSource: string } {
+export function bar(doc: Node | null, c: Asked): { kind: AskKind; label: "Line" | "Verse" | "Paragraph"; none: string; inSource: string } {
   return { kind: doc ? askKind(doc) : "none", label: lineLabel(c), none: noNumbers(c), inSource: "Switch to the rendered view to go to " + askedFor(c) };
 }
 export interface Standing { pos: number | null; asked: number | string }
@@ -219,7 +220,7 @@ export type Answer = { pos: number; asked: number | string; said: Said | null } 
 const typedWrong = (text: string): Answer => ({ said: { text, kind: "typed" } });
 const absent = (text: string): Answer => ({ said: { text, kind: "absent" } });
 const placed = (hit: { pos: number } | string, standing: Standing): Answer => (typeof hit === "string" ? absent(hit) : { pos: hit.pos, asked: standing.asked, said: null });
-function pageAnswer(doc: Node, c: Conventions, typed: string, standing: Standing): Answer {
+function pageAnswer(doc: Node, c: Asked, typed: string, standing: Standing): Answer {
   const why = askCheck(typed, "page", lineLabel(c).toLowerCase());
   if (why) return typedWrong(why);
   const tok = typed.trim(), hit = folioHit(doc, tok);
@@ -253,7 +254,7 @@ function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only
    where the same number is asked again */
-function numberAnswer(doc: Node, c: Conventions, n: number | string, standing: Standing, from: "bar" | "link"): Answer {
+function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "bar" | "link"): Answer {
   if (typeof n === "number" && c.byBookChapterAndParagraph) return placed(paragraphHit(doc, n), standing);
   const found = lineHits(doc, n), noun = c.scripture ? "verse" : undefined;
   if (!found.hits.length) return absent(lineRefusal(found.blocks, n, noun));
@@ -261,7 +262,7 @@ function numberAnswer(doc: Node, c: Conventions, n: number | string, standing: S
   const word = landingWord(hit, found, n, noun);
   return { pos: hit.pos, asked: n, said: word && (from === "bar" || hit.skipped) ? { text: word, kind: "landing" } : null };
 }
-function lineAnswer(doc: Node, c: Conventions, typed: string, standing: Standing, from: "bar" | "link"): Answer {
+function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from: "bar" | "link"): Answer {
   const label = askedLabel(doc, typed);
   if (label) return numberAnswer(doc, c, label, standing, from);
   const why = askCheck(typed, "line", lineLabel(c).toLowerCase());
@@ -270,7 +271,7 @@ function lineAnswer(doc: Node, c: Conventions, typed: string, standing: Standing
 /* what a box's words name on this page, typed or followed from a link (pin:
    a link to a line › a link to a stanza, and line) */
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
-export function ask(doc: Node, c: Conventions, words: Words, standing: Standing, from: "bar" | "link"): Answer {
+export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "bar" | "link"): Answer {
   if ("page" in words) return pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
   return hasStanzas(doc) ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);

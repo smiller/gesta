@@ -21,9 +21,11 @@ _Avoid_: the retired words `tools/vocabulary.ts` lists.
 A link's text; for a reference, the work and the passage's place in it.
 
 **Reference directive**:
-A line of its own in a `::: reference` block at the top of a root's or a
-work's page, naming a convention its references follow. On a root's page:
-`scripture`, `no author`, `from the last title`; on a work's page, for the
-entries below it: `prosimetrum`, `by book, chapter, and paragraph`, `parts
-in roman`; `Old English verse` on any page, for it and every page below.
+A line in a `::: reference` block on a root's or a work's page (not one
+inside a quote or a note), naming a convention its references follow. On a
+root's page: `scripture`, `no author`, `from the last title` (which may run
+on with words of its own); on a work's page, for the entries below it:
+`prosimetrum`, `by book, chapter, and paragraph`, `parts in roman`; `Old
+English verse` on any page, for it and every page below. Every other
+directive is a line of its own.
 _Avoid_: setting, option, flag.

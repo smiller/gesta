@@ -89,8 +89,9 @@ editor/reference.ts:193).
   label reads the record through its context, where it resolved four
   directives by hand.
 - goto.ts takes the record (`byBookChapterAndParagraph`, `scripture`); its
-  own `{ paragraphs, verses }` gone. lineBarActs.ts and editor/reference.ts
-  build the record once per ask and per reference.
+  own `{ paragraphs, verses }` gone. lineBarActs.ts builds the record once
+  per ask; a reference builds it twice, in editor/reference.ts and again in
+  the label.
 - One reading differs from before, in no entry: an entry with no tag under
   the bookshelf read its root-level directives off the namespace's own key,
   `bookshelf`, in the label but not in ⌃⌘G; the record reads none there.
@@ -103,3 +104,38 @@ editor/reference.ts:193).
   files, the two new ones included; the approved Helium run unchanged
   (corner, order, bridge, reader ok) (MEASURED, `npm run verify`).
 - GLOSSARY.md: **Reference directive**.
+
+## The batch's review (abb68f6..5fe90db)
+
+`/code-review` at high, 110,613 tokens (MEASURED: the last message of
+subagents/agent-a96d6b08c98cb9b16.jsonl, input 2 + cache creation 1,437 +
+cache read 106,872 + output 2,302). Nine findings; each read against the
+code, all nine stand:
+
+1. The help still documented `roman book and canto` and `I.i.2.1`
+   (help.html:91, :110) — rewritten to `1.1.2.1`. My own check before step
+   1 read only the first 600 characters of line 110 and called the help
+   clean. Pinned: conventions.test › "every directive the help names is
+   one the record reads", which failed on 1 of the 6 directives the help
+   names before the fix (MEASURED).
+2. main.ts's seed comment still said "under its directive" — cut.
+3. one-offs/shelfLinesRun.ts still stripped the directive — the line and
+   its comment gone.
+4. A reference builds the record twice — kept: both builds read the same
+   memoised text with the same inputs; the record's wording above
+   corrected, where it said once.
+5. The glossary's "a line of its own … at the top" was stricter than the
+   code — reworded: `from the last title` may run on, and the block may
+   stand anywhere on the page but not inside a quote or a note.
+6. `roman()` sits in store/reference.ts with goto.ts its only app caller —
+   left to the architecture run, which decides where a module's parts
+   live.
+7. The all-false record written out in two tests — goto.ts takes
+   `Pick<Conventions, "byBookChapterAndParagraph" | "scripture">`, the two
+   fields it reads; its tests' records have just those.
+8. A directive's words went unescaped into a RegExp — a line now compares
+   by trimmed, lower-cased text.
+9. `as unknown as Conventions` — the record is a typed literal, one field
+   a line.
+
+The suite 1480 tests.
