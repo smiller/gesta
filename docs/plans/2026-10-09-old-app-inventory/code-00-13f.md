@@ -1,6 +1,6 @@
-# Inventory A — the `../writer` version's files 00 … 13f against the new app
+# Inventory A — the `../writer` version's files 00 … 13f against this app
 
-Old paths are under `../writer/src/js/`, new paths under `gesta/src/`. Tags: READ (code read), MEASURED (run under node against the new app's own modules — the editor state, its keymap commands, its copy and paste functions — via scratch scripts in the scratchpad's `probe/`; not played in Helium), INFERRED.
+Old paths are under `../writer/src/js/`, new paths under `gesta/src/`. Tags: READ (code read), MEASURED (run under node against this app's own modules — the editor state, its keymap commands, its copy and paste functions — via scratch scripts in the scratchpad's `probe/`; not played in Helium), INFERRED.
 
 | # | what the reader sees | old file:line | new file:line | verdict | note |
 |---|---|---|---|---|---|

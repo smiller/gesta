@@ -5,6 +5,6 @@ export const retiredWord = (line: string): boolean => words(line).some((w) => RE
    quotation of the words keeps them */
 const unquoted = (line: string): string => line.replace(/"[^"]*"|“[^”]*”/g, "");
 export const retiredName = (line: string, age: "current" | "old" | "either" = "either"): boolean => {
-  const ages = age === "either" ? "current|old" : age;
+  const ages = age === "either" ? "current|old|new" : age === "old" ? "old|new" : age;
   return new RegExp("\\b(?:" + ages + ")\\s+app\\b", "i").test(unquoted(line));
 };

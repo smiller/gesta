@@ -1,6 +1,6 @@
-# tests.html triage: the `../writer` version's tests against the new app
+# tests.html triage: the `../writer` version's tests against this app
 
-Source: ../writer/tests.html, lines 1–28875, all 214 test functions (the suites list and runner after line 28536 hold no test). 438 rows: a function pinning behaviours with different verdicts has one row per group. Verdicts: PINNED 184, PRESENT-UNPINNED 99, DIFFERENT 48, ABSENT 37, QUIRK 70 (51 functions wholly QUIRK). READ = read in code; INFERRED = deduced; MEASURED (node probe) = the new app's modules run under node from scratch scripts, not Helium.
+Source: ../writer/tests.html, lines 1–28875, all 214 test functions (the suites list and runner after line 28536 hold no test). 438 rows: a function pinning behaviours with different verdicts has one row per group. Verdicts: PINNED 184, PRESENT-UNPINNED 99, DIFFERENT 48, ABSENT 37, QUIRK 70 (51 functions wholly QUIRK). READ = read in code; INFERRED = deduced; MEASURED (node probe) = this app's modules run under node from scratch scripts, not Helium.
 
 | # | test name (tests.html line) | what the reader sees | new code or test | verdict | note |
 |---|---|---|---|---|---|

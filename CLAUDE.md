@@ -76,9 +76,9 @@ must keep is restated here.
   `one-offs/shelfLines.ts` calls a typed attribution a "source line".
   `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
   one-offs/, this file or the glossary; dated plan records keep their words.
-- THE APP IS NEVER NAMED BY ITS AGE: not "the current app", not "the old
-  app". Where the version it was rebuilt from must be named, it is "the
-  `../writer` version". `tools/vocabulary.test.ts` holds this over src/,
+- THE APP IS NEVER NAMED BY ITS AGE: not "the current app", "the old app"
+  or "the new app". This one is "this app"; where the version it was
+  rebuilt from must be named, it is "the `../writer` version". `tools/vocabulary.test.ts` holds this over src/,
   tools/, one-offs/, this file, the glossary and the plans, a quotation of
   the words excepted; the conversion plan alone keeps "the current app".
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file

@@ -23,8 +23,8 @@ test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say re
   expect(found).toEqual([]);
 });
 
-test("retiredName: the app named by its age, current or old, in any case; never the words apart or a quotation of them", () => {
-  for (const bad of ["the current app's run", "The Current App", "THE CURRENT APP", "the CURRENT app's parser", "the old app's databases"]) expect(retiredName(bad), bad).toBe(true);
+test("retiredName: the app named by its age, current, old or new, in any case; never the words apart or a quotation of them", () => {
+  for (const bad of ["the current app's run", "The Current App", "THE CURRENT APP", "the CURRENT app's parser", "the old app's databases", "files against the new app", "the new app's own modules"]) expect(retiredName(bad), bad).toBe(true);
   for (const good of ["the `../writer` version", "the current application state", "an old approach", "an app", 'kept "the current app" as written', "quoted (“the old app keeps no place”)"]) expect(retiredName(good), good).toBe(false);
 });
 test("the app, its tools, its one-off scripts, CLAUDE.md, the glossary and the plans name the ../writer version as that, never by its age; the conversion plan alone calls it the current app", () => {

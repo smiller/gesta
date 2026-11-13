@@ -1340,8 +1340,9 @@ at the head is kept current per phase.
 
 ## Phase 4 decisions (2026-09-08)
 
-- THE REVIEW SHAPE, asked from "this is a new app; what is the sensible
-  and economic way to review it" (the running app's five-reviewer loop
+- THE REVIEW SHAPE, asked from
+  "this is a new app; what is the sensible and economic way to review it"
+  (the running app's five-reviewer loop
   had spent a week's allowance in a day, and its CLAUDE.md's order was
   out of date — its memory records one /code-review at medium since
   2026-09-02): the free checkers first, then ONE `/code-review` at
