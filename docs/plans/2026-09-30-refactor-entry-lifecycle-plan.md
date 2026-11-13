@@ -75,7 +75,7 @@ them, one dated section per batch.
   main.ts keeps `warmBlock` for the bookmarks, now over `coldRefusal`.
   The browser's `prompt` is called with one argument where it was, two
   where it was.
-- `npm run check` clean; the suite 75 files, 664 tests; the comment
+- `npm run check` clean; the comment
   checker passes; hooks 44/44 (MEASURED).
 - THE NET: `npm run test:helium` — corner ok, bridge ok, 153 steps, 0
   open (MEASURED).
@@ -116,11 +116,11 @@ them, one dated section per batch.
 
 - 11 committed as c5d3d31: `format.test › cutMd: a whole heading
   selected alone` run red first with the look's own failure (MEASURED:
-  "Testing with a heading 3" without its `#`), then green; the suite 665;
+  "Testing with a heading 3" without its `#`), then green;
   Helium 0 open (MEASURED).
 - 13: two tests in `lifecycle.test` — the Donne case red first (MEASURED),
   the name no root carries green before and after (it pins what must not
-  change); then green; the suite 667, tsc clean, the checker passes
+  change); then green; tsc clean, the checker passes
   (MEASURED). The reader's accept (c66fec7a93b7…) recorded the tree with
   11 written but unbuilt; 13 re-armed the gate, so both are looked at
   before the one review.

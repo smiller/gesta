@@ -67,8 +67,7 @@ makes", its top recommendation. Candidates 2 (the paste decision) and 3 (the
   (READ). The interface gained one member over the agreed sketch:
   `halves(u)`, which halves of an Old English line the passage inks, read by
   the label's half-line range and the quotation alike.
-- The comma test failed before (MEASURED) and passes after; the suite 1479
-  tests, every changed file Code Health 10, `passage.ts` new at 10;
+- The comma test failed before (MEASURED) and passes after; every changed file Code Health 10, `passage.ts` new at 10;
   `payloadOver` fell to 9.38 (Complex Method, Complex Conditional) and the
   translation-alone choice was split into `quotedFor` (MEASURED).
 - reference.test.ts through the interface: 64 of 66 passed on the first
@@ -112,7 +111,7 @@ makes", its top recommendation. Candidates 2 (the paste decision) and 3 (the
   view checked first.
 - 8: `Standing.asked` typed without the null the acts never hold.
 - 9: `quotation`'s `column: "both"` never passed; `translation?: boolean`.
-- All in one fix commit; the suite 1484, Code Health held, Helium unchanged.
+- All in one fix commit; Code Health held, Helium unchanged.
 
 ## The batch's architecture re-scan
 
@@ -143,7 +142,7 @@ changes.
   the margin-note one asserting `passageAt`'s refusal for
   `referencePayload`'s. Seventeen pins in passage.ts renamed
   `passage.test › …`, all 719 resolving.
-- The suite 1488 across 130 files; reference.ts, passage.ts, formatBarActs.ts
+- reference.ts, passage.ts, formatBarActs.ts
   and both test files Code Health 10, passage.test.ts new at 10; Helium
   unchanged (MEASURED). Over the reader's own Golding Book 7 (the backup's
   file), lines 2–3 give the same Ref, Ref (all) and offer before and after

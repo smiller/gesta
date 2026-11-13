@@ -79,7 +79,7 @@ opening leaves it alone").
   jump, the click handlers) stay where they are (4).
 - The Go to comment's sentence on what its opening dismisses moved to the
   table, where the rule now lives.
-- `npm run check` clean; the suite 76 files, 675 tests; the comment
+- `npm run check` clean; the comment
   checker passes; hooks 44/44; Helium corner ok, bridge ok, 0 open
   (MEASURED).
 - AWAITING the reader's look and accept, then one /code-review at high
@@ -152,7 +152,7 @@ review's price; put to the reader.
 
 Done: the four table tests rewritten and run red (MEASURED: 3 of 4
 failing), then green; the table now built as "every other" from one
-list; the suite 76 files, 673 tests; tsc clean; the checker passes;
+list; tsc clean; the checker passes;
 Helium 0 open — the approved run did not move, no step opening one
 overlay over another (MEASURED). The hand-check played first in headless
 Helium (a scratch probe, `tools/out/`): Go to then search, search then Go

@@ -42,7 +42,7 @@ REVIEW CYCLES: 1
 - The Latin's 11 Greek images were not seen: supplied from Shaw; νή from 1 Cor. 15:31.
 - Work files: tools/out/augustine. Imported 2026-11-04: 7/7 match the backup,
   two differing by a final newline.
-- verify exit 0: 1,304 tests, 44 hook checks, Helium steps 478, 0 open.
+- verify exit 0: 44 hook checks, Helium steps 478, 0 open.
 
 ## Review cycle 1 (2026-11-04)
 
@@ -60,7 +60,7 @@ A note selected alone keeps the fence around it, now under its paragraph's numbe
 two standing tests pin that wrapper for every work, so it was not removed. The
 paste step now waits for the paste to land; that this was the cause is inferred.
 The stricter retired-word check found `citeInLine`, renamed. New Helium steps:
-⌃⌘G 61 and 99 and ⌃⌘R on a work by paragraph. verify exit 0: 1,312 tests, steps 481.
+⌃⌘G 61 and 99 and ⌃⌘R on a work by paragraph. verify exit 0, steps 481.
 
 Measured for the question of unused code (a regex scan, 978 exports): 1 used
 nowhere, 14 used only by tests, 158 used only in their own file. Test titles: 2 of

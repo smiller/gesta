@@ -57,7 +57,7 @@ landed; the source view's terminal route a second copy of the rule.
   the paste becomes through the next route, each read (MEASURED, a probe).
   The joining rule's string tests go through `sourcePasted`, the joined
   text itself.
-- The suite 1481 tests; every changed file Code Health 10, copy.ts and
+- Every changed file Code Health 10, copy.ts and
   copy.test.ts new at 10; the approved Helium run unchanged (corner, order,
   bridge, reader ok, MEASURED).
 

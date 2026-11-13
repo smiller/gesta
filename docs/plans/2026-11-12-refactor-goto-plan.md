@@ -55,7 +55,7 @@ the bar.
   as the Line box's "50b is not a line number". Two tests added: the bar's
   words under each convention, and a link's landing saying only an omitted
   line's word.
-- The suite 1483 tests; goto.ts, goto.test.ts and lineBarActs.ts Code
+- goto.ts, goto.test.ts and lineBarActs.ts Code
   Health 10; the approved Helium run unchanged (corner, order, bridge,
   reader ok, MEASURED).
 
@@ -78,7 +78,7 @@ alone; a link keeps `?line=N.M`; the focus starts in the Stanza box.
 - `ask()` takes the boxes' words as a record, `{ line }`, `{ page }` or
   `{ stanza, line }`; `bar()` answers `"stanza"` for a page holding a
   top-level stanza. Test-first: the new tests failed before the module
-  took the record (MEASURED). The suite 1488.
+  took the record (MEASURED).
 - Helium: the two steps typing `2.1` and `77.4` into the bar now type into
   the two boxes, plus a missing line, `ii` and a line with no stanza; the
   bar's reader names the Stanza box only where it is shown, so no other

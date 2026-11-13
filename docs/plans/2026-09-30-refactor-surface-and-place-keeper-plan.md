@@ -141,7 +141,7 @@ session.ts) — a rule kept by listener order, owed to the place keeper.
   `sourceView.ts` 98 (MEASURED, wc). The 14 branch sites on the open view
   are 0 in `session.ts` (MEASURED, grep); the switch names the two
   differences at two branches on `source`, as decided (10).
-- `npm run check` clean; the suite 73 files, 620 tests (MEASURED). The
+- `npm run check` clean (MEASURED). The
   comment checker FAILED once, on a new block naming another module's
   function (`crossViewOffset` in the interface's comment), reworded;
   passes (MEASURED). Hooks 44/44 (MEASURED).
@@ -258,7 +258,7 @@ is carried.
   (MEASURED, grep). The listeners are registered in today's order, from
   the same point in `startSession`; `scrollRestoration` is set a few
   statements earlier than before, inside the same synchronous start.
-- `npm run check` clean; the suite 74 files, 635 tests (MEASURED). The
+- `npm run check` clean (MEASURED). The
   comment checker FAILED once, on a role noun's possessive in a new
   comment ("the masthead's"), reworded; passes. Hooks 44/44 (MEASURED).
 - THE NET: `npm run test:helium` — corner ok, bridge ok, 153 steps, 0

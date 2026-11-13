@@ -213,7 +213,7 @@ Every file at 10, its six tests already there (13 of 13, MEASURED):
 | parse.ts | 5.46 | 10 | the token walker a builder over tables (complexity 71 before); the block arms an ordered list; the list levels a writer; waiver above |
 
 HEAD's scores under the waivers: grammar.ts 8.61, serialize.ts 8.05, parse.ts
-5.62. The nets: tsc, the suite (1437), the corpus round trip over the backup
+5.62. The nets: tsc, the suite, the corpus round trip over the backup
 (17,347 files; its report identical to HEAD's but for the time, 61 round trip
 differs in both), `npm run verify` with the Helium runs played (corner, bridge,
 reader ok; 544 steps, 0 open). One moved comment failed the standard
@@ -249,7 +249,7 @@ by an argument parser, the rest by pattern, each count checked.
 Read on the way: refile.ts's mayName first came out building every match
 before testing one, losing the early exit 59331c8 measured (1,338 ms to 28
 ms); put back as a loop that stops at the first hit. The nets: tsc, the
-suite (1437), `npm run verify` with the Helium runs played (corner, bridge,
+suite, `npm run verify` with the Helium runs played (corner, bridge,
 reader ok; 544 steps, 0 open); the comment ledger's 25 moved blocks read,
 all keeping to the standard, one gaining "nothing is swept" for what its own
 function now does, two merged on withFirst; the 32 tests whose call shape
@@ -279,7 +279,7 @@ under tools/out that tsc reads kept compiling the same way.
 Read on the way: continuations' block step returns the carry unchanged for a
 block with no rest, as the loop's early return left it; format's and the row
 commands' `dispatch?.(build())` build nothing without a dispatch. The nets:
-tsc, the suite (1437), `npm run verify` with the Helium runs played (corner,
+tsc, the suite, `npm run verify` with the Helium runs played (corner,
 bridge, reader ok; 544 steps, 0 open); the ledger's 48 blocks read, two new
 comments that only restated their code removed (placeKeeper.test's helper,
 sourceKeys' quote table), two merged on the step they describe; the 46 tests
@@ -315,7 +315,7 @@ names in this file are off: an anonymous `acts.x = () =>` handler is reported
 under the named function above it (`acts.replace.open` read as 5 arguments,
 `edit`'s count).
 
-The nets: tsc, the suite (1437), `npm run verify` with the Helium runs played
+The nets: tsc, the suite, `npm run verify` with the Helium runs played
 (corner, bridge, reader ok; 544 steps, 0 open); the ledger's 33 blocks read,
 two new comments removed (one restating its code; one explaining a
 `boolean | null` answer, the answer made `"there" | "switched" | "refused"`
@@ -371,7 +371,7 @@ panel's `canPick` read at each read of the panel as it was. No other deps
 member holds a value read at launch that main.ts read at use (READ: every
 `screen.*` part handed over is mutated in place, never reassigned).
 
-The nets after the fix: tsc, the suite (1445, eight new: `pictureMoves` and
+The nets after the fix: tsc, the suite (eight new tests: `pictureMoves` and
 `heldKeys`), the comment ledger recorded as read, the titles check, the code
 health gate (15 files, main.ts 6.92 → 10, every new file 10), the hooks'
 self-test 46/46, and the Helium runs played (corner, bridge, reader ok; 544
@@ -489,7 +489,7 @@ in 816 entries from HEAD, 808 s (MEASURED). The comparison masks the clocks,
 the repo's path, and a stack trace's frames and source excerpt, the error's
 message compared: a refactored file's throw comes from another frame.
 
-The nets: the transforms' self-tests (the suite, 1,445); the test titles read,
+The nets: the transforms' self-tests (the suite); the test titles read,
 eleven whose calls changed shape, one assertion restored that the rewrite had
 made compare a call with itself (an empty cut against none), the ends test
 renamed for its function; and the three passes from the changed tree against
@@ -625,7 +625,7 @@ order ("we have tests which are dependent on the order that they're run in,
 and that's very bad"), after the one-off scripts are split from tools/; this
 reading the first case.
 
-The nets: both tsc programs, the suite (1,446, the resolver's new case among
+The nets: both tsc programs, the suite (the resolver's new case among
 them), the pins, the labels' guard, and the corner, bridge and reader runs
 played over the cut tree against their approved copies, twice for the corner
 run, its second play as approved (MEASURED).
@@ -857,7 +857,7 @@ Arguments' across the board. We probably want to revisit that."
   `asAddress` the one cast. Test-first (the new test and 35 rewritten calls
   red before). tsc then named every place outside text met the decoder, 22
   (MEASURED), each now an `asAddress` of the whole href, location.hash or
-  typed text, or the Address it already held. The suite 1,470, both tsc
+  typed text, or the Address it already held. Both tsc
   programs clean, every touched file at 10 (MEASURED).
 
 ### The review of the day's four commits (582c878..7b4a8e4)
