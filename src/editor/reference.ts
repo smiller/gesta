@@ -4,7 +4,7 @@ import { schema } from "../model/schema.ts";
 import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
 import { elideRange, referenceLabel, mdLabel, refersByHalfLine, refersAsProsimetrum, refersByBookChapterParagraph, type Journal, type FolioRange } from "../store/reference.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
-import { passageAt, quotation, inkBetween, type Passage, type Refusal as PassageRefusal } from "./passage.ts";
+import { passageAt, quotation, inkBetween, type Passage, type Refusal } from "./passage.ts";
 
 const N = schema.nodes;
 /* a lettered line says its label at the end of a run it stands at (pin:
@@ -149,17 +149,12 @@ export function selectionLink(doc: Node, from: number, to: number): Highlight | 
   while ((i = before.indexOf(q, i + 1)) !== -1) nth++;
   return { q, nth };
 }
-/* (pin: reference.test › Ref (all) is offered) */
-export function offersBoth(state: EditorState): boolean {
-  const p = passageAt(state.doc, state.selection.from, state.selection.to);
-  return !("refused" in p) && !!p.facing;
-}
 /* the entry's hash as a markdown link TARGET: a paren in a tag would close
    the (url) early on paste */
 export function entryLinkUrl(date: string, tag: string | null, hl?: Highlight | null): string {
   return entryHash(date, tag, hl || undefined).replace(/\(/g, "%28").replace(/\)/g, "%29");
 }
-export type Refusal = PassageRefusal | "no-translation";
+export type { Refusal };
 export const REFUSAL_TEXT: Record<Refusal, string> = {
   select: "Select a passage to reference first",
   code: "A code block can't be referenced",
@@ -191,23 +186,16 @@ function rangeOver(p: Passage, at: EntryAt, journal: Journal, halves: boolean): 
   return stanzaRange(p) || referenceRange(p, { halves });
 }
 const facingRange = (p: Passage): string => (hasFacing(p.doc) ? referenceRange(p, { side: "right" }) : "");
-/* a passage in a block numbered on both sides is quoted by its translation
-   column alone, unless both columns were asked for */
-function quotedFor(p: Passage, all: boolean, how: { halves: boolean; paragraphs: boolean }): { passage: string } | { refused: Refusal } {
-  if (all || !p.facing) return { passage: quotation(p, how)! };
-  const alone = quotation(p, { translation: true });
-  return alone ? { passage: alone } : { refused: "no-translation" };
-}
 function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): Payload | { refused: Refusal } {
   const hl = selectionLink(p.doc, p.from, p.to);
   if (!hl) return { refused: "select" };
   const halves = refersByHalfLine(at.date, at.tag, journal);
   const paragraphs = refersByBookChapterParagraph(at.date, at.tag, journal) || refersAsProsimetrum(at.date, at.tag, journal);
-  const quoted = quotedFor(p, all, { halves, paragraphs });
+  const quoted = quotation(p, { halves, paragraphs, all });
   if ("refused" in quoted) return quoted;
   const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, at, journal, halves), folio: folioRange(p), facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
-  return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.passage, label, url, passage: quoted.passage };
+  return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
   return { label: mdLabel(referenceLabel(date, tag, { range: "" }, journal), "entry"), url: entryLinkUrl(date, tag) };

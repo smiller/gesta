@@ -126,3 +126,25 @@ makes", its top recommendation. Candidates 2 (the paste decision) and 3 (the
   passage); the passage's tests filed in reference.test.ts (29 of its pins
   resolve there, MEASURED); a page's leaves walked by folios.ts and
   reference.ts both, goto.ts importing each.
+
+## The re-scan's candidates 1 and 2 (asked, 2026-11-12)
+
+Decided by grilling: the passage answers what Ref and Ref (all) quote,
+"no-translation" refusal included, and `reference.ts` stops choosing
+(`quotedFor` and `offersBoth` go; the format bar reads the passage's
+`facing`); `quotation(p, { halves, paragraphs, all })` returns `{ text }` or
+`{ refused: "no-translation" }`; the refusals' words stay in reference.ts; the
+passage's tests move to passage.test.ts with their pins; nothing on screen
+changes.
+
+- Built so. The split by what each test reaches through its helpers: 22 to
+  passage.test.ts, 45 stay (MEASURED); the two Ref (all) offer tests
+  rewritten onto the passage (`offered`: a passage whose `facing` is set),
+  the margin-note one asserting `passageAt`'s refusal for
+  `referencePayload`'s. Seventeen pins in passage.ts renamed
+  `passage.test › …`, all 719 resolving.
+- The suite 1488 across 130 files; reference.ts, passage.ts, formatBarActs.ts
+  and both test files Code Health 10, passage.test.ts new at 10; Helium
+  unchanged (MEASURED). Over the reader's own Golding Book 7 (the backup's
+  file), lines 2–3 give the same Ref, Ref (all) and offer before and after
+  the change (MEASURED, the change stashed and restored).

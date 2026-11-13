@@ -3,7 +3,7 @@ import type { Session } from "../session.ts";
 import type { Screen } from "./screen.svelte.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "../editor/format.ts";
 import { blankRowSelected } from "../editor/rowKeys.ts";
-import { offersBoth } from "../editor/reference.ts";
+import { passageAt } from "../editor/passage.ts";
 import { mastheadBottom } from "./mastheadBottom.ts";
 
 type BarView = NonNullable<Session["view"]>;
@@ -55,7 +55,8 @@ export function formatBar(d: FormatBarDeps): FormatBar {
     bar.incode = inCode(view.state);
     bar.on = formatState(view.state);
     bar.canTag = buttons().canCreate;
-    bar.canRefAll = offersBoth(view.state);
+    const p = passageAt(view.state.doc, view.state.selection.from, view.state.selection.to);
+    bar.canRefAll = !("refused" in p) && !!p.facing;
     bar.tagTitle = buttons().tagTitle;
     bar.show = true;
   };

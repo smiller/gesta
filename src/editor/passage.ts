@@ -74,7 +74,7 @@ function lastBeside(block: Node, first: number): number {
   for (let k = first + 1; k < block.childCount; k++) {
     const row = block.child(k);
     /* a skipped line number and a stanza gap stand in the Latin column under
-       the English as no row (pin: reference.test › a sentence's Latin runs on
+       the English as no row (pin: passage.test › a sentence's Latin runs on
        past a skipped line number) */
     if (row.type === N.skip || row.type === N.gap) continue;
     if (!besideEnglish(row)) break;
@@ -134,7 +134,7 @@ function spansTwoBlocks(p: Passage): boolean {
 }
 /* THE PASSAGE IS A QUOTATION NODE, serialized once: a textual filter over
    serialized lines misread a note's fence lines inside a verse block, a
-   refused `:::` paragraph and a gap at a fence's edge (pin: reference.test
+   refused `:::` paragraph and a gap at a fence's edge (pin: passage.test
    › the passage is a quotation node) */
 function quoted(blocks: Node[]): string {
   return serializeMarkdown(schema.nodes.doc.create(null, [N.blockquote.create(null, blocks)])).trim();
@@ -144,7 +144,7 @@ function quoted(blocks: Node[]): string {
    ink outside the blocks whose units the selection covers: skipping every
    row block's whole span hid a note's paragraph inside an outer block, and
    a drag from a nested pair into it dropped the paragraph (pin:
-   reference.test › the number on the right block at every depth) */
+   passage.test › the number on the right block at every depth) */
 function coversProse({ doc, from, to, lines }: Passage): boolean {
   const blocks = new Set(lines().map((u) => u.blockPos));
   let at = from;
@@ -160,7 +160,7 @@ function coversProse({ doc, from, to, lines }: Passage): boolean {
    where the selection covers ink in it, off the row where it does not
    (a passage is whole rows, never a cell: a drag from a pair's last cell
    into the paragraph after it cut a cell out, and an end merely resting at
-   a row's edge widened to a whole row no one selected) (pin: reference.test
+   a row's edge widened to a whole row no one selected) (pin: passage.test
    › no cut through a pair) */
 function wholeRows(doc: Node, from: number, to: number): [number, number] {
   const $from = doc.resolve(from), $to = doc.resolve(to);
@@ -178,20 +178,20 @@ function wholeRows(doc: Node, from: number, to: number): [number, number] {
 /* the cut with the containers around THE WHOLE of it unwrapped: a reference
    referenced again is quoted ONE level deep, however many quotations, notes or
    cards deep it stood — a quoted pair referenced again came out at one level, a
-   quoted paragraph at two (pin: reference.test › no cut through a pair, one
+   quoted paragraph at two (pin: passage.test › no cut through a pair, one
    quote level). A container holding only ONE END stays: a drag from a
    reference into the line after it keeps the pair quoted beside the line
    that was not, as the source had them. Every edge break comes off a
    paragraph, a gap row off a cut block's edge, and a block with no ink goes
    — inside a retained container as well: one break of two stayed, an empty
    paragraph stood in the nested box, and an edge gap painted an empty row
-   under the opener (pin: reference.test › the number on the right block at
+   under the opener (pin: passage.test › the number on the right block at
    every depth, the nested box trimmed, an edge gap off) */
 const CONTAINERS = new Set(["blockquote", "note", "card", "grid"]);
-/* a margin-note is a note on the text, not the text (pin: reference.test ›
+/* a margin-note is a note on the text, not the text (pin: passage.test ›
    a margin-note is left out of a passage in loose prose too) */
 const keep = (b: Node): boolean => b.type !== N.margin_note && (b.type === N.gap || drawsInk(b));
-/* one gap stands where a margin-note stood between two (pin: reference.test ›
+/* one gap stands where a margin-note stood between two (pin: passage.test ›
    a margin-note left out between two stanza gaps leaves one gap) */
 function withoutMarginNotes(rows: Node[]): Node[] {
   const out: Node[] = [];
@@ -239,17 +239,17 @@ function unquoted(cut: Node): Node[] {
    with "> " markers; a verse block copies as its own fence, numbered from
    its first quoted line, a dual-language one keeping the two columns —
    INSIDE the quotation: bare beside a reference, it read as the entry's own
-   verse (pin: reference.test › a paired block copies as its own fence
-   inside the quotation) (pin: reference.test › a single-column passage
+   verse (pin: passage.test › a paired block copies as its own fence
+   inside the quotation) (pin: passage.test › a single-column passage
    quotes whole rows as its own fence). In a row block the ROW is the unit and whole rows are quoted,
    the contiguous run carrying the stanza gaps between them; a nested
    note stays behind and a page-turn row is dropped. In loose prose the
    unit is the selection, widened to whole pair rows. */
 /* the passage carries no page marker, dropped as its rows are written:
    dropped before, a page-turn row was quoted as a blank line
-   (pin: reference.test › the quoted passage sheds its page markers)
-   (pin: reference.test › a page-turn row in a quoted run is left out)
-   (pin: reference.test › a page-turn row is left out of a quoted run that starts in prose) */
+   (pin: passage.test › the quoted passage sheds its page markers)
+   (pin: passage.test › a page-turn row in a quoted run is left out)
+   (pin: passage.test › a page-turn row is left out of a quoted run that starts in prose) */
 const isTurn = (row: Node): boolean => {
   if (drawsInk(row)) return false;
   let turn = false;
@@ -272,7 +272,7 @@ function loosePassage(p: Quoting): string {
   /* renumbered BEFORE anything is unwrapped or dropped: after, the number
      landed on the wrong block once a truncated remainder had been
      dropped, and on the outer block of a verse inside a note inside a
-     verse (pin: reference.test › the number on the right block at every depth) */
+     verse (pin: passage.test › the number on the right block at every depth) */
   return quoted(unquoted(renumbered(p.doc, a, cut.copy(dropFolios(dropTurns(cut.content))), p.paragraphs)));
 }
 function byBlock(units: Unit[]): Unit[][] {
@@ -301,8 +301,8 @@ function passageMd(passage: Passage, byHalves: boolean, paragraphs: boolean): st
    line if need be, an opening mark before the first word kept, one with no
    word after it passed over; nothing but spaces and punctuation selected
    stays as it was
-   (pin: reference.test › wordEdges) (pin: reference.test › a passage begun at the end of a line)
-   (pin: reference.test › a passage begun on an opening mark) */
+   (pin: passage.test › wordEdges) (pin: passage.test › a passage begun at the end of a line)
+   (pin: passage.test › a passage begun on an opening mark) */
 const inWord = (ch: string): boolean => /[\p{L}\p{N}’'-]/u.test(ch);
 const opening = (ch: string): boolean => /[“‘«(\[]/.test(ch);
 const textOf = (n: Node): string => n.textBetween(0, n.content.size, undefined, "￼");
@@ -432,7 +432,7 @@ function blockPassage(p: Quoting, units: Unit[]): string {
   const kept = withoutMarginNotes(run);
   if (quotesAsFence(c)) return fencedRun(c, kept, first);
   /* quoted as lines a skipped line number has no place, and a blank would
-     read as a stanza gap (pin: reference.test › a stanza's quotation leaves
+     read as a stanza gap (pin: passage.test › a stanza's quotation leaves
      a skipped line number out) */
   return kept.filter((row) => row.type !== N.skip).map(lineQuote).join("\n");
 }
@@ -503,7 +503,7 @@ function refusalOver(p: Passage): Refusal | null {
 }
 
 type Block = { node: Node; pos: number };
-export type Refusal = "select" | "code" | "margin-note" | "two-blocks";
+export type Refusal = "select" | "code" | "margin-note" | "two-blocks" | "no-translation";
 export interface Passage {
   readonly doc: Node;
   /* the words quoted: the selection widened to whole words and to the Latin a sentence stands beside */
@@ -534,11 +534,14 @@ export function passageAt(doc: Node, from: number, to: number): Passage | { refu
   const refused = refusalOver(p);
   return refused ? { refused } : p;
 }
-/* `paragraphs`: a prose fence that counts paragraphs; the translation
-   column alone is null where the passage inks none of it */
-export function quotation(p: Passage, how: { halves?: boolean; paragraphs?: boolean; translation?: boolean }): string | null {
-  if (how.translation) return p.facing && translationPassage(p, p.facing);
-  return passageMd(p, !!how.halves, !!how.paragraphs);
+/* what Ref quotes, and with `all` what Ref (all) quotes: a passage in a
+   block numbered on both sides is quoted by its translation column alone,
+   refused where it inks none of it, unless both columns are asked for;
+   `paragraphs`: a prose fence that counts paragraphs */
+export function quotation(p: Passage, how: { halves?: boolean; paragraphs?: boolean; all?: boolean }): { text: string } | { refused: "no-translation" } {
+  if (how.all || !p.facing) return { text: passageMd(p, !!how.halves, !!how.paragraphs) };
+  const alone = translationPassage(p, p.facing);
+  return alone ? { text: alone } : { refused: "no-translation" };
 }
 /* what the passage's rows hold beyond the selection: a range per text, a
    note's own text left out */
