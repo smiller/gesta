@@ -28,7 +28,7 @@
 ## Measured after
 
 - The Helium step "a picture's gaps and a quotation's top" (editing as the
-  old app does): above 18, below 18, paragraph gap 18, quote top to text
+  `../writer` version does): above 18, below 18, paragraph gap 18, quote top to text
   [7, 7, 7].
 - A scratch probe: a click right of the picture and X typed put X in the
   picture's paragraph, the picture kept; Enter then Y made a new paragraph

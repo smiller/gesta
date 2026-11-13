@@ -265,7 +265,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
 - MEASURED, the tree: 1,050 comment blocks in 156 files (the prototype
   read 981 in 151: this scanner reads the stylesheets, help.html and
   every trailing comment too); the sweep lists 138 naming another
-  module — 100 with a path (most of them the old app's files in port
+  module — 100 with a path (most of them the `../writer` version's files in port
   provenance), 23 with a role possessive, 29 with an identifier.
 - MEASURED, the replay over the last 80 commits touching src/: the
   ledger holds 858 blocks; 49 commits would have failed, on 119 blocks.
@@ -343,7 +343,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
 ### 2026-09-28 — src/store audited
 
 - MEASURED: 330 comment blocks → 284, 1,061 comment lines → 943, 154
-  pins (the kept blocks carry most of the old app's measurements, so the
+  pins (the kept blocks carry most of the `../writer` version's measurements, so the
   lines fell less than the model's; each gained its pin). The sweep lists
   nothing in src/store (it listed 70 blocks there). The whole tree's
   sweep: 138 naming another module → 74, 245 carrying provenance → 138.
@@ -382,7 +382,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
   many of them Helium readings (reference paste, grid, card copy, list,
   contents folds, launch) where the behaviour is only on a screen. The
   sweep lists nothing in src/editor (it listed 52 blocks there).
-- Out, as before: headers the layout covers, port history (the old app's
+- Out, as before: headers the layout covers, port history (the `../writer` version's
   file names, "the README's rule", "the current app's …"), dates and
   "(the review)", and clauses about another file — fit.ts, main.ts,
   paste.ts, richCopy.ts, the stylesheet, the router — each either cut or
@@ -411,7 +411,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
 
 - src/chrome, MEASURED: 147 comment blocks → 133, 493 comment lines → 414.
   The component headers were port history round a decision or two (the
-  old app's file names, which the other-module rule reads as paths);
+  `../writer` version's file names, which the other-module rule reads as paths);
   the decisions stay, the history goes. screen.svelte.ts's header said
   the "every opener closes the others" rule "will live here when the
   panels arrive" — they arrived; the rule is on the panel field, pinned.
@@ -533,7 +533,7 @@ pinned (a performance choice), 2 pinned with a neighbour.
   Section dividers kept, like the svelte-ignore directives.
 - src/store, MEASURED: 284 blocks → 258, 943 comment lines → 884 (26
   blocks gone); the stripped diff empty. Fewer than the estimate's share:
-  the store's comments are mostly the old app's measurements and the
+  the store's comments are mostly the `../writer` version's measurements and the
   backup's reasons (why the archive goes first, why a delete needs the
   shared signature), and those stay. Gone: restatements of a test's title
   (the folio label, a rename carrying a place, the relabel of a minted

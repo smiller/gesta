@@ -1843,17 +1843,17 @@ at the head is kept current per phase.
   relative one as `oklch(…)` (MEASURED), and the copy's inline sweep
   would carry that form into an email. Pinned by `cardFills.test`; the
   card copy step's background readings re-approved and listed as decided
-  differences from the old app. Played over the live `page/3x3` (54
+  differences from the `../writer` version. Played over the live `page/3x3` (54
   cards, six grids) in headless Helium, then looked at by hand.
 - 2026-10-08, THE CORPUS IS GESTA'S OWN BACKUP. The corpus tools
   (`tools/corpus.ts`, `tools/importCorpus.ts`, `tools/referenceCorpus.ts`)
   defaulted to `~/Library/CloudStorage/Dropbox/gesta-snapshots/current`,
-  the old app's backup mirror, which stopped on 2026-09-07 (READ: its
+  the `../writer` version's backup mirror, which stopped on 2026-09-07 (READ: its
   newest file, 13,565 entry docs). Found when a card count quoted from it
   was a month stale. DECIDED (asked): they default to
   `~/Library/CloudStorage/Dropbox/gesta-backups/current`, this app's
   backup (MEASURED: 14,269 files, its newest written the same morning),
-  and no live reference to gesta-snapshots is left; it is the old app's.
+  and no live reference to gesta-snapshots is left; it is the `../writer` version's.
   Every earlier mention of it in this record and in the plans and
   brainstorms beside it records what was measured over it on its day and
   stands as written. MEASURED the same day: 4,815 of gesta-backups'
@@ -1901,7 +1901,7 @@ at the head is kept current per phase.
 - 2026-10-08, THE OLD PARSER'S COMPARISON OFF BY DEFAULT. Read once over
   the live corpus the same day: 42 files, 16 slips in the source (the
   reader fixing them, the lines written out), 26 where this app reads
-  right — forms the old app never had, italics nested or across a line,
+  right — forms the `../writer` version never had, italics nested or across a line,
   links it ended short. DECIDED (asked: "move it behind --writer"):
   `node tools/corpus.ts` asks the round trip's questions alone; `--writer`
   adds the comparison with ../writer's parser and its two decided rules,

@@ -32,7 +32,7 @@ bookshelf's.
    copy that fails stops the move before any entry is written; a picture the
    store lacks is counted in the corner. The old picture rows stay (the image
    store has no delete). A picture named for its entry — by its whole path
-   (`page--Essays--…-img-1.webp`, the old app's export) or by the entry's
+   (`page--Essays--…-img-1.webp`, the `../writer` version's export) or by the entry's
    own name (`Essay-img-1.webp`, a paste) — is renamed for the new entry in the
    same form and its address in the text follows; any other name is kept. Into
    a text that names pictures already, the moved are numbered past its highest.
@@ -85,7 +85,7 @@ list, then made on the reader's word:
    folds do not; a bookmark landing on one the list holds is dropped.
 5. Renamed beside itself, the parent's bare-name label stayed — fixed.
 6. A blank twin showed as `“”` in the confirm — fixed: its name.
-7. `corner.writer.txt`, the frozen old app's run, was edited by hand for the
+7. `corner.writer.txt`, the frozen `../writer` version's run, was edited by hand for the
    name change — open, the reader's call.
 8. The move is a near copy of the re-file; two renames treat links
    differently — open, the reader's call.
@@ -242,7 +242,7 @@ time two first.
 - 8. A click on "saved" took the clipboard — asked: a routine whisper ("saved",
   "copied", a failed copy) only goes; a copy that never answers no longer holds
   the whisper on screen. The first section's "after the click" reads as the
-  old app's again.
+  `../writer` version's again.
 - 9. Three comments said what the parser does — reworded.
 - 10. Bookmarks moved through two calls — one call, folds and bookmarks named.
 - 6, 7 timed first (asked), under node over the backup's 17,348 entries:

@@ -507,7 +507,7 @@ type checker read — tsconfig.json includes tools/ but sets no allowJs
 net. The eleven files renamed with `git mv`, every reference to them
 following (the pin resolver's file names, the stamp's file filter, the unused
 exports test's special case, package.json, CLAUDE.md); left as they were: the
-old app's own md.mjs in corpus.ts, the hooks self-test's throwaway t.mjs, the
+`../writer` version's own md.mjs in corpus.ts, the hooks self-test's throwaway t.mjs, the
 code health test's .mjs cases.
 
 A function handed to `page.evaluate` travels to the browser as its source:
@@ -529,7 +529,7 @@ name and arity. That checking found, while typing: the successor's
 `seedStanza` and `seedMargin` took no seeds where the steps pass them and the
 writer's take them; its `launch` never read its seeds; a forEach index never
 read; `waitPairGrew`'s `prev` a string of column widths where I had first
-guessed a number. The old app's adapter lacks `pictureKeys` and eight readers,
+guessed a number. The `../writer` version's adapter lacks `pictureKeys` and eight readers,
 all added after it was frozen: its driver hands it over by a cast, the
 decision commented. One src/ file changed: three inferences in
 src/store/io.ts that fell back to any once null checks were off in the Helium
@@ -549,10 +549,10 @@ needs nothing else passed by reference. The composed scripts parse (MEASURED).
 Both adapters to 10, inPage.ts new at 10, helium-probe.ts scored at 10 now its
 lines are typed; helium-steps.ts holds at 3.48 until 3b.
 
-### The comparison with the old app retired (2026-11-12)
+### The comparison with the `../writer` version retired (2026-11-12)
 
-Asked, mid-3b: "Are we still comparing against the old app? It's going to get
-more and more out of date, surely?" The old app was frozen 2026-10-17 and
+Asked, mid-3b: "Are we still comparing against the `../writer` version? It's going to get
+more and more out of date, surely?" The `../writer` version was frozen 2026-10-17 and
 never played since; its run `corner.writer.txt` stood as last generated,
 compared on every verify. MEASURED: of `corner.differences.txt`'s 324 decided
 differences, 112 said only "new here, the old app frozen"; the 271 steps it
@@ -564,7 +564,7 @@ a cast in the steps' adapter type, a special case in the unused exports test.
 Retired before 3b, the reader agreeing: helium-compare.ts, helium-writer.ts,
 adapters/writer.ts, corner.writer.txt and corner.differences.txt removed (git
 history keeps them), `test:helium` the approve run alone, the approve script's
-`--writer` mode and the old app's seam types gone. corpus.ts's `--writer`
+`--writer` mode and the `../writer` version's seam types gone. corpus.ts's `--writer`
 parser comparison, off by default, stays.
 
 ### Batch 3b — the steps cut into modules
@@ -718,10 +718,11 @@ standard's checker extended to the daily tools/ ("Yes, with the split").
   the conversion plan — "the `../writer` version" where it must be named.) Two flagged blocks were
   the checker's own subject (its provenance rule's banner, its known-bad
   list), reworded.
-- Left for project 2: two sections are still named for the old app ("editing
-  as the old app does", "notices and surfaces as the old app has them"),
-  their names in src/'s pins and the approved copy; and references.ts's
-  `if (!inSource)` before the grid's ⌃⌘M, a hedge for the old app's view.
+- Left for project 2: two sections are still named for the `../writer` version
+  ("editing as the old app does",
+  "notices and surfaces as the old app has them"), their names in src/'s
+  pins and the approved copy; and references.ts's
+  `if (!inSource)` before the grid's ⌃⌘M, a hedge for the `../writer` version's view.
 
 ### Project 2 — the Helium steps independent of their order (2026-11-12)
 
@@ -771,10 +772,10 @@ order-dependent failures here?" — yes: the work below removes them.
   lands on 3m1, the next in the Consolatio's contents, where an earlier
   section's save had left 3pr2; the import's tally and the caret back in
   the text, and the two refusals gone from the console.
-- The side list's two items: the two sections still named for the old app
+- The side list's two items: the two sections still named for the `../writer` version
   are `editing` and `notices and surfaces`, their 29 pins in src/ renamed
   with them, all 709 resolving (MEASURED); the grid step's hedge for the
-  old app's view, a ⌃⌘M pressed only if the view was not source, removed,
+  `../writer` version's view, a ⌃⌘M pressed only if the view was not source, removed,
   the reading before it showing the view forced to source.
 - EVERY COMMIT CHECKS IT (asked: "I want order independence checked on
   every commit. I was going to ask how we avoided adding new
@@ -918,7 +919,7 @@ MEASURED).
   8. typedAddress reads `beforeQuery`.
   9. The path checker reads package.json, .claude/settings.json and
      hooks/ too, and takes `./tools/…`; probed: package.json names 8, the
-     hooks and settings none, the old app's path passed over (MEASURED).
+     hooks and settings none, the `../writer` version's path passed over (MEASURED).
   10. The paste's pattern run once.
 
 ### A terminal's copy pasted (2026-11-12)

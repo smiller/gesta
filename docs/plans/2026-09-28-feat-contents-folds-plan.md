@@ -360,7 +360,7 @@ judged real and fixed in one commit:
 - (7) the comment asserting main's centring reworded as a decision; the
   foldState header's claim about placeState reworded as history.
 - (8) the shared step "places" (six readings, successor-only, listed in
-  corner.differences.txt); the old app's run regenerated: 115 steps, 0 open.
+  corner.differences.txt); the `../writer` version's run regenerated: 115 steps, 0 open.
 - (9) one `stored(key, parse)` helper under both keys; a place equal to
   the last written is not written.
 - Found by the step, not the review: an entry left at the TOP came back

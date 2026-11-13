@@ -79,8 +79,8 @@ must keep is restated here.
 - THE APP IS NEVER NAMED BY ITS AGE: not "the current app", not "the old
   app". Where the version it was rebuilt from must be named, it is "the
   `../writer` version". `tools/vocabulary.test.ts` holds this over src/,
-  tools/, one-offs/, this file, the glossary and every plan but the
-  conversion plan, a quotation of the words excepted.
+  tools/, one-offs/, this file, the glossary and the plans, a quotation of
+  the words excepted; the conversion plan alone keeps "the current app".
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
   `/improve-codebase-architecture` reads: things a reader of the app would
   recognise, never how the code does them; a word is added when a design

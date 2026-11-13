@@ -731,9 +731,9 @@ measured, what the reader was told to look at, what the review found.
   exercised by the step and stays inferred.
 - VOCABULARY, and THE CUTOVER (2026-09-22, the reader's word after this
   batch): "the current app" in this plan, in CLAUDE.md and in the tools
-  means `../writer`, which is now the OLD app — this is the app in use,
+  means `../writer`, which is now the `../writer` version — this is the app in use,
   and a feature built here is never back-ported. The help sentence that
-  warned of a grid saved in the old app was dropped the same day, there
+  warned of a grid saved in the `../writer` version was dropped the same day, there
   being no one to save one there; CLAUDE.md's running-app sentence and
   its reference rule were rewritten, dated.
 - The docs: help.html gains a grid sentence after the card's (the fence,
@@ -780,8 +780,8 @@ measured, what the reader was told to look at, what the review found.
   viewport's width to the root as `--client-w` on load and resize, and
   the stylesheet reads it with `100vw` as the fallback.
 - The step's first cut reloaded the page to reach the open path, which
-  ended the OLD app's run; a navigation away and back does the same, once
-  the save has landed, and the old app's adapter now accepts a painted
+  ended the `../writer` version's run; a navigation away and back does the same, once
+  the save has landed, and the `../writer` version's adapter now accepts a painted
   source view as an entry (text, no elements). The refused entry's
   console line lost its stack: minified names churn per build in the
   tools' console.
@@ -809,8 +809,8 @@ measured, what the reader was told to look at, what the review found.
   web page's `card-body` would have become a card of a colour the
   stylesheet has no rule for: the card's toDOM writes `data-card` and its
   parseDOM asks for it, the guard the grid took that morning. A card
-  copied from the OLD app's HTML no longer parses as a card here; the
-  old app is not in use.
+  copied from the `../writer` version's HTML no longer parses as a card here; the
+  `../writer` version is not in use.
 - The step's fixed 1,200 ms sleep before navigating away is a loop on the
   store until it holds the stray line.
 - The cost claim about the band scan, asserted without a number in the

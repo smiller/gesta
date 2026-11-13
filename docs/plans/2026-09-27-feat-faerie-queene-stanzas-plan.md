@@ -178,7 +178,7 @@ All from the grilling of 2026-09-27, by the reader, unless marked.
 
 ### The tools and the help
 
-- tools/corpus.ts:120-123 skips question 3 (the old app's parse) for a
+- tools/corpus.ts:120-123 skips question 3 (the `../writer` version's parse) for a
   file holding `::: grid`; `::: stanza` joins that exception, since
   ../writer's parser reads it as text (READ, the research pass).
 - tools/helium-steps.mjs: one successor-only step, the grid step's shape
@@ -289,7 +289,7 @@ Mutabilitie canto and reads them.
   stays as it is (INFERRED from headings.ts; tests pin both).
 - A pasted stanza in an entry WITHOUT the directive draws its number but
   cites plainly — by design (the last row of the decisions table).
-- Old app: ../writer reads `::: stanza` as text; nothing is back-ported,
+- The `../writer` version reads `::: stanza` as text; nothing is back-ported,
   and the export's stanza fences are the successor's alone (CLAUDE.md).
 
 ## Questions still open
@@ -389,7 +389,7 @@ decisions table.
     `I.i` "I.i is not a stanza or stanza.line, like 2.1".
 - NOT DONE: the shared Helium step (the plan's "The tools and the
   help"). A stanza step needs a seeded bookshelf work carrying the
-  directive and the old app's reading of every field; left for the
+  directive and the `../writer` version's reading of every field; left for the
   reader's word rather than changing the approved runs unattended. The
   probe above stood in for it.
 - MEASURED: `npm run verify` exit 0 — 519 tests, 43/43 hook checks, the

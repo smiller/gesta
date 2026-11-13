@@ -85,7 +85,7 @@ stand 21 lines apart, MEASURED over the built entries).
   each need it named, test-first.
 - Nothing is decided for a phone or tablet beyond the in-text form: not
   needed until a portable version is.
-- The old app reads the fence as text; it is not maintained.
+- The `../writer` version reads the fence as text; it is not maintained.
 
 ## Record: the build, 2026-09-29
 
@@ -214,7 +214,7 @@ any was fixed; the reader chose:
   the verdict run's diff was the renames alone.
 - The `../writer` version's run, regenerated for the labels, read a fading
   corner as gone in an untouched list step once in two runs (a timing
-  flake in the old app); the second run matched.
+  flake in the `../writer` version); the second run matched.
 
 DECIDED after it, by the reader: no further review round for this work
 unless a problem is really significant; next, the Donne folder rebuilt to
@@ -228,7 +228,7 @@ MEASURED: the rebuild differs from the folder as it stood in 17 lines
 alone (`::: note` → `::: margin-note`, 8 in The First Anniversarie, 9 in
 The Second), no file added or lost; `tools/importCorpus.ts` imports all
 216, 0 failed; `tools/corpus.ts` round trips all 216 (0 changed, 0
-threw), and the two Anniversaries join the files the old app's parser
+threw), and the two Anniversaries join the files the `../writer` version's parser
 reads differently (29 → 31), as it reads the fence as text. NOTES.txt
 beside the folder says so.
 

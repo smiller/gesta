@@ -189,7 +189,7 @@ four declined:
   the extract's label and the heading's relabel): should a day's tagged
   entries take their titles from their first level-one heading, as pages
   and books do? Today they are their tags everywhere — carried from the
-  old app (the successor plan's decision row 5, 2026-09-07), not chosen
+  `../writer` version (the successor plan's decision row 5, 2026-09-07), not chosen
   here. A feature with its own plan, likely a mockup: the masthead's tag
   row, the extract's label, the relabel, Go to's and search's names, and
   the seven journal tagged entries that open with `##`. Kept as is for

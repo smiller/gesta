@@ -1,9 +1,9 @@
-# The old app's behaviour, inventoried against this one
+# The `../writer` version's behaviour, inventoried against this one
 
 Asked 2026-10-08, after a page opened with no caret: why did that survive an
-earlier ask (2026-09-12) to make the old app's behaviour the approved one?
+earlier ask (2026-09-12) to make the `../writer` version's behaviour the approved one?
 The answer is in the main plan's record under that date. Its step 2, owed
-since phase 0, is this inventory: every behaviour the old app's code shows a
+since phase 0, is this inventory: every behaviour the `../writer` version's code shows a
 reader, and the triage of its tests.html, each checked against this app.
 
 ## How it was made, and what it cost
@@ -53,8 +53,7 @@ Sources: A = code 00–13f, B = code 14–37, T = tests.html (row numbers).
    tried and counted failed. B97, T311.
 7. Typing on an entry while it is being imported can land over the
    imported text. B98 (INFERRED).
-8. A store that hangs on load leaves a blank page and says nothing (the old
-   app pinned "couldn't load entries — reload" after 8 s). B104.
+8. A store that hangs on load leaves a blank page and says nothing (the `../writer` version pinned "couldn't load entries — reload" after 8 s). B104.
 9. `navigator.storage.persist()` is never asked, so the browser may evict
    the store under pressure. B110.
 
@@ -65,12 +64,12 @@ Sources: A = code 00–13f, B = code 14–37, T = tests.html (row numbers).
 11. Closing Line numbering by clicking its own label: keys go nowhere. B51, T69.
 12. The bookmark card's link button inserts the link and leaves no caret. B79.
 13. Tab on plain prose, or over a selection spilling out of a list, walks
-    the focus out of the entry (the old app kept it and whispered). A102, T248.
+    the focus out of the entry (the `../writer` version kept it and whispered). A102, T248.
 14. Tab and Shift-Tab in a rendered code block walk the focus out; help.html
     promises two spaces. A99, T250. ⌘A in a code block selects the whole
     page; help.html promises the block. A101, T249.
 15. Escape after a search jump selects the whole paragraph and raises the
-    format bar (the old app cleared the jump's selection). B4, T71, T405.
+    format bar (the `../writer` version cleared the jump's selection). B4, T71, T405.
 16. ⌃⌘M, and a route to the entry already open, leave the search results,
     the shortcuts popup or a panel standing over the entry. B14, A10, T233, T239.
 17. Tabbing out of the bookmarks or shortcuts card leaves it open. B72, T20, T320.
@@ -126,7 +125,7 @@ Sources: A = code 00–13f, B = code 14–37, T = tests.html (row numbers).
 ### 5. The markdown view refuses what it used to do
 
 45. The bookmark link button, "+ sub-page" and ⌃⌘N say "place your cursor in
-    the entry" in the markdown view; the old app typed the link at the
+    the entry" in the markdown view; the `../writer` version typed the link at the
     caret. B20, T8, T30.
 46. With no caret in the entry, the link button and a shortcut insert at the
     last caret instead of refusing (help.html promises the refusal). B19,
@@ -194,12 +193,12 @@ that section against the committed tree):
 1. A fence's words after its language are kept (`rest` on the code block;
    roundtrip.test). Before: "```not code" saved as "```not".
 2. The code button refuses a paragraph holding a picture or a page marker,
-   "can't make a code block from that" (asked, the old app's words).
+   "can't make a code block from that" (asked, the `../writer` version's words).
    Before: the picture deleted.
 3. A paste of line breaks alone is nothing (paste.test). Before: the
    selection replaced by an empty paragraph.
 4. No page marker leaves in any copy — ⌘C and ⌘X in both flavours, the hover
-   copy, ⌃⌘R's passage (asked: always, as the old app did; cutting a
+   copy, ⌃⌘R's passage (asked: always, as the `../writer` version did; cutting a
    paragraph within a book loses its marker too).
 5. One export or import at a time. The whisper "an export is still running"
    cannot show while the export's own progress line holds the corner, by
@@ -271,14 +270,14 @@ lock's own state. REVIEW CYCLES: 2.
 ## Group 2, done (2026-10-09)
 
 Each item played first in headless Helium, over the build before the fix and
-over the old app, in the shared steps' new section "where the keys go"; every
+over the `../writer` version, in the shared steps' new section "where the keys go"; every
 reading but one differs between the code before and after (MEASURED, one run
-of the section on each), and the old app's run of the same section is in
+of the section on each), and the `../writer` version's run of the same section is in
 corner.writer.txt. Rulings asked item by item, all as recommended:
 
 10. ⌃⌘S, ⌃⌘B or ⌃⌘H pressed again closes the card with the keys back in the
     text. Before: no focus at all. An opener CLICKED again keeps the focus on
-    the button, as the old app and the approved copy have it.
+    the button, as the `../writer` version and the approved copy have it.
 11. "Line numbering" clicked to close the row hands the keys back as ⌃⌘L
     does. Before: the focus stayed on the label.
 12. NO CHANGE NEEDED. The inventory's B79 (INFERRED: no caret after the
@@ -289,8 +288,8 @@ corner.writer.txt. Rulings asked item by item, all as recommended:
     the code before.
 13. Tab in prose stays in the entry: a bare caret whispers "⌃⌘M toggles
     markdown", a selection "Tab indents one list, quote, or code block at a
-    time" (asked, the old app's words). Shift-Tab there is left to the
-    browser, as it was in the old app. Before: the focus walked to a
+    time" (asked, the `../writer` version's words). Shift-Tab there is left to the
+    browser, as it was in the `../writer` version. Before: the focus walked to a
     masthead button.
 14. In a rendered code block Tab inserts two spaces, Shift-Tab takes up to
     two back, a selection's lines shift and stay selected — the source
@@ -300,10 +299,10 @@ corner.writer.txt. Rulings asked item by item, all as recommended:
 15. Escape after a search jump leaves the caret just after the match
     (asked); a selection the reader made, or any change since the jump, is
     not the jump's (`jump` plugin, `escapeJump`). Before: the match stayed
-    selected. The old app removed the selection, no caret.
+    selected. The `../writer` version removed the selection, no caret.
 16. ⌃⌘M (either way) and an arrival at the entry already open close the
     panels, Search and the line bar; Go to and Line numbering stay (the
-    old app's closeMastheadPanels). Openings `view` and `here`; `sourceView`
+    `../writer` version's closeMastheadPanels). Openings `view` and `here`; `sourceView`
     retired. Before: Search and the shortcuts popup stood over the entry.
 17. Focus leaving the bookmarks card or the shortcuts popup closes it; a
     focus going nowhere (a deleted row's button) does not. Before: both
@@ -315,15 +314,13 @@ corner.writer.txt. Rulings asked item by item, all as recommended:
     refusal is said once per press, while a held Shift-Tab still unwinds.
     Before: a held Enter split "defixo" out of 3pr2 and split the line
     after a shortcut; a held Tab nested a quote three deep.
-19. A caret scrolled into view stops 24px below the masthead (the old
-    app's margin; MEASURED 24 on both apps). Before: 5px from the window's
+19. A caret scrolled into view stops 24px below the masthead (the `../writer` version's margin; MEASURED 24 on both apps). Before: 5px from the window's
     top, under a 113px masthead.
 20. An entry ending in a table is given an empty line below it, which
     serializes away (editor.test); a click there takes the caret. Before:
     "z" typed there was lost.
 21. A picture that finishes preparing while the keys are elsewhere lands
-    without taking the focus or scrolling (asked: land it, unlike the old
-    app's refusal, whose insert needed the focus). The step holds the
+    without taking the focus or scrolling (asked: land it, unlike the `../writer` version's refusal, whose insert needed the focus). The step holds the
     decode 800ms so the picture lands after the keys are in Search.
     Before: the picture took the focus.
 
@@ -360,13 +357,13 @@ him as a question and not answered before the accept. A confirmation pass
 
 A HELD TAB MOVES ONE CONTROL, asked 2026-10-12. Separate presses of Tab
 are the same in both apps: each press moves the focus one control. They
-differ only while Tab is HELD DOWN: the old app keeps moving, the
+differ only while Tab is HELD DOWN: the `../writer` version keeps moving, the
 keyboard's auto-repeat carrying the focus on — from the bookshelf button
 through ten more controls to Go to in about a second (MEASURED headless,
 11 keydowns) — while here the focus moves once, to the pages button, and
 stays there until Tab is let go and pressed again (MEASURED). Shown that
 example, he preferred held Tab not to repeat. A decided difference from
-the old app, pinned by the step "Tab held from the bookshelf button".
+the `../writer` version, pinned by the step "Tab held from the bookshelf button".
 
 Group 2 CLOSED at 1 cycle: offered the confirmation pass, he started
 group 3 instead (2026-10-12).
@@ -375,16 +372,16 @@ group 3 instead (2026-10-12).
 
 Each item played first in headless Helium over both apps, in the shared
 steps' new section "editing as the help says", seeded by a store write (a
-countdown typed into the old app's source view came back split into one
+countdown typed into the `../writer` version's source view came back split into one
 list per line, MEASURED). Asked: "22-25 should definitely go back to doing
-what the old app did"; 26, the help sentence deleted. MEASURED before →
-after, the old app's reading the after's in every row:
+what the `../writer` version did"; 26, the help sentence deleted. MEASURED before →
+after, the `../writer` version's reading the after's in every row:
 
 22. Lines 2–3 of a verse copied with ⌘C: `::: verse` → `::: verse 2`. The
     copy is numbered from its first copied line by the stamp the Ref
     button's passage already used, moved to numbering.ts so the copy and
     the reference share it (paste.test).
-23. Enter after 5, 4: `4.` → `3.`. The old app's rule, READ in
+23. Enter after 5, 4: `4.` → `3.`. The `../writer` version's rule, READ in
     ../writer/src/js/08-markdown-as-you-type.js:654: the new item's number
     is the previous one plus the step between the two above it; a step of
     one writes no number (listKeys.test).
@@ -392,13 +389,13 @@ after, the old app's reading the after's in every row:
     → a new paragraph in the same item. And, found while checking the help
     text (help.html:78, "Enter again on the empty block steps out to a new
     item"): Enter on that empty paragraph made another empty one → steps
-    out to a new item (old app: `next\n2. out`, MEASURED) (listKeys.test).
+    out to a new item (the `../writer` version: `next\n2. out`, MEASURED) (listKeys.test).
 25. Tab in a quote with the caret on a heading: nothing → the heading
     nested alone (`>> ## Quoted head`); in a table: nothing → the table
     nested whole; Shift-Tab lifts either back (quoteKeys.test). The
     module's own header already promised it.
 26. help.html's "While you are typing the numbers step aside … when the
-    entry saves" deleted. MEASURED: the old app's numbers vanish while
+    entry saves" deleted. MEASURED: the `../writer` version's numbers vanish while
     typing (none drawn 60ms after a keystroke) and return on the save;
     here they stay and renumber at once — a decided difference, listed.
 
@@ -416,19 +413,19 @@ numbering.ts's header said nothing writes a number into the document, and
 a copy now writes a fence's start — it says the start is the one number
 held; the step "a line typed into verse" read only the labels, `5 10`
 either way — it reads the line beside each (`5:four line` after a line
-typed above it, here while typing, the old app none until the save); the
+typed above it, here while typing, the `../writer` version none until the save); the
 item count was spelled twice, Enter's and the serializer's — one
 `itemNumbers`. NOT TAKEN, two: a copy from inside `::: stanza 12` comes
 out `::: verse 3` — help.html says a passage copied from the middle of a
 stanza is written as plain verse numbered from where it starts; a card in
 a grid in a quote nests the grid — help.html names the grid as moving
 whole, a card directly in a quote moving alone. PUT TO HIM, three, the
-old app's rule ported under his ruling and MEASURED the same in both apps
+`../writer` version's rule ported under his ruling and MEASURED the same in both apps
 by three new steps: Enter after the first item of 5, 4, 3 makes 6; Enter
 after 4 in 5, 4, 3 makes a second 3; Enter after 5 in 1, 5, 6 makes 9.
 REVIEW CYCLES: 1.
 
-THE COUNTDOWN LEFT AS THE OLD APP HAS IT, asked 2026-10-12: "let's leave
+THE COUNTDOWN LEFT AS THE `../writer` VERSION HAS IT, asked 2026-10-12: "let's leave
 it for now. We can define reverse list behaviour when we next add one."
 His expectation, for then: Enter after 5 in 5, 4, 3 makes 4 and renumbers
 the rest 3, 2; after 4, makes 3 and renumbers the old 3 as 2. Why it can
@@ -449,10 +446,9 @@ Group 3 CLOSED at 1 cycle: he skipped the confirmation pass (2026-10-12).
 
 ## Group 4, done (2026-10-12)
 
-Asked: run group 4 "until it meets the criteria of working like the old
-app"; the review lighter, this being the old app's behaviour restored, not
+Asked: run group 4 "until it meets the criteria of working like the old app"; the review lighter, this being the `../writer` version's behaviour restored, not
 new UI. Every item played first over both apps in the shared steps' new
-section "editing as the old app does"; after: every reading the old app's,
+section "editing as the old app does"; after: every reading the `../writer` version's,
 or a decided difference listed with its reason (MEASURED, 0 open). Before →
 after, test-first unless named a step:
 
@@ -483,7 +479,7 @@ after, test-first unless named a step:
     next entry as a stored refusal's is (paste.test, surface.test).
 38. ` -- ` and quotes in the markdown view: literal → a dash and curls, never
     inside a fenced block or a code span (sourceKeys.test; INFERRED that the
-    old app skipped code there too — not played).
+    `../writer` version skipped code there too — not played).
 39. A wholly bold-italic row: a stage direction → a speaker (numbering.test).
 40. NOT CHANGED, decided: an entry's title is its first level-one heading
     everywhere (the successor plan's decision 5, the Horace shelf corrected
@@ -494,7 +490,7 @@ after, test-first unless named a step:
     the markdown view (⌃⌘M)" (editor.test).
 43. A page label where a space follows its marker: a line high (8 of 60,
     MEASURED) → beside its leaf's first word, measured (folios.test; the
-    step: 0 of 72 here, 9 of 72 in the old app, whose own rule this is —
+    step: 0 of 72 here, 9 of 72 in the `../writer` version, whose own rule this is —
     listed). 226 such markers in 103 files of the backup (MEASURED), Lewis's
     Preface among them.
 44. A near-miss entry link pasted: a dead link → text (paste.test).
@@ -513,7 +509,7 @@ Review cycle 1 (/code-review high, e1681fe..8e222c2): 137,761 tokens
 (MEASURED, the transcript's last message), 10 findings, all taken:
 1. The markdown view's own insert re-entered its input handler and curled
    the straight quote a second quote puts back: `"b""` read `“b”`, the
-   second quote lost (MEASURED in Helium on the unfixed src; the old app
+   second quote lost (MEASURED in Helium on the unfixed src; the `../writer` version
    reads `“b"`). A guard around the insert; the step types `"b""`.
 2. Shift-Tab on the blank line between two runs of a nested quote split
    the inner quote round an empty paragraph: refused, saying "⌃⌘M toggles
@@ -543,7 +539,7 @@ refusals already pinned. REVIEW CYCLES: 1.
 ## Groups 5–7, one batch (asked 2026-10-12)
 
 Asked: groups 5–7 built as one batch with one review at the end. Each item
-restored to the old app's behaviour, read from both codes first (two
+restored to the `../writer` version's behaviour, read from both codes first (two
 research passes, READ), except where noted:
 - 56, asked 2026-10-12, as recommended: (a) a picture whose write fails
   says "picture not saved — storage full"; (b) an export names its lost
@@ -557,10 +553,10 @@ research passes, READ), except where noted:
 Built (2026-10-12), test-first: the pure parts in Vitest (the Tag title,
 the link title, the missing-picture count, the lifecycle's caret and
 markdown-view link), the wiring in a new step section, "notices and
-surfaces as the old app has them", played over both apps and over the
+surfaces as the `../writer` version has them", played over both apps and over the
 unfixed src, every step's reading moving with its change (MEASURED):
 45. The bookmark card's link, "+ sub-page" and ⌃⌘N type `[label](href)`
-    after the caret in the markdown view, undoably, as the old app's
+    after the caret in the markdown view, undoably, as the `../writer` version's
     "+ sub-page" did (it had no ⌃⌘N).
 46. The caret is read when the bookmark or shortcuts card opens and when
     "+ sub-page" is pressed: none in the entry says "place your cursor in
@@ -585,7 +581,7 @@ unfixed src, every step's reading moving with its change (MEASURED):
 56. As asked, above.
 57. The Tag button's title names the namespace's noun.
 58. Every link says "⌘-click to open".
-59. The old app's icon, inlined by main.ts (a `<link>` in index.html was
+59. The `../writer` version's icon, inlined by main.ts (a `<link>` in index.html was
     emitted as a second file).
 61. A bare launch writes today's #date into the address.
 62. ⌃⌘ letters match in either case.
@@ -595,7 +591,7 @@ listed with their reasons (two cursor arrivals, the Import button's
 hand-back, 56a as asked, the line bar's re-ask on another tab's write,
 ?warm=slow being the successor's probe). One gap the compare found and
 fixed before the commit: a shortcut refused for want of a caret left the
-keys nowhere; they go back to the entry, as the old app's did. Seen in
+keys nowhere; they go back to the entry, as the `../writer` version's did. Seen in
 the hand-check probe and not taken: the hover copy button can stand over
 the line bar's Line box when a hovered block's top is under the masthead.
 
@@ -613,7 +609,7 @@ taken:
    warm, the keys on its button").
 3. A Line numbering write that failed blocked the change and left the
    select and the gutter disagreeing: the change is made and the failure
-   said. (The old app blocked it; not asked — an edge of a full store.)
+   said. (The `../writer` version blocked it; not asked — an edge of a full store.)
 4. The markdown view's link went into whatever entry was shown when the
    write landed: the entry is checked too (lifecycle.test).
 5. The markdown view's link was spelled by hand, unescaped: one
@@ -621,7 +617,7 @@ taken:
 6. "⌘-click to open" rode out in every HTML copy: it is the editor's own
    drawing of a link, and a hover copy strips it.
 7. `after` promised to leave the selection standing and did not: the
-   contract now says what both views do, as the old app's insert did —
+   contract now says what both views do, as the `../writer` version's insert did —
    typed at the selection's end, the caret after it (keeping the
    selection left the caret before the link, MEASURED in the full run).
 8. Every failed picture write said "storage full": only a full store
@@ -784,7 +780,7 @@ quoted lines: a stanza counts from its own first line, so a run from
 inside one would be numbered wrong. Reversed a pinned decision; the unit
 tests changed first (reference.test), the help card says how each kind is
 quoted, and a new shared step, "⌃⌘R on verse lines 2–3", reads it in
-headless Helium (MEASURED), its difference from the old app's bare lines
+headless Helium (MEASURED), its difference from the `../writer` version's bare lines
 listed. Hand-checked in his Helium on Housman, Last Poems 25.9-12: the
 clipboard held the reference minted by the same code, byte for byte
 (MEASURED). 8df275e accepted 2026-10-13. src/editor/reference.ts is no
@@ -875,7 +871,7 @@ the label stays, only the link's mark now moves (links.test, red first).
 A shared step in a last section of its own, "renamed under a label part
 italic", reads the host's link after a sub-page's rename in both apps:
 `[the *Ideas* page](#page/Rename%20Host/Plans)` (MEASURED, 0 open); last,
-because the old app keeps a deleted page in its scope lists. The step
+because the `../writer` version keeps a deleted page in its scope lists. The step
 opens the host first: seeded behind the app's back, a host not yet read
 was not in the cache the rename retargets through.
 c96a959 accepted 2026-10-13 on the headless reading. src/store/links.ts is no DOM
@@ -1281,8 +1277,7 @@ the whole key chain); the row selected is drawn with a blinking caret at
 its start in place of the box (editor.css). A new Helium section, "a
 blank row", over Twelfth Night 1.1 (2026-09-06): clicked, the caret on
 the row, no box, the caret drawn, bar off; Backspace, the row gone and the
-caret after "attending"; x typed, the row the line "x" (MEASURED). The old
-app does the same three with the browser's own caret in the empty row
+caret after "attending"; x typed, the row the line "x" (MEASURED). The `../writer` version does the same three with the browser's own caret in the empty row
 (MEASURED, its run regenerated); the three fields that differ are listed
 with their reasons. Nothing else in the run moved.
 
@@ -1323,7 +1318,7 @@ read against the code before its fix:
    tools/adapters/blankRow.mjs, over the root each names.
 10. ⌃⌘G's Escape hand-back placed its caret with TextSelection.near (READ,
    main.ts). Routed through caretNear.
-The old app's run regenerated; the one new difference ("the search row
+The `../writer` version's run regenerated; the one new difference ("the search row
 opened over it · caret") listed with its reason. "Tab held in a quote"
 read "at the end" in one approve run against "inside a line" before
 (MEASURED), the flake seen once on 2026-10-15; the approved line kept as
@@ -1530,7 +1525,7 @@ leave it" (asked) — no speaker's row.
 Asked ("fix the pasted reference, and then import the shorter links").
 Headless Helium, a new section "a reference pasted": ⌃⌘R over Horace, ⌘V
 into another page, the link stored as "file:…#page/Horace" (MEASURED);
-the old app's run stores it bare. A pasted link to this page by its full
+the `../writer` version's run stores it bare. A pasted link to this page by its full
 address now keeps its bare address (bareLinks in paste.ts, the editor's
 transformPasted; paste.test), as typed links already did; the reading now
 "bare" in both apps (MEASURED). Nine page lists in later sections gain the
@@ -1562,7 +1557,7 @@ findings, unverified; fixed:
    cut and its words kept: now left whole.
 4. The step could not tell the HTML route from the text one: it now reads
    the HTML flavour's href, "file address" in both apps (MEASURED), so the
-   bare link stored is the paste's doing. The old app's first read threw
+   bare link stored is the paste's doing. The `../writer` version's first read threw
    "Clipboard data has changed"; the read retries.
 6. `makeHref`, nav's minting of a same-document URL, replaces the direct
    `internalHash` slice (its `"` escaping kept).
@@ -1616,11 +1611,11 @@ step pastes over the whole page: pasted at a paragraph's start, the HTML
 route joined the quote's last line onto that paragraph — the same before
 the fix (MEASURED), noted, not changed.
 
-### 2026-10-17 — the old app frozen; a passing run not replayed
+### 2026-10-17 — the `../writer` version frozen; a passing run not replayed
 
 Asked, after 37 minutes of one fix were mostly headless runs (MEASURED:
-the old app's whole run 7m57s, again with the successor's 11m27s, a
-flake's rerun 3m30s, the commit's verify 6m59s). The old app frozen
+the `../writer` version's whole run 7m57s, again with the successor's 11m27s, a
+flake's rerun 3m30s, the commit's verify 6m59s). The `../writer` version frozen
 (462eca2): never replayed, its stored run still compared. A passing run
 not replayed: the fingerprint of everything a run reads stamped when it
 passes; two builds of one source are byte-identical (MEASURED, one SHA-256),
@@ -1667,7 +1662,7 @@ a mockup of four; the go-to box grouped too; the shelves kept in
 page"), opened from "Shelves…" at the list's foot. shelves.ts (pure,
 tested); panelRows heads each shelf; destinationRows groups by shelf;
 search's scopes leave Shelves out; help card. Headless "shelves" step,
-last in the run, new here, the old app frozen: Latin / Boethius set in
+last in the run, new here, the `../writer` version frozen: Latin / Boethius set in
 26px, English / the rest, Shelves… opens the entry, go-to grouped
 (MEASURED). Folder ~/Desktop/gesta-imports/gesta-shelves: Shelves,
 Beowulf moved to bookshelf/Beowulf with its own `no author`, 2026-10-17's
