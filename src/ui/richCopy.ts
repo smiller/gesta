@@ -17,7 +17,7 @@ import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { referenceAnchorHTML } from "../editor/reference.ts";
 import { inlineBlockStyles } from "../editor/inlineStyles.ts";
-import { COPY_MARK } from "../editor/paste.ts";
+import { COPY_MARK } from "../editor/copy.ts";
 export { inlineBlockStyles };
 
 /* a live block's HTML with its look inlined and the caret-holders gone */

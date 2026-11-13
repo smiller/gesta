@@ -23,10 +23,10 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
-import { pasteSlice, pasteBlocks, placeBlocks, copyMd, copiedSlice, onlyLineBreaks, pastedRefusal, bareLinks, bareBlocks, clipboardParser, linkSelection, referenceInLine, terminalCopy, unwrapped } from "./paste.ts";
+import { pasteProps } from "./paste.ts";
+import { copyProps } from "./copy.ts";
 import { landing } from "./landing.ts";
 import { codeHighlight } from "./codeHighlight.ts";
-import { pastedImageFile } from "./images.ts";
 import { folds, type FoldOptions } from "./folds.ts";
 
 export interface EditorOptions {
@@ -188,36 +188,6 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
   });
 }
 
-function pasteMarkdown(view: EditorView, plain: string, opts: EditorOptions): boolean {
-  const parsed = pasteBlocks(plain, view.state.selection.$from);
-  if (!parsed) return false;
-  const blocks = bareBlocks(parsed, location.href);
-  view.dispatch(placeBlocks(view.state, blocks).scrollIntoView());
-  const refused = pastedRefusal(blocks);
-  if (refused) opts.onPasteRefused?.(refused);
-  return true;
-}
-function pasteTerminal(view: EditorView, text: string, opts: EditorOptions): boolean {
-  if (pasteMarkdown(view, text, opts)) return true;
-  view.dispatch(view.state.tr.replaceSelection(bareLinks(pasteSlice(text, view.state.selection.$from), location.href)).scrollIntoView());
-  return true;
-}
-function pasteText(view: EditorView, data: DataTransfer, opts: EditorOptions): boolean {
-  const plain = data.getData("text/plain"), html = data.getData("text/html");
-  const linked = linkSelection(view.state, plain, html) || referenceInLine(view.state, plain, html);
-  if (linked) { view.dispatch(linked.scrollIntoView()); return true; }
-  /* line breaks alone are nothing to paste, from any app: they replaced a
-     selection with empty paragraphs (pin: paste.test › a paste of line breaks alone) */
-  if (onlyLineBreaks(plain, view.state.selection.$from, html)) return true;
-  /* text carrying HTML keeps the editor's paste, but for a terminal's copy
-     outside code: its text, as blocks where they are taken, else as any
-     plain text is (pin: a terminal's copy pasted › a terminal's one line
-     pasted) (pin: a terminal's copy pasted › a terminal's copy pasted into a
-     code block) */
-  if (terminalCopy(html) && !view.state.selection.$from.parent.type.spec.code) return pasteTerminal(view, unwrapped(plain), opts);
-  if (data.types.includes("text/html")) return false;
-  return pasteMarkdown(view, plain, opts);
-}
 type Edges = { top: number; bottom: number; left: number; right: number };
 function readyScroll(view: EditorView, opts: EditorOptions, edges: { threshold: Edges; margin: Edges }): void {
   if (!view.hasFocus()) view.focus();
@@ -268,16 +238,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     attributes: { class: "page", spellcheck: "false" },
     handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
-    handlePaste: (view, event) => {
-      const file = pastedImageFile(event.clipboardData);
-      if (file) { opts.onPasteFile?.(file); return true; }
-      return event.clipboardData ? pasteText(view, event.clipboardData, opts) : false;
-    },
-    clipboardTextParser: (text, $context) => pasteSlice(text, $context),
-    clipboardParser,
-    clipboardTextSerializer: (slice) => copyMd(slice),
-    transformCopied: (slice, view) => copiedSlice(slice, view.state.doc, view.state.selection.from, view.state.selection.to),
-    transformPasted: (slice) => bareLinks(slice, location.href),
+    ...pasteProps({ file: (f) => opts.onPasteFile?.(f), refused: (text) => opts.onPasteRefused?.(text), href: () => location.href }),
+    ...copyProps(),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the
          DOM only while the editor has focus, and skips its

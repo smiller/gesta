@@ -236,9 +236,9 @@ export function blocksOf(units: Unit[]): Unit[][] {
 /* a cut from `at` numbered from where it opens: on a raw cut the
    first-child chain IS the start's ancestor chain, so each verse or prose
    ancestor is stamped at its own depth with its own count at the row the
-   cut opens on (pin: paste.test › verse lines copied from inside a block
+   cut opens on (pin: copy.test › verse lines copied from inside a block
    keep their numbers), and a numbered list from the item it opens on
-   (pin: paste.test › list items copied from the middle keep their own numbers) */
+   (pin: copy.test › list items copied from the middle keep their own numbers) */
 interface StampCtx { $at: ResolvedPos; at: number; paragraphs: boolean }
 const rowsOf = (anc: Node, child: Node): boolean => (anc.type === N.verse || anc.type === N.prose) && child.type === anc.type;
 const listOf = (anc: Node, child: Node): boolean => anc.type === N.ordered_list && child.type === anc.type;

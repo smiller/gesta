@@ -1,7 +1,6 @@
 import { flattenText } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
-import { pastedImageFile } from "./images.ts";
-import { terminalCopy, unwrapped } from "./paste.ts";
+import { clipboardOf, sourcePasted } from "./paste.ts";
 import { sourceTab, sourceTyped } from "./sourceKeys.ts";
 import { wordCount, wordsOf } from "./format.ts";
 import type { Surface, ReplacePort } from "./surface.ts";
@@ -49,15 +48,14 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     }
     opts.onChange();
   });
+  /* through the browser's own insert, so ⌘Z takes it back (pin: a
+     terminal's copy pasted › a terminal's copy pasted in the source view) */
   ta.addEventListener("paste", (e) => {
-    const f = pastedImageFile(e.clipboardData);
-    if (f) { e.preventDefault(); opts.onPasteFile(f); return; }
-    /* a terminal's copy goes in as its text, its wrapped lines joined,
-       through the browser's own insert so ⌘Z takes it back (pin: a
-       terminal's copy pasted › a terminal's copy pasted in the source view) */
-    if (!terminalCopy(e.clipboardData?.getData("text/html") ?? "")) return;
+    const r = sourcePasted(clipboardOf(e.clipboardData));
+    if (!r) return;
     e.preventDefault();
-    document.execCommand("insertText", false, unwrapped(e.clipboardData!.getData("text/plain")));
+    if ("file" in r) opts.onPasteFile(r.file);
+    else document.execCommand("insertText", false, r.text);
   });
   ta.addEventListener("keydown", (e) => {
     if (e.key !== "Tab" || ta.readOnly) return;

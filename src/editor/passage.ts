@@ -4,7 +4,7 @@ import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, fenceAt, paragraphAt, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
 import { quotePrefix } from "../model/grammar.ts";
-import { dropFolios } from "./paste.ts";
+import { dropFolios } from "./copy.ts";
 
 const N = schema.nodes;
 

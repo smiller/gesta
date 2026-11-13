@@ -1,10 +1,11 @@
 import { asAddress } from "../store/keys.ts";
 import { Fragment, Slice, DOMParser, type ResolvedPos, type Node, type Mark, type ParseOptions } from "prosemirror-model";
 import { type EditorState, type Transaction, TextSelection, Selection } from "prosemirror-state";
+import type { EditorProps } from "prosemirror-view";
+import { pastedImageFile } from "./images.ts";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
-import { serializeMarkdown } from "../model/serialize.ts";
-import { renumbered } from "./numbering.ts";
+import { COPY_MARK } from "./copy.ts";
 import { bareUrl } from "./typing.ts";
 import { namesEntry, internalHash, makeHref } from "../store/nav.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
@@ -35,7 +36,7 @@ function flat(lines: string[]): Slice {
   lines.forEach((l, i) => { if (i) nodes.push(N.hard_break.create()); if (l) nodes.push(schema.text(l)); });
   return new Slice(Fragment.from(nodes), 0, 0);
 }
-export function onlyLineBreaks(raw: string, $context: ResolvedPos, html = ""): boolean {
+function onlyLineBreaks(raw: string, $context: ResolvedPos, html = ""): boolean {
   if ($context.parent.type.spec.code || html.includes("data-pm-slice")) return false;
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   return txt.includes("\n") && !txt.trim();
@@ -51,7 +52,7 @@ function parsedBlocks(body: string, oneLine: boolean): Node[] | null {
     return blocks;
   } catch { return null; }
 }
-export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
+function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
   const body = raw.replace(LINE_BREAK_RE, "\n").replace(/\n$/, "");
   /* every code-shaped textblock is literal — the reference block too: a
      split there cut the one directive into two (pin: paste.test › inside a
@@ -64,7 +65,7 @@ export function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
 /* a pasted fence the model refuses is named with its reason (pin:
    paste.test › a pasted fence the model refuses is named)
    (pin: editing › a refused fence pasted) */
-export function pastedRefusal(blocks: Node[]): string | null {
+function pastedRefusal(blocks: Node[]): string | null {
   const refused = fenceRefusals(N.doc.create(null, blocks));
   return refused.length ? refusalsText(refused) : null;
 }
@@ -88,7 +89,7 @@ function placeAt(tr: Transaction, $at: ResolvedPos, frag: Fragment): number {
   tr.split($at.pos);
   return insertedAt(tr, tr.doc.resolve(tr.mapping.map($at.pos)).before(), frag);
 }
-export function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
+function placeBlocks(state: EditorState, blocks: Node[]): Transaction {
   const tr = state.tr.deleteSelection();
   const frag = Fragment.from(blocks);
   const pos = placeAt(tr, tr.selection.$from, frag);
@@ -118,7 +119,7 @@ function trimmedRange(doc: Node, from: number, to: number): [number, number] {
   while (to > from && /\s/.test(doc.textBetween(to - 1, to))) to--;
   return [from, to];
 }
-export function linkSelection(state: EditorState, raw: string, html = ""): Transaction | null {
+function linkSelection(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
   if (!oneTextRun(sel)) return null;
   const pasted = pastedAddress(raw, html);
@@ -129,7 +130,7 @@ export function linkSelection(state: EditorState, raw: string, html = ""): Trans
   return tr.setSelection(TextSelection.create(tr.doc, sel.to));
 }
 const typedLine = (sel: Selection): boolean => sel.empty && linkable(sel.$from) && !!sel.$from.parent.textContent.trim();
-export function referenceInLine(state: EditorState, raw: string, html = ""): Transaction | null {
+function referenceInLine(state: EditorState, raw: string, html = ""): Transaction | null {
   const sel = state.selection;
   if (!typedLine(sel)) return null;
   const pasted = pastedAddress(raw, html);
@@ -157,7 +158,7 @@ function blockSlice(body: string, lines: string[], $context: ResolvedPos): Slice
   } catch { /* a form the schema refuses stays as typed */ }
   return null;
 }
-export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
+function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   const txt = raw.replace(LINE_BREAK_RE, "\n");
   const body = txt.replace(/\n$/, "");
   if ($context.parent.type.spec.code) return new Slice(Fragment.from(schema.text(txt)), 0, 0);
@@ -173,7 +174,7 @@ export function pasteSlice(raw: string, $context: ResolvedPos): Slice {
 const TERMINAL_OPEN = /^\s*(?:<meta[^>]*>\s*|<html[^>]*>\s*|<head>[^]*?<\/head>\s*|<body[^>]*>\s*|<!--StartFragment-->\s*)*<div style="[^"]*white-space:\s*pre(?![\w-])[^"]*">/i;
 const TERMINAL_CLOSE = /<\/div>\s*(?:<!--EndFragment-->\s*|<\/body>\s*|<\/html>\s*)*$/i;
 const NOT_A_RUN = /<(?!div style="display: inline[;"]|\/div>|a\s|\/a>|span[\s>]|\/span>)/i;
-export function terminalCopy(html: string): boolean {
+function terminalCopy(html: string): boolean {
   const open = TERMINAL_OPEN.exec(html), close = TERMINAL_CLOSE.exec(html);
   return !!open && !!close && close.index >= open[0].length && !NOT_A_RUN.test(html.slice(open[0].length, close.index));
 }
@@ -197,7 +198,7 @@ function fencesAfter(open: { code: boolean; blocks: number }, line: string): { c
   if (open.code || !t.startsWith(":::")) return open;
   return { ...open, blocks: t === ":::" ? Math.max(0, open.blocks - 1) : open.blocks + 1 };
 }
-export function unwrapped(text: string): string {
+function unwrapped(text: string): string {
   const out: string[] = [];
   let open = { code: false, blocks: 0 };
   for (const line of text.split("\n")) {
@@ -230,11 +231,11 @@ function bareFragment(frag: Fragment, docHref: string): Fragment {
   frag.forEach((n) => { out.push(barePiece(n, docHref)); });
   return out.every((n, i) => n === frag.child(i)) ? frag : Fragment.fromArray(out);
 }
-export function bareLinks(slice: Slice, docHref: string): Slice {
+function bareLinks(slice: Slice, docHref: string): Slice {
   const content = bareFragment(slice.content, docHref);
   return content === slice.content ? slice : new Slice(content, slice.openStart, slice.openEnd);
 }
-export function bareBlocks(blocks: Node[], docHref: string): Node[] {
+function bareBlocks(blocks: Node[], docHref: string): Node[] {
   const out: Node[] = [];
   bareFragment(Fragment.from(blocks), docHref).forEach((b) => out.push(b));
   return out;
@@ -246,7 +247,6 @@ export function bareBlocks(blocks: Node[], docHref: string): Node[] {
    (pin: a reference pasted › prose with two spaces pasted) (pin: paste.test ›
    pasted HTML keeps its spaces only when every block in it is one this page
    marked) */
-export const COPY_MARK = "data-gesta-copy";
 interface PastedNode { nodeType: number; nodeName: string; textContent: string | null; hasAttribute?(name: string): boolean }
 export function keepsSpaces(dom: globalThis.Node): boolean {
   let marked = false;
@@ -266,109 +266,73 @@ class SpaceKeepingParser extends DOMParser {
     return super.parseSlice(dom, { ...options, preserveWhitespace: true });
   }
 }
-export const clipboardParser = new SpaceKeepingParser(schema, DOMParser.fromSchema(schema).rules);
-/* NO PAGE MARKER LEAVES IN A COPY: pasted into a journal entry it made a
-   page number with no book behind it. Where one stood between two spaces,
-   one space goes with it (pin: paste.test › a copy carries no page marker out) */
-const spacesMeet = (prev: Node | undefined, kept: Node): boolean =>
-  !!prev?.isText && prev.text!.endsWith(" ") && kept.isText && kept.text!.startsWith(" ");
-function afterFolio(kept: Node, prev: Node | undefined): Node | null {
-  if (!spacesMeet(prev, kept)) return kept;
-  return kept.text!.length > 1 ? kept.cut(1) : null;
+const clipboardParser = new SpaceKeepingParser(schema, DOMParser.fromSchema(schema).rules);
+
+export interface Clipboard { plain: string; html: string; types: readonly string[]; file: File | null }
+export function clipboardOf(data: DataTransfer | null): Clipboard {
+  return { plain: data?.getData("text/plain") ?? "", html: data?.getData("text/html") ?? "", types: data ? Array.from(data.types) : [], file: pastedImageFile(data) };
 }
-export function dropFolios(frag: Fragment): Fragment {
-  const out: Node[] = [];
-  let dropped = false;
-  frag.forEach((n) => {
-    if (n.type === N.folio) { dropped = true; return; }
-    const copy = n.isLeaf ? n : n.copy(dropFolios(n.content));
-    const kept = dropped ? afterFolio(copy, out[out.length - 1]) : copy;
-    if (kept) out.push(kept);
-    dropped = false;
-  });
-  return Fragment.fromArray(out);
+export type Pasted = { tr: Transaction; refused: string | null } | { file: File } | "nothing" | "editor's own";
+/* as ProseMirror pastes plain text: the parsed slice, its links made bare, a
+   single node set in whole, the transaction marked as a paste */
+function plainPaste(state: EditorState, text: string, href: string): Pasted {
+  if (!text) return "editor's own";
+  const slice = bareLinks(pasteSlice(text, state.selection.$from), href);
+  const single = slice.openStart === 0 && slice.openEnd === 0 && slice.content.childCount === 1 ? slice.content.firstChild : null;
+  const tr = single ? state.tr.replaceSelectionWith(single, false) : state.tr.replaceSelection(slice);
+  return { tr: tr.scrollIntoView().setMeta("paste", true).setMeta("uiEvent", "paste"), refused: null };
 }
-/* `doc`, `from` and `to`: where the selection was cut, so a verse or prose
-   block it opens inside is numbered from its first copied line. A cut
-   opening at the end of a line starts at the next: the empty row it opened
-   with read back as a gap, numbering every line under it one too low (pin:
-   paste.test › a copy whose selection opens at the end of a line); so does
-   one opening at a list item's end, which copied an empty item (pin:
-   paste.test › list items copied from the middle keep their own numbers) */
-/* a pair's row ends with its last cell (pin: paste.test › a copy opening at the end of a pair's right cell) */
-const inLastCell = ($from: ResolvedPos): boolean => $from.parent.type === N.cell && $from.index(-1) === $from.node(-1).childCount - 1;
-const inListParagraph = ($from: ResolvedPos): boolean => $from.parent.type === N.paragraph && $from.depth > 1 && $from.node(-1).type === N.list_item;
-const atRowEnd = ($from: ResolvedPos): boolean =>
-  ($from.parent.type === N.line || inLastCell($from) || inListParagraph($from)) && $from.parentOffset === $from.parent.content.size;
-function pastRowEnd(doc: Node, from: number, to: number | undefined, slice: Slice): { from: number; slice: Slice } {
-  const $from = doc.resolve(from);
-  if (to === undefined || !atRowEnd($from)) return { from, slice };
-  const next = Selection.findFrom(doc.resolve($from.after()), 1, true);
-  return next && next.from < to ? { from: next.from, slice: doc.slice(next.from, to, true) } : { from, slice };
+function asText(state: EditorState, text: string, href: string): Pasted {
+  const parsed = pasteBlocks(text, state.selection.$from);
+  if (!parsed) return plainPaste(state, text, href);
+  const blocks = bareBlocks(parsed, href);
+  return { tr: placeBlocks(state, blocks).scrollIntoView(), refused: pastedRefusal(blocks) };
 }
-export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number): Slice {
-  if (!doc || from === undefined) return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
-  const at = pastRowEnd(doc, from, to, slice);
-  const cut = keepRightCell(doc, at.from, renumbered(doc, at.from, doc.copy(at.slice.content)));
-  return closeRowSlice(new Slice(dropFolios(cut.content), at.slice.openStart, at.slice.openEnd));
-}
-/* a cut opening inside a pair's right cell keeps the left one, empty:
-   without it the right column's text read back as the left's (pin:
-   paste.test › lines copied from a block numbered on both sides) */
-const rightCellAlone = (node: Node, $at: ResolvedPos, d: number): boolean =>
-  node.type === N.pair && $at.node(d).type === N.pair && $at.index(d) === 1 && node.childCount === 1;
-function keepRightCell(doc: Node, at: number, cut: Node): Node {
-  const $at = doc.resolve(at);
-  const mend = (node: Node, d: number): Node => {
-    if (d > $at.depth || !node.firstChild) return node;
-    if (rightCellAlone(node, $at, d)) {
-      return node.copy(Fragment.from([N.cell.create(), node.firstChild]));
-    }
-    return node.copy(Fragment.from([mend(node.firstChild, d + 1), ...node.content.content.slice(1)]));
-  };
-  return mend(cut, 0);
-}
-/* a selection open inside one code block copies its characters, as the
-   browser would (pin: paste.test › a selection inside one code block copies
-   its characters) */
-function openCode(slice: Slice): Node | null {
-  let inner = slice.content;
-  for (let d = 1; inner.childCount === 1 && d <= Math.min(slice.openStart, slice.openEnd); d++) {
-    if (inner.firstChild!.type === N.code_block) return inner.firstChild!;
-    inner = inner.firstChild!.content;
+type Route = (state: EditorState, clip: Clipboard, href: string) => Pasted | null;
+const linked = (state: EditorState, clip: Clipboard): Transaction | null => linkSelection(state, clip.plain, clip.html) || referenceInLine(state, clip.plain, clip.html);
+const outsideCode = (state: EditorState): boolean => !state.selection.$from.parent.type.spec.code;
+/* THE ORDER IS THE RULE. A picture is handed on; a link or reference over
+   words or into a line is placed; line breaks alone are nothing, from any app:
+   they replaced a selection with empty paragraphs (pin: paste.test › a paste
+   of line breaks alone); a terminal's copy outside code is its text,
+   unwrapped (pin: a terminal's copy pasted › a terminal's one line pasted)
+   (pin: a terminal's copy pasted › a terminal's copy pasted into a code
+   block); other HTML is the editor's own; plain text is blocks where they
+   are taken, else as ProseMirror pastes it */
+const ROUTES: Route[] = [
+  (_s, clip) => (clip.file ? { file: clip.file } : null),
+  (s, clip) => { const tr = linked(s, clip); return tr ? { tr: tr.scrollIntoView(), refused: null } : null; },
+  (s, clip) => (onlyLineBreaks(clip.plain, s.selection.$from, clip.html) ? "nothing" : null),
+  (s, clip, href) => (terminalCopy(clip.html) && outsideCode(s) ? asText(s, unwrapped(clip.plain), href) : null),
+  (_s, clip) => (clip.types.includes("text/html") ? "editor's own" : null),
+  (s, clip, href) => asText(s, clip.plain, href),
+];
+export function pasted(state: EditorState, clip: Clipboard, href: string): Pasted {
+  for (const route of ROUTES) {
+    const r = route(state, clip, href);
+    if (r) return r;
   }
-  return null;
+  return "editor's own";
 }
-export function copyMd(slice: Slice): string {
-  const code = openCode(slice);
-  if (code) return code.textContent;
-  let content = slice.content;
-  if (content.childCount && content.firstChild!.isInline) content = Fragment.from(N.paragraph.create(null, content));
-  const blocks: Node[] = [];
-  content.forEach((n) => blocks.push(n));
-  if (!blocks.length) return "";
-  try { return serializeMarkdown(N.doc.create(null, blocks)); } catch { return slice.content.textBetween(0, slice.content.size, "\n"); }
+type PasteProps = Pick<EditorProps, "handlePaste" | "clipboardTextParser" | "clipboardParser" | "transformPasted">;
+export function pasteProps(on: { file(f: File): void; refused(text: string): void; href(): string }): PasteProps {
+  return {
+    handlePaste: (view, event) => {
+      const r = pasted(view.state, clipboardOf(event.clipboardData), on.href());
+      if (r === "editor's own") return false;
+      if (r === "nothing") return true;
+      if ("file" in r) on.file(r.file);
+      else { view.dispatch(r.tr); if (r.refused) on.refused(r.refused); }
+      return true;
+    },
+    clipboardTextParser: (text, $context) => pasteSlice(text, $context),
+    clipboardParser,
+    transformPasted: (slice) => bareLinks(slice, on.href()),
+  };
 }
-/* A DRAG FROM INSIDE ONE ROW, CELL OR ITEM INTO THE NEXT COPIES AS THE
-   BLOCK THOSE PARTS CAME FROM: a slice open inside a verse or prose row, a
-   list or a table is CLOSED, so the paste lands the block whole (MEASURED:
-   the first line of a copied canto pasted as a paragraph before the
-   fence). A slice open inside ordinary prose keeps its openness, which is
-   what lets a copied phrase land inline (pin: paste.test › a slice open
-   inside a verse row is closed) */
-/* the blocks, AND their rows: a selection inside one block slices to its
-   rows with the block left out (MEASURED: a drag across two pairs slices to
-   pairs, open two deep). A drag across two cards slices to the GRID itself,
-   open three deep (MEASURED: a selection's content() keeps its parents)
-   (pin: paste.test › a drag across two cards of a grid is closed at the
-   grid). The card is not a row (pin: paste.test › a plain card is not a
-   row) */
-const ROW_BLOCKS = new Set([N.verse, N.prose, N.bullet_list, N.ordered_list, N.table, N.pair, N.line, N.gap, N.skip, N.list_item, N.table_row, N.grid]);
-const rowish = (n: Node): boolean => ROW_BLOCKS.has(n.type) && !(n.type === N.grid && n.childCount < 2);
-const closedAt = (open: number, edge: Node): number => (open && rowish(edge) ? 0 : open);
-export function closeRowSlice(slice: Slice): Slice {
-  const first = slice.content.firstChild, last = slice.content.lastChild;
-  if (!first || !last) return slice;
-  const start = closedAt(slice.openStart, first), end = closedAt(slice.openEnd, last);
-  return start === slice.openStart && end === slice.openEnd ? slice : new Slice(slice.content, start, end);
+/* the markdown view's answer: a picture handed on, a terminal's copy as its
+   text, unwrapped; null leaves the paste to the browser */
+export function sourcePasted(clip: Clipboard): { file: File } | { text: string } | null {
+  if (clip.file) return { file: clip.file };
+  return terminalCopy(clip.html) ? { text: unwrapped(clip.plain) } : null;
 }

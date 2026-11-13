@@ -561,9 +561,14 @@ is in the plan's record, under the phase named):
   toolbar's acts as commands: the marks and their chords, the heading,
   quote and code toggles, the curl over a selection, the word count, the
   cut of a selection into a link), `codeKeys.ts` (Enter on a code
-  block's empty last line, the way out; Tab, Shift-Tab and ⌘A there), `paste.ts` (what pasted text
-  becomes and what copied text says; a terminal's copy taken as its text,
-  its wrapped lines joined), `goto.ts` (⌃⌘G's decisions over a
+  block's empty last line, the way out; Tab, Shift-Tab and ⌘A there), `paste.ts` (what a paste
+  becomes, for both views: `pasted` over the state and the clipboard, its
+  routes in their order — a picture, a link or reference placed, line
+  breaks alone nothing, a terminal's copy as its text, its wrapped lines
+  joined, other HTML the editor's own, plain text as blocks or as
+  ProseMirror pastes it — and `pasteProps`, the rendered view's paste as
+  props, 2026-11-12), `copy.ts` (what copied text says: the markdown, the
+  slice cut from where the selection stands, no page marker, as `copyProps`), `goto.ts` (⌃⌘G's decisions over a
   document: what the entry can be asked for, the hits and the cycle, the
   refusals), `landing.ts` (the landing mark as a plugin: a position that
   maps through edits, drawn as a node decoration), `codeHighlight.ts`

@@ -4,7 +4,7 @@ import type { Session } from "../session.ts";
 import type { Screen } from "./screen.svelte.ts";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { dropFolios } from "../editor/paste.ts";
+import { dropFolios } from "../editor/copy.ts";
 import { writeClipboard } from "./clipboard.ts";
 import { richBlockHtml, withPictureBytes } from "./richCopy.ts";
 import { mastheadBottom } from "./mastheadBottom.ts";
