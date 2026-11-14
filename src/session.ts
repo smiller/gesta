@@ -28,6 +28,7 @@ import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
+import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
 import { mastheadBottom } from "./ui/mastheadBottom.ts";
@@ -415,7 +416,7 @@ export function startSession(opts: SessionOptions): Session {
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2) */
   const orderMemo = new Map<string, { md: string; links: ContentsLink[] }>();
   function step(dir: "prev" | "next"): void {
-    if (!layer.warmed) { say("still loading — try that again in a moment", 2500); return; }
+    if (refuseCold(layer, say)) return;
     const keys = Object.keys(layer.cache), bearing = (k: string) => !!layer.entryMd(k).trim();
     const nb = navNeighbors({ keys, bearing }, current.date, current.tag, (pk) => subPageOrder({ keys, bearing }, pk, layer.entryMd(pk), orderMemo).names)[dir];
     if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
@@ -450,7 +451,7 @@ export function startSession(opts: SessionOptions): Session {
   function copyReference(all = false): void {
     if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
-    if (!view || !layer.warmed) { say("Still loading — try that again in a moment"); return; }
+    if (refuseCold(layer, say) || !view) return;
     const out = referencePayload(view.state, { date: current.date, tag: current.tag }, journal, all);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
@@ -458,7 +459,7 @@ export function startSession(opts: SessionOptions): Session {
     copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn't copy the reference");
   }
   function copyEntryLink(): void {
-    if (!layer.warmed) { say("Still loading — try that again in a moment"); return; }
+    if (refuseCold(layer, say)) return;
     const p = entryLinkParts(current.date, current.tag, journal);
     copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }

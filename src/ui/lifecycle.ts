@@ -2,6 +2,7 @@ import type { EditorView } from "prosemirror-view";
 import type { EntryLayer, Rewrite } from "../store/entries.ts";
 import type { Session } from "../session.ts";
 import type { HandOver } from "../store/entrySave.ts";
+import { refuseCold } from "./journalLoad.ts";
 import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
 import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
@@ -65,18 +66,6 @@ export interface Lifecycle {
   shown(ekey: string, stored: string): void;
 }
 
-/* null once the cache is complete (pin: lifecycle.test › says loading while the warm runs) */
-export function coldRefusal(layer: Pick<EntryLayer, "warmed" | "storeReadFailed">): string | null {
-  if (layer.warmed) return null;
-  return layer.storeReadFailed ? "couldn’t load entries — reload first" : "still loading — try that again in a moment";
-}
-
-/* says the refusal and answers whether it refused (pin: lifecycle.test › says loading while the warm runs) */
-export function refuseCold(layer: Pick<EntryLayer, "warmed" | "storeReadFailed">, say: (text: string, ms?: number) => void): boolean {
-  const why = coldRefusal(layer);
-  if (why) say(why, 2500);
-  return !!why;
-}
 
 type Current = SessionPort["current"];
 type Spec = Exclude<ReturnType<typeof subEntrySpec>, null | { refuse: string }>;

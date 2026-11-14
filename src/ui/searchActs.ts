@@ -13,6 +13,7 @@ import { entryKey, NS, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { READER_DB } from "../store/bundle.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./searchModel.ts";
+import { loadState } from "./journalLoad.ts";
 
 export interface SearchDeps {
   sr: Screen["search"];
@@ -107,7 +108,8 @@ export function searchActs(d: SearchDeps): SearchRow {
      surfaces › a result clicked after more typing) */
   let builtFor = "";
   const notReady = (): boolean => {
-    if (!layer.warmed) { sr.empty = layer.storeReadFailed ? "Couldn’t load entries." : "Still loading…"; return true; }
+    const state = loadState(layer);
+    if (state !== "in") { sr.empty = state === "failed" ? "Couldn’t load entries." : "Still loading…"; return true; }
     if (index.complete) return false;
     /* not while an op holds the line: its report would be lost
        (pin: notices.test › a newer progress retires the older handle) */

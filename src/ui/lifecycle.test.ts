@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
-import { lifecycle, coldRefusal, refuseCold, type Dialogs, type LifecycleDeps, type UiPort } from "./lifecycle.ts";
+import { lifecycle, type Dialogs, type LifecycleDeps, type UiPort } from "./lifecycle.ts";
 import { entryLayer } from "../store/entries.ts";
 import { entrySave, type EntrySave } from "../store/entrySave.ts";
 import { memEntryStore, type EntryStore } from "../store/store.ts";
@@ -152,18 +152,6 @@ describe("the cold cache", () => {
     await w.life.newRoot("page");
     expect(w.asked).toEqual(["Name for the new page:"]);
     expect(w.log).toEqual(Array(5).fill("say " + LOADING));
-  });
-  it("says loading while the warm runs, and that the read failed once it has", async () => {
-    const cold = await world({ at: ["page", "A"], warm: "no" });
-    expect(coldRefusal(cold.layer)).toBe(LOADING);
-    const failed = await world({ at: ["page", "A"], warm: "failed" });
-    expect(coldRefusal(failed.layer)).toBe("couldn’t load entries — reload first");
-    const said: string[] = [];
-    expect(refuseCold(failed.layer, (t) => { said.push(t); })).toBe(true);
-    expect(refuseCold((await world({ at: ["page", "A"] })).layer, (t) => { said.push(t); })).toBe(false);
-    expect(said).toEqual(["couldn’t load entries — reload first"]);
-    const warm = await world({ at: ["page", "A"] });
-    expect(coldRefusal(warm.layer)).toBeNull();
   });
 });
 

@@ -6,6 +6,7 @@ import type { Opening } from "./overlays.ts";
 import { panelRows } from "./mastheadModel.ts";
 import { entryKey, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
+import { loadState } from "./journalLoad.ts";
 
 export type Ns = "page" | "bookshelf";
 export type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
@@ -25,8 +26,7 @@ export interface Panels { panel(ns: PanelName, byKey?: boolean): void; reanswer(
 
 const emptyLine = (ns: Ns, layer: PanelDeps["layer"]): string => {
   if (ns !== "bookshelf") return "";
-  if (layer.warmed) return "No authors yet — import a folder, or start one below.";
-  return layer.storeReadFailed ? "Couldn’t load the bookshelf." : "Still loading…";
+  return { in: "No authors yet — import a folder, or start one below.", failed: "Couldn’t load the bookshelf.", loading: "Still loading…" }[loadState(layer)];
 };
 const listed = (ns: PanelName | null): ns is Ns => ns === "page" || ns === "bookshelf";
 

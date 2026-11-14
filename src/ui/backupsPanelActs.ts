@@ -4,7 +4,7 @@ import type { ImageStore } from "../store/store.ts";
 import type { Backup } from "../store/backup.ts";
 import type { Screen } from "./screen.svelte.ts";
 import { sweepPlan } from "../store/pictures.ts";
-import { refuseCold } from "./lifecycle.ts";
+import { refuseCold, loadState } from "./journalLoad.ts";
 import { counted } from "./counted.ts";
 
 export interface BackupsPanelDeps {
@@ -27,8 +27,8 @@ export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
   const { bk, layer, images, flushSave, say } = d;
   const plannedSweep = (): Promise<ReturnType<typeof sweepPlan>> => flushSave().then(() => images.keys()).then((keys) => sweepPlan(keys, layer.cache));
   const warmth = (): Screen["backups"]["warm"] => {
-    if (layer.storeReadFailed) return "failed";
-    return layer.warmed ? "ok" : "loading";
+    const state = loadState(layer);
+    return state === "in" ? "ok" : state;
   };
   const read = (): void => {
     const b = d.backup();

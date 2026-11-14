@@ -15,9 +15,9 @@ import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { noticeLedger } from "./ui/notices.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
 import { screenState } from "./ui/screen.svelte.ts";
-import { loadPatience } from "./ui/loadPatience.ts";
+import { loadPins, refuseCold } from "./ui/journalLoad.ts";
 import { mastheadModel } from "./ui/mastheadModel.ts";
-import { lifecycle, refuseCold } from "./ui/lifecycle.ts";
+import { lifecycle } from "./ui/lifecycle.ts";
 import { overlays } from "./ui/overlays.ts";
 import { bookmarkActs } from "./ui/bookmarkActs.ts";
 import { replaceActs } from "./ui/replaceActs.ts";
@@ -478,15 +478,13 @@ const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeou
 /* asked once: an unpersisted store may be evicted under storage pressure
    (pin: losing nothing › a store that never answers) */
 navigator.storage?.persist?.().catch(() => {});
-const patience = loadPatience(LOAD_PATIENCE_MS, notices);
+const loadPinned = loadPins(LOAD_PATIENCE_MS, notices);
 /* the bundle's own progress line speaks while it is read, however long a
    slow device takes */
-if (READER) wrote.then(patience.start); else patience.start();
+if (READER) wrote.then(loadPinned.start); else loadPinned.start();
 primed.then(held).then(() => layer.warm()).then(() => {
-  patience.done();
-  /* an unreadable journal is an error, not a status: it sticks, the
-     caught failure copyable */
-  if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; notices.stickErr("the store could not be read — reload", layer.storeReadError); reanswerOpen(); return; }
+  loadPinned.landed(layer);
+  if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
   stage("all"); count();
   say(Object.keys(layer.cache).length + " entries stored");
   /* an entry opened from its primed row is redrawn only where the warm
