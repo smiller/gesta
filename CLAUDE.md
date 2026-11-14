@@ -333,7 +333,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     here), `apostrophes.ts` (what the app shows writes ’, not '),
     `unusedExports.ts` (an export nothing uses, or only
     tests, fails, its allowed list giving each exception's reason),
-    `hooks-test.sh`, `accepted.sh`.
+    `hooks-test.sh`, `accepted.sh`; `sourceSpans.ts` (a source file's
+    comments, strings and template text, which both `commentRules.ts`
+    and `apostrophes.ts` read).
 - `one-offs/` — scripts run once or a few times over the backup to set
   its entries right; every check holds over them as over `tools/`. What
   each one is: `one-offs/README.md`.
