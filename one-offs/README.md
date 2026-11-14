@@ -159,3 +159,13 @@ test beside it; `one-offs/quoteJoinsRun.ts` runs it over the journal before
 2026 in the backup and writes the changed entries as an import folder
 with a review page; `one-offs/quoteJoinsApart.json` the gaps read as two
 quotations, by entry and the quoted line above.
+`one-offs/archiveCommonplaces.ts` — an archive's members as the
+commonplaces' backup holds them: a page's under `commonplace/`, the
+pictures named for it renamed, and every text's links into a page
+followed, by the app's own move of a page; a manifest's page rows
+renamed; pure, its test beside it. `one-offs/archiveCommonplacesRun.ts
+[backup-dir] [--apply]` reads every archive, writes each rewritten one
+under `one-offs/out/archive-commonplace` and reads it back, and checks the
+mirror's `page/` against its `commonplace/`; with `--apply` it writes into
+the backup, each archive read back before its original goes, then
+removes `archive/page/` and `current/page/`.
