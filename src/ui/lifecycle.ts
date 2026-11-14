@@ -211,8 +211,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      click replayed against the renamed state would move nothing yet still
      retarget the address to a name that holds nothing. The new key lands
      BEFORE the old one clears, so a crash between leaves a transient
-     duplicate, never a lost entry (pin: lifecycle.test › flushes, suspends,
-     writes the new key) (pin: lifecycle.test › ignores a second rename). A
+     duplicate, never a lost entry (pin: lifecycle.test › hands over, writes
+     the new key) (pin: lifecycle.test › ignores a second rename). A
      page or book goes the one way, `relocate`, whether renamed, re-filed or
      moved; a day's tagged entry, which hosts nothing, is renamed here */
   let renaming = false;
@@ -261,7 +261,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return layer.removeEntry(oldKey).then(() => retargetHost(t.date, t.old, t.full))
       .then(() => t.hand.land(newKey, (typed) => followedTag(t, typed))).then(() => {
       /* the kept state before the open, the place after it (pin:
-         lifecycle.test › flushes, suspends, writes the new key) */
+         lifecycle.test › hands over, writes the new key) */
       const kept = { [oldKey]: newKey };
       deps.moveKept(kept, kept);
       ui.replaceHash(entryHash(t.date, t.full));
@@ -344,7 +344,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   interface Move { date: string; old: string; to: string; toDate: string; toTag: string; from: string; mode: Mode }
   interface Moved { from: string; to: string; named: Record<string, string>; md: string }
   interface Relocation extends Move {
-    plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; hand: HandOver; flushed: string; there: string;
+    plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; hand: HandOver; there: string;
     rootNames: Record<string, string>; moved: Moved[]; copied: string[]; twinPictures: string[]; couldnt: string;
   }
   type Carried = { lost: number; olds: string[] };
@@ -381,7 +381,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return r.plan.into ? joined(otherText(r, r.there), own) : own;
   }
   function movedOf(r: Relocation, k: string): Moved {
-    if (k === r.from) return { from: k, to: r.plan.moves[k], named: r.rootNames, md: rootText(r, r.flushed) };
+    if (k === r.from) return { from: k, to: r.plan.moves[k], named: r.rootNames, md: rootText(r, r.hand.md) };
     const named = picturesFor(r, k);
     return { from: k, to: r.plan.moves[k], named, md: renamePictures(otherText(r, layer.entryMd(k)), named) };
   }
@@ -389,7 +389,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const pageless = !(m.from in plan.moves);
     if (pageless) plan.moves[m.from] = m.to;
     const r: Relocation = {
-      ...m, plan, pageless, relabel: relabelOf(m), hand, flushed: hand.md, there: plan.into ? layer.entryMd(m.to) : "",
+      ...m, plan, pageless, relabel: relabelOf(m), hand, there: plan.into ? layer.entryMd(m.to) : "",
       rootNames: {}, moved: [], copied: [], twinPictures: Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k))), couldnt: COULDNT[m.mode],
     };
     r.rootNames = picturesFor(r, m.from);
@@ -407,14 +407,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   /* typed while the copies ran: kept under the old name (pin:
      lifecycle.test › a failed move keeps what was typed) */
-  const keepTyped = (r: Relocation): Promise<boolean> => r.hand.keep();
   function moveRefused(r: Relocation, why: string): Promise<void> {
-    return keepTyped(r).then(() => dropUnnamed(r.copied)).then(() => { session.open(r.date, r.old); ui.pin(r.couldnt + " — " + why); });
+    return r.hand.keep().then(() => dropUnnamed(r.copied)).then(() => { session.open(r.date, r.old); ui.pin(r.couldnt + " — " + why); });
   }
   const undoCopy = (r: Relocation, m: Moved): Promise<boolean> => (m.to === r.to && r.plan.into ? layer.setEntry(r.to, r.there) : layer.removeEntry(m.to));
   function takeBack(r: Relocation, landed: boolean[]): Promise<void> {
     const tos = r.moved.map((m) => m.to);
-    return keepTyped(r)
+    return r.hand.keep()
       .then(() => Promise.all(r.moved.map((m) => undoCopy(r, m))))
       .then((undone) => dropUnnamed(r.copied, stillThere(tos, undone, (i) => r.moved[i].md)).then(() => undone))
       .then((undone) => {
@@ -442,7 +441,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   function clearOlds(r: Relocation, carried: Carried, t: Omit<Tally, "stayed">): Promise<void> {
     const olds = [...Object.keys(r.plan.moves).filter((k) => !(r.pageless && k === r.from)), ...Object.keys(r.plan.twins)];
-    const was = olds.map((k) => (k === r.from ? r.flushed : layer.entryMd(k)));
+    const was = olds.map((k) => (k === r.from ? r.hand.md : layer.entryMd(k)));
     return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
       const still = stillThere(olds, removed, (i) => was[i]);
       return r.hand.land(r.to, (typed) => rootText(r, typed)).then(() => dropUnnamed([...carried.olds, ...r.twinPictures], still)).then(() => failedOf(olds, removed));

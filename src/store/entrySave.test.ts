@@ -127,19 +127,12 @@ test("a hand-over landing writes only what was typed since it began, under the n
   expect(r.wrote).toEqual([true]);
 });
 
-test("a hand-over kept writes what was typed since back under the old key; deleted elsewhere, it is handed back instead", async () => {
+test("a hand-over kept writes what was typed since back under the old key", async () => {
   const r = rig({ "page/A": "typed" });
   const h = (await r.save.handOver("page/A"))!;
   r.at.screen = { ekey: "page/A", md: "typed more" };
   await h.keep();
   expect(r.writes).toEqual([["page/A", "typed more"]]);
-  const gone = rig({ "page/A": "typed" });
-  const g = (await gone.save.handOver("page/A"))!;
-  gone.save.deleted();
-  gone.at.screen = { ekey: "page/A", md: "typed more" };
-  expect(await g.keep()).toBe(false);
-  expect(gone.writes).toEqual([]);
-  expect(gone.refused).toEqual(["typed more"]);
 });
 
 test("leaving writes the waiting edit before it goes on", async () => {
@@ -157,9 +150,44 @@ test("the store moved under the entry only when it changed since the last open o
   r.stored["page/A"] = "from an import";
   expect(r.save.moved()).toBe(true);
   r.at.screen = { ekey: "page/A", md: "typed more" };
-  expect(r.save.moved()).toBe(false);
   r.save.edited();
   expect(r.save.moved()).toBe(false);
   await r.save.flush();
   expect(r.save.moved()).toBe(false);
+});
+
+test("the store moved is told from the stored text alone, whatever form the screen writes it back in", () => {
+  const r = rig({ "page/A": "x\n" }, { ekey: "page/A", md: "x" });
+  r.save.opened("page/A", "x\n");
+  expect(r.save.moved()).toBe(false);
+  r.stored["page/A"] = "y\n";
+  expect(r.save.moved()).toBe(true);
+});
+
+test("an edit made while a write is out keeps the store from reading as moved until that edit is written", async () => {
+  const r = rig({ "page/A": "before" });
+  r.save.opened("page/A", "before");
+  r.save.edited();
+  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS - 1);
+  r.save.edited();
+  r.stored["page/A"] = "from an import";
+  expect(r.save.moved()).toBe(false);
+});
+
+test("a hand-over's ends write nothing once the screen shows another entry", async () => {
+  const r = rig({ "page/A": "typed" });
+  const h = (await r.save.handOver("page/A"))!;
+  r.at.screen = { ekey: "page/Q", md: "another entry's text" };
+  expect(await h.land("page/B", (md) => md)).toBe(true);
+  expect(await h.keep()).toBe(true);
+  expect(r.writes).toEqual([]);
+});
+
+test("text typed during a rename of an entry deleted elsewhere still lands under the new name", async () => {
+  const r = rig({ "page/A": "typed" });
+  const h = (await r.save.handOver("page/A"))!;
+  r.save.deleted();
+  r.at.screen = { ekey: "page/A", md: "typed more" };
+  expect(await h.land("page/B", (md) => md)).toBe(true);
+  expect(r.writes).toEqual([["page/B", "typed more"]]);
 });

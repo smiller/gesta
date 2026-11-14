@@ -344,7 +344,7 @@ describe("rename", () => {
     await same.life.rename();
     expect(same.log).toEqual(['alert A "C" sub-page already exists.']);
   });
-  it("flushes, suspends, writes the new keys before clearing the old, its parent's link and every other following, carries what was typed meanwhile, then opens, moves the places and says so", async () => {
+  it("hands over, writes the new keys before clearing the old, its parent's link and every other following, carries what was typed meanwhile, then opens, moves the places and says so", async () => {
     const w = await world({ at: ["page", "A/B"], entries: { "page/A": "- [B](#page/A/B)\n", "page/A/B": "body\n", "page/A/B/x": "", "page/Q": "see [B](#page/A/B/x)\n" } });
     w.typeMeanwhile("body more\n");
     w.answer("C");

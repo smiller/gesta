@@ -72,7 +72,7 @@ export interface Session {
   openHash(): void;
   /* another tab landed a write under ekey */
   takeNotice(ekey: string): Promise<void>;
-  readonly save: EntrySave;
+  readonly save: Pick<EntrySave, "now" | "flush" | "handOver">;
   refresh(): Promise<void>;
   surfaceMd(): string;
   readonly hashDeferred: boolean;
@@ -326,9 +326,9 @@ export function startSession(opts: SessionOptions): Session {
        (pin: bookmarks from another window › its row's page opened from the first).
        A read answers only while its own address is still the one asked
        for: a later address opened by an earlier read went unread. What was
-       typed into the entry still on screen during the read is saved
-       before the open, whose first act cancels a pending save (pin:
-       entrySave.test › leaving writes the waiting edit before it goes on) */
+       typed into the entry still on screen during the read is written
+       before the open (pin: entrySave.test › leaving writes the waiting
+       edit before it goes on) */
     const want = entryKey(h.date, h.tag);
     if (!primed && unreadAfterWarm(want)) { readThenOpen(want); return; }
     if (unmintedKey(Object.keys(layer.cache), h.date, h.tag)) { refuseUnminted(h, want); return; }
