@@ -10,7 +10,7 @@ async function noticesOpening(): Promise<void> {
   await lineNumberingKeptAcross();
 }
 async function chordWithCapsLock(): Promise<void> {
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await view(false);
   await dismiss();
   await page.click(S.editor);
@@ -22,7 +22,7 @@ async function chordWithCapsLock(): Promise<void> {
   await page.goto(A.url("").replace(/#$/, ""));
   await page.waitForTimeout(2000);
   await log("a bare launch", { hash: await page.evaluate(() => location.hash) });
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await view(false);
   /* picked with the row open, as a hand picks it */
   await page.keyboard.press("Control+Meta+l");
@@ -32,7 +32,7 @@ async function chordWithCapsLock(): Promise<void> {
   await page.reload();
 }
 async function lineNumberingKeptAcross(): Promise<void> {
-  await A.waitEntry(page, "page/Horace").catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace").catch(() => {});
   await page.waitForTimeout(500);
   await log("Line numbering kept across a reload", { interval: await page.evaluate((s) => document.querySelector(s)?.value ?? null, LINES) });
   await page.keyboard.press("Control+Meta+l");
@@ -53,12 +53,12 @@ async function importRefusedFilesOnly(): Promise<void> {
   await page.waitForTimeout(4000);
   await log("an import of refused files only", { corner: first, fourSecondsOn: await corner() });
   await dismiss();
-  await picked({ name: "export", kids: [{ name: "page", kids: [{ name: "Trip--Log.md", text: "a\n" }, { name: "Trip-Log.md", text: "b\n" }] }] });
+  await picked({ name: "export", kids: [{ name: "commonplace", kids: [{ name: "Trip--Log.md", text: "a\n" }, { name: "Trip-Log.md", text: "b\n" }] }] });
   await page.click(importButton);
   await page.waitForTimeout(500);
   await log("an import of two files for one entry", { corner: await corner() });
   await dismiss();
-  await write("page/Pic Fail", "x\n");
+  await write("commonplace/Pic Fail", "x\n");
   await R.caretAfter(page, "x", 1);
   await rest(page);
   await page.evaluate(() => { const P = IDBObjectStore.prototype; window.__idb = [P.put, P.add]; const full = () => { throw new DOMException("full", "QuotaExceededError"); }; P.put = full; P.add = full; });
@@ -67,7 +67,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await page.evaluate(() => { const P = IDBObjectStore.prototype; [P.put, P.add] = window.__idb; });
   await log("a picture whose write fails", { corner: await corner() });
   await dismiss();
-  await write("page/Pic Copy", "::: note\nx\n:::\n");
+  await write("commonplace/Pic Copy", "::: note\nx\n:::\n");
   await R.caretAfter(page, "x", 1);
   await rest(page);
   await R.pastePng(page);
@@ -84,9 +84,9 @@ async function blockPictureHoverCopied(): Promise<void> {
 }
 async function pictureBlockHoverCopied(): Promise<void> {
   await log("a block with a picture hover-copied", { pictureCarried: await page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; return /<img[^>]+src="data:image\//.test(html); } catch (e) { return String(e); } }) });
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await view(false);
-  const before = await A.stored(page, "page/Horace");
+  const before = await A.stored(page, "commonplace/Horace");
   await lineBarReasked(before);
   await resultAfterMoreTyping();
   await formatBarUnderMasthead();
@@ -98,7 +98,7 @@ async function lineBarReasked(before: string): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   const asked = await boxes();
-  await A.foreignWrite(page, "page/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
+  await A.foreignWrite(page, "commonplace/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
   await page.waitForTimeout(1200);
   await log("the line bar re-asked when the entry gains a page marker", { before: asked, after: await boxes() });
   const lineBox = await page.evaluate(() => { const r = document.querySelector("#lineinput")?.getBoundingClientRect(); return r ? { x: r.left + 5, y: r.top + r.height / 2 } : null; });
@@ -107,7 +107,7 @@ async function lineBarReasked(before: string): Promise<void> {
   await rest(page);
   await log("a drag from the Line box out over the entry", { barOpen: (await boxes()).line });
   await page.keyboard.press("Escape");
-  await A.foreignWrite(page, "page/Horace", before);
+  await A.foreignWrite(page, "commonplace/Horace", before);
   await page.waitForTimeout(1200);
 }
 async function resultAfterMoreTyping(): Promise<void> {
@@ -122,7 +122,7 @@ async function resultAfterMoreTyping(): Promise<void> {
   await log("a result clicked after more typing", { selected: await page.evaluate(() => document.getSelection()?.toString() || "") });
 }
 async function formatBarUnderMasthead(): Promise<void> {
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await view(false);
   await page.keyboard.press("Escape");
   await R.selectBetween(page, "Maecenas", "Maecenas");
@@ -136,12 +136,12 @@ async function formatBarUnderMasthead(): Promise<void> {
 async function copyButtonAfterNavigation(): Promise<void> {
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
-  await go("page/Pic Copy");
+  await go("commonplace/Pic Copy");
   await view(false);
   await page.hover(S.editor + " div.note");
   await rest(page);
   const over = await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn);
-  await page.evaluate(() => { location.hash = "#page/Links"; });
+  await page.evaluate(() => { location.hash = "#commonplace/Links"; });
   await page.waitForTimeout(800);
   await log("the copy button after a navigation", { over, after: await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn) });
   await log("a link's tooltip", { title: await page.evaluate((s) => document.querySelector(s + " a")?.title ?? null, S.editor), outside: await page.evaluate((s) => document.querySelector(s + " a[href^='https:']")?.title ?? null, S.editor) });
@@ -164,7 +164,7 @@ async function shortcutWithNoCursor(before: string): Promise<void> {
   await keep("shortcuts", "sig: Sean Miller\nmd: markdown");
   await page.reload();
   await A.waitWarm(page);
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await view(false);
   await page.click(".page-title, #pagetitle, .site-head, header", { timeout: 1000 }).catch(() => {});
   await page.evaluate(() => { const h = document.querySelector(".site-head, header"); if (h) { const r = document.createRange(); r.selectNodeContents(h); r.collapse(true); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); } });
@@ -174,15 +174,15 @@ async function shortcutWithNoCursor(before: string): Promise<void> {
   await page.keyboard.type("md");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("a shortcut chosen with no cursor in the entry", { corner: await corner(), unchanged: (await A.stored(page, "page/Horace")) === before });
+  await log("a shortcut chosen with no cursor in the entry", { corner: await corner(), unchanged: (await A.stored(page, "commonplace/Horace")) === before });
 }
 async function bookmarkLinkInMarkdownView(): Promise<void> {
   await page.keyboard.press("Escape");
-  await write("page/Source Link", "x\n");
+  await write("commonplace/Source Link", "x\n");
   await view(true);
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");
-  await keep("bookmarks", '["2026-09-06","page/Horace","page/Links"]');
+  await keep("bookmarks", '["2026-09-06","commonplace/Horace","commonplace/Links"]');
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.click(".bookmark-link[aria-label='Link to Links']", { timeout: 2000 }).catch(() => {});
@@ -190,7 +190,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await log("a bookmark's link in the markdown view", { md: (await stored()).replace(/\(#[^)]*\)/, "(…)") });
   await view(false);
   const slow = await ctx.newPage();
-  await slow.goto(A.url("page/Horace", "warm=slow"));
+  await slow.goto(A.url("commonplace/Horace", "warm=slow"));
   await rest(slow);
   await slow.keyboard.press("Control+Meta+k");
   await rest(slow);
@@ -201,7 +201,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await log("Search opened before the warm", { loading, rows: await slow.evaluate((s) => document.querySelectorAll(s + ".hit, " + s + ":not(.empty)").length > 0, S.searchRows) });
   /* the Go to row and the bookshelf, each opened on a fresh slow launch with the keys left in it */
   const options = () => slow.evaluate(() => [...document.querySelectorAll(".page-goto select, #pagegoto select")].reduce((n, s) => n + s.options.length, 0));
-  await slow.goto(A.url("page/Horace", "warm=slow&again=1"));
+  await slow.goto(A.url("commonplace/Horace", "warm=slow&again=1"));
   await rest(slow);
   await slow.keyboard.press("Control+Meta+j");
   await rest(slow);
@@ -209,7 +209,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await slow.waitForTimeout(3500);
   await log("Go to opened before the warm", { more: (await options()) > gotoBefore, focusInRow: await slow.evaluate(() => !!document.activeElement?.closest(".page-goto, #pagegoto")) });
   const shelf = () => slow.evaluate(() => { const p = document.querySelector(".pages, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
-  await slow.goto(A.url("page/Horace", "warm=slow&again=2"));
+  await slow.goto(A.url("commonplace/Horace", "warm=slow&again=2"));
   await rest(slow);
   await slow.click(S.booksOpener, { timeout: 2000 }).catch(() => {});
   await rest(slow);
@@ -234,7 +234,7 @@ const underHeader = () => page.evaluate(() => { const b = document.querySelector
 const refuse = () => page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
 const restore = () => page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
 section("pill", async () => {
-  await page.goto(A.url("page/Horace", "corner=pill"));
+  await page.goto(A.url("commonplace/Horace", "corner=pill"));
   await A.waitWarm(page);
   /* the pill is set after the launch's backup run, which ends after the
      warm: read on the warm alone, it was missed 1 run in 10 */
@@ -246,15 +246,15 @@ section("a rename keeps a label's marks", async () => {
   /* last of all: the pages seeded here would show in the lists of any
      section after */
   /* a hand-written label part italic, its entry renamed: the label keeps its marks */
-  await A.foreignWrite(page, "page/Rename Host", "See [the *Ideas* page](#page/Rename%20Host/Ideas) here.\n");
-  await A.foreignWrite(page, "page/Rename Host/Ideas", "ideas\n");
-  await go("page/Rename%20Host");
-  await go("page/Rename%20Host/Ideas");
+  await A.foreignWrite(page, "commonplace/Rename Host", "See [the *Ideas* page](#commonplace/Rename%20Host/Ideas) here.\n");
+  await A.foreignWrite(page, "commonplace/Rename Host/Ideas", "ideas\n");
+  await go("commonplace/Rename%20Host");
+  await go("commonplace/Rename%20Host/Ideas");
   setAnswer("Plans");
   await page.click(S.renameSubPage);
-  await A.waitEntry(page, "page/Rename Host/Plans", 5000).catch(() => {});
-  for (let i = 0; i < 30 && !((await A.stored(page, "page/Rename Host")) || "").includes("/Plans"); i++) await rest(page);
-  await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "page/Rename Host")) || "").split("\n")[0] });
+  await A.waitEntry(page, "commonplace/Rename Host/Plans", 5000).catch(() => {});
+  for (let i = 0; i < 30 && !((await A.stored(page, "commonplace/Rename Host")) || "").includes("/Plans"); i++) await rest(page);
+  await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "commonplace/Rename Host")) || "").split("\n")[0] });
   setAnswer(null);
 });
 section("shelves", async () => {
@@ -303,7 +303,7 @@ async function goBoxShelves(): Promise<void> {
   await log("the search scopes on their shelves", await groups(S.searchScope));
   await page.selectOption(S.searchScope, { label: "All Classical" });
 }
-const groups = (sel: string) => page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Pages" ? g.querySelectorAll("option").length + " pages" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), sel);
+const groups = (sel: string) => page.evaluate((sel) => [...document.querySelectorAll(sel + " optgroup")].map((g) => g.label + ": " + (g.label === "Commonplaces" ? g.querySelectorAll("option").length + " commonplaces" : [...g.querySelectorAll("option")].map((o) => o.textContent).join("|"))), sel);
 async function shelvesSearched(): Promise<void> {
   /* a word only one author's book holds, then one only the other's: each found under the shelf */
   for (const q of ["uisu", "silk-mills"]) {

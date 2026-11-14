@@ -17,10 +17,10 @@ describe("Bookmarks", () => {
   });
   it("rows: the keyed one with its trigger, the numbered one marked here, the editor in place of a trigger", () => {
     const html = draw({ rows: [
-      { key: "page/B", trigger: "fb", label: "B", keyed: true, here: false, cut: false },
+      { key: "commonplace/B", trigger: "fb", label: "B", keyed: true, here: false, cut: false },
       { key: "2026-09-07", trigger: "1", label: "2026-09-07", keyed: false, here: true, cut: true },
-    ], editing: "page/B", draft: "fb", foot: null });
-    expect(html).toMatch(/<li class="hit[^"]*bookmark-keyed[^"]*"[^>]*data-key="page\/B"/);
+    ], editing: "commonplace/B", draft: "fb", foot: null });
+    expect(html).toMatch(/<li class="hit[^"]*bookmark-keyed[^"]*"[^>]*data-key="commonplace\/B"/);
     expect(html).toMatch(/<input class="bookmark-aliasinput[^"]*" type="text" value="fb"/);
     expect(html).toMatch(/bookmark-cut[^"]*"[^>]*data-key="2026-09-07"/);
     expect(html).toContain("you are here");

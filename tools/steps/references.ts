@@ -4,7 +4,7 @@ import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
   /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the reference anchor and the pair's grid inline */
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await R.selectAll(page, S.editorCell);
   /* the bar, not 100ms: it shows after the selectionchange the editor takes the selection on */
   /* the bar has missed about 1 full run in 15 and never in this step's
@@ -23,20 +23,20 @@ section("reference copy", async () => {
 });
 const barMiss = () => R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
 section("a reference pasted", async () => {
-  /* ⌃⌘R's reference pasted with ⌘V into another entry: the link stored by its bare address (#page/…), never the page's full file address */
+  /* ⌃⌘R's reference pasted with ⌘V into another entry: the link stored by its bare address (#commonplace/…), never the app's full file address */
   await referencePasted();
   await proseTwoSpacesPasted();
   await referencePastedMidSentence();
   await pageOwnReferencePasted();
 });
 async function referencePasted(): Promise<void> {
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await R.selectAll(page, S.editorCell);
   const barMissed = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   /* the HTML flavour is the paste's source and carries the full address, so a bare link stored is the paste's own doing */
   const copied = await page.evaluate(inPage(copiedLink, linkKind, htmlLink));
-  await go("page/Referred");
+  await go("commonplace/Referred");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
   await rest(page);
@@ -64,11 +64,11 @@ async function copiedLink(): Promise<string> {
 }
 async function proseTwoSpacesPasted(): Promise<void> {
   /* prose with two spaces after a full stop: the paste keeps them as the entry has them */
-  await go("page/Williams/Witchcraft 3");
+  await go("commonplace/Williams/Witchcraft 3");
   const spanned = await R.selectBetween(page, "though they were not vampires", "could take again");
   const barMissedProse = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
   const saidProse = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
-  await go("page/Referred");
+  await go("commonplace/Referred");
   /* over the whole page: a paste at a paragraph's start joins its last line to that paragraph */
   await page.click(S.editor);
   await page.keyboard.press("Meta+a");
@@ -79,7 +79,7 @@ async function proseTwoSpacesPasted(): Promise<void> {
   const chosen = await R.selectBetween(page, "vampires", "vampires");
   await page.keyboard.press("Meta+v");
   await rest(page);
-  { const md = await A.stored(page); const screen = await page.evaluate(() => { const a = [...document.querySelectorAll("#editor .ProseMirror a")].find((x) => x.textContent === "vampires"); const s = getSelection(); return { link: a ? (a.getAttribute("href") ?? "").replace(/\?h=.*$/, "") : "none", collapsed: s.isCollapsed, caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset) }; }); await log("a reference pasted onto a word", { chosen, ...screen, references: md.split("):\n").length - 1, stored: /\[vampires\]\(#page\/Williams/.test(md) }); }
+  { const md = await A.stored(page); const screen = await page.evaluate(() => { const a = [...document.querySelectorAll("#editor .ProseMirror a")].find((x) => x.textContent === "vampires"); const s = getSelection(); return { link: a ? (a.getAttribute("href") ?? "").replace(/\?h=.*$/, "") : "none", collapsed: s.isCollapsed, caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset) }; }); await log("a reference pasted onto a word", { chosen, ...screen, references: md.split("):\n").length - 1, stored: /\[vampires\]\(#commonplace\/Williams/.test(md) }); }
 }
 async function referencePastedMidSentence(): Promise<void> {
   /* the same reference pasted mid-sentence: its label alone, no colon, the caret after it */
@@ -87,7 +87,7 @@ async function referencePastedMidSentence(): Promise<void> {
   await page.keyboard.press("Meta+v");
   await rest(page);
   /* the paste may not have landed in two frames, and no edit is then there to wait on: the reading says what stood when the wait ran out */
-  { const md = await landedAfter((m) => /greater\.\[\*Williams/.test(m)); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#page\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
+  { const md = await landedAfter((m) => /greater\.\[\*Williams/.test(m)); const screen = await page.evaluate(() => { const s = getSelection(); return { caretAfter: s.anchorNode?.textContent.slice(Math.max(0, s.anchorOffset - 8), s.anchorOffset), caretBefore: s.anchorNode?.textContent.slice(s.anchorOffset, s.anchorOffset + 6) }; }); await log("a reference pasted mid-sentence", { ...screen, references: md.split("):\n").length - 1, referred: /greater\.\[\*Williams\*[^\]]*\]\(#commonplace\/Williams\/Witchcraft%203\?h=[^)]*\) *The/.test(md), colon: /greater\.\[[^\]]*\]\([^)]*\):/.test(md) }); }
   /* the page's reference copied with ⌘C, then pasted mid-sentence: a copy made in the page pastes whole */
   await page.click(S.editor);
   await page.keyboard.press("Meta+a");
@@ -103,7 +103,7 @@ async function pageOwnReferencePasted(): Promise<void> {
 const landedAfter = async (done: (md: string) => boolean) => { let md = await A.stored(page); for (let i = 0; i < 60 && !done(md); i++) { await page.waitForTimeout(50); md = await A.stored(page); } return md; };
 section("code block", async () => {
   /* code: a fence with a language typed, its tokens coloured, the label in the corner, the copy button on hover */
-  await go("page/Coded");
+  await go("commonplace/Coded");
   await page.click(S.editor);
   await page.keyboard.type("```js");
   await page.keyboard.press("Enter");
@@ -119,7 +119,7 @@ section("code block", async () => {
 });
 section("card copy", async () => {
   /* a card copied both ways carries its colour: the hover copy's HTML and ⌘C's HTML both spell the background inline, and ⌘V on a fresh page brings the card back */
-  await go("page/Carded");
+  await go("commonplace/Carded");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-blue\n*Purgatorio* 19.26\n\n::: verse\nquand’ una donna apparve | When a lady appeared\n:::\n:::");
   await rest(page);
@@ -133,7 +133,7 @@ section("card copy", async () => {
   await page.keyboard.press("Meta+c");
   await rest(page);
   await log("a card ⌘C'd", await R.clipboardCard(page));
-  await go("page/Pasted%20Card");
+  await go("commonplace/Pasted%20Card");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
   await rest(page);
@@ -141,7 +141,7 @@ section("card copy", async () => {
 });
 section("grid", async () => {
   /* a grid of cards: drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason pinned */
-  await go("page/Gridded");
+  await go("commonplace/Gridded");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid */
   await rest(page);
@@ -155,13 +155,13 @@ section("grid", async () => {
   await page.keyboard.press("Meta+c");
   await rest(page);
   await log("two cards ⌘C'd", await R.clipboardCard(page));
-  await go("page/Pasted%20Grid");
+  await go("commonplace/Pasted%20Grid");
   await page.click(S.editor);
   await page.keyboard.type("prose first ");
   await page.keyboard.press("Meta+v");
   await rest(page);
   await log("two cards pasted mid-paragraph", await R.gridLayout(page));
-  await go("page/Gridded");
+  await go("commonplace/Gridded");
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::");
@@ -170,17 +170,17 @@ section("grid", async () => {
   await log("a stray line in a grid, switched back", { corner: await R.gridCorner(page) });
   /* the open path forces source over the stored fault (away and back, once the save has landed); a refused ⌃⌘M leaves it forced, so the next entry opens rendered */
   for (let i = 0; i < 12 && !(await A.stored(page) || "").includes("loose"); i++);   /* the store holds the stray line before the navigation, or the open path has nothing to refuse */
-  await go("page/Carded");
+  await go("commonplace/Carded");
   await page.keyboard.press("Control+Meta+m");   /* back to the rendered view on a sound entry, so the faulty one is opened from it */
   await rest(page);
-  await go("page/Gridded");
+  await go("commonplace/Gridded");
   await rest(page);
   await log("the faulty entry opened", { source: await R.inSource(page), corner: await R.gridCorner(page) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
-  await go("page/Carded");
+  await go("commonplace/Carded");
   await log("the next entry after a refused switch", { source: await R.inSource(page) });
-  await go("page/Gridded");
+  await go("commonplace/Gridded");
   await rest(page);
   /* the line fixed and the view restored: the pin released, the grid drawn */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
@@ -195,7 +195,7 @@ section("paired card", async () => {
   await cardNotePairedVerse();
 });
 async function pairedCardOpening(): Promise<void> {
-  await go("page/Paired%20Card");
+  await go("commonplace/Paired%20Card");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-blue\n" + pairs + "\n:::\n\n::: note\n" + pairs + "\n:::");
   await page.waitForTimeout(700);
@@ -226,14 +226,14 @@ section("picture", async () => {
   await picturePastedAnotherEntry();   /* the pin read, dismissed as a reader does: a whisper yields to it */
 });
 async function picturePasted(): Promise<void> {
-  await go("page/Pictured");
+  await go("commonplace/Pictured");
   await page.click(S.editor);
   await page.keyboard.type("A picture: ");
   await R.pastePng(page);
   await R.waitImg(page);
   await R.waitCorner(page, "saved");
   await log("a picture pasted", { md: await A.stored(page), ...(await R.picture(page)) });
-  await go("page/Pictured%20End");
+  await go("commonplace/Pictured%20End");
   await page.click(S.editor);
   await page.keyboard.type("Last line");
   await page.keyboard.press("Enter");
@@ -259,35 +259,35 @@ function caretBelowPicture(s: string): boolean {
   return !!b && b === root.lastElementChild && !!(b as Element).previousElementSibling?.querySelector("img");
 }
 async function picturePastedAnotherEntry(): Promise<void> {
-  await go("page/Pictured%20Away");
+  await go("commonplace/Pictured%20Away");
   await page.click(S.editor);
   await page.keyboard.type("Aimed here");
   await R.pastePng(page);
-  await page.evaluate(() => { location.hash = "#page/Horace"; });
-  await A.waitEntry(page, "page/Horace", 5000).catch(() => {});
+  await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
+  await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
   await page.waitForTimeout(1500);
-  await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await cornerText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "page/Pictured Away")) || "") });
+  await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await cornerText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
   await page.click(S.corner).catch(() => {});
 }
 section("a terminal's copy pasted", async () => {
   /* a terminal's copy, its HTML one white-space: pre block of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same */
-  await go("page/Terminal%20Paste");
+  await go("commonplace/Terminal%20Paste");
   await page.click(S.editor);
   await pasteTerminal(TERMINAL_HTML, TERMINAL_TEXT);
   await log("a terminal's copy pasted", { md: await A.stored(page), drawn: await drawn() });
-  await write("page/Terminal Line", "before\n");
+  await write("commonplace/Terminal Line", "before\n");
   await caretAt("before", 6);
   await pasteTerminal(terminal(" " + run(CODE, "git log") + " shows the day"), " git log shows the day");
   await log("a terminal's one line pasted", { md: await A.stored(page), drawn: await drawn() });
-  await write("page/Terminal Item", "- an item\n");
+  await write("commonplace/Terminal Item", "- an item\n");
   await caretAt("an item", 7);
   await pasteTerminal(terminal(" that " + run(CODE, "wraps") + " at the\n  window's width."), " that wraps at the\n  window's width.");
   await log("a terminal's copy pasted into a list item", { md: await A.stored(page), drawn: await drawn() });
-  await write("page/Terminal Code", "```\nfirst\n```\n");
+  await write("commonplace/Terminal Code", "```\nfirst\n```\n");
   await caretAt("first", 5);
   await pasteTerminal(terminal("\n" + run(CODE, "const") + " a = 1\nconst b = 2"), "\nconst a = 1\nconst b = 2");
   await log("a terminal's copy pasted into a code block", { md: await A.stored(page) });
-  await write("page/Terminal Source", "x\n");
+  await write("commonplace/Terminal Source", "x\n");
   await view(true);
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");

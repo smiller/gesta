@@ -3,74 +3,74 @@ import { movePlan, moveHref, moveLinks, joined, pictureNames, renamePictures, ty
 
 const ESSAY = "https://x.org/2022/07/31/essay/\n\n# On Growing Older\n\nText.\n";
 const CACHE: Record<string, string> = {
-  "page/Essays": "2024/07/26: [Birds](#page/Essays/2024-07-26-birds)\n",
-  "page/Essays/2024-07-26-birds": "# Birds\n\n![](page--Essays--2024-07-26-birds-img-1.webp)\n",
-  "page/Essays/2024-07-26-birds/notes": "notes\n",
-  "page/Essays/2026-07-22-essay": "https://x.org/2026/07/22/essay/\n\n# On Growing Older\n\nShorter.\n",
-  "page/Essays Jr": "another page\n",
+  "commonplace/Essays": "2024/07/26: [Birds](#commonplace/Essays/2024-07-26-birds)\n",
+  "commonplace/Essays/2024-07-26-birds": "# Birds\n\n![](commonplace--Essays--2024-07-26-birds-img-1.webp)\n",
+  "commonplace/Essays/2024-07-26-birds/notes": "notes\n",
+  "commonplace/Essays/2026-07-22-essay": "https://x.org/2026/07/22/essay/\n\n# On Growing Older\n\nShorter.\n",
+  "commonplace/Essays Jr": "another page\n",
   "bookshelf/Miller, Sean": "# Sean Miller\n\n[Essays](#bookshelf/Miller%2C%20Sean/Essays)\n",
   "bookshelf/Miller, Sean/Essays": "# Essays\n\n## 2022-07-31\n\n[On Growing Older](#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay)\n",
   "bookshelf/Miller, Sean/Essays/2022-07-31-essay": ESSAY,
-  "2026-09-01": "See [birds](#page/Essays/2024-07-26-birds?line=3).\n",
+  "2026-09-01": "See [birds](#commonplace/Essays/2024-07-26-birds?line=3).\n",
 };
 const TO = "bookshelf/Miller, Sean/Essays";
-const plan = (cache = CACHE, from = "page/Essays", to = TO): MovePlan => {
+const plan = (cache = CACHE, from = "commonplace/Essays", to = TO): MovePlan => {
   const p = movePlan(cache, from, to);
   if ("refuse" in p) throw new Error(p.refuse);
   return p;
 };
 
 describe("movePlan", () => {
-  it("every key under the page moves to the same place under the new one; a page sharing its name's start stays", () => {
+  it("every key under the entry moves to the same place under the new one; an entry sharing its name's start stays", () => {
     expect(plan().moves).toEqual({
-      "page/Essays": TO,
-      "page/Essays/2024-07-26-birds": TO + "/2024-07-26-birds",
-      "page/Essays/2024-07-26-birds/notes": TO + "/2024-07-26-birds/notes",
+      "commonplace/Essays": TO,
+      "commonplace/Essays/2024-07-26-birds": TO + "/2024-07-26-birds",
+      "commonplace/Essays/2024-07-26-birds/notes": TO + "/2024-07-26-birds/notes",
     });
     expect(plan().into).toBe(true);
   });
-  it("a sub-page the place holds already by its title is a twin, not moved, whatever its key", () => {
-    expect(plan().twins).toEqual({ "page/Essays/2026-07-22-essay": TO + "/2022-07-31-essay" });
+  it("a sub-entry the place holds already by its title is a twin, not moved, whatever its key", () => {
+    expect(plan().twins).toEqual({ "commonplace/Essays/2026-07-22-essay": TO + "/2022-07-31-essay" });
   });
-  it("a blank sub-page whose name the place holds is a twin; one with text and another title refuses", () => {
-    const blank = { ...CACHE, "page/Essays/2022-07-31-essay": "" };
-    expect(plan(blank).twins["page/Essays/2022-07-31-essay"]).toBe(TO + "/2022-07-31-essay");
-    const other = { ...CACHE, "page/Essays/2022-07-31-essay": "# Something else\n" };
-    expect(movePlan(other, "page/Essays", TO)).toEqual({ refuse: TO + "/2022-07-31-essay is there already" });
+  it("a blank sub-entry whose name the place holds is a twin; one with text and another title refuses", () => {
+    const blank = { ...CACHE, "commonplace/Essays/2022-07-31-essay": "" };
+    expect(plan(blank).twins["commonplace/Essays/2022-07-31-essay"]).toBe(TO + "/2022-07-31-essay");
+    const other = { ...CACHE, "commonplace/Essays/2022-07-31-essay": "# Something else\n" };
+    expect(movePlan(other, "commonplace/Essays", TO)).toEqual({ refuse: TO + "/2022-07-31-essay is there already" });
   });
-  it("a blank twin with pages of its own refuses by its name", () => {
-    const deep = { ...CACHE, "page/Essays/2022-07-31-essay": "", "page/Essays/2022-07-31-essay/more": "x\n" };
-    expect(movePlan(deep, "page/Essays", TO)).toEqual({ refuse: "“2022-07-31-essay” is there already and has pages of its own" });
+  it("a blank twin with sub-entries of its own refuses by its name", () => {
+    const deep = { ...CACHE, "commonplace/Essays/2022-07-31-essay": "", "commonplace/Essays/2022-07-31-essay/more": "x\n" };
+    expect(movePlan(deep, "commonplace/Essays", TO)).toEqual({ refuse: "“2022-07-31-essay” is there already and has sub-entries of its own" });
   });
-  it("a twin with pages of its own refuses", () => {
-    const deep = { ...CACHE, "page/Essays/2026-07-22-essay/more": "x\n" };
-    expect(movePlan(deep, "page/Essays", TO)).toEqual({ refuse: "“On Growing Older” is there already and has pages of its own" });
+  it("a twin with sub-entries of its own refuses", () => {
+    const deep = { ...CACHE, "commonplace/Essays/2026-07-22-essay/more": "x\n" };
+    expect(movePlan(deep, "commonplace/Essays", TO)).toEqual({ refuse: "“On Growing Older” is there already and has sub-entries of its own" });
   });
   it("into a place that is no entry yet: nothing is a twin and nothing is joined", () => {
-    const p = plan(CACHE, "page/Essays", "bookshelf/Miller, Sean/Letters");
+    const p = plan(CACHE, "commonplace/Essays", "bookshelf/Miller, Sean/Letters");
     expect(p.into).toBe(false);
     expect(p.twins).toEqual({});
-    expect(p.moves["page/Essays/2026-07-22-essay"]).toBe("bookshelf/Miller, Sean/Letters/2026-07-22-essay");
+    expect(p.moves["commonplace/Essays/2026-07-22-essay"]).toBe("bookshelf/Miller, Sean/Letters/2026-07-22-essay");
   });
   it("refuses a place under itself and one whose parent is nothing", () => {
-    expect(movePlan(CACHE, "page/Essays", "page/Essays/x")).toEqual({ refuse: "a page can’t move under itself" });
-    expect(movePlan(CACHE, "page/Essays", "bookshelf/Nobody/Essays")).toEqual({ refuse: "nothing at bookshelf/Nobody to move it under" });
+    expect(movePlan(CACHE, "commonplace/Essays", "commonplace/Essays/x")).toEqual({ refuse: "an entry can’t move under itself" });
+    expect(movePlan(CACHE, "commonplace/Essays", "bookshelf/Nobody/Essays")).toEqual({ refuse: "nothing at bookshelf/Nobody to move it under" });
   });
 });
 
 describe("moveHref", () => {
-  it("an address into the page moves with its payload; a twin's goes to the one there", () => {
+  it("an address into the entry moves with its payload; a twin's goes to the one there", () => {
     const p = plan();
-    expect(moveHref("#page/Essays/2024-07-26-birds?line=3", "page/Essays", p)).toBe("#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds?line=3");
-    expect(moveHref("#page/Essays?h=birds&n=2", "page/Essays", p)).toBe("#bookshelf/Miller%2C%20Sean/Essays?h=birds&n=2");
-    expect(moveHref("#page/Essays/2026-07-22-essay", "page/Essays", p)).toBe("#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay");
+    expect(moveHref("#commonplace/Essays/2024-07-26-birds?line=3", "commonplace/Essays", p)).toBe("#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds?line=3");
+    expect(moveHref("#commonplace/Essays?h=birds&n=2", "commonplace/Essays", p)).toBe("#bookshelf/Miller%2C%20Sean/Essays?h=birds&n=2");
+    expect(moveHref("#commonplace/Essays/2026-07-22-essay", "commonplace/Essays", p)).toBe("#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay");
   });
   it("matches by the key the address names, however it is spelled", () => {
-    expect(moveHref("#page/Essays%2F2024-07-26-birds", "page/Essays", plan())).toBe("#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds");
+    expect(moveHref("#commonplace/Essays%2F2024-07-26-birds", "commonplace/Essays", plan())).toBe("#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds");
   });
-  it("another page, another namespace and an outside link are left", () => {
-    for (const href of ["#page/Essays%20Jr", "#bookshelf/Miller%2C%20Sean", "https://x.org/#page/Essays", "#2026-09-01"])
-      expect(moveHref(href, "page/Essays", plan())).toBeNull();
+  it("another entry, another namespace and an outside link are left", () => {
+    for (const href of ["#commonplace/Essays%20Jr", "#bookshelf/Miller%2C%20Sean", "https://x.org/#commonplace/Essays", "#2026-09-01"])
+      expect(moveHref(href, "commonplace/Essays", plan())).toBeNull();
   });
 });
 
@@ -88,23 +88,23 @@ describe("moveHref under an author re-filed", () => {
     expect(moveHref("#bookshelf/C.%20P.%20Cavafy/Walls?line=7", from, cav)).toBe("#bookshelf/Cavafy%2C%20C.%20P/Walls?line=7");
   });
   it("another author, a longer name, another namespace and an outside link are left", () => {
-    for (const href of ["#bookshelf/Carroll%2C%20Lewis", "#bookshelf/C.%20P.%20Cavafy%20Jr", "#page/C.%20P.%20Cavafy", "https://x.org/#bookshelf/C.%20P.%20Cavafy", "#2026-09-14"])
+    for (const href of ["#bookshelf/Carroll%2C%20Lewis", "#bookshelf/C.%20P.%20Cavafy%20Jr", "#commonplace/C.%20P.%20Cavafy", "https://x.org/#bookshelf/C.%20P.%20Cavafy", "#2026-09-14"])
       expect(moveHref(href, "bookshelf/C. P. Cavafy", cav)).toBeNull();
   });
 });
 
 describe("moveLinks", () => {
-  it("rewrites each link into the page, its label kept; null when there is none", () => {
-    expect(moveLinks(CACHE["2026-09-01"], "page/Essays", plan())).toBe("See [birds](#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds?line=3).");
-    expect(moveLinks("nothing here\n", "page/Essays", plan())).toBeNull();
+  it("rewrites each link into the entry, its label kept; null when there is none", () => {
+    expect(moveLinks(CACHE["2026-09-01"], "commonplace/Essays", plan())).toBe("See [birds](#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds?line=3).");
+    expect(moveLinks("nothing here\n", "commonplace/Essays", plan())).toBeNull();
   });
 });
 
 describe("moveLinks relabelled", () => {
-  it("a link labelled with the page's old name takes the new; another label, or a link to a sub-page, is left", () => {
-    const p = plan(CACHE, "page/Essays", "page/Letters");
-    expect(moveLinks("[Essays](#page/Essays) [mine](#page/Essays) [Essays](#page/Essays/2024-07-26-birds)\n", "page/Essays", p, { old: "Essays", new: "Letters" }))
-      .toBe("[Letters](#page/Letters) [mine](#page/Letters) [Essays](#page/Letters/2024-07-26-birds)");
+  it("a link labelled with the page's old name takes the new; another label, or a link to a sub-entry, is left", () => {
+    const p = plan(CACHE, "commonplace/Essays", "commonplace/Letters");
+    expect(moveLinks("[Essays](#commonplace/Essays) [mine](#commonplace/Essays) [Essays](#commonplace/Essays/2024-07-26-birds)\n", "commonplace/Essays", p, { old: "Essays", new: "Letters" }))
+      .toBe("[Letters](#commonplace/Letters) [mine](#commonplace/Letters) [Essays](#commonplace/Letters/2024-07-26-birds)");
   });
 });
 
@@ -117,21 +117,21 @@ describe("joined", () => {
 });
 
 describe("pictureNames", () => {
-  const md = "![](page--Essays--2024-07-26-birds-img-1.webp)\n\n![](<2024-07-26-birds-img-2.png>)\n\n![](shared.webp)\n\n![](https://x.org/a.jpg)\n";
+  const md = "![](commonplace--Essays--2024-07-26-birds-img-1.webp)\n\n![](<2024-07-26-birds-img-2.png>)\n\n![](shared.webp)\n\n![](https://x.org/a.jpg)\n";
   it("a picture named for its entry, by its whole path or its own name, is named for the new one in the same form; any other name is kept", () => {
-    expect(pictureNames("page/Essays/2024-07-26-birds", "bookshelf/Miller, Sean/Essays/2024-07-26-birds", md, [])).toEqual({
-      "page--Essays--2024-07-26-birds-img-1.webp": "bookshelf--Miller, Sean--Essays--2024-07-26-birds-img-1.webp",
+    expect(pictureNames("commonplace/Essays/2024-07-26-birds", "bookshelf/Miller, Sean/Essays/2024-07-26-birds", md, [])).toEqual({
+      "commonplace--Essays--2024-07-26-birds-img-1.webp": "bookshelf--Miller, Sean--Essays--2024-07-26-birds-img-1.webp",
       "2024-07-26-birds-img-2.png": "2024-07-26-birds-img-2.png",
       "shared.webp": "shared.webp",
     });
   });
-  it("a page's own pictures are not taken for its sub-page's, nor the other way", () => {
-    expect(pictureNames("page/A", "page/C", "![](page--A--B-img-1.webp) ![](A-img-1.webp) ![](page--A-img-2.webp)", [])).toEqual({
-      "page--A--B-img-1.webp": "page--A--B-img-1.webp", "A-img-1.webp": "C-img-1.webp", "page--A-img-2.webp": "page--C-img-2.webp",
+  it("a page's own pictures are not taken for its sub-entry's, nor the other way", () => {
+    expect(pictureNames("commonplace/A", "commonplace/C", "![](commonplace--A--B-img-1.webp) ![](A-img-1.webp) ![](commonplace--A-img-2.webp)", [])).toEqual({
+      "commonplace--A--B-img-1.webp": "commonplace--A--B-img-1.webp", "A-img-1.webp": "C-img-1.webp", "commonplace--A-img-2.webp": "commonplace--C-img-2.webp",
     });
   });
   it("into an entry whose text names pictures already, the moved ones are numbered past its highest", () => {
-    expect(pictureNames("page/A", "page/C", "![](A-img-1.webp) ![](A-img-3.webp)", ["C-img-1.webp", "C-img-4.webp"])).toEqual({
+    expect(pictureNames("commonplace/A", "commonplace/C", "![](A-img-1.webp) ![](A-img-3.webp)", ["C-img-1.webp", "C-img-4.webp"])).toEqual({
       "A-img-1.webp": "C-img-5.webp", "A-img-3.webp": "C-img-6.webp",
     });
   });

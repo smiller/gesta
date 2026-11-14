@@ -7,7 +7,7 @@ const keys = (n: number, prefix = "k") => Array.from({ length: n }, (_, i) => pr
 test("parseBookmarks: an empty store is a list, anything this app would not have written is null", () => {
   expect(parseBookmarks("")).toEqual([]);
   expect(parseBookmarks("[]")).toEqual([]);
-  expect(parseBookmarks('["2021-06-22", {"key": "page/A", "alias": "pa"}]')).toEqual([row("2021-06-22"), row("page/A", "pa")]);
+  expect(parseBookmarks('["2021-06-22", {"key": "commonplace/A", "alias": "pa"}]')).toEqual([row("2021-06-22"), row("commonplace/A", "pa")]);
   expect(parseBookmarks("not json")).toBeNull();
   expect(parseBookmarks('{"key": "x"}')).toBeNull();
   expect(parseBookmarks('[""]')).toBeNull();
@@ -25,8 +25,8 @@ test("parseBookmarks: an empty store is a list, anything this app would not have
   expect(parseBookmarks(JSON.stringify(keys(BOOKMARK_CAP + 1).concat(many as unknown as string[])))).toBeNull();
 });
 test("serializeBookmarks: an unkeyed row goes back as the bare string, and round-trips", () => {
-  const list = [row("2021-06-22"), row("page/A", "pa")];
-  expect(serializeBookmarks(list)).toEqual(["2021-06-22", { key: "page/A", alias: "pa" }]);
+  const list = [row("2021-06-22"), row("commonplace/A", "pa")];
+  expect(serializeBookmarks(list)).toEqual(["2021-06-22", { key: "commonplace/A", alias: "pa" }]);
   expect(parseBookmarks(JSON.stringify(serializeBookmarks(list)))).toEqual(list);
 });
 test("the two views of one array, and the lookups", () => {
@@ -69,25 +69,25 @@ test("aliasRefusal: the pattern and nothing about the list; the old shape still 
   for (const a of ["1", "a", "1ab", "A"]) expect(aliasRefusal(a)).toMatch(/a letter b to z/);
   for (const a of ["fb", "scr12", "purgatorio19"]) expect(aliasRefusal(a)).toBe("");
   expect(parseBookmarks(null)).toEqual([]);
-  expect(parseBookmarks('["page/A","2026-01-01","bookshelf/M/P"]')!.map((b) => b.key)).toEqual(["page/A", "2026-01-01", "bookshelf/M/P"]);
+  expect(parseBookmarks('["commonplace/A","2026-01-01","bookshelf/M/P"]')!.map((b) => b.key)).toEqual(["commonplace/A", "2026-01-01", "bookshelf/M/P"]);
   expect(parseBookmarks('[{"alias":"c"}]')).toBeNull();
-  expect(parseBookmarks('[{"key":"page/A","alias":"ab"}]')).toBeNull();
+  expect(parseBookmarks('[{"key":"commonplace/A","alias":"ab"}]')).toBeNull();
 });
-test("reachableBookmarks: a day is reachable whatever was written; a page or a book only when registered", () => {
-  const keys = ["2026-09-07", "page/Books", "page/Books/Essay", "bookshelf/Milton, John", "bookshelf/Milton, John/PL"];
-  const list = [row("2020-01-01"), row("page/Books"), row("page/Gone"), row("bookshelf/Milton, John/PL"), row("bookshelf/Nobody")];
-  expect(reachableBookmarks(list, keys).map((b) => b.key)).toEqual(["2020-01-01", "page/Books", "bookshelf/Milton, John/PL"]);
+test("reachableBookmarks: a day is reachable whatever was written; a commonplace or a book only when registered", () => {
+  const keys = ["2026-09-07", "commonplace/Books", "commonplace/Books/Essay", "bookshelf/Milton, John", "bookshelf/Milton, John/PL"];
+  const list = [row("2020-01-01"), row("commonplace/Books"), row("commonplace/Gone"), row("bookshelf/Milton, John/PL"), row("bookshelf/Nobody")];
+  expect(reachableBookmarks(list, keys).map((b) => b.key)).toEqual(["2020-01-01", "commonplace/Books", "bookshelf/Milton, John/PL"]);
 });
 
 test("movedBookmarks: a bookmark moved onto a key the list holds already is dropped, the one there kept", () => {
-  const list = [{ key: "page/B", alias: "b" }, { key: "page/A", alias: "a" }];
-  expect(movedBookmarks(list, { "page/A": "page/B" })).toEqual([{ key: "page/B", alias: "b" }]);
+  const list = [{ key: "commonplace/B", alias: "b" }, { key: "commonplace/A", alias: "a" }];
+  expect(movedBookmarks(list, { "commonplace/A": "commonplace/B" })).toEqual([{ key: "commonplace/B", alias: "b" }]);
 });
 test("movedBookmarks: two bookmarks moved onto one key keep the first", () => {
-  const list = [{ key: "page/A", alias: "a" }, { key: "page/B", alias: "b" }];
-  expect(movedBookmarks(list, { "page/A": "page/C", "page/B": "page/C" })).toEqual([{ key: "page/C", alias: "a" }]);
+  const list = [{ key: "commonplace/A", alias: "a" }, { key: "commonplace/B", alias: "b" }];
+  expect(movedBookmarks(list, { "commonplace/A": "commonplace/C", "commonplace/B": "commonplace/C" })).toEqual([{ key: "commonplace/C", alias: "a" }]);
 });
 test("movedBookmarks: each moved key's bookmark follows it, alias and place in the list kept", () => {
-  const list = [{ key: "page/A", alias: "" }, { key: "bookshelf/C. P. Cavafy/Walls", alias: "w" }];
-  expect(movedBookmarks(list, { "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls" })).toEqual([{ key: "page/A", alias: "" }, { key: "bookshelf/Cavafy, C. P/Walls", alias: "w" }]);
+  const list = [{ key: "commonplace/A", alias: "" }, { key: "bookshelf/C. P. Cavafy/Walls", alias: "w" }];
+  expect(movedBookmarks(list, { "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls" })).toEqual([{ key: "commonplace/A", alias: "" }, { key: "bookshelf/Cavafy, C. P/Walls", alias: "w" }]);
 });

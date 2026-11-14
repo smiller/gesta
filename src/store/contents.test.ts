@@ -15,7 +15,7 @@ describe("subPageOrder", () => {
   const cache: Record<string, string> = {
     "bookshelf/Dante": "[Inferno](#bookshelf/Dante/Inferno), [Purgatorio](#bookshelf/Dante/Purgatorio), [Paradiso](#bookshelf/Dante/Paradiso)",
     "bookshelf/Dante/Inferno": "i", "bookshelf/Dante/Purgatorio": "p", "bookshelf/Dante/Paradiso": "pa", "bookshelf/Dante/Notes": "",
-    "page/Plain": "see [Two](#page/Plain/Two) mid-sentence", "page/Plain/One": "1", "page/Plain/Two": "2",
+    "commonplace/Plain": "see [Two](#commonplace/Plain/Two) mid-sentence", "commonplace/Plain/One": "1", "commonplace/Plain/Two": "2",
   };
   const keys = Object.keys(cache);
   const bearing = (k: string) => !!(cache[k] || "").trim();
@@ -24,10 +24,10 @@ describe("subPageOrder", () => {
     expect(o.stated).toBe(true);
     expect(o.names).toEqual(["Inferno", "Purgatorio", "Paradiso", "Notes"]);
   });
-  it("a page mentioning one sub mid-sentence keeps the alphabet", () => {
-    const o = subPageOrder({ keys, bearing }, "page/Plain", cache["page/Plain"]);
+  it("an entry mentioning one sub mid-sentence keeps the alphabet", () => {
+    const o = subPageOrder({ keys, bearing }, "commonplace/Plain", cache["commonplace/Plain"]);
     expect(o).toEqual({ names: ["One", "Two"], rows: null, stated: false });
-    expect(subPageOrder({ keys, bearing }, "page/None", "")).toEqual({ names: [], rows: null, stated: false });
+    expect(subPageOrder({ keys, bearing }, "commonplace/None", "")).toEqual({ names: [], rows: null, stated: false });
   });
   it("the memo answers by the parent's text, not its name", () => {
     const memo = new Map();
@@ -39,11 +39,11 @@ describe("subPageDisplayList", () => {
   const bearing = () => true;
   it("a feed of dated names lists newest first; an undated name keeps reading order; a stated order is never flipped", () => {
     const feed = { names: ["2023-01-01-a", "2023-02-01-b"], rows: null, stated: false };
-    expect(subPageDisplayList(feed, "page/F", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
+    expect(subPageDisplayList(feed, "commonplace/F", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
     const mixed = { names: ["2023-01-01-a", "intro"], rows: null, stated: false };
-    expect(subPageDisplayList(mixed, "page/M", bearing, null)).toEqual(["2023-01-01-a", "intro"]);
+    expect(subPageDisplayList(mixed, "commonplace/M", bearing, null)).toEqual(["2023-01-01-a", "intro"]);
     const stated = { names: ["2023-02-01-b", "2023-01-01-a"], rows: [], stated: true };
-    expect(subPageDisplayList(stated, "page/S", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
+    expect(subPageDisplayList(stated, "commonplace/S", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
   });
   it("the extra joins the end of a stated order and is sorted into an alphabetical one", () => {
     expect(subPageDisplayList({ names: ["b", "a"], rows: [], stated: true }, "p", bearing, "c")).toEqual(["b", "a", "c"]);
@@ -53,16 +53,16 @@ describe("subPageDisplayList", () => {
 
 describe("foldsContents", () => {
   const keys = ["bookshelf/Spenser, Edmund", "bookshelf/Spenser, Edmund/The Faerie Queene", "bookshelf/Spenser, Edmund/The Faerie Queene/1.1",
-    "bookshelf/Milton, John/Lycidas", "bookshelf/Dante/Commedia/Inferno", "bookshelf/Dante/Commedia/Inferno/1", "page/Notes", "page/Notes/Sub", "2026-09-28", "2026-09-28/Tag"];
+    "bookshelf/Milton, John/Lycidas", "bookshelf/Dante/Commedia/Inferno", "bookshelf/Dante/Commedia/Inferno/1", "commonplace/Notes", "commonplace/Notes/Sub", "2026-09-28", "2026-09-28/Tag"];
   it("a work with sub-entries folds, at any depth below the author", () => {
     expect(foldsContents(keys, "bookshelf", "Spenser, Edmund/The Faerie Queene")).toBe(true);
     expect(foldsContents(keys, "bookshelf", "Dante/Commedia/Inferno")).toBe(true);
   });
-  it("an author page, a leaf, a page or a day does not", () => {
+  it("an author's entry, a leaf, a commonplace or a day does not", () => {
     expect(foldsContents(keys, "bookshelf", "Spenser, Edmund")).toBe(false);
     expect(foldsContents(keys, "bookshelf", "Milton, John/Lycidas")).toBe(false);
     expect(foldsContents(keys, "bookshelf", "Spenser, Edmund/The Faerie Queene/1.1")).toBe(false);
-    expect(foldsContents(keys, "page", "Notes")).toBe(false);
+    expect(foldsContents(keys, "commonplace", "Notes")).toBe(false);
     expect(foldsContents(keys, "2026-09-28", null)).toBe(false);
   });
 });

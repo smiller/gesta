@@ -51,14 +51,14 @@ describe("an author's two names", () => {
 });
 
 describe("typedAddress", () => {
-  it("a typed address names a page or book, spelled from its namespace or as a link's hash", () => {
+  it("a typed address names a commonplace or book, spelled from its namespace or as a link's hash", () => {
     expect(typedAddress(" bookshelf/Miller, Sean/Essays ")).toEqual({ date: "bookshelf", tag: "Miller, Sean/Essays" });
     expect(typedAddress("#bookshelf/Miller%2C%20Sean/Essays")).toEqual({ date: "bookshelf", tag: "Miller, Sean/Essays" });
-    expect(typedAddress("page/Essays")).toEqual({ date: "page", tag: "Essays" });
-    expect(typedAddress("page/Growth 50%/A")).toEqual({ date: "page", tag: "Growth 50%/A" });
+    expect(typedAddress("commonplace/Essays")).toEqual({ date: "commonplace", tag: "Essays" });
+    expect(typedAddress("commonplace/Growth 50%/A")).toEqual({ date: "commonplace", tag: "Growth 50%/A" });
   });
   it("an address with an empty part is refused", () => {
-    for (const raw of ["bookshelf/Miller, Sean/", "page//Essays", "#page//Essays", "#bookshelf/Miller%2C%20Sean/"]) expect(typedAddress(raw)).toEqual({ refuse: "an address can’t have an empty part" });
+    for (const raw of ["bookshelf/Miller, Sean/", "commonplace//Essays", "#commonplace//Essays", "#bookshelf/Miller%2C%20Sean/"]) expect(typedAddress(raw)).toEqual({ refuse: "an address can’t have an empty part" });
   });
   it("a name, a day, a namespace alone and nothing are no address", () => {
     for (const raw of ["Essays", "#2026-09-01", "#page", "pages/x", "", null]) expect(typedAddress(raw)).toBeNull();

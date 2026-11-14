@@ -29,3 +29,9 @@ on with words of its own); on a work's page, for the entries below it:
 English verse` on any page, for it and every page below. Every other
 directive is a line of its own.
 _Avoid_: setting, option, flag.
+
+**Commonplace**:
+A named entry that belongs to no day and no author: Books, Birthdays,
+Verdour. The paper icon lists them; "New commonplace…" makes one, and
+"+ sub-entry" one beneath it. Its address is `#commonplace/Name`.
+_Avoid_: page (the printed page's word), note (a block in an entry).

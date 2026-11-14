@@ -150,7 +150,7 @@ section("sub-entries", async () => {
   setAnswer(null);
 });
 section("list", async () => {
-  await go("page/Brand%20New");
+  await go("commonplace/Brand%20New");
   await page.click(S.editor);
   await page.keyboard.type("- one");
   await page.keyboard.press("Enter");
@@ -175,7 +175,7 @@ section("list", async () => {
   await log("the gap between the two outer items, and a line's height", await R.listGaps(page));
 });
 section("search", async () => {
-  await go("page/Links");
+  await go("commonplace/Links");
   await page.keyboard.press("Control+Meta+k");
   await rest(page);
   await log("⌃⌘K", await R.search(page));
@@ -306,7 +306,7 @@ section("the switch carries the text", async () => {
 });
 async function switchCarriesTextOpening(): Promise<void> {
   const canto = Array.from({ length: 40 }, (_, k) => "::: stanza " + (k + 1) + "\n" + Array.from({ length: 9 }, (_, j) => "Stanza " + (k + 1) + ", line " + (j + 1) + ", set down to fill the measure").join("\n") + "\n:::").join("\n\n") + "\n";
-  await go("page/Long%20Canto");
+  await go("commonplace/Long%20Canto");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -331,7 +331,7 @@ async function switchPlaceRemembered(): Promise<void> {
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
     if (where < 1) {
-      await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x: { key: string }) => x.key === "page/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
+      await log("the switch's place remembered", { matches: await page.evaluate((k) => { try { const r = JSON.parse(localStorage.getItem(k) || "[]").find((x: { key: string }) => x.key === "commonplace/Long Canto"); return !!r && Math.abs(r.y - scrollY) < 3; } catch { return null; } }, A.ns + "places") });
       /* the page grows above the text just set, as a picture resolving does: the switch's place is held like an arrival's */
       await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);
       await rest(page);

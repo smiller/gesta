@@ -3,7 +3,7 @@ import { hashParts } from "./nav.ts";
 import { rewriteLinks, followedLabel } from "./links.ts";
 import { firstHeading } from "./headings.ts";
 import { childrenOf, registered } from "./lists.ts";
-import { entryFile } from "./names.ts";
+import { entryFile, type EntryFile } from "./names.ts";
 import { imageRefs, imageLinks, shownPictures, splitKey } from "./exportEntries.ts";
 import { under } from "./refile.ts";
 import { destination, serializeMarkdown } from "../model/serialize.ts";
@@ -18,12 +18,12 @@ import { Transform } from "prosemirror-transform";
 export interface MovePlan { moves: Record<string, string>; twins: Record<string, string>; into: boolean }
 
 /* a twin is told by its title, its key being free to differ (the same essay
-   filed under two dates); a twin with pages of its own refuses, having
-   nowhere to put them (pin: move.test › a twin with pages of its own refuses) */
+   filed under two dates); a twin with sub-entries of its own refuses, having
+   nowhere to put them (pin: move.test › a twin with sub-entries of its own refuses) */
 interface MoveCtx { cache: Record<string, string>; keys: string[]; from: string; to: string }
 type Refusal = { refuse: string };
 function placeRefusal(c: MoveCtx): string | null {
-  if (under(c.to, c.from)) return "a page can’t move under itself";
+  if (under(c.to, c.from)) return "an entry can’t move under itself";
   const [ns, tag] = splitKey(c.to);
   const parent = pageParts(tag || "").parent;
   if (parent !== null && !registered(c.keys, ns, parent)) return "nothing at " + entryKey(ns, parent) + " to move it under";
@@ -52,7 +52,7 @@ function findTwins(c: MoveCtx): { twins: Record<string, string> } | Refusal {
   for (const leaf of childrenOf(c.keys, c.from)) {
     const twin = twinOf(c, leaf, there), k = entryKey(c.from, leaf);
     if (!twin) continue;
-    if (hasPages(c.keys, k)) return { refuse: "“" + (firstHeading(c.cache[k] || "") || leaf) + "” is there already and has pages of its own" };
+    if (hasPages(c.keys, k)) return { refuse: "“" + (firstHeading(c.cache[k] || "") || leaf) + "” is there already and has sub-entries of its own" };
     twins[k] = twin;
   }
   return { twins };
@@ -78,7 +78,7 @@ export function movePlan(cache: Record<string, string>, from: string, to: string
 }
 
 /* matched by the key the address names, its payload kept (pin: move.test ›
-   an address into the page moves with its payload) */
+   an address into the entry moves with its payload) */
 function destOf(key: string, from: string, plan: MovePlan): string | null {
   if (key in plan.twins) return plan.twins[key];
   if (!under(key, from)) return null;
@@ -126,6 +126,9 @@ function highestTaken(taken: string[], stems: string[]): number {
 }
 export function pictureNames(from: string, to: string, md: string, taken: string[]): Record<string, string> {
   const [a, b] = [splitKey(from), splitKey(to)].map(([d, t]) => entryFile(d, t));
+  return pictureNamesBetween(a, b, md, taken);
+}
+export function pictureNamesBetween(a: EntryFile, b: EntryFile, md: string, taken: string[]): Record<string, string> {
   const stems: [string, string][] = [[a.flatBase, b.flatBase], [a.base, b.base]];
   let n = highestTaken(taken, [b.flatBase, b.base]);
   const out: Record<string, string> = Object.create(null);

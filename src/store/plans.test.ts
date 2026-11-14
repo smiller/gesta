@@ -12,13 +12,13 @@ const doc = (path: string, text: string): ExportFile => {
 };
 
 test("a record is a doc unless it carries bytes; failures share one message shape", () => {
-  const d = doc("page/A.md", "hello");
+  const d = doc("commonplace/A.md", "hello");
   expect(isDoc(d)).toBe(true);
   expect(isDoc({ name: "x.webp", bytes: new Uint8Array(1) })).toBe(false);
   expect(fileBody(d)).toBe("hello");
-  expect(filePath(d)).toBe("page/A.md");
+  expect(filePath(d)).toBe("commonplace/A.md");
   expect(filePath({ name: "flat.md" })).toBe("flat.md");
-  expect(flatName({ dir: "", name: "A.md", flat: "page--A.md" })).toBe("page--A.md");
+  expect(flatName({ dir: "", name: "A.md", flat: "commonplace--A.md" })).toBe("commonplace--A.md");
   expect(errText({ name: "E", message: "m" })).toBe("E: m");
   expect(failMsg("write", null)).toBe("write — see console");
   expect(fsaFatal({ name: "NotAllowedError" })).toBe(true);
@@ -37,22 +37,22 @@ test("fileSize counts UTF-8 bytes as the folder will report them", () => {
 });
 
 test("dedupFiles: anything not positively known up to date is written", () => {
-  const a = doc("page/A.md", "hello");
+  const a = doc("commonplace/A.md", "hello");
   const sig = fileSig(a);
-  const manifest = { "page/A.md": { size: 5, sig } };
-  expect(dedupFiles([a], manifest, { "page/A.md": 5 }).length).toBe(0);
+  const manifest = { "commonplace/A.md": { size: 5, sig } };
+  expect(dedupFiles([a], manifest, { "commonplace/A.md": 5 }).length).toBe(0);
   expect(dedupFiles([a], manifest, {}).length).toBe(1);
-  expect(dedupFiles([a], manifest, { "page/A.md": 4 }).length).toBe(1);
-  expect(dedupFiles([a], { "page/A.md": { size: 5, sig: "x" } }, { "page/A.md": 5 }).length).toBe(1);
-  expect(dedupFiles([a], {}, { "page/A.md": 5 }).length).toBe(1);
-  const b = doc("page/B.md", "two"), c = doc("page/C.md", "three");
-  const many = { "page/A.md": { sig: fileSig(a), size: 5 }, "page/B.md": { sig: "stale", size: 3 }, "page/C.md": { sig: fileSig(c), size: 5 } };
-  expect(dedupFiles([a, b, c], many, { "page/A.md": 5, "page/B.md": 3, "page/C.md": 5 }).map((f) => f.name)).toEqual(["B.md"]);
+  expect(dedupFiles([a], manifest, { "commonplace/A.md": 4 }).length).toBe(1);
+  expect(dedupFiles([a], { "commonplace/A.md": { size: 5, sig: "x" } }, { "commonplace/A.md": 5 }).length).toBe(1);
+  expect(dedupFiles([a], {}, { "commonplace/A.md": 5 }).length).toBe(1);
+  const b = doc("commonplace/B.md", "two"), c = doc("commonplace/C.md", "three");
+  const many = { "commonplace/A.md": { sig: fileSig(a), size: 5 }, "commonplace/B.md": { sig: "stale", size: 3 }, "commonplace/C.md": { sig: fileSig(c), size: 5 } };
+  expect(dedupFiles([a, b, c], many, { "commonplace/A.md": 5, "commonplace/B.md": 3, "commonplace/C.md": 5 }).map((f) => f.name)).toEqual(["B.md"]);
 });
 
 test("fileSig reads fileBody, so a sidecar's bytes hash instead of throwing", () => {
-  const pic: ExportFile = { name: "a-img-1.webp", dir: "page/", bytes: new Uint8Array([1, 2, 3]) };
-  const other: ExportFile = { name: "a-img-2.webp", dir: "page/", bytes: new Uint8Array([1, 2, 4]) };
+  const pic: ExportFile = { name: "a-img-1.webp", dir: "commonplace/", bytes: new Uint8Array([1, 2, 3]) };
+  const other: ExportFile = { name: "a-img-2.webp", dir: "commonplace/", bytes: new Uint8Array([1, 2, 4]) };
   expect(typeof fileSig(pic)).toBe("string");
   expect(fileSig(pic)).not.toBe(fileSig(other));
   expect(fileSig(pic)).toBe(fileSig({ dir: "", name: "elsewhere.webp", bytes: new Uint8Array([1, 2, 3]) }));
@@ -74,33 +74,33 @@ test("backupPlan: the mirror on signature, the archives once per day, the reconc
 });
 
 test("sidecarOfOurs: the stem must name an entry we have seen", () => {
-  const known: Record<string, true> = { "page/A.md": true };
-  expect(sidecarOfOurs("page/A-img-1.webp", known)).toBe(true);
-  expect(sidecarOfOurs("page/page--A-img-2.png", known)).toBe(true);
-  expect(sidecarOfOurs("page/holiday-img-1.jpg", known)).toBe(false);
-  expect(sidecarOfOurs("page/holiday--A-img-1.jpg", known)).toBe(false);
-  expect(sidecarOfOurs("page/A.md", known)).toBe(false);
+  const known: Record<string, true> = { "commonplace/A.md": true };
+  expect(sidecarOfOurs("commonplace/A-img-1.webp", known)).toBe(true);
+  expect(sidecarOfOurs("commonplace/commonplace--A-img-2.png", known)).toBe(true);
+  expect(sidecarOfOurs("commonplace/holiday-img-1.jpg", known)).toBe(false);
+  expect(sidecarOfOurs("commonplace/holiday--A-img-1.jpg", known)).toBe(false);
+  expect(sidecarOfOurs("commonplace/A.md", known)).toBe(false);
 });
 
 test("reconcilePlan: a ghost sidecar goes under either spelling; a stranger's files stay", () => {
-  const pageFiles: ExportFile[] = [doc("page/Verdour.md", "x"), { name: "page--Verdour-img-1.webp", dir: "page/", bytes: new Uint8Array([1, 2, 3]) }];
+  const pageFiles: ExportFile[] = [doc("commonplace/Verdour.md", "x"), { name: "commonplace--Verdour-img-1.webp", dir: "commonplace/", bytes: new Uint8Array([1, 2, 3]) }];
   const plan = reconcilePlan({
-    "page/Verdour.md": 1, "page/page--Verdour-img-1.webp": 3, "page/Verdour-img-1.webp": 3,
-    "page/holiday-img-1.jpg": 9, "page/notes.txt": 4, "page/.DS_Store": 6,
+    "commonplace/Verdour.md": 1, "commonplace/commonplace--Verdour-img-1.webp": 3, "commonplace/Verdour-img-1.webp": 3,
+    "commonplace/holiday-img-1.jpg": 9, "commonplace/notes.txt": 4, "commonplace/.DS_Store": 6,
   }, pageFiles);
-  expect(plan.drop).toEqual(["page/Verdour-img-1.webp"]);
+  expect(plan.drop).toEqual(["commonplace/Verdour-img-1.webp"]);
 });
 
 test("reconcilePlan: a namespaced entry's ghost picture is seen through its flat stem", () => {
-  const plan = reconcilePlan({ "page/Yarnia.md": 1, "page/page--Yarnia-img-1.webp": 3, "page/foo.md": 1, "page/holiday--foo-img-1.jpg": 9 },
-    [doc("page/Yarnia.md", "x"), doc("page/foo.md", "x")]);
-  expect(plan.drop).toContain("page/page--Yarnia-img-1.webp");
-  expect(plan.drop).not.toContain("page/holiday--foo-img-1.jpg");
+  const plan = reconcilePlan({ "commonplace/Yarnia.md": 1, "commonplace/commonplace--Yarnia-img-1.webp": 3, "commonplace/foo.md": 1, "commonplace/holiday--foo-img-1.jpg": 9 },
+    [doc("commonplace/Yarnia.md", "x"), doc("commonplace/foo.md", "x")]);
+  expect(plan.drop).toContain("commonplace/commonplace--Yarnia-img-1.webp");
+  expect(plan.drop).not.toContain("commonplace/holiday--foo-img-1.jpg");
 });
 
 test("reconcilePlan: a namespace word below the tier root is not ours", () => {
-  const plan = reconcilePlan({ "notes/page/Ideas.md": 5, "notes/page/page--Ideas-img-1.png": 3, "docs/bookshelf/Hamlet/Act I.md": 7, "page/Old/Note.md": 4 }, []);
-  expect(plan.drop).toEqual(["page/Old/Note.md"]);
+  const plan = reconcilePlan({ "notes/commonplace/Ideas.md": 5, "notes/commonplace/commonplace--Ideas-img-1.png": 3, "docs/bookshelf/Hamlet/Act I.md": 7, "commonplace/Old/Note.md": 4 }, []);
+  expect(plan.drop).toEqual(["commonplace/Old/Note.md"]);
 });
 
 test("reconcilePlan: a removed day's picture goes with it, by the bare stem", () => {
@@ -111,31 +111,31 @@ test("reconcilePlan: a removed day's picture goes with it, by the bare stem", ()
 });
 
 test("reconcilePlan drops only nested ghosts of ours, and spares the unread", () => {
-  const expected: ExportFile[] = [doc("page/A.md", "x"), { dir: "", name: "A.md", text: "y" }];
+  const expected: ExportFile[] = [doc("commonplace/A.md", "x"), { dir: "", name: "A.md", text: "y" }];
   const present = {
-    "page/A.md": 1, "page/Ghost.md": 1, "page/Ghost-img-1.png": 1, "notes/theirs.md": 1, "A-img-1.png": 1,
-    "page/Unread.md": 1, "page/Unread-img-1.png": 1, "page/page--Unread-img-2.png": 1,
+    "commonplace/A.md": 1, "commonplace/Ghost.md": 1, "commonplace/Ghost-img-1.png": 1, "notes/theirs.md": 1, "A-img-1.png": 1,
+    "commonplace/Unread.md": 1, "commonplace/Unread-img-1.png": 1, "commonplace/commonplace--Unread-img-2.png": 1,
   };
-  const unread = [{ dir: "page/", base: "Unread", flatBase: "page--Unread", root: "page/Unread" }];
+  const unread = [{ dir: "commonplace/", base: "Unread", flatBase: "commonplace--Unread", root: "commonplace/Unread" }];
   const plan = reconcilePlan(present, expected, unread);
-  expect(plan.drop.sort()).toEqual(["page/Ghost-img-1.png", "page/Ghost.md"]);
+  expect(plan.drop.sort()).toEqual(["commonplace/Ghost-img-1.png", "commonplace/Ghost.md"]);
   expect(plan.refused).toBe(0);
-  const withPic = { "page/Yarnia.md": 9, "page/page--Yarnia-img-1.webp": 400, "page/Yarnia-img-2.webp": 400 };
-  const lostPic = [{ dir: "page/", base: "Yarnia", flatBase: "page--Yarnia", root: "page/Yarnia" }];
-  expect(reconcilePlan(withPic, [doc("page/Yarnia.md", "x")], lostPic).drop.length).toBe(0);
-  expect(reconcilePlan(withPic, [doc("page/Yarnia.md", "x")], []).drop.length).toBe(2);
+  const withPic = { "commonplace/Yarnia.md": 9, "commonplace/commonplace--Yarnia-img-1.webp": 400, "commonplace/Yarnia-img-2.webp": 400 };
+  const lostPic = [{ dir: "commonplace/", base: "Yarnia", flatBase: "commonplace--Yarnia", root: "commonplace/Yarnia" }];
+  expect(reconcilePlan(withPic, [doc("commonplace/Yarnia.md", "x")], lostPic).drop.length).toBe(0);
+  expect(reconcilePlan(withPic, [doc("commonplace/Yarnia.md", "x")], []).drop.length).toBe(2);
 });
 
 test("reconcilePlan's floor: a small folder may still sweep over half", () => {
-  const present = { "page/A.md": 1, "page/G1.md": 1, "page/G2.md": 1, "page/G3.md": 1, "page/G4.md": 1, "page/B.md": 1 };
-  const plan = reconcilePlan(present, [doc("page/A.md", "x"), doc("page/B.md", "y")], []);
+  const present = { "commonplace/A.md": 1, "commonplace/G1.md": 1, "commonplace/G2.md": 1, "commonplace/G3.md": 1, "commonplace/G4.md": 1, "commonplace/B.md": 1 };
+  const plan = reconcilePlan(present, [doc("commonplace/A.md", "x"), doc("commonplace/B.md", "y")], []);
   expect(plan.drop.length).toBe(4);
   expect(plan.refused).toBe(0);
 });
 
 test("reconcilePlan refuses a sweep past the floor rather than doing it", () => {
   const present: Record<string, number> = {};
-  for (let i = 0; i < 50; i++) present["page/G" + i + ".md"] = 1;
+  for (let i = 0; i < 50; i++) present["commonplace/G" + i + ".md"] = 1;
   const plan = reconcilePlan(present, [], []);
   expect(plan.drop).toEqual([]);
   expect(plan.refused).toBe(50);
@@ -150,7 +150,7 @@ test("rootSig: a deletion moves it, order does not, and it is versioned", () => 
 });
 
 test("rootOf: a file answers with its archive, or with nothing", () => {
-  expect(rootOf({ name: "x.md", dir: "page/", root: "page/Recipes" })).toBe("page/Recipes");
+  expect(rootOf({ name: "x.md", dir: "commonplace/", root: "commonplace/Recipes" })).toBe("commonplace/Recipes");
   const quiet = console.error; console.error = () => {};
   expect(rootOf({ name: "x.md", dir: "" })).toBe(null);
   console.error = quiet;
@@ -171,14 +171,14 @@ const shelf = () => {
   const book: ExportFile = { ...doc("bookshelf/Austen/Emma.md", "book"), root: "bookshelf/Austen" };
   const other: ExportFile = { ...doc("bookshelf/Austen/Persuasion.md", "more"), root: "bookshelf/Austen" };
   const pic: ExportFile = { name: "bookshelf--Austen--Emma-img-1.webp", dir: "bookshelf/Austen/", bytes: new Uint8Array([7]), root: "bookshelf/Austen" };
-  const page: ExportFile = { ...doc("page/Recipes.md", "page"), root: "page/Recipes" };
+  const page: ExportFile = { ...doc("commonplace/Recipes.md", "commonplace"), root: "commonplace/Recipes" };
   return { day, book, other, pic, page, all: [day, book, other, pic, page] };
 };
 
 test("archivePlan groups by root, in an order the export's cannot change", () => {
   const { all } = shelf();
   const first = archivePlan(all, {}, {});
-  expect(first.map((g) => g.root)).toEqual(["bookshelf/Austen", "journal/2026", "page/Recipes"]);
+  expect(first.map((g) => g.root)).toEqual(["bookshelf/Austen", "commonplace/Recipes", "journal/2026"]);
   expect(first[0].files.length).toBe(3);
 });
 
@@ -210,7 +210,7 @@ test("rootManifest: every line terminated, a gap written as a bare name", () => 
 });
 
 test("bundleDue: the reader's bundle is written unless its record and the folder both vouch for it", () => {
-  const files = [doc("journal/2026/2026-01-01.md", "one"), doc("page/A.md", "two")];
+  const files = [doc("journal/2026/2026-01-01.md", "one"), doc("commonplace/A.md", "two")];
   const sig = rootSig(files);
   expect(bundleDue(files, undefined, 120)).toBe(true);
   expect(bundleDue(files, { sig, size: 120 }, null)).toBe(true);
@@ -221,7 +221,7 @@ test("bundleDue: the reader's bundle is written unless its record and the folder
 
 test("withheld: a lost write withholds both scalars, a blind sweep the signature; the bundle's own failure neither", () => {
   expect(withheld([])).toEqual({ lostWrite: false, blind: false });
-  expect(withheld([{ name: "page/A.md" }])).toEqual({ lostWrite: true, blind: false });
+  expect(withheld([{ name: "commonplace/A.md" }])).toEqual({ lostWrite: true, blind: false });
   expect(withheld([{ name: "current", blind: true }])).toEqual({ lostWrite: false, blind: true });
   expect(withheld([{ name: "old.md", sweep: true }])).toEqual({ lostWrite: false, blind: false });
   expect(withheld([{ name: READER_ZIP }])).toEqual({ lostWrite: false, blind: false });

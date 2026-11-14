@@ -9,9 +9,9 @@ export const SHELVES = "Shelves";
 export interface Shelf { name: string; roots: string[] }
 export interface ShelfGroup { shelf: string | null; roots: string[] }
 
-/* read as the page renders: a top-level ## is a shelf, the links in the
+/* read as the entry renders: a top-level ## is a shelf, the links in the
    blocks after it name its authors; a name given twice is one shelf, or
-   its authors were drawn under both (pin: shelves.test › read as the page
+   its authors were drawn under both (pin: shelves.test › read as the entry
    renders) */
 function bookRoot(href: string): string | null {
   const at = entryAt(asAddress(href));

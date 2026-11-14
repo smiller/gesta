@@ -50,7 +50,7 @@ test("a grid cannot require a card: a card's colour has no default, so the schem
   expect(() => new Schema({ nodes, marks: schema.spec.marks })).toThrow(/non-generatable nodes \(card\)/);
 });
 test("a link's DOM, which copies are made from, carries its address alone", () => {
-  expect(schema.marks.link.spec.toDOM!(schema.marks.link.create({ href: "#page/Horace" }), true)).toEqual(["a", { href: "#page/Horace" }, 0]);
+  expect(schema.marks.link.spec.toDOM!(schema.marks.link.create({ href: "#commonplace/Horace" }), true)).toEqual(["a", { href: "#commonplace/Horace" }, 0]);
 });
 
 test("a skipped line number is never selected, and stands only in verse", () => {

@@ -14,7 +14,7 @@ async function pippaScrolledDown(): Promise<void> {
   await wheelTo(1200);
   await page.waitForTimeout(700);
   await log("Pippa scrolled down", await R.place(page));
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await rest(page);
   await log("Horace followed", await R.place(page));
   await page.goBack();
@@ -22,7 +22,7 @@ async function pippaScrolledDown(): Promise<void> {
   await rest(page);
   await log("Back", await R.place(page));
   await page.goForward();
-  await A.waitEntry(page, "page/Horace", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
   await rest(page);
   await log("Forward", await R.place(page));
   await page.goBack();
@@ -38,7 +38,7 @@ async function pippaScrolledDown(): Promise<void> {
   await rest(page);
   await log("400px grown above the held place", await R.place(page));
   await page.waitForTimeout(500);
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
   await log("Pippa after the growth", await R.place(page));
@@ -58,7 +58,7 @@ async function pippaPlaceReturned(): Promise<void> {
   await page.mouse.move(500, 400);
   await page.mouse.wheel(0, toFiller);
   await page.waitForTimeout(700);
-  await go("page/Horace");
+  await go("commonplace/Horace");
 }
 async function backPlaceClosedSection(): Promise<void> {
   await page.evaluate((k) => { try { localStorage.removeItem(k); } catch { /* none */ } }, A.ns + "folds");
@@ -95,7 +95,7 @@ async function contentsLinkBeforeWarm(): Promise<void> {
   await page.waitForTimeout(400);
   await log("a closed section's text switched to", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 3.4") });
   /* a forced entry: refused on the open path, scrolled, left and returned to */
-  await go("page/Forced%20Long");
+  await go("commonplace/Forced%20Long");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -108,23 +108,23 @@ async function forcedEntryReturned(): Promise<void> {
   await R.setSource(page, Array.from({ length: 90 }, (_, i) => "Line " + (i + 1) + " of a long refused entry.").join("\n\n") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
-  for (let i = 0; i < 12 && !((await A.stored(page, "page/Forced Long")) || "").includes("loose"); i++);
-  await go("page/Horace");
+  for (let i = 0; i < 12 && !((await A.stored(page, "commonplace/Forced Long")) || "").includes("loose"); i++);
+  await go("commonplace/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
-  await go("page/Forced%20Long");
+  await go("commonplace/Forced%20Long");
   await rest(page);
   await wheelTo(900);
   const leftAt = await winY();
   await page.waitForTimeout(700);
-  await go("page/Horace");
-  await go("page/Forced%20Long");
+  await go("commonplace/Horace");
+  await go("commonplace/Forced%20Long");
   await rest(page);
   await log("a forced entry left scrolled, returned to", { source: await R.inSource(page), stayed: Math.abs((await winY()) - leftAt) < 3 });
   /* the masthead changing height under a held place, as it does when the
      entry arrived from had a taller one: the place is set again, in the
      source view by its offset and in the rendered one by its text */
   await log("a held place, the masthead shrinking under it", await shrunk(async () => ({ stayed: Math.abs((await winY()) - leftAt) < 3 })));
-  await go("page/Horace");
+  await go("commonplace/Horace");
 }
 async function heldPlaceRenderedView(): Promise<void> {
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
@@ -132,7 +132,7 @@ async function heldPlaceRenderedView(): Promise<void> {
   await rest(page);
   await wheelTo(2600);
   await page.waitForTimeout(700);
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
   /* the row under the masthead, read mid-column: 40px in is the gutter */
@@ -157,10 +157,10 @@ const shrunk = async (fn: () => Promise<unknown>) => {
   };
 const rowUnderHead = () => page.evaluate(() => { const top = (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
 async function backToInlineCodeLines(): Promise<void> {
-  await go("page/Horace");
+  await go("commonplace/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
   /* a place held on lines that open on inline code, one paragraph so the window's top always falls on text: the caret at the line's start, the code run no stop on the way */
-  await go("page/Coded%20Lines");
+  await go("commonplace/Coded%20Lines");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -169,12 +169,12 @@ async function backToInlineCodeLines(): Promise<void> {
   await page.waitForTimeout(1500);
   await wheelTo(1200);
   await page.waitForTimeout(700);
-  await go("page/Horace");
-  await go("page/Coded%20Lines");
+  await go("commonplace/Horace");
+  await go("commonplace/Coded%20Lines");
   await rest(page);
   await log("back to lines opening on inline code", { source: await R.inSource(page) });
   /* a place held in the source mid-way down one long paragraph, the entry forced into the source by a stray line in a grid (another entry otherwise opens rendered): the caret on the line on screen, so a key typed leaves the window where it is */
-  await go("page/Long%20Paragraph");
+  await go("commonplace/Long%20Paragraph");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -183,8 +183,8 @@ async function backToInlineCodeLines(): Promise<void> {
   await page.waitForTimeout(1500);
   await wheelTo(1200);
   await page.waitForTimeout(700);
-  await go("page/Horace");
-  await go("page/Long%20Paragraph");
+  await go("commonplace/Horace");
+  await go("commonplace/Long%20Paragraph");
   await rest(page);
   const before = await winY();
   /* the caret's line on screen, from a twin of the textarea: a markdown line's start is a paragraph's, and a held index unmoved stands mid-line, neither shown by "stayed" alone */
@@ -209,9 +209,9 @@ section("entries left and renamed", async () => {
   await copyWithClipboardRefused();
 });
 async function unknownPageLeftUntouched(): Promise<void> {
-  await go("page/Never%20Typed");
-  await go("page/Horace");
-  await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "page/Never Typed")) ?? null });
+  await go("commonplace/Never%20Typed");
+  await go("commonplace/Horace");
+  await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "commonplace/Never Typed")) ?? null });
   await go("2026-09-05");
   /* the caret in the text, not its heading, where a new entry's link is refused */
   await R.caretAfter(page, "The most famous story", "The most famous story".length);
@@ -250,8 +250,8 @@ async function copyWithClipboardRefused(): Promise<void> {
   await log("⌃⌘C again, the clipboard back", { corner: await cornerText() });
   const blocked = await ctx.newPage();
   await blocked.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new DOMException("site data blocked", "SecurityError"); } }); });
-  await blocked.goto(A.url("page/Horace"));
-  await A.waitEntry(blocked, "page/Horace", 8000).catch(() => {});
+  await blocked.goto(A.url("commonplace/Horace"));
+  await A.waitEntry(blocked, "commonplace/Horace", 8000).catch(() => {});
   /* localStorage alone refused: the profile's IndexedDB still answers, so the store's own failure path is not what this reads */
   await log("a page opened with localStorage refused", { entry: (await A.entry(blocked)) ?? null, blockedScreen: ((await A.screen(blocked).catch(() => "")) || "").split(" · corner")[0] });
   await blocked.close();
@@ -273,14 +273,14 @@ section("margin-note", async () => {
   await still(page);
   await log("narrowed to 1000px, typed on", { ...(await R.margins(page)), lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1500, height: 900 });
-  await go("page/Margins");
+  await go("commonplace/Margins");
   await R.settle(page);
   await log("margin-notes between paragraphs and in a grid at 1500px", await R.margins(page));
   await page.setViewportSize({ width: 1000, height: 600 });
 });
 section("footnote marks", async () => {
   /* a footnote mark, a space and superscript digits after a word, is no break in a phrase search: "Pedenteria in comparison" finds "Pedenteria ¹ in comparison", and Enter selects it, the mark inside; "m²" stays text */
-  await go("page/Footnoted");
+  await go("commonplace/Footnoted");
   /* the box holding the whole query (it keeps the last one while the entry stays open, so a new one is typed over ⌘A), then the scan's pause: a row from the query before can stand until it runs */
   await page.click(S.editor);
   await page.keyboard.type("Skill of government was but a Pedenteria ¹ in comparison, so as Amphion, ³ was said; an area of 4 m² here.");
@@ -316,11 +316,11 @@ section("bookmarks from another window", async () => {
   await pageOpenFirstSaved();
 });
 async function secondWindow(): Promise<void> {
-  await keep("bookmarks", '["2026-09-06","page/Horace"]');
+  await keep("bookmarks", '["2026-09-06","commonplace/Horace"]');
   await go("2026-09-06");
   const other = await page.context().newPage();
-  await other.goto(A.url("page/Made%20Elsewhere"));
-  await A.waitEntry(other, "page/Made Elsewhere").catch(() => {});
+  await other.goto(A.url("commonplace/Made%20Elsewhere"));
+  await A.waitEntry(other, "commonplace/Made Elsewhere").catch(() => {});
   await A.waitWarm(other).catch(() => {});
   await other.click(S.editor);
   await other.keyboard.type("made in the second window");
@@ -336,46 +336,46 @@ async function secondWindow(): Promise<void> {
   await page.waitForTimeout(500);
   await log("⌃⌘B back in the first", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.click(".bookmarks .bookmark-label:text-is('Made Elsewhere')", { timeout: 1000 }).catch(() => {});
-  await A.waitEntry(page, "page/Made Elsewhere", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Made Elsewhere", 5000).catch(() => {});
   await rest(page);
   await log("its row's page opened from the first", { entry: await A.entry(page), text: await R.editorTextHead(page) });
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
   await page.waitForTimeout(2500);
-  await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
+  await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
 }
 async function pageOpenFirstSaved(): Promise<void> {
   const again = await page.context().newPage();
-  await again.goto(A.url("page/Made%20Elsewhere"));
-  await A.waitEntry(again, "page/Made Elsewhere").catch(() => {});
+  await again.goto(A.url("commonplace/Made%20Elsewhere"));
+  await A.waitEntry(again, "commonplace/Made Elsewhere").catch(() => {});
   await A.waitWarm(again).catch(() => {});
   await page.bringToFront();
   await page.click(S.editor);
   await again.click(S.editor);
   await again.keyboard.type(", the second again");
   await again.waitForTimeout(2500);
-  await log("the page open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "page/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
+  await log("the page open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
   await page.click(S.editor);
   await page.keyboard.type(", the first unsaved");
-  await A.foreignWrite(again, "page/Made Elsewhere", "rewritten in the second");
+  await A.foreignWrite(again, "commonplace/Made Elsewhere", "rewritten in the second");
   await page.waitForTimeout(2500);
-  await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "page/Made Elsewhere"), corner: await R.cornerText(page) });
+  await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
   await page.click(S.corner);
   await rest(page);
-  await go("page/Deleted%20Elsewhere");
+  await go("commonplace/Deleted%20Elsewhere");
   await page.click(S.editor);
   await page.keyboard.type("to be deleted in the second");
   await page.waitForTimeout(1500);
-  await A.foreignWrite(again, "page/Deleted Elsewhere", null);
+  await A.foreignWrite(again, "commonplace/Deleted Elsewhere", null);
   await page.waitForTimeout(500);
   await log("the page open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.cornerText(page) });
   await page.click(S.editor);
   await page.keyboard.type(", typed after");
   await page.waitForTimeout(1500);
-  await log("typed into the page deleted in the second", { stored: await A.stored(page, "page/Deleted Elsewhere"), corner: await R.cornerText(page) });
+  await log("typed into the page deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.cornerText(page) });
   await go("2026-09-06");
   await log("the deleted page left for the day", { corner: await R.cornerText(page) });
-  await go("page/Deleted%20Elsewhere");
+  await go("commonplace/Deleted%20Elsewhere");
   await log("the deleted page opened again in the first", { textEnd: await textEnd() });
   await again.close();
   await go("2026-09-06");

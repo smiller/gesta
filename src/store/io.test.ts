@@ -250,9 +250,9 @@ test("writeFilesTo lands each file in its own folder, and a folderless one at th
     { dir: "journal/1997/", name: "1997-03-14.md", text: "a" },
     { dir: "journal/1997/", name: "1997-08-02.md", text: "b" },
     { dir: "journal/2026/", name: "2026-08-01.md", text: "c" },
-    { dir: "", name: "page--Top.md", text: "d" }]);
+    { dir: "", name: "commonplace--Top.md", text: "d" }]);
   expect(clean.length).toBe(0);
-  expect(Object.keys(sink).sort().join("|")).toBe("root/journal/1997/1997-03-14.md|root/journal/1997/1997-08-02.md|root/journal/2026/2026-08-01.md|root/page--Top.md");
+  expect(Object.keys(sink).sort().join("|")).toBe("root/commonplace--Top.md|root/journal/1997/1997-03-14.md|root/journal/1997/1997-08-02.md|root/journal/2026/2026-08-01.md");
   expect(sink["root/journal/1997/1997-08-02.md"]).toBe("b");
 });
 
@@ -312,33 +312,33 @@ test("writeBackup: writeMirror lands files under current/, and a dated plan open
 
 test("writeBackup: the relayout sweep drops only the flat copies this run just nested", async () => {
   const sweepSink: Sink = {};
-  for (const k of ["current/2026-07-16.md", "current/2026-07-16-img-1.webp", "current/2019-01-01.md", "current/page--Keep.md",
-    "current/page--Keep-img-1.webp", "current/page--Gone.md", "current/Keep-img-1.webp", "2026-07-17/2026-07-16.md", "2026-07-10/old.md"]) sweepSink[k] = "stale";
+  for (const k of ["current/2026-07-16.md", "current/2026-07-16-img-1.webp", "current/2019-01-01.md", "current/commonplace--Keep.md",
+    "current/commonplace--Keep-img-1.webp", "current/commonplace--Gone.md", "current/Keep-img-1.webp", "2026-07-17/2026-07-16.md", "2026-07-10/old.md"]) sweepSink[k] = "stale";
   await writeBackup({ dir: tierRoot(sweepSink), files: [
     { dir: "journal/2026/", name: "2026-07-16.md", text: "x", root: "journal/2026" },
     { dir: "journal/2026/", name: "2026-07-16-img-1.webp", bytes: new Uint8Array([1]), root: "journal/2026" },
-    { dir: "page/", name: "Keep.md", flat: "page--Keep.md", text: "p", root: "page/Keep" },
-    { dir: "page/", name: "page--Keep-img-1.webp", bytes: new Uint8Array([1]), root: "page/Keep" },
+    { dir: "commonplace/", name: "Keep.md", flat: "commonplace--Keep.md", text: "p", root: "commonplace/Keep" },
+    { dir: "commonplace/", name: "commonplace--Keep-img-1.webp", bytes: new Uint8Array([1]), root: "commonplace/Keep" },
   ], plan: { writeMirror: true, dated: "2026-07-17", reconcile: false } });
   expect("current/2026-07-16.md" in sweepSink).toBe(false);
   expect("current/2026-07-16-img-1.webp" in sweepSink).toBe(false);
   expect("current/2019-01-01.md" in sweepSink).toBe(true);
-  expect("current/page--Keep.md" in sweepSink).toBe(false);
-  expect("current/page--Gone.md" in sweepSink).toBe(true);
-  expect("current/page--Keep-img-1.webp" in sweepSink).toBe(false);
+  expect("current/commonplace--Keep.md" in sweepSink).toBe(false);
+  expect("current/commonplace--Gone.md" in sweepSink).toBe(true);
+  expect("current/commonplace--Keep-img-1.webp" in sweepSink).toBe(false);
   expect("current/Keep-img-1.webp" in sweepSink).toBe(true);
   expect("2026-07-17/2026-07-16.md" in sweepSink).toBe(true);
   expect("2026-07-10/old.md" in sweepSink).toBe(true);
 });
 
 test("writeBackup: the sweep's unit of safety is the ENTRY, not the file", async () => {
-  const partSink: Sink = { "current/page--Recipes.md": "the only complete copy", "current/page--Recipes-img-1.webp": "the only complete copy" };
+  const partSink: Sink = { "current/commonplace--Recipes.md": "the only complete copy", "current/commonplace--Recipes-img-1.webp": "the only complete copy" };
   await writeBackup({ dir: tierRoot(partSink, (name) => name === "Recipes.md"), files: [
-    { dir: "page/", name: "Recipes.md", flat: "page--Recipes.md", entry: "page--Recipes", text: "x" },
-    { dir: "page/", name: "page--Recipes-img-1.webp", entry: "page--Recipes", bytes: new Uint8Array([1]) },
+    { dir: "commonplace/", name: "Recipes.md", flat: "commonplace--Recipes.md", entry: "commonplace--Recipes", text: "x" },
+    { dir: "commonplace/", name: "commonplace--Recipes-img-1.webp", entry: "commonplace--Recipes", bytes: new Uint8Array([1]) },
   ], plan: { writeMirror: true, dated: null, reconcile: false } });
-  expect("current/page--Recipes.md" in partSink).toBe(true);
-  expect("current/page--Recipes-img-1.webp" in partSink).toBe(true);
+  expect("current/commonplace--Recipes.md" in partSink).toBe(true);
+  expect("current/commonplace--Recipes-img-1.webp" in partSink).toBe(true);
 });
 
 const oneTier = (sub: Dir): Dir => ({ getDirectoryHandle: () => Promise.resolve(sub) }) as unknown as Dir;
@@ -495,12 +495,12 @@ test("zipBytes mints members a real unpacker reads back whole", async () => {
   expect(Array.from(await unpackMember(members[1])).join(",")).toBe("0,255,13,10,26,0");
   expect(members[0].crc).toBe(crc32(new TextEncoder().encode("call me Emma")));
   expect(members[0].size).toBe(12);
-  const one = readZip(await zipBytes([{ name: "café.md", dir: "page/", text: "x" }], day))[0];
-  expect(one.name).toBe("page/café.md");
+  const one = readZip(await zipBytes([{ name: "café.md", dir: "commonplace/", text: "x" }], day))[0];
+  expect(one.name).toBe("commonplace/café.md");
   expect(one.utf8).toBe(true);
   expect(one.madeBy >> 8).toBe(3);
   expect(one.attrs >>> 16).toBe(0x81A4);
-  let deep = "page/";
+  let deep = "commonplace/";
   while (deep.length < 120) deep += "Averylongsegment/";
   const far = readZip(await zipBytes([{ name: "leaf.md", dir: deep, text: "deep" }], day))[0];
   expect(far.name.length > 100).toBe(true);
@@ -590,7 +590,7 @@ test("zipBytes yields to the task queue on a large root; a small one never pays 
   let quiet = 0;
   const off = setYieldWatch(() => { quiet++; });
   try {
-    await zipBytes([{ name: "a.md", dir: "page/", text: "short" }], "2026-08-18");
+    await zipBytes([{ name: "a.md", dir: "commonplace/", text: "short" }], "2026-08-18");
     expect(quiet).toBe(0);
   } finally { off(); }
 });

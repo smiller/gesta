@@ -56,7 +56,7 @@ const posOf = (doc: Node, ch: string): number => { const f = flattenDoc(doc); re
 describe("the switch", () => {
   it("holds the caret, reads the top, mounts the other view, puts the window back, aligns, tells, then places the caret", () => {
     const w = world(300);
-    w.s.show("AB\n\nCD", "page/A");
+    w.s.show("AB\n\nCD", "commonplace/A");
     const r = w.last();
     r.top = 5;   /* C */
     w.log.length = 0;
@@ -67,12 +67,12 @@ describe("the switch", () => {
   });
   it("reads no top at the window's top, and a top at the first character stays at the top", () => {
     const w0 = world(0);
-    w0.s.show("AB\n\nCD", "page/A");
+    w0.s.show("AB\n\nCD", "commonplace/A");
     w0.log.length = 0;
     w0.s.switchTo(true);
     expect(w0.log).not.toContain("read top");
     const w = world(20);
-    w.s.show("AB\n\nCD", "page/A");
+    w.s.show("AB\n\nCD", "commonplace/A");
     w.last().top = 1;
     w.log.length = 0;
     w.s.switchTo(true);
@@ -99,7 +99,7 @@ describe("the switch", () => {
 describe("the hold across the switch", () => {
   it("a switch to the view already open lets nothing go; a real switch lets go first", () => {
     const w = world();
-    w.s.show("AB", "page/A");
+    w.s.show("AB", "commonplace/A");
     w.log.length = 0;
     w.s.switchTo(false);
     expect(w.log).toEqual([]);
@@ -111,13 +111,13 @@ describe("the hold across the switch", () => {
 describe("the caret across the switch", () => {
   it("a caret unmoved since it arrived keeps the other view's hold; a moved one retires it", () => {
     const unmoved = world();
-    unmoved.s.show("AB\n\nCD", "page/A");
+    unmoved.s.show("AB\n\nCD", "commonplace/A");
     unmoved.last().caretAt = 6;   /* before D */
     unmoved.s.switchTo(true);
     unmoved.s.switchTo(false);
     expect(unmoved.log[unmoved.log.length - 1]).toBe("caret 6 scroll");
     const moved = world();
-    moved.s.show("AB\n\nCD", "page/A");
+    moved.s.show("AB\n\nCD", "commonplace/A");
     moved.last().caretAt = 6;
     moved.s.switchTo(true);
     moved.last().caretAt = 0;
@@ -126,14 +126,14 @@ describe("the caret across the switch", () => {
   });
   it("a caret seen on leaving is scrolled to, and in the rendered view releases the hold; an unseen one leaves the window", () => {
     const seen = world();
-    seen.s.show("AB\n\nCD", "page/A");
+    seen.s.show("AB\n\nCD", "commonplace/A");
     seen.s.switchTo(true);
     seen.log.length = 0;
     seen.s.switchTo(false);
     expect(seen.log.slice(-2)).toEqual(["release", "caret 1 scroll"]);
     expect(seen.log[0]).toBe("release");
     const unseen = world();
-    unseen.s.show("AB\n\nCD", "page/A");
+    unseen.s.show("AB\n\nCD", "commonplace/A");
     unseen.last().seen = false;
     unseen.s.switchTo(true);
     expect(unseen.log[unseen.log.length - 1]).toBe("caret 0 still");
@@ -151,13 +151,13 @@ describe("a text the model refuses", () => {
   it("shown, forces the source view, pinned and told; the next show puts the reader's view back", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
-    w.s.show(BAD, "page/Gridded");
+    w.s.show(BAD, "commonplace/Gridded");
     expect(w.log).toEqual(["build source", "view true"]);
-    expect(w.pins).toEqual(["cannot render page/Gridded — " + WHY + "; shown as source"]);
-    expect(err).toHaveBeenCalledWith("cannot render", "page/Gridded", WHY);
+    expect(w.pins).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown as source"]);
+    expect(err).toHaveBeenCalledWith("cannot render", "commonplace/Gridded", WHY);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
-    w.s.show("fine", "page/Fine");
+    w.s.show("fine", "commonplace/Fine");
     expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
     expect(w.released).toEqual([1]);
     expect(w.s.md).toBe(false);
@@ -166,21 +166,21 @@ describe("a text the model refuses", () => {
   it("switched back to, keeps the source view, re-pinned, and a forced view stays forced", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
-    w.s.show(BAD, "page/Gridded");
+    w.s.show(BAD, "commonplace/Gridded");
     w.log.length = 0;
     w.s.switchTo(false);
     expect(w.log).toEqual(["release", "read caret"]);
-    expect(w.pins[1]).toBe("cannot render page/Gridded — " + WHY + "; shown as source");
+    expect(w.pins[1]).toBe("cannot render commonplace/Gridded — " + WHY + "; shown as source");
     expect(w.released).toEqual([1]);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
-    w.s.show("fine", "page/Fine");
+    w.s.show("fine", "commonplace/Fine");
     expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
     err.mockRestore();
   });
   it("a clean parse back releases the pin; the lines it refused are pinned anew", () => {
     const w = world();
-    w.s.show("fine", "page/A");
+    w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
     w.last().text = "::: versey\nline\n:::";
     w.s.switchTo(false);
@@ -193,40 +193,40 @@ describe("a text the model refuses", () => {
   });
   it("a show of another entry is in the rendered view; the same entry shown again keeps the view chosen", () => {
     const w = world();
-    w.s.show("fine", "page/A");
+    w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
     w.log.length = 0;
-    w.s.show("fine", "page/A");
+    w.s.show("fine", "commonplace/A");
     expect(w.s.md).toBe(true);
     expect(w.log).toEqual(["destroy source", "build source"]);
     w.log.length = 0;
-    w.s.show("other", "page/B");
+    w.s.show("other", "commonplace/B");
     expect(w.s.md).toBe(false);
     expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
   });
   it("a renamed entry, shown under its new key with the view kept, stays in the view chosen", () => {
     const w = world();
-    w.s.show("fine", "page/A");
+    w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
-    w.s.show("fine", "page/B", true);
+    w.s.show("fine", "commonplace/B", true);
     expect(w.s.md).toBe(true);
   });
   it("a show releases the entry left's fence pin", () => {
     const w = world();
-    w.s.show("fine", "page/A");
+    w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
     w.last().text = "::: versey\nline\n:::";
     w.s.switchTo(false);
-    w.s.show("fine", "page/B");
+    w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
   });
   it("a refusal pinned for a paste is released by the next show, and by the next one pinned", () => {
     const w = world();
-    w.s.show("fine", "page/A");
+    w.s.show("fine", "commonplace/A");
     w.s.pinRefusal("::: verse -1 — refused");
     w.s.pinRefusal("::: verse -2 — refused");
     expect(w.released).toEqual([1]);
-    w.s.show("fine", "page/B");
+    w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1, 2]);
   });
 });

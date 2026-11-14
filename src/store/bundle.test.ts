@@ -9,8 +9,8 @@ const files: ExportFile[] = [
   { name: "2026-01-01.md", dir: "journal/2026/", text: "a day ".repeat(50) },
   { name: "2026-01-01-img-1.webp", dir: "journal/2026/", bytes: new Uint8Array([1, 2, 3]) },
   { name: "Emma.md", dir: "bookshelf/Austen, Jane/", text: "Emma Woodhouse, handsome, clever, and rich" },
-  { name: "Trip Log.md", dir: "page/", text: "![x](Trip Log-img-1.webp)" },
-  { name: "Trip Log-img-1.webp", dir: "page/", bytes: new Uint8Array(400).fill(7) },
+  { name: "Trip Log.md", dir: "commonplace/", text: "![x](Trip Log-img-1.webp)" },
+  { name: "Trip Log-img-1.webp", dir: "commonplace/", bytes: new Uint8Array(400).fill(7) },
 ];
 
 test("readBundle keys every entry as the import does and keeps each picture by its path", async () => {
@@ -18,9 +18,9 @@ test("readBundle keys every entry as the import does and keeps each picture by i
   expect(b.entries).toEqual({
     "2026-01-01": "a day ".repeat(50),
     "bookshelf/Austen, Jane/Emma": "Emma Woodhouse, handsome, clever, and rich",
-    "page/Trip Log": "![x](Trip Log-img-1.webp)",
+    "commonplace/Trip Log": "![x](Trip Log-img-1.webp)",
   });
-  expect(Object.keys(b.pictures).sort()).toEqual(["journal/2026/2026-01-01-img-1.webp", "page/Trip Log-img-1.webp"]);
+  expect(Object.keys(b.pictures).sort()).toEqual(["commonplace/Trip Log-img-1.webp", "journal/2026/2026-01-01-img-1.webp"]);
   expect(b.skipped).toBe(0);
   expect(b.written).toBeNull();
 });
@@ -38,9 +38,9 @@ test("bundleImages reads a picture out of the file, stored or deflated, and has 
   const b = await readBundle(zip);
   const images = bundleImages(zip, b.pictures);
   expect(Array.from((await images.get("journal/2026/2026-01-01-img-1.webp"))!.bytes)).toEqual([1, 2, 3]);
-  expect((await images.get("page/Trip Log-img-1.webp"))!.bytes).toEqual(new Uint8Array(400).fill(7));
-  expect(await images.get("page/nothing.webp")).toBeNull();
-  await expect(images.set("page/x.webp", new Uint8Array(1))).rejects.toThrow();
+  expect((await images.get("commonplace/Trip Log-img-1.webp"))!.bytes).toEqual(new Uint8Array(400).fill(7));
+  expect(await images.get("commonplace/nothing.webp")).toBeNull();
+  await expect(images.set("commonplace/x.webp", new Uint8Array(1))).rejects.toThrow();
 });
 
 test("readBundle counts its progress over the entries and refuses a file that is not a zip or is damaged", async () => {

@@ -3,10 +3,10 @@ import { namedPictures, unnamed, sweepPlan, SWEEP_FLOOR, pictureMoves } from "./
 import { memImageStore } from "./store.ts";
 
 const CACHE: Record<string, string> = {
-  "page/Trip Log": "![](<Trip Log-img-1.webp>) and ![](https://x.org/a.png)\n",
+  "commonplace/Trip Log": "![](<Trip Log-img-1.webp>) and ![](https://x.org/a.png)\n",
   "bookshelf/Miller, Sean/Essays/A": "![](<bookshelf--Miller, Sean--Essays--A-img-1.webp>)\n\n![](shared.webp)\n",
   "2026-09-06": "![](2026-09-06-img-1.webp)\n",
-  "page/Blank": "",
+  "commonplace/Blank": "",
 };
 
 describe("namedPictures", () => {
@@ -14,35 +14,35 @@ describe("namedPictures", () => {
     expect([...namedPictures(CACHE)].sort()).toEqual([
       "bookshelf/Miller, Sean/Essays/bookshelf--Miller, Sean--Essays--A-img-1.webp",
       "bookshelf/Miller, Sean/Essays/shared.webp",
+      "commonplace/Trip Log-img-1.webp",
       "journal/2026/2026-09-06-img-1.webp",
-      "page/Trip Log-img-1.webp",
     ]);
   });
 });
 
 describe("namedPictures, read twice", () => {
   it("a picture only the syntax reads is named too, as is one only the parser reads", () => {
-    const named = namedPictures({ "page/A": "```\n![](in-code.png)\n```\n\n![](Notes(2)-img-1.webp)\n" });
-    expect(named.has("page/in-code.png")).toBe(true);
-    expect(named.has("page/Notes(2)-img-1.webp")).toBe(true);
+    const named = namedPictures({ "commonplace/A": "```\n![](in-code.png)\n```\n\n![](Notes(2)-img-1.webp)\n" });
+    expect(named.has("commonplace/in-code.png")).toBe(true);
+    expect(named.has("commonplace/Notes(2)-img-1.webp")).toBe(true);
   });
 });
 
 describe("unnamed", () => {
   it("of the keys given, those no entry names, in their order", () => {
-    expect(unnamed(["page/old.webp", "bookshelf/Miller, Sean/Essays/shared.webp", "page/gone.webp"], CACHE)).toEqual(["page/old.webp", "page/gone.webp"]);
+    expect(unnamed(["commonplace/old.webp", "bookshelf/Miller, Sean/Essays/shared.webp", "commonplace/gone.webp"], CACHE)).toEqual(["commonplace/old.webp", "commonplace/gone.webp"]);
   });
 });
 
 describe("sweepPlan", () => {
   const named = [...namedPictures(CACHE)];
   it("drops every stored picture no entry names", () => {
-    expect(sweepPlan([...named, "page/old.webp"], CACHE)).toEqual({ drop: ["page/old.webp"], refused: 0 });
+    expect(sweepPlan([...named, "commonplace/old.webp"], CACHE)).toEqual({ drop: ["commonplace/old.webp"], refused: 0 });
   });
   it("refuses, dropping nothing, when more than half the pictures would go and more than the floor", () => {
-    const many = Array.from({ length: SWEEP_FLOOR + 1 }, (_, i) => "page/old-" + i + ".webp");
+    const many = Array.from({ length: SWEEP_FLOOR + 1 }, (_, i) => "commonplace/old-" + i + ".webp");
     expect(sweepPlan([...named, ...many], CACHE)).toEqual({ drop: [], refused: SWEEP_FLOOR + 1 });
-    const few = ["page/a.webp", "page/b.webp", "page/c.webp", "page/d.webp", "page/e.webp"];
+    const few = ["commonplace/a.webp", "commonplace/b.webp", "commonplace/c.webp", "commonplace/d.webp", "commonplace/e.webp"];
     expect(sweepPlan(few, CACHE).drop).toEqual(few);
   });
 });
@@ -50,10 +50,10 @@ describe("sweepPlan", () => {
 describe("the image store's list and delete", () => {
   it("lists the keys it holds and deletes one", async () => {
     const images = memImageStore();
-    await images.set("page/a.webp", new Uint8Array([1]));
-    await images.set("page/b.webp", new Uint8Array([2]));
-    await images.del("page/a.webp");
-    expect(await images.keys()).toEqual(["page/b.webp"]);
+    await images.set("commonplace/a.webp", new Uint8Array([1]));
+    await images.set("commonplace/b.webp", new Uint8Array([2]));
+    await images.del("commonplace/a.webp");
+    expect(await images.keys()).toEqual(["commonplace/b.webp"]);
   });
 });
 

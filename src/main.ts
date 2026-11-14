@@ -28,6 +28,7 @@ import { searchActs } from "./ui/searchActs.ts";
 import { gotoActs } from "./ui/gotoActs.ts";
 import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
 import { pictureMoves } from "./store/pictures.ts";
+import { afterLoad } from "./store/toCommonplaces.ts";
 import { formatBar } from "./ui/formatBarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
 import { panelActs, type PanelName, type Ns } from "./ui/panelActs.ts";
@@ -351,7 +352,7 @@ acts.shortcuts.save = () => {
 acts.shortcuts.escape = () => { closePanel(); session.focusText(); };
 const bm = screen.bookmarks;
 const marks = bookmarkStore({
-  seed: [{ key: "page/Making Verity Cards", alias: "" }, { key: "page/Verdour", alias: "" }],
+  seed: [{ key: "commonplace/Making Verity Cards", alias: "" }, { key: "commonplace/Verdour", alias: "" }],
   pin: (text, err) => notices.stickErrIdle(text, err),
   release: (gen) => notices.releasePin(gen),
   storedKeys: () => layer.storedKeys(),
@@ -482,7 +483,9 @@ const loadPinned = loadPins(LOAD_PATIENCE_MS, notices);
 /* the bundle's own progress line speaks while it is read, however long a
    slow device takes */
 if (READER) wrote.then(loadPinned.start); else loadPinned.start();
-primed.then(held).then(() => layer.warm()).then(() => {
+/* the pages became commonplaces before anything reads the keys: the
+   lists, the search index, the backup's folders */
+primed.then(held).then(() => layer.warm()).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [session.moveFolds, session.movePlaces, marks.move], readOnly: READER })).then(() => {
   loadPinned.landed(layer);
   if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
   stage("all"); count();

@@ -2,13 +2,13 @@
    breadcrumb, the bold leaf, the title row, the day's sibling tags, and
    whether today is worth reaching for. The date line is a BREADCRUMB — on any
    sub-entry the parent crumbs link back up, every ancestor its own link,
-   and the leaf, the entry's own NAME, reads bold; a top-level page is its
-   bold label alone; a day's main entry is "Era — date". Only a ROOT reads
+   and the leaf, the entry's own NAME, reads bold; a top-level commonplace is its bold label alone;
+   a day's main entry is "Era — date". Only a ROOT reads
    as something other than its key, and only in a namespace that titles
    its roots. The tag bar lists DESTINATIONS only: a day's sibling tags,
    never the open one. The title row is for TITLES, never names: a
-   sub-page's first heading, or a day's — a headingless sub-page already
-   names itself in the crumb (pin: mastheadModel.test › a sub-page: the parent
+   sub-entry's first heading, or a day's — a headingless sub-entry already
+   names itself in the crumb (pin: mastheadModel.test › a sub-entry: the parent
    crumb links back) (pin: mastheadModel.test › deeper down every ancestor is
    its own link) */
 import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";

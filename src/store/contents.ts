@@ -4,9 +4,8 @@
    lists its children as links in the book's order: no second place to
    store an order, nothing outside the text for a backup to lose. ALL OR
    NOTHING, over the subs a reader can see: the contents decides only
-   when it links every CONTENT-BEARING sub, so a page mentioning one sub
-   mid-sentence reorders nothing, and a blank registration gets no vote
-   (pin: contents.test › a page mentioning one sub mid-sentence keeps the
+   when it links every CONTENT-BEARING sub, so an entry mentioning one sub mid-sentence reorders nothing, and a blank registration gets no vote
+   (pin: contents.test › an entry mentioning one sub mid-sentence keeps the
    alphabet).
    The links' section headings (levels 1–3, in document order) are the
    sections a picker groups by; a heading that is itself a link names the

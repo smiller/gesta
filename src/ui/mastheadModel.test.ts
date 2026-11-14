@@ -9,9 +9,9 @@ const cache: Record<string, string> = {
   "2026-09-07/Zed": "z",
   "2026-09-06": "untitled",
   "2026-09-06/Only": "o",
-  "page/Books": "# Books\n\nthe list",
-  "page/Books/Essay": "# The essay's title\n\nbody",
-  "page/Books/Deep/Down": "no heading",
+  "commonplace/Books": "# Books\n\nthe list",
+  "commonplace/Books/Essay": "# The essay's title\n\nbody",
+  "commonplace/Books/Deep/Down": "no heading",
   "bookshelf/Milton, John": "# John Milton\n\n- Paradise Lost",
   "bookshelf/Milton, John/Paradise Lost/1": "# Book 1\n\n::: verse\nOf Man's first disobedience\n:::",
   "bookshelf/Spenser, Edmund": "# Edmund Spenser",
@@ -56,25 +56,25 @@ describe("a day", () => {
 });
 
 describe("a page", () => {
-  it("a top-level page: its own name, bold, alone — no crumb, no title, no tags", () => {
-    const x = m("page", "Books");
+  it("a top-level commonplace: its own name, bold, alone — no crumb, no title, no tags", () => {
+    const x = m("commonplace", "Books");
     expect(x.crumbs).toEqual([]);
     expect(x.leaf).toBe("Books");
     expect(x.title).toBe("");
     expect(x.tags).toEqual([]);
     expect(x.showToday).toBe(true);
   });
-  it("a sub-page: the parent crumb links back, the leaf is its name, the title its first heading", () => {
-    const x = m("page", "Books/Essay");
-    expect(x.crumbs).toEqual([{ text: "Books", href: "#page/Books", title: "Back to Books" }]);
+  it("a sub-entry: the parent crumb links back, the leaf is its name, the title its first heading", () => {
+    const x = m("commonplace", "Books/Essay");
+    expect(x.crumbs).toEqual([{ text: "Books", href: "#commonplace/Books", title: "Back to Books" }]);
     expect(x.leaf).toBe("Essay");
     expect(x.title).toBe("The essay's title");
   });
-  it("deeper down every ancestor is its own link; a headingless sub-page takes no title row", () => {
-    const x = m("page", "Books/Deep/Down");
+  it("deeper down every ancestor is its own link; a headingless sub-entry takes no title row", () => {
+    const x = m("commonplace", "Books/Deep/Down");
     expect(x.crumbs).toEqual([
-      { text: "Books", href: "#page/Books", title: "Back to Books" },
-      { text: "Deep", href: "#page/Books/Deep", title: "Back to Deep" },
+      { text: "Books", href: "#commonplace/Books", title: "Back to Books" },
+      { text: "Deep", href: "#commonplace/Books/Deep", title: "Back to Deep" },
     ]);
     expect(x.leaf).toBe("Down");
     expect(x.title).toBe("");
@@ -84,7 +84,7 @@ describe("a page", () => {
 describe("the bookshelf", () => {
   it("a root reads as its own heading, in the crumb as in the leaf", () => {
     expect(rootLabel("bookshelf", "Milton, John", journal)).toBe("John Milton");
-    expect(rootLabel("page", "Books", journal)).toBe("Books");
+    expect(rootLabel("commonplace", "Books", journal)).toBe("Books");
     expect(rootLabel("bookshelf", "Nobody", journal)).toBe("Nobody");
     expect(m("bookshelf", "Milton, John").leaf).toBe("John Milton");
     const x = m("bookshelf", "Milton, John/Paradise Lost/1");
@@ -97,7 +97,7 @@ describe("the bookshelf", () => {
 
 describe("the panels", () => {
   it("a namespace's roots as rows, labelled as roots are, in key order", () => {
-    expect(panelRows("page", keys, journal)).toEqual([{ text: "Books", href: "#page/Books" }]);
+    expect(panelRows("commonplace", keys, journal)).toEqual([{ text: "Books", href: "#commonplace/Books" }]);
     expect(panelRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }, { text: "Edmund Spenser", href: "#bookshelf/Spenser%2C%20Edmund" }]);
     expect(panelRows("nowhere", keys, journal)).toEqual([]);
   });

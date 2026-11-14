@@ -2,7 +2,7 @@ import { section, page, A, R, S, log, go, wheelTo, setAnswer, rest } from "./kit
 
 section("shortcuts", async () => {
   /* shortcuts: ⌃⌘S with an empty table opens the editor; a table saved; a code typed and Enter inserts at the caret */
-  await go("page/Expanded");
+  await go("commonplace/Expanded");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+s");
   await rest(page);
@@ -29,7 +29,7 @@ section("bookmarks", async () => {
   await rest(page);
   await log("A pressed", await R.bookmarks(page));
   await page.keyboard.press("Escape");
-  await go("page/Horace", 5000);
+  await go("commonplace/Horace", 5000);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.keyboard.press("1");
@@ -68,10 +68,10 @@ section("bookmarks", async () => {
 });
 section("bookmarks damaged", async () => {
   /* a damaged list: ⌃⌘B says so and A is refused with its pin; repaired by hand, the next ⌃⌘B shows its rows without a reload, and A lands, releasing the pin; a reload ends the step so the pin is not carried on, back on the day the next step reads */
-  await go("page/Horace", 5000);
+  await go("commonplace/Horace", 5000);
   await page.evaluate((k) => localStorage.setItem(k, "not json"), A.bookmarksKey);
   await page.reload();
-  await A.waitEntry(page, "page/Horace").catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace").catch(() => {});
   await A.waitWarm(page).catch(() => {});
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
@@ -89,7 +89,7 @@ section("bookmarks damaged", async () => {
   await log("A over the list repaired", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
   await page.keyboard.press("Escape");
   await page.reload();
-  await A.waitEntry(page, "page/Horace").catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace").catch(() => {});
   await A.waitWarm(page).catch(() => {});
   await go("2026-09-06");
 });
@@ -103,7 +103,7 @@ section("backups", async () => {
 });
 section("help", async () => {
   /* help: ⌃⌘H opens the card over the entry and closes the pages panel; Escape closes it */
-  await page.click(S.pagesOpener);
+  await page.click(S.commonplacesOpener);
   await page.keyboard.press("Control+Meta+h");
   await rest(page);
   await log("⌃⌘H over an open pages panel", await R.help(page));
@@ -112,7 +112,7 @@ section("help", async () => {
 });
 section("line bar", async () => {
   /* ⌃⌘G: the bar over verse takes a line, cycles nothing on one block, marks and centres; Escape hands the caret to the row; over a book of leaves the Page box */
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
@@ -127,7 +127,7 @@ section("line bar", async () => {
   await page.keyboard.press("Escape");
   await rest(page);
   await log("Escape", { ...(await R.linebar(page)), caretRow: await R.caretRow(page) });
-  await go("page/Williams/Witchcraft%203");
+  await go("commonplace/Williams/Witchcraft%203");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
@@ -145,7 +145,7 @@ section("line bar", async () => {
 });
 section("reference paste", async () => {
   /* a reference pasted as plain text into the rendered view renders as its markdown */
-  await go("page/Pasted");
+  await go("commonplace/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord");
   await rest(page);
@@ -160,7 +160,7 @@ section("reference paste", async () => {
      not only select it — the one-line case above never needed a scroll,
      and the jump landed at the top of Paradise Lost (found by hand); the
      bar stays off, the passage is to be read in context */
-  await go("page/Pasted");
+  await go("commonplace/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Pippa*](#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed)");
   await rest(page);
@@ -170,9 +170,9 @@ section("reference paste", async () => {
   await log("a link deep into a long entry followed", await R.highlightFollowed(page));
   /* a paired reference is a fence inside the quotation: its pair stands
      where a quoted paragraph's text does, its cells unwrapped */
-  await go("page/Pasted Pair");
+  await go("commonplace/Pasted Pair");
   await page.click(S.editor);
-  await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#page/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
+  await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#commonplace/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
   await page.waitForTimeout(700);
   await log("a paired reference pasted", await R.quotedPair(page));
   /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured with a longer phrase). READ WITHIN 400ms OF THE KEYS: a reading at 700ms proved nothing about the grow; the settled reading follows it */

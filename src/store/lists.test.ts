@@ -3,7 +3,7 @@ import { dayKeys, entryNeighbors, childrenOf, registered, unmintedKey, subPageNe
 
 const keys = [
   "2026-01-05", "2026-01-05/morning", "2026-01-02", "2025-12-31",
-  "page/Recipes", "page/Recipes/Bread", "page/Recipes/Soup",
+  "commonplace/Recipes", "commonplace/Recipes/Bread", "commonplace/Recipes/Soup",
   "bookshelf/Dante/Inferno/10", "bookshelf/Dante/Inferno/2", "bookshelf/Dante/Inferno/1", "bookshelf/Dante/Purgatorio/1",
 ];
 
@@ -20,8 +20,8 @@ test("entryNeighbors from an indexed day and from a day between", () => {
 
 test("childrenOf: the names directly under a key, in reading order, ancestors included", () => {
   expect(childrenOf(keys, "2026-01-05")).toEqual(["morning"]);
-  expect(childrenOf(keys, "page")).toEqual(["Recipes"]);
-  expect(childrenOf(keys, "page/Recipes")).toEqual(["Bread", "Soup"]);
+  expect(childrenOf(keys, "commonplace")).toEqual(["Recipes"]);
+  expect(childrenOf(keys, "commonplace/Recipes")).toEqual(["Bread", "Soup"]);
   expect(childrenOf(keys, "bookshelf")).toEqual(["Dante"]);            // no body of its own
   expect(childrenOf(keys, "bookshelf/Dante")).toEqual(["Inferno", "Purgatorio"]);
   expect(childrenOf(keys, "bookshelf/Dante/Inferno")).toEqual(["1", "2", "10"]);
@@ -35,7 +35,7 @@ test("registered: itself present, or an ancestor of one that is; unmintedKey rea
   expect(registered(keys, "2026-01-05", null)).toBe(true);
   expect(unmintedKey(keys, "bookshelf", "Milton")).toBe(true);
   expect(unmintedKey(keys, "bookshelf", "Dante/Inferno/1")).toBe(false);
-  expect(unmintedKey(keys, "page", "Brand New")).toBe(false);     // pages mint on visit
+  expect(unmintedKey(keys, "commonplace", "Brand New")).toBe(false);     // commonplaces mint on visit
   expect(unmintedKey(keys, "2026-01-05", "new tag")).toBe(false); // a day has no row
 });
 
@@ -61,9 +61,9 @@ test("subPageNeighbors: siblings in reading order, blanks skipped, an unlisted s
   expect(subPageNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "3")).toEqual({ prev: "2", next: "10" });
 });
 
-test("navNeighbors: a day walks days, a sub-page its siblings, a tagged day and a root nowhere", () => {
+test("navNeighbors: a day walks days, a sub-entry its siblings, a tagged day and a root nowhere", () => {
   expect(navNeighbors({ keys, bearing: () => true }, "2026-01-02", null)).toEqual({ prev: ["2025-12-31", null], next: ["2026-01-05", null] });
   expect(navNeighbors({ keys, bearing: () => true }, "2026-01-05", "morning")).toEqual({ prev: null, next: null });
-  expect(navNeighbors({ keys, bearing: () => true }, "page", "Recipes")).toEqual({ prev: null, next: null });
-  expect(navNeighbors({ keys, bearing: () => true }, "page", "Recipes/Bread")).toEqual({ prev: null, next: ["page", "Recipes/Soup"] });
+  expect(navNeighbors({ keys, bearing: () => true }, "commonplace", "Recipes")).toEqual({ prev: null, next: null });
+  expect(navNeighbors({ keys, bearing: () => true }, "commonplace", "Recipes/Bread")).toEqual({ prev: null, next: ["commonplace", "Recipes/Soup"] });
 });

@@ -378,7 +378,7 @@ class FitView implements PluginView {
   private readonly onResize = (): void => { if (window.innerWidth !== this.window) this.schedule(false); };
   /* the boxes again when a box's WIDTH has settled, the root's and each
      box's own: at the window's resize event a card in a grid still had
-     the last width, each split one resize behind (MEASURED, page/3x3 from
+     the last width, each split one resize behind (MEASURED, commonplace/3x3 from
      1280 to 1700px); past the cap the root stays 712px while the card
      grows from 541 to 650 (MEASURED, 1700 to 2400px). A height alone
      changes no split, and a first sighting is no change */

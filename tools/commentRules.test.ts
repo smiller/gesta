@@ -51,7 +51,7 @@ describe("the pins", () => {
     bridge: 'say("an unknown book is refused", o);\n',
     bridgeRun: 'an unknown book is refused         {"entry":"2026-09-12"}\n',
     readerRun: 'Escape after the hit: {"hit":""}\nconsole: \n',
-    tests: new Map([["nav.test", ['test("hashParts: a page routes; anything less falls back", () => {});\ndescribe.each(xs)("keyed store over %s", () => {});\n']]]),
+    tests: new Map([["nav.test", ['test("hashParts: a commonplace routes; anything less falls back", () => {});\ndescribe.each(xs)("keyed store over %s", () => {});\n']]]),
   };
   const why = (body: string): (string | null)[] => pins(body).map((p) => unresolved(p, sources));
   test("a pin split across a block's lines is read whole; two groups are two pins", () => {
@@ -71,7 +71,7 @@ describe("the pins", () => {
     expect(why("(pin: source view › never run)")[0]).toBe('no reading "never run" in tools/expected/corner.approved.txt');
   });
   test("a Vitest pin is a title prefix in the named test file", () => {
-    expect(why("(pin: nav.test › hashParts: a page routes)")).toEqual([null]);
+    expect(why("(pin: nav.test › hashParts: a commonplace routes)")).toEqual([null]);
     expect(why("(pin: nav.test › keyed store over)")).toEqual([null]);
     expect(why("(pin: nav.test › makeHref)")[0]).toBe('no test in nav.test.ts titled "makeHref…"');
     expect(why("(pin: keys.test › anything)")[0]).toBe("no keys.test.ts under src/");
@@ -175,12 +175,12 @@ const KNOWN_BAD: { at: string; file: string; caught: string[]; raw: string }[] =
 
 /* comments in today's tree that must stay quiet, verbatim */
 const QUIET: { file: string; raw: string }[] = [
-  { file: "src/store/nav.ts", raw: `/* The today fallback — an undecodable escape, a bare or empty #page/, an
+  { file: "src/store/nav.ts", raw: `/* The today fallback — an undecodable escape, a bare or empty #commonplace/, an
    empty interior segment — drops the highlight payload with it, or it would
    select some innocent passage in today's entry. Trailing empties are the
-   parent: #page/Name/ is the page itself.
-   (pin: nav.test › hashParts: a page routes; anything less falls back)
-   (pin: nav.test › hashParts: a page hierarchy at any depth) */` },
+   parent: #commonplace/Name/ is the page itself.
+   (pin: nav.test › hashParts: a commonplace routes; anything less falls back)
+   (pin: nav.test › hashParts: a commonplace hierarchy at any depth) */` },
   { file: "src/store/nav.ts", raw: "    } catch { hl = null; }   /* a mangled payload loses only the highlight (pin: nav.test › hashParts: the ?h=…&n=… highlight payload) */" },
   { file: "src/store/names.ts", raw: `/* a picture's key: its relative src in its entry's own folder
    (pin: importFiles.test › a picture the import files is found where the entry looks) */` },

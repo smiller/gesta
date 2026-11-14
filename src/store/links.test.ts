@@ -4,8 +4,8 @@ import { parseMarkdown } from "../model/parse.ts";
 
 describe("linkRuns", () => {
   it("one run per link, adjacent marks merged, text across emphasis kept", () => {
-    const runs = linkRuns(parseMarkdown("See [the *essay*](#page/B/E) and [x](https://x.org/).\n\n[again](#page/B/E)"));
-    expect(runs.map((r) => [r.href, r.text])).toEqual([["#page/B/E", "the essay"], ["https://x.org/", "x"], ["#page/B/E", "again"]]);
+    const runs = linkRuns(parseMarkdown("See [the *essay*](#commonplace/B/E) and [x](https://x.org/).\n\n[again](#commonplace/B/E)"));
+    expect(runs.map((r) => [r.href, r.text])).toEqual([["#commonplace/B/E", "the essay"], ["https://x.org/", "x"], ["#commonplace/B/E", "again"]]);
   });
 });
 describe("retargetLinks", () => {
@@ -25,8 +25,8 @@ describe("retargetLinks", () => {
     expect(retargetLinks(md, { href: "#2026-09-07/Ideas", label: "Ideas" }, null)).toBe("Before.\n\nAfter  here.");
     expect(retargetLinks(md, { href: "#nowhere", label: "x" }, null)).toBeNull();
   });
-  it("a sub-page's link is retargeted by its full hash", () => {
-    expect(retargetLinks("- [1](#page/Book/1)\n- [2](#page/Book/2)", { href: "#page/Book/1", label: "1" }, { href: "#page/Book/One", label: "One" })).toBe("- [One](#page/Book/One)\n- [2](#page/Book/2)");
+  it("a sub-entry's link is retargeted by its full hash", () => {
+    expect(retargetLinks("- [1](#commonplace/Book/1)\n- [2](#commonplace/Book/2)", { href: "#commonplace/Book/1", label: "1" }, { href: "#commonplace/Book/One", label: "One" })).toBe("- [One](#commonplace/Book/One)\n- [2](#commonplace/Book/2)");
   });
 });
 describe("retargetLinks, a label's own marks", () => {
@@ -37,12 +37,12 @@ describe("retargetLinks, a label's own marks", () => {
 });
 describe("relabelLinks", () => {
   it("relabels a minted label to the new heading, leaves a hand-written one, returns to the bare name when the heading goes", () => {
-    const href = "#page/Book/1";
-    expect(relabelLinks("[1](#page/Book/1) and [read this](#page/Book/1)", href, "1", { was: "", now: "The Essay" })).toBe("[The Essay](#page/Book/1) and [read this](#page/Book/1)");
-    expect(relabelLinks("[The Essay](#page/Book/1)", href, "1", { was: "The Essay", now: "A New Title" })).toBe("[A New Title](#page/Book/1)");
-    expect(relabelLinks("[A New Title](#page/Book/1)", href, "1", { was: "A New Title", now: "" })).toBe("[1](#page/Book/1)");
-    expect(relabelLinks("[1](#page/Book/1)", href, "1", { was: "same", now: "same" })).toBeNull();
-    expect(relabelLinks("[Title: a] b](#page/Book/1)", href, "1", { was: "", now: "Title: a] b" })).toBeNull();
+    const href = "#commonplace/Book/1";
+    expect(relabelLinks("[1](#commonplace/Book/1) and [read this](#commonplace/Book/1)", href, "1", { was: "", now: "The Essay" })).toBe("[The Essay](#commonplace/Book/1) and [read this](#commonplace/Book/1)");
+    expect(relabelLinks("[The Essay](#commonplace/Book/1)", href, "1", { was: "The Essay", now: "A New Title" })).toBe("[A New Title](#commonplace/Book/1)");
+    expect(relabelLinks("[A New Title](#commonplace/Book/1)", href, "1", { was: "A New Title", now: "" })).toBe("[1](#commonplace/Book/1)");
+    expect(relabelLinks("[1](#commonplace/Book/1)", href, "1", { was: "same", now: "same" })).toBeNull();
+    expect(relabelLinks("[Title: a] b](#commonplace/Book/1)", href, "1", { was: "", now: "Title: a] b" })).toBeNull();
   });
 });
 describe("rewriteLinks", () => {

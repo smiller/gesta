@@ -13,10 +13,10 @@ test("oneEach and entryDocs: one file per ENTRY, and only a .md carries a key at
   expect(docs.length).toBe(1);
   expect((docs[0] as { handle?: string }).handle).toBe("the one");
   // two pages under different parents share a basename and are two entries
-  expect(oneEach([f("page/A/", "Notes.md", "a"), f("page/B/", "Notes.md", "b")]).length).toBe(2);
-  expect(oneEach([f("page/A/", "Notes-img-1.png", "a"), f("page/B/", "Notes-img-1.png", "b")]).length).toBe(2);
+  expect(oneEach([f("commonplace/A/", "Notes.md", "a"), f("commonplace/B/", "Notes.md", "b")]).length).toBe(2);
+  expect(oneEach([f("commonplace/A/", "Notes-img-1.png", "a"), f("commonplace/B/", "Notes-img-1.png", "b")]).length).toBe(2);
   // only a .md carries a key: two sidecars that fold alike are two files
-  expect(oneEach([f("page/A/", "Trip--1-img-1.png", "a"), f("page/A/", "Trip-1-img-1.png", "b")]).length).toBe(2);
+  expect(oneEach([f("commonplace/A/", "Trip--1-img-1.png", "a"), f("commonplace/A/", "Trip-1-img-1.png", "b")]).length).toBe(2);
   // an entry key and a file path never collide — different namespaces
   expect(oneEach([f("journal/1997/", "1997-01-01.md", "doc"), f("journal/1997/", "1997-01-01", "stray")]).length).toBe(2);
 });
@@ -24,12 +24,12 @@ test("oneEach and entryDocs: one file per ENTRY, and only a .md carries a key at
 test("oneEach: normalization refuses with what to do, never 'several backups'", () => {
   let normed: Error | null = null;
   try {
-    oneEach([f("page/", "Trip--Log.md", "a"), f("page/", "Trip-Log.md", "b")]);
+    oneEach([f("commonplace/", "Trip--Log.md", "a"), f("commonplace/", "Trip-Log.md", "b")]);
   } catch (e) { normed = e as Error; }
   expect(normed).not.toBe(null);
   expect(normed!.message).not.toMatch(/several backups/i);
   expect(normed!.message).toMatch(/same entry/);
-  expect((normed as { merged?: string }).merged).toBe("page/Trip-Log.md");
+  expect((normed as { merged?: string }).merged).toBe("commonplace/Trip-Log.md");
 });
 
 test("a root pick keys no entry: current/ and archive/ put the namespace at segment 1", () => {
@@ -44,9 +44,9 @@ test("a root pick keys no entry: current/ and archive/ put the namespace at segm
 test("the records: a doc has text, a sidecar bytes, an unreadable file is kept and marked", () => {
   expect(isDoc({ dir: "", name: "a.md", text: "" })).toBe(true);
   expect(isDoc({ dir: "", name: "a.webp", bytes: new Uint8Array() })).toBe(false);
-  expect(unreadFile("a.md", "page/")).toEqual({ dir: "page/", name: "a.md", unread: true });
-  expect(unreadFile("a.webp", "page/")).toEqual({ dir: "page/", name: "a.webp", unread: true, bytes: null });
-  expect(isDoc(unreadFile("a.webp", "page/"))).toBe(false);
+  expect(unreadFile("a.md", "commonplace/")).toEqual({ dir: "commonplace/", name: "a.md", unread: true });
+  expect(unreadFile("a.webp", "commonplace/")).toEqual({ dir: "commonplace/", name: "a.webp", unread: true, bytes: null });
+  expect(isDoc(unreadFile("a.webp", "commonplace/"))).toBe(false);
   expect(failMsg("import failed", new Error("boom"))).toBe("import failed — Error: boom");
   expect(failMsg("import failed", null)).toBe("import failed — see console");
 });

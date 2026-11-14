@@ -5,11 +5,11 @@
    book unioned into its own namespace's group so a preselect can never
    name a row the list does not hold (pin: searchModel.test › the open
    unregistered book joins its own group) */
-import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, PAGE_KEY, capitalized } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, COMMONPLACE_KEY, capitalized, plural } from "../store/keys.ts";
 import { rootGroups, type ShelfGroup } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
-import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_PAGES, bookScope, type Scope, type Result } from "../store/search.ts";
+import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_COMMONPLACES, bookScope, type Scope, type Result } from "../store/search.ts";
 import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
 
 export interface ScopeOption { label: string; scope: Scope; group: string | null }
@@ -21,7 +21,7 @@ export function sameScope(a: Scope, b: Scope): boolean {
   if (a.kind === "shelf" && b.kind === "shelf") return a.ns === b.ns && a.shelf === b.shelf;
   return a.kind === b.kind;
 }
-export function nsGroupLabel(ns: string): string { return capitalized(KEYED_NS[ns].noun) + "s"; }
+export function nsGroupLabel(ns: string): string { return capitalized(plural(KEYED_NS[ns].noun)); }
 export interface ScopeWorld { keys: string[]; journal: Journal; shelvesMd?: string }
 const openBook = (open: Scope, ns: string): string | null => (open.kind === "book" && open.ns === ns ? open.book : null);
 function groupOptions(ns: string, g: ShelfGroup, journal: Journal): ScopeOption[] {
@@ -41,13 +41,13 @@ export function scopeOptions(date: string, tag: string | null, w: ScopeWorld): S
   return [
     { label: "Everything", scope: SCOPE_EVERYTHING, group: null },
     { label: "Journal", scope: SCOPE_JOURNAL, group: null },
-    { label: "All " + nsGroupLabel(PAGE_KEY), scope: SCOPE_PAGES, group: null },
+    { label: "All " + nsGroupLabel(COMMONPLACE_KEY), scope: SCOPE_COMMONPLACES, group: null },
     ...NS_KEYS.flatMap((ns) => nsOptions(ns, open, w)),
   ];
 }
 /* the dropdown's runs of options under one optgroup: a run breaks where
-   its namespace does as well as its label, so a shelf named "Pages" is not
-   drawn among the pages, and each run is keyed by where it starts (pin:
+   its namespace does as well as its label, so a shelf named "Commonplaces" is not
+   drawn among the commonplaces, and each run is keyed by where it starts (pin:
    searchModel.test › the dropdown's runs) */
 export function optionGroups(options: ScopeOption[]): { group: string | null; at: number[] }[] {
   const nsOfOption = (o: ScopeOption): string => (o.scope.kind === "book" || o.scope.kind === "shelf" ? o.scope.ns : "");

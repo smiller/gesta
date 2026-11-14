@@ -55,7 +55,7 @@ export function fsaFatal(err: unknown): boolean {
 }
 export interface Merged extends Error { merged: string }
 /* one file per ENTRY — never per filename, which stopped being an identity
-   when pages nested: page/A/Notes.md and page/B/Notes.md are two entries.
+   when entries nested: commonplace/A/Notes.md and commonplace/B/Notes.md are two entries.
    A KEY CLAIMED TWICE IS A REFUSAL with nothing to choose between — one
    shape is written and one read, so what brings two paths to one key is
    normalization (a "--" run or an edge dash folded), and the message says

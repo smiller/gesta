@@ -19,35 +19,35 @@ async function enterInsideQuoteNew(): Promise<void> {
   await bookmarkLinkInCode();
 }
 async function enterInsideQuoteTyped(): Promise<void> {
-  await write("page/Quote Enter", "> one\n> two\n");
+  await write("commonplace/Quote Enter", "> one\n> two\n");
   await caretAt("one", 3);
   await page.keyboard.press("Enter");
   await page.keyboard.type("new");
   await log("Enter inside a quote, new typed", { md: await stored() });
-  await write("page/Code Two", "alpha\n\nbeta\n");
+  await write("commonplace/Code Two", "alpha\n\nbeta\n");
   await between("alpha", "beta");
   await button("Code block");
   await log("the code button over two paragraphs", { md: await stored() });
-  await write("page/Quote Three", "> first\n>\n> second\n>\n> third\n");
+  await write("commonplace/Quote Three", "> first\n>\n> second\n>\n> third\n");
   await caretAt("second", 3);
   await button("Quote");
   await log("the quote button with the caret in a quote's middle paragraph", { md: await stored() });
-  await write("page/Nested Runs", "> intro\n>\n>> a\n>>\n>> b\n>>\n>> c\n");
+  await write("commonplace/Nested Runs", "> intro\n>\n>> a\n>>\n>> b\n>>\n>> c\n");
   await caretAt("b", 1);
   await page.keyboard.press("Shift+Tab");
   await rest(page);
   await log("Shift-Tab on the middle run of a nested quote", { md: await stored() });
-  await write("page/Soft Italic", "wrote this:\n");
+  await write("commonplace/Soft Italic", "wrote this:\n");
   await caretAt("wrote this:", 11);
   await page.keyboard.press("Shift+Enter");
   await page.keyboard.type("_Somnium Scipionis_ ok");
   await log("_italic_ typed at the start of a Shift-Enter line", { md: await stored() });
-  await write("page/Quote Italic", "> note:\n");
+  await write("commonplace/Quote Italic", "> note:\n");
   await caretAt("note:", 5);
   await page.keyboard.press("Enter");
   await page.keyboard.type("_verity_ ok");
   await log("_italic_ typed on a quote's later line", { md: await stored() });
-  await write("page/Middle Marker", "a\n");
+  await write("commonplace/Middle Marker", "a\n");
   await caretAt("a", 1);
   await page.keyboard.press("Shift+Enter");
   await page.keyboard.type("Z");
@@ -56,47 +56,47 @@ async function enterInsideQuoteTyped(): Promise<void> {
   await caretAt("Z", 0);
   await page.keyboard.type("- ");
   await log("- typed at the start of a middle line", { md: await stored() });
-  await write("page/Quote Marker", "> a\n");
+  await write("commonplace/Quote Marker", "> a\n");
   await caretAt("a", 1);
   await page.keyboard.press("Enter");
 }
 async function quoteMarkOnLaterLine(): Promise<void> {
   await page.keyboard.type("> b");
   await log("> typed on a quote's later line", { md: await stored() });
-  await write("page/List From Three", "3. x\n4. y\n5. z\n");
+  await write("commonplace/List From Three", "3. x\n4. y\n5. z\n");
   await between("y", "z");
   await log("items 4–5 of a list from 3 copied", { clipboard: await copied() });
-  await write("page/Code Copy", "```js\na = *ptr;\nmore\n```\n");
+  await write("commonplace/Code Copy", "```js\na = *ptr;\nmore\n```\n");
   await between("a = *ptr;", "mo");
   await log("a selection inside a code block copied", { clipboard: await copied() });
-  await write("page/Paste In Run", "x *the best* of times\n");
+  await write("commonplace/Paste In Run", "x *the best* of times\n");
   await caretAt("the be", 6);
   await R.pasteText(page, "L1\nL2");
   await rest(page);
   await log("two lines pasted inside an emphasised run", { md: await stored() });
-  await write("page/Paste Quote", "> quoted line\n");
+  await write("commonplace/Paste Quote", "> quoted line\n");
   await caretAt("quoted", 6);
   await R.pasteText(page, "> inner");
   await rest(page);
   await log("> inner pasted inside a quote", { md: await stored() });
-  await write("page/Paste Picture Quote", "x\n");
+  await write("commonplace/Paste Picture Quote", "x\n");
   await caretAt("x", 1);
   await R.pasteText(page, "> ![](a.png)");
   await rest(page);
   await log("a one-line quote of a picture pasted", { md: await stored() });
-  await write("page/Paste Url", "see it now\n");
+  await write("commonplace/Paste Url", "see it now\n");
   await caretAt("see ", 4);
   await R.pasteText(page, "https://example.org/x");
   await rest(page);
   await log("a bare URL pasted", { md: await stored(), links: await page.evaluate(() => document.querySelectorAll("#editor a, #page a").length) });
   /* a bookmark to press: Links, added from its own card */
-  await go("page/Links");
+  await go("commonplace/Links");
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.keyboard.press("a");
   await rest(page);
   await page.keyboard.press("Escape");
-  await write("page/Inline Code Link", "see `code here` now\n");
+  await write("commonplace/Inline Code Link", "see `code here` now\n");
   await caretAt("code", 2);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
@@ -106,12 +106,12 @@ async function bookmarkLinkInCode(): Promise<void> {
   await rest(page);
   await log("a bookmark's link pressed in inline code", { md: await stored(), corner: await corner() });
   await page.keyboard.press("Escape");
-  await write("page/Paste Refused", "x\n");
+  await write("commonplace/Paste Refused", "x\n");
   await caretAt("x", 1);
   await R.pasteText(page, "::: verse -1\nline one\n:::");
   await page.waitForTimeout(400);
   await log("a refused fence pasted", { md: await stored(), corner: await corner() });
-  await write("page/Source Curl", "x\n");
+  await write("commonplace/Source Curl", "x\n");
   await view(true);
   await R.sourceCaretTo(page, "x");
   await page.keyboard.press("End");
@@ -119,7 +119,7 @@ async function bookmarkLinkInCode(): Promise<void> {
   await rest(page);
   await view(false);
   await log("-- and quotes typed in the markdown view", { md: await stored() });
-  await write("page/Bold Italic Row", "::: verse\n**SPEAKER**\n*Stage direction*\n***KING JOHN***\nDeath.\n:::\n");
+  await write("commonplace/Bold Italic Row", "::: verse\n**SPEAKER**\n*Stage direction*\n***KING JOHN***\nDeath.\n:::\n");
 }
 async function whollyBoldItalicRow(): Promise<void> {
   await log("a wholly bold-italic row", await page.evaluate(() => {
@@ -129,10 +129,10 @@ async function whollyBoldItalicRow(): Promise<void> {
   }));
 }
 async function quotationInsideNote(): Promise<void> {
-  await write("page/Note Quote", "::: note\n> quoted in a note\n:::\n");
+  await write("commonplace/Note Quote", "::: note\n> quoted in a note\n:::\n");
   await log("a quotation inside a note", await page.evaluate(() => { const q = document.querySelector("#editor .note blockquote, #page .note blockquote"); if (!q) return { quote: null as string | null }; const cs = getComputedStyle(q); return { fill: cs.backgroundColor !== "rgba(0, 0, 0, 0)", rule: parseFloat(cs.borderLeftWidth) > 0 || getComputedStyle(q, "::before").content !== "none" }; }));
   const box = "data:image/svg+xml;base64," + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120"><rect width="300" height="120" fill="#ccc"/></svg>').toString("base64");
-  await write("page/Spacing", `early light:\n\n![](${box})\n\n~ ~\n\nA paragraph.\n\n> ::: verse 265\n> ye Elves of Hilles,\n> :::\n\n> ::: verse 197 265\n> auraeque | Ye Ayres\n> :::\n\n> A quoted paragraph.\n`);
+  await write("commonplace/Spacing", `early light:\n\n![](${box})\n\n~ ~\n\nA paragraph.\n\n> ::: verse 265\n> ye Elves of Hilles,\n> :::\n\n> ::: verse 197 265\n> auraeque | Ye Ayres\n> :::\n\n> A quoted paragraph.\n`);
   await page.waitForFunction(() => [...document.querySelectorAll("#editor img:not(.ProseMirror-separator)")].every((i) => i.complete), null, { timeout: 2000 }).catch(() => {});
 }
 async function pictureGapsAndQuotation(): Promise<void> {
@@ -151,14 +151,14 @@ async function pictureGapsAndQuotation(): Promise<void> {
   }));
 }
 async function referenceBlockClicked(): Promise<void> {
-  await write("page/Reference Block", "::: reference\nby book, chapter, and paragraph\n:::\n\nafter\n");
+  await write("commonplace/Reference Block", "::: reference\nby book, chapter, and paragraph\n:::\n\nafter\n");
   await page.click("#editor .reference, #page .reference", { timeout: 2000 }).catch(() => {});
   await rest(page);
   await page.keyboard.type("Q");
   await rest(page);
   await log("a reference block clicked, Q typed", { md: await stored(), corner: await corner() });
   const greek = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega".split(" ");
-  await write("page/Spaced Leaves", greek.concat(greek, greek).map((w, i) => w + "word⟨" + (i + 1) + "⟩").join(" ") + "\n");
+  await write("commonplace/Spaced Leaves", greek.concat(greek, greek).map((w, i) => w + "word⟨" + (i + 1) + "⟩").join(" ") + "\n");
   await page.waitForTimeout(600);
 }
 async function pageLabelsBesideTheir(): Promise<void> {
@@ -192,7 +192,7 @@ function labelsOffLeaf(): { markers: number; off: number } {
   return { markers: markers.length, off };
 }
 async function nearMissEntryLink(): Promise<void> {
-  await write("page/Near Miss", "x\n");
+  await write("commonplace/Near Miss", "x\n");
   await caretAt("x", 1);
   await R.pasteText(page, " [near](#pagex)");
   await rest(page);

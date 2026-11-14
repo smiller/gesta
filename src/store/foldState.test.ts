@@ -17,7 +17,7 @@ test("a malformed page record keeps only what is well formed", () => {
   expect(foldPage(store, "bookshelf/S/W")).toEqual({ open: ["A", "B"] });
 });
 
-test("movedFolds: each moved page's open sections go with it; the rest stay", () => {
-  const store = parseFoldStore('{"bookshelf/C. P. Cavafy":{"open":["Poems"]},"page/A":{"open":["X"]}}');
-  expect(movedFolds(store, { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" })).toEqual({ "bookshelf/Cavafy, C. P": { open: ["Poems"] }, "page/A": { open: ["X"] } });
+test("movedFolds: each moved entry's open sections go with it; the rest stay", () => {
+  const store = parseFoldStore('{"bookshelf/C. P. Cavafy":{"open":["Poems"]},"commonplace/A":{"open":["X"]}}');
+  expect(movedFolds(store, { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" })).toEqual({ "bookshelf/Cavafy, C. P": { open: ["Poems"] }, "commonplace/A": { open: ["X"] } });
 });

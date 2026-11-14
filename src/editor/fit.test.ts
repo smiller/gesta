@@ -61,7 +61,7 @@ test("a settle narrows again, and an entry the layout cannot place is no answer"
   expect(fitWidth(m(200, 300, { floor: 0 }), null, false)).toBe(null);
 });
 
-/* the measured card on page/3x3 at a 1520px window: room 408, the widest
+/* the measured card on commonplace/3x3 at a 1520px window: room 408, the widest
    original 266 and translation 131, as read under max-content */
 test("an inset block's split: where both columns' widest lines fit, the spare room is shared between them", () => {
   expect(insetCol(408, 266, 131)).toBe(Math.round(267 + (408 - 267 - 132) / 2));

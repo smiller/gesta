@@ -31,29 +31,29 @@ function fakeFile(name: string, v: string | Uint8Array | Error): FileHandle {
 test("walkFolder lists every file with its folder path, depth-first, names only", async () => {
   const found = await walkFolder(fakeDir({
     "journal": { "2026": { "2026-01-05.md": "a" } },
-    "page": { "Trip Log": { "Trip Log.md": "b", "Trip Log-img-1.webp": new Uint8Array([1]) } },
+    "commonplace": { "Trip Log": { "Trip Log.md": "b", "Trip Log-img-1.webp": new Uint8Array([1]) } },
     ".DS_Store": new Uint8Array([0]),
   }));
   expect(found.map((f) => f.dir + f.name)).toEqual([
-    "journal/2026/2026-01-05.md", "page/Trip Log/Trip Log.md", "page/Trip Log/Trip Log-img-1.webp", ".DS_Store",
+    "journal/2026/2026-01-05.md", "commonplace/Trip Log/Trip Log.md", "commonplace/Trip Log/Trip Log-img-1.webp", ".DS_Store",
   ]);
 });
 
 test("pickImportFiles reads a .md as text and anything else as bytes; an unreadable file is kept and marked", async () => {
   const files = await pickImportFiles(fakeDir({
-    "page": { "A.md": "text", "A-img-1.webp": new Uint8Array([7]), "B.md": new Error("evicted"), "B-img-1.webp": new Error("evicted") },
+    "commonplace": { "A.md": "text", "A-img-1.webp": new Uint8Array([7]), "B.md": new Error("evicted"), "B-img-1.webp": new Error("evicted") },
   }));
   expect(files).toEqual([
-    { dir: "page/", name: "A.md", text: "text" },
-    { dir: "page/", name: "A-img-1.webp", bytes: new Uint8Array([7]) },
-    { dir: "page/", name: "B.md", unread: true },
-    { dir: "page/", name: "B-img-1.webp", unread: true, bytes: null },
+    { dir: "commonplace/", name: "A.md", text: "text" },
+    { dir: "commonplace/", name: "A-img-1.webp", bytes: new Uint8Array([7]) },
+    { dir: "commonplace/", name: "B.md", unread: true },
+    { dir: "commonplace/", name: "B-img-1.webp", unread: true, bytes: null },
   ]);
 });
 
 test("pickImportFiles refuses two files spelling one entry before reading anything", async () => {
   let reads = 0;
-  const dir = fakeDir({ "page": { "Trip--Log.md": "a", "Trip-Log.md": "b" } });
+  const dir = fakeDir({ "commonplace": { "Trip--Log.md": "a", "Trip-Log.md": "b" } });
   const counting = {
     ...dir,
     async *values() {
@@ -64,6 +64,6 @@ test("pickImportFiles refuses two files spelling one entry before reading anythi
       }
     },
   } as unknown as DirHandle;
-  await expect(pickImportFiles(counting)).rejects.toMatchObject({ merged: "page/Trip-Log.md" });
+  await expect(pickImportFiles(counting)).rejects.toMatchObject({ merged: "commonplace/Trip-Log.md" });
   expect(reads).toBe(0);
 });

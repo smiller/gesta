@@ -91,8 +91,8 @@ function referred(file: string, md: string): string {
 const MOVED = new Map([
   ["bookshelf/Doctor Who/Eleventh Doctor/Series 6/32-13 The Wedding of River Song", "bookshelf/Doctor Who/Eleventh Doctor/32-13 The Wedding of River Song"],
   ["bookshelf/Doctor Who/Twelfth Doctor/Series 9/35-8 The Zygon Inversion", "bookshelf/Doctor Who/Twelfth Doctor/35-8 The Zygon Inversion"],
-  ["page/Sean’s Books/68 — Lulu Miller, Why Fish Don’t Exist", "page/Sean’s Books/68"],
-  ["page/Charles Williams/The Figure of Beatrice", "bookshelf/Williams, Charles/The Figure of Beatrice/7. The Making of the Commedia"],
+  ["commonplace/Sean’s Books/68 — Lulu Miller, Why Fish Don’t Exist", "commonplace/Sean’s Books/68"],
+  ["commonplace/Charles Williams/The Figure of Beatrice", "bookshelf/Williams, Charles/The Figure of Beatrice/7. The Making of the Commedia"],
   ["bookshelf/Doctor Who/Seventh Doctor/Season 25/25-1 Remembrance of the Daleks", "bookshelf/Doctor Who/Seventh Doctor/25-1 Remembrance of the Daleks"],
   ["bookshelf/Doctor Who/Eleventh Doctor/Series 5/31-5 Flesh and Stone", "bookshelf/Doctor Who/Eleventh Doctor/31-5 Flesh and Stone"],
   ["bookshelf/Doctor Who/Twelfth Doctor/Series 10/36-13 Twice Upon A Time", "bookshelf/Doctor Who/Twelfth Doctor/36-13 Twice Upon A Time"],

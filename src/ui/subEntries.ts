@@ -4,7 +4,7 @@
    every depth; registered-but-blank ones never block, and are swept only
    AFTER the user confirms (pin: subEntries.test › content-bearing
    descendants at any depth block; blanks never do) */
-import { nsOf, pageParts, entryKey, entryHash, entryNoun, todayKey, NS_BOOK } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, entryHash, entryNoun, todayKey, NS_BOOK, plural } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import { pageName } from "../store/names.ts";
@@ -65,13 +65,13 @@ export function renamePrompt(date: string, tag: string, shownLabel: string): str
   return "Rename the " + (ns ? entryNoun(date, tag) : "tag") + ' "' + shownLabel + '" to:';
 }
 export function movePrompt(date: string, tag: string, shownLabel: string): string {
-  return "Move the " + entryNoun(date, tag) + " “" + shownLabel + "” and its " + nsOf(date)!.subNoun + "s to:";
+  return "Move the " + entryNoun(date, tag) + " “" + shownLabel + "” and its " + plural(nsOf(date)!.subNoun) + " to:";
 }
-const subsText = (sub: string, moved: number): string => (moved ? " and its " + counted(moved, " " + sub, " " + sub + "s") : "");
+const subsText = (sub: string, moved: number): string => (moved ? " and its " + counted(moved, " " + sub, " " + plural(sub)) : "");
 function twinsText(sub: string, twins: string[]): string {
   if (!twins.length) return "";
   const one = twins.length === 1;
-  return " " + (one ? "1 " + sub + " is" : twins.length + " " + sub + "s are") + " there already by title and " + (one ? "is" : "are") + " deleted, " + (one ? "its" : "their") + " links going to the one there: " + twins.map((t) => "“" + t + "”").join(", ") + ".";
+  return " " + (one ? "1 " + sub + " is" : twins.length + " " + plural(sub) + " are") + " there already by title and " + (one ? "is" : "are") + " deleted, " + (one ? "its" : "their") + " links going to the one there: " + twins.map((t) => "“" + t + "”").join(", ") + ".";
 }
 export interface Shown { date: string; tag: string; shown: string }
 export function moveConfirm(e: Shown, to: string, plan: { moved: number; into: boolean; twins: string[] }): string {

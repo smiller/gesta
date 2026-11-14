@@ -17,7 +17,7 @@ import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, headingRefusal, cutsHeading, HEADING_REFUSAL, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { firstHeading } from "../store/headings.ts";
-import { nsOf, pageParts, entryKey, entryHash, KEYED_NS, NS_BOOK } from "../store/keys.ts";
+import { nsOf, pageParts, entryKey, entryHash, KEYED_NS, NS_BOOK, plural } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { registered, childrenOf } from "../store/lists.ts";
 
@@ -281,7 +281,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      so none lands where its pictures are not: one copy for each new place,
      none where a picture stays put, each checked and made one at a time, so a
      book's pictures are never all read at once (pin: lifecycle.test › a
-     picture two pages share is copied once). A place holding another picture
+     picture two commonplaces share is copied once). A place holding another picture
      under the new name would show that one in its place, so the copying stops
      and the clash is named (pin: lifecycle.test › each copy is checked); a
      failed read or copy rejects. `copied` gathers each copy made, to be taken
@@ -484,7 +484,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     if (!c.tag || cold()) return done;
     const date = c.date, tag = c.tag, ns = nsOf(date);
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) return refused("delete the " + ns.subNoun + "s first", 2500);
+    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) return refused("delete the " + plural(ns.subNoun) + " first", 2500);
     if (!dialogs.confirm(deleteConfirm(date, tag, shownName(date, tag)))) return done;
     return removeAt(date, tag);
   }

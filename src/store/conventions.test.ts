@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { conventionsOf, type Conventions } from "./conventions.ts";
 import { journalOf } from "./headings.ts";
-import { NS_BOOK, NS_PAGE } from "./keys.ts";
+import { NS_BOOK, NS_COMMONPLACE } from "./keys.ts";
 import help from "../ui/help.html?raw";
 
 const NONE: Conventions = { lastTitle: false, noAuthor: false, scripture: false, partsInRoman: false, prosimetrum: false, byBookChapterAndParagraph: false, oldEnglishVerse: false };
@@ -35,7 +35,7 @@ test("a directive on the wrong level is not read: a work's on the root, a root's
 });
 test("nothing is read outside the namespaces that title their roots", () => {
   const all = block("scripture", "no author", "from the last title", "Old English verse");
-  expect(conventionsOf(NS_PAGE.key, "A/W/1", journalOf({ "page/A": all }))).toEqual(NONE);
+  expect(conventionsOf(NS_COMMONPLACE.key, "A/W/1", journalOf({ "commonplace/A": all }))).toEqual(NONE);
   expect(conventionsOf("2026-09-22", null, journalOf({ "2026-09-22": all }))).toEqual(NONE);
   expect(conventionsOf(NS_BOOK.key, null, journalOf({ bookshelf: all }))).toEqual(NONE);
 });

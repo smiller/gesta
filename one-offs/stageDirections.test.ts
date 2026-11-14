@@ -91,7 +91,7 @@ describe("what is not a direction", () => {
 
 describe("what the review found", () => {
   it("a row that is a link or a note marker is not a direction", () => {
-    for (const row of ["[Act II](#page/A/B)", "[1] A note on the text."]) {
+    for (const row of ["[Act II](#commonplace/A/B)", "[1] A note on the text."]) {
       const r = williams(row, true);
       expect(r.md).toBe(row);
       expect(r.changes).toHaveLength(0);
@@ -137,12 +137,12 @@ describe("what the confirmation pass found", () => {
     expect(tey("*Enter* sims.").md).toBe("*Enter SIMS.*");
   });
   it("nor a bullet, nor a line holding a link", () => {
-    for (const row of ["* Item *x* y", "*See* [the act](#page/A/B) *for it*"]) expect(tey(row).changes).toHaveLength(0);
+    for (const row of ["* Item *x* y", "*See* [the act](#commonplace/A/B) *for it*"]) expect(tey(row).changes).toHaveLength(0);
   });
   it("a join is stopped by a [ before the row's ], not by one after it", () => {
     expect(williams("*[He runs*\n*round the stage]* So will you [1].", true).md).toBe("*[He runs round the stage]* So will you [1].");
   });
   it("a link or a note marker after a space is not a direction either", () => {
-    for (const row of ["* [Act II](#page/A/B)", "*[1] A note."]) expect(williams(row).changes).toHaveLength(0);
+    for (const row of ["* [Act II](#commonplace/A/B)", "*[1] A note."]) expect(williams(row).changes).toHaveLength(0);
   });
 });

@@ -4,8 +4,8 @@ import { journalOf } from "../store/headings.ts";
 
 const cache: Record<string, string> = {
   "2026-09-07": "# A titled day", "2026-09-07/Ideas": "i", "2026-08-01": "x", "2025-12-25": "y",
-  "page/Books": "[Essay](#page/Books/Essay) then [Two](#page/Books/Two)", "page/Books/Essay": "# The essay", "page/Books/Two": "2",
-  "page/Empty": "nothing under it",
+  "commonplace/Books": "[Essay](#commonplace/Books/Essay) then [Two](#commonplace/Books/Two)", "commonplace/Books/Essay": "# The essay", "commonplace/Books/Two": "2",
+  "commonplace/Empty": "nothing under it",
   "bookshelf/Virgil": "# Virgil\n\n[Aeneid](#bookshelf/Virgil/Aeneid)",
   "bookshelf/Virgil/Aeneid": "# Aeneid\n\n## Books\n\n[1](#bookshelf/Virgil/Aeneid/1), [2](#bookshelf/Virgil/Aeneid/2)",
   "bookshelf/Virgil/Aeneid/1": "arma", "bookshelf/Virgil/Aeneid/2": "conticuere",
@@ -25,10 +25,10 @@ describe("gotoLevels", () => {
     expect(L[4].sentinel).toBe("← the day");
     expect(gotoLevels(w, "2026-08-01", null).length).toBe(4);
   });
-  it("a page: one select per level, the open leaf preselected, its parent's order and labels", () => {
-    const L = gotoLevels(w, "page", "Books/Essay");
-    expect(L[0]).toMatchObject({ value: "Books", valueNs: "page" });
-    expect(L[1]).toMatchObject({ aria: "Sub-page", value: "Essay", sentinel: "← the page", path: "Books" });
+  it("a commonplace: one select per level, the open leaf preselected, its parent's order and labels", () => {
+    const L = gotoLevels(w, "commonplace", "Books/Essay");
+    expect(L[0]).toMatchObject({ value: "Books", valueNs: "commonplace" });
+    expect(L[1]).toMatchObject({ aria: "Sub-entry", value: "Essay", sentinel: "← the commonplace", path: "Books" });
     expect(labels(L[1])).toEqual(["The essay", "Two"]);
     expect(L.length).toBe(2);
   });
@@ -57,19 +57,19 @@ describe("gotoPick", () => {
     expect(gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, L, { level: 4, value: "Ideas" })).toEqual({ jump: "#2026-09-07/Ideas" });
     expect(gotoPick(w, { date: "2026-09-07", tag: "Ideas" }, L, { level: 4, value: "" })).toEqual({ jump: "#2026-09-07" });
   });
-  it("a scope pick: a page with subs lists them placeholder-led, a page with none jumps, Journal opens today's shape from a page", () => {
-    const L = gotoLevels(w, "page", "Books/Essay");
-    const b = gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 0, value: "Books", ns: "page" }) as { levels: Level[] };
-    expect(b.levels[1]).toMatchObject({ aria: "Sub-page", value: null, path: "Books" });
-    expect(gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 0, value: "Empty", ns: "page" })).toEqual({ jump: "#page/Empty" });
-    const j = gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 0, value: "", ns: undefined }) as { levels: Level[] };
+  it("a scope pick: a commonplace with subs lists them placeholder-led, a commonplace with none jumps, Journal opens today's shape from a commonplace", () => {
+    const L = gotoLevels(w, "commonplace", "Books/Essay");
+    const b = gotoPick(w, { date: "commonplace", tag: "Books/Essay" }, L, { level: 0, value: "Books", ns: "commonplace" }) as { levels: Level[] };
+    expect(b.levels[1]).toMatchObject({ aria: "Sub-entry", value: null, path: "Books" });
+    expect(gotoPick(w, { date: "commonplace", tag: "Books/Essay" }, L, { level: 0, value: "Empty", ns: "commonplace" })).toEqual({ jump: "#commonplace/Empty" });
+    const j = gotoPick(w, { date: "commonplace", tag: "Books/Essay" }, L, { level: 0, value: "", ns: undefined }) as { levels: Level[] };
     expect(j.levels.map((l) => l.aria)).toEqual(["Destination", "Year", "Month", "Day", "Tagged entry"]);
     expect(j.levels[3].value).toBe("07");
   });
   it("in a chain: the sentinel opens the parent, a leaf descends or jumps, the collapsed work's own row opens", () => {
-    const L = gotoLevels(w, "page", "Books/Essay");
-    expect(gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 1, value: "" })).toEqual({ jump: "#page/Books" });
-    expect(gotoPick(w, { date: "page", tag: "Books/Essay" }, L, { level: 1, value: "Two" })).toEqual({ jump: "#page/Books/Two" });
+    const L = gotoLevels(w, "commonplace", "Books/Essay");
+    expect(gotoPick(w, { date: "commonplace", tag: "Books/Essay" }, L, { level: 1, value: "" })).toEqual({ jump: "#commonplace/Books" });
+    expect(gotoPick(w, { date: "commonplace", tag: "Books/Essay" }, L, { level: 1, value: "Two" })).toEqual({ jump: "#commonplace/Books/Two" });
     const V = gotoLevels(w, "bookshelf", "Virgil");
     expect(gotoPick(w, { date: "bookshelf", tag: "Virgil" }, V, { level: 1, value: "Aeneid" })).toEqual({ jump: "#bookshelf/Virgil/Aeneid" });
     expect(gotoPick(w, { date: "bookshelf", tag: "Virgil" }, V, { level: 1, value: "Aeneid/1" })).toEqual({ jump: "#bookshelf/Virgil/Aeneid/1" });
@@ -78,19 +78,19 @@ describe("gotoPick", () => {
 
 describe("the destination on the shelves", () => {
   it("an author's group is its shelf, in the shelves' order; the shelves entry is no destination unless it is open", () => {
-    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n", "page/Notes": "n" };
+    const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n", "commonplace/Notes": "n" };
     const world = { keys: Object.keys(c), cache: c, journal: journalOf(c), today: "2026-09-07" };
     const rows = destinationRows(world, "2026-09-07", null).map((r) => [r.label, r.group ?? null]);
-    expect(rows).toEqual([["Journal", null], ["Notes", "Pages"], ["Horace", "Latin"], ["John Milton", "English"]]);
+    expect(rows).toEqual([["Journal", null], ["Notes", "Commonplaces"], ["Horace", "Latin"], ["John Milton", "English"]]);
     expect(destinationRows(world, "bookshelf", "Shelves").map((r) => r.v)).toContain("Shelves");
   });
 });
 describe("rowGroups", () => {
   it("a select's runs break where the namespace does as well as the label, keyed by where each starts", () => {
-    const c = { "page/Notes": "n", "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Shelves": "# Shelves\n\n## Pages\n- [Horace](#bookshelf/Horace)\n\n## Latin\n- [Virgil](#bookshelf/Virgil)" };
+    const c = { "commonplace/Notes": "n", "bookshelf/Horace": "# Horace", "bookshelf/Virgil": "# Virgil", "bookshelf/Shelves": "# Shelves\n\n## Commonplaces\n- [Horace](#bookshelf/Horace)\n\n## Latin\n- [Virgil](#bookshelf/Virgil)" };
     const world = { keys: Object.keys(c), cache: c, journal: journalOf(c) };
     expect(rowGroups(destinationRows(world, "2026-09-07", null)).map((g) => [g.group, g.at, g.rows.map((r) => r.v)])).toEqual([
-      [null, 0, [""]], ["Pages", 1, ["Notes"]], ["Pages", 2, ["Horace"]], ["Latin", 3, ["Virgil"]],
+      [null, 0, [""]], ["Commonplaces", 1, ["Notes"]], ["Commonplaces", 2, ["Horace"]], ["Latin", 3, ["Virgil"]],
     ]);
   });
 });
@@ -100,7 +100,7 @@ describe("the option a level shows picked", () => {
   it("the row whose value is the level's, and in its namespace where the level names one", () => {
     expect(isPicked(level("Books"), { v: "Books", label: "Books" })).toBe(true);
     expect(isPicked(level("Books"), { v: "Essay", label: "Essay" })).toBe(false);
-    expect(isPicked(level("Milton", "bookshelf"), { v: "Milton", label: "Milton", ns: "page" })).toBe(false);
+    expect(isPicked(level("Milton", "bookshelf"), { v: "Milton", label: "Milton", ns: "commonplace" })).toBe(false);
     expect(isPicked(level("Milton", "bookshelf"), { v: "Milton", label: "Milton", ns: "bookshelf" })).toBe(true);
   });
   it("nothing picked at a level not yet chosen", () => {

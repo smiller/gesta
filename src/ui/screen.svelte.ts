@@ -29,7 +29,7 @@ export interface Screen {
      one closes the others by construction (pin: launch, panels, the corner,
      links › books panel, displacing it). The in-flow rows compete for no
      spot and are not in it. */
-  panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
+  panel: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
   panelRows: PanelRow[];
   /* an empty panel's one explanatory line, "" for none */
   panelEmpty: string;

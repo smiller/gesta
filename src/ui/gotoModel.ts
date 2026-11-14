@@ -13,7 +13,7 @@
    a walk (pin: gotoModel.test › a sole child that is itself a parent
    collapses). A book's sections and its order come from one reading of the
    parent's contents. */
-import { isDayKey, nsOf, pageParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, PAGE_KEY, NS_BOOK } from "../store/keys.ts";
+import { isDayKey, nsOf, pageParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, COMMONPLACE_KEY, NS_BOOK } from "../store/keys.ts";
 import { dayKeys, childrenOf } from "../store/lists.ts";
 import { subPageOrder, subPageDisplayList, type Bearing, type OrderMemo, type SubOrder } from "../store/contents.ts";
 import type { Journal } from "../store/reference.ts";
@@ -60,8 +60,8 @@ export function destinationRows(w: GotoWorld, date: string, tag: string | null):
   return [{ v: "", label: "Journal" }, ...NS_KEYS.flatMap((key) => nsDestinations(w, key, date === key ? open : null))];
 }
 /* a select's runs of rows under one optgroup: a run breaks where its
-   namespace does as well as its label, so a shelf named "Pages" is not
-   drawn among the pages, and each run is keyed by where it starts (pin:
+   namespace does as well as its label, so a shelf named "Commonplaces" is not
+   drawn among the commonplaces, and each run is keyed by where it starts (pin:
    gotoModel.test › a select's runs) */
 export function rowGroups(rows: Row[]): { group: string | null; at: number; rows: Row[] }[] {
   const out: { group: string | null; at: number; rows: Row[] }[] = [];
@@ -153,7 +153,7 @@ export function gotoLevels(w: GotoWorld, date: string, tag: string | null): Leve
 function gotoNs(levels: Level[], date: string): string {
   const d = levels[0];
   const row = d.rows.find((r) => r.v === d.value && (!d.valueNs || r.ns === d.valueNs));
-  return row?.ns || (nsOf(date) ? date : PAGE_KEY);
+  return row?.ns || (nsOf(date) ? date : COMMONPLACE_KEY);
 }
 const val = (levels: Level[], level: number): string | null => levels.find((l) => l.level === level)?.value ?? null;
 const below = (levels: Level[], level: number): Level[] => levels.filter((l) => l.level < level);

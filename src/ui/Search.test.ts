@@ -12,19 +12,19 @@ function draw(patch: Partial<ReturnType<typeof screenState>["search"]>): string 
 const options = [
   { label: "Everything", scope: { kind: "everything" as const }, group: null },
   { label: "Journal", scope: { kind: "journal" as const }, group: null },
-  { label: "Books", scope: { kind: "book" as const, ns: "page", book: "Books" }, group: "Pages" },
+  { label: "Books", scope: { kind: "book" as const, ns: "commonplace", book: "Books" }, group: "Commonplaces" },
 ];
 describe("Search", () => {
   it("closed by default, the scope select grouped, the picked option selected", () => {
     const html = draw({ options, scopeAt: 2 });
     expect(html).toMatch(/<details class="page-search[^"]*">/);
     expect(html).not.toMatch(/<details class="page-search[^"]*" open/);
-    expect(html).toMatch(/<optgroup label="Pages">(<!--[^>]*-->)*<option value="2" selected[^>]*>Books/);
+    expect(html).toMatch(/<optgroup label="Commonplaces">(<!--[^>]*-->)*<option value="2" selected[^>]*>Books/);
   });
   it("open, with rows: the where, the marked snippet, the active bar, the cap notice", () => {
     const html = draw({ open: true, query: "sister", options, active: 1, capped: true, rows: [
       { result: { date: "2026-09-07", tag: null, nth: 0, snippet: "" }, where: "2026-09-07", runs: [{ text: "her ", mark: false }, { text: "sister", mark: true }] },
-      { result: { date: "page", tag: "Books", nth: 0, snippet: "" }, where: "Books", runs: [{ text: "x", mark: false }] },
+      { result: { date: "commonplace", tag: "Books", nth: 0, snippet: "" }, where: "Books", runs: [{ text: "x", mark: false }] },
     ] });
     expect(html).toMatch(/<details class="page-search[^"]*" open/);
     expect(html).toMatch(/<li class="hit[^"]*">(<!--[^>]*-->)*<span class="where[^"]*">2026-09-07<\/span>/);

@@ -27,15 +27,15 @@ export const AUGUSTINE_SEEDS = {
 /* a fixture's text, for a step that writes its own seeds */
 export const fixture = (name: string) => readFileSync(new URL("../../fixtures/" + name, import.meta.url), "utf8");
 export const SEEDS: Record<string, string> = {
-  "page/Horace": fixture("horace-odes-1.1.md"), "bookshelf/Browning, Robert/Pippa Passes": fixture("pippa-passes-intro.md"),
-  "2026-09-06": fixture("twelfth-night-1.1.md"), "2026-09-05": fixture("williams-witchcraft-3.md"), "page/Williams/Witchcraft 3": fixture("williams-witchcraft-3.md"),
-  "page/Links": "A link to [Horace](#page/Horace), one to [itself](#page/Links), and one [outside](https://example.org/).\n",
+  "commonplace/Horace": fixture("horace-odes-1.1.md"), "bookshelf/Browning, Robert/Pippa Passes": fixture("pippa-passes-intro.md"),
+  "2026-09-06": fixture("twelfth-night-1.1.md"), "2026-09-05": fixture("williams-witchcraft-3.md"), "commonplace/Williams/Witchcraft 3": fixture("williams-witchcraft-3.md"),
+  "commonplace/Links": "A link to [Horace](#commonplace/Horace), one to [itself](#commonplace/Links), and one [outside](https://example.org/).\n",
   "bookshelf/Boethius/Consolatio": "# De consolatione philosophiae\n\n## Book 3\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n- [3m1](#bookshelf/Boethius/Consolatio/3m1)\n- [3pr2](#bookshelf/Boethius/Consolatio/3pr2)\n",
   "bookshelf/Boethius/Consolatio/3pr1": "# 3pr1\n\nIam cantum illa finiuerat.\n", "bookshelf/Boethius/Consolatio/3m1": "# 3m1\n\nQui serere ingenuum uolet agrum.\n", "bookshelf/Boethius/Consolatio/3pr2": "# 3pr2\n\nTum defixo paululum uisu.\n",
 };
 export const MARGIN_SEEDS = {
   "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
-  "page/Margins": fixture("margins-prose.md"),
+  "commonplace/Margins": fixture("margins-prose.md"),
 };
 /* a pause for the page to answer a gesture: two frames, ProseMirror and
    Svelte drawing within them, where a fixed sleep of up to 300 ms stood;
@@ -180,7 +180,7 @@ export const setAnswer = (a: typeof answer): void => { answer = a; };
 export async function freshStart(): Promise<void> {
   answer = null; prompts.length = 0; confirms.length = 0;
   stages = await A.fresh(page, SEEDS);
-  if (!(await seededIn("page/Horace"))) throw new Error("not seeded: " + stages);
+  if (!(await seededIn("commonplace/Horace"))) throw new Error("not seeded: " + stages);
 }
 function answerDialog(d: Dialog): void {
   if (d.type() === "confirm") { confirms.push(d.message()); d.accept(); return; }

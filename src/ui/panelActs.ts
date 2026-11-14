@@ -8,7 +8,7 @@ import { entryKey, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { loadState } from "./journalLoad.ts";
 
-export type Ns = "page" | "bookshelf";
+export type Ns = "commonplace" | "bookshelf";
 export type PanelName = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
 
 export interface PanelDeps {
@@ -28,7 +28,7 @@ const emptyLine = (ns: Ns, layer: PanelDeps["layer"]): string => {
   if (ns !== "bookshelf") return "";
   return { in: "No authors yet — import a folder, or start one below.", failed: "Couldn’t load the bookshelf.", loading: "Still loading…" }[loadState(layer)];
 };
-const listed = (ns: PanelName | null): ns is Ns => ns === "page" || ns === "bookshelf";
+const listed = (ns: PanelName | null): ns is Ns => ns === "commonplace" || ns === "bookshelf";
 
 export function panelActs(d: PanelDeps): Panels {
   const { screen, layer, journal, session } = d;

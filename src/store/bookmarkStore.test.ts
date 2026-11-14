@@ -3,7 +3,7 @@ import { bookmarkStore } from "./bookmarkStore.ts";
 
 const KEY = "gesta.v1.bookmarks";
 const row = (key: string, alias = "") => ({ key, alias });
-const SEED = [row("page/A"), row("page/B")];
+const SEED = [row("commonplace/A"), row("commonplace/B")];
 
 function world(initial?: string) {
   const box: Record<string, string> = {};
@@ -29,11 +29,11 @@ function world(initial?: string) {
 }
 
 describe("the load and the seed", () => {
-  it("an absent key seeds the two pages once; an emptied list, written as [], is never seeded again", () => {
+  it("an absent key seeds the two commonplaces once; an emptied list, written as [], is never seeded again", () => {
     const w = world();
     const s = w.store();
     expect(s.list()).toEqual(SEED);
-    expect(JSON.parse(w.box[KEY])).toEqual(["page/A", "page/B"]);
+    expect(JSON.parse(w.box[KEY])).toEqual(["commonplace/A", "commonplace/B"]);
     expect(s.write([])).toBe(true);
     expect(w.box[KEY]).toBe("[]");
     expect(w.store().list()).toEqual([]);
@@ -45,7 +45,7 @@ describe("the load and the seed", () => {
     const s = w.store();
     expect(s.unreadable()).toBe(true);
     expect(s.list()).toEqual([]);
-    expect(s.write([row("page/C")])).toBe(false);
+    expect(s.write([row("commonplace/C")])).toBe(false);
     expect(w.pins).toEqual(["bookmarks not saved"]);
     w.block(false);
     expect(KEY in w.box).toBe(false);
@@ -58,24 +58,24 @@ describe("the latch", () => {
     const s = w.store();
     expect(s.unreadable()).toBe(true);
     expect(s.list()).toEqual([]);
-    expect(s.write([row("page/C")])).toBe(false);
+    expect(s.write([row("commonplace/C")])).toBe(false);
     expect(w.pins).toEqual(["bookmarks not saved"]);
     expect(w.box[KEY]).toBe("not json");
   });
   it("the open re-reads a damaged list: repaired by hand, its rows show and a write lands", () => {
     const w = world("not json");
     const s = w.store();
-    w.box[KEY] = '["page/C"]';
+    w.box[KEY] = '["commonplace/C"]';
     s.open(null);
     expect(s.unreadable()).toBe(false);
-    expect(s.list()).toEqual([row("page/C")]);
-    expect(s.write([row("page/C"), row("page/D")])).toBe(true);
-    expect(JSON.parse(w.box[KEY])).toEqual(["page/C", "page/D"]);
+    expect(s.list()).toEqual([row("commonplace/C")]);
+    expect(s.write([row("commonplace/C"), row("commonplace/D")])).toBe(true);
+    expect(JSON.parse(w.box[KEY])).toEqual(["commonplace/C", "commonplace/D"]);
   });
   it("the open over a list still damaged keeps the latch", () => {
     const w = world("not json");
     const s = w.store();
-    s.open(() => ["page/C"]);
+    s.open(() => ["commonplace/C"]);
     expect(s.unreadable()).toBe(true);
     expect(w.box[KEY]).toBe("not json");
     expect(w.pins).toEqual([]);
@@ -84,98 +84,98 @@ describe("the latch", () => {
 
 describe("the open", () => {
   it("re-reads the list: a row another window added shows, and the next write keeps it", () => {
-    const w = world('["page/C"]');
+    const w = world('["commonplace/C"]');
     const s = w.store();
-    w.box[KEY] = '["page/C", "page/D"]';
+    w.box[KEY] = '["commonplace/C", "commonplace/D"]';
     s.open(null);
-    expect(s.list()).toEqual([row("page/C"), row("page/D")]);
-    expect(s.write([...s.list(), row("page/E")])).toBe(true);
-    expect(JSON.parse(w.box[KEY])).toEqual(["page/C", "page/D", "page/E"]);
+    expect(s.list()).toEqual([row("commonplace/C"), row("commonplace/D")]);
+    expect(s.write([...s.list(), row("commonplace/E")])).toBe(true);
+    expect(JSON.parse(w.box[KEY])).toEqual(["commonplace/C", "commonplace/D", "commonplace/E"]);
   });
   it("a list damaged since it read clean latches at the open", () => {
-    const w = world('["page/C"]');
+    const w = world('["commonplace/C"]');
     const s = w.store();
     w.box[KEY] = "not json";
     s.open(null);
     expect(s.unreadable()).toBe(true);
-    expect(s.write([row("page/C")])).toBe(false);
+    expect(s.write([row("commonplace/C")])).toBe(false);
     expect(w.box[KEY]).toBe("not json");
   });
 });
 
 describe("the write", () => {
   it("a failed write pins and leaves the list as it was; the next landed write releases that pin", () => {
-    const w = world('["page/C"]');
+    const w = world('["commonplace/C"]');
     const s = w.store();
     w.fill(true);
-    expect(s.write([row("page/C"), row("page/D")])).toBe(false);
+    expect(s.write([row("commonplace/C"), row("commonplace/D")])).toBe(false);
     expect(w.pins).toEqual(["bookmarks not saved"]);
-    expect(s.list()).toEqual([row("page/C")]);
+    expect(s.list()).toEqual([row("commonplace/C")]);
     w.fill(false);
-    expect(s.write([row("page/C"), row("page/D")])).toBe(true);
+    expect(s.write([row("commonplace/C"), row("commonplace/D")])).toBe(true);
     expect(w.released).toEqual([1]);
-    expect(s.list()).toEqual([row("page/C"), row("page/D")]);
+    expect(s.list()).toEqual([row("commonplace/C"), row("commonplace/D")]);
   });
   it("a write is read back: the list is what the storage holds", () => {
     const w = world("[]");
     const s = w.store();
-    s.write([row("page/C", "cc")]);
-    expect(w.box[KEY]).toBe('[{"key":"page/C","alias":"cc"}]');
-    expect(s.list()).toEqual([row("page/C", "cc")]);
+    s.write([row("commonplace/C", "cc")]);
+    expect(w.box[KEY]).toBe('[{"key":"commonplace/C","alias":"cc"}]');
+    expect(s.list()).toEqual([row("commonplace/C", "cc")]);
   });
 });
 
 describe("the sweep at the open", () => {
   it("rows that lead nowhere are dropped and written, only once the keys are known", async () => {
-    const w = world('["2020-01-01", "page/Gone", "page/Here"]');
+    const w = world('["2020-01-01", "commonplace/Gone", "commonplace/Here"]');
     const s = w.store();
     expect(await s.open(null)).toBe(false);
     expect(s.list().length).toBe(3);
-    expect(await s.open(() => ["page/Here"])).toBe(true);
-    expect(s.list()).toEqual([row("2020-01-01"), row("page/Here")]);
-    expect(JSON.parse(w.box[KEY])).toEqual(["2020-01-01", "page/Here"]);
+    expect(await s.open(() => ["commonplace/Here"])).toBe(true);
+    expect(s.list()).toEqual([row("2020-01-01"), row("commonplace/Here")]);
+    expect(JSON.parse(w.box[KEY])).toEqual(["2020-01-01", "commonplace/Here"]);
   });
-  it("a row this window has not loaded but the shared store holds is kept: a page made in another window", async () => {
-    const w = world('["page/Here"]');
+  it("a row this window has not loaded but the shared store holds is kept: a commonplace made in another window", async () => {
+    const w = world('["commonplace/Here"]');
     const s = w.store();
-    w.box[KEY] = '["page/Here", "page/X/Y"]';
-    w.held.keys = ["page/Here", "page/X", "page/X/Y"];
-    expect(await s.open(() => ["page/Here"])).toBe(false);
-    expect(s.list()).toEqual([row("page/Here"), row("page/X/Y")]);
-    expect(JSON.parse(w.box[KEY])).toEqual(["page/Here", "page/X/Y"]);
+    w.box[KEY] = '["commonplace/Here", "commonplace/X/Y"]';
+    w.held.keys = ["commonplace/Here", "commonplace/X", "commonplace/X/Y"];
+    expect(await s.open(() => ["commonplace/Here"])).toBe(false);
+    expect(s.list()).toEqual([row("commonplace/Here"), row("commonplace/X/Y")]);
+    expect(JSON.parse(w.box[KEY])).toEqual(["commonplace/Here", "commonplace/X/Y"]);
   });
   it("a shared store that cannot be read drops nothing", async () => {
-    const w = world('["page/Gone"]');
+    const w = world('["commonplace/Gone"]');
     const s = w.store();
     w.held.unreadable = true;
     expect(await s.open(() => [])).toBe(false);
-    expect(s.list()).toEqual([row("page/Gone")]);
-    expect(w.box[KEY]).toBe('["page/Gone"]');
+    expect(s.list()).toEqual([row("commonplace/Gone")]);
+    expect(w.box[KEY]).toBe('["commonplace/Gone"]');
   });
-  it("the drop is judged on the list and the keys as they stand when the store answers: a page made and bookmarked meanwhile is kept", async () => {
-    const w = world('["page/Gone"]');
+  it("the drop is judged on the list and the keys as they stand when the store answers: a commonplace made and bookmarked meanwhile is kept", async () => {
+    const w = world('["commonplace/Gone"]');
     const s = w.store();
     const cache: string[] = [];
     const swept = s.open(() => cache);
-    cache.push("page/New");
-    s.write([row("page/Gone"), row("page/New")]);
+    cache.push("commonplace/New");
+    s.write([row("commonplace/Gone"), row("commonplace/New")]);
     expect(await swept).toBe(true);
-    expect(s.list()).toEqual([row("page/New")]);
+    expect(s.list()).toEqual([row("commonplace/New")]);
   });
   it("a sweep that reads the store and drops nothing writes nothing", async () => {
-    const w = world('["page/X/Y"]');
+    const w = world('["commonplace/X/Y"]');
     const s = w.store();
-    w.held.keys = ["page/X/Y"];
+    w.held.keys = ["commonplace/X/Y"];
     w.fill(true);
     expect(await s.open(() => [])).toBe(false);
     expect(w.held.reads).toBe(1);
     expect(w.pins).toEqual([]);
   });
   it("the shared store is not read when every row leads somewhere, and a sweep that drops nothing writes nothing", async () => {
-    const w = world('["page/Here"]');
+    const w = world('["commonplace/Here"]');
     const s = w.store();
     w.fill(true);
-    expect(await s.open(() => ["page/Here"])).toBe(false);
+    expect(await s.open(() => ["commonplace/Here"])).toBe(false);
     expect(w.held.reads).toBe(0);
     expect(w.pins).toEqual([]);
   });
@@ -183,17 +183,17 @@ describe("the sweep at the open", () => {
 
 describe("a move", () => {
   it("re-reads the list before it writes: another window's rows are kept, the moved key's row follows", () => {
-    const w = world(JSON.stringify(["page/A", "bookshelf/C. P. Cavafy/Walls"]));
+    const w = world(JSON.stringify(["commonplace/A", "bookshelf/C. P. Cavafy/Walls"]));
     const s = w.store();
-    w.box[KEY] = JSON.stringify(["page/A", "bookshelf/C. P. Cavafy/Walls", "page/Elsewhere"]);
+    w.box[KEY] = JSON.stringify(["commonplace/A", "bookshelf/C. P. Cavafy/Walls", "commonplace/Elsewhere"]);
     s.move({ "bookshelf/C. P. Cavafy/Walls": "bookshelf/Cavafy, C. P/Walls" });
-    expect(JSON.parse(w.box[KEY])).toEqual(["page/A", "bookshelf/Cavafy, C. P/Walls", "page/Elsewhere"]);
+    expect(JSON.parse(w.box[KEY])).toEqual(["commonplace/A", "bookshelf/Cavafy, C. P/Walls", "commonplace/Elsewhere"]);
   });
   it("writes nothing when no row moves", () => {
-    const w = world(JSON.stringify(["page/A"]));
+    const w = world(JSON.stringify(["commonplace/A"]));
     const s = w.store();
     w.box[KEY] = "unchanged on purpose";
-    s.move({ "page/B": "page/C" });
+    s.move({ "commonplace/B": "commonplace/C" });
     expect(w.box[KEY]).toBe("unchanged on purpose");
   });
 });

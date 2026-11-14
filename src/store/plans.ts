@@ -88,7 +88,7 @@ function sparedPaths(unread?: EntryFile[] | null): PathSet {
   return spared;
 }
 /* every .md we know of, live or ghost, by the import's own question: a
-   foreign notes/page/Ideas.md is nobody's (pin: plans.test › reconcilePlan:
+   foreign notes/commonplace/Ideas.md is nobody's (pin: plans.test › reconcilePlan:
    a namespace word below the tier root is not ours) */
 function knownDocs(here: string[], keep: PathSet): PathSet {
   const known: PathSet = Object.create(null);

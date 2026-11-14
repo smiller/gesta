@@ -2,12 +2,12 @@ import { isDayKey, nsOf, todayKey, asAddress, beforeQuery, type Address, type Hi
 import { pageName } from "./names.ts";
 
 export interface HashParts { date: string; tag: string | null; hl: Highlight | null }
-/* The today fallback — an undecodable escape, a bare or empty #page/, an
+/* The today fallback — an undecodable escape, a bare or empty #commonplace/, an
    empty interior segment — drops the highlight payload with it, or it would
    select some innocent passage in today's entry. Trailing empties are the
-   parent: #page/Name/ is the page itself.
-   (pin: nav.test › hashParts: a page routes; anything less falls back)
-   (pin: nav.test › hashParts: a page hierarchy at any depth) */
+   parent: #commonplace/Name/ is the commonplace itself.
+   (pin: nav.test › hashParts: a commonplace routes; anything less falls back)
+   (pin: nav.test › hashParts: a commonplace hierarchy at any depth) */
 export function hashParts(a: Address): HashParts {
   return entryAt(a) ?? { date: todayKey(), tag: null, hl: null };
 }

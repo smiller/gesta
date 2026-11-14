@@ -118,7 +118,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
       /* not edited as a document — an editor over a lossy parse would save
          the loss — but as source: the switch back parses it again
          (pin: grid › the faulty entry opened) */
-      console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render page/Gridded) */
+      console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
       /* PINNED, released by the next show: a whisper was covered by the
          entry count before it was read (pin: grid › the faulty entry opened) */
       fencePin = refusedPin(err);

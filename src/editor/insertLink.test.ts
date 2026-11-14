@@ -23,7 +23,7 @@ test("headingRefusal: a caret in a heading refuses, at its start too; the line b
 });
 test("insertLinkAfter: the caret stands after the link it placed, outside it", () => {
   let s = at("some text here", "text");
-  insertLinkAfter({ get state() { return s; }, dispatch: (tr) => { s = s.apply(tr); } }, "#page/X", "X");
+  insertLinkAfter({ get state() { return s; }, dispatch: (tr) => { s = s.apply(tr); } }, "#commonplace/X", "X");
   expect(s.selection.empty).toBe(true);
   expect(s.doc.textBetween(0, s.selection.from)).toBe("some textX");
   expect(schema.marks.link.isInSet(s.selection.$from.marks())).toBeUndefined();
@@ -32,7 +32,7 @@ test("linkRefusal: inline code refuses as a code block does", () => {
   expect(linkRefusal(at("see `code here` now", "co"))).toBe("no link inside a code block");
 });
 test("linkMarkdown: the link as the rendered view's own link saves, escaped the same way", () => {
-  for (const [label, href] of [["Notes\\", "#page/Notes"], ["a*b_c", "#page/A"], ["a)", "#2026-10-12/a)"], ["plain", "#page/Plain"]]) {
+  for (const [label, href] of [["Notes\\", "#commonplace/Notes"], ["a*b_c", "#commonplace/A"], ["a)", "#2026-10-12/a)"], ["plain", "#commonplace/Plain"]]) {
     const doc = schema.nodes.doc.create(null, schema.nodes.paragraph.create(null, schema.text(label, [schema.marks.link.create({ href })])));
     expect(linkMarkdown(href, label)).toBe(serializeMarkdown(doc));
     expect(parseMarkdown(linkMarkdown(href, label)).eq(doc)).toBe(true);

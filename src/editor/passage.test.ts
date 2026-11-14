@@ -103,19 +103,19 @@ test("a paired block copies as its own fence inside the quotation, numbered from
 
 test("a paired reference referenced again: the quoted block walked whole, the number from its own start", () => {
   /* a paired reference inside a quotation: a cut through one cell of the pair could not be written */
-  const doc = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::");
+  const doc = parseMarkdown("[*Horace*](#commonplace/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::");
   const [a, b] = span(doc, "alph", "alph");
   expect(quote(doc, a, b + 4)).toBe("> ::: verse 13\n> alpha beta | one two\n> :::");
   const [c, d] = span(doc, "gamma", "four");
   expect(quote(doc, c, d)).toBe("> ::: verse 14\n> gamma delta | three four\n> :::");
 });
 test("no cut through a pair, one quote level, a note kept, the block's own count", () => {
-  const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
+  const q = parseMarkdown("[*Horace*](#commonplace/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> gamma delta | three four\n> :::\n\nAfter the quote.");
   /* one end outside the quoted pair: whole rows, no throw, and the quotation holding only that end STAYS, as the source had it */
   let [a, b] = span(q, "four", "After");
   expect(quote(q, a, b)).toBe(">> ::: verse 14\n>> gamma delta | three four\n>> :::\n> After");   /* numbered from the row the cut opens on */
   [a, b] = span(q, "Horace", "alph");
-  expect(quote(q, a, b)).toBe("> [*Horace*](#page/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
+  expect(quote(q, a, b)).toBe("> [*Horace*](#commonplace/Horace?h=x):\n>> ::: verse 13\n>> alpha beta | one two\n>> :::");
   /* a note inside a quoted verse block: its text, as before */
   const noted = parseMarkdown("> ::: verse 13\n> alpha beta | one two\n> ::: note\n> a footnote here\n> :::\n> gamma delta | three four\n> :::");
   [a, b] = span(noted, "footnote", "footnote");

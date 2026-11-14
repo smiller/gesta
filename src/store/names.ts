@@ -98,7 +98,7 @@ export function nsTarget(ns: string, names: string[]): Target | null {
 }
 /* The single answer to "which entry does this file overwrite". THE
    TOP-LEVEL DIRECTORY IS THE WHOLE OF THE QUESTION: an entry sits under
-   journal/, page/ or bookshelf/ at the top of the pick, or it is not an
+   journal/, commonplace/ or bookshelf/ at the top of the pick, or it is not an
    entry (MEASURED: every member of all 79 archives and every file in the
    mirror sits under one of the three). Loosening it widens what a backup
    deletes (pin: plans.test › reconcilePlan: a ghost sidecar goes under
@@ -140,7 +140,7 @@ const safe = (s: string): string => s.replace(FILE_UNSAFE_RE, "-");
    archive alone: nothing reads an archive's folder name back as a key, so
    it may be normalised where an entry's own path may not */
 const dirSafe = (s: string): string => safe(s).replace(/\.+$/, "") || "-";
-function keyedFile(date: string, tag: string): EntryFile {
+export function keyedFile(date: string, tag: string): EntryFile {
   const pp = pageParts(tag);
   const anc = pp.parent ? pp.parent.split("/").map(safe) : [];
   const leaf = safe(pp.leaf);

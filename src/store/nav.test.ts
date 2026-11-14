@@ -41,35 +41,35 @@ test("entryHash writes the line an address names back as it was read", () => {
   expect(entryHash(h.date, h.tag, h.hl!)).toBe(raw);
 });
 
-test("hashParts: a page routes; anything less falls back and drops the payload", () => {
-  expect(dt(hashParts(asAddress("#page/Making%20Verity%20Cards")))).toBe("page|Making Verity Cards");
-  const p = hashParts(asAddress("#page/Notes?h=a%20b&n=2"));
-  expect(dt(p)).toBe("page|Notes");
+test("hashParts: a commonplace routes; anything less falls back and drops the payload", () => {
+  expect(dt(hashParts(asAddress("#commonplace/Making%20Verity%20Cards")))).toBe("commonplace|Making Verity Cards");
+  const p = hashParts(asAddress("#commonplace/Notes?h=a%20b&n=2"));
+  expect(dt(p)).toBe("commonplace|Notes");
   expect(p.hl).toEqual({ q: "a b", nth: 2 });
   expect(dt(hashParts(asAddress("#page")))).toBe(today + "|null");
-  expect(dt(hashParts(asAddress("#page/")))).toBe(today + "|null");
-  const u = hashParts(asAddress("#page/100%zz?h=x"));
+  expect(dt(hashParts(asAddress("#commonplace/")))).toBe(today + "|null");
+  const u = hashParts(asAddress("#commonplace/100%zz?h=x"));
   expect(dt(u)).toBe(today + "|null");
   expect(u.hl).toBe(null);
-  expect(dt(hashParts(asAddress("#page/a%3Fb")))).toBe("page|a-b");
-  expect(hashParts(asAddress("#page/" + "a".repeat(299))).tag!.length).toBe(245);
-  expect(dt(hashParts(asAddress("#page/page")))).toBe("page|page");
+  expect(dt(hashParts(asAddress("#commonplace/a%3Fb")))).toBe("commonplace|a-b");
+  expect(hashParts(asAddress("#commonplace/" + "a".repeat(299))).tag!.length).toBe(245);
+  expect(dt(hashParts(asAddress("#commonplace/page")))).toBe("commonplace|page");
 });
 
-test("hashParts: a page hierarchy at any depth, per-segment rules", () => {
-  expect(dt(hashParts(asAddress("#page/Kent%20Beck/TDD")))).toBe("page|Kent Beck/TDD");
-  expect(dt(hashParts(asAddress("#page/Kent%20Beck%2FTDD")))).toBe("page|Kent Beck/TDD");
-  expect(dt(hashParts(asAddress("#page/Kent%20Beck/")))).toBe("page|Kent Beck");
-  expect(dt(hashParts(asAddress("#page/a%3Fb/c%3Fd")))).toBe("page|a-b/c-d");
-  expect(hashParts(asAddress("#page/" + "a".repeat(299) + "/" + "b".repeat(299))).tag).toBe("a".repeat(245) + "/" + "b".repeat(245));
-  const deep = hashParts(asAddress("#page/A/B/C?h=x"));
-  expect(dt(deep)).toBe("page|A/B/C");
+test("hashParts: a commonplace hierarchy at any depth, per-segment rules", () => {
+  expect(dt(hashParts(asAddress("#commonplace/Kent%20Beck/TDD")))).toBe("commonplace|Kent Beck/TDD");
+  expect(dt(hashParts(asAddress("#commonplace/Kent%20Beck%2FTDD")))).toBe("commonplace|Kent Beck/TDD");
+  expect(dt(hashParts(asAddress("#commonplace/Kent%20Beck/")))).toBe("commonplace|Kent Beck");
+  expect(dt(hashParts(asAddress("#commonplace/a%3Fb/c%3Fd")))).toBe("commonplace|a-b/c-d");
+  expect(hashParts(asAddress("#commonplace/" + "a".repeat(299) + "/" + "b".repeat(299))).tag).toBe("a".repeat(245) + "/" + "b".repeat(245));
+  const deep = hashParts(asAddress("#commonplace/A/B/C?h=x"));
+  expect(dt(deep)).toBe("commonplace|A/B/C");
   expect(deep.hl!.q).toBe("x");
-  expect(dt(hashParts(asAddress("#page/A/B/C/")))).toBe("page|A/B/C");
-  expect(dt(hashParts(asAddress("#page/A//C")))).toBe(today + "|null");
-  expect(dt(hashParts(asAddress("#page//B")))).toBe(today + "|null");
-  expect(dt(hashParts(asAddress("#page/A/100%zz")))).toBe(today + "|null");
-  expect(dt(hashParts(asAddress("#page/My%20%28Notes%29/Sub")))).toBe("page|My (Notes)/Sub");
+  expect(dt(hashParts(asAddress("#commonplace/A/B/C/")))).toBe("commonplace|A/B/C");
+  expect(dt(hashParts(asAddress("#commonplace/A//C")))).toBe(today + "|null");
+  expect(dt(hashParts(asAddress("#commonplace//B")))).toBe(today + "|null");
+  expect(dt(hashParts(asAddress("#commonplace/A/100%zz")))).toBe(today + "|null");
+  expect(dt(hashParts(asAddress("#commonplace/My%20%28Notes%29/Sub")))).toBe("commonplace|My (Notes)/Sub");
   expect(dt(hashParts(asAddress("#bookshelf/Book/Part")))).toBe("bookshelf|Book/Part");
 });
 
@@ -77,20 +77,20 @@ const doc = "https://gesta.example/journal/index.html";
 
 test("internalHash: same origin and path is this document, anything else is not", () => {
   expect(internalHash(doc + "#2026-01-02", doc)).toBe("#2026-01-02");
-  expect(internalHash("#page/X", doc)).toBe("#page/X");
+  expect(internalHash("#commonplace/X", doc)).toBe("#commonplace/X");
   expect(internalHash("index.html#2026-01-02", doc)).toBe("#2026-01-02");
   expect(internalHash(doc + "?x=1#a", doc)).toBe("#a");
   expect(internalHash("https://other.example/journal/index.html#a", doc)).toBe(null);
   expect(internalHash("https://gesta.example/other/index.html#a", doc)).toBe(null);
   expect(internalHash(doc, doc)).toBe(null);
   expect(internalHash("http://[bad", doc)).toBe(null);
-  expect(internalHash(doc + "#page/Kent%20Beck", doc)).toBe("#page/Kent%20Beck");
+  expect(internalHash(doc + "#commonplace/Kent%20Beck", doc)).toBe("#commonplace/Kent%20Beck");
 });
 
 test("makeHref: a same-document URL mints as its bare fragment; the rest keeps its address", () => {
-  expect(makeHref(doc + "#page/Kent Beck/TDD", doc)).toBe("#page/Kent Beck/TDD");
+  expect(makeHref(doc + "#commonplace/Kent Beck/TDD", doc)).toBe("#commonplace/Kent Beck/TDD");
   expect(makeHref("index.html#2026-01-02", doc)).toBe("#2026-01-02");
-  expect(makeHref("https://example.com/index.html#page/X", doc)).toBe("https://example.com/index.html#page/X");
+  expect(makeHref("https://example.com/index.html#commonplace/X", doc)).toBe("https://example.com/index.html#commonplace/X");
   expect(makeHref("www.foo.com", doc)).toBe("https://www.foo.com");
   expect(makeHref("https://foo.com", doc)).toBe("https://foo.com");
   expect(makeHref('https://f.com/"x"', doc)).toBe("https://f.com/%22x%22");
@@ -103,7 +103,7 @@ test("makeHref under file://, the deploy the app ships in", () => {
 });
 
 test("an address is read with its #, and one entryHash mints reads back as that entry", () => {
-  expect(dt(hashParts(asAddress("#page/Books/Essay")))).toBe("page|Books/Essay");
+  expect(dt(hashParts(asAddress("#commonplace/Books/Essay")))).toBe("commonplace|Books/Essay");
   expect(dt(hashParts(entryHash("bookshelf", "Milton, John/Paradise Lost")))).toBe("bookshelf|Milton, John/Paradise Lost");
   expect(namesEntry(asAddress("#2020-02-03/My%20Tag"))).toBe(true);
   expect(namesEntry(asAddress("#garbage"))).toBe(false);
@@ -112,12 +112,12 @@ test("an address is read with its #, and one entryHash mints reads back as that 
 
 test("text without the # is no address: it names no entry, and hashParts falls back to today", () => {
   expect(namesEntry(asAddress("2020-02-03/My%20Tag"))).toBe(false);
-  expect(namesEntry(asAddress("page/Books"))).toBe(false);
-  expect(dt(hashParts(asAddress("page/Books")))).toBe(today + "|null");
+  expect(namesEntry(asAddress("commonplace/Books"))).toBe(false);
+  expect(dt(hashParts(asAddress("commonplace/Books")))).toBe(today + "|null");
 });
 
 test("entryAt reads an address once: the entry it names, or null where hashParts would fall back", () => {
-  expect(entryAt(asAddress("#page/Books/Essay?h=x"))).toEqual({ date: "page", tag: "Books/Essay", hl: { q: "x", nth: 0 } });
+  expect(entryAt(asAddress("#commonplace/Books/Essay?h=x"))).toEqual({ date: "commonplace", tag: "Books/Essay", hl: { q: "x", nth: 0 } });
   expect(entryAt(asAddress("#garbage"))).toBeNull();
-  expect(entryAt(asAddress("page/Books"))).toBeNull();
+  expect(entryAt(asAddress("commonplace/Books"))).toBeNull();
 });

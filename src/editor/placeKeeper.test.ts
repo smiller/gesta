@@ -52,13 +52,13 @@ function world(): World {
 
 function arrived(): World {
   const w = world();
-  w.seed("page/A", 40, 400);
-  w.keeper.open("page/A", "arrive", w.show(w.rendered()));
+  w.seed("commonplace/A", 40, 400);
+  w.keeper.open("commonplace/A", "arrive", w.show(w.rendered()));
   return w;
 }
 function opened(view: (w: World) => Fake | null = (w) => w.rendered()): World {
   const w = world();
-  w.keeper.open("page/A", "keep", w.show(view(w)));
+  w.keeper.open("commonplace/A", "keep", w.show(view(w)));
   return w;
 }
 
@@ -70,21 +70,21 @@ describe("arriving", () => {
     const w = arrived();
     expect(w.log).toEqual(["anchoring false", "reveal 40", "to 40"]);
     const first = world();
-    first.keeper.open("page/B", "arrive", first.show(first.rendered()));
+    first.keeper.open("commonplace/B", "arrive", first.show(first.rendered()));
     expect(first.log).toEqual(["anchoring true", "scroll 0"]);
     const keep = world();
-    keep.seed("page/A", 40, 400);
-    keep.keeper.open("page/A", "keep", keep.show(keep.rendered()));
+    keep.seed("commonplace/A", 40, 400);
+    keep.keeper.open("commonplace/A", "keep", keep.show(keep.rendered()));
     expect(keep.log).toEqual([]);
   });
   it("a highlight owed goes to the top, holds nothing, and leaves the stored place", () => {
     const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.open("page/A", "owed", w.show(w.rendered()));
+    w.seed("commonplace/A", 40, 400);
+    w.keeper.open("commonplace/A", "owed", w.show(w.rendered()));
     expect(w.log).toEqual(["anchoring true", "scroll 0"]);
     w.fire("resize");
     expect(w.log).toHaveLength(2);
-    expect(w.place("page/A")).toEqual({ pos: 40, y: 400 });
+    expect(w.place("commonplace/A")).toEqual({ pos: 40, y: 400 });
   });
 });
 
@@ -111,11 +111,11 @@ describe("the hold", () => {
   });
   it("is dropped by opening another entry, and kept by opening the same one", () => {
     const w = arrived();
-    w.keeper.open("page/A", "keep", w.show(w.rendered()));
+    w.keeper.open("commonplace/A", "keep", w.show(w.rendered()));
     w.log.length = 0;
     w.fire("resize");
     expect(w.log).toEqual(["reveal 40", "to 40"]);
-    w.keeper.open("page/B", "keep", w.show(w.rendered()));
+    w.keeper.open("commonplace/B", "keep", w.show(w.rendered()));
     w.fire("resize");
     expect(w.log).toEqual(["reveal 40", "to 40", "anchoring true"]);
   });
@@ -135,18 +135,18 @@ describe("recording", () => {
     const w = arrived();
     w.win.at = 999;
     w.fire("leave");
-    expect(w.place("page/A")).toEqual({ pos: 40, y: 400 });
+    expect(w.place("commonplace/A")).toEqual({ pos: 40, y: 400 });
     const src = opened((x) => x.source());
     src.win.at = 250;
     src.fire("leave");
-    expect(src.place("page/A")).toEqual({ pos: -1, y: 250 });
+    expect(src.place("commonplace/A")).toEqual({ pos: -1, y: 250 });
     const r = opened((x) => x.rendered(7));
     r.win.at = 300;
     r.fire("leave");
-    expect(r.place("page/A")).toEqual({ pos: 7, y: 300 });
+    expect(r.place("commonplace/A")).toEqual({ pos: 7, y: 300 });
     r.surf!.at = null;
     r.fire("leave");
-    expect(r.place("page/A")).toEqual({ pos: 0, y: 300 });
+    expect(r.place("commonplace/A")).toEqual({ pos: 0, y: 300 });
     const none = opened(() => null);
     none.fire("leave");
     expect(none.sets).toBe(0);
@@ -160,16 +160,16 @@ describe("recording", () => {
     vi.advanceTimersByTime(300);
     expect(w.sets).toBe(0);
     vi.advanceTimersByTime(100);
-    expect(w.place("page/A")).toEqual({ pos: 7, y: 300 });
+    expect(w.place("commonplace/A")).toEqual({ pos: 7, y: 300 });
   });
   it("records the entry left, under its own key and from its own view, before the next is shown", () => {
     const w = world();
-    w.keeper.open("page/A", "keep", w.show(w.source()));
+    w.keeper.open("commonplace/A", "keep", w.show(w.source()));
     w.win.at = 120;
     let seen: unknown = "unread";
-    w.keeper.open("page/B", "keep", () => { seen = w.place("page/A"); w.surf = w.rendered(); });
+    w.keeper.open("commonplace/B", "keep", () => { seen = w.place("commonplace/A"); w.surf = w.rendered(); });
     expect(seen).toEqual({ pos: -1, y: 120 });
-    expect(w.place("page/B")).toBeNull();
+    expect(w.place("commonplace/B")).toBeNull();
   });
   it("skips a write the same as the last; a move forgets the last", () => {
     const w = opened((x) => x.rendered(7));
@@ -177,7 +177,7 @@ describe("recording", () => {
     w.fire("leave");
     w.fire("leave");
     expect(w.sets).toBe(1);
-    w.keeper.move("page/A", "page/Z");
+    w.keeper.move("commonplace/A", "commonplace/Z");
     w.fire("leave");
     expect(w.sets).toBe(3);
   });
@@ -186,8 +186,8 @@ describe("recording", () => {
 describe("applying", () => {
   const arrive = (seed: [number, number], f: (w: ReturnType<typeof world>) => Fake | null) => {
     const w = world();
-    w.seed("page/A", seed[0], seed[1]);
-    w.keeper.open("page/A", "arrive", w.show(f(w)));
+    w.seed("commonplace/A", seed[0], seed[1]);
+    w.keeper.open("commonplace/A", "arrive", w.show(f(w)));
     return w.log.slice(1);
   };
   it("by the window's offset where there is no position to go to: none stored, at the top, the source view, no view", () => {
@@ -205,9 +205,9 @@ describe("applying", () => {
 describe("the caret on arrival", () => {
   const caret = (seed: [number, number] | null, f: (w: World) => Fake, how: "arrive" | "owed" | "keep" = "arrive"): string[] => {
     const w = world();
-    if (seed) w.seed("page/A", seed[0], seed[1]);
+    if (seed) w.seed("commonplace/A", seed[0], seed[1]);
     const s = f(w);
-    w.keeper.open("page/A", how, w.show(s));
+    w.keeper.open("commonplace/A", how, w.show(s));
     return s.carets;
   };
   it("goes to the start of a page never visited, and of one left at the top, the window left where it is", () => {
@@ -235,12 +235,12 @@ describe("the caret on arrival", () => {
 describe("moves", () => {
   it("a rename carries the place to the new key; a delete drops it", () => {
     const w = world();
-    w.seed("page/A", 40, 400);
-    w.keeper.move("page/A", "page/Z");
-    expect(w.place("page/Z")).toEqual({ pos: 40, y: 400 });
-    expect(w.place("page/A")).toBeNull();
-    w.keeper.move("page/Z", null);
-    expect(w.place("page/Z")).toBeNull();
+    w.seed("commonplace/A", 40, 400);
+    w.keeper.move("commonplace/A", "commonplace/Z");
+    expect(w.place("commonplace/Z")).toEqual({ pos: 40, y: 400 });
+    expect(w.place("commonplace/A")).toBeNull();
+    w.keeper.move("commonplace/Z", null);
+    expect(w.place("commonplace/Z")).toBeNull();
   });
 });
 
@@ -249,7 +249,7 @@ describe("carry, the switch's place", () => {
     const w = opened();
     w.keeper.carry(30);
     expect(w.log).toEqual(["anchoring false", "reveal 30", "to 30"]);
-    expect(w.place("page/A")).toEqual({ pos: 30, y: 300 });
+    expect(w.place("commonplace/A")).toEqual({ pos: 30, y: 300 });
     w.surf!.throws = true;
     w.log.length = 0;
     w.fire("resize");
@@ -257,6 +257,6 @@ describe("carry, the switch's place", () => {
     const top = opened();
     top.surf!.scrollToPos = () => {};
     top.keeper.carry(30);
-    expect(top.place("page/A")).toEqual({ pos: 30, y: 1 });
+    expect(top.place("commonplace/A")).toEqual({ pos: 30, y: 1 });
   });
 });

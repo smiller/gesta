@@ -37,7 +37,7 @@ const FILES: [RegExp, string][] = [
   [/john-milton\/paradise-lost\.org$/, "bookshelf/Milton, John/Paradise Lost"],
   [/john-milton\.org$/, "bookshelf/Milton, John"],
   [/ordo-virtutum\.org$/, "bookshelf/Hildegard of Bingen/Ordo Virtutum"],
-  [/tao-t[eo]-ching\.org$/, "page/Tao Te Ching"],
+  [/tao-t[eo]-ching\.org$/, "commonplace/Tao Te Ching"],
   [/charles-williams\.org$/, "bookshelf/Williams, Charles"],
   [/just_one_thing\.org$/, "bookshelf/Hanson, Rick/Just One Thing newsletter"],
 ];

@@ -24,9 +24,9 @@
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     onLines: (open: boolean) => void;
-    onPanel: (ns: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
+    onPanel: (ns: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
     onClosePanel: () => void;
-    onNewRoot: (ns: "page" | "bookshelf") => void;
+    onNewRoot: (ns: "commonplace" | "bookshelf") => void;
     onShelves: () => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
@@ -48,7 +48,7 @@
   export function focusGoto(): void { gotoRow?.focusFirst(); }
   let searchRow: { focusInput(): void } | undefined = $state();
   export function focusSearch(): void { searchRow?.focusInput(); }
-  const NOUN = { page: "page", bookshelf: "author" } as const;
+  const NOUN = { commonplace: "commonplace", bookshelf: "author" } as const;
   /* a card's focus going nowhere is a row deleted under it, not a leaving
      (pin: where the keys go › Tab twelve times from the bookmarks card);
      the pages panel's is the window left */
@@ -71,7 +71,7 @@
       </svg>
       <span class="caret">▾</span>
     </button>
-    <button class="datebtn opener" title="Open the pages list" aria-label="Open the pages list" onclick={() => onPanel("page")}>
+    <button class="datebtn opener" title="Open the commonplaces list" aria-label="Open the commonplaces list" onclick={() => onPanel("commonplace")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 1.8 h5.2 L12 4.6 v9.6 H4 z"></path>
         <path d="M9.2 1.8 v2.8 H12"></path>
@@ -120,7 +120,7 @@
   {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} onLeave={leaveCard} />{/if}
   {#if screen.panel === "shortcuts"}<Shortcuts bind:this={shortcutsCard} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leaveCard} />{/if}
   {#if screen.panel === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
-  {#if screen.panel === "page" || screen.panel === "bookshelf"}
+  {#if screen.panel === "commonplace" || screen.panel === "bookshelf"}
     <nav class="pages" onfocusout={leave}>
       {#each screen.panelRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onClosePanel}>{r.text}</a>{/if}{/each}
       {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}

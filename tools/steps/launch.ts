@@ -9,22 +9,22 @@ async function afterWarm(): Promise<void> {
   await log("after warm", await R.corner(page));
   await log("masthead over Horace", await R.masthead(page));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-masthead.png"), clip: { x: 0, y: 0, width: 1000, height: 130 } });
-  await page.click(S.pagesOpener);
+  await page.click(S.commonplacesOpener);
   await log("pages panel", await R.panel(page));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-panel.png"), clip: { x: 0, y: 0, width: 600, height: 260 } });
   await page.click(S.booksOpener);
   await log("books panel, displacing it", await R.panel(page));
   await page.click(S.booksOpener);
   await log("its own opener again", await R.panel(page));
-  await page.click(S.pagesOpener);
+  await page.click(S.commonplacesOpener);
   await page.keyboard.press("Escape");
   await log("after Escape", await R.panel(page));
-  await page.click(S.pagesOpener);
+  await page.click(S.commonplacesOpener);
   await page.mouse.click(500, 400);
   await log("after a click outside", await R.panel(page));
-  await page.click(S.pagesOpener);
+  await page.click(S.commonplacesOpener);
   await page.click(S.panelRow("Williams"));
-  await A.waitEntry(page, "page/Williams", 5000);
+  await A.waitEntry(page, "commonplace/Williams", 5000);
   await log("after a row click", { entry: await A.entry(page), panel: await R.panel(page) });
   await page.waitForTimeout(3200);
   await log("3.2 s later", await R.corner(page));
@@ -39,8 +39,8 @@ async function afterWarm(): Promise<void> {
   await page.keyboard.press("Control+Meta+,");
   await rest(page);
   await log("after ⌃⌘, on the first entry", await R.corner(page));
-  await go("page/Links");
-  await page.click(S.editorLink("#page/Links"));
+  await go("commonplace/Links");
+  await page.click(S.editorLink("#commonplace/Links"));
   /* the editor takes a click's caret a tick after the click */
   await page.waitForFunction(() => { const s = getSelection(); return !!s.rangeCount && s.anchorOffset > 0; }, null, { timeout: 1000 }).catch(() => {});
   await log("a link to itself", { entry: await A.entry(page), ...(await R.corner(page)) });
@@ -50,20 +50,20 @@ async function plainClickExternalLink(): Promise<void> {
   await rest(page);
   await log("a plain click on an external link", { entry: await A.entry(page), url: page.url().split("#")[1] });
   const popup = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
-  await page.click(S.editorLink("#page/Horace"), { modifiers: ["Meta"] });
+  await page.click(S.editorLink("#commonplace/Horace"), { modifiers: ["Meta"] });
   await rest(page);
   await log("⌘-click on an internal link", { newTab: (await popup).split("#")[1], ...(await R.afterModClick(page)) });
   const popup2 = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
   await page.click(S.editorLink("https://example.org/"), { modifiers: ["Meta"] });
   await rest(page);
   await log("⌘-click on an external link", { newTab: (await popup2) !== "(no new tab)", ...(await R.afterModClick(page)) });   /* headless has no network: whether a tab opened, not where it got */
-  await page.click(S.editorLink("#page/Horace"));
-  await A.waitEntry(page, "page/Horace", 5000);
+  await page.click(S.editorLink("#commonplace/Horace"));
+  await A.waitEntry(page, "commonplace/Horace", 5000);
   await log("a plain click on an internal link", { entry: await A.entry(page) });
 }
 section("fence", async () => {
   /* a verse fence pasted as TEXT mid-paragraph is set down between the halves, its first line inside */
-  await go("page/Pasted%20Fence");
+  await go("commonplace/Pasted%20Fence");
   await page.click(S.editor);
   await page.keyboard.type("start end");
   /* THE CARET PLACED THROUGH THE DOM SELECTION, not the keys: Home and the
@@ -78,11 +78,11 @@ section("fence", async () => {
 });
 section("verse copy", async () => {
   /* a verse block copied inside the rendered view with ⌘C and pasted into a fresh page with ⌘V comes back as the block */
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await R.selectAll(page, S.editorVerse);
   await rest(page);
   await page.keyboard.press("Meta+c");
-  await go("page/Pasted%20Verse");
+  await go("commonplace/Pasted%20Verse");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
   await rest(page);
@@ -90,7 +90,7 @@ section("verse copy", async () => {
 });
 section("refused fence", async () => {
   /* a refused fence named on the switch back: "::: versey" typed in the source stays a paragraph and the corner says why; a clean switch releases it */
-  await go("page/Fenced");
+  await go("commonplace/Fenced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source);
@@ -110,7 +110,7 @@ section("refused fence", async () => {
 });
 section("quote tab", async () => {
   /* Tab in a quote nests, Shift-Tab lifts, again at the floor says so; ⌃⌘L opens the Line numbering row over verse */
-  await go("page/Quoted");
+  await go("commonplace/Quoted");
   await page.click(S.editor);
   await page.keyboard.type("> quoted words");
   await page.keyboard.press("Tab");
@@ -120,7 +120,7 @@ section("quote tab", async () => {
   await page.keyboard.press("Shift+Tab");
   await rest(page);
   await log("Shift-Tab twice", { md: await A.stored(page), corner: await R.cornerText(page) });
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await page.keyboard.press("Control+Meta+l");
   await rest(page);
   await log("⌃⌘L over Horace", await R.linesRow(page));

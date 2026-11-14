@@ -1,9 +1,9 @@
 import { test, expect } from "vitest";
 import {
-  isDayKey, PAGE_KEY, NS, NS_PAGE, NS_BOOK, NS_KEYS, nsOf,
+  isDayKey, COMMONPLACE_KEY, NS, NS_COMMONPLACE, NS_BOOK, NS_KEYS, nsOf,
   pageParts, entryKey, encPart, entryHash, hashTarget, asAddress,
   capitalized, entryNoun, monthLabel, dateLabel,
-  todayKey, prettyDate, byName, titlesRoots,
+  todayKey, prettyDate, byName, titlesRoots, plural,
 } from "./keys.ts";
 
 test("the storage namespace sits outside page750.*", () => {
@@ -16,7 +16,7 @@ test("isDayKey accepts the date shape and nothing else", () => {
   // Shape only, deliberately: no month/day range check.
   expect(isDayKey("2026-13-40")).toBe(true);
   expect(isDayKey("2026-1-5")).toBe(false);
-  expect(isDayKey(PAGE_KEY)).toBe(false);
+  expect(isDayKey(COMMONPLACE_KEY)).toBe(false);
   expect(isDayKey("bookshelf")).toBe(false);
   // Anchored at both ends — DATE_KEY_SRC is the unanchored spelling.
   expect(isDayKey("x2026-01-05")).toBe(false);
@@ -24,13 +24,13 @@ test("isDayKey accepts the date shape and nothing else", () => {
 });
 
 test("nsOf answers the namespace rows and nothing hand-typed", () => {
-  expect(nsOf(PAGE_KEY)).toBe(NS_PAGE);
+  expect(nsOf(COMMONPLACE_KEY)).toBe(NS_COMMONPLACE);
   expect(nsOf("bookshelf")).toBe(NS_BOOK);
   expect(nsOf("2026-01-05")).toBe(null);
   // A hand-typed #__proto__ or #constructor must answer "not a namespace".
   expect(nsOf("__proto__")).toBe(null);
   expect(nsOf("constructor")).toBe(null);
-  expect(NS_KEYS).toEqual([PAGE_KEY, "bookshelf"]);
+  expect(NS_KEYS).toEqual([COMMONPLACE_KEY, "bookshelf"]);
   // Every row declares both nouns — the guard whose job is the day a third
   // row arrives short one.
   for (const k of NS_KEYS) {
@@ -42,7 +42,7 @@ test("nsOf answers the namespace rows and nothing hand-typed", () => {
 test("entryKey joins date and tag; tag optional", () => {
   expect(entryKey("2026-01-05", null)).toBe("2026-01-05");
   expect(entryKey("2026-01-05", "Ideas")).toBe("2026-01-05/Ideas");
-  expect(entryKey("page", "A/B")).toBe("page/A/B");
+  expect(entryKey("commonplace", "A/B")).toBe("commonplace/A/B");
 });
 
 test("pageParts: the four fields, and their divergence past depth 2", () => {
@@ -59,7 +59,7 @@ test("encPart encodes parens beyond encodeURIComponent", () => {
 test("entryHash: a keyed tag's slash is structure, a day tag's is content", () => {
   expect(entryHash("2026-01-05", null)).toBe("#2026-01-05");
   expect(entryHash("2026-01-05", "a/b")).toBe("#2026-01-05/a%2Fb");
-  expect(entryHash("page", "A/B (x)")).toBe("#page/A/B%20%28x%29");
+  expect(entryHash("commonplace", "A/B (x)")).toBe("#commonplace/A/B%20%28x%29");
   expect(entryHash("bookshelf", "Milton, John/Paradise Lost"))
     .toBe("#bookshelf/Milton%2C%20John/Paradise%20Lost");
   // The two arms use DIFFERENT encoders, and parens are where they differ;
@@ -80,16 +80,16 @@ test("entryHash appends the highlight payload", () => {
 
 test("hashTarget: the first ? ends the address", () => {
   expect(hashTarget(asAddress("#2026-01-05?h=q&n=1"))).toBe("#2026-01-05");
-  expect(hashTarget(asAddress("#page/A"))).toBe("#page/A");
+  expect(hashTarget(asAddress("#commonplace/A"))).toBe("#commonplace/A");
 });
 
 test("entryNoun reads the row and the level; a day has no noun", () => {
-  expect(entryNoun("page", "Notes")).toBe("page");
-  expect(entryNoun("page", "Notes/Sub")).toBe("sub-page");
+  expect(entryNoun("commonplace", "Notes")).toBe("commonplace");
+  expect(entryNoun("commonplace", "Notes/Sub")).toBe("sub-entry");
   expect(entryNoun("bookshelf", "Milton, John")).toBe("author");
   expect(entryNoun("bookshelf", "Milton, John/Paradise Lost")).toBe("book");
   expect(entryNoun("2026-01-05", "tag")).toBe(null);
-  expect(entryNoun("page", null)).toBe("page");
+  expect(entryNoun("commonplace", null)).toBe("commonplace");
 });
 
 test("date labels: English-fixed months, no zero-padding on the day", () => {
@@ -121,6 +121,10 @@ test("byName: numeric-aware, and a TOTAL order — names the collator ties still
 
 test("titlesRoots: read off the namespace column, false for a day and an unknown key", () => {
   expect(titlesRoots(NS_BOOK.key)).toBe(true);
-  expect(titlesRoots(NS_PAGE.key)).toBe(false);
+  expect(titlesRoots(NS_COMMONPLACE.key)).toBe(false);
   expect(titlesRoots("2021-06-22")).toBe(false);
+});
+
+test("plural: an entry, entries; a book, books", () => {
+  expect(["sub-entry", "book", "commonplace", "author"].map(plural)).toEqual(["sub-entries", "books", "commonplaces", "authors"]);
 });

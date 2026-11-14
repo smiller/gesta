@@ -22,12 +22,12 @@ export const url = (hash: string, query = "") => PAGE + (query ? "?" + query : "
 export async function reseeded(page: Page, seeds: Record<string, string>) {
   for (const [k, md] of Object.entries(seeds)) await foreignWrite(page, k, md);
   await page.goto("about:blank");
-  await page.goto(url("page/Horace", "fresh"));
+  await page.goto(url("commonplace/Horace", "fresh"));
   await waitWarm(page);
 }
 /* the page opened once to make its store before the seeds go in */
 async function launch(page: Page, seeds: Record<string, string>) {
-  await page.goto(url("page/Horace"));
+  await page.goto(url("commonplace/Horace"));
   await waitWarm(page);
   await reseeded(page, seeds);
   return page.evaluate(() => document.documentElement.dataset.probe);
@@ -60,7 +60,7 @@ export const act = {
 };
 export const sel = {
   editor: "#editor .ProseMirror", editorFirst: "#editor .ProseMirror > :first-child",
-  pagesOpener: ".opener[title='Open the pages list']", booksOpener: ".opener[title='List the authors on the bookshelf']",
+  commonplacesOpener: ".opener[title='Open the commonplaces list']", booksOpener: ".opener[title='List the authors on the bookshelf']",
   panelRow: (name: string) => ".pages a[title='" + name + "']",
   corner: ".saved.show", backupsButton: ".toolbtn[title='Automatic folder backups']",
   replaceWith: "#replacewith", replaceAll: ".replacebar button[title^='Replace every']", replaceSkip: ".replacebar button[title^='Leave this']",
@@ -253,7 +253,7 @@ export const read = {
   cleanSwitch: (page: Page) => page.evaluate(() => ({ corner: document.querySelector(".saved.show")?.textContent || "", verse: !!document.querySelector("#editor .verse") })),
   linesRow: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open, focused: document.activeElement?.getAttribute("aria-label"), options: [...document.querySelectorAll(".page-lines option")].map((o) => o.textContent) })),
   linesRowOpen: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open })),
-  clipboardReference: (page: Page) => page.evaluate(async () => { const corner = document.querySelector(".saved.show")?.textContent; try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#page\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } }),
+  clipboardReference: (page: Page) => page.evaluate(async () => { const corner = document.querySelector(".saved.show")?.textContent; try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#commonplace\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } }),
   codeBlock: (page: Page) => page.evaluate(() => { const pre = document.querySelector("#editor pre"); return { lang: pre.dataset.lang, label: getComputedStyle(pre, "::after").content, tokens: [...pre.querySelectorAll("[class^=tok-]")].map((t) => t.className + ":" + t.textContent) }; }),
   copyHover: (page: Page) => page.evaluate(() => { const b = document.querySelector(".copybtn"); const pre = document.querySelector("#editor pre").getBoundingClientRect(); const r = b.getBoundingClientRect(); return { show: b.classList.contains("show"), title: b.title, insideBlock: r.top >= pre.top && r.right <= pre.right + 1, labelHidden: getComputedStyle(document.querySelector("#editor pre"), "::after").opacity }; }),
   copyLabel: (page: Page) => page.evaluate(() => document.querySelector(".copybtn").textContent),

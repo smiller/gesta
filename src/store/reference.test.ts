@@ -3,7 +3,7 @@ import {
   REFERENCE_DATED, REFERENCE_TOKEN, REFERENCE_DIVISION, referenceNumeral,
   referenceAbsorbs, elideRange, folioLabel, referenceAuthor, referenceLabel, mdLabel, type Journal,
 } from "./reference.ts";
-import { NS_BOOK, NS_PAGE } from "./keys.ts";
+import { NS_BOOK, NS_COMMONPLACE } from "./keys.ts";
 import { journalOf, firstHeading } from "./headings.ts";
 
 
@@ -67,12 +67,12 @@ test("folioLabel: arabic elides, roman and zero-padded never", () => {
   expect(folioLabel("007", "009")).toBe("pp. 007-009");
 });
 
-test("referenceAuthor: a book's surname off the key, Gesta for a day, nothing for a page", () => {
+test("referenceAuthor: a book's surname off the key, Gesta for a day, nothing for a commonplace", () => {
   expect(referenceAuthor(NS_BOOK.key, "Milton, John")).toBe("Milton");
   expect(referenceAuthor(NS_BOOK.key, "Virgil")).toBe("Virgil");
   expect(referenceAuthor("2021-06-22", "Walk")).toBe("Gesta");
   expect(referenceAuthor("2026-03-10", null)).toBe("Gesta");
-  expect(referenceAuthor(NS_PAGE.key, "Sean's Books")).toBe("");
+  expect(referenceAuthor(NS_COMMONPLACE.key, "Sean's Books")).toBe("");
 });
 
 // the corpus cases, over a journal of headings
@@ -96,9 +96,9 @@ const journal: Journal = journalOf({
   "bookshelf/Dante/Commedia (with Longfellow’s translation)": "# *Commedia* (with Longfellow’s translation)",
   "bookshelf/Dante/Commedia (with Longfellow’s translation)/Inferno": "# Inferno",
   "bookshelf/Lewis, C. S/The Screwtape Letters": "# The Screwtape Letters",
-  "page/Sean's Books/1": "# The Figure of Beatrice\n\ntext",
-  "page/Sean's Books/2": "# 2: Witchcraft\n",
-  "page/Notes": "no heading here",
+  "commonplace/Sean's Books/1": "# The Figure of Beatrice\n\ntext",
+  "commonplace/Sean's Books/2": "# 2: Witchcraft\n",
+  "commonplace/Notes": "no heading here",
   "bookshelf/Ovid/Metamorphoses": "# Metamorphoses",
   "bookshelf/Ovid/Metamorphoses (with Golding’s translation)": "# *Metamorphoses* (with Golding’s translation)",
   "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7": "# Book 7",
@@ -137,16 +137,16 @@ test("referenceLabel: the line range dots onto a numeral run and commas after a 
   expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "3", folio: { from: "9", to: "9" } }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
 });
 
-test("referenceLabel: from the last title, a day, a page", () => {
+test("referenceLabel: from the last title, a day, a commonplace", () => {
   expect(referenceLabel(NS_BOOK.key, "Dante/Commedia/Inferno/7", { range: "121-6" }, journal)).toBe("Dante, *Inferno*, 7.121-6");
   // a day names itself by its date and refers to no locator
   expect(referenceLabel("2021-06-22", null, { range: "3-5" }, journal)).toBe("*Gesta*, 22 June 2021");
   expect(referenceLabel("2021-06-22", "Walk", { range: "" }, journal)).toBe("*Gesta*, 22 June 2021, *Walk*");
-  // a page stands on its own name; a numbered sub-page shows its name after a colon
-  expect(referenceLabel(NS_PAGE.key, "Sean's Books/1", { range: "" }, journal)).toBe("*Sean's Books*, 1: *The Figure of Beatrice*");
-  expect(referenceLabel(NS_PAGE.key, "Sean's Books/2", { range: "" }, journal)).toBe("*Sean's Books*, 2: *Witchcraft*");
-  expect(referenceLabel(NS_PAGE.key, "Notes", { range: "" }, journal)).toBe("*Notes*");
-  expect(referenceLabel(NS_PAGE.key, "Notes", { range: "", folio: { from: "3", to: "4" } }, journal)).toBe("*Notes*");
+  // a commonplace stands on its own name; a numbered sub-entry shows its name after a colon
+  expect(referenceLabel(NS_COMMONPLACE.key, "Sean's Books/1", { range: "" }, journal)).toBe("*Sean's Books*, 1: *The Figure of Beatrice*");
+  expect(referenceLabel(NS_COMMONPLACE.key, "Sean's Books/2", { range: "" }, journal)).toBe("*Sean's Books*, 2: *Witchcraft*");
+  expect(referenceLabel(NS_COMMONPLACE.key, "Notes", { range: "" }, journal)).toBe("*Notes*");
+  expect(referenceLabel(NS_COMMONPLACE.key, "Notes", { range: "", folio: { from: "3", to: "4" } }, journal)).toBe("*Notes*");
 });
 
 test("referenceLabel: a root whose page says no author is named in no reference; the root itself stands on its title", () => {

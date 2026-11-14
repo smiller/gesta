@@ -257,11 +257,11 @@ test("all() is ascending-key fresh copies", async () => {
 
 test("memImageStore: bytes under the sidecar's path, null on a miss", async () => {
   const s = memImageStore();
-  expect(await s.get("page/A/A-img-1.webp")).toBe(null);
-  await s.set("page/A/A-img-1.webp", new Uint8Array([1, 2]));
-  expect(await s.get("page/A/A-img-1.webp")).toEqual({ id: "page/A/A-img-1.webp", bytes: new Uint8Array([1, 2]) });
+  expect(await s.get("commonplace/A/A-img-1.webp")).toBe(null);
+  await s.set("commonplace/A/A-img-1.webp", new Uint8Array([1, 2]));
+  expect(await s.get("commonplace/A/A-img-1.webp")).toEqual({ id: "commonplace/A/A-img-1.webp", bytes: new Uint8Array([1, 2]) });
   await s.clear();
-  expect(await s.get("page/A/A-img-1.webp")).toBe(null);
+  expect(await s.get("commonplace/A/A-img-1.webp")).toBe(null);
 });
 
 const dir = (name: string) => ({ name }) as unknown as FileSystemDirectoryHandle;

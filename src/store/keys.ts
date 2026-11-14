@@ -6,16 +6,16 @@ export const DATE_KEY_RE = new RegExp("^" + DATE_KEY_SRC + "$");
 export function isDayKey(key: string): boolean { return DATE_KEY_RE.test(key); }
 /* the reserved word in the date slot that holds the named, non-dated pages —
    not date-shaped, so no real day can collide */
-export const PAGE_KEY = "page";
+export const COMMONPLACE_KEY = "commonplace";
 /* OUTSIDE page750.*: every file:// page shares one storage origin (MEASURED
    in Helium), and this app never reads the old databases (pin: keys.test ›
    the storage namespace sits outside page750.*) */
 export const NS = "gesta.v1.";
 
 /* A namespace an entry key's first slot can hold besides a date. A ROW per
-   namespace, differing only in DATA: a guard widened from `date === PAGE_KEY`
-   to a namespace test, over a body that still builds a page key, is WRONG
-   rather than unfinished — it files a book's sub-pages into a page's list the
+   namespace, differing only in DATA: a guard widened from `date === COMMONPLACE_KEY`
+   to a namespace test, over a body that still builds a commonplace key, is WRONG rather than
+   unfinished — it files a book's sub-entries into a commonplace's list the
    moment a second row exists. Only what DIFFERS earns a column. */
 export interface Namespace {
   key: string;
@@ -37,9 +37,9 @@ export interface Namespace {
      division swallowed the whole page name. */
   numeralDivisions: boolean;
 }
-export const NS_PAGE: Namespace = {
-  key: PAGE_KEY,
-  noun: "page", subNoun: "sub-page",
+export const NS_COMMONPLACE: Namespace = {
+  key: COMMONPLACE_KEY,
+  noun: "commonplace", subNoun: "sub-entry",
   mintsOnVisit: true, refersWithLocator: false, titledRoots: false, numeralDivisions: false,
 };
 export const NS_BOOK: Namespace = {
@@ -54,12 +54,14 @@ export const NS_BOOK: Namespace = {
    "not a namespace" (pin: keys.test › nsOf answers the namespace rows and
    nothing hand-typed) */
 export const KEYED_NS: Record<string, Namespace> = Object.create(null);
-for (const ns of [NS_PAGE, NS_BOOK]) KEYED_NS[ns.key] = ns;
+for (const ns of [NS_COMMONPLACE, NS_BOOK]) KEYED_NS[ns.key] = ns;
 export const NS_KEYS: string[] = Object.keys(KEYED_NS);
 /* the descriptor an entry key's date slot names — null on a day, and on any
    first slot that is neither. Day-facing guards still ask isDayKey: a hash
    that routes nowhere would pass !nsOf. */
 export function nsOf(date: string): Namespace | null { return KEYED_NS[date] || null; }
+/* a namespace's nouns in the plural: an entry, entries (pin: keys.test › plural) */
+export const plural = (noun: string): string => (noun.endsWith("y") ? noun.slice(0, -1) + "ies" : noun + "s");
 
 export function todayKey(): string {
   const d = new Date();

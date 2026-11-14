@@ -4,34 +4,34 @@
    curly apostrophes, stays 1:1 in code units). Every occurrence-counting
    site folds through searchFold, or their nth indices drift apart (pin:
    highlight.test › what selectionLink minted, findHit lands on) */
-import { isDayKey, PAGE_KEY, pageParts } from "./keys.ts";
+import { isDayKey, COMMONPLACE_KEY, pageParts } from "./keys.ts";
 
 export function searchFold(s: string): string {
   return s.replace(/İ/g, "I").toLowerCase().replace(/[‘’]/g, "'");
 }
 export interface IndexRow { date: string; tag: string | null; text: string; lower: string }
-export type Scope = { kind: "everything" } | { kind: "journal" } | { kind: "pages" } | { kind: "book"; ns: string; book: string } | { kind: "shelf"; ns: string; shelf: string; books: ReadonlySet<string> };
+export type Scope = { kind: "everything" } | { kind: "journal" } | { kind: "commonplaces" } | { kind: "book"; ns: string; book: string } | { kind: "shelf"; ns: string; shelf: string; books: ReadonlySet<string> };
 export const SCOPE_EVERYTHING: Scope = Object.freeze({ kind: "everything" }) as Scope;
 export const SCOPE_JOURNAL: Scope = Object.freeze({ kind: "journal" }) as Scope;
-export const SCOPE_PAGES: Scope = Object.freeze({ kind: "pages" }) as Scope;
+export const SCOPE_COMMONPLACES: Scope = Object.freeze({ kind: "commonplaces" }) as Scope;
 export function bookScope(ns: string, book: string): Scope { return { kind: "book", ns, book }; }
 /* a row's book: the same keyed namespace and the same root name — the
-   parent's own body and every sub-page share it, while "Sean" cannot
-   swallow "Sean's Books". The namespace is half the question: a page and
+   parent's own body and every sub-entry share it, while "Sean" cannot
+   swallow "Sean's Books". The namespace is half the question: a commonplace and
    a book may both be called "Shakespeare" (pin: search.test › a book scope
    carries its namespace) */
 export function inBook(row: { date: string; tag: string | null }, ns: string, root: string): boolean {
   return row.date === ns && pageParts(row.tag || "").name === root;
 }
 /* the ONE spelling of the filter; every arm positive, an unknown kind
-   STATED false rather than riding a fall-through. The PAGES kind stays
-   page's alone: "All Pages" is a named surface, and a bookshelf reached
+   STATED false rather than riding a fall-through. The COMMONPLACES kind
+   stays the commonplaces' alone: "All Commonplaces" is a named surface, and a bookshelf reached
    through it would silently widen what that row promises (pin: search.test
    › the ONE filter) */
 export function inScope(row: { date: string; tag: string | null }, scope: Scope): boolean {
   if (scope.kind === "everything") return true;
   if (scope.kind === "journal") return isDayKey(row.date);
-  if (scope.kind === "pages") return row.date === PAGE_KEY;
+  if (scope.kind === "commonplaces") return row.date === COMMONPLACE_KEY;
   if (scope.kind === "book") return inBook(row, scope.ns, scope.book);
   if (scope.kind === "shelf") return row.date === scope.ns && scope.books.has(pageParts(row.tag || "").name);
   return false;

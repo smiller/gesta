@@ -50,56 +50,56 @@ describe("searchHits", () => {
 describe("inScope", () => {
   const ROWS = [
     { date: "2020-06-06", tag: null }, { date: "2020-06-06", tag: "notes" },
-    { date: "page", tag: "Journalish" }, { date: "page", tag: "Journalish/Ch" }, { date: "page", tag: "Other/Ch" },
+    { date: "commonplace", tag: "Journalish" }, { date: "commonplace", tag: "Journalish/Ch" }, { date: "commonplace", tag: "Other/Ch" },
   ];
   it("the ONE filter, every kind against every row shape; an unknown kind fails closed", () => {
     const cases: [Scope, boolean[]][] = [
       [{ kind: "everything" }, [true, true, true, true, true]],
       [{ kind: "journal" }, [true, true, false, false, false]],
-      [{ kind: "pages" }, [false, false, true, true, true]],
-      [{ kind: "book", ns: "page", book: "Journalish" }, [false, false, true, true, false]],
+      [{ kind: "commonplaces" }, [false, false, true, true, true]],
+      [{ kind: "book", ns: "commonplace", book: "Journalish" }, [false, false, true, true, false]],
       [{ kind: "nosuchkind" } as unknown as Scope, [false, false, false, false, false]],
     ];
     for (const [scope, want] of cases) expect(ROWS.map((r) => inScope(r, scope))).toEqual(want);
   });
-  it("a book scope carries its namespace, so a same-named page is another book", () => {
-    const bookRow = { date: "bookshelf", tag: "Corpus" }, pageRow = { date: "page", tag: "Corpus" };
-    expect(inScope(bookRow, { kind: "pages" })).toBe(false);
+  it("a book scope carries its namespace, so a same-named commonplace is another book", () => {
+    const bookRow = { date: "bookshelf", tag: "Corpus" }, pageRow = { date: "commonplace", tag: "Corpus" };
+    expect(inScope(bookRow, { kind: "commonplaces" })).toBe(false);
     expect(inScope(bookRow, { kind: "everything" })).toBe(true);
     expect(inScope(bookRow, { kind: "journal" })).toBe(false);
     expect(inScope(bookRow, { kind: "book", ns: "bookshelf", book: "Corpus" })).toBe(true);
     expect(inScope(pageRow, { kind: "book", ns: "bookshelf", book: "Corpus" })).toBe(false);
-    expect(inScope(bookRow, { kind: "book", ns: "page", book: "Corpus" })).toBe(false);
-    expect(inBook({ date: "page", tag: "Sean's Books/x" }, "page", "Sean")).toBe(false);
+    expect(inScope(bookRow, { kind: "book", ns: "commonplace", book: "Corpus" })).toBe(false);
+    expect(inBook({ date: "commonplace", tag: "Sean's Books/x" }, "commonplace", "Sean")).toBe(false);
   });
   it("a shelf scope holds its authors' books, every level of each, and nothing else", () => {
     const latin: Scope = { kind: "shelf", ns: "bookshelf", shelf: "Latin", books: new Set(["Horace", "Virgil"]) };
     expect(inScope({ date: "bookshelf", tag: "Horace" }, latin)).toBe(true);
     expect(inScope({ date: "bookshelf", tag: "Virgil/Aeneid/1" }, latin)).toBe(true);
     expect(inScope({ date: "bookshelf", tag: "Milton, John/PL" }, latin)).toBe(false);
-    expect(inScope({ date: "page", tag: "Horace" }, latin)).toBe(false);
+    expect(inScope({ date: "commonplace", tag: "Horace" }, latin)).toBe(false);
     expect(inScope({ date: "2020-06-06", tag: null }, latin)).toBe(false);
   });
 });
 describe("searchEntries", () => {
   const row = (date: string, tag: string | null, text: string): IndexRow => ({ date, tag, text, lower: searchFold(text) });
   const index = [
-    row("page", "Books", "The sisters read. Her sister’s book."),
+    row("commonplace", "Books", "The sisters read. Her sister’s book."),
     row("2026-09-07", null, "A Sister of mercy, and resisters."),
     row("2026-09-06", "x", "nothing here"),
   ];
   it("one result per occurrence with its index, a windowed snippet, the scope applied", () => {
     const r = searchEntries(index, "sister", { kind: "everything" });
-    expect(r.map((x) => [x.date, x.nth])).toEqual([["page", 0], ["page", 1], ["2026-09-07", 0], ["2026-09-07", 1]]);
+    expect(r.map((x) => [x.date, x.nth])).toEqual([["commonplace", 0], ["commonplace", 1], ["2026-09-07", 0], ["2026-09-07", 1]]);
     expect(r[0].snippet).toBe("The sisters read. Her sister’s book.");
     /* "sister’s" folds to "sister's", and an apostrophe is not word glue */
-    expect(searchEntries(index, "_sister_", { kind: "everything" }).map((x) => [x.date, x.nth])).toEqual([["page", 0], ["2026-09-07", 0]]);
+    expect(searchEntries(index, "_sister_", { kind: "everything" }).map((x) => [x.date, x.nth])).toEqual([["commonplace", 0], ["2026-09-07", 0]]);
     expect(searchEntries(index, "sister", { kind: "journal" }).map((x) => x.date)).toEqual(["2026-09-07", "2026-09-07"]);
     expect(searchEntries(index, "", { kind: "everything" })).toEqual([]);
   });
   it("the snippet elides on both sides, and the scan collects one past the cap", () => {
-    const long = row("page", "L", "x".repeat(40) + " needle " + "y".repeat(40));
-    expect(searchEntries([long], "needle", { kind: "pages" })[0].snippet).toBe("…" + "x".repeat(29) + " needle " + "y".repeat(29) + "…");
+    const long = row("commonplace", "L", "x".repeat(40) + " needle " + "y".repeat(40));
+    expect(searchEntries([long], "needle", { kind: "commonplaces" })[0].snippet).toBe("…" + "x".repeat(29) + " needle " + "y".repeat(29) + "…");
     const many = Array.from({ length: SEARCH_CAP + 50 }, (_, i) => row("2020-01-0" + (i % 9 + 1), String(i), "hit"));
     expect(searchEntries(many, "hit", { kind: "everything" }).length).toBe(SEARCH_CAP + 1);
   });

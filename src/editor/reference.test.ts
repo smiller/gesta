@@ -132,10 +132,10 @@ test("a block inside a note, the label's top level, an end resting on a row, bla
   [a, b] = span(host, "line one", "line two");
   expect(rangeOf(host, a, b)).toBe("1-2");
   /* an end resting at a row's edge with none of its ink selected takes none of the row */
-  const q = parseMarkdown("[*Horace*](#page/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> :::");
+  const q = parseMarkdown("[*Horace*](#commonplace/Horace?h=x):\n\n> ::: verse 13\n> alpha beta | one two\n> :::");
   [a] = span(q, "Horace", "Horace");
   let cellStart = 0; q.descendants((n, pos) => { if (n.type.name === "cell" && !cellStart) cellStart = pos + 1; });
-  expect(quote(q, a, cellStart)).toBe("> [*Horace*](#page/Horace?h=x):");
+  expect(quote(q, a, cellStart)).toBe("> [*Horace*](#commonplace/Horace?h=x):");
   /* a quote body's blank line stays one blank once lifted */
   const blanks = parseMarkdown("> The mind\n>\n> ::: verse 13\n> a | b\n> :::\n> \n> After.");
   [a, b] = span(blanks, "mind", "After");

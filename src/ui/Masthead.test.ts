@@ -8,10 +8,10 @@ import { screenState } from "./screen.svelte.ts";
 import { mastheadModel, type PanelRow } from "./mastheadModel.ts";
 import { journalOf } from "../store/headings.ts";
 
-const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "page/Books/Essay": "# The essay\n\nb" };
+const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "commonplace/Books/Essay": "# The essay\n\nb" };
 const journal = journalOf(cache);
 const none = () => {};
-function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "page" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups"; rows: PanelRow[]; empty: string; reader: boolean }> = {}): string {
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups"; rows: PanelRow[]; empty: string; reader: boolean }> = {}): string {
   const screen = screenState(extra.interval ?? 5);
   screen.masthead = mastheadModel(date, tag, { keys: Object.keys(cache), journal, today: "2026-09-07" });
   screen.gutter = !!extra.gutter;
@@ -34,9 +34,9 @@ describe("Masthead", () => {
     expect(html).toMatch(/class="page-title[^"]*" hidden/);
     expect(html).not.toContain(">Ideas</a>");
   });
-  it("a sub-page: the parent crumb, the leaf, its heading as the title, the today button shown", () => {
-    const html = draw("page", "Books/Essay");
-    expect(html).toMatch(/href="#page\/Books" title="Back to Books">Books<\/a>(<!--[^>]*-->|\s)* › (<!--[^>]*-->)*<strong class="tag-current[^"]*">Essay<\/strong>/);
+  it("a sub-entry: the parent crumb, the leaf, its heading as the title, the today button shown", () => {
+    const html = draw("commonplace", "Books/Essay");
+    expect(html).toMatch(/href="#commonplace\/Books" title="Back to Books">Books<\/a>(<!--[^>]*-->|\s)* › (<!--[^>]*-->)*<strong class="tag-current[^"]*">Essay<\/strong>/);
     expect(html).toContain(">The essay</span>");
     expect(html).toMatch(/title="Go to today">today/);
   });
@@ -52,28 +52,28 @@ describe("Masthead", () => {
     expect(html).toMatch(/<span class="shelf[^"]*">Latin<\/span>/);
     expect(html).toMatch(/<a href="#bookshelf\/Horace" title="Horace" class="[^"]*shelved[^"]*">Horace<\/a>/);
     expect(html).toMatch(/New author…<\/button>(<!--[^>]*-->|\s)*<button class="panel-new[^"]*" type="button">Shelves…<\/button>/);
-    expect(draw("2026-09-07", null, { panel: "page", rows: [] })).not.toMatch(/>Shelves…</);
+    expect(draw("2026-09-07", null, { panel: "commonplace", rows: [] })).not.toMatch(/>Shelves…</);
   });
-  it("no panel by default; an open pages panel lists its rows and the create row; an empty shelf explains itself", () => {
+  it("no panel by default; an open commonplaces panel lists its rows and the create row; an empty shelf explains itself", () => {
     expect(draw("2026-09-07", null)).not.toContain('class="pages');
-    const html = draw("2026-09-07", null, { panel: "page", rows: [{ text: "Books", href: "#page/Books" }] });
-    expect(html).toMatch(/<nav class="pages[^"]*">(<!--[^>]*-->)*<a href="#page\/Books" title="Books"[^>]*>Books<\/a>/);
-    expect(html).toContain(">New page…</button>");
+    const html = draw("2026-09-07", null, { panel: "commonplace", rows: [{ text: "Books", href: "#commonplace/Books" }] });
+    expect(html).toMatch(/<nav class="pages[^"]*">(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books"[^>]*>Books<\/a>/);
+    expect(html).toContain(">New commonplace…</button>");
     expect(html).not.toContain("panel-empty");
     const shelf = draw("2026-09-07", null, { panel: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });
     expect(shelf).toMatch(/<span class="panel-empty[^"]*">No authors yet/);
     expect(shelf).toContain(">New author…</button>");
   });
-  it("the sub-entry buttons: a day offers the create only, a tagged entry rename and delete only, a page all three with its nouns", () => {
+  it("the sub-entry buttons: a day offers the create only, a tagged entry rename and delete only, a commonplace all three with its nouns", () => {
     const day = draw("2026-09-07", null);
     expect(day).toMatch(/title="Create a tagged sub-entry for this day"[^>]*>\+ tagged entry/);
     expect(day).toMatch(/title="Rename this entry's tag" hidden/);
     const tagged = draw("2026-09-07", "Ideas");
     expect(tagged).toMatch(/title="Create a tagged sub-entry for this day" hidden/);
     expect(tagged).toMatch(/title="Delete this tagged entry">delete/);
-    const page = draw("page", "Books/Essay");
-    expect(page).toMatch(/title="Create a sub-page here">\+ sub-page/);
-    expect(page).toMatch(/title="Rename this sub-page">rename/);
+    const page = draw("commonplace", "Books/Essay");
+    expect(page).toMatch(/title="Create a sub-entry here">\+ sub-entry/);
+    expect(page).toMatch(/title="Rename this sub-entry">rename/);
   });
   it("the read-only page: ‹ and › either side of the crumbs to walk without a keyboard, the bundle's control in place of the writing tools", () => {
     const html = draw("2026-09-07", null, { reader: true });

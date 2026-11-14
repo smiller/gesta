@@ -19,7 +19,7 @@ test("a pick imports its entry docs, keyed by path, text stored as written", asy
   const files: ImportFile[] = [
     { dir: "journal/2026/", name: "2026-01-05.md", text: "# A day\n\ntext\n" },
     { dir: "journal/2026/", name: "2026-01-05--morning.md", text: "tagged" },
-    { dir: "page/Recipes/", name: "Bread.md", text: "# Bread" },
+    { dir: "commonplace/Recipes/", name: "Bread.md", text: "# Bread" },
     { dir: "bookshelf/Milton, John/", name: "Paradise Lost.md", text: "::: verse\nOf man's first\n:::" },
     { dir: "", name: "README.md", text: "not an entry" },
     { dir: "", name: ".DS_Store", bytes: bytes(0) },
@@ -27,7 +27,7 @@ test("a pick imports its entry docs, keyed by path, text stored as written", asy
   const seen: [number, number][] = [];
   const tally = await importFiles(files, s, (d, t) => seen.push([d, t]));
   expect(tally).toEqual({ imported: 4, failed: 0, attempted: 4, failures: [] });
-  expect(Object.keys(entries).sort()).toEqual(["2026-01-05", "2026-01-05/morning", "bookshelf/Milton, John/Paradise Lost", "page/Recipes/Bread"]);
+  expect(Object.keys(entries).sort()).toEqual(["2026-01-05", "2026-01-05/morning", "bookshelf/Milton, John/Paradise Lost", "commonplace/Recipes/Bread"]);
   expect(entries["2026-01-05"]).toBe("# A day\n\ntext\n");
   expect(seen).toEqual([[1, 4], [2, 4], [3, 4], [4, 4]]);
 });
@@ -35,37 +35,37 @@ test("a pick imports its entry docs, keyed by path, text stored as written", asy
 test("a sidecar is filed under the path its ref resolves to, bare or <bracketed>, and the ref stays as written", async () => {
   const { s, entries, images } = sink();
   const files: ImportFile[] = [
-    /* a childless page sits as page/<Name>.md with its sidecars beside it */
-    { dir: "page/", name: "Trip Log.md", text: "![](<Trip Log-img-1.webp>) and ![x](Trip Log-img-2.webp)" },
-    { dir: "page/", name: "Trip Log-img-1.webp", bytes: bytes(1) },
-    { dir: "page/", name: "Trip Log-img-2.webp", bytes: bytes(2) },
-    { dir: "page/", name: "Trip Log-img-3.webp", bytes: bytes(3) },   /* unreferenced */
-    { dir: "page/Other/", name: "Trip Log-img-1.webp", bytes: bytes(9) },     /* another entry's */
+    /* a childless commonplace sits as commonplace/<Name>.md with its sidecars beside it */
+    { dir: "commonplace/", name: "Trip Log.md", text: "![](<Trip Log-img-1.webp>) and ![x](Trip Log-img-2.webp)" },
+    { dir: "commonplace/", name: "Trip Log-img-1.webp", bytes: bytes(1) },
+    { dir: "commonplace/", name: "Trip Log-img-2.webp", bytes: bytes(2) },
+    { dir: "commonplace/", name: "Trip Log-img-3.webp", bytes: bytes(3) },   /* unreferenced */
+    { dir: "commonplace/Other/", name: "Trip Log-img-1.webp", bytes: bytes(9) },     /* another entry's */
   ];
   const tally = await importFiles(files, s);
   expect(tally.imported).toBe(1);
-  expect(entries["page/Trip Log"]).toBe("![](<Trip Log-img-1.webp>) and ![x](Trip Log-img-2.webp)");
-  expect(Object.keys(images).sort()).toEqual(["page/Trip Log-img-1.webp", "page/Trip Log-img-2.webp"]);
-  expect(images["page/Trip Log-img-1.webp"]).toEqual(bytes(1));
+  expect(entries["commonplace/Trip Log"]).toBe("![](<Trip Log-img-1.webp>) and ![x](Trip Log-img-2.webp)");
+  expect(Object.keys(images).sort()).toEqual(["commonplace/Trip Log-img-1.webp", "commonplace/Trip Log-img-2.webp"]);
+  expect(images["commonplace/Trip Log-img-1.webp"]).toEqual(bytes(1));
 });
 
 test("sidecarRefs: an imageless text scans nothing; a deeper file is another entry's", () => {
-  const sidecars = { "page/A/A-img-1.webp": bytes(1), "page/A/B/A-img-1.webp": bytes(2) };
-  expect(sidecarRefs("page/A.md", "no pictures", sidecars)).toEqual({ refs: [], blocked: false });
-  expect(sidecarRefs("page/A.md", "![](A-img-1.webp)", sidecars)).toEqual({ refs: [], blocked: false });
-  expect(sidecarRefs("page/A/A.md", "![](A-img-1.webp)", sidecars)).toEqual({ refs: ["page/A/A-img-1.webp"], blocked: false });
+  const sidecars = { "commonplace/A/A-img-1.webp": bytes(1), "commonplace/A/B/A-img-1.webp": bytes(2) };
+  expect(sidecarRefs("commonplace/A.md", "no pictures", sidecars)).toEqual({ refs: [], blocked: false });
+  expect(sidecarRefs("commonplace/A.md", "![](A-img-1.webp)", sidecars)).toEqual({ refs: [], blocked: false });
+  expect(sidecarRefs("commonplace/A/A.md", "![](A-img-1.webp)", sidecars)).toEqual({ refs: ["commonplace/A/A-img-1.webp"], blocked: false });
 });
 
 test("an entry whose picture could not be read is refused and counted, with the reason", async () => {
   const { s, entries } = sink();
   const files: ImportFile[] = [
-    { dir: "page/", name: "A.md", text: "![](A-img-1.webp)" },
-    { dir: "page/", name: "A-img-1.webp", bytes: null, unread: true },
+    { dir: "commonplace/", name: "A.md", text: "![](A-img-1.webp)" },
+    { dir: "commonplace/", name: "A-img-1.webp", bytes: null, unread: true },
   ];
   const tally = await importFiles(files, s);
   expect(tally.imported).toBe(0);
-  expect(tally.failures).toEqual([{ path: "page/A.md", error: "a picture this entry needs could not be read" }]);
-  expect("page/A" in entries).toBe(false);
+  expect(tally.failures).toEqual([{ path: "commonplace/A.md", error: "a picture this entry needs could not be read" }]);
+  expect("commonplace/A" in entries).toBe(false);
 });
 
 test("an unreadable .md is counted, never attempted; a form the schema refuses is counted with its error", async () => {
@@ -91,7 +91,7 @@ test("a write that does not land is a failure, not an import", async () => {
 });
 
 test("a picture the import files is found where the entry looks, for every kind of key", async () => {
-  const keys: [string, string | null][] = [["2026-01-05", null], ["2026-01-05", "morning"], ["page", "Trip Log"], ["page", "Recipes/Bread"], ["bookshelf", "Spenser, Edmund/The Faerie Queene/1.1"]];
+  const keys: [string, string | null][] = [["2026-01-05", null], ["2026-01-05", "morning"], ["commonplace", "Trip Log"], ["commonplace", "Recipes/Bread"], ["bookshelf", "Spenser, Edmund/The Faerie Queene/1.1"]];
   for (const [date, tag] of keys) {
     const { s, images } = sink();
     const at = entryFile(date, tag);
@@ -107,19 +107,19 @@ test("storage full stops the import: the rest are not tried, and the tally says 
     setImage: () => Promise.resolve(),
     writeError: () => new DOMException("full", "QuotaExceededError"),
   };
-  const files: ImportFile[] = ["A", "B", "C"].map((n) => ({ dir: "page/", name: n + ".md", text: "# " + n }));
+  const files: ImportFile[] = ["A", "B", "C"].map((n) => ({ dir: "commonplace/", name: n + ".md", text: "# " + n }));
   const tally = await importFiles(files, s);
-  expect(tried).toEqual(["page/A", "page/B"]);
+  expect(tried).toEqual(["commonplace/A", "commonplace/B"]);
   expect(tally).toMatchObject({ imported: 1, failed: 1, attempted: 3, full: true });
 });
 
 test("the entries an import will write, by key, before it runs", () => {
   const files: ImportFile[] = [
     { dir: "journal/2026/", name: "2026-01-05.md", text: "a day" },
-    { dir: "page/", name: "Typed.md", text: "IMPORTED TEXT" },
+    { dir: "commonplace/", name: "Typed.md", text: "IMPORTED TEXT" },
     { dir: "", name: "README.md", text: "not an entry" },
   ];
-  expect([...importKeys(files)].sort()).toEqual(["2026-01-05", "page/Typed"]);
+  expect([...importKeys(files)].sort()).toEqual(["2026-01-05", "commonplace/Typed"]);
 });
 
 test("storage full on a picture stops the import the same way", async () => {
@@ -129,9 +129,9 @@ test("storage full on a picture stops the import the same way", async () => {
     setImage: () => Promise.reject(new DOMException("full", "QuotaExceededError")),
   };
   const files: ImportFile[] = [
-    { dir: "page/", name: "A.md", text: "![](A-img-1.webp)" },
-    { dir: "page/", name: "A-img-1.webp", bytes: new Uint8Array([1]) },
-    { dir: "page/", name: "B.md", text: "# B" },
+    { dir: "commonplace/", name: "A.md", text: "![](A-img-1.webp)" },
+    { dir: "commonplace/", name: "A-img-1.webp", bytes: new Uint8Array([1]) },
+    { dir: "commonplace/", name: "B.md", text: "# B" },
   ];
   const tally = await importFiles(files, s);
   expect(tried).toEqual([]);
@@ -145,11 +145,11 @@ test("storage full on a later picture names the pictures already written for tha
     setImage: () => ++n === 1 ? Promise.resolve() : Promise.reject(new DOMException("full", "QuotaExceededError")),
   };
   const files: ImportFile[] = [
-    { dir: "page/", name: "A.md", text: "![](A-img-1.webp) ![](A-img-2.webp)" },
-    { dir: "page/", name: "A-img-1.webp", bytes: new Uint8Array([1]) },
-    { dir: "page/", name: "A-img-2.webp", bytes: new Uint8Array([2]) },
+    { dir: "commonplace/", name: "A.md", text: "![](A-img-1.webp) ![](A-img-2.webp)" },
+    { dir: "commonplace/", name: "A-img-1.webp", bytes: new Uint8Array([1]) },
+    { dir: "commonplace/", name: "A-img-2.webp", bytes: new Uint8Array([2]) },
   ];
   const tally = await importFiles(files, s);
   expect(tally.full).toBe(true);
-  expect(tally.failures[0].error).toContain("page/A-img-1.webp");
+  expect(tally.failures[0].error).toContain("commonplace/A-img-1.webp");
 });

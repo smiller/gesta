@@ -58,21 +58,21 @@ async function launch(url: string, fn: (page: Page) => Promise<Record<string, un
   return out;
 }
 const say = (label: string, o: unknown): void => console.log(label.padEnd(34), JSON.stringify(o));
-say("seed, open #page/Horace", await launch(PAGE + "#page/Horace", async (page) => {
+say("seed, open #commonplace/Horace", await launch(PAGE + "#commonplace/Horace", async (page) => {
   await reseeded(page, SEEDS);
   return read(page);
 }));
 say("open a book page", await launch(PAGE + "#bookshelf/Browning,%20Robert/Pippa%20Passes", read));
 say("open a day", await launch(PAGE + "#2026-09-06", read));
 say("an unknown book is refused", await launch(PAGE + "#bookshelf/Nobody/Nothing", read));
-say("an unknown page mints on visit", await launch(PAGE + "#page/Brand%20New", read));
-say("type, wait past the debounce", await launch(PAGE + "#page/Brand%20New", async (page) => {
+say("an unknown page mints on visit", await launch(PAGE + "#commonplace/Brand%20New", read));
+say("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
   await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
   return read(page);
 }));
-say("relaunch: the text came back", await launch(PAGE + "#page/Brand%20New", read));
+say("relaunch: the text came back", await launch(PAGE + "#commonplace/Brand%20New", read));
 say("an unknown book under a known author", await launch(PAGE + "#bookshelf/Browning,%20Robert/Nothing", read));
 say("walk: next from the earlier day", await launch(PAGE + "#2026-09-05", async (page) => {
   await page.keyboard.press("Control+Meta+Period");

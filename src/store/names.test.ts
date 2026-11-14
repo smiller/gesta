@@ -69,17 +69,17 @@ test("importTarget: the day arm reads the filename, in exactly its own folder", 
 });
 
 test("importTarget: the namespace arm is tested FIRST and keys by path", () => {
-  expect(importTarget("page/A/B.md")).toEqual({ date: "page", tag: "A/B" });
+  expect(importTarget("commonplace/A/B.md")).toEqual({ date: "commonplace", tag: "A/B" });
   expect(importTarget("bookshelf/B/2026-01-05.md")).toEqual({ date: "bookshelf", tag: "B/2026-01-05" });
-  expect(importTarget("notes/page/Ideas.md")).toBe(null);
+  expect(importTarget("notes/commonplace/Ideas.md")).toBe(null);
   expect(importTarget("bookshelf/A/B/C/D.md")).toEqual({ date: "bookshelf", tag: "A/B/C/D" });
 });
 
 test("importTarget: only entry-shaped .md files target anything", () => {
-  expect(importTarget("page/A/B-img-1.webp")).toBe(null);
+  expect(importTarget("commonplace/A/B-img-1.webp")).toBe(null);
   expect(importTarget("page.md")).toBe(null);
-  expect(nsTarget("page", [])).toBe(null);
-  expect(nsTarget("page", ["A", ""])).toBe(null);
+  expect(nsTarget("commonplace", [])).toBe(null);
+  expect(nsTarget("commonplace", ["A", ""])).toBe(null);
 });
 
 test("entryFile: a day rides under its year; the flat and bare stems agree", () => {
@@ -90,41 +90,41 @@ test("entryFile: a day rides under its year; the flat and bare stems agree", () 
 });
 
 test("entryFile: a keyed entry's folder IS its key, its flat stem opens with its namespace", () => {
-  expect(entryFile("page", "Recipes")).toEqual(
-    { dir: "page/", base: "Recipes", flatBase: "page--Recipes", root: "page/Recipes" });
-  expect(entryFile("page", "Recipes/Bread")).toEqual(
-    { dir: "page/Recipes/", base: "Bread", flatBase: "page--Recipes--Bread", root: "page/Recipes" });
+  expect(entryFile("commonplace", "Recipes")).toEqual(
+    { dir: "commonplace/", base: "Recipes", flatBase: "commonplace--Recipes", root: "commonplace/Recipes" });
+  expect(entryFile("commonplace", "Recipes/Bread")).toEqual(
+    { dir: "commonplace/Recipes/", base: "Bread", flatBase: "commonplace--Recipes--Bread", root: "commonplace/Recipes" });
   expect(entryFile("bookshelf", "Hamlet/Act I/Scene 2")).toEqual(
     { dir: "bookshelf/Hamlet/Act I/", base: "Scene 2",
       flatBase: "bookshelf--Hamlet--Act I--Scene 2", root: "bookshelf/Hamlet" });
 });
 
 test("entryFile: an ancestor ending in a dot flattens the entry, never its root", () => {
-  expect(entryFile("page", "A./B")).toEqual(
-    { dir: "", base: "page--A.--B", flatBase: "page--A.--B", root: "page/A" });
-  expect(entryFile("page", "../Sub")).toEqual(
-    { dir: "", base: "page--..--Sub", flatBase: "page--..--Sub", root: "page/-" });
+  expect(entryFile("commonplace", "A./B")).toEqual(
+    { dir: "", base: "commonplace--A.--B", flatBase: "commonplace--A.--B", root: "commonplace/A" });
+  expect(entryFile("commonplace", "../Sub")).toEqual(
+    { dir: "", base: "commonplace--..--Sub", flatBase: "commonplace--..--Sub", root: "commonplace/-" });
 });
 
 test("collidingFile: two entries claiming one flat stem refuse the run", () => {
   const at = (tag: string) => entryFile("2024-01-02", tag);
   expect(collidingFile([
-    { at: entryFile("page", "Recipes"), key: "page/Recipes" },
-    { at: entryFile("page", "Bread"), key: "page/Bread" },
+    { at: entryFile("commonplace", "Recipes"), key: "commonplace/Recipes" },
+    { at: entryFile("commonplace", "Bread"), key: "commonplace/Bread" },
   ])).toBe(null);
   expect(collidingFile([
     { at: at("a/b"), key: "2024-01-02/a/b" },
     { at: at("a:b"), key: "2024-01-02/a:b" },
   ])).toEqual({ name: "journal/2024/2024-01-02--a-b.md", keys: ["2024-01-02/a/b", "2024-01-02/a:b"] });
   const flatOnly = collidingFile([
-    { at: entryFile("page", "A--B"), key: "page/A--B" },
-    { at: entryFile("page", "A/B"), key: "page/A/B" },
+    { at: entryFile("commonplace", "A--B"), key: "commonplace/A--B" },
+    { at: entryFile("commonplace", "A/B"), key: "commonplace/A/B" },
   ]);
-  expect(flatOnly!.name).toBe("page--A--B.md");
+  expect(flatOnly!.name).toBe("commonplace--A--B.md");
 });
 
 test("collidingFile: the same key twice is a drifted registry, not a clash", () => {
-  const job = { at: entryFile("page", "Recipes"), key: "page/Recipes" };
+  const job = { at: entryFile("commonplace", "Recipes"), key: "commonplace/Recipes" };
   expect(collidingFile([job, { ...job }])).toBe(null);
 });
 

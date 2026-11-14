@@ -22,34 +22,34 @@ test("imageRefs: a text the editor cannot read is read by its picture syntax, so
 
 test("splitKey and archiveRoots read the key alone", () => {
   expect(splitKey("2026-01-05")).toEqual(["2026-01-05", null]);
-  expect(splitKey("page/A/B")).toEqual(["page", "A/B"]);
-  expect(archiveRoots(["2026-01-05", "page/Recipes/Bread", "bookshelf/Dante/Inferno/1"])).toEqual(["journal/2026", "page/Recipes", "bookshelf/Dante"]);
+  expect(splitKey("commonplace/A/B")).toEqual(["commonplace", "A/B"]);
+  expect(archiveRoots(["2026-01-05", "commonplace/Recipes/Bread", "bookshelf/Dante/Inferno/1"])).toEqual(["journal/2026", "commonplace/Recipes", "bookshelf/Dante"]);
 });
 
 test("exportEntries: a doc per non-blank entry under its path, sidecars beside it, blanks skipped", async () => {
   const images = memImageStore();
-  await images.set("page/Trip Log-img-1.webp", new Uint8Array([1]));
+  await images.set("commonplace/Trip Log-img-1.webp", new Uint8Array([1]));
   const cache = {
     "2026-01-05": "# A day\n", "2026-01-05/morning": "tagged", "2026-01-06": "   \n",
     /* a bare ref cannot hold a space (the export brackets such a name), so
        the missing one is spaceless */
-    "page/Trip Log": "![](<Trip Log-img-1.webp>) and ![](missing-img-2.webp)",
+    "commonplace/Trip Log": "![](<Trip Log-img-1.webp>) and ![](missing-img-2.webp)",
     "bookshelf/Dante/Inferno/1": "canto",
   };
   const files = await exportEntries(cache, images);
   expect(files.map(filePath)).toEqual([
     "journal/2026/2026-01-05.md", "journal/2026/2026-01-05--morning.md",
     "bookshelf/Dante/Inferno/1.md",
-    "page/Trip Log.md", "page/Trip Log-img-1.webp",
+    "commonplace/Trip Log.md", "commonplace/Trip Log-img-1.webp",
   ]);
   const doc = files[3];
-  expect(doc.text).toBe(cache["page/Trip Log"]);
-  expect(doc.flat).toBe("page--Trip Log.md");
-  expect(doc.entry).toBe("page--Trip Log");
-  expect(doc.root).toBe("page/Trip Log");
-  expect(files[4]).toMatchObject({ bytes: new Uint8Array([1]), entry: "page--Trip Log", root: "page/Trip Log" });
+  expect(doc.text).toBe(cache["commonplace/Trip Log"]);
+  expect(doc.flat).toBe("commonplace--Trip Log.md");
+  expect(doc.entry).toBe("commonplace--Trip Log");
+  expect(doc.root).toBe("commonplace/Trip Log");
+  expect(files[4]).toMatchObject({ bytes: new Uint8Array([1]), entry: "commonplace--Trip Log", root: "commonplace/Trip Log" });
   // the second ref had no bytes: the doc is marked
-  expect(doc.picsLost).toMatchObject({ dir: "page/", base: "Trip Log" });
+  expect(doc.picsLost).toMatchObject({ dir: "commonplace/", base: "Trip Log" });
   expect(doc.picsMissing).toBe(1);
   expect(missingPictures(files)).toBe(1);
   expect(doc.picsFaulted).toBeUndefined();
@@ -60,7 +60,7 @@ test("exportEntries: a doc per non-blank entry under its path, sidecars beside i
 test("exportEntries: a picture read that throws marks the doc faulted, and the run goes on", async () => {
   const images = memImageStore();
   const broken = { ...images, get: () => Promise.reject(new Error("db closed")) };
-  const files = await exportEntries({ "page/A": "![](A-img-1.webp)" }, broken);
+  const files = await exportEntries({ "commonplace/A": "![](A-img-1.webp)" }, broken);
   expect(files.length).toBe(1);
   expect(files[0].picsFaulted).toBe(true);
   expect(files[0].picsLost).toBeTruthy();

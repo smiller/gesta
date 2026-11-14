@@ -20,7 +20,7 @@ async function keysOpening(): Promise<void> {
   await refusedEntryRedrawnUnder();
 }
 async function chordsPressedTwice(): Promise<void> {
-  await go("page/Horace");
+  await go("commonplace/Horace");
   await view(false);
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's pin, dismissed as a reader does: the whispers below yield to it */
   await tap(S.editor);
@@ -33,13 +33,13 @@ async function chordsPressedTwice(): Promise<void> {
   await tap(".page-lines > summary");
   await rest(page);
   await log("Line numbering closed by its label", await R.linesRowOpen(page));
-  await go("page/Links");
+  await go("commonplace/Links");
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.keyboard.press("a");
   await rest(page);
   await page.keyboard.press("Escape");
-  await go("page/Horace");
+  await go("commonplace/Horace");
   /* the line's place once the measuring passes after an arrival are done:
      two readings a frame apart agree. Measured at once, a full run's click
      landed a word later as often as not */
@@ -58,10 +58,10 @@ async function bookmarkLinkPressed(): Promise<void> {
   await tap(".bookmark-link[aria-label='Link to Links']");
   await rest(page);
   await page.keyboard.type("Z");
-  await log("a bookmark's link pressed, Z typed", { line: ((await A.stored(page)) || "").split("\n").find((l) => l.includes("](#page/Links)"))?.slice(0, 60) ?? null });
+  await log("a bookmark's link pressed, Z typed", { line: ((await A.stored(page)) || "").split("\n").find((l) => l.includes("](#commonplace/Links)"))?.slice(0, 60) ?? null });
   await page.keyboard.press("Escape");
   /* Tab and ⌘A outside a list, in a code block, and the line below a table */
-  await go("page/Keys");
+  await go("commonplace/Keys");
   await tap(S.editor);
   await view(true);
   await R.setSource(page, "one\n\ntwo\n\n```\nx = 1\ny = 2\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n");
@@ -155,7 +155,7 @@ async function tabTwelveTimesBookmarks(): Promise<void> {
   await hold("Enter", 3);
   await rest(page);
   await log("Enter held on a search result", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Boethius/Consolatio/3pr2") });
-  await go("page/Held");
+  await go("commonplace/Held");
   await tap(S.editor);
   await page.keyboard.press("Control+Meta+s");
   await rest(page);
@@ -194,30 +194,30 @@ async function digitHeldBookmarksCard(): Promise<void> {
   /* a picture that finishes preparing while Search is typed in */
   /* the digit that opens a bookmark, held: nothing typed into the entry it opened */
   await page.evaluate(() => { window.__typed = 0; document.addEventListener("beforeinput", () => { window.__typed++; }, true); });
-  await keep("bookmarks", '["page/Horace","2026-09-06"]');
+  await keep("bookmarks", '["commonplace/Horace","2026-09-06"]');
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await hold("1", 4);
   await page.waitForTimeout(800);
   await log("a digit held on the bookmarks card", { typed: await page.evaluate(() => window.__typed) });
   /* a refused entry redrawn by another tab's write: Search, open over it, stays */
-  await go("page/Refused");
+  await go("commonplace/Refused");
   await view(true);
   await R.setSource(page, "::: grid\nloose\n:::\n");
   for (let i = 0; i < 12 && !((await A.stored(page)) || "").includes("loose"); i++);
-  await go("page/Held");
-  await go("page/Refused");
+  await go("commonplace/Held");
+  await go("commonplace/Refused");
   await page.keyboard.press("Control+Meta+k");
   await rest(page);
   await page.keyboard.type("lo");
-  await A.foreignWrite(page, "page/Refused", "::: grid\nloose again\n:::\n");
+  await A.foreignWrite(page, "commonplace/Refused", "::: grid\nloose again\n:::\n");
   await page.waitForTimeout(800);
 }
 async function refusedEntryRedrawnUnder(): Promise<void> {
   await log("a refused entry redrawn under Search", { source: await R.inSource(page), query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null) });
   await page.keyboard.press("Escape");
   /* the picture's preparation held 800ms, so it lands after the keys are in Search */
-  await go("page/Pictured%20Late");
+  await go("commonplace/Pictured%20Late");
   await tap(S.editor);
 }
 const tap = (sel: string) => page.click(sel, { timeout: 3000 }).catch(() => {});
@@ -258,7 +258,7 @@ async function verseLines23Copied(): Promise<void> {
   await enterListItemS();
 }
 async function verseLinesCopied(): Promise<void> {
-  await write("page/Verse Copied", "::: verse\none line\ntwo line\nthree line\nfour line\nfive line\nsix line\nseven line\neight line\nnine line\nten line\neleven line\n:::\n");
+  await write("commonplace/Verse Copied", "::: verse\none line\ntwo line\nthree line\nfour line\nfive line\nsix line\nseven line\neight line\nnine line\nten line\neleven line\n:::\n");
   await R.selectBetween(page, "two line", "three line");
   await page.keyboard.press("Meta+c");
   await rest(page);
@@ -277,27 +277,27 @@ async function verseLinesCopied(): Promise<void> {
   const typing = await numbers();
   await page.waitForTimeout(3000);
   await log("a line typed into verse", { before, typing, after: await numbers() });
-  await write("page/Countdown", "5. five\n4. four\n");
+  await write("commonplace/Countdown", "5. five\n4. four\n");
   await caretAt("four", 4);
   await page.keyboard.press("Enter");
   await page.keyboard.type("next");
   await log("Enter in a countdown list", { md: await A.stored(page), numbers: await listNumbers() });
-  await write("page/Countdown Three", "5. five\n4. four\n3. three\n");
+  await write("commonplace/Countdown Three", "5. five\n4. four\n3. three\n");
   await caretAt("five", 4);
   await page.keyboard.press("Enter");
   await page.keyboard.type("new");
   await log("Enter after the first item of a countdown", { md: await A.stored(page) });
-  await write("page/Countdown Middle", "5. five\n4. four\n3. three\n");
+  await write("commonplace/Countdown Middle", "5. five\n4. four\n3. three\n");
   await caretAt("four", 4);
   await page.keyboard.press("Enter");
   await page.keyboard.type("new");
   await log("Enter after the middle item of a countdown", { md: await A.stored(page) });
-  await write("page/Numbers Jump", "1. a\n5. e\n6. f\n");
+  await write("commonplace/Numbers Jump", "1. a\n5. e\n6. f\n");
   await caretAt("e", 1);
   await page.keyboard.press("Enter");
   await page.keyboard.type("new");
   await log("Enter after a jump in the numbering", { md: await A.stored(page) });
-  await write("page/Item Paragraph", "1. one\n\n   more of one\n\n2. two\n");
+  await write("commonplace/Item Paragraph", "1. one\n\n   more of one\n\n2. two\n");
 }
 async function enterListItemS(): Promise<void> {
   await caretAt("more of one", 11);
@@ -308,12 +308,12 @@ async function enterListItemS(): Promise<void> {
   await page.keyboard.press("Enter");
   await page.keyboard.type("out");
   await log("Enter twice after it, out typed", { md: await A.stored(page) });
-  await write("page/Quoted Heading", "> ## Quoted head\n>\n> quoted text\n");
+  await write("commonplace/Quoted Heading", "> ## Quoted head\n>\n> quoted text\n");
   await caretAt("Quoted head", 3);
   await page.keyboard.press("Tab");
   await rest(page);
   await log("Tab on a heading in a quote", { md: await A.stored(page) });
-  await write("page/Quoted Table", "> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |\n");
+  await write("commonplace/Quoted Table", "> quoted text\n>\n> | a | b |\n> | - | - |\n> | 1 | 2 |\n");
   await caretAt("1", 1);
 }
 const numbers = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln.shown, #page .ln.shown")].filter((r) => getComputedStyle(r, "::before").content.replace(/"/g, "") !== "none").map((r) => r.dataset.line + ":" + r.textContent.trim().slice(0, 10)).join(" "));

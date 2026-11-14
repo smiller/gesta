@@ -154,7 +154,7 @@ async function lineBarSkippedLine(): Promise<void> {
   await rest(page);
   const quoted = await R.clipboardLines(page);
   await page.keyboard.press("Escape");
-  await go("page/Quoted%20Ovid");
+  await go("commonplace/Quoted%20Ovid");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
   const fitted = await page.waitForFunction(() => document.querySelector("#editor .ProseMirror.fitted"), null, { timeout: 3000 }).then(() => true, () => false);
@@ -314,7 +314,7 @@ async function escapeOnWorkByParagraph(): Promise<void> {
 }
 async function referenceOnWorkByParagraph(): Promise<void> {
   await log("⌃⌘R on a work by paragraph", { label: await page.evaluate(async () => { for (let i = 0; i < 40; i++) { const t = await navigator.clipboard.readText().catch(() => ""); if (t.includes("Augustine")) return t.split("\n")[0].replace(/\]\(#[^)]*\)/, "]"); await new Promise((r) => setTimeout(r, 50)); } return "not landed"; }) });
-  await page.evaluate(() => { location.hash = "#page/Horace"; });
+  await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
   await R.settle(page);
   await rest(page);
   await page.keyboard.press("Control+Meta+g");
@@ -341,12 +341,12 @@ async function byParagraphFollowing(): Promise<void> {
 
 section("column marks", async () => {
   /* a hand's drag begun on a line's closing punctuation: on every row kind, what the marks show beyond the selection, whether Ref (all) is offered, and what ⌃⌘R quotes */
-  await writeAll({ "page/Golding": fixture("ovid-golding-7.md"), "page/Samson": fixture("samson-split-lines.md") });
-  await marksAfterDrag("page/Horace", "a paired line's closing comma into the next line's Latin", ["ancestors,", 9], ["o et praes", 9]);
-  await marksAfterDrag("page/Horace", "a paired line's English into the next line's Latin", ["born of monarch", 5], ["o et praes", 9]);
-  await marksAfterDrag("page/Golding", "a block numbered on both sides, from a line's closing comma", ["with fulsome face,", 17], ["Medea with", 10]);
-  await marksAfterDrag("page/Samson", "plain verse, from a line's closing stop", ["we long to know.", 15], ["It would burst", 14]);
-  await marksAfterDrag("page/Samson", "a split line's rest, from the closing stop of the line it splits", ["Relate by whom.", 14], ["By Samson.", 6]);
+  await writeAll({ "commonplace/Golding": fixture("ovid-golding-7.md"), "commonplace/Samson": fixture("samson-split-lines.md") });
+  await marksAfterDrag("commonplace/Horace", "a paired line's closing comma into the next line's Latin", ["ancestors,", 9], ["o et praes", 9]);
+  await marksAfterDrag("commonplace/Horace", "a paired line's English into the next line's Latin", ["born of monarch", 5], ["o et praes", 9]);
+  await marksAfterDrag("commonplace/Golding", "a block numbered on both sides, from a line's closing comma", ["with fulsome face,", 17], ["Medea with", 10]);
+  await marksAfterDrag("commonplace/Samson", "plain verse, from a line's closing stop", ["we long to know.", 15], ["It would burst", 14]);
+  await marksAfterDrag("commonplace/Samson", "a split line's rest, from the closing stop of the line it splits", ["Relate by whom.", 14], ["By Samson.", 6]);
 });
 async function marksAfterDrag(key: string, label: string, [from, at]: [string, number], [to, end]: [string, number]): Promise<void> {
   await go(key);

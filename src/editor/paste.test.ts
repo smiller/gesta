@@ -97,7 +97,7 @@ test("a pasted link to an address that names no entry stays as typed", () => {
   const near = pastedState(s, " [near](#pagex)").doc;
   expect(near.textContent).toBe("x [near](#pagex)");
   expect(linksIn(near)).toEqual([]);
-  for (const miss of ["[a](#page/)", "[a](#shelf/A)"]) expect(linksIn(pastedState(s, miss).doc)).toEqual([]);
+  for (const miss of ["[a](#commonplace/)", "[a](#shelf/A)"]) expect(linksIn(pastedState(s, miss).doc)).toEqual([]);
   expect(paste(at("see  now", "see "), "[Ideas](#2026-09-07/Ideas)")).toBe("see [Ideas](#2026-09-07/Ideas) now");
 });
 test("a pasted fence the model refuses is named with its reason; a clean paste names nothing", () => {
@@ -112,19 +112,19 @@ test("a bare URL pasted alone is a link at once", () => {
   expect(doc.textContent).toBe("see https://example.org/x now");
   expect(linksIn(pastedState(s, "see https://example.org/x").doc)).toEqual([]);
 });
-test("a pasted link to this page by its full address keeps only its bare address; a link anywhere else keeps its own", () => {
+test("a pasted link into the app by its full address keeps only its bare address; a link anywhere else keeps its own", () => {
   const page = PAGE;
   const link = (href: string) => schema.text("Horace", [schema.marks.link.create({ href })]);
-  const html = new Slice(schema.node("doc", null, [schema.node("paragraph", null, [link(page + "#page/Horace?h=sunt%20quos"), schema.text(" and "), link("https://example.com/#x"), schema.text(" and "), link("file:///Users/someone/writer/index.html#2022-07-05")])]).content, 0, 0);
+  const html = new Slice(schema.node("doc", null, [schema.node("paragraph", null, [link(page + "#commonplace/Horace?h=sunt%20quos"), schema.text(" and "), link("https://example.com/#x"), schema.text(" and "), link("file:///Users/someone/writer/index.html#2022-07-05")])]).content, 0, 0);
   const hrefs: string[] = [];
   const ownPaste = pasteProps({ file: () => {}, refused: () => {}, href: () => page + "#2026-10-16" });
   ownPaste.transformPasted!(html, null as never, false).content.descendants((n) => { n.marks.forEach((m) => hrefs.push(m.attrs.href as string)); });
-  expect(hrefs).toEqual(["#page/Horace?h=sunt%20quos", "https://example.com/#x", "file:///Users/someone/writer/index.html#2022-07-05"]);
+  expect(hrefs).toEqual(["#commonplace/Horace?h=sunt%20quos", "https://example.com/#x", "file:///Users/someone/writer/index.html#2022-07-05"]);
 });
-test("a link to this page in pasted markdown keeps only its bare address; one whose words are its address stays whole; a paste with nothing to change comes back as it was", () => {
+test("a link into the app in pasted markdown keeps only its bare address; one whose words are its address stays whole; a paste with nothing to change comes back as it was", () => {
   const page = PAGE;
   const s = at("start here", "here");
-  expect(after(s, `[Horace](${page}#page/Horace)\n\nand [${page}#page/Ode](${page}#page/Ode)`)).toBe(`start here\n\n[Horace](#page/Horace)\n\nand ${page}#page/Ode`);
+  expect(after(s, `[Horace](${page}#commonplace/Horace)\n\nand [${page}#commonplace/Ode](${page}#commonplace/Ode)`)).toBe(`start here\n\n[Horace](#commonplace/Horace)\n\nand ${page}#commonplace/Ode`);
   const plain = new Slice(parseMarkdown("no links [here](https://example.com/)").content, 0, 0);
   expect(pasteProps({ file: () => {}, refused: () => {}, href: () => page }).transformPasted!(plain, null as never, false)).toBe(plain);
 });

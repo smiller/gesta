@@ -29,12 +29,12 @@ describe("mayName", () => {
   });
   it("a name with a straight apostrophe or brackets is read whole, the link's closing bracket not taken for its end", () => {
     expect(mayName("bookshelf", "O'Brien, Flann")("[x](#bookshelf/O'Brien%2C%20Flann) and more")).toBe(true);
-    expect(mayName("page", "Notes(2)")("see [x](#page/Notes(2)) here")).toBe(true);
-    expect(mayName("page", "Notes(2)")("see [x](#page/Notes%282%29/a) here")).toBe(true);
-    expect(mayName("page", "Notes")("see [x](#page/Notes(2)) here")).toBe(false);
+    expect(mayName("commonplace", "Notes(2)")("see [x](#commonplace/Notes(2)) here")).toBe(true);
+    expect(mayName("commonplace", "Notes(2)")("see [x](#commonplace/Notes%282%29/a) here")).toBe(true);
+    expect(mayName("commonplace", "Notes")("see [x](#commonplace/Notes(2)) here")).toBe(false);
   });
   it("another author, a longer name, another namespace and no address are not", () => {
-    for (const md of ["[a](#bookshelf/Carroll%2C%20Lewis)", "[a](#bookshelf/C.%20P.%20Cavafy%20Jr)", "[a](#page/C.%20P.%20Cavafy)", "C. P. Cavafy wrote it"]) expect(may(md)).toBe(false);
+    for (const md of ["[a](#bookshelf/Carroll%2C%20Lewis)", "[a](#bookshelf/C.%20P.%20Cavafy%20Jr)", "[a](#commonplace/C.%20P.%20Cavafy)", "C. P. Cavafy wrote it"]) expect(may(md)).toBe(false);
   });
 });
 
@@ -49,7 +49,7 @@ describe("withHeading", () => {
 
 describe("linkingKeys", () => {
   it("the entries outside the moved set and its copies holding an address under the name moved", () => {
-    const cache = { "2026-09-14": "a [x](#bookshelf/C.%20P.%20Cavafy)", "2026-09-15": "plain bookshelf/ talk", "page/Links": "[y](#bookshelf/Horace)", "bookshelf/C. P. Cavafy": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)", "bookshelf/Cavafy, C. P": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)" };
+    const cache = { "2026-09-14": "a [x](#bookshelf/C.%20P.%20Cavafy)", "2026-09-15": "plain bookshelf/ talk", "commonplace/Links": "[y](#bookshelf/Horace)", "bookshelf/C. P. Cavafy": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)", "bookshelf/Cavafy, C. P": "[z](#bookshelf/C.%20P.%20Cavafy/Walls)" };
     expect(linkingKeys(cache, "bookshelf", "C. P. Cavafy", { "bookshelf/C. P. Cavafy": "bookshelf/Cavafy, C. P" })).toEqual(["2026-09-14"]);
   });
 });

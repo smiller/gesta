@@ -1,115 +1,115 @@
 == launch, panels, the corner, links
 the launch's stages: "start;primed;all;"
-after warm: {"text":"10 entries stored","show":true,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-masthead over Horace: {"crumb":"Horace","title":"","titleHidden":true,"lines":true,"today":true,"backups":"backups","height":111.21875,"sticky":"sticky","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-pages panel: {"rows":["Horace","Links","Williams"],"create":"New page…","cursor":"on button","screen":"page/Horace · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
-books panel, displacing it: {"rows":["Boethius","Browning, Robert"],"create":"New author…","cursor":"on button","screen":"page/Horace · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
-its own opener again: {"value":null,"cursor":"on button","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-after Escape: {"value":null,"cursor":"on button","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-after a click outside: {"value":null,"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-after a row click: {"entry":"page/Williams","panel":null,"cursor":"at a line's start","screen":"page/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-3.2 s later: {"text":"10 entries stored","show":false,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"page/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-after typing: {"text":"saved","show":true,"opacity":"[fading]","pill":true,"cursor":"at the end","screen":"page/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-after the click: {"text":"saved","show":false,"opacity":"[fading]","pill":true,"cursor":"none","screen":"page/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-after ⌃⌘, on the first entry: {"text":"no earlier entry","show":true,"opacity":"[fading]","pill":true,"cursor":"none","screen":"page/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-launch, panels, the corner, links: arrived at page/Links: {"cursor":"at a line's start"}
-a link to itself: {"entry":"page/Links","text":"already here","show":true,"opacity":"[fading]","pill":true,"cursor":"inside a line","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a plain click on an external link: {"entry":"page/Links","url":"page/Links","cursor":"inside a line","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌘-click on an internal link: {"newTab":"page/Horace","stayed":"page/Links","nodeSelected":false,"selection":"","bar":false,"cursor":"inside a line","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌘-click on an external link: {"newTab":true,"stayed":"page/Links","nodeSelected":false,"selection":"","bar":false,"cursor":"inside a line","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a plain click on an internal link: {"entry":"page/Horace","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after warm: {"text":"10 entries stored","show":true,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+masthead over Horace: {"crumb":"Horace","title":"","titleHidden":true,"lines":true,"today":true,"backups":"backups","height":111.21875,"sticky":"sticky","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+pages panel: {"rows":["Horace","Links","Williams"],"create":"New commonplace…","cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
+books panel, displacing it: {"rows":["Boethius","Browning, Robert"],"create":"New author…","cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
+its own opener again: {"value":null,"cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after Escape: {"value":null,"cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after a click outside: {"value":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after a row click: {"entry":"commonplace/Williams","panel":null,"cursor":"at a line's start","screen":"commonplace/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+3.2 s later: {"text":"10 entries stored","show":false,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"commonplace/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after typing: {"text":"saved","show":true,"opacity":"[fading]","pill":true,"cursor":"at the end","screen":"commonplace/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after the click: {"text":"saved","show":false,"opacity":"[fading]","pill":true,"cursor":"none","screen":"commonplace/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+after ⌃⌘, on the first entry: {"text":"no earlier entry","show":true,"opacity":"[fading]","pill":true,"cursor":"none","screen":"commonplace/Williams · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+launch, panels, the corner, links: arrived at commonplace/Links: {"cursor":"at a line's start"}
+a link to itself: {"entry":"commonplace/Links","text":"already here","show":true,"opacity":"[fading]","pill":true,"cursor":"inside a line","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a plain click on an external link: {"entry":"commonplace/Links","url":"commonplace/Links","cursor":"inside a line","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌘-click on an internal link: {"newTab":"commonplace/Horace","stayed":"commonplace/Links","nodeSelected":false,"selection":"","bar":false,"cursor":"inside a line","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌘-click on an external link: {"newTab":true,"stayed":"commonplace/Links","nodeSelected":false,"selection":"","bar":false,"cursor":"inside a line","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a plain click on an internal link: {"entry":"commonplace/Horace","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == fence
-fence: arrived at page/Pasted Fence: {"cursor":"at a line's start"}
-a fence pasted as text mid-paragraph: {"md":"start\n\n::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::\n\n end","cursor":"at a line's start","screen":"page/Pasted Fence · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+fence: arrived at commonplace/Pasted Fence: {"cursor":"at a line's start"}
+a fence pasted as text mid-paragraph: {"md":"start\n\n::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::\n\n end","cursor":"at a line's start","screen":"commonplace/Pasted Fence · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == verse copy
-verse copy: arrived at page/Horace: {"cursor":"at a line's start"}
-verse copy: arrived at page/Pasted Verse: {"cursor":"at a line's start"}
+verse copy: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+verse copy: arrived at commonplace/Pasted Verse: {"cursor":"at a line's start"}
 a verse block copied and pasted: {"fence":true,"pairs":36,"head":["::: verse","Maecenas atavis edite regibus, | Maecenas, born of monarch ancestors,","o et praesidium et dulce decus meum, | The shield at once and glory of my life!"]}
 == refused fence
-refused fence: arrived at page/Fenced: {"cursor":"at a line's start"}
-a refused fence: {"corner":"::: versey — not a block Gesta knows, so it stayed a paragraph (click to copy)","paragraphs":1,"cursor":"at the end","screen":"page/Fenced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a clean switch: {"corner":"","verse":true,"cursor":"at the end","screen":"page/Fenced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+refused fence: arrived at commonplace/Fenced: {"cursor":"at a line's start"}
+a refused fence: {"corner":"::: versey — not a block Gesta knows, so it stayed a paragraph (click to copy)","paragraphs":1,"cursor":"at the end","screen":"commonplace/Fenced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a clean switch: {"corner":"","verse":true,"cursor":"at the end","screen":"commonplace/Fenced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == quote tab
-quote tab: arrived at page/Quoted: {"cursor":"at a line's start"}
-Tab in a quote: {"md":">> quoted words","cursor":"at the end","screen":"page/Quoted · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Shift-Tab twice: {"md":"> quoted words","corner":"saved","cursor":"at the end","screen":"page/Quoted · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-quote tab: arrived at page/Horace: {"cursor":"at a line's start"}
-⌃⌘L over Horace: {"open":true,"focused":"Line numbering","options":["none","every line","every 2nd","every 3rd","every 4th","every 5th","every 10th"],"cursor":"on select","screen":"page/Horace · sel none · bar off · panel none · rows lines · rendered · corner [whatever stood]"}
-Escape: {"open":false,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+quote tab: arrived at commonplace/Quoted: {"cursor":"at a line's start"}
+Tab in a quote: {"md":">> quoted words","cursor":"at the end","screen":"commonplace/Quoted · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Shift-Tab twice: {"md":"> quoted words","corner":"saved","cursor":"at the end","screen":"commonplace/Quoted · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+quote tab: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+⌃⌘L over Horace: {"open":true,"focused":"Line numbering","options":["none","every line","every 2nd","every 3rd","every 4th","every 5th","every 10th"],"cursor":"on select","screen":"commonplace/Horace · sel none · bar off · panel none · rows lines · rendered · corner [whatever stood]"}
+Escape: {"open":false,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == reference copy
-reference copy: arrived at page/Horace: {"cursor":"at a line's start"}
-⌃⌘R: {"said":"Reference copied to clipboard","corner":"Reference copied to clipboard","types":["text/plain","text/html"],"textHead":"[*Horace*](#page/Horace?h=Maecenas%20ata","passage":"> ::: verse\n> Maecenas atavis edite regibus, | Maecenas, bor","htmlHead":"<p data-gesta-copy=\"\"><a href=\"…\"><em>Horace</em></a>:</p><blockquote data-gesta-copy=\"\"><div class=\"verse\"><div class=\"vrow vpair\" style=\"display: grid; grid-t","anchor":true,"em":true,"grid":true,"cursor":"selected 30","screen":"page/Horace · sel 30 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+reference copy: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+⌃⌘R: {"said":"Reference copied to clipboard","corner":"Reference copied to clipboard","types":["text/plain","text/html"],"textHead":"[*Horace*](#commonplace/Horace?h=Maecena","passage":"> ::: verse\n> Maecenas atavis edite regibus, | Maecenas, bor","htmlHead":"<p data-gesta-copy=\"\"><a href=\"…\"><em>Horace</em></a>:</p><blockquote data-gesta-copy=\"\"><div class=\"verse\"><div class=\"vrow vpair\" style=\"display: grid; grid-t","anchor":true,"em":true,"grid":true,"cursor":"selected 30","screen":"commonplace/Horace · sel 30 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 == a reference pasted
-a reference pasted: arrived at page/Horace: {"cursor":"at a line's start"}
-a reference pasted: arrived at page/Referred: {"cursor":"at a line's start"}
-the reference pasted: {"said":"Reference copied to clipboard","copied":"file address","link":"bare","head":"#page/Horace","cursor":"at the end","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a reference pasted: arrived at page/Williams/Witchcraft 3: {"cursor":"at a line's start"}
-a reference pasted: arrived at page/Referred: {"cursor":"at a line's start"}
-prose with two spaces pasted: {"joined":false,"spanned":true,"said":"Reference copied to clipboard","spaces":"kept","cursor":"at the end","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a reference pasted onto a word: {"chosen":true,"link":"#page/Williams/Witchcraft%203","collapsed":true,"caretAfter":"vampires","references":1,"stored":true,"cursor":"inside a line","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a reference pasted mid-sentence: {"caretAfter":"ark Ages","caretBefore":"","references":1,"referred":true,"colon":false,"cursor":"inside a line","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the page's own reference pasted mid-sentence: {"copied":"in-page","references":2,"labelAlone":1,"cursor":"at a line's start","screen":"page/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a reference pasted: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+a reference pasted: arrived at commonplace/Referred: {"cursor":"at a line's start"}
+the reference pasted: {"said":"Reference copied to clipboard","copied":"file address","link":"bare","head":"#commonplace/Horace","cursor":"at the end","screen":"commonplace/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a reference pasted: arrived at commonplace/Williams/Witchcraft 3: {"cursor":"at a line's start"}
+a reference pasted: arrived at commonplace/Referred: {"cursor":"at a line's start"}
+prose with two spaces pasted: {"joined":false,"spanned":true,"said":"Reference copied to clipboard","spaces":"kept","cursor":"at the end","screen":"commonplace/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a reference pasted onto a word: {"chosen":true,"link":"#commonplace/Williams/Witchcraft%203","collapsed":true,"caretAfter":"vampires","references":1,"stored":true,"cursor":"inside a line","screen":"commonplace/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a reference pasted mid-sentence: {"caretAfter":"ark Ages","caretBefore":"","references":1,"referred":true,"colon":false,"cursor":"inside a line","screen":"commonplace/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the page's own reference pasted mid-sentence: {"copied":"in-page","references":2,"labelAlone":1,"cursor":"at a line's start","screen":"commonplace/Referred · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == code block
-code block: arrived at page/Coded: {"cursor":"at a line's start"}
-a js block typed: {"lang":"js","label":"\"js\"","tokens":["tok-k:const","tok-n:42","tok-c:// answer"],"cursor":"at the end","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-hovered: {"show":true,"title":"Copy this code block","insideBlock":true,"labelHidden":"0","cursor":"at the end","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-clicked: {"value":"copied","cursor":"at the end","screen":"page/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+code block: arrived at commonplace/Coded: {"cursor":"at a line's start"}
+a js block typed: {"lang":"js","label":"\"js\"","tokens":["tok-k:const","tok-n:42","tok-c:// answer"],"cursor":"at the end","screen":"commonplace/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+hovered: {"show":true,"title":"Copy this code block","insideBlock":true,"labelHidden":"0","cursor":"at the end","screen":"commonplace/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+clicked: {"value":"copied","cursor":"at the end","screen":"commonplace/Coded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == card copy
-card copy: arrived at page/Carded: {"cursor":"at a line's start"}
-a card hover-copied: {"label":"copied","live":"rgb(204, 223, 213)","bg":"rgb(204, 223, 213)","grid":true,"card":true,"cursor":"at the end","screen":"page/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a card ⌘C'd: {"bg":"rgb(204, 223, 213)","grid":true,"card":true,"cursor":"selected 63","screen":"page/Carded · sel 63 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-card copy: arrived at page/Pasted Card: {"cursor":"at a line's start"}
+card copy: arrived at commonplace/Carded: {"cursor":"at a line's start"}
+a card hover-copied: {"label":"copied","live":"rgb(204, 223, 213)","bg":"rgb(204, 223, 213)","grid":true,"card":true,"cursor":"at the end","screen":"commonplace/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a card ⌘C'd: {"bg":"rgb(204, 223, 213)","grid":true,"card":true,"cursor":"selected 63","screen":"commonplace/Carded · sel 63 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+card copy: arrived at commonplace/Pasted Card: {"cursor":"at a line's start"}
 pasted on a fresh page: {"fence":true,"lines":7,"cards":1,"pairs":1}
 == grid
-grid: arrived at page/Gridded: {"cursor":"at a line's start"}
-a grid pasted: {"grid":true,"columns":2,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-hovered above its corner: {"show":true,"label":"copy grid","title":"Copy this grid","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the grid copied: {"label":"copied","text":"::: grid 2\n::: card-light-blue\nalpha\n:::","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-two cards ⌘C'd: {"bg":"rgb(204, 223, 213)","grid":true,"card":true,"cursor":"selected 11","screen":"page/Gridded · sel 11 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-grid: arrived at page/Pasted Grid: {"cursor":"at a line's start"}
-two cards pasted mid-paragraph: {"grid":true,"columns":2,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"page/Pasted Grid · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-grid: arrived at page/Gridded: {"cursor":"at a line's start"}
-a stray line in a grid, switched back: {"corner":"cannot render page/Gridded — a grid holds only cards; \"loose\" is not a card; shown as source (click to copy)","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-grid: arrived at page/Carded: {"cursor":"at a line's start"}
-grid: arrived at page/Gridded: {"cursor":"at a line's start"}
-the faulty entry opened: {"source":true,"corner":"cannot render page/Gridded — a grid holds only cards; \"loose\" is not a card; shown as source (click to copy)","cursor":"at a line's start","screen":"page/Gridded · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-grid: arrived at page/Carded: {"cursor":"at a line's start"}
-the next entry after a refused switch: {"source":false,"cursor":"at a line's start","screen":"page/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-grid: arrived at page/Gridded: {"cursor":"at a line's start"}
-the line made a card, switched back: {"corner":"saved","grid":true,"columns":3,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"page/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+grid: arrived at commonplace/Gridded: {"cursor":"at a line's start"}
+a grid pasted: {"grid":true,"columns":2,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"commonplace/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+hovered above its corner: {"show":true,"label":"copy grid","title":"Copy this grid","cursor":"at the end","screen":"commonplace/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the grid copied: {"label":"copied","text":"::: grid 2\n::: card-light-blue\nalpha\n:::","cursor":"at the end","screen":"commonplace/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+two cards ⌘C'd: {"bg":"rgb(204, 223, 213)","grid":true,"card":true,"cursor":"selected 11","screen":"commonplace/Gridded · sel 11 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+grid: arrived at commonplace/Pasted Grid: {"cursor":"at a line's start"}
+two cards pasted mid-paragraph: {"grid":true,"columns":2,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"commonplace/Pasted Grid · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+grid: arrived at commonplace/Gridded: {"cursor":"at a line's start"}
+a stray line in a grid, switched back: {"corner":"cannot render commonplace/Gridded — a grid holds only cards; \"loose\" is not a card; shown as source (click to copy)","cursor":"at the end","screen":"commonplace/Gridded · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+grid: arrived at commonplace/Carded: {"cursor":"at a line's start"}
+grid: arrived at commonplace/Gridded: {"cursor":"at a line's start"}
+the faulty entry opened: {"source":true,"corner":"cannot render commonplace/Gridded — a grid holds only cards; \"loose\" is not a card; shown as source (click to copy)","cursor":"at a line's start","screen":"commonplace/Gridded · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+grid: arrived at commonplace/Carded: {"cursor":"at a line's start"}
+the next entry after a refused switch: {"source":false,"cursor":"at a line's start","screen":"commonplace/Carded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+grid: arrived at commonplace/Gridded: {"cursor":"at a line's start"}
+the line made a card, switched back: {"corner":"saved","grid":true,"columns":3,"cards":2,"wider":true,"type":"14.4px","cursor":"at the end","screen":"commonplace/Gridded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == paired card
-paired card: arrived at page/Paired Card: {"cursor":"at a line's start"}
-a card and a note of paired verse: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"page/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-typed on in the note's last row: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"page/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+paired card: arrived at commonplace/Paired Card: {"cursor":"at a line's start"}
+a card and a note of paired verse: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"commonplace/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed on in the note's last row: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"commonplace/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == picture
-picture: arrived at page/Pictured: {"cursor":"at a line's start"}
-a picture pasted: {"md":"A picture: ![](Pictured-img-1.webp)","src":"blob:","width":1400,"height":700,"last":"P","cursor":"at the end","screen":"page/Pictured · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-picture: arrived at page/Pictured End: {"cursor":"at a line's start"}
-a picture pasted at the entry's end: {"md":"Last line\n\n![](<Pictured End-img-1.webp>)","lineBelowPicture":true,"caretBelowPicture":true,"cursor":"at the end","screen":"page/Pictured End · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-picture: arrived at page/Pictured Away: {"cursor":"at a line's start"}
-a picture pasted, then another entry at once: {"entry":"page/Horace","picturesHere":0,"corner":"the picture had nowhere to land — paste it again (click to copy)","aimedAtHasOne":false,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+picture: arrived at commonplace/Pictured: {"cursor":"at a line's start"}
+a picture pasted: {"md":"A picture: ![](Pictured-img-1.webp)","src":"blob:","width":1400,"height":700,"last":"P","cursor":"at the end","screen":"commonplace/Pictured · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+picture: arrived at commonplace/Pictured End: {"cursor":"at a line's start"}
+a picture pasted at the entry's end: {"md":"Last line\n\n![](<Pictured End-img-1.webp>)","lineBelowPicture":true,"caretBelowPicture":true,"cursor":"at the end","screen":"commonplace/Pictured End · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+picture: arrived at commonplace/Pictured Away: {"cursor":"at a line's start"}
+a picture pasted, then another entry at once: {"entry":"commonplace/Horace","picturesHere":0,"corner":"the picture had nowhere to land — paste it again (click to copy)","aimedAtHasOne":false,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == a terminal's copy pasted
-a terminal's copy pasted: arrived at page/Terminal Paste: {"cursor":"at a line's start"}
-a terminal's copy pasted: {"md":"⏺ Two commits today, and npm run verify passed before each landed.\n\n- f2db598: the one-offs split, with every check still covering them.\n- 7603f25: the steps made independent.","drawn":{"paragraphs":3,"items":2},"cursor":"at the end","screen":"page/Terminal Paste · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a terminal's copy pasted: arrived at page/Terminal Line: {"cursor":"at a line's start"}
-a terminal's one line pasted: {"md":"before git log shows the day","drawn":{"paragraphs":1,"items":0},"cursor":"at the end","screen":"page/Terminal Line · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a terminal's copy pasted: arrived at page/Terminal Item: {"cursor":"at a line's start"}
-a terminal's copy pasted into a list item: {"md":"- an item that wraps at the window's width.","drawn":{"paragraphs":1,"items":1},"cursor":"at the end","screen":"page/Terminal Item · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a terminal's copy pasted: arrived at page/Terminal Code: {"cursor":"at a line's start"}
-a terminal's copy pasted into a code block: {"md":"```\nfirst\nconst a = 1\nconst b = 2\n```","cursor":"at the end","screen":"page/Terminal Code · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a terminal's copy pasted: arrived at page/Terminal Source: {"cursor":"at a line's start"}
-a terminal's copy pasted in the source view: {"md":"x passed before it landed.","cursor":"at the end","screen":"page/Terminal Source · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Paste: {"cursor":"at a line's start"}
+a terminal's copy pasted: {"md":"⏺ Two commits today, and npm run verify passed before each landed.\n\n- f2db598: the one-offs split, with every check still covering them.\n- 7603f25: the steps made independent.","drawn":{"paragraphs":3,"items":2},"cursor":"at the end","screen":"commonplace/Terminal Paste · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Line: {"cursor":"at a line's start"}
+a terminal's one line pasted: {"md":"before git log shows the day","drawn":{"paragraphs":1,"items":0},"cursor":"at the end","screen":"commonplace/Terminal Line · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Item: {"cursor":"at a line's start"}
+a terminal's copy pasted into a list item: {"md":"- an item that wraps at the window's width.","drawn":{"paragraphs":1,"items":1},"cursor":"at the end","screen":"commonplace/Terminal Item · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Code: {"cursor":"at a line's start"}
+a terminal's copy pasted into a code block: {"md":"```\nfirst\nconst a = 1\nconst b = 2\n```","cursor":"at the end","screen":"commonplace/Terminal Code · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Source: {"cursor":"at a line's start"}
+a terminal's copy pasted in the source view: {"md":"x passed before it landed.","cursor":"at the end","screen":"commonplace/Terminal Source · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 == shortcuts
-shortcuts: arrived at page/Expanded: {"cursor":"at a line's start"}
-⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"page/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
-saved: {"rows":["sigSean Miller","mdmarkdown"],"editor":true,"focused":"toolbtn","corner":"shortcuts saved","cursor":"on button","screen":"page/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
-m typed: {"value":["mdmarkdown"],"cursor":"on input","screen":"page/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
-Enter: {"card":null,"text":"markdown","cursor":"at the end","screen":"page/Expanded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+shortcuts: arrived at commonplace/Expanded: {"cursor":"at a line's start"}
+⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"commonplace/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
+saved: {"rows":["sigSean Miller","mdmarkdown"],"editor":true,"focused":"toolbtn","corner":"shortcuts saved","cursor":"on button","screen":"commonplace/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
+m typed: {"value":["mdmarkdown"],"cursor":"on input","screen":"commonplace/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}
+Enter: {"card":null,"text":"markdown","cursor":"at the end","screen":"commonplace/Expanded · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == bookmarks
 bookmarks: arrived at 2026-09-06: {"cursor":"at a line's start"}
 ⌃⌘B on a day: {"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 A pressed: {"rows":["1 2026-09-06 you are here key link ×"],"focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-bookmarks: arrived at page/Horace: {"cursor":"at a line's start"}
+bookmarks: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 1 from Horace: {"entry":"2026-09-06","card":null,"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 keyed fb: {"rows":["fb 2026-09-06 you are here key link ×"],"focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 f typed: {"lit":1,"cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
@@ -117,38 +117,38 @@ b typed, already here: {"card":null,"corner":"already on 2026-09-06","cursor":"a
 fb over a selection, already here: {"corner":"already on 2026-09-06","cursor":"selected 12","screen":"2026-09-06 · sel 12 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 × pressed: {"rows":["No bookmarks yet."],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel","cursor":"on section","screen":"2026-09-06 · sel 12 chars · bar on · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 == bookmarks damaged
-bookmarks damaged: arrived at page/Horace: {"cursor":"at a line's start"}
-⌃⌘B over a damaged list: {"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel","cursor":"on section","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-A over a damaged list: {"card":{"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel"},"corner":"bookmarks not saved (click to copy)","stored":"not json","cursor":"on section","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-⌃⌘B over the list repaired: {"rows":["1 2026-09-06 key link ×"],"foot":"Press A to add bookmark for Horace","focused":"helppanel","cursor":"on section","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-A over the list repaired: {"card":{"rows":["1 2026-09-06 key link ×","2 Horace you are here key link ×"],"focused":"helppanel"},"cursor":"on section","screen":"page/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+bookmarks damaged: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+⌃⌘B over a damaged list: {"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel","cursor":"on section","screen":"commonplace/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+A over a damaged list: {"card":{"rows":["your saved bookmarks are damaged — nothi"],"focused":"helppanel"},"corner":"bookmarks not saved (click to copy)","stored":"not json","cursor":"on section","screen":"commonplace/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+⌃⌘B over the list repaired: {"rows":["1 2026-09-06 key link ×"],"foot":"Press A to add bookmark for Horace","focused":"helppanel","cursor":"on section","screen":"commonplace/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+A over the list repaired: {"card":{"rows":["1 2026-09-06 key link ×","2 Horace you are here key link ×"],"focused":"helppanel"},"cursor":"on section","screen":"commonplace/Horace · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 bookmarks damaged: arrived at 2026-09-06: {"cursor":"at a line's start"}
 == backups
-backups: {"buttons":["Set up automatic backups…"],"status":null,"cursor":"on button","screen":"page/Horace · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
-Escape: {"card":false,"cursor":"on button","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+backups: {"buttons":["Set up automatic backups…"],"status":null,"cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
+Escape: {"card":false,"cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == help
-⌃⌘H over an open pages panel: {"help":true,"pages":false,"heading":"Custom keys","cursor":"on button","screen":"page/Horace · sel none · bar off · panel help · rows none · rendered · corner [whatever stood]"}
-Escape: {"help":false,"cursor":"on button","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘H over an open pages panel: {"help":true,"pages":false,"heading":"Custom keys","cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel help · rows none · rendered · corner [whatever stood]"}
+Escape: {"help":false,"cursor":"on button","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == line bar
-line bar: arrived at page/Horace: {"cursor":"at a line's start"}
-⌃⌘G over Horace: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-3, Enter: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":-3,"corner":"","cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-Enter again on one block: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":-3,"corner":"","cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-Escape: {"open":false,"focused":"editor","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","caretRow":"3","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-line bar: arrived at page/Williams/Witchcraft 3: {"cursor":"at a line's start"}
-⌃⌘G over Witchcraft: {"open":true,"focused":"folioinput","lineBox":false,"pageBox":true,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"page/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-9z, Enter: {"open":true,"focused":"folioinput","lineBox":false,"pageBox":true,"marked":null,"centred":null,"corner":"9z is not a page number","cursor":"on input","screen":"page/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-61, Enter: {"open":true,"focused":"folioinput","lineBox":false,"pageBox":true,"marked":"61","centred":56,"corner":"9z is not a page number","cursor":"on input","screen":"page/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+line bar: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+⌃⌘G over Horace: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+3, Enter: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":-3,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+Enter again on one block: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":-3,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+Escape: {"open":false,"focused":"editor","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","caretRow":"3","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+line bar: arrived at commonplace/Williams/Witchcraft 3: {"cursor":"at a line's start"}
+⌃⌘G over Witchcraft: {"open":true,"focused":"folioinput","lineBox":false,"pageBox":true,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"commonplace/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+9z, Enter: {"open":true,"focused":"folioinput","lineBox":false,"pageBox":true,"marked":null,"centred":null,"corner":"9z is not a page number","cursor":"on input","screen":"commonplace/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+61, Enter: {"open":true,"focused":"folioinput","lineBox":false,"pageBox":true,"marked":"61","centred":56,"corner":"9z is not a page number","cursor":"on input","screen":"commonplace/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 == reference paste
-reference paste: arrived at page/Pasted: {"cursor":"at a line's start"}
-a reference pasted: {"md":"[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord","link":"#2026-09-07?h=blind%20cord","quote":"blind cord","cursor":"at the end","screen":"page/Pasted · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+reference paste: arrived at commonplace/Pasted: {"cursor":"at a line's start"}
+a reference pasted: {"md":"[*Gesta*, 7 September 2026](#2026-09-07?h=blind%20cord):\n\n> blind cord","link":"#2026-09-07?h=blind%20cord","quote":"blind cord","cursor":"at the end","screen":"commonplace/Pasted · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the reference link followed: {"selected":"food of love","bar":false,"onScreen":true,"cursor":"selected 12","screen":"2026-09-06 · sel 12 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-reference paste: arrived at page/Pasted: {"cursor":"at a line's start"}
+reference paste: arrived at commonplace/Pasted: {"cursor":"at a line's start"}
 a link deep into a long entry followed: {"selected":"Power shall fall short in or exceed","bar":false,"onScreen":true,"cursor":"selected 35","screen":"bookshelf/Browning, Robert/Pippa Passes · sel 35 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-reference paste: arrived at page/Pasted Pair: {"cursor":"at a line's start"}
-a paired reference pasted: {"quotes":2,"indent":0,"cols":"266 360","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-typed into the quoted pair: {"grew":true,"quotes":2,"indent":0,"cols":"266 425","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-typed into the quoted pair, settled: {"quotes":2,"indent":0,"cols":"266 425","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"page/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+reference paste: arrived at commonplace/Pasted Pair: {"cursor":"at a line's start"}
+a paired reference pasted: {"quotes":2,"indent":0,"cols":"266 360","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"commonplace/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed into the quoted pair: {"grew":true,"quotes":2,"indent":0,"cols":"266 425","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"commonplace/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed into the quoted pair, settled: {"quotes":2,"indent":0,"cols":"266 425","wrapped":false,"sameBox":true,"cursor":"at the end","screen":"commonplace/Pasted Pair · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == toolbar
 toolbar: arrived at 2026-09-06: {"cursor":"at a line's start"}
 a word double-clicked: {"show":true,"selected":"music","lit":[],"aboveSelection":true,"focused":"editor","tag":true,"cursor":"selected 5","screen":"2026-09-06 · sel 5 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
@@ -187,15 +187,15 @@ renamed to Plans: {"entry":"2026-09-06/Plans","hash":"2026-09-06/Plans","hostLin
 the host's link followed: {"value":["Plans","#2026-09-06/Plans"],"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 deleted: back on the day, its link gone, the other tag left: {"entry":"2026-09-06","links":["#2026-09-06/Music"],"tags":["Music"],"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == list
-list: arrived at page/Brand New: {"cursor":"at a line's start"}
-a code block typed, Enter twice out of it: {"md":"- one\n  - two\n- three\n\n```\ncode line\n```\n\nafter the block","cursor":"at the end","screen":"page/Brand New · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice: {"md":"- one\n  - two\n- three\n\n```\ncode line\n```\n\nafter the block","text":"saved","show":true,"opacity":"[fading]","pill":true,"cursor":"at the end","screen":"page/Brand New · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the gap between the two outer items, and a line's height: {"outerGapPastNestedList":18,"lineToNextLine":9.6,"line":21,"cursor":"at the end","screen":"page/Brand New · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+list: arrived at commonplace/Brand New: {"cursor":"at a line's start"}
+a code block typed, Enter twice out of it: {"md":"- one\n  - two\n- three\n\n```\ncode line\n```\n\nafter the block","cursor":"at the end","screen":"commonplace/Brand New · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice: {"md":"- one\n  - two\n- three\n\n```\ncode line\n```\n\nafter the block","text":"saved","show":true,"opacity":"[fading]","pill":true,"cursor":"at the end","screen":"commonplace/Brand New · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the gap between the two outer items, and a line's height: {"outerGapPastNestedList":18,"lineToNextLine":9.6,"line":21,"cursor":"at the end","screen":"commonplace/Brand New · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == search
-search: arrived at page/Links: {"cursor":"at a line's start"}
-⌃⌘K: {"open":true,"focused":"search-input","scope":"Links","options":["Everything","Journal","All Pages","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":[],"cursor":"on input","screen":"page/Links · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
-typed sister: {"open":true,"focused":"search-input","scope":"Everything","options":["Everything","Journal","All Pages","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Williams › 3. The Dark Ages …e knives, in case those three sisters should come “who were by anc…","hit: 2026-09-05 …e knives, in case those three sisters should come “who were by anc…"],"cursor":"on input","screen":"page/Links · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
-after ↓: {"value":["hit active: 2026-09-05 …e knives, in case those three sisters should come “who were by anc…"],"cursor":"on input","screen":"page/Links · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+search: arrived at commonplace/Links: {"cursor":"at a line's start"}
+⌃⌘K: {"open":true,"focused":"search-input","scope":"Links","options":["Everything","Journal","All Commonplaces","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":[],"cursor":"on input","screen":"commonplace/Links · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+typed sister: {"open":true,"focused":"search-input","scope":"Everything","options":["Everything","Journal","All Commonplaces","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Williams › 3. The Dark Ages …e knives, in case those three sisters should come “who were by anc…","hit: 2026-09-05 …e knives, in case those three sisters should come “who were by anc…"],"cursor":"on input","screen":"commonplace/Links · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+after ↓: {"value":["hit active: 2026-09-05 …e knives, in case those three sisters should come “who were by anc…"],"cursor":"on input","screen":"commonplace/Links · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 Enter: {"entry":"2026-09-05","selected":"sister","open":false,"cursor":"selected 6","screen":"2026-09-05 · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a jump to a hit in the entry already open: {"entry":"2026-09-05","selected":"blackamoor","open":false,"cursor":"selected 10","screen":"2026-09-05 · sel 10 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == walk
@@ -221,13 +221,13 @@ Backspace on the blank row: {"caret":"…ns attending|","box":"none","drawn":fal
 x typed on the blank row: {"caret":"…x|","box":"none","drawn":false,"rows":["Enter DUKE ORSINO, CURIO","x"],"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a quotation mark typed on the blank row: {"caret":"…“|","box":"none","drawn":false,"rows":["Enter DUKE ORSINO, CURIO","“"],"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == the switch carries the text
-the switch carries the text: arrived at page/Long Canto: {"cursor":"at a line's start"}
-a long canto switched at its middle: {"rendered":20,"source":20,"back":20,"cursor":"inside a line","screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the switch's place remembered: {"matches":true,"cursor":"inside a line","screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘M back, then 400px grown above: {"top":20,"cursor":"inside a line","screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a long canto switched at its end: {"rendered":true,"source":true,"back":true,"cursor":"inside a line","screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘M from 20px down: {"source":25,"back":0,"cursor":"inside a line","screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a caret seen in the source, ⌃⌘M back: {"caretInView":true,"cursor":"inside a line","screen":"page/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the switch carries the text: arrived at commonplace/Long Canto: {"cursor":"at a line's start"}
+a long canto switched at its middle: {"rendered":20,"source":20,"back":20,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the switch's place remembered: {"matches":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘M back, then 400px grown above: {"top":20,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a long canto switched at its end: {"rendered":true,"source":true,"back":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘M from 20px down: {"source":25,"back":0,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a caret seen in the source, ⌃⌘M back: {"caretInView":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == contents folds
 contents folds: arrived at bookshelf/Spenser, Edmund/The Faerie Queene: {"cursor":"at a line's start"}
 a contents page opened: {"folds":1,"open":[],"counts":["1 entry"],"linksShowing":0,"cantoInView":null,"cursor":"at a line's start","screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -238,18 +238,18 @@ back on the contents: {"folds":1,"open":["Book I: The "],"counts":["1 entry"],"l
 == places
 places: arrived at bookshelf/Browning, Robert/Pippa Passes: {"cursor":"at a line's start"}
 Pippa scrolled down: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
-Horace followed: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+Horace followed: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Back: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Forward: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Forward: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Back again: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 reloaded: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 400px grown above the held place: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 places: arrived at bookshelf/Browning, Robert/Pippa Passes: {"cursor":"at a line's start"}
 Pippa after the growth: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 places: arrived at bookshelf/Boethius/Consolatio: {"cursor":"at a line's start"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 places: arrived at bookshelf/Boethius/Consolatio: {"cursor":"at a line's start"}
 back to a place in a closed section: {"open":["Book 5"],"fillerInView":true,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 before the warm: {"folds":0,"fillerInView":true,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -257,68 +257,68 @@ the warm landed: {"folds":6,"open":["Book 5"],"fillerInView":true,"cursor":"at a
 a contents link clicked before the warm: {"entry":"bookshelf/Boethius/Consolatio/3pr1","refused":false,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3pr1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 places: arrived at bookshelf/Boethius/Consolatio: {"cursor":"at a line's start"}
 a closed section's text switched to: {"open":["Book 3"],"fillerInView":true,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-places: arrived at page/Forced Long: {"cursor":"at a line's start"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
-places: arrived at page/Forced Long: {"cursor":"at a line's start"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
-places: arrived at page/Forced Long: {"cursor":"at a line's start"}
-a forced entry left scrolled, returned to: {"source":true,"stayed":true,"cursor":"at a line's start","screen":"page/Forced Long · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-a held place, the masthead shrinking under it: {"stayed":true,"cursor":"at a line's start","screen":"page/Forced Long · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Forced Long: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Forced Long: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Forced Long: {"cursor":"at a line's start"}
+a forced entry left scrolled, returned to: {"source":true,"stayed":true,"cursor":"at a line's start","screen":"commonplace/Forced Long · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+a held place, the masthead shrinking under it: {"stayed":true,"cursor":"at a line's start","screen":"commonplace/Forced Long · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 places: arrived at bookshelf/Browning, Robert/Pippa Passes: {"cursor":"at a line's start"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 places: arrived at bookshelf/Browning, Robert/Pippa Passes: {"cursor":"at a line's start"}
 a held place in the rendered view, the masthead shrinking under it: {"sameText":true,"line":"Meantime, what lights my sunbeam","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a held place, then a scroll no hand made: {"kept":true,"line":"—From weevil and chafer?","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
-places: arrived at page/Coded Lines: {"cursor":"at a line's start"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
-places: arrived at page/Coded Lines: {"cursor":"at a line's start"}
-back to lines opening on inline code: {"source":false,"cursor":"at a line's start","screen":"page/Coded Lines · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-places: arrived at page/Long Paragraph: {"cursor":"at a line's start"}
-places: arrived at page/Horace: {"cursor":"at a line's start"}
-places: arrived at page/Long Paragraph: {"cursor":"inside a line"}
-typed at the place in a long paragraph's source: {"source":true,"lineOnScreen":true,"stayed":true,"cursor":"inside a line","screen":"page/Long Paragraph · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Coded Lines: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Coded Lines: {"cursor":"at a line's start"}
+back to lines opening on inline code: {"source":false,"cursor":"at a line's start","screen":"commonplace/Coded Lines · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+places: arrived at commonplace/Long Paragraph: {"cursor":"at a line's start"}
+places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+places: arrived at commonplace/Long Paragraph: {"cursor":"inside a line"}
+typed at the place in a long paragraph's source: {"source":true,"lineOnScreen":true,"stayed":true,"cursor":"inside a line","screen":"commonplace/Long Paragraph · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 == entries left and renamed
-entries left and renamed: arrived at page/Never Typed: {"cursor":"at a line's start"}
-entries left and renamed: arrived at page/Horace: {"cursor":"at a line's start"}
-an unknown page visited and left untouched: {"stored":null,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+entries left and renamed: arrived at commonplace/Never Typed: {"cursor":"at a line's start"}
+entries left and renamed: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+an unknown page visited and left untouched: {"stored":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 entries left and renamed: arrived at 2026-09-05: {"cursor":"at a line's start"}
 a long entry renamed, scrolled: {"entry":"2026-09-05/Longer","stayed":true,"cursor":"on button","screen":"2026-09-05/Longer · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 deleted scrolled: its place dropped: {"entry":"2026-09-05","placeKept":false,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘C with the clipboard refused: {"corner":"Couldn't copy the link (click to copy)","cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘C again, the clipboard back: {"corner":"Link copied","cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a page opened with localStorage refused: {"entry":"page/Horace","blockedScreen":"page/Horace · sel none · bar off · panel none · rows none · rendered","cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a page opened with localStorage refused: {"entry":"commonplace/Horace","blockedScreen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered","cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == margin-note
 margin-note: arrived at bookshelf/Donne, John/Anniversaries/The First Anniversarie: {"cursor":"at a line's start"}
 margin-notes in verse at 1500px: {"marginNotes":[{"text":"What life the world ","form":"margin 15em","beside":"For there’s a ki","offCentre":0,"clear":-83,"pushed":false,"caret":false},{"text":"The sickenesse of th","form":"margin 15em","beside":"The dangers and ","offCentre":0,"clear":-83,"pushed":false,"caret":false},{"text":"Shortnesse of life.","form":"margin 15em","beside":"For with due tem","offCentre":null,"clear":-83,"pushed":true,"caret":false}],"shown":["60","65","70"],"cursor":"at a line's start","screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 typed into a margin-note in the margin: {"lines":["What life the world hath stil X."],"cursor":"inside a line","screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 narrowed to 1000px, typed on: {"marginNotes":[{"text":"What life the world ","form":"text","beside":"For there’s a ki","offCentre":null,"clear":0,"pushed":false,"caret":true},{"text":"The sickenesse of th","form":"text","beside":"The dangers and ","offCentre":null,"clear":0,"pushed":false,"caret":false},{"text":"Shortnesse of life.","form":"text","beside":"For with due tem","offCentre":null,"clear":0,"pushed":false,"caret":false}],"shown":["60","65","70"],"lines":["What life the world hath stil XY."],"cursor":"inside a line","screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-margin-note: arrived at page/Margins: {"cursor":"at a line's start"}
-margin-notes between paragraphs and in a grid at 1500px: {"marginNotes":[{"text":"A margin-note on the","form":"margin 15em","beside":"The paragraph th","offCentre":0,"clear":-83,"pushed":false,"caret":false},{"text":"A margin-note in a c","form":"text","beside":"The card on the ","offCentre":null,"clear":0,"pushed":false,"caret":false}],"shown":[],"cursor":"at a line's start","screen":"page/Margins · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+margin-note: arrived at commonplace/Margins: {"cursor":"at a line's start"}
+margin-notes between paragraphs and in a grid at 1500px: {"marginNotes":[{"text":"A margin-note on the","form":"margin 15em","beside":"The paragraph th","offCentre":0,"clear":-83,"pushed":false,"caret":false},{"text":"A margin-note in a c","form":"text","beside":"The card on the ","offCentre":null,"clear":0,"pushed":false,"caret":false}],"shown":[],"cursor":"at a line's start","screen":"commonplace/Margins · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == footnote marks
-footnote marks: arrived at page/Footnoted: {"cursor":"at a line's start"}
-typed Pedenteria in comparison: {"open":true,"focused":"search-input","scope":"Everything","options":["Everything","Journal","All Pages","Footnoted","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Footnoted Skill of government was but a Pedenteria in comparison, so as Amphion, was said; an …"],"cursor":"on input","screen":"page/Footnoted · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
-Enter on the footnoted phrase: {"entry":"page/Footnoted","selected":"Pedenteria ¹ in comparison","cursor":"selected 26","screen":"page/Footnoted · sel 26 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-typed Amphion, was: {"open":true,"focused":"search-input","scope":"Footnoted","options":["Everything","Journal","All Pages","Footnoted","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Footnoted …denteria in comparison, so as Amphion, was said; an area of 4 m² here."],"cursor":"on input","screen":"page/Footnoted · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
-typed 4 m²: {"open":true,"focused":"search-input","scope":"Footnoted","options":["Everything","Journal","All Pages","Footnoted","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Footnoted …Amphion, was said; an area of 4 m² here."],"cursor":"on input","screen":"page/Footnoted · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+footnote marks: arrived at commonplace/Footnoted: {"cursor":"at a line's start"}
+typed Pedenteria in comparison: {"open":true,"focused":"search-input","scope":"Everything","options":["Everything","Journal","All Commonplaces","Footnoted","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Footnoted Skill of government was but a Pedenteria in comparison, so as Amphion, was said; an …"],"cursor":"on input","screen":"commonplace/Footnoted · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+Enter on the footnoted phrase: {"entry":"commonplace/Footnoted","selected":"Pedenteria ¹ in comparison","cursor":"selected 26","screen":"commonplace/Footnoted · sel 26 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed Amphion, was: {"open":true,"focused":"search-input","scope":"Footnoted","options":["Everything","Journal","All Commonplaces","Footnoted","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Footnoted …denteria in comparison, so as Amphion, was said; an area of 4 m² here."],"cursor":"on input","screen":"commonplace/Footnoted · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+typed 4 m²: {"open":true,"focused":"search-input","scope":"Footnoted","options":["Everything","Journal","All Commonplaces","Footnoted","Horace","Links","Williams","Boethius","Browning, Robert"],"rows":["hit active: Footnoted …Amphion, was said; an area of 4 m² here."],"cursor":"on input","screen":"commonplace/Footnoted · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 == bookmarks from another window
 bookmarks from another window: arrived at 2026-09-06: {"cursor":"at a line's start"}
 A in a second window: {"card":{"rows":["1 2026-09-06 key link ×","2 Horace key link ×","3 Made Elsewhere you are here key link ×"],"focused":"helppanel"},"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘B back in the first: {"card":{"rows":["1 2026-09-06 you are here key link ×","2 Horace key link ×","3 Made Elsewhere key link ×"],"focused":"helppanel"},"stored":"[\"2026-09-06\",\"page/Horace\",\"page/Made Elsewhere\"]","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
-its row's page opened from the first: {"entry":"page/Made Elsewhere","text":"made in the second window","cursor":"at a line's start","screen":"page/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-its row's page typed into from the first: {"entry":"page/Made Elsewhere","stored":"made in the second windowtyped in the first","cursor":"at the end","screen":"page/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the page open in the first, saved in the second: {"textEnd":"in the first, the second again","stored":"made in the second windowtyped in the first, the second again","focused":true,"cursor":"inside a line","screen":"page/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-typed in the first as the second saves: {"textEnd":"econd again, the first unsaved","stored":"rewritten in the second","corner":"not saved — changed in another tab, copy your text then reload (click to copy)","cursor":"at the end","screen":"page/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-bookmarks from another window: arrived at page/Deleted Elsewhere: {"cursor":"at a line's start"}
-the page open in the first, deleted in the second: {"entry":"page/Deleted Elsewhere","textEnd":"to be deleted in the second","corner":"deleted in another tab (click to copy)","cursor":"at the end","screen":"page/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-typed into the page deleted in the second: {"stored":null,"corner":"not saved — deleted in another tab, copy your text (click to copy)","cursor":"at the end","screen":"page/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘B back in the first: {"card":{"rows":["1 2026-09-06 you are here key link ×","2 Horace key link ×","3 Made Elsewhere key link ×"],"focused":"helppanel"},"stored":"[\"2026-09-06\",\"commonplace/Horace\",\"commonplace/Made Elsewhere\"]","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+its row's page opened from the first: {"entry":"commonplace/Made Elsewhere","text":"made in the second window","cursor":"at a line's start","screen":"commonplace/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+its row's page typed into from the first: {"entry":"commonplace/Made Elsewhere","stored":"made in the second windowtyped in the first","cursor":"at the end","screen":"commonplace/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the page open in the first, saved in the second: {"textEnd":"in the first, the second again","stored":"made in the second windowtyped in the first, the second again","focused":true,"cursor":"inside a line","screen":"commonplace/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed in the first as the second saves: {"textEnd":"econd again, the first unsaved","stored":"rewritten in the second","corner":"not saved — changed in another tab, copy your text then reload (click to copy)","cursor":"at the end","screen":"commonplace/Made Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+bookmarks from another window: arrived at commonplace/Deleted Elsewhere: {"cursor":"at a line's start"}
+the page open in the first, deleted in the second: {"entry":"commonplace/Deleted Elsewhere","textEnd":"to be deleted in the second","corner":"deleted in another tab (click to copy)","cursor":"at the end","screen":"commonplace/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed into the page deleted in the second: {"stored":null,"corner":"not saved — deleted in another tab, copy your text (click to copy)","cursor":"at the end","screen":"commonplace/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 bookmarks from another window: arrived at 2026-09-06: {"cursor":"at a line's start"}
 the deleted page left for the day: {"cursor":"at a line's start","screen":"2026-09-06 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-bookmarks from another window: arrived at page/Deleted Elsewhere: {"cursor":"at a line's start"}
-the deleted page opened again in the first: {"textEnd":"","cursor":"at a line's start","screen":"page/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+bookmarks from another window: arrived at commonplace/Deleted Elsewhere: {"cursor":"at a line's start"}
+the deleted page opened again in the first: {"textEnd":"","cursor":"at a line's start","screen":"commonplace/Deleted Elsewhere · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 bookmarks from another window: arrived at 2026-09-06: {"cursor":"at a line's start"}
-× on its first row: {"card":{"rows":["1 Horace key link ×","2 Made Elsewhere key link ×"],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel"},"stored":"[\"page/Horace\",\"page/Made Elsewhere\"]","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
+× on its first row: {"card":{"rows":["1 Horace key link ×","2 Made Elsewhere key link ×"],"foot":"Press A to add bookmark for 2026-09-06","focused":"helppanel"},"stored":"[\"commonplace/Horace\",\"commonplace/Made Elsewhere\"]","cursor":"on section","screen":"2026-09-06 · sel none · bar off · panel bookmarks · rows none · rendered · corner [whatever stood]"}
 == author filing
 author filing: arrived at 2026-09-06: {"cursor":"at a line's start"}
 New author…, Sean Miller, Enter twice: {"prompts":["Name for the new author: []","Sorted under: [Miller, Sean]"],"entry":"bookshelf/Miller, Sean","stored":"# Sean Miller\n","cursor":"at a line's start","screen":"bookshelf/Miller, Sean · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -331,183 +331,183 @@ the bookshelf after the re-file: {"rows":["Boethius","Browning, Robert","Sean Mi
 author filing: arrived at bookshelf/Sean Miller/Odes: {"cursor":"at a line's start"}
 the re-filed book, its picture: {"entry":"bookshelf/Sean Miller/Odes","md":"A book. ![](Odes-img-1.webp)","missing":null,"src":"blob:","width":1400,"height":700,"last":"P","cursor":"at a line's start","screen":"bookshelf/Sean Miller/Odes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == replace
-replace: arrived at page/Replaced: {"cursor":"at a line's start"}
-⌃⌘E in the rendered view: {"open":true,"view":"source","count":"","find":"","with":"","focus":"replacefind","boxes":"aligned","marks":0,"outlined":null,"corner":"Source view, to replace","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-*-* typed into Find: {"open":true,"view":"source","count":"1 of 3","find":"*-*","with":"","focus":"replacefind","boxes":"aligned","marks":3,"outlined":"*-* on screen","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Enter in Find: {"open":true,"view":"source","count":"2 of 3","find":"*-*","with":"","focus":"replacefind","boxes":"aligned","marks":3,"outlined":"*-* on screen","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Enter in Replace with: {"open":true,"view":"source","count":"2 of 2","find":"*-*","with":"-","focus":"replacewith","boxes":"aligned","marks":2,"outlined":"*-* on screen","stored":"One*-*two -three, and *,* four.\n\nFive*-*six.","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Skip: {"open":true,"view":"source","count":"1 of 2","find":"*-*","with":"-","focus":"replacewith","boxes":"aligned","marks":2,"outlined":"*-* on screen","stored":"One*-*two -three, and *,* four.\n\nFive*-*six.","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Replace All, the rest replaced: {"open":true,"view":"source","count":"none","find":"*-*","with":"-","focus":"replacewith","boxes":"aligned","marks":0,"outlined":null,"stored":"One-two -three, and *,* four.\n\nFive-six.","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-⌘Z in the text: {"open":true,"view":"source","count":"2 found","find":"*-*","with":"-","focus":"TEXTAREA","boxes":"aligned","marks":2,"outlined":null,"stored":"One*-*two -three, and *,* four.\n\nFive*-*six.","cursor":"selected 44","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Escape, opened in the rendered view: {"open":false,"view":"rendered","count":"2 found","find":"*-*","with":"-","focus":"DIV","boxes":"aligned","marks":0,"outlined":null,"cursor":"at a line's start","screen":"page/Replaced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘E in the source view: {"open":true,"view":"source","count":"1 of 2","find":"*-*","with":"-","focus":"replacefind","boxes":"aligned","marks":2,"outlined":"*-* on screen","cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Escape, opened in the source view: {"open":false,"view":"source","count":"1 of 2","find":"*-*","with":"-","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"cursor":"selected 3","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-a long entry's matches: {"count":"1 of 1500","drift":0,"cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Replace All in a long entry: {"count":"none","kept":true,"cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Replace All, the replacement holding the find: {"open":true,"view":"source","count":"2 found","find":"cat","with":"cats","focus":"replacewith","boxes":"aligned","marks":2,"outlined":null,"cursor":"on input","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Escape, the switch back refused: {"open":false,"view":"source","count":"none","find":"::: card-red","with":"zz","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"cursor":"at a line's start","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-⌃⌘H over the bar: {"open":false,"view":"rendered","count":"none","find":"::: card-red","with":"zz","focus":"DIV","boxes":"aligned","marks":0,"outlined":null,"help":true,"cursor":"at the end","screen":"page/Replaced · sel none · bar off · panel help · rows none · rendered · corner [whatever stood]"}
-the entry saved in another window, the bar open: {"open":false,"view":"source","count":"1 of 1","find":"*-*","with":"zz","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"text":"One*-*two. Seven*-*eight.","caret":3,"cursor":"inside a line","screen":"page/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+replace: arrived at commonplace/Replaced: {"cursor":"at a line's start"}
+⌃⌘E in the rendered view: {"open":true,"view":"source","count":"","find":"","with":"","focus":"replacefind","boxes":"aligned","marks":0,"outlined":null,"corner":"Source view, to replace","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+*-* typed into Find: {"open":true,"view":"source","count":"1 of 3","find":"*-*","with":"","focus":"replacefind","boxes":"aligned","marks":3,"outlined":"*-* on screen","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Enter in Find: {"open":true,"view":"source","count":"2 of 3","find":"*-*","with":"","focus":"replacefind","boxes":"aligned","marks":3,"outlined":"*-* on screen","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Enter in Replace with: {"open":true,"view":"source","count":"2 of 2","find":"*-*","with":"-","focus":"replacewith","boxes":"aligned","marks":2,"outlined":"*-* on screen","stored":"One*-*two -three, and *,* four.\n\nFive*-*six.","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Skip: {"open":true,"view":"source","count":"1 of 2","find":"*-*","with":"-","focus":"replacewith","boxes":"aligned","marks":2,"outlined":"*-* on screen","stored":"One*-*two -three, and *,* four.\n\nFive*-*six.","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Replace All, the rest replaced: {"open":true,"view":"source","count":"none","find":"*-*","with":"-","focus":"replacewith","boxes":"aligned","marks":0,"outlined":null,"stored":"One-two -three, and *,* four.\n\nFive-six.","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+⌘Z in the text: {"open":true,"view":"source","count":"2 found","find":"*-*","with":"-","focus":"TEXTAREA","boxes":"aligned","marks":2,"outlined":null,"stored":"One*-*two -three, and *,* four.\n\nFive*-*six.","cursor":"selected 44","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Escape, opened in the rendered view: {"open":false,"view":"rendered","count":"2 found","find":"*-*","with":"-","focus":"DIV","boxes":"aligned","marks":0,"outlined":null,"cursor":"at a line's start","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘E in the source view: {"open":true,"view":"source","count":"1 of 2","find":"*-*","with":"-","focus":"replacefind","boxes":"aligned","marks":2,"outlined":"*-* on screen","cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Escape, opened in the source view: {"open":false,"view":"source","count":"1 of 2","find":"*-*","with":"-","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"cursor":"selected 3","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+a long entry's matches: {"count":"1 of 1500","drift":0,"cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Replace All in a long entry: {"count":"none","kept":true,"cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Replace All, the replacement holding the find: {"open":true,"view":"source","count":"2 found","find":"cat","with":"cats","focus":"replacewith","boxes":"aligned","marks":2,"outlined":null,"cursor":"on input","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Escape, the switch back refused: {"open":false,"view":"source","count":"none","find":"::: card-red","with":"zz","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"cursor":"at a line's start","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+⌃⌘H over the bar: {"open":false,"view":"rendered","count":"none","find":"::: card-red","with":"zz","focus":"DIV","boxes":"aligned","marks":0,"outlined":null,"help":true,"cursor":"at the end","screen":"commonplace/Replaced · sel none · bar off · panel help · rows none · rendered · corner [whatever stood]"}
+the entry saved in another window, the bar open: {"open":false,"view":"source","count":"1 of 1","find":"*-*","with":"zz","focus":"TEXTAREA","boxes":"aligned","marks":0,"outlined":null,"text":"One*-*two. Seven*-*eight.","caret":3,"cursor":"inside a line","screen":"commonplace/Replaced · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 == losing nothing
-losing nothing: arrived at page/Kept: {"cursor":"at a line's start"}
-a fence's words after the language, through both views: {"fence":"```not code","cursor":"at the end","screen":"page/Kept · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-the code button over a picture: {"corner":"can't make a code block from that","kept":true,"cursor":"selected 9","screen":"page/Kept · sel 9 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-line breaks pasted over a selection: {"kept":true,"cursor":"selected 3","screen":"page/Kept · sel 3 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-⌘C over a page marker: {"text":"::: note\nin her degree and on\n:::","cursor":"selected 21","screen":"page/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-a note with a page marker hover-copied: {"text":"::: note\nin her degree and on\n:::","cursor":"selected 21","screen":"page/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-export pressed again while one runs: {"corner":"exporting…","pickers":1,"cursor":"selected 21","screen":"page/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-losing nothing: arrived at page/Typed: {"cursor":"at a line's start"}
-typed into an entry an import overwrites: {"afterButton":"at the end","text":"IMPORTED TEXT","corner":"imported 1501 entries","cursor":"at a line's start","screen":"page/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a store that never answers: {"corner":"couldn't load entries — reload (click to copy)","persistAsked":true,"cursor":"at a line's start","screen":"page/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+losing nothing: arrived at commonplace/Kept: {"cursor":"at a line's start"}
+a fence's words after the language, through both views: {"fence":"```not code","cursor":"at the end","screen":"commonplace/Kept · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+the code button over a picture: {"corner":"can't make a code block from that","kept":true,"cursor":"selected 9","screen":"commonplace/Kept · sel 9 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+line breaks pasted over a selection: {"kept":true,"cursor":"selected 3","screen":"commonplace/Kept · sel 3 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+⌘C over a page marker: {"text":"::: note\nin her degree and on\n:::","cursor":"selected 21","screen":"commonplace/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a note with a page marker hover-copied: {"text":"::: note\nin her degree and on\n:::","cursor":"selected 21","screen":"commonplace/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+export pressed again while one runs: {"corner":"exporting…","pickers":1,"cursor":"selected 21","screen":"commonplace/Kept · sel 21 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+losing nothing: arrived at commonplace/Typed: {"cursor":"at a line's start"}
+typed into an entry an import overwrites: {"afterButton":"at the end","text":"IMPORTED TEXT","corner":"imported 1501 entries","cursor":"at a line's start","screen":"commonplace/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a store that never answers: {"corner":"couldn't load entries — reload (click to copy)","persistAsked":true,"cursor":"at a line's start","screen":"commonplace/Typed · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == where the keys go
-where the keys go: arrived at page/Horace: {"cursor":"at a line's start"}
-⌃⌘S pressed twice: {"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘B pressed twice: {"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Line numbering closed by its label: {"open":false,"cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-where the keys go: arrived at page/Links: {"cursor":"at a line's start"}
-where the keys go: arrived at page/Horace: {"cursor":"at a line's start"}
-a bookmark's link pressed, Z typed: {"line":"Maecena[Links](#page/Links)Zs atavis edite regibus, | Maecen","cursor":"inside a line","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-where the keys go: arrived at page/Keys: {"cursor":"at a line's start"}
-Tab in prose: {"corner":"⌃⌘M toggles markdown","cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Tab over two paragraphs: {"corner":"Tab indents one list, quote, or code block at a time","cursor":"selected 8","screen":"page/Keys · sel 8 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-Tab in a code block: {"code":"x   = 1\ny = 2","cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌘A in a code block: {"cursor":"selected 13","screen":"page/Keys · sel 13 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-a click below a table at the end, z typed: {"last":"P","tail":["","z"],"cursor":"at the end","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Escape after a search jump: {"cursor":"at a line's start","screen":"page/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘M over open search results: {"cursor":"inside a line","screen":"page/Keys · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+where the keys go: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+⌃⌘S pressed twice: {"cursor":"inside a line","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘B pressed twice: {"cursor":"inside a line","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Line numbering closed by its label: {"open":false,"cursor":"inside a line","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at commonplace/Links: {"cursor":"at a line's start"}
+where the keys go: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+a bookmark's link pressed, Z typed: {"line":"Maecena[Links](#commonplace/Links)Zs atavis edite regibus, |","cursor":"inside a line","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at commonplace/Keys: {"cursor":"at a line's start"}
+Tab in prose: {"corner":"⌃⌘M toggles markdown","cursor":"inside a line","screen":"commonplace/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab over two paragraphs: {"corner":"Tab indents one list, quote, or code block at a time","cursor":"selected 8","screen":"commonplace/Keys · sel 8 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+Tab in a code block: {"code":"x   = 1\ny = 2","cursor":"inside a line","screen":"commonplace/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌘A in a code block: {"cursor":"selected 13","screen":"commonplace/Keys · sel 13 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a click below a table at the end, z typed: {"last":"P","tail":["","z"],"cursor":"at the end","screen":"commonplace/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Escape after a search jump: {"cursor":"at a line's start","screen":"commonplace/Keys · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘M over open search results: {"cursor":"inside a line","screen":"commonplace/Keys · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 where the keys go: arrived at 2026-09-12: {"cursor":"at a line's start"}
 ⌃⌘T on today from the shortcuts popup: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘T on today from Search: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Tab twelve times from the bookmarks card: {"cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Shift-Tab from the shortcuts popup: {"cursor":"on summary","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Tab held from the bookshelf button: {"focus":"Open the pages list","cursor":"on button","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab held from the bookshelf button: {"focus":"Open the commonplaces list","cursor":"on button","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 where the keys go: arrived at bookshelf/Boethius/Consolatio/3pr1: {"cursor":"at a line's start"}
 ⌃⌘. held from 3pr1: {"walks":1,"cursor":"at a line's start","screen":"bookshelf/Boethius/Consolatio/3m1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Enter held on a search result: {"entry":"bookshelf/Boethius/Consolatio/3pr2","md":"# 3pr2\n\nTum defixo paululum uisu.\n","cursor":"selected 6","screen":"bookshelf/Boethius/Consolatio/3pr2 · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-where the keys go: arrived at page/Held: {"cursor":"at a line's start"}
-Enter held on a shortcut: {"md":"Sean Miller then.","cursor":"at the end","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Tab held in a quote: {"md":">> quoted","cursor":"inside a line","screen":"page/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at commonplace/Held: {"cursor":"at a line's start"}
+Enter held on a shortcut: {"md":"Sean Miller then.","cursor":"at the end","screen":"commonplace/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Tab held in a quote: {"md":">> quoted","cursor":"inside a line","screen":"commonplace/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 where the keys go: arrived at 2026-09-05: {"cursor":"at a line's start"}
 Enter with the caret above the window: {"clear":24,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a digit held on the bookmarks card: {"typed":0,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-where the keys go: arrived at page/Refused: {"cursor":"at a line's start"}
-where the keys go: arrived at page/Held: {"cursor":"at a line's start"}
-where the keys go: arrived at page/Refused: {"cursor":"at a line's start"}
-a refused entry redrawn under Search: {"source":true,"query":"lo","cursor":"on input","screen":"page/Refused · sel none · bar off · panel none · rows search · source · corner [whatever stood]"}
-where the keys go: arrived at page/Pictured Late: {"cursor":"at a line's start"}
-a picture pasted, then Search typed in: {"query":"abc","pictures":2,"md":"![](<Pictured Late-img-1.webp>)","cursor":"on input","screen":"page/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+a digit held on the bookmarks card: {"typed":0,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+where the keys go: arrived at commonplace/Refused: {"cursor":"at a line's start"}
+where the keys go: arrived at commonplace/Held: {"cursor":"at a line's start"}
+where the keys go: arrived at commonplace/Refused: {"cursor":"at a line's start"}
+a refused entry redrawn under Search: {"source":true,"query":"lo","cursor":"on input","screen":"commonplace/Refused · sel none · bar off · panel none · rows search · source · corner [whatever stood]"}
+where the keys go: arrived at commonplace/Pictured Late: {"cursor":"at a line's start"}
+a picture pasted, then Search typed in: {"query":"abc","pictures":2,"md":"![](<Pictured Late-img-1.webp>)","cursor":"on input","screen":"commonplace/Pictured Late · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 == editing as the help says
-editing as the help says: arrived at page/Verse Copied: {"cursor":"at a line's start"}
-verse lines 2–3 copied: {"clipboard":["::: verse 2","two line","three line",":::"],"cursor":"selected 19","screen":"page/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘R on verse lines 2–3: {"lines":["[*Verse Copied*](…):","","> ::: verse 2","> two line","> three line","> :::"],"cursor":"selected 19","screen":"page/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-a line typed into verse: {"before":"5:five line 10:ten line","typing":"5:four line 10:nine line","after":"5:four line 10:nine line","cursor":"at a line's start","screen":"page/Verse Copied · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Countdown: {"cursor":"at a line's start"}
-Enter in a countdown list: {"md":"5. five\n4. four\n3. next","numbers":"· 4 3 (start 5)","cursor":"at the end","screen":"page/Countdown · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Countdown Three: {"cursor":"at a line's start"}
-Enter after the first item of a countdown: {"md":"5. five\n6. new\n4. four\n3. three","cursor":"at a line's start","screen":"page/Countdown Three · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Countdown Middle: {"cursor":"at a line's start"}
-Enter after the middle item of a countdown: {"md":"5. five\n4. four\n3. new\n3. three","cursor":"at a line's start","screen":"page/Countdown Middle · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Numbers Jump: {"cursor":"at a line's start"}
-Enter after a jump in the numbering: {"md":"1. a\n5. e\n9. new\n10. f","cursor":"at a line's start","screen":"page/Numbers Jump · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Item Paragraph: {"cursor":"at a line's start"}
-Enter in a list item's second paragraph: {"md":"1. one\n\n    more of one\n\n    next\n\n2. two","cursor":"at a line's start","screen":"page/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Enter twice after it, out typed: {"md":"1. one\n\n    more of one\n\n    next\n2. out\n\n2. two","cursor":"at a line's start","screen":"page/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Quoted Heading: {"cursor":"at a line's start"}
-Tab on a heading in a quote: {"md":">> ## Quoted head\n> \n> quoted text","cursor":"inside a line","screen":"page/Quoted Heading · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing as the help says: arrived at page/Quoted Table: {"cursor":"at a line's start"}
-Tab in a table in a quote: {"md":"> quoted text\n> \n>> | a | b |\n>> | --- | --- |\n>> | 1 | 2 |","cursor":"inside a line","screen":"page/Quoted Table · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Verse Copied: {"cursor":"at a line's start"}
+verse lines 2–3 copied: {"clipboard":["::: verse 2","two line","three line",":::"],"cursor":"selected 19","screen":"commonplace/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘R on verse lines 2–3: {"lines":["[*Verse Copied*](…):","","> ::: verse 2","> two line","> three line","> :::"],"cursor":"selected 19","screen":"commonplace/Verse Copied · sel 19 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a line typed into verse: {"before":"5:five line 10:ten line","typing":"5:four line 10:nine line","after":"5:four line 10:nine line","cursor":"at a line's start","screen":"commonplace/Verse Copied · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Countdown: {"cursor":"at a line's start"}
+Enter in a countdown list: {"md":"5. five\n4. four\n3. next","numbers":"· 4 3 (start 5)","cursor":"at the end","screen":"commonplace/Countdown · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Countdown Three: {"cursor":"at a line's start"}
+Enter after the first item of a countdown: {"md":"5. five\n6. new\n4. four\n3. three","cursor":"at a line's start","screen":"commonplace/Countdown Three · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Countdown Middle: {"cursor":"at a line's start"}
+Enter after the middle item of a countdown: {"md":"5. five\n4. four\n3. new\n3. three","cursor":"at a line's start","screen":"commonplace/Countdown Middle · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Numbers Jump: {"cursor":"at a line's start"}
+Enter after a jump in the numbering: {"md":"1. a\n5. e\n9. new\n10. f","cursor":"at a line's start","screen":"commonplace/Numbers Jump · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Item Paragraph: {"cursor":"at a line's start"}
+Enter in a list item's second paragraph: {"md":"1. one\n\n    more of one\n\n    next\n\n2. two","cursor":"at a line's start","screen":"commonplace/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Enter twice after it, out typed: {"md":"1. one\n\n    more of one\n\n    next\n2. out\n\n2. two","cursor":"at a line's start","screen":"commonplace/Item Paragraph · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Quoted Heading: {"cursor":"at a line's start"}
+Tab on a heading in a quote: {"md":">> ## Quoted head\n> \n> quoted text","cursor":"inside a line","screen":"commonplace/Quoted Heading · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing as the help says: arrived at commonplace/Quoted Table: {"cursor":"at a line's start"}
+Tab in a table in a quote: {"md":"> quoted text\n> \n>> | a | b |\n>> | --- | --- |\n>> | 1 | 2 |","cursor":"inside a line","screen":"commonplace/Quoted Table · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == editing
-editing: arrived at page/Quote Enter: {"cursor":"at a line's start"}
-Enter inside a quote, new typed: {"md":"> one\n> new\n> two","cursor":"at a line's start","screen":"page/Quote Enter · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Code Two: {"cursor":"at a line's start"}
-the code button over two paragraphs: {"md":"```\nalpha\nbeta\n```","cursor":"selected 10","screen":"page/Code Two · sel 10 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Quote Three: {"cursor":"at a line's start"}
-the quote button with the caret in a quote's middle paragraph: {"md":"first\n\nsecond\n\nthird","cursor":"inside a line","screen":"page/Quote Three · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Nested Runs: {"cursor":"at a line's start"}
-Shift-Tab on the middle run of a nested quote: {"md":"> intro\n> \n>> a\n> b\n>> c","cursor":"at a line's start","screen":"page/Nested Runs · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Soft Italic: {"cursor":"at a line's start"}
-_italic_ typed at the start of a Shift-Enter line: {"md":"wrote this:\n*Somnium Scipionis* ok","cursor":"at the end","screen":"page/Soft Italic · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Quote Italic: {"cursor":"at a line's start"}
-_italic_ typed on a quote's later line: {"md":"> note:\n> *verity* ok","cursor":"at the end","screen":"page/Quote Italic · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Middle Marker: {"cursor":"at a line's start"}
-- typed at the start of a middle line: {"md":"a\n\n- Z\n\nb","cursor":"at a line's start","screen":"page/Middle Marker · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Quote Marker: {"cursor":"at a line's start"}
-> typed on a quote's later line: {"md":"> a\n> \\> b","cursor":"at the end","screen":"page/Quote Marker · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/List From Three: {"cursor":"at a line's start"}
-items 4–5 of a list from 3 copied: {"clipboard":["4. y","5. z"],"cursor":"selected 4","screen":"page/List From Three · sel 4 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Code Copy: {"cursor":"at a line's start"}
-a selection inside a code block copied: {"clipboard":["a = *ptr;","mo"],"cursor":"selected 12","screen":"page/Code Copy · sel 12 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Paste In Run: {"cursor":"at a line's start"}
-two lines pasted inside an emphasised run: {"md":"x *the be*\n\nL1\nL2\n\n*st* of times","cursor":"at a line's start","screen":"page/Paste In Run · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Paste Quote: {"cursor":"at a line's start"}
-> inner pasted inside a quote: {"md":"> quoted> inner line","cursor":"inside a line","screen":"page/Paste Quote · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Paste Picture Quote: {"cursor":"at a line's start"}
-a one-line quote of a picture pasted: {"md":"x\n\n> ![](a.png)","cursor":"at the end","screen":"page/Paste Picture Quote · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Paste Url: {"cursor":"at a line's start"}
-a bare URL pasted: {"md":"see https://example.org/xit now","links":1,"cursor":"inside a line","screen":"page/Paste Url · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Links: {"cursor":"at a line's start"}
-editing: arrived at page/Inline Code Link: {"cursor":"at a line's start"}
-a bookmark's link pressed in inline code: {"md":"see `code here` now","corner":"no link inside a code block","cursor":"inside a line","screen":"page/Inline Code Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Paste Refused: {"cursor":"at a line's start"}
-a refused fence pasted: {"md":"x\n\n::: verse -1\nline one\n\\:::","corner":"::: verse -1 — -1 is not a starting line, so it stayed a paragraph (click to copy)","cursor":"at the end","screen":"page/Paste Refused · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Source Curl: {"cursor":"at a line's start"}
--- and quotes typed in the markdown view: {"md":"x a — “b\" it’s","cursor":"at the end","screen":"page/Source Curl · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Bold Italic Row: {"cursor":"at a line's start"}
-a wholly bold-italic row: {"king":"as the speaker","cursor":"at a line's start","screen":"page/Bold Italic Row · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Note Quote: {"cursor":"at a line's start"}
-a quotation inside a note: {"fill":false,"rule":false,"cursor":"at a line's start","screen":"page/Note Quote · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Spacing: {"cursor":"at a line's start"}
-a picture's gaps and a quotation's top: {"abovePicture":18,"belowPicture":18,"paragraphGap":18,"quoteTopToText":[7,7,7],"cursor":"at a line's start","screen":"page/Spacing · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Reference Block: {"cursor":"at a line's start"}
-a reference block clicked, Q typed: {"md":"::: reference\nby book, chapter, and paragraph\n:::\n\nafter","corner":"Reference style is edited in the markdown view (⌃⌘M)","cursor":"at a line's start","screen":"page/Reference Block · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Spaced Leaves: {"cursor":"at a line's start"}
-page labels beside their leaf's first word: {"markers":72,"off":0,"cursor":"at a line's start","screen":"page/Spaced Leaves · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-editing: arrived at page/Near Miss: {"cursor":"at a line's start"}
-a near-miss entry link pasted: {"md":"x [near](#pagex)","links":0,"cursor":"at the end","screen":"page/Near Miss · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Quote Enter: {"cursor":"at a line's start"}
+Enter inside a quote, new typed: {"md":"> one\n> new\n> two","cursor":"at a line's start","screen":"commonplace/Quote Enter · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Code Two: {"cursor":"at a line's start"}
+the code button over two paragraphs: {"md":"```\nalpha\nbeta\n```","cursor":"selected 10","screen":"commonplace/Code Two · sel 10 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Quote Three: {"cursor":"at a line's start"}
+the quote button with the caret in a quote's middle paragraph: {"md":"first\n\nsecond\n\nthird","cursor":"inside a line","screen":"commonplace/Quote Three · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Nested Runs: {"cursor":"at a line's start"}
+Shift-Tab on the middle run of a nested quote: {"md":"> intro\n> \n>> a\n> b\n>> c","cursor":"at a line's start","screen":"commonplace/Nested Runs · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Soft Italic: {"cursor":"at a line's start"}
+_italic_ typed at the start of a Shift-Enter line: {"md":"wrote this:\n*Somnium Scipionis* ok","cursor":"at the end","screen":"commonplace/Soft Italic · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Quote Italic: {"cursor":"at a line's start"}
+_italic_ typed on a quote's later line: {"md":"> note:\n> *verity* ok","cursor":"at the end","screen":"commonplace/Quote Italic · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Middle Marker: {"cursor":"at a line's start"}
+- typed at the start of a middle line: {"md":"a\n\n- Z\n\nb","cursor":"at a line's start","screen":"commonplace/Middle Marker · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Quote Marker: {"cursor":"at a line's start"}
+> typed on a quote's later line: {"md":"> a\n> \\> b","cursor":"at the end","screen":"commonplace/Quote Marker · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/List From Three: {"cursor":"at a line's start"}
+items 4–5 of a list from 3 copied: {"clipboard":["4. y","5. z"],"cursor":"selected 4","screen":"commonplace/List From Three · sel 4 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Code Copy: {"cursor":"at a line's start"}
+a selection inside a code block copied: {"clipboard":["a = *ptr;","mo"],"cursor":"selected 12","screen":"commonplace/Code Copy · sel 12 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Paste In Run: {"cursor":"at a line's start"}
+two lines pasted inside an emphasised run: {"md":"x *the be*\n\nL1\nL2\n\n*st* of times","cursor":"at a line's start","screen":"commonplace/Paste In Run · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Paste Quote: {"cursor":"at a line's start"}
+> inner pasted inside a quote: {"md":"> quoted> inner line","cursor":"inside a line","screen":"commonplace/Paste Quote · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Paste Picture Quote: {"cursor":"at a line's start"}
+a one-line quote of a picture pasted: {"md":"x\n\n> ![](a.png)","cursor":"at the end","screen":"commonplace/Paste Picture Quote · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Paste Url: {"cursor":"at a line's start"}
+a bare URL pasted: {"md":"see https://example.org/xit now","links":1,"cursor":"inside a line","screen":"commonplace/Paste Url · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Links: {"cursor":"at a line's start"}
+editing: arrived at commonplace/Inline Code Link: {"cursor":"at a line's start"}
+a bookmark's link pressed in inline code: {"md":"see `code here` now","corner":"no link inside a code block","cursor":"inside a line","screen":"commonplace/Inline Code Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Paste Refused: {"cursor":"at a line's start"}
+a refused fence pasted: {"md":"x\n\n::: verse -1\nline one\n\\:::","corner":"::: verse -1 — -1 is not a starting line, so it stayed a paragraph (click to copy)","cursor":"at the end","screen":"commonplace/Paste Refused · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Source Curl: {"cursor":"at a line's start"}
+-- and quotes typed in the markdown view: {"md":"x a — “b\" it’s","cursor":"at the end","screen":"commonplace/Source Curl · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Bold Italic Row: {"cursor":"at a line's start"}
+a wholly bold-italic row: {"king":"as the speaker","cursor":"at a line's start","screen":"commonplace/Bold Italic Row · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Note Quote: {"cursor":"at a line's start"}
+a quotation inside a note: {"fill":false,"rule":false,"cursor":"at a line's start","screen":"commonplace/Note Quote · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Spacing: {"cursor":"at a line's start"}
+a picture's gaps and a quotation's top: {"abovePicture":18,"belowPicture":18,"paragraphGap":18,"quoteTopToText":[7,7,7],"cursor":"at a line's start","screen":"commonplace/Spacing · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Reference Block: {"cursor":"at a line's start"}
+a reference block clicked, Q typed: {"md":"::: reference\nby book, chapter, and paragraph\n:::\n\nafter","corner":"Reference style is edited in the markdown view (⌃⌘M)","cursor":"at a line's start","screen":"commonplace/Reference Block · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Spaced Leaves: {"cursor":"at a line's start"}
+page labels beside their leaf's first word: {"markers":72,"off":0,"cursor":"at a line's start","screen":"commonplace/Spaced Leaves · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+editing: arrived at commonplace/Near Miss: {"cursor":"at a line's start"}
+a near-miss entry link pasted: {"md":"x [near](#pagex)","links":0,"cursor":"at the end","screen":"commonplace/Near Miss · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == notices and surfaces
-notices and surfaces: arrived at page/Horace: {"cursor":"at a line's start"}
-⌃⌘K with Caps Lock: {"searchOpen":true,"cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+⌃⌘K with Caps Lock: {"searchOpen":true,"cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 a bare launch: {"hash":"#2026-09-12","cursor":"at a line's start","screen":"2026-09-12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Horace: {"cursor":"at a line's start"}
-Line numbering kept across a reload: {"interval":"1","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-an import of refused files only: {"corner":"nothing to import here — 1 .md file will NOT be imported. (click to copy)","fourSecondsOn":"nothing to import here — 1 .md file will NOT be imported. (click to copy)","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-an import of two files for one entry: {"corner":"two files here are the same entry (page/Trip--Log.md and page/Trip-Log.md) — remove one and import again (click to copy)","cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Pic Fail: {"cursor":"at a line's start"}
-a picture whose write fails: {"corner":"picture not saved — storage full (click to copy)","cursor":"at the end","screen":"page/Pic Fail · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Pic Copy: {"cursor":"at a line's start"}
-a block with a picture hover-copied: {"pictureCarried":true,"cursor":"at the end","screen":"page/Pic Copy · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Horace: {"cursor":"at a line's start"}
-the line bar re-asked when the entry gains a page marker: {"before":{"line":true,"page":false},"after":{"line":true,"page":true},"cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-a drag from the Line box out over the entry: {"barOpen":true,"cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-a result clicked after more typing: {"selected":"atavis","cursor":"selected 6","screen":"page/Horace · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Horace: {"cursor":"selected 6"}
-the format bar after Line numbering opens: {"clearBefore":true,"clearAfter":true,"cursor":"on select","screen":"page/Horace · sel 8 chars · bar on · panel none · rows lines · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Pic Copy: {"cursor":"at a line's start"}
-the copy button after a navigation: {"over":true,"after":false,"cursor":"at a line's start","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-a link's tooltip: {"title":"⌘-click to open Horace","outside":"⌘-click to open","cursor":"at a line's start","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the Tag button's tooltip: {"title":"Move selection to a new sub-page","cursor":"selected 4","screen":"page/Links · sel 4 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-a failed copy's pin clicked: {"clipboard":"[*Links*](…)","cursor":"none","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the tab's icon: {"icon":true,"cursor":"none","screen":"page/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Horace: {"cursor":"at a line's start"}
-a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in the entry","unchanged":true,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-notices and surfaces: arrived at page/Source Link: {"cursor":"at a line's start"}
-a bookmark's link in the markdown view: {"md":"x[Links](…)","cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
-Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Go to opened before the warm: {"more":true,"focusInRow":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-the bookshelf opened before the warm, the keys on its button: {"before":0,"after":2,"keysOnButton":true,"cursor":"at the end","screen":"page/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+Line numbering kept across a reload: {"interval":"1","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+an import of refused files only: {"corner":"nothing to import here — 1 .md file will NOT be imported. (click to copy)","fourSecondsOn":"nothing to import here — 1 .md file will NOT be imported. (click to copy)","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+an import of two files for one entry: {"corner":"two files here are the same entry (commonplace/Trip--Log.md and commonplace/Trip-Log.md) — remove one and import again (click to copy)","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Pic Fail: {"cursor":"at a line's start"}
+a picture whose write fails: {"corner":"picture not saved — storage full (click to copy)","cursor":"at the end","screen":"commonplace/Pic Fail · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Pic Copy: {"cursor":"at a line's start"}
+a block with a picture hover-copied: {"pictureCarried":true,"cursor":"at the end","screen":"commonplace/Pic Copy · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+the line bar re-asked when the entry gains a page marker: {"before":{"line":true,"page":false},"after":{"line":true,"page":true},"cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+a drag from the Line box out over the entry: {"barOpen":true,"cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+a result clicked after more typing: {"selected":"atavis","cursor":"selected 6","screen":"commonplace/Horace · sel 6 chars · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Horace: {"cursor":"selected 6"}
+the format bar after Line numbering opens: {"clearBefore":true,"clearAfter":true,"cursor":"on select","screen":"commonplace/Horace · sel 8 chars · bar on · panel none · rows lines · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Pic Copy: {"cursor":"at a line's start"}
+the copy button after a navigation: {"over":true,"after":false,"cursor":"at a line's start","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a link's tooltip: {"title":"⌘-click to open Horace","outside":"⌘-click to open","cursor":"at a line's start","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the Tag button's tooltip: {"title":"Move selection to a new sub-entry","cursor":"selected 4","screen":"commonplace/Links · sel 4 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+a failed copy's pin clicked: {"clipboard":"[*Links*](…)","cursor":"none","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the tab's icon: {"icon":true,"cursor":"none","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in the entry","unchanged":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+notices and surfaces: arrived at commonplace/Source Link: {"cursor":"at a line's start"}
+a bookmark's link in the markdown view: {"md":"x[Links](…)","cursor":"at the end","screen":"commonplace/Source Link · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+Search opened before the warm: {"loading":"Still loading…","rows":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Go to opened before the warm: {"more":true,"focusInRow":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the bookshelf opened before the warm, the keys on its button: {"before":0,"after":2,"keysOnButton":true,"cursor":"at the end","screen":"commonplace/Source Link · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == pill
-with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"cursor":"at a line's start","screen":"page/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+with ?corner=pill: {"text":"backups paused — click to resume","hidden":false,"display":"block","right":22.390625,"bottom":19.1875,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == a rename keeps a label's marks
-a rename keeps a label's marks: arrived at page/Rename Host: {"cursor":"at a line's start"}
-a rename keeps a label's marks: arrived at page/Rename Host/Ideas: {"cursor":"at a line's start"}
-renamed under a label part italic: {"entry":"page/Rename Host/Plans","host":"See [the *Ideas* page](#page/Rename%20Host/Plans) here.","cursor":"on button","screen":"page/Rename Host/Plans · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a rename keeps a label's marks: arrived at commonplace/Rename Host: {"cursor":"at a line's start"}
+a rename keeps a label's marks: arrived at commonplace/Rename Host/Ideas: {"cursor":"at a line's start"}
+renamed under a label part italic: {"entry":"commonplace/Rename Host/Plans","host":"See [the *Ideas* page](#commonplace/Rename%20Host/Plans) here.","cursor":"on button","screen":"commonplace/Rename Host/Plans · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == shelves
 the bookshelf on its shelves: {"seeded":true,"shelvesShown":true,"rows":["## Latin","  Boethius @26","  Browning, Robert @26","## English","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on button","screen":"2026-09-06 · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
 Shelves… clicked: {"entry":"bookshelf/Shelves","panel":null,"cursor":"at a line's start","screen":"bookshelf/Shelves · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a shelf renamed, the list opened at once: {"rows":["## Classical","  Boethius @26","  Browning, Robert @26","## English","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on button","screen":"bookshelf/Shelves · sel none · bar off · panel pages · rows none · rendered · corner [whatever stood]"}
 shelves: arrived at 2026-09-06: {"cursor":"at a line's start"}
-the go-to box on its shelves: {"value":["Pages: 3 pages","Classical: Boethius|Browning, Robert","English: Edmund Spenser"],"cursor":"on select","screen":"2026-09-06 · sel none · bar off · panel none · rows goto · rendered · corner [whatever stood]"}
-the search scopes on their shelves: {"value":["Pages: 3 pages","Classical: All Classical|Boethius|Browning, Robert","English: Edmund Spenser"],"cursor":"on input","screen":"2026-09-06 · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
+the go-to box on its shelves: {"value":["Commonplaces: 3 commonplaces","Classical: Boethius|Browning, Robert","English: Edmund Spenser"],"cursor":"on select","screen":"2026-09-06 · sel none · bar off · panel none · rows goto · rendered · corner [whatever stood]"}
+the search scopes on their shelves: {"value":["Commonplaces: 3 commonplaces","Classical: All Classical|Boethius|Browning, Robert","English: Edmund Spenser"],"cursor":"on input","screen":"2026-09-06 · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 searched uisu under All Classical: {"scope":"All Classical","where":["Boethius › Consolatio › 3pr2"],"cursor":"on input","screen":"2026-09-06 · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 searched silk-mills under All Classical: {"scope":"All Classical","where":["Browning, Robert › Pippa Passes, Introduction (an extract)"],"cursor":"on input","screen":"2026-09-06 · sel none · bar off · panel none · rows search · rendered · corner [whatever stood]"}
 == a work in stanzas
@@ -535,8 +535,8 @@ a skipped line number: {"line":"547","before":"vskip","drawn":"none","cursor":"a
 ⌃⌘G for a skipped line: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"547","centred":71,"corner":"line 546 is omitted in this edition","landed":"qua nimium placui, mutando per","cursor":"on input","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 a drag over one sentence's English: {"selected":"Through this the River Peneus flows from the foot of Pindus ","ends":"n remoter regions by its roar.","marked":["per quae Peneus ab imo","effusus Pindo spumosis volvitur undis","deiectuque gravi tenues agitantia fumos","nubila conducit summisque adspergine sil","inpluit et sonitu plus quam vicina fatig"],"cursor":"selected 251","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel 251 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘R on one sentence's English: {"lines":["[Ovid, *Metamorphoses*, 1.569-73](…):","","> ::: dual-language 569","> ⟨…⟩per quae Peneus ab imo | Through this the River Peneus flows from","> effusus Pindo spumosis volvitur undis","> deiectuque gravi tenues agitantia fumos","> nubila conducit summisque adspergine silvis","> inpluit et sonitu plus quam vicina fatigat:","> :::"],"cursor":"selected 251","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel 251 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-dual-language: arrived at page/Quoted Ovid: {"cursor":"at a line's start"}
-⌃⌘R across a long sentence, pasted: {"lines":["[Ovid, *Metamorphoses*, 1.533-34](…):","","> ::: dual-language 533","> ut canis in vacuo leporem cum Gallicus arvo | Just as when a Gallic ","> vidit, et hic praedam pedibus petit, ille salutem;","> :::"],"fitted":true,"dual":true,"rows":2,"level":true,"latinStep":1,"englishLines":8,"englishInside":true,"cursor":"at the end","screen":"page/Quoted Ovid · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+dual-language: arrived at commonplace/Quoted Ovid: {"cursor":"at a line's start"}
+⌃⌘R across a long sentence, pasted: {"lines":["[Ovid, *Metamorphoses*, 1.533-34](…):","","> ::: dual-language 533","> ut canis in vacuo leporem cum Gallicus arvo | Just as when a Gallic ","> vidit, et hic praedam pedibus petit, ille salutem;","> :::"],"fitted":true,"dual":true,"rows":2,"level":true,"latinStep":1,"englishLines":8,"englishInside":true,"cursor":"at the end","screen":"commonplace/Quoted Ovid · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a dual-language block in a note: {"englishEdge":0,"notes":"Latin English","englishNoteToEdge":0,"latinWrapped":0,"cursor":"at a line's start","screen":"bookshelf/Horace/Satires/1.10 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == facing numbers
 a verse block numbered on both sides: {"fitted":true,"rows":66,"left":"180 185 190 195 200 205 210 215 220 225 230","right":"245 250 255 260 265 270 275 280 285 290 295 300 305","unnumbered":"252 263 264 268 283 289 300 301 302 307 308","drawn":"\"245\"","clear":72,"wrapped":61,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -553,19 +553,19 @@ Ref (all) across Prospero's borrowing: {"label":"[Ovid, *Metamorphoses*, 7.197-2
 ⌃⌘G 61x on a work by paragraph: {"said":"61x is not a paragraph number","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G 99 on a work by paragraph: {"landedOn":"61. Nam quid aliud.61. A","said":"no paragraph 99 — the paragraphs here are 60–62","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘R on a work by paragraph: {"label":"[Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 61)]:","cursor":"selected 14","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel 14 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘G on the next page after a work by paragraph: {"open":true,"box":"Line","cursor":"on input","screen":"page/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+⌃⌘G on the next page after a work by paragraph: {"open":true,"box":"Line","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 back on a work by paragraph: {"open":true,"box":"Paragraph","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 == column marks
-column marks: arrived at page/Horace: {"cursor":"at a line's start"}
-a paired line's closing comma into the next line's Latin: {"selected":", o et prae","marked":["sidium et dulce decus meum,","The shield at once and glory of my life!"],"refAll":false,"quoted":["[*Horace*](…):","","> ::: verse 2","> o et praesidium et dulce decus meum, | The shield at once and glory ","> :::"],"cursor":"selected 11","screen":"page/Horace · sel 11 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-column marks: arrived at page/Horace: {"cursor":"selected 11"}
-a paired line's English into the next line's Latin: {"selected":"of monarch ancestors, o et prae","marked":["Maecenas atavis edite regibus,","Maecenas, born ","sidium et dulce decus meum,","The shield at once and glory of my life!"],"refAll":false,"quoted":["[*Horace*](…):","","> ::: verse","> Maecenas atavis edite regibus, | Maecenas, born of monarch ancestors","> o et praesidium et dulce decus meum, | The shield at once and glory ","> :::"],"cursor":"selected 31","screen":"page/Horace · sel 31 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-column marks: arrived at page/Golding: {"cursor":"at a line's start"}
-a block numbered on both sides, from a line's closing comma: {"selected":", egreditur tectis vestes induta recinctas, Medea with","marked":[],"refAll":true,"quoted":["[*Golding*](…):","","> ::: verse 247","> Medea with","> :::"],"cursor":"selected 54","screen":"page/Golding · sel 54 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-column marks: arrived at page/Samson: {"cursor":"at a line's start"}
-plain verse, from a line's closing stop: {"selected":". Messenger It would burst","marked":[],"refAll":false,"quoted":["[*Samson*](…):","","> ::: verse 1555","> **Messenger**","> It would burst","> :::"],"cursor":"selected 26","screen":"page/Samson · sel 26 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-column marks: arrived at page/Samson: {"cursor":"selected 26"}
-a split line's rest, from the closing stop of the line it splits: {"selected":". Messenger By Sam","marked":[],"refAll":false,"quoted":["[*Samson*](…):","","> ::: verse 1563","> **Messenger**","> ⟨…⟩By Samson","> :::"],"cursor":"selected 18","screen":"page/Samson · sel 18 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+column marks: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+a paired line's closing comma into the next line's Latin: {"selected":", o et prae","marked":["sidium et dulce decus meum,","The shield at once and glory of my life!"],"refAll":false,"quoted":["[*Horace*](…):","","> ::: verse 2","> o et praesidium et dulce decus meum, | The shield at once and glory ","> :::"],"cursor":"selected 11","screen":"commonplace/Horace · sel 11 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+column marks: arrived at commonplace/Horace: {"cursor":"selected 11"}
+a paired line's English into the next line's Latin: {"selected":"of monarch ancestors, o et prae","marked":["Maecenas atavis edite regibus,","Maecenas, born ","sidium et dulce decus meum,","The shield at once and glory of my life!"],"refAll":false,"quoted":["[*Horace*](…):","","> ::: verse","> Maecenas atavis edite regibus, | Maecenas, born of monarch ancestors","> o et praesidium et dulce decus meum, | The shield at once and glory ","> :::"],"cursor":"selected 31","screen":"commonplace/Horace · sel 31 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+column marks: arrived at commonplace/Golding: {"cursor":"at a line's start"}
+a block numbered on both sides, from a line's closing comma: {"selected":", egreditur tectis vestes induta recinctas, Medea with","marked":[],"refAll":true,"quoted":["[*Golding*](…):","","> ::: verse 247","> Medea with","> :::"],"cursor":"selected 54","screen":"commonplace/Golding · sel 54 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+column marks: arrived at commonplace/Samson: {"cursor":"at a line's start"}
+plain verse, from a line's closing stop: {"selected":". Messenger It would burst","marked":[],"refAll":false,"quoted":["[*Samson*](…):","","> ::: verse 1555","> **Messenger**","> It would burst","> :::"],"cursor":"selected 26","screen":"commonplace/Samson · sel 26 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+column marks: arrived at commonplace/Samson: {"cursor":"selected 26"}
+a split line's rest, from the closing stop of the line it splits: {"selected":". Messenger By Sam","marked":[],"refAll":false,"quoted":["[*Samson*](…):","","> ::: verse 1563","> **Messenger**","> ⟨…⟩By Samson","> :::"],"cursor":"selected 18","screen":"commonplace/Samson · sel 18 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 == a link to a line
 a link to a line, clicked: {"landed":"three","selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a link to a line, the next click: {"landed":null,"selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -610,33 +610,33 @@ a link to a line with no English: {"words":368,"wordsTop":31,"rows":[28,28,28],"
 Enter again for a line in both blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":47,"corner":"line 1 — verse block 2 of 2","landed":"gamma","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G past the last line where blocks repeat a number: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":47,"corner":"no line 9 — the longest verse block has 2","landed":"gamma","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 == a page renamed with every link following
-a page renamed with every link following: arrived at page/Rename Far: {"cursor":"at a line's start"}
-a page renamed with every link following: arrived at page/Rename Me: {"cursor":"at a line's start"}
-Rename, Renamed Me typed, Enter: {"prompts":["Rename the page \"Rename Me\" to: [Rename Me]"],"confirms":[],"entry":"page/Renamed Me","corner":"renamed to page/Renamed Me — 1 entry, links updated in 1 other","far":"See [it](#page/Renamed%20Me) here.","old":null,"cursor":"on button","screen":"page/Renamed Me · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a page renamed with every link following: arrived at commonplace/Rename Far: {"cursor":"at a line's start"}
+a page renamed with every link following: arrived at commonplace/Rename Me: {"cursor":"at a line's start"}
+Rename, Renamed Me typed, Enter: {"prompts":["Rename the commonplace \"Rename Me\" to: [Rename Me]"],"confirms":[],"entry":"commonplace/Renamed Me","corner":"renamed to commonplace/Renamed Me — 1 entry, links updated in 1 other","far":"See [it](#commonplace/Renamed%20Me) here.","old":null,"cursor":"on button","screen":"commonplace/Renamed Me · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == unused pictures
-unused pictures: arrived at page/Unused Pictures: {"cursor":"at a line's start"}
-the picture deleted from the text, the backups panel opened: {"kept":["page/Unused Pictures-img-1.webp"],"md":"","panel":{"buttons":["Set up automatic backups…","Remove 1 unused picture"],"status":null},"cursor":"on button","screen":"page/Unused Pictures · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
-Remove … unused picture clicked, the confirm accepted: {"corner":"removed 1 unused picture","left":[],"panel":{"buttons":["Set up automatic backups…"],"status":null},"cursor":"none","screen":"page/Unused Pictures · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
-the whisper clicked: {"corner":"copied","clipboard":"removed 1 unused picture","cursor":"none","screen":"page/Unused Pictures · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+unused pictures: arrived at commonplace/Unused Pictures: {"cursor":"at a line's start"}
+the picture deleted from the text, the backups panel opened: {"kept":["commonplace/Unused Pictures-img-1.webp"],"md":"","panel":{"buttons":["Set up automatic backups…","Remove 1 unused picture"],"status":null},"cursor":"on button","screen":"commonplace/Unused Pictures · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
+Remove … unused picture clicked, the confirm accepted: {"corner":"removed 1 unused picture","left":[],"panel":{"buttons":["Set up automatic backups…"],"status":null},"cursor":"none","screen":"commonplace/Unused Pictures · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
+the whisper clicked: {"corner":"copied","clipboard":"removed 1 unused picture","cursor":"none","screen":"commonplace/Unused Pictures · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == a page moved with its sub-pages
-a page moved with its sub-pages: arrived at page/Move Source/Essay: {"cursor":"at a line's start"}
-a page moved with its sub-pages: arrived at page/Move Source: {"cursor":"at a line's start"}
-Rename, an address in the bookshelf typed, Enter, the confirm accepted: {"prompts":["Move the page “Move Source” and its sub-pages to: [page/Move Source]"],"confirms":["Move the page “Move Source” and its 1 sub-page to bookshelf/Mover, Test/Essays? Its own text goes after the text there. 1 sub-page is there already by title and is deleted, its links going to the one there: “The Twin”."],"entry":"bookshelf/Mover, Test/Essays","hash":"bookshelf/Mover%2C%20Test/Essays","corner":"moved to bookshelf/Mover, Test/Essays — 2 entries, 1 there already deleted, links updated in 1 other","there":"# Essays\n\n[The Twin](#bookshelf/Mover%2C%20Test/Essays/2022-twin)\n\n[Essay](#bookshelf/Mover%2C%20Test/Essays/Essay)","essay":"An essay with a picture: ![](Essay-img-1.webp)","twin":"# The Twin\n\nThe longer copy.\n","links":"See [the essay](#bookshelf/Mover%2C%20Test/Essays/Essay?line=1) and [the twin](#bookshelf/Mover%2C%20Test/Essays/2022-twin).","left":[null,null,null],"cursor":"on button","screen":"bookshelf/Mover, Test/Essays · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a page moved with its sub-pages: arrived at commonplace/Move Source/Essay: {"cursor":"at a line's start"}
+a page moved with its sub-pages: arrived at commonplace/Move Source: {"cursor":"at a line's start"}
+Rename, an address in the bookshelf typed, Enter, the confirm accepted: {"prompts":["Move the commonplace “Move Source” and its sub-entries to: [commonplace/Move Source]"],"confirms":["Move the commonplace “Move Source” and its 1 sub-entry to bookshelf/Mover, Test/Essays? Its own text goes after the text there. 1 sub-entry is there already by title and is deleted, its links going to the one there: “The Twin”."],"entry":"bookshelf/Mover, Test/Essays","hash":"bookshelf/Mover%2C%20Test/Essays","corner":"moved to bookshelf/Mover, Test/Essays — 2 entries, 1 there already deleted, links updated in 1 other","there":"# Essays\n\n[The Twin](#bookshelf/Mover%2C%20Test/Essays/2022-twin)\n\n[Essay](#bookshelf/Mover%2C%20Test/Essays/Essay)","essay":"An essay with a picture: ![](Essay-img-1.webp)","twin":"# The Twin\n\nThe longer copy.\n","links":"See [the essay](#bookshelf/Mover%2C%20Test/Essays/Essay?line=1) and [the twin](#bookshelf/Mover%2C%20Test/Essays/2022-twin).","left":[null,null,null],"cursor":"on button","screen":"bookshelf/Mover, Test/Essays · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the place's links, hovered: {"titles":["⌘-click to open 2022-twin","⌘-click to open Essay"],"cursor":"on button","screen":"bookshelf/Mover, Test/Essays · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a page moved with its sub-pages: arrived at bookshelf/Mover, Test/Essays/Essay: {"cursor":"at a line's start"}
 the pictures under the old page and the new: {"old":[],"now":["bookshelf/Mover, Test/Essays/Essay-img-1.webp"],"cursor":"at a line's start","screen":"bookshelf/Mover, Test/Essays/Essay · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the moved essay, its picture: {"entry":"bookshelf/Mover, Test/Essays/Essay","missing":null,"src":"blob:","width":1400,"height":700,"last":"P","cursor":"at a line's start","screen":"bookshelf/Mover, Test/Essays/Essay · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-console: error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
-error: cannot render page/Gridded a grid holds only cards; "loose" is not a card
+console: error: cannot render commonplace/Gridded a grid holds only cards; "loose" is not a card
+error: cannot render commonplace/Gridded a grid holds only cards; "loose" is not a card
 error: bookmarks not saved Error: bookmarks unreadable
-error: cannot render page/Forced Long a grid holds only cards; "loose" is not a card
-error: cannot render page/Forced Long a grid holds only cards; "loose" is not a card
-error: cannot render page/Long Paragraph a grid holds only cards; "loose" is not a card
+error: cannot render commonplace/Forced Long a grid holds only cards; "loose" is not a card
+error: cannot render commonplace/Forced Long a grid holds only cards; "loose" is not a card
+error: cannot render commonplace/Long Paragraph a grid holds only cards; "loose" is not a card
 error: Couldn't copy the link [*Gesta*, 5 September 2026](#2026-09-05)
 error: not saved — changed in another tab, copy your text then reload Error: entry changed in another tab
-error: cannot render page/Refused a grid holds only cards; "loose" is not a card
-error: cannot render page/Refused a grid holds only cards; "loose again" is not a card
+error: cannot render commonplace/Refused a grid holds only cards; "loose" is not a card
+error: cannot render commonplace/Refused a grid holds only cards; "loose again" is not a card
 error: nothing to import here — 1 .md file will NOT be imported. null
-error: two files here are the same entry (page/Trip--Log.md and page/Trip-Log.md) — remove one and import again null
+error: two files here are the same entry (commonplace/Trip--Log.md and commonplace/Trip-Log.md) — remove one and import again null
 error: picture not saved r
-error: Couldn't copy the link [*Links*](#page/Links)
+error: Couldn't copy the link [*Links*](#commonplace/Links)

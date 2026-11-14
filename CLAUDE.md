@@ -276,7 +276,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `searchIndex.ts`, `indexStore.ts`, `bookmarks.ts`, `bookmarkStore.ts`,
   `shortcuts.ts`, `contents.ts`, `foldState.ts`, `placeState.ts`,
   `links.ts` (links rewritten on a rename or delete), `shelves.ts`,
-  `refile.ts`, `move.ts` (a page or book to another key), `pictures.ts`,
+  `refile.ts`, `move.ts` (an entry to another key), `pictures.ts`,
+  `toCommonplaces.ts` (once: the retired `page/` entries moved to
+  `commonplace/`),
   `entrySave.ts` (the open entry's save: the debounce, leaving an
   entry, a rename's or move's hand-over, an entry deleted elsewhere).
 - `src/ui/` — the UI, Svelte 5. The models, pure and node-tested:

@@ -52,7 +52,7 @@ describe("sourceTyped", () => {
     expect(typedIn("```\ncode\n```\nx \"")).toBe("```\ncode\n```\nx “");
   });
   it("a link's address and title, and a bare address, are left alone; prose after a closed link curls", () => {
-    expect(typedIn("[x](#page/O'")).toBe("[x](#page/O'");
+    expect(typedIn("[x](#commonplace/O'")).toBe("[x](#commonplace/O'");
     expect(typedIn("[a](http://x \"")).toBe("[a](http://x \"");
     expect(typedIn("see https://x.org/a'")).toBe("see https://x.org/a'");
     expect(typedIn("see <https://x.org/a -- ")).toBe("see <https://x.org/a -- ");

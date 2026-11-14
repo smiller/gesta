@@ -82,7 +82,7 @@ section("replace", async () => {
   await savedElsewhereFollowing();
 });
 async function replaceInRenderedView(): Promise<void> {
-  await go("page/Replaced");
+  await go("commonplace/Replaced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -183,7 +183,7 @@ async function escapeSwitchBackRefused(): Promise<void> {
 }
 async function entrySavedAnotherWindow(): Promise<void> {
   { const other = await page.context().newPage();
-    await other.goto(A.url("page/Replaced")); await A.waitEntry(other, "page/Replaced");
+    await other.goto(A.url("commonplace/Replaced")); await A.waitEntry(other, "commonplace/Replaced");
     await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
     await R.waitCorner(other, "saved");
     /* the landed write reaches this window by its notice: waited for, so a reading never races it */
@@ -205,7 +205,7 @@ section("losing nothing", async () => {
   await storeThatNeverAnswers();
 });
 async function fenceWordsBothViews(): Promise<void> {
-  await go("page/Kept");
+  await go("commonplace/Kept");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
@@ -248,7 +248,7 @@ async function exportPressedTwice(): Promise<void> {
   await page.evaluate(() => window.__pickerAbort?.());
   await rest(page);
   /* an import over the entry open, typed into while it runs: the import's text stands and its tally shows; the keys go back to the text after the button */
-  await go("page/Typed");
+  await go("commonplace/Typed");
   await page.click(S.editor);
   await page.keyboard.type("before the import. ");
   await landed(page, 1200);
@@ -262,7 +262,7 @@ async function exportPressedTwiceFollowing(): Promise<void> {
        whether that save or the import's write landed first was a race */
     const held = new Promise<void>((go) => { window.__releaseTyped = go; });
     const typed = { kind: "file", name: "Typed.md", getFile: () => held.then(() => new File(["IMPORTED TEXT\n"], "Typed.md")) };
-    window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("page", [...fillers, typed])]));
+    window.showDirectoryPicker = () => Promise.resolve(dir("export", [dir("commonplace", [...fillers, typed])]));
   });
 }
 async function typedIntoEntryImport(): Promise<void> {
@@ -285,7 +285,7 @@ async function storeThatNeverAnswers(): Promise<void> {
   /* a page of its own, the persist call watched from before the app's first line */
   const hung = await page.context().newPage();
   await hung.addInitScript(() => { const s = navigator.storage; const own = s.persist.bind(s); s.persist = () => { window.__persistAsked = true; return own(); }; });
-  await hung.goto(A.url("page/Horace", "warm=hang"));
+  await hung.goto(A.url("commonplace/Horace", "warm=hang"));
   await hung.waitForTimeout(8500);
   await log("a store that never answers", await hung.evaluate((c) => ({ corner: document.querySelector(c)?.textContent || "", persistAsked: !!window.__persistAsked }), S.corner));
   await hung.close();

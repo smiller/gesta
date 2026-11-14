@@ -24,7 +24,7 @@ const FILES = [
   { dir: "journal/2026/", name: "2026-09-10.md", text: "# A pictured day\n\n![](2026-09-10-img-1.png)\n" },
   { dir: "journal/2026/", name: "2026-09-10-img-1.png", bytes: PNG },
   { dir: "journal/2026/", name: "2026-09-11.md", text: "# The day after\n\nA line.\n" },
-  { dir: "page/", name: "Witchcraft.md", text: fixture("williams-witchcraft-3.md") },
+  { dir: "commonplace/", name: "Witchcraft.md", text: fixture("williams-witchcraft-3.md") },
 ];
 const ZIP = TIMED || resolve("tools/out/reader-fixture.zip");
 if (!TIMED) {
@@ -47,7 +47,7 @@ const launch = async () => {
 const settled = (page: Page, what: string) => page.waitForFunction(() => /all|fail/.test(document.documentElement.dataset.probe || ""), null, { timeout: 60000 }).catch(() => logs.push("no warm " + what));
 const ms = (t: number): string => TIMED ? " (" + (Date.now() - t) + " ms)" : "";
 const first = await launch();
-await first.page.goto(PAGE + "#page/Witchcraft");
+await first.page.goto(PAGE + "#commonplace/Witchcraft");
 await settled(first.page, "bare");
 const screen = (page: Page) => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
@@ -120,7 +120,7 @@ await look("‹ clicked");
 await page.click("button[aria-label='Previous entry']");
 await rest();
 await look("‹ clicked on the first", undefined, true);
-await page.goto(PAGE + "#page/Witchcraft");
+await page.goto(PAGE + "#commonplace/Witchcraft");
 await rest();
 const rows = await search("rumoured Goetia");
 await look("a search row clicked, of " + rows, () => page.evaluate(() => ({ scrolled: scrollY > 1000 })));

@@ -23,9 +23,8 @@ export function typedName(raw: string | null | undefined): Typed {
 }
 
 /* a place typed where a name is asked: an address (`#bookshelf/…`) or one
-   spelled from its namespace (`bookshelf/Miller, Sean/Essays`), a
-   page or book there; anything else is a name (pin: naming.test › a typed
-   address names a page or book) */
+   spelled from its namespace (`bookshelf/Miller, Sean/Essays`), a commonplace or book there; anything else is a name (pin: naming.test › a typed
+   address names a commonplace or book) */
 export const REFUSE_EMPTY_PART = "an address can’t have an empty part";
 type TypedPlace = { date: string; tag: string } | { refuse: string } | null;
 const emptyPart = (path: string): boolean => NS_KEYS.some((n) => path.startsWith(n + "/")) && path.split("/").some((p) => !p);

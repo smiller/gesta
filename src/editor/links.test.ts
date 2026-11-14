@@ -4,7 +4,7 @@ import { linkAction, linkTitle } from "./links.ts";
 const DOC = "file:///Users/x/gesta/dist/index.html#2026-09-07";
 describe("linkAction", () => {
   it("a plain click on a bare fragment routes in this tab", () => {
-    expect(linkAction("#page/Horace", false, DOC)).toEqual({ kind: "route", frag: "#page/Horace" });
+    expect(linkAction("#commonplace/Horace", false, DOC)).toEqual({ kind: "route", frag: "#commonplace/Horace" });
   });
   it("a full URL pointing at this document is internal in external clothing", () => {
     expect(linkAction("file:///Users/x/gesta/dist/index.html#bookshelf/Lewis%2C%20C.%20S./The%20Screwtape%20Letters", false, DOC))
@@ -15,7 +15,7 @@ describe("linkAction", () => {
     expect(linkAction(null, false, DOC)).toBeNull();
   });
   it("the modifier opens EVERY link in a new tab, internal ones included", () => {
-    expect(linkAction("#page/Horace", true, DOC)).toEqual({ kind: "open", href: "#page/Horace" });
+    expect(linkAction("#commonplace/Horace", true, DOC)).toEqual({ kind: "open", href: "#commonplace/Horace" });
     expect(linkAction("https://example.org/", true, DOC)).toEqual({ kind: "open", href: "https://example.org/" });
   });
 });
@@ -24,12 +24,12 @@ describe("linkTitle", () => {
   it("a link into the journal names the last part of the entry it opens, whatever it carries after", () => {
     expect(linkTitle("#bookshelf/Miller%2C%20Sean/Essays/2026-10-18-refiguring", DOC)).toBe("⌘-click to open 2026-10-18-refiguring");
     expect(linkTitle("#bookshelf/Miller%2C%20Sean/Essays/2026-10-18-refiguring?line=3", DOC)).toBe("⌘-click to open 2026-10-18-refiguring");
-    expect(linkTitle("#page/Books", DOC)).toBe("⌘-click to open Books");
+    expect(linkTitle("#commonplace/Books", DOC)).toBe("⌘-click to open Books");
     expect(linkTitle("#2021-06-22", DOC)).toBe("⌘-click to open 2021-06-22");
     expect(linkTitle("#2021-06-22/Plans", DOC)).toBe("⌘-click to open Plans");
-    expect(linkTitle("file:///Users/x/gesta/dist/index.html#page/Books%2FLent", DOC)).toBe("⌘-click to open Lent");
+    expect(linkTitle("file:///Users/x/gesta/dist/index.html#commonplace/Books%2FLent", DOC)).toBe("⌘-click to open Lent");
   });
   it("a link out of the journal, or to nothing it can name, says only how to open it", () => {
-    for (const href of ["https://x.org/a", "#nonsense", "file:///elsewhere.html#page/Books", ""]) expect(linkTitle(href, DOC)).toBe("⌘-click to open");
+    for (const href of ["https://x.org/a", "#nonsense", "file:///elsewhere.html#commonplace/Books", ""]) expect(linkTitle(href, DOC)).toBe("⌘-click to open");
   });
 });

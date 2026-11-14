@@ -209,10 +209,10 @@ function unwrapped(text: string): string {
   }
   return out.join("\n");
 }
-/* A PASTED LINK TO THIS PAGE KEEPS ITS BARE ADDRESS: pasted HTML carries the
-   page's full file address, which breaks when the page moves; a link whose
-   words are its address stays whole (pin: paste.test › a pasted link to this
-   page) (pin: paste.test › a link to this page in pasted markdown) */
+/* A PASTED LINK INTO THE APP KEEPS ITS BARE ADDRESS: pasted HTML carries
+   the app's full file address, which breaks when the file moves; a link whose
+   words are its address stays whole (pin: paste.test › a pasted link into the app)
+   (pin: paste.test › a link into the app in pasted markdown) */
 const keepsAddress = (m: Mark, n: Node, docHref: string): boolean =>
   m.type !== schema.marks.link || (n.isText && n.text === m.attrs.href) || !internalHash(m.attrs.href as string, docHref);
 function bareMark(m: Mark, n: Node, docHref: string): Mark {

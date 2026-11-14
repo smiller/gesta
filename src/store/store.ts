@@ -105,7 +105,7 @@ export function dexieKeyedStore<R extends object>(dbName: string, storeName: str
 export const IMG_DB = "gesta.images";
 export const IMG_STORE = "images";
 /* a picture is its BYTES under the path its entry's markdown names it by —
-   `page/Trip Log/Trip Log-img-1.webp` — so the ref in the text stays as
+   `commonplace/Trip Log/Trip Log-img-1.webp` — so the ref in the text stays as
    written (pin: importFiles.test › a picture the import files is found where
    the entry looks) */
 export interface ImageRow { id: string; bytes: Uint8Array }

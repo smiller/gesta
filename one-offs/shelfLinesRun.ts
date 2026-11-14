@@ -69,7 +69,7 @@ const PLACED: { file: string; at: number; end?: number; key: string; from: numbe
 /* a line of verse in one's own sentence or list: its words made the link, no passage quoted */
 const LINKED: { file: string; at: number; key: string; from: number }[] = [
   { file: "journal/2016/2016-03-29.md", at: 24, key: "bookshelf/Beowulf", from: 311 },
-  { file: "page/Sean’s Books/39b.md", at: 23, key: "bookshelf/Beowulf", from: 311 },
+  { file: "commonplace/Sean’s Books/39b.md", at: 23, key: "bookshelf/Beowulf", from: 311 },
 ];
 /* a source line inside another writer's quotation made the link, its words and the quotation unchanged */
 const SOURCE_LINES: { file: string; at: number; words: string; key: string; from: number; to: number }[] = [
