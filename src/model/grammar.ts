@@ -32,22 +32,23 @@ export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
 /* THE TWO ALPHABETS, spelled once and spliced into everything below: written
    out at each reader, a widened numeral system would reach some and not
    others. EITHER CASE for roman: a book printing XXIV is as ordinary as one
-   printing xxiv (pin: pageLabels.test › PAGE_ONE: arabic or roman, either case) */
+   printing xxiv (pin: grammar.test › PAGE_ONE: arabic or roman, either case) */
 export const PAGE_ARABIC_SRC = "[0-9]";
 export const PAGE_ROMAN_SRC = "[ivxlcdmIVXLCDM]";
 /* non-capturing, so a splice that is not itself parenthesized cannot
    silently mean ^arabic OR roman$ */
 export const PAGE_NUM_SRC = `(?:${PAGE_ARABIC_SRC}+|${PAGE_ROMAN_SRC}+)`;
-/* ⟨8⟩ — U+27E8/9, MEASURED over the corpus and not chosen: `<8>` and `<<8>>`
-   were in use as shorthand, `« »` as quotation marks, and ⟨ ⟩ appeared
-   nowhere. .replace ONLY: /g under .test() carries lastIndex (pin:
-   pageLabels.test › pageToken and PAGE_TOKEN agree on the brackets) */
-export const PAGE_TOKEN = new RegExp(`⟨(${PAGE_NUM_SRC})⟩`, "g");
 export const PAGE_ONE = new RegExp(`^${PAGE_NUM_SRC}$`);
 export const PAGE_ARABIC = new RegExp(`^${PAGE_ARABIC_SRC}+$`);
+export const PAGE_CHARS_RE = new RegExp("^(?:" + PAGE_ARABIC_SRC + "|" + PAGE_ROMAN_SRC + ")+$");
+/* ⟨8⟩ — U+27E8/9, MEASURED over the corpus and not chosen: `<8>` and `<<8>>`
+   were in use as shorthand, `« »` as quotation marks, and ⟨ ⟩ appeared
+   nowhere. Written and read here, side by side (pin: grammar.test › what
+   pageToken writes PAGE_AT reads back) */
 export function pageToken(label: string): string {
   return `⟨${label}⟩`;
 }
+export const PAGE_AT = new RegExp(`^⟨(${PAGE_NUM_SRC})⟩`);
 
 /* ---------- a row's declared kind ---------- */
 /* THE ROW THAT SAYS WHAT IT IS: "italic, but a line" — Pippa's songs and

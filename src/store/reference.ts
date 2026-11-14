@@ -1,5 +1,5 @@
 import { isDayKey, titlesRoots, nsOf, entryKey, dateLabel } from "./keys.ts";
-import { PAGE_ARABIC } from "./pageLabels.ts";
+import { PAGE_ARABIC } from "../model/grammar.ts";
 import { conventionsOf, type Conventions, type Directives } from "./conventions.ts";
 
 /* WHAT STANDS BEFORE THE PIECES, three answers: a BOOK names its author as

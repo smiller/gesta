@@ -11,7 +11,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, PAGE_NUM_SRC, ROW_KIND_AT, ROW_LABEL_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, PAGE_AT, ROW_KIND_AT, ROW_LABEL_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
   fenceNumbers, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -441,7 +441,6 @@ function autolink(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-const PAGE_AT = new RegExp(`^⟨(${PAGE_NUM_SRC})⟩`);
 function pageLabelRule(state: StateInline, silent: boolean): boolean {
   if (state.src.charCodeAt(state.pos) !== 0x27e8) return false;
   const m = PAGE_AT.exec(state.src.slice(state.pos, state.posMax));

@@ -223,8 +223,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
 (`gesta-snapshots` is the `../writer` version's and is never read).
 
 - `src/model/` — the document model, no DOM: `schema.ts` (nodes, marks,
-  `MARK_ORDER`), `grammar.ts` (the line regexes and the pure string
-  transforms both arms share), `parse.ts`, `serialize.ts`, `tokens.ts`
+  `MARK_ORDER`), `grammar.ts` (the line regexes, a page label's
+  grammar, and the pure string transforms both arms share), `parse.ts`, `serialize.ts`, `tokens.ts`
   (syntax highlighting's tokenizer), `fenceRefusals.ts` (the `:::` lines a
   parse left as paragraphs, with their reasons), `flatten.ts` (the document
   as one character stream with a position map, which every search site and
@@ -271,8 +271,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `lists.ts`, `fsa.ts`, `local.ts`, `plans.ts` (the backup's pure
   decisions), `zip.ts`, `bundle.ts` (the reader's bundle), `io.ts` (the
   disk edge and the backup writer), `exportEntries.ts`, `backup.ts`,
-  `pageLabels.ts` (a page label's grammar), `reference.ts` (the
-  reference grammar and label),
+  `reference.ts` (the reference grammar and label),
   `conventions.ts` (a page's reference directives, each read at its
   level, as one record), `headings.ts` (titles and a page's directive
   text), `search.ts`,

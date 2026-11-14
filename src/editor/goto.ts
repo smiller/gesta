@@ -15,7 +15,7 @@ import type { Node } from "prosemirror-model";
 import { lineUnits, blocksOf, paintsLines, blockUnits, paragraphAt, type Unit } from "./numbering.ts";
 import { schema } from "../model/schema.ts";
 import { hasPages, pages } from "./pages.ts";
-import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../store/pageLabels.ts";
+import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "scripture">;

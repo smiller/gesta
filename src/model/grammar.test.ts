@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { PAGE_CHARS_RE, PAGE_TOKEN, PAGE_ONE, PAGE_ARABIC, pageToken } from "./pageLabels.ts";
+import { PAGE_CHARS_RE, PAGE_ONE, PAGE_ARABIC, PAGE_AT, pageToken } from "./grammar.ts";
 
 test("PAGE_ONE: arabic or roman, either case, never a mix", () => {
   expect(PAGE_ONE.test("8")).toBe(true);
@@ -25,11 +25,9 @@ test("PAGE_ARABIC: the arabic half alone", () => {
   expect(PAGE_ARABIC.test("1x")).toBe(false);
 });
 
-test("pageToken and PAGE_TOKEN agree on the brackets, under .replace", () => {
+test("what pageToken writes PAGE_AT reads back, at the start of the text, and a mixed label it does not", () => {
   expect(pageToken("8")).toBe("⟨8⟩");
-  const seen: string[] = [];
-  const out = "a⟨8⟩b⟨xxiv⟩c".replace(PAGE_TOKEN, (_m, tok: string) => { seen.push(tok); return "*"; });
-  expect(out).toBe("a*b*c");
-  expect(seen).toEqual(["8", "xxiv"]);
-  expect("a⟨x8⟩b".replace(PAGE_TOKEN, "*")).toBe("a⟨x8⟩b");
+  for (const label of ["8", "xxiv", "XXIV"]) expect(PAGE_AT.exec(pageToken(label) + " rest")?.[1]).toBe(label);
+  expect(PAGE_AT.test(pageToken("x8"))).toBe(false);
+  expect(PAGE_AT.test("a" + pageToken("8"))).toBe(false);
 });
