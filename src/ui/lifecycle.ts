@@ -1,6 +1,7 @@
 import type { EditorView } from "prosemirror-view";
 import type { EntryLayer, Rewrite } from "../store/entries.ts";
 import type { Session } from "../session.ts";
+import type { HandOver } from "../store/entrySave.ts";
 import type { Journal } from "../store/reference.ts";
 import { mdLabel } from "../store/reference.ts";
 import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
@@ -21,7 +22,7 @@ import { registered, childrenOf } from "../store/lists.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
 export interface SourcePort { insertAfter(text: string): void; inHeading(): boolean }
-export type SessionPort = Pick<Session, "current" | "flushSave" | "suspendSaves" | "surfaceMd" | "open" | "movePlace" | "movePlaces" | "refresh" | "goto" | "saveNow">;
+export type SessionPort = Pick<Session, "current" | "save" | "open" | "movePlace" | "movePlaces" | "refresh" | "goto">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
   confirm(text: string): boolean;
@@ -149,7 +150,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const label = mdLabel(p.spec.tag, "entry");
     if (p.view) insertLinkAfter(p.view, p.spec.href, label);
     else p.source!.insertAfter(linkMarkdown(p.spec.href, label));
-    return session.saveNow().then(() => { ui.redraw(); session.goto(p.spec.href); });
+    return session.save.now().then(() => { ui.redraw(); session.goto(p.spec.href); });
   }
 
   /* A NEW NAME'S LINK GOES AFTER THE CARET THE ACT BEGAN WITH: none in the
@@ -186,7 +187,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.say("the text moved while the entry was made — the link was not placed", 3000); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
       ui.hideBar();
-      return session.saveNow().then(() => { ui.redraw(); session.goto(spec.href); });
+      return session.save.now().then(() => { ui.redraw(); session.goto(spec.href); });
     });
   }
   /* the selection into a new sub-entry, the link left in its place: the
@@ -249,20 +250,16 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (r.pp) return relocate(r.date, r.old, entryKey(r.date, full), r.deep ? "move" : "rename");
     return renameTagged(r.date, r.old, full);
   }
-  interface TagMove { date: string; old: string; full: string; md: string }
+  interface TagMove { date: string; old: string; full: string; hand: HandOver }
   const followedTag = (t: TagMove, text: string): string =>
     retargetLinks(text, { href: entryHash(t.date, t.old), label: t.old }, { href: entryHash(t.date, t.full), label: t.full }) ?? text;
   function tagRenameFailed(t: TagMove): Promise<void> {
-    const live = session.surfaceMd();
-    return (live !== t.md ? layer.setEntry(entryKey(t.date, t.old), live) : Promise.resolve(true)).then(() => { session.open(t.date, t.old); ui.pin("couldn't rename — nothing was moved"); });
+    return t.hand.keep().then(() => { session.open(t.date, t.old); ui.pin("couldn't rename — nothing was moved"); });
   }
   function tagRenamed(t: TagMove): Promise<void> {
     const oldKey = entryKey(t.date, t.old), newKey = entryKey(t.date, t.full);
-    return layer.removeEntry(oldKey).then(() => retargetHost(t.date, t.old, t.full)).then(() => {
-      /* typed into the surface while the writes ran: carried to the new key */
-      const live = session.surfaceMd();
-      return live !== t.md ? layer.setEntry(newKey, followedTag(t, live)) : true;
-    }).then(() => {
+    return layer.removeEntry(oldKey).then(() => retargetHost(t.date, t.old, t.full))
+      .then(() => t.hand.land(newKey, (typed) => followedTag(t, typed))).then(() => {
       /* the kept state before the open, the place after it (pin:
          lifecycle.test › flushes, suspends, writes the new key) */
       const kept = { [oldKey]: newKey };
@@ -275,11 +272,10 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   function renameTagged(date: string, old: string, full: string): Promise<void> {
     renaming = true;
-    return session.flushSave().then(() => {
-      if (session.current.date !== date || session.current.tag !== old) return;
-      session.suspendSaves();   /* nothing lands under the old key from here on */
-      const t: TagMove = { date, old, full, md: layer.entryMd(entryKey(date, old)) };
-      return layer.setEntry(entryKey(date, full), followedTag(t, t.md)).then((landed) => (landed ? tagRenamed(t) : tagRenameFailed(t)));
+    return session.save.handOver(entryKey(date, old)).then((hand) => {
+      if (!hand) return;
+      const t: TagMove = { date, old, full, hand };
+      return layer.setEntry(entryKey(date, full), followedTag(t, hand.md)).then((landed) => (landed ? tagRenamed(t) : tagRenameFailed(t)));
     }).finally(() => { renaming = false; });
   }
   /* the pictures no entry names any more, deleted; `still` the texts of
@@ -348,7 +344,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   interface Move { date: string; old: string; to: string; toDate: string; toTag: string; from: string; mode: Mode }
   interface Moved { from: string; to: string; named: Record<string, string>; md: string }
   interface Relocation extends Move {
-    plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; flushed: string; there: string;
+    plan: MovePlan; pageless: boolean; relabel?: { old: string; new: string }; hand: HandOver; flushed: string; there: string;
     rootNames: Record<string, string>; moved: Moved[]; copied: string[]; twinPictures: string[]; couldnt: string;
   }
   type Carried = { lost: number; olds: string[] };
@@ -370,11 +366,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   function flushedMove(m: Move): Promise<void> {
     renaming = true;
-    return session.flushSave().then(() => {
-      if (session.current.date !== m.date || session.current.tag !== m.old) return;
-      session.suspendSaves();   /* nothing lands under the old key from here on */
-      return relocateNow(m);
-    }).finally(() => { renaming = false; });
+    return session.save.handOver(m.from).then((hand) => (hand ? relocateNow(m, hand) : undefined)).finally(() => { renaming = false; });
   }
   function relabelOf(m: Move): { old: string; new: string } | undefined {
     const newLeaf = pageParts(m.toTag).leaf, oldLeaf = pageParts(m.old).leaf;
@@ -393,21 +385,21 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const named = picturesFor(r, k);
     return { from: k, to: r.plan.moves[k], named, md: renamePictures(otherText(r, layer.entryMd(k)), named) };
   }
-  function relocation(m: Move, plan: MovePlan): Relocation {
+  function relocation(m: Move, plan: MovePlan, hand: HandOver): Relocation {
     const pageless = !(m.from in plan.moves);
     if (pageless) plan.moves[m.from] = m.to;
     const r: Relocation = {
-      ...m, plan, pageless, relabel: relabelOf(m), flushed: layer.entryMd(m.from), there: plan.into ? layer.entryMd(m.to) : "",
+      ...m, plan, pageless, relabel: relabelOf(m), hand, flushed: hand.md, there: plan.into ? layer.entryMd(m.to) : "",
       rootNames: {}, moved: [], copied: [], twinPictures: Object.keys(plan.twins).flatMap((k) => picturesOf(k, layer.entryMd(k))), couldnt: COULDNT[m.mode],
     };
     r.rootNames = picturesFor(r, m.from);
     r.moved = Object.keys(plan.moves).map((k) => movedOf(r, k));
     return r;
   }
-  function relocateNow(m: Move): Promise<void> {
+  function relocateNow(m: Move, hand: HandOver): Promise<void> {
     const plan = movePlan(layer.cache, m.from, m.to);
     if ("refuse" in plan) { session.open(m.date, m.old); ui.pin(COULDNT[m.mode] + " — " + plan.refuse); return done; }
-    const r = relocation(m, plan);
+    const r = relocation(m, plan, hand);
     return carryPictures(r.moved, r.copied).then(
       (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),
       () => moveRefused(r, "a picture could not be copied, nothing was moved"),
@@ -415,10 +407,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   /* typed while the copies ran: kept under the old name (pin:
      lifecycle.test › a failed move keeps what was typed) */
-  function keepTyped(r: Relocation): Promise<unknown> {
-    const live = session.surfaceMd();
-    return (live !== r.flushed ? layer.setEntry(r.from, live) : Promise.resolve(true)).catch(() => {});
-  }
+  const keepTyped = (r: Relocation): Promise<boolean> => r.hand.keep();
   function moveRefused(r: Relocation, why: string): Promise<void> {
     return keepTyped(r).then(() => dropUnnamed(r.copied)).then(() => { session.open(r.date, r.old); ui.pin(r.couldnt + " — " + why); });
   }
@@ -456,9 +445,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const was = olds.map((k) => (k === r.from ? r.flushed : layer.entryMd(k)));
     return Promise.all(olds.map((k) => layer.removeEntry(k))).then((removed) => {
       const still = stillThere(olds, removed, (i) => was[i]);
-      /* typed into the surface while the writes ran: carried to the new key */
-      const live = session.surfaceMd();
-      return (live !== r.flushed ? layer.setEntry(r.to, rootText(r, live)) : Promise.resolve(true)).then(() => dropUnnamed([...carried.olds, ...r.twinPictures], still)).then(() => failedOf(olds, removed));
+      return r.hand.land(r.to, (typed) => rootText(r, typed)).then(() => dropUnnamed([...carried.olds, ...r.twinPictures], still)).then(() => failedOf(olds, removed));
     }).then((stayed) => arrived(r, carried, { ...t, stayed }));
   }
   function keptMoves(r: Relocation): Record<string, string> {
@@ -500,7 +487,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     /* the text typed on the entry landed on is saved BEFORE the retarget
        reads the host, and the repaint comes only where the store moved (a
        lost link) */
-    return Promise.all([layer.removeEntry(key), ...sweep]).then(([gone]) => gone ? dropUnnamed(pictures) : undefined).then(() => session.flushSave()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
+    return Promise.all([layer.removeEntry(key), ...sweep]).then(([gone]) => gone ? dropUnnamed(pictures) : undefined).then(() => session.save.flush()).then(() => retargetHost(date, tag, null)).then(() => session.refresh()).then(() => {
       ui.redraw();
       ui.focus();
     });

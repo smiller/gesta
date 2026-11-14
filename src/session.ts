@@ -19,7 +19,7 @@ import { referencePayload, entryLinkParts, referenceAnchorHTML, REFUSAL_TEXT } f
 import { writeClipboard } from "./ui/clipboard.ts";
 import { richReferenceHtml } from "./ui/richCopy.ts";
 import type { EntryLayer } from "./store/entries.ts";
-import { entrySave } from "./store/entrySave.ts";
+import { entrySave, type EntrySave } from "./store/entrySave.ts";
 import type { ImageStore } from "./store/store.ts";
 import { highlightIn, escapeJump } from "./editor/highlight.ts";
 import type { Highlight } from "./store/keys.ts";
@@ -72,10 +72,8 @@ export interface Session {
   openHash(): void;
   /* another tab landed a write under ekey */
   takeNotice(ekey: string): Promise<void>;
-  saveNow(): Promise<boolean>;
-  flushSave(): Promise<boolean>;
+  readonly save: EntrySave;
   refresh(): Promise<void>;
-  suspendSaves(): void;
   surfaceMd(): string;
   readonly hashDeferred: boolean;
   refreshFolds(): void;
@@ -237,10 +235,10 @@ export function startSession(opts: SessionOptions): Session {
     pending = null;
   }
   function open(date: string, tag: string | null, how: OpenHow = "keep"): void {
-    save.opened();
     releaseDetached();
     current = { date, tag };
     const ekey = ekeyOf();
+    save.opened(ekey, layer.entryMd(ekey));
     /* a highlight owed wins over the remembered place: it is what a reader
        asked to see (pin: reference paste › the reference link followed) */
     const owed = how === "arrive" && pendingNow();
@@ -295,7 +293,7 @@ export function startSession(opts: SessionOptions): Session {
     hashDeferred = true;
     const asked = location.hash;
     const still = (): boolean => hashDeferred && location.hash === asked;
-    const then = (): void => { if (still()) save.flush().then(() => { if (still()) openAddress(true); }); };
+    const then = (): void => { if (still()) save.leave(() => { if (still()) openAddress(true); }); };
     layer.primeEntry(want).then(then, then);
   }
   const primedOrWarm = (want: string): boolean => layer.warmed || want in layer.cache;
@@ -329,8 +327,8 @@ export function startSession(opts: SessionOptions): Session {
        A read answers only while its own address is still the one asked
        for: a later address opened by an earlier read went unread. What was
        typed into the entry still on screen during the read is saved
-       before the open, whose first act cancels a pending save. Unpinned:
-       races no step can hold open */
+       before the open, whose first act cancels a pending save (pin:
+       entrySave.test › leaving writes the waiting edit before it goes on) */
     const want = entryKey(h.date, h.tag);
     if (!primed && unreadAfterWarm(want)) { readThenOpen(want); return; }
     if (unmintedKey(Object.keys(layer.cache), h.date, h.tag)) { refuseUnminted(h, want); return; }
@@ -388,9 +386,10 @@ export function startSession(opts: SessionOptions): Session {
   }
   /* repainted from the store ONLY where the store moved under it, after the
      debounce has landed: a reopen after an async write threw away keystrokes
-     typed in the window. Unpinned: a race no step can hold open */
+     typed in the window (pin: entrySave.test › the store moved under the
+     entry) */
   function refresh(): Promise<void> {
-    return save.flush().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) redraw(); });
+    return save.leave(() => { if (save.moved()) redraw(); });
   }
   /* a navigation that lands where it already is SAYS so, when given the
      words: silence reads as a dead control
@@ -463,7 +462,7 @@ export function startSession(opts: SessionOptions): Session {
     const p = entryLinkParts(current.date, current.tag, journal);
     copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
   }
-  window.addEventListener("hashchange", () => { save.flush().then(openHash); });
+  window.addEventListener("hashchange", () => { save.leave(openHash); });
   window.addEventListener("beforeunload", () => { save.now(); });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") save.now(); });
   /* a view that is not editable never holds the keys, so its own keymap
@@ -496,7 +495,7 @@ export function startSession(opts: SessionOptions): Session {
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeNotice, saveNow: save.now, flushSave: save.flush, refresh, suspendSaves: save.suspend, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
+    open, openHash, takeNotice, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },

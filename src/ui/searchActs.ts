@@ -16,7 +16,7 @@ import { scopeOptions, defaultScope, sameScope, resultLabel } from "./searchMode
 
 export interface SearchDeps {
   sr: Screen["search"];
-  session: Pick<Session, "current" | "flushSave" | "focusText" | "jump">;
+  session: Pick<Session, "current" | "save" | "focusText" | "jump">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   journal: Journal;
   notices: Pick<Notices, "progress" | "state">;
@@ -139,7 +139,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     sr.open = open;
     if (!open) { session.focusText(); return; }
     opened();
-    session.flushSave();
+    session.save.flush();
     const c = session.current;
     sr.options = scopeOptions(c.date, c.tag, { keys: Object.keys(layer.cache), journal: journal, shelvesMd: layer.cache[entryKey(NS_BOOK.key, SHELVES)] || "" });
     const pre = defaultScope(c.date, c.tag);

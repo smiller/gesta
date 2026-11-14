@@ -14,7 +14,7 @@ export interface PanelDeps {
   screen: Pick<Screen, "panel" | "panelRows" | "panelEmpty">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   journal: Journal;
-  session: Pick<Session, "focusText" | "flushSave">;
+  session: Pick<Session, "focusText" | "save">;
   open(opening: Opening): void;
   closePanel(): void;
   openBookmarks(): void;
@@ -49,7 +49,7 @@ export function panelActs(d: PanelDeps): Panels {
   const openList = (ns: Ns): void => {
     d.open("pages");
     /* the list reads the text as typed (pin: shelves › a shelf renamed, the list opened at once) */
-    session.flushSave();
+    session.save.flush();
     answerPanel(ns);
     screen.panel = ns;
   };

@@ -11,7 +11,7 @@ import { entryDocs, isDoc, failMsg, errText, filePath, type Merged } from "../st
 import { counted } from "./counted.ts";
 
 export interface FolderDeps {
-  session: Pick<Session, "flushSave" | "focusText" | "lockEntries" | "refresh">;
+  session: Pick<Session, "save" | "focusText" | "lockEntries" | "refresh">;
   layer: Pick<EntryLayer, "cache" | "setEntry" | "writeError">;
   images: ImageStore;
   notices: Pick<Notices, "progress" | "stickErrIdle">;
@@ -69,7 +69,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     const dirPicked = pick({ mode: "readwrite" });
     dirPicked.catch(() => {});
     const p = notices.progress("exporting…");
-    session.flushSave().then(() => exportEntries(layer.cache, images)).then((files) => {
+    session.save.flush().then(() => exportEntries(layer.cache, images)).then((files) => {
       if (!files.length) { p.ok("nothing to export"); return; }
       const tally = exportTally(files);
       return dirPicked.then((dir) => writeFilesTo(dir, files, p.step)).then((failures) => reportExport(p, tally, failures));
@@ -129,7 +129,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     if (!pick) { say("import needs a folder picker"); return; }
     if (stillRunning()) return;
     longRun = "an import";
-    session.flushSave();
+    session.save.flush();
     let p: Progress | null = null;
     pick().then(pickImportFiles).then((files) => {
       if (!importAsked(files)) return;

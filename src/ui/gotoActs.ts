@@ -6,7 +6,7 @@ import { gotoLevels, gotoPick } from "./gotoModel.ts";
 
 export interface GotoDeps {
   gt: Screen["goto"];
-  session: Pick<Session, "current" | "flushSave" | "focusText" | "goto">;
+  session: Pick<Session, "current" | "save" | "focusText" | "goto">;
   layer: Pick<EntryLayer, "cache">;
   journal: Journal;
   opened(): void;
@@ -27,7 +27,7 @@ export function gotoActs(d: GotoDeps): GotoRow {
     if (!open) { gt.levels = []; session.focusText(); return; }
     gotoPicked = false;
     opened();
-    session.flushSave();
+    session.save.flush();
     const c = session.current;
     gt.levels = gotoLevels(gotoWorld(), c.date, c.tag);
     setTimeout(() => focusRow(), 0);

@@ -13,7 +13,7 @@ export type BookmarkAct = "jump" | "del" | "key" | "link";
 export interface BookmarkCardDeps {
   bm: Screen["bookmarks"];
   marks: ReturnType<typeof bookmarkStore>;
-  session: Pick<Session, "current" | "goto" | "focusText" | "view" | "mdView" | "insertText" | "saveNow" | "flushSave">;
+  session: Pick<Session, "current" | "goto" | "focusText" | "view" | "mdView" | "insertText" | "save">;
   journal: Journal;
   say(text: string, ms?: number): void;
   overlay: { open(opening: "bookmarks"): void };
@@ -63,7 +63,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     const here = hereKey();
     if (bookmarkIndex(marks.list(), here) !== -1) { say("already bookmarked", 2000); return; }
     if (bookmarksFull(marks.list())) { say("bookmarks full — delete one, or give one its own key", 3000); return; }
-    session.flushSave().then(() => {
+    session.save.flush().then(() => {
       if (!panel.isOpen()) return;
       if (!reachableBookmarks([{ key: here, alias: "" }], keysNow()).length) { if (!warmBlock()) say("nothing to bookmark here yet", 2500); return; }
       const next = addBookmark(marks.list(), here);
@@ -145,7 +145,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
     if (view) insertLinkAfter(view, href, label);
     else session.insertText(linkMarkdown(href, label), true);
-    session.saveNow();
+    session.save.now();
   };
   const act = (key: string, what: BookmarkAct): void => {
     const i = bookmarkIndex(marks.list(), key);

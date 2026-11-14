@@ -194,7 +194,7 @@ const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read"
    both */
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
-  layer, images, say, confirm: (text) => confirm(text), flushSave: () => session.flushSave(),
+  layer, images, say, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
 });
 const readBackups = bkPanel.read;
 acts.sweep = bkPanel.sweep;

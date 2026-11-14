@@ -64,24 +64,9 @@ test("a flush writes the waiting edit, and an open after it cancels nothing", as
   const r = rig();
   r.save.edited();
   await r.save.flush();
-  r.save.opened();
+  r.save.opened("page/A", "typed");
   expect(r.stored["page/A"]).toBe("typed");
   expect(r.save.unsaved()).toBe(false);
-});
-
-test("suspended for a rename, a waiting edit and every later one write nothing until the next open", async () => {
-  const r = rig();
-  r.save.edited();
-  r.save.suspend();
-  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
-  r.save.edited();
-  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
-  expect(r.writes).toEqual([]);
-  expect(r.save.unsaved()).toBe(true);
-  r.save.opened();
-  r.save.edited();
-  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
-  expect(r.writes).toEqual([["page/A", "typed"]]);
 });
 
 test("after a flush the store holds what the screen shows", async () => {
@@ -102,19 +87,79 @@ test("an entry deleted elsewhere is never written; text typed since is handed ba
   expect(await r.save.now()).toBe(false);
   expect(r.refused).toEqual(["typed more"]);
   expect(r.writes).toEqual([]);
-  r.save.opened();
+  r.save.opened("page/A", "typed");
   expect(await r.save.now()).toBe(true);
   expect(r.writes).toEqual([["page/A", "typed more"]]);
 });
 
-test("unsaved while a save waits, while suspended, or while the screen differs from the store", () => {
+test("unsaved while a save waits, during a hand-over, or while the screen differs from the store", async () => {
   expect(rig({ "page/A": "typed" }).save.unsaved()).toBe(false);
   expect(rig({ "page/A": "other" }).save.unsaved()).toBe(true);
   const waiting = rig({ "page/A": "typed" });
   waiting.save.edited();
   expect(waiting.save.unsaved()).toBe(true);
   const held = rig({ "page/A": "typed" });
-  held.save.suspend();
+  await held.save.handOver("page/A");
   expect(held.save.unsaved()).toBe(true);
   expect(rig({}, null).save.unsaved()).toBe(false);
+});
+
+test("a hand-over waits for the save, then holds every edit until the next open, and answers nothing once the entry has gone", async () => {
+  const r = rig();
+  r.save.edited();
+  const h = await r.save.handOver("page/A");
+  expect(r.writes).toEqual([["page/A", "typed"]]);
+  expect(h?.md).toBe("typed");
+  r.save.edited();
+  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
+  expect(r.writes).toHaveLength(1);
+  expect(await r.save.handOver("page/Elsewhere")).toBeNull();
+});
+
+test("a hand-over landing writes only what was typed since it began, under the new key through the rewrite, and says it was written", async () => {
+  const r = rig({ "page/A": "typed" });
+  const h = (await r.save.handOver("page/A"))!;
+  expect(await h.land("page/B", (md) => md.toUpperCase())).toBe(true);
+  expect(r.writes).toEqual([]);
+  r.at.screen = { ekey: "page/A", md: "typed more" };
+  expect(await h.land("page/B", (md) => md.toUpperCase())).toBe(true);
+  expect(r.writes).toEqual([["page/B", "TYPED MORE"]]);
+  expect(r.wrote).toEqual([true]);
+});
+
+test("a hand-over kept writes what was typed since back under the old key; deleted elsewhere, it is handed back instead", async () => {
+  const r = rig({ "page/A": "typed" });
+  const h = (await r.save.handOver("page/A"))!;
+  r.at.screen = { ekey: "page/A", md: "typed more" };
+  await h.keep();
+  expect(r.writes).toEqual([["page/A", "typed more"]]);
+  const gone = rig({ "page/A": "typed" });
+  const g = (await gone.save.handOver("page/A"))!;
+  gone.save.deleted();
+  gone.at.screen = { ekey: "page/A", md: "typed more" };
+  expect(await g.keep()).toBe(false);
+  expect(gone.writes).toEqual([]);
+  expect(gone.refused).toEqual(["typed more"]);
+});
+
+test("leaving writes the waiting edit before it goes on", async () => {
+  const r = rig();
+  r.save.edited();
+  const seen: [string, string][][] = [];
+  await r.save.leave(() => { seen.push([...r.writes]); });
+  expect(seen).toEqual([[["page/A", "typed"]]]);
+});
+
+test("the store moved under the entry only when it changed since the last open or write and nothing was typed since", async () => {
+  const r = rig({ "page/A": "typed" });
+  r.save.opened("page/A", "typed");
+  expect(r.save.moved()).toBe(false);
+  r.stored["page/A"] = "from an import";
+  expect(r.save.moved()).toBe(true);
+  r.at.screen = { ekey: "page/A", md: "typed more" };
+  expect(r.save.moved()).toBe(false);
+  r.save.edited();
+  expect(r.save.moved()).toBe(false);
+  await r.save.flush();
+  expect(r.save.moved()).toBe(false);
 });

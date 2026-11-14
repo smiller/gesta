@@ -3,6 +3,7 @@ import type { Node } from "prosemirror-model";
 import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
 import { lifecycle, coldRefusal, refuseCold, type Dialogs, type LifecycleDeps, type UiPort } from "./lifecycle.ts";
 import { entryLayer } from "../store/entries.ts";
+import { entrySave, type EntrySave } from "../store/entrySave.ts";
 import { memEntryStore, type EntryStore } from "../store/store.ts";
 import { journalOf } from "../store/headings.ts";
 import { parseMarkdown } from "../model/parse.ts";
@@ -36,18 +37,25 @@ function fakeStore(o: Opts, mem: ReturnType<typeof memEntryStore>, log: string[]
   };
 }
 const here = (s: WorldState): string => entryKey(s.current.date, s.current.tag);
+/* the real save over the world's store, its acts logged; a hand-over runs the world's flush hook first */
+function loggedSave(log: string[], s: WorldState, layer: EntryLayerOf): EntrySave {
+  const save = entrySave({ screen: () => ({ ekey: here(s), md: s.typed ?? serializeMarkdown(s.st.doc) }), layer, wrote: () => {}, refused: () => {} });
+  return {
+    ...save,
+    flush: () => { log.push("flush"); return save.flush(); },
+    now: () => { log.push("save"); return save.now(); },
+    handOver: (ekey) => { log.push("hand over"); s.onFlush?.(); return save.handOver(ekey); },
+  };
+}
 function fakeSession(log: string[], s: WorldState, layer: EntryLayerOf): LifecycleDeps["session"] {
   return {
     get current() { return s.current; },
-    flushSave: () => { log.push("flush"); s.onFlush?.(); return Promise.resolve(true); },
-    suspendSaves: () => { log.push("suspend"); },
-    surfaceMd: () => s.typed ?? serializeMarkdown(s.st.doc),
+    save: loggedSave(log, s, layer),
     open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); s.current = { date, tag }; },
     movePlace: (from, to) => { log.push("move " + from + " → " + to); },
     movePlaces: (moves) => { log.push("places " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
     refresh: () => { log.push("refresh"); return Promise.resolve(); },
     goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
-    saveNow: () => { log.push("save"); return layer.setEntry(here(s), serializeMarkdown(s.st.doc)); },
   };
 }
 function fakeDialogs(log: string[], asked: string[], answers: (string | null | boolean)[]): Dialogs {
@@ -342,7 +350,7 @@ describe("rename", () => {
     w.answer("C");
     await w.life.rename();
     const l = w.log;
-    expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
+    expect(l.slice(0, 1)).toEqual(["hand over"]);
     expect(before(l, "set page/A/C", "del page/A/B")).toBe(true);
     expect(before(l, "set page/A", "del page/A/B")).toBe(true);
     const moved = "page/A/B → page/A/C, page/A/B/x → page/A/C/x";
@@ -383,7 +391,7 @@ describe("rename", () => {
     w.onFlush(() => { w.leave("page", "Q"); });
     w.answer("C");
     await w.life.rename();
-    expect(w.log).toEqual(["flush"]);
+    expect(w.log).toEqual(["hand over"]);
     expect(w.md("page/A/B")).toBe("b\n");
   });
 });
@@ -552,7 +560,7 @@ describe("rename moves a page with its sub-pages", () => {
     await w.life.rename();
     expect(w.asked[1]).toBe("Move the page “Essays” and its 1 sub-page to " + TO + "? Its own text goes after the text there. 1 sub-page is there already by title and is deleted, its links going to the one there: “On Growing Older”.");
     const l = w.log;
-    expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
+    expect(l.slice(0, 1)).toEqual(["hand over"]);
     expect(w.pics[PIC_THERE]).toBe("png");
     expect(before(l, "pic " + PIC + " → " + PIC_THERE, "set " + TO + "/2024-07-26-birds")).toBe(true);
     expect(w.md(TO)).toBe("# Essays\n\n[On Growing Older](#bookshelf/Miller%2C%20Sean/Essays/2022-07-31-essay)\n\n2024/07/26: [Birds](#bookshelf/Miller%2C%20Sean/Essays/2024-07-26-birds)");
@@ -778,7 +786,7 @@ describe("rename re-files an author with books", () => {
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     const l = w.log;
-    expect(l.slice(0, 2)).toEqual(["flush", "suspend"]);
+    expect(l.slice(0, 1)).toEqual(["hand over"]);
     for (const k of ["", "/Walls", "/Candles"]) {
       expect(w.md("bookshelf/C. P. Cavafy" + k)).toBeNull();
       expect(before(l, "set bookshelf/Cavafy, C. P" + k, "del bookshelf/C. P. Cavafy")).toBe(true);

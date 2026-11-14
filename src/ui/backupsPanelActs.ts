@@ -14,7 +14,7 @@ export interface BackupsPanelDeps {
   backup: () => Pick<Backup, "configured" | "trouble">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   images: Pick<ImageStore, "keys" | "del">;
-  flushSave: Session["flushSave"];
+  flushSave: Session["save"]["flush"];
   say(text: string, ms?: number): void;
   confirm(text: string): boolean;
 }
