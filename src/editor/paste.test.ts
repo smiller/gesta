@@ -75,15 +75,15 @@ test("inside a reference block every character is literal, as in a code block: t
 });
 
 
-test("a paste of line breaks alone is nothing: it never replaces a selection; in code, or as the editor’s own copy, it pastes", () => {
+test("a paste of line breaks alone is nothing: it never replaces a selection; in code, or as the editor's own copy, it pastes", () => {
   const prose = over("some words", "words"), code = at("```\nx\n```", "x");
   for (const breaks of ["\n\n", "\r\n", "  \n "]) expect(after(prose, breaks)).toBe("nothing");
   expect(after(prose, "a\n")).toBe("some a");
-  expect(after(prose, "")).toBe("editor’s own");
+  expect(after(prose, "")).toBe("default");
   expect(after(prose, " ")).toBe("some  ");
   expect(after(code, "\n\n")).toBe("```\nx\n\n\n```");
   expect(after(prose, "\n\n", "<br><br>")).toBe("nothing");
-  expect(after(prose, "\n\n", '<p data-pm-slice="1 1 []"></p><p></p>')).toBe("editor’s own");
+  expect(after(prose, "\n\n", '<p data-pm-slice="1 1 []"></p><p></p>')).toBe("default");
 });
 
 test("a one-line quote pasted inside a quote is its text; a one-line quote of a picture is a quote", () => {
@@ -200,8 +200,8 @@ test("text after a reference's first line that is no quoted passage, or a copy m
   expect(after(at("intro line", "line"), rest)).toBe("intro line\n\n" + rest);
   expect(after(over("intro line", "line"), rest)).toBe("intro \n\n" + rest);
   const cut = '<p data-pm-slice="1 1 []">x</p>';
-  expect(after(at("as the poem says ", "says "), REF, cut)).toBe("editor’s own");
-  expect(after(over("pauses at 78", "78"), REF, cut)).toBe("editor’s own");
+  expect(after(at("as the poem says ", "says "), REF, cut)).toBe("default");
+  expect(after(over("pauses at 78", "78"), REF, cut)).toBe("default");
   expect(after(at("as the poem says ", "says "), REF, "<p data-gesta-copy><a href=\"#x\">x</a>:</p>")).toBe("as the poem says [*The Wanderer*, 78](#bookshelf/Wanderer?h=Woria%C3%B0)");
 });
 test("the reference ⌃⌘R copies is the one a paste onto words or into a line reads", () => {
@@ -228,7 +228,7 @@ test("a terminal's copy is styled preformatted text alone: one white-space: pre 
   expect(terminal(s, GHOSTTY, plain)).toBe(joined);
   expect(terminal(s, "<meta charset='utf-8'>" + GHOSTTY, plain)).toBe(joined);
   for (const html of ["<pre>let x = 1;</pre>", '<div style="white-space: pre-wrap;">a</div>', "<p>a</p><ul><li>b</li></ul>", "<blockquote " + COPY_MARK + '=""><p>a</p></blockquote>',
-    '<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>', GHOSTTY + "<p>after</p>", GHOSTTY.replace("display: inline;", "display: inline-block;")]) expect(terminal(s, html, plain)).toBe("editor’s own");
+    '<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>', GHOSTTY + "<p>after</p>", GHOSTTY.replace("display: inline;", "display: inline-block;")]) expect(terminal(s, html, plain)).toBe("default");
   expect(terminal(s, GHOSTTY.replace("git log", '<a href="https://example.org/">git log</a>'), plain)).toBe(joined);
 });
 /* a terminal's copy as the markdown view takes it: its lines joined, nothing parsed */

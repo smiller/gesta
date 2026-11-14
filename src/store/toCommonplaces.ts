@@ -14,28 +14,32 @@ export interface MoveParts {
   /* each keeper of state by entry key: bookmarks, places, folds */
   kept: ((moves: Record<string, string>) => void)[];
 }
-interface Planned { moves: Record<string, string>; writes: Record<string, string>; pictures: [string, string][] }
+interface Planned { moves: Record<string, string>; writes: Record<string, string>; links: Record<string, string>; pictures: [string, string][] }
 
 /* a commonplace's key is the page's with its first segment changed, so an
    address into one is followed by changing the same segment, its payload
    as written */
 const followed = (md: string): string =>
   rewriteLinks(md, (run) => (run.href.startsWith("#" + OLD) ? { href: "#" + NEW + run.href.slice(OLD.length + 1) } : null)) ?? md;
-function movedText(p: Planned, key: string, md: string): void {
+/* a commonplace already there is not written over: a run cut short
+   landed it, and it may have been edited since (pin: toCommonplaces.test ›
+   other entries' links are rewritten only once every commonplace has landed) */
+function movedText(p: Planned, cache: Record<string, string>, key: string): void {
   const tag = key.slice(OLD.length), a = keyedFile(RETIRED, tag), b = entryFile(COMMONPLACE_KEY, tag);
-  const names = pictureNamesBetween(a, b, followed(md), []);
-  for (const src of Object.keys(names)) p.pictures.push([a.dir + src, b.dir + names[src]]);
   p.moves[key] = NEW + tag;
-  p.writes[NEW + tag] = renamePictures(followed(md), names);
+  if (NEW + tag in cache) return;
+  const md = followed(cache[key]), names = pictureNamesBetween(a, b, md, []);
+  for (const src of Object.keys(names)) if (a.dir + src !== b.dir + names[src]) p.pictures.push([a.dir + src, b.dir + names[src]]);
+  p.writes[NEW + tag] = renamePictures(md, names);
 }
 function planned(cache: Record<string, string>): Planned | null {
   const keys = Object.keys(cache), olds = keys.filter((k) => k.startsWith(OLD));
   if (!olds.length) return null;
-  const p: Planned = { moves: Object.create(null), writes: Object.create(null), pictures: [] };
-  for (const k of olds) movedText(p, k, cache[k]);
+  const p: Planned = { moves: Object.create(null), writes: Object.create(null), links: Object.create(null), pictures: [] };
+  for (const k of olds) movedText(p, cache, k);
   for (const k of keys.filter((x) => !x.startsWith(OLD))) {
     const md = followed(cache[k]);
-    if (md !== cache[k]) p.writes[k] = md;
+    if (md !== cache[k]) p.links[k] = md;
   }
   return p;
 }
@@ -46,15 +50,20 @@ function cleared(m: MoveParts, p: Planned): Promise<boolean> {
     .then(() => true);
 }
 /* THE PAGES BECOME COMMONPLACES, once: the new entries and their pictures
-   land before any old one goes, and a copy or a write that does not land
-   leaves every page and picture standing for the next start (pin: toCommonplaces.test › with no page
+   land before any link is rewritten, the links before any old one goes,
+   and a copy or a write that does not land leaves every page and picture
+   standing for the next start (pin: toCommonplaces.test › with no page
    left nothing moves) */
 export function toCommonplaces(m: MoveParts): Promise<boolean> {
   const p = planned(m.layer.cache);
   if (!p) return Promise.resolve(false);
+  const landed = (texts: Record<string, string>): Promise<boolean> =>
+    Promise.all(Object.keys(texts).map((k) => m.layer.setEntry(k, texts[k]))).then((all) => !all.includes(false));
   return Promise.all(p.pictures.map(([from, to]) => m.pictures.copyPicture(from, to)))
-    .then(() => Promise.all(Object.keys(p.writes).map((k) => m.layer.setEntry(k, p.writes[k]))))
-    .then((landed) => (landed.includes(false) ? false : cleared(m, p)), () => false);
+    .then(() => landed(p.writes))
+    .then((moved) => moved && landed(p.links))
+    .then((linked) => linked && cleared(m, p))
+    .catch(() => false);
 }
 /* the step after the journal loads: nothing moves in the read-only reader
    or over a store that could not be read */

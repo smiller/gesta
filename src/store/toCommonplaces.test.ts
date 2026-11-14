@@ -72,3 +72,26 @@ test("after the load nothing moves in the read-only reader or over a store that 
   expect(await afterLoad({ ...parts, layer: { ...layer, storeReadFailed: true }, readOnly: false })()).toBe(false);
   expect(await afterLoad({ ...parts, layer, readOnly: false })()).toBe(true);
 });
+
+test("other entries' links are rewritten only once every commonplace has landed, and a commonplace already there is never written over", async () => {
+  const half = rig({ "page/A": "a", "2026-09-06": "[A](#page/A)\n" }, ["commonplace/A"]);
+  expect(await half.move()).toBe(false);
+  expect(half.cache["2026-09-06"]).toContain("(#page/A)");
+  const again = rig({ "page/A": "old", "commonplace/A": "edited since" });
+  expect(await again.move()).toBe(true);
+  expect(again.cache["commonplace/A"]).toBe("edited since");
+  expect(again.cache["page/A"]).toBeUndefined();
+});
+
+test("a picture whose key does not change is neither copied nor removed", async () => {
+  const r = rig({ "page/A./B": "![](photo.jpg)\n" });
+  await r.images.set("photo.jpg", new Uint8Array([7]));
+  await r.move();
+  expect((await r.images.get("photo.jpg"))?.bytes).toEqual(new Uint8Array([7]));
+});
+
+test("a step that fails after the writes leaves the load to go on", async () => {
+  const layer = { cache: { "page/A": "a" } as Record<string, string>, setEntry: () => Promise.resolve(true), removeEntry: () => Promise.reject(new Error("blocked")), storeReadFailed: false };
+  const parts = { pictures: { copyPicture: () => Promise.resolve(true), removePictures: () => Promise.resolve() }, kept: [] };
+  expect(await afterLoad({ ...parts, layer, readOnly: false })()).toBe(false);
+});

@@ -39,3 +39,40 @@ open. The code called the printed page "leaf" to get round it.
 - The backup's `current/page/` folder will stay: the backup leaves a
   top-level folder it does not know as a stranger's (READ: names.ts
   importTarget); removed by hand after the first backup.
+
+## The batch's review and scan (1d82979..bff8016)
+
+`/code-review` at high, 174,582 tokens; the architecture scan
+(45f036b..HEAD), 151,976 (MEASURED, the last message of each
+transcript).
+
+Fixed in one commit (the reader agreed findings 1-5 and 7-10):
+1. A save that wrote nothing left its edits counted unwritten, and
+   `moved()` stayed false: a refresh after an import or a delete kept the
+   stale screen. It now marks the entry current.
+2. The entry open before the migration kept the links it rewrote; the
+   load now refreshes it when anything moved.
+3. A run cut short could write a stale page over an edited commonplace,
+   and leave links into a commonplace never written: the commonplaces
+   land first, the links after, the old keys last, and a commonplace
+   already there is never written over.
+4. A failure after the writes rejected the whole load; the step never
+   rejects.
+5. A picture whose key does not change was copied onto itself and
+   removed; it is left alone.
+7. A rename of an entry deleted elsewhere pinned "not saved" before
+   writing the text anyway; the hand-over no longer refuses it.
+8. The slow-load pin could stick through a slow migration; it is
+   released first.
+9. ⌃⌘R with no rendered view went silent; its words are back.
+10. The paste route's tag, an internal string, is "default", no
+   apostrophe for the checker to curl; a moved entry parsed once.
+
+Finding 6, an older backup's `page/` files skipped by the import: the
+reader chose a one-off rewriting the archives to `commonplace/`, so the
+app keeps one code path. Next.
+
+The scan's other candidates, to grill: one lexer for both checkers
+(tools/commentRules.ts already had one; tools/apostrophes.ts wrote a
+second), pageLabels.ts folded into grammar.ts, the save's tests over the
+real layer.

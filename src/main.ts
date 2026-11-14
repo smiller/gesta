@@ -485,8 +485,7 @@ const loadPinned = loadPins(LOAD_PATIENCE_MS, notices);
 if (READER) wrote.then(loadPinned.start); else loadPinned.start();
 /* the pages became commonplaces before anything reads the keys: the
    lists, the search index, the backup's folders */
-primed.then(held).then(() => layer.warm()).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [session.moveFolds, session.movePlaces, marks.move], readOnly: READER })).then(() => {
-  loadPinned.landed(layer);
+primed.then(held).then(() => layer.warm()).then(() => loadPinned.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [session.moveFolds, session.movePlaces, marks.move], readOnly: READER })).then((migrated) => {
   if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
   stage("all"); count();
   say(Object.keys(layer.cache).length + " entries stored");
@@ -494,6 +493,8 @@ primed.then(held).then(() => layer.warm()).then(afterLoad({ layer, pictures: pic
      changes it: the masthead lists, and whether a contents page folds (pin:
      places › the warm landed) */
   if (!opened || session.hashDeferred) session.openHash(); else { refreshMasthead(); session.refreshFolds(); }
+  /* an entry opened before the migration shows the links it rewrote */
+  if (migrated) session.refresh();
   reanswerOpen();
   lineActs.replayOwed();
   search.buildIndex();

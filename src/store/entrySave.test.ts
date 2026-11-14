@@ -191,3 +191,24 @@ test("text typed during a rename of an entry deleted elsewhere still lands under
   expect(await h.land("commonplace/B", (md) => md)).toBe(true);
   expect(r.writes).toEqual([["commonplace/B", "typed more"]]);
 });
+
+test("an edit that leaves the text as stored still counts as written: the store moving later reads as moved", async () => {
+  const r = rig({ "commonplace/A": "typed" });
+  r.save.opened("commonplace/A", "typed");
+  r.save.edited();
+  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
+  expect(r.writes).toEqual([]);
+  r.stored["commonplace/A"] = "from an import";
+  expect(r.save.moved()).toBe(true);
+});
+
+test("a hand-over of an entry deleted elsewhere hands nothing back before it lands what was typed", async () => {
+  const r = rig({ "commonplace/A": "typed" });
+  r.save.deleted();
+  r.at.screen = { ekey: "commonplace/A", md: "typed more" };
+  r.save.edited();
+  const h = (await r.save.handOver("commonplace/A"))!;
+  expect(r.refused).toEqual([]);
+  await h.land("commonplace/B", (md) => md);
+  expect(r.writes).toEqual([["commonplace/B", "typed more"]]);
+});

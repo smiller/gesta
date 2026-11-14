@@ -451,7 +451,8 @@ export function startSession(opts: SessionOptions): Session {
   function copyReference(all = false): void {
     if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
-    if (refuseCold(layer, say) || !view) return;
+    if (refuseCold(layer, say)) return;
+    if (!view) { say("still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, { date: current.date, tag: current.tag }, journal, all);
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
     let html = "";

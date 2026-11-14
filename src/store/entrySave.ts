@@ -52,6 +52,12 @@ export function entrySave(p: SaveParts): EntrySave {
     const inStore = p.layer.entryMd(s.ekey);
     return s.md === inStore || (!s.md.trim() && !inStore);
   }
+  /* nothing to write, so what is stored is what the screen holds (pin:
+     entrySave.test › an edit that leaves the text as stored still counts) */
+  function current(s: OnScreen): true {
+    if (s.ekey === base?.ekey) { base = { ekey: s.ekey, md: p.layer.entryMd(s.ekey) }; written = edits; }
+    return true;
+  }
   function put(key: string, md: string): Promise<boolean> {
     if (p.layer.storeReadFailed) return Promise.resolve(false);
     const at = edits;
@@ -71,23 +77,31 @@ export function entrySave(p: SaveParts): EntrySave {
     cancel();
     const s = p.screen();
     if (!s || refusedHere(s)) return Promise.resolve(false);
-    if (!p.layer.storeReadFailed && nothingToSave(s)) return Promise.resolve(true);
+    if (!p.layer.storeReadFailed && nothingToSave(s)) return Promise.resolve(current(s));
     return put(s.ekey, s.md);
   }
   const flush = (): Promise<boolean> => (timer ? now() : Promise.resolve(true));
   /* the ends write past the deleted-elsewhere refusal: refused there, the
      typed text was lost (pin: entrySave.test › text typed during a rename of
      an entry deleted elsewhere) */
+  /* what was typed into ekey since md was stored, or null: nothing, or the screen elsewhere */
+  function typedInto(ekey: string, md: string): string | null {
+    const s = p.screen();
+    return s?.ekey === ekey && s.md !== md ? s.md : null;
+  }
+  function handed(ekey: string): HandOver {
+    cancel();
+    suspended = true;
+    const md = p.layer.entryMd(ekey);
+    const end = (key: string, rewrite: (t: string) => string): Promise<boolean> => {
+      const t = typedInto(ekey, md);
+      return t === null ? Promise.resolve(true) : put(key, rewrite(t));
+    };
+    return { md, land: end, keep: () => end(ekey, (t) => t) };
+  }
   function handOver(ekey: string): Promise<HandOver | null> {
-    return flush().then(() => {
-      if (p.screen()?.ekey !== ekey) return null;
-      cancel();
-      suspended = true;
-      const md = p.layer.entryMd(ekey);
-      const typed = (): string | null => { const s = p.screen(); return s?.ekey === ekey && s.md !== md ? s.md : null; };
-      const end = (key: string, rewrite: (t: string) => string): Promise<boolean> => { const t = typed(); return t === null ? Promise.resolve(true) : put(key, rewrite(t)); };
-      return { md, land: end, keep: () => end(ekey, (t) => t) };
-    });
+    if (deletedHere?.ekey === ekey) cancel();
+    return flush().then(() => (p.screen()?.ekey === ekey ? handed(ekey) : null));
   }
   const typedSince = (): boolean => !!timer || suspended || edits !== written;
   const onBase = (s: OnScreen | null): s is OnScreen => !!s && base?.ekey === s.ekey;
