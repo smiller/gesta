@@ -1,5 +1,5 @@
 import { isDayKey, titlesRoots, nsOf, entryKey, dateLabel } from "./keys.ts";
-import { FOLIO_ARABIC } from "./folio.ts";
+import { PAGE_ARABIC } from "./pageLabels.ts";
 import { conventionsOf, type Conventions, type Directives } from "./conventions.ts";
 
 /* WHAT STANDS BEFORE THE PIECES, three answers: a BOOK names its author as
@@ -17,7 +17,7 @@ export function referenceAuthor(date: string, root: string | null): string {
    "2.1", Boethius's "3m9"), or a division word and a number with an
    optional title after ("Book 1", "Scène 2", "Fit 1. The Landing").
    EVERYTHING ELSE IS A TITLE, load-bearing: "25. The Oracles" and "29-2
-   The Shakespeare Code" look numbered and must not be. A DATED SUB-PAGE
+   The Shakespeare Code" look numbered and must not be. A DATED SUB-ENTRY
    NAME IS A NAME (the app mints "2023-11-12-the-article" from a URL); a
    bare date stays a numeral (pin: reference.test › referenceNumeral) */
 export const REFERENCE_DATED = /^\d{4}-\d{2}-\d{2}-\S/;
@@ -59,8 +59,8 @@ export function elideRange(from: number, to: number): string {
   if (Math.floor(from / 10) % 10 === 0) return changedPart(a, b);
   return a.slice(0, -2) === b.slice(0, -2) ? a + "-" + b.slice(-2) : whole;
 }
-const plainArabic = (s: string): boolean => FOLIO_ARABIC.test(s) && String(+s) === s;
-export function folioLabel(from: string, to?: string | null): string {
+const plainArabic = (s: string): boolean => PAGE_ARABIC.test(s) && String(+s) === s;
+export function pageLabel(from: string, to?: string | null): string {
   if (!to || from === to) return "p. " + from;
   return "pp. " + ([from, to].every(plainArabic) ? elideRange(+from, +to) : from + "-" + to);
 }
@@ -134,7 +134,7 @@ export function referenceParts(date: string, tag: string | null, journal: Journa
   for (let i = titlesRoots(date) ? 1 : 0; i < c.segs.length; i++) addPiece(parts, c, i);
   return parts;
 }
-export interface FolioRange { from: string; to: string }
+export interface PageRange { from: string; to: string }
 /* the whole label: author, the pieces, and the locator — a line range or a
    leaf range, never both. The LINE range joins with a DOT onto a trailing
    numeral run and with a COMMA after a title; a LEAF range is always
@@ -144,7 +144,7 @@ export interface FolioRange { from: string; to: string }
    leaf drops (Screwtape came back referred to by leaf for Letter 12); titled, the
    leaf replaces every level below the work (pin: reference.test ›
    referenceLabel: the line range dots onto a numeral run) */
-export interface Locator { range: string; folio?: FolioRange | null; facing?: string }
+export interface Locator { range: string; page?: PageRange | null; facing?: string }
 interface LabelCtx { date: string; tag: string | null; root: string; books: boolean; locates: boolean; journal: Journal; said: Conventions }
 function labelParts(c: LabelCtx): Piece[] {
   /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
@@ -175,16 +175,16 @@ function placeRange(parts: Piece[], range: string): void {
   else if (deepest?.n !== undefined) deepest.n += "." + range;
   else parts.push({ n: range });
 }
-function placeFolio(parts: Piece[], folio: FolioRange, books: boolean, numbered: string | undefined): Piece[] {
+function placePage(parts: Piece[], page: PageRange, books: boolean, numbered: string | undefined): Piece[] {
   if (books && numbered !== undefined) return parts;
   const out = books ? parts.slice(0, 1) : parts;
-  out.push({ plain: folioLabel(folio.from, folio.to) });
+  out.push({ plain: pageLabel(page.from, page.to) });
   return out;
 }
 function located(parts: Piece[], at: Locator, c: LabelCtx, numbered: string | undefined): Piece[] {
   if (!c.locates) return parts;
   if (at.range) { placeRange(parts, at.range); return parts; }
-  return at.folio ? placeFolio(parts, at.folio, c.books, numbered) : parts;
+  return at.page ? placePage(parts, at.page, c.books, numbered) : parts;
 }
 /* the first field is a person (roman), a title (italic), or nothing; a root
    that names no author still names itself where no title stands below it

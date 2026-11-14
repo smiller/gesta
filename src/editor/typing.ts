@@ -120,7 +120,7 @@ const dash = guarded(/(\s)--(\s)$/, prose, (state, m, start, end) => state.tr.in
 /* a quote opens after the start, whitespace, an opening
    bracket, a dash or another opening quote, and closes otherwise — so an
    in-word apostrophe is a right single quote. A leaf node before it (the
-   ￼ a folio or a picture reads as) opens (pin: typing.test › quotes curl as
+   ￼ a page label or a picture reads as) opens (pin: typing.test › quotes curl as
    typed, and a second quote steps the curl) */
 export function curlChar(q: string, prev: string): string {
   const open = !prev || /[\s([{—–“‘\-￼]/.test(prev);

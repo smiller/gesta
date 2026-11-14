@@ -143,7 +143,7 @@ document.addEventListener("click", (e) => {
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
 listenHeldKeys(document, window);
-/* ⌃⌘N is "new": a tagged entry, a sub-page, a book; ⌃⌘L toggles the Line
+/* ⌃⌘N is "new": a tagged entry, a sub-entry, a book; ⌃⌘L toggles the Line
    numbering row — L for lines; Tab belongs to indent, so no masthead row is
    reachable from the editor without a chord of its own; ⌃⌘R is the
    reference, so replace is ⌃⌘E, for exchange */

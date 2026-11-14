@@ -1,6 +1,6 @@
 /* Derived from the keys on every call, never stored: nothing to heal or owe */
 import { isDayKey, entryKey, byName, nsOf } from "./keys.ts";
-import { pageParts } from "./keys.ts";
+import { tagParts } from "./keys.ts";
 
 export function dayKeys(keys: string[]): string[] {
   return keys.filter(isDayKey).sort();
@@ -64,14 +64,14 @@ export function subPageNeighbors(walk: Walk, parentKey: string, sub: string, ord
 }
 type Step = [string, string | null] | null;
 export interface NavSteps { prev: Step; next: Step }
-function subNeighbors(walk: Walk, date: string, pp: ReturnType<typeof pageParts>, orderOf?: (parentKey: string) => string[]): NavSteps {
+function subNeighbors(walk: Walk, date: string, pp: ReturnType<typeof tagParts>, orderOf?: (parentKey: string) => string[]): NavSteps {
   const parentKey = entryKey(date, pp.parent);
   const nb = subPageNeighbors(walk, parentKey, pp.leaf, orderOf?.(parentKey));
   const at = (s: string | null): Step => (s ? [date, pp.parent + "/" + s] : null);
   return { prev: at(nb.prev), next: at(nb.next) };
 }
 export function navNeighbors(walk: Walk, date: string, tag: string | null, orderOf?: (parentKey: string) => string[]): NavSteps {
-  const pp = nsOf(date) && tag ? pageParts(tag) : null;
+  const pp = nsOf(date) && tag ? tagParts(tag) : null;
   if (pp?.sub) return subNeighbors(walk, date, pp, orderOf);
   if (tag) return { prev: null, next: null };
   const nb = entryNeighbors(walk.keys, date);

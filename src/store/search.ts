@@ -4,7 +4,7 @@
    curly apostrophes, stays 1:1 in code units). Every occurrence-counting
    site folds through searchFold, or their nth indices drift apart (pin:
    highlight.test › what selectionLink minted, findHit lands on) */
-import { isDayKey, COMMONPLACE_KEY, pageParts } from "./keys.ts";
+import { isDayKey, COMMONPLACE_KEY, tagParts } from "./keys.ts";
 
 export function searchFold(s: string): string {
   return s.replace(/İ/g, "I").toLowerCase().replace(/[‘’]/g, "'");
@@ -21,7 +21,7 @@ export function bookScope(ns: string, book: string): Scope { return { kind: "boo
    a book may both be called "Shakespeare" (pin: search.test › a book scope
    carries its namespace) */
 export function inBook(row: { date: string; tag: string | null }, ns: string, root: string): boolean {
-  return row.date === ns && pageParts(row.tag || "").name === root;
+  return row.date === ns && tagParts(row.tag || "").name === root;
 }
 /* the ONE spelling of the filter; every arm positive, an unknown kind
    STATED false rather than riding a fall-through. The COMMONPLACES kind
@@ -33,7 +33,7 @@ export function inScope(row: { date: string; tag: string | null }, scope: Scope)
   if (scope.kind === "journal") return isDayKey(row.date);
   if (scope.kind === "commonplaces") return row.date === COMMONPLACE_KEY;
   if (scope.kind === "book") return inBook(row, scope.ns, scope.book);
-  if (scope.kind === "shelf") return row.date === scope.ns && scope.books.has(pageParts(row.tag || "").name);
+  if (scope.kind === "shelf") return row.date === scope.ns && scope.books.has(tagParts(row.tag || "").name);
   return false;
 }
 export interface Query { needle: string; left: boolean; right: boolean }

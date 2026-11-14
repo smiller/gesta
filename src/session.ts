@@ -5,7 +5,7 @@ import { headingLineAt } from "./editor/sourceKeys.ts";
 import { nextImageName, pictureKey } from "./store/names.ts";
 import { imageRefs } from "./store/exportEntries.ts";
 import { setLineInterval } from "./editor/lineNumbers.ts";
-import { entryKey, entryHash, todayKey, nsOf, pageParts, NS, asAddress } from "./store/keys.ts";
+import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./store/keys.ts";
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
@@ -306,7 +306,7 @@ export function startSession(opts: SessionOptions): Session {
      under it reads unregistered too, so the depth asked for would call a
      vanished author a book (pin: bridge › an unknown book under a known author) */
   function missingNoun(h: ReturnType<typeof hashParts>): string {
-    const pp = pageParts(h.tag!), ns = nsOf(h.date)!;
+    const pp = tagParts(h.tag!), ns = nsOf(h.date)!;
     return pp.sub && registered(Object.keys(layer.cache), h.date, pp.name) ? ns.subNoun : ns.noun;
   }
   function refuseUnminted(h: ReturnType<typeof hashParts>, want: string): void {

@@ -4,7 +4,7 @@ import type { Session } from "../session.ts";
 import type { Screen } from "./screen.svelte.ts";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { dropFolios } from "../editor/copy.ts";
+import { dropPageLabels } from "../editor/copy.ts";
 import { writeClipboard } from "./clipboard.ts";
 import { richBlockHtml, withPictureBytes } from "./richCopy.ts";
 import { mastheadBottom } from "./mastheadBottom.ts";
@@ -134,7 +134,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     ? writeClipboard(node.textContent.replace(/\n$/, ""))
     /* the swept HTML, not the raw: with the raw outerHTML a card pasted into
        Mail arrived as plain lines (pin: card copy › a card hover-copied) */
-    : withPictureBytes(richBlockHtml(mine)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropFolios(Fragment.from(node)))), html })));
+    : withPictureBytes(richBlockHtml(mine)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropPageLabels(Fragment.from(node)))), html })));
   const copyBlock = (): void => {
     const view = session.view;
     if (copyGone(view)) { hideCopy(); say("Nothing to copy", 2000); return; }

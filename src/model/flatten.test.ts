@@ -21,7 +21,7 @@ describe("flattenDoc", () => {
     const doc = parseMarkdown("ab\n\ncd ⟨5⟩ ef");
     const flat = flattenDoc(doc);
     expect(flat.text).toBe("ab cd ef");
-    /* the space kept is the text's own at 7; the folio's and the next
+    /* the space kept is the text's own at 7; the page label's and the next
        text's leading space fold into it */
     expect(flat.pos).toEqual([1, 2, null, 5, 6, 7, 10, 11]);
     expect(flatRange(flat, 3, 2)).toEqual({ from: 5, to: 7 });

@@ -12,17 +12,17 @@ export const COPY_MARK = "data-gesta-copy";
    one space goes with it (pin: copy.test › a copy carries no page marker out) */
 const spacesMeet = (prev: Node | undefined, kept: Node): boolean =>
   !!prev?.isText && prev.text!.endsWith(" ") && kept.isText && kept.text!.startsWith(" ");
-function afterFolio(kept: Node, prev: Node | undefined): Node | null {
+function afterPage(kept: Node, prev: Node | undefined): Node | null {
   if (!spacesMeet(prev, kept)) return kept;
   return kept.text!.length > 1 ? kept.cut(1) : null;
 }
-export function dropFolios(frag: Fragment): Fragment {
+export function dropPageLabels(frag: Fragment): Fragment {
   const out: Node[] = [];
   let dropped = false;
   frag.forEach((n) => {
-    if (n.type === N.folio) { dropped = true; return; }
-    const copy = n.isLeaf ? n : n.copy(dropFolios(n.content));
-    const kept = dropped ? afterFolio(copy, out[out.length - 1]) : copy;
+    if (n.type === N.page_label) { dropped = true; return; }
+    const copy = n.isLeaf ? n : n.copy(dropPageLabels(n.content));
+    const kept = dropped ? afterPage(copy, out[out.length - 1]) : copy;
     if (kept) out.push(kept);
     dropped = false;
   });
@@ -47,10 +47,10 @@ function pastRowEnd(doc: Node, from: number, to: number | undefined, slice: Slic
   return next && next.from < to ? { from: next.from, slice: doc.slice(next.from, to, true) } : { from, slice };
 }
 export function copiedSlice(slice: Slice, doc?: Node, from?: number, to?: number): Slice {
-  if (!doc || from === undefined) return closeRowSlice(new Slice(dropFolios(slice.content), slice.openStart, slice.openEnd));
+  if (!doc || from === undefined) return closeRowSlice(new Slice(dropPageLabels(slice.content), slice.openStart, slice.openEnd));
   const at = pastRowEnd(doc, from, to, slice);
   const cut = keepRightCell(doc, at.from, renumbered(doc, at.from, doc.copy(at.slice.content)));
-  return closeRowSlice(new Slice(dropFolios(cut.content), at.slice.openStart, at.slice.openEnd));
+  return closeRowSlice(new Slice(dropPageLabels(cut.content), at.slice.openStart, at.slice.openEnd));
 }
 /* a cut opening inside a pair's right cell keeps the left one, empty:
    without it the right column's text read back as the left's (pin:

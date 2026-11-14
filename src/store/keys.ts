@@ -88,13 +88,13 @@ export function dateLabel(key: string): string {
   return +p[2] + " " + monthLabel(+p[1]) + " " + p[0];
 }
 
-/* the ONE spelling of "split a page tag". Four fields because depth is
+/* the ONE spelling of "split a keyed tag". Four fields because depth is
    uncapped and the two ends of a path are different questions: `name` the
    ROOT, `sub` whether anything sits under it, `parent` the immediate
    parent's path or null at the root, `leaf` the last segment (pin: keys.test
-   › pageParts: the four fields, and their divergence past depth 2) */
-export interface PageParts { name: string; sub: boolean; parent: string | null; leaf: string }
-export function pageParts(tag: string): PageParts {
+   › tagParts: the four fields, and their divergence past depth 2) */
+export interface TagParts { name: string; sub: boolean; parent: string | null; leaf: string }
+export function tagParts(tag: string): TagParts {
   const segs = tag.split("/");
   return {
     name: segs[0],
@@ -136,7 +136,7 @@ export function capitalized(word: string): string {
 }
 export function entryNoun(date: string, tag?: string | null): string | null {
   const ns = nsOf(date);
-  return ns && (pageParts(tag || "").sub ? ns.subNoun : ns.noun);
+  return ns && (tagParts(tag || "").sub ? ns.subNoun : ns.noun);
 }
 export function titlesRoots(ns: string): boolean {
   const desc = nsOf(ns);

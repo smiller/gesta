@@ -17,7 +17,7 @@ describe("LineBar", () => {
     expect(html).toMatch(/<label for="lineinput"[^>]*>Line/);
     expect(html).toMatch(/id="lineinput"[^>]*value="12"/);
     expect(html).toMatch(/<span class="askor[^"]*">, or/);
-    expect(html).toMatch(/<label for="folioinput"[^>]*>Page/);
+    expect(html).toMatch(/<label for="pageinput"[^>]*>Page/);
   });
   it("a book of prose hides the Line box and the or", () => {
     const html = draw({ open: true, kind: "page" });

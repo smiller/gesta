@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import {
   REFERENCE_DATED, REFERENCE_TOKEN, REFERENCE_DIVISION, referenceNumeral,
-  referenceAbsorbs, elideRange, folioLabel, referenceAuthor, referenceLabel, mdLabel, type Journal,
+  referenceAbsorbs, elideRange, pageLabel, referenceAuthor, referenceLabel, mdLabel, type Journal,
 } from "./reference.ts";
 import { NS_BOOK, NS_COMMONPLACE } from "./keys.ts";
 import { journalOf, firstHeading } from "./headings.ts";
@@ -58,13 +58,13 @@ test("elideRange: Chicago 9.61's bands, the last one narrowed", () => {
   expect(elideRange(11564, 11615)).toBe("11564-11615");
 });
 
-test("folioLabel: arabic elides, roman and zero-padded never", () => {
-  expect(folioLabel("8")).toBe("p. 8");
-  expect(folioLabel("8", "8")).toBe("p. 8");
-  expect(folioLabel("254", "255")).toBe("pp. 254-55");
-  expect(folioLabel("xii", "xv")).toBe("pp. xii-xv");
-  expect(folioLabel("022")).toBe("p. 022");
-  expect(folioLabel("007", "009")).toBe("pp. 007-009");
+test("pageLabel: arabic elides, roman and zero-padded never", () => {
+  expect(pageLabel("8")).toBe("p. 8");
+  expect(pageLabel("8", "8")).toBe("p. 8");
+  expect(pageLabel("254", "255")).toBe("pp. 254-55");
+  expect(pageLabel("xii", "xv")).toBe("pp. xii-xv");
+  expect(pageLabel("022")).toBe("p. 022");
+  expect(pageLabel("007", "009")).toBe("pp. 007-009");
 });
 
 test("referenceAuthor: a book's surname off the key, Gesta for a day, nothing for a commonplace", () => {
@@ -126,15 +126,15 @@ test("referenceLabel: the corpus table, author then pieces", () => {
   expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "" }, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*");
 });
 
-test("referenceLabel: the line range dots onto a numeral run and commas after a title; a leaf stands in only for a titled division", () => {
+test("referenceLabel: the line range dots onto a numeral run and commas after a title; a page stands in only for a titled division", () => {
   expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "254-55" }, journal)).toBe("Milton, *Paradise Lost*, 1.254-55");
   expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "1-4" }, journal)).toBe("Blake, *Songs of Innocence*, *A Cradle Song*, 1-4");
-  // a numbered division stands and the leaf drops (Screwtape)
-  expect(referenceLabel(NS_BOOK.key, "Lewis, C. S/The Screwtape Letters/Letter 12", { range: "", folio: { from: "60", to: "62" } }, journal)).toBe("Lewis, *The Screwtape Letters*, 12");
+  // a numbered division stands and the page drops (Screwtape)
+  expect(referenceLabel(NS_BOOK.key, "Lewis, C. S/The Screwtape Letters/Letter 12", { range: "", page: { from: "60", to: "62" } }, journal)).toBe("Lewis, *The Screwtape Letters*, 12");
   // a titled division drops, with any numbered level above it, and the leaf stands in
-  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "", folio: { from: "22", to: "25" } }, journal)).toBe("Blake, *Songs of Innocence*, pp. 22-25");
+  expect(referenceLabel(NS_BOOK.key, "Blake, William/Songs of Innocence/A Cradle Song", { range: "", page: { from: "22", to: "25" } }, journal)).toBe("Blake, *Songs of Innocence*, pp. 22-25");
   // a line range wins over a leaf one
-  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "3", folio: { from: "9", to: "9" } }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
+  expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "3", page: { from: "9", to: "9" } }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
 });
 
 test("referenceLabel: from the last title, a day, a commonplace", () => {
@@ -146,7 +146,7 @@ test("referenceLabel: from the last title, a day, a commonplace", () => {
   expect(referenceLabel(NS_COMMONPLACE.key, "Sean's Books/1", { range: "" }, journal)).toBe("*Sean's Books*, 1: *The Figure of Beatrice*");
   expect(referenceLabel(NS_COMMONPLACE.key, "Sean's Books/2", { range: "" }, journal)).toBe("*Sean's Books*, 2: *Witchcraft*");
   expect(referenceLabel(NS_COMMONPLACE.key, "Notes", { range: "" }, journal)).toBe("*Notes*");
-  expect(referenceLabel(NS_COMMONPLACE.key, "Notes", { range: "", folio: { from: "3", to: "4" } }, journal)).toBe("*Notes*");
+  expect(referenceLabel(NS_COMMONPLACE.key, "Notes", { range: "", page: { from: "3", to: "4" } }, journal)).toBe("*Notes*");
 });
 
 test("referenceLabel: a root whose page says no author is named in no reference; the root itself stands on its title", () => {
@@ -154,7 +154,7 @@ test("referenceLabel: a root whose page says no author is named in no reference;
   expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", { range: "" }, journal)).toBe("*Beowulf*");
   expect(referenceLabel(NS_BOOK.key, "Old English", { range: "" }, journal)).toBe("*Old English*");
   expect(referenceLabel(NS_BOOK.key, "Old English", { range: "1-3" }, journal)).toBe("*Old English*, 1-3");
-  expect(referenceLabel(NS_BOOK.key, "Old English", { range: "", folio: { from: "3", to: "3" } }, journal)).toBe("*Old English*, p. 3");
+  expect(referenceLabel(NS_BOOK.key, "Old English", { range: "", page: { from: "3", to: "3" } }, journal)).toBe("*Old English*, p. 3");
 });
 
 test("headings: the first level-one heading is the title; a ## is a section; the directive is top-level only", () => {
@@ -228,8 +228,8 @@ test("referenceLabel by book, chapter, and paragraph over other pages: the divis
   expect(referenceLabel(NS_BOOK.key, "A/W/2", { range: "chapter 40 (para 60)" }, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
   expect(referenceLabel(NS_BOOK.key, "A/W/Book 2/Chapter 40", { range: "para 60" }, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
 });
-test("referenceLabel by book, chapter, and paragraph: a numbered book stands and the leaf drops; a translator's locator keeps its book", () => {
-  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2", { range: "", folio: { from: "14", to: "14" } }, works)).toBe("A, *W*, book 2");
+test("referenceLabel by book, chapter, and paragraph: a numbered book stands and the page drops; a translator's locator keeps its book", () => {
+  expect(referenceLabel(NS_BOOK.key, "A/W/Book 2", { range: "", page: { from: "14", to: "14" } }, works)).toBe("A, *W*, book 2");
   expect(referenceLabel(NS_BOOK.key, "A/Y (with Shaw’s translation)/Book 2", { range: "5", facing: "7" }, works)).toBe("A, *Y*, book 2.5 (Shaw, 2.7)");
 });
 

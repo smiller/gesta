@@ -28,24 +28,24 @@ export const GRID_OPEN = /^\s*:::\s*grid(?:\s+0*[1-9]\d*)?\s*$/;
 export const TABLE_ROW = /^\s*\|.*\|\s*$/;
 export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
 
-/* ---------- folios ---------- */
+/* ---------- page labels ---------- */
 /* THE TWO ALPHABETS, spelled once and spliced into everything below: written
    out at each reader, a widened numeral system would reach some and not
    others. EITHER CASE for roman: a book printing XXIV is as ordinary as one
-   printing xxiv (pin: folio.test › FOLIO_ONE: arabic or roman, either case) */
-export const FOLIO_ARABIC_SRC = "[0-9]";
-export const FOLIO_ROMAN_SRC = "[ivxlcdmIVXLCDM]";
+   printing xxiv (pin: pageLabels.test › PAGE_ONE: arabic or roman, either case) */
+export const PAGE_ARABIC_SRC = "[0-9]";
+export const PAGE_ROMAN_SRC = "[ivxlcdmIVXLCDM]";
 /* non-capturing, so a splice that is not itself parenthesized cannot
    silently mean ^arabic OR roman$ */
-export const FOLIO_NUM_SRC = `(?:${FOLIO_ARABIC_SRC}+|${FOLIO_ROMAN_SRC}+)`;
+export const PAGE_NUM_SRC = `(?:${PAGE_ARABIC_SRC}+|${PAGE_ROMAN_SRC}+)`;
 /* ⟨8⟩ — U+27E8/9, MEASURED over the corpus and not chosen: `<8>` and `<<8>>`
    were in use as shorthand, `« »` as quotation marks, and ⟨ ⟩ appeared
    nowhere. .replace ONLY: /g under .test() carries lastIndex (pin:
-   folio.test › folioToken and FOLIO_TOKEN agree on the brackets) */
-export const FOLIO_TOKEN = new RegExp(`⟨(${FOLIO_NUM_SRC})⟩`, "g");
-export const FOLIO_ONE = new RegExp(`^${FOLIO_NUM_SRC}$`);
-export const FOLIO_ARABIC = new RegExp(`^${FOLIO_ARABIC_SRC}+$`);
-export function folioToken(label: string): string {
+   pageLabels.test › pageToken and PAGE_TOKEN agree on the brackets) */
+export const PAGE_TOKEN = new RegExp(`⟨(${PAGE_NUM_SRC})⟩`, "g");
+export const PAGE_ONE = new RegExp(`^${PAGE_NUM_SRC}$`);
+export const PAGE_ARABIC = new RegExp(`^${PAGE_ARABIC_SRC}+$`);
+export function pageToken(label: string): string {
   return `⟨${label}⟩`;
 }
 
@@ -57,7 +57,7 @@ export function folioToken(label: string): string {
    ROW, not per block: Pippa Passes interleaves songs with directions
    through 198 italic rows, so a block flag would split the block at every
    song. IN THE TEXT, not a side table, so a backup carries it. MEASURED: no
-   `⟨word⟩` of any kind exists in the corpus, and `line` is not a folio label
+   `⟨word⟩` of any kind exists in the corpus, and `line` is not a page label
    (n, e are not roman). The token names what the row IS, so a second value
    follows the same grammar (pin: parse.test › a ⟨line⟩ token at a row's
    head is the row's declared kind, not its text) */

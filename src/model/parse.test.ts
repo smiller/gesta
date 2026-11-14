@@ -206,12 +206,12 @@ test("body rows pad or trim to the header's column count", () => {
   expect(t.child(0).child(0).attrs.header).toBe(true);
 });
 
-test("inline: code spans keep markers literal, ⟩ is a word boundary, a folio in an href stays a token", () => {
+test("inline: code spans keep markers literal, ⟩ is a word boundary, a page label in an href stays a token", () => {
   const d = parseMarkdown("`*x* ⟨8⟩` ⟨9⟩**bold** [t](https://x.test/⟨1⟩)");
   const kids = d.firstChild!.content.content;
   expect(kids[0].text).toBe("*x* ⟨8⟩");
   expect(kids[0].marks[0].type.name).toBe("code");
-  expect(kids[2].type.name).toBe("folio");
+  expect(kids[2].type.name).toBe("page_label");
   expect(kids[3].marks[0].type.name).toBe("strong");
   expect(kids[5].marks[0].attrs.href).toBe("https://x.test/⟨1⟩");
 });
@@ -230,13 +230,13 @@ test("a bare URL is one link even when it holds emphasis markers or a paren", ()
   expect(visibleText(parseMarkdown("[x](https://x.test) https://y.test"))).toBe("x https://y.test");
 });
 
-test("a bare URL links, trailing punctuation stays outside, and a folio ends the run", () => {
+test("a bare URL links, trailing punctuation stays outside, and a page label ends the run", () => {
   const d = parseMarkdown("see https://x.test/p). and www.y.test⟨8⟩");
   const kids = d.firstChild!.content.content;
   expect(kids[1].marks[0].attrs.href).toBe("https://x.test/p");
   expect(kids[2].text).toBe("). and ");
   expect(kids[3].marks[0].attrs.href).toBe("https://www.y.test");
-  expect(kids[4].type.name).toBe("folio");
+  expect(kids[4].type.name).toBe("page_label");
 });
 
 test("the underline tag is read only as a matched pair; other tags are text", () => {

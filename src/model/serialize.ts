@@ -6,7 +6,7 @@ import type { Node, Mark, MarkType, NodeType } from "prosemirror-model";
 import { schema, MARK_ORDER } from "./schema.ts";
 import {
   LIST_LINE, ITEM_BLOCK_INDENT, FENCE_CLOSE, blockLineAt, escapeProse, escapeIndent,
-  escapeCell, folioToken, quotePrefix, rowKindToken, rowLabelToken, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE, readsAsRowToken,
+  escapeCell, pageToken, quotePrefix, rowKindToken, rowLabelToken, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE, readsAsRowToken,
 } from "./grammar.ts";
 
 const N = schema.nodes;
@@ -56,7 +56,7 @@ function leafMd(node: Node): string {
   switch (node.type) {
     case N.hard_break: return "\n";
     case N.image: return "![" + String(node.attrs.alt) + "](" + destination(String(node.attrs.src)) + ")";
-    case N.folio: return folioToken(String(node.attrs.label));
+    case N.page_label: return pageToken(String(node.attrs.label));
     default: throw new Error(`inline node the serializer does not know: ${node.type.name}`);
   }
 }

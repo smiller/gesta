@@ -1,4 +1,4 @@
-import { nsOf, isDayKey, pageParts } from "./keys.ts";
+import { nsOf, isDayKey, tagParts } from "./keys.ts";
 
 export const utf8 = new TextEncoder();
 /* a sidecar's name as the markdown wrote it, as against a data:, http(s): or
@@ -20,9 +20,9 @@ export const FILE_BYTES = 255;
    255: InvalidStateError at write time, with text about state having
    changed since it was read from disk. */
 export const WRITE_BYTES = FILE_BYTES - ".crswap".length;
-/* THIS SETTLES PAGES, NOT THE WHOLE KEY SPACE: a day's tag is budgeted
+/* THIS SETTLES KEYED ENTRIES, NOT THE WHOLE KEY SPACE: a day's tag is budgeted
    nowhere, and journal/<year>/<date>--<tag>.md outgrows the ceiling at a tag
-   of ~233 bytes, left open (pin: names.test › pageName caps at NAME_BYTES) */
+   of ~233 bytes, left open (pin: names.test › entryName caps at NAME_BYTES) */
 export const NAME_BYTES = WRITE_BYTES - ".md".length;
 /* the ONE spelling of "trim to a UTF-8 byte budget": pre-sliced to bound the
    loop (a pasted-paragraph name re-encoded quadratically and stalled the
@@ -49,20 +49,20 @@ export function imgHash(v: string | Uint8Array): string {
   }
   return h.toString(36);
 }
-/* the ONE rule every key-minting path runs a name through, a sub-page
+/* the ONE rule every key-minting path runs a name through, a sub-entry
    exactly as its parent. A title's ": " reads as the house " — " (a colon
    cannot live in a filename, and the bare "-" read wrong in a title; an
    unspaced colon keeps the plain collapse). "--" runs collapse to "-" and
-   edge dashes are trimmed: the double dash is the sub-page filename
-   delimiter. The edge trims run to a FIXED POINT: name === pageName(name).
+   edge dashes are trimmed: the double dash is the sub-entry filename
+   delimiter. The edge trims run to a FIXED POINT: name === entryName(name).
    A TRAILING DOT GOES WITH THE DASHES: a name becomes a DIRECTORY, and a
    directory whose name ends in a dot is skipped whole on import, silently
    (MEASURED: two folders alike but for the dot, the plain one restored all
    three files, the dotted one none). NEVER TO NOTHING: an all-dot name keeps
    every dot — refusing it was tried and reverted, the export layout already
-   carrying such a name (pin: names.test › pageName: the house rules, run to
+   carrying such a name (pin: names.test › entryName: the house rules, run to
    a fixed point) */
-export function pageName(raw: string | null | undefined): string {
+export function entryName(raw: string | null | undefined): string {
   let s = (raw || "").replace(/: /g, " — ")
     .replace(FILE_UNSAFE_RE, "-").replace(/-{2,}/g, "-");
   s = trimToBytes(s, NAME_BYTES);
@@ -113,7 +113,7 @@ export function importTarget(path: string): Target | null {
      come back as that day's own entry, written over it and never mentioned
      (pin: names.test › importTarget: the namespace arm is tested FIRST) */
   if (nsOf(segs[0]))
-    return nsTarget(segs[0], segs.slice(1).concat(base).map(pageName));
+    return nsTarget(segs[0], segs.slice(1).concat(base).map(entryName));
   /* ONE FOLDER WRITTEN, ONE FOLDER READ: a day's folder disagreeing with its
      name is a file somebody moved. The basename is read raw, not through the
      writer's fold — a gap left open, since tightening it would refuse files
@@ -141,7 +141,7 @@ const safe = (s: string): string => s.replace(FILE_UNSAFE_RE, "-");
    it may be normalised where an entry's own path may not */
 const dirSafe = (s: string): string => safe(s).replace(/\.+$/, "") || "-";
 export function keyedFile(date: string, tag: string): EntryFile {
-  const pp = pageParts(tag);
+  const pp = tagParts(tag);
   const anc = pp.parent ? pp.parent.split("/").map(safe) : [];
   const leaf = safe(pp.leaf);
   /* EVERY separator becomes "--": a single String.replace substitutes only

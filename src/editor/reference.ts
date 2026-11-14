@@ -2,10 +2,11 @@ import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, type Journal, type FolioRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, type Journal, type PageRange } from "../store/reference.ts";
 import { conventionsOf, type Conventions } from "../store/conventions.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { passageAt, quotation, inkBetween, type Passage, type Refusal } from "./passage.ts";
+import { pages, type Page } from "./pages.ts";
 
 const N = schema.nodes;
 /* a lettered line says its label at the end of a run it stands at (pin:
@@ -106,40 +107,30 @@ function paragraphRange(doc: Node, lines: Unit[]): string {
   const a = paragraphOf(doc, lines[0]), b = paragraphOf(doc, lines[lines.length - 1]);
   return a === b ? "para " + a : "paras " + elideRange(a, b);
 }
-export function folioLeaves(doc: Node): { pos: number; label: string }[] {
-  const out: { pos: number; label: string }[] = [];
-  doc.descendants((n, pos) => {
-    if (n.type === N.note || n.type === N.margin_note) return false;
-    if (n.type === N.folio) out.push({ pos, label: String(n.attrs.label) });
-    return true;
-  });
-  return out;
-}
-type Leaf = { pos: number; label: string };
-function startLeaf(doc: Node, leaves: Leaf[], from: number, to: number): Leaf | null {
-  let at: Leaf | null = null;
-  for (const leaf of leaves) {
-    if (from >= leaf.pos) { at = leaf; continue; }
-    if (to <= leaf.pos || inkBetween(doc, from, leaf.pos)) break;
-    at = leaf;
+function startPage(doc: Node, pageList: Page[], from: number, to: number): Page | null {
+  let at: Page | null = null;
+  for (const page of pageList) {
+    if (from >= page.pos) { at = page; continue; }
+    if (to <= page.pos || inkBetween(doc, from, page.pos)) break;
+    at = page;
   }
   return at;
 }
-function throughLeaf(doc: Node, leaves: Leaf[], from: number, to: number): Leaf | null {
-  for (let i = leaves.length - 1; i >= 0; i--) {
-    const leaf = leaves[i];
-    if (to > leaf.pos && inkBetween(doc, Math.max(from, leaf.pos), to)) return leaf;
+function throughPage(doc: Node, pageList: Page[], from: number, to: number): Page | null {
+  for (let i = pageList.length - 1; i >= 0; i--) {
+    const page = pageList[i];
+    if (to > page.pos && inkBetween(doc, Math.max(from, page.pos), to)) return page;
   }
   return null;
 }
-/* the leaf the selection STARTS on, read from the page it is on rather
-   than any marker inside it: the last leaf at or before the start, or the
-   next one when nothing but whitespace stands between; and the last leaf
+/* the page the selection STARTS on, read from where it stands rather
+   than any label inside it: the last page at or before the start, or the
+   next one when nothing but whitespace stands between; and the last page
    the selection reaches ink past */
-function folioRange({ doc, from, to }: Passage): FolioRange | null {
-  const leaves = folioLeaves(doc), at = startLeaf(doc, leaves, from, to);
+function pageRange({ doc, from, to }: Passage): PageRange | null {
+  const pageList = pages(doc), at = startPage(doc, pageList, from, to);
   if (!at) return null;
-  return { from: at.label, to: (throughLeaf(doc, leaves, from, to) || at).label };
+  return { from: at.label, to: (throughPage(doc, pageList, from, to) || at).label };
 }
 /* counted as a literal substring (pin: reference.test › selectionLink) */
 export function selectionLink(doc: Node, from: number, to: number): Highlight | null {
@@ -193,7 +184,7 @@ function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): P
   const said = conventionsOf(at.date, at.tag, journal);
   const quoted = quotation(p, { halves: said.oldEnglishVerse, paragraphs: said.byBookChapterAndParagraph || said.prosimetrum, all });
   if ("refused" in quoted) return quoted;
-  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), folio: folioRange(p), facing: facingRange(p) }, journal);
+  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), page: pageRange(p), facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }

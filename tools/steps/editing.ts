@@ -163,10 +163,10 @@ async function referenceBlockClicked(): Promise<void> {
 }
 async function pageLabelsBesideTheir(): Promise<void> {
   /* a label stands off its leaf when its middle is further than half a line from the middle of the first word after its marker */
-  await log("page labels beside their leaf's first word", await page.evaluate(inPage(labelsOffLeaf, folioWordBox, folioLabelMid)));
+  await log("page labels beside their leaf's first word", await page.evaluate(inPage(labelsOffLeaf, pageWordBox, pageLabelMid)));
 }
 /* the box of the first letter of the word after a page marker, or null */
-function folioWordBox(root: Element, m: Element): DOMRect | null {
+function pageWordBox(root: Element, m: Element): DOMRect | null {
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   w.currentNode = m;
   let t = w.nextNode(); while (t && !t.data.trim()) t = w.nextNode();
@@ -175,19 +175,19 @@ function folioWordBox(root: Element, m: Element): DOMRect | null {
   return r.getBoundingClientRect();
 }
 /* the middle of a marker's label: its gutter row's, or its own drop below the marker */
-function folioLabelMid(m: Element, word: DOMRect): number {
-  const gutter = [...document.querySelectorAll("#foliogutter > *")].find((l) => l.textContent.trim() === "p. " + m.getAttribute("data-folio"));
+function pageLabelMid(m: Element, word: DOMRect): number {
+  const gutter = [...document.querySelectorAll("#pagegutter > *")].find((l) => l.textContent.trim() === "p. " + m.getAttribute("data-page"));
   if (gutter) { const g = gutter.getBoundingClientRect(); return g.top + g.height / 2; }
   const b = m.getBoundingClientRect();
   return b.top + (parseFloat(getComputedStyle(m, "::after").marginTop) || 0) + word.height / 2;
 }
 function labelsOffLeaf(): { markers: number; off: number } {
   const root = document.querySelector("#editor .ProseMirror") || document.getElementById("page");
-  const markers = [...root.querySelectorAll("[data-folio]")];
+  const markers = [...root.querySelectorAll("[data-page]")];
   let off = 0;
   for (const m of markers) {
-    const word = folioWordBox(root, m);
-    if (word && Math.abs(folioLabelMid(m, word) - (word.top + word.height / 2)) > word.height / 2) off++;
+    const word = pageWordBox(root, m);
+    if (word && Math.abs(pageLabelMid(m, word) - (word.top + word.height / 2)) > word.height / 2) off++;
   }
   return { markers: markers.length, off };
 }

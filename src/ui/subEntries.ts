@@ -4,10 +4,10 @@
    every depth; registered-but-blank ones never block, and are swept only
    AFTER the user confirms (pin: subEntries.test › content-bearing
    descendants at any depth block; blanks never do) */
-import { nsOf, pageParts, entryKey, entryHash, entryNoun, todayKey, NS_BOOK, plural } from "../store/keys.ts";
+import { nsOf, tagParts, entryKey, entryHash, entryNoun, todayKey, NS_BOOK, plural } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
-import { pageName } from "../store/names.ts";
+import { entryName } from "../store/names.ts";
 import { counted } from "./counted.ts";
 
 export interface SubSpec { tag: string; full: string; listKey: string; href: string }
@@ -17,7 +17,7 @@ export interface SubSpec { tag: string; full: string; listKey: string; href: str
 export function subEntrySpec(date: string, tag: string | null, typed: string): SubSpec | { refuse: string } | null {
   const ns = nsOf(date);
   if (!ns && tag) return null;
-  const name = ns ? pageName(typed) : typed;
+  const name = ns ? entryName(typed) : typed;
   if (!name) return { refuse: "that name leaves nothing a filename can keep" };
   const full = ns ? tag + "/" + name : name;
   return { tag: name, full, listKey: ns ? entryKey(date, tag) : date, href: entryHash(date, full) };
@@ -39,7 +39,7 @@ export function blankSubTree(keys: string[], listKey: string): string[] {
   return out;
 }
 export interface SubButtons { create: string; createTitle: string; tagTitle: string; canCreate: boolean; canEdit: boolean; renameTitle: string; deleteTitle: string }
-function pageButtons(date: string, tag: string | null, subNoun: string): SubButtons {
+function keyedButtons(date: string, tag: string | null, subNoun: string): SubButtons {
   const level = entryNoun(date, tag) || "";
   return {
     create: "+ " + subNoun, createTitle: "Create a " + subNoun + " here", tagTitle: "Move selection to a new " + subNoun,
@@ -54,14 +54,14 @@ const dayButtons = (tag: string | null): SubButtons => ({
 });
 export function subButtons(date: string, tag: string | null): SubButtons {
   const ns = nsOf(date);
-  return ns ? pageButtons(date, tag, ns.subNoun) : dayButtons(tag);
+  return ns ? keyedButtons(date, tag, ns.subNoun) : dayButtons(tag);
 }
 /* the noun leads the name, the reading not the key, and the prefill stays
    the key since that is what a rename changes (pin: subEntries.test › the
    prompt and the confirm lead with the noun) */
 export function renamePrompt(date: string, tag: string, shownLabel: string): string {
   const ns = nsOf(date);
-  if (ns?.titledRoots && !pageParts(tag).sub) return "File and sort “" + shownLabel + "” under:";
+  if (ns?.titledRoots && !tagParts(tag).sub) return "File and sort “" + shownLabel + "” under:";
   return "Rename the " + (ns ? entryNoun(date, tag) : "tag") + ' "' + shownLabel + '" to:';
 }
 export function movePrompt(date: string, tag: string, shownLabel: string): string {
@@ -85,13 +85,13 @@ export function deleteConfirm(date: string, tag: string, shown: string): string 
 export function deleteLanding(date: string, tag: string): { date: string; tag: string | null } {
   const ns = nsOf(date);
   if (!ns) return { date, tag: null };
-  const pp = pageParts(tag);
+  const pp = tagParts(tag);
   return pp.sub ? { date, tag: pp.parent } : { date: todayKey(), tag: null };
 }
 export function hostKey(date: string, tag: string): string | null {
   const ns = nsOf(date);
   if (!ns) return date;
-  const pp = pageParts(tag);
+  const pp = tagParts(tag);
   return pp.sub ? entryKey(date, pp.parent) : null;
 }
 export interface MoveOutcome { moved: number; updated: number; left: string[]; stayed?: string[]; lost?: number; twins?: number }

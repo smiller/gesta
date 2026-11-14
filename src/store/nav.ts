@@ -1,5 +1,5 @@
 import { isDayKey, nsOf, todayKey, asAddress, beforeQuery, type Address, type Highlight } from "./keys.ts";
-import { pageName } from "./names.ts";
+import { entryName } from "./names.ts";
 
 export interface HashParts { date: string; tag: string | null; hl: Highlight | null }
 /* The today fallback — an undecodable escape, a bare or empty #commonplace/, an
@@ -30,8 +30,8 @@ function highlightOf(raw: string): Highlight | null {
   const line = query.match(/(?:^|&)line=([1-9]\d*(?:\.\d+|[a-z])?|\[\d+\])(?:&|$)/);
   return searchedFor(query) ?? (line ? { q: "", nth: 0, line: line[1] } : null);
 }
-function pagePath(tag: string | null): string | null {
-  const parts = (tag || "").split("/").map(pageName);
+function tagPath(tag: string | null): string | null {
+  const parts = (tag || "").split("/").map(entryName);
   while (parts.length > 1 && !parts[parts.length - 1]) parts.pop();
   return parts.indexOf("") === -1 ? parts.join("/") : null;
 }
@@ -44,7 +44,7 @@ function namedBy(whole: string): HashParts | null {
   try { tag = slash === -1 ? null : decodeURIComponent(raw.slice(slash + 1)); }
   catch { return null; }
   if (nsOf(date)) {
-    const path = pagePath(tag);
+    const path = tagPath(tag);
     return path === null ? null : { date, tag: path, hl };
   }
   if (!isDayKey(date)) return null;

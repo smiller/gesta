@@ -14,9 +14,8 @@
 import type { Node } from "prosemirror-model";
 import { lineUnits, blocksOf, paintsLines, blockUnits, paragraphAt, type Unit } from "./numbering.ts";
 import { schema } from "../model/schema.ts";
-import { hasFolios } from "./folios.ts";
-import { folioLeaves } from "./reference.ts";
-import { FOLIO_ONE, FOLIO_ARABIC, FOLIO_CHARS_RE } from "../store/folio.ts";
+import { hasPages, pages } from "./pages.ts";
+import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../store/pageLabels.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "scripture">;
@@ -31,7 +30,7 @@ const formNoun = (block: Unit[]): string => prose(block) ? "prose block" : "vers
 function askKind(doc: Node): AskKind {
   if (hasStanzas(doc)) return "stanza";
   const lines = paintsLines(doc) || blocksOf(lineUnits(doc, 0)).length > 0;
-  return lines ? (hasFolios(doc) ? "both" : "line") : hasFolios(doc) ? "page" : "none";
+  return lines ? (hasPages(doc) ? "both" : "line") : hasPages(doc) ? "page" : "none";
 }
 interface Hit { pos: number; nth: number; block: Unit[]; skipped?: boolean }
 /* a skipped line number lands where the line would stand, on the line after
@@ -144,21 +143,21 @@ function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, n
   const oneForm = !noun && blocks.every((rows) => prose(rows) === prose(hit.block));
   return (noun ?? unitNoun(hit.block)) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
 }
-function folioHit(doc: Node, tok: string): { pos: number } | null {
+function pageHit(doc: Node, tok: string): { pos: number } | null {
   const want = tok.toLowerCase();
-  const leaf = folioLeaves(doc).find((l) => l.label.toLowerCase() === want);
+  const leaf = pages(doc).find((l) => l.label.toLowerCase() === want);
   return leaf ? { pos: leaf.pos } : null;
 }
-function folioRefusal(doc: Node, tok: string): string {
-  return !folioLeaves(doc).length ? "no page numbers here" : "no page " + trimLabel(tok, ECHO_CAP) + " here";
+function pageRefusal(doc: Node, tok: string): string {
+  return !pages(doc).length ? "no page numbers here" : "no page " + trimLabel(tok, ECHO_CAP) + " here";
 }
 function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string | null {
   const a = ask.trim();
   const noun = kind === "page" ? "page" : lineNoun;
   if (!a) return "type a " + noun + " number";
-  const ok = kind === "page" ? FOLIO_ONE.test(a) : FOLIO_ARABIC.test(a);
+  const ok = kind === "page" ? PAGE_ONE.test(a) : PAGE_ARABIC.test(a);
   if (ok) return null;
-  return kind === "page" && FOLIO_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + noun + " number";
+  return kind === "page" && PAGE_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + noun + " number";
 }
 
 /* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).
@@ -222,8 +221,8 @@ const placed = (hit: { pos: number } | string, standing: Standing): Answer => (t
 function pageAnswer(doc: Node, c: Asked, typed: string, standing: Standing): Answer {
   const why = askCheck(typed, "page", lineLabel(c).toLowerCase());
   if (why) return typedWrong(why);
-  const tok = typed.trim(), hit = folioHit(doc, tok);
-  return hit ? placed(hit, standing) : absent(folioRefusal(doc, tok));
+  const tok = typed.trim(), hit = pageHit(doc, tok);
+  return hit ? placed(hit, standing) : absent(pageRefusal(doc, tok));
 }
 /* a link's words on a page holding stanzas are `N` or `N.M`, stanza and line,
    one place each (pin: a link to a line › a link to a stanza, and line) */

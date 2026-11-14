@@ -11,7 +11,7 @@ import { schema } from "./schema.ts";
 import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
-  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, FOLIO_NUM_SRC, ROW_KIND_AT, ROW_LABEL_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
+  CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, PAGE_NUM_SRC, ROW_KIND_AT, ROW_LABEL_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
   fenceNumbers, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
@@ -372,7 +372,7 @@ function underline(state: StateInline, silent: boolean): boolean {
 }
 
 /* markdown-it's own text rule stops only at ASCII syntax characters, so a
-   bare URL or a folio would be swallowed into text; this one stops at a ⟨
+   bare URL or a page label would be swallowed into text; this one stops at a ⟨
    and at an h or w that opens a URL too */
 const TERMINATORS = new Set([0x0a, 0x21, 0x23, 0x24, 0x25, 0x26, 0x2a, 0x2b, 0x2d, 0x3a, 0x3c, 0x3d, 0x3e, 0x40, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f, 0x60, 0x7b, 0x7d, 0x7e, 0x27e8]);
 /* "]" ends the run: markdown-it scans a link label with these rules in
@@ -402,11 +402,11 @@ function text(state: StateInline, silent: boolean): boolean {
 
 /* claimed HERE, before emphasis runs, so an underscore or a star inside an
    address is never a marker: MEASURED, five files' URLs lost "_" runs when
-   the link was made after the inline pass. ⟨ ends the run, a folio carrying
+   the link was made after the inline pass. ⟨ ends the run, a page label carrying
    no space; trailing punctuation is the text's, except a ")" closing a "("
    the address opened (pin: parse.test › a bare URL is one link even when it
    holds emphasis markers or a paren) (pin: parse.test › a bare URL links,
-   trailing punctuation stays outside, and a folio ends the run) */
+   trailing punctuation stays outside, and a page label ends the run) */
 const URL_BOUNDARY = /[\s([{“‘"'>⟩*_~]/;
 const URL_TRAIL_CHAR = /[.,;:!?…'")\]}»”’]/;
 const countOf = (s: string, re: RegExp): number => (s.match(re) || []).length;
@@ -441,13 +441,13 @@ function autolink(state: StateInline, silent: boolean): boolean {
   return true;
 }
 
-const FOLIO_AT = new RegExp(`^⟨(${FOLIO_NUM_SRC})⟩`);
-function folio(state: StateInline, silent: boolean): boolean {
+const PAGE_AT = new RegExp(`^⟨(${PAGE_NUM_SRC})⟩`);
+function pageLabelRule(state: StateInline, silent: boolean): boolean {
   if (state.src.charCodeAt(state.pos) !== 0x27e8) return false;
-  const m = FOLIO_AT.exec(state.src.slice(state.pos, state.posMax));
+  const m = PAGE_AT.exec(state.src.slice(state.pos, state.posMax));
   if (!m) return false;
   if (!silent) {
-    const t = state.push("folio", "", 0);
+    const t = state.push("page_label", "", 0);
     t.meta = { label: m[1] };
   }
   state.pos += m[0].length;
@@ -465,7 +465,7 @@ md.core.ruler.at("block", (state: StateCore) => {
 });
 md.inline.ruler.at("text", text);
 md.inline.ruler.before("text", "autolink_bare", autolink);
-md.inline.ruler.before("text", "folio", folio);
+md.inline.ruler.before("text", "page_label", pageLabelRule);
 md.inline.ruler.at("newline", newline);
 md.inline.ruler.at("backticks", backticks);
 md.inline.ruler.after("backticks", "underline", underline);
@@ -516,7 +516,7 @@ const LEAVES = new Map<string, (b: DocBuilder, t: Token) => void>([
   ["code_inline", (b, t) => b.text(t.content, schema.marks.code.create().addToSet(b.marks))],
   ["link_open", (b, t) => b.mark("link", { href: linkHref(t) })],
   ["image", (b, t) => b.add(schema.nodes.image.create({ src: String(t.attrGet("src") ?? ""), alt: t.content }, null, b.marks))],
-  ["folio", (b, t) => b.add(schema.nodes.folio.create({ label: t.meta!.label }, null, b.marks))],
+  ["page_label", (b, t) => b.add(schema.nodes.page_label.create({ label: t.meta!.label }, null, b.marks))],
   ["gap", (b) => b.add(schema.nodes.gap.create())],
   ["skip", (b) => b.add(schema.nodes.skip.create())],
   ["fence", (b, t) => b.add(schema.nodes.code_block.create({ lang: t.info, rest: (t.meta?.rest as string) ?? "" }, textOf(t)))],

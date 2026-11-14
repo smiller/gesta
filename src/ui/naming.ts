@@ -5,8 +5,8 @@
    reason — silence there reads as a broken button, where a cancelled
    prompt is silent on purpose (pin: naming.test › a name the filename rule
    cleans away is refused with the reason). NOUN-FREE messages: one prompt serves days,
-   pages, sub-pages and the bookshelf. */
-import { pageName, nameFromUrl } from "../store/names.ts";
+   commonplaces, sub-entries and the bookshelf. */
+import { entryName, nameFromUrl } from "../store/names.ts";
 import { entryAt } from "../store/nav.ts";
 import { nsOf, NS_KEYS, asAddress, beforeQuery } from "../store/keys.ts";
 
@@ -18,7 +18,7 @@ export function typedName(raw: string | null | undefined): Typed {
   if (!s) return null;
   const derived = nameFromUrl(s);
   if (derived === "") return { refuse: REFUSE_URL };
-  const name = pageName(derived || s.replace(/\//g, "-"));
+  const name = entryName(derived || s.replace(/\//g, "-"));
   return name ? { name } : { refuse: REFUSE_EMPTY };
 }
 
@@ -37,7 +37,7 @@ function addressed(s: string): TypedPlace {
 function keyed(s: string): TypedPlace {
   const ns = NS_KEYS.find((n) => s.startsWith(n + "/"));
   if (!ns) return null;
-  const parts = s.slice(ns.length + 1).split("/").map(pageName);
+  const parts = s.slice(ns.length + 1).split("/").map(entryName);
   return parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : { refuse: REFUSE_EMPTY };
 }
 export function typedAddress(raw: string | null | undefined): TypedPlace {

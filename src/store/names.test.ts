@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import {
-  dayDir, pageName, trimToBytes, nameFromUrl,
+  dayDir, entryName, trimToBytes, nameFromUrl,
   nsTarget, importTarget, NAME_BYTES, imgHash,
   entryFile, collidingFile, nextImageName,
 } from "./names.ts";
@@ -14,23 +14,23 @@ test("imgHash: the string math must not move, and the arms differ past ASCII", (
   expect(imgHash(new TextEncoder().encode("é"))).toBe("7xuf8c");
 });
 
-test("pageName: the house rules, run to a fixed point", () => {
-  expect(pageName("Title: Sub")).toBe("Title — Sub");
-  expect(pageName("12:30 log")).toBe("12-30 log");
-  expect(pageName("A//B\\C")).toBe("A-B-C");
-  expect(pageName("a - -")).toBe("a");
-  expect(pageName("-x-")).toBe("x");
-  expect(pageName("Notes.")).toBe("Notes");
-  expect(pageName("...")).toBe("...");
+test("entryName: the house rules, run to a fixed point", () => {
+  expect(entryName("Title: Sub")).toBe("Title — Sub");
+  expect(entryName("12:30 log")).toBe("12-30 log");
+  expect(entryName("A//B\\C")).toBe("A-B-C");
+  expect(entryName("a - -")).toBe("a");
+  expect(entryName("-x-")).toBe("x");
+  expect(entryName("Notes.")).toBe("Notes");
+  expect(entryName("...")).toBe("...");
   for (const n of ["Title — Sub", "A-B-C", "...", "12-30 log"]) {
-    expect(pageName(n)).toBe(n);
+    expect(entryName(n)).toBe(n);
   }
 });
 
-test("pageName caps at NAME_BYTES, by UTF-8 bytes", () => {
+test("entryName caps at NAME_BYTES, by UTF-8 bytes", () => {
   expect(NAME_BYTES).toBe(245);
   const long = "é".repeat(300);
-  expect(pageName(long)).toBe("é".repeat(122));   // 244 bytes — 245 would split a é
+  expect(entryName(long)).toBe("é".repeat(122));   // 244 bytes — 245 would split a é
 });
 
 test("trimToBytes: bounded, multibyte-safe, no lone high surrogate", () => {
@@ -58,7 +58,7 @@ test("nameFromUrl: the shapes a paste actually carries", () => {
   expect(nameFromUrl("")).toBe(null);
   expect(nameFromUrl("https://example.com/2023/1/2/slug/")).toBe(null);
   expect(nameFromUrl("https://example.com/2023/11/12/two/parts/")).toBe(null);
-  expect(pageName(nameFromUrl("https://x.com/2023/11/12/foo--bar/"))).toBe("2023-11-12-foo-bar");
+  expect(entryName(nameFromUrl("https://x.com/2023/11/12/foo--bar/"))).toBe("2023-11-12-foo-bar");
 });
 
 test("importTarget: the day arm reads the filename, in exactly its own folder", () => {

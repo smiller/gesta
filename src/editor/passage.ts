@@ -4,7 +4,7 @@ import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { blockUnits, fenceAt, paragraphOf, drawsInk, whollyIn, renumbered, type Unit, type Side } from "./numbering.ts";
 import { quotePrefix } from "../model/grammar.ts";
-import { dropFolios } from "./copy.ts";
+import { dropPageLabels } from "./copy.ts";
 
 const N = schema.nodes;
 
@@ -253,7 +253,7 @@ function unquoted(cut: Node): Node[] {
 const isTurn = (row: Node): boolean => {
   if (drawsInk(row)) return false;
   let turn = false;
-  row.descendants((n) => { if (n.type === N.folio) turn = true; return !turn; });
+  row.descendants((n) => { if (n.type === N.page_label) turn = true; return !turn; });
   return turn;
 };
 function dropTurns(frag: Fragment): Fragment {
@@ -273,7 +273,7 @@ function loosePassage(p: Quoting): string {
      landed on the wrong block once a truncated remainder had been
      dropped, and on the outer block of a verse inside a note inside a
      verse (pin: passage.test › the number on the right block at every depth) */
-  return quoted(unquoted(renumbered(p.doc, a, cut.copy(dropFolios(dropTurns(cut.content))), p.paragraphs)));
+  return quoted(unquoted(renumbered(p.doc, a, cut.copy(dropPageLabels(dropTurns(cut.content))), p.paragraphs)));
 }
 function byBlock(units: Unit[]): Unit[][] {
   const groups: Unit[][] = [];
@@ -398,7 +398,7 @@ function runRow(c: BlockRun, i: number): Node | null {
   if (row.type === N.note || isTurn(row)) return null;
   const ends = rowEnds(c, i);
   const cut = ends[0] || ends[1] ? fromTheHalf(row, ends, c.p.from, c.p.to) : row;
-  return row.copy(dropFolios(c.paired ? cut.content : partOf(row, c.rows[i].pos, c.p.from, c.p.to)));
+  return row.copy(dropPageLabels(c.paired ? cut.content : partOf(row, c.rows[i].pos, c.p.from, c.p.to)));
 }
 /* a skipped line number goes with the quotation, or the lines after it lose its number (pin: reference.test › a passage across a skipped line number) */
 const asFenceRow = (row: Node): Node => (row.type === N.gap || row.type === N.skip || drawsInk(row) ? row : N.gap.create());
@@ -477,7 +477,7 @@ function translationRow(c: TranslationRun, row: Node, pos: number): void {
     return;
   }
   if (row.type !== N.pair || !drawsInk(row.child(1))) return;
-  const line = N.line.create(null, dropFolios(rightWords(c, row, pos)));
+  const line = N.line.create(null, dropPageLabels(rightWords(c, row, pos)));
   const kind = lineKind(c, line, pos);
   c.rows.push(kind ? N.line.create({ kind }, line.content) : line);
 }

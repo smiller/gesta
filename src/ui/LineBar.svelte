@@ -41,8 +41,8 @@
   </span>
   <span class="askor" hidden={lineBar.kind !== "both"}>, or</span>
   <span class="ask" hidden={lineBar.kind === "line" || lineBar.kind === "stanza"}>
-    <label for="folioinput">Page</label>
-    <input id="folioinput" type="text" autocomplete="off" spellcheck="false" bind:this={pageInput} value={lineBar.page} oninput={(e) => onInput("page", e.currentTarget.value)} onkeydown={key("page")}>
+    <label for="pageinput">Page</label>
+    <input id="pageinput" type="text" autocomplete="off" spellcheck="false" bind:this={pageInput} value={lineBar.page} oninput={(e) => onInput("page", e.currentTarget.value)} onkeydown={key("page")}>
   </span>
   <button type="button" title="Close (Esc)" onclick={onClose}>×</button>
 </div>

@@ -144,11 +144,11 @@ const nodes: Record<string, NodeSpec> = {
   },
   /* a printed book's leaf number, where a new leaf begins: CONTENT, in the
      text, though it renders like display-only markup */
-  folio: {
+  page_label: {
     inline: true, group: "inline",
     attrs: { label: {} },
-    parseDOM: [{ tag: "span.folio", getAttrs: (dom) => ({ label: dom.getAttribute("data-folio") }) }],
-    toDOM: (n) => ["span", { class: "folio", "data-folio": n.attrs.label }],
+    parseDOM: [{ tag: "span.page-label", getAttrs: (dom) => ({ label: dom.getAttribute("data-page") }) }],
+    toDOM: (n) => ["span", { class: "page-label", "data-page": n.attrs.label }],
   },
 };
 

@@ -35,3 +35,10 @@ A named entry that belongs to no day and no author: Books, Birthdays,
 Verdour. The paper icon lists them; "New commonplace…" makes one, and
 "+ sub-entry" one beneath it. Its address is `#commonplace/Name`.
 _Avoid_: page (the printed page's word), note (a block in an entry).
+
+**Page**:
+A printed page of a book, begun in its text by a page label, `⟨138⟩`.
+⌃⌘G's Page box finds one; a reference names the pages a passage is on,
+"p. 138", "pp. 138-9".
+_Avoid_: leaf, folio; page for a Commonplace or for whichever entry is
+open.

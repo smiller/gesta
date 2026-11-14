@@ -26,7 +26,7 @@ export interface Unit {
   label?: string;
 }
 
-/* text that is not whitespace, or a picture; a folio draws nothing here, a
+/* text that is not whitespace, or a picture; a page label draws nothing here, a
    break is not ink, and a cell is a container (pin: numbering.test ›
    whollyIn and drawsInk) */
 export function drawsInk(row: Node): boolean {

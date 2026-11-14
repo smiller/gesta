@@ -1,4 +1,4 @@
-import { entryKey, entryHash, pageParts, hashTarget, asAddress } from "./keys.ts";
+import { entryKey, entryHash, tagParts, hashTarget, asAddress } from "./keys.ts";
 import { hashParts } from "./nav.ts";
 import { rewriteLinks, followedLabel } from "./links.ts";
 import { firstHeading } from "./headings.ts";
@@ -12,7 +12,7 @@ import { schema } from "../model/schema.ts";
 import { Transform } from "prosemirror-transform";
 
 /* `moves` every key that changes its name, the root included; `twins` a
-   sub-page the place already holds by its title, which is deleted and whose
+   sub-entry the place already holds by its title, which is deleted and whose
    links go to the one there; `into` that the place is an entry already,
    whose text the root's joins */
 export interface MovePlan { moves: Record<string, string>; twins: Record<string, string>; into: boolean }
@@ -25,7 +25,7 @@ type Refusal = { refuse: string };
 function placeRefusal(c: MoveCtx): string | null {
   if (under(c.to, c.from)) return "an entry can’t move under itself";
   const [ns, tag] = splitKey(c.to);
-  const parent = pageParts(tag || "").parent;
+  const parent = tagParts(tag || "").parent;
   if (parent !== null && !registered(c.keys, ns, parent)) return "nothing at " + entryKey(ns, parent) + " to move it under";
   return null;
 }

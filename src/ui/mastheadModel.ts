@@ -11,7 +11,7 @@
    names itself in the crumb (pin: mastheadModel.test › a sub-entry: the parent
    crumb links back) (pin: mastheadModel.test › deeper down every ancestor is
    its own link) */
-import { nsOf, pageParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
+import { nsOf, tagParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
@@ -37,7 +37,7 @@ export function rootLabel(ns: string, name: string, journal: Journal): string {
 export interface Where { keys: string[]; journal: Journal; today: string }
 type Head = Pick<MastheadModel, "crumbs" | "leaf" | "title" | "tags">;
 function pageHead(date: string, tag: string | null, journal: Journal): Head {
-  const pp = pageParts(tag || "");
+  const pp = tagParts(tag || "");
   if (!pp.sub) return { crumbs: [], leaf: rootLabel(date, pp.name, journal), title: "", tags: [] };
   const path = pp.parent!.split("/");
   const crumbs: Crumb[] = path.map((name, i) => {

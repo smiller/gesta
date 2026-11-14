@@ -26,7 +26,7 @@ export function richBlockHtml(el: Element): string {
   inlineBlockStyles(el, clone);
   /* no page marker leaves in a copy (pin: losing nothing › a note with a page marker hover-copied),
      nor the editor's hint on a link */
-  clone.querySelectorAll(".folio").forEach((f) => f.remove());
+  clone.querySelectorAll(".page-label").forEach((f) => f.remove());
   clone.querySelectorAll("a[title]").forEach((a) => a.removeAttribute("title"));
   clone.setAttribute(COPY_MARK, "");
   return clone.outerHTML.replace(/​/g, "");

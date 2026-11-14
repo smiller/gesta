@@ -71,7 +71,7 @@
       </svg>
       <span class="caret">▾</span>
     </button>
-    <button class="datebtn opener" title="Open the commonplaces list" aria-label="Open the commonplaces list" onclick={() => onPanel("commonplace")}>
+    <button class="datebtn opener" title="List the commonplaces" aria-label="List the commonplaces" onclick={() => onPanel("commonplace")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 1.8 h5.2 L12 4.6 v9.6 H4 z"></path>
         <path d="M9.2 1.8 v2.8 H12"></path>

@@ -237,7 +237,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     `margins.ts` (a margin-note's form and push), `measurePass.ts` (the
     measuring pass's scheduler), `continuations.ts` (a split line's rest),
     `dualLanguage.ts` (a dual-language block's waits and notes),
-    `folios.ts` (a page's leaves in the gutter).
+    `pages.ts` (a book's printed pages: which page labels count, where
+    each page begins; no DOM), `pageGutter.ts` (the labels drawn in the
+    gutter).
   - THE PASSAGE, `passage.ts` (`GLOSSARY.md`'s word): the rows a selection
     lands in, the refusal, one walk of their lines, what Ref and Ref (all)
     quote, and the marks' ranges. `pairMarks.ts` draws the marks;
@@ -269,7 +271,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `lists.ts`, `fsa.ts`, `local.ts`, `plans.ts` (the backup's pure
   decisions), `zip.ts`, `bundle.ts` (the reader's bundle), `io.ts` (the
   disk edge and the backup writer), `exportEntries.ts`, `backup.ts`,
-  `folio.ts`, `reference.ts` (the reference grammar and label),
+  `pageLabels.ts` (a page label's grammar), `reference.ts` (the
+  reference grammar and label),
   `conventions.ts` (a page's reference directives, each read at its
   level, as one record), `headings.ts` (titles and a page's directive
   text), `search.ts`,

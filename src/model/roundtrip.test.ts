@@ -70,7 +70,7 @@ const ROUND_TRIPS = [
   "::: stanza 48\nSo did Sir *Guyon* beare himselfe in fight,\n:::\n\n::: note\nan editor’s note after the stanza\n:::",
   "::: stanza 3\n*Sad verse, giue death to him that death does giue,*\n:::",
   "\\::: stanza 2",
-  "text with a ⟨8⟩ folio",
+  "text with a ⟨8⟩ page label",
   "⟨xxiv⟩**Enter GHOST**",
   "::: verse\n*Exit*\n⟨line⟩*Flower o’ the broom,*\n⟨line⟩*a* | *b*\n⟨line⟩\n:::",
   "::: prose\n⟨line⟩ |\n:::",

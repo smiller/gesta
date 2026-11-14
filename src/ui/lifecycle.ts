@@ -17,7 +17,7 @@ import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, headingRefusal, cutsHeading, HEADING_REFUSAL, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
 import { firstHeading } from "../store/headings.ts";
-import { nsOf, pageParts, entryKey, entryHash, KEYED_NS, NS_BOOK, plural } from "../store/keys.ts";
+import { nsOf, tagParts, entryKey, entryHash, KEYED_NS, NS_BOOK, plural } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { registered, childrenOf } from "../store/lists.ts";
 
@@ -85,18 +85,18 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   /* "Shelves" is no author's: the shelves hold no books, keep their name,
      and no author is filed under it, or it would be hidden from every list
      (pin: lifecycle.test › the shelves are no author) */
-  const onShelves = (date: string, tag: string | null): boolean => date === NS_BOOK.key && !!tag && pageParts(tag).name === SHELVES;
+  const onShelves = (date: string, tag: string | null): boolean => date === NS_BOOK.key && !!tag && tagParts(tag).name === SHELVES;
   const SHELVES_KEEP = "the shelves keep their name", SHELVES_EMPTY = "the shelves hold no books", SHELVES_TAKEN = "“" + SHELVES + "” is the shelves’ own name";
   const keysNow = (): string[] => Object.keys(layer.cache);
   const shownName = (date: string, tag: string): string => {
-    const ns = nsOf(date), pp = pageParts(tag);
+    const ns = nsOf(date), pp = tagParts(tag);
     return ns && !pp.sub ? rootLabel(date, tag, journal) : ns ? pp.leaf : tag;
   };
   const retargetHost = (date: string, oldTag: string, newTag: string | null): Promise<unknown> => {
     const host = hostKey(date, oldTag);
     if (!host) return Promise.resolve();
-    const oldLabel = nsOf(date) ? pageParts(oldTag).leaf : oldTag;
-    const newLabel = newTag ? (nsOf(date) ? pageParts(newTag).leaf : newTag) : null;
+    const oldLabel = nsOf(date) ? tagParts(oldTag).leaf : oldTag;
+    const newLabel = newTag ? (nsOf(date) ? tagParts(newTag).leaf : newTag) : null;
     const out = retargetLinks(layer.entryMd(host), { href: entryHash(date, oldTag), label: oldLabel }, newTag ? { href: entryHash(date, newTag), label: newLabel! } : null);
     return out === null ? Promise.resolve() : layer.setEntry(host, out);
   };
@@ -211,12 +211,12 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (cold()) return done;
     const date = c.date, old = c.tag;
     if (onShelves(date, old)) return refused(SHELVES_KEEP, 2500);
-    if (nsOf(date)?.titledRoots && !pageParts(old).sub) return refile(date, old);
+    if (nsOf(date)?.titledRoots && !tagParts(old).sub) return refile(date, old);
     return renameAsked(date, old);
   }
-  interface Renaming { date: string; old: string; pp: ReturnType<typeof pageParts> | null; deep: boolean; oldLeaf: string }
+  interface Renaming { date: string; old: string; pp: ReturnType<typeof tagParts> | null; deep: boolean; oldLeaf: string }
   function renamingOf(date: string, old: string): Renaming {
-    const ns = nsOf(date), pp = ns ? pageParts(old) : null;
+    const ns = nsOf(date), pp = ns ? tagParts(old) : null;
     return { date, old, pp, deep: !!ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, old)), oldLeaf: pp ? pp.leaf : old };
   }
   function renameTyped(r: Renaming, raw: string | null): Promise<void> {
@@ -313,7 +313,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return relocate(date, old, entryKey(date, root), "refile");
   }
 
-  /* A PAGE OR BOOK TO ANOTHER KEY, its sub-pages, pictures and every link to
+  /* A COMMONPLACE OR BOOK TO ANOTHER KEY, its sub-entries, pictures and every link to
      them with it — renamed, re-filed or moved. Every copy lands before any
      old key is cleared, and a copy that fails takes the others back, the
      old standing whole, the text there put back as it was (pin:
@@ -323,10 +323,9 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      be is NAMED in a pin rather than undone: the undo is more writes that
      can fail the same way (pin: lifecycle.test › a link refused once as
      stale is rewritten on the retry). Only a move asks first; into an entry
-     already there, its text joins after the text there and a sub-page the
+     already there, its text joins after the text there and a sub-entry the
      place holds by its title is deleted, its links and bookmarks going to
-     that one. An author re-filed keeps its name as its page's heading, and
-     one whose books came without a page is given one (pin: lifecycle.test ›
+     that one. An author re-filed keeps its name as its entry's heading, and one whose books came without an entry is given one (pin: lifecycle.test ›
      an author with no page of its own) */
   type Mode = "move" | "rename" | "refile";
   const COULDNT: Record<Mode, string> = { move: "couldn't move", rename: "couldn't rename", refile: "couldn't re-file" };
@@ -338,16 +337,16 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   type Carried = { lost: number; olds: string[] };
   interface Tally { left: string[]; updated: number; stayed: string[] }
-  const shelvesPlace = (date: string, tag: string): boolean => date === NS_BOOK.key && pageParts(tag).name === SHELVES;
+  const shelvesPlace = (date: string, tag: string): boolean => date === NS_BOOK.key && tagParts(tag).name === SHELVES;
   function moveAsked(date: string, old: string, to: string, plan: MovePlan): boolean {
-    const twinTitles = Object.keys(plan.twins).map((k) => firstHeading(layer.entryMd(k)) || pageParts(splitKey(k)[1]!).leaf);
+    const twinTitles = Object.keys(plan.twins).map((k) => firstHeading(layer.entryMd(k)) || tagParts(splitKey(k)[1]!).leaf);
     return dialogs.confirm(moveConfirm({ date, tag: old, shown: shownName(date, old) }, to, { moved: Object.keys(plan.moves).length - 1, into: plan.into, twins: twinTitles }));
   }
   function relocate(date: string, old: string, to: string, mode: Mode): Promise<void> {
     const from = entryKey(date, old);
     if (to === from) return done;
     const [toDate, toTag] = splitKey(to) as [string, string];
-    if (shelvesPlace(toDate, toTag)) return refused(pageParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500);
+    if (shelvesPlace(toDate, toTag)) return refused(tagParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500);
     const first = movePlan(layer.cache, from, to);
     if ("refuse" in first) return refused(first.refuse, 3000);
     if (mode === "move" && !moveAsked(date, old, to, first)) return done;
@@ -358,7 +357,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return session.save.handOver(m.from).then((hand) => (hand ? relocateNow(m, hand) : undefined)).finally(() => { renaming = false; });
   }
   function relabelOf(m: Move): { old: string; new: string } | undefined {
-    const newLeaf = pageParts(m.toTag).leaf, oldLeaf = pageParts(m.old).leaf;
+    const newLeaf = tagParts(m.toTag).leaf, oldLeaf = tagParts(m.old).leaf;
     return newLeaf !== oldLeaf ? { old: oldLeaf, new: newLeaf } : undefined;
   }
   const headedMd = (r: Relocation, md: string): string => (r.mode === "refile" ? withHeading(md, r.old) ?? md : md);
@@ -526,8 +525,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return filedRoot(ns, raw!);
   }
 
-  /* the parent's index link reads as a sub-page's TITLE: when a landed
-     save moves a sub-page's first heading, the parent's minted labels
+  /* the parent's index link reads as a sub-entry's TITLE: when a landed
+     save moves a sub-entry's first heading, the parent's minted labels
      follow — the bare name or the previous heading; a hand-written label
      stays. The previous heading is remembered per key from the last look
      (pin: lifecycle.test › remembers the heading at first sight) */
@@ -537,7 +536,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (cut === -1) return;
     const date = ekey.slice(0, cut), tag = ekey.slice(cut + 1);
     if (!nsOf(date)) return;
-    const pp = pageParts(tag);
+    const pp = tagParts(tag);
     const heading = journal.heading(ekey);
     const before = ekey in headingSeen ? headingSeen[ekey] : heading;
     headingSeen[ekey] = heading;

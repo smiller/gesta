@@ -13,7 +13,7 @@
    a walk (pin: gotoModel.test › a sole child that is itself a parent
    collapses). A book's sections and its order come from one reading of the
    parent's contents. */
-import { isDayKey, nsOf, pageParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, COMMONPLACE_KEY, NS_BOOK } from "../store/keys.ts";
+import { isDayKey, nsOf, tagParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, COMMONPLACE_KEY, NS_BOOK } from "../store/keys.ts";
 import { dayKeys, childrenOf } from "../store/lists.ts";
 import { subPageOrder, subPageDisplayList, type Bearing, type OrderMemo, type SubOrder } from "../store/contents.ts";
 import type { Journal } from "../store/reference.ts";
@@ -56,7 +56,7 @@ function nsDestinations(w: GotoWorld, key: string, open: string | null): Row[] {
   return rootGroups(key, roots, w.cache[entryKey(NS_BOOK.key, SHELVES)] || "", open).flatMap((g) => groupRows(w, key, g));
 }
 export function destinationRows(w: GotoWorld, date: string, tag: string | null): Row[] {
-  const open = nsOf(date) && tag ? pageParts(tag).name : null;
+  const open = nsOf(date) && tag ? tagParts(tag).name : null;
   return [{ v: "", label: "Journal" }, ...NS_KEYS.flatMap((key) => nsDestinations(w, key, date === key ? open : null))];
 }
 /* a select's runs of rows under one optgroup: a run breaks where its
@@ -119,7 +119,7 @@ function levelRows(w: GotoWorld, l: Listing): Row[] {
 }
 const pickedValue = (home: boolean, sub: string | null, subs: string[]): string | null => (!home ? null : !sub ? "" : subs.includes(sub) ? sub : null);
 function sentinelOf(ns: string, path: string): string {
-  const pp = pageParts(path);
+  const pp = tagParts(path);
   return pp.sub ? "← " + pp.leaf : "← the " + KEYED_NS[ns].noun;
 }
 export function subLevel(w: GotoWorld, ns: string, path: string, want: Want): { took: number; level: Level | null; jump?: string } {
@@ -145,7 +145,7 @@ function chainLevels(w: GotoWorld, date: string, root: string, segs: string[]): 
 }
 const todayOf = (w: GotoWorld): string => w.today || todayKey();
 export function gotoLevels(w: GotoWorld, date: string, tag: string | null): Level[] {
-  const pp = nsOf(date) && tag ? pageParts(tag) : null;
+  const pp = nsOf(date) && tag ? tagParts(tag) : null;
   const out: Level[] = [{ level: 0, aria: "Destination", rows: destinationRows(w, date, tag), value: pp ? pp.name : "", valueNs: pp ? date : undefined, sentinel: null, path: null }];
   if (!pp) return out.concat(journalLevels(w, openDay(date, todayOf(w)), tag));
   return out.concat(chainLevels(w, date, pp.name, (tag || "").split("/").slice(1)));

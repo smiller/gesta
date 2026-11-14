@@ -18,7 +18,7 @@ export function linkAction(href: string | null, modified: boolean, docHref: stri
   const frag = internalHash(href, docHref);
   return frag ? { kind: "route", frag } : null;
 }
-/* the entry's last part, so a list of dated sub-pages tells each one's date
+/* the entry's last part, so a list of dated sub-entries tells each one's date
    without a heading for it (pin: links.test › a link into the journal names) */
 export function linkTitle(href: string, docHref: string = location.href): string {
   const hint = "⌘-click to open";

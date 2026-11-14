@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import {
   isDayKey, COMMONPLACE_KEY, NS, NS_COMMONPLACE, NS_BOOK, NS_KEYS, nsOf,
-  pageParts, entryKey, encPart, entryHash, hashTarget, asAddress,
+  tagParts, entryKey, encPart, entryHash, hashTarget, asAddress,
   capitalized, entryNoun, monthLabel, dateLabel,
   todayKey, prettyDate, byName, titlesRoots, plural,
 } from "./keys.ts";
@@ -45,11 +45,11 @@ test("entryKey joins date and tag; tag optional", () => {
   expect(entryKey("commonplace", "A/B")).toBe("commonplace/A/B");
 });
 
-test("pageParts: the four fields, and their divergence past depth 2", () => {
-  expect(pageParts("A")).toEqual({ name: "A", sub: false, parent: null, leaf: "A" });
-  expect(pageParts("A/B")).toEqual({ name: "A", sub: true, parent: "A", leaf: "B" });
+test("tagParts: the four fields, and their divergence past depth 2", () => {
+  expect(tagParts("A")).toEqual({ name: "A", sub: false, parent: null, leaf: "A" });
+  expect(tagParts("A/B")).toEqual({ name: "A", sub: true, parent: "A", leaf: "B" });
   // At depth 3 name and parent part company: which BOOK, which LIST.
-  expect(pageParts("A/B/C")).toEqual({ name: "A", sub: true, parent: "A/B", leaf: "C" });
+  expect(tagParts("A/B/C")).toEqual({ name: "A", sub: true, parent: "A/B", leaf: "C" });
 });
 
 test("encPart encodes parens beyond encodeURIComponent", () => {

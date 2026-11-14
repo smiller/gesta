@@ -229,7 +229,7 @@ const picked = (tree: Tree) => page.evaluate((tree) => {
     window.showDirectoryPicker = () => Promise.resolve(build(tree));
     window.confirm = () => false;
   }, tree);
-const boxes = () => page.evaluate(() => { const v = (s: string) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; }; return { line: v("#lineinput"), page: v("#folioinput") }; });
+const boxes = () => page.evaluate(() => { const v = (s: string) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; }; return { line: v("#lineinput"), page: v("#pageinput") }; });
 const underHeader = () => page.evaluate(() => { const b = document.querySelector(".fmt")?.getBoundingClientRect(), h = document.querySelector(".site-head, header")?.getBoundingClientRect(); return b && h ? b.top >= h.bottom - 1 : null; });
 const refuse = () => page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
 const restore = () => page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });

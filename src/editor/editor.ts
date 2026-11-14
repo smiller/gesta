@@ -10,7 +10,7 @@ import { marginNotes } from "./margins.ts";
 import { continuations } from "./continuations.ts";
 import { dualLanguage } from "./dualLanguage.ts";
 import { pairMarks } from "./pairMarks.ts";
-import { folios } from "./folios.ts";
+import { pageGutter } from "./pageGutter.ts";
 import { typing, typingKeymap, autolinkEnter } from "./typing.ts";
 import { DOMSerializer, Fragment, type Node } from "prosemirror-model";
 import { inlineBlockStyles } from "./inlineStyles.ts";
@@ -180,7 +180,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       continuations(),
       ...dualLanguage(),
       pairMarks(),
-      folios(),
+      pageGutter(),
       landing(),
       codeHighlight(),
       folds(foldOpts),

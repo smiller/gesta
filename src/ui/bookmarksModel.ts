@@ -11,7 +11,7 @@
    jump only while nothing is held, which is what leaves scr12 reachable
    (pin: bookmarksModel.test › a key nothing else starts with goes on the
    press; one that could grow waits) */
-import { isDayKey, pageParts, entryKey } from "../store/keys.ts";
+import { isDayKey, tagParts, entryKey } from "../store/keys.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING } from "../store/search.ts";
 import { resultLabel } from "./searchModel.ts";
@@ -25,7 +25,7 @@ export function bookmarkLabel(key: string, journal: Journal): string {
 export function bookmarkLinkLabel(key: string, journal: Journal): string {
   const p = bookmarkParts(key);
   if (isDayKey(p.date)) return p.tag ? p.date + " · " + p.tag : p.date;
-  const parts = pageParts(p.tag || "");
+  const parts = tagParts(p.tag || "");
   return parts.sub ? (journal.heading(entryKey(p.date, p.tag)) || parts.leaf) : parts.name;
 }
 export interface BookmarkRow { key: string; trigger: string; label: string; keyed: boolean; here: boolean; cut: boolean }
