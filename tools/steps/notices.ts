@@ -1,4 +1,4 @@
-import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, keep, STANZA_SEEDS, type Tree, pill } from "./kit.ts";
+import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
 section("notices and surfaces", async () => {
   await noticesOpening();
@@ -234,15 +234,13 @@ const underHeader = () => page.evaluate(() => { const b = document.querySelector
 const refuse = () => page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
 const restore = () => page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
 section("pill", async () => {
-  if (pill) {
-    await page.goto(A.url("page/Horace", "corner=pill"));
-    await A.waitWarm(page);
-    /* the pill is set after the launch's backup run, which ends after the
-       warm: read on the warm alone, it was missed 1 run in 10 */
-    await page.waitForFunction(() => document.querySelector(".backup-paused")?.hidden === false, null, { timeout: 5000 }).catch(() => {});
-    await log("with ?corner=pill", await R.pill(page));
-    if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
-  }
+  await page.goto(A.url("page/Horace", "corner=pill"));
+  await A.waitWarm(page);
+  /* the pill is set after the launch's backup run, which ends after the
+     warm: read on the warm alone, it was missed 1 run in 10 */
+  await page.waitForFunction(() => document.querySelector(".backup-paused")?.hidden === false, null, { timeout: 5000 }).catch(() => {});
+  await log("with ?corner=pill", await R.pill(page));
+  if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
 });
 section("a rename keeps a label's marks", async () => {
   /* last of all: the pages seeded here would show in the lists of any

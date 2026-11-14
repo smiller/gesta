@@ -54,8 +54,9 @@ export function entrySave(p: SaveParts): EntrySave {
     opened: () => { cancel(); suspended = false; deletedHere = null; },
     deleted: () => { deletedHere = p.screen(); },
     unsaved: () => {
+      if (timer || suspended) return true;
       const s = p.screen();
-      return !!timer || suspended || (!!s && s.md !== p.layer.entryMd(s.ekey));
+      return !!s && s.md !== p.layer.entryMd(s.ekey);
     },
   };
 }

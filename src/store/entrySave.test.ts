@@ -60,7 +60,7 @@ test("a flush writes only what waits on the debounce", async () => {
   expect(r.writes).toHaveLength(1);
 });
 
-test("text typed while a read is out is written by the flush before the open, which then cancels nothing of it", async () => {
+test("a flush writes the waiting edit, and an open after it cancels nothing", async () => {
   const r = rig();
   r.save.edited();
   await r.save.flush();
@@ -84,7 +84,7 @@ test("suspended for a rename, a waiting edit and every later one write nothing u
   expect(r.writes).toEqual([["page/A", "typed"]]);
 });
 
-test("a repaint after the flush finds the store holding what was typed", async () => {
+test("after a flush the store holds what the screen shows", async () => {
   const r = rig({ "page/A": "before" });
   r.save.edited();
   expect(r.save.unsaved()).toBe(true);

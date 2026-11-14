@@ -5,7 +5,7 @@ import * as A from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
 
 export type Tree = { name: string; text?: string; kids?: Tree[] };
-export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean; pill?: boolean }
+export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean }
 /* the day the drivers pin the page's clock to (context.clock.setFixedTime,
    Date only; the timers run). Never a seeded day: a run on a day whose
    number a seeded day shares (the 5th, the 6th) read one Day option fewer,
@@ -70,7 +70,7 @@ export async function still(p: Page) {
 export { A };
 export const R = A.read, S = A.sel;
 /* the run's page and context, bound before the first section */
-export let page: Page, ctx: BrowserContext, shot: string | undefined, pill = false;
+export let page: Page, ctx: BrowserContext, shot: string | undefined;
 /* the section playing, which an arrival's line names */
 export let current = "";
 export const setSection = (name: string): void => { current = name; };
@@ -145,7 +145,7 @@ export const go = async (hash: string, ms = 15000) => {
 };
 /* entries written as another tab would, in turn */
 export const writeAll = async (seeds: Record<string, string>) => { for (const [k, md] of Object.entries(seeds)) await A.foreignWrite(page, k, md); };
-export const seed = async (seeds: Record<string, string>) => { await writeAll(seeds); await page.goto("about:blank"); await page.goto(A.url("page/Horace", A.LANDING)); await A.waitWarm(page); };
+export const seed = (seeds: Record<string, string>) => A.reseeded(page, seeds);
 /* a list or table kept in localStorage, written before the section reads it */
 export const keep = (name: string, value: string) => page.evaluate(([k, v]) => localStorage.setItem(k, v), [A.ns + name, value]);
 /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
@@ -196,6 +196,6 @@ export const SECTIONS: [string, () => Promise<void>][] = [];
 export const section = (name: string, fn: () => Promise<void>): void => { SECTIONS.push([name, fn]); };
 
 export function bind(p: Page, c: BrowserContext, opts: RunOptions): void {
-  page = p; ctx = c; shot = opts.screenshot; pill = !!opts.pill;
+  page = p; ctx = c; shot = opts.screenshot;
   page.on("dialog", answerDialog);
 }

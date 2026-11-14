@@ -14,19 +14,22 @@ const PAGE = "file://" + resolve("dist/index.html");
 export const ns = NS;
 export const bookmarksKey = NS + "bookmarks";
 export const url = (hash: string, query = "") => PAGE + (query ? "?" + query : "") + "#" + hash;
-/* the page opened once to make its store, the seeds written into it, and
-   the page opened again over them, under a query no address carries: the
-   next goto then loads the page anew and reads what was written since; on
-   the address alone it moved only the hash, and an entry written before it
-   went unread (pin: shelves › the bookshelf on its shelves) */
-export const LANDING = "fresh";
+/* the seeds written into the page's store and the page opened again over
+   them, under a query no address carries: the next goto then loads the
+   page anew and reads what was written since; on the address alone it
+   moved only the hash, and an entry written before it went unread (pin:
+   shelves › the bookshelf on its shelves) */
+export async function reseeded(page: Page, seeds: Record<string, string>) {
+  for (const [k, md] of Object.entries(seeds)) await foreignWrite(page, k, md);
+  await page.goto("about:blank");
+  await page.goto(url("page/Horace", "fresh"));
+  await waitWarm(page);
+}
+/* the page opened once to make its store before the seeds go in */
 async function launch(page: Page, seeds: Record<string, string>) {
   await page.goto(url("page/Horace"));
   await waitWarm(page);
-  for (const [k, md] of Object.entries(seeds)) await foreignWrite(page, k, md);
-  await page.goto("about:blank");
-  await page.goto(url("page/Horace", LANDING));
-  await waitWarm(page);
+  await reseeded(page, seeds);
   return page.evaluate(() => document.documentElement.dataset.probe);
 }
 /* a section's start: the origin's storage cleared — the entries, the

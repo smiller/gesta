@@ -329,8 +329,8 @@ export function startSession(opts: SessionOptions): Session {
        A read answers only while its own address is still the one asked
        for: a later address opened by an earlier read went unread. What was
        typed into the entry still on screen during the read is saved
-       before the open, whose first act cancels a pending save (pin:
-       entrySave.test › text typed while a read is out) */
+       before the open, whose first act cancels a pending save. Unpinned:
+       races no step can hold open */
     const want = entryKey(h.date, h.tag);
     if (!primed && unreadAfterWarm(want)) { readThenOpen(want); return; }
     if (unmintedKey(Object.keys(layer.cache), h.date, h.tag)) { refuseUnminted(h, want); return; }
@@ -351,7 +351,8 @@ export function startSession(opts: SessionOptions): Session {
   let detachedPins: number[] = [];
   const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
   function noticeVerdict(ekey: string, md: string | null): ScreenNotice {
-    const verdict = screenNotice(onScreenKey(ekey), save.unsaved(), md);
+    const here = onScreenKey(ekey);
+    const verdict = screenNotice(here, here && save.unsaved(), md);
     if (verdict === "deleted") save.deleted();
     return verdict;
   }
@@ -387,7 +388,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   /* repainted from the store ONLY where the store moved under it, after the
      debounce has landed: a reopen after an async write threw away keystrokes
-     typed in the window (pin: entrySave.test › a repaint after the flush) */
+     typed in the window. Unpinned: a race no step can hold open */
   function refresh(): Promise<void> {
     return save.flush().then(() => { if (layer.entryMd(ekeyOf()) !== currentMd()) redraw(); });
   }

@@ -49,8 +49,8 @@ function scrub(text: string): string {
 }
 const env = { ...process.env, NODE_OPTIONS: "" };
 /* WHAT A RUN READS, fingerprinted after the build: the pages (every line of
-   the app, its fixtures and its libraries), the drivers, steps and
-   adapters, the source files an adapter or the `--mode reader` bundle
+   the app and its libraries), the fixtures the steps seed, the drivers,
+   steps and adapters, the source files an adapter or the `--mode reader` bundle
    imports, the approved copy, and the browser, node and playwright that
    play it. A run whose inputs match a passing run's stamp is not played
    again: a commit replayed for seven minutes a run approved minutes
@@ -63,6 +63,7 @@ function inputsFor(name: string) {
   return [
     file("dist/index.html"), file("dist-reader/index.html"),
     ...["tools", "tools/steps", "tools/adapters"].flatMap((d) => readdirSync(d).map((f) => d + "/" + f)).filter(stamped).map(file),
+    ...readdirSync("fixtures").map((f) => file("fixtures/" + f)),
     file("src/store/keys.ts"), file("src/store/store.ts"),
     ...["io", "zip", "files", "plans", "names"].map((m) => file("src/store/" + m + ".ts")),
     file(approvedOf(name)),

@@ -286,7 +286,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   entries, over ports), `overlays.ts` (one thing open at a time),
   `tabNotice.ts`, `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
   `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
-  `heldKeys.ts`, `mastheadBottom.ts`. THE ACTS, the page's handlers, each
+  `heldKeys.ts`, `mastheadBottom.ts`, `loadPatience.ts` (the pin when
+  the journal is slow to load). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,
   `gotoActs.ts`, `lineBarActs.ts`, `replaceActs.ts`, `bookmarkActs.ts`,
   `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
@@ -322,7 +323,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     answering with an element); `tsconfig.json` leaves them out.
   - The checkers: `comments.ts` with `commentRules.ts`, `testTitles.ts`
     with `testTitlesRun.ts`, `codeHealth.ts` with `codeHealthRun.ts`,
-    `vocabulary.ts`, `unusedExports.ts` (an export nothing uses, or only
+    `vocabulary.ts`, `claudeLayout.test.ts` (every src/ module named
+    here), `unusedExports.ts` (an export nothing uses, or only
     tests, fails, its allowed list giving each exception's reason),
     `hooks-test.sh`, `accepted.sh`.
 - `one-offs/` — scripts run once or a few times over the backup to set

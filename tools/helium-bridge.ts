@@ -9,7 +9,7 @@ import { tmpdir } from "node:os";
 import { TODAY } from "./helium-steps.ts";
 import type { Page } from "./heliumPage.ts";
 import { inPage } from "./adapters/inPage.ts";
-import { foreignWrite, waitWarm } from "./adapters/app.ts";
+import { reseeded } from "./adapters/app.ts";
 import { SEEDS } from "./steps/kit.ts";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
 const PROFILE = resolve(tmpdir(), "gesta-helium-bridge-profile");   /* the system temp, not Dropbox: a profile there is held by the sync, and its delete failed */
@@ -59,10 +59,7 @@ async function launch(url: string, fn: (page: Page) => Promise<Record<string, un
 }
 const say = (label: string, o: unknown): void => console.log(label.padEnd(34), JSON.stringify(o));
 say("seed, open #page/Horace", await launch(PAGE + "#page/Horace", async (page) => {
-  for (const [k, md] of Object.entries(SEEDS)) await foreignWrite(page, k, md);
-  await page.goto("about:blank");
-  await page.goto(PAGE + "#page/Horace");
-  await waitWarm(page);
+  await reseeded(page, SEEDS);
   return read(page);
 }));
 say("open a book page", await launch(PAGE + "#bookshelf/Browning,%20Robert/Pippa%20Passes", read));
