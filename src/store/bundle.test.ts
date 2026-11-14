@@ -52,7 +52,7 @@ test("readBundle counts its progress over the entries and refuses a file that is
   await expect(zipDirectory(blob(zip.subarray(40)))).rejects.toThrow(/damaged/);
   const torn = zip.slice();
   torn[0] = 0;
-  await expect(readBundle(blob(torn))).rejects.toThrow("the zip's member journal/2026/2026-01-01.md is damaged");
+  await expect(readBundle(blob(torn))).rejects.toThrow("the zip’s member journal/2026/2026-01-01.md is damaged");
 });
 
 test("bundleKeeper keeps one picked file, a new pick replacing it; heldLabel says when it was written", async () => {

@@ -11,7 +11,7 @@ import type { ResolvedPos } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 
 const G = schema.nodes.grid, C = schema.nodes.card, P = schema.nodes.paragraph;
-export const GRID_JOIN = "a grid's cards are joined in the source view (⌃⌘M)";
+export const GRID_JOIN = "a grid’s cards are joined in the source view (⌃⌘M)";
 
 /* the depth of the card holding the caret's textblock directly, when that
    card is a grid's; 0 otherwise */

@@ -65,7 +65,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     building = false;
     waiting.clear();
     console.error("the search index could not be built", err);
-    indexing?.fail(failMsg("couldn't build the search index", err), errText(err));
+    indexing?.fail(failMsg("couldn’t build the search index", err), errText(err));
     indexing = null;
   };
   /* a throw ends this build and says so; the next search starts another */

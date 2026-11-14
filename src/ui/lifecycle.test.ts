@@ -224,7 +224,7 @@ describe("create", () => {
     w.select(pos(w.doc(), "hello", true));
     w.answer("B");
     await w.life.create();
-    expect(w.log).toEqual(["set commonplace/A/B", "say couldn't create the entry — see the corner"]);
+    expect(w.log).toEqual(["set commonplace/A/B", "say couldn’t create the entry — see the corner"]);
     expect(serializeMarkdown(w.doc())).toBe("hello");
   });
   it("leaves the new entry standing and says so when the editor went away during the write", async () => {
@@ -304,7 +304,7 @@ describe("extract", () => {
     w.select(pos(w.doc(), "Part"), pos(w.doc(), "body text", true));
     w.answer("P");
     await w.life.extract();
-    expect(w.log).toEqual(["set commonplace/A/P", "say couldn't create the entry — see the corner"]);
+    expect(w.log).toEqual(["set commonplace/A/P", "say couldn’t create the entry — see the corner"]);
     expect(serializeMarkdown(w.doc())).toBe(HOST);
   });
   it("places no link when the text moved during the write; the new entry stands", async () => {
@@ -427,7 +427,7 @@ describe("the pictures left behind", () => {
     const back = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: PICS, failSet: "commonplace/Letters/A", failDel: "commonplace/Letters" });
     back.answer("commonplace/Letters", true);
     await back.life.rename();
-    expect(back.log[back.log.length - 1]).toBe("pin couldn't move — copies left: commonplace/Letters");
+    expect(back.log[back.log.length - 1]).toBe("pin couldn’t move — copies left: commonplace/Letters");
     expect(back.pics["commonplace/commonplace--Letters-img-1.webp"]).toBe("e");
   });
   it("each copy is checked, renamed or not, one at a time just before it is made; a clash takes back those made, keeps what was typed, and names it", async () => {
@@ -442,7 +442,7 @@ describe("the pictures left behind", () => {
     ]);
     expect(w.pics["bookshelf/Miller, Sean/shared.webp"]).toBeUndefined();
     expect(w.md("commonplace/Essays")).toBe("typed\n");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn't move — a picture named bookshelf--Miller, Sean--Letters--A-img-1.webp is there already in bookshelf/Miller, Sean/Letters"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture named bookshelf--Miller, Sean--Letters--A-img-1.webp is there already in bookshelf/Miller, Sean/Letters"]);
   });
   it("a picture read that fails reopens the commonplace, says so, and keeps what was typed", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: PICS, failClash: true });
@@ -450,7 +450,7 @@ describe("the pictures left behind", () => {
     w.answer("bookshelf/Miller, Sean/Letters", true);
     await w.life.rename();
     expect(w.md("commonplace/Essays")).toBe("typed\n");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn't move — a picture could not be copied, nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture could not be copied, nothing was moved"]);
   });
   it("one picture two commonplaces name under different new names is copied to each", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e", "commonplace/Essays/A": "![](commonplace--Essays--A-img-1.webp)\n", "commonplace/Essays/B": "![](commonplace--Essays--A-img-1.webp)\n" }, pics: { "commonplace/Essays/commonplace--Essays--A-img-1.webp": "a" } });
@@ -498,7 +498,7 @@ describe("rename moves a page with its sub-entries", () => {
     w.answer("commonplace/Other", true);
     await w.life.rename();
     expect(w.log.filter((x) => /^(set|del|pic) /.test(x))).toEqual([]);
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn't move — a picture named photo.jpg is there already in commonplace/Other"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
     expect(w.pics["commonplace/Other/photo.jpg"]).toBe("theirs");
   });
   it("a picture two commonplaces share is copied once, and one that stays where it is not at all", async () => {
@@ -591,7 +591,7 @@ describe("rename moves a page with its sub-entries", () => {
     w.answer(TO, true);
     await w.life.rename();
     expect(w.log.filter((x) => x.startsWith("set ") || x.startsWith("del "))).toEqual([]);
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn't move — a picture could not be copied, nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture could not be copied, nothing was moved"]);
     const lost = await world({ at: ["commonplace", "Essays"], entries: ESSAYS });
     lost.answer(TO, true);
     await lost.life.rename();
@@ -604,7 +604,7 @@ describe("rename moves a page with its sub-entries", () => {
     for (const [k, v] of Object.entries(ESSAYS)) expect(w.md(k)).toBe(v);
     expect(w.md(TO + "/2024-07-26-birds")).toBeNull();
     expect(w.log).not.toContain("del commonplace/Essays");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn't move — nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — nothing was moved"]);
   });
 });
 
@@ -622,7 +622,7 @@ describe("a day's tagged entry renamed", () => {
     await w.life.rename();
     expect(w.md("2026-09-05/draft")).toBe("text");
     expect(w.log).not.toContain("del 2026-09-05/draft");
-    expect(w.log.slice(-2)).toEqual(["open 2026-09-05/draft", "pin couldn't rename — nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open 2026-09-05/draft", "pin couldn’t rename — nothing was moved"]);
   });
 });
 
@@ -817,7 +817,7 @@ describe("rename re-files an author with books", () => {
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     expect(w.log.filter((x) => /^(set|del) /.test(x))).toEqual([]);
-    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn't re-file — a picture could not be copied, nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn’t re-file — a picture could not be copied, nothing was moved"]);
   });
   it("a failed move removes the copies made and leaves the old author whole, opened again", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
@@ -826,7 +826,7 @@ describe("rename re-files an author with books", () => {
     for (const k of Object.keys(CAVAFY)) expect(w.md(k)).toBe(CAVAFY[k as keyof typeof CAVAFY]);
     for (const k of ["", "/Walls", "/Candles"]) expect(w.md("bookshelf/Cavafy, C. P" + k)).toBeNull();
     expect(w.log).not.toContain("del bookshelf/C. P. Cavafy");
-    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn't re-file — nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn’t re-file — nothing was moved"]);
   });
   it("a link spelled with an encoded slash, lowercase hex or angle brackets moves too", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-16": "[a](#bookshelf/C.%20P.%20Cavafy%2FWalls)\n", "2026-09-17": "[b](<#bookshelf/C. P. Cavafy/Candles>)\n", "2026-09-18": "[c](#bookshelf/C.%20P.%20Cav%61fy)\n" } });
@@ -849,7 +849,7 @@ describe("rename re-files an author with books", () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles", failDel: "bookshelf/Cavafy, C. P/Walls" });
     w.answer("Cavafy, C. P.");
     await w.life.rename();
-    expect(w.log[w.log.length - 1]).toBe("pin couldn't re-file — copies left: bookshelf/Cavafy, C. P/Walls");
+    expect(w.log[w.log.length - 1]).toBe("pin couldn’t re-file — copies left: bookshelf/Cavafy, C. P/Walls");
   });
   it("an old entry whose removal is refused is named in a pin, the rest moved", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failDel: "bookshelf/C. P. Cavafy/Walls" });

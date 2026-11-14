@@ -272,11 +272,11 @@ export interface Clipboard { plain: string; html: string; types: readonly string
 export function clipboardOf(data: DataTransfer | null): Clipboard {
   return { plain: data?.getData("text/plain") ?? "", html: data?.getData("text/html") ?? "", types: data ? Array.from(data.types) : [], file: pastedImageFile(data) };
 }
-export type Pasted = { tr: Transaction; refused: string | null } | { file: File } | "nothing" | "editor's own";
+export type Pasted = { tr: Transaction; refused: string | null } | { file: File } | "nothing" | "editor’s own";
 /* plain text as one slice: its links made bare, a single node set in whole,
    the transaction tagged a paste */
 function plainPaste(state: EditorState, text: string, href: string): Pasted {
-  if (!text) return "editor's own";
+  if (!text) return "editor’s own";
   const slice = bareLinks(pasteSlice(text, state.selection.$from), href);
   const single = slice.openStart === 0 && slice.openEnd === 0 && slice.content.childCount === 1 ? slice.content.firstChild : null;
   const tr = single ? state.tr.replaceSelectionWith(single, false) : state.tr.replaceSelection(slice);
@@ -304,7 +304,7 @@ const ROUTES: Route[] = [
   (s, clip) => { const tr = linked(s, clip); return tr ? { tr: tr.scrollIntoView(), refused: null } : null; },
   (s, clip) => (onlyLineBreaks(clip.plain, s.selection.$from, clip.html) ? "nothing" : null),
   (s, clip, href) => (terminalCopy(clip.html) && outsideCode(s) ? (clip.plain ? asText(s, unwrapped(clip.plain), href) : "nothing") : null),
-  (_s, clip) => (clip.types.includes("text/html") ? "editor's own" : null),
+  (_s, clip) => (clip.types.includes("text/html") ? "editor’s own" : null),
   (s, clip, href) => asText(s, clip.plain, href),
 ];
 export function pasted(state: EditorState, clip: Clipboard, href: string): Pasted {
@@ -312,14 +312,14 @@ export function pasted(state: EditorState, clip: Clipboard, href: string): Paste
     const r = route(state, clip, href);
     if (r) return r;
   }
-  return "editor's own";
+  return "editor’s own";
 }
 type PasteProps = Pick<EditorProps, "handlePaste" | "clipboardTextParser" | "clipboardParser" | "transformPasted">;
 export function pasteProps(on: { file(f: File): void; refused(text: string): void; href(): string }): PasteProps {
   return {
     handlePaste: (view, event) => {
       const r = pasted(view.state, clipboardOf(event.clipboardData), on.href());
-      if (r === "editor's own") return false;
+      if (r === "editor’s own") return false;
       if (r === "nothing") return true;
       if ("file" in r) on.file(r.file);
       else { view.dispatch(r.tr); if (r.refused) on.refused(r.refused); }

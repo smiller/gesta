@@ -10,7 +10,7 @@ import { entryName, nameFromUrl } from "../store/names.ts";
 import { entryAt } from "../store/nav.ts";
 import { nsOf, NS_KEYS, asAddress, beforeQuery } from "../store/keys.ts";
 
-export const REFUSE_URL = "that link's title can't be a name — type one instead";
+export const REFUSE_URL = "that link’s title can’t be a name — type one instead";
 export const REFUSE_EMPTY = "that name leaves nothing a filename can keep";
 export type Typed = { name: string } | { refuse: string } | null;
 export function typedName(raw: string | null | undefined): Typed {

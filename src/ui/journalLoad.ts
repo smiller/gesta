@@ -25,7 +25,7 @@ export interface Pins {
 export function loadPins(ms: number, pins: Pins): { start(): void; landed(layer: Load & Pick<EntryLayer, "storeReadError">): void } {
   let pinned = 0, timer: ReturnType<typeof setTimeout> | undefined, landed = false;
   return {
-    start: () => { if (!landed) timer = setTimeout(() => { pinned = pins.stick("couldn't load entries — reload"); }, ms); },
+    start: () => { if (!landed) timer = setTimeout(() => { pinned = pins.stick("couldn’t load entries — reload"); }, ms); },
     landed: (layer) => {
       landed = true;
       clearTimeout(timer);

@@ -84,9 +84,9 @@ test("code over lines broken by Enter keeps each line, and back again", () => {
 test("code refuses a paragraph holding a picture or a page marker anywhere in it, and says so; the picture stays", () => {
   const s = sel("cap ![](x.png) tion", "cap", "tion");
   expect(codeBlock(s, () => {})).toBe(false);
-  expect(codeBlockRefusal(s)).toBe("can't make a code block from that");
-  expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toBe("can't make a code block from that");
-  expect(codeBlockRefusal(sel("cap ![](x.png) tion", "cap"))).toBe("can't make a code block from that");
+  expect(codeBlockRefusal(s)).toBe("can’t make a code block from that");
+  expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toBe("can’t make a code block from that");
+  expect(codeBlockRefusal(sel("cap ![](x.png) tion", "cap"))).toBe("can’t make a code block from that");
   expect(codeBlockRefusal(sel("plain words", "plain"))).toBeNull();
   expect(codeBlockRefusal(sel("::: note\ncap ![](x.png) tion\n\nsecond\n:::\n\nafter", "second", "after"))).toBeNull();
 });

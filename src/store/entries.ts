@@ -167,7 +167,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
     writeErrors.set(ekey, err);
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
-    else if (isDel) notices.stuckIdle("couldn't delete — reload", err);
+    else if (isDel) notices.stuckIdle("couldn’t delete — reload", err);
     else { unlanded.add(ekey); notices.stuck("not saved", err, ekey); }
     return false;
   }

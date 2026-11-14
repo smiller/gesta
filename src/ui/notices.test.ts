@@ -196,11 +196,11 @@ describe("progress", () => {
 describe("the deferred one-shot", () => {
   it("waits under a busy pin and resurfaces when the op ends", () => {
     const p = n.progress("importing…");
-    expect(n.stickErrIdle("couldn't delete — reload", new Error("x"))).toBe(0);
+    expect(n.stickErrIdle("couldn’t delete — reload", new Error("x"))).toBe(0);
     expect(n.state.text).toBe("importing…");
     expect(console.error).toHaveBeenCalledTimes(1);
     p.ok("imported 3 entries");
-    expect(n.state.text).toBe("couldn't delete — reload (click to copy)");
+    expect(n.state.text).toBe("couldn’t delete — reload (click to copy)");
   });
   it("one slot: a newer deferred failure supersedes an older unseen one", () => {
     const p = n.progress("importing…");
@@ -271,18 +271,18 @@ describe("the keyed save-failure family, as the entry layer speaks it", () => {
   });
   it("with both latches armed only the save failure shows; the one-shot waits for its dismiss", () => {
     const p = n.progress("importing…");
-    n.stickErrIdle("couldn't delete — reload", null);
+    n.stickErrIdle("couldn’t delete — reload", null);
     n.entry.stuck("not saved", new Error("x"), "a");
     p.ok("imported");
     expect(n.state.text).toBe("not saved (click to copy)");
     n.click();
-    expect(n.state.text).toBe("couldn't delete — reload (click to copy)");
+    expect(n.state.text).toBe("couldn’t delete — reload (click to copy)");
   });
   it("a delete that failed for another reason is the unkeyed, deferred kind", () => {
     const p = n.progress("importing…");
-    n.entry.stuckIdle("couldn't delete — reload", new Error("x"));
+    n.entry.stuckIdle("couldn’t delete — reload", new Error("x"));
     p.ok("imported");
-    expect(n.state.text).toBe("couldn't delete — reload (click to copy)");
+    expect(n.state.text).toBe("couldn’t delete — reload (click to copy)");
     n.entry.landed("anything");
     expect(n.pinned).toBe(true);
   });

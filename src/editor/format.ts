@@ -37,7 +37,7 @@ export function codeBlockRefusal(state: EditorState): string | null {
     n.forEach((c) => { if (isAtom(c)) atom = true; });
     return false;
   });
-  return atom ? "can't make a code block from that" : null;
+  return atom ? "can’t make a code block from that" : null;
 }
 /* SEVERAL PARAGRAPHS BECOME ONE CODE BLOCK, a line each, and a selection
    ending at the very start of the next paragraph leaves that paragraph be

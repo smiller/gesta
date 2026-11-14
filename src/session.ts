@@ -151,7 +151,7 @@ export function startSession(opts: SessionOptions): Session {
     const aimedAt = ekeyOf(), aimedView = surface.md;
     decoding = true;
     pastedPictureBytes(file).then((bytes) => { decoding = false; return landPicture(bytes, aimedAt, aimedView); })
-      .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn't be read — try copying it as a PNG"); });
+      .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn’t be read — try copying it as a PNG"); });
   }
   const folds = stored(NS + "folds", parseFoldStore);
   const readFolds = (ekey: string): FoldPage => foldPage(folds.read(), ekey);
@@ -456,12 +456,12 @@ export function startSession(opts: SessionOptions): Session {
     if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
     try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }
-    copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn't copy the reference");
+    copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn’t copy the reference");
   }
   function copyEntryLink(): void {
     if (refuseCold(layer, say)) return;
     const p = entryLinkParts(current.date, current.tag, journal);
-    copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn't copy the link");
+    copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn’t copy the link");
   }
   window.addEventListener("hashchange", () => { save.leave(openHash); });
   window.addEventListener("beforeunload", () => { save.now(); });

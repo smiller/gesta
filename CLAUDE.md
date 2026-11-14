@@ -330,7 +330,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   - The checkers: `comments.ts` with `commentRules.ts`, `testTitles.ts`
     with `testTitlesRun.ts`, `codeHealth.ts` with `codeHealthRun.ts`,
     `vocabulary.ts`, `claudeLayout.test.ts` (every src/ module named
-    here), `unusedExports.ts` (an export nothing uses, or only
+    here), `apostrophes.ts` (what the app shows writes ’, not '),
+    `unusedExports.ts` (an export nothing uses, or only
     tests, fails, its allowed list giving each exception's reason),
     `hooks-test.sh`, `accepted.sh`.
 - `one-offs/` — scripts run once or a few times over the backup to set

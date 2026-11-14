@@ -71,7 +71,7 @@ const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : is
 type WalkDir = "prev" | "next";
 function keepPicked(file: File): void {
   const p = notices.progress("keeping the backup…");
-  keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn't keep the backup", err), errText(err)); });
+  keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn’t keep the backup", err), errText(err)); });
 }
 const acts = {
   today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
@@ -452,7 +452,7 @@ const openBundle = (): Promise<void> => keptBundle!.get().then((row) => {
     bundlePictures = bundleImages(row.file, b.pictures);
     const keys = Object.keys(b.entries);
     return Promise.all(keys.map((k) => readerStore!.foreignSet(k, b.entries[k]))).then(() => { p.ok(keys.length + " entries"); stage("bundle"); });
-  }).catch((err: unknown) => { console.error("the backup could not be read", err); p.fail(failMsg("couldn't read the backup", err), errText(err)); });
+  }).catch((err: unknown) => { console.error("the backup could not be read", err); p.fail(failMsg("couldn’t read the backup", err), errText(err)); });
 });
 const wrote = READER ? openBundle() : q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
   : Promise.resolve();

@@ -36,18 +36,18 @@ function specOf(text: string): Spec {
   return { text, kind: raw[1], rest: raw[2], numbers: raw[2].replace(/^numbered\s+|\s+numbered$/g, "") };
 }
 const numberedWord = (s: Spec): string | null =>
-  /\bnumbered\b/.test(s.text) && /^(dual-language|stanza)\b/.test(s.text) ? s.text.split(/\s/)[0] + " takes no numbered: the word is verse's and prose's" : null;
+  /\bnumbered\b/.test(s.text) && /^(dual-language|stanza)\b/.test(s.text) ? s.text.split(/\s/)[0] + " takes no numbered: the word is verse’s and prose’s" : null;
 const numberedFirst = (s: Spec): string | null =>
   s.kind && s.kind !== "dual-language" && /^numbered\s+[1-9]\d*$/.test(s.rest) ? "numbered goes after the number, like ::: " + s.kind + " " + s.numbers + " numbered" : null;
 function twoNumbers(s: Spec): string | null {
   const two = s.kind && s.numbers.match(/^(\d+)\s+(\d+)$/);
   if (!two) return null;
-  if (s.kind !== "verse") return s.kind + " takes one number; a second, for the right column, is verse's alone";
+  if (s.kind !== "verse") return s.kind + " takes one number; a second, for the right column, is verse’s alone";
   return +two[1] > 0 ? two[2] + " is not a starting line for the right column" : two[1] + " is not a starting line";
 }
 function startNumber(s: Spec): string | null {
   if (!s.kind) return null;
-  if (s.kind === "verse" && /^\d+\s+\d+\s+\d/.test(s.numbers)) return "verse takes two numbers at most: its first line, and its right column's";
+  if (s.kind === "verse" && /^\d+\s+\d+\s+\d/.test(s.numbers)) return "verse takes two numbers at most: its first line, and its right column’s";
   return s.numbers + " is not a starting " + (s.kind === "prose" ? "sentence" : "line");
 }
 const WORDS: [RegExp, (m: RegExpMatchArray) => string][] = [

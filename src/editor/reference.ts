@@ -149,8 +149,8 @@ export function entryLinkUrl(date: string, tag: string | null, hl?: Highlight | 
 export type { Refusal };
 export const REFUSAL_TEXT: Record<Refusal, string> = {
   select: "Select a passage to reference first",
-  code: "A code block can't be referenced",
-  "margin-note": "A margin-note can't be referenced — select the text beside it",
+  code: "A code block can’t be referenced",
+  "margin-note": "A margin-note can’t be referenced — select the text beside it",
   "two-blocks": "That spans two verse blocks — reference them one at a time",
   "no-translation": "No translation lines selected — Ref (all) quotes the Latin too",
 };

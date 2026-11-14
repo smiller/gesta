@@ -34,6 +34,8 @@ const ALLOWED: Record<string, string> = {
   "src/store/io.ts setYieldWatch": "the tests' watch on the backup yielding",
   "tools/unusedExports.ts unusedExports": "a checker's rule, run by its own test",
   "tools/vocabulary.ts retiredWord": "a checker's rule, run by its own test",
+  "tools/apostrophes.ts straightInStrings": "a checker's rule, run by its own test",
+  "tools/apostrophes.ts straightInMarkup": "a checker's rule, run by its own test",
 };
 test("nothing in src/, tools/ or one-offs/ is exported that nothing uses", () => {
   const paths = [...walk("src"), ...walk("tools"), ...walk("one-offs")].filter((f) => /\.(ts|mjs|svelte)$/.test(f));

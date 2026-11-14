@@ -134,7 +134,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const placeMoved = (p: Placing): boolean =>
     (p.view ? p.view !== deps.view() : p.source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
   function linkPlaced(p: Placing, landed: boolean): Promise<void> | void {
-    if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
+    if (!landed) { ui.say("couldn’t create the entry — see the corner", 3000); return; }
     if (placeMoved(p)) { ui.say("the entry was made — the link was not placed", 3000); return; }
     const label = mdLabel(p.spec.tag, "entry");
     if (p.view) insertLinkAfter(p.view, p.spec.href, label);
@@ -169,7 +169,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const md = cutMd(view.state.doc, from, to), cutText = view.state.doc.textBetween(from, to, " ", " ");
     const label = nsOf(c.date) ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
     return layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
-      if (!landed) { ui.say("couldn't create the entry — see the corner", 3000); return; }
+      if (!landed) { ui.say("couldn’t create the entry — see the corner", 3000); return; }
       /* the positions were taken before the write: a document that moved
          under them keeps its text, the new entry standing
          (pin: lifecycle.test › places no link when the text moved) */
@@ -243,7 +243,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const followedTag = (t: TagMove, text: string): string =>
     retargetLinks(text, { href: entryHash(t.date, t.old), label: t.old }, { href: entryHash(t.date, t.full), label: t.full }) ?? text;
   function tagRenameFailed(t: TagMove): Promise<void> {
-    return t.hand.keep().then(() => { session.open(t.date, t.old); ui.pin("couldn't rename — nothing was moved"); });
+    return t.hand.keep().then(() => { session.open(t.date, t.old); ui.pin("couldn’t rename — nothing was moved"); });
   }
   function tagRenamed(t: TagMove): Promise<void> {
     const oldKey = entryKey(t.date, t.old), newKey = entryKey(t.date, t.full);
@@ -328,7 +328,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      that one. An author re-filed keeps its name as its entry's heading, and one whose books came without an entry is given one (pin: lifecycle.test ›
      an author with no page of its own) */
   type Mode = "move" | "rename" | "refile";
-  const COULDNT: Record<Mode, string> = { move: "couldn't move", rename: "couldn't rename", refile: "couldn't re-file" };
+  const COULDNT: Record<Mode, string> = { move: "couldn’t move", rename: "couldn’t rename", refile: "couldn’t re-file" };
   interface Move { date: string; old: string; to: string; toDate: string; toTag: string; from: string; mode: Mode }
   interface Moved { from: string; to: string; named: Record<string, string>; md: string }
   interface Relocation extends Move {

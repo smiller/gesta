@@ -93,10 +93,10 @@ test("Tab nests the item under the one above; Shift-Tab lifts it back out", () =
 });
 test("Tab on the first item, or one already nested under its neighbour, refuses and says why", () => {
   expect(refuses(tabInList, at("- one\n- two", "one"))).toBe(true);
-  expect(listRefusal(at("- one\n- two", "one"), false)).toBe("can't indent the first item in a list");
+  expect(listRefusal(at("- one\n- two", "one"), false)).toBe("can’t indent the first item in a list");
   const nested = at("- one\n  - two\n- three", "two");
   expect(refuses(tabInList, nested)).toBe(true);
-  expect(listRefusal(nested, false)).toBe("can't indent an item more than one deeper than its parent");
+  expect(listRefusal(nested, false)).toBe("can’t indent an item more than one deeper than its parent");
 });
 test("Shift-Tab at the outermost level does nothing and says so", () => {
   const s = at("- one\n- two", "two");

@@ -66,7 +66,7 @@ export const shiftTabInList: Command = (state, dispatch, view) =>
   inListItem(state) && nested(state) && liftListItem(item)(state, dispatch, view);
 export function listRefusal(state: EditorState, shift: boolean): string {
   if (shift) return "at the outer level: switch to markdown (⌃⌘M) to remove";
-  return nested(state) ? "can't indent an item more than one deeper than its parent" : "can't indent the first item in a list";
+  return nested(state) ? "can’t indent an item more than one deeper than its parent" : "can’t indent the first item in a list";
 }
 /* a Tab in a list is CONSUMED whether or not it moved: the press must not
    leave the editor for the browser's focus walk */

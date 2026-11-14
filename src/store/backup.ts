@@ -57,7 +57,7 @@ function pictureTrouble(files: ExportFile[]): { spare: EntryFile[]; picFaults: F
   const spare: EntryFile[] = [], picFaults: Failure[] = [];
   for (const f of files) {
     if (f.picsLost) spare.push(f.picsLost);
-    if (f.picsFaulted) picFaults.push({ name: filePath(f), error: new Error("this entry's pictures could not be read"), doc: true });
+    if (f.picsFaulted) picFaults.push({ name: filePath(f), error: new Error("this entry’s pictures could not be read"), doc: true });
   }
   return { spare, picFaults };
 }
@@ -153,8 +153,8 @@ export function backupRunner(opts: BackupOptions): Backup {
      nor is the bundle's, retried when the mirror next moves */
   function reportLeftovers(failures: Failure[]): void {
     const bundle = failures.find((x) => x.name === READER_ZIP), swept = failures.filter((x) => x !== bundle);
-    if (swept.length) stick("backup couldn't remove " + swept.length + " old file(s)", swept[0].error, swept.map((x) => x.name).join(", "));
-    if (bundle) stick("backed up, but gesta.zip for the reader couldn't be written", bundle.error, errText(bundle.error) || READER_ZIP);
+    if (swept.length) stick("backup couldn’t remove " + swept.length + " old file(s)", swept[0].error, swept.map((x) => x.name).join(", "));
+    if (bundle) stick("backed up, but gesta.zip for the reader couldn’t be written", bundle.error, errText(bundle.error) || READER_ZIP);
   }
   /* the commits, ONE AFTER THE OTHER: both ride in the same record.
      Another tab's dated run voids ours: the shared scalar moved
@@ -217,7 +217,7 @@ export function backupRunner(opts: BackupOptions): Backup {
       });
     }).catch((err: unknown) => {
       if (err && (err as Error).name === "AbortError") return;
-      stick(failMsg("couldn't set up backups", err), err);
+      stick(failMsg("couldn’t set up backups", err), err);
     });
   }
   /* the paused affordance's click: requestPermission re-grants the CACHED

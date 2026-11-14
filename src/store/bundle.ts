@@ -23,7 +23,7 @@ function endRecordAt(tail: Uint8Array): number {
   for (let i = tail.length - 22; i >= 0; i--) if (dv.getUint32(i, true) === EOCD) return i;
   throw new Error("not a zip file");
 }
-const directoryDamaged = (): Error => new Error("the zip's directory is damaged");
+const directoryDamaged = (): Error => new Error("the zip’s directory is damaged");
 function centralMembers(cd: Uint8Array, n: number, cdAt: number): Member[] {
   const cv = viewOf(cd), members: Member[] = [];
   let at = 0;
@@ -57,7 +57,7 @@ export function zipDirectory(file: Blob): Promise<{ members: Member[]; comment: 
    field there being free to differ from the directory's */
 export function memberData(chunk: Uint8Array, base: number, m: Member): Uint8Array {
   const o = m.at - base, dv = viewOf(chunk);
-  const damaged = (): Error => new Error("the zip's member " + m.path + " is damaged");
+  const damaged = (): Error => new Error("the zip’s member " + m.path + " is damaged");
   if (o < 0 || o + 30 > chunk.length) throw damaged();
   if (dv.getUint32(o, true) !== LOCAL) throw damaged();
   const from = o + 30 + dv.getUint16(o + 26, true) + dv.getUint16(o + 28, true);

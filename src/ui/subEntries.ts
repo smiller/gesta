@@ -50,7 +50,7 @@ function keyedButtons(date: string, tag: string | null, subNoun: string): SubBut
 const dayButtons = (tag: string | null): SubButtons => ({
   create: "+ tagged entry", createTitle: "Create a tagged sub-entry for this day", tagTitle: "Move selection to a new tagged entry",
   canCreate: !tag, canEdit: !!tag,
-  renameTitle: "Rename this entry's tag", deleteTitle: "Delete this tagged entry",
+  renameTitle: "Rename this entry’s tag", deleteTitle: "Delete this tagged entry",
 });
 export function subButtons(date: string, tag: string | null): SubButtons {
   const ns = nsOf(date);

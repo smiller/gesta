@@ -18,11 +18,11 @@ test("a fence-shaped line that opens nothing is named with its reason; the words
   expect(refused("::: stanza 0\nline\n:::")[0].reason).toBe("0 is not a stanza number");
 });
 test("a second number is told it is verse's alone, or what is wrong with it", () => {
-  expect(refused("::: dual-language 568 244\nline\n:::")[0].reason).toBe("dual-language takes one number; a second, for the right column, is verse's alone");
-  expect(refused("::: prose 3 5\nline\n:::")[0].reason).toBe("prose takes one number; a second, for the right column, is verse's alone");
+  expect(refused("::: dual-language 568 244\nline\n:::")[0].reason).toBe("dual-language takes one number; a second, for the right column, is verse’s alone");
+  expect(refused("::: prose 3 5\nline\n:::")[0].reason).toBe("prose takes one number; a second, for the right column, is verse’s alone");
   expect(refused("::: verse 179 0\nline\n:::")[0].reason).toBe("0 is not a starting line for the right column");
   expect(refused("::: verse 0 244\nline\n:::")[0].reason).toBe("0 is not a starting line");
-  expect(refused("::: verse 1 2 3\nline\n:::")[0].reason).toBe("verse takes two numbers at most: its first line, and its right column's");
+  expect(refused("::: verse 1 2 3\nline\n:::")[0].reason).toBe("verse takes two numbers at most: its first line, and its right column’s");
 });
 test("a real fence, a bare closer, a code block's line and a row are none of them refusals", () => {
   expect(refused("::: verse\nline\n:::")).toEqual([]);
@@ -40,15 +40,15 @@ test("the pin's text: one line with its tail, several one per line with the coun
 
 test("a misplaced or unsupported `numbered` is named as such", () => {
   const why = (md: string) => fenceRefusals(parseMarkdown(md)).map((r) => r.reason);
-  expect(why("::: dual-language numbered\na\n:::")).toEqual(["dual-language takes no numbered: the word is verse's and prose's"]);
+  expect(why("::: dual-language numbered\na\n:::")).toEqual(["dual-language takes no numbered: the word is verse’s and prose’s"]);
   expect(why("::: verse numbered 5\na\n:::")).toEqual(["numbered goes after the number, like ::: verse 5 numbered"]);
-  expect(why("::: stanza 2 numbered\na\n:::")).toEqual(["stanza takes no numbered: the word is verse's and prose's"]);
+  expect(why("::: stanza 2 numbered\na\n:::")).toEqual(["stanza takes no numbered: the word is verse’s and prose’s"]);
 });
 
 test("`numbered` after a bad number leaves the number's own reason, and the word is never read as part of it", () => {
   const why = (md: string) => fenceRefusals(parseMarkdown(md)).map((r) => r.reason);
   expect(why("::: verse 179 0 numbered\na | b\n:::")).toEqual(["0 is not a starting line for the right column"]);
-  expect(why("::: prose 5 7 numbered\na | b\n:::")).toEqual(["prose takes one number; a second, for the right column, is verse's alone"]);
+  expect(why("::: prose 5 7 numbered\na | b\n:::")).toEqual(["prose takes one number; a second, for the right column, is verse’s alone"]);
   expect(why("::: verse 0 numbered\na\n:::")).toEqual(["0 is not a starting line"]);
   expect(why("::: verse numbered 0\na\n:::")).toEqual(["0 is not a starting line"]);
 });

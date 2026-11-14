@@ -115,7 +115,7 @@ test("a plain rejected delete reports unkeyed and idle-deferred, never into the 
   await layer.setEntry("k", "a");
   await layer.removeEntry("k");
   expect(calls.stuckIdle.length).toBe(1);
-  expect(calls.stuckIdle[0][0]).toMatch(/couldn't delete/);
+  expect(calls.stuckIdle[0][0]).toMatch(/couldn’t delete/);
   expect(calls.stuck.length).toBe(0);
 });
 

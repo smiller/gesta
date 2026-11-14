@@ -35,7 +35,7 @@ describe("the subtree", () => {
 describe("the buttons and the dialogs", () => {
   it("wording per namespace; a commonplace both hosts and is a sub-entry; a day's tag is only a sub-entry", () => {
     expect(subButtons("2026-09-07", null)).toMatchObject({ create: "+ tagged entry", canCreate: true, canEdit: false });
-    expect(subButtons("2026-09-07", "Ideas")).toMatchObject({ canCreate: false, canEdit: true, renameTitle: "Rename this entry's tag" });
+    expect(subButtons("2026-09-07", "Ideas")).toMatchObject({ canCreate: false, canEdit: true, renameTitle: "Rename this entry’s tag" });
     expect(subButtons("commonplace", "Books")).toMatchObject({ create: "+ sub-entry", canCreate: true, canEdit: true, renameTitle: "Rename this commonplace", deleteTitle: "Delete this commonplace" });
     // the shelves hold no books; a page called Shelves is a page
     expect(subButtons("bookshelf", "Shelves")).toMatchObject({ canCreate: false, canEdit: true });

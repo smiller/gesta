@@ -37,7 +37,7 @@ test("a load still out after its patience pins the words to reload, and its land
   vi.advanceTimersByTime(7999);
   expect(r.stuck).toEqual([]);
   vi.advanceTimersByTime(1);
-  expect(r.stuck).toEqual(["couldn't load entries — reload"]);
+  expect(r.stuck).toEqual(["couldn’t load entries — reload"]);
   r.pins.landed(IN);
   expect(r.released).toEqual([1]);
 });
