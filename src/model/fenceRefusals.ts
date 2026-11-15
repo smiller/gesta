@@ -11,16 +11,28 @@ import { schema } from "./schema.ts";
 import { opensFence } from "./grammar.ts";
 
 export interface FenceRefusal { line: string; reason: string }
+/* a line opening in inline code quotes a fence: read as its text, the
+   quotation was told as a refused fence (pin: fenceRefusals.test › a line
+   that opens in inline code) */
+function plainLines(p: Node): string[] {
+  let line = "", quoted = false;
+  const lines: string[] = [];
+  const end = (): void => { if (!quoted) lines.push(line); line = ""; quoted = false; };
+  p.forEach((c) => {
+    if (c.type === schema.nodes.hard_break) { end(); return; }
+    if (!c.isText) return;
+    if (!line.trim() && schema.marks.code.isInSet(c.marks)) quoted = true;
+    line += c.text;
+  });
+  end();
+  return lines;
+}
 export function fenceRefusals(doc: Node): FenceRefusal[] {
   const out: FenceRefusal[] = [];
   doc.descendants((n) => {
     if (n.type === schema.nodes.code_block) return false;
     if (n.type !== schema.nodes.paragraph) return true;
-    let line = "";
-    const lines: string[] = [];
-    n.forEach((c) => { if (c.type === schema.nodes.hard_break) { lines.push(line); line = ""; } else if (c.isText) line += c.text; });
-    lines.push(line);
-    for (const l of lines) {
+    for (const l of plainLines(n)) {
       const reason = fenceLineReason(l);
       if (reason) out.push({ line: l.trim(), reason });
     }

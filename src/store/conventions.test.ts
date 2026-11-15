@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { conventionsOf, type Conventions } from "./conventions.ts";
+import { conventionsOf, directiveTrouble, type Conventions } from "./conventions.ts";
 import { journalOf } from "./headings.ts";
 import { NS_BOOK, NS_COMMONPLACE } from "./keys.ts";
 import help from "../ui/help.html?raw";
@@ -60,4 +60,20 @@ test("every directive the help sets in a reference block turns a convention on, 
   expect(named.length).toBeGreaterThan(0);
   const read = (words: string): boolean => [under(block(words), "# W"), under("# A", block(words))].some((c) => Object.values(c).some(Boolean));
   expect(named.filter((words) => !read(words))).toEqual([]);
+});
+
+test("a line no directive reads is named, and a directive on a page it is not read from says where it is read", () => {
+  expect(directiveTrouble("bookshelf/Chaucer, Geoffrey", "roman book and canto\nparts in roman\nno author\n")).toEqual([
+    "“roman book and canto” is not a reference directive",
+    "“parts in roman” is read on a work’s page",
+  ]);
+  expect(directiveTrouble("bookshelf/Chaucer, Geoffrey/Canterbury Tales", "parts in roman\nfrom the last title\nOld English verse")).toEqual([
+    "“from the last title” is read on an author’s page",
+  ]);
+  expect(directiveTrouble("bookshelf/Beowulf", "no author\nOld English verse\nfrom the last title")).toEqual([]);
+});
+
+test("directives are read on the bookshelf alone: a reference block elsewhere is not checked", () => {
+  expect(directiveTrouble("commonplace/Books", "anything at all")).toEqual([]);
+  expect(directiveTrouble("2026-09-06", "anything at all")).toEqual([]);
 });

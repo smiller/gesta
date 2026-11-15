@@ -52,3 +52,9 @@ test("`numbered` after a bad number leaves the number's own reason, and the word
   expect(why("::: verse 0 numbered\na\n:::")).toEqual(["0 is not a starting line"]);
   expect(why("::: verse numbered 0\na\n:::")).toEqual(["0 is not a starting line"]);
 });
+
+test("a line that opens in inline code quotes a fence and refuses nothing", () => {
+  expect(refused("`::: note`s within `::: prose` or `::: verse` blocks")).toEqual([]);
+  expect(refused("plain\\\n`::: verse -3` quoted")).toEqual([]);
+  expect(refused("::: versey `x`\nline\n:::")[0].line).toBe("::: versey x");
+});

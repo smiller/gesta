@@ -24,13 +24,16 @@ export function firstHeading(md: string): string {
 /* top-level only: a descendant scan found a directive an entry merely
    QUOTED as an example (pin: reference.test › headings: the first level-one
    heading is the title; a ## is a section; the directive is top-level only) */
+export function directivesIn(doc: Node): string {
+  const out: string[] = [];
+  doc.forEach((block) => { if (block.type === N.reference) out.push(block.textContent); });
+  return out.join("\n");
+}
 export function referenceDirectives(md: string): string {
   if (!/^::: reference/m.test(md)) return "";
   let doc: Node;
   try { doc = parseMarkdown(md); } catch { return ""; }
-  const out: string[] = [];
-  doc.forEach((block) => { if (block.type === N.reference) out.push(block.textContent); });
-  return out.join("\n");
+  return directivesIn(doc);
 }
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);

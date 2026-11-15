@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt, view } from "./kit.ts";
+import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt, view, writeAll } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -188,6 +188,19 @@ section("grid", async () => {
   await page.waitForTimeout(400);
   await R.waitCorner(page, "saved");   /* read after the switch's save: at 400ms alone it was there one run in two */
   await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await R.gridLayout(page)) });
+});
+section("told on open", async () => {
+  /* a refused fence line and a directive no page reads, pinned when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
+  await writeAll({
+    "2026-09-02/gesta-wrangling": "# Gesta wrangling\n\n```\nx\n```\n\n::: verse -3\nfealan thalos\n\\:::",
+    "bookshelf/Chaucer, Geoffrey": "# Geoffrey Chaucer\n\n::: reference\nroman book and canto\nparts in roman\n:::",
+  });
+  await go("2026-09-02/gesta-wrangling");
+  await rest(page);
+  await log("a journal day with a refused fence line, opened", { corner: await R.gridCorner(page) });
+  await go("bookshelf/Chaucer,%20Geoffrey");
+  await rest(page);
+  await log("an author with directives no page reads there, opened", { corner: await R.gridCorner(page) });
 });
 section("paired card", async () => {
   /* a card's and a note's paired verse split by their own widest lines: equal halves wrapped four lines of a card whose translation needed a third of it */

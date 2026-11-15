@@ -2,6 +2,8 @@ import type { Node } from "prosemirror-model";
 import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
+import { directivesIn } from "../store/headings.ts";
+import { directiveTrouble } from "../store/conventions.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
 
 export interface Surface {
@@ -96,6 +98,15 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     cur = make();
   };
   const refusedPin = (err: unknown): number => opts.pin("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+  /* the entry's refused fences and its directives' trouble, pinned when it
+     is drawn: told only on the switch back, they were never seen by a
+     reader who did not edit the source (pin: surface.test › an entry opened
+     pins its refused fences) */
+  function pinTold(doc: Node): void {
+    const refused = fenceRefusals(doc);
+    const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(ekey, directivesIn(doc))];
+    if (told.length) fencePin = opts.pin(told.join("\n"));
+  }
   function show(md: string, key: string, keepView = false): void {
     /* the release is told, as the force was: told only of the force, a
        view shown forced stayed shown after it ended (pin: grid › the next entry after a refused switch) */
@@ -129,6 +140,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
       return;
     }
     mount(() => build.rendered(doc));
+    pinTold(doc);
   }
   /* a MOVED caret retires the other view's hold
      (pin: source view › the caret moved in the source, ⌃⌘M back)
@@ -196,9 +208,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     }
     mdView = false;
     mount(() => build.rendered(doc));
-    const refused = fenceRefusals(doc);
     if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
-    if (refused.length) fencePin = opts.pin(refusalsText(refused));
+    pinTold(doc);
     return true;
   }
   function switchTo(md: boolean): void {

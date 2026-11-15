@@ -191,6 +191,18 @@ describe("a text the model refuses", () => {
     expect(w.released).toEqual([1]);
     expect(w.pins).toHaveLength(1);
   });
+  it("a directive the page does not read is pinned on the switch back, with the fences it refused", () => {
+    const back = (md: string) => {
+      const w = world();
+      w.s.show("# Chaucer", "bookshelf/Chaucer, Geoffrey");
+      w.s.switchTo(true);
+      w.last().text = md;
+      w.s.switchTo(false);
+      return w.pins;
+    };
+    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n“roman book and canto” is not a reference directive"]);
+    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::")).toEqual(["“roman book and canto” is not a reference directive"]);
+  });
   it("a show of another entry is in the rendered view; the same entry shown again keeps the view chosen", () => {
     const w = world();
     w.s.show("fine", "commonplace/A");
@@ -210,6 +222,14 @@ describe("a text the model refuses", () => {
     w.s.switchTo(true);
     w.s.show("fine", "commonplace/B", true);
     expect(w.s.md).toBe(true);
+  });
+  it("an entry opened pins its refused fences and its directives' trouble together, and the next entry opened releases them", () => {
+    const w = world();
+    w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::", "bookshelf/Chaucer, Geoffrey");
+    expect(w.pins).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n“roman book and canto” is not a reference directive"]);
+    w.s.show("fine", "commonplace/B");
+    expect(w.released).toEqual([1]);
+    expect(w.pins).toHaveLength(1);
   });
   it("a show releases the entry left's fence pin", () => {
     const w = world();
