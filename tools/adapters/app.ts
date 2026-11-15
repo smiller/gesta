@@ -256,7 +256,13 @@ export const read = {
   clipboardReference: (page: Page) => page.evaluate(async () => { const corner = document.querySelector(".saved.show")?.textContent; try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#commonplace\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } }),
   codeBlock: (page: Page) => page.evaluate(() => { const pre = document.querySelector("#editor pre"); return { lang: pre.dataset.lang, label: getComputedStyle(pre, "::after").content, tokens: [...pre.querySelectorAll("[class^=tok-]")].map((t) => t.className + ":" + t.textContent) }; }),
   copyHover: (page: Page) => page.evaluate(() => { const b = document.querySelector(".copybtn"); const pre = document.querySelector("#editor pre").getBoundingClientRect(); const r = b.getBoundingClientRect(); return { show: b.classList.contains("show"), title: b.title, insideBlock: r.top >= pre.top && r.right <= pre.right + 1, labelHidden: getComputedStyle(document.querySelector("#editor pre"), "::after").opacity }; }),
-  copyLabel: (page: Page) => page.evaluate(() => document.querySelector(".copybtn").textContent),
+  /* read once the label has settled: read a rest after the click, it once
+     still said "copy"; a label that never settles is read as it stands
+     (pin: card copy › a card hover-copied) */
+  copyLabel: async (page: Page) => {
+    await page.waitForFunction(() => /^(copied|copy failed)$/.test(document.querySelector(".copybtn")?.textContent ?? ""), null, { timeout: 1000, polling: 25 }).catch(() => {});
+    return page.evaluate(() => document.querySelector(".copybtn").textContent);
+  },
   clipboardCard: (page: Page) => page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const bg = /background-color:\s*([^;"]+)/.exec(html); return { bg: bg && bg[1], grid: /grid-template-columns:/.test(html), card: /class="card-light-blue"/.test(html), raw: /background-color/.test(html) ? undefined : html.replace(/<meta[^>]*>/g, "").slice(0, 120) }; } catch (e) { return { clipboard: String(e) }; } }),
   cardLive: (page: Page) => page.evaluate(() => getComputedStyle(document.querySelector("#editor .card-light-blue")).backgroundColor),
   /* the grid's readings: the layout, the band above its corner, a selection across its cards, the corner's text */
