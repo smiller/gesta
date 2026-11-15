@@ -272,9 +272,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   decisions), `zip.ts`, `bundle.ts` (the reader's bundle), `io.ts` (the
   disk edge and the backup writer), `exportEntries.ts`, `backup.ts`,
   `reference.ts` (the reference grammar and label),
-  `conventions.ts` (a page's reference directives, each read at its
-  level, as one record), `headings.ts` (titles and a page's directive
-  text), `search.ts`,
+  `conventions.ts` (a page's reference directives: read from its text,
+  each at its level, as one record, and what is wrong with them),
+  `headings.ts` (titles), `search.ts`,
   `searchIndex.ts`, `indexStore.ts`, `bookmarks.ts`, `bookmarkStore.ts`,
   `shortcuts.ts`, `contents.ts`, `foldState.ts`, `placeState.ts`,
   `links.ts` (links rewritten on a rename or delete), `shelves.ts`,

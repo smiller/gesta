@@ -6,6 +6,7 @@ import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import type { Journal } from "./reference.ts";
+import { referenceDirectives } from "./conventions.ts";
 
 const N = schema.nodes;
 /* the first level-one heading's text, "" when none; a cheap probe keeps
@@ -21,24 +22,10 @@ export function firstHeading(md: string): string {
   });
   return found;
 }
-/* top-level only: a descendant scan found a directive an entry merely
-   QUOTED as an example (pin: reference.test › headings: the first level-one
-   heading is the title; a ## is a section; the directive is top-level only) */
-export function directivesIn(doc: Node): string {
-  const out: string[] = [];
-  doc.forEach((block) => { if (block.type === N.reference) out.push(block.textContent); });
-  return out.join("\n");
-}
-export function referenceDirectives(md: string): string {
-  if (!/^::: reference/m.test(md)) return "";
-  let doc: Node;
-  try { doc = parseMarkdown(md); } catch { return ""; }
-  return directivesIn(doc);
-}
 export function journalOf(cache: Record<string, string>): Journal {
   const memo: Record<string, { md: string; heading: string }> = Object.create(null);
-  const said: Record<string, { md: string; directives: string }> = Object.create(null);
-  const directives = (ekey: string): string => {
+  const said: Record<string, { md: string; directives: string[] }> = Object.create(null);
+  const directives = (ekey: string): string[] => {
     const md = cache[ekey] || "";
     const m = said[ekey];
     if (m && m.md === md) return m.directives;

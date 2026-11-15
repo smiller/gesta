@@ -1,3 +1,6 @@
+import type { Node } from "prosemirror-model";
+import { parseMarkdown } from "../model/parse.ts";
+import { schema } from "../model/schema.ts";
 import { entryKey, titlesRoots } from "./keys.ts";
 
 export interface Conventions {
@@ -10,7 +13,22 @@ export interface Conventions {
   oldEnglishVerse: boolean;
 }
 export interface Directives {
-  directives(ekey: string): string;
+  directives(ekey: string): string[];
+}
+/* a page's directive lines: its top-level reference blocks only, since a
+   descendant scan found a directive an entry merely QUOTED as an example
+   (pin: reference.test › headings: the first level-one heading is the
+   title; a ## is a section; the directive is top-level only) */
+export function directivesIn(doc: Node): string[] {
+  const out: string[] = [];
+  doc.forEach((block) => { if (block.type === schema.nodes.reference) out.push(...block.textContent.split("\n")); });
+  return out;
+}
+export function referenceDirectives(md: string): string[] {
+  if (!/^::: reference/m.test(md)) return [];
+  let doc: Node;
+  try { doc = parseMarkdown(md); } catch { return []; }
+  return directivesIn(doc);
 }
 
 /* where a directive is read from, given the entry's path, and the one
@@ -44,14 +62,14 @@ export function conventionsOf(date: string, tag: string | null, journal: Directi
   const segs = titlesRoots(date) && tag ? tag.split("/") : [];
   const out = {} as Conventions;
   for (const d of DIRECTIVES)
-    out[d.key] = d.level.pages(segs).some((t) => journal.directives(entryKey(date, t)).split("\n").some(d.said));
+    out[d.key] = d.level.pages(segs).some((t) => journal.directives(entryKey(date, t)).some(d.said));
   return out;
 }
-export function directiveTrouble(ekey: string, text: string): string[] {
-  const [date, ...segs] = ekey.split("/");
+export function directiveTrouble(date: string, tag: string | null, lines: string[]): string[] {
+  const segs = tag ? tag.split("/") : [];
   if (!titlesRoots(date) || !segs.length) return [];
   const out: string[] = [];
-  for (const l of text.split("\n").map((x) => x.trim()).filter(Boolean)) {
+  for (const l of lines.map((x) => x.trim()).filter(Boolean)) {
     const d = DIRECTIVES.find((x) => x.said(l));
     if (!d) out.push("“" + l + "” is not a reference directive");
     else if (!d.level.at(segs.length)) out.push("“" + l + "” is read on " + d.level.where);

@@ -162,10 +162,10 @@ test("headings: the first level-one heading is the title; a ## is a section; the
   expect(firstHeading("## Section only")).toBe("");
   expect(firstHeading("text\n\n# Later title")).toBe("Later title");
   expect(firstHeading("")).toBe("");
-  const directives = (md: string): string => journalOf({ "bookshelf/W": md }).directives("bookshelf/W");
-  expect(directives("# Dante\n\n::: reference\nfrom the last title\n:::")).toBe("from the last title");
-  expect(directives("> ::: reference\n> from the last title\n> :::")).toBe("");
-  expect(directives("# Dante")).toBe("");
+  const directives = (md: string): string[] => journalOf({ "bookshelf/W": md }).directives("bookshelf/W");
+  expect(directives("# Dante\n\n::: reference\nfrom the last title\n:::")).toEqual(["from the last title"]);
+  expect(directives("> ::: reference\n> from the last title\n> :::")).toEqual([]);
+  expect(directives("# Dante")).toEqual([]);
 });
 
 test("mdLabel: no stray ] and no newline in a link text, and a fallback for none", () => {

@@ -51,3 +51,13 @@ Review 166,688 tokens, scan 131,426 (transcripts).
   whether a save failed, where two records were cleared in pairs. The
   layer's other records of a key left: each does a different job.
 - Scan candidates 2 and 3 (A1.3.2) wait.
+- Scan candidate 2 (A1.3.2, the fit's half), built (asked): one measuring
+  bracket and one reading of a paired block's columns for both passes;
+  the two edges kept, they answer different questions; data-fit lists
+  prose and edge. Helium the same in both orders.
+- Scan candidate 3 (A1.3.2.1), built (asked): conventions.ts reads a
+  page's directive lines as well as their meaning, headings.ts titles
+  alone; the directives travel as lines; directiveTrouble takes the date
+  and tag as conventionsOf does; the surface's tests name the warning
+  through directiveTrouble rather than restating it; one way to replace
+  the surface's pin, where four were written out.

@@ -2,8 +2,8 @@ import type { Node } from "prosemirror-model";
 import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
-import { directivesIn } from "../store/headings.ts";
-import { directiveTrouble } from "../store/conventions.ts";
+import { directivesIn, directiveTrouble } from "../store/conventions.ts";
+import { splitKey } from "../store/exportEntries.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
 
 export interface Surface {
@@ -92,6 +92,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
   let fencePin = 0;
+  const unpin = (): void => { if (fencePin) opts.releasePin(fencePin); fencePin = 0; };
+  const repin = (next: () => number): void => { unpin(); fencePin = next(); };
   const mount = (make: () => Surface): void => {
     const old = cur;
     cur = null;
@@ -107,8 +109,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   function pinTold(doc: Node, opening: boolean): void {
     if (opening && opts.pinned()) return;
     const refused = fenceRefusals(doc);
-    const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(ekey, directivesIn(doc))];
-    if (told.length) fencePin = opts.pin(told.join("\n"));
+    const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(...splitKey(ekey), directivesIn(doc))];
+    if (told.length) repin(() => opts.pin(told.join("\n")));
   }
   /* whether the show is of another entry than the one on screen, the view
      it opens in settled */
@@ -132,7 +134,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        redraw of the entry on screen keeps its warning, and pins it no more
        (pin: surface.test › a redraw of the entry on screen) */
     carets.rendered = carets.source = null; placedAt = null;
-    if (fresh && fencePin) { opts.releasePin(fencePin); fencePin = 0; }
+    if (fresh) unpin();
     if (mdView) { mount(() => build.source(md)); return; }
     let doc;
     try { doc = parseMarkdown(md); }
@@ -147,8 +149,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
     /* PINNED, released by the next show: a whisper was covered by the
        entry count before it was read (pin: grid › the faulty entry opened) */
-    if (fencePin) opts.releasePin(fencePin);
-    fencePin = refusedPin(err);
+    repin(() => refusedPin(err));
     readerView = mdView; forced = true;
     mdView = true;
     mount(() => build.source(md));
@@ -213,14 +214,13 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
          the line the message quotes, and a whisper faded before a slow
          reader found it; released by the clean parse below
          (pin: grid › a stray line in a grid, switched back) */
-      if (fencePin) opts.releasePin(fencePin);
-      fencePin = refusedPin(err);
+      repin(() => refusedPin(err));
       forced = wasForced;   /* a forced source view stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
       return false;
     }
     mdView = false;
     mount(() => build.rendered(doc));
-    if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
+    unpin();
     pinTold(doc, false);
     return true;
   }
@@ -258,9 +258,6 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     get md() { return mdView; },
     get forced() { return forced; },
     show, switchTo,
-    pinRefusal: (text) => {
-      if (fencePin) opts.releasePin(fencePin);
-      fencePin = opts.pin(text);
-    },
+    pinRefusal: (text) => repin(() => opts.pin(text)),
   };
 }

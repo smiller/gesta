@@ -61,3 +61,6 @@
 {"at":"2026-11-15T15:38","ev":"start","id":"A1.3.1"}
 {"at":"2026-11-15T15:48","ev":"done","id":"A1.3.1","commits":["d5603eb"]}
 {"at":"2026-11-15T15:48","ev":"start","id":"A1.3.2"}
+{"at":"2026-11-15T15:56","ev":"done","id":"A1.3.2","commits":["3db6f91"],"note":"the fit half; the conventions half is A1.3.2.1"}
+{"at":"2026-11-15T15:56","ev":"add","id":"A1.3.2.1","list":"A","title":"conventions.ts reads its own directives","parent":"A1.3.2"}
+{"at":"2026-11-15T15:56","ev":"start","id":"A1.3.2.1"}

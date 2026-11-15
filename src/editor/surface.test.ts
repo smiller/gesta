@@ -5,6 +5,9 @@ import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc, flattenText } from "../model/flatten.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
+import { directiveTrouble } from "../store/conventions.ts";
+
+const told = (): string => directiveTrouble("bookshelf", "Chaucer, Geoffrey", ["roman book and canto"]).join("\n");
 
 interface Fake extends Surface { caretAt: number; seen: boolean; top: number | null; text: string }
 
@@ -201,8 +204,8 @@ describe("a text the model refuses", () => {
       w.s.switchTo(false);
       return w.pins;
     };
-    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n“roman book and canto” is not a reference directive"]);
-    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::")).toEqual(["“roman book and canto” is not a reference directive"]);
+    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
+    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::")).toEqual([told()]);
   });
   it("a show of another entry is in the rendered view; the same entry shown again keeps the view chosen", () => {
     const w = world();
@@ -227,7 +230,7 @@ describe("a text the model refuses", () => {
   it("an entry opened pins its refused fences and its directives' trouble together, and the next entry opened releases them", () => {
     const w = world();
     w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::", "bookshelf/Chaucer, Geoffrey");
-    expect(w.pins).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n“roman book and canto” is not a reference directive"]);
+    expect(w.pins).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
     expect(w.pins).toHaveLength(1);
