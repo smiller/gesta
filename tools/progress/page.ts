@@ -45,18 +45,20 @@ function chips(it: Item, d: Drawn): string {
 }
 const rowClass = (it: Item, depth: number): string => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean).join(" ");
 const open = (s: Status): boolean => s === "unstarted" || s === "in progress" || s === "paused";
-/* reported (a carried item's before the day), started, ended */
-const times = (it: Item): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), open(it.status) ? "—" : hm(it.ended)];
+/* reported (a carried item's before the day), started, ended, and, where
+   it spawned something, closed */
+const closedCell = (it: Item, spawned: boolean): string => (!spawned ? "" : it.closed ? hm(it.closed) : "—");
+const times = (it: Item, spawned: boolean): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), open(it.status) ? "—" : hm(it.ended), closedCell(it, spawned)];
 function label(it: Item): string {
   const from = it.movedFrom ? " (moved in from " + it.movedFrom + ")" : "";
   return esc(it.title) + from + (it.note ? " (" + esc(it.note) + ")" : "");
 }
 function row({ item: it, depth }: Placed, d: Drawn): string {
-  const cells = times(it).map((t) => '<td class="t">' + t + "</td>").join("");
+  const cells = times(it, d.items.some((i) => i.parent === it.id)).map((t) => '<td class="t">' + t + "</td>").join("");
   return '<tr class="' + rowClass(it, depth) + '"' + (depth ? ' style="--d:' + depth + '"' : "") + '><td class="n">' + it.id + '</td><td><div class="item">' + chips(it, d) +
     '<span class="label">' + label(it) + "</span></div></td>" + cells + '<td class="c">' + it.commits.join(" ") + "</td></tr>";
 }
-const HEAD = '<thead><tr><th class="n">#</th><th>Item</th><th class="t">reported</th><th class="t">started</th><th class="t">ended</th><th>commit</th></tr></thead>';
+const HEAD = '<thead><tr><th class="n">#</th><th>Item</th><th class="t">reported</th><th class="t">started</th><th class="t">ended</th><th class="t">closed</th><th>commit</th></tr></thead>';
 function section(list: List, placed: Placed[], d: Drawn): string {
   if (!placed.length) return "";
   const starting = placed.filter((p) => p.item.starting && !p.depth).length;

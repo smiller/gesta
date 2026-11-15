@@ -43,6 +43,14 @@ test("an item done while something it spawned is neither done nor dropped is don
   expect(replay(closed).find((i) => i.id === "A1")!.status).toBe("done");
 });
 
+test("an item closes when it and everything it spawned have ended, at the last of those ends", () => {
+  expect(byId().A1.closed).toBeUndefined();
+  const closed = Object.fromEntries(replay([...day, { at: at("13:10"), ev: "done", id: "A1.2.1" }]).map((i) => [i.id, i]));
+  expect(closed.A1.closed?.at).toBe(at("13:10"));
+  expect(closed["A1.2"].closed?.at).toBe(at("13:10"));
+  expect(closed["A1.1"].closed).toBeUndefined();
+});
+
 test("a snapshot holds only what was reported by its time, each as it stood then", () => {
   const it = byId("09:40");
   expect(Object.keys(it).sort()).toEqual(["A1", "A1.1", "S1", "S3"]);

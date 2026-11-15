@@ -65,3 +65,5 @@
 {"at":"2026-11-15T15:56","ev":"add","id":"A1.3.2.1","list":"A","title":"conventions.ts reads its own directives","parent":"A1.3.2"}
 {"at":"2026-11-15T15:56","ev":"start","id":"A1.3.2.1"}
 {"at":"2026-11-15T16:05","ev":"done","id":"A1.3.2.1","commits":["30ada24"]}
+{"at":"2026-11-15T16:07","ev":"add","id":"S9","list":"S","title":"visualization: a \"closed\" column, when an item and all it spawned had ended (asked)"}
+{"at":"2026-11-15T16:07","ev":"start","id":"S9"}

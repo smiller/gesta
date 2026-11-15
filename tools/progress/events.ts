@@ -15,6 +15,8 @@ export interface Item {
   starting: boolean;
   movedFrom?: string; movedTo?: string;
   reported?: Stamp; started?: Stamp; stopped?: Stamp; ended?: Stamp;
+  /* the item and everything it spawned ended, at the last of those ends */
+  closed?: Stamp;
   commits: string[]; note?: string;
   status: Status;
 }
@@ -51,6 +53,13 @@ function settled(items: Items): void {
   const below = (id: string): Item[] => all.filter((i) => i.parent === id).flatMap((c) => [c, ...below(c.id)]);
   for (const it of all) it.status = begun(it);
   for (const it of all) if (it.status === "done" && below(it.id).some((c) => stillOpen(c.status))) it.status = "done, spawned open";
+  for (const it of all) closing(it, below(it.id));
+}
+const later = (a: Stamp | undefined, b: Stamp | undefined): Stamp | undefined => (!a || (b && b.at > a.at) ? b : a);
+function closing(it: Item, under: Item[]): void {
+  const tree = [it, ...under];
+  if (!under.length || tree.some((x) => stillOpen(x.status))) return;
+  it.closed = tree.map((x) => x.ended).reduce(later, undefined);
 }
 const opens = (e: Event): boolean => e.ev === "carry" || e.ev === "add" || e.ev === "move";
 function applied(items: Items, e: Event): void {
