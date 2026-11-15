@@ -120,7 +120,9 @@ section("sub-entries", async () => {
      the link splitting a word, once the heading ran past the click's point */
   await A.watchSelection(page);
   await page.click(S.editorFirst);
-  await A.selectionMoved(page, 2000);
+  await rest(page);
+  /* a click onto the caret already there moves nothing, and was waited on two seconds */
+  if (!(await page.evaluate(() => window.__selUnmoved()))) await A.selectionMoved(page, 2000);
   await page.keyboard.press("Meta+ArrowDown");
   await rest(page);
   await log("a day's tools", await R.tools(page));

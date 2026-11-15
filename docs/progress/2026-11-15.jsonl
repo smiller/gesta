@@ -84,3 +84,4 @@
 {"at":"2026-11-15T16:33","ev":"start","id":"S8.2"}
 {"at":"2026-11-15T16:44","ev":"done","id":"S8.2","note":"Helium verdict 338 s before, 265 s after"}
 {"at":"2026-11-15T16:44","ev":"start","id":"S8.1"}
+{"at":"2026-11-15T16:52","ev":"add","id":"S10","list":"S","title":"visualization: click a row to expand a fuller description beneath it (asked)"}
