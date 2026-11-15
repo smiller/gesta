@@ -287,7 +287,8 @@ async function storeThatNeverAnswers(): Promise<void> {
   const hung = await page.context().newPage();
   await hung.addInitScript(() => { const s = navigator.storage; const own = s.persist.bind(s); s.persist = () => { window.__persistAsked = true; return own(); }; });
   await hung.goto(A.url("commonplace/Horace", "warm=hang"));
-  await hung.waitForTimeout(8500);
+  await hung.clock.fastForward(8500);
+  await rest(hung);
   await log("a store that never answers", await hung.evaluate((c) => ({ corner: document.querySelector(c)?.textContent || "", persistAsked: !!window.__persistAsked }), S.corner));
   await hung.close();
 }

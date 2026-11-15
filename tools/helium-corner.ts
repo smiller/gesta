@@ -17,6 +17,7 @@ if (PROFILE === A.profile) {
 const logs: string[] = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
+await ctx.clock.install({ time: new Date(TODAY + "T12:00:00") });
 await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
 /* the last edit's time and the store writes still open, for a read of the
    stored text to wait on rather than sleep */
