@@ -72,4 +72,7 @@ tr.has-detail[aria-expanded="true"] td.n::after { content: " ▾"; }
 tr.has-detail:focus-visible { outline: 2px solid var(--open); outline-offset: -2px; }
 tr.detail td { padding-top: 0; }
 .detail-text { color: var(--muted); white-space: pre-wrap; }
+.detail-text .part { display: block; }
+.detail-text .part + .part { margin-top: 2px; }
+.detail-text b { color: var(--fg); font-weight: 600; }
 tr.sub .detail-text { padding-left: calc(var(--d) * 34px); }

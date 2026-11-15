@@ -68,3 +68,14 @@ test("a paused item's ended time is its stop's; an item in progress has none", (
   const paused: Event[] = [...started, { at: at("10:34"), ev: "stop", id: "A1.1", note: "waiting" }];
   expect(cells(page(paused, { day: "2026-11-15" }), "A1.1").slice(0, 3)).toEqual(["≈09:10", "10:20", "10:34"]);
 });
+
+test("a detail's parts each start their own line, the header in bold; text before any header stands as it is", () => {
+  const told: Event[] = [...day, { at: at("10:10"), ev: "detail", id: "A1", text: "Asked: a <race> found. Why: it blocks. Done when: it holds. Paused (10:34): run 12 times. Reactivates when: it fails again." }];
+  const text = /<div class="detail-text">(.*?)<\/div><\/td>/.exec(page(told, { day: "2026-11-15" }))![1];
+  expect(text.split("</span>").filter(Boolean)).toEqual([
+    '<span class="part"><b>Asked:</b> a &lt;race&gt; found.', '<span class="part"><b>Why:</b> it blocks.', '<span class="part"><b>Done when:</b> it holds.',
+    '<span class="part"><b>Paused (10:34):</b> run 12 times.', '<span class="part"><b>Reactivates when:</b> it fails again.',
+  ]);
+  const plain: Event[] = [...day, { at: at("10:10"), ev: "detail", id: "A1", text: "no headers here, nor a Why without its colon" }];
+  expect(/<div class="detail-text">(.*?)<\/div>/.exec(page(plain, { day: "2026-11-15" }))![1]).toBe("no headers here, nor a Why without its colon");
+});

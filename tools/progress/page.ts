@@ -56,8 +56,16 @@ const opener = (it: Item): string => (it.detail ? ' tabindex="0" aria-expanded="
 const indent = (depth: number): string => (depth ? ' style="--d:' + depth + '"' : "");
 /* a row of its own, not a block in the label's cell, which wrapped it short
    of the time and commit columns; the tbody round the two carries the outline */
+const HEADER = /\s*\b(Asked|Why|Done when|Paused \(\d\d:\d\d\)|Reactivates when):\s*/g;
+/* each headed part on a line of its own, its header in bold */
+function parts(detail: string): string {
+  const pieces = esc(detail).split(HEADER);
+  const lead = pieces[0], headed: string[] = [];
+  for (let i = 1; i < pieces.length; i += 2) headed.push('<span class="part"><b>' + pieces[i] + ":</b> " + pieces[i + 1] + "</span>");
+  return (lead ? (headed.length ? '<span class="part">' + lead + "</span>" : lead) : "") + headed.join("");
+}
 const detailRow = (it: Item, depth: number): string => !it.detail ? "" :
-  '<tr class="' + ["detail", ...tint(it, depth)].join(" ") + '"' + indent(depth) + ' hidden><td></td><td colspan="6"><div class="detail-text">' + esc(it.detail) + "</div></td></tr>";
+  '<tr class="' + ["detail", ...tint(it, depth)].join(" ") + '"' + indent(depth) + ' hidden><td></td><td colspan="6"><div class="detail-text">' + parts(it.detail) + "</div></td></tr>";
 function row({ item: it, depth }: Placed, d: Drawn): string {
   const cells = times(it, d.items.some((i) => i.parent === it.id)).map((t) => '<td class="t">' + t + "</td>").join("");
   return '<tbody><tr class="' + rowClass(it, depth) + '"' + indent(depth) + opener(it) + '><td class="n">' + it.id + '</td><td><div class="item">' + chips(it, d) +
