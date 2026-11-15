@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep, seed } from "./kit.ts";
+import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep, seed, landed } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -166,7 +166,7 @@ async function backToInlineCodeLines(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await R.setSource(page, Array.from({ length: 60 }, (_, i) => "I `go` and the sea, line " + (i + 1) + ".").join("\n"));
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(1500);
+  await landed(page, 1500);
   await wheelTo(1200);
   await page.waitForTimeout(700);
   await go("commonplace/Horace");
@@ -180,7 +180,7 @@ async function backToInlineCodeLines(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await R.setSource(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" ") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForTimeout(1500);
+  await landed(page, 1500);
   await wheelTo(1200);
   await page.waitForTimeout(700);
   await go("commonplace/Horace");
@@ -324,7 +324,7 @@ async function secondWindow(): Promise<void> {
   await A.waitWarm(other).catch(() => {});
   await other.click(S.editor);
   await other.keyboard.type("made in the second window");
-  await other.waitForTimeout(2500);
+  await landed(other, 2500);
   await other.keyboard.press("Control+Meta+b");
   await rest(other);
   await other.keyboard.press("a");
@@ -341,7 +341,7 @@ async function secondWindow(): Promise<void> {
   await log("its row's page opened from the first", { entry: await A.entry(page), text: await R.editorTextHead(page) });
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
-  await page.waitForTimeout(2500);
+  await landed(page, 2500);
   await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
 }
 async function pageOpenFirstSaved(): Promise<void> {
@@ -353,25 +353,27 @@ async function pageOpenFirstSaved(): Promise<void> {
   await page.click(S.editor);
   await again.click(S.editor);
   await again.keyboard.type(", the second again");
-  await again.waitForTimeout(2500);
+  await landed(again, 2500);
+  /* the second's save arrives in the first by its notice */
+  await page.waitForFunction(() => document.querySelector("#editor")?.textContent?.includes(", the second again"), null, { timeout: 2500 }).catch(() => {});
   await log("the page open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
   await page.click(S.editor);
   await page.keyboard.type(", the first unsaved");
   await A.foreignWrite(again, "commonplace/Made Elsewhere", "rewritten in the second");
-  await page.waitForTimeout(2500);
+  await landed(page, 2500);
   await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
   await page.click(S.corner);
   await rest(page);
   await go("commonplace/Deleted%20Elsewhere");
   await page.click(S.editor);
   await page.keyboard.type("to be deleted in the second");
-  await page.waitForTimeout(1500);
+  await landed(page, 1500);
   await A.foreignWrite(again, "commonplace/Deleted Elsewhere", null);
   await page.waitForTimeout(500);
   await log("the page open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.cornerText(page) });
   await page.click(S.editor);
   await page.keyboard.type(", typed after");
-  await page.waitForTimeout(1500);
+  await landed(page, 1500);
   await log("typed into the page deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.cornerText(page) });
   await go("2026-09-06");
   await log("the deleted page left for the day", { corner: await R.cornerText(page) });

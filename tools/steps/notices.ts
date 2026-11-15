@@ -1,4 +1,4 @@
-import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
+import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, still, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
 section("notices and surfaces", async () => {
   await noticesOpening();
@@ -20,7 +20,7 @@ async function chordWithCapsLock(): Promise<void> {
   await log("⌃⌘K with Caps Lock", { searchOpen: await page.evaluate(() => { const d = document.querySelector(".page-search, #pagesearch"); return !!d && (d.tagName === "DETAILS" ? d.open : !d.hidden); }) });
   await page.keyboard.press("Escape");
   await page.goto(A.url("").replace(/#$/, ""));
-  await page.waitForTimeout(2000);
+  await page.waitForFunction(() => location.hash.length > 1, null, { timeout: 2000 }).catch(() => {});
   await log("a bare launch", { hash: await page.evaluate(() => location.hash) });
   await go("commonplace/Horace");
   await view(false);
@@ -63,7 +63,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await rest(page);
   await page.evaluate(() => { const P = IDBObjectStore.prototype; window.__idb = [P.put, P.add]; const full = () => { throw new DOMException("full", "QuotaExceededError"); }; P.put = full; P.add = full; });
   await R.pastePng(page);
-  await page.waitForTimeout(1500);
+  await page.waitForFunction(() => /storage full/.test(document.querySelector(".saved.show")?.textContent || ""), null, { timeout: 1500 }).catch(() => {});
   await page.evaluate(() => { const P = IDBObjectStore.prototype; [P.put, P.add] = window.__idb; });
   await log("a picture whose write fails", { corner: await corner() });
   await dismiss();
@@ -197,7 +197,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await slow.keyboard.type("atavis");
   await slow.waitForTimeout(400);
   const loading = await slow.evaluate((s) => [...document.querySelectorAll(s)].map((l) => l.textContent.trim()).join(" | ").slice(0, 40), S.searchRows);
-  await slow.waitForTimeout(3500);
+  await warmed(slow);
   await log("Search opened before the warm", { loading, rows: await slow.evaluate((s) => document.querySelectorAll(s + ".hit, " + s + ":not(.empty)").length > 0, S.searchRows) });
   /* the Go to row and the bookshelf, each opened on a fresh slow launch with the keys left in it */
   const options = () => slow.evaluate(() => [...document.querySelectorAll(".page-goto select, #pagegoto select")].reduce((n, s) => n + s.options.length, 0));
@@ -206,7 +206,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await slow.keyboard.press("Control+Meta+j");
   await rest(slow);
   const gotoBefore = await options();
-  await slow.waitForTimeout(3500);
+  await warmed(slow);
   await log("Go to opened before the warm", { more: (await options()) > gotoBefore, focusInRow: await slow.evaluate(() => !!document.activeElement?.closest(".page-goto, #pagegoto")) });
   const shelf = () => slow.evaluate(() => { const p = document.querySelector(".pages, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
   await slow.goto(A.url("commonplace/Horace", "warm=slow&again=2"));
@@ -216,10 +216,12 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await slow.evaluate(() => document.querySelector(".pages .panel-new, #bookspanel .panel-new")?.focus());
   await slow.mouse.move(5, 700);
   const shelfBefore = await shelf();
-  await slow.waitForTimeout(3500);
+  await warmed(slow);
   await log("the bookshelf opened before the warm, the keys on its button", { before: shelfBefore, after: await shelf(), keysOnButton: await slow.evaluate(() => !!document.activeElement?.matches(".panel-new")) });
   await slow.close();
 }
+/* a slowed launch's warm, and the page held still after it */
+const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await still(p); };
 const corner = () => page.evaluate(() => document.querySelector(".saved.show, #saved.show")?.textContent || "");
 const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
