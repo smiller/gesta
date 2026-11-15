@@ -60,3 +60,11 @@ test("a day is drawn as its page and its slideshow, each named with the artifact
   expect(readFileSync(d[0].path, "utf8")).toContain('<td class="n">A1.1</td>');
   expect(readFileSync(d[1].path, "utf8")).toContain('class="frame"');
 });
+
+test("a paused item's ended time is its stop's; an item in progress has none", () => {
+  const cells = (html: string, id: string): string[] => [...new RegExp('<td class="n">' + id.replace(".", "\\.") + "</td>.*?</tr>").exec(html)![0].matchAll(/<td class="t">([^<]*)<\/td>/g)].map((m) => m[1]);
+  const started: Event[] = [...day, { at: at("10:20"), ev: "start", id: "A1.1" }];
+  expect(cells(page(started, { day: "2026-11-15" }), "A1.1").slice(0, 3)).toEqual(["≈09:10", "10:20", "—"]);
+  const paused: Event[] = [...started, { at: at("10:34"), ev: "stop", id: "A1.1", note: "waiting" }];
+  expect(cells(page(paused, { day: "2026-11-15" }), "A1.1").slice(0, 3)).toEqual(["≈09:10", "10:20", "10:34"]);
+});

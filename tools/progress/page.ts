@@ -43,10 +43,11 @@ function chips(it: Item, d: Drawn): string {
 }
 const tint = (it: Item, depth: number): string[] => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean);
 const rowClass = (it: Item, depth: number): string => [...tint(it, depth), ...(it.detail ? ["has-detail"] : [])].join(" ");
-/* reported (a carried item's before the day), started, ended, and, where
-   it spawned something, closed */
+/* reported (a carried item's before the day), started, ended (a paused
+   one's at its stop), and, where it spawned something, closed */
 const closedCell = (it: Item, spawned: boolean): string => (!spawned ? "" : it.closed ? hm(it.closed) : "—");
-const times = (it: Item, spawned: boolean): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), isOpen(it.status) ? "—" : hm(it.ended), closedCell(it, spawned)];
+const endedCell = (it: Item): string => (it.status === "paused" ? hm(it.stopped) : isOpen(it.status) ? "—" : hm(it.ended));
+const times = (it: Item, spawned: boolean): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), endedCell(it), closedCell(it, spawned)];
 function label(it: Item): string {
   const from = it.movedFrom ? " (moved in from " + it.movedFrom + ")" : "";
   return esc(it.title) + from + (it.note ? " (" + esc(it.note) + ")" : "");
