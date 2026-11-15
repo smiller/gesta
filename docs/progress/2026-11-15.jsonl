@@ -89,3 +89,6 @@
 {"at":"2026-11-15T17:00","ev":"start","id":"S10"}
 {"at":"2026-11-15T17:01","ev":"detail","id":"S10","text":"Click a row to open a fuller description beneath it; click again to close it. Given with add … --detail, or later with the detail command."}
 {"at":"2026-11-15T17:04","ev":"done","id":"S10","commits":["6faee71"]}
+{"at":"2026-11-15T17:06","ev":"add","id":"S11","list":"S","title":"visualization: a row's detail runs the full width of the row (asked)","detail":"Starting left where it does now, under the Item column, but not breaking before the time and commit columns; still inside the row's outline."}
+{"at":"2026-11-15T17:06","ev":"start","id":"S11"}
+{"at":"2026-11-15T17:07","ev":"done","id":"S11","commits":["13c3aec"]}
