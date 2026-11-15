@@ -86,3 +86,6 @@
 {"at":"2026-11-15T16:44","ev":"start","id":"S8.1"}
 {"at":"2026-11-15T16:52","ev":"add","id":"S10","list":"S","title":"visualization: click a row to expand a fuller description beneath it (asked)"}
 {"at":"2026-11-15T16:57","ev":"done","id":"S8.1","commits":["8ef4797"]}
+{"at":"2026-11-15T17:00","ev":"start","id":"S10"}
+{"at":"2026-11-15T17:01","ev":"detail","id":"S10","text":"Click a row to open a fuller description beneath it; click again to close it. Given with add … --detail, or later with the detail command."}
+{"at":"2026-11-15T17:04","ev":"done","id":"S10","commits":["6faee71"]}
