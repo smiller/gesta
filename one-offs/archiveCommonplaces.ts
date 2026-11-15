@@ -8,8 +8,7 @@ const moved = (path: string): string => (path.startsWith(OLD) ? NEW + path.slice
 export const commonplaceArchivePath = (path: string): string =>
   path.startsWith("archive/" + OLD) ? "archive/" + moved(path.slice("archive/".length)) : path;
 
-/* the tag a page's text is filed under, read as the import reads the
-   commonplace it became */
+/* a page's tag, read from the commonplace path it becomes */
 const pageTag = (path: string): string | null =>
   (path.startsWith(OLD) ? importTarget(moved(path))?.tag ?? null : null);
 interface Rewrites { texts: Map<string, string>; pictures: Map<string, string> }

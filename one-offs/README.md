@@ -168,4 +168,5 @@ renamed; pure, its test beside it. `one-offs/archiveCommonplacesRun.ts
 under `one-offs/out/archive-commonplace` and reads it back, and checks the
 mirror's `page/` against its `commonplace/`; with `--apply` it writes into
 the backup, each archive read back before its original goes, then
-removes `archive/page/` and `current/page/`.
+removes `archive/page/` and `current/page/`. Run once over the backup
+on 2026-11-14; it cannot be run again or resumed.

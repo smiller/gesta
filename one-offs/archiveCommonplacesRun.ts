@@ -46,7 +46,7 @@ async function landed(path: string, members: Member[], day: string): Promise<voi
 
 interface Done { moved: number; rewritten: string[]; pictures: number }
 const renamedPictures = (was: Member[], now: Member[]): number =>
-  now.filter((m, i) => !m.path.endsWith(".md") && basename(m.path) !== basename(was[i].path)).length;
+  now.filter((m, i) => !/\.md$/i.test(m.path) && basename(m.path) !== basename(was[i].path)).length;
 /* an archive that moved has its original removed once the new one is in place */
 function settled(done: Done, from: string, to: string): void {
   if (to === from) { done.rewritten.push(from); return; }
@@ -102,6 +102,7 @@ if (APPLY) {
   const left = walk(join(BACKUP, "archive/page")).filter((p) => basename(p) !== ".DS_Store");
   if (left.length) throw new Error("archive/page still holds " + left.join(", "));
   rmSync(join(BACKUP, "archive/page"), { recursive: true });
-  if (!mirror.absent.length) rmSync(join(BACKUP, "current/page"), { recursive: true });
-  console.log("removed archive/page" + (mirror.absent.length ? "" : " and current/page"));
+  const mirrorHolds = !mirror.absent.length && !mirror.differ.length;
+  if (mirrorHolds) rmSync(join(BACKUP, "current/page"), { recursive: true });
+  console.log("removed archive/page" + (mirrorHolds ? " and current/page" : ""));
 } else console.log("written under " + relative(process.cwd(), OUT) + "; nothing in the backup changed");

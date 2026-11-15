@@ -21,8 +21,6 @@ interface Planned { moves: Record<string, string>; writes: Record<string, string
    as written */
 export const commonplaceLinks = (md: string): string =>
   rewriteLinks(md, (run) => (run.href.startsWith("#" + OLD) ? { href: "#" + NEW + run.href.slice(OLD.length + 1) } : null)) ?? md;
-/* a page's text as the commonplace of its tag, with each picture it names
-   whose key changes, from the old key to the new */
 export function asCommonplace(tag: string, md: string): { md: string; pictures: [string, string][] } {
   const a = keyedFile(RETIRED, tag), b = entryFile(COMMONPLACE_KEY, tag);
   const linked = commonplaceLinks(md), names = pictureNamesBetween(a, b, linked, []);

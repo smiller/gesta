@@ -24,7 +24,7 @@ async function rig(stored: Record<string, string> = {}, screen: OnScreen | null 
   return {
     save, io, wrote, refused, at, writes: io.writes,
     stored: async (k: string): Promise<string | undefined> => (await mem.peek(k))?.md,
-    /* the store moved under the entry, as an import moves it: through the layer, not counted as the save's */
+    /* the store moved under the entry by a write through the layer, not counted as the save's */
     imported: async (k: string, md: string): Promise<void> => { const n = io.writes.length; await layer.setEntry(k, md); io.writes.splice(n); },
   };
 }

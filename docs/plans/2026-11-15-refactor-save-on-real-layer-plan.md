@@ -20,3 +20,21 @@ a stand-in layer that stored a write only when it landed. The real
 - The sweep for the cache read as the store: `unsaved()` (fixed with the
   bug) and `toCommonplaces.ts`'s skip of a commonplace already in the
   cache; every other read takes the cache as the journal's current text.
+
+## The phase's review and scan (514d9f3..d88609d)
+
+Review 122,033 tokens, scan 102,680 (transcripts).
+
+- The save fix's `owed` read `writeErrors`: it counted a refusal for
+  another tab's change (a save after such a delete refused again, a pin
+  with nothing typed), it outlives a delete and a clear, the retry ran only
+  for the entry on screen, and a full store failed again on every trigger.
+  To the scan's top candidate, grilled next: the layer alone answers
+  whether a key still owes a write.
+- The archive one-off: current/page/ removed only when no file differs
+  too (0 differed in the apply, MEASURED then); the `.md` count reads either
+  case; it cannot be rerun, said in its README entry.
+- Three comments: one restating a return type, cut; two describing another
+  module, reworded.
+- Scan candidates 2 (the page-label grammar classifying a typed label) and
+  3 (the apostrophe checker taking a file) wait.
