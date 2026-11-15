@@ -6,10 +6,13 @@
      start | stop | done | drop <id>   [--commits a,b] [--note text]
      move <id> <list>
    --at HH:MM for a time other than now, --approx for one not known exactly,
-   --day YYYY-MM-DD for another day's log */
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+   --day YYYY-MM-DD for another day's log; the day's page and slideshow
+   redrawn after, each named with the artifact to republish it to */
+import { appendFileSync, mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { replay, isOpen, LISTS, type Event, type List } from "./events.ts";
+import { DIR, dayEvents } from "./day.ts";
+import { drawn } from "./page.ts";
 
 const rootNumber = (id: string, list: List): number => { const m = new RegExp("^" + list + "(\\d+)$").exec(id); return m ? +m[1] : 0; };
 const ids = (events: Event[]): string[] => events.flatMap((e) => (e.ev === "move" ? [e.id, e.to] : "id" in e ? [e.id] : []));
@@ -37,8 +40,6 @@ export function beginning(last: Event[], at: string): Event[] {
 }
 
 /* ---------- the command ---------- */
-const DIR = "docs/progress";
-export const dayEvents = (day: string): Event[] => { const p = join(DIR, day + ".jsonl"); return existsSync(p) ? readFileSync(p, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Event) : []; };
 const lastDay = (day: string): string | undefined => readdirSync(DIR).map((f) => f.replace(/\.jsonl$/, "")).filter((d) => d < day).sort().pop();
 const pad = (n: number): string => String(n).padStart(2, "0");
 const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
@@ -105,5 +106,6 @@ function main(argv: string[]): void {
   refuseOrGo(events, day);
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   for (const e of events) console.log(JSON.stringify(e));
+  for (const d of drawn(day, dayEvents(day))) console.log("republish " + d.path + " → " + d.url);
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

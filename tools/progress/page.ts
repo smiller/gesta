@@ -2,7 +2,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { slides } from "./slides.ts";
-import { dayEvents } from "./log.ts";
+import { dayEvents } from "./day.ts";
 import { replay, counts, isOpen, LISTS, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
 
 const NAME: Record<List, string> = { A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions" };
@@ -104,6 +104,15 @@ export function page(events: Event[], o: { day: string; at?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
   const title = longDay(o.day) + (o.at ? ", as it stood at " + o.at : "");
   return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + "</main>\n" + TOGGLE + "\n";
+}
+
+export const PUBLISHED = { day: "https://claude.ai/artifact/H7HDCNRgr91rJS6s21U8VM", slides: "https://claude.ai/artifact/2UpbtsA5SwPd4JoPRwZz2w" };
+export function drawn(day: string, events: Event[], out = "tools/out/progress"): { path: string; url: string }[] {
+  mkdirSync(out, { recursive: true });
+  const paged = { path: join(out, day + ".html"), url: PUBLISHED.day }, slid = { path: join(out, day + "-slides.html"), url: PUBLISHED.slides };
+  writeFileSync(paged.path, page(events, { day }));
+  writeFileSync(slid.path, slides(events, { day }));
+  return [paged, slid];
 }
 
 function main(argv: string[]): void {

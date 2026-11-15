@@ -342,7 +342,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     snapshot at a time, or with `--slides` the slideshow, under
     `tools/out/progress/`), `slides.ts` (the day every half hour),
     `log.ts` (an event appended as it happens, refused when it names no
-    list or no item); each day's events in `docs/progress/`.
+    list or no item, the day's page and slideshow redrawn after),
+    `day.ts` (a day's events read from its log); each day's events in
+    `docs/progress/`.
 - `one-offs/` — scripts run once or a few times over the backup to set
   its entries right; every check holds over them as over `tools/`. What
   each one is: `one-offs/README.md`.

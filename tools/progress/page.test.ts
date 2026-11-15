@@ -1,5 +1,8 @@
 import { test, expect } from "vitest";
-import { page } from "./page.ts";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { page, drawn, PUBLISHED } from "./page.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -47,4 +50,13 @@ test("an item with a detail has it in a hidden row of its own beneath it, spanni
   expect(a1?.[1]).not.toContain("has-detail");
   expect(html.match(/class="detail-text"/g)).toHaveLength(1);
   expect(html).toContain('addEventListener("click"');
+});
+
+test("a day is drawn as its page and its slideshow, each named with the artifact it is published to", () => {
+  const out = mkdtempSync(join(tmpdir(), "progress-"));
+  const d = drawn("2026-11-15", day, out);
+  expect(d).toEqual([{ path: join(out, "2026-11-15.html"), url: PUBLISHED.day }, { path: join(out, "2026-11-15-slides.html"), url: PUBLISHED.slides }]);
+  expect(d.every((x) => existsSync(x.path))).toBe(true);
+  expect(readFileSync(d[0].path, "utf8")).toContain('<td class="n">A1.1</td>');
+  expect(readFileSync(d[1].path, "utf8")).toContain('class="frame"');
 });
