@@ -462,3 +462,17 @@ test("a retry whose key is deleted before its turn, or while it is out, leaves t
   expect([await mem.peek("a"), await mem.peek("b")]).toEqual([null, null]);
   expect("a" in layer.cache || "b" in layer.cache).toBe(false);
 });
+
+test("a save that fails after its entry was deleted is told nowhere: no pin waits on a key that will never land", async () => {
+  let fail: ((e: Error) => void) | null = null;
+  const { layer, calls } = fresh((mem) => ({ ...mem, set: () => new Promise<void>((_, rej) => { fail = rej; }) }));
+  await layer.warm();
+  const saved = layer.setEntry("k", "typed");
+  await vi.waitFor(() => expect(fail).not.toBeNull());
+  const gone = layer.removeEntry("k");
+  fail!(new Error("quota"));
+  await Promise.all([saved, gone]);
+  expect(calls.removed).toEqual(["k"]);
+  expect(calls.stuck).toEqual([]);
+  expect(layer.owes("k")).toBe(false);
+});

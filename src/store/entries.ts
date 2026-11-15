@@ -187,12 +187,11 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     writeErrors.set(ekey, err);
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
     else if (isDel) notices.stuckIdle("couldn’t delete — reload", err);
-    else {
-      /* a key deleted since owes nothing: retried, it wrote the deleted
-         entry back (pin: entries.test › a retry whose key is deleted) */
-      if (saveSeq[ekey] === seqAt) unlanded.add(ekey);
-      notices.stuck("not saved", err, ekey);
-    }
+    /* a key deleted since owes nothing and is told nothing: retried, it
+       wrote the deleted entry back (pin: entries.test › a retry whose key is
+       deleted), and its pin waited on a landing that never comes (pin:
+       entries.test › a save that fails after its entry was deleted) */
+    else if (saveSeq[ekey] === seqAt) { unlanded.add(ekey); notices.stuck("not saved", err, ekey); }
     return false;
   }
   function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {

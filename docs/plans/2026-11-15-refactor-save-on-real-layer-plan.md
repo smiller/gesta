@@ -56,5 +56,8 @@ The scan's top candidate, grilled (asked: all five recommended answers).
   written back by a retry. The retry asks "still owed?" at its turn in the
   key's queue, and a failure after its key was deleted owes nothing. The
   test fails without both (MEASURED).
-- Left: the notices keep their own record of owed keys for the "not
-  saved" pin.
+- The notices' own record of owed keys kept (asked): it holds every
+  failure pin outstanding, a refused delete's too. Where it disagreed with
+  the layer, fixed: a save failing after its entry was deleted pinned "not
+  saved" on a key that would never land, the pin standing until a reload;
+  such a failure is now told nowhere. Test-first.
