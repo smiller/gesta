@@ -1,4 +1,4 @@
-import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, keep } from "./kit.ts";
+import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, jump, keep } from "./kit.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
@@ -67,7 +67,7 @@ async function bookmarkLinkPressed(): Promise<void> {
   await R.setSource(page, "one\n\ntwo\n\n```\nx = 1\ny = 2\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n");
   await view(false);
   await R.waitCorner(page, "saved");
-  await page.waitForTimeout(1500);   /* every save landed first: a whisper of theirs stood over Tab's */
+  await jump(page, 1500);   /* every save landed first: a whisper of theirs stood over Tab's */
   /* clicked until the caret stands in the word: a click measured while the
      page settled after a view switch landed at the entry's end
      (pin: where the keys go › Tab held in a quote) */
@@ -269,13 +269,13 @@ async function verseLinesCopied(): Promise<void> {
   await log("⌃⌘R on verse lines 2–3", { lines: (await R.clipboardLines(page)).map((l) => l.replace(/\(#[^)]*\)/, "(…)")) });
   await page.keyboard.press("ArrowRight");
   await caretAt("two line", 8);
-  await page.waitForTimeout(3000);
+  await jump(page, 3000);
   const before = await numbers();
   await page.keyboard.press("Enter");
   await page.keyboard.type("new line");
   await rest(page);
   const typing = await numbers();
-  await page.waitForTimeout(3000);
+  await jump(page, 3000);
   await log("a line typed into verse", { before, typing, after: await numbers() });
   await write("commonplace/Countdown", "5. five\n4. four\n");
   await caretAt("four", 4);

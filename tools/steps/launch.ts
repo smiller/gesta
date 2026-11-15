@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, shot, log, go, stages, rest } from "./kit.ts";
+import { section, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
 
 section("launch, panels, the corner, links", async () => {
   await afterWarm();
@@ -26,7 +26,7 @@ async function afterWarm(): Promise<void> {
   await page.click(S.panelRow("Williams"));
   await A.waitEntry(page, "commonplace/Williams", 5000);
   await log("after a row click", { entry: await A.entry(page), panel: await R.panel(page) });
-  await page.waitForTimeout(3200);
+  await jump(page, 3200);
   await log("3.2 s later", await R.corner(page));
   await page.click(S.editor);
   await page.keyboard.press("End");

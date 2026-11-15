@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep, seed, landed } from "./kit.ts";
+import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep, seed, landed, jump } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -12,7 +12,7 @@ section("places", async () => {
 async function pippaScrolledDown(): Promise<void> {
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await wheelTo(1200);
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   await log("Pippa scrolled down", await R.place(page));
   await go("commonplace/Horace");
   await rest(page);
@@ -57,7 +57,7 @@ async function pippaPlaceReturned(): Promise<void> {
   const toFiller = await page.evaluate((s) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith("Filler 5.4")); return p ? Math.round(p.getBoundingClientRect().top - (document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0) - 4) : 0; }, S.editor);
   await page.mouse.move(500, 400);
   await page.mouse.wheel(0, toFiller);
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   await go("commonplace/Horace");
 }
 async function backPlaceClosedSection(): Promise<void> {
@@ -115,7 +115,7 @@ async function forcedEntryReturned(): Promise<void> {
   await rest(page);
   await wheelTo(900);
   const leftAt = await winY();
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   await go("commonplace/Horace");
   await go("commonplace/Forced%20Long");
   await rest(page);
@@ -131,7 +131,7 @@ async function heldPlaceRenderedView(): Promise<void> {
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
   await wheelTo(2600);
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   await go("commonplace/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
@@ -168,7 +168,7 @@ async function backToInlineCodeLines(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
   await landed(page, 1500);
   await wheelTo(1200);
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   await go("commonplace/Horace");
   await go("commonplace/Coded%20Lines");
   await rest(page);
@@ -182,7 +182,7 @@ async function backToInlineCodeLines(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
   await landed(page, 1500);
   await wheelTo(1200);
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   await go("commonplace/Horace");
   await go("commonplace/Long%20Paragraph");
   await rest(page);
@@ -222,7 +222,7 @@ async function unknownPageLeftUntouched(): Promise<void> {
   await R.pasteText(page, Array.from({ length: 80 }, (_, i) => "Line " + (i + 1) + " of a long entry.").join("\n\n"));
   await R.waitCorner(page, "saved");
   await wheelTo(900);
-  await page.waitForTimeout(700);
+  await jump(page, 700);
   const before = await winY();
   setAnswer("Longer");
   await page.click(S.renameButton);
@@ -284,7 +284,7 @@ section("footnote marks", async () => {
   /* the box holding the whole query (it keeps the last one while the entry stays open, so a new one is typed over ⌘A), then the scan's pause: a row from the query before can stand until it runs */
   await page.click(S.editor);
   await page.keyboard.type("Skill of government was but a Pedenteria ¹ in comparison, so as Amphion, ³ was said; an area of 4 m² here.");
-  await page.waitForTimeout(1500);
+  await jump(page, 1500);
   await page.keyboard.press("Control+Meta+k");
   await rest(page);
   await page.selectOption(S.searchScope, { label: "Everything" });
@@ -309,7 +309,7 @@ section("footnote marks", async () => {
   await log("typed 4 m²", await R.search(page));
   await page.keyboard.press("Escape");
 });
-const searched = async (q: string) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await page.waitForTimeout(400); };
+const searched = async (q: string) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await jump(page, 400); };
 section("bookmarks from another window", async () => {
   /* two windows, last of the steps that read the page lists, the page made here joining them: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept */
   await secondWindow();

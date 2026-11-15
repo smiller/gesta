@@ -6,8 +6,8 @@ import { inPageWith } from "../adapters/inPage.ts";
 
 export type Tree = { name: string; text?: string; kids?: Tree[] };
 export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean }
-/* the day the drivers pin the page's clock to (context.clock.setFixedTime,
-   Date only; the timers run). Never a seeded day: a run on a day whose
+/* the day the page's Date is pinned to (context.clock.setFixedTime). Never
+   a seeded day: a run on a day whose
    number a seeded day shares (the 5th, the 6th) read one Day option fewer,
    and no scrub of the day number could say so. */
 export const TODAY = "2026-09-12";
@@ -53,6 +53,12 @@ export async function searchFor(p: Page, words: string) {
   await p.keyboard.press("Control+Meta+k");
   await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
   await p.keyboard.type(words);
+}
+/* the page's timers moved on at once by what a sleep of ms would have let
+   pass: the run's clock is installed, so the wait is a jump */
+export async function jump(p: Page, ms: number) {
+  await p.clock.fastForward(ms);
+  await rest(p);
 }
 export async function rest(p: Page) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});

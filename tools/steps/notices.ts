@@ -1,4 +1,4 @@
-import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, still, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
+import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, still, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
 section("notices and surfaces", async () => {
   await noticesOpening();
@@ -50,7 +50,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await page.click(importButton);
   await page.waitForTimeout(500);
   const first = await corner();
-  await page.waitForTimeout(4000);
+  await jump(page, 4000);
   await log("an import of refused files only", { corner: first, fourSecondsOn: await corner() });
   await dismiss();
   await picked({ name: "export", kids: [{ name: "commonplace", kids: [{ name: "Trip--Log.md", text: "a\n" }, { name: "Trip-Log.md", text: "b\n" }] }] });
@@ -71,7 +71,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await R.caretAfter(page, "x", 1);
   await rest(page);
   await R.pastePng(page);
-  await page.waitForTimeout(1500);
+  await page.waitForSelector(S.editor + " div.note img", { timeout: 1500 }).catch(() => {});
   await page.hover(S.editor + " div.note");
   await rest(page);
   await page.click(S.copybtn, { timeout: 2000 }).catch(() => {});
@@ -115,7 +115,7 @@ async function resultAfterMoreTyping(): Promise<void> {
   await page.keyboard.press("Control+Meta+k");
   await rest(page);
   await page.keyboard.type("atavis");
-  await page.waitForTimeout(800);
+  await jump(page, 800);
   await page.keyboard.type(" zzz", { delay: 10 });
   await page.click(S.searchRows + ":first-child", { timeout: 1000 }).catch(() => {});
   await page.waitForTimeout(600);
@@ -142,7 +142,8 @@ async function copyButtonAfterNavigation(): Promise<void> {
   await rest(page);
   const over = await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn);
   await page.evaluate(() => { location.hash = "#commonplace/Links"; });
-  await page.waitForTimeout(800);
+  await A.waitEntry(page, "commonplace/Links", 800).catch(() => {});
+  await rest(page);
   await log("the copy button after a navigation", { over, after: await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn) });
   await log("a link's tooltip", { title: await page.evaluate((s) => document.querySelector(s + " a")?.title ?? null, S.editor), outside: await page.evaluate((s) => document.querySelector(s + " a[href^='https:']")?.title ?? null, S.editor) });
   await R.selectBetween(page, "link", "link");

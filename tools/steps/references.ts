@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt, view, writeAll } from "./kit.ts";
+import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt, view, writeAll, jump } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -211,7 +211,7 @@ async function pairedCardOpening(): Promise<void> {
   await go("commonplace/Paired%20Card");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-blue\n" + pairs + "\n:::\n\n::: note\n" + pairs + "\n:::");
-  await page.waitForTimeout(700);
+  await jump(page, 700);
 }
 const pairs = "::: verse\n*This is what was bequeathed us* | Death of the body —\n | How many poems\nNo other shore, only this bank | In the Book\nOn which the living gather. | Urge us\n\nNo meaning but what we find here. |\nNo purpose but what we make. | Death of the heart —\n\nThat, and the beloved’s clear instructions: | Insisting\nTurn me into song; sing me awake. | We'd better not.\n:::";
 async function cardNotePairedVerse(): Promise<void> {

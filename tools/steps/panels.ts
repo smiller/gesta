@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, wheelTo, setAnswer, rest } from "./kit.ts";
+import { section, page, A, R, S, log, go, wheelTo, setAnswer, rest, still } from "./kit.ts";
 
 section("shortcuts", async () => {
   /* shortcuts: ⌃⌘S with an empty table opens the editor; a table saved; a code typed and Enter inserts at the caret */
@@ -173,7 +173,7 @@ section("reference paste", async () => {
   await go("commonplace/Pasted Pair");
   await page.click(S.editor);
   await R.pasteText(page, "[*Milton*](#2026-09-07?h=mind):\n\n> The mind is its own place\n\n[*Horace*](#commonplace/Horace?h=intemptata):\n\n> ::: verse 13\n> intemptata nites. Me tabula sacer | you shine untested. As for me, a holy\n> votiva paries indicat uvida | wall with a votive table shows that I\n> suspendisse potenti | have hung up my still dripping clothes\n> vestimenta maris deo. | to the deity who rules the sea.\n> :::");
-  await page.waitForTimeout(700);
+  await still(page);
   await log("a paired reference pasted", await R.quotedPair(page));
   /* the grow side: a longer English half typed into the quoted pair widens the entry under the caret rather than wrapping (short of the 1000px window's cap, where a wrap is the cap's — measured with a longer phrase). READ WITHIN 400ms OF THE KEYS: a reading at 700ms proved nothing about the grow; the settled reading follows it */
   const pasted = await R.quotedPair(page);

@@ -1,4 +1,4 @@
-import { section, page, A, R, log, rest, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
+import { section, page, A, R, log, rest, jump, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
 
 section("a link to a line", async () => {
   /* an address naming a line marks it as ⌃⌘G does: no selection, no format bar, and gone at the next press */
@@ -97,7 +97,7 @@ async function linkParagraphBeforeWarm(): Promise<void> {
   await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
   await A.waitEntry(page, work2, 8000).catch(() => {});
   await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(2600);
+  await jump(page, 2600);
 }
 const work2 = "bookshelf/Augustine/De Doctrina Christiana/Book 2";
 async function keyBeforeWarm(): Promise<void> {

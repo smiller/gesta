@@ -277,7 +277,7 @@ async function typedIntoEntryImport(): Promise<void> {
   await page.evaluate(() => window.__releaseTyped());
   await page.waitForFunction(tallied, S.corner, { timeout: 30000 }).catch(() => {});
   const tally = await cornerText();
-  await page.waitForTimeout(1000);
+  await landed(page, 1000);
   await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tally });
 }
 const tallied = (c: string): boolean => /^imported /.test(document.querySelector(c)?.textContent || "");
