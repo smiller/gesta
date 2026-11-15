@@ -57,7 +57,6 @@ const indent = (depth: number): string => (depth ? ' style="--d:' + depth + '"' 
 /* a row of its own, not a block in the label's cell, which wrapped it short
    of the time and commit columns; the tbody round the two carries the outline */
 const HEADER = /\s*\b(Asked|Why|Done when|Paused \(\d\d:\d\d\)|Reactivates when):\s*/g;
-/* each headed part on a line of its own, its header in bold */
 function parts(detail: string): string {
   const pieces = esc(detail).split(HEADER);
   const lead = pieces[0], headed: string[] = [];
