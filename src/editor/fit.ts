@@ -176,32 +176,34 @@ function writeFit(host: HTMLElement, fit: Fit | null): void {
 }
 export function fitCap(): number { return Math.min(CAP, window.innerWidth - WINDOW_MARGIN); }
 
-/* the measuring pass. The bracket is the invariant: one throw between the
-   class going on and coming off would leave every entry with no side
-   margins and every paired block at max-content, with nothing on screen
-   naming the cause. And a reader's place is held across it: under the
-   class rows un-wrap, the document collapses and the engine clamps
-   scrollTop — MEASURED, 22,313px of jump on a 400-row block. */
+/* a measuring pass's class on `host` for `read` alone. The bracket is the
+   invariant: one throw between the class going on and coming off would
+   leave every entry with no side margins and every paired block at
+   max-content, with nothing on screen naming the cause. And a reader's
+   place is held across it: under the class rows un-wrap, the document
+   collapses and the engine clamps scrollTop — MEASURED, 22,313px of jump
+   on a 400-row block. */
+function measuring<T>(host: HTMLElement, cls: string, read: () => T): T {
+  const scroller = document.scrollingElement || document.documentElement;
+  const held = scroller.scrollTop;
+  host.classList.add(cls);
+  try { return read(); } finally {
+    host.classList.remove(cls);
+    scroller.scrollTop = held;
+  }
+}
 export function measure(host: HTMLElement): Measured | number | null {
   const verse = pairedBlocksIn(host, "div.verse");
   const prose = proseNeed(host);
   if (!verse.length) return prose || null;
-  const scroller = document.scrollingElement || document.documentElement;
-  const held = scroller.scrollTop;
   const cols: Columns = { c1: 0, c2: 0, frame: 0, whole: false, gapRow: null };
-  let floor = 0, gap = 0, edge: number | undefined;
-  host.classList.add("fitting");
-  try {
-    floor = host.getBoundingClientRect().width;
+  return measuring(host, "fitting", () => {
+    const floor = host.getBoundingClientRect().width;
     for (const b of verse) readBlock(b, host, cols);
     /* the gap is the row's, not the block's, read once off the first pair */
-    if (cols.gapRow) gap = parseFloat(getComputedStyle(cols.gapRow).columnGap) || 0;
-    edge = proseEdge(host, verse[0]);
-  } finally {
-    host.classList.remove("fitting");
-    scroller.scrollTop = held;
-  }
-  return { floor, c1: cols.c1, c2: cols.c2, gap, frame: cols.frame, cap: fitCap(), whole: cols.whole, prose, edge };
+    const gap = cols.gapRow ? parseFloat(getComputedStyle(cols.gapRow).columnGap) || 0 : 0;
+    return { floor, c1: cols.c1, c2: cols.c2, gap, frame: cols.frame, cap: fitCap(), whole: cols.whole, prose, edge: proseEdge(host, verse[0]) };
+  });
 }
 /* the block's own box, and in a book that includes the line-number
    gutter, so a four-digit number sits inside the fitted width; and
@@ -216,25 +218,31 @@ function ownBox(b: HTMLElement, host: HTMLElement): number {
   return own;
 }
 interface Columns { c1: number; c2: number; frame: number; whole: boolean; gapRow: HTMLElement | null }
-function readPairs(b: HTMLElement, cols: Columns, measureCap: number): void {
+const widthOf = (el: Element): number => el.getBoundingClientRect().width;
+/* a paired block's widest original and widest English, each unwrapped,
+   the English no wider than `englishCap`. Most of a dual-language block's
+   lines carry no English: its original is as wide as the widest of them
+   too, or a long one wraps */
+function blockColumns(b: HTMLElement, englishCap: number): { c1: number; c2: number } {
+  let c1 = 0, c2 = 0;
   b.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
-    cols.gapRow ??= r;
     const cells = r.children;
-    if (cells[0]) cols.c1 = Math.max(cols.c1, cells[0].getBoundingClientRect().width);
-    if (cells[1]) cols.c2 = Math.max(cols.c2, Math.min(measureCap, cells[1].getBoundingClientRect().width));
+    if (cells[0]) c1 = Math.max(c1, widthOf(cells[0]));
+    if (cells[1]) c2 = Math.max(c2, Math.min(englishCap, widthOf(cells[1])));
   });
+  if (b.classList.contains("dual-language")) b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, widthOf(r)); });
+  return { c1, c2 };
 }
 function readBlock(b: HTMLElement, host: HTMLElement, cols: Columns): void {
   cols.frame = Math.max(cols.frame, ownBox(b, host));
+  cols.gapRow ??= b.querySelector<HTMLElement>(":scope > .vpair");
   /* a dual-language block's English is prose, held to a reading measure
      however long its sentences run */
-  const measureCap = b.classList.contains("dual-language") ? parseFloat(getComputedStyle(b).fontSize) * DUAL_MEASURE_EM : Infinity;
-  readPairs(b, cols, measureCap);
-  /* most of a dual-language block's lines carry no English: the Latin
-     column is as wide as the widest of them too, or a long one wraps */
-  if (measureCap === Infinity) return;
-  cols.whole = true;
-  b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { cols.c1 = Math.max(cols.c1, r.getBoundingClientRect().width); });
+  const dual = b.classList.contains("dual-language");
+  const { c1, c2 } = blockColumns(b, dual ? parseFloat(getComputedStyle(b).fontSize) * DUAL_MEASURE_EM : Infinity);
+  cols.c1 = Math.max(cols.c1, c1);
+  cols.c2 = Math.max(cols.c2, c2);
+  if (dual) cols.whole = true;
 }
 
 /* the prose's English edge less the verse's own inset (its line numbers)
@@ -291,27 +299,7 @@ export function measureInsets(view: EditorView): { pos: number; col: number }[] 
     const r = dom.querySelector<HTMLElement>(":scope > .vpair")!;
     return pageEnglish.getBoundingClientRect().left - r.getBoundingClientRect().left - (parseFloat(getComputedStyle(r).columnGap) || 0);
   });
-  const scroller = document.scrollingElement || document.documentElement;
-  const held = scroller.scrollTop;
-  const widths: [number, number][] = [];
-  view.dom.classList.add("fitting-insets");
-  try {
-    for (const { dom } of blocks) {
-      let c1 = 0, c2 = 0;
-      dom.querySelectorAll<HTMLElement>(":scope > .vpair").forEach((r) => {
-        const cells = r.children;
-        if (cells[0]) c1 = Math.max(c1, cells[0].getBoundingClientRect().width);
-        if (cells[1]) c2 = Math.max(c2, cells[1].getBoundingClientRect().width);
-      });
-      if (dom.classList.contains("dual-language")) {
-        dom.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { c1 = Math.max(c1, r.getBoundingClientRect().width); });
-      }
-      widths.push([c1, c2]);
-    }
-  } finally {
-    view.dom.classList.remove("fitting-insets");
-    scroller.scrollTop = held;
-  }
+  const widths = measuring(view.dom, "fitting-insets", () => blocks.map(({ dom }) => { const c = blockColumns(dom, Infinity); return [c.c1, c.c2]; }));
   return blocks.flatMap((b, i) => {
     if (!(rooms[i] > 0)) return [];
     const col = b.dom.classList.contains("dual-language")
@@ -476,7 +464,7 @@ class FitView implements PluginView {
     writeFit(host, fit);
     /* the inputs, readable off the DOM: what a headless dump or the
        inspector can compare against the answer */
-    host.dataset.fit = [m.floor, m.c1, m.c2, m.gap, m.frame, m.cap].map((n) => Math.round(n * 10) / 10).join(" ");
+    host.dataset.fit = [m.floor, m.c1, m.c2, m.gap, m.frame, m.cap, m.prose ?? 0, m.edge ?? 0].map((n) => Math.round(n * 10) / 10).join(" ");
     return true;
   }
 }

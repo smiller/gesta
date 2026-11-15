@@ -41,6 +41,8 @@ tr.sub .item::before { content: ""; position: absolute; top: -8px; height: 18px;
 .s-done { color: var(--done); } .s-part { color: var(--part); } .s-open { color: var(--open); } .s-prog { color: var(--prog); } .chip.s-prog { background: color-mix(in srgb, var(--prog) 14%, transparent); } .s-moved { color: var(--moved); } .s-dropped { color: var(--dropped); }
 tr.done .label { text-decoration: line-through; text-decoration-color: var(--done); text-decoration-thickness: 1.5px; color: var(--muted); }
 tr.dropped .label { text-decoration: line-through; color: var(--dropped); }
+/* a moved item is read where it moved to, so it is struck through here like a done one */
+tr.moved .label { text-decoration: line-through; text-decoration-color: var(--moved); text-decoration-thickness: 1.5px; color: var(--muted); }
 tr.unstarted td { background: var(--start); }
 /* a bar down the left of a starting item's row, drawn inside the cell so no column moves */
 tr.sod td:first-child { box-shadow: inset 5px 0 0 var(--muted); padding-left: 14px; }
