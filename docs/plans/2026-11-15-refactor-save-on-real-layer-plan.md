@@ -37,7 +37,7 @@ Review 122,033 tokens, scan 102,680 (transcripts).
 - Three comments: one restating a return type, cut; two describing another
   module, reworded.
 - Scan candidates 2 (the page-label grammar classifying a typed label) and
-  3 (the apostrophe checker taking a file) wait.
+  3 (the apostrophe checker taking a file): skipped (asked).
 
 ## Whether a key owes a write, in the layer
 
