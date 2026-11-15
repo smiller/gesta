@@ -332,13 +332,17 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     here), `apostrophes.ts` (what the app shows writes ’, not '),
     `unusedExports.ts` (an export nothing uses, or only
     tests, fails, its allowed list giving each exception's reason),
-    `hooks-test.sh`, `accepted.sh`; `sourceSpans.ts` (a source file's
+    `hooks-test.sh`, `accepted.sh`, `commitSubject.ts` (the commit-msg
+    hook's check: a Conventional Commits subject, 72 characters at most);
+    `sourceSpans.ts` (a source file's
     comments, strings and template text, which both `commentRules.ts`
     and `apostrophes.ts` read).
   - The day's progress, `progress/`: `events.ts` (a day's events replayed
-    to a time: each item's state, the counts), `page.ts` (the page, or a
-    snapshot at a time, under `tools/out/progress/`), `log.ts` (an event
-    appended as it happens); each day's events in `docs/progress/`.
+    to a time: each item's state, the counts), `page.ts` (the page, a
+    snapshot at a time, or with `--slides` the slideshow, under
+    `tools/out/progress/`), `slides.ts` (the day every half hour),
+    `log.ts` (an event appended as it happens, refused when it names no
+    list or no item); each day's events in `docs/progress/`.
 - `one-offs/` — scripts run once or a few times over the backup to set
   its entries right; every check holds over them as over `tools/`. What
   each one is: `one-offs/README.md`.

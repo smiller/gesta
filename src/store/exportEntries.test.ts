@@ -1,5 +1,6 @@
 import { test, expect } from "vitest";
-import { exportEntries, imageRefs, patternRefs, archiveRoots, splitKey, missingPictures } from "./exportEntries.ts";
+import { exportEntries, imageRefs, patternRefs, archiveRoots, missingPictures } from "./exportEntries.ts";
+import { splitKey } from "./keys.ts";
 import { memImageStore } from "./store.ts";
 import { filePath } from "./files.ts";
 

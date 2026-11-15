@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { nextId, beginning } from "./log.ts";
+import { nextId, beginning, commandLine, refusal } from "./log.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -29,4 +29,17 @@ test("a new day begins with the last day's unstarted and in-progress items carri
   expect(next.slice(1).map((e) => ("id" in e ? e.id : ""))).toEqual(["A1", "A1.2", "S6", "B1"]);
   expect(next.find((e) => "id" in e && e.id === "A1.2")).toMatchObject({ parent: "A1" });
   expect(next.every((e) => e.ev === "begin" || e.ev === "carry")).toBe(true);
+});
+
+test("a yes-or-no flag takes no word after it", () => {
+  const c = commandLine(["add", "S", "--approx", "the", "card-copy", "race", "--at", "10:22"]);
+  expect([c.cmd, c.asked.rest, c.asked.base.approx, c.asked.base.at.slice(11)]).toEqual(["add", ["S", "the", "card-copy", "race"], true, "10:22"]);
+});
+
+test("an event naming no list, no item the day knows, or a day not begun is refused, nothing written", () => {
+  expect(refusal({ at: at("10:00"), ev: "add", id: "s1", list: "s" as "S", title: "t" }, day)).toBe("no list s: A, S, L or B");
+  expect(refusal({ at: at("10:00"), ev: "start", id: "S99" }, day)).toBe("no item S99 on this day");
+  expect(refusal({ at: at("10:00"), ev: "add", id: "S1", list: "S", title: "t" }, [])).toBe("the day has not begun: run begin first");
+  expect(refusal({ at: at("10:00"), ev: "start", id: "B1" }, day)).toBeNull();
+  expect(refusal({ at: at("10:00"), ev: "begin", next: {} }, [])).toBeNull();
 });

@@ -1,5 +1,6 @@
 import { entryFile, pictureIn } from "./names.ts";
-import { imageRefs, patternRefs, splitKey } from "./exportEntries.ts";
+import { imageRefs, patternRefs } from "./exportEntries.ts";
+import { splitKey } from "./keys.ts";
 import type { ImageStore } from "./store.ts";
 
 /* a text's pictures read both ways, parsed and by their syntax alone: a

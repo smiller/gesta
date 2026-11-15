@@ -1,6 +1,4 @@
-/* node tools/progress/page.ts <day> [--at HH:MM | --slides] — the day's
-   page, a snapshot of it at a time, or its slideshow, written under
-   tools/out/progress/ */
+/* node tools/progress/page.ts <day> [--at HH:MM | --slides] */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { slides } from "./slides.ts";

@@ -3,7 +3,7 @@ import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
 import { directivesIn, directiveTrouble } from "../store/conventions.ts";
-import { splitKey } from "../store/exportEntries.ts";
+import { splitKey } from "../store/keys.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
 
 export interface Surface {

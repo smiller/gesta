@@ -7,7 +7,7 @@ const clock = (m: number): string => pad(Math.floor(m / 60)) + ":" + pad(m % 60)
 /* the day's start, every clock half hour after it, and its last event */
 export function frameTimes(events: Event[]): string[] {
   if (!events.length) return [];
-  const first = minutes(events[0].at), last = Math.max(...events.map((e) => minutes(e.at)));
+  const first = Math.min(...events.map((e) => minutes(e.at))), last = Math.max(...events.map((e) => minutes(e.at)));
   const out = [clock(first)];
   for (let m = Math.floor(first / 30) * 30 + 30; m <= last; m += 30) out.push(clock(m));
   if (out[out.length - 1] !== clock(last)) out.push(clock(last));
@@ -41,7 +41,8 @@ function play() { stop("Pause"); timer = setInterval(() => { if (i >= frames.len
 pause.addEventListener("click", () => { if (timer) { stop("Resume"); return; } if (i >= frames.length - 1) show(0); play(); });
 when.addEventListener("input", () => { stop("Resume"); show(+when.value); });
 bars.forEach((b, k) => b.addEventListener("click", () => { stop("Resume"); show(k); }));
-addEventListener("keydown", (e) => { if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return; stop("Resume"); show(Math.max(0, Math.min(frames.length - 1, i + (e.key === "ArrowRight" ? 1 : -1)))); });
+const steps = { ArrowRight: 1, ArrowLeft: -1 };
+addEventListener("keydown", (e) => { const step = e.target === when ? 0 : steps[e.key] || 0; if (!step) return; stop("Resume"); show(Math.max(0, Math.min(frames.length - 1, i + step))); });
 show(0); play();
 </script>`;
 

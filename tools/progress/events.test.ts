@@ -67,3 +67,27 @@ test("items carried in are the starting items, in the order reported; a moved on
   expect(c.starting).toEqual({ total: 3, byList: { A: 1, S: 2 }, byStatus: { "done, spawned open": 1, "in progress": 1, moved: 1 } });
   expect(c.added).toEqual({ total: 3, byList: { A: 2, S: 1 }, byStatus: { done: 1, dropped: 1, paused: 1 } });
 });
+
+test("events apply in time order whatever order the log holds them in", () => {
+  const backdated: Event[] = [...day, { at: at("09:30"), ev: "drop", id: "S1", note: "logged late" }];
+  expect(replay(backdated, at("09:45")).find((i) => i.id === "S1")!.status).toBe("dropped");
+});
+
+test("a spawned item moved to another list still counts under what spawned it, as the item it became", () => {
+  const moved: Event[] = [
+    { at: at("09:00"), ev: "begin", next: {} },
+    { at: at("09:00"), ev: "carry", id: "A1", list: "A", title: "a" },
+    { at: at("09:10"), ev: "add", id: "A1.1", list: "A", parent: "A1", title: "spawned" },
+    { at: at("09:20"), ev: "done", id: "A1" },
+    { at: at("09:30"), ev: "move", id: "A1.1", to: "S5", list: "S" },
+  ];
+  const open = Object.fromEntries(replay(moved).map((i) => [i.id, i]));
+  expect([open.A1.status, open.A1.closed, open.S5.parent]).toEqual(["done, spawned open", undefined, undefined]);
+  const done = Object.fromEntries(replay([...moved, { at: at("10:00"), ev: "done", id: "S5" }]).map((i) => [i.id, i]));
+  expect([done.A1.status, done.A1.closed?.at]).toEqual(["done", at("10:00")]);
+});
+
+test("a stop or drop given without a note keeps the note the item had", () => {
+  const kept: Event[] = [...day, { at: at("13:30"), ev: "drop", id: "A1.2.1" }];
+  expect(replay(kept).find((i) => i.id === "A1.2.1")!.note).toBe("to run later");
+});

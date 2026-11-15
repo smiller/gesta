@@ -61,3 +61,23 @@ kept shifting (asked: "I have no idea what we've accomplished").
   frame on screen outlined, a bar a click away.
 - `page.ts --slides`, `tools/progress/slides.ts`; published at its own
   link on request.
+
+## The phase's review and scan (12f5ac1..74552f4), A2
+
+Review 118,897 tokens, scan 117,581 (transcripts). No behaviour change found
+in the three src/ refactors.
+
+- Fixed (A2.1): a replay applies events in time order (a backdated one
+  was lost from earlier frames); `--approx` takes no word after it; the
+  slideshow's arrows step once with the slider focused (played in Helium);
+  a spawned item moved to another list still counts under what spawned it;
+  an event naming no list, no item the day knows, or a day not begun is
+  refused, nothing written; a stop or drop without a note keeps the note;
+  splitKey beside entryKey in keys.ts (A2.4), the surface no longer
+  importing the exporter; page.ts's header its usage line alone.
+- Two commit subjects were 73 characters: tools/commitSubject.ts, for a
+  commit-msg hook (asked, the hook added by hand); over the last 40 commits
+  it refuses three (MEASURED).
+- Scan: one place that knows what a label means (A2.2, Strong) to grill;
+  the entry layer's cache read-only through its interface (A2.3, Worth
+  exploring) refused, asked: a scan over that code raises it again.

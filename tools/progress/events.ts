@@ -37,9 +37,9 @@ function created(items: Items, e: Event): void {
 }
 function changed(it: Item, e: Event): void {
   if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; }
-  else if (e.ev === "stop") { it.stopped = stamp(e); it.note = e.note; }
+  else if (e.ev === "stop") { it.stopped = stamp(e); it.note = e.note ?? it.note; }
   else if (e.ev === "done") { it.ended = stamp(e); it.commits = e.commits ?? []; it.note = e.note ?? it.note; it.status = "done"; }
-  else if (e.ev === "drop") { it.ended = stamp(e); it.note = e.note; it.status = "dropped"; }
+  else if (e.ev === "drop") { it.ended = stamp(e); it.note = e.note ?? it.note; it.status = "dropped"; }
 }
 /* moved, or started and so in progress or, stopped since, paused */
 function begun(it: Item): Status {
@@ -50,7 +50,10 @@ function begun(it: Item): Status {
 const stillOpen = (s: Status): boolean => s === "unstarted" || s === "in progress" || s === "paused";
 function settled(items: Items): void {
   const all = [...items.values()];
-  const below = (id: string): Item[] => all.filter((i) => i.parent === id).flatMap((c) => [c, ...below(c.id)]);
+  /* what an item spawned, a moved one followed to the item it became: its
+     parent's work is not done while that is open */
+  const became = (it: Item): Item[] => { const to = it.movedTo ? items.get(it.movedTo) : undefined; return to ? [to, ...became(to)] : []; };
+  const below = (id: string): Item[] => all.filter((i) => i.parent === id).flatMap((c) => [c, ...became(c), ...below(c.id)]);
   for (const it of all) it.status = begun(it);
   for (const it of all) if (it.status === "done" && below(it.id).some((c) => stillOpen(c.status))) it.status = "done, spawned open";
   for (const it of all) closing(it, below(it.id));
@@ -71,7 +74,9 @@ function applied(items: Items, e: Event): void {
    the order they were reported */
 export function replay(events: Event[], until?: string): Item[] {
   const items: Items = new Map();
-  for (const e of events) {
+  /* in time order: an event logged late, with an earlier time, lands where it belongs */
+  const timed = [...events].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
+  for (const e of timed) {
     if (until && e.at > until) break;
     applied(items, e);
   }

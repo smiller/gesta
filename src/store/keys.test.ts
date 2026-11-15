@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import {
-  isDayKey, COMMONPLACE_KEY, NS, NS_COMMONPLACE, NS_BOOK, NS_KEYS, nsOf,
+  splitKey, isDayKey, COMMONPLACE_KEY, NS, NS_COMMONPLACE, NS_BOOK, NS_KEYS, nsOf,
   tagParts, entryKey, encPart, entryHash, hashTarget, asAddress,
   capitalized, entryNoun, monthLabel, dateLabel,
   todayKey, prettyDate, byName, titlesRoots, plural,
@@ -127,4 +127,9 @@ test("titlesRoots: read off the namespace column, false for a day and an unknown
 
 test("plural: an entry, entries; a book, books", () => {
   expect(["sub-entry", "book", "commonplace", "author"].map(plural)).toEqual(["sub-entries", "books", "commonplaces", "authors"]);
+});
+
+test("splitKey gives back the date and tag entryKey built the key from", () => {
+  for (const [date, tag] of [["2026-01-05", null], ["2026-01-05", "notes"], ["bookshelf", "Milton, John/Paradise Lost/Book 1"]] as [string, string | null][])
+    expect(splitKey(entryKey(date, tag))).toEqual([date, tag]);
 });

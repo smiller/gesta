@@ -105,6 +105,10 @@ export function tagParts(tag: string): TagParts {
 }
 /* the ONE join every entry is filed under */
 export function entryKey(date: string, tag?: string | null): string { return date + (tag ? "/" + tag : ""); }
+export function splitKey(ekey: string): [string, string | null] {
+  const slash = ekey.indexOf("/");
+  return slash === -1 ? [ekey, null] : [ekey.slice(0, slash), ekey.slice(slash + 1)];
+}
 /* encodeURIComponent leaves ( ) literal, but a ) closes the markdown link a
    hash rides in (pin: keys.test › encPart encodes parens beyond
    encodeURIComponent) */

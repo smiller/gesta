@@ -43,6 +43,12 @@ const lastDay = (day: string): string | undefined => readdirSync(DIR).map((f) =>
 const pad = (n: number): string => String(n).padStart(2, "0");
 const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 const clock = (d = new Date()): string => pad(d.getHours()) + ":" + pad(d.getMinutes());
+/* a yes-or-no flag: taken off the line alone, the word after it left */
+function has(args: string[], name: string): boolean {
+  const i = args.indexOf("--" + name);
+  if (i >= 0) args.splice(i, 1);
+  return i >= 0;
+}
 function flag(args: string[], name: string): string | undefined {
   const i = args.indexOf("--" + name);
   if (i < 0) return undefined;
@@ -59,12 +65,32 @@ const BUILT: Record<string, (a: Asked) => Event> = {
   done: (a) => ({ ...a.base, ev: "done", id: a.rest[0], ...(a.commits ? { commits: a.commits.split(",") } : {}), ...noted(a) }),
   start: plain("start"), stop: plain("stop"), drop: plain("drop"),
 };
-function commandLine(argv: string[]): { day: string; cmd: string; asked: Omit<Asked, "events"> } {
+export function commandLine(argv: string[]): { day: string; cmd: string; asked: Omit<Asked, "events"> } {
   const args = [...argv];
-  const day = flag(args, "day") || today(), hm = flag(args, "at") || clock(), approx = flag(args, "approx") !== undefined;
+  const approx = has(args, "approx"), day = flag(args, "day") || today(), hm = flag(args, "at") || clock();
   const parent = flag(args, "parent"), commits = flag(args, "commits"), note = flag(args, "note");
   const [cmd, ...rest] = args;
   return { day, cmd, asked: { rest, base: { at: day + "T" + hm, ...(approx ? { approx: true } : {}) }, parent, commits, note } };
+}
+/* why an event cannot be logged, or null: a list that does not exist
+   crashed the page, an unknown number was silently ignored, and a number
+   taken before the day began could reuse one an earlier day had used */
+const unlisted = (e: Event): string | null => ("list" in e && !LISTS.includes(e.list) ? e.list : null);
+/* the number an event acts on, where it names one it did not itself open */
+const actsOn = (e: Event): string | null => (e.ev === "begin" || e.ev === "add" || e.ev === "carry" ? null : e.id);
+export function refusal(e: Event, events: Event[]): string | null {
+  if (e.ev === "begin") return null;
+  if (!events.some((x) => x.ev === "begin")) return "the day has not begun: run begin first";
+  const list = unlisted(e), id = actsOn(e);
+  if (list !== null) return "no list " + list + ": A, S, L or B";
+  if (id !== null && !ids(events).includes(id)) return "no item " + id + " on this day";
+  return null;
+}
+function refuseOrGo(events: (Event | null)[], day: string): Event[] {
+  if (events.some((e) => !e)) { console.error("unknown command"); process.exit(1); }
+  const refused = events.map((e) => refusal(e!, read(day))).find(Boolean);
+  if (refused) { console.error(refused); process.exit(1); }
+  return events as Event[];
 }
 function main(argv: string[]): void {
   const { day, cmd, asked } = commandLine(argv);
@@ -73,7 +99,7 @@ function main(argv: string[]): void {
   if (cmd === "begin" && read(day).some((e) => e.ev === "begin")) { console.error(day + " has begun already"); process.exit(1); }
   const before = lastDay(day), build = BUILT[cmd];
   const events = cmd === "begin" ? beginning(before ? read(before) : [], asked.base.at) : [build ? build({ ...asked, events: read(day) }) : null];
-  if (events.some((e) => !e)) { console.error("unknown command: " + cmd); process.exit(1); }
+  refuseOrGo(events, day);
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   for (const e of events) console.log(JSON.stringify(e));
 }

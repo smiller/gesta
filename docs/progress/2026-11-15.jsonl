@@ -68,3 +68,11 @@
 {"at":"2026-11-15T16:07","ev":"add","id":"S9","list":"S","title":"visualization: a \"closed\" column, when an item and all it spawned had ended (asked)"}
 {"at":"2026-11-15T16:07","ev":"start","id":"S9"}
 {"at":"2026-11-15T16:08","ev":"done","id":"S9","commits":["74552f4"]}
+{"at":"2026-11-15T16:10","ev":"add","id":"A2","list":"A","title":"Phase review and scan: the architecture queue finished"}
+{"at":"2026-11-15T16:10","ev":"start","id":"A2"}
+{"at":"2026-11-15T16:16","ev":"add","id":"A2.1","list":"A","title":"Review fixes: the progress tools' input, order and keys; splitKey; the subject checker","parent":"A2"}
+{"at":"2026-11-15T16:16","ev":"add","id":"A2.2","list":"A","title":"Scan: one place that knows what a label means (Strong)","parent":"A2"}
+{"at":"2026-11-15T16:16","ev":"add","id":"A2.3","list":"A","title":"Scan: the entry layer's cache read-only through its interface (Worth exploring)","parent":"A2"}
+{"at":"2026-11-15T16:16","ev":"drop","id":"A2.3","note":"refused, asked: a scan over that code raises it again"}
+{"at":"2026-11-15T16:16","ev":"add","id":"A2.4","list":"A","title":"Scan: splitKey beside entryKey in keys.ts","parent":"A2"}
+{"at":"2026-11-15T16:16","ev":"start","id":"A2.1"}

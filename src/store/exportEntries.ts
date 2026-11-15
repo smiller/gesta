@@ -1,14 +1,11 @@
 import { entryFile, collidingFile, pictureIn, RELATIVE_SRC } from "./names.ts";
+import { splitKey } from "./keys.ts";
 import { yieldToTaskQueue } from "./io.ts";
 import type { ExportFile } from "./files.ts";
 import type { ImageStore } from "./store.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 
-export function splitKey(ekey: string): [string, string | null] {
-  const slash = ekey.indexOf("/");
-  return slash === -1 ? [ekey, null] : [ekey.slice(0, slash), ekey.slice(slash + 1)];
-}
 /* group 1 the address as written, bracketed or bare, a bare one holding one
    level of balanced brackets; a title and brackets in the words allowed */
 export const imageLinks = (): RegExp => /!\[(?:[^\]\n\\[]|\\.|\[[^\]\n]*\])*\]\((<[^>\n]*>|(?:[^()\s]|\([^()\s]*\))*)(?:\s+(?:"[^"\n]*"|'[^'\n]*'|\([^)\n]*\)))?\s*\)/g;
