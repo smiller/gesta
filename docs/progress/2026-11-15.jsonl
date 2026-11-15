@@ -76,3 +76,6 @@
 {"at":"2026-11-15T16:16","ev":"drop","id":"A2.3","note":"refused, asked: a scan over that code raises it again"}
 {"at":"2026-11-15T16:16","ev":"add","id":"A2.4","list":"A","title":"Scan: splitKey beside entryKey in keys.ts","parent":"A2"}
 {"at":"2026-11-15T16:16","ev":"start","id":"A2.1"}
+{"at":"2026-11-15T16:27","ev":"done","id":"A2.4","commits":["fd7ed62"]}
+{"at":"2026-11-15T16:27","ev":"done","id":"A2.1","commits":["fd7ed62"]}
+{"at":"2026-11-15T16:27","ev":"start","id":"A2.2"}

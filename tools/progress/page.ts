@@ -2,9 +2,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { slides } from "./slides.ts";
-import { replay, counts, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
+import { dayEvents } from "./log.ts";
+import { replay, counts, isOpen, LISTS, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
 
-const LISTS: List[] = ["A", "S", "L", "B"];
 const NAME: Record<List, string> = { A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions" };
 const CHIP: Record<Status, [string, string]> = {
   "unstarted": ["s-open", "unstarted"], "in progress": ["s-prog", "in progress"], "paused": ["s-paused", "paused"], "done": ["s-done", "done"],
@@ -42,11 +42,10 @@ function chips(it: Item, d: Drawn): string {
   return isNew + status + was + (it.starting ? '<span class="chip s-start">starting item</span>' : "");
 }
 const rowClass = (it: Item, depth: number): string => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean).join(" ");
-const open = (s: Status): boolean => s === "unstarted" || s === "in progress" || s === "paused";
 /* reported (a carried item's before the day), started, ended, and, where
    it spawned something, closed */
 const closedCell = (it: Item, spawned: boolean): string => (!spawned ? "" : it.closed ? hm(it.closed) : "—");
-const times = (it: Item, spawned: boolean): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), open(it.status) ? "—" : hm(it.ended), closedCell(it, spawned)];
+const times = (it: Item, spawned: boolean): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), isOpen(it.status) ? "—" : hm(it.ended), closedCell(it, spawned)];
 function label(it: Item): string {
   const from = it.movedFrom ? " (moved in from " + it.movedFrom + ")" : "";
   return esc(it.title) + from + (it.note ? " (" + esc(it.note) + ")" : "");
@@ -96,7 +95,7 @@ export function page(events: Event[], o: { day: string; at?: string }): string {
 
 function main(argv: string[]): void {
   const [day, flag, at] = argv;
-  const events = readFileSync(join("docs/progress", day + ".jsonl"), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Event);
+  const events = dayEvents(day);
   const name = flag === "--slides" ? "-slides" : flag === "--at" && at ? "-" + at.replace(":", "") : "";
   const out = join("tools/out/progress", day + name + ".html");
   mkdirSync("tools/out/progress", { recursive: true });

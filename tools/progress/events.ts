@@ -47,7 +47,17 @@ function begun(it: Item): Status {
   if (it.status !== "unstarted" || !it.started) return it.status;
   return it.stopped ? "paused" : "in progress";
 }
-const stillOpen = (s: Status): boolean => s === "unstarted" || s === "in progress" || s === "paused";
+/* THE ONE PLACE a label's group is said: written out at each use, adding
+   "paused" meant finding every copy (pin: events.test › which labels are open) */
+export const LISTS: List[] = ["A", "S", "L", "B"];
+const OPEN = new Set<Status>(["unstarted", "in progress", "paused"]);
+const UNDERWAY = new Set<Status>(["in progress", "paused"]);
+const DONE = new Set<Status>(["done", "done, spawned open"]);
+export const isOpen = (s: Status): boolean => OPEN.has(s);
+export const isUnderway = (s: Status): boolean => UNDERWAY.has(s);
+export const isDone = (s: Status): boolean => DONE.has(s);
+/* the items that count: a moved one counts once, where it started */
+export const own = (items: Item[]): Item[] => items.filter((i) => !i.movedFrom);
 function settled(items: Items): void {
   const all = [...items.values()];
   /* what an item spawned, a moved one followed to the item it became: its
@@ -55,13 +65,13 @@ function settled(items: Items): void {
   const became = (it: Item): Item[] => { const to = it.movedTo ? items.get(it.movedTo) : undefined; return to ? [to, ...became(to)] : []; };
   const below = (id: string): Item[] => all.filter((i) => i.parent === id).flatMap((c) => [c, ...became(c), ...below(c.id)]);
   for (const it of all) it.status = begun(it);
-  for (const it of all) if (it.status === "done" && below(it.id).some((c) => stillOpen(c.status))) it.status = "done, spawned open";
+  for (const it of all) if (it.status === "done" && below(it.id).some((c) => isOpen(c.status))) it.status = "done, spawned open";
   for (const it of all) closing(it, below(it.id));
 }
 const later = (a: Stamp | undefined, b: Stamp | undefined): Stamp | undefined => (!a || (b && b.at > a.at) ? b : a);
 function closing(it: Item, under: Item[]): void {
   const tree = [it, ...under];
-  if (!under.length || tree.some((x) => stillOpen(x.status))) return;
+  if (!under.length || tree.some((x) => isOpen(x.status))) return;
   it.closed = tree.map((x) => x.ended).reduce(later, undefined);
 }
 const opens = (e: Event): boolean => e.ev === "carry" || e.ev === "add" || e.ev === "move";
@@ -93,8 +103,7 @@ function tally(items: Item[]): Tally {
   }
   return t;
 }
-/* a moved item counts once, where it started */
 export function counts(items: Item[]): { starting: Tally; added: Tally } {
-  const own = items.filter((i) => !i.movedFrom);
-  return { starting: tally(own.filter((i) => i.starting)), added: tally(own.filter((i) => !i.starting)) };
+  const counted = own(items);
+  return { starting: tally(counted.filter((i) => i.starting)), added: tally(counted.filter((i) => !i.starting)) };
 }

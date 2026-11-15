@@ -43,3 +43,8 @@ test("the slideshow is one page: a strip of the day's counts, a slider, and a pa
   expect(html).toContain('id="pause"');
   expect(html).toContain("5000");
 });
+
+test("the strip counts a paused item with those under way", () => {
+  const paused: Event[] = [...day.slice(0, 3), { at: at("09:50"), ev: "stop", id: "S1" }];
+  expect(slides(paused, { day: "2026-11-15" })).toContain("<title>09:50: 0 done, 1 in progress, 0 unstarted</title>");
+});

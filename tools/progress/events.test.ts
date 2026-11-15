@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { replay, counts, type Event } from "./events.ts";
+import { replay, counts, isOpen, isUnderway, isDone, LISTS, type Event } from "./events.ts";
 
 const DAY = "2026-11-15T";
 const at = (hm: string): string => DAY + hm;
@@ -90,4 +90,11 @@ test("a spawned item moved to another list still counts under what spawned it, a
 test("a stop or drop given without a note keeps the note the item had", () => {
   const kept: Event[] = [...day, { at: at("13:30"), ev: "drop", id: "A1.2.1" }];
   expect(replay(kept).find((i) => i.id === "A1.2.1")!.note).toBe("to run later");
+});
+
+test("which labels are open, which under way, which done, and the lists there are, said once", () => {
+  expect(["unstarted", "in progress", "paused", "done", "done, spawned open", "moved", "dropped"].map((s) => [isOpen(s as never), isUnderway(s as never), isDone(s as never)])).toEqual([
+    [true, false, false], [true, true, false], [true, true, false], [false, false, true], [false, false, true], [false, false, false], [false, false, false],
+  ]);
+  expect(LISTS).toEqual(["A", "S", "L", "B"]);
 });

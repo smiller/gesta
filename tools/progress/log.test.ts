@@ -43,3 +43,8 @@ test("an event naming no list, no item the day knows, or a day not begun is refu
   expect(refusal({ at: at("10:00"), ev: "start", id: "B1" }, day)).toBeNull();
   expect(refusal({ at: at("10:00"), ev: "begin", next: {} }, [])).toBeNull();
 });
+
+test("a paused item is carried into the next day as an open one", () => {
+  const paused: Event[] = [...day, { at: at("10:00"), ev: "start", id: "S6" }, { at: at("10:05"), ev: "stop", id: "S6", note: "waiting" }];
+  expect(beginning(paused, "2026-11-16T09:00").some((e) => "id" in e && e.id === "S6")).toBe(true);
+});

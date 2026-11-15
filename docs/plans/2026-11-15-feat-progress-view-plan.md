@@ -81,3 +81,8 @@ in the three src/ refactors.
 - Scan: one place that knows what a label means (A2.2, Strong) to grill;
   the entry layer's cache read-only through its interface (A2.3, Worth
   exploring) refused, asked: a scan over that code raises it again.
+- A2.2 built (asked): events.ts says once which labels are open, under
+  way and done, the lists there are, and which items count (a moved copy
+  not); log.ts reads a day's log for page.ts too. The two "paused" paths
+  that had no test (carried into a new day; the strip) pinned. Both pages
+  drawn the same as before, byte for byte (MEASURED).

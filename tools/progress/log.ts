@@ -8,9 +8,8 @@
    --day YYYY-MM-DD for another day's log */
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { replay, type Event, type List } from "./events.ts";
+import { replay, isOpen, LISTS, type Event, type List } from "./events.ts";
 
-const LISTS: List[] = ["A", "S", "L", "B"];
 const rootNumber = (id: string, list: List): number => { const m = new RegExp("^" + list + "(\\d+)$").exec(id); return m ? +m[1] : 0; };
 const ids = (events: Event[]): string[] => events.flatMap((e) => (e.ev === "move" ? [e.id, e.to] : "id" in e ? [e.id] : []));
 /* the list's next number, never one used before: the day's begin keeps the
@@ -30,7 +29,7 @@ export function nextId(events: Event[], list: List, parent?: string): string {
 export function beginning(last: Event[], at: string): Event[] {
   const next: Partial<Record<List, number>> = {};
   for (const l of LISTS) { const n = nextRoot(last, l); if (n > 1) next[l] = n; }
-  const open = replay(last).filter((i) => i.status === "unstarted" || i.status === "in progress" || i.status === "paused");
+  const open = replay(last).filter((i) => isOpen(i.status));
   const carried = new Set(open.map((i) => i.id));
   const under = (p?: string) => (p && carried.has(p) ? { parent: p } : {});
   return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent) }))];
@@ -38,7 +37,7 @@ export function beginning(last: Event[], at: string): Event[] {
 
 /* ---------- the command ---------- */
 const DIR = "docs/progress";
-const read = (day: string): Event[] => { const p = join(DIR, day + ".jsonl"); return existsSync(p) ? readFileSync(p, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Event) : []; };
+export const dayEvents = (day: string): Event[] => { const p = join(DIR, day + ".jsonl"); return existsSync(p) ? readFileSync(p, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Event) : []; };
 const lastDay = (day: string): string | undefined => readdirSync(DIR).map((f) => f.replace(/\.jsonl$/, "")).filter((d) => d < day).sort().pop();
 const pad = (n: number): string => String(n).padStart(2, "0");
 const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
@@ -88,7 +87,7 @@ export function refusal(e: Event, events: Event[]): string | null {
 }
 function refuseOrGo(events: (Event | null)[], day: string): Event[] {
   if (events.some((e) => !e)) { console.error("unknown command"); process.exit(1); }
-  const refused = events.map((e) => refusal(e!, read(day))).find(Boolean);
+  const refused = events.map((e) => refusal(e!, dayEvents(day))).find(Boolean);
   if (refused) { console.error(refused); process.exit(1); }
   return events as Event[];
 }
@@ -96,9 +95,9 @@ function main(argv: string[]): void {
   const { day, cmd, asked } = commandLine(argv);
   mkdirSync(DIR, { recursive: true });
   /* begun twice, a day carried its items in twice */
-  if (cmd === "begin" && read(day).some((e) => e.ev === "begin")) { console.error(day + " has begun already"); process.exit(1); }
+  if (cmd === "begin" && dayEvents(day).some((e) => e.ev === "begin")) { console.error(day + " has begun already"); process.exit(1); }
   const before = lastDay(day), build = BUILT[cmd];
-  const events = cmd === "begin" ? beginning(before ? read(before) : [], asked.base.at) : [build ? build({ ...asked, events: read(day) }) : null];
+  const events = cmd === "begin" ? beginning(before ? dayEvents(before) : [], asked.base.at) : [build ? build({ ...asked, events: dayEvents(day) }) : null];
   refuseOrGo(events, day);
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   for (const e of events) console.log(JSON.stringify(e));

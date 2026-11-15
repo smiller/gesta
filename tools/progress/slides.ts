@@ -1,4 +1,4 @@
-import { replay, type Event, type Item } from "./events.ts";
+import { replay, own, isDone, isUnderway, type Event, type Item } from "./events.ts";
 import { frame, head, KEY, longDay } from "./page.ts";
 
 const pad = (n: number): string => String(n).padStart(2, "0");
@@ -16,10 +16,9 @@ export function frameTimes(events: Event[]): string[] {
 
 /* each frame's items done, in progress or paused, and unstarted, a moved
    item counted once, where it started */
-const DONE = new Set(["done", "done, spawned open"]);
 function standing(items: Item[]): [number, number, number] {
-  const own = items.filter((i) => !i.movedFrom);
-  return [own.filter((i) => DONE.has(i.status)).length, own.filter((i) => i.status === "in progress" || i.status === "paused").length, own.filter((i) => i.status === "unstarted").length];
+  const counted = own(items), n = (f: (i: Item) => boolean): number => counted.filter(f).length;
+  return [n((i) => isDone(i.status)), n((i) => isUnderway(i.status)), n((i) => i.status === "unstarted")];
 }
 const BAR = 26, TALL = 90;
 function strip(snaps: Item[][], times: string[]): string {
