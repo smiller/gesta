@@ -1,4 +1,4 @@
-import { test, expect } from "vitest";
+import { test, expect, vi } from "vitest";
 import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } from "./store.ts";
 import { entryLayer, type EntryNotices } from "./entries.ts";
 
@@ -393,4 +393,72 @@ test("a write that did not land keeps its error for the caller; a landing clears
   fail = false;
   expect(await layer.setEntry("commonplace/A", "a")).toBe(true);
   expect(layer.writeError("commonplace/A")).toBeUndefined();
+});
+
+function failing() {
+  const io = { fail: true, sets: [] as string[] };
+  const rig = fresh((mem) => ({ ...mem, set: (k, md) => { io.sets.push(k); return io.fail ? Promise.reject(new Error("quota")) : mem.set(k, md); } }));
+  return { ...rig, io };
+}
+
+test("a key owes a write while its last one failed, until a landing, a delete or a clear", async () => {
+  const { layer, io } = failing();
+  await layer.warm();
+  await layer.setEntry("a", "x");
+  expect(layer.owes("a")).toBe(true);
+  io.fail = false;
+  await layer.setEntry("a", "x");
+  expect(layer.owes("a")).toBe(false);
+  io.fail = true;
+  await layer.setEntry("b", "y");
+  await layer.removeEntry("b");
+  expect(layer.owes("b")).toBe(false);
+  await layer.setEntry("c", "z");
+  await layer.clear();
+  expect(layer.owes("c")).toBe(false);
+});
+
+test("a write refused for another tab's change owes nothing, nor does a delete that failed", async () => {
+  const { layer, mem } = fresh();
+  await layer.warm();
+  await layer.setEntry("k", "mine");
+  await mem.foreignSet("k", "theirs");
+  await layer.setEntry("k", "mine edited");
+  expect(layer.owes("k")).toBe(false);
+  const blocked = fresh((m) => ({ ...m, del: () => Promise.reject(new Error("blocked")) }));
+  await blocked.layer.warm();
+  await blocked.layer.setEntry("d", "x");
+  await blocked.layer.removeEntry("d");
+  expect(blocked.layer.owes("d")).toBe(false);
+});
+
+test("the keys owed are written again, each once, at a retry and when another write lands", async () => {
+  const { layer, mem, io } = failing();
+  await layer.warm();
+  await layer.setEntry("a", "x");
+  await layer.setEntry("b", "y");
+  io.sets.length = 0;
+  await layer.retryOwed();
+  expect(io.sets.sort()).toEqual(["a", "b"]);
+  io.fail = false;
+  io.sets.length = 0;
+  await layer.setEntry("c", "z");
+  await vi.waitFor(() => expect(layer.owes("a") || layer.owes("b")).toBe(false));
+  expect(io.sets.sort()).toEqual(["a", "b", "c"]);
+  expect((await mem.peek("a"))?.md).toBe("x");
+});
+
+test("a retry whose key is deleted before its turn, or while it is out, leaves the delete standing and nothing owed", async () => {
+  const { layer, mem, io } = failing();
+  await layer.warm();
+  await layer.setEntry("a", "x");
+  await layer.setEntry("b", "y");
+  const out = layer.retryOwed();
+  const gone = [layer.removeEntry("a"), layer.removeEntry("b")];
+  await Promise.all([out, ...gone]);
+  io.fail = false;
+  await layer.retryOwed();
+  expect(layer.owes("a") || layer.owes("b")).toBe(false);
+  expect([await mem.peek("a"), await mem.peek("b")]).toEqual([null, null]);
+  expect("a" in layer.cache || "b" in layer.cache).toBe(false);
 });

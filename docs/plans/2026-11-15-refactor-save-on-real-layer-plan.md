@@ -38,3 +38,23 @@ Review 122,033 tokens, scan 102,680 (transcripts).
   module, reworded.
 - Scan candidates 2 (the page-label grammar classifying a typed label) and
   3 (the apostrophe checker taking a file) wait.
+
+## Whether a key owes a write, in the layer
+
+The scan's top candidate, grilled (asked: all five recommended answers).
+
+- `owes(ekey)` in the layer: the last write here did not land and a retry
+  could; one refused for another tab's change owes nothing. The two
+  records it reads, `unlanded` and `writeErrors`, now cleared together by
+  a landing, a delete and `clear()`.
+- `retryOwed()` writes every key owed, not only the entry on screen: at
+  switching away and at closing, beside the save, and once when another
+  write lands; no timer.
+- The save's "nothing to save" and `unsaved()` are one judgement: spaces
+  in an entry never stored no longer read as unsaved.
+- Found building it: a rename's failed copy, deleted by its take-back, was
+  written back by a retry. The retry asks "still owed?" at its turn in the
+  key's queue, and a failure after its key was deleted owes nothing. The
+  test fails without both (MEASURED).
+- Left: the notices keep their own record of owed keys for the "not
+  saved" pin.

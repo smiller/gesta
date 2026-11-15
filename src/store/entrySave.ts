@@ -5,7 +5,7 @@ export const SAVE_DEBOUNCE_MS = 500;
 export interface OnScreen { ekey: string; md: string }
 export interface SaveParts {
   screen(): OnScreen | null;
-  layer: Pick<EntryLayer, "entryMd" | "setEntry" | "writeError" | "storeReadFailed">;
+  layer: Pick<EntryLayer, "entryMd" | "setEntry" | "owes" | "storeReadFailed">;
   wrote(landed: boolean): void;
   /* text typed into an entry deleted elsewhere, which no write will keep */
   refused(md: string): void;
@@ -51,10 +51,9 @@ export function entrySave(p: SaveParts): EntrySave {
      judged from the text alone, the next save wrote nothing and a closed
      tab lost it (pin: entrySave.test › a save whose write did not land is
      made again) */
-  const owed = (ekey: string): boolean => p.layer.writeError(ekey) !== undefined;
   /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
   function nothingToSave(s: OnScreen): boolean {
-    if (owed(s.ekey)) return false;
+    if (p.layer.owes(s.ekey)) return false;
     const inStore = p.layer.entryMd(s.ekey);
     return s.md === inStore || (!s.md.trim() && !inStore);
   }
@@ -128,7 +127,7 @@ export function entrySave(p: SaveParts): EntrySave {
     unsaved: () => {
       if (timer || suspended) return true;
       const s = p.screen();
-      return !!s && (s.md !== p.layer.entryMd(s.ekey) || owed(s.ekey));
+      return !!s && !nothingToSave(s);
     },
   };
 }

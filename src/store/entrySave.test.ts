@@ -235,3 +235,10 @@ test("a save whose write did not land is made again by the next, and the entry i
   expect(await r.stored("commonplace/A")).toBe("typed");
   expect(r.save.unsaved()).toBe(false);
 });
+
+test("spaces typed into an entry never stored are nothing to save, and leave the entry saved", async () => {
+  const r = await rig({}, { ekey: "commonplace/New", md: "  \n" });
+  expect(r.save.unsaved()).toBe(false);
+  expect(await r.save.now()).toBe(true);
+  expect(r.writes).toEqual([]);
+});

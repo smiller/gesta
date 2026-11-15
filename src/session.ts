@@ -465,8 +465,11 @@ export function startSession(opts: SessionOptions): Session {
     copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn’t copy the link");
   }
   window.addEventListener("hashchange", () => { save.leave(openHash); });
-  window.addEventListener("beforeunload", () => { save.now(); });
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") save.now(); });
+  /* every key owed is written again too, not only the entry on screen
+     (pin: entries.test › the keys owed are written again) */
+  const owedOut = (): void => { save.now(); layer.retryOwed(); };
+  window.addEventListener("beforeunload", owedOut);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") owedOut(); });
   /* a view that is not editable never holds the keys, so its own keymap
      never sees Escape (pin: reader › Escape after the hit) */
   if (opts.readOnly) document.addEventListener("keydown", (e) => {

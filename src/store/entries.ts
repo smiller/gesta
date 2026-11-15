@@ -30,6 +30,12 @@ export interface EntryLayer {
   setEntry(ekey: string, md: string): Promise<boolean>;
   /* why the key's last write did not land; nothing once one lands */
   writeError(ekey: string): unknown;
+  /* the key's last write here did not land, and writing it again could:
+     not one refused for another tab's change, which a reload alone clears
+     (pin: entries.test › a write refused for another tab's change owes nothing) */
+  owes(ekey: string): boolean;
+  /* each key owed written again, once (pin: entries.test › the keys owed are written again) */
+  retryOwed(): Promise<void>;
   removeEntry(ekey: string): Promise<boolean>;
   /* `edit` answers null when it changes nothing */
   rewriteEntry(ekey: string, edit: (md: string) => string | null): Promise<Rewrite>;
@@ -127,6 +133,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
     delete cache[ekey];
     unlanded.delete(ekey);
+    writeErrors.delete(ekey);
     notices.removed(ekey);
   }
   function removeEntry(ekey: string): Promise<boolean> {
@@ -149,7 +156,19 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     notices.landed(ekey);
     opts.announce?.(ekey);
     opts.onLanded?.(ekey);
+    /* a landing says the store takes writes again */
+    if (unlanded.size) void retryOwed();
     return true;
+  }
+  const owes = (ekey: string): boolean => unlanded.has(ekey) && !isStale(writeErrors.get(ekey));
+  const retrying = new Set<string>();
+  function retryOwed(): Promise<void> {
+    const keys = [...unlanded].filter((k) => owes(k) && !retrying.has(k));
+    for (const k of keys) retrying.add(k);
+    /* asked again at its turn in the key's queue: a delete queued ahead of
+       it stands (pin: entries.test › a retry whose key is deleted) */
+    const again = (k: string): Promise<boolean> => persistEntry(k, () => (k in cache && owes(k) ? store.set(k, cache[k]) : Promise.resolve(GONE)));
+    return Promise.all(keys.map((k) => again(k).finally(() => retrying.delete(k)))).then(() => {});
   }
   /* PUT THE CACHE BACK: a refused write left there would go out over the
      backup folder at the next run (pin: entries.test › a stale write
@@ -168,7 +187,12 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     writeErrors.set(ekey, err);
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
     else if (isDel) notices.stuckIdle("couldn’t delete — reload", err);
-    else { unlanded.add(ekey); notices.stuck("not saved", err, ekey); }
+    else {
+      /* a key deleted since owes nothing: retried, it wrote the deleted
+         entry back (pin: entries.test › a retry whose key is deleted) */
+      if (saveSeq[ekey] === seqAt) unlanded.add(ekey);
+      notices.stuck("not saved", err, ekey);
+    }
     return false;
   }
   function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {
@@ -179,6 +203,8 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   }
   function clear(): Promise<void> {
     for (const k of Object.keys(cache)) delete cache[k];
+    unlanded.clear();
+    writeErrors.clear();
     return store.clear();
   }
   /* one row into the cache. Additive and idempotent: a key already held is
@@ -236,7 +262,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     }).then(() => { warmed = !storeReadFailed; warmLanded(); });
   }
   return {
-    cache, saveSeq, entryMd, setEntry, writeError: (ekey: string) => writeErrors.get(ekey), removeEntry, rewriteEntry, persistEntry, primeEntry, warm, clear,
+    cache, saveSeq, entryMd, setEntry, writeError: (ekey: string) => writeErrors.get(ekey), owes, retryOwed, removeEntry, rewriteEntry, persistEntry, primeEntry, warm, clear,
     storedKeys: () => store.keys(), takeNotice,
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },
