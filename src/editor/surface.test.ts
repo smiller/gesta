@@ -8,7 +8,7 @@ import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
 
 interface Fake extends Surface { caretAt: number; seen: boolean; top: number | null; text: string }
 
-function world(y = 0) {
+function world(y = 0, standing = { pin: false }) {
   const log: string[] = [];
   const built: Fake[] = [];
   const pins: string[] = [], released: number[] = [];
@@ -46,6 +46,7 @@ function world(y = 0) {
     },
     pin: (text) => { pins.push(text); return pins.length; },
     releasePin: (gen) => { released.push(gen); },
+    pinned: () => standing.pin,
     onView: (md) => { log.push("view " + md); },
     switched: () => { log.push("switched"); },
   });
@@ -230,6 +231,20 @@ describe("a text the model refuses", () => {
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
     expect(w.pins).toHaveLength(1);
+  });
+  it("the warning on open never covers a pin already standing", () => {
+    const w = world(0, { pin: true });
+    w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
+    expect(w.pins).toEqual([]);
+  });
+  it("a redraw of the entry on screen neither pins its warning again nor releases it", () => {
+    const w = world();
+    const md = "# Chaucer\n\n::: reference\nroman book and canto\n:::";
+    w.s.show(md, "bookshelf/Chaucer, Geoffrey");
+    w.s.show(md, "bookshelf/Chaucer, Geoffrey", true);
+    w.s.show(md, "bookshelf/Chaucer, Geoffrey");
+    expect(w.pins).toHaveLength(1);
+    expect(w.released).toEqual([]);
   });
   it("a show releases the entry left's fence pin", () => {
     const w = world();

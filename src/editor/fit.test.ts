@@ -131,6 +131,10 @@ test("paired verse beside paired prose: its original reaches the prose's English
   const fit = fitWidth(m(353, 600, { prose: 950, edge: 370 }), null, false)!;
   expect(fit.width).toBe(Math.ceil(370 + 601 + 43.2 + 62.2));
 });
+test("an entry capped below paired prose's measure moves the edge in by half the shortfall, as the prose's columns shrink", () => {
+  expect(fitWidth(m(300, 448, { prose: 950, edge: 370, cap: 900 }), null, false)!.col).toBe(345);
+  expect(fitWidth(m(353, 300, { prose: 950, edge: 370, cap: 900 }), null, false)!.col).toBe(354);
+});
 test("paired prose beside verse: the entry is as wide as the wider of the two, never past the cap", () => {
   expect(fitWidth(m(300, 300, { prose: 950 }), null, false)!.width).toBe(950);
   expect(fitWidth(m(300, 300, { prose: 950 }), null, false)!.col).toBe(301);

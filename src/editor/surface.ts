@@ -63,6 +63,7 @@ export interface SurfaceOptions {
   /* 0 when nothing was pinned */
   pin: (text: string) => number;
   releasePin: (gen: number) => void;
+  pinned: () => boolean;
   onView: (md: boolean) => void;
   switched: () => void;
 }
@@ -101,13 +102,17 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   /* the entry's refused fences and its directives' trouble, pinned when it
      is drawn: told only on the switch back, they were never seen by a
      reader who did not edit the source (pin: surface.test › an entry opened
-     pins its refused fences) */
-  function pinTold(doc: Node): void {
+     pins its refused fences). On opening it never covers a pin standing: it
+     hid a "not saved" (pin: surface.test › the warning on open never covers) */
+  function pinTold(doc: Node, opening: boolean): void {
+    if (opening && opts.pinned()) return;
     const refused = fenceRefusals(doc);
     const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(ekey, directivesIn(doc))];
     if (told.length) fencePin = opts.pin(told.join("\n"));
   }
-  function show(md: string, key: string, keepView = false): void {
+  /* whether the show is of another entry than the one on screen, the view
+     it opens in settled */
+  function arrived(key: string, keepView: boolean): boolean {
     /* the release is told, as the force was: told only of the force, a
        view shown forced stayed shown after it ended (pin: grid › the next entry after a refused switch) */
     if (forced) { mdView = readerView; forced = false; opts.onView(mdView); }
@@ -115,32 +120,39 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        entry drawn again or renamed keeps the view chosen
        (pin: surface.test › a show of another entry is in the rendered view)
        (pin: surface.test › a renamed entry) */
-    const another = key !== ekey && !keepView;
+    const fresh = key !== ekey, another = fresh && !keepView;
     if (another && mdView) { mdView = false; opts.onView(false); }
     ekey = key;
+    return fresh;
+  }
+  function show(md: string, key: string, keepView = false): void {
+    const fresh = arrived(key, keepView);
     /* the carets and a pinned fence refusal belong to the entry left
-       (pin: surface.test › a show releases the entry left's fence pin) */
+       (pin: surface.test › a show releases the entry left's fence pin); a
+       redraw of the entry on screen keeps its warning, and pins it no more
+       (pin: surface.test › a redraw of the entry on screen) */
     carets.rendered = carets.source = null; placedAt = null;
-    if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
+    if (fresh && fencePin) { opts.releasePin(fencePin); fencePin = 0; }
     if (mdView) { mount(() => build.source(md)); return; }
     let doc;
     try { doc = parseMarkdown(md); }
-    catch (err) {
-      /* not edited as a document — an editor over a lossy parse would save
-         the loss — but as source: the switch back parses it again
-         (pin: grid › the faulty entry opened) */
-      console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
-      /* PINNED, released by the next show: a whisper was covered by the
-         entry count before it was read (pin: grid › the faulty entry opened) */
-      fencePin = refusedPin(err);
-      readerView = mdView; forced = true;
-      mdView = true;
-      mount(() => build.source(md));
-      opts.onView(true);
-      return;
-    }
+    catch (err) { shownForced(md, err); return; }
     mount(() => build.rendered(doc));
-    pinTold(doc);
+    if (fresh) pinTold(doc, true);
+  }
+  /* not edited as a document — an editor over a lossy parse would save
+     the loss — but as source: the switch back parses it again
+     (pin: grid › the faulty entry opened) */
+  function shownForced(md: string, err: unknown): void {
+    console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
+    /* PINNED, released by the next show: a whisper was covered by the
+       entry count before it was read (pin: grid › the faulty entry opened) */
+    if (fencePin) opts.releasePin(fencePin);
+    fencePin = refusedPin(err);
+    readerView = mdView; forced = true;
+    mdView = true;
+    mount(() => build.source(md));
+    opts.onView(true);
   }
   /* a MOVED caret retires the other view's hold
      (pin: source view › the caret moved in the source, ⌃⌘M back)
@@ -209,7 +221,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     mdView = false;
     mount(() => build.rendered(doc));
     if (fencePin) { opts.releasePin(fencePin); fencePin = 0; }
-    pinTold(doc);
+    pinTold(doc, false);
     return true;
   }
   function switchTo(md: boolean): void {

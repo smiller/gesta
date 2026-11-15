@@ -92,10 +92,14 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
      good answer is left standing (pin: fit.test › a settle narrows again, and
      an entry the layout cannot place is no answer) */
   if (!m.floor) return null;
-  const c1 = Math.max(Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK, Math.ceil(m.edge ?? 0));
+  const own = Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK;
   const c2 = Math.ceil(m.c2) + FIT_SLACK;
   const held = growOnly ? prev : null, kept = held?.col ?? null;
-  const width = entryWidth(m, c1, c2, held), room = width - m.gap - m.frame;
+  const width = entryWidth(m, Math.max(own, Math.ceil(m.edge ?? 0)), c2, held), room = width - m.gap - m.frame;
+  /* capped below paired prose's measure, the prose's two columns shrink
+     alike, and its English starts half the shortfall in (pin: fit.test ›
+     an entry capped below paired prose's measure) */
+  const c1 = Math.max(own, Math.round((m.edge ?? 0) - Math.max(0, (m.prose ?? 0) - width) / 2));
   if (m.whole) return { width, col: wholeCol(room, c1, c2, kept) };
   return { width, col: keptCol(splitCol(room, c1, c2), room, c2, kept) };
 }

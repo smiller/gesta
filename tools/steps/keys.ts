@@ -67,7 +67,7 @@ async function bookmarkLinkPressed(): Promise<void> {
   await R.setSource(page, "one\n\ntwo\n\n```\nx = 1\ny = 2\n```\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n");
   await view(false);
   await R.waitCorner(page, "saved");
-  await jump(page, 1500);   /* every save landed first: a whisper of theirs stood over Tab's */
+  await landed(page, 1500);   /* every save landed first: a whisper of theirs stood over Tab's */
   /* clicked until the caret stands in the word: a click measured while the
      page settled after a view switch landed at the entry's end
      (pin: where the keys go › Tab held in a quote) */

@@ -24,3 +24,25 @@ never edited the source never saw it either.
   in a journal day quoting fence syntax, is escaped by hand.
 - Played in Helium: the section "told on open", the approved run's only
   change.
+
+## The batch's review and scan (1cb88ee..3b7eab6)
+
+Review 166,688 tokens, scan 131,426 (transcripts).
+
+- The warning on open shared the corner's one pin slot: it could cover a
+  standing "not saved" and leave nothing when released, and every redraw of
+  the entry pinned it again. It no longer covers a pin standing, and a
+  redraw of the entry on screen neither pins it again nor releases it
+  (asked). Each pin already had its own id: the review was wrong there.
+- The save layer: a refusal for another tab's change on a key deleted since
+  is told nowhere, as the other failure was (an old test's assertion
+  changed with it); a failure is recorded only for a key not deleted since;
+  a key a landing retried in vain waits for the next retry asked for
+  (asked). A retry already skips a key whose write landed first.
+- The columns in a window narrower than paired prose's measure: the edge
+  moves in by half the shortfall; the Helium section reads 900px too.
+- The Helium kit: `jump`'s comment says what it does not wait for; the
+  wait for saves at keys.ts:70 is `landed`; the selection watch's
+  "unmoved" asked of the watch itself.
+- Scan candidate 1 (the entry layer's queue out of its interface, one
+  record a key) to grill next; 2 and 3 wait.

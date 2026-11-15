@@ -157,19 +157,28 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     opts.announce?.(ekey);
     opts.onLanded?.(ekey);
     /* a landing says the store takes writes again */
-    if (unlanded.size) void retryOwed();
+    if (unlanded.size) void retried(true);
     return true;
   }
   const owes = (ekey: string): boolean => unlanded.has(ekey) && !isStale(writeErrors.get(ekey));
   const retrying = new Set<string>();
-  function retryOwed(): Promise<void> {
-    const keys = [...unlanded].filter((k) => owes(k) && !retrying.has(k));
+  /* a key a landing retried in vain waits for the next retry asked for: on
+     every landing, a store too full for it was written again and again
+     while smaller entries saved (pin: entries.test › a key a landing
+     retried that failed again) */
+  const held = new Set<string>();
+  const due = (k: string): boolean => owes(k) && !retrying.has(k) && !held.has(k);
+  function retried(onLanding: boolean): Promise<void> {
+    if (!onLanding) held.clear();
+    const keys = [...unlanded].filter(due);
     for (const k of keys) retrying.add(k);
     /* asked again at its turn in the key's queue: a delete queued ahead of
        it stands (pin: entries.test › a retry whose key is deleted) */
     const again = (k: string): Promise<boolean> => persistEntry(k, () => (k in cache && owes(k) ? store.set(k, cache[k]) : Promise.resolve(GONE)));
-    return Promise.all(keys.map((k) => again(k).finally(() => retrying.delete(k)))).then(() => {});
+    const settle = (k: string) => (landedNow: boolean): void => { retrying.delete(k); if (onLanding && !landedNow) held.add(k); };
+    return Promise.all(keys.map((k) => again(k).then(settle(k)))).then(() => {});
   }
+  const retryOwed = (): Promise<void> => retried(false);
   /* PUT THE CACHE BACK: a refused write left there would go out over the
      backup folder at the next run (pin: entries.test › a stale write
      restores the cache). Guarded by the counter — a delete mutates the
@@ -178,13 +187,14 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
      restores it too: its row survives in the store (pin: entries.test › a
      stale delete restores the cache) */
   function staleRefusal(ekey: string, err: StaleWriteError, seqAt: number | undefined, isDel: boolean): void {
-    if (saveSeq[ekey] === seqAt) cache[ekey] = err.stored;
+    if (saveSeq[ekey] !== seqAt) return;
+    cache[ekey] = err.stored;
     if (isDel) { notices.stuck("not deleted — changed in another tab, reload", err, ekey); return; }
     unlanded.add(ekey);
     notices.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
   }
   function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
-    writeErrors.set(ekey, err);
+    if (saveSeq[ekey] === seqAt) writeErrors.set(ekey, err);
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
     else if (isDel) notices.stuckIdle("couldn’t delete — reload", err);
     /* a key deleted since owes nothing and is told nothing: retried, it

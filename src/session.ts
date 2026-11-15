@@ -214,6 +214,7 @@ export function startSession(opts: SessionOptions): Session {
     window: viewport,
     places: keeper,
     pin: (text) => opts.pin?.(text) || 0,
+    pinned: () => !!opts.pinned?.(),
     releasePin: (gen) => opts.releasePin?.(gen),
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },

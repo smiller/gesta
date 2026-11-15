@@ -14,6 +14,7 @@ declare global {
     __releaseTyped: () => void;
     __selSeen: boolean;
     __selFrom: unknown[];
+    __selUnmoved: () => boolean;
     __persistAsked: boolean;
     __clip: [Clipboard["write"], Clipboard["writeText"], Document["execCommand"]];
     __idb: [IDBObjectStore["put"], IDBObjectStore["add"]];

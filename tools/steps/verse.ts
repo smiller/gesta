@@ -402,8 +402,15 @@ section("prose and verse paired", async () => {
   });
   await go("bookshelf/Dante/Vita%20Nuova/12");
   await still(page);
-  await log("the two Englishes", await page.evaluate(() => {
-    const english = (sel: string) => Math.round(document.querySelector(`#editor ${sel} > .vpair > .vcell + .vcell`)!.getBoundingClientRect().left);
-    return { prose: english(".prose"), verse: english(".verse"), oneColumn: english(".prose") === english(".verse") };
-  }));
+  const englishes = () => page.evaluate(() => {
+    const english = (sel: string) => document.querySelector(`#editor ${sel} > .vpair > .vcell + .vcell`)!.getBoundingClientRect().left;
+    /* within a pixel: the shrunken prose's columns stand at fractions of one */
+    return { prose: Math.round(english(".prose")), oneColumn: Math.abs(english(".prose") - english(".verse")) < 1 };
+  });
+  await log("the two Englishes", await englishes());
+  /* a window narrower than paired prose's measure: its columns shrink, and the verse's English with them */
+  await page.setViewportSize({ width: 900, height: 600 });
+  await still(page);
+  await log("the two Englishes in a narrower window", await englishes());
+  await page.setViewportSize({ width: 1000, height: 600 });
 });

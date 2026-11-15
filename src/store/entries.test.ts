@@ -107,7 +107,7 @@ test("a stale restore is guarded by the counter: a removal in between wins", asy
   await Promise.all([p, removed]);
   expect("k" in layer.cache).toBe(false);   // the stale arm did not land "theirs" again
   expect(await mem.get("k")).toBe(null);
-  expect(calls.stuck[0][0]).toMatch(/changed in another tab/);
+  expect(calls.stuck).toEqual([]);   // the entry is gone: its refusal is told nowhere
 });
 
 test("a plain rejected delete reports unkeyed and idle-deferred, never into the ledger", async () => {
@@ -475,4 +475,49 @@ test("a save that fails after its entry was deleted is told nowhere: no pin wait
   expect(calls.removed).toEqual(["k"]);
   expect(calls.stuck).toEqual([]);
   expect(layer.owes("k")).toBe(false);
+  expect(layer.writeError("k")).toBeUndefined();
+});
+
+test("a save refused for another tab's change after its entry was deleted is told nowhere either", async () => {
+  let refuse: (() => void) | null = null;
+  const { layer, calls } = fresh((mem) => ({ ...mem, set: () => new Promise<void>((_, rej) => { refuse = () => rej(staleWriteErr("theirs", "typed")); }) }));
+  await layer.warm();
+  const saved = layer.setEntry("k", "typed");
+  await vi.waitFor(() => expect(refuse).not.toBeNull());
+  const gone = layer.removeEntry("k");
+  refuse!();
+  await Promise.all([saved, gone]);
+  expect(calls.stuck).toEqual([]);
+  expect(layer.owes("k")).toBe(false);
+  expect(layer.writeError("k")).toBeUndefined();
+});
+
+test("a key with a write already out is not written again by a retry", async () => {
+  const sets: string[] = [];
+  let hold: (() => void) | null = null, failing = true;
+  const { layer } = fresh((mem) => ({ ...mem, set: (k, md) => { sets.push(k); if (failing) return Promise.reject(new Error("quota")); return new Promise<void>((done) => { hold = () => { void mem.set(k, md).then(done); }; }); } }));
+  await layer.warm();
+  await layer.setEntry("a", "x");
+  failing = false;
+  const out = layer.setEntry("a", "x");
+  await vi.waitFor(() => expect(hold).not.toBeNull());
+  const retried = layer.retryOwed();
+  hold!();
+  await Promise.all([out, retried]);
+  expect(sets).toEqual(["a", "a"]);
+});
+
+test("a key a landing retried that failed again waits for the next retry asked for, not the next landing", async () => {
+  const sets: string[] = [];
+  const { layer } = fresh((mem) => ({ ...mem, set: (k, md) => { sets.push(k); return k === "big" ? Promise.reject(new Error("quota")) : mem.set(k, md); } }));
+  await layer.warm();
+  await layer.setEntry("big", "x");
+  await layer.setEntry("small", "1");
+  await vi.waitFor(() => expect(sets.filter((k) => k === "big")).toHaveLength(2));
+  await layer.setEntry("small", "2");
+  await layer.setEntry("small", "3");
+  await new Promise((r) => setTimeout(r, 10));
+  expect(sets.filter((k) => k === "big")).toHaveLength(2);
+  await layer.retryOwed();
+  expect(sets.filter((k) => k === "big")).toHaveLength(3);
 });

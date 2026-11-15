@@ -107,6 +107,7 @@ export const watchSelection = (page: Page) => page.evaluate(() => {
   const at = () => { const s = getSelection(); return [s.anchorNode, s.anchorOffset, s.focusNode, s.focusOffset]; };
   window.__selFrom = at();
   window.__selSeen = false;
+  window.__selUnmoved = () => at().every((x, i) => x === window.__selFrom[i]);
   const moved = () => { if (at().some((x, i) => x !== window.__selFrom[i])) { window.__selSeen = true; document.removeEventListener("selectionchange", moved); } };
   document.addEventListener("selectionchange", moved);
 });
@@ -117,7 +118,7 @@ export const selectionMoved = (page: Page, ms = 1000) => page.waitForFunction(()
 async function placed<T>(page: Page, place: () => Promise<T>): Promise<T> {
   await watchSelection(page);
   const out = await place();
-  const unmoved = await page.evaluate(() => { const s = getSelection(); return [s.anchorNode, s.anchorOffset, s.focusNode, s.focusOffset].every((x, i) => x === window.__selFrom[i]); });
+  const unmoved = await page.evaluate(() => window.__selUnmoved());
   if (!unmoved) await selectionMoved(page);
   return out;
 }

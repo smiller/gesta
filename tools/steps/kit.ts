@@ -54,8 +54,9 @@ export async function searchFor(p: Page, words: string) {
   await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
   await p.keyboard.type(words);
 }
-/* the page's timers moved on at once by what a sleep of ms would have let
-   pass: the run's clock is installed, so the wait is a jump */
+/* every page timer due within ms fired at once, the run's clock being
+   installed; what those timers start (a store write, a fade they schedule)
+   runs after, so a wait for that is a wait on its condition */
 export async function jump(p: Page, ms: number) {
   await p.clock.fastForward(ms);
   await rest(p);
