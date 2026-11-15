@@ -14,12 +14,12 @@ export function frameTimes(events: Event[]): string[] {
   return out;
 }
 
-/* each frame's items done, in progress and unstarted, a moved item counted
-   once, where it started */
+/* each frame's items done, in progress or paused, and unstarted, a moved
+   item counted once, where it started */
 const DONE = new Set(["done", "done, spawned open"]);
 function standing(items: Item[]): [number, number, number] {
   const own = items.filter((i) => !i.movedFrom);
-  return [own.filter((i) => DONE.has(i.status)).length, own.filter((i) => i.status === "in progress").length, own.filter((i) => i.status === "unstarted").length];
+  return [own.filter((i) => DONE.has(i.status)).length, own.filter((i) => i.status === "in progress" || i.status === "paused").length, own.filter((i) => i.status === "unstarted").length];
 }
 const BAR = 26, TALL = 90;
 function strip(snaps: Item[][], times: string[]): string {

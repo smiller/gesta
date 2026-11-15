@@ -26,8 +26,11 @@ test("each item's label is worked out from its events", () => {
   const it = byId();
   expect([it.A1.status, it["A1.1"].status, it.S1.status, it.S3.status, it.B1.status, it["A1.2"].status]).toEqual(
     ["done, spawned open", "done", "in progress", "moved", "unstarted", "dropped"]);
-  expect(it["A1.2.1"].status).toBe("in progress");
+  expect(it["A1.2.1"].status).toBe("paused");
   expect(it["A1.2.1"].stopped?.at).toBe(at("12:20"));
+  expect(byId("12:15")["A1.2.1"].status).toBe("in progress");
+  const resumed: Event[] = [...day, { at: at("13:20"), ev: "start", id: "A1.2.1" }];
+  expect(replay(resumed).find((i) => i.id === "A1.2.1")!.status).toBe("in progress");
   expect(it["A1.1"].reported).toEqual({ at: at("09:35"), approx: true });
   expect(it.A1.commits).toEqual(["d88609d"]);
 });
@@ -54,5 +57,5 @@ test("items carried in are the starting items, in the order reported; a moved on
   expect([it.S3.movedTo, it.B1.movedFrom, it.B1.title]).toEqual(["B1", "S3", "⌃⌘G cycling"]);
   const c = counts(items);
   expect(c.starting).toEqual({ total: 3, byList: { A: 1, S: 2 }, byStatus: { "done, spawned open": 1, "in progress": 1, moved: 1 } });
-  expect(c.added).toEqual({ total: 3, byList: { A: 2, S: 1 }, byStatus: { done: 1, dropped: 1, "in progress": 1 } });
+  expect(c.added).toEqual({ total: 3, byList: { A: 2, S: 1 }, byStatus: { done: 1, dropped: 1, paused: 1 } });
 });

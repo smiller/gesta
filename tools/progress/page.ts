@@ -9,10 +9,10 @@ import { replay, counts, type Event, type Item, type List, type Stamp, type Stat
 const LISTS: List[] = ["A", "S", "L", "B"];
 const NAME: Record<List, string> = { A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions" };
 const CHIP: Record<Status, [string, string]> = {
-  "unstarted": ["s-open", "unstarted"], "in progress": ["s-prog", "in progress"], "done": ["s-done", "done"],
+  "unstarted": ["s-open", "unstarted"], "in progress": ["s-prog", "in progress"], "paused": ["s-paused", "paused"], "done": ["s-done", "done"],
   "done, spawned open": ["s-part", "done · spawned open"], "moved": ["s-moved", "moved"], "dropped": ["s-dropped", "dropped"],
 };
-const ROW: Record<Status, string> = { "unstarted": "unstarted", "in progress": "now", "done": "done", "done, spawned open": "part", "moved": "moved", "dropped": "dropped" };
+const ROW: Record<Status, string> = { "unstarted": "unstarted", "in progress": "now", "paused": "paused", "done": "done", "done, spawned open": "part", "moved": "moved", "dropped": "dropped" };
 const esc = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const hm = (s?: Stamp): string => (s ? (s.approx ? "≈" : "") + s.at.slice(11, 16) : "—");
 const lower = (l: List): string => NAME[l].toLowerCase();
@@ -44,7 +44,7 @@ function chips(it: Item, d: Drawn): string {
   return isNew + status + was + (it.starting ? '<span class="chip s-start">starting item</span>' : "");
 }
 const rowClass = (it: Item, depth: number): string => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean).join(" ");
-const open = (s: Status): boolean => s === "unstarted" || s === "in progress";
+const open = (s: Status): boolean => s === "unstarted" || s === "in progress" || s === "paused";
 /* reported (a carried item's before the day), started, ended */
 const times = (it: Item): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), open(it.status) ? "—" : hm(it.ended)];
 function label(it: Item): string {

@@ -30,7 +30,7 @@ export function nextId(events: Event[], list: List, parent?: string): string {
 export function beginning(last: Event[], at: string): Event[] {
   const next: Partial<Record<List, number>> = {};
   for (const l of LISTS) { const n = nextRoot(last, l); if (n > 1) next[l] = n; }
-  const open = replay(last).filter((i) => i.status === "unstarted" || i.status === "in progress");
+  const open = replay(last).filter((i) => i.status === "unstarted" || i.status === "in progress" || i.status === "paused");
   const carried = new Set(open.map((i) => i.id));
   const under = (p?: string) => (p && carried.has(p) ? { parent: p } : {});
   return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent) }))];

@@ -8,7 +8,7 @@ export type Event = Base & (
   | { ev: "done"; id: string; commits?: string[]; note?: string }
   | { ev: "move"; id: string; to: string; list: List }
 );
-export type Status = "unstarted" | "in progress" | "done" | "done, spawned open" | "moved" | "dropped";
+export type Status = "unstarted" | "in progress" | "paused" | "done" | "done, spawned open" | "moved" | "dropped";
 export interface Item {
   id: string; list: List; title: string; parent?: string;
   /* on the day's list when it began: carried in, or moved from an item that was */
@@ -39,14 +39,17 @@ function changed(it: Item, e: Event): void {
   else if (e.ev === "done") { it.ended = stamp(e); it.commits = e.commits ?? []; it.note = e.note ?? it.note; it.status = "done"; }
   else if (e.ev === "drop") { it.ended = stamp(e); it.note = e.note; it.status = "dropped"; }
 }
-const stillOpen = (s: Status): boolean => s === "unstarted" || s === "in progress";
+/* moved, or started and so in progress or, stopped since, paused */
+function begun(it: Item): Status {
+  if (it.movedTo) return "moved";
+  if (it.status !== "unstarted" || !it.started) return it.status;
+  return it.stopped ? "paused" : "in progress";
+}
+const stillOpen = (s: Status): boolean => s === "unstarted" || s === "in progress" || s === "paused";
 function settled(items: Items): void {
   const all = [...items.values()];
   const below = (id: string): Item[] => all.filter((i) => i.parent === id).flatMap((c) => [c, ...below(c.id)]);
-  for (const it of all) {
-    if (it.movedTo) it.status = "moved";
-    else if (it.status === "unstarted" && it.started) it.status = "in progress";
-  }
+  for (const it of all) it.status = begun(it);
   for (const it of all) if (it.status === "done" && below(it.id).some((c) => stillOpen(c.status))) it.status = "done, spawned open";
 }
 const opens = (e: Event): boolean => e.ev === "carry" || e.ev === "add" || e.ev === "move";

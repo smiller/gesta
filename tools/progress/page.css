@@ -38,7 +38,7 @@ tr.sub .item::before { content: ""; position: absolute; top: -8px; height: 18px;
   border-left: 1.5px solid var(--line); border-bottom: 1.5px solid var(--line); border-bottom-left-radius: 4px; }
 .swatch { display: inline-block; width: 26px; height: 12px; border-radius: 3px; background: var(--start); border: 1px solid var(--rule); vertical-align: -1px; }
 .chip { font-size: 11px; font-weight: 600; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; flex: none; }
-.s-done { color: var(--done); } .s-part { color: var(--part); } .s-open { color: var(--open); } .s-prog { color: var(--prog); } .chip.s-prog { background: color-mix(in srgb, var(--prog) 14%, transparent); } .s-moved { color: var(--moved); } .s-dropped { color: var(--dropped); }
+.s-done { color: var(--done); } .s-part { color: var(--part); } .s-open { color: var(--open); } .s-prog { color: var(--prog); } .chip.s-prog { background: color-mix(in srgb, var(--prog) 14%, transparent); } .s-paused { color: var(--prog); } .chip.s-paused { border-style: dashed; } .s-moved { color: var(--moved); } .s-dropped { color: var(--dropped); }
 tr.done .label { text-decoration: line-through; text-decoration-color: var(--done); text-decoration-thickness: 1.5px; color: var(--muted); }
 tr.dropped .label { text-decoration: line-through; color: var(--dropped); }
 /* a moved item is read where it moved to, so it is struck through here like a done one */
