@@ -125,6 +125,12 @@ test("paired prose takes two 24em columns and its gap, with its frame: 908px at 
   expect(proseWidth(18, 0)).toBe(908);
   expect(proseWidth(18, 42.6)).toBe(Math.ceil(864 + 43.2 + 42.6));
 });
+test("paired verse beside paired prose: its original reaches the prose's English, so the two Englishes stand in one column; a wider original keeps its width", () => {
+  expect(fitWidth(m(353, 448, { prose: 950, edge: 370 }), null, false)!.col).toBe(370);
+  expect(fitWidth(m(400, 448, { prose: 950, edge: 370 }), null, false)!.col).toBe(401);
+  const fit = fitWidth(m(353, 600, { prose: 950, edge: 370 }), null, false)!;
+  expect(fit.width).toBe(Math.ceil(370 + 601 + 43.2 + 62.2));
+});
 test("paired prose beside verse: the entry is as wide as the wider of the two, never past the cap", () => {
   expect(fitWidth(m(300, 300, { prose: 950 }), null, false)!.width).toBe(950);
   expect(fitWidth(m(300, 300, { prose: 950 }), null, false)!.col).toBe(301);

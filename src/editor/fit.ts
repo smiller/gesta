@@ -45,6 +45,11 @@ export interface Measured {
   whole?: boolean;
   /* the width paired prose on the entry asks for */
   prose?: number;
+  /* the original column that puts the verse's English where paired prose's
+     starts: a fitted original left the verse's English 16px short of the
+     prose's (MEASURED, Vita Nuova 12) (pin: fit.test › paired verse beside
+     paired prose) */
+  edge?: number;
 }
 export interface Fit { width: number; col: number | null }
 
@@ -87,7 +92,7 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
      good answer is left standing (pin: fit.test › a settle narrows again, and
      an entry the layout cannot place is no answer) */
   if (!m.floor) return null;
-  const c1 = Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK;
+  const c1 = Math.max(Math.max(Math.ceil(m.c1), MIN_COL) + FIT_SLACK, Math.ceil(m.edge ?? 0));
   const c2 = Math.ceil(m.c2) + FIT_SLACK;
   const held = growOnly ? prev : null, kept = held?.col ?? null;
   const width = entryWidth(m, c1, c2, held), room = width - m.gap - m.frame;
@@ -180,18 +185,19 @@ export function measure(host: HTMLElement): Measured | number | null {
   const scroller = document.scrollingElement || document.documentElement;
   const held = scroller.scrollTop;
   const cols: Columns = { c1: 0, c2: 0, frame: 0, whole: false, gapRow: null };
-  let floor = 0, gap = 0;
+  let floor = 0, gap = 0, edge: number | undefined;
   host.classList.add("fitting");
   try {
     floor = host.getBoundingClientRect().width;
     for (const b of verse) readBlock(b, host, cols);
     /* the gap is the row's, not the block's, read once off the first pair */
     if (cols.gapRow) gap = parseFloat(getComputedStyle(cols.gapRow).columnGap) || 0;
+    edge = proseEdge(host, verse[0]);
   } finally {
     host.classList.remove("fitting");
     scroller.scrollTop = held;
   }
-  return { floor, c1: cols.c1, c2: cols.c2, gap, frame: cols.frame, cap: fitCap(), whole: cols.whole, prose };
+  return { floor, c1: cols.c1, c2: cols.c2, gap, frame: cols.frame, cap: fitCap(), whole: cols.whole, prose, edge };
 }
 /* the block's own box, and in a book that includes the line-number
    gutter, so a four-digit number sits inside the fitted width; and
@@ -227,6 +233,14 @@ function readBlock(b: HTMLElement, host: HTMLElement, cols: Columns): void {
   b.querySelectorAll<HTMLElement>(":scope > .vrow:not(.vpair)").forEach((r) => { cols.c1 = Math.max(cols.c1, r.getBoundingClientRect().width); });
 }
 
+/* the prose's English edge less the verse's own inset (its line numbers)
+   ahead of its original, none where the entry has no paired prose */
+function proseEdge(host: HTMLElement, verse: HTMLElement): number | undefined {
+  const prose = pairedBlocksIn(host, "div.prose")[0];
+  const italian = (b: HTMLElement): number => b.querySelector(":scope > .vpair > *")!.getBoundingClientRect().left;
+  if (!prose) return undefined;
+  return parseFloat(getComputedStyle(prose).fontSize) * PROSE_COLUMN_EM - (italian(verse) - italian(prose));
+}
 /* the widest paired prose block's ask: its columns at their measure, and its
    own box with a quotation's around it, as a verse block pays them */
 function proseNeed(host: HTMLElement): number {

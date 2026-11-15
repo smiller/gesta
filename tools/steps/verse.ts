@@ -392,3 +392,18 @@ async function dragText(from: string, at: number, to: string, end: number): Prom
   await page.mouse.move(pts.q.x, pts.q.y, { steps: 8 });
   await page.mouse.up();
 }
+
+section("prose and verse paired", async () => {
+  /* a prose block and a verse block paired in one entry: the verse's English starts where the prose's does, its original at least as wide as that needs */
+  await writeAll({
+    "bookshelf/Dante": "# Dante",
+    "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
+    "bookshelf/Dante/Vita Nuova/12": "# Vita Nuova, 12\n\n::: prose\nOra, tornando al proposito, dico che poi che la mia beatitudine mi fue negata, mi giunse tanto dolore, che, partito me da le genti, in solinga parte andai a bagnare la terra d’amarissime lagrime. | And now, resuming my discourse, I will go on to relate that when, for the first time, this beatitude was denied me, I fell into such grief that, parting myself from others, I went into a lonely place to bathe the ground with most bitter tears.\n:::\n\n::: verse\nBallata, i’ voi che tu ritrovi Amore, | Song, ’tis my will that thou do seek out Love,\ne con lui vade a madonna davante, | And go with him where my dear lady is;\n:::",
+  });
+  await go("bookshelf/Dante/Vita%20Nuova/12");
+  await still(page);
+  await log("the two Englishes", await page.evaluate(() => {
+    const english = (sel: string) => Math.round(document.querySelector(`#editor ${sel} > .vpair > .vcell + .vcell`)!.getBoundingClientRect().left);
+    return { prose: english(".prose"), verse: english(".verse"), oneColumn: english(".prose") === english(".verse") };
+  }));
+});

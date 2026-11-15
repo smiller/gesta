@@ -571,6 +571,9 @@ column marks: arrived at commonplace/Samson: {"cursor":"at a line's start"}
 plain verse, from a line's closing stop: {"selected":". Messenger It would burst","marked":[],"refAll":false,"quoted":["[*Samson*](…):","","> ::: verse 1555","> **Messenger**","> It would burst","> :::"],"cursor":"selected 26","screen":"commonplace/Samson · sel 26 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 column marks: arrived at commonplace/Samson: {"cursor":"selected 26"}
 a split line's rest, from the closing stop of the line it splits: {"selected":". Messenger By Sam","marked":[],"refAll":false,"quoted":["[*Samson*](…):","","> ::: verse 1563","> **Messenger**","> ⟨…⟩By Samson","> :::"],"cursor":"selected 18","screen":"commonplace/Samson · sel 18 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+== prose and verse paired
+prose and verse paired: arrived at bookshelf/Dante/Vita Nuova/12: {"cursor":"at a line's start"}
+the two Englishes: {"prose":521,"verse":521,"oneColumn":true,"cursor":"at a line's start","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == a link to a line
 a link to a line, clicked: {"landed":"three","selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a link to a line, the next click: {"landed":null,"selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
