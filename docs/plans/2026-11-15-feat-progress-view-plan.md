@@ -46,3 +46,18 @@ kept shifting (asked: "I have no idea what we've accomplished").
   numbers corrected the mock-up in one place: A1.2.1.1 is the notices' owed
   record (reported 10:06), A1.2.1.2 the card-copy race (≈10:22).
 - Notes on the page name items by number, never by a description (asked).
+
+## The slideshow (asked)
+
+- A frame at the day's start, every clock half hour after it and at the
+  last event: 12 for today, 09:26 to 14:21. One page: a slider with the
+  frame's time, ← and →, play every 5 seconds, Pause that turns to
+  Resume (and to Play again at the end).
+- Each frame marks a row reported since the frame before "new", a row
+  whose label changed "was …", and each count's change, e.g. (+2).
+- Rows appear where they belong, the tables growing in the middle: the
+  growth is what is watched (asked; open to revisit).
+- A strip above: done, in progress and unstarted at each frame, the
+  frame on screen outlined, a bar a click away.
+- `page.ts --slides`, `tools/progress/slides.ts`; published at its own
+  link on request.
