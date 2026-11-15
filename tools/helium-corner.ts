@@ -31,6 +31,17 @@ await ctx.addInitScript(() => {
     tx.addEventListener("complete", done); tx.addEventListener("error", done); tx.addEventListener("abort", done);
     return put.apply(this, args);
   };
+  window.__selCalls = [];
+  for (const m of ["addRange", "removeAllRanges", "collapse", "setBaseAndExtent", "extend", "empty"] as const) {
+    const was = Selection.prototype[m] as (...a: unknown[]) => void;
+    (Selection.prototype as unknown as Record<string, unknown>)[m] = function (this: Selection, ...a: unknown[]) {
+      const out = was.apply(this, a);
+      const by = (new Error().stack ?? "").split("\n").slice(2, 4).map((l) => l.trim().replace(/\(?file:\/\/\S*\//, "(")).join(" < ");
+      window.__selCalls.push({ m, t: Math.round(performance.now()), len: this.toString().length, by });
+      if (window.__selCalls.length > 8) window.__selCalls.shift();
+      return out;
+    };
+  }
 });
 const page = await ctx.newPage();
 page.on("console", (m) => logs.push(m.type() + ": " + m.text()));

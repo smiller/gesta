@@ -25,7 +25,7 @@ async function settle(page: Page): Promise<void> {
   await page.keyboard.press("Escape").catch(() => {});
 }
 const skipped = (opts: RunOptions, name: string): boolean => !!opts.only && !opts.only.includes(name);
-const firstLine = (e: unknown): string => String(e).split("\n")[0].slice(0, 200);
+const firstLine = (e: unknown): string => String(e).split("\n")[0].slice(0, 2000);
 /* a start that throws fails its own section, not the run */
 async function started(page: Page, name: string): Promise<boolean> {
   try { await settle(page); await freshStart(); return true; }
