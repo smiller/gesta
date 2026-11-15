@@ -1,0 +1,59 @@
+{"at": "2026-11-15T09:26", "ev": "begin", "next": {"A": 2, "S": 8, "L": 3, "B": 1}}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "A1", "list": "A", "title": "The save's tests on the real entry layer (a scan candidate)"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S1", "list": "S", "title": "An unknown or retired directive line is ignored silently"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S2", "list": "S", "title": "Vita Nuova: the verse's English starts left of the prose's"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S3", "list": "S", "title": "⌃⌘G doesn't cycle on a retyped number"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S4", "list": "S", "title": "Vita Nuova: ⌃⌘G counts sentences, ⌃⌘R paragraphs"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S5", "list": "S", "title": "Fold ## sections in journal entries and Commonplaces?"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S6", "list": "S", "title": "Rename the reference directives to say what each does"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "S7", "list": "S", "title": "About 580 lines still say \"page\" in old senses"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "L1", "list": "L", "title": "The README"}
+{"at": "2026-11-15T09:26", "ev": "carry", "id": "L2", "list": "L", "title": "The Help: the Ref button paragraph into sub-bullets"}
+{"at": "2026-11-15T09:29", "ev": "start", "id": "A1"}
+{"at": "2026-11-15T09:35", "ev": "add", "id": "A1.1", "list": "A", "parent": "A1", "title": "Found: a failed write's next save wrote nothing", "approx": true}
+{"at": "2026-11-15T09:40", "ev": "start", "id": "A1.1", "approx": true}
+{"at": "2026-11-15T09:56", "ev": "done", "id": "A1.1", "commits": ["d88609d"]}
+{"at": "2026-11-15T09:56", "ev": "done", "id": "A1", "commits": ["d88609d"]}
+{"at": "2026-11-15T09:56", "ev": "add", "id": "A1.2", "list": "A", "parent": "A1", "title": "Phase review and scan"}
+{"at": "2026-11-15T09:58", "ev": "start", "id": "A1.2"}
+{"at": "2026-11-15T10:02", "ev": "add", "id": "A1.2.1", "list": "A", "parent": "A1.2", "title": "Scan: the layer answers \"owes a write\""}
+{"at": "2026-11-15T10:02", "ev": "add", "id": "A1.2.2", "list": "A", "parent": "A1.2", "title": "Scan: the page-label grammar classifies; the apostrophe checker takes a file"}
+{"at": "2026-11-15T10:06", "ev": "add", "id": "A1.2.1.1", "list": "S", "parent": "A1.2.1", "title": "The notices' own record of owed keys"}
+{"at": "2026-11-15T10:07", "ev": "done", "id": "A1.2", "commits": ["1cb88ee"]}
+{"at": "2026-11-15T10:08", "ev": "start", "id": "A1.2.1"}
+{"at": "2026-11-15T10:22", "ev": "add", "id": "A1.2.1.2", "list": "S", "parent": "A1.2.1", "title": "\"card copy\" Helium race", "approx": true}
+{"at": "2026-11-15T10:25", "ev": "done", "id": "A1.2.1", "commits": ["73d2e57"]}
+{"at": "2026-11-15T10:27", "ev": "drop", "id": "A1.2.2", "note": "skipped, asked; be8c3f6"}
+{"at": "2026-11-15T10:48", "ev": "start", "id": "A1.2.1.2"}
+{"at": "2026-11-15T10:57", "ev": "done", "id": "A1.2.1.2", "commits": ["7a1a2b0"]}
+{"at": "2026-11-15T10:58", "ev": "add", "id": "S8", "list": "S", "title": "Helium fixed waits (your question)", "approx": true}
+{"at": "2026-11-15T11:04", "ev": "move", "id": "L1", "to": "B1", "list": "B"}
+{"at": "2026-11-15T11:04", "ev": "move", "id": "L2", "to": "B2", "list": "B"}
+{"at": "2026-11-15T11:04", "ev": "move", "id": "S3", "to": "B3", "list": "B"}
+{"at": "2026-11-15T11:05", "ev": "start", "id": "S1"}
+{"at": "2026-11-15T11:30", "ev": "add", "id": "S1.1", "list": "S", "parent": "S1", "title": "Found: a false warning on a line opening in inline code", "approx": true}
+{"at": "2026-11-15T11:31", "ev": "start", "id": "S1.1", "approx": true}
+{"at": "2026-11-15T11:40", "ev": "add", "id": "S1.2", "list": "S", "parent": "S1", "title": "You: escape `::: verse -3` in 2 September's entry", "approx": true}
+{"at": "2026-11-15T11:46", "ev": "done", "id": "S1.2", "note": "by hand", "approx": true}
+{"at": "2026-11-15T11:47", "ev": "done", "id": "S1.1", "commits": ["1915dd3"]}
+{"at": "2026-11-15T11:47", "ev": "done", "id": "S1", "commits": ["1915dd3"]}
+{"at": "2026-11-15T11:48", "ev": "start", "id": "S2"}
+{"at": "2026-11-15T12:10", "ev": "done", "id": "S2", "commits": ["a1e41fa"]}
+{"at": "2026-11-15T12:14", "ev": "start", "id": "A1.2.1.1"}
+{"at": "2026-11-15T12:26", "ev": "done", "id": "A1.2.1.1", "commits": ["0ed205c"]}
+{"at": "2026-11-15T12:26", "ev": "add", "id": "A1.3", "list": "A", "parent": "A1", "title": "Batch review and scan"}
+{"at": "2026-11-15T12:30", "ev": "start", "id": "S8", "approx": true}
+{"at": "2026-11-15T13:35", "ev": "add", "id": "S8.1", "list": "S", "parent": "S8", "title": "\"sub-entries\": a click lets a wait run out, once a run"}
+{"at": "2026-11-15T13:39", "ev": "done", "id": "S8", "commits": ["a19e7f3", "9be39e5", "d85aeb9", "3b7eab6"]}
+{"at": "2026-11-15T13:42", "ev": "start", "id": "A1.3", "approx": true}
+{"at": "2026-11-15T13:48", "ev": "add", "id": "A1.3.1", "list": "A", "parent": "A1.3", "title": "Scan: the entry layer's queue out of its interface, one record a key"}
+{"at": "2026-11-15T13:48", "ev": "add", "id": "A1.3.2", "list": "A", "parent": "A1.3", "title": "Scan: the fit's one reading; conventions reads its directives"}
+{"at": "2026-11-15T13:50", "ev": "add", "id": "S8.2", "list": "S", "parent": "S8", "title": "Time a whole verify, before and after"}
+{"at": "2026-11-15T13:52", "ev": "add", "id": "S2.1", "list": "S", "parent": "S2", "title": "Review: apart again in a narrow window", "approx": true}
+{"at": "2026-11-15T13:54", "ev": "start", "id": "S2.1"}
+{"at": "2026-11-15T13:56", "ev": "start", "id": "S8.2", "approx": true}
+{"at": "2026-11-15T14:05", "ev": "stop", "id": "S8.2", "note": "stopped, to run after the fixes", "approx": true}
+{"at": "2026-11-15T14:05", "ev": "add", "id": "B4", "list": "B", "title": "Make progress visible (taken up first, asked)", "approx": true}
+{"at": "2026-11-15T14:15", "ev": "done", "id": "S2.1", "commits": ["12f5ac1"]}
+{"at": "2026-11-15T14:15", "ev": "done", "id": "A1.3", "commits": ["12f5ac1"]}
+{"at": "2026-11-15T14:21", "ev": "start", "id": "B4"}

@@ -1,0 +1,58 @@
+import { test, expect } from "vitest";
+import { replay, counts, type Event } from "./events.ts";
+
+const DAY = "2026-11-15T";
+const at = (hm: string): string => DAY + hm;
+const day: Event[] = [
+  { at: at("09:26"), ev: "begin", next: { A: 2, S: 8, L: 3, B: 1 } },
+  { at: at("09:26"), ev: "carry", id: "A1", list: "A", title: "the save's tests on the real layer" },
+  { at: at("09:26"), ev: "carry", id: "S1", list: "S", title: "a directive ignored silently" },
+  { at: at("09:26"), ev: "carry", id: "S3", list: "S", title: "⌃⌘G cycling" },
+  { at: at("09:29"), ev: "start", id: "A1" },
+  { at: at("09:35"), ev: "add", id: "A1.1", list: "A", parent: "A1", title: "found: a retry wrote nothing", approx: true },
+  { at: at("09:56"), ev: "done", id: "A1.1", commits: ["d88609d"] },
+  { at: at("09:56"), ev: "done", id: "A1", commits: ["d88609d"] },
+  { at: at("09:56"), ev: "add", id: "A1.2", list: "A", parent: "A1", title: "phase review" },
+  { at: at("10:06"), ev: "add", id: "A1.2.1", list: "S", parent: "A1.2", title: "the notices' owed record" },
+  { at: at("11:04"), ev: "move", id: "S3", to: "B1", list: "B" },
+  { at: at("11:05"), ev: "start", id: "S1" },
+  { at: at("12:14"), ev: "start", id: "A1.2.1" },
+  { at: at("12:20"), ev: "stop", id: "A1.2.1", note: "to run later" },
+  { at: at("13:00"), ev: "drop", id: "A1.2" },
+];
+const byId = (hm?: string) => Object.fromEntries(replay(day, hm && at(hm)).map((i) => [i.id, i]));
+
+test("each item's label is worked out from its events", () => {
+  const it = byId();
+  expect([it.A1.status, it["A1.1"].status, it.S1.status, it.S3.status, it.B1.status, it["A1.2"].status]).toEqual(
+    ["done, spawned open", "done", "in progress", "moved", "unstarted", "dropped"]);
+  expect(it["A1.2.1"].status).toBe("in progress");
+  expect(it["A1.2.1"].stopped?.at).toBe(at("12:20"));
+  expect(it["A1.1"].reported).toEqual({ at: at("09:35"), approx: true });
+  expect(it.A1.commits).toEqual(["d88609d"]);
+});
+
+test("an item done while something it spawned is neither done nor dropped is done with spawned items open, and done once all are", () => {
+  const it = byId("12:00");
+  expect(it.A1.status).toBe("done, spawned open");
+  expect(it["A1.2"].status).toBe("unstarted");
+  const closed: Event[] = [...day, { at: at("13:10"), ev: "done", id: "A1.2.1" }];
+  expect(replay(closed).find((i) => i.id === "A1")!.status).toBe("done");
+});
+
+test("a snapshot holds only what was reported by its time, each as it stood then", () => {
+  const it = byId("09:40");
+  expect(Object.keys(it).sort()).toEqual(["A1", "A1.1", "S1", "S3"]);
+  expect([it.A1.status, it["A1.1"].status, it.S3.status]).toEqual(["in progress", "unstarted", "unstarted"]);
+});
+
+test("items carried in are the starting items, in the order reported; a moved one shows in both places and counts once", () => {
+  const items = replay(day);
+  expect(items.map((i) => i.id)).toEqual(["A1", "S1", "S3", "A1.1", "A1.2", "A1.2.1", "B1"]);
+  const it = byId();
+  expect([it.A1.starting, it.S3.starting, it.B1.starting, it["A1.1"].starting]).toEqual([true, true, true, false]);
+  expect([it.S3.movedTo, it.B1.movedFrom, it.B1.title]).toEqual(["B1", "S3", "⌃⌘G cycling"]);
+  const c = counts(items);
+  expect(c.starting).toEqual({ total: 3, byList: { A: 1, S: 2 }, byStatus: { "done, spawned open": 1, "in progress": 1, moved: 1 } });
+  expect(c.added).toEqual({ total: 3, byList: { A: 2, S: 1 }, byStatus: { done: 1, dropped: 1, "in progress": 1 } });
+});

@@ -1,0 +1,49 @@
+:root {
+  --bg: #f6f7f5; --panel: #ffffff; --fg: #1d2420; --muted: #5d6a63; --rule: #d9dfdb;
+  --done: #2f7a4f; --part: #b07a1c; --open: #3d5a8a; --prog: #1f7a7a; --moved: #7a5ca8; --dropped: #8a8f8c;
+  --line: #a9b5ae; --start: #e9efe9;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141917; --panel: #1b211e; --fg: #e3e9e5; --muted: #98a59e; --rule: #2c3530;
+  --done: #6cc28f; --part: #e0b25a; --open: #8fb1e8; --prog: #6fd0cc; --moved: #b9a0e3; --dropped: #8a918d; --line: #4b5a52; --start: #223029; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141917; --panel: #1b211e; --fg: #e3e9e5; --muted: #98a59e; --rule: #2c3530;
+  --done: #6cc28f; --part: #e0b25a; --open: #8fb1e8; --prog: #6fd0cc; --moved: #b9a0e3; --dropped: #8a918d; --line: #4b5a52; --start: #223029; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font-size: 22px; font-weight: 600; margin: 0; text-wrap: balance; }
+.sub { color: var(--muted); margin: 4px 0 0; }
+.tally { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 13px; }
+.tally b { font-weight: 500; }
+.tallies { display: grid; gap: 6px; }
+.tally > span:first-child { min-width: 22ch; }
+.key { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted); }
+section { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px 10px; min-width: 0; }
+section h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 760px; }
+th { text-align: left; font-size: 11.5px; font-weight: 500; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; padding: 4px 8px 6px; border-bottom: 1px solid var(--rule); }
+td { padding: 6px 8px; vertical-align: top; border-bottom: 1px solid var(--rule); }
+tr:last-child td { border-bottom: 0; }
+td.t, th.t { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; width: 72px; }
+td.n, th.n { font-family: var(--mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; width: 64px; padding-right: 4px; }
+td.c { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
+.item { display: flex; gap: 8px; align-items: baseline; }
+/* a spawned row hangs from its parent: indented by its depth, a line drawn from the parent's level */
+tr.sub .item { padding-left: calc(var(--d) * 34px); position: relative; }
+tr.sub .item::before { content: ""; position: absolute; top: -8px; height: 18px; width: 20px; left: calc(var(--d) * 34px - 26px);
+  border-left: 1.5px solid var(--line); border-bottom: 1.5px solid var(--line); border-bottom-left-radius: 4px; }
+.swatch { display: inline-block; width: 26px; height: 12px; border-radius: 3px; background: var(--start); border: 1px solid var(--rule); vertical-align: -1px; }
+.chip { font-size: 11px; font-weight: 600; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; flex: none; }
+.s-done { color: var(--done); } .s-part { color: var(--part); } .s-open { color: var(--open); } .s-prog { color: var(--prog); } .chip.s-prog { background: color-mix(in srgb, var(--prog) 14%, transparent); } .s-moved { color: var(--moved); } .s-dropped { color: var(--dropped); }
+tr.done .label { text-decoration: line-through; text-decoration-color: var(--done); text-decoration-thickness: 1.5px; color: var(--muted); }
+tr.dropped .label { text-decoration: line-through; color: var(--dropped); }
+tr.unstarted td { background: var(--start); }
+/* a bar down the left of a starting item's row, drawn inside the cell so no column moves */
+tr.sod td:first-child { box-shadow: inset 5px 0 0 var(--muted); padding-left: 14px; }
+.chip.s-start { color: var(--muted); border-style: dashed; font-weight: 500; }
+.now { outline: 2px solid var(--prog); outline-offset: -2px; }
+.note { color: var(--muted); font-size: 12.5px; max-width: 70ch; }

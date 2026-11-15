@@ -335,6 +335,10 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     `hooks-test.sh`, `accepted.sh`; `sourceSpans.ts` (a source file's
     comments, strings and template text, which both `commentRules.ts`
     and `apostrophes.ts` read).
+  - The day's progress, `progress/`: `events.ts` (a day's events replayed
+    to a time: each item's state, the counts), `page.ts` (the page, or a
+    snapshot at a time, under `tools/out/progress/`), `log.ts` (an event
+    appended as it happens); each day's events in `docs/progress/`.
 - `one-offs/` — scripts run once or a few times over the backup to set
   its entries right; every check holds over them as over `tools/`. What
   each one is: `one-offs/README.md`.
