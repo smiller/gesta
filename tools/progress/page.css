@@ -1,16 +1,16 @@
 :root {
   --bg: #f6f7f5; --panel: #ffffff; --fg: #1d2420; --muted: #5d6a63; --rule: #d9dfdb;
   --done: #2f7a4f; --part: #b07a1c; --open: #3d5a8a; --prog: #1f7a7a; --moved: #7a5ca8; --dropped: #8a8f8c;
-  --line: #a9b5ae; --start: #e9efe9;
+  --line: #a9b5ae; --start: #ecefed; --settled: #ddeedd;
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #141917; --panel: #1b211e; --fg: #e3e9e5; --muted: #98a59e; --rule: #2c3530;
-  --done: #6cc28f; --part: #e0b25a; --open: #8fb1e8; --prog: #6fd0cc; --moved: #b9a0e3; --dropped: #8a918d; --line: #4b5a52; --start: #223029; color-scheme: dark } }
+  --done: #6cc28f; --part: #e0b25a; --open: #8fb1e8; --prog: #6fd0cc; --moved: #b9a0e3; --dropped: #8a918d; --line: #4b5a52; --start: #262c29; --settled: #1f3a29; color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #141917; --panel: #1b211e; --fg: #e3e9e5; --muted: #98a59e; --rule: #2c3530;
-  --done: #6cc28f; --part: #e0b25a; --open: #8fb1e8; --prog: #6fd0cc; --moved: #b9a0e3; --dropped: #8a918d; --line: #4b5a52; --start: #223029; color-scheme: dark }
+  --done: #6cc28f; --part: #e0b25a; --open: #8fb1e8; --prog: #6fd0cc; --moved: #b9a0e3; --dropped: #8a918d; --line: #4b5a52; --start: #262c29; --settled: #1f3a29; color-scheme: dark }
 body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.45;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
 main { max-width: 1080px; margin: 0 auto; display: grid; gap: 24px; }
@@ -43,7 +43,9 @@ tr.done .label { text-decoration: line-through; text-decoration-color: var(--don
 tr.dropped .label { text-decoration: line-through; color: var(--dropped); }
 /* a moved item is read where it moved to, so it is struck through here like a done one */
 tr.moved .label { text-decoration: line-through; text-decoration-color: var(--moved); text-decoration-thickness: 1.5px; color: var(--muted); }
+/* a background on what needs no attention now: the plain rows are the ones to read */
 tr.unstarted td { background: var(--start); }
+tr.done td, tr.moved td, tr.dropped td { background: var(--settled); }
 /* a bar down the left of a starting item's row, drawn inside the cell so no column moves */
 tr.sod td:first-child { box-shadow: inset 5px 0 0 var(--muted); padding-left: 14px; }
 .chip.s-start { color: var(--muted); border-style: dashed; font-weight: 500; }

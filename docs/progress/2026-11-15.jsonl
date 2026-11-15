@@ -81,3 +81,6 @@
 {"at":"2026-11-15T16:27","ev":"start","id":"A2.2"}
 {"at":"2026-11-15T16:31","ev":"done","id":"A2.2","commits":["a7f41e5"]}
 {"at":"2026-11-15T16:31","ev":"done","id":"A2","commits":["fd7ed62","a7f41e5"]}
+{"at":"2026-11-15T16:33","ev":"start","id":"S8.2"}
+{"at":"2026-11-15T16:44","ev":"done","id":"S8.2","note":"Helium verdict 338 s before, 265 s after"}
+{"at":"2026-11-15T16:44","ev":"start","id":"S8.1"}
