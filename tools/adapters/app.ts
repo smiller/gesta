@@ -111,10 +111,14 @@ export const watchSelection = (page: Page) => page.evaluate(() => {
   document.addEventListener("selectionchange", moved);
 });
 export const selectionMoved = (page: Page, ms = 1000) => page.waitForFunction(() => window.__selSeen, null, { timeout: ms }).catch(() => {});
+/* each placement is a script's, the selection standing where it lands once
+   it returns: one onto the selection already there has no change to wait
+   for, and waited a second for it */
 async function placed<T>(page: Page, place: () => Promise<T>): Promise<T> {
   await watchSelection(page);
   const out = await place();
-  await selectionMoved(page);
+  const unmoved = await page.evaluate(() => { const s = getSelection(); return [s.anchorNode, s.anchorOffset, s.focusNode, s.focusOffset].every((x, i) => x === window.__selFrom[i]); });
+  if (!unmoved) await selectionMoved(page);
   return out;
 }
 export const read = {

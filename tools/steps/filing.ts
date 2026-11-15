@@ -163,7 +163,8 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await rest(page);
   await log("Escape, the switch back refused", await R.replaceBar(page));
   await R.setSource(page, "One*-*two.\n");
-  await R.waitCorner(page, "saved");
+  /* the save, not the corner: the refusal's pin stands over "saved" */
+  await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   /* another panel opened over the bar closes it, and switches back as Escape does */
@@ -267,7 +268,8 @@ async function exportPressedTwiceFollowing(): Promise<void> {
 }
 async function typedIntoEntryImport(): Promise<void> {
   await page.click(".toolbtn[title^='Import']");
-  await page.waitForFunction(importing, S.corner, { timeout: 10000 }).catch(() => {});
+  /* no "importing…" to wait for: the folder is read only once the typing is let through */
+  await rest(page);
   const afterButton = await cursor();
   await page.click(S.editor);
   await page.keyboard.type("T0 T1 T2 ");
@@ -278,7 +280,6 @@ async function typedIntoEntryImport(): Promise<void> {
   await page.waitForTimeout(1000);
   await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tally });
 }
-const importing = (c: string): boolean => /^importing/.test(document.querySelector(c)?.textContent || "");
 const tallied = (c: string): boolean => /^imported /.test(document.querySelector(c)?.textContent || "");
 const textStart = (e: string): string => (document.querySelector(e)?.textContent || "").slice(0, 40);
 async function storeThatNeverAnswers(): Promise<void> {
