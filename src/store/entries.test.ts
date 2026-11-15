@@ -32,37 +32,41 @@ test("setEntry writes the cache synchronously and the store durably", async () =
   expect(calls.landed).toEqual(["2026-01-01"]);
 });
 
-test("removeEntry clears the cache, bumps the counter, and clears every debt", async () => {
-  const { layer, mem, calls } = fresh();
+test("removeEntry clears the cache, the store, and every debt the key owed", async () => {
+  let fail = true;
+  const { layer, mem, calls } = fresh((m) => ({ ...m, set: (k, md) => (fail ? Promise.reject(new Error("quota")) : m.set(k, md)) }));
   await layer.setEntry("2026-01-01", "a");
-  const seqBefore = layer.saveSeq["2026-01-01"] || 0;
+  fail = false;
   await layer.removeEntry("2026-01-01");
-  expect(layer.saveSeq["2026-01-01"]).toBe(seqBefore + 1);
+  expect([layer.owes("2026-01-01"), layer.writeError("2026-01-01")]).toEqual([false, undefined]);
   expect("2026-01-01" in layer.cache).toBe(false);
   expect(calls.removed).toEqual(["2026-01-01"]);
   expect(await mem.get("2026-01-01")).toBe(null);
 });
 
-test("persistEntry serializes one key's ops, and one failure doesn't wedge the chain", async () => {
-  const { layer } = fresh();
+test("one key's writes run in order, and one that fails doesn't wedge the queue", async () => {
   const order: string[] = [];
   let releaseFirst!: () => void;
   const first = new Promise<void>((r) => { releaseFirst = r; });
-  layer.persistEntry("k", () => first.then(() => { order.push("first"); throw new Error("boom"); }));
-  const second = layer.persistEntry("k", () => { order.push("second"); return Promise.resolve(); });
+  const { layer, mem } = fresh((m) => ({ ...m, set: (k, md) => (md === "first" ? first.then(() => { order.push("first"); throw new Error("boom"); }) : (order.push(md), m.set(k, md))) }));
+  void layer.setEntry("k", "first");
+  const second = layer.setEntry("k", "second");
   releaseFirst();
-  await second;
+  expect(await second).toBe(true);
   expect(order).toEqual(["first", "second"]);
+  expect((await mem.peek("k"))?.md).toBe("second");
 });
 
-test("persistEntry rejection sticks keyed and releases nothing; only a landing releases", async () => {
-  const { layer, calls } = fresh();
-  expect(await layer.persistEntry("k", () => Promise.reject(new Error("idb blocked")))).toBe(false);
+test("a write that does not land sticks keyed and releases nothing; only a landing releases", async () => {
+  let fail = true;
+  const { layer, calls } = fresh((m) => ({ ...m, set: (k, md) => (fail ? Promise.reject(new Error("idb blocked")) : m.set(k, md)) }));
+  expect(await layer.setEntry("k", "a")).toBe(false);
   expect(calls.stuck.length).toBe(1);
   expect(calls.stuck[0][0]).toBe("not saved");
   expect(calls.stuck[0][2]).toBe("k");
   expect(calls.landed).toEqual([]);
-  expect(await layer.persistEntry("k", () => Promise.resolve())).toBe(true);
+  fail = false;
+  expect(await layer.setEntry("k", "a")).toBe(true);
   expect(calls.landed).toEqual(["k"]);
 });
 
@@ -96,12 +100,12 @@ test("a stale delete restores the cache and reports as not deleted", async () =>
 });
 
 test("a stale restore is guarded by the counter: a removal in between wins", async () => {
-  const { layer, mem, calls } = fresh();
-  await layer.setEntry("k", "mine");
   let release!: () => void;
   const gate = new Promise<void>((r) => { release = r; });
+  const { layer, mem, calls } = fresh((m) => ({ ...m, set: (k, md) => (md === "mine edited" ? gate.then(() => { throw staleWriteErr("theirs", "mine edited"); }) : m.set(k, md)) }));
+  await layer.setEntry("k", "mine");
   // the write is refused as stale after the removal has retired the entry
-  const p = layer.persistEntry("k", () => gate.then(() => { throw staleWriteErr("theirs", "mine edited"); }));
+  const p = layer.setEntry("k", "mine edited");
   const removed = layer.removeEntry("k");   // bumps the counter, clears the cache
   release();
   await Promise.all([p, removed]);

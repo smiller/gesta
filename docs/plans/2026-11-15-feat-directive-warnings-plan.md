@@ -44,5 +44,10 @@ Review 166,688 tokens, scan 131,426 (transcripts).
 - The Helium kit: `jump`'s comment says what it does not wait for; the
   wait for saves at keys.ts:70 is `landed`; the selection watch's
   "unmoved" asked of the watch itself.
-- Scan candidate 1 (the entry layer's queue out of its interface, one
-  record a key) to grill next; 2 and 3 wait.
+- Scan candidate 1 (A1.3.1), built (asked): `persistEntry` and `saveSeq`
+  out of the entry layer's interface, the five tests that drove them
+  writing and deleting through `setEntry` and `removeEntry` over a store
+  that holds or refuses; a key's debt one record, its last failure and
+  whether a save failed, where two records were cleared in pairs. The
+  layer's other records of a key left: each does a different job.
+- Scan candidates 2 and 3 (A1.3.2) wait.
