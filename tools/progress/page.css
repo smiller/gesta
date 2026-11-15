@@ -59,3 +59,5 @@ tr.sod td:first-child { box-shadow: inset 5px 0 0 var(--muted); padding-left: 14
 .strip .bar.done { fill: var(--done); } .strip .bar.prog { fill: var(--prog); } .strip .bar.open { fill: var(--open); opacity: .55; }
 .strip g.here .bar { stroke: var(--fg); stroke-width: 1.5; }
 .frame { display: grid; gap: 24px; }
+/* a frame not on screen: display: grid above outranks the attribute */
+.frame[hidden] { display: none; }
