@@ -174,15 +174,15 @@ export function referencePayload(state: EditorState, at: EntryAt, journal: Journ
 /* a passage in stanza fences refers by stanza, in any work (pin: reference.test › a work in stanza fences refers by stanza) */
 function rangeOver(p: Passage, said: Conventions): string {
   if (said.byBookChapterAndParagraph) return byBookChapterParagraphRange(p);
-  if (said.prosimetrum) return prosimetrumRange(p);
-  return stanzaRange(p) || referenceRange(p, { halves: said.oldEnglishVerse });
+  if (said.proseByParagraphVerseByLine) return prosimetrumRange(p);
+  return stanzaRange(p) || referenceRange(p, { halves: said.byHalfLine });
 }
 const facingRange = (p: Passage): string => (hasFacing(p.doc) ? referenceRange(p, { side: "right" }) : "");
 function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): Payload | { refused: Refusal } {
   const hl = selectionLink(p.doc, p.from, p.to);
   if (!hl) return { refused: "select" };
   const said = conventionsOf(at.date, at.tag, journal);
-  const quoted = quotation(p, { halves: said.oldEnglishVerse, paragraphs: said.byBookChapterAndParagraph || said.prosimetrum, all });
+  const quoted = quotation(p, { halves: said.byHalfLine, paragraphs: said.byBookChapterAndParagraph || said.proseByParagraphVerseByLine, all });
   if ("refused" in quoted) return quoted;
   const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), page: pageRange(p), facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);

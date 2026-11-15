@@ -64,7 +64,7 @@ function marked(h: Half, notes: Record<string, string>, said: string[]): string 
   return h.text + " " + mark(said.length);
 }
 const noteLines = (said: string[]): string[] => ["::: note", ...said.map((t, k) => `[${k + 1}] ${t}`).join("\n\n").split("\n"), ":::"];
-const pageHead = (title: string, note: string): string => `# ${title}\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n`;
+const pageHead = (title: string, note: string): string => `# ${title}\n\n::: reference\nby title alone\n:::\n\n::: note\n${note}\n:::\n\n`;
 
 const NO_HALF: Half = { text: "", tr: "", n: "" };
 const joinedText = (a: Half, b: Half): string => (a.text && b.text ? a.text + "  " + b.text : a.text || b.text);

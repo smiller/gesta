@@ -18,7 +18,7 @@ import { hasPages, pages } from "./pages.ts";
 import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
-type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "scripture">;
+type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse">;
 
 const N = schema.nodes;
 export type AskKind = "none" | "line" | "page" | "both" | "stanza";
@@ -204,9 +204,9 @@ function stanzaHit(doc: Node, ask: string): { pos: number } | string {
   return stanzaAt(doc, s, l);
 }
 
-const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => (c.byBookChapterAndParagraph ? "Paragraph" : c.scripture ? "Verse" : "Line");
-const askedFor = (c: Asked): string => (c.byBookChapterAndParagraph ? "a paragraph" : c.scripture ? "a verse" : "a line or a page");
-const noNumbers = (c: Asked): string => (c.byBookChapterAndParagraph ? "no paragraph numbers here" : c.scripture ? "no verse numbers here" : "no line or page numbers here");
+const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => (c.byBookChapterAndParagraph ? "Paragraph" : c.byChapterAndVerse ? "Verse" : "Line");
+const askedFor = (c: Asked): string => (c.byBookChapterAndParagraph ? "a paragraph" : c.byChapterAndVerse ? "a verse" : "a line or a page");
+const noNumbers = (c: Asked): string => (c.byBookChapterAndParagraph ? "no paragraph numbers here" : c.byChapterAndVerse ? "no verse numbers here" : "no line or page numbers here");
 /* the bar as this entry asks it: which boxes, the Line box's label, what is
    said where nothing can be asked, and where there is no document to ask */
 export function bar(doc: Node | null, c: Asked): { kind: AskKind; label: "Line" | "Verse" | "Paragraph"; none: string; inSource: string } {
@@ -265,7 +265,7 @@ function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing
    where the same number is asked again */
 function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "bar" | "link"): Answer {
   if (typeof n === "number" && c.byBookChapterAndParagraph) return placed(paragraphHit(doc, n), standing);
-  const found = lineHits(doc, n), noun = c.scripture ? "verse" : undefined;
+  const found = lineHits(doc, n), noun = c.byChapterAndVerse ? "verse" : undefined;
   if (!found.hits.length) return absent(lineRefusal(found.blocks, n, noun));
   const hit = nextHit(found.hits, standing.pos, n === standing.asked);
   const word = landingWord(hit, found, n, noun);

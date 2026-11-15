@@ -37,7 +37,7 @@ test("two half-lines a whole line, the text's two spaces apart, the translation'
 
 test("one page that names no author, the poem one verse block of pairs, a gap between stanzas, its text as stored", () => {
   const md = hwaetEntry("Deor", "Deor", [["Welund him be wurman  wræces cunnade, | Weland himself, experienced agony,"], ["Þæs ofereode,  þisses swa mæg. | That was overcome, so may this be."]], "Text: x.")["bookshelf/Deor.md"];
-  expect(md).toBe("# Deor\n\n::: reference\nno author\n:::\n\n::: note\nText: x.\n:::\n\n::: verse\nWelund him be wurman  wræces cunnade, | Weland himself, experienced agony,\n\nÞæs ofereode,  þisses swa mæg. | That was overcome, so may this be.\n:::");
+  expect(md).toBe("# Deor\n\n::: reference\nby title alone\n:::\n\n::: note\nText: x.\n:::\n\n::: verse\nWelund him be wurman  wræces cunnade, | Weland himself, experienced agony,\n\nÞæs ofereode,  þisses swa mæg. | That was overcome, so may this be.\n:::");
   expect(serializeMarkdown(parseMarkdown(md))).toBe(md);
 });
 
@@ -79,7 +79,7 @@ test("a poem in stanzas: a row a line, each stanza its own numbered fence, a lin
     { n: 2, lines: ["Gefendr heilir | Greetings to the hosts,"] },
   ]);
   const md = hwaetStanzaEntry("Hávamál", "Hávamál", stanzas, "Text: x.")["bookshelf/Hávamál.md"];
-  expect(md).toBe("# Hávamál\n\n::: reference\nno author\n:::\n\n::: note\nText: x.\n:::\n\n::: stanza 1\nGáttir allar | Before one would advance\nþví at óvíst |\ner at vita ¹ | because one can't know\n::: note\n[1] A note.\n:::\n:::\n\n::: stanza 2\nGefendr heilir | Greetings to the hosts,\n:::");
+  expect(md).toBe("# Hávamál\n\n::: reference\nby title alone\n:::\n\n::: note\nText: x.\n:::\n\n::: stanza 1\nGáttir allar | Before one would advance\nþví at óvíst |\ner at vita ¹ | because one can't know\n::: note\n[1] A note.\n:::\n:::\n\n::: stanza 2\nGefendr heilir | Greetings to the hosts,\n:::");
   expect(serializeMarkdown(parseMarkdown(md))).toBe(md);
   // a stanza out of order, or a line number off its row, is named
   expect(stanzaLines([[{ n: "2.", text: "a", tr: "A" }]], {}).off).toEqual(["stanza 1 headed 2."]);

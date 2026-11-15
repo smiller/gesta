@@ -193,7 +193,7 @@ section("told on open", async () => {
   /* a refused fence line and a directive no page reads, pinned when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
   await writeAll({
     "2026-09-02/gesta-wrangling": "# Gesta wrangling\n\n```\nx\n```\n\n::: verse -3\nfealan thalos\n\\:::",
-    "bookshelf/Chaucer, Geoffrey": "# Geoffrey Chaucer\n\n::: reference\nroman book and canto\nparts in roman\n:::",
+    "bookshelf/Chaucer, Geoffrey": "# Geoffrey Chaucer\n\n::: reference\nroman book and canto\npart titles in roman\n:::",
   });
   await go("2026-09-02/gesta-wrangling");
   await rest(page);

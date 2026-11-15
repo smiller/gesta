@@ -4,13 +4,13 @@ import { schema } from "../model/schema.ts";
 import { entryKey, titlesRoots } from "./keys.ts";
 
 export interface Conventions {
-  lastTitle: boolean;
-  noAuthor: boolean;
-  scripture: boolean;
-  partsInRoman: boolean;
-  prosimetrum: boolean;
+  byInnermostTitleAlone: boolean;
+  byTitleAlone: boolean;
+  byChapterAndVerse: boolean;
+  partTitlesInRoman: boolean;
+  proseByParagraphVerseByLine: boolean;
   byBookChapterAndParagraph: boolean;
-  oldEnglishVerse: boolean;
+  byHalfLine: boolean;
 }
 export interface Directives {
   directives(ekey: string): string[];
@@ -38,24 +38,24 @@ const root: Level = { pages: (segs) => segs.slice(0, 1), at: (d) => d === 1, whe
 const work: Level = { pages: (segs) => (segs.length >= 3 ? [segs[0] + "/" + segs[1]] : []), at: (d) => d === 2, where: "a work’s page" };
 /* the entry's own page or any above it: a root of works with no author says
    it once for all of them, an author's work for its parts (pin:
-   conventions.test › Old English verse holds from the page that says it
+   conventions.test › by half-line holds from the page that says it
    down) */
 const ownOrAbove: Level = { pages: (segs) => segs.map((_, i) => segs.slice(0, i + 1).join("/")), at: () => true, where: "any page" };
-/* a line of its own: "no author" inside another directive's words is not
-   one (pin: conventions.test › a directive is a line of its own in a
-   top-level reference block) */
+/* the whole line: a name matched inside a longer line was read, and the
+   rest of the line ignored with no notice (pin: conventions.test › a
+   directive is the whole of its line) */
 const line = (words: string) => (l: string): boolean => l.trim().toLowerCase() === words;
 /* EVERY DIRECTIVE, its words and its level written once: what is read and
    what is reported cannot disagree (pin: conventions.test › a line no
    directive reads is named) */
 const DIRECTIVES: { key: keyof Conventions; said: (l: string) => boolean; level: Level }[] = [
-  { key: "lastTitle", said: (l) => /last title/i.test(l), level: root },
-  { key: "noAuthor", said: line("no author"), level: root },
-  { key: "scripture", said: line("scripture"), level: root },
-  { key: "partsInRoman", said: line("parts in roman"), level: work },
-  { key: "prosimetrum", said: line("prosimetrum"), level: work },
+  { key: "byInnermostTitleAlone", said: line("by innermost title alone"), level: root },
+  { key: "byTitleAlone", said: line("by title alone"), level: root },
+  { key: "byChapterAndVerse", said: line("by chapter and verse"), level: root },
+  { key: "partTitlesInRoman", said: line("part titles in roman"), level: work },
+  { key: "proseByParagraphVerseByLine", said: line("prose by paragraph, verse by line"), level: work },
   { key: "byBookChapterAndParagraph", said: line("by book, chapter, and paragraph"), level: work },
-  { key: "oldEnglishVerse", said: line("old english verse"), level: ownOrAbove },
+  { key: "byHalfLine", said: line("by half-line"), level: ownOrAbove },
 ];
 
 export function conventionsOf(date: string, tag: string | null, journal: Directives): Conventions {

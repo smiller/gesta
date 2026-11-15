@@ -5,9 +5,9 @@ import { ask, bar, type Standing, type Answer } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
-const LINES = { byBookChapterAndParagraph: false, scripture: false };
+const LINES = { byBookChapterAndParagraph: false, byChapterAndVerse: false };
 const PARAGRAPHS = { ...LINES, byBookChapterAndParagraph: true };
-const VERSES = { ...LINES, scripture: true };
+const VERSES = { ...LINES, byChapterAndVerse: true };
 const FRESH: Standing = { pos: null, asked: 0 };
 /* the text of the row an ask lands on, or what it says instead */
 function lands(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string {

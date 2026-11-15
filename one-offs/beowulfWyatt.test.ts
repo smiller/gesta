@@ -41,7 +41,7 @@ test("one bookshelf page that names no author and says it is Old English verse, 
   const out = beowulfEntries([["Hwæt we Gardena  in geardagum", "þeodcyninga  þrym gefrunon,"], ["Ða wæs on burgum  Beowulf Scyldinga,"]], "Text: A. J. Wyatt.");
   expect(Object.keys(out)).toEqual(["bookshelf/Beowulf.md"]);
   const poem = out["bookshelf/Beowulf.md"];
-  expect(poem).toBe("# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\nHwæt we Gardena  in geardagum\nþeodcyninga  þrym gefrunon,\n\nÐa wæs on burgum  Beowulf Scyldinga,\n:::");
+  expect(poem).toBe("# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\nHwæt we Gardena  in geardagum\nþeodcyninga  þrym gefrunon,\n\nÐa wæs on burgum  Beowulf Scyldinga,\n:::");
   expect(serializeMarkdown(parseMarkdown(poem))).toBe(poem);
 });
 
@@ -83,7 +83,7 @@ test("one page that names no author, the fragment one verse block, its asterisks
   const out = finnsburhEntry(["* * *  hornas byrnað næfre?”", "oððe hwæþer ðæra hyssa  * * *"], "Text: A. J. Wyatt.");
   expect(Object.keys(out)).toEqual(["bookshelf/Finnsburh.md"]);
   const md = out["bookshelf/Finnsburh.md"];
-  expect(md).toBe("# The Fight at Finnsburh\n\n::: reference\nno author\n:::\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\n* * *  hornas byrnað næfre?”\noððe hwæþer ðæra hyssa  * * *\n:::");
+  expect(md).toBe("# The Fight at Finnsburh\n\n::: reference\nby title alone\n:::\n\n::: note\nText: A. J. Wyatt.\n:::\n\n::: verse\n* * *  hornas byrnað næfre?”\noððe hwæþer ðæra hyssa  * * *\n:::");
   expect(serializeMarkdown(parseMarkdown(md))).toBe(md);
   const doc = parseMarkdown(md);
   expect(doc.textContent).toContain("* * *  hornas");

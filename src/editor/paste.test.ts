@@ -70,8 +70,8 @@ test("a verse fence pasted as text is set down whole: mid-paragraph the paragrap
 
 
 test("inside a reference block every character is literal, as in a code block: the directive is never split", () => {
-  const s = at("::: reference\nfrom the last title\n:::\n\npara", "from ");
-  expect(paste(s, "one\n\ntwo\n")).toBe("::: reference\nfrom one\n\ntwo\nthe last title\n:::\n\npara");
+  const s = at("::: reference\nby innermost title alone\n:::\n\npara", "by ");
+  expect(paste(s, "one\n\ntwo\n")).toBe("::: reference\nby one\n\ntwo\ninnermost title alone\n:::\n\npara");
 });
 
 

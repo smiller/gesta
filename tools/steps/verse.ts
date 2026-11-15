@@ -2,7 +2,7 @@ import { section, page, A, R, S, log, go, seededIn, rest, still, fixture, writeA
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
-  await A.foreignWrite(page, "bookshelf/Havamal", "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
+  await A.foreignWrite(page, "bookshelf/Havamal", "# Hávamál\n\n::: reference\nby title alone\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
   const seeded = await seededIn("bookshelf/Havamal");
   await page.goto(A.url("bookshelf/Havamal"));
   await A.waitEntry(page, "bookshelf/Havamal", 5000).catch(() => {});
@@ -29,7 +29,7 @@ section("a work in stanzas", async () => {
 });
 section("Old English verse", async () => {
   /* a work whose page says Old English verse refers to its half-lines: Beowulf 49-52, a root that names no author */
-  await A.foreignWrite(page, "bookshelf/Beowulf", "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
+  await A.foreignWrite(page, "bookshelf/Beowulf", "# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
   const seeded = await seededIn("bookshelf/Beowulf");
   await page.goto(A.url("bookshelf/Beowulf"));
   await A.waitEntry(page, "bookshelf/Beowulf", 5000).catch(() => {});
@@ -45,7 +45,7 @@ section("Old English verse", async () => {
   await rest(page);
   await log("⌃⌘R on a first half-line", { lines: await R.clipboardLines(page) });
   /* beside its translation the original is quoted from the half referred to, the translation whole */
-  await A.foreignWrite(page, "bookshelf/Seafarer", "# The Seafarer\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
+  await A.foreignWrite(page, "bookshelf/Seafarer", "# The Seafarer\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
   const paired = await seededIn("bookshelf/Seafarer");
   await page.goto(A.url("bookshelf/Seafarer"));
   await A.waitEntry(page, "bookshelf/Seafarer", 5000).catch(() => {});
@@ -243,7 +243,7 @@ section("scripture's Verse box", async () => {
   /* a Bible's chapters are asked by verse, whichever block they are set in */
   for (const [root, fence] of [["KJV", "::: verse numbered\nIn the beginning.\nAnd the earth.\nAnd God said.\n:::"], ["Douay-Rheims", "::: prose numbered\nIn principio. | In the beginning.\nTerra autem. | And the earth.\nDixitque Deus. | And God said.\n:::"]]) {
     const chapter = "bookshelf/" + root + "/Genesis/1";
-    await A.foreignWrite(page, "bookshelf/" + root, "# " + root + "\n\n::: reference\nscripture\n:::\n");
+    await A.foreignWrite(page, "bookshelf/" + root, "# " + root + "\n\n::: reference\nby chapter and verse\n:::\n");
     await A.foreignWrite(page, "bookshelf/" + root + "/Genesis", "# Genesis\n");
     await A.foreignWrite(page, chapter, "# Genesis 1\n\n" + fence + "\n");
     await page.goto(A.url(chapter));
@@ -397,7 +397,7 @@ section("prose and verse paired", async () => {
   /* a prose block and a verse block paired in one entry: the verse's English starts where the prose's does, its original at least as wide as that needs */
   await writeAll({
     "bookshelf/Dante": "# Dante",
-    "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
+    "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprose by paragraph, verse by line\n:::",
     "bookshelf/Dante/Vita Nuova/12": "# Vita Nuova, 12\n\n::: prose\nOra, tornando al proposito, dico che poi che la mia beatitudine mi fue negata, mi giunse tanto dolore, che, partito me da le genti, in solinga parte andai a bagnare la terra d’amarissime lagrime. | And now, resuming my discourse, I will go on to relate that when, for the first time, this beatitude was denied me, I fell into such grief that, parting myself from others, I went into a lonely place to bathe the ground with most bitter tears.\n:::\n\n::: verse\nBallata, i’ voi che tu ritrovi Amore, | Song, ’tis my will that thou do seek out Love,\ne con lui vade a madonna davante, | And go with him where my dear lady is;\n:::",
   });
   await go("bookshelf/Dante/Vita%20Nuova/12");

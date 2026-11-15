@@ -254,8 +254,8 @@ test("stanzas refer by stanza under the canto's key, and a run across a stanza g
 });
 // Any work whose verse is in stanza fences refers by stanza: Hávamál, a root
 // with no author, its stanzas paired with a translation.
-const HAV = parseMarkdown("# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
-const havJournal = journalOf({ "bookshelf/Hávamál": "# Hávamál\n\n::: reference\nno author\n:::" });
+const HAV = parseMarkdown("# Hávamál\n\n::: reference\nby title alone\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
+const havJournal = journalOf({ "bookshelf/Hávamál": "# Hávamál\n\n::: reference\nby title alone\n:::" });
 const havLabel = (needle: string, end?: string): string | false => {
   const [a, b] = span(HAV, needle, end);
   const p = referencePayload(state(HAV, a, b), { date: "bookshelf", tag: "Hávamál" }, havJournal);
@@ -268,7 +268,7 @@ test("a work in stanza fences refers by stanza with no directive: Hávamál, 76.
 });
 // Old English verse refers to its half-lines: a work whose page says so, its
 // lines two half-lines apart at a double space.
-const BWF_PAGE = "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::";
+const BWF_PAGE = "# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::";
 const BWF = parseMarkdown(BWF_PAGE + "\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
 const oeLabel = (doc: Node, tag: string, page: Record<string, string>, [needle, end]: [string, string?]): string | false => {
   const [a, b] = span(doc, needle, end);
@@ -311,12 +311,12 @@ test("Old English verse refers to a half-line as 50a or 50b, a run from a second
   expect("label" in p && p.label).toBe("*Beowulf*, 50b");
 });
 test("without the line on its page a work refers to whole lines, double space or not", () => {
-  expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\n:::" }, ["Men ne cunnon", "onfeng"])).toBe("*Beowulf*, 50-52");
+  expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nby title alone\n:::" }, ["Men ne cunnon", "onfeng"])).toBe("*Beowulf*, 50-52");
   // the words inside a longer line are not the directive
-  expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nnot Old English verse here\n:::" }, ["Men ne cunnon"])).toBe("*Beowulf*, 50");
+  expect(oeLabel(BWF, "Beowulf", { "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nby title alone\nnot by half-line here\n:::" }, ["Men ne cunnon"])).toBe("*Beowulf*, 50");
 });
 test("Old English verse with its translation: the original's halves count, the translation's words refer to the line; a line with no double space is whole", () => {
-  const page = "# Deor\n\n::: reference\nno author\nOld English verse\n:::";
+  const page = "# Deor\n\n::: reference\nby title alone\nby half-line\n:::";
   const deor = parseMarkdown(page + "\n\n::: verse\nWelund him be wurman  wræces cunnade, | Weland himself, by means of worms (swords?), experienced agony,\nanhydig eorl  earfoþa dreag, | the strong-minded noble endured troubles;\n* * * |\n:::");
   const j = { "bookshelf/Deor": page };
   expect(oeLabel(deor, "Deor", j, ["wræces cunnade"])).toBe("*Deor*, 1b");
@@ -325,7 +325,7 @@ test("Old English verse with its translation: the original's halves count, the t
   expect(oeLabel(deor, "Deor", j, ["* * *"])).toBe("*Deor*, 3");
 });
 test("Old English verse with its translation quotes the original from the half the reference names, the translation whole", () => {
-  const page = "# Seafarer\n\n::: reference\nno author\nOld English verse\n:::";
+  const page = "# Seafarer\n\n::: reference\nby title alone\nby half-line\n:::";
   const sf = parseMarkdown(page + "\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
   const j = journalOf({ "bookshelf/Seafarer": page });
   const run = referencePayload(state(sf, ...span(sf, "Dagas sind", "ealle onmedlan")), { date: "bookshelf", tag: "Seafarer" }, j);
@@ -338,7 +338,7 @@ test("Old English verse with its translation quotes the original from the half t
   expect("passage" in plain && plain.passage).toMatch(/^> ::: verse 80\n> dream mid dugeþum\.  Dagas/);
 });
 test("Old English verse said on a work's page reaches the entries below it; the range keeps its elision, 1162b-68a", () => {
-  const work = "# Elene\n\n::: reference\nOld English verse\n:::";
+  const work = "# Elene\n\n::: reference\nby half-line\n:::";
   const doc = parseMarkdown("::: verse 1162\na b  c d\ne\nf\ng\nh\ni\nj k  l m\n:::");
   const p = referencePayload(state(doc, ...span(doc, "c d", "j k")), { date: "bookshelf", tag: "Cynewulf/Elene/Fitt 1" }, journalOf({ "bookshelf/Cynewulf": "# Cynewulf", "bookshelf/Cynewulf/Elene": work }));
   expect("label" in p && p.label).toBe("Cynewulf, *Elene*, 1.1162b-68a");
@@ -422,10 +422,10 @@ test("a passage running from one block numbered on both sides into the next is r
 });
 
 // The Vita Nuova: a chapter of prose numbered by Barbi's paragraphs and its
-// poems, under the work's `prosimetrum` directive.
+// poems, under the work's `prose by paragraph, verse by line` directive.
 const vnJournal = journalOf({
-  "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
-  "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
+  "bookshelf/Dante": "# Dante\n\n::: reference\nby innermost title alone\n:::",
+  "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprose by paragraph, verse by line\n:::",
 });
 const VN3 = parseMarkdown("# Vita Nuova, 3\n\n::: prose 8\nE mantenente cominciai a pensare. | And immediately having considered.\nE trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n\nPensando io a ciò che m'era apparuto. | Then, musing on what I had seen.\n:::\n\n" +
   "::: verse\nA ciascun' alma presa e gentil core | To every heart which the sweet pain doth move,\nnel cui cospetto ven lo dir presente, | And unto which these words may now be brought\n:::\n\n" +
@@ -529,7 +529,7 @@ test("by book, chapter, and paragraph: a selection running through a chapter hea
   expect("label" in roman && roman.label).toBe("Augustine, *De Doctrina Christiana*, book 2, chapter XL (para 63)");
 });
 test("without the directive the same chapter refers as every book does: 3.8, 3.1-2", () => {
-  const plain = journalOf({ "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::" });
+  const plain = journalOf({ "bookshelf/Dante": "# Dante\n\n::: reference\nby innermost title alone\n:::" });
   expect(vnLabel(VN3, "3", ["cominciai"], plain)).toBe("Dante, *Vita Nuova*, 3.8");
   expect(vnLabel(VN3, "3", ["ciascun", "presente"], plain)).toBe("Dante, *Vita Nuova*, 3.1-2");
 });

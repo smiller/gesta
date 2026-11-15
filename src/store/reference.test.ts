@@ -88,9 +88,9 @@ const journal: Journal = journalOf({
   "bookshelf/Housman, A. E/Last Poems/25. The Oracles": "# 25. The Oracles",
   "bookshelf/Blake, William/Songs of Innocence/A Cradle Song": "# A Cradle Song",
   "bookshelf/Blake, William/Songs of Innocence": "# Songs of Innocence",
-  "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
+  "bookshelf/Dante": "# Dante\n\n::: reference\nby innermost title alone\n:::",
   "bookshelf/Dante/Commedia": "# Commedia",
-  "bookshelf/Old English": "# Old English\n\n::: reference\nno author\n:::",
+  "bookshelf/Old English": "# Old English\n\n::: reference\nby title alone\n:::",
   "bookshelf/Old English/Beowulf": "# Beowulf",
   "bookshelf/Dante/Commedia/Inferno": "# Inferno",
   "bookshelf/Dante/Commedia (with Longfellow’s translation)": "# *Commedia* (with Longfellow’s translation)",
@@ -137,7 +137,7 @@ test("referenceLabel: the line range dots onto a numeral run and commas after a 
   expect(referenceLabel(NS_BOOK.key, "Milton, John/Paradise Lost/Book 1", { range: "3", page: { from: "9", to: "9" } }, journal)).toBe("Milton, *Paradise Lost*, 1.3");
 });
 
-test("referenceLabel: from the last title, a day, a commonplace", () => {
+test("referenceLabel: by innermost title alone, a day, a commonplace", () => {
   expect(referenceLabel(NS_BOOK.key, "Dante/Commedia/Inferno/7", { range: "121-6" }, journal)).toBe("Dante, *Inferno*, 7.121-6");
   // a day names itself by its date and refers to no locator
   expect(referenceLabel("2021-06-22", null, { range: "3-5" }, journal)).toBe("*Gesta*, 22 June 2021");
@@ -149,7 +149,7 @@ test("referenceLabel: from the last title, a day, a commonplace", () => {
   expect(referenceLabel(NS_COMMONPLACE.key, "Notes", { range: "", page: { from: "3", to: "4" } }, journal)).toBe("*Notes*");
 });
 
-test("referenceLabel: a root whose page says no author is named in no reference; the root itself stands on its title", () => {
+test("referenceLabel: a root whose page says by title alone is named in no reference; the root itself stands on its title", () => {
   expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", { range: "50-52" }, journal)).toBe("*Beowulf*, 50-52");
   expect(referenceLabel(NS_BOOK.key, "Old English/Beowulf", { range: "" }, journal)).toBe("*Beowulf*");
   expect(referenceLabel(NS_BOOK.key, "Old English", { range: "" }, journal)).toBe("*Old English*");
@@ -163,8 +163,8 @@ test("headings: the first level-one heading is the title; a ## is a section; the
   expect(firstHeading("text\n\n# Later title")).toBe("Later title");
   expect(firstHeading("")).toBe("");
   const directives = (md: string): string[] => journalOf({ "bookshelf/W": md }).directives("bookshelf/W");
-  expect(directives("# Dante\n\n::: reference\nfrom the last title\n:::")).toEqual(["from the last title"]);
-  expect(directives("> ::: reference\n> from the last title\n> :::")).toEqual([]);
+  expect(directives("# Dante\n\n::: reference\nby innermost title alone\n:::")).toEqual(["by innermost title alone"]);
+  expect(directives("> ::: reference\n> by innermost title alone\n> :::")).toEqual([]);
   expect(directives("# Dante")).toEqual([]);
 });
 
@@ -191,11 +191,11 @@ test("referenceLabel of a canto: book and canto as keyed, the proem's pr, whole 
   expect(referenceLabel(NS_BOOK.key, FQ + "7.8", { range: "2.9" }, fq)).toBe("Spenser, *The Faerie Queene*, 7.8.2.9");
 });
 
-// The Vita Nuova: under the work's `prosimetrum` directive a reference names
+// The Vita Nuova: under the work's `prose by paragraph, verse by line` directive a reference names
 // the part of the chapter it is in, comma-joined, never dotted.
 const vn = journalOf({
-  "bookshelf/Dante": "# Dante\n\n::: reference\nfrom the last title\n:::",
-  "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprosimetrum\n:::",
+  "bookshelf/Dante": "# Dante\n\n::: reference\nby innermost title alone\n:::",
+  "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprose by paragraph, verse by line\n:::",
   "bookshelf/Dante/Vita Nuova/3": "# Vita Nuova, 3",
 });
 test("referenceLabel: a worded range is comma-joined after the chapter, a numeral range still dots on", () => {
@@ -233,16 +233,16 @@ test("referenceLabel by book, chapter, and paragraph: a numbered book stands and
   expect(referenceLabel(NS_BOOK.key, "A/Y (with Shaw’s translation)/Book 2", { range: "5", facing: "7" }, works)).toBe("A, *Y*, book 2.5 (Shaw, 2.7)");
 });
 
-// Scripture: under the root's `scripture` directive a book is named plainly
+// Scripture: under the root's `by chapter and verse` directive a book is named plainly
 // and its chapter and verse follow a space, as a Bible is referred to.
 const bible = journalOf({
-  "bookshelf/KJV": "# KJV\n\n::: reference\nscripture\n:::",
+  "bookshelf/KJV": "# KJV\n\n::: reference\nby chapter and verse\n:::",
   "bookshelf/KJV/Genesis": "# Genesis",
   "bookshelf/KJV/1 Samuel": "# 1 Samuel",
-  "bookshelf/Douay-Rheims": "# Douay-Rheims\n\n::: reference\nscripture\n:::",
+  "bookshelf/Douay-Rheims": "# Douay-Rheims\n\n::: reference\nby chapter and verse\n:::",
   "bookshelf/Douay-Rheims/Psalms": "# Psalms",
 });
-test("referenceLabel under scripture: KJV, Genesis 1.3; a range; a chapter; a book; a book whose name opens with a number", () => {
+test("referenceLabel by chapter and verse: KJV, Genesis 1.3; a range; a chapter; a book; a book whose name opens with a number", () => {
   expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", { range: "3" }, bible)).toBe("KJV, Genesis 1.3");
   expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", { range: "3-5" }, bible)).toBe("KJV, Genesis 1.3-5");
   expect(referenceLabel(NS_BOOK.key, "KJV/Genesis/1", { range: "" }, bible)).toBe("KJV, Genesis 1");
@@ -253,14 +253,14 @@ test("referenceLabel under scripture: KJV, Genesis 1.3; a range; a chapter; a bo
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "" }, vn)).toBe("Dante, *Vita Nuova*, 3");
 });
 
-// Chaucer: under the work's `parts in roman` directive a tale is named in
+// Chaucer: under the work's `part titles in roman` directive a tale is named in
 // roman after the work's italic title.
 const ct = journalOf({
-  "bookshelf/Chaucer, Geoffrey/Canterbury Tales": "# Canterbury Tales\n\n::: reference\nparts in roman\n:::",
+  "bookshelf/Chaucer, Geoffrey/Canterbury Tales": "# Canterbury Tales\n\n::: reference\npart titles in roman\n:::",
   "bookshelf/Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale": "# The Knight’s Tale",
   "bookshelf/Chaucer, Geoffrey/Troilus and Criseyde": "# Troilus and Criseyde",
 });
-test("referenceLabel under parts in roman: Chaucer, *Canterbury Tales*, The Knight's Tale, 859-62; a work without it as before", () => {
+test("referenceLabel under part titles in roman: Chaucer, *Canterbury Tales*, The Knight's Tale, 859-62; a work without it as before", () => {
   expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", { range: "859-62" }, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale, 859-62");
   expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Canterbury Tales/The Knight's Tale", { range: "" }, ct)).toBe("Chaucer, *Canterbury Tales*, The Knight’s Tale");
   expect(referenceLabel(NS_BOOK.key, "Chaucer, Geoffrey/Troilus and Criseyde/1", { range: "1-7" }, ct)).toBe("Chaucer, *Troilus and Criseyde*, 1.1-7");

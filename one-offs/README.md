@@ -44,7 +44,7 @@ an import folder with a review page. Letters are matched with accents dropped an
 letter; the review compares words with them kept.
 `one-offs/beowulfWyatt.ts` — Wyatt's Beowulf (1894) as Wikisource
 transcribes it made one bookshelf page, `bookshelf/Beowulf`, its page
-saying `no author` and `Old English verse`: the apparatus dropped, the
+saying `by title alone` and `by half-line`: the apparatus dropped, the
 spelling plain, the transcription's misreadings set right by line
 (`misread`), pure, its test beside it; `one-offs/beowulfWyattRun.ts` fetches
 the pages (cached under `one-offs/out/wyatt`), checks the 3182 lines against
@@ -170,3 +170,12 @@ mirror's `page/` against its `commonplace/`; with `--apply` it writes into
 the backup, each archive read back before its original goes, then
 removes `archive/page/` and `current/page/`. Run once over the backup
 on 2026-11-14; it cannot be run again or resumed.
+`one-offs/directiveNames.ts` — an entry's retired reference directive
+names given their new ones (`from the last title` → `by innermost title
+alone`, `no author` → `by title alone`, `scripture` → `by chapter and
+verse`, `parts in roman` → `part titles in roman`, `prosimetrum` →
+`prose by paragraph, verse by line`, `Old English verse` → `by
+half-line`), inside a top-level reference block alone, pure, its test
+beside it; `one-offs/directiveNamesRun.ts` runs it over the backup, checks
+the parser reads every new name it wrote, and writes an import folder
+with a review page.

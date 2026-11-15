@@ -22,12 +22,11 @@ A link's text; for a reference, the work and the passage's place in it.
 
 **Reference directive**:
 A line in a `::: reference` block standing at the top level of a root's or
-a work's page, inside no other block, naming a convention its references follow. On a
-root's page: `scripture`, `no author`, `from the last title` (which may run
-on with words of its own); on a work's page, for the entries below it:
-`prosimetrum`, `by book, chapter, and paragraph`, `parts in roman`; `Old
-English verse` on any page, for it and every page below. Every other
-directive is a line of its own.
+a work's page, inside no other block, naming a convention its references follow, the whole of its line. On a
+root's page: `by chapter and verse`, `by title alone`, `by innermost title
+alone`; on a work's page, for the entries below it: `prose by paragraph,
+verse by line`, `by book, chapter, and paragraph`, `part titles in roman`;
+`by half-line` on any page, for it and every page below.
 _Avoid_: setting, option, flag.
 
 **Commonplace**:

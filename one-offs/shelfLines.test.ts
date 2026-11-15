@@ -286,8 +286,8 @@ test("quotedRuns: an attribution closing the quotation that names the work, the 
 // Old English verse, a root of its own with no author, its half-lines referred to;
 // Hávamál in stanza fences.
 const north = shelfIndex({
-  "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 377\nÐonne sægdon þæt  sæliþende,\nþa ðe gifsceattas  Geata fyredon\nþyder to þance,  þæt he þrittiges\nmanna mægencræft  on his mundgripe\nheaþorof hæbbe.  Hine halig God\n:::",
-  "bookshelf/Havamal": "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::",
+  "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 377\nÐonne sægdon þæt  sæliþende,\nþa ðe gifsceattas  Geata fyredon\nþyder to þance,  þæt he þrittiges\nmanna mægencræft  on his mundgripe\nheaþorof hæbbe.  Hine halig God\n:::",
+  "bookshelf/Havamal": "# Hávamál\n\n::: reference\nby title alone\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::",
 });
 test("quotedRuns: the letters matched without their accents and with ð and þ one letter, so a quotation in another edition's marks is the passage", () => {
   const md = "> Ðonne sægdon þæt      sælíþende\n> þá ðe gifsceattas      Géata fyredon\n> þyder tó þance      þæt hé þrítiges\n> manna mægencræft      on his mundgripe\n> heaþoróf hæbbe\n";
@@ -304,14 +304,14 @@ test("shelfIndex: a work in stanza fences is indexed, and a stanza quoted is a r
   expect("text" in m && m.text.split("\n")[0]).toMatch(/^\[\*Hávamál\*, 76\]/);
 });
 test("quotedRuns: the lines placed by their likeness count toward a run's letters, so three lines with one short line exact are a run", () => {
-  const bwf = shelfIndex({ "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 1316\nGang ða æfter flore  fyrdwyrðe man\nmid his handscole  (healwudu dynede),\nþæt he þone wisan  wordum nægde\nfrean Ingwina,  frægn gif him wære\næfter neodlaðu  niht getæse.\nHroðgar maþelode,  helm Scyldinga:\n:::" });
+  const bwf = shelfIndex({ "bookshelf/Beowulf": "# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 1316\nGang ða æfter flore  fyrdwyrðe man\nmid his handscole  (healwudu dynede),\nþæt he þone wisan  wordum nægde\nfrean Ingwina,  frægn gif him wære\næfter neodlaðu  niht getæse.\nHroðgar maþelode,  helm Scyldinga:\n:::" });
   const md = "Also Bwf’s [1318-20]\n\n> þæt he ðone wisan  wordum nægde\n> frean Ingwine,  frægn gif him wære\n> æfter neodlaðum  niht gelæse.\n";
   expect(quotedRuns(md, bwf).map((r) => [r.start, r.end, r.from, r.to])).toEqual([[2, 4, 1318, 1320]]);
   // a line too short to be a quotation on its own is still none
   expect(quotedRuns("> þæt he ðone wisan  wordum nægde\n", bwf)).toEqual([]);
 });
 test("referenceOf: Old English verse beside its translation, quoted from a second half-line and to a first, is referred to and quoted by its halves", () => {
-  const sf = shelfIndex({ "bookshelf/Seafarer": "# The Seafarer\n\n::: reference\nno author\nOld English verse\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\nne goldgiefan  swylce iu wæron, | nor givers of gold as once there were,\n:::" });
+  const sf = shelfIndex({ "bookshelf/Seafarer": "# The Seafarer\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\nne goldgiefan  swylce iu wæron, | nor givers of gold as once there were,\n:::" });
   const md = "> Dagas sind gewitene\n> ealle onmedlan  eorþan rices;\n> nearon nu cyningas  ne caseras\n> ne goldgiefan\n";
   const runs = quotedRuns(md, sf);
   expect(runs.map((r) => [r.start, r.end, r.from, r.to])).toEqual([[0, 3, 80, 83]]);
@@ -331,7 +331,7 @@ test("referRuns: a short source line ending in a colon a blank line above the ru
   expect(out).toBe("[Horace, *Odes*, 1.1.3-4](#u3):\n\n> ::: verse 3\n> line\n> :::\n\n[Horace, *Odes*, 1.1.8-8](#u8):\n\n> ::: verse 8\n> line\n> :::\n");
 });
 test("quotedRuns: stanzas quoted one after another, a blank line between, are one run, a reference across them", () => {
-  const hav = shelfIndex({ "bookshelf/Havamal": "# Hávamál\n\n::: reference\nno author\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::\n\n::: stanza 78\nFullar grindr | Full folds\n:::" });
+  const hav = shelfIndex({ "bookshelf/Havamal": "# Hávamál\n\n::: reference\nby title alone\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::\n\n::: stanza 78\nFullar grindr | Full folds\n:::" });
   const md = "> Deyr fé\n> deyja frændr\n> deyr sjálfr it sama\n> en orðstírr\n> deyr aldregi\n> hveim er sér góðan getr\n\n> Deyr fé\n> deyja frændr\n> deyr sjálfr it sama\n> ek veit einn\n> at aldri deyr\n> dómr um dauðan hvern\n";
   const runs = quotedRuns(md, hav);
   expect(runs.map((r) => [r.start, r.end])).toEqual([[0, 12]]);

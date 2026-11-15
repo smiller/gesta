@@ -149,8 +149,8 @@ interface LabelCtx { date: string; tag: string | null; root: string; books: bool
 function labelParts(c: LabelCtx): Piece[] {
   /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
   const parts = referenceParts(c.date, c.tag, c.journal, c.said.byBookChapterAndParagraph);
-  /* (pin: reference.test › referenceLabel under parts in roman) */
-  if (!c.said.partsInRoman) return parts;
+  /* (pin: reference.test › referenceLabel under part titles in roman) */
+  if (!c.said.partTitlesInRoman) return parts;
   return parts.map((p, i) => (i > 0 && titledWork(p) ? { plain: p.t! } : p));
 }
 const titledWork = (p: Piece): boolean => p.t !== undefined && !p.translator;
@@ -188,9 +188,9 @@ function located(parts: Piece[], at: Locator, c: LabelCtx, numbered: string | un
 }
 /* the first field is a person (roman), a title (italic), or nothing; a root
    that names no author still names itself where no title stands below it
-   (pin: reference.test › referenceLabel: a root whose page says no author) */
+   (pin: reference.test › referenceLabel: a root whose page says by title alone) */
 function withFirst(parts: Piece[], c: LabelCtx): Piece[] {
-  const unnamed = c.said.noAuthor;
+  const unnamed = c.said.byTitleAlone;
   const first = unnamed ? "" : referenceAuthor(c.date, c.root);
   if (first) parts.unshift(c.books ? { plain: first } : { t: first });
   else if (unnamed && !hasTitle(parts)) parts.unshift({ t: c.journal.heading(entryKey(c.date, c.root)) || c.root });
@@ -202,7 +202,7 @@ function pieceText(p: Piece, plainTitles: boolean): string {
   return p.n + (p.after ? ": *" + p.after + "*" : "");
 }
 const numberAfterTitle = (prev: Piece, p: Piece): boolean => p.n !== undefined && prev.t !== undefined;
-/* (pin: reference.test › referenceLabel under scripture) */
+/* (pin: reference.test › referenceLabel by chapter and verse) */
 function joinParts(parts: Piece[], plainTitles: boolean): string {
   const sep = (i: number): string => (i === 0 ? "" : plainTitles && numberAfterTitle(parts[i - 1], parts[i]) ? " " : ", ");
   return parts.map((p, i) => sep(i) + pieceText(p, plainTitles)).join("");
@@ -211,7 +211,7 @@ const labelCtx = (date: string, tag: string | null, journal: Journal): LabelCtx 
   ({ date, tag, root: (tag || "").split("/")[0], books: titlesRoots(date), locates: !!nsOf(date)?.refersWithLocator, journal, said: conventionsOf(date, tag, journal) });
 function framed(parts: Piece[], c: LabelCtx): Piece[] {
   if (isDayKey(c.date)) parts.unshift({ plain: dateLabel(c.date) });
-  return c.said.lastTitle ? fromLastTitle(parts) : parts;
+  return c.said.byInnermostTitleAlone ? fromLastTitle(parts) : parts;
 }
 function translatorNote(c: LabelCtx, translator: string, facing: string, numbered: string | undefined): string {
   const division = numbered !== undefined ? numbered + "." : "";
@@ -229,7 +229,7 @@ export function referenceLabel(date: string, tag: string | null, at: Locator, jo
   const range = !translator && facing ? facing : at.range;
   const parts = framed(pieces, c);
   const numbered = numberedDeepest(parts);
-  const label = joinParts(withFirst(located(parts, { ...at, range }, c, numbered), c), c.said.scripture);
+  const label = joinParts(withFirst(located(parts, { ...at, range }, c, numbered), c), c.said.byChapterAndVerse);
   return translator ? label + translatorNote(c, translator, facing, numbered) : label;
 }
 export function mdLabel(text: string, fallback: string): string {

@@ -81,7 +81,7 @@ the line made a card, switched back: {"corner":"saved","grid":true,"columns":3,"
 told on open: arrived at 2026-09-02/gesta-wrangling: {"cursor":"at a line's start"}
 a journal day with a refused fence line, opened: {"corner":"::: verse -3 — -3 is not a starting line, so it stayed a paragraph (click to copy)","cursor":"at a line's start","screen":"2026-09-02/gesta-wrangling · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 told on open: arrived at bookshelf/Chaucer, Geoffrey: {"cursor":"at a line's start"}
-an author with directives no page reads there, opened: {"corner":"“roman book and canto” is not a reference directive\n“parts in roman” is read on a work’s page (click to copy)","cursor":"at a line's start","screen":"bookshelf/Chaucer, Geoffrey · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+an author with directives no page reads there, opened: {"corner":"“roman book and canto” is not a reference directive\n“part titles in roman” is read on a work’s page (click to copy)","cursor":"at a line's start","screen":"bookshelf/Chaucer, Geoffrey · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == paired card
 paired card: arrived at commonplace/Paired Card: {"cursor":"at a line's start"}
 a card and a note of paired verse: {"blocks":[{"box":"card-light-blue","rows":8,"wrapped":0,"wider":true},{"box":"note","rows":8,"wrapped":0,"wider":true}],"cursor":"at the end","screen":"commonplace/Paired Card · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

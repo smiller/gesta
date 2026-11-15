@@ -83,7 +83,7 @@ export function plainSpelling(line: string): string {
 
 export function beowulfEntries(fitts: string[][], note: string): Record<string, string> {
   return {
-    "bookshelf/Beowulf.md": `# Beowulf\n\n::: reference\nno author\nOld English verse\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${fitts.map((f) => f.join("\n")).join("\n\n")}\n:::`,
+    "bookshelf/Beowulf.md": `# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${fitts.map((f) => f.join("\n")).join("\n\n")}\n:::`,
   };
 }
 
@@ -115,5 +115,5 @@ export function finnsburhLines(pages: string[]): { lines: string[]; numbered: Nu
 }
 
 export function finnsburhEntry(lines: string[], note: string): Record<string, string> {
-  return { "bookshelf/Finnsburh.md": `# The Fight at Finnsburh\n\n::: reference\nno author\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${lines.join("\n")}\n:::` };
+  return { "bookshelf/Finnsburh.md": `# The Fight at Finnsburh\n\n::: reference\nby title alone\n:::\n\n::: note\n${note}\n:::\n\n::: verse\n${lines.join("\n")}\n:::` };
 }
