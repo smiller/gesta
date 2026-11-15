@@ -103,3 +103,6 @@
 {"at":"2026-11-15T17:45","ev":"done","id":"S12","commits":["3a8acd5"]}
 {"at":"2026-11-15T17:45","ev":"start","id":"S6.1"}
 {"at":"2026-11-15T18:02","ev":"add","id":"S6.1.1","list":"S","title":"Helium \"where the keys go\": a click on the editor lands at a line's start, once in a reverse-order run","parent":"S6.1","detail":"Asked: found by the pre-commit verify at 17:59 while committing S6.1's record: in the order run, the section's first three readings had the caret \"at a line's start\" where the approved run has \"inside a line\"; the replay passed. Why: tap(S.editor) clicks the editor's middle, so the caret depends on the layout at that moment; a section must read the same in either order. Done when: the step waits for the layout to hold still before its click (or places the caret itself), and the order run passes it over several runs."}
+{"at":"2026-11-15T18:04","ev":"start","id":"S6.1.1"}
+{"at":"2026-11-15T18:34","ev":"done","id":"S6.1.1","commits":["1853804"],"note":"the page 5628 px tall before the measuring pass, 1277 after; the click now waits for still()"}
+{"at":"2026-11-15T18:34","ev":"stop","id":"S6.1","note":"the failure's record is in place (8874ab6); 0 failures in 12 whole runs since, waiting for the next one to name its cause"}
