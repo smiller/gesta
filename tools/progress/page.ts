@@ -41,7 +41,8 @@ function chips(it: Item, d: Drawn): string {
   const status = '<span class="chip ' + cls + '">' + text + (to ? " → " + lower(to.list) + " " + to.id : "") + "</span>";
   return isNew + status + was + (it.starting ? '<span class="chip s-start">starting item</span>' : "");
 }
-const rowClass = (it: Item, depth: number): string => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : "", it.detail ? "has-detail" : ""].filter(Boolean).join(" ");
+const tint = (it: Item, depth: number): string[] => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean);
+const rowClass = (it: Item, depth: number): string => [...tint(it, depth), ...(it.detail ? ["has-detail"] : [])].join(" ");
 /* reported (a carried item's before the day), started, ended, and, where
    it spawned something, closed */
 const closedCell = (it: Item, spawned: boolean): string => (!spawned ? "" : it.closed ? hm(it.closed) : "—");
@@ -52,18 +53,21 @@ function label(it: Item): string {
 }
 const opener = (it: Item): string => (it.detail ? ' tabindex="0" aria-expanded="false"' : "");
 const indent = (depth: number): string => (depth ? ' style="--d:' + depth + '"' : "");
-const detail = (it: Item): string => (it.detail ? '<div class="detail-text" hidden>' + esc(it.detail) + "</div>" : "");
+/* a row of its own, not a block in the label's cell, which wrapped it short
+   of the time and commit columns; the tbody round the two carries the outline */
+const detailRow = (it: Item, depth: number): string => !it.detail ? "" :
+  '<tr class="' + ["detail", ...tint(it, depth)].join(" ") + '"' + indent(depth) + ' hidden><td></td><td colspan="6"><div class="detail-text">' + esc(it.detail) + "</div></td></tr>";
 function row({ item: it, depth }: Placed, d: Drawn): string {
   const cells = times(it, d.items.some((i) => i.parent === it.id)).map((t) => '<td class="t">' + t + "</td>").join("");
-  return '<tr class="' + rowClass(it, depth) + '"' + indent(depth) + opener(it) + '><td class="n">' + it.id + '</td><td><div class="item">' + chips(it, d) +
-    '<span class="label">' + label(it) + "</span></div>" + detail(it) + "</td>" + cells + '<td class="c">' + it.commits.join(" ") + "</td></tr>";
+  return '<tbody><tr class="' + rowClass(it, depth) + '"' + indent(depth) + opener(it) + '><td class="n">' + it.id + '</td><td><div class="item">' + chips(it, d) +
+    '<span class="label">' + label(it) + "</span></div></td>" + cells + '<td class="c">' + it.commits.join(" ") + "</td></tr>" + detailRow(it, depth) + "</tbody>";
 }
 const HEAD = '<thead><tr><th class="n">#</th><th>Item</th><th class="t">reported</th><th class="t">started</th><th class="t">ended</th><th class="t">closed</th><th>commit</th></tr></thead>';
 function section(list: List, placed: Placed[], d: Drawn): string {
   if (!placed.length) return "";
   const starting = placed.filter((p) => p.item.starting && !p.depth).length;
-  return "<section><h2>" + NAME[list] + (starting ? " — " + starting + " at the start" : "") + '</h2><div class="scroll"><table>' + HEAD + "<tbody>" +
-    placed.map((p) => row(p, d)).join("") + "</tbody></table></div></section>";
+  return "<section><h2>" + NAME[list] + (starting ? " — " + starting + " at the start" : "") + '</h2><div class="scroll"><table>' + HEAD +
+    placed.map((p) => row(p, d)).join("") + "</table></div></section>";
 }
 /* a count's change since the frame before, when there is one */
 const delta = (now: number, was?: number): string => { const d = was === undefined ? 0 : now - was; return d > 0 ? " (+" + d + ")" : d < 0 ? " (−" + -d + ")" : ""; };
@@ -76,7 +80,7 @@ export const KEY = '<div class="key">' + (Object.keys(CHIP) as Status[]).map((s)
   '<span><span class="chip s-start">starting item</span> on the day\'s list when it began</span><span><span class="swatch"></span> unstarted</span></div>';
 
 export const TOGGLE = `<script>
-function toggle(r) { const open = r.getAttribute("aria-expanded") !== "true"; r.setAttribute("aria-expanded", String(open)); r.querySelector(".detail-text").hidden = !open; }
+function toggle(r) { const open = r.getAttribute("aria-expanded") !== "true"; r.setAttribute("aria-expanded", String(open)); r.nextElementSibling.hidden = !open; }
 document.addEventListener("click", (e) => { const r = e.target.closest("tr.has-detail"); if (r) toggle(r); });
 const opening = new Set(["Enter", " "]);
 document.addEventListener("keydown", (e) => { if (!opening.has(e.key)) return; if (e.target.matches("tr.has-detail")) { e.preventDefault(); toggle(e.target); } });

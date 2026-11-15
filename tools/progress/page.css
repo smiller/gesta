@@ -27,7 +27,8 @@ section h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; 
 table { border-collapse: collapse; width: 100%; min-width: 760px; }
 th { text-align: left; font-size: 11.5px; font-weight: 500; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; padding: 4px 8px 6px; border-bottom: 1px solid var(--rule); }
 td { padding: 6px 8px; vertical-align: top; border-bottom: 1px solid var(--rule); }
-tr:last-child td { border-bottom: 0; }
+tbody:last-child tr:last-child td { border-bottom: 0; }
+tr:has(+ tr.detail:not([hidden])) td { border-bottom: 0; }
 td.t, th.t { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; width: 72px; }
 td.n, th.n { font-family: var(--mono); font-size: 12.5px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; width: 64px; padding-right: 4px; }
 td.c { font-family: var(--mono); font-size: 12px; color: var(--muted); white-space: nowrap; }
@@ -49,7 +50,7 @@ tr.done td, tr.moved td, tr.dropped td { background: var(--settled); }
 /* a bar down the left of a starting item's row, drawn inside the cell so no column moves */
 tr.sod td:first-child { box-shadow: inset 5px 0 0 var(--muted); padding-left: 14px; }
 .chip.s-start { color: var(--muted); border-style: dashed; font-weight: 500; }
-.now { outline: 2px solid var(--prog); outline-offset: -2px; }
+tbody:has(> tr.now) { outline: 2px solid var(--prog); outline-offset: -2px; }
 .note { color: var(--muted); font-size: 12.5px; max-width: 70ch; }
 .chip.s-new { color: var(--bg); background: var(--prog); border-color: var(--prog); }
 .chip.s-was { color: var(--muted); font-weight: 500; }
@@ -69,5 +70,6 @@ tr.has-detail { cursor: pointer; }
 tr.has-detail td.n::after { content: " ▸"; }
 tr.has-detail[aria-expanded="true"] td.n::after { content: " ▾"; }
 tr.has-detail:focus-visible { outline: 2px solid var(--open); outline-offset: -2px; }
-.detail-text { color: var(--muted); max-width: 72ch; margin-top: 6px; white-space: pre-wrap; }
+tr.detail td { padding-top: 0; }
+.detail-text { color: var(--muted); white-space: pre-wrap; }
 tr.sub .detail-text { padding-left: calc(var(--d) * 34px); }
