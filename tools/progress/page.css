@@ -65,3 +65,9 @@ tr.sod td:first-child { box-shadow: inset 5px 0 0 var(--muted); padding-left: 14
 .frame { display: grid; gap: 24px; }
 /* a frame not on screen: display: grid above outranks the attribute */
 .frame[hidden] { display: none; }
+tr.has-detail { cursor: pointer; }
+tr.has-detail td.n::after { content: " ▸"; }
+tr.has-detail[aria-expanded="true"] td.n::after { content: " ▾"; }
+tr.has-detail:focus-visible { outline: 2px solid var(--open); outline-offset: -2px; }
+.detail-text { color: var(--muted); max-width: 72ch; margin-top: 6px; white-space: pre-wrap; }
+tr.sub .detail-text { padding-left: calc(var(--d) * 34px); }

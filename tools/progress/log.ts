@@ -1,7 +1,8 @@
 /* node tools/progress/log.ts <command> … — one event appended to the day's
    log, stamped with the time:
      begin                       the day's start: yesterday's open items carried in
-     add <list> <title…>         [--parent ID]; prints the number it took
+     add <list> <title…>         [--parent ID] [--detail text]; prints the number it took
+     detail <id> <text…>         the fuller description a click on its row opens
      start | stop | done | drop <id>   [--commits a,b] [--note text]
      move <id> <list>
    --at HH:MM for a time other than now, --approx for one not known exactly,
@@ -32,7 +33,7 @@ export function beginning(last: Event[], at: string): Event[] {
   const open = replay(last).filter((i) => isOpen(i.status));
   const carried = new Set(open.map((i) => i.id));
   const under = (p?: string) => (p && carried.has(p) ? { parent: p } : {});
-  return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent) }))];
+  return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent), ...(i.detail ? { detail: i.detail } : {}) }))];
 }
 
 /* ---------- the command ---------- */
@@ -55,11 +56,12 @@ function flag(args: string[], name: string): string | undefined {
   args.splice(i, v === undefined || v.startsWith("--") ? 1 : 2);
   return v === undefined || v.startsWith("--") ? "" : v;
 }
-interface Asked { rest: string[]; base: { at: string; approx?: boolean }; events: Event[]; parent?: string; commits?: string; note?: string }
+interface Asked { rest: string[]; base: { at: string; approx?: boolean }; events: Event[]; parent?: string; commits?: string; note?: string; detail?: string }
 const noted = (a: Asked) => (a.note ? { note: a.note } : {});
 const plain = (ev: "start" | "stop" | "drop") => (a: Asked): Event => ({ ...a.base, ev, id: a.rest[0], ...noted(a) });
 const BUILT: Record<string, (a: Asked) => Event> = {
-  add: (a) => { const list = a.rest[0] as List; return { ...a.base, ev: "add", id: nextId(a.events, list, a.parent), list, title: a.rest.slice(1).join(" "), ...(a.parent ? { parent: a.parent } : {}) }; },
+  add: (a) => { const list = a.rest[0] as List; return { ...a.base, ev: "add", id: nextId(a.events, list, a.parent), list, title: a.rest.slice(1).join(" "), ...(a.parent ? { parent: a.parent } : {}), ...(a.detail ? { detail: a.detail } : {}) }; },
+  detail: (a) => ({ ...a.base, ev: "detail", id: a.rest[0], text: a.rest.slice(1).join(" ") }),
   move: (a) => ({ ...a.base, ev: "move", id: a.rest[0], to: nextId(a.events, a.rest[1] as List), list: a.rest[1] as List }),
   done: (a) => ({ ...a.base, ev: "done", id: a.rest[0], ...(a.commits ? { commits: a.commits.split(",") } : {}), ...noted(a) }),
   start: plain("start"), stop: plain("stop"), drop: plain("drop"),
@@ -67,10 +69,12 @@ const BUILT: Record<string, (a: Asked) => Event> = {
 export function commandLine(argv: string[]): { day: string; cmd: string; asked: Omit<Asked, "events"> } {
   const args = [...argv];
   const approx = has(args, "approx"), day = flag(args, "day") || today(), hm = flag(args, "at") || clock();
-  const parent = flag(args, "parent"), commits = flag(args, "commits"), note = flag(args, "note");
+  const parent = flag(args, "parent"), commits = flag(args, "commits"), note = flag(args, "note"), detail = flag(args, "detail");
   const [cmd, ...rest] = args;
-  return { day, cmd, asked: { rest, base: { at: day + "T" + hm, ...(approx ? { approx: true } : {}) }, parent, commits, note } };
+  return { day, cmd, asked: { rest, base: { at: day + "T" + hm, ...(approx ? { approx: true } : {}) }, parent, commits, note, detail } };
 }
+type Line = ReturnType<typeof commandLine>;
+export const built = (c: Line, events: Event[]): Event | null => { const build = BUILT[c.cmd]; return build ? build({ ...c.asked, events }) : null; };
 /* why an event cannot be logged, or null: a list that does not exist
    crashed the page, an unknown number was silently ignored, and a number
    taken before the day began could reuse one an earlier day had used */
@@ -96,8 +100,8 @@ function main(argv: string[]): void {
   mkdirSync(DIR, { recursive: true });
   /* begun twice, a day carried its items in twice */
   if (cmd === "begin" && dayEvents(day).some((e) => e.ev === "begin")) { console.error(day + " has begun already"); process.exit(1); }
-  const before = lastDay(day), build = BUILT[cmd];
-  const events = cmd === "begin" ? beginning(before ? dayEvents(before) : [], asked.base.at) : [build ? build({ ...asked, events: dayEvents(day) }) : null];
+  const before = lastDay(day);
+  const events = cmd === "begin" ? beginning(before ? dayEvents(before) : [], asked.base.at) : [built({ day, cmd, asked }, dayEvents(day))];
   refuseOrGo(events, day);
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   for (const e of events) console.log(JSON.stringify(e));

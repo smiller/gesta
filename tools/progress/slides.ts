@@ -1,5 +1,5 @@
 import { replay, own, isDone, isUnderway, type Event, type Item } from "./events.ts";
-import { frame, head, KEY, longDay } from "./page.ts";
+import { frame, head, KEY, longDay, TOGGLE } from "./page.ts";
 
 const pad = (n: number): string => String(n).padStart(2, "0");
 const minutes = (at: string): number => +at.slice(11, 13) * 60 + +at.slice(14, 16);
@@ -51,5 +51,5 @@ export function slides(events: Event[], o: { day: string }): string {
   const times = frameTimes(events), snaps = times.map((t) => replay(events, o.day + "T" + t));
   const frames = snaps.map((items, i) => '<div class="frame" data-at="' + times[i] + '"' + (i ? " hidden" : "") + ">" + frame(items, i ? snaps[i - 1] : undefined) + "</div>").join("");
   const controls = '<div class="controls"><button id="pause" type="button">Pause</button><input id="when" type="range" min="0" max="' + (times.length - 1) + '" value="0" aria-label="the frame\'s time"><span id="clock">' + times[0] + "</span></div>";
-  return head("Gesta Day Slides") + "<main><header><h1>" + longDay(o.day) + ", every half hour</h1></header>" + strip(snaps, times) + controls + KEY + frames + "</main>\n" + SCRIPT + "\n";
+  return head("Gesta Day Slides") + "<main><header><h1>" + longDay(o.day) + ", every half hour</h1></header>" + strip(snaps, times) + controls + KEY + frames + "</main>\n" + SCRIPT + "\n" + TOGGLE + "\n";
 }

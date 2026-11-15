@@ -98,3 +98,15 @@ test("which labels are open, which under way, which done, and the lists there ar
   ]);
   expect(LISTS).toEqual(["A", "S", "L", "B"]);
 });
+
+test("an item's detail is the one it was added with, or the last detail event's, and is kept through a move", () => {
+  const detailed: Event[] = [...day,
+    { at: at("13:10"), ev: "add", id: "S8", list: "S", title: "s8", detail: "the fuller description" },
+    { at: at("13:20"), ev: "detail", id: "S1", text: "first" },
+    { at: at("13:30"), ev: "detail", id: "S1", text: "second" },
+    { at: at("13:40"), ev: "move", id: "S1", to: "B2", list: "B" },
+  ];
+  const it = Object.fromEntries(replay(detailed).map((i) => [i.id, i]));
+  expect([it.S8.detail, it.S1.detail, it.B2.detail, it.A1.detail]).toEqual(["the fuller description", "second", "second", undefined]);
+  expect(replay(detailed, at("13:25")).find((i) => i.id === "S1")!.detail).toBe("first");
+});

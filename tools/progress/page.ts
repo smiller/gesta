@@ -41,7 +41,7 @@ function chips(it: Item, d: Drawn): string {
   const status = '<span class="chip ' + cls + '">' + text + (to ? " → " + lower(to.list) + " " + to.id : "") + "</span>";
   return isNew + status + was + (it.starting ? '<span class="chip s-start">starting item</span>' : "");
 }
-const rowClass = (it: Item, depth: number): string => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean).join(" ");
+const rowClass = (it: Item, depth: number): string => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : "", it.detail ? "has-detail" : ""].filter(Boolean).join(" ");
 /* reported (a carried item's before the day), started, ended, and, where
    it spawned something, closed */
 const closedCell = (it: Item, spawned: boolean): string => (!spawned ? "" : it.closed ? hm(it.closed) : "—");
@@ -50,10 +50,13 @@ function label(it: Item): string {
   const from = it.movedFrom ? " (moved in from " + it.movedFrom + ")" : "";
   return esc(it.title) + from + (it.note ? " (" + esc(it.note) + ")" : "");
 }
+const opener = (it: Item): string => (it.detail ? ' tabindex="0" aria-expanded="false"' : "");
+const indent = (depth: number): string => (depth ? ' style="--d:' + depth + '"' : "");
+const detail = (it: Item): string => (it.detail ? '<div class="detail-text" hidden>' + esc(it.detail) + "</div>" : "");
 function row({ item: it, depth }: Placed, d: Drawn): string {
   const cells = times(it, d.items.some((i) => i.parent === it.id)).map((t) => '<td class="t">' + t + "</td>").join("");
-  return '<tr class="' + rowClass(it, depth) + '"' + (depth ? ' style="--d:' + depth + '"' : "") + '><td class="n">' + it.id + '</td><td><div class="item">' + chips(it, d) +
-    '<span class="label">' + label(it) + "</span></div></td>" + cells + '<td class="c">' + it.commits.join(" ") + "</td></tr>";
+  return '<tr class="' + rowClass(it, depth) + '"' + indent(depth) + opener(it) + '><td class="n">' + it.id + '</td><td><div class="item">' + chips(it, d) +
+    '<span class="label">' + label(it) + "</span></div>" + detail(it) + "</td>" + cells + '<td class="c">' + it.commits.join(" ") + "</td></tr>";
 }
 const HEAD = '<thead><tr><th class="n">#</th><th>Item</th><th class="t">reported</th><th class="t">started</th><th class="t">ended</th><th class="t">closed</th><th>commit</th></tr></thead>';
 function section(list: List, placed: Placed[], d: Drawn): string {
@@ -72,6 +75,12 @@ function tallyLine(lead: string, t: Tally, b?: Tally): string {
 export const KEY = '<div class="key">' + (Object.keys(CHIP) as Status[]).map((s) => '<span><span class="chip ' + CHIP[s][0] + '">' + CHIP[s][1] + "</span></span>").join("") +
   '<span><span class="chip s-start">starting item</span> on the day\'s list when it began</span><span><span class="swatch"></span> unstarted</span></div>';
 
+export const TOGGLE = `<script>
+function toggle(r) { const open = r.getAttribute("aria-expanded") !== "true"; r.setAttribute("aria-expanded", String(open)); r.querySelector(".detail-text").hidden = !open; }
+document.addEventListener("click", (e) => { const r = e.target.closest("tr.has-detail"); if (r) toggle(r); });
+const opening = new Set(["Enter", " "]);
+document.addEventListener("keydown", (e) => { if (!opening.has(e.key)) return; if (e.target.matches("tr.has-detail")) { e.preventDefault(); toggle(e.target); } });
+</script>`;
 export const longDay = (day: string): string => new Date(day + "T12:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 export function head(title: string): string {
   const css = readFileSync(new URL("./page.css", import.meta.url), "utf8");
@@ -90,7 +99,7 @@ export function frame(items: Item[], before?: Item[]): string {
 export function page(events: Event[], o: { day: string; at?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
   const title = longDay(o.day) + (o.at ? ", as it stood at " + o.at : "");
-  return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + "</main>\n";
+  return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + "</main>\n" + TOGGLE + "\n";
 }
 
 function main(argv: string[]): void {

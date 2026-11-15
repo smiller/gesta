@@ -37,3 +37,12 @@ test("a snapshot is the page as it stood at its time, and says so", () => {
   expect(html).toContain("as it stood at 09:15");
   expect(html).toContain('<span class="chip s-open">unstarted</span>');
 });
+
+test("an item with a detail has it hidden beneath its label, inside its own row, opened by a click on the row; one without has none", () => {
+  const told: Event[] = [...day, { at: at("10:10"), ev: "detail", id: "A1", text: "why <this> matters" }];
+  const html = page(told, { day: "2026-11-15" });
+  const a1 = /<tr class="[^"]*has-detail"[^>]*aria-expanded="false"[^>]*><td class="n">A1<\/td>(.*?)<\/tr>/.exec(html);
+  expect(a1?.[1]).toMatch(/<span class="label">[^<]*<\/span><\/div><div class="detail-text" hidden>why &lt;this&gt; matters<\/div><\/td>/);
+  expect(html.match(/class="detail-text"/g)).toHaveLength(1);
+  expect(html).toContain('addEventListener("click"');
+});

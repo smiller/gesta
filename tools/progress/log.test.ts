@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { nextId, beginning, commandLine, refusal } from "./log.ts";
+import { nextId, beginning, commandLine, refusal, built } from "./log.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -47,4 +47,14 @@ test("an event naming no list, no item the day knows, or a day not begun is refu
 test("a paused item is carried into the next day as an open one", () => {
   const paused: Event[] = [...day, { at: at("10:00"), ev: "start", id: "S6" }, { at: at("10:05"), ev: "stop", id: "S6", note: "waiting" }];
   expect(beginning(paused, "2026-11-16T09:00").some((e) => "id" in e && e.id === "S6")).toBe(true);
+});
+
+test("an item's detail is given with --detail on add, or later by the detail command, and carried into the next day", () => {
+  const added = commandLine(["add", "S", "a", "title", "--detail", "the fuller description"]);
+  expect([added.asked.rest, added.asked.detail]).toEqual([["S", "a", "title"], "the fuller description"]);
+  expect(built(added, day)).toMatchObject({ ev: "add", id: "S7", title: "a title", detail: "the fuller description" });
+  expect(built(commandLine(["detail", "S6", "said", "later"]), day)).toMatchObject({ ev: "detail", id: "S6", text: "said later" });
+  expect(refusal({ at: at("10:00"), ev: "detail", id: "S99", text: "t" }, day)).toBe("no item S99 on this day");
+  const told: Event[] = [...day, { at: at("10:00"), ev: "detail", id: "S6", text: "why" }];
+  expect(beginning(told, "2026-11-16T09:00").find((e) => "id" in e && e.id === "S6")).toMatchObject({ detail: "why" });
 });
