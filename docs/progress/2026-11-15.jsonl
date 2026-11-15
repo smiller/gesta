@@ -92,3 +92,5 @@
 {"at":"2026-11-15T17:06","ev":"add","id":"S11","list":"S","title":"visualization: a row's detail runs the full width of the row (asked)","detail":"Starting left where it does now, under the Item column, but not breaking before the time and commit columns; still inside the row's outline."}
 {"at":"2026-11-15T17:06","ev":"start","id":"S11"}
 {"at":"2026-11-15T17:07","ev":"done","id":"S11","commits":["13c3aec"]}
+{"at":"2026-11-15T17:09","ev":"detail","id":"S10","text":"Asked: a click on a row opens a fuller description beneath it (asked at 16:50; the words themselves were not kept). Why: a title alone is too short to say what an item is or why it is on the list. Done when: in Helium, a click on a row with a description shows it beneath the label, and a second click hides it."}
+{"at":"2026-11-15T17:09","ev":"detail","id":"S11","text":"Asked: \"It can go the full width of the row, really. That is, starting left where it does, but it doesn't need to break before subsequent columns.\" Why: in the Item column it wrapped short of the time and commit columns. Done when: in Helium, the description runs from the Item column to the row's right edge, inside the outline."}
