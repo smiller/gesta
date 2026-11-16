@@ -305,6 +305,12 @@ section("a terminal's copy pasted", async () => {
   await page.keyboard.press("Enter");
   await pasteTerminal(terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Done:") + terminal(TABLE.join("\n")), "⏺ Done:\n" + TABLE.join("\n"));
   await log("a terminal's box-drawn table pasted, in a second pre block", { md: await A.stored(page), rows: await page.evaluate((sel) => [...document.querySelectorAll(sel + " tr")].map((r) => r.children.length), S.editor) });
+  await write("commonplace/Terminal Rows", "before\n");
+  await caretAt("before", 6);
+  await page.keyboard.press("Enter");
+  const rows = ["┌───┬─────┐", "│ a │ b   │", "├───┼─────┤", "│ 1 │ x|y │", "│ 3 │ 4   │", "└───┴─────┘"];
+  await pasteTerminal(terminal(rows.join("\n")), rows.join("\n"));
+  await log("a terminal's table with no rule between rows, a pipe in a cell", { md: await A.stored(page), cells: await page.evaluate((sel) => [...document.querySelectorAll(sel + " tr")].map((r) => [...r.children].map((c) => c.textContent)), S.editor) });
   await write("commonplace/Terminal Source", "x\n");
   await view(true);
   await R.sourceCaretTo(page, "x");

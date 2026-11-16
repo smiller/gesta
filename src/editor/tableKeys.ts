@@ -24,12 +24,16 @@ function outOfTable(tr: Transaction, $head: ResolvedPos, d: number): Transaction
 }
 /* Enter goes a cell down, as in a spreadsheet, and from the last row out
    of the table; split, the cell became a new cell in its row (pin:
-   tableKeys.test › Enter in a cell goes to the end of the cell below) */
+   tableKeys.test › Enter in a cell goes to the end of the cell below); a
+   selection is deleted first, as Enter does anywhere (pin: tableKeys.test ›
+   Enter over a selection in a cell) */
 export const enterDown: Command = (state, dispatch) => {
-  const { $head } = state.selection, d = $head.depth;
+  if (state.selection.$head.parent.type !== CELL) return false;
+  const start = state.selection.empty ? state.tr : state.tr.deleteSelection();
+  const { $head } = start.selection, d = $head.depth;
   if ($head.parent.type !== CELL) return false;
   const lastRow = $head.index(d - 2) === $head.node(d - 2).childCount - 1;
-  const tr = lastRow ? outOfTable(state.tr, $head, d) : state.tr.setSelection(TextSelection.create(state.doc, cellBelow($head, d)));
+  const tr = lastRow ? outOfTable(start, $head, d) : start.setSelection(TextSelection.create(start.doc, cellBelow($head, d)));
   if (!tr) return false;
   dispatch?.(tr.scrollIntoView());
   return true;

@@ -31,6 +31,7 @@ const ROUND_TRIPS = [
   "```js\nvar x = 1;\n```",
   "````\n```\ninner\n```\n````",
   "| a | b |\n| --- | --- |\n| 1 | 2 |",
+  "| a | b |\n| --- | --- |\n| x \\| y | `p\\|q` |",
   "::: card-red\ninside a card\n:::",
   "::: card-blue\n# a heading in a card\n\n- and a list\n:::",
   "::: verse\nalpha\nbeta\n:::",

@@ -5,6 +5,7 @@ import type { EditorProps } from "prosemirror-view";
 import { pastedImageFile } from "./images.ts";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
+import { escapeTablePipes } from "../model/grammar.ts";
 import { COPY_MARK } from "./copy.ts";
 import { bareUrl } from "./typing.ts";
 import { namesEntry, internalHash, makeHref } from "../store/nav.ts";
@@ -175,7 +176,7 @@ function pasteSlice(raw: string, $context: ResolvedPos): Slice {
 const PRE_BLOCK = '<div style="[^"]*white-space:\\s*pre(?![\\w-])[^"]*">';
 const TERMINAL_OPEN = new RegExp("^\\s*(?:<meta[^>]*>\\s*|<html[^>]*>\\s*|<head>[^]*?<\\/head>\\s*|<body[^>]*>\\s*|<!--StartFragment-->\\s*)*" + PRE_BLOCK, "i");
 const TERMINAL_CLOSE = /<\/div>\s*(?:<!--EndFragment-->\s*|<\/body>\s*|<\/html>\s*)*$/i;
-const NEXT_BLOCK = new RegExp("<\\/div>" + PRE_BLOCK, "gi");
+const NEXT_BLOCK = new RegExp("<\\/div>\\s*" + PRE_BLOCK, "gi");
 const NOT_A_RUN = /<(?!div style="display: inline[;"]|\/div>|a\s|\/a>|span[\s>]|\/span>)/i;
 function terminalCopy(html: string): boolean {
   const open = TERMINAL_OPEN.exec(html), close = TERMINAL_CLOSE.exec(html);
@@ -214,28 +215,46 @@ function marginOff(lines: string[]): string[] {
   if (lines.length < 2) return lines;
   const [first, ...rest] = lines, firstCounts = indentOf(first) >= 2;
   const indents = (firstCounts ? lines : rest).filter((l) => /\S/.test(l) && !MESSAGE.test(l)).map(indentOf);
-  const margin = indents.length ? Math.min(...indents) : 0, off = (l: string) => l.replace(new RegExp("^[ \\t]{0," + margin + "}"), "");
+  const margin = indents.length ? Math.min(...indents) : 0, lead = new RegExp("^[ \\t]{0," + margin + "}"), off = (l: string) => l.replace(lead, "");
   return [firstCounts ? off(first) : first, ...rest.map(off)];
 }
 /* a terminal draws a table in box characters, each cell wrapped within its
    column; joined as prose its borders and cells ran together (pin:
-   paste.test › a terminal's box-drawn table) */
-const BOX_TOP = /^\s*┌/, BOX_BOTTOM = /^\s*└/, BOX_RULE = /^\s*├/;
+   paste.test › a terminal's box-drawn table). A box is a table only when
+   every line between its top and bottom is a row or a rule: a diagram's
+   box ran on to a tree listing's └ and cut every line between into cells
+   (pin: paste.test › a box is a table only when) */
+const BOX_TOP = /^\s*┌/, BOX_BOTTOM = /^\s*└/, BOX_RULE = /^\s*├/, BOX_INSIDE = /^\s*[│├]/;
 const cellsOf = (line: string): string[] => line.trim().slice(1, -1).split("│").map((c) => c.trim());
 function boxRow(lines: string[]): string {
   const rows = lines.map(cellsOf);
-  return "| " + rows[0].map((_, i) => rows.map((r) => r[i] ?? "").filter(Boolean).join(" ")).join(" | ") + " |";
+  return "| " + rows[0].map((_, i) => escapeTablePipes(rows.map((r) => r[i] ?? "").filter(Boolean).join(" "))).join(" | ") + " |";
+}
+/* lines between rules are one row wrapped; where no rule falls between body
+   rows each line is a row, a wrapped row too, the two drawn alike (pin:
+   paste.test › a terminal's box-drawn table) */
+function boxRows(inside: string[]): string[][] {
+  const groups: string[][] = [[]];
+  for (const l of inside) if (BOX_RULE.test(l)) groups.push([]); else groups.at(-1)!.push(l);
+  const rows = groups.filter((g) => g.length);
+  return groups.length > 2 ? rows : [rows[0], ...rows.slice(1).flat().map((l) => [l])];
 }
 function boxTable(inside: string[]): string[] {
-  const rows: string[][] = [[]];
-  for (const l of inside) if (BOX_RULE.test(l)) rows.push([]); else rows.at(-1)!.push(l);
-  const md = rows.filter((r) => r.length).map(boxRow);
-  return [md[0], "| " + cellsOf(inside[0]).map(() => "---").join(" | ") + " |", ...md.slice(1)];
+  const rows = boxRows(inside), md = rows.map(boxRow);
+  return [md[0], "| " + cellsOf(rows[0][0]).map(() => "---").join(" | ") + " |", ...md.slice(1)];
+}
+function boxEnd(lines: string[], top: number): number {
+  let j = top + 1;
+  while (j < lines.length && BOX_INSIDE.test(lines[j])) j++;
+  const rows = lines.slice(top + 1, j).some((l) => !BOX_RULE.test(l));
+  return rows && j < lines.length && BOX_BOTTOM.test(lines[j]) ? j : -1;
 }
 function boxTablesOff(lines: string[]): string[] {
   const out: string[] = [];
+  let code = false;
   for (let i = 0; i < lines.length; i++) {
-    const end = BOX_TOP.test(lines[i]) ? lines.findIndex((l, j) => j > i && BOX_BOTTOM.test(l)) : -1;
+    if (lines[i].trim().startsWith("```")) code = !code;
+    const end = !code && BOX_TOP.test(lines[i]) ? boxEnd(lines, i) : -1;
     if (end < 0) out.push(lines[i]);
     else { out.push(...boxTable(lines.slice(i + 1, end))); i = end; }
   }

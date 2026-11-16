@@ -2,7 +2,7 @@
    (`ts.createScanner` undefined). */
 /* a "template" span is a template's text between its substitutions, never
    a substitution, whose strings are strings; `line` marks a // comment */
-export interface Span { at: number; to: number; kind: "comment" | "string" | "template"; line: boolean }
+export interface Span { at: number; to: number; kind: "comment" | "string" | "template" | "regex"; line: boolean }
 
 interface Lex { src: string; i: number; prev: string; word: string; depth: number; braces: number[]; out: Span[] }
 
@@ -72,6 +72,7 @@ function regex(x: Lex): boolean {
   if (x.src[x.i] !== "/" || !regexCan(x)) return false;
   let i = regexEnd(x.src, x.i + 1) + 1;
   while (i < x.src.length && /\w/.test(x.src[i])) i++;
+  x.out.push({ at: x.i, to: i, kind: "regex", line: false });
   return moved(x, "/", i);
 }
 function word(x: Lex): boolean {

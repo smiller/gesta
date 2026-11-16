@@ -187,8 +187,9 @@ export function isTableStart(lines: string[], i: number): boolean {
   return TABLE_ROW.test(lines[i]) && i + 1 < lines.length && TABLE_DIVIDER.test(lines[i + 1]);
 }
 export function tableRowCells(line: string): string[] {
-  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+  return line.trim().replace(/^\|/, "").replace(/(?<!\\)\|$/, "").split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, "|"));
 }
+export const escapeTablePipes = (md: string): string => md.replace(/\|/g, "\\|");
 
 /* ---------- prose that would read back as syntax ---------- */
 /* the ONE spelling of "does lines[i] open a block" */

@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { spans, spansOf, only } from "./sourceSpans.ts";
+import { spansOf, only } from "./sourceSpans.ts";
 
 const read = (src: string, file = "a.ts") => spansOf(file, src).map((s) => [s.kind, src.slice(s.at, s.to)]);
 
@@ -13,9 +13,9 @@ test("a template's text is read between its substitutions, a string inside one i
   expect(read('const t = `a ${f("b")} c`;')).toEqual([["template", "a "], ["string", '"b"'], ["template", " c"]]);
 });
 
-test("a slash after return or an operator opens a regex, whose quotes and slashes are no string's or comment's", () => {
-  expect(read("function f() { return /'[/*]/.test(s); }\nconst r = x / y; // z")).toEqual([["comment", "// z"]]);
-  expect(spans("const r = a = /\"/g;")).toEqual([]);
+test("a slash after return or an operator opens a regex, a span of its own, whose quotes and slashes are no string's or comment's", () => {
+  expect(read("function f() { return /'[/*]/.test(s); }\nconst r = x / y; // z")).toEqual([["regex", "/'[/*]/"], ["comment", "// z"]]);
+  expect(read("const r = a = /\"/g;")).toEqual([["regex", '/"/g']]);
 });
 
 test("a page's script, its style and its markup are read in place, each in its own way", () => {

@@ -222,7 +222,7 @@ test("spaces at a selection's edges stay outside the link; a selection of spaces
 const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;color: rgb(177, 185, 249);">git log</div> ran, and\n  <div style="display: inline;font-weight: bold;">bold</div> words.</div>';
 
 const terminal = (s: EditorState, html: string, plain: string): string => after(s, plain, html);
-test("a terminal's copy is styled preformatted text alone: white-space: pre blocks of inline runs, one after another", () => {
+test("a terminal's copy is styled preformatted text alone: white-space: pre blocks of inline runs, one after another, with space between them or none", () => {
   /* a terminal's copy is its text, its lines joined; any other HTML is the editor's own paste */
   const s = at("x", "x"), plain = "git log ran, and\n  bold words.", joined = "xgit log ran, and bold words.";
   expect(terminal(s, GHOSTTY, plain)).toBe(joined);
@@ -232,6 +232,7 @@ test("a terminal's copy is styled preformatted text alone: white-space: pre bloc
     GHOSTTY + GHOSTTY.replace("display: inline;", "display: inline-block;"), GHOSTTY + '<div style="white-space: pre-wrap;">a</div>']) expect(terminal(s, html, plain)).toBe("default");
   expect(terminal(s, GHOSTTY.replace("git log", '<a href="https://example.org/">git log</a>'), plain)).toBe(joined);
   expect(terminal(s, GHOSTTY + GHOSTTY, plain)).toBe(joined);
+  expect(terminal(s, GHOSTTY + "\n" + GHOSTTY, plain)).toBe(joined);
 });
 /* a terminal's copy as the markdown view takes it: its lines joined, nothing parsed */
 const unwrapped = (text: string): string => {
@@ -255,11 +256,16 @@ test("a terminal's margin is taken off: the indent every line shares, a message'
   expect(unwrapped("  - outer\n    - inner")).toBe("- outer\n  - inner");
 });
 
-test("a terminal's box-drawn table is a markdown table: its first row the header, a row's wrapped lines joined cell by cell", () => {
+test("a terminal's box-drawn table is a markdown table: its first row the header, a row's wrapped lines joined cell by cell between rules, each line a row where it draws none, a pipe in a cell escaped", () => {
   const box = ["  Done:", "", "  ┌──────┬──────────────┐", "  │ Item │     What     │", "  ├──────┼──────────────┤",
     "  │      │ begin failed │", "  │ P1   │  its carries │", "  ├──────┼──────────────┤", "  │ S14  │ the paste    │", "  └──────┴──────────────┘", "", "  After."];
   expect(unwrapped(box.join("\n"))).toBe("Done:\n\n| Item | What |\n| --- | --- |\n| P1 | begin failed its carries |\n| S14 | the paste |\n\nAfter.");
   expect(unwrapped("  ┌───┐\n  │ a │\n  no bottom")).toBe("┌───┐\n│ a │\nno bottom");
+  expect(unwrapped("┌───┬───┐\n│ a │ b │\n├───┼───┤\n│ 1 │ 2 │\n│ 3 │ 4 │\n└───┴───┘")).toBe("| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |");
+  expect(unwrapped("┌─────┐\n│ h   │\n├─────┤\n│ a|b │\n└─────┘")).toBe("| h |\n| --- |\n| a\\|b |");
+});
+test("a box is a table only when every line between its top and its bottom is a row or a rule, outside a code fence; any other is left as it was", () => {
+  for (const kept of ["┌──┐\n└──┘", "┌──┐\n├──┤\n└──┘", "┌──┐ a diagram\nThen the decoder runs.\n├── a.ts\n└── last.ts", "```\n┌───┐\n│ a │\n└───┘\n```"]) expect(unwrapped(kept)).toBe(kept);
 });
 
 test("a terminal's copy of markdown keeps its structure: nothing in a fence is joined, nor a fence, heading, quote or table line", () => {

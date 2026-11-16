@@ -328,7 +328,7 @@ async function tabTableQuote(): Promise<void> {
 }
 
 section("Enter in a table", async () => {
-  /* Enter goes a cell down, and from the last row out of the table into a new line; the table unchanged */
+  /* Enter goes a cell down, and from the last row out of the table into a new line; the table unchanged; over a selection in a cell, the selection deleted first */
   await write("commonplace/Table Enter", "| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n");
   await caretAt("2", 1);
   const where = () => page.evaluate(() => { const n = getSelection()?.anchorNode; const e = n?.nodeType === 1 ? (n as Element) : n?.parentElement; const b = e?.closest("td, th, p"); return b ? b.tagName.toLowerCase() + " " + JSON.stringify(b.textContent) : null; });
@@ -341,4 +341,9 @@ section("Enter in a table", async () => {
   await page.keyboard.type("after");
   await rest(page);
   await log("typed after the table", { md: await A.stored(page) });
+  await R.selectBetween(page, "2", "2");
+  const selected = await page.evaluate(() => getSelection()?.toString() ?? "");
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("Enter over a cell's selected text", { selected, in: await where(), md: await A.stored(page) });
 });

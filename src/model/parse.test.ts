@@ -206,6 +206,12 @@ test("body rows pad or trim to the header's column count", () => {
   expect(t.child(0).child(0).attrs.header).toBe(true);
 });
 
+test("an escaped pipe in a table row is a pipe in its cell, never a column's edge", () => {
+  const t = parseMarkdown("| a | b |\n| --- | --- |\n| x \\| y | z |").firstChild!;
+  expect(t.child(1).childCount).toBe(2);
+  expect([t.child(1).child(0).textContent, t.child(1).child(1).textContent]).toEqual(["x | y", "z"]);
+});
+
 test("inline: code spans keep markers literal, ⟩ is a word boundary, a page label in an href stays a token", () => {
   const d = parseMarkdown("`*x* ⟨8⟩` ⟨9⟩**bold** [t](https://x.test/⟨1⟩)");
   const kids = d.firstChild!.content.content;

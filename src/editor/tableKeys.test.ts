@@ -40,6 +40,14 @@ test("Enter in a quoted table's last row leaves into the quote, not out of it", 
   expect(out.selection.$head.node(1).type.name).toBe("blockquote");
   expect(textAndOffset(out)).toEqual(["", 0]);
 });
+test("Enter over a selection in a cell deletes it, then goes a cell down; a selection from outside the table is not this command's", () => {
+  const s = caret(TABLE, "1"), sel = s.apply(s.tr.setSelection(TextSelection.create(s.doc, s.selection.head - 1, s.selection.head)));
+  const down = enter(sel);
+  expect(serializeMarkdown(down.doc)).toBe("| a | b |\n| --- | --- |\n|  | 2 |\n| 3 |  |");
+  expect(textAndOffset(down)).toEqual(["3", 1]);
+  const from = caret("before\n\n" + TABLE, "1"), across = from.apply(from.tr.setSelection(TextSelection.create(from.doc, 2, from.selection.head)));
+  expect(enterDown(across)).toBe(false);
+});
 test("outside a table Enter is not this command's", () => {
   expect(enterDown(caret("a line", "line"))).toBe(false);
 });

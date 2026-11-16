@@ -63,8 +63,9 @@ function stanzaRange({ doc, lines: walk }: Passage): string {
 }
 /* a poem's name is its first numbered line, a direction or a gap before it
    passed over; the original where it is paired; a closing comma, semicolon
-   or colon dropped, and an opening guillemet or quotation mark the line
-   never closes */
+   or colon dropped, and an opening « or “ the line never closes. A ‘ is
+   kept: its closing ’ is also the apostrophe, so whether it closes cannot
+   be read */
 function firstLine(poem: Node, pos: number): string {
   const row = blockUnits(poem, pos, 0, "left").find((u) => u.line > 0)?.node;
   const text = (row ? (row.type === N.pair ? row.child(0) : row).textContent : "").trim().replace(/[,;:]$/, "");
