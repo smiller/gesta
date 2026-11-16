@@ -113,3 +113,4 @@
 {"at":"2026-11-16T18:06","ev":"start","id":"P12"}
 {"at":"2026-11-16T18:09","ev":"done","id":"P12","commits":["9d2ec1a"]}
 {"at":"2026-11-16T18:11","ev":"done","id":"P12","commits":["9d2ec1a","9b32c12"]}
+{"at":"2026-11-16T18:11","ev":"done","id":"P12","commits":["9d2ec1a","9b32c12"],"note":"links clicked on claude.ai, both pages"}
