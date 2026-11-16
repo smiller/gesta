@@ -348,8 +348,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   - The day's progress, `progress/`: `events.ts` (a day's events replayed
     to a time: each item's state, the counts), `page.ts` (the page, a
     snapshot at a time, or with `--slides` the slideshow, under
-    `tools/out/progress/`; with `--terminal` the counts and lists as text),
-    `slides.ts` (the day every half hour),
+    `tools/out/progress/`, the slideshow the day every half hour; with
+    `--terminal` the counts and lists as text),
     `log.ts` (an event appended as it happens, refused when it names no
     list or no item, the day's page and slideshow redrawn after),
     `day.ts` (a day's events read from its log); each day's events in

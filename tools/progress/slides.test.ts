@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { frameTimes, slides } from "./slides.ts";
+import { frameTimes, slides } from "./page.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
