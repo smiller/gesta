@@ -41,3 +41,5 @@
 {"at":"2026-11-16T11:45","ev":"add","id":"A5.1.3","list":"A","title":"A terminal's copy as its own module","parent":"A5.1","detail":"Asked: \"then discuss 3, 4\" (candidate 3 of A5.1's scan, Worth exploring). Why: about 100 lines of paste.ts are a pure conversion among the editor's paste routes; tests reach it through the markdown view's route. Done when: discussed, then built test-first or refused with an ADR in docs/adr/."}
 {"at":"2026-11-16T11:45","ev":"add","id":"A5.1.4","list":"A","title":"The progress log: one write path that refuses, writes and redraws","parent":"A5.1","detail":"Asked: \"then discuss 3, 4\" (candidate 4 of A5.1's scan, Worth exploring). Why: the refusals live in log.ts's command alone; wake.ts writes past them; the write path is untested against a fixed directory. Done when: discussed, then built test-first or refused with an ADR in docs/adr/."}
 {"at":"2026-11-16T11:45","ev":"start","id":"A5.1.1"}
+{"at":"2026-11-16T11:55","ev":"done","id":"A5.1.1","commits":["ccf18ed"]}
+{"at":"2026-11-16T11:55","ev":"start","id":"A5.1.2"}

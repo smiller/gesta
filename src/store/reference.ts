@@ -144,7 +144,11 @@ export interface PageRange { from: string; to: string }
    leaf drops (Screwtape came back referred to by leaf for Letter 12); titled, the
    leaf replaces every level below the work (pin: reference.test ›
    referenceLabel: the line range dots onto a numeral run) */
-export interface Locator { range: string; worded?: boolean; page?: PageRange | null; facing?: string }
+/* what the label does with a place: numbers dot onto the deepest numeral,
+   paragraphs stand as a field or in brackets after a chapter, words stand
+   as a field */
+export interface Place { kind: "numbers" | "paragraphs" | "words"; text: string }
+export interface Locator { place: Place | null; page?: PageRange | null; facing?: string }
 interface LabelCtx { date: string; tag: string | null; root: string; books: boolean; locates: boolean; journal: Journal; said: Conventions }
 function labelParts(c: LabelCtx): Piece[] {
   /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
@@ -164,16 +168,17 @@ function numberedDeepest(parts: Piece[]): string | undefined {
   const deepest = parts[parts.length - 1];
   return deepest?.n ?? deepest?.division;
 }
-const wordedChapterRange = (deepest: Piece | undefined, range: string): boolean =>
-  deepest?.division !== undefined && /^chapter\b/.test(deepest.plain!) && /^paras? /.test(range);
-function placeRange(parts: Piece[], range: string, worded: boolean): void {
+const isChapter = (deepest: Piece | undefined): boolean => deepest?.division !== undefined && /^chapter\b/.test(deepest.plain!);
+/* the kind is told, never read off the text: read from its first
+   character, words opening on a guillemet were dotted on as a numeral
+   (pin: reference.test › referenceLabel places each kind its own way) */
+function placeRange(parts: Piece[], { kind, text }: Place): void {
   const deepest = parts[parts.length - 1];
-  /* a range said to be worded, or opening on a letter, stands after the chapter as a field of its own; read from its first character alone, words opening on a guillemet were dotted on as a numeral (pin: reference.test › referenceLabel: a worded range) */
-  if (wordedChapterRange(deepest, range)) deepest.plain += " (" + range + ")";
-  else if (worded || /^[a-z]/i.test(range)) parts.push({ plain: range });
-  else if (deepest?.division !== undefined) deepest.plain += "." + range;
-  else if (deepest?.n !== undefined) deepest.n += "." + range;
-  else parts.push({ n: range });
+  if (kind === "paragraphs" && isChapter(deepest)) deepest.plain += " (" + text + ")";
+  else if (kind !== "numbers") parts.push({ plain: text });
+  else if (deepest?.division !== undefined) deepest.plain += "." + text;
+  else if (deepest?.n !== undefined) deepest.n += "." + text;
+  else parts.push({ n: text });
 }
 function placePage(parts: Piece[], page: PageRange, books: boolean, numbered: string | undefined): Piece[] {
   if (books && numbered !== undefined) return parts;
@@ -183,7 +188,7 @@ function placePage(parts: Piece[], page: PageRange, books: boolean, numbered: st
 }
 function located(parts: Piece[], at: Locator, c: LabelCtx, numbered: string | undefined): Piece[] {
   if (!c.locates) return parts;
-  if (at.range) { placeRange(parts, at.range, !!at.worded); return parts; }
+  if (at.place) { placeRange(parts, at.place); return parts; }
   return at.page ? placePage(parts, at.page, c.books, numbered) : parts;
 }
 /* the first field is a person (roman), a title (italic), or nothing; a root
@@ -226,10 +231,10 @@ export function referenceLabel(date: string, tag: string | null, at: Locator, jo
      its right column's lines are the ones referred to (pin: reference.test ›
      referenceLabel: a work headed as given with a translation) */
   const facing = at.facing ?? "";
-  const range = !translator && facing ? facing : at.range;
+  const place: Place | null = !translator && facing ? { kind: "numbers", text: facing } : at.place;
   const parts = framed(pieces, c);
   const numbered = numberedDeepest(parts);
-  const label = joinParts(withFirst(located(parts, { ...at, range }, c, numbered), c), c.said.byChapterAndVerse);
+  const label = joinParts(withFirst(located(parts, { ...at, place }, c, numbered), c), c.said.byChapterAndVerse);
   return translator ? label + translatorNote(c, translator, facing, numbered) : label;
 }
 export function mdLabel(text: string, fallback: string): string {

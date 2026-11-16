@@ -2,7 +2,7 @@ import type { Node } from "prosemirror-model";
 import type { EditorState } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { blockUnits, paragraphAt, paragraphOf, hasFacing, type Unit, type Side } from "./numbering.ts";
-import { elideRange, referenceLabel, mdLabel, type Journal, type PageRange } from "../store/reference.ts";
+import { elideRange, referenceLabel, mdLabel, type Journal, type PageRange, type Place } from "../store/reference.ts";
 import { conventionsOf, type Conventions } from "../store/conventions.ts";
 import { entryHash, type Highlight } from "../store/keys.ts";
 import { passageAt, quotation, inkBetween, type Passage, type Refusal } from "./passage.ts";
@@ -71,16 +71,17 @@ function firstLine(poem: Node, pos: number): string {
   const text = (row ? (row.type === N.pair ? row.child(0) : row).textContent : "").trim().replace(/[,;:]$/, "");
   return /^«[^»]*$|^“[^”]*$/.test(text) ? text.slice(1) : text;
 }
+const placed = (kind: Place["kind"], text: string): Place | null => (text ? { kind, text } : null);
 /* a prosimetrum's chapter: its prose by paragraph alone, a poem by its first
    line and its lines (pin: reference.test › a prosimetrum chapter with two
    poems) */
-function prosimetrumRange(p: Passage): string {
+function prosimetrumRange(p: Passage): Place | null {
   const { doc } = p, range = referenceRange(p);
   const lines = p.lines({ top: true }).filter((u) => u.line);
   const first = lines[0];
-  if (!range || !first) return "";
+  if (!range || !first) return null;
   const block = doc.nodeAt(first.blockPos)!;
-  return block.type === N.prose ? paragraphRange(doc, lines) : firstLine(block, first.blockPos) + ", " + range;
+  return block.type === N.prose ? placed("paragraphs", paragraphRange(doc, lines)) : placed("words", firstLine(block, first.blockPos) + ", " + range);
 }
 function paragraphIn(doc: Node, from: number, lines: Unit[]): string {
   if (lines[0]) return paragraphRange(doc, lines);
@@ -95,12 +96,12 @@ function chapterSpan(doc: Node, from: number, to: number): string | null {
 }
 /* (pin: reference.test › a work by book, chapter, and paragraph refers) (pin:
    reference.test › by book, chapter, and paragraph: text under a chapter) */
-function byBookChapterParagraphRange(p: Passage): string {
+function byBookChapterParagraphRange(p: Passage): Place | null {
   const { doc, from, to } = p, lines = p.lines({ top: true }).filter((u) => u.line);
-  if (lines[0] && doc.nodeAt(lines[0].blockPos)!.type !== N.prose) return referenceRange(p);
+  if (lines[0] && doc.nodeAt(lines[0].blockPos)!.type !== N.prose) return placed("numbers", referenceRange(p));
   const para = paragraphIn(doc, from, lines), chapter = chapterSpan(doc, from, to);
-  if (!chapter) return para;
-  return para ? chapter + " (" + para + ")" : chapter;
+  if (!chapter) return placed("paragraphs", para);
+  return placed("words", para ? chapter + " (" + para + ")" : chapter);
 }
 /* the last `##` at or above the position that names a chapter: one naming none leaves it standing */
 const isChapterHeading = (n: Node): boolean => n.type === N.heading && n.attrs.level === 2;
@@ -180,10 +181,10 @@ export function referencePayload(state: EditorState, at: EntryAt, journal: Journ
   return "refused" in p ? p : payloadOver(p, at, journal, all);
 }
 /* a passage in stanza fences refers by stanza, in any work (pin: reference.test › a work in stanza fences refers by stanza) */
-function rangeOver(p: Passage, said: Conventions): string {
+function rangeOver(p: Passage, said: Conventions): Place | null {
   if (said.byBookChapterAndParagraph) return byBookChapterParagraphRange(p);
   if (said.proseByParagraphVerseByLine) return prosimetrumRange(p);
-  return stanzaRange(p) || referenceRange(p, { halves: said.byHalfLine });
+  return placed("numbers", stanzaRange(p) || referenceRange(p, { halves: said.byHalfLine }));
 }
 const facingRange = (p: Passage): string => (hasFacing(p.doc) ? referenceRange(p, { side: "right" }) : "");
 function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): Payload | { refused: Refusal } {
@@ -192,10 +193,10 @@ function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): P
   const said = conventionsOf(at.date, at.tag, journal);
   const quoted = quotation(p, { halves: said.byHalfLine, paragraphs: said.byBookChapterAndParagraph || said.proseByParagraphVerseByLine, all });
   if ("refused" in quoted) return quoted;
-  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), worded: said.proseByParagraphVerseByLine, page: pageRange(p), facing: facingRange(p) }, journal);
+  const label = referenceLabel(at.date, at.tag, { place: rangeOver(p, said), page: pageRange(p), facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }
 export function entryLinkParts(date: string, tag: string | null, journal: Journal): { label: string; url: string } {
-  return { label: mdLabel(referenceLabel(date, tag, { range: "" }, journal), "entry"), url: entryLinkUrl(date, tag) };
+  return { label: mdLabel(referenceLabel(date, tag, { place: null }, journal), "entry"), url: entryLinkUrl(date, tag) };
 }
