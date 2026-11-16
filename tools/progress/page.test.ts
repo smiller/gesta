@@ -73,12 +73,21 @@ test("the day page ends with the day in order: a row a span, its start, finish, 
   expect(html).toContain("<div>from 09:00 to 10:00</div><div>working for <b>10 min</b></div><div>nothing started or ended for <b>50 min</b></div>");
 });
 
-test("a span still open runs to now on the day itself, or to a snapshot's time; the slideshow has no day in order", () => {
+test("a span still open runs to now on the day itself, or to a snapshot's time", () => {
   const open: Event[] = [...day, { at: at("10:05"), ev: "start", id: "S1" }];
   expect(inOrder(page(open, { day: "2026-11-15", now: "11:35" }))).toContain('<td class="t">10:05</td><td class="t">—</td><td class="t took">1 h 30 min</td>');
   expect(inOrder(page(open, { day: "2026-11-15", now: "11:35" }))).toContain("from 09:00 to 11:35 (now)");
   expect(inOrder(page(open, { day: "2026-11-15", at: "09:25" }))).toContain('<td class="t">09:20</td><td class="t">—</td><td class="t took">5 min</td>');
-  expect(slides(open, { day: "2026-11-15" })).not.toContain('<section class="in-order">');
+});
+
+test("each frame of the slideshow ends with the day in order as it stood at its time, a span open then running to it; a frame before any span has none", () => {
+  const html = slides([...day, { at: at("10:05"), ev: "start", id: "S1" }, { at: at("10:40"), ev: "done", id: "S1" }], { day: "2026-11-15" });
+  const frames = html.split('<div class="frame"').slice(1);
+  expect(frames.map((f) => /data-at="([^"]*)"/.exec(f)?.[1])).toEqual(["09:00", "09:30", "10:00", "10:30", "10:40"]);
+  expect(frames.map((f) => f.split('<section class="in-order">').length - 1)).toEqual([0, 1, 1, 1, 1]);
+  expect(frames[3]).toContain('<td class="t">10:05</td><td class="t">—</td><td class="t took">25 min</td>');
+  expect(frames[3]).toContain("from 09:00 to 10:30</div>");
+  expect(frames[4]).toContain('<td class="t">10:05</td><td class="t">10:40</td><td class="t took">35 min</td>');
 });
 
 test("a day is drawn as its page and its slideshow, each named with the artifact it is published to", () => {

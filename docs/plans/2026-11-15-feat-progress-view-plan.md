@@ -103,3 +103,6 @@ days (asked).
   snapshot's time; the slideshow has no such section.
 - `tools/progress/spans.ts` holds it, no HTML; `today` and `clock` moved
   to day.ts so page.ts reads the clock without importing log.ts.
+- Each slideshow frame ends with the day in order as it stood at its
+  time (P11, asked); a frame before any span has none. The terminal copy
+  has none (asked: fine).
