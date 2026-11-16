@@ -14,6 +14,7 @@
 import { spawn, spawnSync } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { fingerprint, mayReuse, approvalRefusal, stamped, failedRun } from "./heliumStamp.ts";
 import { orderDifferences } from "./heliumOrder.ts";
@@ -76,6 +77,7 @@ const STAMPS = resolve("tools/out/helium-pass");
 const stampPath = (name: string): string => resolve(STAMPS, name + ".txt");
 const stamp = (name: string, print = fingerprint(inputsFor(name))): void => { mkdirSync(STAMPS, { recursive: true }); writeFileSync(stampPath(name), print); };
 let failed = 0;
+const outputs: string[] = [];
 for (const script of ["build", "build:reader"]) {
   const build = spawnSync("npm", ["run", script], { env, encoding: "utf8" });
   if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
@@ -147,9 +149,7 @@ function prepare(name: string): Playing | null {
 const baselineOf = (name: string, played: Map<string, string>): string | null =>
   played.get(TOOLS[name].heldTo ?? "") ?? readOrNull(approvedOf(name));
 function judge({ name, played }: Playing, received: string, baseline: string | null): void {
-  /* a child, not an import: imported, the progress tools were the run's
-     inputs, and an edit to the day's page replayed it */
-  process.stdout.write(spawnSync("node", ["tools/progress/wake.ts"], { input: received, encoding: "utf8" }).stdout ?? "");
+  outputs.push(received);
   if (!TOOLS[name].heldTo) writeFileSync(receivedOf(name), received);
   const failure = differs(name, received, baseline);
   if (!failure) { rmSync(receivedOf(name), { force: true }); if (!process.env.STEPS) stamp(name, played); console.log(name + ": ok"); return; }
@@ -164,6 +164,16 @@ async function playGroup(group: string[]): Promise<void> {
   const played = new Map(runs.map((r, i) => [r.name, outs[i]]));
   for (const r of runs) judge(r, played.get(r.name)!, baselineOf(r.name, played));
 }
+/* a child, not an import: imported, the progress tools were the run's
+   inputs, and an edit to the day's page replayed it; once over every run
+   played, and its failure said, a silent one leaving a watched item
+   asleep */
+function wakeOnce(): void {
+  if (!outputs.length) return;
+  const w = spawnSync("node", [fileURLToPath(new URL("./progress/wake.ts", import.meta.url))], { input: outputs.join("\n"), encoding: "utf8" });
+  process.stdout.write(w.stdout ?? "");
+  if (w.status !== 0) console.log("wake failed (" + (w.status ?? w.signal) + "): " + (w.stderr || w.error?.message || "").trim());
+}
 if (approve) for (const name of run) approveOne(name);
-else for (const group of TOGETHER) await playGroup(group);
+else { for (const group of TOGETHER) await playGroup(group); wakeOnce(); }
 process.exit(failed ? 1 : 0);

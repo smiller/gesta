@@ -198,13 +198,14 @@ const vn = journalOf({
   "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprose by paragraph, verse by line\n:::",
   "bookshelf/Dante/Vita Nuova/3": "# Vita Nuova, 3",
 });
-test("referenceLabel places each kind its own way: numbers dot onto the deepest numeral, paragraphs stand after it or in brackets after a chapter, words stand after it whatever they open on", () => {
+test("referenceLabel places each kind its own way: numbers, a facing column's too, dot onto the deepest numeral, paragraphs stand after it or in brackets after a chapter, words stand after it whatever they open on", () => {
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { place: { kind: "numbers", text: "4" } }, vn)).toBe("Dante, *Vita Nuova*, 3.4");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { place: { kind: "paragraphs", text: "para 4" } }, vn)).toBe("Dante, *Vita Nuova*, 3, para 4");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { place: { kind: "words", text: "A ciascun’alma presa e gentil core, 1-4" } }, vn)).toBe("Dante, *Vita Nuova*, 3, A ciascun’alma presa e gentil core, 1-4");
   for (const opens of ["(O voi che per la via, 1", "«O voi che per la via, 1", "1 voi che per la via, 1"]) expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/37", { place: { kind: "words", text: opens } }, vn)).toBe("Dante, *Vita Nuova*, 37, " + opens);
   expect(referenceLabel(NS_BOOK.key, "A/W/Book 2/Chapter 40", { place: { kind: "paragraphs", text: "para 60" } }, works)).toBe("A, *W*, book 2, chapter 40 (para 60)");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { place: null }, vn)).toBe("Dante, *Vita Nuova*, 3");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { place: null, facing: "4" }, vn)).toBe("Dante, *Vita Nuova*, 3.4");
 });
 
 // De Doctrina Christiana: all prose, so under `by book, chapter, and paragraph` a reference names

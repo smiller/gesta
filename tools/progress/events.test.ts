@@ -110,7 +110,7 @@ test("an item's detail is the one it was added with, or the last detail event's,
   expect([it.S8.detail, it.S1.detail, it.B2.detail, it.A1.detail]).toEqual(["the fuller description", "second", "second", undefined]);
   expect(replay(detailed, at("13:25")).find((i) => i.id === "S1")!.detail).toBe("first");
 });
-test("an item's watch is the last watch event's, carried in with it, and ends when the item starts again", () => {
+test("an item's watch is the last watch event's, carried in with it, kept through a move, and ends when the item starts again", () => {
   const watched: Event[] = [...day,
     { at: at("13:10"), ev: "add", id: "S9", list: "S", title: "s9" },
     { at: at("13:20"), ev: "start", id: "S9" },
@@ -120,6 +120,8 @@ test("an item's watch is the last watch event's, carried in with it, and ends wh
   ];
   expect(replay(watched, at("13:35")).find((i) => i.id === "S9")!.watch).toBe("the bar did not show");
   expect(replay(watched).find((i) => i.id === "S9")!.watch).toBeUndefined();
+  const moved = replay([...watched.slice(0, -1), { at: at("13:35"), ev: "move", id: "S9", to: "B9", list: "B" }]);
+  expect(moved.find((i) => i.id === "B9")!.watch).toBe("the bar did not show");
   const carried = replay([{ at: at("09:00"), ev: "begin", next: {} }, { at: at("09:00"), ev: "carry", id: "S6.1", list: "S", title: "t", watch: "the bar did not show" }]);
   expect(carried[0].watch).toBe("the bar did not show");
 });

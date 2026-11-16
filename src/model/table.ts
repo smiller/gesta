@@ -12,6 +12,7 @@ export function isTableStart(lines: string[], i: number): boolean {
   return ROW.test(lines[i]) && i + 1 < lines.length && DIVIDER.test(lines[i + 1]);
 }
 export function tableLines(rows: string[][]): string[] {
+  if (!rows.length) return [];
   const line = (cells: string[]): string => "| " + cells.map(escaped).join(" | ") + " |";
   return [line(rows[0]), "| " + rows[0].map(() => "---").join(" | ") + " |", ...rows.slice(1).map(line)];
 }

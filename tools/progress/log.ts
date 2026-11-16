@@ -98,10 +98,10 @@ export const batchRefusal = (batch: Event[], logged: Event[]): string | null =>
 /* a day not begun is begun by its first event: "run begin first" met
    every day's first command (pin: log.test › a day not begun is begun by
    its first event) */
-export const opened = (today: Event[], last: Event[], at: string): Event[] => (today.some((e) => e.ev === "begin") ? [] : beginning(last, at));
+export const opened = (today: Event[], last: () => Event[], at: string): Event[] => (today.some((e) => e.ev === "begin") ? [] : beginning(last(), at));
 function asked(day: string, c: Line): (Event | null)[] {
-  const today = dayEvents(day), last = lastDayEvents(day), at = c.asked.base.at;
-  if (c.cmd === "begin") return beginning(last, at);
+  const today = dayEvents(day), last = () => lastDayEvents(day), at = c.asked.base.at;
+  if (c.cmd === "begin") return beginning(last(), at);
   const owed = opened(today, last, at);
   return [...owed, built(c, [...today, ...owed])];
 }

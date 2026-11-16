@@ -36,7 +36,7 @@ function created(items: Items, e: Event): void {
   if (!was) return;
   was.movedTo = e.to;
   was.ended = stamp(e);
-  items.set(e.to, { id: e.to, list: e.list, title: was.title, detail: was.detail, starting: was.starting, movedFrom: e.id, reported: was.reported, commits: [], status: "unstarted" });
+  items.set(e.to, { id: e.to, list: e.list, title: was.title, detail: was.detail, watch: was.watch, starting: was.starting, movedFrom: e.id, reported: was.reported, commits: [], status: "unstarted" });
 }
 function changed(it: Item, e: Event): void {
   if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; it.watch = undefined; it.note = e.note ?? it.note; }

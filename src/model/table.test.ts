@@ -1,9 +1,10 @@
 import { test, expect } from "vitest";
 import { tableLines, readTable, isTableStart } from "./table.ts";
 
-test("a table written is its header, a divider, then a row a line, a cell's pipe escaped", () => {
+test("a table written is its header, a divider, then a row a line, a cell's pipe escaped; no rows, no lines", () => {
   expect(tableLines([["a", "b"], ["1", "x|y"]])).toEqual(["| a | b |", "| --- | --- |", "| 1 | x\\|y |"]);
   expect(tableLines([["a"]])).toEqual(["| a |", "| --- |"]);
+  expect(tableLines([])).toEqual([]);
 });
 
 test("cells written and read back are the cells: a pipe, a backslash, an escaped pipe, a trailing backslash, a code span's pipe, an empty cell", () => {

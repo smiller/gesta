@@ -59,3 +59,26 @@ was owed over `cccc617..HEAD`.
   a day's first command (asked); the wake reads what the begin would carry
   in, so a watched item wakes on a new day's first run, which before it
   could not; `logged` refuses for both callers. `begin` stays as a command.
+
+## The review of the architecture run's builds (A6)
+
+- `/code-review high 579083c..HEAD`, 112,046 tokens (MEASURED, the last
+  message of `subagents/agent-a9a2c28b8288a71b0.jsonl`: 2 input + 2,947
+  cache creation + 106,715 cache read + 2,382 output). Ten findings.
+- No architecture run over it: a batch made only of an architecture run's
+  own builds (asked; CLAUDE.md says so now).
+- Fixed: the last day is a dated log alone, a Dropbox conflicted copy or a
+  backup never taken for one; a move keeps an item's watch; the wake runs
+  once after a verdict's runs, found from its own script, and a failed
+  wake says so; a begun day never reads the last; no rows, no table lines.
+- A correction: 604dafa's message said every label stayed the same. One
+  rule changed: under `prose by paragraph, verse by line`, a facing
+  column's lines now dot on (3.4) where they stood as a field (3, 4). No
+  entry reaches it: only Vita Nuova has the directive, and no fence of its
+  carries a facing number (MEASURED, grep); Golding's references keep
+  their form (Helium's ⌃⌘R reading unchanged). Kept, and pinned (asked).
+- Kept: the wake in the pre-commit's Helium run, which can leave the day's
+  log changed after a commit (asked).
+- Refused: `isTableStart` run twice per table (asked); the one-off
+  `pipeTables.ts`'s own cell reader, since importing `table.ts`'s took a
+  trivial function out and lowered its code health to 9.38.
