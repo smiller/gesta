@@ -14,3 +14,6 @@
 {"at":"2026-11-16T07:36","approx":true,"ev":"add","id":"P2","list":"P","title":"A Process list, last, for the tools and the process","detail":"Asked: \"Maybe a new Chore list or Infrastructure or Process for items like this?\" then \"yes on the P Process list. It should definitely be at the bottom, so app-specific work goes first.\" Why: the begin fix and items like it are not app work and had no list. Done when: P is a list, drawn last, test-first."}
 {"at":"2026-11-16T07:39","ev":"start","id":"P2"}
 {"at":"2026-11-16T07:40","ev":"done","id":"P2","commits":["2f55630"]}
+{"at":"2026-11-16T07:43","ev":"start","id":"S15"}
+{"at":"2026-11-16T07:59","ev":"done","id":"S15","commits":["4a9c124"],"note":"hand-checked and accepted"}
+{"at":"2026-11-16T07:59","ev":"add","id":"P3","list":"P","title":"The titles checker missed a test whose assertions changed under its title","detail":"Asked: found in S15 (07:58): npm run test:titles said \"no test changed under the same description\" though the wrapped-lines test in src/editor/paste.test.ts changed two assertions under an unchanged title. Why: the checker is what makes a title be read against changed assertions; a miss lets a stale title through. Done when: the cause is found (the checker or a misreading of what it tracks), and if the checker, it lists such a test, test-first."}
