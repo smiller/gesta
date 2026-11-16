@@ -86,7 +86,7 @@ export function refusal(e: Event, events: Event[]): string | null {
   if (e.ev === "begin") return null;
   if (!events.some((x) => x.ev === "begin")) return "the day has not begun: run begin first";
   const list = unlisted(e), id = actsOn(e);
-  if (list !== null) return "no list " + list + ": A, S, L or B";
+  if (list !== null) return "no list " + list + ": " + LISTS.slice(0, -1).join(", ") + " or " + LISTS.at(-1);
   if (id !== null && !ids(events).includes(id)) return "no item " + id + " on this day";
   return null;
 }

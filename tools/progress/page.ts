@@ -5,7 +5,7 @@ import { slides } from "./slides.ts";
 import { dayEvents } from "./day.ts";
 import { replay, counts, isOpen, LISTS, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
 
-const NAME: Record<List, string> = { A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions" };
+const NAME: Record<List, string> = { A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions", P: "Process" };
 const CHIP: Record<Status, [string, string]> = {
   "unstarted": ["s-open", "unstarted"], "in progress": ["s-prog", "in progress"], "paused": ["s-paused", "paused"], "done": ["s-done", "done"],
   "done, spawned open": ["s-part", "done · spawned open"], "moved": ["s-moved", "moved"], "dropped": ["s-dropped", "dropped"],
@@ -22,7 +22,7 @@ function trees(items: Item[]): Record<List, Placed[]> {
   const ids = new Set(items.map((i) => i.id));
   const children = (id: string): Item[] => items.filter((i) => i.parent === id);
   const walk = (it: Item, depth: number): Placed[] => [{ item: it, depth }, ...children(it.id).flatMap((c) => walk(c, depth + 1))];
-  const out = { A: [], S: [], L: [], B: [] } as Record<List, Placed[]>;
+  const out = Object.fromEntries(LISTS.map((l) => [l, []])) as unknown as Record<List, Placed[]>;
   for (const root of items.filter((i) => !i.parent || !ids.has(i.parent))) out[root.list].push(...walk(root, 0));
   return out;
 }

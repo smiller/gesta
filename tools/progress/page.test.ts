@@ -17,6 +17,12 @@ const day: Event[] = [
 ];
 const rows = (html: string): string[] => [...html.matchAll(/<td class="n">([^<]*)<\/td>/g)].map((m) => m[1]);
 
+test("the process list comes last, after every list of the app's own work", () => {
+  const html = page([...day, { at: at("10:10"), ev: "add", id: "P1", list: "P", title: "begin carries its items in" }], { day: "2026-11-15" });
+  expect([...html.matchAll(/<h2>([^<—]*)/g)].map((m) => m[1].trim())).toEqual(["Architecture queue", "Side list", "Bigger questions", "Process"]);
+  expect(rows(html).at(-1)).toBe("P1");
+});
+
 test("a section a list, a row an item in its tree's order, each with its number, its label and its three times", () => {
   const html = page(day, { day: "2026-11-15" });
   expect([...html.matchAll(/<h2>([^<—]*)/g)].map((m) => m[1].trim())).toEqual(["Architecture queue", "Side list", "Bigger questions"]);
