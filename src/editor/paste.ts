@@ -5,7 +5,7 @@ import type { EditorProps } from "prosemirror-view";
 import { pastedImageFile } from "./images.ts";
 import { schema } from "../model/schema.ts";
 import { parseMarkdown } from "../model/parse.ts";
-import { escapeTablePipes } from "../model/grammar.ts";
+import { tableLines } from "../model/table.ts";
 import { COPY_MARK } from "./copy.ts";
 import { bareUrl } from "./typing.ts";
 import { namesEntry, internalHash, makeHref } from "../store/nav.ts";
@@ -226,9 +226,9 @@ function marginOff(lines: string[]): string[] {
    (pin: paste.test › a box is a table only when) */
 const BOX_TOP = /^\s*┌/, BOX_BOTTOM = /^\s*└/, BOX_RULE = /^\s*├/, BOX_INSIDE = /^\s*[│├]/;
 const cellsOf = (line: string): string[] => line.trim().slice(1, -1).split("│").map((c) => c.trim());
-function boxRow(lines: string[]): string {
+function boxCells(lines: string[]): string[] {
   const rows = lines.map(cellsOf);
-  return "| " + rows[0].map((_, i) => escapeTablePipes(rows.map((r) => r[i] ?? "").filter(Boolean).join(" "))).join(" | ") + " |";
+  return rows[0].map((_, i) => rows.map((r) => r[i] ?? "").filter(Boolean).join(" "));
 }
 /* lines between rules are one row wrapped; where no rule falls between body
    rows each line is a row, a wrapped row too, the two drawn alike (pin:
@@ -239,10 +239,7 @@ function boxRows(inside: string[]): string[][] {
   const rows = groups.filter((g) => g.length);
   return groups.length > 2 ? rows : [rows[0], ...rows.slice(1).flat().map((l) => [l])];
 }
-function boxTable(inside: string[]): string[] {
-  const rows = boxRows(inside), md = rows.map(boxRow);
-  return [md[0], "| " + cellsOf(rows[0][0]).map(() => "---").join(" | ") + " |", ...md.slice(1)];
-}
+const boxTable = (inside: string[]): string[] => tableLines(boxRows(inside).map(boxCells));
 function boxEnd(lines: string[], top: number): number {
   let j = top + 1;
   while (j < lines.length && BOX_INSIDE.test(lines[j])) j++;

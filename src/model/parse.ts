@@ -12,9 +12,10 @@ import { fenceLineReason } from "./fenceRefusals.ts";
 import {
   LINE_BREAK_RE, LIST_LINE, FENCE_LINE, FENCE_TICKS, FENCE_CLOSE, QUOTE_LINE, HEADING_LINE,
   CARD_OPEN, CARD_CLOSE, VERSE_OPEN, STANZA_OPEN, DUAL_OPEN, stanzaNumber, PROSE_OPEN, fenceNumbered, REFERENCE_OPEN, NOTE_OPEN, MARGIN_NOTE_OPEN, GRID_OPEN, PAGE_AT, ROW_KIND_AT, ROW_LABEL_AT, ROW_SKIP_TOKEN, ROW_TOKEN_ESCAPE,
-  fenceNumbers, fenceBody, verseSplit, unescapeCell, isTableStart, tableRowCells,
+  fenceNumbers, fenceBody, verseSplit, unescapeCell,
   blockLineAt, unescapeProse,
 } from "./grammar.ts";
+import { isTableStart, readTable } from "./table.ts";
 
 type TokenCtor = new (type: string, tag: string, nesting: -1 | 0 | 1) => Token;
 
@@ -303,13 +304,7 @@ class ListWriter {
 }
 
 function emitTable(sink: Sink, lines: string[], from: number): number {
-  const head = tableRowCells(lines[from]);
-  from += 2;   /* the header row and its "| --- |" divider */
-  const rows: string[][] = [head];
-  while (from < lines.length && /^\s*\|.*\|\s*$/.test(lines[from])) {
-    const cells = tableRowCells(lines[from++]);
-    rows.push(head.map((_, k) => cells[k] || ""));
-  }
+  const { rows, next } = readTable(lines, from)!;
   sink.push("table_open", "table", 1);
   rows.forEach((cells, r) => {
     sink.push("table_row_open", "tr", 1);
@@ -317,7 +312,7 @@ function emitTable(sink: Sink, lines: string[], from: number): number {
     sink.push("table_row_close", "tr", -1);
   });
   sink.push("table_close", "table", -1);
-  return from;
+  return next;
 }
 
 /* ---------- the markdown-it instance: inline rules and the pipeline ---------- */

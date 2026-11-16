@@ -256,13 +256,14 @@ test("a terminal's margin is taken off: the indent every line shares, a message'
   expect(unwrapped("  - outer\n    - inner")).toBe("- outer\n  - inner");
 });
 
-test("a terminal's box-drawn table is a markdown table: its first row the header, a row's wrapped lines joined cell by cell between rules, each line a row where it draws none, a pipe in a cell escaped", () => {
+test("a terminal's box-drawn table is a markdown table: its first row the header, a row's wrapped lines joined cell by cell between rules, each line a row where it draws none, a pipe kept in its cell", () => {
   const box = ["  Done:", "", "  ┌──────┬──────────────┐", "  │ Item │     What     │", "  ├──────┼──────────────┤",
     "  │      │ begin failed │", "  │ P1   │  its carries │", "  ├──────┼──────────────┤", "  │ S14  │ the paste    │", "  └──────┴──────────────┘", "", "  After."];
   expect(unwrapped(box.join("\n"))).toBe("Done:\n\n| Item | What |\n| --- | --- |\n| P1 | begin failed its carries |\n| S14 | the paste |\n\nAfter.");
   expect(unwrapped("  ┌───┐\n  │ a │\n  no bottom")).toBe("┌───┐\n│ a │\nno bottom");
   expect(unwrapped("┌───┬───┐\n│ a │ b │\n├───┼───┤\n│ 1 │ 2 │\n│ 3 │ 4 │\n└───┴───┘")).toBe("| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |");
-  expect(unwrapped("┌─────┐\n│ h   │\n├─────┤\n│ a|b │\n└─────┘")).toBe("| h |\n| --- |\n| a\\|b |");
+  const piped = parseMarkdown(unwrapped("┌─────┐\n│ h   │\n├─────┤\n│ a|b │\n└─────┘")).firstChild!;
+  expect([piped.childCount, piped.child(1).child(0).textContent]).toEqual([2, "a|b"]);
 });
 test("a box is a table only when every line between its top and its bottom is a row or a rule, outside a code fence; any other is left as it was", () => {
   for (const kept of ["┌──┐\n└──┘", "┌──┐\n├──┤\n└──┘", "┌──┐ a diagram\nThen the decoder runs.\n├── a.ts\n└── last.ts", "```\n┌───┐\n│ a │\n└───┘\n```"]) expect(unwrapped(kept)).toBe(kept);

@@ -224,7 +224,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
 
 - `src/model/` — the document model, no DOM: `schema.ts` (nodes, marks,
   `MARK_ORDER`), `grammar.ts` (the line regexes, a page label's
-  grammar, and the pure string transforms both arms share), `parse.ts`, `serialize.ts`, `tokens.ts`
+  grammar, and the pure string transforms both arms share), `table.ts` (a markdown table's lines: where one
+  starts, its cells read and written), `parse.ts`, `serialize.ts`, `tokens.ts`
   (syntax highlighting's tokenizer), `fenceRefusals.ts` (the `:::` lines a
   parse left as paragraphs, with their reasons), `flatten.ts` (the document
   as one character stream with a position map, which every search site and

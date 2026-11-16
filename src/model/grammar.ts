@@ -1,3 +1,4 @@
+import { isTableStart } from "./table.ts";
 /* the ONE spelling of what counts as a line break */
 export const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
 export const LIST_LINE = /^(\s*)([-*]|\d+[.)])\s+(.*)$/;
@@ -25,8 +26,6 @@ export const REFERENCE_OPEN = /^\s*:::\s*reference\s*$/;
 export const NOTE_OPEN = /^\s*:::\s*note\s*$/;
 export const MARGIN_NOTE_OPEN = /^\s*:::\s*margin-note\s*$/;
 export const GRID_OPEN = /^\s*:::\s*grid(?:\s+0*[1-9]\d*)?\s*$/;
-export const TABLE_ROW = /^\s*\|.*\|\s*$/;
-export const TABLE_DIVIDER = /^\s*\|[\s:|-]*-[\s:|-]*\|\s*$/;
 
 /* ---------- page labels ---------- */
 /* THE TWO ALPHABETS, spelled once and spliced into everything below: written
@@ -181,15 +180,6 @@ export function escapeCell(md: string): string {
 export function unescapeCell(s: string): string {
   return s.replace(/\\([\\|])/g, "$1");
 }
-
-/* ---------- tables ---------- */
-export function isTableStart(lines: string[], i: number): boolean {
-  return TABLE_ROW.test(lines[i]) && i + 1 < lines.length && TABLE_DIVIDER.test(lines[i + 1]);
-}
-export function tableRowCells(line: string): string[] {
-  return line.trim().replace(/^\|/, "").replace(/(?<!\\)\|$/, "").split(/(?<!\\)\|/).map((c) => c.trim().replace(/\\\|/g, "|"));
-}
-export const escapeTablePipes = (md: string): string => md.replace(/\|/g, "\\|");
 
 /* ---------- prose that would read back as syntax ---------- */
 /* the ONE spelling of "does lines[i] open a block" */
