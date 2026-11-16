@@ -16,7 +16,7 @@ import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { fingerprint, mayReuse, approvalRefusal, stamped, failedRun } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal, failedRun, readByDrivers, DRIVERS } from "./heliumStamp.ts";
 import { orderDifferences } from "./heliumOrder.ts";
 
 const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
@@ -50,10 +50,9 @@ function scrub(text: string): string {
 }
 const env = { ...process.env, NODE_OPTIONS: "" };
 /* WHAT A RUN READS, fingerprinted after the build: the pages (every line of
-   the app and its libraries), the fixtures the steps seed, the drivers,
-   steps and adapters, the source files an adapter or the `--mode reader` bundle
-   imports, the approved copy, and the browser, node and playwright that
-   play it. A run whose inputs match a passing run's stamp is not played
+   the app and its libraries), the fixtures the steps seed, the code its
+   drivers reach through their imports, the approved copy, and the browser,
+   node and playwright that play it. A run whose inputs match a passing run's stamp is not played
    again: a commit replayed for seven minutes a run approved minutes
    before */
 const HELIUM_PLIST = "/Applications/Helium.app/Contents/Info.plist";
@@ -63,10 +62,8 @@ function inputsFor(name: string) {
   const helium = (/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/.exec(readFileSync(HELIUM_PLIST, "utf8")) ?? [])[1] ?? "(unknown)";
   return [
     file("dist/index.html"), file("dist-reader/index.html"),
-    ...["tools", "tools/steps", "tools/adapters"].flatMap((d) => readdirSync(d).map((f) => d + "/" + f)).filter(stamped).map(file),
+    ...readByDrivers(DRIVERS, (p) => readFileSync(p, "utf8")).map(file),
     ...readdirSync("fixtures").map((f) => file("fixtures/" + f)),
-    file("src/store/keys.ts"), file("src/store/store.ts"),
-    ...["io", "zip", "files", "plans", "names"].map((m) => file("src/store/" + m + ".ts")),
     file(approvedOf(name)),
     { name: "helium", bytes: helium },
     { name: "node", bytes: process.version },

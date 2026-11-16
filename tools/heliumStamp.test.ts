@@ -1,7 +1,6 @@
 import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { dirname, join, normalize } from "node:path";
-import { fingerprint, mayReuse, approvalRefusal, stamped, failedRun } from "./heliumStamp.ts";
+import { fingerprint, mayReuse, approvalRefusal, failedRun, readByDrivers, DRIVERS } from "./heliumStamp.ts";
 
 const inputs = [
   { name: "dist/index.html", bytes: "<html>page</html>" },
@@ -40,22 +39,19 @@ test("approving refuses a run in which a section failed or the tool died", () =>
   expect(approvalRefusal("x\n\nEXIT 1\n", "print", "print")).toMatch(/failed/);
 });
 
-/* the tools/ files one file imports */
-const toolImports = (f: string): string[] =>
-  [...readFileSync(f, "utf8").matchAll(/(?:from|import)\s+"(\.{1,2}\/[^"]+\.ts)"/g)].map((m) => normalize(join(dirname(f), m[1]))).filter((p) => p.startsWith("tools/"));
-/* the tools/ files a driver imports, followed through their own imports */
-function importsOf(start: string): Set<string> {
-  const seen = new Set<string>(), todo = [start];
-  for (let f = todo.pop(); f !== undefined; f = todo.pop()) {
-    if (!seen.has(f)) { seen.add(f); todo.push(...toolImports(f)); }
-  }
-  return seen;
-}
-test("every tools/ file a Helium run's driver reads, through its imports, is in the run's fingerprint", () => {
-  const read = ["tools/helium-corner.ts", "tools/helium-bridge.ts", "tools/helium-reader.ts", "tools/helium-approve.ts"].flatMap((d) => [...importsOf(d)]);
-  expect(read.filter((f) => !stamped(f))).toEqual([]);
-  expect(["tools/steps/kit.ts", "tools/heliumDom.d.ts", "tools/adapters/inPage.ts"].every(stamped)).toBe(true);
-  expect(["tools/corpus.ts", "tools/out/x.ts", "tools/expected/corner.approved.txt"].some(stamped)).toBe(false);
+test("what a run reads of the code is its drivers and every file they reach through their imports, src/ as well as tools/", () => {
+  const files: Record<string, string> = {
+    "tools/d.ts": 'import { a } from "./a.ts";\nimport "./steps/s.ts";',
+    "tools/a.ts": 'import { b } from "../src/store/b.ts";',
+    "tools/steps/s.ts": "",
+    "src/store/b.ts": 'import { c } from "./c.ts";\nimport { x } from "prosemirror-model";',
+    "src/store/c.ts": "",
+    "tools/unreached.ts": "",
+  };
+  expect(readByDrivers(["tools/d.ts"], (f) => files[f])).toEqual(["src/store/b.ts", "src/store/c.ts", "tools/a.ts", "tools/d.ts", "tools/steps/s.ts"]);
+  const read = readByDrivers(DRIVERS, (f) => readFileSync(f, "utf8"));
+  expect(["src/store/io.ts", "src/store/fsa.ts", "tools/steps/kit.ts", "tools/adapters/inPage.ts", "tools/helium-corner.ts"].filter((f) => !read.includes(f))).toEqual([]);
+  expect(read.filter((f) => f === "tools/corpus.ts" || f.startsWith("tools/out/") || f.startsWith("tools/progress/"))).toEqual([]);
 });
 
 test("a run failed where a section failed, its fresh start failed, or it exited badly; and such a run is not approved", () => {

@@ -118,3 +118,12 @@ was owed over `cccc617..HEAD`.
   with text alone. Its seven rule tests moved; the markdown view's paste
   route has a test of its own. Helium's per-rule readings kept (asked).
   GLOSSARY.md gains "Terminal copy".
+- Built, candidate 4 (asked): the slideshow merged into `page.ts`, its
+  shell private, `slides.ts` gone and the import cycle with it; the page
+  and slideshow draw byte-identical (MEASURED, cmp).
+- Built, candidate 3, raised to Strong: what a Helium run reads of the
+  code is its drivers and everything they import, `src/` too. The
+  hand-kept `src/` list had missed `src/store/fsa.ts`, imported by
+  `io.ts`, which a driver imports (MEASURED); the walk adds it and drops
+  five files no driver imports (helium-probe, heliumDom.d.ts, three tests).
+- Candidate 2, the verdict's bookkeeping: to be revisited (asked).

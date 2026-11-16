@@ -2,6 +2,7 @@
    the inputs' fingerprint is stamped when a run passes, and a later run
    whose inputs fingerprint the same is not played again */
 import { createHash } from "node:crypto";
+import { posix } from "node:path";
 
 export interface Input { name: string; bytes: string | Uint8Array }
 
@@ -30,5 +31,18 @@ export function approvalRefusal(received: string | null, playedOver: string | nu
   return null;
 }
 
-/* the tools/ files a run reads: the drivers and their types, the steps, the adapters */
-export const stamped = (path: string): boolean => /^tools\/(helium[^/]*\.ts|steps\/[^/]+\.ts|adapters\/[^/]+\.ts)$/.test(path);
+export const DRIVERS = ["tools/helium-corner.ts", "tools/helium-bridge.ts", "tools/helium-reader.ts", "tools/helium-approve.ts"];
+/* the code a run reads: its drivers and every file they reach through
+   their relative imports, src/ as well as tools/; a hand-kept list of src/
+   files missed one reached only through another's import (pin:
+   heliumStamp.test › what a run reads of the code) */
+const RELATIVE = /(?:from|import)\s+"(\.{1,2}\/[^"]+\.ts)"/g;
+export function readByDrivers(drivers: string[], read: (path: string) => string): string[] {
+  const seen = new Set<string>(), todo = [...drivers];
+  for (let f = todo.pop(); f !== undefined; f = todo.pop()) {
+    if (seen.has(f)) continue;
+    seen.add(f);
+    for (const m of read(f).matchAll(RELATIVE)) todo.push(posix.normalize(posix.join(posix.dirname(f), m[1])));
+  }
+  return [...seen].sort();
+}
