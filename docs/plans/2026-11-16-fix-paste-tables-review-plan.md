@@ -100,3 +100,7 @@ was owed over `cccc617..HEAD`.
   names `--terminal`.
 - Known limit, left (asked): a sentence the terminal wraps just before a
   ` -- ` breaks there; nothing joins into a `--` line.
+- S19, found in A7's hand-check: a command's output, which Claude Code
+  opens on `⎿`, joined the command line above it and kept three spaces of
+  indent. A `⎿` line now starts its own and stands outside the margin, as
+  a message's `⏺` does.

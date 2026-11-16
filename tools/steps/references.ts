@@ -283,7 +283,7 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await page.click(S.corner).catch(() => {});
 }
 section("a terminal's copy pasted", async () => {
-  /* a terminal's copy, its HTML white-space: pre blocks of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same; a box-drawn table, in a second block, a table; a line opening on -- its own, a line wrapped from it run back on */
+  /* a terminal's copy, its HTML white-space: pre blocks of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same; a box-drawn table, in a second block, a table; a line opening on -- its own, a line wrapped from it run back on; a command's ⎿ output its own line */
   await go("commonplace/Terminal%20Paste");
   await page.click(S.editor);
   await pasteTerminal(TERMINAL_HTML, TERMINAL_TEXT);
@@ -317,6 +317,12 @@ section("a terminal's copy pasted", async () => {
   const counts = ["  Started with 5 (1 side list, 4 bigger questions)", "  -- unstarted 5", "", "  Spawned or added since 17 (7 architecture queue)", "  -- done · spawned", "  open 1", "  -- dropped 1", "", "  This morning's session did S14."];
   await pasteTerminal(terminal(counts.join("\n")), counts.join("\n"));
   await log("a terminal's -- lines pasted", { md: await A.stored(page), drawn: await drawn() });
+  await write("commonplace/Terminal Command", "before\n");
+  await caretAt("before", 6);
+  await page.keyboard.press("Enter");
+  const ran = ["! node tools/progress/page.ts 2026-11-16 --terminal", "  ⎿  Monday, 16 November 2026", "", "     Started with 5 (1 side list, 4 bigger questions)", "     -- unstarted 5"];
+  await pasteTerminal(terminal(ran.join("\n")), ran.join("\n"));
+  await log("a terminal's command and its ⎿ output pasted", { md: await A.stored(page), drawn: await drawn() });
   await write("commonplace/Terminal Source", "x\n");
   await view(true);
   await R.sourceCaretTo(page, "x");

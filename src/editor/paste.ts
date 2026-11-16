@@ -190,7 +190,7 @@ function terminalCopy(html: string): boolean {
    does, a line wrapped from it running back on; held both ways, a long one
    broke where the terminal wrapped it. A bare -- stands alone (pin:
    paste.test › a terminal's line opening on --) */
-const STARTS_ITS_OWN = /^\s*(?:(?:[-*+•]|\d+[.)]|⏺)\s|--(?:\s|$))/;
+const STARTS_ITS_OWN = /^\s*(?:(?:[-*+•]|\d+[.)]|⏺|⎿)\s|--(?:\s|$))/;
 const ENDS_A_SENTENCE = /[.?!:…]["'”’)\]]*$/;
 const HOLDS = /^\s*(?:```|:::|#{1,6}\s|>|\||[┌├└│]|--\s*$)/;
 const BREAKS: ((prev: string, line: string) => boolean)[] = [
@@ -206,13 +206,14 @@ function fencesAfter(open: { code: boolean; blocks: number }, line: string): { c
   return { ...open, blocks: t === ":::" ? Math.max(0, open.blocks - 1) : open.blocks + 1 };
 }
 /* the terminal's margin is the indent every line shares. A message's ⏺
-   stands in it, and a first line indented less than two was begun mid-line,
+   or a command's ⎿ stands in it (pin: paste.test › a command's output,
+   opening on ⎿), and a first line indented less than two was begun mid-line,
    its one space the gap before its word, which taken off ran two words
    together (pin: a terminal's copy pasted › a terminal's copy pasted into a
    list item); neither counts, and the first keeps its spaces (pin:
    paste.test › a terminal's margin is taken off); one line has no margin
    (pin: paste.test › a terminal's copy that is not blocks) */
-const MESSAGE = /^⏺\s/;
+const MESSAGE = /^\s*[⏺⎿]\s/;
 const indentOf = (l: string): number => l.length - l.trimStart().length;
 function marginOff(lines: string[]): string[] {
   if (lines.length < 2) return lines;

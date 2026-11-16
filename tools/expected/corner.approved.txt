@@ -108,6 +108,8 @@ a terminal's copy pasted: arrived at commonplace/Terminal Rows: {"cursor":"at a 
 a terminal's table with no rule between rows, a pipe in a cell: {"md":"before\n\n| a | b |\n| --- | --- |\n| 1 | x\\|y |\n| 3 | 4 |","cells":[["a","b"],["1","x|y"],["3","4"]],"cursor":"at the end","screen":"commonplace/Terminal Rows · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a terminal's copy pasted: arrived at commonplace/Terminal Counts: {"cursor":"at a line's start"}
 a terminal's -- lines pasted: {"md":"before\n\nStarted with 5 (1 side list, 4 bigger questions)\n-- unstarted 5\n\nSpawned or added since 17 (7 architecture queue)\n-- done · spawned open 1\n-- dropped 1\n\nThis morning's session did S14.","drawn":{"paragraphs":4,"items":0},"cursor":"at the end","screen":"commonplace/Terminal Counts · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Command: {"cursor":"at a line's start"}
+a terminal's command and its ⎿ output pasted: {"md":"before\n\n! node tools/progress/page.ts 2026-11-16 --terminal\n⎿  Monday, 16 November 2026\n\nStarted with 5 (1 side list, 4 bigger questions)\n-- unstarted 5","drawn":{"paragraphs":3,"items":0},"cursor":"at the end","screen":"commonplace/Terminal Command · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a terminal's copy pasted: arrived at commonplace/Terminal Source: {"cursor":"at a line's start"}
 a terminal's copy pasted in the source view: {"md":"x passed before it landed.","cursor":"at the end","screen":"commonplace/Terminal Source · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 == shortcuts

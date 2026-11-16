@@ -249,6 +249,10 @@ test("a terminal's wrapped lines are joined: a line not ending a sentence runs o
   for (const end of ["Shall I commit?", "Done!", "Summary:", "And so…", "it said “stop.”", "(see above.)"]) expect(unwrapped(end + "\nNext line.")).toBe(end + "\nNext line.");
   expect(unwrapped("first\n• second\n1) third\n⏺ Next step")).toBe("first\n• second\n1) third\n⏺ Next step");
 });
+test("a command's output, opening on ⎿, starts its own line and stands outside the margin, as a message's ⏺ does", () => {
+  const ran = ["! node tools/progress/page.ts 2026-11-16 --terminal", "  ⎿  Monday, 16 November 2026", "", "     Started with 5 (1 side list, 4 bigger questions)", "     -- unstarted 5"];
+  expect(unwrapped(ran.join("\n"))).toBe("! node tools/progress/page.ts 2026-11-16 --terminal\n⎿  Monday, 16 November 2026\n\nStarted with 5 (1 side list, 4 bigger questions)\n-- unstarted 5");
+});
 test("a terminal's line opening on -- starts its own, as a list item does, and a line wrapped from it runs back on; a bare -- stands alone", () => {
   const counts = ["  The day, as it prints it:", "  Started with 5 (1 side list, 4 bigger questions)", "  -- unstarted 5", "", "  Spawned or added since 17 (7 architecture queue)", "  -- done · spawned", "  open 1", "  -- dropped 1", "", "  This morning's session did S14."];
   expect(unwrapped(counts.join("\n"))).toBe("The day, as it prints it:\nStarted with 5 (1 side list, 4 bigger questions)\n-- unstarted 5\n\nSpawned or added since 17 (7 architecture queue)\n-- done · spawned open 1\n-- dropped 1\n\nThis morning's session did S14.");
