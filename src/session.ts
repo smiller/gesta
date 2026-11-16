@@ -9,8 +9,8 @@ import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
-import { subEntryOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
-import { parseFoldStore, foldPage, withFoldPage, movedFolds, type FoldPage } from "./store/foldState.ts";
+import { subEntryOrder, foldKind, type ContentsLink } from "./store/contents.ts";
+import { parseFoldStore, foldPage, withFoldPage, movedFolds, remembered, remembering, type FoldPage } from "./store/foldState.ts";
 import { stored } from "./store/local.ts";
 import { errText } from "./store/files.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
@@ -184,15 +184,14 @@ export function startSession(opts: SessionOptions): Session {
   function mountEditor(doc: Node, date: string, tag: string | null): RenderedView {
     mount.replaceChildren();
     const ekey = entryKey(date, tag);
-    const folding = foldsContents(Object.keys(layer.cache), date, tag);
-    const page = folding ? readFolds(ekey) : null;
+    const kind = foldKind(Object.keys(layer.cache), date, tag);
     rendered = renderedView(mount, doc, {
       interval,
       onChange: edited,
       onSelect: () => opts.onSelect?.(),
       nodeViews: { image: imageView(resolver(date, tag)) },
       /* given even off: refreshFolds switches it on */
-      folds: { on: folding, open: page ? page.open : [], onChange: (open) => writeFolds(ekey, { open }) },
+      folds: { kind, flipped: kind ? remembered(readFolds(ekey), kind) : [], onChange: (keys, now) => writeFolds(ekey, remembering(now, keys)) },
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
@@ -255,10 +254,9 @@ export function startSession(opts: SessionOptions): Session {
     const view = live();
     if (!view) return;
     const st = foldsKey.getState(view.state);
-    const on = foldsContents(Object.keys(layer.cache), current.date, current.tag);
-    if (!st || st.on === on) return;
-    const page = on ? readFolds(ekeyOf()) : null;
-    setFolds(on, page ? page.open : [])(view.state, view.dispatch);
+    const kind = foldKind(Object.keys(layer.cache), current.date, current.tag);
+    if (!st || st.kind === kind) return;
+    setFolds(kind, kind ? remembered(readFolds(ekeyOf()), kind) : [])(view.state, view.dispatch);
     /* the folds moved the text under a held place: set again now, not a
        frame later when the size is observed (pin: places › the warm landed) */
     keeper.reapply();

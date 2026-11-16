@@ -233,6 +233,15 @@ the switch's place remembered: {"matches":true,"cursor":"inside a line","screen"
 a long canto switched at its end: {"rendered":true,"source":true,"back":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘M from 20px down: {"source":25,"back":0,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a caret seen in the source, ⌃⌘M back: {"caretInView":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+== sections fold on a journal day and a commonplace
+sections fold on a journal day and a commonplace: arrived at 2026-09-03: {"cursor":"at a line's start"}
+a journal day with sections opened: {"folds":2,"open":["Walk","Reading"],"counts":["4 words","3 words"],"linksShowing":0,"cantoInView":null,"cursor":"at a line's start","screen":"2026-09-03 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+its Walk section closed: {"folds":2,"open":["Reading"],"counts":["4 words","3 words"],"linksShowing":0,"cantoInView":null,"cursor":"at a line's start","screen":"2026-09-03 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+sections fold on a journal day and a commonplace: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+sections fold on a journal day and a commonplace: arrived at 2026-09-03: {"cursor":"at a line's start"}
+the day opened again: {"folds":2,"open":["Reading"],"counts":["4 words","3 words"],"linksShowing":0,"cantoInView":null,"cursor":"at a line's start","screen":"2026-09-03 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+sections fold on a journal day and a commonplace: arrived at commonplace/Sectioned: {"cursor":"at a line's start"}
+a commonplace with sections opened: {"folds":2,"open":["One","Two"],"counts":["2 words","1 word"],"linksShowing":0,"cantoInView":null,"cursor":"at a line's start","screen":"commonplace/Sectioned · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == contents folds
 contents folds: arrived at bookshelf/Spenser, Edmund/The Faerie Queene: {"cursor":"at a line's start"}
 a contents page opened: {"folds":1,"open":[],"counts":["1 entry"],"linksShowing":0,"cantoInView":null,"cursor":"at a line's start","screen":"bookshelf/Spenser, Edmund/The Faerie Queene · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

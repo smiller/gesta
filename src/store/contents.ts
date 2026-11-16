@@ -20,7 +20,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { linkRuns } from "./links.ts";
 import { childrenOf, type Walk } from "./lists.ts";
-import { entryKey, entryHash, byName, DATE_KEY_SRC, NS_BOOK } from "./keys.ts";
+import { entryKey, entryHash, byName, isDayKey, DATE_KEY_SRC, NS_BOOK, NS_COMMONPLACE } from "./keys.ts";
 
 export interface ContentsLink { href: string; group: string | null }
 interface Head { from: number; to: number; text: string }
@@ -111,4 +111,11 @@ export function foldsContents(keys: string[], date: string, tag: string | null):
   if (date !== NS_BOOK.key || !tag) return false;
   if (tag.split("/").length < 2) return false;
   return childrenOf(keys, entryKey(date, tag)).length > 0;
+}
+/* contents start closed and count their links; sections start open and
+   count their words, so a day's writing is never hidden on arrival */
+export type FoldKind = "contents" | "sections";
+export function foldKind(keys: string[], date: string, tag: string | null): FoldKind | null {
+  if (foldsContents(keys, date, tag)) return "contents";
+  return isDayKey(date) || date === NS_COMMONPLACE.key ? "sections" : null;
 }

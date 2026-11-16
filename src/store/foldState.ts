@@ -1,7 +1,9 @@
 /* a per-browser convenience, never in the text or a backup. Parsing
    forgives anything: a damaged store is an empty one (pin: foldState.test ›
    an absent, empty or damaged store reads as empty) */
-export interface FoldPage { open: string[] }
+import type { FoldKind } from "./contents.ts";
+
+export interface FoldPage { open: string[]; closed: string[] }
 export type FoldStore = Record<string, FoldPage>;
 
 function readJson(raw: string | null): unknown {
@@ -14,12 +16,12 @@ export function parseFoldStore(raw: string | null): FoldStore {
   const data = readJson(raw);
   if (!isRecord(data)) return out;
   for (const [k, v] of Object.entries(data)) {
-    if (v && typeof v === "object") out[k] = { open: stringsIn((v as { open?: unknown }).open) };
+    if (v && typeof v === "object") out[k] = { open: stringsIn((v as { open?: unknown }).open), closed: stringsIn((v as { closed?: unknown }).closed) };
   }
   return out;
 }
 export function foldPage(store: FoldStore, ekey: string): FoldPage {
-  return store[ekey] || { open: [] };
+  return store[ekey] || { open: [], closed: [] };
 }
 export function withFoldPage(store: FoldStore, ekey: string, patch: Partial<FoldPage>): FoldStore {
   return { ...store, [ekey]: { ...foldPage(store, ekey), ...patch } };
@@ -29,3 +31,6 @@ export function movedFolds(store: FoldStore, moves: Record<string, string>): Fol
   for (const [k, v] of Object.entries(store)) out[Object.hasOwn(moves, k) ? moves[k] : k] = v;
   return out;
 }
+/* the sections an entry holds otherwise than its kind starts them */
+export const remembered = (page: FoldPage, kind: FoldKind): string[] => (kind === "contents" ? page.open : page.closed);
+export const remembering = (kind: FoldKind, keys: string[]): Partial<FoldPage> => (kind === "contents" ? { open: keys } : { closed: keys });

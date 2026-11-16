@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
+import { section, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -366,6 +366,22 @@ async function switchFrom20pxDown(): Promise<void> {
 async function caretSeenSourceM(): Promise<void> {
   await log("a caret seen in the source, ⌃⌘M back", { caretInView: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }) });
 }
+section("sections fold on a journal day and a commonplace", async () => {
+  /* a day and a commonplace under `##` headings: every section open on arrival, the triangle closing one to its word count, the closing kept when the day is left and opened again */
+  await write("2026-09-03", "the morning\n\n## Walk\n\none two three four\n\n## Reading\n\nfive six seven\n");
+  await R.settle(page);
+  await log("a journal day with sections opened", await R.folds(page));
+  await R.clickFoldTriangle(page, "Walk");
+  await rest(page);
+  await log("its Walk section closed", await R.folds(page));
+  await go("commonplace/Horace");
+  await go("2026-09-03");
+  await R.settle(page);
+  await log("the day opened again", await R.folds(page));
+  await write("commonplace/Sectioned", "# Sectioned\n\n## One\n\nalpha beta\n\n## Two\n\ngamma\n");
+  await R.settle(page);
+  await log("a commonplace with sections opened", await R.folds(page));
+});
 section("contents folds", async () => {
   /* a work's contents folding under its headings: the stanza seeds' Faerie Queene, its contents page a `##` Book heading over a canto link — closed on arrival with its count, opened by the triangle in the margin, remembered with the link followed from it on the way back */
   await seed(STANZA_SEEDS);
