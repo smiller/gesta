@@ -144,7 +144,7 @@ export interface PageRange { from: string; to: string }
    leaf drops (Screwtape came back referred to by leaf for Letter 12); titled, the
    leaf replaces every level below the work (pin: reference.test ›
    referenceLabel: the line range dots onto a numeral run) */
-export interface Locator { range: string; page?: PageRange | null; facing?: string }
+export interface Locator { range: string; worded?: boolean; page?: PageRange | null; facing?: string }
 interface LabelCtx { date: string; tag: string | null; root: string; books: boolean; locates: boolean; journal: Journal; said: Conventions }
 function labelParts(c: LabelCtx): Piece[] {
   /* (pin: reference.test › referenceLabel by book, chapter, and paragraph) */
@@ -166,11 +166,11 @@ function numberedDeepest(parts: Piece[]): string | undefined {
 }
 const wordedChapterRange = (deepest: Piece | undefined, range: string): boolean =>
   deepest?.division !== undefined && /^chapter\b/.test(deepest.plain!) && /^paras? /.test(range);
-function placeRange(parts: Piece[], range: string): void {
+function placeRange(parts: Piece[], range: string, worded: boolean): void {
   const deepest = parts[parts.length - 1];
-  /* a worded range, "para 4" or a poem's first line, stands after the chapter as a field of its own, a line opening on a guillemet too (pin: reference.test › referenceLabel: a worded range) */
+  /* a range said to be worded, or opening on a letter, stands after the chapter as a field of its own; read from its first character alone, words opening on a guillemet were dotted on as a numeral (pin: reference.test › referenceLabel: a worded range) */
   if (wordedChapterRange(deepest, range)) deepest.plain += " (" + range + ")";
-  else if (/^[\p{L}«“‘"']/u.test(range)) parts.push({ plain: range });
+  else if (worded || /^[a-z]/i.test(range)) parts.push({ plain: range });
   else if (deepest?.division !== undefined) deepest.plain += "." + range;
   else if (deepest?.n !== undefined) deepest.n += "." + range;
   else parts.push({ n: range });
@@ -183,7 +183,7 @@ function placePage(parts: Piece[], page: PageRange, books: boolean, numbered: st
 }
 function located(parts: Piece[], at: Locator, c: LabelCtx, numbered: string | undefined): Piece[] {
   if (!c.locates) return parts;
-  if (at.range) { placeRange(parts, at.range); return parts; }
+  if (at.range) { placeRange(parts, at.range, !!at.worded); return parts; }
   return at.page ? placePage(parts, at.page, c.books, numbered) : parts;
 }
 /* the first field is a person (roman), a title (italic), or nothing; a root

@@ -198,10 +198,10 @@ const vn = journalOf({
   "bookshelf/Dante/Vita Nuova": "# Vita Nuova\n\n::: reference\nprose by paragraph, verse by line\n:::",
   "bookshelf/Dante/Vita Nuova/3": "# Vita Nuova, 3",
 });
-test("referenceLabel: a worded range is comma-joined after the chapter, one opening on a quotation mark too; a numeral range still dots on", () => {
+test("referenceLabel: a worded range is comma-joined after the chapter, one said to be worded whatever it opens on; a numeral range still dots on", () => {
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "para 4" }, vn)).toBe("Dante, *Vita Nuova*, 3, para 4");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "A ciascun’alma presa e gentil core, 1-4" }, vn)).toBe("Dante, *Vita Nuova*, 3, A ciascun’alma presa e gentil core, 1-4");
-  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/37", { range: "«L’amaro lagrimar che voi faceste, 1" }, vn)).toBe("Dante, *Vita Nuova*, 37, «L’amaro lagrimar che voi faceste, 1");
+  expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/37", { range: "(O voi che per la via, 1", worded: true }, vn)).toBe("Dante, *Vita Nuova*, 37, (O voi che per la via, 1");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "" }, vn)).toBe("Dante, *Vita Nuova*, 3");
   expect(referenceLabel(NS_BOOK.key, "Dante/Vita Nuova/3", { range: "4" }, vn)).toBe("Dante, *Vita Nuova*, 3.4");
 });

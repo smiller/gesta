@@ -533,3 +533,10 @@ test("without the directive the same chapter refers as every book does: 3.8, 3.1
   expect(vnLabel(VN3, "3", ["cominciai"], plain)).toBe("Dante, *Vita Nuova*, 3.8");
   expect(vnLabel(VN3, "3", ["ciascun", "presente"], plain)).toBe("Dante, *Vita Nuova*, 3.1-2");
 });
+
+test("a prosimetrum names a poem by its first numbered line: a direction before it is passed over, an opening guillemet never closed dropped", () => {
+  const VN34 = parseMarkdown("# Vita Nuova, 34\n\n::: verse\n*Primo cominciamento* | *First Commencement*\nEra venuta ne la mente mia | That lady of all gentle memories\nla gentil donna che per suo valore | Had lighted on my soul;\n:::");
+  expect(vnLabel(VN34, "34", ["valore"])).toBe("Dante, *Vita Nuova*, 34, Era venuta ne la mente mia, 2");
+  const VN37 = parseMarkdown("# Vita Nuova, 37\n\n::: verse\n«L’amaro lagrimar che voi faceste, | The very bitter weeping that ye made\noscuraron la morte e l’alma trista | Hath from mine eyes taken their sight\n:::");
+  expect(vnLabel(VN37, "37", ["oscuraron"])).toBe("Dante, *Vita Nuova*, 37, L’amaro lagrimar che voi faceste, 2");
+});

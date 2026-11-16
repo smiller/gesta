@@ -17,13 +17,15 @@ function readJson(raw: string | null): unknown {
 }
 /* forgives anything, a damaged store an empty one; a record from before
    one list served both kinds holds `open` (contents) or `closed`
-   (sections), read as that list (pin: foldMemory.test › a record from
-   before, open sections or closed ones) */
+   (sections), most often both with one empty, read as the one that holds
+   sections: the empty `open` taken first lost every day's closed sections
+   (pin: foldMemory.test › a record from before, open sections or closed
+   ones) (pin: foldMemory.test › a record written with both lists) */
 export function parseFoldStore(raw: string | null): FoldStore {
   const out: FoldStore = Object.create(null);
   const data = readJson(raw);
   if (!isRecord(data)) return out;
-  for (const [k, v] of Object.entries(data)) if (isRecord(v)) out[k] = { flipped: stringsIn(v.flipped ?? v.open ?? v.closed) };
+  for (const [k, v] of Object.entries(data)) if (isRecord(v)) out[k] = { flipped: v.flipped !== undefined ? stringsIn(v.flipped) : [...stringsIn(v.open), ...stringsIn(v.closed)] };
   return out;
 }
 type Stored = { read(): FoldStore; write(next: (s: FoldStore) => FoldStore): void };

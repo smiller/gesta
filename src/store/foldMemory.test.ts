@@ -54,3 +54,9 @@ test("a moved entry's record goes with it, a dropped one's is forgotten, and the
   expect(later.startOf("commonplace", "A")).toEqual({ kind: "sections", flipped: [] });
   expect(later.startOf("commonplace", "B")).toEqual({ kind: "sections", flipped: ["Y"] });
 });
+
+test("a record written with both lists, one of them empty, is read as the one that holds sections", () => {
+  const { mem } = memoryOver('{"2026-01-07": {"open": [], "closed": ["Walk"]}, "bookshelf/S/W": {"open": ["Book I"], "closed": []}}', ["bookshelf/S/W", "bookshelf/S/W/1"]);
+  expect(mem.startOf("2026-01-07", null)).toEqual({ kind: "sections", flipped: ["Walk"] });
+  expect(mem.startOf("bookshelf", "S/W")).toEqual({ kind: "contents", flipped: ["Book I"] });
+});

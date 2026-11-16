@@ -365,3 +365,16 @@ describe("a work of prose by paragraph and verse by line: Verse Line, or Prose P
     expect(lands(chapter, "5", PROSIMETRUM)).toBe("the lines here are 1–4");
   });
 });
+
+describe("a work of prose by paragraph and verse by line, beyond the bar's two boxes", () => {
+  const proseChapter = parseMarkdown("::: prose\nOne. | Un.\nTwo. | Deux.\nThree. | Trois.\n:::");
+  it("a link to a line in a chapter of prose lands on that sentence, as before the bar counted verse alone", () => {
+    const a = ask(proseChapter, PROSIMETRUM, { line: "3" }, FRESH, "link");
+    expect("pos" in a && proseChapter.nodeAt(a.pos)!.textContent).toContain("Three.");
+  });
+  it("a chapter in stanzas or with printed pages keeps the bar its fences ask for", () => {
+    expect(bar(parseMarkdown("::: stanza 1\na\nb\n:::"), PROSIMETRUM)).toMatchObject({ kind: "stanza" });
+    expect(bar(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM)).toMatchObject({ kind: "both", label: "Line", pageLabel: "Page" });
+    expect("pos" in ask(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM, { page: "3" }, FRESH, "bar")).toBe(true);
+  });
+});

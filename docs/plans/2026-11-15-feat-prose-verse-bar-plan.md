@@ -33,3 +33,25 @@ the prose by paragraph.
 - B5.1 built test-first; played: Vita Nuova 12's second verse line
   "…, 12, Ballata, i’ voi che tu ritrovi Amore, 2", its prose "…, 12, para
   1"; the approved run's one change.
+
+## The batch's review (16c19cd..131ae73: A3.1, A3.3, B5, B5.1)
+
+`/code-review` at high: 122,183 tokens (MEASURED: the last usage line of
+subagents/agent-a0f371b808d3523bd.jsonl, input 2 + cache creation 1,642
++ cache read 116,335 + output 4,204). Eight findings, all acted on:
+
+1. Fold records written before fold memory held both lists, one empty;
+   the empty `open` won and a day's closed sections were lost, and the
+   next write saved the loss (READ, foldState.ts:27 at 4d8328b^): the
+   list that holds sections is read. Closings lost between the two
+   commits stay lost.
+2. A poem named by its first row, a direction (Vita Nuova 34's *Primo
+   cominciamento*) or a gap: by its first numbered line.
+3. A link to a line stopped reaching a chapter of prose (none in the
+   backup, MEASURED): only the bar's Verse Line box counts verse alone.
+4. Stanzas and printed pages lost their bar under the directive: kept.
+5. A worded range guessed from its first character: the reference says
+   it is worded.
+6. An opening guillemet never closed kept in a poem's name: dropped.
+7. Three parallel chains of the bar's words: one table.
+8. A comment naming another module's output: says its own code's rule.

@@ -61,12 +61,14 @@ function stanzaRange({ doc, lines: walk }: Passage): string {
   const whole = a.line === 1 && b.line === lastLineOf(doc, b);
   return stanzaLabel({ stanza: stanzaOf(doc, a)!, line: a.line }, { stanza: stanzaOf(doc, b)!, line: b.line }, whole);
 }
-/* a poem's name is its first line, the original where it is paired, a
-   closing comma, semicolon or colon dropped */
-function firstLine(poem: Node): string {
-  const row = poem.firstChild;
-  const text = row ? (row.type === N.pair ? row.child(0) : row).textContent : "";
-  return text.trim().replace(/[,;:]$/, "");
+/* a poem's name is its first numbered line, a direction or a gap before it
+   passed over; the original where it is paired; a closing comma, semicolon
+   or colon dropped, and an opening guillemet or quotation mark the line
+   never closes */
+function firstLine(poem: Node, pos: number): string {
+  const row = blockUnits(poem, pos, 0, "left").find((u) => u.line > 0)?.node;
+  const text = (row ? (row.type === N.pair ? row.child(0) : row).textContent : "").trim().replace(/[,;:]$/, "");
+  return /^«[^»]*$|^“[^”]*$/.test(text) ? text.slice(1) : text;
 }
 /* a prosimetrum's chapter: its prose by paragraph alone, a poem by its first
    line and its lines (pin: reference.test › a prosimetrum chapter with two
@@ -77,7 +79,7 @@ function prosimetrumRange(p: Passage): string {
   const first = lines[0];
   if (!range || !first) return "";
   const block = doc.nodeAt(first.blockPos)!;
-  return block.type === N.prose ? paragraphRange(doc, lines) : firstLine(block) + ", " + range;
+  return block.type === N.prose ? paragraphRange(doc, lines) : firstLine(block, first.blockPos) + ", " + range;
 }
 function paragraphIn(doc: Node, from: number, lines: Unit[]): string {
   if (lines[0]) return paragraphRange(doc, lines);
@@ -189,7 +191,7 @@ function payloadOver(p: Passage, at: EntryAt, journal: Journal, all: boolean): P
   const said = conventionsOf(at.date, at.tag, journal);
   const quoted = quotation(p, { halves: said.byHalfLine, paragraphs: said.byBookChapterAndParagraph || said.proseByParagraphVerseByLine, all });
   if ("refused" in quoted) return quoted;
-  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), page: pageRange(p), facing: facingRange(p) }, journal);
+  const label = referenceLabel(at.date, at.tag, { range: rangeOver(p, said), worded: said.proseByParagraphVerseByLine, page: pageRange(p), facing: facingRange(p) }, journal);
   const url = entryLinkUrl(at.date, at.tag, hl);
   return { text: "[" + mdLabel(label, label) + "](" + url + "):\n\n" + quoted.text, label, url, passage: quoted.text };
 }
