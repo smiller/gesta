@@ -15,6 +15,9 @@ body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-s
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 24px 48px; }
 main { max-width: 1080px; margin: 0 auto; display: grid; gap: 24px; }
 h1 { font-size: 22px; font-weight: 600; margin: 0; text-wrap: balance; }
+.days { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 13px; }
+.days a { color: var(--open); text-decoration: none; }
+.days a:hover, .days a:focus-visible { text-decoration: underline; }
 .sub { color: var(--muted); margin: 4px 0 0; }
 .tally { display: flex; flex-wrap: wrap; gap: 8px 20px; font-family: var(--mono); font-size: 13px; }
 .tally b { font-weight: 500; }

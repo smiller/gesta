@@ -1,7 +1,7 @@
 /* node tools/progress/page.ts <day> [--at HH:MM | --slides | --terminal [HH:MM]] */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { dayEvents, today, clock as wallClock } from "./day.ts";
+import { dayEvents, today, clock as wallClock, neighbours, logNames, type Days } from "./day.ts";
 import { inOrder, minutes, type Gap, type Order, type Piece, type Span } from "./spans.ts";
 import { replay, counts, isOpen, isDone, isUnderway, own, LISTS, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
 
@@ -114,7 +114,7 @@ document.addEventListener("keydown", (e) => { if (!opening.has(e.key)) return; i
 const longDay = (day: string): string => new Date(day + "T12:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 function head(title: string): string {
   const css = readFileSync(new URL("./page.css", import.meta.url), "utf8");
-  return "<title>" + title + "</title>\n<meta name=\"claude:viewport-fit-sides\" content=\"cover\">\n" +
+  return '<!doctype html>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>' + title + "</title>\n<meta name=\"claude:viewport-fit-sides\" content=\"cover\">\n" +
     '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">\n' +
     "<style>\n" + css + "</style>\n";
 }
@@ -126,6 +126,13 @@ function frame(items: Item[], before?: Item[]): string {
   return '<div class="tallies">' + tallyLine("Started with", c.starting, b?.starting) + tallyLine("Spawned or added since", c.added, b?.added) + "</div>" +
     LISTS.map((l) => section(l, placed[l], d)).join("");
 }
+const shortDay = (day: string): string => new Date(day + "T12:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+function dayLinks(days: Days | undefined, file: (day: string) => string): string {
+  const link = (rel: string, words: (d: string) => string, d?: string): string => (d ? '<a rel="' + rel + '" href="' + file(d) + '">' + words(shortDay(d)) + "</a>" : "<span></span>");
+  if (!days?.before && !days?.after) return "";
+  return '<nav class="days">' + link("prev", (d) => "← Previous day, " + d, days.before) + link("next", (d) => "Next day, " + d + " →", days.after) + "</nav>";
+}
+const pageFile = (day: string): string => day + ".html", slidesFile = (day: string): string => day + "-slides.html";
 const asOf = (o: { day: string; at?: string }): string => longDay(o.day) + (o.at ? ", as it stood at " + o.at : "");
 export function terminal(events: Event[], o: { day: string; at?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at), c = counts(items), placed = trees(items);
@@ -133,10 +140,10 @@ export function terminal(events: Event[], o: { day: string; at?: string }): stri
   const lists = LISTS.filter((l) => placed[l].length).map((l) => [NAME[l], ...placed[l].map(line)].join("\n"));
   return [asOf(o), "", tallyText("Started with", c.starting), "", tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
 }
-export function page(events: Event[], o: { day: string; at?: string; now?: string }): string {
+export function page(events: Event[], o: { day: string; at?: string; now?: string; days?: Days }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
   const title = asOf(o);
-  return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + dayInOrder(events, items, o) + "</main>\n" + TOGGLE + "\n";
+  return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1>" + dayLinks(o.days, pageFile) + "</header>" + KEY + frame(items) + dayInOrder(events, items, o) + "</main>\n" + TOGGLE + "\n";
 }
 
 const took = (m: number): string => (m < 60 ? m + " min" : Math.floor(m / 60) + " h" + (m % 60 ? " " + (m % 60) + " min" : ""));
@@ -224,19 +231,30 @@ show(0); play();
 
 /* the day as a slideshow: a frame at each of its times, each marked
    against the one before */
-export function slides(events: Event[], o: { day: string }): string {
+export function slides(events: Event[], o: { day: string; days?: Days }): string {
   const times = frameTimes(events), snaps = times.map((t) => replay(events, o.day + "T" + t));
   const frames = snaps.map((items, i) => '<div class="frame" data-at="' + times[i] + '"' + (i ? " hidden" : "") + ">" + frame(items, i ? snaps[i - 1] : undefined) + dayInOrder(events, items, { day: o.day, at: times[i] }) + "</div>").join("");
   const controls = '<div class="controls"><button id="pause" type="button">Pause</button><input id="when" type="range" min="0" max="' + (times.length - 1) + '" value="0" aria-label="the frame\'s time"><span id="clock">' + times[0] + "</span></div>";
-  return head("Gesta Day Slides") + "<main><header><h1>" + longDay(o.day) + ", every half hour</h1></header>" + strip(snaps, times) + controls + KEY + frames + "</main>\n" + SCRIPT + "\n" + TOGGLE + "\n";
+  return head("Gesta Day Slides") + "<main><header><h1>" + longDay(o.day) + ", every half hour</h1>" + dayLinks(o.days, slidesFile) + "</header>" + strip(snaps, times) + controls + KEY + frames + "</main>\n" + SCRIPT + "\n" + TOGGLE + "\n";
 }
 export const PUBLISHED = { day: "https://claude.ai/artifact/H7HDCNRgr91rJS6s21U8VM", slides: "https://claude.ai/artifact/2UpbtsA5SwPd4JoPRwZz2w" };
-export function drawn(day: string, events: Event[], out = "tools/out/progress", now = day === today() ? wallClock() : undefined): { path: string; url: string }[] {
-  mkdirSync(out, { recursive: true });
-  const paged = { path: join(out, day + ".html"), url: PUBLISHED.day }, slid = { path: join(out, day + "-slides.html"), url: PUBLISHED.slides };
-  writeFileSync(paged.path, page(events, { day, now }));
-  writeFileSync(slid.path, slides(events, { day }));
-  return [paged, slid];
+interface Drawing { out: string; names: string[]; read: (day: string) => Event[]; now?: string }
+function drawOne(day: string, events: Event[], w: Drawing): [string, string] {
+  const days = neighbours(w.names, day), paths: [string, string] = [join(w.out, pageFile(day)), join(w.out, slidesFile(day))];
+  writeFileSync(paths[0], page(events, { day, now: w.now, days }));
+  writeFileSync(paths[1], slides(events, { day, days }));
+  return paths;
+}
+/* a page links to its neighbours as files published beside it: the day's
+   own is published there for the next day's link back, and the day
+   before's is redrawn, as its link to this day appears only once this day
+   has a log */
+export function drawn(day: string, events: Event[], o: Partial<Drawing> = {}): { path: string; url: string; beside: string[] }[] {
+  const w: Drawing = { out: o.out ?? "tools/out/progress", names: o.names ?? logNames(), read: o.read ?? dayEvents, now: o.now ?? (day === today() ? wallClock() : undefined) };
+  mkdirSync(w.out, { recursive: true });
+  const before = neighbours(w.names, day).before, own = drawOne(day, events, w);
+  const earlier = before ? drawOne(before, w.read(before), { ...w, now: undefined }) : undefined;
+  return [PUBLISHED.day, PUBLISHED.slides].map((url, i) => ({ path: own[i], url, beside: [...(earlier ? [earlier[i]] : []), own[i]] }));
 }
 
 function main(argv: string[]): void {
@@ -244,9 +262,10 @@ function main(argv: string[]): void {
   const events = dayEvents(day);
   if (!flag) { for (const d of drawn(day, events)) console.log(d.path); return; }
   if (flag === "--terminal") { console.log(terminal(events, { day, at })); return; }
+  const days = neighbours(logNames(), day);
   const out = join("tools/out/progress", day + (flag === "--slides" ? "-slides" : "-" + (at ?? "").replace(":", "")) + ".html");
   mkdirSync("tools/out/progress", { recursive: true });
-  writeFileSync(out, flag === "--slides" ? slides(events, { day }) : page(events, { day, at }));
+  writeFileSync(out, flag === "--slides" ? slides(events, { day, days }) : page(events, { day, at, days }));
   console.log(out);
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

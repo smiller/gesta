@@ -119,7 +119,7 @@ export function logged(day: string, events: Event[]): { refused: string } | { li
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   /* the artifacts hold today's ledger: a past day's page republished there
      would overwrite it */
-  const pages = drawn(day, dayEvents(day)).map((d) => (day === today() ? "republish " + d.path + " → " + d.url : "drawn " + d.path + ", not republished: " + day + " is not today"));
+  const pages = drawn(day, dayEvents(day)).map((d) => (day === today() ? "republish " + d.path + " → " + d.url + ", beside it " + d.beside.join(" ") : "drawn " + d.path + ", not republished: " + day + " is not today"));
   return { lines: [...events.map((e) => JSON.stringify(e)), ...pages] };
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

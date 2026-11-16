@@ -90,13 +90,32 @@ test("each frame of the slideshow ends with the day in order as it stood at its 
   expect(frames[4]).toContain('<td class="t">10:05</td><td class="t">10:40</td><td class="t took">35 min</td>');
 });
 
-test("a day is drawn as its page and its slideshow, each named with the artifact it is published to", () => {
+test("a day is drawn as its page and its slideshow, each named with the artifact it is published to and the files published beside it: its own and the logged day before's, redrawn", () => {
   const out = mkdtempSync(join(tmpdir(), "progress-"));
-  const d = drawn("2026-11-15", day, out);
-  expect(d).toEqual([{ path: join(out, "2026-11-15.html"), url: PUBLISHED.day }, { path: join(out, "2026-11-15-slides.html"), url: PUBLISHED.slides }]);
-  expect(d.every((x) => existsSync(x.path))).toBe(true);
+  const names = ["2026-11-14.jsonl", "2026-11-15.jsonl"];
+  const d = drawn("2026-11-15", day, { out, names, read: () => [] });
+  expect(d).toEqual([
+    { path: join(out, "2026-11-15.html"), url: PUBLISHED.day, beside: [join(out, "2026-11-14.html"), join(out, "2026-11-15.html")] },
+    { path: join(out, "2026-11-15-slides.html"), url: PUBLISHED.slides, beside: [join(out, "2026-11-14-slides.html"), join(out, "2026-11-15-slides.html")] },
+  ]);
+  expect(d.flatMap((x) => x.beside).every((p) => existsSync(p))).toBe(true);
   expect(readFileSync(d[0].path, "utf8")).toContain('<td class="n">A1.1</td>');
   expect(readFileSync(d[1].path, "utf8")).toContain('class="frame"');
+  expect(readFileSync(join(out, "2026-11-14.html"), "utf8")).toContain('href="2026-11-15.html"');
+  expect(drawn("2026-11-14", [], { out, names: ["2026-11-14.jsonl"], read: () => [] })[0].beside).toEqual([join(out, "2026-11-14.html")]);
+});
+
+test("the day page links to the logged day before and the one after, each where there is one, by its file beside it", () => {
+  const links = (html: string): string[] => [...html.matchAll(/<a rel="(prev|next)" href="([^"]*)">([^<]*)<\/a>/g)].map((m) => m[1] + " " + m[2] + " " + m[3]);
+  expect(links(page(day, { day: "2026-11-15", days: { before: "2026-11-14", after: "2026-11-16" } }))).toEqual([
+    "prev 2026-11-14.html ← Previous day, Saturday 14 November", "next 2026-11-16.html Next day, Monday 16 November →"]);
+  expect(links(page(day, { day: "2026-11-15", days: { after: "2026-11-16" } }))).toEqual(["next 2026-11-16.html Next day, Monday 16 November →"]);
+  expect(page(day, { day: "2026-11-15", days: {} })).not.toContain('<nav class="days"');
+  expect(links(slides(day, { day: "2026-11-15", days: { before: "2026-11-14" } }))).toEqual(["prev 2026-11-14-slides.html ← Previous day, Saturday 14 November"]);
+});
+
+test("each page is a whole document, as a file published beside another page is served unwrapped", () => {
+  for (const html of [page(day, { day: "2026-11-15" }), slides(day, { day: "2026-11-15" })]) expect(html).toMatch(/^<!doctype html>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>/);
 });
 
 test("a paused item's ended time is its stop's; an item in progress has none", () => {

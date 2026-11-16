@@ -11,9 +11,12 @@ export const dayEvents = (day: string): Event[] => { const p = join(DIR, day + "
    the days, and taken for one its items would be carried in (pin:
    day.test › the last day is the latest dated log) */
 const DATED = /^(\d{4}-\d{2}-\d{2})\.jsonl$/;
-export const lastDay = (names: string[], day: string): string | undefined =>
-  names.flatMap((f) => DATED.exec(f)?.[1] ?? []).filter((d) => d < day).sort().pop();
+const dated = (names: string[]): string[] => names.flatMap((f) => DATED.exec(f)?.[1] ?? []).sort();
+export const lastDay = (names: string[], day: string): string | undefined => dated(names).filter((d) => d < day).pop();
+export interface Days { before?: string; after?: string }
+export const neighbours = (names: string[], day: string): Days => ({ before: lastDay(names, day), after: dated(names).find((d) => d > day) });
+export const logNames = (): string[] => (existsSync(DIR) ? readdirSync(DIR) : []);
 export function lastDayEvents(day: string): Event[] {
-  const last = existsSync(DIR) ? lastDay(readdirSync(DIR), day) : undefined;
+  const last = lastDay(logNames(), day);
   return last ? dayEvents(last) : [];
 }
