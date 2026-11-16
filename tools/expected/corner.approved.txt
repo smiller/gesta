@@ -587,6 +587,8 @@ the two Englishes in a narrower window: {"prose":472,"oneColumn":true,"cursor":"
 ⌃⌘G on prose and verse: {"boxes":["Verse Line",", or","Prose Paragraph"],"cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 Prose Paragraph 1, Enter: {"landed":"Ora, tornando al proposito, ","cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 Verse Line 2, Enter: {"landed":"e con lui vade a madonna dav","boxes":{"line":"2","paragraph":""},"cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+⌃⌘R on the poem's second line: {"label":"[Dante, *Vita Nuova*, 12, Ballata, i’ voi che tu ritrovi Amore, 2](…):","cursor":"selected 33","screen":"bookshelf/Dante/Vita Nuova/12 · sel 33 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘R on the prose: {"label":"[Dante, *Vita Nuova*, 12, para 1](…):","cursor":"selected 26","screen":"bookshelf/Dante/Vita Nuova/12 · sel 26 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 == a link to a line
 a link to a line, clicked: {"landed":"three","selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a link to a line, the next click: {"landed":null,"selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

@@ -61,18 +61,23 @@ function stanzaRange({ doc, lines: walk }: Passage): string {
   const whole = a.line === 1 && b.line === lastLineOf(doc, b);
   return stanzaLabel({ stanza: stanzaOf(doc, a)!, line: a.line }, { stanza: stanzaOf(doc, b)!, line: b.line }, whole);
 }
-/* a prosimetrum's chapter: its prose by paragraph, a poem by its lines, and
-   by its place among the chapter's poems where there is more than one (pin:
-   reference.test › a prosimetrum chapter with two poems) */
+/* a poem's name is its first line, the original where it is paired, a
+   closing comma, semicolon or colon dropped */
+function firstLine(poem: Node): string {
+  const row = poem.firstChild;
+  const text = row ? (row.type === N.pair ? row.child(0) : row).textContent : "";
+  return text.trim().replace(/[,;:]$/, "");
+}
+/* a prosimetrum's chapter: its prose by paragraph alone, a poem by its first
+   line and its lines (pin: reference.test › a prosimetrum chapter with two
+   poems) */
 function prosimetrumRange(p: Passage): string {
   const { doc } = p, range = referenceRange(p);
   const lines = p.lines({ top: true }).filter((u) => u.line);
   const first = lines[0];
   if (!range || !first) return "";
-  if (doc.nodeAt(first.blockPos)!.type === N.prose) return "prose, " + paragraphRange(doc, lines);
-  const poems: number[] = [];
-  doc.forEach((n, pos) => { if (n.type === N.verse) poems.push(pos); });
-  return "verse " + (poems.length > 1 ? poems.indexOf(first.blockPos) + 1 + "." : "") + range;
+  const block = doc.nodeAt(first.blockPos)!;
+  return block.type === N.prose ? paragraphRange(doc, lines) : firstLine(block) + ", " + range;
 }
 function paragraphIn(doc: Node, from: number, lines: Unit[]): string {
   if (lines[0]) return paragraphRange(doc, lines);

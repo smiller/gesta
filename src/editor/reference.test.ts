@@ -443,21 +443,21 @@ test("a prosimetrum's sentence quotes that sentence and its translation alone", 
   const p = referencePayload(state(VN3, a, b), { date: "bookshelf", tag: "Dante/Vita Nuova/3" }, vnJournal);
   expect("passage" in p && p.passage).toBe("> ::: prose 8\n> E trovai che l'ora era la quarta. | I knew that it was the fourth hour.\n> :::");
 });
-test("a prosimetrum refers to the prose by Barbi's paragraph, its sentences counted under it, and a poem by its lines: 3, prose, para 8; paras 8-9; para 13; verse 1-2", () => {
-  expect(vnLabel(VN3, "3", ["cominciai"])).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
-  expect(vnLabel(VN3, "3", ["quarta"])).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
-  expect(vnLabel(VN3, "3", ["cominciai", "quarta"])).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
-  expect(vnLabel(VN3, "3", ["fourth hour"])).toBe("Dante, *Vita Nuova*, 3, prose, para 8");
-  expect(vnLabel(VN3, "3", ["apparuto"])).toBe("Dante, *Vita Nuova*, 3, prose, para 9");
-  expect(vnLabel(VN3, "3", ["cominciai", "apparuto"])).toBe("Dante, *Vita Nuova*, 3, prose, paras 8-9");
-  expect(vnLabel(VN3, "3", ["risposto"])).toBe("Dante, *Vita Nuova*, 3, prose, para 13");
-  expect(vnLabel(VN3, "3", ["ciascun", "presente"])).toBe("Dante, *Vita Nuova*, 3, verse 1-2");
-  expect(vnLabel(VN3, "3", ["sweet pain"])).toBe("Dante, *Vita Nuova*, 3, verse 1");
+test("a prosimetrum refers to the prose by Barbi's paragraph alone, its sentences counted under it, and a poem by its first line and its lines: 3, para 8; paras 8-9; para 13; A ciascun' alma presa e gentil core, 1-2", () => {
+  expect(vnLabel(VN3, "3", ["cominciai"])).toBe("Dante, *Vita Nuova*, 3, para 8");
+  expect(vnLabel(VN3, "3", ["quarta"])).toBe("Dante, *Vita Nuova*, 3, para 8");
+  expect(vnLabel(VN3, "3", ["cominciai", "quarta"])).toBe("Dante, *Vita Nuova*, 3, para 8");
+  expect(vnLabel(VN3, "3", ["fourth hour"])).toBe("Dante, *Vita Nuova*, 3, para 8");
+  expect(vnLabel(VN3, "3", ["apparuto"])).toBe("Dante, *Vita Nuova*, 3, para 9");
+  expect(vnLabel(VN3, "3", ["cominciai", "apparuto"])).toBe("Dante, *Vita Nuova*, 3, paras 8-9");
+  expect(vnLabel(VN3, "3", ["risposto"])).toBe("Dante, *Vita Nuova*, 3, para 13");
+  expect(vnLabel(VN3, "3", ["ciascun", "presente"])).toBe("Dante, *Vita Nuova*, 3, A ciascun' alma presa e gentil core, 1-2");
+  expect(vnLabel(VN3, "3", ["sweet pain"])).toBe("Dante, *Vita Nuova*, 3, A ciascun' alma presa e gentil core, 1");
 });
-test("a prosimetrum chapter with two poems names the poem: 8, verse 1.1-2, verse 2.2; its prose as ever", () => {
-  expect(vnLabel(VN8, "8", ["Piangete", "plorare"])).toBe("Dante, *Vita Nuova*, 8, verse 1.1-2");
-  expect(vnLabel(VN8, "8", ["dolor madre"])).toBe("Dante, *Vita Nuova*, 8, verse 2.2");
-  expect(vnLabel(VN8, "8", ["partire"])).toBe("Dante, *Vita Nuova*, 8, prose, para 1");
+test("a prosimetrum chapter with two poems names each by its own first line, its closing comma dropped: 8, Piangete, amanti, poi che piange Amore, 1-2; its prose by paragraph", () => {
+  expect(vnLabel(VN8, "8", ["Piangete", "plorare"])).toBe("Dante, *Vita Nuova*, 8, Piangete, amanti, poi che piange Amore, 1-2");
+  expect(vnLabel(VN8, "8", ["dolor madre"])).toBe("Dante, *Vita Nuova*, 8, Morte villana, di pietà nemica, 2");
+  expect(vnLabel(VN8, "8", ["partire"])).toBe("Dante, *Vita Nuova*, 8, para 1");
 });
 // De Doctrina Christiana: a book of prose whose fences carry the edition's
 // section numbers, under the work's `by book, chapter, and paragraph` directive.

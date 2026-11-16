@@ -428,4 +428,17 @@ section("prose and verse paired", async () => {
   await page.press("#lineinput", "Enter");
   await rest(page);
   await log("Verse Line 2, Enter", { landed: await landedOn(), boxes: { line: await page.inputValue("#lineinput"), paragraph: await page.inputValue("#pageinput") } });
+  /* ⌃⌘R on the poem and on the prose: a poem named by its first line, the prose by its paragraph alone */
+  await page.keyboard.press("Escape");
+  await rest(page);
+  await R.selectBetween(page, "e con lui", "davante,");
+  await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
+  const poemLabel = (await R.clipboardLines(page))[0];
+  await log("⌃⌘R on the poem's second line", { label: poemLabel });
+  await R.selectBetween(page, "Ora, tornando", "proposito");
+  await page.keyboard.press("Control+Meta+r");
+  /* the corner already says copied: what is waited for is a change on the clipboard */
+  let proseLabel = poemLabel;
+  for (let i = 0; i < 20 && proseLabel === poemLabel; i++) { await rest(page); proseLabel = (await R.clipboardLines(page))[0]; }
+  await log("⌃⌘R on the prose", { label: proseLabel });
 });

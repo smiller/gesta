@@ -168,9 +168,9 @@ const wordedChapterRange = (deepest: Piece | undefined, range: string): boolean 
   deepest?.division !== undefined && /^chapter\b/.test(deepest.plain!) && /^paras? /.test(range);
 function placeRange(parts: Piece[], range: string): void {
   const deepest = parts[parts.length - 1];
-  /* a worded range, "prose, para 4", stands after the chapter as a field of its own (pin: reference.test › referenceLabel: a worded range) */
+  /* a worded range, "para 4" or a poem's first line, stands after the chapter as a field of its own, a line opening on a guillemet too (pin: reference.test › referenceLabel: a worded range) */
   if (wordedChapterRange(deepest, range)) deepest.plain += " (" + range + ")";
-  else if (/^[a-z]/i.test(range)) parts.push({ plain: range });
+  else if (/^[\p{L}«“‘"']/u.test(range)) parts.push({ plain: range });
   else if (deepest?.division !== undefined) deepest.plain += "." + range;
   else if (deepest?.n !== undefined) deepest.n += "." + range;
   else parts.push({ n: range });
