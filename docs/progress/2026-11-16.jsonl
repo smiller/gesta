@@ -73,3 +73,4 @@
 {"at":"2026-11-16T14:01","ev":"start","id":"S19"}
 {"at":"2026-11-16T14:13","ev":"done","id":"S19","commits":["978abca"],"note":"hand-checked and accepted"}
 {"at":"2026-11-16T14:14","ev":"start","id":"A7.1"}
+{"at":"2026-11-16T14:19","ev":"detail","id":"A7.1","text":"Asked: owed by CLAUDE.md beside A7, the line handed over at 13:24; run at 14:14. Why: the batch since the last run (A5.1, 11:37) is more than that run's own builds: A6's fixes (table.ts, helium-approve.ts, tools/progress), P5 and P6 (page.ts), S18 and S19 (paste.ts, steps/references.ts). Done when: the scan's cost is recorded, and every candidate built test-first, skipped, or refused with an ADR. Scanned: 4 candidates, 156,606 tokens (2 input + 4,631 cache creation + 147,856 cache read + 4,117 output)."}
