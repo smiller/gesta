@@ -127,3 +127,13 @@ was owed over `cccc617..HEAD`.
   `io.ts`, which a driver imports (MEASURED); the walk adds it and drops
   five files no driver imports (helium-probe, heliumDom.d.ts, three tests).
 - Candidate 2, the verdict's bookkeeping: to be revisited (asked).
+- Built, candidate 2 widened to the comparisons (asked; not a cause of
+  flaky readings, which are the steps' races, S6.1 the one known; it is
+  where three of helium-approve.ts's four past review fixes landed):
+  `tools/heliumVerdict.ts`, `compared` (a pass, a failed run, an order
+  difference, or a difference from the approved copy) and `ledger` (a
+  run's four files over directories it is given: whether it plays, what
+  a pass or a fail leaves, an approval refused or done), tested over a
+  temp directory. helium-approve.ts keeps the builds, the spawning, diff
+  for display and the printing. Played for real: a whole verdict, all
+  ok; bridge failed on purpose, then approved, its copy back as committed.

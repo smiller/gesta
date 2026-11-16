@@ -12,12 +12,12 @@
 // where corner was not played; it has no copy of its own to approve.
 // `node tools/helium-approve.ts [--approve] [corner|order|bridge|reader ...]`
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, existsSync, rmSync, readdirSync, mkdirSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
-import { fingerprint, mayReuse, approvalRefusal, failedRun, readByDrivers, DRIVERS } from "./heliumStamp.ts";
-import { orderDifferences } from "./heliumOrder.ts";
+import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
+import { compared, ledger, type Compared } from "./heliumVerdict.ts";
 
 const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
 interface Tool { script: string; args?: string[]; env?: Record<string, string>; heldTo?: string }
@@ -57,7 +57,8 @@ const env = { ...process.env, NODE_OPTIONS: "" };
    before */
 const HELIUM_PLIST = "/Applications/Helium.app/Contents/Info.plist";
 const file = (p: string) => ({ name: p, bytes: existsSync(p) ? readFileSync(p) : "(missing)" });
-const approvedOf = (name: string): string => resolve("tools/expected/" + (TOOLS[name].heldTo ?? name) + ".approved.txt");
+const L = ledger({ expected: resolve("tools/expected"), stamps: resolve("tools/out/helium-pass") });
+const approvedOf = (name: string): string => L.approvedPath(TOOLS[name].heldTo ?? name);
 function inputsFor(name: string) {
   const helium = (/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/.exec(readFileSync(HELIUM_PLIST, "utf8")) ?? [])[1] ?? "(unknown)";
   return [
@@ -70,33 +71,20 @@ function inputsFor(name: string) {
     { name: "playwright-core", bytes: JSON.parse(readFileSync("node_modules/playwright-core/package.json", "utf8")).version },
   ];
 }
-const STAMPS = resolve("tools/out/helium-pass");
-const stampPath = (name: string): string => resolve(STAMPS, name + ".txt");
-const stamp = (name: string, print = fingerprint(inputsFor(name))): void => { mkdirSync(STAMPS, { recursive: true }); writeFileSync(stampPath(name), print); };
 let failed = 0;
 const outputs: string[] = [];
 for (const script of ["build", "build:reader"]) {
   const build = spawnSync("npm", ["run", script], { env, encoding: "utf8" });
   if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
 }
-const readOrNull = (p: string): string | null => (existsSync(p) ? readFileSync(p, "utf8") : null);
-const playedPath = (name: string): string => resolve(STAMPS, name + ".played.txt");
-const receivedOf = (name: string): string => resolve("tools/expected/" + name + ".received.txt");
 
 function approveOne(name: string): void {
-  const receivedPath = receivedOf(name);
   if (TOOLS[name].heldTo) { if (names.includes(name)) { failed++; console.log(name + ": nothing to approve — a section reading otherwise in another order is given its own setup"); } return; }
-  const received = readOrNull(receivedPath);
-  if (received === null && !names.length) return;
-  const refusal = approvalRefusal(received, readOrNull(playedPath(name)), fingerprint(inputsFor(name)));
+  if (L.received(name) === null && !names.length) return;
+  const fp = fingerprint(inputsFor(name)), refusal = L.refusal(name, fp);
   if (refusal) { failed++; console.log(name + ": not approved — " + refusal); return; }
-  const d = spawnSync("diff", ["-u", approvedOf(name), receivedPath], { encoding: "utf8" });
-  console.log(d.stdout || "");
-  writeFileSync(approvedOf(name), received!);
-  rmSync(receivedPath, { force: true });
-  rmSync(playedPath(name), { force: true });
-  stamp(name);
-  console.log(name + ": approved, the run that was played (" + received!.split("\n").length + " lines)");
+  console.log(spawnSync("diff", ["-u", L.approvedPath(name), L.receivedPath(name)], { encoding: "utf8" }).stdout || "");
+  console.log(name + ": approved, the run that was played (" + L.approve(name, fp).split("\n").length + " lines)");
 }
 /* the last run's browser may still be exiting: kill, then retry the
    delete for a few seconds rather than fail on a held directory */
@@ -115,18 +103,12 @@ function play(tool: Tool): Promise<string> {
     child.on("close", (code, signal) => { const bad = code || signal; finish(bad ? "\nEXIT " + bad + "\n" + err : ""); });
   });
 }
-function orderFailure(name: string, received: string, baseline: string | null): string | null {
-  /* two runs failing alike read the same: a failed run is no pass */
-  if (failedRun(received)) return name + ": FAILED — " + received.split("\n").find((l) => failedRun(l));
-  const off = baseline === null ? ["(no approved copy)"] : orderDifferences(baseline, received);
-  return off.length ? name + ": DIFFERS in another order — " + off.join("; ") : null;
-}
-function differs(name: string, received: string, baseline: string | null): string | null {
-  if (TOOLS[name].heldTo) return orderFailure(name, received, baseline);
-  if (baseline === received) return null;
-  const d = spawnSync("diff", ["-u", approvedOf(name), receivedOf(name)], { encoding: "utf8" });
+function said(name: string, c: Exclude<Compared, { pass: true }>): string {
+  if ("failed" in c) return name + ": FAILED — " + c.failed;
+  if ("order" in c) return name + ": DIFFERS in another order — " + c.order.join("; ");
+  const d = spawnSync("diff", ["-u", L.approvedPath(name), L.receivedPath(name)], { encoding: "utf8" });
   const diffLines = (d.stdout || "").split("\n");
-  return [name + ": DIFFERS from " + approvedOf(name) + (baseline === null ? " (no approved copy yet)" : ""), ...diffLines.slice(0, 80),
+  return [name + ": DIFFERS from " + L.approvedPath(name) + (c.differs === "new" ? " (no approved copy yet)" : ""), ...diffLines.slice(0, 80),
     ...(diffLines.length > 80 ? ["… " + (diffLines.length - 80) + " more lines of the diff: read the received copy whole"] : []),
     "read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
@@ -134,26 +116,23 @@ interface Playing { name: string; played: string }
 /* a run to play, its stamps cleared and its profile emptied before any run
    of its group starts; null where a passing run's stamp stands */
 function prepare(name: string): Playing | null {
-  if (mayReuse(readOrNull(stampPath(name)), fingerprint(inputsFor(name)), { steps: !!process.env.STEPS })) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
-  rmSync(stampPath(name), { force: true });
-  rmSync(playedPath(name), { force: true });
-  clearProfile(name);
   /* an edit made while it plays is not what it played */
-  return { name, played: fingerprint(inputsFor(name)) };
+  const fp = fingerprint(inputsFor(name));
+  if (!L.plays(name, fp, !!process.env.STEPS)) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  clearProfile(name);
+  return { name, played: fp };
 }
 /* a run held to another is held to that one's run played beside it, so a
    reading changed on purpose is not taken for an order; else to its copy */
 const baselineOf = (name: string, played: Map<string, string>): string | null =>
-  played.get(TOOLS[name].heldTo ?? "") ?? readOrNull(approvedOf(name));
+  played.get(TOOLS[name].heldTo ?? "") ?? L.baseline(TOOLS[name].heldTo ?? name);
 function judge({ name, played }: Playing, received: string, baseline: string | null): void {
   outputs.push(received);
-  if (!TOOLS[name].heldTo) writeFileSync(receivedOf(name), received);
-  const failure = differs(name, received, baseline);
-  if (!failure) { rmSync(receivedOf(name), { force: true }); if (!process.env.STEPS) stamp(name, played); console.log(name + ": ok"); return; }
+  const held = !!TOOLS[name].heldTo, c = compared(received, baseline, held);
+  L.after(name, { received, fp: played, steps: !!process.env.STEPS, held }, c);
+  if (c.pass === true) { console.log(name + ": ok"); return; }
   failed++;
-  writeFileSync(receivedOf(name), received);
-  if (!process.env.STEPS && !TOOLS[name].heldTo) { mkdirSync(STAMPS, { recursive: true }); writeFileSync(playedPath(name), played); }
-  console.log(failure);
+  console.log(said(name, c));
 }
 async function playGroup(group: string[]): Promise<void> {
   const runs = group.filter((n) => run.includes(n)).map(prepare).filter((r): r is Playing => r !== null);
