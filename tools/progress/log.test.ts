@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { nextId, beginning, commandLine, refusal, built } from "./log.ts";
+import { nextId, beginning, commandLine, refusal, batchRefusal, built } from "./log.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -42,6 +42,13 @@ test("an event naming no list, no item the day knows, or a day not begun is refu
   expect(refusal({ at: at("10:00"), ev: "add", id: "S1", list: "S", title: "t" }, [])).toBe("the day has not begun: run begin first");
   expect(refusal({ at: at("10:00"), ev: "start", id: "B1" }, day)).toBeNull();
   expect(refusal({ at: at("10:00"), ev: "begin", next: {} }, [])).toBeNull();
+});
+
+test("a batch is read against the day as it will stand: a begin lets its own carries through", () => {
+  const opened = beginning(day, "2026-11-16T09:00");
+  expect(opened.some((e) => e.ev === "carry")).toBe(true);
+  expect(batchRefusal(opened, [])).toBeNull();
+  expect(batchRefusal(opened.slice(1), [])).toBe("the day has not begun: run begin first");
 });
 
 test("a paused item is carried into the next day as an open one", () => {

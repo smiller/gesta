@@ -90,9 +90,13 @@ export function refusal(e: Event, events: Event[]): string | null {
   if (id !== null && !ids(events).includes(id)) return "no item " + id + " on this day";
   return null;
 }
+/* read against the file alone, a begin's carries were refused before the
+   begin ahead of them was written (pin: log.test › a batch is read against) */
+export const batchRefusal = (batch: Event[], logged: Event[]): string | null =>
+  batch.map((e, i) => refusal(e, [...logged, ...batch.slice(0, i)])).find(Boolean) ?? null;
 function refuseOrGo(events: (Event | null)[], day: string): Event[] {
   if (events.some((e) => !e)) { console.error("unknown command"); process.exit(1); }
-  const refused = events.map((e) => refusal(e!, dayEvents(day))).find(Boolean);
+  const refused = batchRefusal(events as Event[], dayEvents(day));
   if (refused) { console.error(refused); process.exit(1); }
   return events as Event[];
 }
