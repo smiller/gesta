@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
 import { replay, isOpen, type Event, type Item } from "./events.ts";
 import { dayEvents, lastDayEvents } from "./day.ts";
-import { logged, opened, today, clock } from "./log.ts";
+import { logged, opened } from "./log.ts";
+import { today, clock } from "./day.ts";
 
 const LINE = 300;
 export function woken(items: Item[], output: string): { id: string; line: string }[] {

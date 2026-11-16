@@ -3,6 +3,9 @@ import { join } from "node:path";
 import type { Event } from "./events.ts";
 
 export const DIR = "docs/progress";
+const pad = (n: number): string => String(n).padStart(2, "0");
+export const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+export const clock = (d = new Date()): string => pad(d.getHours()) + ":" + pad(d.getMinutes());
 export const dayEvents = (day: string): Event[] => { const p = join(DIR, day + ".jsonl"); return existsSync(p) ? readFileSync(p, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as Event) : []; };
 /* a log's name is its date alone: a Dropbox conflicted copy sorts among
    the days, and taken for one its items would be carried in (pin:

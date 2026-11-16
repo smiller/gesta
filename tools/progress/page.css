@@ -76,3 +76,26 @@ tr.detail td { padding-top: 0; }
 .detail-text .part + .part { margin-top: 2px; }
 .detail-text b { color: var(--fg); font-weight: 600; }
 tr.sub .detail-text { padding-left: calc(var(--d) * 34px); }
+.in-order .tally { margin-bottom: 6px; }
+.in-order .tally > span:first-child { min-width: 0; }
+.in-order .times { font-family: var(--mono); font-size: 13px; margin-bottom: 10px; }
+.in-order .times b { font-weight: 500; }
+.in-order table { min-width: 900px; }
+.in-order td.t, .in-order th.t { width: 52px; }
+.in-order td.n, .in-order th.n { width: 56px; }
+.in-order td.took { color: var(--muted); }
+.in-order td.took .of { display: block; font-size: 11px; }
+.in-order td.c { white-space: normal; width: 64px; }
+.in-order th.day, .in-order td.day { width: 170px; }
+.in-order .lane { position: relative; height: 10px; margin-top: 5px; background: var(--start); border-radius: 2px; }
+.in-order .lane span { position: absolute; top: 0; bottom: 0; border-radius: 2px; background: currentColor; }
+.in-order .lane span.whole { opacity: .3; }
+.in-order .ticks { position: relative; height: 14px; }
+.in-order .ticks span { position: absolute; transform: translateX(-50%); font-family: var(--mono); font-size: 11px; }
+.in-order .what { display: grid; gap: 2px; }
+/* a span is read for when it ran, not whether its item still needs attention: no strike or settled background */
+.in-order tr.done .label, .in-order tr.moved .label { text-decoration: none; color: var(--fg); }
+.in-order tr.done td, .in-order tr.moved td, .in-order tr.dropped td { background: none; }
+.in-order tr.gap td { color: var(--muted); font-style: italic; background: var(--start); font-size: 12.5px; padding-block: 3px; }
+.in-order tr.sub .item { padding-left: calc(var(--d) * 22px); }
+.in-order tr.sub .item::before { left: calc(var(--d) * 22px - 16px); width: 12px; }

@@ -1,7 +1,8 @@
 /* node tools/progress/page.ts <day> [--at HH:MM | --slides | --terminal [HH:MM]] */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { dayEvents } from "./day.ts";
+import { dayEvents, today, clock as wallClock } from "./day.ts";
+import { inOrder, minutes, type Gap, type Order, type Piece, type Span } from "./spans.ts";
 import { replay, counts, isOpen, isDone, isUnderway, own, LISTS, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
 
 const NAME: Record<List, string> = { A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions", P: "Process" };
@@ -132,14 +133,53 @@ export function terminal(events: Event[], o: { day: string; at?: string }): stri
   const lists = LISTS.filter((l) => placed[l].length).map((l) => [NAME[l], ...placed[l].map(line)].join("\n"));
   return [asOf(o), "", tallyText("Started with", c.starting), "", tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
 }
-export function page(events: Event[], o: { day: string; at?: string }): string {
+export function page(events: Event[], o: { day: string; at?: string; now?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
   const title = asOf(o);
-  return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + "</main>\n" + TOGGLE + "\n";
+  return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + dayInOrder(events, items, o) + "</main>\n" + TOGGLE + "\n";
+}
+
+const took = (m: number): string => (m < 60 ? m + " min" : Math.floor(m / 60) + " h" + (m % 60 ? " " + (m % 60) + " min" : ""));
+const ownTime = (s: Span): number => s.own.reduce((n, [a, b]) => n + b - a, 0);
+const share = (o: Order, m: number): number => (m / Math.max(1, o.to - o.from)) * 100;
+const placedAt = (o: Order, [a, b]: Piece): string => ' style="left:' + share(o, a - o.from).toFixed(2) + "%;width:" + Math.max(0.6, share(o, b - a)).toFixed(2) + '%"';
+function lane(s: Span, o: Order): string {
+  const start = minutes(s.from.at), whole: Piece = [start, start + s.whole];
+  const faint = ownTime(s) < s.whole ? ['<span class="whole"' + placedAt(o, whole) + "></span>"] : [];
+  return '<div class="lane ' + CHIP[s.ending][0] + '">' + [...faint, ...s.own.map((p) => "<span" + placedAt(o, p) + "></span>")].join("") + "</div>";
+}
+const tookCell = (s: Span): string => (ownTime(s) < s.whole ? took(ownTime(s)) + '<span class="of">of ' + took(s.whole) + "</span>" : took(s.whole));
+const depthOf = (it: Item, items: Map<string, Item>): number => (it.parent && items.has(it.parent) ? 1 + depthOf(items.get(it.parent)!, items) : 0);
+interface Ordered { o: Order; items: Map<string, Item> }
+function spanRow(s: Span, d: Ordered): string {
+  const it = d.items.get(s.id)!, depth = depthOf(it, d.items);
+  const what = '<span class="chip ' + CHIP[s.ending][0] + '">' + CHIP[s.ending][1] + '</span><span class="what"><span class="label">' + esc(it.title) + "</span>" + (s.note ? '<span class="note">' + esc(s.note) + "</span>" : "") + "</span>";
+  const times = [hm(s.from), s.to ? hm(s.to) : "—"].map((t) => '<td class="t">' + t + "</td>").join("") + '<td class="t took">' + tookCell(s) + "</td>";
+  return '<tbody><tr class="' + [ROW[s.ending], depth ? "sub" : ""].filter(Boolean).join(" ") + '"' + indent(depth) + ">" + times + '<td class="n">' + s.id + '</td><td><div class="item">' + what +
+    '</div></td><td class="day">' + lane(s, d.o) + '</td><td class="c">' + (s.ending === "done" ? it.commits.join(" ") : "") + "</td></tr></tbody>";
+}
+const gapRow = (g: Gap): string =>
+  '<tbody><tr class="gap"><td class="t">' + clock(g.from) + '</td><td class="t">' + clock(g.to) + '</td><td class="t took">' + took(g.to - g.from) + '</td><td></td><td colspan="3">nothing started or ended</td></tr></tbody>';
+function orderHead(o: Order): string {
+  const hours: string[] = [];
+  for (let h = Math.ceil(o.from / 60) * 60; h <= o.to; h += 60) hours.push('<span style="left:' + share(o, h - o.from).toFixed(2) + '%">' + h / 60 + "</span>");
+  return '<thead><tr><th class="t">start</th><th class="t">finish</th><th class="t">took</th><th class="n">#</th><th>What</th><th class="day"><div class="ticks">' + hours.join("") + "</div></th><th>commit</th></tr></thead>";
+}
+function orderTotals(o: Order, until: string): string {
+  const spans = o.rows.filter((r): r is Span => r.kind === "span");
+  const tally = '<div class="tally"><span>Spans <b>' + spans.length + '</b></span><span class="s-done">ended done <b>' + spans.filter((s) => s.ending === "done").length + "</b></span><span>started inside another span <b>" + o.inside + "</b></span></div>";
+  return tally + '<div class="times"><div>from ' + clock(o.from) + " to " + clock(o.to) + until + "</div><div>working for <b>" + took(o.working) + "</b></div><div>nothing started or ended for <b>" + took(o.idle) + "</b></div></div>";
+}
+function dayInOrder(events: Event[], items: Item[], o: { day: string; at?: string; now?: string }): string {
+  const end = o.at ?? o.now, shown = o.at ? events.filter((e) => e.at <= o.day + "T" + o.at) : events;
+  const d: Ordered = { o: inOrder(shown, end && o.day + "T" + end), items: new Map(items.map((i) => [i.id, i])) };
+  if (!d.o.rows.length) return "";
+  const rows = d.o.rows.map((r) => (r.kind === "gap" ? gapRow(r) : spanRow(r, d))).join("");
+  return '<section class="in-order"><h2>The day in order — each span from its start to its stop, done or drop</h2>' + orderTotals(d.o, !o.at && o.now ? " (now)" : "") +
+    '<div class="scroll"><table>' + orderHead(d.o) + rows + "</table></div></section>";
 }
 
 const pad = (n: number): string => String(n).padStart(2, "0");
-const minutes = (at: string): number => +at.slice(11, 13) * 60 + +at.slice(14, 16);
 const clock = (m: number): string => pad(Math.floor(m / 60)) + ":" + pad(m % 60);
 /* the day's start, every clock half hour after it, and its last event */
 export function frameTimes(events: Event[]): string[] {
@@ -191,10 +231,10 @@ export function slides(events: Event[], o: { day: string }): string {
   return head("Gesta Day Slides") + "<main><header><h1>" + longDay(o.day) + ", every half hour</h1></header>" + strip(snaps, times) + controls + KEY + frames + "</main>\n" + SCRIPT + "\n" + TOGGLE + "\n";
 }
 export const PUBLISHED = { day: "https://claude.ai/artifact/H7HDCNRgr91rJS6s21U8VM", slides: "https://claude.ai/artifact/2UpbtsA5SwPd4JoPRwZz2w" };
-export function drawn(day: string, events: Event[], out = "tools/out/progress"): { path: string; url: string }[] {
+export function drawn(day: string, events: Event[], out = "tools/out/progress", now = day === today() ? wallClock() : undefined): { path: string; url: string }[] {
   mkdirSync(out, { recursive: true });
   const paged = { path: join(out, day + ".html"), url: PUBLISHED.day }, slid = { path: join(out, day + "-slides.html"), url: PUBLISHED.slides };
-  writeFileSync(paged.path, page(events, { day }));
+  writeFileSync(paged.path, page(events, { day, now }));
   writeFileSync(slid.path, slides(events, { day }));
   return [paged, slid];
 }

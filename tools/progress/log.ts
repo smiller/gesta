@@ -12,7 +12,7 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { replay, isOpen, LISTS, type Event, type List } from "./events.ts";
-import { DIR, dayEvents, lastDayEvents } from "./day.ts";
+import { DIR, dayEvents, lastDayEvents, today, clock } from "./day.ts";
 import { drawn } from "./page.ts";
 
 const rootNumber = (id: string, list: List): number => { const m = new RegExp("^" + list + "(\\d+)$").exec(id); return m ? +m[1] : 0; };
@@ -41,9 +41,6 @@ export function beginning(last: Event[], at: string): Event[] {
 }
 
 /* ---------- the command ---------- */
-const pad = (n: number): string => String(n).padStart(2, "0");
-export const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-export const clock = (d = new Date()): string => pad(d.getHours()) + ":" + pad(d.getMinutes());
 /* a yes-or-no flag: taken off the line alone, the word after it left */
 function has(args: string[], name: string): boolean {
   const i = args.indexOf("--" + name);

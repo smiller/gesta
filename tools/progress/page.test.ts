@@ -16,17 +16,19 @@ const day: Event[] = [
   { at: at("09:30"), ev: "done", id: "A1", commits: ["d88609d"] },
   { at: at("10:00"), ev: "move", id: "S1", to: "B1", list: "B" },
 ];
-const rows = (html: string): string[] => [...html.matchAll(/<td class="n">([^<]*)<\/td>/g)].map((m) => m[1]);
+const lists = (html: string): string => html.split('<section class="in-order">')[0];
+const rows = (html: string): string[] => [...lists(html).matchAll(/<td class="n">([^<]*)<\/td>/g)].map((m) => m[1]);
+const headings = (html: string): string[] => [...lists(html).matchAll(/<h2>([^<—]*)/g)].map((m) => m[1].trim());
 
 test("the process list comes last, after every list of the app's own work", () => {
   const html = page([...day, { at: at("10:10"), ev: "add", id: "P1", list: "P", title: "begin carries its items in" }], { day: "2026-11-15" });
-  expect([...html.matchAll(/<h2>([^<—]*)/g)].map((m) => m[1].trim())).toEqual(["Architecture queue", "Side list", "Bigger questions", "Process"]);
+  expect(headings(html)).toEqual(["Architecture queue", "Side list", "Bigger questions", "Process"]);
   expect(rows(html).at(-1)).toBe("P1");
 });
 
 test("a section a list, a row an item in its tree's order, each with its number, its label and its three times", () => {
   const html = page(day, { day: "2026-11-15" });
-  expect([...html.matchAll(/<h2>([^<—]*)/g)].map((m) => m[1].trim())).toEqual(["Architecture queue", "Side list", "Bigger questions"]);
+  expect(headings(html)).toEqual(["Architecture queue", "Side list", "Bigger questions"]);
   expect(rows(html)).toEqual(["A1", "A1.1", "S1", "B1"]);
   expect(html).toContain('<span class="chip s-part">done · spawned open</span>');
   expect(html).toContain("≈09:10");
@@ -57,6 +59,26 @@ test("an item with a detail has it in a hidden row of its own beneath it, spanni
   expect(a1?.[1]).not.toContain("has-detail");
   expect(html.match(/class="detail-text"/g)).toHaveLength(1);
   expect(html).toContain('addEventListener("click"');
+});
+
+const inOrder = (html: string): string => html.split('<section class="in-order">')[1] ?? "";
+test("the day page ends with the day in order: a row a span, its start, finish, own time of its whole, number, title and note; a gap a row of its own; the day's from, working and gaps", () => {
+  const worked: Event[] = [...day, { at: at("09:22"), ev: "start", id: "A1.1" }, { at: at("09:25"), ev: "done", id: "A1.1", note: "held" }];
+  const html = inOrder(page(worked, { day: "2026-11-15" }));
+  expect([...html.matchAll(/<td class="n">([^<]*)<\/td>/g)].map((m) => m[1])).toEqual(["A1", "A1.1"]);
+  expect(html).toContain('<td class="t">09:20</td><td class="t">09:30</td><td class="t took">7 min<span class="of">of 10 min</span></td>');
+  expect(html).toContain('<span class="label">a race</span><span class="note">held</span>');
+  expect(html.match(/nothing started or ended<\/td>/g)).toHaveLength(2);
+  expect(html).toContain('<td class="t">09:30</td><td class="t">10:00</td><td class="t took">30 min</td>');
+  expect(html).toContain("<div>from 09:00 to 10:00</div><div>working for <b>10 min</b></div><div>nothing started or ended for <b>50 min</b></div>");
+});
+
+test("a span still open runs to now on the day itself, or to a snapshot's time; the slideshow has no day in order", () => {
+  const open: Event[] = [...day, { at: at("10:05"), ev: "start", id: "S1" }];
+  expect(inOrder(page(open, { day: "2026-11-15", now: "11:35" }))).toContain('<td class="t">10:05</td><td class="t">—</td><td class="t took">1 h 30 min</td>');
+  expect(inOrder(page(open, { day: "2026-11-15", now: "11:35" }))).toContain("from 09:00 to 11:35 (now)");
+  expect(inOrder(page(open, { day: "2026-11-15", at: "09:25" }))).toContain('<td class="t">09:20</td><td class="t">—</td><td class="t took">5 min</td>');
+  expect(slides(open, { day: "2026-11-15" })).not.toContain('<section class="in-order">');
 });
 
 test("a day is drawn as its page and its slideshow, each named with the artifact it is published to", () => {

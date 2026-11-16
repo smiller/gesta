@@ -86,3 +86,20 @@ in the three src/ refactors.
   not); log.ts reads a day's log for page.ts too. The two "paused" paths
   that had no test (carried into a new day; the strip) pinned. Both pages
   drawn the same as before, byte for byte (MEASURED).
+
+## The day in order (P8, P10)
+
+Mocked up from the day's log (P8), then built as it is to try for a few
+days (asked).
+
+- A span runs from a start to its stop, done, drop or move; a restart is
+  a span of its own; a start on an open span is not a second one.
+- A parent's took is its own time, its spawned items' spans taken out,
+  the whole span under it (asked); a span inside another it did not spawn
+  is not taken out, so the took column can sum past "working for".
+- Every gap of a minute or more is a row (asked: no threshold), so
+  working and the gaps together are the day.
+- A span open at the end runs to now on the day itself, or to a
+  snapshot's time; the slideshow has no such section.
+- `tools/progress/spans.ts` holds it, no HTML; `today` and `clock` moved
+  to day.ts so page.ts reads the clock without importing log.ts.
