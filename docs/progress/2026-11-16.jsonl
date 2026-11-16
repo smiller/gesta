@@ -62,3 +62,4 @@
 {"at":"2026-11-16T12:43","ev":"start","id":"P6"}
 {"at":"2026-11-16T12:44","ev":"done","id":"P6","commits":["0903325"]}
 {"at":"2026-11-16T12:51","ev":"add","id":"S18","list":"S","title":"A terminal copy's -- lines run into the lines around them","detail":"Asked: \"Pasting that loses some formatting\" with a screenshot (12:50): the session summary's --terminal block pasted as 'Started with 5 (...) -- unstarted 5' and '... -- done 16 -- dropped 1 This morning's session ...'. Why: the terminal draws a code block without its fences, and the paste joins a line onto the next unless it ends a sentence or the next starts a list item or a message; '-- ' is neither (paste.ts STARTS_ITS_OWN). Reproduced by sourcePasted on the summary's plain text (MEASURED). Done when: a line starting '-- ' stands on its own, nothing running on into it or out of it, the summary's block pasting as its lines, test-first and played in Helium."}
+{"at":"2026-11-16T13:14","ev":"start","id":"S18"}
