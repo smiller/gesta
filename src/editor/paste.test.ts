@@ -249,9 +249,10 @@ test("a terminal's wrapped lines are joined: a line not ending a sentence runs o
   for (const end of ["Shall I commit?", "Done!", "Summary:", "And so…", "it said “stop.”", "(see above.)"]) expect(unwrapped(end + "\nNext line.")).toBe(end + "\nNext line.");
   expect(unwrapped("first\n• second\n1) third\n⏺ Next step")).toBe("first\n• second\n1) third\n⏺ Next step");
 });
-test("a terminal's line opening on -- stands on its own: no line runs on into it, nor it into the next", () => {
-  const counts = ["  The day, as it prints it:", "  Started with 5 (1 side list, 4 bigger questions)", "  -- unstarted 5", "", "  Spawned or added since 17 (7 architecture queue)", "  -- done 16", "  -- dropped 1", "  This morning's session did S14."];
-  expect(unwrapped(counts.join("\n"))).toBe("The day, as it prints it:\nStarted with 5 (1 side list, 4 bigger questions)\n-- unstarted 5\n\nSpawned or added since 17 (7 architecture queue)\n-- done 16\n-- dropped 1\nThis morning's session did S14.");
+test("a terminal's line opening on -- starts its own, as a list item does, and a line wrapped from it runs back on; a bare -- stands alone", () => {
+  const counts = ["  The day, as it prints it:", "  Started with 5 (1 side list, 4 bigger questions)", "  -- unstarted 5", "", "  Spawned or added since 17 (7 architecture queue)", "  -- done · spawned", "  open 1", "  -- dropped 1", "", "  This morning's session did S14."];
+  expect(unwrapped(counts.join("\n"))).toBe("The day, as it prints it:\nStarted with 5 (1 side list, 4 bigger questions)\n-- unstarted 5\n\nSpawned or added since 17 (7 architecture queue)\n-- done · spawned open 1\n-- dropped 1\n\nThis morning's session did S14.");
+  expect(unwrapped("Thanks,\n--\nSean")).toBe("Thanks,\n--\nSean");
   expect(unwrapped("a line that -- mid-line\nruns on")).toBe("a line that -- mid-line runs on");
 });
 test("a terminal's margin is taken off: the indent every line shares, a message's ⏺ or a first line begun mid-line standing outside it; what is indented past it keeps the rest", () => {

@@ -1,4 +1,4 @@
-/* node tools/progress/page.ts <day> [--at HH:MM | --slides | --terminal] */
+/* node tools/progress/page.ts <day> [--at HH:MM | --slides | --terminal [HH:MM]] */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { slides } from "./slides.ts";
@@ -87,20 +87,20 @@ const delta = (now: number, was?: number): string => { const d = was === undefin
    with the page's (pin: page.test › the terminal copy says the page's
    count lines) */
 interface Counted { word: string; n: number; d: string; cls: string }
-function tallyWords(lead: string, t: Tally, b?: Tally): { lead: string; total: Counted; lists: string; statuses: Counted[] } {
+function tallyWords(lead: string, t: Tally, b?: Tally): { lead: string; n: number; d: string; lists: string; statuses: Counted[] } {
   const named = LISTS.filter((l) => t.byList[l]).map((l) => t.byList[l] + " " + lower(l)).join(", ");
   const lists = named ? " (" + named + ")" : "";
   const statuses = (Object.keys(CHIP) as Status[]).filter((s) => t.byStatus[s]).map((s) => ({ word: CHIP[s][1], n: t.byStatus[s]!, d: delta(t.byStatus[s]!, b && (b.byStatus[s] ?? 0)), cls: CHIP[s][0] }));
-  return { lead, total: { word: lead, n: t.total, d: delta(t.total, b?.total), cls: "" }, lists, statuses };
+  return { lead, n: t.total, d: delta(t.total, b?.total), lists, statuses };
 }
 function tallyLine(lead: string, t: Tally, b?: Tally): string {
   const w = tallyWords(lead, t, b);
   const statuses = w.statuses.map((s) => '<span class="' + s.cls + '">' + s.word + " <b>" + s.n + "</b>" + s.d + "</span>");
-  return '<div class="tally"><span>' + w.lead + " <b>" + w.total.n + "</b>" + w.total.d + w.lists + "</span>" + statuses.join("") + "</div>";
+  return '<div class="tally"><span>' + w.lead + " <b>" + w.n + "</b>" + w.d + w.lists + "</span>" + statuses.join("") + "</div>";
 }
 function tallyText(lead: string, t: Tally): string {
   const w = tallyWords(lead, t);
-  return [w.lead + " " + w.total.n + w.lists, ...w.statuses.map((s) => "-- " + s.word + " " + s.n)].join("\n");
+  return [w.lead + " " + w.n + w.lists, ...w.statuses.map((s) => "-- " + s.word + " " + s.n)].join("\n");
 }
 export const KEY = '<div class="key">' + (Object.keys(CHIP) as Status[]).map((s) => '<span><span class="chip ' + CHIP[s][0] + '">' + CHIP[s][1] + "</span></span>").join("") +
   '<span><span class="chip s-start">starting item</span> on the day\'s list when it began</span><span><span class="swatch"></span> unstarted</span></div>';
@@ -126,15 +126,16 @@ export function frame(items: Item[], before?: Item[]): string {
   return '<div class="tallies">' + tallyLine("Started with", c.starting, b?.starting) + tallyLine("Spawned or added since", c.added, b?.added) + "</div>" +
     LISTS.map((l) => section(l, placed[l], d)).join("");
 }
-export function terminal(events: Event[], o: { day: string }): string {
-  const items = replay(events), c = counts(items), placed = trees(items);
-  const line = ({ item: it, depth }: Placed): string => "  ".repeat(depth + 1) + it.id + "  " + statusWords(it, items) + (it.starting ? " · starting item" : "") + "  " + labelWords(it);
+const asOf = (o: { day: string; at?: string }): string => longDay(o.day) + (o.at ? ", as it stood at " + o.at : "");
+export function terminal(events: Event[], o: { day: string; at?: string }): string {
+  const items = replay(events, o.at && o.day + "T" + o.at), c = counts(items), placed = trees(items);
+  const line = ({ item: it, depth }: Placed): string => "  ".repeat(depth) + "-- " + it.id + "  " + statusWords(it, items) + (it.starting ? " · starting item" : "") + "  " + labelWords(it);
   const lists = LISTS.filter((l) => placed[l].length).map((l) => [NAME[l], ...placed[l].map(line)].join("\n"));
-  return [longDay(o.day), "", tallyText("Started with", c.starting), "", tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
+  return [asOf(o), "", tallyText("Started with", c.starting), "", tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
 }
 export function page(events: Event[], o: { day: string; at?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
-  const title = longDay(o.day) + (o.at ? ", as it stood at " + o.at : "");
+  const title = asOf(o);
   return head("Gesta Day Ledger") + "<main><header><h1>" + title + "</h1></header>" + KEY + frame(items) + "</main>\n" + TOGGLE + "\n";
 }
 
@@ -151,7 +152,7 @@ function main(argv: string[]): void {
   const [day, flag, at] = argv;
   const events = dayEvents(day);
   if (!flag) { for (const d of drawn(day, events)) console.log(d.path); return; }
-  if (flag === "--terminal") { console.log(terminal(events, { day })); return; }
+  if (flag === "--terminal") { console.log(terminal(events, { day, at })); return; }
   const out = join("tools/out/progress", day + (flag === "--slides" ? "-slides" : "-" + (at ?? "").replace(":", "")) + ".html");
   mkdirSync("tools/out/progress", { recursive: true });
   writeFileSync(out, flag === "--slides" ? slides(events, { day }) : page(events, { day, at }));

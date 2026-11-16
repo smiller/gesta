@@ -3,6 +3,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { page, drawn, terminal, PUBLISHED } from "./page.ts";
+import { sourcePasted } from "../../src/editor/paste.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -87,7 +88,7 @@ test("a detail's parts each start their own line, the header in bold; text befor
 });
 
 const words = (s: string): string[] => s.replace(/<[^>]*>/g, " ").replace(/--|[(),·]/g, " ").split(/\s+/).filter(Boolean);
-test("the terminal copy says the page's count lines in the same words, each status on a line of its own, then each list's items in tree order with status, starting mark and label", () => {
+test("the terminal copy says the page's count lines in the same words, each status on a line of its own, then each list's items in tree order, each a -- line with status, starting mark and label", () => {
   const html = page(day, { day: "2026-11-15" }), text = terminal(day, { day: "2026-11-15" });
   const tallies = /<div class="tallies">(.*?)<\/div><section>/s.exec(html)![1];
   const lines = text.split("\n");
@@ -95,13 +96,25 @@ test("the terminal copy says the page's count lines in the same words, each stat
   expect(words(lines.slice(2, 8).join(" "))).toEqual(words(tallies));
   expect(lines.slice(9)).toEqual([
     "Architecture queue",
-    "  A1  done · spawned open · starting item  the save's tests",
-    "    A1.1  unstarted  a race",
+    "-- A1  done · spawned open · starting item  the save's tests",
+    "  -- A1.1  unstarted  a race",
     "",
     "Side list",
-    "  S1  moved → bigger questions B1 · starting item  fold <## sections>",
+    "-- S1  moved → bigger questions B1 · starting item  fold <## sections>",
     "",
     "Bigger questions",
-    "  B1  unstarted · starting item  fold <## sections> (moved in from S1)",
+    "-- B1  unstarted · starting item  fold <## sections> (moved in from S1)",
   ]);
+});
+test("a terminal copy at a time is the day as it stood then, and says so", () => {
+  const text = terminal(day, { day: "2026-11-15", at: "09:15" });
+  expect(text.split("\n")[0]).toBe("Sunday, 15 November 2026, as it stood at 09:15");
+  expect(text).toContain("-- A1  unstarted · starting item  the save's tests");
+});
+/* a terminal shows a copy two spaces in, its lines as a terminal's copy pastes them */
+const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;">x</div></div>';
+test("the terminal copy pasted from a terminal keeps every line of it its own: no list's items run together", () => {
+  const text = terminal(day, { day: "2026-11-15" }), shown = text.split("\n").map((l) => (l ? "  " + l : l)).join("\n");
+  const pasted = sourcePasted({ plain: shown, html: GHOSTTY, types: ["text/html"], file: null });
+  expect(pasted && "text" in pasted ? pasted.text.split("\n") : null).toEqual(text.split("\n"));
 });

@@ -82,3 +82,21 @@ was owed over `cccc617..HEAD`.
 - Refused: `isTableStart` run twice per table (asked); the one-off
   `pipeTables.ts`'s own cell reader, since importing `table.ts`'s took a
   trivial function out and lowered its code health to 9.38.
+
+## The review of S18 and the progress fixes (A7)
+
+- `/code-review high dd0181f..HEAD`, 80,862 tokens (MEASURED, the last
+  message of `subagents/agent-a47e9c59412330c04.jsonl`: 2 input + 2,285
+  cache creation + 76,306 cache read + 2,269 output). Eight findings, three
+  of them probed by the reviewer.
+- A `--` line now starts its own as a list item does, and a line wrapped
+  from it runs back on (asked): held both ways, a long one broke where the
+  terminal wrapped it. The cost, accepted: a prose line straight after the
+  last `--` line, with no blank line between, joins it; replies leave a
+  blank line after a code block. A bare `--` stands alone.
+- `--terminal` prints each item as a `--` line, nested by indent, so a
+  pasted copy keeps every line its own (a test pastes it); it takes a time
+  as the page does; the count wording's shape trimmed; CLAUDE.md's layout
+  names `--terminal`.
+- Known limit, left (asked): a sentence the terminal wraps just before a
+  ` -- ` breaks there; nothing joins into a `--` line.

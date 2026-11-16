@@ -186,12 +186,13 @@ function terminalCopy(html: string): boolean {
    sentence runs on into the next, unless that one starts a list item or a
    message (pin: paste.test › a terminal's wrapped lines are joined); markdown
    copied out stays as it was (pin: paste.test › a terminal's copy of markdown
-   keeps its structure). A code block comes without its fences, so a line
-   opening on -- is held too: joined, a count's status lines ran into the
-   lines around them (pin: paste.test › a terminal's line opening on --) */
-const STARTS_ITS_OWN = /^\s*(?:[-*+•]|\d+[.)]|⏺)\s/;
+   keeps its structure). A line opening on -- starts its own as a list item
+   does, a line wrapped from it running back on; held both ways, a long one
+   broke where the terminal wrapped it. A bare -- stands alone (pin:
+   paste.test › a terminal's line opening on --) */
+const STARTS_ITS_OWN = /^\s*(?:(?:[-*+•]|\d+[.)]|⏺)\s|--(?:\s|$))/;
 const ENDS_A_SENTENCE = /[.?!:…]["'”’)\]]*$/;
-const HOLDS = /^\s*(?:```|:::|#{1,6}\s|>|\||[┌├└│]|--\s)/;
+const HOLDS = /^\s*(?:```|:::|#{1,6}\s|>|\||[┌├└│]|--\s*$)/;
 const BREAKS: ((prev: string, line: string) => boolean)[] = [
   (prev, line) => !/\S/.test(prev) || !/\S/.test(line),
   (prev, line) => ENDS_A_SENTENCE.test(prev.trimEnd()) || STARTS_ITS_OWN.test(line),
