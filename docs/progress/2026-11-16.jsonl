@@ -50,3 +50,5 @@
 {"at":"2026-11-16T12:16","ev":"done","id":"A5.1.4","commits":["c1d7168"]}
 {"at":"2026-11-16T12:16","ev":"done","id":"A5.1","note":"2 Strong built, 3 skipped for now, 4 built after discussion; 176,017 tokens"}
 {"at":"2026-11-16T12:16","ev":"done","id":"A5","commits":["579083c","ccf18ed","604dafa","c1d7168"]}
+{"at":"2026-11-16T12:18","ev":"add","id":"A6","list":"A","title":"The batch review: /code-review at HIGH over 579083c..HEAD","detail":"Asked: /code-review high 579083c..HEAD, run at 12:18 (its first transcript line), then \"Not seeing the row on the visualization.\" (12:19). Why: the architecture run's two src refactors (ccf18ed table module, 604dafa typed reference place) touched paste.ts, a DOM seam, so the batch's review was owed. Done when: the findings land in one fix commit, the cost is read from the transcript and recorded in the plan's record, then the architecture run over the batch's files."}
+{"at":"2026-11-16T12:18","ev":"start","id":"A6"}
