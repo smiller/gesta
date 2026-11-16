@@ -168,8 +168,13 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const kind = b.kind === "none" ? "both" : b.kind;
     if (kind !== lb.kind) switchKind(kind);
   };
+  /* two boxes joined by "or" ask one number: typing in one empties the
+     other, which stayed and read as asked too */
   const inputBar = (kind: "line" | "page" | "stanza", v: string): void => {
     if (kind === "line") { lb.line = v; lineAsked = 0; } else lb[kind] = v;
+    if (lb.kind !== "both" || !v) return;
+    if (kind === "line") lb.page = "";
+    else if (kind === "page") { lb.line = ""; lineAsked = 0; }
   };
   /* on a page in stanzas Enter in either box asks with both */
   const wordsOf = (kind: "line" | "page" | "stanza", v: string): Words => {

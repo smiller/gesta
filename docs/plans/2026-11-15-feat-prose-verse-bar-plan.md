@@ -23,3 +23,6 @@ the prose by paragraph.
   lines alone) and carried to the bar; the Help says so. Played in Helium:
   "Verse Line, or Prose Paragraph" shown, Paragraph 1 and Line 2 each
   landing in its own form; the approved run's one change.
+- Seen by hand, both boxes filled and the last typed obeyed: in a bar
+  joined by "or" (here, and Line-or-Page while it stands), typing in one
+  box empties the other (asked). Played: Line 2 typed, Paragraph empty.

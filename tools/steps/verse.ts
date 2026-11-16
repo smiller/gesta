@@ -427,5 +427,5 @@ section("prose and verse paired", async () => {
   await page.fill("#lineinput", "2");
   await page.press("#lineinput", "Enter");
   await rest(page);
-  await log("Verse Line 2, Enter", { landed: await landedOn() });
+  await log("Verse Line 2, Enter", { landed: await landedOn(), boxes: { line: await page.inputValue("#lineinput"), paragraph: await page.inputValue("#pageinput") } });
 });
