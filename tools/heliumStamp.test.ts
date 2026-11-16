@@ -39,7 +39,7 @@ test("approving refuses a run in which a section failed or the tool died", () =>
   expect(approvalRefusal("x\n\nEXIT 1\n", "print", "print")).toMatch(/failed/);
 });
 
-test("what a run reads of the code is its drivers and every file they reach through their imports, src/ as well as tools/", () => {
+test("what a run reads of the code is its drivers and every file they reach through their imports, dynamic ones too, src/ as well as tools/; a path no file stands at is passed over", () => {
   const files: Record<string, string> = {
     "tools/d.ts": 'import { a } from "./a.ts";\nimport "./steps/s.ts";',
     "tools/a.ts": 'import { b } from "../src/store/b.ts";',
@@ -47,8 +47,10 @@ test("what a run reads of the code is its drivers and every file they reach thro
     "src/store/b.ts": 'import { c } from "./c.ts";\nimport { x } from "prosemirror-model";',
     "src/store/c.ts": "",
     "tools/unreached.ts": "",
+    "tools/later.ts": "",
   };
-  expect(readByDrivers(["tools/d.ts"], (f) => files[f])).toEqual(["src/store/b.ts", "src/store/c.ts", "tools/a.ts", "tools/d.ts", "tools/steps/s.ts"]);
+  files["tools/d.ts"] += '\n// an example: import { z } from "./gone.ts";\nconst later = await import("./later.ts");';
+  expect(readByDrivers(["tools/d.ts"], (f) => files[f] ?? null)).toEqual(["src/store/b.ts", "src/store/c.ts", "tools/a.ts", "tools/d.ts", "tools/later.ts", "tools/steps/s.ts"]);
   const read = readByDrivers(DRIVERS, (f) => readFileSync(f, "utf8"));
   expect(["src/store/io.ts", "src/store/fsa.ts", "tools/steps/kit.ts", "tools/adapters/inPage.ts", "tools/helium-corner.ts"].filter((f) => !read.includes(f))).toEqual([]);
   expect(read.filter((f) => f === "tools/corpus.ts" || f.startsWith("tools/out/") || f.startsWith("tools/progress/"))).toEqual([]);

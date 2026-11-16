@@ -31,12 +31,8 @@ export function ledger(at: { expected: string; stamps: string }) {
     approvedPath: approved, receivedPath: received,
     baseline: (n: string): string | null => read(approved(n)),
     received: (n: string): string | null => read(received(n)),
-    plays(n: string, fp: string, steps: boolean): boolean {
-      if (mayReuse(read(stamp(n)), fp, { steps })) return false;
-      remove(stamp(n));
-      remove(played(n));
-      return true;
-    },
+    reusable: (n: string, fp: string, steps: boolean): boolean => mayReuse(read(stamp(n)), fp, { steps }),
+    clear(n: string): void { remove(stamp(n)); remove(played(n)); },
     /* a run of some steps is never stamped nor noted as played, so it can
        be neither reused nor approved (pin: heliumVerdict.test › after a
        fail the received copy is kept) */
@@ -46,12 +42,15 @@ export function ledger(at: { expected: string; stamps: string }) {
       if (!run.steps && !run.held) write(played(n), run.fp);
     },
     refusal: (n: string, fp: string): string | null => approvalRefusal(read(received(n)), read(played(n)), fp),
-    approve(n: string, fp: string): string {
+    /* the stamp is taken after the approved copy is written, the copy being
+       one of the run's inputs: taken before, the next run replayed whole
+       (pin: heliumVerdict.test › a run is approved only when) */
+    approve(n: string, stampAfter: () => string): string {
       const text = read(received(n))!;
       write(approved(n), text);
       remove(received(n));
       remove(played(n));
-      write(stamp(n), fp);
+      write(stamp(n), stampAfter());
       return text;
     },
   };

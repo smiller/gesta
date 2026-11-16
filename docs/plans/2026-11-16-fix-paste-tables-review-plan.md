@@ -137,3 +137,22 @@ was owed over `cccc617..HEAD`.
   temp directory. helium-approve.ts keeps the builds, the spawning, diff
   for display and the printing. Played for real: a whole verdict, all
   ok; bridge failed on purpose, then approved, its copy back as committed.
+
+## The review of S19 and A7.1's builds (A8)
+
+- `/code-review high 1e43685..HEAD`, 108,441 tokens (MEASURED, the last
+  message of `subagents/agent-a99275606c33b25b0.jsonl`: 2 input + 2,621
+  cache creation + 100,633 cache read + 5,185 output). Ten findings; no
+  architecture run (the 14:14 scan read S19's code; the rest is its builds).
+- Fixed: an approval stamped the fingerprint taken before it wrote the
+  approved copy, one of the run's inputs, so the next run replayed whole;
+  the stamp is now taken after (played: approve, then "not replayed").
+  A command's output lines, from its ⎿ to a blank line, stand as printed
+  and lose the ⎿ text's column (asked: a long wrapped output line stays
+  broken); a ⏺ or ⎿ deeper than the margin loses its spaces. Helium's
+  import walk passes over a path no file stands at and reads dynamic
+  imports. isTerminalCopy's test moved beside it, its comment says what it
+  does; slides.test.ts joined page.test.ts; the ledger's plays split into
+  reusable and clear; the failure message takes the ledger's path.
+- Refused: the fingerprint reading each code file twice (about 34 small
+  files).

@@ -13,7 +13,7 @@
 // `node tools/helium-approve.ts [--approve] [corner|order|bridge|reader ...]`
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, rmSync, readdirSync } from "node:fs";
-import { resolve } from "node:path";
+import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
@@ -63,7 +63,7 @@ function inputsFor(name: string) {
   const helium = (/<key>CFBundleVersion<\/key>\s*<string>([^<]*)<\/string>/.exec(readFileSync(HELIUM_PLIST, "utf8")) ?? [])[1] ?? "(unknown)";
   return [
     file("dist/index.html"), file("dist-reader/index.html"),
-    ...readByDrivers(DRIVERS, (p) => readFileSync(p, "utf8")).map(file),
+    ...readByDrivers(DRIVERS, (p) => (existsSync(p) ? readFileSync(p, "utf8") : null)).map(file),
     ...readdirSync("fixtures").map((f) => file("fixtures/" + f)),
     file(approvedOf(name)),
     { name: "helium", bytes: helium },
@@ -84,7 +84,7 @@ function approveOne(name: string): void {
   const fp = fingerprint(inputsFor(name)), refusal = L.refusal(name, fp);
   if (refusal) { failed++; console.log(name + ": not approved — " + refusal); return; }
   console.log(spawnSync("diff", ["-u", L.approvedPath(name), L.receivedPath(name)], { encoding: "utf8" }).stdout || "");
-  console.log(name + ": approved, the run that was played (" + L.approve(name, fp).split("\n").length + " lines)");
+  console.log(name + ": approved, the run that was played (" + L.approve(name, () => fingerprint(inputsFor(name))).split("\n").length + " lines)");
 }
 /* the last run's browser may still be exiting: kill, then retry the
    delete for a few seconds rather than fail on a held directory */
@@ -110,7 +110,7 @@ function said(name: string, c: Exclude<Compared, { pass: true }>): string {
   const diffLines = (d.stdout || "").split("\n");
   return [name + ": DIFFERS from " + L.approvedPath(name) + (c.differs === "new" ? " (no approved copy yet)" : ""), ...diffLines.slice(0, 80),
     ...(diffLines.length > 80 ? ["… " + (diffLines.length - 80) + " more lines of the diff: read the received copy whole"] : []),
-    "read tools/expected/" + name + ".received.txt; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
+    "read " + relative(process.cwd(), L.receivedPath(name)) + "; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
 interface Playing { name: string; played: string }
 /* a run to play, its stamps cleared and its profile emptied before any run
@@ -118,7 +118,8 @@ interface Playing { name: string; played: string }
 function prepare(name: string): Playing | null {
   /* an edit made while it plays is not what it played */
   const fp = fingerprint(inputsFor(name));
-  if (!L.plays(name, fp, !!process.env.STEPS)) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  if (L.reusable(name, fp, !!process.env.STEPS)) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  L.clear(name);
   clearProfile(name);
   return { name, played: fp };
 }

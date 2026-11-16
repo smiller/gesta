@@ -1,9 +1,8 @@
 import { tableLines } from "../model/table.ts";
 
 /* A TERMINAL'S COPY IS TEXT, NOT STRUCTURE: its HTML is white-space: pre
-   blocks of text and coloured inline runs, one after another, and read as
-   HTML every run was a paragraph of its own; one copy can come as two
-   blocks or more (pin: paste.test › a terminal's copy is styled
+   blocks of text and coloured inline runs and nothing else, one copy two
+   blocks or more (pin: terminalCopy.test › a terminal's copy is styled
    preformatted text alone) */
 const PRE_BLOCK = '<div style="[^"]*white-space:\\s*pre(?![\\w-])[^"]*">';
 const TERMINAL_OPEN = new RegExp("^\\s*(?:<meta[^>]*>\\s*|<html[^>]*>\\s*|<head>[^]*?<\\/head>\\s*|<body[^>]*>\\s*|<!--StartFragment-->\\s*)*" + PRE_BLOCK, "i");
@@ -43,16 +42,31 @@ function fencesAfter(open: { code: boolean; blocks: number }, line: string): { c
    its one space the gap before its word, which taken off ran two words
    together (pin: a terminal's copy pasted › a terminal's copy pasted into a
    list item); neither counts, and the first keeps its spaces (pin:
-   terminalCopy.test › a terminal's margin is taken off); one line has no margin
-   (pin: paste.test › a terminal's copy that is not blocks) */
-const MESSAGE = /^\s*[⏺⎿]\s/;
+   terminalCopy.test › a terminal's margin is taken off); one line has no
+   margin */
+const MESSAGE = /^\s*[⏺⎿]\s/, OUTPUT = /^\s*⎿\s/;
 const indentOf = (l: string): number => l.length - l.trimStart().length;
+/* the output under a ⎿ sits at the column its text starts at, wherever the
+   prose around it sits: taken off by the margin alone, a listing kept the
+   difference (pin: terminalCopy.test › a command's output lines) */
+function outputColumns(lines: string[]): (number | undefined)[] {
+  let col: number | undefined;
+  return lines.map((l) => {
+    if (OUTPUT.test(l)) { col = l.length - l.replace(/^\s*⎿\s*/, "").length; return undefined; }
+    if (!/\S/.test(l)) col = undefined;
+    return col;
+  });
+}
+const inMargin = (l: string, own: number | undefined): boolean => /\S/.test(l) && !MESSAGE.test(l) && own === undefined;
+function marginOf(lines: string[], own: (number | undefined)[], from: number): number {
+  const indents = lines.flatMap((l, i) => (i >= from && inMargin(l, own[i]) ? [indentOf(l)] : []));
+  return indents.length ? Math.min(...indents) : 0;
+}
+const takenOff = (l: string, n: number): string => (MESSAGE.test(l) ? l.trimStart() : l.slice(Math.min(n, indentOf(l))));
 function marginOff(lines: string[]): string[] {
   if (lines.length < 2) return lines;
-  const [first, ...rest] = lines, firstCounts = indentOf(first) >= 2;
-  const indents = (firstCounts ? lines : rest).filter((l) => /\S/.test(l) && !MESSAGE.test(l)).map(indentOf);
-  const margin = indents.length ? Math.min(...indents) : 0, lead = new RegExp("^[ \\t]{0," + margin + "}"), off = (l: string) => l.replace(lead, "");
-  return [firstCounts ? off(first) : first, ...rest.map(off)];
+  const own = outputColumns(lines), from = indentOf(lines[0]) >= 2 ? 0 : 1, margin = marginOf(lines, own, from);
+  return lines.map((l, i) => (i < from ? l : takenOff(l, own[i] ?? margin)));
 }
 /* a terminal draws a table in box characters, each cell wrapped within its
    column; joined as prose its borders and cells ran together (pin:
@@ -93,14 +107,20 @@ function boxTablesOff(lines: string[]): string[] {
   }
   return out;
 }
+/* a command's output, from its ⎿ to a blank line, is lines as printed:
+   joined as prose, a listing ran into one line; a long one the terminal
+   wrapped stays broken (pin: terminalCopy.test › a command's output lines) */
+const outputAfter = (output: boolean, line: string): boolean => OUTPUT.test(line) || (output && /\S/.test(line));
+const joinsNothing = (open: { code: boolean; blocks: number }, output: boolean): boolean => open.code || open.blocks > 0 || output;
 export function terminalText(text: string): string {
   const out: string[] = [];
-  let open = { code: false, blocks: 0 };
+  let open = { code: false, blocks: 0 }, output = false;
   for (const line of boxTablesOff(marginOff(text.split("\n")))) {
-    const last = open.code || open.blocks > 0 ? undefined : out.at(-1);
+    const last = joinsNothing(open, output) ? undefined : out.at(-1);
     if (last !== undefined && runsOn(last, line)) out[out.length - 1] = last.trimEnd() + " " + line.trimStart();
     else out.push(line);
     open = fencesAfter(open, line);
+    output = outputAfter(output, line);
   }
   return out.join("\n");
 }

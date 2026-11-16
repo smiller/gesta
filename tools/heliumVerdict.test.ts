@@ -12,20 +12,20 @@ const has = (d: { expected: string; stamps: string }) => (name: string) => ({
 });
 const RUN = "== a\nx: 1\n", FAILED = "== a\nSECTION FAILED (a): boom\n";
 
-test("a run plays unless a passing run's stamp holds its inputs; one of some steps always plays; a run that plays loses its stamp and its played print first", () => {
+test("a run is reusable when a passing run's stamp holds its inputs, never one of some steps; asking clears nothing, and a run cleared to play loses its stamp and its played print", () => {
   const d = dirs(), l = ledger(d);
-  expect(l.plays("corner", "fp1", false)).toBe(true);
+  expect(l.reusable("corner", "fp1", false)).toBe(false);
   l.after("corner", { received: RUN, fp: "fp1", steps: false, held: false }, { pass: true });
-  expect(l.plays("corner", "fp1", false)).toBe(false);
-  expect(l.plays("corner", "fp1", true)).toBe(true);
-  expect(has(d)("corner").stamp).toBeNull();
-  expect(l.plays("corner", "fp1", false)).toBe(true);
+  expect([l.reusable("corner", "fp1", false), l.reusable("corner", "fp2", false), l.reusable("corner", "fp1", true)]).toEqual([true, false, false]);
+  expect(has(d)("corner").stamp).toBe("fp1");
+  l.clear("corner");
+  expect(has(d)("corner")).toEqual({ received: false, stamp: null, played: null });
 });
 
 test("after a pass the received copy goes and a whole run is stamped; a run of some steps leaves no stamp", () => {
   const d = dirs(), l = ledger(d);
   l.after("corner", { received: RUN, fp: "fp1", steps: false, held: false }, { pass: false, differs: "changed" });
-  expect(l.plays("corner", "fp1", false)).toBe(true);
+  l.clear("corner");
   l.after("corner", { received: RUN, fp: "fp1", steps: false, held: false }, { pass: true });
   expect(has(d)("corner")).toEqual({ received: false, stamp: "fp1", played: null });
   l.after("bridge", { received: RUN, fp: "fp2", steps: true, held: false }, { pass: true });
@@ -42,7 +42,7 @@ test("after a fail the received copy is kept to read, and what it played is note
   expect(has(d)("order")).toEqual({ received: true, stamp: null, played: null });
 });
 
-test("a run is approved only when it was played whole, its inputs unchanged since and no section of it failed; approved, it is the approved copy and stamped", () => {
+test("a run is approved only when it was played whole, its inputs unchanged since and no section of it failed; approved, it is the approved copy, stamped with the inputs as they stand after it is written", () => {
   const d = dirs(), l = ledger(d);
   expect(l.refusal("corner", "fp1")).toMatch(/no run to approve/);
   l.after("reader", { received: RUN, fp: "fp3", steps: true, held: false }, { pass: false, differs: "changed" });
@@ -52,9 +52,9 @@ test("a run is approved only when it was played whole, its inputs unchanged sinc
   l.after("corner", { received: RUN, fp: "fp1", steps: false, held: false }, { pass: false, differs: "new" });
   expect(l.refusal("corner", "fp9")).toMatch(/changed since it played/);
   expect(l.refusal("corner", "fp1")).toBeNull();
-  expect(l.approve("corner", "fp1")).toBe(RUN);
+  expect(l.approve("corner", () => "after:" + readFileSync(join(d.expected, "corner.approved.txt"), "utf8"))).toBe(RUN);
   expect(readFileSync(join(d.expected, "corner.approved.txt"), "utf8")).toBe(RUN);
-  expect(has(d)("corner")).toEqual({ received: false, stamp: "fp1", played: null });
+  expect(has(d)("corner")).toEqual({ received: false, stamp: "after:" + RUN, played: null });
   expect(l.baseline("corner")).toBe(RUN);
 });
 

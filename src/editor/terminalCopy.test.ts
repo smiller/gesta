@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { terminalText } from "./terminalCopy.ts";
+import { isTerminalCopy, terminalText } from "./terminalCopy.ts";
 import { parseMarkdown } from "../model/parse.ts";
 
 test("a terminal's wrapped lines are joined: a line not ending a sentence runs on into the next, a list item or a new message always starts its own", () => {
@@ -21,11 +21,12 @@ test("a terminal's line opening on -- starts its own, as a list item does, and a
   expect(terminalText("Thanks,\n--\nSean")).toBe("Thanks,\n--\nSean");
   expect(terminalText("a line that -- mid-line\nruns on")).toBe("a line that -- mid-line runs on");
 });
-test("a terminal's margin is taken off: the indent every line shares, a message's ⏺ or a first line begun mid-line standing outside it; what is indented past it keeps the rest", () => {
+test("a terminal's margin is taken off: the indent every line shares, a message's ⏺ or a first line begun mid-line standing outside it; what is indented past it keeps the rest; one line alone has none", () => {
   expect(terminalText("⏺ I fixed it.\n\n  The cause: x.\n  - one\n    - nested\n\n  After.")).toBe("⏺ I fixed it.\n\nThe cause: x.\n- one\n  - nested\n\nAfter.");
   expect(terminalText("  ```\n  code\n    deeper\n  ```")).toBe("```\ncode\n  deeper\n```");
   expect(terminalText(" begun mid-line.\n  The next.")).toBe(" begun mid-line.\nThe next.");
   expect(terminalText("  - outer\n    - inner")).toBe("- outer\n  - inner");
+  expect(terminalText("   one line alone")).toBe("   one line alone");
 });
 
 test("a terminal's box-drawn table is a markdown table: its first row the header, a row's wrapped lines joined cell by cell between rules, each line a row where it draws none, a pipe kept in its cell", () => {
@@ -48,4 +49,17 @@ test("a terminal's copy of markdown keeps its structure: nothing in a fence is j
   expect(terminalText("> quoted\n> lines")).toBe("> quoted\n> lines");
   expect(terminalText("| a | b |\n| c | d |")).toBe("| a | b |\n| c | d |");
   expect(terminalText("words before\n```\ncode\n```")).toBe("words before\n```\ncode\n```");
+});
+
+const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;color: rgb(177, 185, 249);">git log</div> ran, and\n  <div style="display: inline;font-weight: bold;">bold</div> words.</div>';
+test("a terminal's copy is styled preformatted text alone: white-space: pre blocks of inline runs, one after another, with space between them or none", () => {
+  for (const html of [GHOSTTY, "<meta charset='utf-8'>" + GHOSTTY, GHOSTTY.replace("git log", '<a href="https://example.org/">git log</a>'), GHOSTTY + GHOSTTY, GHOSTTY + "\n" + GHOSTTY]) expect(isTerminalCopy(html)).toBe(true);
+  for (const html of ["<pre>let x = 1;</pre>", '<div style="white-space: pre-wrap;">a</div>', "<p>a</p><ul><li>b</li></ul>",
+    '<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>', GHOSTTY + "<p>after</p>", GHOSTTY.replace("display: inline;", "display: inline-block;"),
+    GHOSTTY + GHOSTTY.replace("display: inline;", "display: inline-block;"), GHOSTTY + '<div style="white-space: pre-wrap;">a</div>']) expect(isTerminalCopy(html)).toBe(false);
+});
+test("a command's output lines, from its ⎿ to a blank line, each stand as they are; a ⏺ or ⎿ deeper than the margin loses its spaces too", () => {
+  const ran = ["⏺ Bash(git log --oneline -3)", "  ⎿  bfeecd2 docs: A8 added", "     a03bb5d docs: A7.1.2 done", "     ff11004 refactor: the verdict", "", "⏺ Done, and the", "  rest wraps."];
+  expect(terminalText(ran.join("\n"))).toBe("⏺ Bash(git log --oneline -3)\n⎿  bfeecd2 docs: A8 added\na03bb5d docs: A7.1.2 done\nff11004 refactor: the verdict\n\n⏺ Done, and the rest wraps.");
+  expect(terminalText("    ⎿  deep\n  prose here\n  more")).toBe("⎿  deep\nprose here\nmore");
 });
