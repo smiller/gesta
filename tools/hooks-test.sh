@@ -223,6 +223,18 @@ cout=$(git commit -qm "feat: red" 2>&1); crc=$?
 if [ "$crc" != 0 ] && [ "$(git rev-parse HEAD)" = "$h1" ]; then ok "pre-commit: verify red, the commit is refused"; else bad "pre-commit: verify red, exit $crc, HEAD $([ "$(git rev-parse HEAD)" = "$h1" ] && echo held || echo MOVED)"; fi
 case "$cout" in *"npm run verify FAILED"*) ok "pre-commit names verify in its refusal" ;; *) bad "pre-commit's refusal did not name verify: $(printf '%s' "$cout" | tail -1)" ;; esac
 git reset -q --hard "$h1"; green verify.sh
+# verify reads the tree as it will be committed: a commit leaving out a
+# file verify needs passed, verify having read the file from disk
+clean
+printf '#!/bin/sh\n[ -f src/needed.ts ] || { echo "src/needed.ts missing"; exit 1; }\n' > verify.sh
+echo 'export const n = 1;' > src/needed.ts
+touch_src; git add verify.sh src/a.ts
+cout=$(git commit -qm "feat: half staged" 2>&1); crc=$?
+if [ "$crc" != 0 ] && [ "$(git rev-parse HEAD)" = "$h1" ]; then ok "pre-commit: a commit leaving out a file verify needs is refused"; else bad "pre-commit: a commit leaving out a file verify needs was not refused (exit $crc)"; fi
+[ -f src/needed.ts ] && ok "pre-commit: what was not staged is back after verify" || bad "pre-commit: what was not staged is gone after verify"
+git add src/needed.ts
+if git commit -qm "feat: whole" >/dev/null 2>&1 && [ "$(git rev-parse HEAD)" != "$h1" ]; then ok "pre-commit: the same commit staged whole lands"; else bad "pre-commit: the same commit staged whole did not land"; fi
+git reset -q --hard "$h1"; green verify.sh
 
 # === the wiring, read from THE REAL REPO (read-only) ========================
 wiring=$(python3 - "$REPO" <<'PY'

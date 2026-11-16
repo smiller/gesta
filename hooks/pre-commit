@@ -4,5 +4,19 @@
 # anything is committed. The rule was prose until now (a hidden red on
 # 2026-09-12 when a grep in a chain stood in for the exit code); this is it
 # as a mechanism. One-time setup after clone: git config core.hooksPath hooks
+# The tree as it will be committed, 2026-11-16: what is not staged, tracked
+# or not, is set aside while verify runs and put back after, whatever verify
+# says; a commit leaving out half its change passed, verify having read the
+# other half from disk.
 cd "$(dirname "$0")/.." || exit 1
-npm run verify || { echo "pre-commit: npm run verify FAILED — fix it before committing."; exit 1; }
+aside=0
+if ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
+  git stash push --quiet --keep-index --include-untracked -m "pre-commit: not staged" || { echo "pre-commit: could not set aside what is not staged"; exit 1; }
+  aside=1
+fi
+npm run verify; status=$?
+if [ "$aside" = 1 ] && ! git stash pop --quiet; then
+  echo "pre-commit: what was not staged is kept in the stash \"pre-commit: not staged\"; git stash pop to bring it back"
+  exit 1
+fi
+[ "$status" = 0 ] || { echo "pre-commit: npm run verify FAILED — fix it before committing."; exit 1; }
