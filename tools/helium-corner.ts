@@ -35,9 +35,11 @@ await ctx.addInitScript(() => {
   for (const m of ["addRange", "removeAllRanges", "collapse", "setBaseAndExtent", "extend", "empty"] as const) {
     const was = Selection.prototype[m] as (...a: unknown[]) => void;
     (Selection.prototype as unknown as Record<string, unknown>)[m] = function (this: Selection, ...a: unknown[]) {
-      const out = was.apply(this, a);
-      const by = (new Error().stack ?? "").split("\n").slice(2, 4).map((l) => l.trim().replace(/\(?file:\/\/\S*\//, "(")).join(" < ");
-      window.__selCalls.push({ m, t: Math.round(performance.now()), len: this.toString().length, by });
+      const had = !this.isCollapsed, out = was.apply(this, a), emptied = had && this.isCollapsed;
+      /* a stack only for the call that empties a selection: one on every
+         call costs a stack capture per selection update */
+      const by = emptied ? (new Error().stack ?? "").split("\n").slice(2, 4).map((l) => l.trim().replace(/\(?file:\/\/\S*\//, "(")).join(" < ") : "";
+      window.__selCalls.push({ m, t: Math.round(performance.now()), collapsed: this.isCollapsed, by });
       if (window.__selCalls.length > 8) window.__selCalls.shift();
       return out;
     };

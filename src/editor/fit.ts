@@ -148,11 +148,12 @@ const INSET = "div.note, div[class^=\"card-\"]";
 
 /* every paired block the width rule governs for one form: a descendant
    match minus the inset boxes, so a quoted paired block widens the entry
-   with the rest and takes its column with it */
+   with the rest and takes its column with it; and minus a closed
+   section's, which has no box to measure */
 function pairedBlocksIn(host: HTMLElement, sel: string): HTMLElement[] {
   const out: HTMLElement[] = [];
   host.querySelectorAll<HTMLElement>(sel).forEach((blk) => {
-    if (blk.parentElement?.closest(INSET)) return;
+    if (blk.parentElement?.closest(INSET) || blk.closest(".folded")) return;
     if (blk.querySelector(":scope > .vpair")) out.push(blk);
   });
   return out;

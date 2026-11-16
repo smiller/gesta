@@ -10,7 +10,7 @@ import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
 import { subEntryOrder, foldKind, type ContentsLink } from "./store/contents.ts";
-import { parseFoldStore, foldPage, withFoldPage, movedFolds, remembered, remembering, type FoldPage } from "./store/foldState.ts";
+import { parseFoldStore, foldPage, withFoldPage, movedFolds, droppedFolds, remembered, remembering, type FoldPage } from "./store/foldState.ts";
 import { stored } from "./store/local.ts";
 import { errText } from "./store/files.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
@@ -82,6 +82,7 @@ export interface Session {
   movePlace(from: string, to: string | null): void;
   movePlaces(moves: Record<string, string>): void;
   moveFolds(moves: Record<string, string>): void;
+  dropFolds(keys: string[]): void;
   goto(hash: string, sameMsg?: string): void;
   step(dir: "prev" | "next"): void;
   today(): void;
@@ -345,7 +346,7 @@ export function startSession(opts: SessionOptions): Session {
      (pin: bookmarks from another window › the commonplace open in the first, saved in the second)
      (pin: bookmarks from another window › typed into the commonplace deleted in the second) */
   /* the notices of a deleted entry on screen last while it is on screen
-     (pin: bookmarks from another window › the deleted page left for the day) */
+     (pin: bookmarks from another window › the deleted commonplace left for the day) */
   let detachedPins: number[] = [];
   const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
   function noticeVerdict(ekey: string, md: string | null): ScreenNotice {
@@ -507,6 +508,7 @@ export function startSession(opts: SessionOptions): Session {
     movePlace: keeper.move,
     movePlaces: keeper.moveAll,
     moveFolds: (moves) => { folds.write((s) => movedFolds(s, moves)); },
+    dropFolds: (keys) => { folds.write((s) => droppedFolds(s, keys)); },
     setInterval: (n) => { interval = n; const v = live(); if (v) setLineInterval(n)(v.state, v.dispatch); },
   };
 }

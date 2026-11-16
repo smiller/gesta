@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { parseFoldStore, foldPage, withFoldPage, movedFolds, remembered, remembering } from "./foldState.ts";
+import { parseFoldStore, foldPage, withFoldPage, movedFolds, droppedFolds, remembered, remembering } from "./foldState.ts";
 
 test("an absent, empty or damaged store reads as empty: nothing remembered open or closed", () => {
   for (const raw of [null, "", "not json", "[1,2]", '{"x": 3}']) expect(foldPage(parseFoldStore(raw), "bookshelf/S/W")).toEqual({ open: [], closed: [] });
@@ -30,4 +30,11 @@ test("a contents page remembers its open sections, a journal day or a commonplac
   expect(remembered(foldPage(again, "bookshelf/S/W"), "contents")).toEqual(["Book I"]);
   expect(remembered(foldPage(again, "2026-01-07"), "sections")).toEqual(["Walk"]);
   expect(remembered(foldPage(again, "2026-01-07"), "contents")).toEqual([]);
+});
+
+test("a deleted entry's folds are forgotten, so an entry made again at its key opens as new", () => {
+  const store = parseFoldStore('{"commonplace/X":{"closed":["Notes"]},"commonplace/X/Sub":{"closed":["A"]},"commonplace/Y":{"closed":["B"]}}');
+  const left = droppedFolds(store, ["commonplace/X", "commonplace/X/Sub"]);
+  expect(Object.keys(left)).toEqual(["commonplace/Y"]);
+  expect(remembered(foldPage(left, "commonplace/X"), "sections")).toEqual([]);
 });

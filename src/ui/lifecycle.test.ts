@@ -54,6 +54,7 @@ function fakeSession(log: string[], s: WorldState, layer: EntryLayerOf): Lifecyc
     open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); s.current = { date, tag }; },
     movePlace: (from, to) => { log.push("move " + from + " → " + to); },
     movePlaces: (moves) => { log.push("places " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
+    dropFolds: (keys) => { log.push("folds dropped " + keys.join(", ")); },
     refresh: () => { log.push("refresh"); return Promise.resolve(); },
     goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
   };
@@ -637,13 +638,13 @@ describe("delete", () => {
     expect(no.asked).toEqual(['Delete the sub-entry "B"?']);
     expect(no.log).toEqual([]);
   });
-  it("opens the landing and drops the places BEFORE removing, then flushes, unlinks the host, refreshes, redraws, focuses", async () => {
+  it("opens the landing and drops the places and the folds BEFORE removing, then flushes, unlinks the host, refreshes, redraws, focuses", async () => {
     const w = await world({ at: ["commonplace", "A/B"], entries: { "commonplace/A": "- [B](#commonplace/A/B)\n", "commonplace/A/B": "body\n", "commonplace/A/B/x": "" } });
     w.answer(true);
     await w.life.remove();
     const l = w.log;
-    expect(l.slice(0, 4)).toEqual(["hash #commonplace/A", "open commonplace/A arrive", "move commonplace/A/B → null", "move commonplace/A/B/x → null"]);
-    expect(l.slice(4, 6).sort()).toEqual(["del commonplace/A/B", "del commonplace/A/B/x"]);
+    expect(l.slice(0, 5)).toEqual(["hash #commonplace/A", "open commonplace/A arrive", "move commonplace/A/B → null", "move commonplace/A/B/x → null", "folds dropped commonplace/A/B, commonplace/A/B/x"]);
+    expect(l.slice(5, 7).sort()).toEqual(["del commonplace/A/B", "del commonplace/A/B/x"]);
     expect(l.slice(l.indexOf("flush"))).toEqual(["flush", "set commonplace/A", "refresh", "redraw", "focus"]);
     expect(w.md("commonplace/A/B")).toBeNull();
     expect(w.md("commonplace/A/B/x")).toBeNull();

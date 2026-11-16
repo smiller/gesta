@@ -31,6 +31,11 @@ export function movedFolds(store: FoldStore, moves: Record<string, string>): Fol
   for (const [k, v] of Object.entries(store)) out[Object.hasOwn(moves, k) ? moves[k] : k] = v;
   return out;
 }
-/* the sections an entry holds otherwise than its kind starts them */
+export function droppedFolds(store: FoldStore, keys: string[]): FoldStore {
+  const out: FoldStore = Object.create(null);
+  for (const [k, v] of Object.entries(store)) if (!keys.includes(k)) out[k] = v;
+  return out;
+}
+/* contents keep their open sections, sections their closed ones */
 export const remembered = (page: FoldPage, kind: FoldKind): string[] => (kind === "contents" ? page.open : page.closed);
 export const remembering = (kind: FoldKind, keys: string[]): Partial<FoldPage> => (kind === "contents" ? { open: keys } : { closed: keys });

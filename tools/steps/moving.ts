@@ -85,7 +85,7 @@ const there = (k: string) => A.stored(page, "bookshelf/Mover, Test/Essays" + k);
 async function picturesUnderOldEntry(): Promise<void> {
   await R.waitImg(page).catch(() => {});
   await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
-  await log("the pictures under the old page and the new", { old: await A.pictureKeys(page, "commonplace/Move Source/"), now: await A.pictureKeys(page, "bookshelf/Mover, Test/Essays/") });
+  await log("the pictures under the old commonplace and the new address", { old: await A.pictureKeys(page, "commonplace/Move Source/"), now: await A.pictureKeys(page, "bookshelf/Mover, Test/Essays/") });
 }
 async function movedEssayPicture(): Promise<void> {
   await log("the moved essay, its picture", { entry: await A.entry(page), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });

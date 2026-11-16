@@ -12,6 +12,7 @@ import type { Node } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { linkRuns } from "../store/links.ts";
 import type { FoldKind } from "../store/contents.ts";
+import { counted } from "../ui/counted.ts";
 
 export interface FoldSection {
   heading: number;
@@ -21,7 +22,9 @@ export interface FoldSection {
      heading of that text (pin: folds.test › a twin's key never collides with
      a heading that reads like one) */
   key: string;
-  count: string;
+  /* a contents section's links; a section of writing counts its words only
+     when drawn closed */
+  count: string | null;
 }
 interface Head { pos: number; end: number; level: number; text: string }
 function headsOf(doc: Node): Head[] {
@@ -35,9 +38,8 @@ function sectionEnd(heads: Head[], i: number, size: number): number {
   for (let j = i + 1; j < heads.length; j++) if (heads[j].level <= 2) return heads[j].pos;
   return size;
 }
-const plural = (n: number, one: string, many: string): string => n + " " + (n === 1 ? one : many);
-const wordsIn = (doc: Node, from: number, to: number): number => doc.textBetween(from, to, " ", " ").split(/\s+/).filter(Boolean).length;
-export function foldSections(doc: Node, kind: FoldKind = "contents"): FoldSection[] {
+const wordsIn = (doc: Node, s: FoldSection): string => counted(doc.textBetween(s.from, s.to, " ", " ").split(/\s+/).filter(Boolean).length, " word", " words");
+export function foldSections(doc: Node, kind: FoldKind): FoldSection[] {
   const heads = headsOf(doc);
   const runs = kind === "contents" ? linkRuns(doc) : [];
   const seen: Record<string, number> = Object.create(null);
@@ -45,7 +47,7 @@ export function foldSections(doc: Node, kind: FoldKind = "contents"): FoldSectio
   heads.forEach((h, i) => {
     if (h.level !== 2) return;
     const to = sectionEnd(heads, i, doc.content.size);
-    const count = kind === "contents" ? plural(runs.filter((r) => r.from >= h.end && r.to <= to).length, "entry", "entries") : plural(wordsIn(doc, h.end, to), "word", "words");
+    const count = kind === "contents" ? counted(runs.filter((r) => r.from >= h.end && r.to <= to).length, " entry", " entries") : null;
     const nth = (seen[h.text] = (seen[h.text] || 0) + 1);
     out.push({ heading: h.pos, from: h.end, to, key: nth > 1 ? h.text + "\u0001" + nth : h.text, count });
   });
@@ -59,11 +61,12 @@ export function sectionAt(sections: FoldSection[], pos: number): FoldSection | n
   return sections.find((s) => pos > s.from && pos < s.to) || null;
 }
 /* drawn BY POSITION: a key is only what a visit remembers */
-export function foldDecorations(doc: Node, sections: FoldSection[], openHeadings: Set<number>): DecorationSet {
+export function foldDecorations(doc: Node, sections: FoldSection[], openHeadings: Set<number>, kind: FoldKind): DecorationSet {
   const decos: Decoration[] = [];
   for (const s of sections) {
     const isOpen = openHeadings.has(s.heading);
-    decos.push(Decoration.node(s.heading, s.from, { class: "fold", "data-count": s.count, "aria-expanded": String(isOpen) }));
+    const count = kind === "contents" ? s.count : isOpen ? null : wordsIn(doc, s);
+    decos.push(Decoration.node(s.heading, s.from, { class: "fold", ...(count ? { "data-count": count } : {}), "aria-expanded": String(isOpen) }));
     if (isOpen) continue;
     doc.nodesBetween(s.from, s.to, (block, pos) => {
       if (pos >= s.from && pos + block.nodeSize <= s.to) decos.push(Decoration.node(pos, pos + block.nodeSize, { class: "folded" }));
@@ -80,22 +83,21 @@ export interface FoldState { kind: FoldKind | null; open: Set<number>; sections:
 export const foldsKey = new PluginKey<FoldState>("folds");
 type FoldMeta = { toggle: number } | { set: { kind: FoldKind | null; flipped: string[] } };
 const keysOf = (sections: FoldSection[], open: Set<number>): string[] => sections.filter((s) => open.has(s.heading)).map((s) => s.key);
-/* the sections held otherwise than the kind starts them: the open ones of
-   contents, the closed ones of sections */
+/* the sections held otherwise than the kind starts them, either way round:
+   sections start open, so a day's writing is never hidden on arrival, and
+   contents start closed, so a long contents fits on a screen */
+const flipped = (kind: FoldKind | null, sections: FoldSection[], held: Set<number>): Set<number> =>
+  kind === "sections" ? new Set(sections.filter((s) => !held.has(s.heading)).map((s) => s.heading)) : held;
 export function flippedKeys(state: EditorState): string[] {
   const st = foldsKey.getState(state);
-  if (!st) return [];
-  return st.kind === "sections" ? st.sections.filter((s) => !st.open.has(s.heading)).map((s) => s.key) : keysOf(st.sections, st.open);
+  return st ? keysOf(st.sections, flipped(st.kind, st.sections, st.open)) : [];
 }
 function draw(doc: Node, kind: FoldKind | null, open: Set<number>, sections: FoldSection[]): FoldState {
-  return { kind, open, sections, decorations: kind ? foldDecorations(doc, sections, open) : DecorationSet.empty };
+  return { kind, open, sections, decorations: kind ? foldDecorations(doc, sections, open, kind) : DecorationSet.empty };
 }
 const positionsOf = (sections: FoldSection[], keys: string[]): Set<number> =>
   new Set(sections.filter((s) => keys.includes(s.key)).map((s) => s.heading));
-function startOpen(kind: FoldKind | null, sections: FoldSection[], flipped: string[]): Set<number> {
-  const named = positionsOf(sections, flipped);
-  return kind === "sections" ? new Set(sections.filter((s) => !named.has(s.heading)).map((s) => s.heading)) : named;
-}
+const startOpen = (kind: FoldKind | null, sections: FoldSection[], keys: string[]): Set<number> => flipped(kind, sections, positionsOf(sections, keys));
 
 /* CLOSING a section a selection reaches into, from either end, collapses it
    onto the heading's end, where it can be seen: a caret, then a range
@@ -134,8 +136,8 @@ export function setFolds(kind: FoldKind | null, flipped: string[]): Command {
   return (state, dispatch) => { dispatch?.(state.tr.setMeta(foldsKey, { set: { kind, flipped } } satisfies FoldMeta)); return true; };
 }
 type Folding = { kind: FoldKind | null; open: Set<number>; sections: FoldSection[] };
-function remapped(tr: Transaction, prev: FoldState, doc: Node): { open: Set<number>; sections: FoldSection[] } {
-  const sections = foldSections(doc, prev.kind ?? "contents");
+function remapped(tr: Transaction, prev: FoldState, doc: Node, kind: FoldKind): { open: Set<number>; sections: FoldSection[] } {
+  const sections = foldSections(doc, kind);
   const heads = new Set(sections.map((s) => s.heading));
   /* a heading SURVIVES an edit while its mapped start stays before
      its mapped end; a deleted one collapses, and mapped by its start
@@ -193,7 +195,7 @@ export function folds(opts: FoldOptions = { kind: null, flipped: [] }): Plugin<F
       apply(tr, prev, _old, next: EditorState) {
         const meta = tr.getMeta(foldsKey) as FoldMeta | undefined;
         let s: Folding = { kind: prev.kind, open: prev.open, sections: prev.sections };
-        if (tr.docChanged && s.kind) s = { kind: s.kind, ...remapped(tr, prev, next.doc) };
+        if (tr.docChanged && s.kind) s = { kind: s.kind, ...remapped(tr, prev, next.doc, s.kind) };
         s = afterMeta(meta, s, next.doc);
         if (s.kind && touches(tr, meta)) s = { ...s, open: openedAt(s.open, s.sections, next.selection.head) };
         if (unchanged(prev, s)) return prev;

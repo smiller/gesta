@@ -24,7 +24,7 @@ import { registered, childrenOf } from "../store/lists.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
 export interface SourcePort { insertAfter(text: string): void; inHeading(): boolean }
-export type SessionPort = Pick<Session, "current" | "save" | "open" | "movePlace" | "movePlaces" | "refresh" | "goto">;
+export type SessionPort = Pick<Session, "current" | "save" | "open" | "movePlace" | "movePlaces" | "dropFolds" | "refresh" | "goto">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
   confirm(text: string): boolean;
@@ -468,10 +468,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const pictures = picturesOf(key, layer.entryMd(key));
     /* the landing FIRST, the remove after: a save still owed to the deleted
        entry, landing after its remove, resurrected it
-       (pin: lifecycle.test › opens the landing and drops the places BEFORE removing) */
+       (pin: lifecycle.test › opens the landing and drops the places and the folds BEFORE removing) */
     ui.replaceHash(entryHash(back.date, back.tag));
     session.open(back.date, back.tag, "arrive");
     for (const k of [key, ...sweptKeys]) session.movePlace(k, null);
+    session.dropFolds([key, ...sweptKeys]);
     /* the text typed on the entry landed on is saved BEFORE the retarget
        reads the host, and the repaint comes only where the store moved (a
        lost link) */

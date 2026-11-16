@@ -342,7 +342,7 @@ async function secondWindow(): Promise<void> {
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
   await landed(page, 2500);
-  await log("its row's page typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
+  await log("its row's commonplace typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
 }
 async function pageOpenFirstSaved(): Promise<void> {
   const again = await page.context().newPage();
@@ -376,7 +376,7 @@ async function pageOpenFirstSaved(): Promise<void> {
   await landed(page, 1500);
   await log("typed into the commonplace deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.cornerText(page) });
   await go("2026-09-06");
-  await log("the deleted page left for the day", { corner: await R.cornerText(page) });
+  await log("the deleted commonplace left for the day", { corner: await R.cornerText(page) });
   await go("commonplace/Deleted%20Elsewhere");
   await log("the deleted commonplace opened again in the first", { textEnd: await textEnd() });
   await again.close();

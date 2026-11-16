@@ -106,6 +106,8 @@ function main(argv: string[]): void {
   refuseOrGo(events, day);
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   for (const e of events) console.log(JSON.stringify(e));
-  for (const d of drawn(day, dayEvents(day))) console.log("republish " + d.path + " → " + d.url);
+  /* the artifacts hold today's ledger: a past day's page republished there
+     would overwrite it */
+  for (const d of drawn(day, dayEvents(day))) console.log(day === today() ? "republish " + d.path + " → " + d.url : "drawn " + d.path + ", not republished: " + day + " is not today");
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

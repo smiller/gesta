@@ -68,7 +68,8 @@ function writeForm(n: HTMLElement, f: Form | null): void {
   if (!f) write(n, "--mn-push", "");
 }
 function place(root: HTMLElement): void {
-  const notes = Array.from(root.querySelectorAll<HTMLElement>("div.margin-note"));
+  /* a closed section's note has no box to measure */
+  const notes = Array.from(root.querySelectorAll<HTMLElement>("div.margin-note")).filter((n) => !n.closest(".folded"));
   if (!notes.length) return;
   const hosts = new Map<HTMLElement, Host>();
   const hostOf = (el: HTMLElement): Host => {

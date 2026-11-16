@@ -126,10 +126,10 @@ export function drawn(day: string, events: Event[], out = "tools/out/progress"):
 function main(argv: string[]): void {
   const [day, flag, at] = argv;
   const events = dayEvents(day);
-  const name = flag === "--slides" ? "-slides" : flag === "--at" && at ? "-" + at.replace(":", "") : "";
-  const out = join("tools/out/progress", day + name + ".html");
+  if (!flag) { for (const d of drawn(day, events)) console.log(d.path); return; }
+  const out = join("tools/out/progress", day + (flag === "--slides" ? "-slides" : "-" + (at ?? "").replace(":", "")) + ".html");
   mkdirSync("tools/out/progress", { recursive: true });
-  writeFileSync(out, flag === "--slides" ? slides(events, { day }) : page(events, { day, at: flag === "--at" ? at : undefined }));
+  writeFileSync(out, flag === "--slides" ? slides(events, { day }) : page(events, { day, at }));
   console.log(out);
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

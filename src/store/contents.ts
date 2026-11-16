@@ -112,8 +112,6 @@ export function foldsContents(keys: string[], date: string, tag: string | null):
   if (tag.split("/").length < 2) return false;
   return childrenOf(keys, entryKey(date, tag)).length > 0;
 }
-/* contents start closed and count their links; sections start open and
-   count their words, so a day's writing is never hidden on arrival */
 export type FoldKind = "contents" | "sections";
 export function foldKind(keys: string[], date: string, tag: string | null): FoldKind | null {
   if (foldsContents(keys, date, tag)) return "contents";

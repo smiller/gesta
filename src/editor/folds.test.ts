@@ -13,7 +13,7 @@ const doc = parseMarkdown(CONTENTS);
 const openKeys = (state: EditorState): string[] => { const st = foldsKey.getState(state)!; return st.sections.filter((s) => st.open.has(s.heading)).map((s) => s.key); };
 
 test("a section is a ## heading and everything under it down to the next heading of level 1 or 2", () => {
-  const s = foldSections(doc);
+  const s = foldSections(doc, "contents");
   expect(s.map((x) => x.key)).toEqual(["Dedications", "Book I: The Legende of the Knight", "Book VII: Two Cantos of Mutabilitie"]);
   const bodyText = (i: number) => doc.textBetween(s[i].from, s[i].to, "|");
   expect(bodyText(0)).toBe("To the most high, mightie and magnificent empresse|Letter to Raleigh|Commendatory Verses");
@@ -21,11 +21,11 @@ test("a section is a ## heading and everything under it down to the next heading
   expect(bodyText(2)).toBe("Canto vi");                              /* a level-one heading ends it */
 });
 test("a section's count is its links: N entries, 1 entry", () => {
-  expect(foldSections(doc).map((x) => x.count)).toEqual(["2 entries", "3 entries", "1 entry"]);
+  expect(foldSections(doc, "contents").map((x) => x.count)).toEqual(["2 entries", "3 entries", "1 entry"]);
 });
 test("the decorations: every heading marked with its count and state, a closed section's blocks hidden", () => {
-  const sections = foldSections(doc);
-  const decos = (open: string[]) => foldDecorations(doc, sections, new Set(sections.filter((x) => open.includes(x.key)).map((x) => x.heading))).find() as Decoration[];
+  const sections = foldSections(doc, "contents");
+  const decos = (open: string[]) => foldDecorations(doc, sections, new Set(sections.filter((x) => open.includes(x.key)).map((x) => x.heading)), "contents").find() as Decoration[];
   const attrsAt = (open: string[], text: string) => {
     const d = decos(open).find((x) => doc.nodeAt(x.from)!.textContent.startsWith(text));
     return d ? (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs : null;
@@ -41,8 +41,8 @@ test("the decorations: every heading marked with its count and state, a closed s
 test("sectionAt: the section a position's body belongs to, null above the first heading or on a heading", () => {
   let inCanto = -1;
   doc.descendants((n, pos) => { if (inCanto < 0 && n.text === "Canto ii") inCanto = pos + 1; return inCanto < 0; });
-  expect(sectionAt(foldSections(doc), inCanto)?.key).toBe("Book I: The Legende of the Knight");
-  expect(sectionAt(foldSections(doc), 3)).toBe(null);
+  expect(sectionAt(foldSections(doc, "contents"), inCanto)?.key).toBe("Book I: The Legende of the Knight");
+  expect(sectionAt(foldSections(doc, "contents"), 3)).toBe(null);
 });
 
 function stateWith(opts: Parameters<typeof folds>[0]): EditorState {
@@ -83,7 +83,7 @@ test("typing in an open heading keeps its section open, and the new text is what
 });
 test("twin headings are two sections, toggled apart and remembered apart", () => {
   const twin = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)");
-  const keys = foldSections(twin).map((x) => x.key);
+  const keys = foldSections(twin, "contents").map((x) => x.key);
   expect(keys).toEqual(["Notes", "Notes\u00012"]);
   let s = EditorState.create({ doc: twin, plugins: [folds({ kind: "contents", flipped: [] })] });
   toggleFold(keys[1])(s, (tr) => { s = s.apply(tr); });
@@ -121,7 +121,7 @@ test("openFoldAt opens the section a position is in (⌃⌘G's landing), and doe
 
 test("a twin's key never collides with a heading that reads like one", () => {
   const d = parseMarkdown("# W\n\n## Notes\n\n- [a](#a)\n\n## Notes\n\n- [b](#b)\n\n## Notes (2)\n\n- [c](#c)");
-  const keys = foldSections(d).map((x) => x.key);
+  const keys = foldSections(d, "contents").map((x) => x.key);
   expect(new Set(keys).size).toBe(3);
   let s = EditorState.create({ doc: d, plugins: [folds({ kind: "contents", flipped: [] })] });
   toggleFold("Notes (2)")(s, (tr) => { s = s.apply(tr); });
@@ -131,7 +131,7 @@ test("a twin's key never collides with a heading that reads like one", () => {
 });
 test("deleting an open section does not open the one after it", () => {
   let s = stateWith({ kind: "contents", flipped: ["Dedications"] });
-  const secs = foldSections(s.doc);
+  const secs = foldSections(s.doc, "contents");
   s = s.apply(s.tr.delete(secs[0].heading, secs[1].heading));
   expect(openKeys(s)).toEqual([]);
 });
@@ -153,7 +153,7 @@ test("with folding off an edit computes no sections; switching on computes them"
 
 test("a heading selected whole (Escape) is not inside its section: the triangle closes it and it stays closed", () => {
   let s = stateWith({ kind: "contents", flipped: ["Dedications"] });
-  const secs = foldSections(s.doc);
+  const secs = foldSections(s.doc, "contents");
   s = s.apply(s.tr.setSelection(NodeSelection.create(s.doc, secs[0].heading)));
   expect(openKeys(s)).toEqual(["Dedications"]);
   toggleFold("Dedications")(s, (tr) => { s = s.apply(tr); });
@@ -161,8 +161,12 @@ test("a heading selected whole (Escape) is not inside its section: the triangle 
 });
 
 const DAY = parseMarkdown("# 7 January\n\nmorning words here\n\n## Walk\n\none two three four\n\n## Reading\n\nfive six\n\nseven\n\n## End\n\nfin");
-test("on a journal day or a commonplace a section's count is its words: N words, 1 word", () => {
-  expect(foldSections(DAY, "sections").map((x) => x.count)).toEqual(["4 words", "3 words", "1 word"]);
+test("on a journal day or a commonplace a closed section's count is its words: N words, 1 word; an open one carries none", () => {
+  const sections = foldSections(DAY, "sections");
+  const counts = (open: number[]): (string | null)[] => (foldDecorations(DAY, sections, new Set(open), "sections").find() as Decoration[])
+    .map((d) => (d as unknown as { type: { attrs: Record<string, string> } }).type.attrs).filter((a) => a.class === "fold").map((a) => a["data-count"] ?? null);
+  expect(counts([])).toEqual(["4 words", "3 words", "1 word"]);
+  expect(counts([sections[0].heading])).toEqual([null, "3 words", "1 word"]);
 });
 test("on a journal day or a commonplace every section starts open but the ones remembered closed, and the closed ones are what is remembered", () => {
   let s = EditorState.create({ doc: DAY, plugins: [folds({ kind: "sections", flipped: ["Reading"] })] });
