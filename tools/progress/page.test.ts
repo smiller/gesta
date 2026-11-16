@@ -34,10 +34,10 @@ test("a section a list, a row an item in its tree's order, each with its number,
   expect(html.match(/s-start">starting item<\/span><span class="label">/g)).toHaveLength(3);
 });
 
-test("the two count lines: the day's starting items and what was spawned or added since, each by list", () => {
+test("the two count lines: the day's starting items and what was spawned or added since, each by list in parentheses", () => {
   const html = page(day, { day: "2026-11-15" });
-  expect(html).toContain("Started with <b>2</b>: 1 architecture queue, 1 side list");
-  expect(html).toContain("Spawned or added since <b>1</b>: 1 side list");
+  expect(html).toContain("Started with <b>2</b> (1 architecture queue, 1 side list)");
+  expect(html).toContain("Spawned or added since <b>1</b> (1 side list)");
 });
 
 test("a snapshot is the page as it stood at its time, and says so", () => {
@@ -86,14 +86,14 @@ test("a detail's parts each start their own line, the header in bold; text befor
   expect(/<div class="detail-text">(.*?)<\/div>/.exec(page(plain, { day: "2026-11-15" }))![1]).toBe("no headers here, nor a Why without its colon");
 });
 
-const words = (s: string): string[] => s.replace(/<[^>]*>/g, " ").replace(/[—,:·]/g, " ").split(/\s+/).filter(Boolean);
-test("the terminal copy says the page's count lines in the same words, then each list's items in tree order with status, starting mark and label", () => {
+const words = (s: string): string[] => s.replace(/<[^>]*>/g, " ").replace(/--|[(),·]/g, " ").split(/\s+/).filter(Boolean);
+test("the terminal copy says the page's count lines in the same words, each status on a line of its own, then each list's items in tree order with status, starting mark and label", () => {
   const html = page(day, { day: "2026-11-15" }), text = terminal(day, { day: "2026-11-15" });
   const tallies = /<div class="tallies">(.*?)<\/div><section>/s.exec(html)![1];
   const lines = text.split("\n");
-  expect(lines[0]).toBe("Sunday, 15 November 2026");
-  expect(words(lines.slice(1, 3).join(" "))).toEqual(words(tallies));
-  expect(lines.slice(4)).toEqual([
+  expect(lines.slice(0, 8)).toEqual(["Sunday, 15 November 2026", "", "Started with 2 (1 architecture queue, 1 side list)", "-- done · spawned open 1", "-- moved 1", "", "Spawned or added since 1 (1 side list)", "-- unstarted 1"]);
+  expect(words(lines.slice(2, 8).join(" "))).toEqual(words(tallies));
+  expect(lines.slice(9)).toEqual([
     "Architecture queue",
     "  A1  done · spawned open · starting item  the save's tests",
     "    A1.1  unstarted  a race",

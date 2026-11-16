@@ -88,18 +88,19 @@ const delta = (now: number, was?: number): string => { const d = was === undefin
    count lines) */
 interface Counted { word: string; n: number; d: string; cls: string }
 function tallyWords(lead: string, t: Tally, b?: Tally): { lead: string; total: Counted; lists: string; statuses: Counted[] } {
-  const lists = LISTS.filter((l) => t.byList[l]).map((l) => t.byList[l] + " " + lower(l)).join(", ");
+  const named = LISTS.filter((l) => t.byList[l]).map((l) => t.byList[l] + " " + lower(l)).join(", ");
+  const lists = named ? " (" + named + ")" : "";
   const statuses = (Object.keys(CHIP) as Status[]).filter((s) => t.byStatus[s]).map((s) => ({ word: CHIP[s][1], n: t.byStatus[s]!, d: delta(t.byStatus[s]!, b && (b.byStatus[s] ?? 0)), cls: CHIP[s][0] }));
   return { lead, total: { word: lead, n: t.total, d: delta(t.total, b?.total), cls: "" }, lists, statuses };
 }
 function tallyLine(lead: string, t: Tally, b?: Tally): string {
   const w = tallyWords(lead, t, b);
   const statuses = w.statuses.map((s) => '<span class="' + s.cls + '">' + s.word + " <b>" + s.n + "</b>" + s.d + "</span>");
-  return '<div class="tally"><span>' + w.lead + " <b>" + w.total.n + "</b>" + w.total.d + (w.lists ? ": " + w.lists : "") + "</span>" + statuses.join("") + "</div>";
+  return '<div class="tally"><span>' + w.lead + " <b>" + w.total.n + "</b>" + w.total.d + w.lists + "</span>" + statuses.join("") + "</div>";
 }
 function tallyText(lead: string, t: Tally): string {
   const w = tallyWords(lead, t);
-  return w.lead + " " + w.total.n + (w.lists ? ": " + w.lists : "") + " — " + w.statuses.map((s) => s.word + " " + s.n).join(", ");
+  return [w.lead + " " + w.total.n + w.lists, ...w.statuses.map((s) => "-- " + s.word + " " + s.n)].join("\n");
 }
 export const KEY = '<div class="key">' + (Object.keys(CHIP) as Status[]).map((s) => '<span><span class="chip ' + CHIP[s][0] + '">' + CHIP[s][1] + "</span></span>").join("") +
   '<span><span class="chip s-start">starting item</span> on the day\'s list when it began</span><span><span class="swatch"></span> unstarted</span></div>';
@@ -129,7 +130,7 @@ export function terminal(events: Event[], o: { day: string }): string {
   const items = replay(events), c = counts(items), placed = trees(items);
   const line = ({ item: it, depth }: Placed): string => "  ".repeat(depth + 1) + it.id + "  " + statusWords(it, items) + (it.starting ? " · starting item" : "") + "  " + labelWords(it);
   const lists = LISTS.filter((l) => placed[l].length).map((l) => [NAME[l], ...placed[l].map(line)].join("\n"));
-  return [longDay(o.day), tallyText("Started with", c.starting), tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
+  return [longDay(o.day), "", tallyText("Started with", c.starting), "", tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
 }
 export function page(events: Event[], o: { day: string; at?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
