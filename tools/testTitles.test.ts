@@ -27,10 +27,14 @@ test("testsOf finds each test's description and its code, whatever its quotes, d
   expect(found.get("a one-line test")).toContain("expect(3)");
   expect(found.get("a test with a timeout")).toContain("expect(5)");
 });
-test("a test is listed when its code changed and its description did not", () => {
+test("a test is listed when its code changed and its description did not, spacing inside a string or template a change", () => {
   expect(changedUnderSameTitle(FILE, FILE.replace("expect(4)", "expect(44)"))).toEqual(["a nested test"]);
+  const quoted = 'test("a quoted rule", () => {\n  expect(f("a\\n    b", `c  d`)).toBe("e");\n});\n';
+  expect(changedUnderSameTitle(quoted, quoted.replace("a\\n    b", "a\\nb"))).toEqual(["a quoted rule"]);
+  expect(changedUnderSameTitle(quoted, quoted.replace("`c  d`", "`c d`"))).toEqual(["a quoted rule"]);
+  expect(changedUnderSameTitle(quoted, quoted.replace("toBe(", "toBe(  "))).toEqual([]);
 });
-test("a test is not listed when it is new, removed, renamed, unchanged, or changed only in spacing, nor for code outside any test", () => {
+test("a test is not listed when it is new, removed, renamed, unchanged, or changed only in spacing outside its strings, nor for code outside any test", () => {
   expect(changedUnderSameTitle(FILE, FILE)).toEqual([]);
   expect(changedUnderSameTitle(FILE, FILE + 'test("a new one", () => {\n  expect(6).toBe(6);\n});\n')).toEqual([]);
   expect(changedUnderSameTitle(FILE, FILE.replace('it("a nested test"', 'it("a nested rule"').replace("expect(4)", "expect(44)"))).toEqual([]);
