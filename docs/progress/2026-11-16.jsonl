@@ -109,3 +109,7 @@
 {"at":"2026-11-16T17:10","ev":"add","id":"P11","list":"P","title":"The slideshow's frames each with the day in order as it stood then","detail":"Asked: \"It feels like the slideshow should have a day in order.\" (the terminal copy without it is fine). Why: the slideshow replays the day; the spans and gaps are how it was spent. Done when: each frame draws the day in order as of its time, a span open then running to that time, test-first, the slideshow republished."}
 {"at":"2026-11-16T17:10","ev":"start","id":"P11"}
 {"at":"2026-11-16T17:11","ev":"done","id":"P11","commits":["dd5008d"],"note":"each frame as it stood then (asked)"}
+{"at":"2026-11-16T18:06","ev":"add","id":"P12","list":"P","title":"Previous day and next day links on the day page and the slideshow","detail":"Asked: \"It would be quite neat if the visualization pages had 'previous day' (if there's a previous day) and 'next day' (if there's a next day) links on them to go to the previous / next visualization.\" Why: each artifact holds only today's page; an earlier day is reached only by redrawing it locally. Done when: the day page and the slideshow each link to the logged day before and after it where there is one, locally and on the published artifacts, the earlier days' pages published beside today's."}
+{"at":"2026-11-16T18:06","ev":"start","id":"P12"}
+{"at":"2026-11-16T18:09","ev":"done","id":"P12","commits":["9d2ec1a"]}
+{"at":"2026-11-16T18:11","ev":"done","id":"P12","commits":["9d2ec1a","9b32c12"]}
