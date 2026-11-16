@@ -115,7 +115,10 @@ test("the day page links to the logged day before and the one after, each where 
 });
 
 test("each page is a whole document, as a file published beside another page is served unwrapped", () => {
-  for (const html of [page(day, { day: "2026-11-15" }), slides(day, { day: "2026-11-15" })]) expect(html).toMatch(/^<!doctype html>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<title>/);
+  for (const html of [page(day, { day: "2026-11-15" }), slides(day, { day: "2026-11-15" })]) {
+    expect(html).toMatch(/^<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="[^"]*">\n<title>/);
+    expect(html).toMatch(/<\/head>\n<body>\n<main>[^]*<\/body>\n<\/html>\n$/);
+  }
 });
 
 test("a paused item's ended time is its stop's; an item in progress has none", () => {
