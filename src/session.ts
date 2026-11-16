@@ -9,8 +9,8 @@ import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
-import { subEntryOrder, foldKind, type ContentsLink } from "./store/contents.ts";
-import { parseFoldStore, foldPage, withFoldPage, movedFolds, droppedFolds, remembered, remembering, type FoldPage } from "./store/foldState.ts";
+import { subEntryOrder, type ContentsLink } from "./store/contents.ts";
+import { foldMemory, parseFoldStore } from "./store/foldMemory.ts";
 import { stored } from "./store/local.ts";
 import { errText } from "./store/files.ts";
 import { foldsKey, setFolds } from "./editor/folds.ts";
@@ -154,9 +154,7 @@ export function startSession(opts: SessionOptions): Session {
     pastedPictureBytes(file).then((bytes) => { decoding = false; return landPicture(bytes, aimedAt, aimedView); })
       .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn’t be read — try copying it as a PNG"); });
   }
-  const folds = stored(NS + "folds", parseFoldStore);
-  const readFolds = (ekey: string): FoldPage => foldPage(folds.read(), ekey);
-  const writeFolds = (ekey: string, patch: Partial<FoldPage>): void => folds.write((s) => withFoldPage(s, ekey, patch));
+  const folds = foldMemory(stored(NS + "folds", parseFoldStore), () => Object.keys(layer.cache));
   /* read at every scroll to the caret, a keystroke's included: a cached
      height, not a layout forced on the page the keystroke just changed */
   let mastheadHeight = 0;
@@ -185,14 +183,14 @@ export function startSession(opts: SessionOptions): Session {
   function mountEditor(doc: Node, date: string, tag: string | null): RenderedView {
     mount.replaceChildren();
     const ekey = entryKey(date, tag);
-    const kind = foldKind(Object.keys(layer.cache), date, tag);
+    const start = folds.startOf(date, tag);
     rendered = renderedView(mount, doc, {
       interval,
       onChange: edited,
       onSelect: () => opts.onSelect?.(),
       nodeViews: { image: imageView(resolver(date, tag)) },
       /* given even off: refreshFolds switches it on */
-      folds: { kind, flipped: kind ? remembered(readFolds(ekey), kind) : [], onChange: (keys, now) => writeFolds(ekey, remembering(now, keys)) },
+      folds: { ...start, onChange: (keys) => folds.record(ekey, keys) },
       onRoute: (frag) => goto(frag, "already here"),
       onRefuse: (why) => say(why),
       onPasteFile: pasteFile,
@@ -255,9 +253,9 @@ export function startSession(opts: SessionOptions): Session {
     const view = live();
     if (!view) return;
     const st = foldsKey.getState(view.state);
-    const kind = foldKind(Object.keys(layer.cache), current.date, current.tag);
-    if (!st || st.kind === kind) return;
-    setFolds(kind, kind ? remembered(readFolds(ekeyOf()), kind) : [])(view.state, view.dispatch);
+    const start = folds.startOf(current.date, current.tag);
+    if (!st || st.kind === start.kind) return;
+    setFolds(start.kind, start.flipped)(view.state, view.dispatch);
     /* the folds moved the text under a held place: set again now, not a
        frame later when the size is observed (pin: places › the warm landed) */
     keeper.reapply();
@@ -507,8 +505,8 @@ export function startSession(opts: SessionOptions): Session {
     refreshFolds,
     movePlace: keeper.move,
     movePlaces: keeper.moveAll,
-    moveFolds: (moves) => { folds.write((s) => movedFolds(s, moves)); },
-    dropFolds: (keys) => { folds.write((s) => droppedFolds(s, keys)); },
+    moveFolds: (moves) => folds.move(moves),
+    dropFolds: (keys) => folds.drop(keys),
     setInterval: (n) => { interval = n; const v = live(); if (v) setLineInterval(n)(v.state, v.dispatch); },
   };
 }

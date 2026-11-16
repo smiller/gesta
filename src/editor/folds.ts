@@ -11,7 +11,7 @@ import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 import type { Node } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
 import { linkRuns } from "../store/links.ts";
-import type { FoldKind } from "../store/contents.ts";
+import type { FoldKind } from "../store/foldMemory.ts";
 import { counted } from "../ui/counted.ts";
 
 export interface FoldSection {
@@ -179,7 +179,7 @@ const unchanged = (prev: FoldState, s: Folding): boolean => s.kind === prev.kind
 export interface FoldOptions {
   kind: FoldKind | null;
   flipped: string[];
-  onChange?: (flipped: string[], kind: FoldKind) => void;
+  onChange?: (flipped: string[]) => void;
 }
 export function folds(opts: FoldOptions = { kind: null, flipped: [] }): Plugin<FoldState> {
   return new Plugin<FoldState>({
@@ -224,8 +224,8 @@ export function folds(opts: FoldOptions = { kind: null, flipped: [] }): Plugin<F
         /* apply returns the same state object when nothing changed: no keys
            are built on a keystroke that folds nothing */
         if (foldsKey.getState(prevState) === foldsKey.getState(view.state)) return;
-        const a = flippedKeys(prevState), b = flippedKeys(view.state), kind = foldsKey.getState(view.state)!.kind;
-        if (kind && a.join("\u0000") !== b.join("\u0000")) opts.onChange?.(b, kind);
+        const a = flippedKeys(prevState), b = flippedKeys(view.state);
+        if (foldsKey.getState(view.state)!.kind && a.join("\u0000") !== b.join("\u0000")) opts.onChange?.(b);
       },
     }),
   });

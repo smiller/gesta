@@ -58,6 +58,14 @@ subagents/agent-ac3130e0c30cc674a.jsonl, input 2 + cache creation 3,458
    key's bookmark is left for the list. A move-into left the twins' and
    the source's fold records: they go now. Lifecycle's rename, move and
    delete and the commonplaces move use it.
-2. One module for fold memory (Strong): open.
+2. One module for fold memory (Strong), grilled (asked): built as
+   src/store/foldMemory.ts over the stored adapter and the keys, in place
+   of foldState.ts and contents.ts's foldKind: which entries fold, one
+   flipped list an entry (a record from before holding open or closed read
+   as it), what an entry starts with, a change recorded, keys moved or
+   dropped. The plugin reports only the flipped keys; which way a kind
+   starts is written once, in folds.ts.
 3. The measuring passes and the view switch hear a fold change (Worth
-   exploring), with a misplacement on ⌃⌘M seen by hand: open.
+   exploring), with a misplacement on ⌃⌘M seen by hand: dropped, not
+   reproduced (five headless plays on 7 January 2025, and the reader's own
+   look); left for the next run over this code to raise again (asked).

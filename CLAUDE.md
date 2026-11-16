@@ -276,7 +276,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   each at its level, as one record, and what is wrong with them),
   `headings.ts` (titles), `search.ts`,
   `searchIndex.ts`, `indexStore.ts`, `bookmarks.ts`, `bookmarkStore.ts`,
-  `shortcuts.ts`, `contents.ts`, `foldState.ts`, `placeState.ts`,
+  `shortcuts.ts`, `contents.ts`, `foldMemory.ts` (which entries fold, and the
+  sections each holds otherwise than it starts them), `placeState.ts`,
   `links.ts` (links rewritten on a rename or delete), `shelves.ts`,
   `refile.ts`, `move.ts` (an entry to another key), `pictures.ts`,
   `toCommonplaces.ts` (once: the retired `page/` entries moved to

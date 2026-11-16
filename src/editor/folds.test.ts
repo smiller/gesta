@@ -179,9 +179,9 @@ test("on a journal day or a commonplace every section starts open but the ones r
   expect(flippedKeys(stateWith({ kind: "contents", flipped: ["Dedications"] }))).toEqual(["Dedications"]);
 });
 
-test("a change is reported with the kind the folds have now, so an entry switched to folding after it was drawn remembers what it opens", () => {
-  const told: [string[], string | null][] = [];
-  const plugin = folds({ kind: null, flipped: [], onChange: (keys, kind) => told.push([keys, kind]) });
+test("a change is reported once the folds are on, so an entry switched to folding after it was drawn remembers what it opens", () => {
+  const told: string[][] = [];
+  const plugin = folds({ kind: null, flipped: [], onChange: (keys) => told.push(keys) });
   let s = EditorState.create({ doc, plugins: [plugin] });
   const watcher = plugin.spec.view!({ state: s } as never);
   const step = (cmd: (st: EditorState, d: (tr: import("prosemirror-state").Transaction) => void) => boolean): void => {
@@ -191,5 +191,5 @@ test("a change is reported with the kind the folds have now, so an entry switche
   };
   step(setFolds("contents", []));
   step(toggleFold("Dedications"));
-  expect(told).toEqual([[["Dedications"], "contents"]]);
+  expect(told).toEqual([["Dedications"]]);
 });

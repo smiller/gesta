@@ -1,5 +1,5 @@
-import { test, describe, it, expect } from "vitest";
-import { contentsLinks, subEntryOrder, subEntryDisplayList, foldsContents, foldKind } from "./contents.ts";
+import { describe, it, expect } from "vitest";
+import { contentsLinks, subEntryOrder, subEntryDisplayList, foldsContents } from "./contents.ts";
 
 describe("contentsLinks", () => {
   it("links in document order with the section heading in force; a heading that is a link is a child where it stands", () => {
@@ -65,15 +65,4 @@ describe("foldsContents", () => {
     expect(foldsContents(keys, "commonplace", "Notes")).toBe(false);
     expect(foldsContents(keys, "2026-09-28", null)).toBe(false);
   });
-});
-
-test("a work's contents folds as contents; any journal day or commonplace by its sections; nothing else folds", () => {
-  const keys = ["bookshelf/Spenser, Edmund/The Faerie Queene", "bookshelf/Spenser, Edmund/The Faerie Queene/1.1", "bookshelf/Milton, John/Lycidas", "commonplace/Notes", "commonplace/Notes/Sub"];
-  expect(foldKind(keys, "bookshelf", "Spenser, Edmund/The Faerie Queene")).toBe("contents");
-  expect(foldKind(keys, "bookshelf", "Milton, John/Lycidas")).toBeNull();
-  expect(foldKind(keys, "bookshelf", "Spenser, Edmund")).toBeNull();
-  expect(foldKind(keys, "commonplace", "Notes")).toBe("sections");
-  expect(foldKind(keys, "commonplace", "Notes/Sub")).toBe("sections");
-  expect(foldKind(keys, "2026-09-28", null)).toBe("sections");
-  expect(foldKind(keys, "2026-09-28", "gesta-wrangling")).toBe("sections");
 });
