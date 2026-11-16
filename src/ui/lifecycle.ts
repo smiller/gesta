@@ -21,10 +21,11 @@ import { firstHeading } from "../store/headings.ts";
 import { nsOf, tagParts, entryKey, entryHash, KEYED_NS, NS_BOOK, plural } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { registered, childrenOf } from "../store/lists.ts";
+import type { KeptState } from "./keptState.ts";
 
 export type EditorPort = Pick<EditorView, "state" | "dispatch">;
 export interface SourcePort { insertAfter(text: string): void; inHeading(): boolean }
-export type SessionPort = Pick<Session, "current" | "save" | "open" | "movePlace" | "movePlaces" | "dropFolds" | "refresh" | "goto">;
+export type SessionPort = Pick<Session, "current" | "save" | "open" | "refresh" | "goto">;
 export interface Dialogs {
   prompt(text: string, value?: string): string | null;
   confirm(text: string): boolean;
@@ -49,7 +50,7 @@ export interface LifecycleDeps {
   session: SessionPort;
   dialogs: Dialogs;
   ui: UiPort;
-  moveKept(folds: Record<string, string>, bookmarks: Record<string, string>): void;
+  kept: KeptState;
   /* false when the store holds no picture under `from`; rejects when the write failed */
   copyPicture(from: string, to: string): Promise<boolean>;
   /* whether `to` holds a picture other than the one under `from` */
@@ -250,13 +251,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const oldKey = entryKey(t.date, t.old), newKey = entryKey(t.date, t.full);
     return layer.removeEntry(oldKey).then(() => retargetHost(t.date, t.old, t.full))
       .then(() => t.hand.land(newKey, (typed) => followedTag(t, typed))).then(() => {
-      /* the kept state before the open, the place after it (pin:
-         lifecycle.test › hands over, writes the new key) */
-      const kept = { [oldKey]: newKey };
-      deps.moveKept(kept, kept);
-      ui.replaceHash(entryHash(t.date, t.full));
-      session.open(t.date, t.full);
-      session.movePlace(oldKey, newKey);
+      deps.kept.relocate({ moved: { [oldKey]: newKey } }, () => { ui.replaceHash(entryHash(t.date, t.full)); session.open(t.date, t.full); });
       ui.redraw();
     });
   }
@@ -446,14 +441,9 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (r.mode === "refile") return refiledText(r.toTag, o);
     return movedText(r.to, { ...o, twins: Object.keys(r.plan.twins).length }, r.mode === "rename" ? "renamed" : "moved");
   }
-  /* the kept state before the open, the places after it */
   function arrived(r: Relocation, carried: Carried, t: Tally): void {
-    const twins = Object.keys(r.plan.twins), kept = keptMoves(r);
-    deps.moveKept(kept, { ...kept, ...r.plan.twins, ...(r.plan.into ? { [r.from]: r.to } : {}) });
-    ui.replaceHash(entryHash(r.toDate, r.toTag));
-    session.open(r.toDate, r.toTag);
-    session.movePlaces(kept);
-    for (const k of r.plan.into ? [...twins, r.from] : twins) session.movePlace(k, null);
+    const merged = { ...r.plan.twins, ...(r.plan.into ? { [r.from]: r.to } : {}) };
+    deps.kept.relocate({ moved: keptMoves(r), merged }, () => { ui.replaceHash(entryHash(r.toDate, r.toTag)); session.open(r.toDate, r.toTag); });
     ui.redraw();
     const text = outcomeText(r, carried, t);
     if (t.left.length || t.stayed.length) ui.pin(text);
@@ -468,11 +458,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const pictures = picturesOf(key, layer.entryMd(key));
     /* the landing FIRST, the remove after: a save still owed to the deleted
        entry, landing after its remove, resurrected it
-       (pin: lifecycle.test › opens the landing and drops the places and the folds BEFORE removing) */
-    ui.replaceHash(entryHash(back.date, back.tag));
-    session.open(back.date, back.tag, "arrive");
-    for (const k of [key, ...sweptKeys]) session.movePlace(k, null);
-    session.dropFolds([key, ...sweptKeys]);
+       (pin: lifecycle.test › tells the kept state the entry and its sub-entries are gone) */
+    deps.kept.relocate({ gone: [key, ...sweptKeys] }, () => { ui.replaceHash(entryHash(back.date, back.tag)); session.open(back.date, back.tag, "arrive"); });
     /* the text typed on the entry landed on is saved BEFORE the retarget
        reads the host, and the repaint comes only where the store moved (a
        lost link) */

@@ -287,7 +287,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `notices.svelte.ts` (the notice ledger), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
   `gotoModel.ts`, `subEntries.ts`, `lifecycle.ts` (the six acts over
-  entries, over ports), `overlays.ts` (one thing open at a time),
+  entries, over ports), `keptState.ts` (what the browser keeps by entry
+  key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabNotice.ts`, `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
   `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
   `heldKeys.ts`, `mastheadBottom.ts`, `journalLoad.ts` (the journal's

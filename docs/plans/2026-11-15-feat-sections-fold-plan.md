@@ -44,3 +44,20 @@ cache read 157,994 + output 2,910). Ten findings:
 9. A second pluraliser beside `counted`: `counted` used.
 10. A dead "contents" fallback and two hand-written inversions: the kind
     required, one `flipped` both ways.
+
+## The architecture run (the batch's files)
+
+Scan 121,817 tokens (MEASURED: the last usage line of
+subagents/agent-ac3130e0c30cc674a.jsonl, input 2 + cache creation 3,458
++ cache read 114,904 + output 3,453). Three candidates:
+
+1. One module for an entry's kept state (Strong), grilled (asked): built
+   as src/ui/keptState.ts, told once per act which keys moved, merged or
+   went, the open handed in; folds and bookmarks before the open, places
+   after; a merged key's bookmark follows, its folds and place go; a gone
+   key's bookmark is left for the list. A move-into left the twins' and
+   the source's fold records: they go now. Lifecycle's rename, move and
+   delete and the commonplaces move use it.
+2. One module for fold memory (Strong): open.
+3. The measuring passes and the view switch hear a fold change (Worth
+   exploring), with a misplacement on ⌃⌘M seen by hand: open.

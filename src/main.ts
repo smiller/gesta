@@ -18,6 +18,7 @@ import { screenState } from "./ui/screen.svelte.ts";
 import { loadPins, refuseCold } from "./ui/journalLoad.ts";
 import { mastheadModel } from "./ui/mastheadModel.ts";
 import { lifecycle } from "./ui/lifecycle.ts";
+import { keptState } from "./ui/keptState.ts";
 import { overlays } from "./ui/overlays.ts";
 import { bookmarkActs } from "./ui/bookmarkActs.ts";
 import { replaceActs } from "./ui/replaceActs.ts";
@@ -397,16 +398,18 @@ const fmt = formatBar({
   extract: () => life.extract(), head: document.querySelector(".site-head")!,
 });
 acts.bar = fmt.act;
+const kept = keptState({
+  places: { move: session.movePlace, moveAll: session.movePlaces },
+  folds: { move: session.moveFolds, drop: session.dropFolds },
+  bookmarks: { move: (moves) => marks.move(moves) },
+});
 const life = lifecycle({
   layer, journal, session,
   view: () => session.view,
   caretInEntry,
   source: () => session.mdView ? sourcePort : null,
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
-  moveKept: (folds, bookmarks) => {
-    session.moveFolds(folds);
-    marks.move(bookmarks);
-  },
+  kept,
   ...pictureMoves(images),
   ui: { say, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
 });
@@ -485,7 +488,7 @@ const loadPinned = loadPins(LOAD_PATIENCE_MS, notices);
 if (READER) wrote.then(loadPinned.start); else loadPinned.start();
 /* the pages became commonplaces before anything reads the keys: the
    lists, the search index, the backup's folders */
-primed.then(held).then(() => layer.warm()).then(() => loadPinned.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [session.moveFolds, session.movePlaces, marks.move], readOnly: READER })).then((migrated) => {
+primed.then(held).then(() => layer.warm()).then(() => loadPinned.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [(moved) => kept.relocate({ moved })], readOnly: READER })).then((migrated) => {
   if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
   stage("all"); count();
   say(Object.keys(layer.cache).length + " entries stored");

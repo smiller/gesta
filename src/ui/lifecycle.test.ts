@@ -1,3 +1,4 @@
+import type { KeptState, Relocation } from "./keptState.ts";
 import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
@@ -52,9 +53,6 @@ function fakeSession(log: string[], s: WorldState, layer: EntryLayerOf): Lifecyc
     get current() { return s.current; },
     save: loggedSave(log, s, layer),
     open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); s.current = { date, tag }; },
-    movePlace: (from, to) => { log.push("move " + from + " → " + to); },
-    movePlaces: (moves) => { log.push("places " + Object.entries(moves).map(([a, b]) => a + " → " + b).join(", ")); },
-    dropFolds: (keys) => { log.push("folds dropped " + keys.join(", ")); },
     refresh: () => { log.push("refresh"); return Promise.resolve(); },
     goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
   };
@@ -81,9 +79,12 @@ function fakePictures(o: Opts, log: string[], pics: Record<string, string>): Pic
   };
 }
 const shownMoves = (m: Record<string, string>): string => Object.entries(m).map(([a, b]) => a + " → " + b).join(", ");
-const fakeKept = (log: string[]): LifecycleDeps["moveKept"] => (folds, marks) => {
-  log.push("kept " + shownMoves(folds) + (shownMoves(marks) !== shownMoves(folds) ? " | marks " + shownMoves(marks) : ""));
-};
+const shownKept = (r: Relocation): string => [
+  r.moved && Object.keys(r.moved).length ? "moved " + shownMoves(r.moved) : "",
+  r.merged && Object.keys(r.merged).length ? "merged " + shownMoves(r.merged) : "",
+  r.gone?.length ? "gone " + r.gone.join(", ") : "",
+].filter(Boolean).join(" | ");
+const fakeKept = (log: string[]): KeptState => ({ relocate: (r, open) => { log.push("kept " + shownKept(r)); open?.(); } });
 function fakeUi(log: string[]): UiPort {
   return {
     say: (text) => { log.push("say " + text); },
@@ -111,7 +112,7 @@ async function world(o: Opts) {
     caretInEntry: () => !o.noCaret,
     source: () => (o.source && !s.dropped ? source : null),
     session: fakeSession(log, s, layer), dialogs: fakeDialogs(log, asked, answers),
-    ...fakePictures(o, log, pics), moveKept: fakeKept(log), ui: fakeUi(log),
+    ...fakePictures(o, log, pics), kept: fakeKept(log), ui: fakeUi(log),
   });
   return {
     life, layer, log, asked, pics,
@@ -333,7 +334,7 @@ describe("rename", () => {
     await same.life.rename();
     expect(same.log).toEqual(['alert A "C" sub-entry already exists.']);
   });
-  it("hands over, writes the new keys before clearing the old, its parent's link and every other following, carries what was typed meanwhile, then opens, moves the places and says so", async () => {
+  it("hands over, writes the new keys before clearing the old, its parent's link and every other following, carries what was typed meanwhile, then gives the kept state its moves with the open, and says so", async () => {
     const w = await world({ at: ["commonplace", "A/B"], entries: { "commonplace/A": "- [B](#commonplace/A/B)\n", "commonplace/A/B": "body\n", "commonplace/A/B/x": "", "commonplace/Q": "see [B](#commonplace/A/B/x)\n" } });
     w.typeMeanwhile("body more\n");
     w.answer("C");
@@ -344,7 +345,7 @@ describe("rename", () => {
     expect(before(l, "set commonplace/A", "del commonplace/A/B")).toBe(true);
     const moved = "commonplace/A/B → commonplace/A/C, commonplace/A/B/x → commonplace/A/C/x";
     expect(l.slice(l.indexOf("del commonplace/A/B/x") + 1)).toEqual([
-      "set commonplace/A/C", "kept " + moved, "hash #commonplace/A/C", "open commonplace/A/C", "places " + moved, "redraw", "say renamed to commonplace/A/C — 2 entries, links updated in 2 others",
+      "set commonplace/A/C", "kept moved " + moved, "hash #commonplace/A/C", "open commonplace/A/C", "redraw", "say renamed to commonplace/A/C — 2 entries, links updated in 2 others",
     ]);
     expect(w.md("commonplace/A/C")).toBe("body more\n");
     expect(w.md("commonplace/A/C/x")).toBe("");
@@ -563,8 +564,7 @@ describe("rename moves a page with its sub-entries", () => {
     const kept = "commonplace/Essays/2024-07-26-birds → " + TO + "/2024-07-26-birds";
     const merged = "commonplace/Essays/2026-07-22-essay → " + TO + "/2022-07-31-essay, commonplace/Essays → " + TO;
     expect(l.slice(l.findIndex((x) => x.startsWith("kept ")))).toEqual([
-      "kept " + kept + " | marks " + kept + ", " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "places " + kept,
-      "move commonplace/Essays/2026-07-22-essay → null", "move commonplace/Essays → null", "redraw",
+      "kept moved " + kept + " | merged " + merged, "hash #bookshelf/Miller%2C%20Sean/Essays", "open " + TO, "redraw",
       "say moved to " + TO + " — 2 entries, 1 there already deleted, links updated in 1 other",
     ]);
   });
@@ -638,13 +638,13 @@ describe("delete", () => {
     expect(no.asked).toEqual(['Delete the sub-entry "B"?']);
     expect(no.log).toEqual([]);
   });
-  it("opens the landing and drops the places and the folds BEFORE removing, then flushes, unlinks the host, refreshes, redraws, focuses", async () => {
+  it("tells the kept state the entry and its sub-entries are gone, the landing its open, BEFORE removing, then flushes, unlinks the host, refreshes, redraws, focuses", async () => {
     const w = await world({ at: ["commonplace", "A/B"], entries: { "commonplace/A": "- [B](#commonplace/A/B)\n", "commonplace/A/B": "body\n", "commonplace/A/B/x": "" } });
     w.answer(true);
     await w.life.remove();
     const l = w.log;
-    expect(l.slice(0, 5)).toEqual(["hash #commonplace/A", "open commonplace/A arrive", "move commonplace/A/B → null", "move commonplace/A/B/x → null", "folds dropped commonplace/A/B, commonplace/A/B/x"]);
-    expect(l.slice(5, 7).sort()).toEqual(["del commonplace/A/B", "del commonplace/A/B/x"]);
+    expect(l.slice(0, 3)).toEqual(["kept gone commonplace/A/B, commonplace/A/B/x", "hash #commonplace/A", "open commonplace/A arrive"]);
+    expect(l.slice(3, 5).sort()).toEqual(["del commonplace/A/B", "del commonplace/A/B/x"]);
     expect(l.slice(l.indexOf("flush"))).toEqual(["flush", "set commonplace/A", "refresh", "redraw", "focus"]);
     expect(w.md("commonplace/A/B")).toBeNull();
     expect(w.md("commonplace/A/B/x")).toBeNull();
@@ -788,8 +788,8 @@ describe("rename re-files an author with books", () => {
     expect(w.md("commonplace/Poets")).toBe("[Cavafy](#bookshelf/Cavafy%2C%20C.%20P)");
     expect(w.md("bookshelf/Carroll, Lewis")).toBe("# Lewis Carroll\n");
     const moved = "bookshelf/C. P. Cavafy → bookshelf/Cavafy, C. P, bookshelf/C. P. Cavafy/Candles → bookshelf/Cavafy, C. P/Candles, bookshelf/C. P. Cavafy/Walls → bookshelf/Cavafy, C. P/Walls";
-    expect(l.slice(l.indexOf("kept " + moved))).toEqual([
-      "kept " + moved, "hash #bookshelf/Cavafy%2C%20C.%20P", "open bookshelf/Cavafy, C. P", "places " + moved,
+    expect(l.slice(l.indexOf("kept moved " + moved))).toEqual([
+      "kept moved " + moved, "hash #bookshelf/Cavafy%2C%20C.%20P", "open bookshelf/Cavafy, C. P",
       "redraw", "say filed under Cavafy, C. P — 3 entries moved, links updated in 2 others",
     ]);
   });
