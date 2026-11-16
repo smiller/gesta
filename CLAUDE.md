@@ -257,10 +257,11 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     and the arrival back; no DOM.
   - Keys and acts: `typing.ts` (markdown as you type), `format.ts` (the
     toolbar's acts), `sourceKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
-    `gridKeys.ts`, `listKeys.ts`, `links.ts` (a click on a link),
-    `insertLink.ts`, `highlight.ts` (the jump to a highlight), `folds.ts`
-    (a contents page's folds), `codeHighlight.ts`, `images.ts` (the image
-    node view), `inlineStyles.ts`.
+    `gridKeys.ts`, `tableKeys.ts` (Enter a cell down, out from the last
+    row), `listKeys.ts`, `links.ts` (a click on a link), `insertLink.ts`,
+    `highlight.ts` (the jump to a highlight), `folds.ts` (a contents
+    page's folds), `codeHighlight.ts`, `images.ts` (the image node view),
+    `inlineStyles.ts`.
   - `editor.ts` (the view with its plugins), `editor.css`. The command
     tests are markdown in, a caret, the command, markdown and caret out.
 - `src/store/` — storage, no DOM: `keys.ts` (what an entry key is, the

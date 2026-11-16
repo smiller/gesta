@@ -23,6 +23,7 @@ import { codeKeymap } from "./codeKeys.ts";
 import { jump, escapeJump } from "./highlight.ts";
 import { quoteKeymap } from "./quoteKeys.ts";
 import { gridKeymap } from "./gridKeys.ts";
+import { tableKeymap } from "./tableKeys.ts";
 import { pasteProps } from "./paste.ts";
 import { copyProps } from "./copy.ts";
 import { landing } from "./landing.ts";
@@ -167,6 +168,7 @@ export function editorState(doc: Node, interval: number, onRefuse?: (why: string
       listKeymap(say),
       quoteKeymap(say),
       gridKeymap(say),
+      tableKeymap,
       formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),

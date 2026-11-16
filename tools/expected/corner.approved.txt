@@ -432,6 +432,11 @@ editing as the help says: arrived at commonplace/Quoted Heading: {"cursor":"at a
 Tab on a heading in a quote: {"md":">> ## Quoted head\n> \n> quoted text","cursor":"inside a line","screen":"commonplace/Quoted Heading · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 editing as the help says: arrived at commonplace/Quoted Table: {"cursor":"at a line's start"}
 Tab in a table in a quote: {"md":"> quoted text\n> \n>> | a | b |\n>> | --- | --- |\n>> | 1 | 2 |","cursor":"inside a line","screen":"commonplace/Quoted Table · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+== Enter in a table
+Enter in a table: arrived at commonplace/Table Enter: {"cursor":"at a line's start"}
+Enter in a cell: {"in":"td \"4\"","cursor":"at the end","screen":"commonplace/Table Enter · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Enter in the last row: {"in":"p \"\"","cursor":"at the end","screen":"commonplace/Table Enter · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+typed after the table: {"md":"| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nafter","cursor":"at the end","screen":"commonplace/Table Enter · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == editing
 editing: arrived at commonplace/Quote Enter: {"cursor":"at a line's start"}
 Enter inside a quote, new typed: {"md":"> one\n> new\n> two","cursor":"at a line's start","screen":"commonplace/Quote Enter · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

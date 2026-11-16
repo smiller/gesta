@@ -326,3 +326,19 @@ async function tabTableQuote(): Promise<void> {
   await rest(page);
   await log("Tab in a table in a quote", { md: await A.stored(page) });
 }
+
+section("Enter in a table", async () => {
+  /* Enter goes a cell down, and from the last row out of the table into a new line; the table unchanged */
+  await write("commonplace/Table Enter", "| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n");
+  await caretAt("2", 1);
+  const where = () => page.evaluate(() => { const n = getSelection()?.anchorNode; const e = n?.nodeType === 1 ? (n as Element) : n?.parentElement; const b = e?.closest("td, th, p"); return b ? b.tagName.toLowerCase() + " " + JSON.stringify(b.textContent) : null; });
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("Enter in a cell", { in: await where() });
+  await page.keyboard.press("Enter");
+  await rest(page);
+  await log("Enter in the last row", { in: await where() });
+  await page.keyboard.type("after");
+  await rest(page);
+  await log("typed after the table", { md: await A.stored(page) });
+});
