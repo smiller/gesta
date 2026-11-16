@@ -22,7 +22,7 @@ export interface Namespace {
   noun: string;
   subNoun: string;
   /* an unknown key opens, and registers on its first save (pin: bridge › an
-     unknown page mints on visit) */
+     unknown commonplace mints on visit) */
   mintsOnVisit: boolean;
   /* whether a reference from here carries a locator — the selection's line
      range, or the leaf it sits on. A named document or a day is not about
@@ -30,11 +30,12 @@ export interface Namespace {
   refersWithLocator: boolean;
   /* whether a root's KEY and its LABEL are different strings: a book's root is
      an author, keyed "Milton, John" and labelled "John Milton" by the entry's
-     own heading. A page's name is the label (pin: keys.test › titlesRoots) */
+     own heading. A commonplace's name is the label (pin: keys.test ›
+     titlesRoots) */
   titledRoots: boolean;
   /* whether a reference reads a DIVISION WORD plus a number as a numeral —
-     "Book 1", "Scène 2". False for pages: MEASURED, "Books 1–25" read as a
-     division swallowed the whole page name. */
+     "Book 1", "Scène 2". False for commonplaces: MEASURED, "Books 1–25" read
+     as a division swallowed the whole commonplace's name. */
   numeralDivisions: boolean;
 }
 export const NS_COMMONPLACE: Namespace = {

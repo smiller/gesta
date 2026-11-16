@@ -209,12 +209,12 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   const gotoBefore = await options();
   await warmed(slow);
   await log("Go to opened before the warm", { more: (await options()) > gotoBefore, focusInRow: await slow.evaluate(() => !!document.activeElement?.closest(".page-goto, #pagegoto")) });
-  const shelf = () => slow.evaluate(() => { const p = document.querySelector(".pages, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
+  const shelf = () => slow.evaluate(() => { const p = document.querySelector(".lists, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
   await slow.goto(A.url("commonplace/Horace", "warm=slow&again=2"));
   await rest(slow);
   await slow.click(S.booksOpener, { timeout: 2000 }).catch(() => {});
   await rest(slow);
-  await slow.evaluate(() => document.querySelector(".pages .panel-new, #bookspanel .panel-new")?.focus());
+  await slow.evaluate(() => document.querySelector(".lists .panel-new, #bookspanel .panel-new")?.focus());
   await slow.mouse.move(5, 700);
   const shelfBefore = await shelf();
   await warmed(slow);
@@ -246,7 +246,7 @@ section("pill", async () => {
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
 });
 section("a rename keeps a label's marks", async () => {
-  /* last of all: the pages seeded here would show in the lists of any
+  /* last of all: the commonplaces seeded here would show in the lists of any
      section after */
   /* a hand-written label part italic, its entry renamed: the label keeps its marks */
   await A.foreignWrite(page, "commonplace/Rename Host", "See [the *Ideas* page](#commonplace/Rename%20Host/Ideas) here.\n");
@@ -254,7 +254,7 @@ section("a rename keeps a label's marks", async () => {
   await go("commonplace/Rename%20Host");
   await go("commonplace/Rename%20Host/Ideas");
   setAnswer("Plans");
-  await page.click(S.renameSubPage);
+  await page.click(S.renameSubEntry);
   await A.waitEntry(page, "commonplace/Rename Host/Plans", 5000).catch(() => {});
   for (let i = 0; i < 30 && !((await A.stored(page, "commonplace/Rename Host")) || "").includes("/Plans"); i++) await rest(page);
   await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "commonplace/Rename Host")) || "").split("\n")[0] });
@@ -277,9 +277,9 @@ async function bookshelfShelves(): Promise<void> {
   await A.waitEntry(page, "2026-09-06", 5000).catch(() => {});
   await page.click(S.booksOpener);
   /* the list is answered again when the store's read ends: the shelves come with it */
-  const shelvesShown = await page.waitForSelector(".pages .shelf", { timeout: 5000 }).then(() => true, () => false);
+  const shelvesShown = await page.waitForSelector(".lists .shelf", { timeout: 5000 }).then(() => true, () => false);
   await log("the bookshelf on its shelves", { seeded, shelvesShown, rows: await list() });
-  await page.click(".pages button.panel-new:has-text('Shelves…')");
+  await page.click(".lists button.panel-new:has-text('Shelves…')");
   await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
   await log("Shelves… clicked", { entry: await A.entry(page), panel: await R.panel(page) });
   /* a shelf renamed, the list opened at once: the list reads the text as typed */
@@ -290,10 +290,10 @@ async function bookshelfShelves(): Promise<void> {
   /* the bar the double-click floated hides once the typing has collapsed the selection: read before it went, the screen said so */
   await page.waitForFunction(() => !document.querySelector(".fmt")?.classList.contains("show"), null, { timeout: 2000 }).catch(() => {});
   await page.click(S.booksOpener);
-  await page.waitForSelector(".pages .shelf", { timeout: 5000 }).catch(() => {});
+  await page.waitForSelector(".lists .shelf", { timeout: 5000 }).catch(() => {});
   await log("a shelf renamed, the list opened at once", { rows: await list() });
 }
-const list = () => page.evaluate(() => { const p = document.querySelector(".pages"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
+const list = () => page.evaluate(() => { const p = document.querySelector(".lists"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
 async function goBoxShelves(): Promise<void> {
   await page.keyboard.press("Escape");
   await go("2026-09-06");

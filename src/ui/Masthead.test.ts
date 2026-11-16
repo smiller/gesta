@@ -55,9 +55,9 @@ describe("Masthead", () => {
     expect(draw("2026-09-07", null, { panel: "commonplace", rows: [] })).not.toMatch(/>Shelves…</);
   });
   it("no panel by default; an open commonplaces panel lists its rows and the create row; an empty shelf explains itself", () => {
-    expect(draw("2026-09-07", null)).not.toContain('class="pages');
+    expect(draw("2026-09-07", null)).not.toContain('class="lists');
     const html = draw("2026-09-07", null, { panel: "commonplace", rows: [{ text: "Books", href: "#commonplace/Books" }] });
-    expect(html).toMatch(/<nav class="pages[^"]*">(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books"[^>]*>Books<\/a>/);
+    expect(html).toMatch(/<nav class="lists[^"]*">(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books"[^>]*>Books<\/a>/);
     expect(html).toContain(">New commonplace…</button>");
     expect(html).not.toContain("panel-empty");
     const shelf = draw("2026-09-07", null, { panel: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });

@@ -15,13 +15,13 @@ export function linkRefusal(state: EditorState): string {
   return "";
 }
 export const HEADING_REFUSAL = "no link inside a heading — place your cursor below it";
-/* a heading is a page's name: a new page's link placed there would rename
-   the page it is minted on (pin: insertLink.test › headingRefusal) */
+/* a heading is an entry's name: a new entry's link placed there would
+   rename the entry it is minted on (pin: insertLink.test › headingRefusal) */
 export function headingRefusal(state: EditorState): string {
   return state.selection.$to.parent.type === schema.nodes.heading ? HEADING_REFUSAL : "";
 }
 /* a selection that leaves part of a heading behind, the link landing in it;
-   one holding a whole heading is the new page's (pin: lifecycle.test › the
+   one holding a whole heading is the new entry's (pin: lifecycle.test › the
    Tag button refuses a selection that cuts into a heading) */
 export function cutsHeading(state: EditorState): boolean {
   const { $from, $to } = state.selection;

@@ -79,7 +79,7 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
          (pin: bookmarkStore.test › a shared store that cannot be read drops nothing) */
       let stored: string[];
       try { stored = await opts.storedKeys(); } catch { return false; }
-      /* the keys asked again: a page made and bookmarked during the read
+      /* the keys asked again: an entry made and bookmarked during the read
          (pin: bookmarkStore.test › the drop is judged on the list and the keys as they stand) */
       const live = reachableBookmarks(list, keys().concat(stored));
       return live.length !== list.length && write(live);

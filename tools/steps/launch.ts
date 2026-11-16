@@ -10,7 +10,7 @@ async function afterWarm(): Promise<void> {
   await log("masthead over Horace", await R.masthead(page));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-masthead.png"), clip: { x: 0, y: 0, width: 1000, height: 130 } });
   await page.click(S.commonplacesOpener);
-  await log("pages panel", await R.panel(page));
+  await log("lists panel", await R.panel(page));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-panel.png"), clip: { x: 0, y: 0, width: 600, height: 260 } });
   await page.click(S.booksOpener);
   await log("books panel, displacing it", await R.panel(page));

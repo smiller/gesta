@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { contentsLinks, subPageOrder, subPageDisplayList, foldsContents } from "./contents.ts";
+import { contentsLinks, subEntryOrder, subEntryDisplayList, foldsContents } from "./contents.ts";
 
 describe("contentsLinks", () => {
   it("links in document order with the section heading in force; a heading that is a link is a child where it stands", () => {
@@ -11,7 +11,7 @@ describe("contentsLinks", () => {
     ]);
   });
 });
-describe("subPageOrder", () => {
+describe("subEntryOrder", () => {
   const cache: Record<string, string> = {
     "bookshelf/Dante": "[Inferno](#bookshelf/Dante/Inferno), [Purgatorio](#bookshelf/Dante/Purgatorio), [Paradiso](#bookshelf/Dante/Paradiso)",
     "bookshelf/Dante/Inferno": "i", "bookshelf/Dante/Purgatorio": "p", "bookshelf/Dante/Paradiso": "pa", "bookshelf/Dante/Notes": "",
@@ -20,34 +20,34 @@ describe("subPageOrder", () => {
   const keys = Object.keys(cache);
   const bearing = (k: string) => !!(cache[k] || "").trim();
   it("a book that links every content-bearing sub states its order; a blank gets no vote and rides the end", () => {
-    const o = subPageOrder({ keys, bearing }, "bookshelf/Dante", cache["bookshelf/Dante"]);
+    const o = subEntryOrder({ keys, bearing }, "bookshelf/Dante", cache["bookshelf/Dante"]);
     expect(o.stated).toBe(true);
     expect(o.names).toEqual(["Inferno", "Purgatorio", "Paradiso", "Notes"]);
   });
   it("an entry mentioning one sub mid-sentence keeps the alphabet", () => {
-    const o = subPageOrder({ keys, bearing }, "commonplace/Plain", cache["commonplace/Plain"]);
+    const o = subEntryOrder({ keys, bearing }, "commonplace/Plain", cache["commonplace/Plain"]);
     expect(o).toEqual({ names: ["One", "Two"], rows: null, stated: false });
-    expect(subPageOrder({ keys, bearing }, "commonplace/None", "")).toEqual({ names: [], rows: null, stated: false });
+    expect(subEntryOrder({ keys, bearing }, "commonplace/None", "")).toEqual({ names: [], rows: null, stated: false });
   });
   it("the memo answers by the parent's text, not its name", () => {
     const memo = new Map();
-    subPageOrder({ keys, bearing }, "bookshelf/Dante", cache["bookshelf/Dante"], memo);
+    subEntryOrder({ keys, bearing }, "bookshelf/Dante", cache["bookshelf/Dante"], memo);
     expect(memo.get("bookshelf/Dante").links.length).toBe(3);
   });
 });
-describe("subPageDisplayList", () => {
+describe("subEntryDisplayList", () => {
   const bearing = () => true;
   it("a feed of dated names lists newest first; an undated name keeps reading order; a stated order is never flipped", () => {
     const feed = { names: ["2023-01-01-a", "2023-02-01-b"], rows: null, stated: false };
-    expect(subPageDisplayList(feed, "commonplace/F", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
+    expect(subEntryDisplayList(feed, "commonplace/F", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
     const mixed = { names: ["2023-01-01-a", "intro"], rows: null, stated: false };
-    expect(subPageDisplayList(mixed, "commonplace/M", bearing, null)).toEqual(["2023-01-01-a", "intro"]);
+    expect(subEntryDisplayList(mixed, "commonplace/M", bearing, null)).toEqual(["2023-01-01-a", "intro"]);
     const stated = { names: ["2023-02-01-b", "2023-01-01-a"], rows: [], stated: true };
-    expect(subPageDisplayList(stated, "commonplace/S", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
+    expect(subEntryDisplayList(stated, "commonplace/S", bearing, null)).toEqual(["2023-02-01-b", "2023-01-01-a"]);
   });
   it("the extra joins the end of a stated order and is sorted into an alphabetical one", () => {
-    expect(subPageDisplayList({ names: ["b", "a"], rows: [], stated: true }, "p", bearing, "c")).toEqual(["b", "a", "c"]);
-    expect(subPageDisplayList({ names: ["a", "c"], rows: null, stated: false }, "p", bearing, "b")).toEqual(["a", "b", "c"]);
+    expect(subEntryDisplayList({ names: ["b", "a"], rows: [], stated: true }, "p", bearing, "c")).toEqual(["b", "a", "c"]);
+    expect(subEntryDisplayList({ names: ["a", "c"], rows: null, stated: false }, "p", bearing, "b")).toEqual(["a", "b", "c"]);
   });
 });
 

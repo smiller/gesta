@@ -65,7 +65,7 @@ say("seed, open #commonplace/Horace", await launch(PAGE + "#commonplace/Horace",
 say("open a book page", await launch(PAGE + "#bookshelf/Browning,%20Robert/Pippa%20Passes", read));
 say("open a day", await launch(PAGE + "#2026-09-06", read));
 say("an unknown book is refused", await launch(PAGE + "#bookshelf/Nobody/Nothing", read));
-say("an unknown page mints on visit", await launch(PAGE + "#commonplace/Brand%20New", read));
+say("an unknown commonplace mints on visit", await launch(PAGE + "#commonplace/Brand%20New", read));
 say("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");

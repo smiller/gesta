@@ -41,11 +41,11 @@ export function unmintedKey(keys: string[], date: string, tag: string | null): b
    stated order, at its END: an unsaved sub placed by comparison in an order
    that is not alphabetical walked to the top of the index. Blank siblings
    are skipped lazily, each direction probing only until its first hit (pin:
-   lists.test › subPageNeighbors: siblings in reading order, blanks skipped,
+   lists.test › subEntryNeighbors: siblings in reading order, blanks skipped,
    an unlisted sub placed by comparison) */
 /* THE ORDER IS THE CALLER'S TO GIVE: a book's index states its own — in the
    Consolatio the prose and the verse alternate, 3pr1 then 3m1; by name, ⌃⌘.
-   from 3pr1 went to 3pr2 (pin: lists.test › subPageNeighbors walks the
+   from 3pr1 went to 3pr2 (pin: lists.test › subEntryNeighbors walks the
    order it is given) */
 export interface Walk { keys: string[]; bearing: (key: string) => boolean }
 function startAt(subs: string[], sub: string, stated: boolean): number {
@@ -56,7 +56,7 @@ function startAt(subs: string[], sub: string, stated: boolean): number {
   while (i < subs.length && byName(subs[i], sub) < 0) i++;
   return i;
 }
-export function subPageNeighbors(walk: Walk, parentKey: string, sub: string, order?: string[]): Neighbors {
+export function subEntryNeighbors(walk: Walk, parentKey: string, sub: string, order?: string[]): Neighbors {
   const subs = order || childrenOf(walk.keys, parentKey);
   const at = startAt(subs, sub, !!order);
   const bears = (s: string): boolean => s !== sub && walk.bearing(entryKey(parentKey, s));
@@ -66,7 +66,7 @@ type Step = [string, string | null] | null;
 export interface NavSteps { prev: Step; next: Step }
 function subNeighbors(walk: Walk, date: string, pp: ReturnType<typeof tagParts>, orderOf?: (parentKey: string) => string[]): NavSteps {
   const parentKey = entryKey(date, pp.parent);
-  const nb = subPageNeighbors(walk, parentKey, pp.leaf, orderOf?.(parentKey));
+  const nb = subEntryNeighbors(walk, parentKey, pp.leaf, orderOf?.(parentKey));
   const at = (s: string | null): Step => (s ? [date, pp.parent + "/" + s] : null);
   return { prev: at(nb.prev), next: at(nb.next) };
 }

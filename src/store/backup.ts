@@ -74,7 +74,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   let committedSig: string | null = null;
   /* a synchronous "a folder is configured" mirror for the edit hot path,
      seeded from the durable hint; the run's store read corrects it */
-  let configured = !!readRaw(BACKUP_ON);   /* every hint read and written inside try: reaching localStorage throws where it is refused (pin: entries left and renamed › a page opened with localStorage refused) */
+  let configured = !!readRaw(BACKUP_ON);   /* every hint read and written inside try: reaching localStorage throws where it is refused (pin: entries left and renamed › a commonplace opened with localStorage refused) */
   let handle: Dir | null = null;   /* cached so a resume can requestPermission SYNCHRONOUSLY in the click */
   let running: Promise<void> | null = null;   /* the single-flight latch */
   let trouble = "";

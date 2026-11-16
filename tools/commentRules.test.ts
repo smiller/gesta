@@ -82,7 +82,7 @@ describe("the pins", () => {
   });
   test("a bridge pin is a step of the bridge tool and a line of its approved run", () => {
     expect(why("(pin: bridge › an unknown book is refused)")).toEqual([null]);
-    expect(why("(pin: bridge › an unknown page mints)")[0]).toMatch(/^no step/);
+    expect(why("(pin: bridge › an unknown commonplace mints)")[0]).toMatch(/^no step/);
   });
   test("a reader pin is a reading of the reader's approved run", () => {
     expect(why("(pin: reader › Escape after the hit)")).toEqual([null]);

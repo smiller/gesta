@@ -15,7 +15,7 @@
    parent's contents. */
 import { isDayKey, nsOf, tagParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, COMMONPLACE_KEY, NS_BOOK } from "../store/keys.ts";
 import { dayKeys, childrenOf } from "../store/lists.ts";
-import { subPageOrder, subPageDisplayList, type Bearing, type OrderMemo, type SubOrder } from "../store/contents.ts";
+import { subEntryOrder, subEntryDisplayList, type Bearing, type OrderMemo, type SubOrder } from "../store/contents.ts";
 import type { Journal } from "../store/reference.ts";
 import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
 import { nsGroupLabel } from "./searchModel.ts";
@@ -93,8 +93,8 @@ export interface Want { sub: string | null; home: boolean; level: number; deep: 
 interface Listing { listKey: string; order: SubOrder; subs: string[]; group: string | null; took: number; sub: string | null }
 function bearingSubs(w: GotoWorld, key: string, memo: OrderMemo, extra: string | null): { order: SubOrder; subs: string[] } {
   const bearing = bearingOf(w);
-  const order = subPageOrder({ keys: w.keys, bearing }, key, w.cache[key] || "", memo);
-  return { order, subs: subPageDisplayList(order, key, bearing, extra).filter((s) => bearing(entryKey(key, s))) };
+  const order = subEntryOrder({ keys: w.keys, bearing }, key, w.cache[key] || "", memo);
+  return { order, subs: subEntryDisplayList(order, key, bearing, extra).filter((s) => bearing(entryKey(key, s))) };
 }
 function listing(w: GotoWorld, ns: string, path: string, want: Want): Listing {
   const memo: OrderMemo = new Map(), listKey = entryKey(ns, path);

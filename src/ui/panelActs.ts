@@ -47,7 +47,7 @@ export function panelActs(d: PanelDeps): Panels {
     backups: () => { d.open("backups"); d.readBackups(); screen.panel = "backups"; },
   };
   const openList = (ns: Ns): void => {
-    d.open("pages");
+    d.open("lists");
     /* the list reads the text as typed (pin: shelves › a shelf renamed, the list opened at once) */
     session.save.flush();
     answerPanel(ns);
@@ -67,7 +67,7 @@ export function panelActs(d: PanelDeps): Panels {
   const reanswer = (): void => {
     const ns = screen.panel;
     if (listed(ns)) {
-      const el = document.querySelector(".pages");
+      const el = document.querySelector(".lists");
       const answer = (): void => { if (screen.panel === ns) answerPanel(ns); };
       if (el?.matches(":hover")) el.addEventListener("mouseleave", answer, { once: true });
       else answer();

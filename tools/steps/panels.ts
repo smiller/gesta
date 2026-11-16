@@ -102,11 +102,11 @@ section("backups", async () => {
   await log("Escape", { card: await R.backupsOpen(page) });
 });
 section("help", async () => {
-  /* help: ⌃⌘H opens the card over the entry and closes the pages panel; Escape closes it */
+  /* help: ⌃⌘H opens the card over the entry and closes the lists panel; Escape closes it */
   await page.click(S.commonplacesOpener);
   await page.keyboard.press("Control+Meta+h");
   await rest(page);
-  await log("⌃⌘H over an open pages panel", await R.help(page));
+  await log("⌃⌘H over an open lists panel", await R.help(page));
   await page.keyboard.press("Escape");
   await log("Escape", await R.helpOpen(page));
 });

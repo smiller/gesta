@@ -61,13 +61,13 @@ export const act = {
 export const sel = {
   editor: "#editor .ProseMirror", editorFirst: "#editor .ProseMirror > :first-child",
   commonplacesOpener: ".opener[title='List the commonplaces']", booksOpener: ".opener[title='List the authors on the bookshelf']",
-  panelRow: (name: string) => ".pages a[title='" + name + "']",
+  panelRow: (name: string) => ".lists a[title='" + name + "']",
   corner: ".saved.show", backupsButton: ".toolbtn[title='Automatic folder backups']",
   replaceWith: "#replacewith", replaceAll: ".replacebar button[title^='Replace every']", replaceSkip: ".replacebar button[title^='Leave this']",
   source: "textarea.source", copybtn: ".copybtn", fmtB: ".fmt .b", fmtTag: ".fmt .t",
   shortcutsEditor: ".shortcuts .shortcut-edit", shortcutsSave: ".shortcuts .editbox .toolbtn", shortcutsInput: ".shortcuts .search-input",
   bookmarkKey: ".bookmarks .bookmark-setalias", bookmarkDel: ".bookmarks .bookmark-del",
-  tagbarLink: (href: string) => ".tagbar a[href='" + href + "']", renameButton: ".toolbtn[title=\"Rename this entry’s tag\"]", renameSubPage: ".toolbtn[title^='Rename this']", renameAuthor: ".toolbtn[title='Rename this author']", newAuthor: ".pages .panel-new", deleteButton: ".toolbtn[title='Delete this tagged entry']",
+  tagbarLink: (href: string) => ".tagbar a[href='" + href + "']", renameButton: ".toolbtn[title=\"Rename this entry’s tag\"]", renameSubEntry: ".toolbtn[title^='Rename this']", renameAuthor: ".toolbtn[title='Rename this author']", newAuthor: ".lists .panel-new", deleteButton: ".toolbtn[title='Delete this tagged entry']",
   gotoDay: ".page-goto select[aria-label='Day']", gotoDestination: ".page-goto select[aria-label='Destination']", searchScope: ".page-search select", searchRows: ".search-results li",
   editorLink: (href: string) => "#editor a[href='" + href + "']", editorImg: "#editor img", editorPre: "#editor pre", editorVerse: "#editor .verse", editorCard: "#editor .card-light-blue", editorCell: "#editor .vpair .vcell",
 };
@@ -82,7 +82,7 @@ function selectedNow(): string {
   return sel && !sel.isCollapsed ? sel.toString().length + " chars" : "none";
 }
 function openPanel(): string {
-  const panel = [["pages", ".pages"], ["help", ".helppanel:not(.bookmarks):not(.backups)"], ["bookmarks", ".bookmarks"], ["backups", ".backups"], ["shortcuts", ".shortcuts"]].find(([, c]) => pageShows(c));
+  const panel = [["lists", ".lists"], ["help", ".helppanel:not(.bookmarks):not(.backups)"], ["bookmarks", ".bookmarks"], ["backups", ".backups"], ["shortcuts", ".shortcuts"]].find(([, c]) => pageShows(c));
   return panel ? panel[0] : "none";
 }
 function openRows(): string {
@@ -253,7 +253,7 @@ export const read = {
   cornerText: (page: Page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent),
   cornerTextOrEmpty: (page: Page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),
   masthead: (page: Page) => page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; }),
-  panel: (page: Page) => page.evaluate(() => { const p = document.querySelector(".pages"); return p ? { rows: [...p.querySelectorAll("a")].map((a) => a.textContent), create: p.querySelector(".panel-new")?.textContent, empty: p.querySelector(".panel-empty")?.textContent } : null; }),
+  panel: (page: Page) => page.evaluate(() => { const p = document.querySelector(".lists"); return p ? { rows: [...p.querySelectorAll("a")].map((a) => a.textContent), create: p.querySelector(".panel-new")?.textContent, empty: p.querySelector(".panel-empty")?.textContent } : null; }),
   afterModClick: (page: Page) => page.evaluate(() => ({ stayed: document.documentElement.dataset.entry, nodeSelected: !!document.querySelector(".ProseMirror-selectednode"), selection: document.getSelection()?.toString().slice(0, 20), bar: document.querySelector(".fmt")?.classList.contains("show") })),
   pairs: (page: Page) => page.evaluate(() => document.querySelectorAll("#editor .vpair").length),
   refusedFence: (page: Page) => page.evaluate(() => ({ corner: document.querySelector(".saved.show")?.textContent, paragraphs: document.querySelectorAll("#editor p").length })),
@@ -312,7 +312,7 @@ export const read = {
   bookmarksLit: (page: Page) => page.evaluate(() => [...document.querySelectorAll(".bookmarks li.bookmark-typing")].length),
   backups: (page: Page) => page.evaluate(() => { const c = document.querySelector(".backups"); return c ? { buttons: [...c.querySelectorAll("button")].map((b) => b.textContent), status: c.querySelector(".backups-status")?.textContent || null } : null; }),
   backupsOpen: (page: Page) => page.evaluate(() => !!document.querySelector(".backups")),
-  help: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden, pages: !!document.querySelector(".pages"), heading: document.querySelector(".helppanel h3")?.textContent })),
+  help: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden, lists: !!document.querySelector(".lists"), heading: document.querySelector(".helppanel h3")?.textContent })),
   helpOpen: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden })),
   linebar: (page: Page) => page.evaluate(() => { const b = document.querySelector(".linebar"); const marked = document.querySelector("#editor .landed"); const r = marked?.getBoundingClientRect(); return { open: !b.hidden, focused: document.activeElement?.classList.contains("ProseMirror") ? "editor" : document.activeElement?.id, ...(b.querySelector("label[for=stanzainput]") && !b.querySelector("label[for=stanzainput]").parentElement.hidden ? { stanzaBox: true } : {}), lineBox: !b.querySelector("label[for=lineinput]").parentElement.hidden, pageBox: !b.querySelector("label[for=pageinput]").parentElement.hidden, marked: marked ? (marked.dataset.line || marked.dataset.page || marked.className) : null, centred: r ? Math.round((r.top + r.bottom) / 2 - innerHeight / 2) : null, corner: document.querySelector(".saved.show")?.textContent || "" }; }),
   caretRow: (page: Page) => page.evaluate(() => document.getSelection()?.anchorNode?.parentElement?.closest(".vrow")?.dataset.line),

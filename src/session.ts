@@ -9,7 +9,7 @@ import { entryKey, entryHash, todayKey, nsOf, tagParts, NS, asAddress } from "./
 import { entryFile } from "./store/names.ts";
 import { hashParts } from "./store/nav.ts";
 import { navNeighbors, unmintedKey, registered } from "./store/lists.ts";
-import { subPageOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
+import { subEntryOrder, foldsContents, type ContentsLink } from "./store/contents.ts";
 import { parseFoldStore, foldPage, withFoldPage, movedFolds, type FoldPage } from "./store/foldState.ts";
 import { stored } from "./store/local.ts";
 import { errText } from "./store/files.ts";
@@ -249,7 +249,7 @@ export function startSession(opts: SessionOptions): Session {
     show();
     if (!surface.forced) replayPending();
   }
-  /* a page opened before the warm drew unfolded, its sub-entries not yet in
+  /* an entry opened before the warm drew unfolded, its sub-entries not yet in
      the cache (pin: places › the warm landed) */
   function refreshFolds(): void {
     const view = live();
@@ -325,7 +325,7 @@ export function startSession(opts: SessionOptions): Session {
     const h = hashParts(asAddress(location.hash));
     /* AFTER THE WARM an address the cache lacks is read from the store
        first: another window may have written it since
-       (pin: bookmarks from another window › its row's page opened from the first).
+       (pin: bookmarks from another window › its row's commonplace opened from the first).
        A read answers only while its own address is still the one asked
        for: a later address opened by an earlier read went unread. What was
        typed into the entry still on screen during the read is written
@@ -344,8 +344,8 @@ export function startSession(opts: SessionOptions): Session {
      typing (a rename's suspension counted as such), or, deleted, kept on
      screen with its saves refused
      (pin: tabNotice.test › the entry on screen)
-     (pin: bookmarks from another window › the page open in the first, saved in the second)
-     (pin: bookmarks from another window › typed into the page deleted in the second) */
+     (pin: bookmarks from another window › the commonplace open in the first, saved in the second)
+     (pin: bookmarks from another window › typed into the commonplace deleted in the second) */
   /* the notices of a deleted entry on screen last while it is on screen
      (pin: bookmarks from another window › the deleted page left for the day) */
   let detachedPins: number[] = [];
@@ -419,7 +419,7 @@ export function startSession(opts: SessionOptions): Session {
   function step(dir: "prev" | "next"): void {
     if (refuseCold(layer, say)) return;
     const keys = Object.keys(layer.cache), bearing = (k: string) => !!layer.entryMd(k).trim();
-    const nb = navNeighbors({ keys, bearing }, current.date, current.tag, (pk) => subPageOrder({ keys, bearing }, pk, layer.entryMd(pk), orderMemo).names)[dir];
+    const nb = navNeighbors({ keys, bearing }, current.date, current.tag, (pk) => subEntryOrder({ keys, bearing }, pk, layer.entryMd(pk), orderMemo).names)[dir];
     if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
   }

@@ -51,7 +51,7 @@ export function entrySave(p: SaveParts): EntrySave {
      judged from the text alone, the next save wrote nothing and a closed
      tab lost it (pin: entrySave.test › a save whose write did not land is
      made again) */
-  /* an empty document mints nothing (pin: entries left and renamed › an unknown page visited and left untouched) */
+  /* an empty document mints nothing (pin: entries left and renamed › an unknown commonplace visited and left untouched) */
   function nothingToSave(s: OnScreen): boolean {
     if (p.layer.owes(s.ekey)) return false;
     const inStore = p.layer.entryMd(s.ekey);

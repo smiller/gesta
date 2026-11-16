@@ -137,7 +137,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
    stopPropagation there would not reach a document listener anyway. */
 document.addEventListener("click", (e) => {
   const t = e.target as Element | null;
-  if (!t?.closest(".pages, .opener, .helppanel")) closePanel();
+  if (!t?.closest(".lists, .opener, .helppanel")) closePanel();
   /* the results are an opaque overlay over the entry: a click into the
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
@@ -297,7 +297,7 @@ acts.goto.pick = goRow.pick;
    makes it read as storage again. */
 /* read inside try: reaching localStorage throws where it is refused,
    and read bare at boot it stopped the page before it drew
-   (pin: entries left and renamed › a page opened with localStorage refused) */
+   (pin: entries left and renamed › a commonplace opened with localStorage refused) */
 const SHORTCUTS_KEY = NS + "shortcuts";
 const sc = screen.shortcuts;
 let shortcuts: Shortcut[] = parseShortcuts(readRaw(SHORTCUTS_KEY) || "");

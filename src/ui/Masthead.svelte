@@ -51,7 +51,7 @@
   const NOUN = { commonplace: "commonplace", bookshelf: "author" } as const;
   /* a card's focus going nowhere is a row deleted under it, not a leaving
      (pin: where the keys go › Tab twelve times from the bookmarks card);
-     the pages panel's is the window left */
+     the lists panel's is the window left */
   const leaving = (nowhere: boolean) => (e: FocusEvent): void => {
     const to = e.relatedTarget;
     if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) onClosePanel();
@@ -121,7 +121,7 @@
   {#if screen.panel === "shortcuts"}<Shortcuts bind:this={shortcutsCard} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leaveCard} />{/if}
   {#if screen.panel === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
   {#if screen.panel === "commonplace" || screen.panel === "bookshelf"}
-    <nav class="pages" onfocusout={leave}>
+    <nav class="lists" onfocusout={leave}>
       {#each screen.panelRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onClosePanel}>{r.text}</a>{/if}{/each}
       {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}
       {#if !reader}
@@ -222,7 +222,7 @@
      breathing gap; dvh, not vh, under a phone's retracting URL bar; the
      floor is ONE ROW, since a floor above the room overhangs and strands
      the create row. */
-  .pages {
+  .lists {
     position: absolute;
     top: calc(100% + 6px);
     left: var(--head-gutter);
@@ -242,16 +242,16 @@
   /* every line on one vertical rhythm, tight: every 10px off a line is
      another root on the screen; flex: none so the lines hold their size
      under the max-height and the panel scrolls */
-  .pages a, .pages button, .pages .panel-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
-  .pages a, .pages button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
-  .pages a:hover, .pages button:hover { background: var(--aside-bg); }
-  .pages a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .pages .panel-new { color: var(--bar-link); }
+  .lists a, .lists button, .lists .panel-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
+  .lists a, .lists button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
+  .lists a:hover, .lists button:hover { background: var(--aside-bg); }
+  .lists a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lists .panel-new { color: var(--bar-link); }
   /* a shelf's heading in the list's own type, its authors set in under it */
-  .pages .shelf { flex: none; line-height: 1.35; padding: 8px 12px 2px; font-size: 0.95em; font-family: var(--sans); font-weight: 600; color: var(--ink); }
-  .pages .shelf:first-child { padding-top: 5px; }
-  .pages a.shelved { padding-left: 26px; }
-  .pages .panel-empty { color: var(--muted); }
+  .lists .shelf { flex: none; line-height: 1.35; padding: 8px 12px 2px; font-size: 0.95em; font-family: var(--sans); font-weight: 600; color: var(--ink); }
+  .lists .shelf:first-child { padding-top: 5px; }
+  .lists a.shelved { padding-left: 26px; }
+  .lists .panel-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
   .mode {
     font-family: var(--sans);

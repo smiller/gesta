@@ -1,5 +1,5 @@
-/* EVERY page hosts, at every depth; the one leaf left is a day's TAGGED
-   entry. A page's name is part of every key beneath it and there is no
+/* EVERY entry hosts, at every depth; the one leaf left is a day's TAGGED
+   entry. An entry's name is part of every key beneath it and there is no
    cascade, so content-bearing DESCENDANTS block its rename and delete at
    every depth; registered-but-blank ones never block, and are swept only
    AFTER the user confirms (pin: subEntries.test › content-bearing

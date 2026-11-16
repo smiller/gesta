@@ -75,7 +75,7 @@ function wantedHrefs(parentKey: string, names: string[]): Record<string, string>
   for (const n of names) wanted[entryHash(date, tag ? tag + "/" + n : n)] = n;
   return wanted;
 }
-export function subPageOrder(walk: Walk, parentKey: string, parentMd: string, memo?: OrderMemo): SubOrder {
+export function subEntryOrder(walk: Walk, parentKey: string, parentMd: string, memo?: OrderMemo): SubOrder {
   const names = childrenOf(walk.keys, parentKey);
   if (!names.length) return { names: [], rows: null, stated: false };
   const wanted = wantedHrefs(parentKey, names);
@@ -93,7 +93,7 @@ export function subPageOrder(walk: Walk, parentKey: string, parentMd: string, me
   return { names: rows.map((r) => r.name), rows, stated: true };
 }
 const DATED_SUB_RE = new RegExp("^" + DATE_KEY_SRC + "(-|$)");
-export function subPageDisplayList(order: SubOrder, parentKey: string, bearing: Bearing, extra: string | null): string[] {
+export function subEntryDisplayList(order: SubOrder, parentKey: string, bearing: Bearing, extra: string | null): string[] {
   const subs = order.names.slice();
   const reversed = !order.stated && datedVotes(subs.filter((s) => bearing(entryKey(parentKey, s))));
   withExtra(subs, extra, order.stated);

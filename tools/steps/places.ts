@@ -211,7 +211,7 @@ section("entries left and renamed", async () => {
 async function unknownPageLeftUntouched(): Promise<void> {
   await go("commonplace/Never%20Typed");
   await go("commonplace/Horace");
-  await log("an unknown page visited and left untouched", { stored: (await A.stored(page, "commonplace/Never Typed")) ?? null });
+  await log("an unknown commonplace visited and left untouched", { stored: (await A.stored(page, "commonplace/Never Typed")) ?? null });
   await go("2026-09-05");
   /* the caret in the text, not its heading, where a new entry's link is refused */
   await R.caretAfter(page, "The most famous story", "The most famous story".length);
@@ -253,7 +253,7 @@ async function copyWithClipboardRefused(): Promise<void> {
   await blocked.goto(A.url("commonplace/Horace"));
   await A.waitEntry(blocked, "commonplace/Horace", 8000).catch(() => {});
   /* localStorage alone refused: the profile's IndexedDB still answers, so the store's own failure path is not what this reads */
-  await log("a page opened with localStorage refused", { entry: (await A.entry(blocked)) ?? null, blockedScreen: ((await A.screen(blocked).catch(() => "")) || "").split(" · corner")[0] });
+  await log("a commonplace opened with localStorage refused", { entry: (await A.entry(blocked)) ?? null, blockedScreen: ((await A.screen(blocked).catch(() => "")) || "").split(" · corner")[0] });
   await blocked.close();
 }
 section("margin-note", async () => {
@@ -311,7 +311,7 @@ section("footnote marks", async () => {
 });
 const searched = async (q: string) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await jump(page, 400); };
 section("bookmarks from another window", async () => {
-  /* two windows, last of the steps that read the page lists, the page made here joining them: a page made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept */
+  /* two windows, last of the steps that read the lists, the commonplace made here joining them: a commonplace made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded that page, its page, opened from that row, is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the page opened again is blank; and a × there writes the list with it kept */
   await secondWindow();
   await pageOpenFirstSaved();
 });
@@ -338,7 +338,7 @@ async function secondWindow(): Promise<void> {
   await page.click(".bookmarks .bookmark-label:text-is('Made Elsewhere')", { timeout: 1000 }).catch(() => {});
   await A.waitEntry(page, "commonplace/Made Elsewhere", 5000).catch(() => {});
   await rest(page);
-  await log("its row's page opened from the first", { entry: await A.entry(page), text: await R.editorTextHead(page) });
+  await log("its row's commonplace opened from the first", { entry: await A.entry(page), text: await R.editorTextHead(page) });
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
   await landed(page, 2500);
@@ -356,7 +356,7 @@ async function pageOpenFirstSaved(): Promise<void> {
   await landed(again, 2500);
   /* the second's save arrives in the first by its notice */
   await page.waitForFunction(() => document.querySelector("#editor")?.textContent?.includes(", the second again"), null, { timeout: 2500 }).catch(() => {});
-  await log("the page open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
+  await log("the commonplace open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
   await page.click(S.editor);
   await page.keyboard.type(", the first unsaved");
   await A.foreignWrite(again, "commonplace/Made Elsewhere", "rewritten in the second");
@@ -370,15 +370,15 @@ async function pageOpenFirstSaved(): Promise<void> {
   await landed(page, 1500);
   await A.foreignWrite(again, "commonplace/Deleted Elsewhere", null);
   await page.waitForTimeout(500);
-  await log("the page open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.cornerText(page) });
+  await log("the commonplace open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.cornerText(page) });
   await page.click(S.editor);
   await page.keyboard.type(", typed after");
   await landed(page, 1500);
-  await log("typed into the page deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.cornerText(page) });
+  await log("typed into the commonplace deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.cornerText(page) });
   await go("2026-09-06");
   await log("the deleted page left for the day", { corner: await R.cornerText(page) });
   await go("commonplace/Deleted%20Elsewhere");
-  await log("the deleted page opened again in the first", { textEnd: await textEnd() });
+  await log("the deleted commonplace opened again in the first", { textEnd: await textEnd() });
   await again.close();
   await go("2026-09-06");
   await page.keyboard.press("Control+Meta+b");

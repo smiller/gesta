@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { dayKeys, entryNeighbors, childrenOf, registered, unmintedKey, subPageNeighbors, navNeighbors } from "./lists.ts";
+import { dayKeys, entryNeighbors, childrenOf, registered, unmintedKey, subEntryNeighbors, navNeighbors } from "./lists.ts";
 
 const keys = [
   "2026-01-05", "2026-01-05/morning", "2026-01-02", "2025-12-31",
@@ -39,26 +39,26 @@ test("registered: itself present, or an ancestor of one that is; unmintedKey rea
   expect(unmintedKey(keys, "2026-01-05", "new tag")).toBe(false); // a day has no row
 });
 
-test("subPageNeighbors walks the order it is given — a book's index order, prose and verse alternating", () => {
+test("subEntryNeighbors walks the order it is given — a book's index order, prose and verse alternating", () => {
   const keys = ["bookshelf/Boethius/Consolatio", "bookshelf/Boethius/Consolatio/3pr1", "bookshelf/Boethius/Consolatio/3m1", "bookshelf/Boethius/Consolatio/3pr2", "bookshelf/Boethius/Consolatio/3m2"];
   const order = ["3pr1", "3m1", "3pr2", "3m2"];
   const parent = "bookshelf/Boethius/Consolatio";
-  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3pr1", order)).toEqual({ prev: null, next: "3m1" });
-  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3m1", order)).toEqual({ prev: "3pr1", next: "3pr2" });
-  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3m2", order)).toEqual({ prev: "3pr2", next: null });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, parent, "3pr1", order)).toEqual({ prev: null, next: "3m1" });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, parent, "3m1", order)).toEqual({ prev: "3pr1", next: "3pr2" });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, parent, "3m2", order)).toEqual({ prev: "3pr2", next: null });
   /* a blank in the order is skipped as before */
-  expect(subPageNeighbors({ keys, bearing: (k) => k !== parent + "/3m1" }, parent, "3pr1", order)).toEqual({ prev: null, next: "3pr2" });
+  expect(subEntryNeighbors({ keys, bearing: (k) => k !== parent + "/3m1" }, parent, "3pr1", order)).toEqual({ prev: null, next: "3pr2" });
   /* a sub the stated order lacks — open, not yet saved — stands at its end */
-  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3m1a", order)).toEqual({ prev: "3m2", next: null });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, parent, "3m1a", order)).toEqual({ prev: "3m2", next: null });
   /* by name, the same keys walk 3m1, 3m2, 3pr1, 3pr2 */
-  expect(subPageNeighbors({ keys, bearing: () => true }, parent, "3pr1")).toEqual({ prev: "3m2", next: "3pr2" });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, parent, "3pr1")).toEqual({ prev: "3m2", next: "3pr2" });
   expect(navNeighbors({ keys, bearing: () => true }, "bookshelf", "Boethius/Consolatio/3pr1", () => order)).toEqual({ prev: null, next: ["bookshelf", "Boethius/Consolatio/3m1"] });
 });
-test("subPageNeighbors: siblings in reading order, blanks skipped, an unlisted sub placed by comparison", () => {
+test("subEntryNeighbors: siblings in reading order, blanks skipped, an unlisted sub placed by comparison", () => {
   const bearing = (k: string) => k !== "bookshelf/Dante/Inferno/2";
-  expect(subPageNeighbors({ keys, bearing }, "bookshelf/Dante/Inferno", "1")).toEqual({ prev: null, next: "10" });
-  expect(subPageNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "10")).toEqual({ prev: "2", next: null });
-  expect(subPageNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "3")).toEqual({ prev: "2", next: "10" });
+  expect(subEntryNeighbors({ keys, bearing }, "bookshelf/Dante/Inferno", "1")).toEqual({ prev: null, next: "10" });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "10")).toEqual({ prev: "2", next: null });
+  expect(subEntryNeighbors({ keys, bearing: () => true }, "bookshelf/Dante/Inferno", "3")).toEqual({ prev: "2", next: "10" });
 });
 
 test("navNeighbors: a day walks days, a sub-entry its siblings, a tagged day and a root nowhere", () => {

@@ -45,7 +45,7 @@ function twinOf(c: MoveCtx, leaf: string, there: Record<string, string>): string
   if (same in c.cache && sameTwin(c.cache, k, same, h)) return same;
   return h ? there[h] : undefined;
 }
-const hasPages = (keys: string[], k: string): boolean => keys.some((x) => x !== k && under(x, k));
+const hasSubEntries = (keys: string[], k: string): boolean => keys.some((x) => x !== k && under(x, k));
 function findTwins(c: MoveCtx): { twins: Record<string, string> } | Refusal {
   const twins: Record<string, string> = Object.create(null);
   if (!(c.to in c.cache)) return { twins };
@@ -53,7 +53,7 @@ function findTwins(c: MoveCtx): { twins: Record<string, string> } | Refusal {
   for (const leaf of childrenOf(c.keys, c.from)) {
     const twin = twinOf(c, leaf, there), k = entryKey(c.from, leaf);
     if (!twin) continue;
-    if (hasPages(c.keys, k)) return { refuse: "“" + (firstHeading(c.cache[k] || "") || leaf) + "” is there already and has sub-entries of its own" };
+    if (hasSubEntries(c.keys, k)) return { refuse: "“" + (firstHeading(c.cache[k] || "") || leaf) + "” is there already and has sub-entries of its own" };
     twins[k] = twin;
   }
   return { twins };

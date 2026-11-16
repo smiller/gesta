@@ -1,7 +1,7 @@
 import { section, page, A, R, S, log, go, cornerText, setAnswer, prompts, confirms, rest } from "./kit.ts";
 
-section("a page renamed with every link following", async () => {
-  /* Rename on a page with no sub-pages, a plain name typed: a link to it on another page follows, and the corner says so */
+section("a commonplace renamed with every link following", async () => {
+  /* Rename on a commonplace with no sub-entries, a plain name typed: a link to it on another entry follows, and the corner says so */
   await A.foreignWrite(page, "commonplace/Rename Me", "me\n");
   await A.foreignWrite(page, "commonplace/Rename Far", "See [it](#commonplace/Rename%20Me) here.\n");
   /* both read by the page before the rename, as entries written elsewhere are */
@@ -10,7 +10,7 @@ section("a page renamed with every link following", async () => {
   setAnswer("Renamed Me");
   prompts.length = 0;
   confirms.length = 0;
-  await page.click(S.renameSubPage);
+  await page.click(S.renameSubEntry);
   await A.waitEntry(page, "commonplace/Renamed Me", 5000).catch(() => {});
   await page.waitForFunction((s) => /renamed to/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 3000 }).catch(() => {});
   await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await cornerText(), far: await A.stored(page, "commonplace/Rename Far"), old: await A.stored(page, "commonplace/Rename Me") });
@@ -48,10 +48,10 @@ async function whisperClicked(): Promise<void> {
   await log("the whisper clicked", { corner: await cornerText(), clipboard: await page.evaluate(async () => { for (let i = 0; i < 20; i++) { try { return await navigator.clipboard.readText(); } catch { await new Promise((r) => setTimeout(r, 50)); } } return null; }) });
   await page.keyboard.press("Escape");
 }
-section("a page moved with its sub-pages", async () => {
-  /* Rename on a page whose sub-pages hold text asks where; an address in the bookshelf moves it there with its picture, its text after the text there, a sub-page there already by its title deleted, its links going to that one; a link from elsewhere follows */
+section("a commonplace moved with its sub-entries", async () => {
+  /* Rename on a commonplace whose sub-entries hold text asks where; an address in the bookshelf moves it there with its picture, its text after the text there, a sub-entry there already by its title deleted, its links going to that one; a link from elsewhere follows */
   await renameToBookshelfAddress();
-  await picturesUnderOldPage();
+  await picturesUnderOldEntry();
   await movedEssayPicture();
 });
 async function renameToBookshelfAddress(): Promise<void> {
@@ -71,7 +71,7 @@ async function renameToBookshelfAddress(): Promise<void> {
   setAnswer(["bookshelf/Mover, Test/Essays"]);
   prompts.length = 0;
   confirms.length = 0;
-  await page.click(S.renameSubPage);
+  await page.click(S.renameSubEntry);
   await page.waitForFunction((s) => /moved to/.test(document.querySelector(s)?.textContent || ""), S.corner, { timeout: 5000 }).catch(() => {});
   await log("Rename, an address in the bookshelf typed, Enter, the confirm accepted", {
     prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), hash: page.url().split("#")[1], corner: await cornerText(),
@@ -82,7 +82,7 @@ async function renameToBookshelfAddress(): Promise<void> {
   await go("bookshelf/Mover%2C%20Test/Essays/Essay");
 }
 const there = (k: string) => A.stored(page, "bookshelf/Mover, Test/Essays" + k);
-async function picturesUnderOldPage(): Promise<void> {
+async function picturesUnderOldEntry(): Promise<void> {
   await R.waitImg(page).catch(() => {});
   await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
   await log("the pictures under the old page and the new", { old: await A.pictureKeys(page, "commonplace/Move Source/"), now: await A.pictureKeys(page, "bookshelf/Mover, Test/Essays/") });
