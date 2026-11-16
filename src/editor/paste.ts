@@ -201,10 +201,26 @@ function fencesAfter(open: { code: boolean; blocks: number }, line: string): { c
   if (open.code || !t.startsWith(":::")) return open;
   return { ...open, blocks: t === ":::" ? Math.max(0, open.blocks - 1) : open.blocks + 1 };
 }
+/* the terminal's margin is the indent every line shares. A message's ⏺
+   stands in it, and a first line indented less than two was begun mid-line,
+   its one space the gap before its word, which taken off ran two words
+   together (pin: a terminal's copy pasted › a terminal's copy pasted into a
+   list item); neither counts, and the first keeps its spaces (pin:
+   paste.test › a terminal's margin is taken off); one line has no margin
+   (pin: paste.test › a terminal's copy that is not blocks) */
+const MESSAGE = /^⏺\s/;
+const indentOf = (l: string): number => l.length - l.trimStart().length;
+function marginOff(lines: string[]): string[] {
+  if (lines.length < 2) return lines;
+  const [first, ...rest] = lines, firstCounts = indentOf(first) >= 2;
+  const indents = (firstCounts ? lines : rest).filter((l) => /\S/.test(l) && !MESSAGE.test(l)).map(indentOf);
+  const margin = indents.length ? Math.min(...indents) : 0, off = (l: string) => l.replace(new RegExp("^[ \\t]{0," + margin + "}"), "");
+  return [firstCounts ? off(first) : first, ...rest.map(off)];
+}
 function unwrapped(text: string): string {
   const out: string[] = [];
   let open = { code: false, blocks: 0 };
-  for (const line of text.split("\n")) {
+  for (const line of marginOff(text.split("\n"))) {
     const last = open.code || open.blocks > 0 ? undefined : out.at(-1);
     if (last !== undefined && runsOn(last, line)) out[out.length - 1] = last.trimEnd() + " " + line.trimStart();
     else out.push(line);

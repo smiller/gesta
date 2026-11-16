@@ -241,12 +241,18 @@ const unwrapped = (text: string): string => {
 };
 test("a terminal's wrapped lines are joined: a line not ending a sentence runs on into the next, a list item or a new message always starts its own", () => {
   expect(unwrapped("Every one passed\n  npm run verify before it landed.")).toBe("Every one passed npm run verify before it landed.");
-  expect(unwrapped("found nine things.\n    Eight were fixed")).toBe("found nine things.\n    Eight were fixed");
-  expect(unwrapped("the string rules:\n  - Kept off\n  1. First")).toBe("the string rules:\n  - Kept off\n  1. First");
+  expect(unwrapped("found nine things.\n    Eight were fixed")).toBe("found nine things.\nEight were fixed");
+  expect(unwrapped("the string rules:\n  - Kept off\n  1. First")).toBe("the string rules:\n- Kept off\n1. First");
   expect(unwrapped("a paragraph\n\nanother")).toBe("a paragraph\n\nanother");
   expect(unwrapped("- outside text reaches the\n    decoder.")).toBe("- outside text reaches the decoder.");
   for (const end of ["Shall I commit?", "Done!", "Summary:", "And so…", "it said “stop.”", "(see above.)"]) expect(unwrapped(end + "\nNext line.")).toBe(end + "\nNext line.");
   expect(unwrapped("first\n• second\n1) third\n⏺ Next step")).toBe("first\n• second\n1) third\n⏺ Next step");
+});
+test("a terminal's margin is taken off: the indent every line shares, a message's ⏺ or a first line begun mid-line standing outside it; what is indented past it keeps the rest", () => {
+  expect(unwrapped("⏺ I fixed it.\n\n  The cause: x.\n  - one\n    - nested\n\n  After.")).toBe("⏺ I fixed it.\n\nThe cause: x.\n- one\n  - nested\n\nAfter.");
+  expect(unwrapped("  ```\n  code\n    deeper\n  ```")).toBe("```\ncode\n  deeper\n```");
+  expect(unwrapped(" begun mid-line.\n  The next.")).toBe(" begun mid-line.\nThe next.");
+  expect(unwrapped("  - outer\n    - inner")).toBe("- outer\n  - inner");
 });
 
 test("a terminal's copy of markdown keeps its structure: nothing in a fence is joined, nor a fence, heading, quote or table line", () => {
