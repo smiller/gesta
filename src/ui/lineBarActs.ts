@@ -146,6 +146,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     opened();
     lb.kind = b.kind;
     lb.lineLabel = b.label;
+    lb.pageLabel = b.pageLabel;
     lb.open = true;
     setTimeout(() => focusBar(), 0);
   };
@@ -163,6 +164,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     if (!lb.open || !view) return;
     const b = bar(view.state.doc, conventions());
     lb.lineLabel = b.label;
+    lb.pageLabel = b.pageLabel;
     const kind = b.kind === "none" ? "both" : b.kind;
     if (kind !== lb.kind) switchKind(kind);
   };

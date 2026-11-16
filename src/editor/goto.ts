@@ -18,7 +18,7 @@ import { hasPages, pages } from "./pages.ts";
 import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
-type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse">;
+type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse" | "proseByParagraphVerseByLine">;
 
 const N = schema.nodes;
 export type AskKind = "none" | "line" | "page" | "both" | "stanza";
@@ -62,8 +62,8 @@ function blockHits(rows: Unit[], i: number, n: number | string): Hit[] {
   return out;
 }
 interface LineHits { hits: Hit[]; blocks: Unit[][] }
-function lineHits(doc: Node, n: number | string): LineHits {
-  const blocks = blocksOf(askedUnits(doc));
+function lineHits(doc: Node, n: number | string, verseOnly = false): LineHits {
+  const blocks = blocksOf(askedUnits(doc)).filter((b) => !verseOnly || !prose(b));
   const hits = blocks.flatMap((rows, i) => blockHits(rows, i, n));
   /* a block opening part-way along a line holds that line's rest: the line is
      where it begins, unless the page has only the rest (pin: goto.test › a
@@ -205,12 +205,23 @@ function stanzaHit(doc: Node, ask: string): { pos: number } | string {
 }
 
 const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => (c.byBookChapterAndParagraph ? "Paragraph" : c.byChapterAndVerse ? "Verse" : "Line");
-const askedFor = (c: Asked): string => (c.byBookChapterAndParagraph ? "a paragraph" : c.byChapterAndVerse ? "a verse" : "a line or a page");
-const noNumbers = (c: Asked): string => (c.byBookChapterAndParagraph ? "no paragraph numbers here" : c.byChapterAndVerse ? "no verse numbers here" : "no line or page numbers here");
-/* the bar as this entry asks it: which boxes, the Line box's label, what is
-   said where nothing can be asked, and where there is no document to ask */
-export function bar(doc: Node | null, c: Asked): { kind: AskKind; label: "Line" | "Verse" | "Paragraph"; none: string; inSource: string } {
-  return { kind: doc ? askKind(doc) : "none", label: lineLabel(c), none: noNumbers(c), inSource: "Switch to the rendered view to go to " + askedFor(c) };
+const askedFor = (c: Asked): string => (c.byBookChapterAndParagraph ? "a paragraph" : c.byChapterAndVerse ? "a verse" : c.proseByParagraphVerseByLine ? "a line or a paragraph" : "a line or a page");
+const noNumbers = (c: Asked): string => (c.byBookChapterAndParagraph ? "no paragraph numbers here" : c.byChapterAndVerse ? "no verse numbers here" : c.proseByParagraphVerseByLine ? "no line or paragraph numbers here" : "no line or page numbers here");
+type BarLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" };
+/* a work of prose by paragraph and verse by line asks its verse by line and
+   its prose by paragraph, each box only where the entry holds that form, the
+   form named only where both stand */
+function proseAndVerse(doc: Node): BarLabels {
+  const blocks = blocksOf(askedUnits(doc)), verse = blocks.some((b) => !prose(b)), proseHere = blocks.some(prose);
+  if (verse && proseHere) return { kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" };
+  return { kind: verse ? "line" : proseHere ? "page" : "none", label: "Line", pageLabel: "Paragraph" };
+}
+const labels = (doc: Node | null, c: Asked): BarLabels =>
+  doc && c.proseByParagraphVerseByLine ? proseAndVerse(doc) : { kind: doc ? askKind(doc) : "none", label: lineLabel(c), pageLabel: "Page" };
+/* the bar as this entry asks it: which boxes, their labels, what is said
+   where nothing can be asked, and where there is no document to ask */
+export function bar(doc: Node | null, c: Asked): BarLabels & { none: string; inSource: string } {
+  return { ...labels(doc, c), none: noNumbers(c), inSource: "Switch to the rendered view to go to " + askedFor(c) };
 }
 export interface Standing { pos: number | null; asked: number | string }
 export interface Said { text: string; kind: "typed" | "absent" | "landing" }
@@ -223,6 +234,10 @@ function pageAnswer(doc: Node, c: Asked, typed: string, standing: Standing): Ans
   if (why) return typedWrong(why);
   const tok = typed.trim(), hit = pageHit(doc, tok);
   return hit ? placed(hit, standing) : absent(pageRefusal(doc, tok));
+}
+function paragraphAnswer(doc: Node, typed: string, standing: Standing): Answer {
+  const why = askCheck(typed, "line", "paragraph");
+  return why ? typedWrong(why) : placed(paragraphHit(doc, parseInt(typed.trim(), 10)), standing);
 }
 /* a link's words on a page holding stanzas are `N` or `N.M`, stanza and line,
    one place each (pin: a link to a line › a link to a stanza, and line) */
@@ -265,7 +280,7 @@ function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing
    where the same number is asked again */
 function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "bar" | "link"): Answer {
   if (typeof n === "number" && c.byBookChapterAndParagraph) return placed(paragraphHit(doc, n), standing);
-  const found = lineHits(doc, n), noun = c.byChapterAndVerse ? "verse" : undefined;
+  const found = lineHits(doc, n, c.proseByParagraphVerseByLine), noun = c.byChapterAndVerse ? "verse" : undefined;
   if (!found.hits.length) return absent(lineRefusal(found.blocks, n, noun));
   const hit = nextHit(found.hits, standing.pos, n === standing.asked);
   const word = landingWord(hit, found, n, noun);
@@ -281,7 +296,7 @@ function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from
    a link to a line › a link to a stanza, and line) */
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
 export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "bar" | "link"): Answer {
-  if ("page" in words) return pageAnswer(doc, c, words.page, standing);
+  if ("page" in words) return c.proseByParagraphVerseByLine ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
   return hasStanzas(doc) ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);
 }

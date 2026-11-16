@@ -5,7 +5,8 @@ import { ask, bar, type Standing, type Answer } from "./goto.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
-const LINES = { byBookChapterAndParagraph: false, byChapterAndVerse: false };
+const LINES = { byBookChapterAndParagraph: false, byChapterAndVerse: false, proseByParagraphVerseByLine: false };
+const PROSIMETRUM = { ...LINES, proseByParagraphVerseByLine: true };
 const PARAGRAPHS = { ...LINES, byBookChapterAndParagraph: true };
 const VERSES = { ...LINES, byChapterAndVerse: true };
 const FRESH: Standing = { pos: null, asked: 0 };
@@ -53,11 +54,11 @@ describe("askKind", () => {
   });
 });
 describe("the bar's words", () => {
-  it("the Line box's label and what is said where nothing can be asked follow the work's conventions; with no document the bar asks nothing", () => {
+  it("the boxes' labels and what is said where nothing can be asked follow the work's conventions; with no document the bar asks nothing", () => {
     expect([LINES, VERSES, PARAGRAPHS].map((c) => bar(null, c))).toEqual([
-      { kind: "none", label: "Line", none: "no line or page numbers here", inSource: "Switch to the rendered view to go to a line or a page" },
-      { kind: "none", label: "Verse", none: "no verse numbers here", inSource: "Switch to the rendered view to go to a verse" },
-      { kind: "none", label: "Paragraph", none: "no paragraph numbers here", inSource: "Switch to the rendered view to go to a paragraph" },
+      { kind: "none", label: "Line", pageLabel: "Page", none: "no line or page numbers here", inSource: "Switch to the rendered view to go to a line or a page" },
+      { kind: "none", label: "Verse", pageLabel: "Page", none: "no verse numbers here", inSource: "Switch to the rendered view to go to a verse" },
+      { kind: "none", label: "Paragraph", pageLabel: "Page", none: "no paragraph numbers here", inSource: "Switch to the rendered view to go to a paragraph" },
     ]);
   });
 });
@@ -338,5 +339,29 @@ describe("the words of a box that asks for a verse", () => {
   it("a page with no noun given keeps its own words", () => {
     expect(says(prose, "9")).toMatch(/sentences here/);
     expect(says(verse, "9")).toMatch(/lines here/);
+  });
+});
+
+describe("a work of prose by paragraph and verse by line: Verse Line, or Prose Paragraph", () => {
+  const chapter = parseMarkdown("# 3\n\n::: prose 3\nFirst one. | E one.\nFirst two. | E two.\n\nSecond one. | F one.\n:::\n\n::: verse\nA ciascun alma\nnel cui cospetto\nin ciò che mandin\nsalute in lor\n:::");
+  const proseOnly = parseMarkdown("::: prose 8\nOne. | Un.\n:::");
+  const verseOnly = parseMarkdown("::: verse\nx\ny\n:::");
+  it("a chapter of both asks Verse Line, or Prose Paragraph; of prose alone, Paragraph; of verse alone, Line", () => {
+    expect(bar(chapter, PROSIMETRUM)).toMatchObject({ kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" });
+    expect(bar(proseOnly, PROSIMETRUM)).toMatchObject({ kind: "page", pageLabel: "Paragraph" });
+    expect(bar(verseOnly, PROSIMETRUM)).toMatchObject({ kind: "line", label: "Line" });
+    expect(bar(parseMarkdown("plain"), PROSIMETRUM).kind).toBe("none");
+    expect(bar(null, PROSIMETRUM)).toMatchObject({ none: "no line or paragraph numbers here", inSource: "Switch to the rendered view to go to a line or a paragraph" });
+  });
+  it("the Paragraph box lands on the paragraph a reference names, its first sentence", () => {
+    expect(lands(chapter, "3", PROSIMETRUM, "page")).toContain("First one.");
+    expect(lands(chapter, "4", PROSIMETRUM, "page")).toContain("Second one.");
+    expect(lands(chapter, "9", PROSIMETRUM, "page")).toBe("no paragraph 9 — the paragraphs here are 3–4");
+    expect(lands(chapter, "4x", PROSIMETRUM, "page")).toBe("4x is not a paragraph number");
+  });
+  it("the Line box counts the verse's lines alone, never the prose's sentences", () => {
+    expect(lands(chapter, "3", PROSIMETRUM)).toBe("in ciò che mandin");
+    expect(lands(chapter, "1", PROSIMETRUM)).toBe("A ciascun alma");
+    expect(lands(chapter, "5", PROSIMETRUM)).toBe("the lines here are 1–4");
   });
 });

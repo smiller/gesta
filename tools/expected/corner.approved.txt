@@ -584,6 +584,9 @@ a split line's rest, from the closing stop of the line it splits: {"selected":".
 prose and verse paired: arrived at bookshelf/Dante/Vita Nuova/12: {"cursor":"at a line's start"}
 the two Englishes: {"prose":521,"oneColumn":true,"cursor":"at a line's start","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the two Englishes in a narrower window: {"prose":472,"oneColumn":true,"cursor":"at a line's start","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘G on prose and verse: {"boxes":["Verse Line",", or","Prose Paragraph"],"cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+Prose Paragraph 1, Enter: {"landed":"Ora, tornando al proposito, ","cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+Verse Line 2, Enter: {"landed":"e con lui vade a madonna dav","cursor":"on input","screen":"bookshelf/Dante/Vita Nuova/12 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 == a link to a line
 a link to a line, clicked: {"landed":"three","selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a link to a line, the next click: {"landed":null,"selected":"","address":"line=3","said":null,"cursor":"at a line's start","screen":"bookshelf/Statius/Book 1 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

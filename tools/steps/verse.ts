@@ -413,4 +413,19 @@ section("prose and verse paired", async () => {
   await still(page);
   await log("the two Englishes in a narrower window", await englishes());
   await page.setViewportSize({ width: 1000, height: 600 });
+  await still(page);
+  /* ⌃⌘G on a chapter of prose and verse: Verse Line, or Prose Paragraph, each box landing in its own form */
+  const shown = () => page.evaluate(() => [...document.querySelectorAll(".linebar .ask:not([hidden]) label, .linebar .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
+  const landedOn = () => page.evaluate(() => (document.querySelector("#editor .landed")?.textContent ?? "").slice(0, 28));
+  await page.keyboard.press("Control+Meta+g");
+  await rest(page);
+  await log("⌃⌘G on prose and verse", { boxes: await shown() });
+  await page.fill("#pageinput", "1");
+  await page.press("#pageinput", "Enter");
+  await rest(page);
+  await log("Prose Paragraph 1, Enter", { landed: await landedOn() });
+  await page.fill("#lineinput", "2");
+  await page.press("#lineinput", "Enter");
+  await rest(page);
+  await log("Verse Line 2, Enter", { landed: await landedOn() });
 });
