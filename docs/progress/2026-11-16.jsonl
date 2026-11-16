@@ -80,3 +80,6 @@
 {"at":"2026-11-16T14:24","ev":"add","id":"A7.1.4","list":"A","title":"The day's page and slideshow import each other","parent":"A7.1","detail":"Asked: \"4, with cyclical imports, feels like something we should fix\" (candidate 4, Speculative). Why: page.ts and slides.ts import each other; five exports are the page's shell with slides.ts their only outside importer. Done when: the cycle is gone, test-first, the pages drawn the same."}
 {"at":"2026-11-16T14:24","ev":"start","id":"A7.1.1"}
 {"at":"2026-11-16T14:44","ev":"done","id":"A7.1.1","commits":["0d50d89"]}
+{"at":"2026-11-16T14:50","ev":"start","id":"A7.1.4"}
+{"at":"2026-11-16T14:52","ev":"done","id":"A7.1.4","commits":["772c62b"]}
+{"at":"2026-11-16T14:52","ev":"start","id":"A7.1.3"}
