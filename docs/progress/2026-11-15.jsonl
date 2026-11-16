@@ -141,3 +141,5 @@
 {"at":"2026-11-15T22:52","ev":"start","id":"B5.1"}
 {"at":"2026-11-15T23:07","ev":"done","id":"B5.1","commits":["75cd0df"],"note":"accepted"}
 {"at":"2026-11-15T23:07","ev":"done","id":"B5","commits":["348d2ed","d71090a"],"note":"accepted"}
+{"at":"2026-11-15T23:09","ev":"add","id":"A4","list":"A","title":"Batch review: 16c19cd..HEAD (A3.1, A3.3, B5, B5.1)","detail":"Asked: \"We can do the code review now.\" Owed by the rule: the batch touched session.ts and main.ts. Why: the kept-state module, fold memory, the prose-and-verse bar, the or-bar boxes and Vita Nuova's references landed with no review of their own (65a97cf, 4d8328b, 348d2ed, d71090a, 75cd0df). Done when: the /code-review at high has run, its cost recorded, its findings in one fix commit."}
+{"at":"2026-11-15T23:09","ev":"start","id":"A4"}
