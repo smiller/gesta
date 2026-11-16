@@ -222,14 +222,16 @@ test("spaces at a selection's edges stay outside the link; a selection of spaces
 const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;color: rgb(177, 185, 249);">git log</div> ran, and\n  <div style="display: inline;font-weight: bold;">bold</div> words.</div>';
 
 const terminal = (s: EditorState, html: string, plain: string): string => after(s, plain, html);
-test("a terminal's copy is styled preformatted text alone: one white-space: pre block of inline runs", () => {
+test("a terminal's copy is styled preformatted text alone: white-space: pre blocks of inline runs, one after another", () => {
   /* a terminal's copy is its text, its lines joined; any other HTML is the editor's own paste */
   const s = at("x", "x"), plain = "git log ran, and\n  bold words.", joined = "xgit log ran, and bold words.";
   expect(terminal(s, GHOSTTY, plain)).toBe(joined);
   expect(terminal(s, "<meta charset='utf-8'>" + GHOSTTY, plain)).toBe(joined);
   for (const html of ["<pre>let x = 1;</pre>", '<div style="white-space: pre-wrap;">a</div>', "<p>a</p><ul><li>b</li></ul>", "<blockquote " + COPY_MARK + '=""><p>a</p></blockquote>',
-    '<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>', GHOSTTY + "<p>after</p>", GHOSTTY.replace("display: inline;", "display: inline-block;")]) expect(terminal(s, html, plain)).toBe("default");
+    '<div style="color: #ccc; white-space: pre;"><div><span>const</span> x = 1;</div><div>y</div></div>', GHOSTTY + "<p>after</p>", GHOSTTY.replace("display: inline;", "display: inline-block;"),
+    GHOSTTY + GHOSTTY.replace("display: inline;", "display: inline-block;"), GHOSTTY + '<div style="white-space: pre-wrap;">a</div>']) expect(terminal(s, html, plain)).toBe("default");
   expect(terminal(s, GHOSTTY.replace("git log", '<a href="https://example.org/">git log</a>'), plain)).toBe(joined);
+  expect(terminal(s, GHOSTTY + GHOSTTY, plain)).toBe(joined);
 });
 /* a terminal's copy as the markdown view takes it: its lines joined, nothing parsed */
 const unwrapped = (text: string): string => {

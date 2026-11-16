@@ -167,16 +167,19 @@ function pasteSlice(raw: string, $context: ResolvedPos): Slice {
   if (slice) return slice;
   return lines.length > 1 ? flat(lines) : new Slice(Fragment.from(body ? schema.text(body) : Fragment.empty), 0, 0);
 }
-/* A TERMINAL'S COPY IS TEXT, NOT STRUCTURE: its HTML is one white-space: pre
-   block of text and coloured inline runs, and read as HTML every run was a
-   paragraph of its own (pin: paste.test › a terminal's copy is styled
+/* A TERMINAL'S COPY IS TEXT, NOT STRUCTURE: its HTML is white-space: pre
+   blocks of text and coloured inline runs, one after another, and read as
+   HTML every run was a paragraph of its own; one copy can come as two
+   blocks or more (pin: paste.test › a terminal's copy is styled
    preformatted text alone) */
-const TERMINAL_OPEN = /^\s*(?:<meta[^>]*>\s*|<html[^>]*>\s*|<head>[^]*?<\/head>\s*|<body[^>]*>\s*|<!--StartFragment-->\s*)*<div style="[^"]*white-space:\s*pre(?![\w-])[^"]*">/i;
+const PRE_BLOCK = '<div style="[^"]*white-space:\\s*pre(?![\\w-])[^"]*">';
+const TERMINAL_OPEN = new RegExp("^\\s*(?:<meta[^>]*>\\s*|<html[^>]*>\\s*|<head>[^]*?<\\/head>\\s*|<body[^>]*>\\s*|<!--StartFragment-->\\s*)*" + PRE_BLOCK, "i");
 const TERMINAL_CLOSE = /<\/div>\s*(?:<!--EndFragment-->\s*|<\/body>\s*|<\/html>\s*)*$/i;
+const NEXT_BLOCK = new RegExp("<\\/div>" + PRE_BLOCK, "gi");
 const NOT_A_RUN = /<(?!div style="display: inline[;"]|\/div>|a\s|\/a>|span[\s>]|\/span>)/i;
 function terminalCopy(html: string): boolean {
   const open = TERMINAL_OPEN.exec(html), close = TERMINAL_CLOSE.exec(html);
-  return !!open && !!close && close.index >= open[0].length && !NOT_A_RUN.test(html.slice(open[0].length, close.index));
+  return !!open && !!close && close.index >= open[0].length && !NOT_A_RUN.test(html.slice(open[0].length, close.index).replace(NEXT_BLOCK, ""));
 }
 /* the terminal breaks its lines at the window's width: a line not ending a
    sentence runs on into the next, unless that one starts a list item or a
