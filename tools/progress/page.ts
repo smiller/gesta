@@ -1,4 +1,4 @@
-/* node tools/progress/page.ts <day> [--at HH:MM | --slides] */
+/* node tools/progress/page.ts <day> [--at HH:MM | --slides | --terminal] */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { slides } from "./slides.ts";
@@ -34,11 +34,13 @@ function change(it: Item, d: Drawn): [string, string] {
   if (!was) return ['<span class="chip s-new">new</span>', ""];
   return was.status === it.status ? ["", ""] : ["", '<span class="chip s-was">was ' + CHIP[was.status][1] + "</span>"];
 }
+const statusWords = (it: Item, items: Item[]): string => {
+  const to = it.movedTo ? items.find((i) => i.id === it.movedTo) : undefined;
+  return CHIP[it.status][1] + (to ? " → " + lower(to.list) + " " + to.id : "");
+};
 function chips(it: Item, d: Drawn): string {
-  const [cls, text] = CHIP[it.status];
-  const to = it.movedTo ? d.items.find((i) => i.id === it.movedTo) : undefined;
   const [isNew, was] = change(it, d);
-  const status = '<span class="chip ' + cls + '">' + text + (to ? " → " + lower(to.list) + " " + to.id : "") + "</span>";
+  const status = '<span class="chip ' + CHIP[it.status][0] + '">' + esc(statusWords(it, d.items)) + "</span>";
   return isNew + status + was + (it.starting ? '<span class="chip s-start">starting item</span>' : "");
 }
 const tint = (it: Item, depth: number): string[] => [ROW[it.status], it.starting ? "sod" : "", depth ? "sub" : ""].filter(Boolean);
@@ -48,10 +50,11 @@ const rowClass = (it: Item, depth: number): string => [...tint(it, depth), ...(i
 const closedCell = (it: Item, spawned: boolean): string => (!spawned ? "" : it.closed ? hm(it.closed) : "—");
 const endedCell = (it: Item): string => (it.status === "paused" ? hm(it.stopped) : isOpen(it.status) ? "—" : hm(it.ended));
 const times = (it: Item, spawned: boolean): string[] => [it.reported ? hm(it.reported) : "earlier", hm(it.started), endedCell(it), closedCell(it, spawned)];
-function label(it: Item): string {
+function labelWords(it: Item): string {
   const from = it.movedFrom ? " (moved in from " + it.movedFrom + ")" : "";
-  return esc(it.title) + from + (it.note ? " (" + esc(it.note) + ")" : "");
+  return it.title + from + (it.note ? " (" + it.note + ")" : "");
 }
+const label = (it: Item): string => esc(labelWords(it));
 const opener = (it: Item): string => (it.detail ? ' tabindex="0" aria-expanded="false"' : "");
 const indent = (depth: number): string => (depth ? ' style="--d:' + depth + '"' : "");
 /* a row of its own, not a block in the label's cell, which wrapped it short
@@ -79,10 +82,24 @@ function section(list: List, placed: Placed[], d: Drawn): string {
 }
 /* a count's change since the frame before, when there is one */
 const delta = (now: number, was?: number): string => { const d = was === undefined ? 0 : now - was; return d > 0 ? " (+" + d + ")" : d < 0 ? " (−" + -d + ")" : ""; };
-function tallyLine(lead: string, t: Tally, b?: Tally): string {
+/* THE ONE WORDING of a count line, which the page marks up and the
+   terminal copy prints: hand-tallied in a summary, the counts disagreed
+   with the page's (pin: page.test › the terminal copy says the page's
+   count lines) */
+interface Counted { word: string; n: number; d: string; cls: string }
+function tallyWords(lead: string, t: Tally, b?: Tally): { lead: string; total: Counted; lists: string; statuses: Counted[] } {
   const lists = LISTS.filter((l) => t.byList[l]).map((l) => t.byList[l] + " " + lower(l)).join(", ");
-  const statuses = (Object.keys(CHIP) as Status[]).filter((s) => t.byStatus[s]).map((s) => '<span class="' + CHIP[s][0] + '">' + CHIP[s][1] + " <b>" + t.byStatus[s] + "</b>" + delta(t.byStatus[s]!, b && (b.byStatus[s] ?? 0)) + "</span>");
-  return '<div class="tally"><span>' + lead + " <b>" + t.total + "</b>" + delta(t.total, b?.total) + (lists ? ": " + lists : "") + "</span>" + statuses.join("") + "</div>";
+  const statuses = (Object.keys(CHIP) as Status[]).filter((s) => t.byStatus[s]).map((s) => ({ word: CHIP[s][1], n: t.byStatus[s]!, d: delta(t.byStatus[s]!, b && (b.byStatus[s] ?? 0)), cls: CHIP[s][0] }));
+  return { lead, total: { word: lead, n: t.total, d: delta(t.total, b?.total), cls: "" }, lists, statuses };
+}
+function tallyLine(lead: string, t: Tally, b?: Tally): string {
+  const w = tallyWords(lead, t, b);
+  const statuses = w.statuses.map((s) => '<span class="' + s.cls + '">' + s.word + " <b>" + s.n + "</b>" + s.d + "</span>");
+  return '<div class="tally"><span>' + w.lead + " <b>" + w.total.n + "</b>" + w.total.d + (w.lists ? ": " + w.lists : "") + "</span>" + statuses.join("") + "</div>";
+}
+function tallyText(lead: string, t: Tally): string {
+  const w = tallyWords(lead, t);
+  return w.lead + " " + w.total.n + (w.lists ? ": " + w.lists : "") + " — " + w.statuses.map((s) => s.word + " " + s.n).join(", ");
 }
 export const KEY = '<div class="key">' + (Object.keys(CHIP) as Status[]).map((s) => '<span><span class="chip ' + CHIP[s][0] + '">' + CHIP[s][1] + "</span></span>").join("") +
   '<span><span class="chip s-start">starting item</span> on the day\'s list when it began</span><span><span class="swatch"></span> unstarted</span></div>';
@@ -108,6 +125,12 @@ export function frame(items: Item[], before?: Item[]): string {
   return '<div class="tallies">' + tallyLine("Started with", c.starting, b?.starting) + tallyLine("Spawned or added since", c.added, b?.added) + "</div>" +
     LISTS.map((l) => section(l, placed[l], d)).join("");
 }
+export function terminal(events: Event[], o: { day: string }): string {
+  const items = replay(events), c = counts(items), placed = trees(items);
+  const line = ({ item: it, depth }: Placed): string => "  ".repeat(depth + 1) + it.id + "  " + statusWords(it, items) + (it.starting ? " · starting item" : "") + "  " + labelWords(it);
+  const lists = LISTS.filter((l) => placed[l].length).map((l) => [NAME[l], ...placed[l].map(line)].join("\n"));
+  return [longDay(o.day), tallyText("Started with", c.starting), tallyText("Spawned or added since", c.added), "", lists.join("\n\n")].join("\n");
+}
 export function page(events: Event[], o: { day: string; at?: string }): string {
   const items = replay(events, o.at && o.day + "T" + o.at);
   const title = longDay(o.day) + (o.at ? ", as it stood at " + o.at : "");
@@ -127,6 +150,7 @@ function main(argv: string[]): void {
   const [day, flag, at] = argv;
   const events = dayEvents(day);
   if (!flag) { for (const d of drawn(day, events)) console.log(d.path); return; }
+  if (flag === "--terminal") { console.log(terminal(events, { day })); return; }
   const out = join("tools/out/progress", day + (flag === "--slides" ? "-slides" : "-" + (at ?? "").replace(":", "")) + ".html");
   mkdirSync("tools/out/progress", { recursive: true });
   writeFileSync(out, flag === "--slides" ? slides(events, { day }) : page(events, { day, at }));

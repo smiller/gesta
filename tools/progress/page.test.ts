@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { page, drawn, PUBLISHED } from "./page.ts";
+import { page, drawn, terminal, PUBLISHED } from "./page.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -84,4 +84,24 @@ test("a detail's parts each start their own line, the header in bold; text befor
   ]);
   const plain: Event[] = [...day, { at: at("10:10"), ev: "detail", id: "A1", text: "no headers here, nor a Why without its colon" }];
   expect(/<div class="detail-text">(.*?)<\/div>/.exec(page(plain, { day: "2026-11-15" }))![1]).toBe("no headers here, nor a Why without its colon");
+});
+
+const words = (s: string): string[] => s.replace(/<[^>]*>/g, " ").replace(/[—,:·]/g, " ").split(/\s+/).filter(Boolean);
+test("the terminal copy says the page's count lines in the same words, then each list's items in tree order with status, starting mark and label", () => {
+  const html = page(day, { day: "2026-11-15" }), text = terminal(day, { day: "2026-11-15" });
+  const tallies = /<div class="tallies">(.*?)<\/div><section>/s.exec(html)![1];
+  const lines = text.split("\n");
+  expect(lines[0]).toBe("Sunday, 15 November 2026");
+  expect(words(lines.slice(1, 3).join(" "))).toEqual(words(tallies));
+  expect(lines.slice(4)).toEqual([
+    "Architecture queue",
+    "  A1  done · spawned open · starting item  the save's tests",
+    "    A1.1  unstarted  a race",
+    "",
+    "Side list",
+    "  S1  moved → bigger questions B1 · starting item  fold <## sections>",
+    "",
+    "Bigger questions",
+    "  B1  unstarted · starting item  fold <## sections> (moved in from S1)",
+  ]);
 });
