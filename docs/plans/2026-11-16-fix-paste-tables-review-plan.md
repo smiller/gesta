@@ -39,3 +39,23 @@ was owed over `cccc617..HEAD`.
   cell's selected text (the cell emptied, the caret in the cell below).
   Shift+← then Enter raced ProseMirror's reading of the selection in a
   whole run; the step selects through `selectBetween`, which waits.
+
+## The architecture run (A5.1)
+
+- `/improve-codebase-architecture` over the batch's 20 files: one scan,
+  176,017 tokens (MEASURED, the last message of
+  `subagents/agent-a9393be2a4ba75177.jsonl`: 2 input + 4,958 cache
+  creation + 166,666 cache read + 4,391 output). Four candidates.
+- Built, Strong: a markdown table written and read in one module,
+  `src/model/table.ts` (ccf18ed; a cell escapes its pipe alone, asked); a
+  reference's place crossing as `{ kind, text }`, numbers, paragraphs or
+  words, the label's first-letter guess gone (604dafa; formatting stays on
+  the editor side, conventions still read on both, asked).
+- Skipped for now, no ADR: a terminal's copy as its own module
+  (`sourcePasted` already is its interface); it may come back if the code
+  changes (asked).
+- Built after discussion: the progress log's one write path. A day not
+  begun is begun by its first event, so "run begin first" no longer meets
+  a day's first command (asked); the wake reads what the begin would carry
+  in, so a watched item wakes on a new day's first run, which before it
+  could not; `logged` refuses for both callers. `begin` stays as a command.

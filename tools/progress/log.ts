@@ -9,10 +9,10 @@
    --at HH:MM for a time other than now, --approx for one not known exactly,
    --day YYYY-MM-DD for another day's log; the day's page and slideshow
    redrawn after, each named with the artifact to republish it to */
-import { appendFileSync, mkdirSync, readdirSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { replay, isOpen, LISTS, type Event, type List } from "./events.ts";
-import { DIR, dayEvents } from "./day.ts";
+import { DIR, dayEvents, lastDayEvents } from "./day.ts";
 import { drawn } from "./page.ts";
 
 const rootNumber = (id: string, list: List): number => { const m = new RegExp("^" + list + "(\\d+)$").exec(id); return m ? +m[1] : 0; };
@@ -41,7 +41,6 @@ export function beginning(last: Event[], at: string): Event[] {
 }
 
 /* ---------- the command ---------- */
-const lastDay = (day: string): string | undefined => readdirSync(DIR).map((f) => f.replace(/\.jsonl$/, "")).filter((d) => d < day).sort().pop();
 const pad = (n: number): string => String(n).padStart(2, "0");
 export const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 export const clock = (d = new Date()): string => pad(d.getHours()) + ":" + pad(d.getMinutes());
@@ -96,26 +95,34 @@ export function refusal(e: Event, events: Event[]): string | null {
    begin ahead of them was written (pin: log.test › a batch is read against) */
 export const batchRefusal = (batch: Event[], logged: Event[]): string | null =>
   batch.map((e, i) => refusal(e, [...logged, ...batch.slice(0, i)])).find(Boolean) ?? null;
-function refuseOrGo(events: (Event | null)[], day: string): Event[] {
-  if (events.some((e) => !e)) { console.error("unknown command"); process.exit(1); }
-  const refused = batchRefusal(events as Event[], dayEvents(day));
-  if (refused) { console.error(refused); process.exit(1); }
-  return events as Event[];
+/* a day not begun is begun by its first event: "run begin first" met
+   every day's first command (pin: log.test › a day not begun is begun by
+   its first event) */
+export const opened = (today: Event[], last: Event[], at: string): Event[] => (today.some((e) => e.ev === "begin") ? [] : beginning(last, at));
+function asked(day: string, c: Line): (Event | null)[] {
+  const today = dayEvents(day), last = lastDayEvents(day), at = c.asked.base.at;
+  if (c.cmd === "begin") return beginning(last, at);
+  const owed = opened(today, last, at);
+  return [...owed, built(c, [...today, ...owed])];
 }
 function main(argv: string[]): void {
-  const { day, cmd, asked } = commandLine(argv);
+  const c = commandLine(argv);
   mkdirSync(DIR, { recursive: true });
   /* begun twice, a day carried its items in twice */
-  if (cmd === "begin" && dayEvents(day).some((e) => e.ev === "begin")) { console.error(day + " has begun already"); process.exit(1); }
-  const before = lastDay(day);
-  const events = cmd === "begin" ? beginning(before ? dayEvents(before) : [], asked.base.at) : [built({ day, cmd, asked }, dayEvents(day))];
-  for (const l of logged(day, refuseOrGo(events, day))) console.log(l);
+  if (c.cmd === "begin" && dayEvents(c.day).some((e) => e.ev === "begin")) { console.error(c.day + " has begun already"); process.exit(1); }
+  const events = asked(c.day, c);
+  if (events.some((e) => !e)) { console.error("unknown command"); process.exit(1); }
+  const out = logged(c.day, events as Event[]);
+  if ("refused" in out) { console.error(out.refused); process.exit(1); }
+  for (const l of out.lines) console.log(l);
 }
-export function logged(day: string, events: Event[]): string[] {
+export function logged(day: string, events: Event[]): { refused: string } | { lines: string[] } {
+  const refused = batchRefusal(events, dayEvents(day));
+  if (refused) return { refused };
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
   /* the artifacts hold today's ledger: a past day's page republished there
      would overwrite it */
   const pages = drawn(day, dayEvents(day)).map((d) => (day === today() ? "republish " + d.path + " → " + d.url : "drawn " + d.path + ", not republished: " + day + " is not today"));
-  return [...events.map((e) => JSON.stringify(e)), ...pages];
+  return { lines: [...events.map((e) => JSON.stringify(e)), ...pages] };
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

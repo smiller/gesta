@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { nextId, beginning, commandLine, refusal, batchRefusal, built } from "./log.ts";
+import { nextId, beginning, commandLine, refusal, batchRefusal, built, opened } from "./log.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -70,4 +70,12 @@ test("a watch is given by the watch command, refused for an item the day does no
   expect(refusal({ at: at("10:00"), ev: "watch", id: "S99", text: "t" }, day)).toBe("no item S99 on this day");
   const watching: Event[] = [...day, { at: at("10:00"), ev: "start", id: "S6" }, { at: at("10:05"), ev: "stop", id: "S6" }, { at: at("10:06"), ev: "watch", id: "S6", text: "the bar did not show" }];
   expect(beginning(watching, "2026-11-16T09:00").find((e) => "id" in e && e.id === "S6")).toMatchObject({ watch: "the bar did not show" });
+});
+test("a day not begun is begun by its first event: the begin and its carries ahead of it, at its time, its number the next the last day kept", () => {
+  const owed = opened([], day, "2026-11-16T08:00");
+  expect(owed).toEqual(beginning(day, "2026-11-16T08:00"));
+  expect(opened(owed, day, "2026-11-16T08:05")).toEqual([]);
+  expect(built(commandLine(["add", "S", "new", "--day", "2026-11-16"]), owed)).toMatchObject({ id: "S7" });
+  const start: Event = { at: "2026-11-16T08:00", ev: "start", id: "A1" };
+  expect(batchRefusal([...owed, start], [])).toBeNull();
 });
