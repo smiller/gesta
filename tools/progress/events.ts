@@ -3,8 +3,8 @@ export interface Stamp { at: string; approx: boolean }
 interface Base { at: string; approx?: boolean }
 export type Event = Base & (
   | { ev: "begin"; next: Partial<Record<List, number>> }
-  | { ev: "carry" | "add"; id: string; list: List; title: string; parent?: string; detail?: string }
-  | { ev: "detail"; id: string; text: string }
+  | { ev: "carry" | "add"; id: string; list: List; title: string; parent?: string; detail?: string; watch?: string }
+  | { ev: "detail" | "watch"; id: string; text: string }
   | { ev: "start" | "stop" | "drop"; id: string; note?: string }
   | { ev: "done"; id: string; commits?: string[]; note?: string }
   | { ev: "move"; id: string; to: string; list: List }
@@ -12,6 +12,8 @@ export type Event = Base & (
 export type Status = "unstarted" | "in progress" | "paused" | "done" | "done, spawned open" | "moved" | "dropped";
 export interface Item {
   id: string; list: List; title: string; parent?: string; detail?: string;
+  /* what a Helium run's output holds to start it again */
+  watch?: string;
   /* on the day's list when it began: carried in, or moved from an item that was */
   starting: boolean;
   movedFrom?: string; movedTo?: string;
@@ -26,7 +28,7 @@ const stamp = (e: Base): Stamp => ({ at: e.at, approx: !!e.approx });
 type Items = Map<string, Item>;
 function created(items: Items, e: Event): void {
   if (e.ev === "carry" || e.ev === "add") {
-    items.set(e.id, { id: e.id, list: e.list, title: e.title, parent: e.parent, detail: e.detail, starting: e.ev === "carry", reported: e.ev === "add" ? stamp(e) : undefined, commits: [], status: "unstarted" });
+    items.set(e.id, { id: e.id, list: e.list, title: e.title, parent: e.parent, detail: e.detail, watch: e.watch, starting: e.ev === "carry", reported: e.ev === "add" ? stamp(e) : undefined, commits: [], status: "unstarted" });
     return;
   }
   if (e.ev !== "move") return;
@@ -37,11 +39,12 @@ function created(items: Items, e: Event): void {
   items.set(e.to, { id: e.to, list: e.list, title: was.title, detail: was.detail, starting: was.starting, movedFrom: e.id, reported: was.reported, commits: [], status: "unstarted" });
 }
 function changed(it: Item, e: Event): void {
-  if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; }
+  if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; it.watch = undefined; it.note = e.note ?? it.note; }
   else if (e.ev === "stop") { it.stopped = stamp(e); it.note = e.note ?? it.note; }
   else if (e.ev === "done") { it.ended = stamp(e); it.commits = e.commits ?? []; it.note = e.note ?? it.note; it.status = "done"; }
   else if (e.ev === "drop") { it.ended = stamp(e); it.note = e.note ?? it.note; it.status = "dropped"; }
   else if (e.ev === "detail") it.detail = e.text;
+  else if (e.ev === "watch") it.watch = e.text;
 }
 /* moved, or started and so in progress or, stopped since, paused */
 function begun(it: Item): Status {

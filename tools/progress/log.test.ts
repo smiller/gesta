@@ -65,3 +65,9 @@ test("an item's detail is given with --detail on add, or later by the detail com
   const told: Event[] = [...day, { at: at("10:00"), ev: "detail", id: "S6", text: "why" }];
   expect(beginning(told, "2026-11-16T09:00").find((e) => "id" in e && e.id === "S6")).toMatchObject({ detail: "why" });
 });
+test("a watch is given by the watch command, refused for an item the day does not know, and carried into the next day", () => {
+  expect(built(commandLine(["watch", "S6", "the", "bar", "did", "not", "show"]), day)).toMatchObject({ ev: "watch", id: "S6", text: "the bar did not show" });
+  expect(refusal({ at: at("10:00"), ev: "watch", id: "S99", text: "t" }, day)).toBe("no item S99 on this day");
+  const watching: Event[] = [...day, { at: at("10:00"), ev: "start", id: "S6" }, { at: at("10:05"), ev: "stop", id: "S6" }, { at: at("10:06"), ev: "watch", id: "S6", text: "the bar did not show" }];
+  expect(beginning(watching, "2026-11-16T09:00").find((e) => "id" in e && e.id === "S6")).toMatchObject({ watch: "the bar did not show" });
+});

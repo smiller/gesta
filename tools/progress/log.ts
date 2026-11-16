@@ -3,6 +3,7 @@
      begin                       the day's start: yesterday's open items carried in
      add <list> <title…>         [--parent ID] [--detail text]; prints the number it took
      detail <id> <text…>         the fuller description a click on its row opens
+     watch <id> <text…>          a Helium run whose output holds the text starts it
      start | stop | done | drop <id>   [--commits a,b] [--note text]
      move <id> <list>
    --at HH:MM for a time other than now, --approx for one not known exactly,
@@ -36,14 +37,14 @@ export function beginning(last: Event[], at: string): Event[] {
   const open = replay(last).filter((i) => isOpen(i.status));
   const carried = new Set(open.map((i) => i.id));
   const under = (p?: string) => (p && carried.has(p) ? { parent: p } : {});
-  return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent), ...(i.detail ? { detail: i.detail } : {}) }))];
+  return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent), ...(i.detail ? { detail: i.detail } : {}), ...(i.watch ? { watch: i.watch } : {}) }))];
 }
 
 /* ---------- the command ---------- */
 const lastDay = (day: string): string | undefined => readdirSync(DIR).map((f) => f.replace(/\.jsonl$/, "")).filter((d) => d < day).sort().pop();
 const pad = (n: number): string => String(n).padStart(2, "0");
-const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-const clock = (d = new Date()): string => pad(d.getHours()) + ":" + pad(d.getMinutes());
+export const today = (d = new Date()): string => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+export const clock = (d = new Date()): string => pad(d.getHours()) + ":" + pad(d.getMinutes());
 /* a yes-or-no flag: taken off the line alone, the word after it left */
 function has(args: string[], name: string): boolean {
   const i = args.indexOf("--" + name);
@@ -63,6 +64,7 @@ const plain = (ev: "start" | "stop" | "drop") => (a: Asked): Event => ({ ...a.ba
 const BUILT: Record<string, (a: Asked) => Event> = {
   add: (a) => { const list = a.rest[0] as List; return { ...a.base, ev: "add", id: nextId(a.events, list, a.parent), list, title: a.rest.slice(1).join(" "), ...(a.parent ? { parent: a.parent } : {}), ...(a.detail ? { detail: a.detail } : {}) }; },
   detail: (a) => ({ ...a.base, ev: "detail", id: a.rest[0], text: a.rest.slice(1).join(" ") }),
+  watch: (a) => ({ ...a.base, ev: "watch", id: a.rest[0], text: a.rest.slice(1).join(" ") }),
   move: (a) => ({ ...a.base, ev: "move", id: a.rest[0], to: nextId(a.events, a.rest[1] as List), list: a.rest[1] as List }),
   done: (a) => ({ ...a.base, ev: "done", id: a.rest[0], ...(a.commits ? { commits: a.commits.split(",") } : {}), ...noted(a) }),
   start: plain("start"), stop: plain("stop"), drop: plain("drop"),
@@ -107,11 +109,13 @@ function main(argv: string[]): void {
   if (cmd === "begin" && dayEvents(day).some((e) => e.ev === "begin")) { console.error(day + " has begun already"); process.exit(1); }
   const before = lastDay(day);
   const events = cmd === "begin" ? beginning(before ? dayEvents(before) : [], asked.base.at) : [built({ day, cmd, asked }, dayEvents(day))];
-  refuseOrGo(events, day);
+  for (const l of logged(day, refuseOrGo(events, day))) console.log(l);
+}
+export function logged(day: string, events: Event[]): string[] {
   appendFileSync(join(DIR, day + ".jsonl"), events.map((e) => JSON.stringify(e) + "\n").join(""));
-  for (const e of events) console.log(JSON.stringify(e));
   /* the artifacts hold today's ledger: a past day's page republished there
      would overwrite it */
-  for (const d of drawn(day, dayEvents(day))) console.log(day === today() ? "republish " + d.path + " → " + d.url : "drawn " + d.path + ", not republished: " + day + " is not today");
+  const pages = drawn(day, dayEvents(day)).map((d) => (day === today() ? "republish " + d.path + " → " + d.url : "drawn " + d.path + ", not republished: " + day + " is not today"));
+  return [...events.map((e) => JSON.stringify(e)), ...pages];
 }
 if (import.meta.url === "file://" + process.argv[1]) main(process.argv.slice(2));

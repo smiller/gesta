@@ -147,6 +147,9 @@ function prepare(name: string): Playing | null {
 const baselineOf = (name: string, played: Map<string, string>): string | null =>
   played.get(TOOLS[name].heldTo ?? "") ?? readOrNull(approvedOf(name));
 function judge({ name, played }: Playing, received: string, baseline: string | null): void {
+  /* a child, not an import: imported, the progress tools were the run's
+     inputs, and an edit to the day's page replayed it */
+  process.stdout.write(spawnSync("node", ["tools/progress/wake.ts"], { input: received, encoding: "utf8" }).stdout ?? "");
   if (!TOOLS[name].heldTo) writeFileSync(receivedOf(name), received);
   const failure = differs(name, received, baseline);
   if (!failure) { rmSync(receivedOf(name), { force: true }); if (!process.env.STEPS) stamp(name, played); console.log(name + ": ok"); return; }

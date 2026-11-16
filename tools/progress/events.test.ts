@@ -110,3 +110,20 @@ test("an item's detail is the one it was added with, or the last detail event's,
   expect([it.S8.detail, it.S1.detail, it.B2.detail, it.A1.detail]).toEqual(["the fuller description", "second", "second", undefined]);
   expect(replay(detailed, at("13:25")).find((i) => i.id === "S1")!.detail).toBe("first");
 });
+test("an item's watch is the last watch event's, carried in with it, and ends when the item starts again", () => {
+  const watched: Event[] = [...day,
+    { at: at("13:10"), ev: "add", id: "S9", list: "S", title: "s9" },
+    { at: at("13:20"), ev: "start", id: "S9" },
+    { at: at("13:30"), ev: "stop", id: "S9" },
+    { at: at("13:31"), ev: "watch", id: "S9", text: "the bar did not show" },
+    { at: at("13:40"), ev: "start", id: "S9" },
+  ];
+  expect(replay(watched, at("13:35")).find((i) => i.id === "S9")!.watch).toBe("the bar did not show");
+  expect(replay(watched).find((i) => i.id === "S9")!.watch).toBeUndefined();
+  const carried = replay([{ at: at("09:00"), ev: "begin", next: {} }, { at: at("09:00"), ev: "carry", id: "S6.1", list: "S", title: "t", watch: "the bar did not show" }]);
+  expect(carried[0].watch).toBe("the bar did not show");
+});
+test("a start given a note takes it as the item's note, as a stop does", () => {
+  const started = replay([...day, { at: at("13:10"), ev: "add", id: "S9", list: "S", title: "s9" }, { at: at("13:20"), ev: "start", id: "S9", note: "woken" }]);
+  expect(started.find((i) => i.id === "S9")!.note).toBe("woken");
+});
