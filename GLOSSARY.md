@@ -29,6 +29,13 @@ verse by line`, `by book, chapter, and paragraph`, `part titles in roman`;
 `by half-line` on any page, for it and every page below.
 _Avoid_: setting, option, flag.
 
+**Terminal copy**:
+Text copied from a terminal: its lines broken at the window's width, its
+margin the indent every line shares, a table drawn in box characters.
+Pasted, it is the text it was, its wrapped lines joined and its tables
+markdown tables, never a paragraph per coloured run.
+_Avoid_: terminal paste, console text.
+
 **Commonplace**:
 A named entry that belongs to no day and no author: Books, Birthdays,
 Verdour. The paper icon lists them; "New commonplace…" makes one, and

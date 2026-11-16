@@ -104,3 +104,17 @@ was owed over `cccc617..HEAD`.
   opens on `⎿`, joined the command line above it and kept three spaces of
   indent. A `⎿` line now starts its own and stands outside the margin, as
   a message's `⏺` does.
+
+## The architecture run over A7's batch (A7.1)
+
+- `/improve-codebase-architecture` over 9 files: one scan, 156,606 tokens
+  (MEASURED, the last message of `subagents/agent-a3b164f858a785ee6.jsonl`:
+  2 input + 4,631 cache creation + 147,856 cache read + 4,117 output).
+  Four candidates.
+- Built, Strong, reopened from A5.1.3's skip (the code changed, as the
+  skip allowed): `src/editor/terminalCopy.ts`, a terminal's copy on its
+  own, `isTerminalCopy(html)` and `terminalText(plain)`; the paste route
+  and `sourcePasted` call it, and so does `page.test.ts`'s contract test,
+  with text alone. Its seven rule tests moved; the markdown view's paste
+  route has a test of its own. Helium's per-rule readings kept (asked).
+  GLOSSARY.md gains "Terminal copy".

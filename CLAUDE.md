@@ -249,7 +249,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     `reference.ts` builds a reference over a passage (the label's ranges,
     the highlight, the clipboard text).
   - Paste and copy: `paste.ts` (what a paste becomes, for both views:
-    `pasted` and `pasteProps`, its routes in order), `copy.ts` (what a copy
+    `pasted` and `pasteProps`, its routes in order), `terminalCopy.ts`
+    (a terminal's copy: whether some HTML is one, and the text it pastes
+    as), `copy.ts` (what a copy
     says, `copyProps`).
   - ⌃⌘G: `goto.ts` (`ask` and `bar`: the bar and a link to a line alike,
     a stanza page by its Stanza and Line boxes), `landing.ts` (the landing

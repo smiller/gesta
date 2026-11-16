@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { page, drawn, terminal, PUBLISHED } from "./page.ts";
-import { sourcePasted } from "../../src/editor/paste.ts";
+import { terminalText } from "../../src/editor/terminalCopy.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
@@ -111,10 +111,8 @@ test("a terminal copy at a time is the day as it stood then, and says so", () =>
   expect(text.split("\n")[0]).toBe("Sunday, 15 November 2026, as it stood at 09:15");
   expect(text).toContain("-- A1  unstarted · starting item  the save's tests");
 });
-/* a terminal shows a copy two spaces in, its lines as a terminal's copy pastes them */
-const GHOSTTY = '<div style="font-family: monospace; white-space: pre;"><div style="display: inline;">x</div></div>';
+/* a terminal shows a copy two spaces in */
 test("the terminal copy pasted from a terminal keeps every line of it its own: no list's items run together", () => {
   const text = terminal(day, { day: "2026-11-15" }), shown = text.split("\n").map((l) => (l ? "  " + l : l)).join("\n");
-  const pasted = sourcePasted({ plain: shown, html: GHOSTTY, types: ["text/html"], file: null });
-  expect(pasted && "text" in pasted ? pasted.text.split("\n") : null).toEqual(text.split("\n"));
+  expect(terminalText(shown).split("\n")).toEqual(text.split("\n"));
 });
