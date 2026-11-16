@@ -47,3 +47,6 @@
 {"at":"2026-11-16T12:03","ev":"start","id":"A5.1.3"}
 {"at":"2026-11-16T12:13","ev":"drop","id":"A5.1.3","note":"skipped for now, no ADR: may come back if the code changes (asked)"}
 {"at":"2026-11-16T12:13","ev":"start","id":"A5.1.4"}
+{"at":"2026-11-16T12:16","ev":"done","id":"A5.1.4","commits":["c1d7168"]}
+{"at":"2026-11-16T12:16","ev":"done","id":"A5.1","note":"2 Strong built, 3 skipped for now, 4 built after discussion; 176,017 tokens"}
+{"at":"2026-11-16T12:16","ev":"done","id":"A5","commits":["579083c","ccf18ed","604dafa","c1d7168"]}
