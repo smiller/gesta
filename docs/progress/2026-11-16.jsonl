@@ -89,3 +89,4 @@
 {"at":"2026-11-16T15:10","ev":"done","id":"A7.1.2","commits":["ff11004"]}
 {"at":"2026-11-16T15:10","ev":"done","id":"A7.1","note":"1, 2 (widened), 3, 4 built; 156,606 tokens"}
 {"at":"2026-11-16T15:10","ev":"add","id":"A8","list":"A","title":"The batch review: /code-review at HIGH over 1e43685..HEAD","detail":"Asked: owed by CLAUDE.md, the line handed over at 15:10 with A7.1's builds. Why: S19 (978abca) and A7.1.1 (0d50d89) touched paste.ts, a DOM seam; A7.1's tools builds (772c62b, 521d286, ff11004) ride with them. No architecture run: the 14:14 scan read S19's code, and the rest is that run's own builds. Done when: the findings land in one fix commit and the cost, read from the transcript, is recorded in the plan's record."}
+{"at":"2026-11-16T15:13","ev":"start","id":"A8"}
