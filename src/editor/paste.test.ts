@@ -255,6 +255,13 @@ test("a terminal's margin is taken off: the indent every line shares, a message'
   expect(unwrapped("  - outer\n    - inner")).toBe("- outer\n  - inner");
 });
 
+test("a terminal's box-drawn table is a markdown table: its first row the header, a row's wrapped lines joined cell by cell", () => {
+  const box = ["  Done:", "", "  ┌──────┬──────────────┐", "  │ Item │     What     │", "  ├──────┼──────────────┤",
+    "  │      │ begin failed │", "  │ P1   │  its carries │", "  ├──────┼──────────────┤", "  │ S14  │ the paste    │", "  └──────┴──────────────┘", "", "  After."];
+  expect(unwrapped(box.join("\n"))).toBe("Done:\n\n| Item | What |\n| --- | --- |\n| P1 | begin failed its carries |\n| S14 | the paste |\n\nAfter.");
+  expect(unwrapped("  ┌───┐\n  │ a │\n  no bottom")).toBe("┌───┐\n│ a │\nno bottom");
+});
+
 test("a terminal's copy of markdown keeps its structure: nothing in a fence is joined, nor a fence, heading, quote or table line", () => {
   expect(unwrapped("::: verse\na | one\nb | two\n:::")).toBe("::: verse\na | one\nb | two\n:::");
   expect(unwrapped("```\nnpm test\nnpm run verify\n```")).toBe("```\nnpm test\nnpm run verify\n```");

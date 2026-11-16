@@ -283,7 +283,7 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await page.click(S.corner).catch(() => {});
 }
 section("a terminal's copy pasted", async () => {
-  /* a terminal's copy, its HTML one white-space: pre block of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same */
+  /* a terminal's copy, its HTML white-space: pre blocks of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same; a box-drawn table, in a second block, a table */
   await go("commonplace/Terminal%20Paste");
   await page.click(S.editor);
   await pasteTerminal(TERMINAL_HTML, TERMINAL_TEXT);
@@ -300,6 +300,11 @@ section("a terminal's copy pasted", async () => {
   await caretAt("first", 5);
   await pasteTerminal(terminal("\n" + run(CODE, "const") + " a = 1\nconst b = 2"), "\nconst a = 1\nconst b = 2");
   await log("a terminal's copy pasted into a code block", { md: await A.stored(page) });
+  await write("commonplace/Terminal Table", "before\n");
+  await caretAt("before", 6);
+  await page.keyboard.press("Enter");
+  await pasteTerminal(terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Done:") + terminal(TABLE.join("\n")), "⏺ Done:\n" + TABLE.join("\n"));
+  await log("a terminal's box-drawn table pasted, in a second pre block", { md: await A.stored(page), rows: await page.evaluate((sel) => [...document.querySelectorAll(sel + " tr")].map((r) => r.children.length), S.editor) });
   await write("commonplace/Terminal Source", "x\n");
   await view(true);
   await R.sourceCaretTo(page, "x");
@@ -327,5 +332,6 @@ const drawn = () => page.evaluate((sel) => ({ paragraphs: document.querySelector
 const CODE = "color: rgb(177, 185, 249);";
 const run = (style: string, text: string): string => '<div style="display: inline;' + style + '">' + text + "</div>";
 const terminal = (inner: string): string => '<div style="font-family: monospace; white-space: pre;">' + inner + "</div>";
+const TABLE = ["", "  ┌──────┬──────────────┐", "  │ Item │     What     │", "  ├──────┼──────────────┤", "  │      │ begin failed │", "  │ P1   │  its carries │", "  ├──────┼──────────────┤", "  │ S14  │ the paste    │", "  └──────┴──────────────┘"];
 const TERMINAL_HTML = terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run(CODE, "npm run verify") + " passed\n  before each landed.\n\n  - " + run(CODE, "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run(CODE, "7603f25") + ": the steps made independent.");
 const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";

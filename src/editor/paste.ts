@@ -188,7 +188,7 @@ function terminalCopy(html: string): boolean {
    keeps its structure) */
 const STARTS_ITS_OWN = /^\s*(?:[-*+•]|\d+[.)]|⏺)\s/;
 const ENDS_A_SENTENCE = /[.?!:…]["'”’)\]]*$/;
-const HOLDS = /^\s*(?:```|:::|#{1,6}\s|>|\|)/;
+const HOLDS = /^\s*(?:```|:::|#{1,6}\s|>|\||[┌├└│])/;
 const BREAKS: ((prev: string, line: string) => boolean)[] = [
   (prev, line) => !/\S/.test(prev) || !/\S/.test(line),
   (prev, line) => ENDS_A_SENTENCE.test(prev.trimEnd()) || STARTS_ITS_OWN.test(line),
@@ -217,10 +217,34 @@ function marginOff(lines: string[]): string[] {
   const margin = indents.length ? Math.min(...indents) : 0, off = (l: string) => l.replace(new RegExp("^[ \\t]{0," + margin + "}"), "");
   return [firstCounts ? off(first) : first, ...rest.map(off)];
 }
+/* a terminal draws a table in box characters, each cell wrapped within its
+   column; joined as prose its borders and cells ran together (pin:
+   paste.test › a terminal's box-drawn table) */
+const BOX_TOP = /^\s*┌/, BOX_BOTTOM = /^\s*└/, BOX_RULE = /^\s*├/;
+const cellsOf = (line: string): string[] => line.trim().slice(1, -1).split("│").map((c) => c.trim());
+function boxRow(lines: string[]): string {
+  const rows = lines.map(cellsOf);
+  return "| " + rows[0].map((_, i) => rows.map((r) => r[i] ?? "").filter(Boolean).join(" ")).join(" | ") + " |";
+}
+function boxTable(inside: string[]): string[] {
+  const rows: string[][] = [[]];
+  for (const l of inside) if (BOX_RULE.test(l)) rows.push([]); else rows.at(-1)!.push(l);
+  const md = rows.filter((r) => r.length).map(boxRow);
+  return [md[0], "| " + cellsOf(inside[0]).map(() => "---").join(" | ") + " |", ...md.slice(1)];
+}
+function boxTablesOff(lines: string[]): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const end = BOX_TOP.test(lines[i]) ? lines.findIndex((l, j) => j > i && BOX_BOTTOM.test(l)) : -1;
+    if (end < 0) out.push(lines[i]);
+    else { out.push(...boxTable(lines.slice(i + 1, end))); i = end; }
+  }
+  return out;
+}
 function unwrapped(text: string): string {
   const out: string[] = [];
   let open = { code: false, blocks: 0 };
-  for (const line of marginOff(text.split("\n"))) {
+  for (const line of boxTablesOff(marginOff(text.split("\n")))) {
     const last = open.code || open.blocks > 0 ? undefined : out.at(-1);
     if (last !== undefined && runsOn(last, line)) out[out.length - 1] = last.trimEnd() + " " + line.trimStart();
     else out.push(line);

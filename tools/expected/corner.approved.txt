@@ -102,6 +102,8 @@ a terminal's copy pasted: arrived at commonplace/Terminal Item: {"cursor":"at a 
 a terminal's copy pasted into a list item: {"md":"- an item that wraps at the window's width.","drawn":{"paragraphs":1,"items":1},"cursor":"at the end","screen":"commonplace/Terminal Item · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a terminal's copy pasted: arrived at commonplace/Terminal Code: {"cursor":"at a line's start"}
 a terminal's copy pasted into a code block: {"md":"```\nfirst\nconst a = 1\nconst b = 2\n```","cursor":"at the end","screen":"commonplace/Terminal Code · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a terminal's copy pasted: arrived at commonplace/Terminal Table: {"cursor":"at a line's start"}
+a terminal's box-drawn table pasted, in a second pre block: {"md":"before\n\n⏺ Done:\n\n| Item | What |\n| --- | --- |\n| P1 | begin failed its carries |\n| S14 | the paste |","rows":[2,2,2],"cursor":"at the end","screen":"commonplace/Terminal Table · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a terminal's copy pasted: arrived at commonplace/Terminal Source: {"cursor":"at a line's start"}
 a terminal's copy pasted in the source view: {"md":"x passed before it landed.","cursor":"at the end","screen":"commonplace/Terminal Source · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 == shortcuts
