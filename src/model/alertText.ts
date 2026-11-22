@@ -195,8 +195,8 @@ export const ALERTS = {
   linkNotPlaced: warning("the entry was made — the link was not placed", "A new entry made from a selection landed, but the entry or view on screen changed before its link could be placed."),
   textMoved: warning("the text moved while the entry was made — the link was not placed", "A new entry made from a selection landed, but the selected text changed meanwhile."),
 
-  oneWord: info("1 word", "The Words button or ⌃⌘W over one word.", 2000),
-  words: info((p: { n: number }) => p.n + " words", "The Words button or ⌃⌘W: the selection’s count, or the entry’s with nothing selected.", 2000),
+  oneWord: info("1 word", "Word count: from the Words button or ⌃⌘W: one word, in the selection or the entry.", 2000),
+  words: info((p: { n: number }) => p.n + " words", "Word count: from the Words button or ⌃⌘W: the selection’s, or the entry’s with nothing selected.", 2000),
   lineBarLanding: info((p: { text: string }) => p.text, "⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the line bar’s phrases.", 2500),
   entriesStored: info((p: { n: number }) => p.n + " entries stored", "The journal read at launch."),
   toReplace: info("Source view, to replace", "⌃⌘E in the rendered view, switching to the markdown view.", 3000),

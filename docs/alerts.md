@@ -134,8 +134,8 @@ Blue. A count, a progress line or a note, telling of no outcome. It fades on its
 
 | Words | When |
 |---|---|
-| `1 word` | The Words button or ⌃⌘W over one word. |
-| `… words` | The Words button or ⌃⌘W: the selection’s count, or the entry’s with nothing selected. |
+| `1 word` | Word count: from the Words button or ⌃⌘W: one word, in the selection or the entry. |
+| `… words` | Word count: from the Words button or ⌃⌘W: the selection’s, or the entry’s with nothing selected. |
 | `…` | ⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the line bar’s phrases. |
 | `… entries stored` | The journal read at launch. |
 | `Source view, to replace` | ⌃⌘E in the rendered view, switching to the markdown view. |
