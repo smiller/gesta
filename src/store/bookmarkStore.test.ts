@@ -23,7 +23,7 @@ function world(initial?: string) {
     seed: SEED, storage,
     storedKeys: async () => { held.reads++; if (held.unreadable) throw new Error("IndexedDB blocked"); return held.keys; },
     error: (text) => { pins.push(text); return ++gen; },
-    releaseError: (g) => { released.push(g); },
+    resolveError: (g) => { released.push(g); },
   });
   return { box, store, pins, released, held, fill: (on: boolean) => { full = on; }, block: (on: boolean) => { blocked = on; } };
 }

@@ -18,7 +18,7 @@ export function refuseCold(layer: Load, warn: (text: string) => void): boolean {
 
 export interface Pins {
   error(text: string, from?: ErrorFrom): number;
-  releaseError(gen: number): void;
+  resolveError(gen: number): void;
 }
 /* a store that never answers left a blank page saying nothing
    (pin: losing nothing › a store that never answers) */
@@ -29,7 +29,7 @@ export function loadPins(ms: number, pins: Pins): { start(): void; landed(layer:
     landed: (layer) => {
       landed = true;
       clearTimeout(timer);
-      if (pinned) pins.releaseError(pinned);
+      if (pinned) pins.resolveError(pinned);
       /* an unreadable journal is an error, not a status: it sticks, the
          caught failure copyable */
       if (layer.storeReadFailed) pins.error("the store could not be read — reload", { caught: layer.storeReadError });

@@ -42,7 +42,7 @@ export interface Alerts {
   warn(text: string): void;
   clearWarning(): void;
   error(text: string, from?: ErrorFrom): number;
-  releaseError(gen: number): void;
+  resolveError(gen: number): void;
   progress(text: string): Progress;
   click(kind: Kind): void;
   /* the ×: closes the alert without copying */
@@ -134,10 +134,10 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     errorCopy = copy || text;
     return errorGen;
   }
-  /* releasing another error brings back a save error still owed
+  /* resolving another error brings back a save error still owed
      (pin: alertLedger.test › a save error covered by another error comes
-     back when its owner releases) */
-  function releaseError(g: number): void {
+     back when its owner resolves) */
+  function resolveError(g: number): void {
     if (!g || g !== errorGen) return;
     errorGen++;
     errorCopy = "";
@@ -174,11 +174,11 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     saveErrorLatch = [text, err, copy];
     saveErrorGen = error(text, { caught: err, copy });
   }
-  function releaseSaveError(ekey: string): void {
+  function resolveSaveError(ekey: string): void {
     delete owed[ekey];
     for (const k in owed) if (k) return;   /* another key still owed — keep the pin */
     saveErrorLatch = null;
-    releaseError(saveErrorGen);
+    resolveError(saveErrorGen);
     saveErrorGen = 0;
   }
   function replaySaveError(): void {
@@ -223,7 +223,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
      its own pin undismissable; closing another brings it back while owed */
   function closeError(): string {
     const payload = errorCopy;
-    releaseError(errorGen);
+    resolveError(errorGen);
     return payload;
   }
   /* the copy-failed error only closes: copying its words would fail again
@@ -249,12 +249,12 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   return {
     get state() { return state; },
     get pinned() { return state.error.shown; },
-    info, succeed, warn, clearWarning, error, releaseError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
+    info, succeed, warn, clearWarning, error, resolveError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
     click: (kind) => CLICKS[kind](),
     dismiss: (kind) => CLOSES[kind](),
     entry: {
-      landed: releaseSaveError,
-      removed: releaseSaveError,
+      landed: resolveSaveError,
+      removed: resolveSaveError,
       stuck: saveError,
       stuckIdle: (text, err) => { error(text, { caught: err }); },
     },

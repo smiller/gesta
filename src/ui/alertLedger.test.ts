@@ -128,15 +128,15 @@ describe("an error", () => {
     expect(copied).toEqual(["NotAllowedError: denied", "backup blocked"]);
     expect(console.error).toHaveBeenCalledTimes(2);
   });
-  it("releaseError releases only while the error is still the owner's", () => {
+  it("resolveError resolves only while the error is still the owner's", () => {
     const gen = n.error("fence refused", { caught: null });
-    n.releaseError(gen);
+    n.resolveError(gen);
     expect(n.state.error.shown).toBe(false);
     const g2 = n.error("first", { caught: null });
     n.error("second", { caught: null });
-    n.releaseError(g2);
+    n.resolveError(g2);
     expect(n.state.error.text).toBe("second");
-    n.releaseError(0);
+    n.resolveError(0);
     expect(n.state.error.text).toBe("second");
   });
   it("a click where no error stands does nothing", () => {
@@ -405,10 +405,10 @@ describe("the newer of info and success", () => {
 });
 
 describe("the review's findings", () => {
-  it("a save error covered by another error comes back when its owner releases that one", () => {
+  it("a save error covered by another error comes back when its owner resolves that one", () => {
     n.entry.stuck("not saved", new Error("x"), "a");
     const g = n.error("Couldn’t copy the reference", { copy: "x" });
-    n.releaseError(g);
+    n.resolveError(g);
     expect(n.state.error).toMatchObject({ text: "not saved", shown: true });
   });
   it("a routine success is held back while a save error stands; another success is not", () => {

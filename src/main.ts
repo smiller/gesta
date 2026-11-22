@@ -260,7 +260,7 @@ const entryShown = (stored: string, ekey: string): void => {
 };
 const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, info, succeed, warn,
-  error: (text, from) => alerts.error(text, from), pinned: () => alerts.pinned, releaseError: (gen) => alerts.releaseError(gen),
+  error: (text, from) => alerts.error(text, from), pinned: () => alerts.pinned, resolveError: (gen) => alerts.resolveError(gen),
   onShow: (stored, ekey) => entryShown(stored, ekey),
   onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),
@@ -364,7 +364,7 @@ acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };
 acts.shortcuts.save = () => {
   try { localStorage.setItem(SHORTCUTS_KEY, sc.draft); }
   catch (e) { shortcutsFailGen = alerts.error("shortcuts not saved — storage full", { caught: e }); return; }
-  alerts.releaseError(shortcutsFailGen); shortcutsFailGen = 0;
+  alerts.resolveError(shortcutsFailGen); shortcutsFailGen = 0;
   shortcuts = parseShortcuts(sc.draft);
   sc.dirty = false;
   renderShortcuts();
@@ -375,7 +375,7 @@ const bm = screen.bookmarks;
 const marks = bookmarkStore({
   seed: [{ key: "commonplace/Making Verity Cards", alias: "" }, { key: "commonplace/Verdour", alias: "" }],
   error: (text, from) => alerts.error(text, from),
-  releaseError: (gen) => alerts.releaseError(gen),
+  resolveError: (gen) => alerts.resolveError(gen),
   storedKeys: () => layer.storedKeys(),
 });
 const card = bookmarkActs({

@@ -5,9 +5,9 @@ import { NS } from "./keys.ts";
 export interface BookmarkStoreOptions {
   /* written once, when the key is absent */
   seed: Bookmark[];
-  /* an error raised: returns the generation `releaseError` takes back */
+  /* an error raised: returns the generation `resolveError` takes back */
   error(text: string, from: { caught: unknown }): number;
-  releaseError(gen: number): void;
+  resolveError(gen: number): void;
   storage?: () => Pick<Storage, "getItem" | "setItem">;
   /* the keys in the entry store every window shares */
   storedKeys(): Promise<string[]>;
@@ -48,7 +48,7 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
   const write = (next: Bookmark[]): boolean => {
     const err = save(next);
     if (err) { failGen = opts.error("bookmarks not saved", { caught: err }); return false; }
-    opts.releaseError(failGen);
+    opts.resolveError(failGen);
     failGen = 0;
     return true;
   };

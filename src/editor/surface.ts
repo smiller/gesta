@@ -62,7 +62,7 @@ export interface SurfaceOptions {
   places: PlacePort;
   /* 0 when nothing was pinned */
   error: (text: string) => number;
-  releaseError: (gen: number) => void;
+  resolveError: (gen: number) => void;
   pinned: () => boolean;
   onView: (md: boolean) => void;
   switched: () => void;
@@ -89,7 +89,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
   let fencePin = 0;
-  const unpin = (): void => { if (fencePin) opts.releaseError(fencePin); fencePin = 0; };
+  const unpin = (): void => { if (fencePin) opts.resolveError(fencePin); fencePin = 0; };
   const repin = (next: () => number): void => { unpin(); fencePin = next(); };
   const mount = (make: () => Surface): void => {
     const old = cur;

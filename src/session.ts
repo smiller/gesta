@@ -48,7 +48,7 @@ export interface SessionOptions {
   warn: (text: string) => void;
   error?: (text: string, from?: ErrorFrom) => number;
   pinned?: () => boolean;
-  releaseError?: (gen: number) => void;
+  resolveError?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
   /* a navigation to the entry already open */
@@ -218,7 +218,7 @@ export function startSession(opts: SessionOptions): Session {
     places: keeper,
     error: (text) => opts.error?.(text) || 0,
     pinned: () => !!opts.pinned?.(),
-    releaseError: (gen) => opts.releaseError?.(gen),
+    resolveError: (gen) => opts.resolveError?.(gen),
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },
   });
@@ -229,7 +229,7 @@ export function startSession(opts: SessionOptions): Session {
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
   function releaseDetached(): void {
-    for (const g of detachedPins) opts.releaseError?.(g);
+    for (const g of detachedPins) opts.resolveError?.(g);
     detachedPins = [];
   }
   const pendingNow = (): boolean => pending?.gen === navGen;
@@ -438,7 +438,7 @@ export function startSession(opts: SessionOptions): Session {
          clipboard back); an older copy settling late changes nothing
          (unpinned: two writes no step can order) */
       if (gen !== copyGen) return;
-      if (copyPin) { opts.releaseError?.(copyPin); copyPin = 0; }
+      if (copyPin) { opts.resolveError?.(copyPin); copyPin = 0; }
       if (ok) { succeed(okText); return; }
       console.error(failText, payload.text);
       copyPin = opts.error ? opts.error(failText, { copy: payload.text }) : 0;

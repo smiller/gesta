@@ -25,7 +25,7 @@ function rig() {
   const stuck: string[] = [], errs: unknown[] = [], released: number[] = [];
   const pins = loadPins(8000, {
     error: (text, from) => { stuck.push(text); if (from && "caught" in from) errs.push(from.caught); return stuck.length; },
-    releaseError: (gen) => { released.push(gen); },
+    resolveError: (gen) => { released.push(gen); },
   });
   return { pins, stuck, errs, released };
 }

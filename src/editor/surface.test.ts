@@ -48,7 +48,7 @@ function world(y = 0, standing = { pin: false }) {
       release: () => { log.push("release"); },
     },
     error: (text) => { pins.push(text); return pins.length; },
-    releaseError: (gen) => { released.push(gen); },
+    resolveError: (gen) => { released.push(gen); },
     pinned: () => standing.pin,
     onView: (md) => { log.push("view " + md); },
     switched: () => { log.push("switched"); },

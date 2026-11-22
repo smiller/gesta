@@ -15,7 +15,8 @@ alert by kind, its words and when it is raised.
    an alert, its kind or the band: failure, refusal, passing, strip; the
    words stay for an act that does nothing and for stripping markers.
 4. The ledger's methods: `error`, `errorCaught`, `warn`, `info`,
-   `succeed`; `clearWarning`, `releaseError`.
+   `succeed`; `clearWarning`, `releaseError` (`resolveError`, asked after: the
+   glossary's "until it is resolved").
 5. The kept log moves from the `flashlog` key to `alertlog` once, its
    kinds read failure → error, refusal → warning; the console's
    `gesta.alerts()`.
