@@ -56,7 +56,7 @@ describe("an info", () => {
     expect(copied).toEqual(["193 entries stored"]);
     expect(n.state.success.shown).toBe(false);
   });
-  it("a routine success — saved, copied — only goes when clicked", async () => {
+  it("a routine success — saved, copied — is closed by a click, nothing copied", async () => {
     for (const id of ["saved", "copied"] as const) {
       n.raise(id);
       n.click("success");
