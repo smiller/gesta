@@ -118,6 +118,12 @@ a terminal's copy pasted in the source view: {"md":"x passed before it landed.",
 references across verse blocks: arrived at commonplace/Blocks: {"cursor":"at a line's start"}
 ⌃⌘R over blocks numbered apart: {"refused":"Those verse blocks aren’t numbered straight on — reference them one at a time (click to copy)","cursor":"selected 24","screen":"commonplace/Blocks · sel 24 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘R over blocks numbered straight on: {"said":"Reference copied to clipboard","textHead":"[*Blocks*](#commonplace/Blocks?h=second%","passage":"> ::: verse\n> second block\n> \n> third block\n> :::","cursor":"selected 32","screen":"commonplace/Blocks · sel 32 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+== references across blocks of each kind
+references across blocks of each kind: arrived at commonplace/Dual: {"cursor":"at a line's start"}
+⌃⌘R over dual-language blocks with a heading between: {"said":"Reference copied to clipboard","lines":["[*Dual*](…):","","> ::: dual-language 2","> cano.","> ","> Troiae qui | who from Troy","> :::"],"cursor":"selected 24","screen":"commonplace/Dual · sel 24 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+references across blocks of each kind: arrived at commonplace/Facing: {"cursor":"at a line's start"}
+⌃⌘R over blocks numbered on both sides, the second opening with a rest: {"said":"Reference copied to clipboard","lines":["[*Facing*](…):","","> ::: verse 11","> second","> ","> ⟨…⟩the rest","> third","> :::"],"cursor":"selected 30","screen":"commonplace/Facing · sel 30 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+Ref (all) over the same: {"said":"Reference copied to clipboard","lines":["[*Facing*](…):","","> ::: verse 2 11",">  | second","> ","> ⟨…⟩ | the rest","> secunda | third","> :::"],"cursor":"selected 30","screen":"commonplace/Facing · sel 30 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 == shortcuts
 shortcuts: arrived at commonplace/Expanded: {"cursor":"at a line's start"}
 ⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"commonplace/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}

@@ -119,9 +119,9 @@ function sentenceRange(doc: Node, from: number, to: number): [number, number] {
 /* the blocks the passage's lines stand in, in order; a row with nothing on
    the left is in its block by the right column (pin: reference.test › a
    passage running from one block numbered on both sides) */
-function blocksOf(p: Passage): Block[] {
-  const units = [...p.lines(), ...p.lines({ side: "right" })];
-  return [...new Set(units.map((u) => u.blockPos))].sort((a, b) => a - b).map((pos) => ({ node: p.doc.nodeAt(pos)!, pos }));
+function blocksOf(doc: Node, lines: Passage["lines"]): Block[] {
+  const units = [...lines(), ...lines({ side: "right" })];
+  return [...new Set(units.map((u) => u.blockPos))].sort((a, b) => a - b).map((pos) => ({ node: doc.nodeAt(pos)!, pos }));
 }
 const atTop = (doc: Node, b: Block): boolean => doc.resolve(b.pos).depth === 0;
 const plainVerse = (b: Node): boolean => b.type === N.verse && b.attrs.stanza == null;
@@ -133,18 +133,29 @@ function onlyHeadingsBetween(doc: Node, a: Block, b: Block): boolean {
   return only;
 }
 const joinable = (doc: Node, a: Block, b: Block): boolean => atTop(doc, a) && atTop(doc, b) && sameKind(a.node, b.node) && onlyHeadingsBetween(doc, a, b);
+interface Ends { first: Unit; last: number }
+function endsOf(b: Block, side: Side): Ends | null {
+  const lines = blockUnits(b.node, b.pos, 0, side).filter((u) => u.line);
+  return lines.length ? { first: lines[0], last: lines[lines.length - 1].line } : null;
+}
 /* a block opening with the rest of a line takes that line's number: the
    block before ended on its first part (pin: reference.test › a block
    opening with the rest of the line) */
-function runsOn(a: Block, b: Block, side: Side): boolean {
-  const x = blockUnits(a.node, a.pos, 0, side).filter((u) => u.line), y = blockUnits(b.node, b.pos, 0, side).filter((u) => u.line);
-  if (!x.length || !y.length) return !x.length && !y.length;
-  const last = x[x.length - 1].line, first = y[0];
-  return first.line === last + 1 || (first.line === last && first.node.attrs.kind === "cont");
+const followsOn = (a: Ends, b: Ends): boolean => b.first.line === a.last + 1 || (b.first.line === a.last && b.first.node.attrs.kind === "cont");
+const pairwise = <T>(xs: T[], ok: (a: T, b: T) => boolean): boolean => xs.every((x, i) => i === 0 || ok(xs[i - 1], x));
+const SIDES: Side[] = ["left", "right"];
+/* a block with no numbered lines on a side is passed over there: one of
+   stage directions alone stands between lines numbered straight on (pin:
+   reference.test › a block with no numbered lines between) */
+const numberedOn = (blocks: Block[]): boolean =>
+  SIDES.every((side) => pairwise(blocks.map((b) => endsOf(b, side)).filter((e): e is Ends => e != null), followsOn));
+const stanzaRun = (doc: Node, blocks: Block[]): boolean => blocks.every((b) => atTop(doc, b) && b.node.attrs.stanza != null);
+/* more than one block and no stanza run: numbered straight on only in a
+   passage spanRefusal has passed, which it does not check again */
+function runOf(p: Passage): Block[] | null {
+  const blocks = p.blocks();
+  return blocks.length > 1 && !stanzaRun(p.doc, blocks) ? blocks : null;
 }
-const numberedOn = (a: Block, b: Block): boolean => runsOn(a, b, "left") && runsOn(a, b, "right");
-const pairwise = (blocks: Block[], ok: (a: Block, b: Block) => boolean): boolean => blocks.every((b, i) => i === 0 || ok(blocks[i - 1], b));
-const stanzaRun = (p: Passage, blocks: Block[]): boolean => blocks.every((b) => atTop(p.doc, b) && b.node.attrs.stanza != null);
 /* TWO BLOCKS ARE ONE PASSAGE ONLY NUMBERED STRAIGHT ON: blocks numbered
    apart have no one range (pin: reference.test › two verse blocks not
    numbered straight on) (pin: reference.test › verse blocks numbered
@@ -155,16 +166,10 @@ function spanRefusal(p: Passage): Refusal | null {
   /* a span touching one block at most is in one: the walk of every line it
      holds took 16 ms over a 3000-line page selected whole (MEASURED) */
   if (rowBlocks(p.doc).filter((b) => overlaps(b, p.from, p.to)).length <= 1) return null;
-  const blocks = blocksOf(p);
-  if (blocks.length <= 1 || stanzaRun(p, blocks)) return null;
-  if (!pairwise(blocks, (a, b) => joinable(p.doc, a, b))) return "two-blocks";
-  return pairwise(blocks, numberedOn) ? null : "numbered-apart";
-}
-/* more than one block and no stanza run: numbered straight on only in a
-   passage spanRefusal has passed, which it does not check again */
-function runOfBlocks(p: Passage): Block[] | null {
-  const blocks = blocksOf(p);
-  return blocks.length > 1 && !stanzaRun(p, blocks) ? blocks : null;
+  const run = runOf(p);
+  if (!run) return null;
+  if (!pairwise(run, (a, b) => joinable(p.doc, a, b))) return "two-blocks";
+  return numberedOn(run) ? null : "numbered-apart";
 }
 /* THE PASSAGE IS A QUOTATION NODE, serialized once: a textual filter over
    serialized lines misread a note's fence lines inside a verse block, a
@@ -324,8 +329,8 @@ function byBlock(units: Unit[]): Unit[][] {
 function passageMd(passage: Passage, byHalves: boolean, paragraphs: boolean): string {
   const p: Quoting = { ...passage, byHalves, paragraphs };
   const units = p.lines();
-  const run = runOfBlocks(p);
-  if (run && !coversProse(p, run)) return joinedPassage(p, run);
+  const run = runOf(p);
+  if (run) return coversProse(p, run) ? loosePassage(p) : joinedPassage(p, run);
   if (!units.length || coversProse(p)) return loosePassage(p);
   /* a run across stanzas:
      each stanza's rows quoted as one block's are, a blank quoted line
@@ -502,9 +507,10 @@ const inFacing = ($x: ResolvedPos): boolean => $x.depth >= 1 && !inNote($x) && i
 function facingRun(doc: Node, from: number, to: number): Block[] | null {
   const $a = doc.resolve(from), $b = doc.resolve(to);
   if (!inFacing($a) || !inFacing($b)) return null;
-  const tops: Block[] = [];
-  doc.forEach((node, pos) => { if (pos >= $a.before(1) && pos <= $b.before(1)) tops.push({ node, pos }); });
-  return tops.every((b) => isFacing(b.node) || passedBetween(b.node)) ? tops.filter((b) => isFacing(b.node)) : null;
+  const tops: Block[] = [], [lo, hi] = [$a.before(1), $b.before(1)];
+  doc.forEach((node, pos) => { if (pos >= lo && pos <= hi) tops.push({ node, pos }); });
+  const facing = tops.filter((b) => isFacing(b.node));
+  return pairwise(facing, (x, y) => onlyHeadingsBetween(doc, x, y)) ? facing : null;
 }
 /* the right column alone as one column's verse, numbered from its first
    line: each row the selection inks gives its line, cut only where the selection starts or ends inside it (pin:
@@ -513,17 +519,24 @@ function facingRun(doc: Node, from: number, to: number): Block[] | null {
    apparatus alone declared a line, or the lines after it lose a number
    (pin: reference.test › the translation alone keeps its verse
    paragraphs' gaps) */
-interface TranslationRun { doc: Node; from: number; to: number; units: Unit[]; rows: Node[] }
+interface TranslationRun { doc: Node; from: number; to: number; units: Unit[]; rows: Node[]; lastLine: number }
 function rightWords(c: TranslationRun, row: Node, pos: number): Fragment {
   const start = pos + 1 + row.child(0).nodeSize + 1, end = start + row.child(1).content.size;
   const lo = Math.max(c.from, start), hi = Math.min(c.to, end);
   return inkBetween(c.doc, lo, hi) ? row.child(1).content.cut(lo - start, hi - start) : row.child(1).content;
 }
-function lineKind(c: TranslationRun, line: Node, pos: number): string | null {
-  const u = c.units.find((v) => v.pos === pos);
-  if (!u) return null;
-  if (u.rest && c.rows.some((r) => r.type === N.line)) return "cont";
+/* a rest is one whose line was the last quoted: a block opening with the
+   rest of the line the block before ends on numbers it as the block's start
+   (pin: reference.test › blocks numbered on both sides, the second opening
+   with the rest) */
+function lineKind(c: TranslationRun, row: Node, line: Node, u: Unit): string | null {
+  if (row.attrs.kind === "cont" && u.line === c.lastLine) return "cont";
   return whollyIn(line, schema.marks.strong) || whollyIn(line, schema.marks.em) ? "line" : null;
+}
+function translatedLine(c: TranslationRun, row: Node, pos: number, u: Unit | undefined): Node {
+  const line = N.line.create(null, dropPageLabels(rightWords(c, row, pos)));
+  const kind = u ? lineKind(c, row, line, u) : null;
+  return kind ? N.line.create({ kind }, line.content) : line;
 }
 function translationRow(c: TranslationRun, row: Node, pos: number): void {
   if (row.type === N.gap) {
@@ -531,9 +544,9 @@ function translationRow(c: TranslationRun, row: Node, pos: number): void {
     return;
   }
   if (row.type !== N.pair || !drawsInk(row.child(1))) return;
-  const line = N.line.create(null, dropPageLabels(rightWords(c, row, pos)));
-  const kind = lineKind(c, line, pos);
-  c.rows.push(kind ? N.line.create({ kind }, line.content) : line);
+  const u = c.units.find((v) => v.pos === pos);
+  c.rows.push(translatedLine(c, row, pos, u));
+  if (u) c.lastLine = u.line;
 }
 function translationRows(c: TranslationRun, block: Block): void {
   const units = c.units.filter((u) => u.blockPos === block.pos);
@@ -550,7 +563,7 @@ function translationRows(c: TranslationRun, block: Block): void {
 function translationPassage({ doc, from, to, lines }: Passage, blocks: Block[]): string | null {
   const units = lines({ top: true, side: "right" }).filter((u) => blocks.some((b) => b.pos === u.blockPos));
   if (!units.length) return null;
-  const c: TranslationRun = { doc, from, to, units, rows: [] };
+  const c: TranslationRun = { doc, from, to, units, rows: [], lastLine: 0 };
   for (const block of blocks) translationRows(c, block);
   return quoted([N.verse.create({ start: units[0].line }, c.rows)]);
 }
@@ -574,6 +587,8 @@ export interface Passage {
   /* the blocks numbered on both sides holding the whole passage: one, or a run numbered straight on */
   readonly facing: Block[] | null;
   lines(at?: { top?: boolean; side?: Side }): Unit[];
+  /* the blocks its lines stand in, in order */
+  blocks(): Block[];
   /* which halves of a line the passage inks; null for a line with no halves */
   halves(u: Unit): { a: boolean; b: boolean } | null;
 }
@@ -584,7 +599,9 @@ function passageOver(doc: Node, from: number, to: number): Passage {
     if (!walks.has(key)) walks.set(key, coveredUnits(doc, from, to, { topOnly: top, side }));
     return walks.get(key)!;
   };
-  return { doc, from, to, facing: facingRun(doc, from, to), lines, halves: (u) => halvesInked(u, from, to) };
+  let held: Block[] | null = null;
+  const blocks = (): Block[] => (held ??= blocksOf(doc, lines));
+  return { doc, from, to, facing: facingRun(doc, from, to), lines, blocks, halves: (u) => halvesInked(u, from, to) };
 }
 /* the selection widened to the Latin a sentence stands beside, then to whole
    words: punctuation alone puts no row in (pin: pairMarks.test › punctuation

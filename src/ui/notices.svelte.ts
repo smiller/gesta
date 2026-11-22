@@ -27,6 +27,7 @@ export interface Notices {
   stickErr(text: string, err: unknown, copy?: string): number;
   stickErrIdle(text: string, err: unknown, copy?: string): number;
   releasePin(gen: number): void;
+  holds(gen: number): boolean;
   progress(text: string): Progress;
   click(): void;
   setTrouble(msg: string): void;
@@ -211,6 +212,7 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
   return {
     get state() { return state; },
     get pinned() { return !!stuckCopy; },
+    holds: (g: number) => !!g && g === gen && !!stuckCopy,
     whisper, refuse, stick, stickErr, stickErrIdle, releasePin, progress, click, setTrouble,
     entry: {
       landed: releaseSaveFail,

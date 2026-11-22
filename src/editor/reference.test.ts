@@ -181,6 +181,12 @@ test("a block opening with the rest of the line the block before ends on is numb
   expect(quote(doc, a, b)).toBe("> ::: dual-language 48\n> portarit.\n> \n> ⟨…⟩Vel dic | Or, tell me\n> naturae\n> :::");
   expect(rangeOf(doc, a, b)).toBe("48-49");
 });
+test("a block with no numbered lines between two numbered straight on is passed over, quoted in its place", () => {
+  const doc = parseMarkdown("::: verse 16\na\nb\n:::\n\n::: verse\n*Exit.*\n:::\n\n::: verse 18\nc\n:::");
+  const [a, b] = span(doc, "b", "c");
+  expect(quote(doc, a, b)).toBe("> ::: verse 17\n> b\n> \n> *Exit.*\n> \n> c\n> :::");
+  expect(rangeOf(doc, a, b)).toBe("17-18");
+});
 test("verse blocks numbered straight on with more than headings between, or of two kinds, are refused", () => {
   const prose = parseMarkdown("::: verse 13\na\n:::\n\nA paragraph.\n\n::: verse 14\nc\n:::");
   expect(quote(prose, ...span(prose, "a", "c"))).toBe("two-blocks");
@@ -453,6 +459,14 @@ test("blocks numbered on both sides and straight on in both columns: the transla
   expect(p).toMatchObject({ label: "Ovid, *Metamorphoses*, 7.180 (Golding, 7.245-46)", passage: "> ::: verse 245\n> Untill that Glaucus\n> \n> The starres\n> :::" });
   const all = referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal, true);
   expect("passage" in all && all.passage).toBe("> ::: verse 180 245\n>  | Untill that Glaucus\n> \n> sidera | The starres\n> :::");
+});
+test("blocks numbered on both sides, the second opening with the rest of the translation's last line: the translation alone quotes it as that line's rest", () => {
+  const two = parseMarkdown("# Book 7\n\n::: verse 179 244\nTres | Before\n | Untill that Glaucus\n:::\n\n::: verse 180 245\n⟨…⟩ | the rest\nsidera | The starres\n:::");
+  const [a, b] = span(two, "Untill", "The starres");
+  const p = referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal);
+  expect(p).toMatchObject({ label: "Ovid, *Metamorphoses*, 7.180 (Golding, 7.245-46)", passage: "> ::: verse 245\n> Untill that Glaucus\n> \n> ⟨…⟩the rest\n> The starres\n> :::" });
+  const all = referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal, true);
+  expect("passage" in all && all.passage).toBe("> ::: verse 180 245\n>  | Untill that Glaucus\n> \n> ⟨…⟩ | the rest\n> sidera | The starres\n> :::");
 });
 
 // The Vita Nuova: a chapter of prose numbered by Barbi's paragraphs and its

@@ -43,6 +43,7 @@ export interface SessionOptions {
   stick?: (text: string, copy?: string) => void;
   pin?: (text: string, copy?: string) => number;
   pinned?: () => boolean;
+  holds?: (gen: number) => boolean;
   releasePin?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
@@ -213,6 +214,7 @@ export function startSession(opts: SessionOptions): Session {
     places: keeper,
     pin: (text) => opts.pin?.(text) || 0,
     pinned: () => !!opts.pinned?.(),
+    holds: (gen) => !!opts.holds?.(gen),
     releasePin: (gen) => opts.releasePin?.(gen),
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },

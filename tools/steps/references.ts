@@ -374,3 +374,25 @@ section("references across verse blocks", async () => {
   const copied = await R.clipboardReference(page);
   await log("⌃⌘R over blocks numbered straight on", { said, textHead: copied.textHead, passage: copied.passage });
 });
+/* the clipboard emptied first and waited for: the corner still read the
+   copy before's "copied", and the clipboard was read one copy behind */
+async function copiedBy(act: () => Promise<unknown>): Promise<{ said: string | false; lines: string[] }> {
+  await page.evaluate(() => navigator.clipboard.writeText(""));
+  const said = await R.cornerAfter(page, act, /copied/);
+  await page.waitForFunction(async () => !!(await navigator.clipboard.readText()), null, { timeout: 2000, polling: 25 }).catch(() => {});
+  return { said, lines: await R.clipboardLines(page) };
+}
+section("references across blocks of each kind", async () => {
+  /* the run on each row kind it lands on: dual-language blocks with a heading between; blocks numbered on both sides, the second opening with the rest of the translation's last line, by Ref and by Ref (all) */
+  await write("commonplace/Dual", "# Dual\n\n::: dual-language 1\nArma virumque | Arms and the man\ncano.\n:::\n\n## Between\n\n::: dual-language 3\nTroiae qui | who from Troy\n:::");
+  await still(page);
+  await R.selectBetween(page, "cano.", "Troiae qui");
+  await R.waitBar(page);
+  await log("⌃⌘R over dual-language blocks with a heading between", await copiedBy(() => page.keyboard.press("Control+Meta+r")));
+  await write("commonplace/Facing", "# Facing\n\n::: verse 1 10\nprima | first\n | second\n:::\n\n::: verse 2 11\n⟨…⟩ | the rest\nsecunda | third\n:::");
+  await still(page);
+  await R.selectBetween(page, "second", "third");
+  await R.waitBar(page);
+  await log("⌃⌘R over blocks numbered on both sides, the second opening with a rest", await copiedBy(() => page.keyboard.press("Control+Meta+r")));
+  await log("Ref (all) over the same", await copiedBy(() => page.click(".fmt button[title='Copy a reference to both columns']")));
+});

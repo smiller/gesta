@@ -117,10 +117,17 @@ test("a dual-language block's grow only widens, its column kept against a Latin 
 });
 
 test("a dual-language block's columns are equal halves of the room, the Latin wider only where its own lines need it", () => {
-  // width 444 + 541 + 105.4 = 1091, room 985.6: each column 493
-  expect(fitWidth(m(443, 540, { whole: true }), null, false)).toEqual({ width: 1091, col: 493 });
+  // room 1188 - 105.4 = 1082.6: each column 541, the English's 541 unwrapped
+  expect(fitWidth(m(443, 540, { whole: true }), null, false)).toEqual({ width: 1188, col: 541 });
   // short sentences: the floor's room 606.6 halved
   expect(fitWidth(m(200, 100, { whole: true }), null, false)).toEqual({ width: 712, col: 303 });
+});
+
+test("a dual-language block whose English is the wider is as wide as two columns of it, under the cap", () => {
+  expect(fitWidth(m(300, 500, { whole: true }), null, false)!.width).toBe(Math.ceil(2 * 501 + 105.4));
+  expect(fitWidth(m(300, 500, { whole: true, cap: 900 }), null, false)).toEqual({ width: 900, col: 397 });
+  // a Latin the wider: its own width, and the English's beside it
+  expect(fitWidth(m(500, 300, { whole: true }), null, false)!.width).toBe(Math.ceil(501 + 301 + 105.4));
 });
 
 test("beside a dual-language block one over-wide line still takes no more than two thirds", () => {

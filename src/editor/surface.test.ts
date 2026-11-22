@@ -49,7 +49,8 @@ function world(y = 0, standing = { pin: false }) {
     },
     pin: (text) => { pins.push(text); return pins.length; },
     releasePin: (gen) => { released.push(gen); },
-    pinned: () => standing.pin,
+    pinned: () => standing.pin || pins.length > released.length,
+    holds: (gen) => gen > 0 && gen === pins.length && !released.includes(gen),
     onView: (md) => { log.push("view " + md); },
     switched: () => { log.push("switched"); },
   });
@@ -278,5 +279,20 @@ describe("a text the model refuses", () => {
     w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
     w.s.releaseRefusal();
     expect(w.released).toEqual([1]);
+  });
+  it("a refusal never covers a pin the surface does not hold", () => {
+    const w = world(0, { pin: true });
+    w.s.show("fine", "commonplace/A");
+    w.s.pinRefusal("That spans two verse blocks");
+    expect(w.pins).toEqual([]);
+  });
+  it("a refusal over the warning pinned when the entry opened puts the warning back when it is released", () => {
+    const w = world();
+    w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
+    w.s.pinRefusal("That spans two verse blocks");
+    expect(w.released).toEqual([1]);
+    w.s.releaseRefusal();
+    expect(w.released).toEqual([1, 2]);
+    expect(w.pins).toEqual([told(), "That spans two verse blocks", told()]);
   });
 });

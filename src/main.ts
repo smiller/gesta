@@ -240,7 +240,7 @@ const entryShown = (stored: string, ekey: string): void => {
 const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, say,
   stick: (text, copy) => { notices.stick(text, copy); },
-  pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
+  pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, holds: (gen) => notices.holds(gen), releasePin: (gen) => notices.releasePin(gen),
   onShow: (stored, ekey) => entryShown(stored, ekey),
   onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),

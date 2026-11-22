@@ -56,3 +56,32 @@ only for a quoted pair of verse, whose English lines wrapped.
 - The verdict's one changed reading: a pasted dual-language reference's
   English runs 9 lines where it ran 8.
 
+## Review
+
+- `/code-review high 5a8edc7..305cdee`: 129,554 tokens (MEASURED, the last
+  message of `subagents/agent-a7919842aa26c708a.jsonl`: 2 input + 5,435
+  cache creation + 116,459 cache read + 7,658 output); 10 findings.
+- Fixed: a refusal never covers a pin the surface does not hold (a "not
+  saved"), and the warning it covered is pinned again when it is
+  released (1, 2); a facing block opening with a line's rest keeps it a
+  rest quoted alone (3); a block with no numbered lines on a side is
+  passed over there (4); a dual-language entry whose English is the wider
+  is sized for two columns of it, under the cap (6); the blocks worked
+  out once per passage, `facingRun` reading between its blocks by the
+  joined run's rule (7, 8); the verdict gained "references across blocks
+  of each kind": dual-language with a heading between, numbered on both
+  sides with a rest, by Ref and Ref (all) (10).
+- Left: 5 (every refusal pinned) waits for U5, notices in two places;
+  9 (a selection taking in the heading above quotes it loose) is the
+  rule for a selection with prose in it.
+- MEASURED (`passageAt` over an entry selected whole, 20 runs, node):
+  Aristophanes’ Apology 68.3 ms at 5a8edc7, 35.8 at 305cdee, 35.5
+  after; House of Fame 7.3, 4.3, 4.2; Golding Book 13 2.1, 2.6, 2.1. The
+  batch made the walk faster, not slower; its 35 ms is outside the run.
+- MEASURED in headless Helium over the backup's Book 4: the entry 1122px
+  → 1188px, its columns 508/509 → 541/542 at every window from 1280 to
+  2400; at 1600 its English 952 lines → 913, 39 of 384 sentences a line
+  shorter. 4.469-511 still one reference. The backup has no block
+  numbered on both sides opening with a rest, and one verse block with
+  no numbered lines between others (Pauline's epigraph), between blocks
+  numbered apart: 3 and 4 are the tests' and the verdict's.

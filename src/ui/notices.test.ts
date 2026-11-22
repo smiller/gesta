@@ -145,6 +145,16 @@ describe("stick", () => {
     n.releasePin(0);
     expect(n.state.text).toBe("second (click to copy)");
   });
+  it("a handle holds the pin only while its notice is the one pinned", () => {
+    const g = n.stick("warning");
+    expect(n.holds(g)).toBe(true);
+    const g2 = n.stick("not saved");
+    expect(n.holds(g)).toBe(false);
+    expect(n.holds(g2)).toBe(true);
+    n.releasePin(g2);
+    expect(n.holds(g2)).toBe(false);
+    expect(n.holds(0)).toBe(false);
+  });
 });
 
 describe("progress", () => {

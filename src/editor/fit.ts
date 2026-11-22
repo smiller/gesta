@@ -59,8 +59,13 @@ export interface Fit { width: number; col: number | null }
    so it never wraps under the caret, while narrowing waits for the settle,
    so a deletion cannot yank the column in mid-keystroke (pin: fit.test › a
    grow only widens) */
+/* a dual-language block's English, the wider, is given a column as wide
+   beside a Latin column as wide: sized to the two and then halved, it
+   wrapped (pin: fit.test › a dual-language block whose English is the
+   wider) */
+const columns = (m: Measured, c1: number, c2: number): number => (m.whole ? Math.max(c1, c2) + c2 : c1 + c2);
 function entryWidth(m: Measured, c1: number, c2: number, held: Fit | null): number {
-  const width = Math.ceil(Math.min(Math.max(m.floor, c1 + c2 + m.gap + m.frame, m.prose ?? 0), m.cap));
+  const width = Math.ceil(Math.min(Math.max(m.floor, columns(m, c1, c2) + m.gap + m.frame, m.prose ?? 0), m.cap));
   /* clamped to the cap even while growing: the window can have narrowed */
   return held ? Math.min(m.cap, Math.max(width, held.width)) : width;
 }
