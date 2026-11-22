@@ -59,8 +59,16 @@ const ROWS: Record<string, (c: Typed, events: Event[], at: string) => Event[]> =
 };
 export const rowEvents = (c: Typed, events: Event[], at: string): Event[] => ROWS[c.name]?.(c, events, at) ?? [];
 
+/* the event's own context, which reaches the agent before it answers: a
+   redrawn page nobody publishes shows nothing, and only the agent can
+   publish it */
+export function hookAnswer(event: string, command: string, lines: string[]): string {
+  const context = "Progress rows written for /" + command + ". Publish both progress pages now, in this turn, before anything else, each with the files beside it:\n" + lines.join("\n");
+  return JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: context } });
+}
 function main(): void {
-  const c = typed(JSON.parse(readFileSync(0, "utf8") || "null"));
+  const input: unknown = JSON.parse(readFileSync(0, "utf8") || "null");
+  const c = typed(input);
   if (!c || !ROWS[c.name]) return;
   mkdirSync(DIR, { recursive: true });
   const day = today(), at = day + "T" + clock(), logs = dayEvents(day);
@@ -68,8 +76,8 @@ function main(): void {
   const rows = rowEvents(c, [...logs, ...owed], at);
   if (!rows.length) return;
   const out = logged(day, [...owed, ...rows]);
-  console.log("progress rows written for /" + c.name + ":");
-  for (const l of "refused" in out ? ["refused: " + out.refused] : out.lines) console.log(l);
+  const event = (input as { hook_event_name?: string }).hook_event_name ?? "UserPromptExpansion";
+  console.log(hookAnswer(event, c.name, "refused" in out ? ["refused: " + out.refused] : out.lines));
 }
 if (import.meta.url === "file://" + process.argv[1]) {
   try { main(); } catch (e) { console.error("reviewRow: " + (e as Error).message); }

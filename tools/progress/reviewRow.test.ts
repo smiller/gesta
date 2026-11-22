@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { typed, rowEvents } from "./reviewRow.ts";
+import { typed, rowEvents, hookAnswer } from "./reviewRow.ts";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-22T" + hm;
@@ -56,4 +56,12 @@ test("an architecture run with no review on the day is a row of its own", () => 
 
 test("any other command writes nothing", () => {
   expect(rowEvents({ name: "simplify", args: "" }, begun, at("09:00"))).toEqual([]);
+});
+
+test("the hook's answer is context for the event that fired: the rows written, and both pages to publish now with their files", () => {
+  const lines = ['{"ev":"add","id":"A13"}', "republish tools/out/progress/d.html → https://claude.ai/artifact/D, beside it tools/out/progress/c.html tools/out/progress/d.html"];
+  const out = JSON.parse(hookAnswer("UserPromptExpansion", "code-review", lines));
+  expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptExpansion");
+  expect(out.hookSpecificOutput.additionalContext).toMatch(/^Progress rows written for \/code-review\. Publish both progress pages now, in this turn, before anything else/);
+  expect(out.hookSpecificOutput.additionalContext).toContain(lines[1]);
 });

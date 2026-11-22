@@ -65,3 +65,8 @@
 {"at":"2026-11-22T16:58","ev":"done","id":"U6.2","commits":["51a61f5","8b85326"],"note":"accepted, committed"}
 {"at":"2026-11-22T16:58","ev":"start","id":"U6.1"}
 {"at":"2026-11-22T16:58","ev":"start","id":"U6.3"}
+{"at":"2026-11-22T17:09","ev":"done","id":"U6.1","commits":["c4f3edb"],"note":"accepted, committed"}
+{"at":"2026-11-22T17:09","ev":"done","id":"U6.3","commits":["c4f3edb"],"note":"accepted, committed"}
+{"at":"2026-11-22T17:09","ev":"done","id":"U6","commits":["34271b2","90eb3c0","b141071","6da47e1","e381116","455a80e","51a61f5","8b85326","c4f3edb","c170f93"],"note":"accepted, committed"}
+{"at":"2026-11-22T17:10","ev":"add","id":"A13","list":"A","title":"The batch review: /code-review at HIGH over 9971f9e..HEAD","detail":"Asked: /code-review high 9971f9e..HEAD, typed at 17:10. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-22T17:10","ev":"start","id":"A13"}
