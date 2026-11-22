@@ -5,7 +5,7 @@ import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc, flattenText } from "../model/flatten.ts";
 import { fenceRefusals } from "../model/fenceRefusals.ts";
-import { alertWords, said, type FenceRefusal } from "../model/alertText.ts";
+import { alertWords, asSaid, said, type ErrorOwner, type OwnerOpts, type FenceRefusal } from "../model/alertText.ts";
 import { directiveTrouble } from "../store/conventions.ts";
 
 const told = (): string => directiveTrouble("bookshelf", "Chaucer, Geoffrey", ["roman book and canto"]).join("\n");
@@ -13,10 +13,15 @@ const opened = (refused: FenceRefusal[], trouble: string): string => alertWords(
 
 interface Fake extends Surface { caretAt: number; seen: boolean; top: number | null; text: string }
 
-function world(y = 0, standing = { error: false }) {
+function world(y = 0) {
   const log: string[] = [];
   const built: Fake[] = [];
-  const errors: string[] = [], released: number[] = [];
+  const errors: string[] = [], released: number[] = [], beneath: string[] = [];
+  let standing: string | null = null;
+  const fenceError: ErrorOwner = {
+    raise: ((a, b, c) => { const [s, o] = asSaid(a, b, c); standing = alertWords(s); errors.push(standing); if ((o as OwnerOpts).beneath) beneath.push(standing); }) as ErrorOwner["raise"],
+    resolve: () => { if (standing !== null) released.push(errors.length); standing = null; },
+  };
   const win = { at: y, y: () => win.at, scrollTo: (to: number) => { win.at = to; log.push("scroll " + to); }, under: () => 0 };
   const fake = (source: boolean, text: string, doc?: Node): Fake => {
     const f: Fake = {
@@ -49,13 +54,11 @@ function world(y = 0, standing = { error: false }) {
       carry: (pos) => { log.push("carry " + pos); },
       release: () => { log.push("release"); },
     },
-    raise: (s) => { errors.push(alertWords(s)); return errors.length; },
-    resolveError: (gen) => { released.push(gen); },
-    errorShown: () => standing.error,
+    fenceError,
     onView: (md) => { log.push("view " + md); },
     switched: () => { log.push("switched"); },
   });
-  return { s, log, win, errors, released, last: () => built[built.length - 1] };
+  return { s, log, win, errors, released, beneath, standing: () => standing, last: () => built[built.length - 1] };
 }
 const posOf = (doc: Node, ch: string): number => { const f = flattenDoc(doc); return f.pos[f.text.indexOf(ch)]!; };
 
@@ -177,7 +180,7 @@ describe("a text the model refuses", () => {
     w.s.switchTo(false);
     expect(w.log).toEqual(["release", "read caret"]);
     expect(w.errors[1]).toBe("cannot render commonplace/Gridded — " + WHY + "; shown as source");
-    expect(w.released).toEqual([1]);
+    expect([w.released, w.standing()]).toEqual([[], w.errors[1]]);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
     w.s.show("fine", "commonplace/Fine");
@@ -237,10 +240,12 @@ describe("a text the model refuses", () => {
     expect(w.released).toEqual([1]);
     expect(w.errors).toHaveLength(1);
   });
-  it("the error on open never covers an error already standing", () => {
-    const w = world(0, { error: true });
+  it("the error on open goes beneath an error already standing; on the switch back it goes on top", () => {
+    const w = world();
     w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
-    expect(w.errors).toEqual([]);
+    w.s.switchTo(true);
+    w.s.switchTo(false);
+    expect([w.errors, w.beneath]).toEqual([[told(), told()], [told()]]);
   });
   it("a redraw of the entry on screen neither raises its error again nor resolves it", () => {
     const w = world();

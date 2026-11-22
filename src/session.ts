@@ -28,7 +28,7 @@ import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 import { screenTake, type ScreenTake } from "./ui/tabWrite.ts";
-import { alertWords, said, type Raise, type Said } from "./model/alertText.ts";
+import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./model/alertText.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
@@ -44,8 +44,7 @@ export interface SessionOptions {
   images: ImageStore;
   interval: number;
   raise: Raise;
-  errorShown?: () => boolean;
-  resolveError?: (gen: number) => void;
+  owner: () => ErrorOwner;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
   /* a navigation to the entry already open */
@@ -108,6 +107,7 @@ const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg
 
 export function startSession(opts: SessionOptions): Session {
   const { mount, layer, images, raise } = opts;
+  const detached = opts.owner(), copied = opts.owner(), fenced = opts.owner();
   const journal = journalOf(layer.cache);
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
@@ -128,7 +128,7 @@ export function startSession(opts: SessionOptions): Session {
     screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
     layer,
     wrote: (landed) => { if (landed) raise("saved"); show(); },
-    refused: (md) => { detachedErrors.push(raise("notSavedDeletedElsewhere", { copy: md })); },
+    refused: (md) => { detached.raise("notSavedDeletedElsewhere", { copy: md }); },
   });
   const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
@@ -211,9 +211,7 @@ export function startSession(opts: SessionOptions): Session {
     },
     window: viewport,
     places: keeper,
-    raise: (s) => raise(s),
-    errorShown: () => !!opts.errorShown?.(),
-    resolveError: (gen) => opts.resolveError?.(gen),
+    fenceError: fenced,
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },
   });
@@ -224,8 +222,7 @@ export function startSession(opts: SessionOptions): Session {
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
   function releaseDetached(): void {
-    for (const g of detachedErrors) opts.resolveError?.(g);
-    detachedErrors = [];
+    detached.resolve();
   }
   const pendingNow = (): boolean => pending?.gen === navGen;
   function replayPending(): void {
@@ -345,7 +342,6 @@ export function startSession(opts: SessionOptions): Session {
      (pin: bookmarks from another window › typed into the commonplace deleted in the second) */
   /* the errors of a deleted entry on screen last while it is on screen
      (pin: bookmarks from another window › the deleted commonplace left for the day) */
-  let detachedErrors: number[] = [];
   const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
   function takeVerdict(ekey: string, md: string | null): ScreenTake {
     const here = onScreenKey(ekey);
@@ -355,7 +351,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function afterTabWrite(ekey: string, verdict: ScreenTake, moved: boolean): void {
     if (!moved) return;
-    if (verdict === "deleted" && !opts.errorShown?.()) detachedErrors.push(raise("deletedElsewhere"));
+    if (verdict === "deleted") detached.raise("deletedElsewhere", { beneath: true });
     else if (onScreenKey(ekey)) redraw();
   }
   function takeTabWrite(ekey: string): Promise<void> {
@@ -424,7 +420,7 @@ export function startSession(opts: SessionOptions): Session {
   /* a failed write raises an error, and a click on it copies the markdown
      the write was carrying; the console keeps it too (pin: entries left
      and renamed › ⌃⌘C with the clipboard refused) */
-  let copyError = 0, copyGen = 0;
+  let copyGen = 0;
   function copy(payload: { text: string; html: string }, ok: "referenceCopied" | "linkCopied", fail: "referenceNotCopied" | "linkNotCopied"): void {
     const gen = ++copyGen;
     writeClipboard(payload).then((landed) => {
@@ -433,10 +429,10 @@ export function startSession(opts: SessionOptions): Session {
          clipboard back); an older copy settling late changes nothing
          (unpinned: two writes no step can order) */
       if (gen !== copyGen) return;
-      if (copyError) { opts.resolveError?.(copyError); copyError = 0; }
+      copied.resolve();
       if (landed) { raise(ok); return; }
       console.error(alertWords({ id: fail }), payload.text);
-      copyError = raise(fail, { copy: payload.text });
+      copied.raise(fail, { copy: payload.text });
     });
   }
   function showWordCount(): void {

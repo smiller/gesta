@@ -196,7 +196,7 @@ const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastCh
    (pin: entries.test › a landed write and a landed delete are told to onLanded) */
 let armBackup = (): void => {};
 const readerStore = READER ? memEntryStore() : null;
-const layer = entryLayer(readerStore ?? idbEntryStore(), alerts.entry, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
+const layer = entryLayer(readerStore ?? idbEntryStore(), { saves: alerts.owner({ holdsSaved: true }), raise }, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
 let bundlePictures: ImageStore | null = null;
 const images: ImageStore = READER ? {
   get: (id) => bundlePictures ? bundlePictures.get(id) : Promise.resolve(null),
@@ -260,7 +260,7 @@ const entryShown = (stored: string, ekey: string): void => {
 };
 const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, raise,
-  errorShown: () => alerts.errorShown, resolveError: (gen) => alerts.resolveError(gen),
+  owner: () => alerts.owner(),
   onShow: (stored, ekey) => entryShown(stored, ekey),
   onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),
@@ -322,7 +322,7 @@ acts.goto.pick = goRow.pick;
 const SHORTCUTS_KEY = NS + "shortcuts";
 const sc = screen.shortcuts;
 let shortcuts: Shortcut[] = parseShortcuts(readRaw(SHORTCUTS_KEY) || "");
-let shortcutsFailGen = 0;
+const shortcutsError = alerts.owner();
 const renderShortcuts = (): void => {
   if (!shortcuts.length) { sc.rows = []; sc.empty = "No shortcuts yet — add some below."; sc.active = 0; if (!sc.editing) showEditor(true); return; }
   sc.rows = filterShortcuts(shortcuts, sc.query);
@@ -363,8 +363,8 @@ acts.shortcuts.edit = () => showEditor(!sc.editing);
 acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };
 acts.shortcuts.save = () => {
   try { localStorage.setItem(SHORTCUTS_KEY, sc.draft); }
-  catch (e) { shortcutsFailGen = raise("shortcutsNotSaved", { caught: e }); return; }
-  alerts.resolveError(shortcutsFailGen); shortcutsFailGen = 0;
+  catch (e) { shortcutsError.raise("shortcutsNotSaved", { caught: e }); return; }
+  shortcutsError.resolve();
   shortcuts = parseShortcuts(sc.draft);
   sc.dirty = false;
   renderShortcuts();
@@ -374,8 +374,7 @@ acts.shortcuts.escape = () => { closePanel(); session.focusText(); };
 const bm = screen.bookmarks;
 const marks = bookmarkStore({
   seed: [{ key: "commonplace/Making Verity Cards", alias: "" }, { key: "commonplace/Verdour", alias: "" }],
-  raise,
-  resolveError: (gen) => alerts.resolveError(gen),
+  error: alerts.owner(),
   storedKeys: () => layer.storedKeys(),
 });
 const card = bookmarkActs({
@@ -502,7 +501,7 @@ const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeou
 /* asked once: an unpersisted store may be evicted under storage pressure
    (pin: losing nothing › a store that never answers) */
 navigator.storage?.persist?.().catch(() => {});
-const loadWatch = loadErrors(LOAD_PATIENCE_MS, alerts);
+const loadWatch = loadErrors(LOAD_PATIENCE_MS, alerts.owner());
 /* the bundle's own progress line speaks while it is read, however long a
    slow device takes */
 if (READER) wrote.then(loadWatch.start); else loadWatch.start();

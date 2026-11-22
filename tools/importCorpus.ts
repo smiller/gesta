@@ -8,7 +8,7 @@ import { importFiles } from "../src/store/importFiles.ts";
 import { entryLayer } from "../src/store/entries.ts";
 import { memEntryStore, memImageStore } from "../src/store/store.ts";
 import type { ImportFile } from "../src/store/files.ts";
-import { alertWords, type Said } from "../src/model/alertText.ts";
+import { alertWords, asSaid, type Raise, type ErrorOwner } from "../src/model/alertText.ts";
 
 const dir = process.argv[2] ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const files: ImportFile[] = [];
@@ -23,11 +23,8 @@ function walk(d: string): void {
 }
 walk(dir);
 const stuck: string[] = [];
-const layer = entryLayer(memEntryStore(), {
-  landed: () => {}, removed: () => {},
-  stuck: (id, _err, ekey) => stuck.push(alertWords({ id } as Said) + " " + ekey),
-  stuckUnkeyed: (id) => stuck.push(alertWords({ id } as Said)),
-});
+const told = ((a, b, c) => { stuck.push(alertWords(asSaid(a, b, c)[0])); }) as Raise;
+const layer = entryLayer(memEntryStore(), { saves: { raise: told as ErrorOwner["raise"], resolve: () => {} }, raise: told });
 const images = memImageStore();
 let filed = 0;
 const t0 = Date.now();
@@ -35,3 +32,4 @@ const tally = await importFiles(files, { setEntry: layer.setEntry, setImage: (p,
 console.log(`files read: ${files.length}; entry docs attempted: ${tally.attempted}; imported: ${tally.imported}; failed: ${tally.failed}; pictures filed: ${filed}; stored entries: ${Object.keys(layer.cache).length}; ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 for (const f of tally.failures) console.log("FAILED " + f.path + " — " + f.error);
 for (const s of stuck) console.log("STUCK " + s);
+for (const k of Object.keys(layer.cache)) if (layer.writeError(k)) console.log("OWED " + k + " — " + String(layer.writeError(k)));

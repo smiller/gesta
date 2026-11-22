@@ -1,18 +1,17 @@
 import { test, expect, vi } from "vitest";
 import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } from "./store.ts";
 import { entryLayer, type EntryAlerts } from "./entries.ts";
-import { alertWords, type Said } from "../model/alertText.ts";
+import { alertWords, asSaid, type ErrorOwner, type Raise } from "../model/alertText.ts";
 
-interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckUnkeyed: unknown[][]; announced: string[]; onLanded: string[] }
+interface Calls { stuck: unknown[][]; resolved: number; raised: string[]; announced: string[]; onLanded: string[] }
 function fresh(over?: (s: MemEntryStore) => EntryStore) {
   const mem = memEntryStore();
-  const calls: Calls = { landed: [], removed: [], stuck: [], stuckUnkeyed: [], announced: [], onLanded: [] };
-  const alerts: EntryAlerts = {
-    landed: (k) => calls.landed.push(k),
-    removed: (k) => calls.removed.push(k),
-    stuck: (id, ...a) => calls.stuck.push([alertWords({ id } as Said), ...a]),
-    stuckUnkeyed: (id, ...a) => calls.stuckUnkeyed.push([alertWords({ id } as Said), ...a]),
+  const calls: Calls = { stuck: [], resolved: 0, raised: [], announced: [], onLanded: [] };
+  const saves = {
+    raise: ((a, b, c) => { const [s, o] = asSaid(a, b, c); calls.stuck.push([alertWords(s), o.caught, o.copy]); }) as ErrorOwner["raise"],
+    resolve: () => { calls.resolved++; },
   };
+  const alerts: EntryAlerts = { saves, raise: ((a, b, c) => { calls.raised.push(alertWords(asSaid(a, b, c)[0])); }) as Raise };
   const layer = entryLayer(over ? over(mem) : mem, alerts, { announce: (k) => calls.announced.push(k), onLanded: (k) => calls.onLanded.push(k) });
   return { layer, mem, calls };
 }
@@ -30,7 +29,7 @@ test("setEntry writes the cache synchronously and the store durably", async () =
   expect(layer.cache["2026-01-01"]).toBe("a");
   await p;
   expect((await mem.get("2026-01-01"))!.md).toBe("a");
-  expect(calls.landed).toEqual(["2026-01-01"]);
+  expect(calls.onLanded).toEqual(["2026-01-01"]);
 });
 
 test("removeEntry clears the cache, the store, and every debt the key owed", async () => {
@@ -41,7 +40,7 @@ test("removeEntry clears the cache, the store, and every debt the key owed", asy
   await layer.removeEntry("2026-01-01");
   expect([layer.owes("2026-01-01"), layer.writeError("2026-01-01")]).toEqual([false, undefined]);
   expect("2026-01-01" in layer.cache).toBe(false);
-  expect(calls.removed).toEqual(["2026-01-01"]);
+  expect(calls.resolved).toBe(1);
   expect(await mem.get("2026-01-01")).toBe(null);
 });
 
@@ -58,17 +57,16 @@ test("one key's writes run in order, and one that fails doesn't wedge the queue"
   expect((await mem.peek("k"))?.md).toBe("second");
 });
 
-test("a write that does not land sticks keyed and releases nothing; only a landing releases", async () => {
+test("a write that does not land raises the save error and resolves nothing; only a landing resolves it", async () => {
   let fail = true;
   const { layer, calls } = fresh((m) => ({ ...m, set: (k, md) => (fail ? Promise.reject(new Error("idb blocked")) : m.set(k, md)) }));
   expect(await layer.setEntry("k", "a")).toBe(false);
   expect(calls.stuck.length).toBe(1);
   expect(calls.stuck[0][0]).toBe("not saved");
-  expect(calls.stuck[0][2]).toBe("k");
-  expect(calls.landed).toEqual([]);
+  expect(calls.resolved).toBe(0);
   fail = false;
   expect(await layer.setEntry("k", "a")).toBe(true);
-  expect(calls.landed).toEqual(["k"]);
+  expect(calls.resolved).toBe(1);
 });
 
 test("clear empties the cache and the store", async () => {
@@ -88,7 +86,7 @@ test("a stale write restores the cache and offers the refused text for copying",
   expect(layer.cache.k).toBe("theirs");
   const stick = calls.stuck[calls.stuck.length - 1];
   expect(stick[0]).toMatch(/not saved — changed in another tab/);
-  expect(stick[3]).toBe("mine edited");
+  expect(stick[2]).toBe("mine edited");
 });
 
 test("a stale delete restores the cache and reports as not deleted", async () => {
@@ -115,12 +113,12 @@ test("a stale restore is guarded by the counter: a removal in between wins", asy
   expect(calls.stuck).toEqual([]);   // the entry is gone: its refusal is told nowhere
 });
 
-test("a plain rejected delete reports unkeyed, never into the ledger", async () => {
+test("a plain rejected delete raises an error no landing resolves, never the save error", async () => {
   const { layer, calls } = fresh((mem) => ({ ...mem, del: () => Promise.reject(new Error("blocked")) }));
   await layer.setEntry("k", "a");
   await layer.removeEntry("k");
-  expect(calls.stuckUnkeyed.length).toBe(1);
-  expect(calls.stuckUnkeyed[0][0]).toMatch(/couldn’t delete/);
+  expect(calls.raised.length).toBe(1);
+  expect(calls.raised[0]).toMatch(/couldn’t delete/);
   expect(calls.stuck.length).toBe(0);
 });
 
@@ -311,7 +309,7 @@ test("a save refused as stale makes the key owed: another tab's write is skipped
   expect(await layer.setEntry("commonplace/A", "mine, edited")).toBe(false);
   await mem.foreignSet("commonplace/A", "theirs again");
   expect(await layer.takeTabWrite("commonplace/A")).toBe(false);
-  expect(calls.removed).toEqual([]);
+  expect(calls.resolved).toBe(0);
 });
 
 test("a write from another tab when the warm could not read the store resolves false, not never", async () => {
@@ -371,10 +369,10 @@ test("rewriteEntry leaves a key whose own save was refused, its rescue error sta
   await layer.setEntry("k", "mine");
   await mem.foreignSet("k", "theirs [x](#old)");
   await layer.setEntry("k", "mine edited");
-  const landed = calls.landed.length;
+  const landed = calls.onLanded.length;
   expect(await layer.rewriteEntry("k", retarget)).toBe("failed");
   expect((await mem.get("k"))!.md).toBe("theirs [x](#old)");
-  expect(calls.landed.length).toBe(landed);
+  expect(calls.onLanded.length).toBe(landed);
 });
 
 test("rewriteEntry refused over a row deleted elsewhere drops the key from the cache, as a delete taken does", async () => {
@@ -383,9 +381,8 @@ test("rewriteEntry refused over a row deleted elsewhere drops the key from the c
   await mem.foreignDel("k");
   expect(await layer.rewriteEntry("k", retarget)).toBe("unchanged");
   expect("k" in layer.cache).toBe(false);
-  expect(calls.removed).toContain("k");
   expect(await mem.get("k")).toBeNull();
-  expect(calls.landed.filter((k) => k === "k").length).toBe(1);
+  expect(calls.onLanded.filter((k) => k === "k").length).toBe(1);
   expect(calls.announced.filter((k) => k === "k").length).toBe(1);
 });
 
@@ -477,8 +474,8 @@ test("a save that fails after its entry was deleted is told nowhere: no error wa
   const gone = layer.removeEntry("k");
   fail!(new Error("quota"));
   await Promise.all([saved, gone]);
-  expect(calls.removed).toEqual(["k"]);
   expect(calls.stuck).toEqual([]);
+  expect(calls.resolved).toBe(0);
   expect(layer.owes("k")).toBe(false);
   expect(layer.writeError("k")).toBeUndefined();
 });
@@ -525,4 +522,17 @@ test("a key a landing retried that failed again waits for the next retry asked f
   expect(sets.filter((k) => k === "big")).toHaveLength(2);
   await layer.retryOwed();
   expect(sets.filter((k) => k === "big")).toHaveLength(3);
+});
+
+test("the save error stands until the last owed entry lands, a removed entry owing nothing", async () => {
+  const failing = new Set(["a", "b", "c"]);
+  const { layer, calls } = fresh((m) => ({ ...m, set: (k, md) => (failing.has(k) ? Promise.reject(new Error("quota")) : m.set(k, md)) }));
+  for (const k of failing) await layer.setEntry(k, "1");
+  failing.delete("a");
+  await layer.setEntry("a", "2");
+  await layer.removeEntry("b");
+  expect(calls.resolved).toBe(0);
+  failing.delete("c");
+  await layer.setEntry("c", "2");
+  expect(calls.resolved).toBe(1);
 });

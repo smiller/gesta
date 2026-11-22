@@ -1,6 +1,6 @@
 import { test, expect, vi, beforeEach, afterEach } from "vitest";
 import { loadState, refuseCold, loadErrors } from "./journalLoad.ts";
-import { asSaid, alertWords, type Raise } from "../model/alertText.ts";
+import { asSaid, alertWords, type ErrorOwner, type Raise } from "../model/alertText.ts";
 
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
@@ -15,7 +15,7 @@ test("the journal's load is loading, failed or in", () => {
 
 test("an act refused while the journal loads says so, and once the read has failed says to reload, never that it is still loading", () => {
   const said: string[] = [];
-  const raise = ((a, b, c) => { said.push(alertWords(asSaid(a, b, c)[0])); return 0; }) as Raise;
+  const raise = ((a, b, c) => { said.push(alertWords(asSaid(a, b, c)[0])); }) as Raise;
   expect(refuseCold(LOADING, raise)).toBe(true);
   expect(refuseCold(FAILED, raise)).toBe(true);
   expect(refuseCold(IN, raise)).toBe(false);
@@ -25,8 +25,8 @@ test("an act refused while the journal loads says so, and once the read has fail
 function rig() {
   const stuck: string[] = [], errs: unknown[] = [], released: number[] = [];
   const watch = loadErrors(8000, {
-    raise: ((a, b, c) => { const [s, from] = asSaid(a, b, c); stuck.push(alertWords(s)); if ("caught" in from) errs.push(from.caught); return stuck.length; }) as Raise,
-    resolveError: (gen) => { released.push(gen); },
+    raise: ((a, b, c) => { const [s, from] = asSaid(a, b, c); stuck.push(alertWords(s)); if ("caught" in from) errs.push(from.caught); }) as ErrorOwner["raise"],
+    resolve: () => { if (stuck.length > released.length) released.push(stuck.length); },
   });
   return { watch, stuck, errs, released };
 }

@@ -54,7 +54,8 @@ A notification in the alert area, one under another, each with an × that
 closes it; a click on its words copies them.
 Its kind says what it tells, whoever started what it reports:
 - **Error**, red: something went wrong (a save, a copy, a fence the page
-  could not read); stays until it is resolved or closed.
+  could not read); stays until it is resolved or closed. A newer error
+  covers an older one, which comes back when the newer goes.
 - **Warning**, amber: why an act just tried did nothing; fades after ten
   seconds, or goes when closed, replaced by the next, or another entry is
   opened.

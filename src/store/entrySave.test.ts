@@ -6,7 +6,7 @@ import { memEntryStore, type EntryStore } from "./store.ts";
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
 
-const QUIET = { landed() {}, removed() {}, stuck() {}, stuckUnkeyed() {} };
+const QUIET = { saves: { raise() {}, resolve() {} }, raise() {} };
 async function rig(stored: Record<string, string> = {}, screen: OnScreen | null = { ekey: "commonplace/A", md: "typed" }, o: { unread?: boolean } = {}) {
   const mem = memEntryStore();
   for (const k of Object.keys(stored)) await mem.foreignSet(k, stored[k]);

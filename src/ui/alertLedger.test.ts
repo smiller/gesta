@@ -85,17 +85,15 @@ describe("an error", () => {
   it("stands with its words, and an info beside it still speaks", () => {
     n.raise("notSaved", { copy: "detail" });
     expect(n.state.error).toMatchObject({ text: "not saved", shown: true });
-    expect(n.errorShown).toBe(true);
     n.raise("oneWord");
     expect(n.state.info).toMatchObject({ text: "1 word", shown: true });
     vi.advanceTimersByTime(10000);
     expect(n.state.error.shown).toBe(true);
   });
-  it("a click copies the detail, releases, and says copied", async () => {
+  it("a click copies the detail, closes the error, and says copied", async () => {
     n.raise("notSaved", { copy: "detail" });
     n.click("error");
     expect(copied).toEqual(["detail"]);
-    expect(n.errorShown).toBe(false);
     expect(n.state.error.shown).toBe(false);
     await flush();
     expect(n.state.success).toMatchObject({ text: "copied", shown: true });
@@ -129,16 +127,53 @@ describe("an error", () => {
     expect(copied).toEqual(["NotAllowedError: denied", "backed up, but gesta.zip for the reader couldn’t be written"]);
     expect(console.error).toHaveBeenCalledTimes(2);
   });
-  it("resolveError resolves only while the error is still the owner's", () => {
-    const gen = n.raise("lineNumbersNotSaved", { caught: null });
-    n.resolveError(gen);
+  it("the newest error shows; when it goes, resolved by its owner or closed, the one beneath comes back", () => {
+    const bookmarks = n.owner(), shortcuts = n.owner();
+    bookmarks.raise("bookmarksNotSaved");
+    shortcuts.raise("shortcutsNotSaved");
+    expect(n.state.error.text).toBe("shortcuts not saved — storage full");
+    shortcuts.resolve();
+    expect(n.state.error).toMatchObject({ text: "bookmarks not saved", shown: true });
+    shortcuts.raise("shortcutsNotSaved");
+    n.dismiss("error");
+    expect(n.state.error.text).toBe("bookmarks not saved");
+    bookmarks.resolve();
     expect(n.state.error.shown).toBe(false);
-    const g2 = n.raise("bookmarksNotSaved", { caught: null });
-    n.raise("shortcutsNotSaved", { caught: null });
-    n.resolveError(g2);
-    expect(n.state.error.text).toBe("shortcuts not saved — storage full");
-    n.resolveError(0);
-    expect(n.state.error.text).toBe("shortcuts not saved — storage full");
+  });
+  it("an owner raising again replaces its error where it stands; its resolve after a close does nothing", () => {
+    const fence = n.owner(), other = n.owner(), third = n.owner();
+    third.raise("shortcutsNotSaved");
+    fence.raise("cannotRender", { key: "commonplace/A", why: "x" });
+    other.raise("bookmarksNotSaved");
+    fence.raise("cannotRender", { key: "commonplace/A", why: "y" });
+    expect(n.state.error.text).toBe("bookmarks not saved");
+    other.resolve();
+    expect(n.state.error.text).toBe("cannot render commonplace/A — y; shown as source");
+    n.dismiss("error");
+    fence.resolve();
+    expect(n.state.error).toMatchObject({ text: "shortcuts not saved — storage full", shown: true });
+  });
+  it("an error with no owner goes only when closed; raised again in the same words it moves to the top, one of it", () => {
+    const owned = n.owner();
+    n.raise("copyButtonFailed");
+    owned.raise("bookmarksNotSaved");
+    n.raise("copyButtonFailed");
+    expect(n.state.error.text).toBe("Copy failed");
+    n.dismiss("error");
+    expect(n.state.error.text).toBe("bookmarks not saved");
+    owned.resolve();
+    expect(n.state.error.shown).toBe(false);
+  });
+  it("an error raised beneath one that stands shows when that one goes; with none standing it shows at once", () => {
+    const saves = n.owner(), opened = n.owner();
+    saves.raise("notSaved");
+    opened.raise("toldOnOpen", { refused: [], trouble: ["“x” is not a reference directive"] }, { beneath: true });
+    expect(n.state.error.text).toBe("not saved");
+    saves.resolve();
+    expect(n.state.error.text).toBe("“x” is not a reference directive");
+    opened.resolve();
+    n.owner().raise("deletedElsewhere", { beneath: true });
+    expect(n.state.error.text).toBe("deleted in another tab");
   });
   it("a click where no error stands does nothing", () => {
     n.click("error");
@@ -197,7 +232,7 @@ describe("progress", () => {
     n.progress("exporting").fail(said("exportFailed", { why: "x" }), "x");
     expect(n.state.error.text).toBe("export failed — x");
     expect(n.state.info.shown).toBe(false);
-    expect(n.errorShown).toBe(true);
+    expect(n.state.error.shown).toBe(true);
     n.click("error");
     n.progress("importing").cancel();
     expect(n.state.info.shown).toBe(false);
@@ -231,61 +266,6 @@ describe("progress", () => {
   });
 });
 
-describe("the keyed save-error family, as the entry layer speaks it", () => {
-  it("a stuck write raises an error with the refused text as the copy, and its landing releases", () => {
-    n.entry.stuck("notSavedChangedElsewhere", new Error("stale"), "2026-09-07", "# my text");
-    expect(n.state.error.text).toBe("not saved — changed in another tab, copy your text then reload");
-    n.entry.landed("2026-09-07");
-    expect(n.state.error.shown).toBe(false);
-    expect(n.errorShown).toBe(false);
-  });
-  it("the error stands until the LAST owed key lands", () => {
-    n.entry.stuck("notSaved", new Error("a"), "a");
-    n.entry.stuck("notSaved", new Error("b"), "b");
-    n.entry.landed("a");
-    expect(n.errorShown).toBe(true);
-    n.entry.landed("other");
-    expect(n.errorShown).toBe(true);
-    n.entry.landed("b");
-    expect(n.errorShown).toBe(false);
-  });
-  it("a removed entry owes nothing", () => {
-    n.entry.stuck("notSaved", new Error("a"), "a");
-    n.entry.removed("a");
-    expect(n.errorShown).toBe(false);
-  });
-  it("the copy payload is the error's text when no rescue was offered", () => {
-    n.entry.stuck("notSaved", new DOMException("full", "QuotaExceededError"), "a");
-    n.click("error");
-    expect(copied).toEqual(["QuotaExceededError: full"]);
-  });
-  it("an error during an op shows at once, beside the progress line", () => {
-    n.progress("importing");
-    n.entry.stuck("notSaved", new Error("x"), "a");
-    expect(n.state.error.text).toBe("not saved");
-    expect(n.state.info.text).toBe("importing…");
-  });
-  it("a save error covered by another error comes back when that one is clicked, until its key lands", () => {
-    n.entry.stuck("notSaved", new Error("x"), "a");
-    n.raise("exportFailed", { why: "x" }, { copy: "x" });
-    n.click("error");
-    expect(n.state.error.text).toBe("not saved");
-    n.click("error");
-    expect(n.state.error.shown).toBe(false);
-    n.entry.stuck("notSaved", new Error("x"), "a");
-    n.entry.landed("a");
-    n.raise("exportFailed", { why: "x" }, { copy: "x" });
-    n.click("error");
-    expect(n.state.error.shown).toBe(false);
-  });
-  it("a delete that failed for another reason raises an error unkeyed: no landing releases it", () => {
-    n.entry.stuckUnkeyed("couldntDelete", new Error("x"));
-    expect(n.state.error.text).toBe("couldn’t delete — reload");
-    n.entry.landed("anything");
-    expect(n.errorShown).toBe(true);
-  });
-});
-
 describe("the paused pill", () => {
   it("carries the backup's trouble text, empty when healthy", () => {
     expect(n.state.trouble).toBe("");
@@ -307,13 +287,12 @@ describe("the dismiss ×", () => {
     await flush();
     expect(copied).toEqual([]);
     expect([n.state.info.shown, n.state.warning.shown, n.state.error.shown]).toEqual([false, false, false]);
-    expect(n.errorShown).toBe(false);
   });
-  it("a progress line has none to close; a save error covered by another comes back when that one is closed", () => {
+  it("a progress line has none to close; an owner's error covered by another comes back when that one is closed", () => {
     n.progress("exporting");
     n.dismiss("info");
     expect(n.state.info.shown).toBe(true);
-    n.entry.stuck("notSaved", new Error("x"), "a");
+    n.owner().raise("notSaved", { caught: new Error("x") });
     n.raise("exportFailed", { why: "x" }, { copy: "x" });
     n.dismiss("error");
     expect(n.state.error.text).toBe("not saved");
@@ -351,12 +330,12 @@ describe("the live alerts", () => {
 });
 
 describe("each error and warning told as it is raised", () => {
-  it("a warning, an error and a save error are told once each; an info and a save error brought back are not", () => {
+  it("a warning and each error are told once, when raised; an info, and an error that comes back, are not", () => {
     const told: string[] = [];
     const l = alertLedger(copy, (kind, text) => { told.push(kind + " " + text); });
     l.raise("oneWord");
     l.raise("noLineNumbers");
-    l.entry.stuck("notSaved", new Error("x"), "a");
+    l.owner().raise("notSaved", { caught: new Error("x") });
     l.raise("exportFailed", { why: "x" }, { copy: "x" });
     l.click("error");
     expect(l.state.error.text).toBe("not saved");
@@ -406,19 +385,14 @@ describe("the newer of info and success", () => {
 });
 
 describe("the review's findings", () => {
-  it("a save error covered by another error comes back when its owner resolves that one", () => {
-    n.entry.stuck("notSaved", new Error("x"), "a");
-    const g = n.raise("referenceNotCopied", { copy: "x" });
-    n.resolveError(g);
-    expect(n.state.error).toMatchObject({ text: "not saved", shown: true });
-  });
   it("a routine success is held back while a save error stands; another success is not", () => {
-    n.entry.stuck("notSaved", new Error("x"), "a");
+    const saves = n.owner({ holdsSaved: true });
+    saves.raise("notSaved", { caught: new Error("x") });
     n.raise("saved");
     expect(n.state.success.shown).toBe(false);
     n.raise("linkCopied");
     expect(n.state.success).toMatchObject({ text: "Link copied", shown: true });
-    n.entry.landed("a");
+    saves.resolve();
     n.raise("saved");
     expect(n.state.success).toMatchObject({ text: "saved", shown: true });
   });
@@ -460,14 +434,12 @@ describe("raise", () => {
     vi.advanceTimersByTime(INFO_MS - 1);
     expect(n.state.success.shown).toBe(true);
   });
-  it("an error carries what was caught and its copy, and answers its generation for resolveError", () => {
-    const gen = n.raise("notSaved", { copy: "my text" });
+  it("an error carries its copy, or the text of what was caught", () => {
+    n.raise("notSaved", { copy: "my text" });
     n.click("error");
-    expect(copied).toEqual(["my text"]);
-    const g2 = n.raise("bookmarksNotSaved", { caught: new DOMException("full", "QuotaExceededError") });
-    n.resolveError(g2);
-    expect(n.state.error.shown).toBe(false);
-    expect(gen).toBeGreaterThan(0);
+    n.raise("bookmarksNotSaved", { caught: new DOMException("full", "QuotaExceededError") });
+    n.click("error");
+    expect(copied).toEqual(["my text", "QuotaExceededError: full"]);
   });
   it("raises a Said a module chose, its parameters with it", () => {
     n.raise(said("noBookmark", { n: "4" }));
@@ -476,12 +448,12 @@ describe("raise", () => {
 });
 
 describe("the kinds each place takes", () => {
-  it("a progress line, its ends and the entry layer's errors take only ids of their own kind, refused before they run", () => {
+  it("a progress line, its ends and an owner's error take only ids of their own kind, refused before they run", () => {
     // @ts-expect-error a progress line takes an info whose words need nothing
     void (() => n.progress("backingUpCount"));
     // @ts-expect-error a progress line's ok ends it in a success
     void (() => n.progress("exporting").ok(said("alreadyBookmarked")));
-    // @ts-expect-error the entry layer's failures are errors
-    void (() => n.entry.stuck("saved", null, "a"));
+    // @ts-expect-error an owner raises errors
+    void (() => n.owner().raise("saved"));
   });
 });

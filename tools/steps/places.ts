@@ -363,6 +363,12 @@ async function pageOpenFirstSaved(): Promise<void> {
   await A.foreignWrite(again, "commonplace/Made Elsewhere", "rewritten in the second");
   await landed(page, 2500);
   await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.cornerText(page) });
+  await A.foreignWrite(again, "commonplace/Refused Fence", "::: versey\nline\n:::");
+  await go("commonplace/Refused%20Fence");
+  await log("an entry with a refused fence opened over the save error", { corner: await R.standingText(page) });
+  await page.click(S.corner);
+  await rest(page);
+  await log("the save error closed over the refused fence", { corner: await R.standingText(page) });
   await page.click(S.corner);
   await rest(page);
   await go("commonplace/Deleted%20Elsewhere");

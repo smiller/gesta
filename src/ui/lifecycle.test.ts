@@ -89,7 +89,7 @@ const fakeKept = (log: string[]): KeptState => ({ relocate: (r, open) => { log.p
 const LABEL = { warning: "warn", error: "error", success: "succeed", info: "info" } as const;
 function fakeUi(log: string[]): UiPort {
   return {
-    raise: ((a, b, c) => { const s = asSaid(a, b, c)[0]; log.push(LABEL[alertKind(s.id)] + " " + alertWords(s)); return 1; }) as Raise,
+    raise: ((a, b, c) => { const s = asSaid(a, b, c)[0]; log.push(LABEL[alertKind(s.id)] + " " + alertWords(s)); }) as Raise,
     redraw: () => { log.push("redraw"); },
     replaceHash: (hash) => { log.push("hash " + hash); },
     hideBar: () => { log.push("hideBar"); },
@@ -101,7 +101,7 @@ async function world(o: Opts) {
   const mem = memEntryStore();
   for (const [k, v] of Object.entries(o.entries ?? {})) await mem.set(k, v);
   const s: WorldState = { current: { date: o.at[0], tag: o.at[1] }, st: EditorState.create({ doc: parseMarkdown("") }), typed: null, dropped: false, onFlush: null, onSet: null };
-  const layer = entryLayer(fakeStore(o, mem, log, s), { landed() {}, removed() {}, stuck() {}, stuckUnkeyed() {} });
+  const layer = entryLayer(fakeStore(o, mem, log, s), { saves: { raise() {}, resolve() {} }, raise() {} });
   if (o.warm !== "no") await layer.warm();
   s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
   const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };

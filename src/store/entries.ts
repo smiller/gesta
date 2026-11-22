@@ -1,22 +1,9 @@
 import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
-import type { BareIdOf } from "../model/alertText.ts";
+import type { BareIdOf, ErrorOwner, Raise } from "../model/alertText.ts";
 
-export interface EntryAlerts {
-  /* a durable landing under ekey: resolve any error owed under it */
-  landed(ekey: string): void;
-  /* the entry is gone: clear every debt under it — the body's AND the
-     derived index's — or a failed-then-deleted entry's stale key would
-     block every future release forever (pin: entries.test › removeEntry
-     clears the cache, the store, and every debt the key owed) */
-  removed(ekey: string): void;
-  /* a write that did not land, keyed so a later landing releases it;
-     `rescue` is the refused text, offered for copying */
-  stuck(id: BareIdOf<"error">, err: unknown, ekey: string, rescue?: string): void;
-  /* a delete that failed for a reason other than staleness: UNKEYED, since
-     the removed key can never land a future write — the entry resurrects from the store next launch (pin:
-     entries.test › a plain rejected delete reports unkeyed) */
-  stuckUnkeyed(id: BareIdOf<"error">, err: unknown): void;
-}
+/* `saves`: the save error, standing until every entry whose write did not
+   land has landed or gone; `raise`: a failure no landing resolves */
+export interface EntryAlerts { saves: ErrorOwner; raise: Raise }
 export interface EntryLayer {
   /* complete once `warmed`: everything written out is enumerated from it */
   cache: Record<string, string>;
@@ -72,6 +59,19 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
      (pin: entries.test › a save refused as stale makes the key owed) */
   const debts = new Map<string, { err: unknown; save: boolean }>();
   const unlanded = (ekey: string): boolean => !!debts.get(ekey)?.save;
+  /* the entries whose write did not land: the save error stands until none
+     is left, so a sibling landing a moment after a failure does not take it
+     down (pin: entries.test › the save error stands until the last owed
+     entry lands) (pin: entries.test › removeEntry clears the cache, the
+     store, and every debt the key owed) */
+  const owed = new Set<string>();
+  function stuck(id: BareIdOf<"error">, err: unknown, ekey: string, rescue?: string): void {
+    owed.add(ekey);
+    alerts.saves.raise(id, { caught: err, copy: rescue });
+  }
+  function settled(ekey: string): void {
+    if (owed.delete(ekey) && !owed.size) alerts.saves.resolve();
+  }
   const chain: Record<string, Promise<unknown>> = Object.create(null);
   /* false until the warm has filled the cache: a backup run before it would
      export a blank journal over the mirror */
@@ -131,7 +131,7 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
     delete cache[ekey];
     debts.delete(ekey);
-    alerts.removed(ekey);
+    settled(ekey);
   }
   function removeEntry(ekey: string): Promise<boolean> {
     forgetRow(ekey);
@@ -149,7 +149,7 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
   function landed(ekey: string, v: unknown): boolean {
     if (v === GONE) return true;
     debts.delete(ekey);
-    alerts.landed(ekey);
+    settled(ekey);
     opts.announce?.(ekey);
     opts.onLanded?.(ekey);
     /* a landing says the store takes writes again */
@@ -185,18 +185,18 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
   function staleRefusal(ekey: string, err: StaleWriteError, seqAt: number | undefined, isDel: boolean): void {
     if (saveSeq[ekey] !== seqAt) return;
     cache[ekey] = err.stored;
-    if (isDel) { alerts.stuck("notDeletedChangedElsewhere", err, ekey); return; }
-    alerts.stuck("notSavedChangedElsewhere", err, ekey, err.refused);
+    if (isDel) { stuck("notDeletedChangedElsewhere", err, ekey); return; }
+    stuck("notSavedChangedElsewhere", err, ekey, err.refused);
   }
   function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
     if (saveSeq[ekey] === seqAt) debts.set(ekey, { err, save: !isDel || unlanded(ekey) });
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
-    else if (isDel) alerts.stuckUnkeyed("couldntDelete", err);
+    else if (isDel) alerts.raise("couldntDelete", { caught: err });
     /* a key deleted since owes nothing and is told nothing: retried, it
        wrote the deleted entry back (pin: entries.test › a retry whose key is
        deleted), and its error waited on a landing that never comes (pin:
        entries.test › a save that fails after its entry was deleted) */
-    else if (saveSeq[ekey] === seqAt) alerts.stuck("notSaved", err, ekey);
+    else if (saveSeq[ekey] === seqAt) stuck("notSaved", err, ekey);
     return false;
   }
   function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {
@@ -208,6 +208,8 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
   function clear(): Promise<void> {
     for (const k of Object.keys(cache)) delete cache[k];
     debts.clear();
+    owed.clear();
+    alerts.saves.resolve();
     return store.clear();
   }
   /* one row into the cache. Additive and idempotent: a key already held is

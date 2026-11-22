@@ -256,6 +256,15 @@ export const alertMs = (id: AlertId): number | undefined => (ALERTS[id] as Entry
 export interface RaiseOpts { caught?: unknown; copy?: string }
 /* raise by id, its parameters after it where it has any, or a Said a module chose */
 export interface Raise {
-  <I extends AlertId>(id: I, ...rest: [...ParamsArg<I>, RaiseOpts?]): number;
-  (s: Said, opts?: RaiseOpts): number;
+  <I extends AlertId>(id: I, ...rest: [...ParamsArg<I>, RaiseOpts?]): void;
+  (s: Said, opts?: RaiseOpts): void;
+}
+/* `beneath`: under the error that stands, shown when that one goes */
+export interface OwnerOpts extends RaiseOpts { beneath?: boolean }
+/* a module's own error: one at a time, raised again in its place, taken
+   down by `resolve` */
+export interface ErrorOwner {
+  raise<I extends IdOf<"error">>(id: I, ...rest: [...ParamsArg<I>, OwnerOpts?]): void;
+  raise(s: SaidOf<"error">, opts?: OwnerOpts): void;
+  resolve(): void;
 }

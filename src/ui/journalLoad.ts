@@ -1,5 +1,5 @@
 import type { EntryLayer } from "../store/entries.ts";
-import type { Raise } from "../model/alertText.ts";
+import type { Raise, ErrorOwner } from "../model/alertText.ts";
 
 type Load = Pick<EntryLayer, "warmed" | "storeReadFailed">;
 export type LoadState = "loading" | "failed" | "in";
@@ -13,23 +13,19 @@ export function refuseCold(layer: Load, raise: Raise): boolean {
   return state !== "in";
 }
 
-export interface LoadAlerts {
-  raise: Raise;
-  resolveError(gen: number): void;
-}
 /* a store that never answers left a blank page saying nothing
    (pin: losing nothing › a store that never answers) */
-export function loadErrors(ms: number, alerts: LoadAlerts): { start(): void; landed(layer: Load & Pick<EntryLayer, "storeReadError">): void } {
-  let shown = 0, timer: ReturnType<typeof setTimeout> | undefined, landed = false;
+export function loadErrors(ms: number, owner: ErrorOwner): { start(): void; landed(layer: Load & Pick<EntryLayer, "storeReadError">): void } {
+  let timer: ReturnType<typeof setTimeout> | undefined, landed = false;
   return {
-    start: () => { if (!landed) timer = setTimeout(() => { shown = alerts.raise("couldntLoad"); }, ms); },
+    start: () => { if (!landed) timer = setTimeout(() => owner.raise("couldntLoad"), ms); },
     landed: (layer) => {
       landed = true;
       clearTimeout(timer);
-      if (shown) alerts.resolveError(shown);
+      owner.resolve();
       /* an unreadable journal is an error, not a status: it sticks, the
          caught failure copyable */
-      if (layer.storeReadFailed) alerts.raise("storeUnreadable", { caught: layer.storeReadError });
+      if (layer.storeReadFailed) owner.raise("storeUnreadable", { caught: layer.storeReadError });
     },
   };
 }

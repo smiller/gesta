@@ -2,7 +2,7 @@ import type { Node } from "prosemirror-model";
 import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { fenceRefusals } from "../model/fenceRefusals.ts";
-import { said, type Said } from "../model/alertText.ts";
+import { said, type ErrorOwner } from "../model/alertText.ts";
 import { directivesIn, directiveTrouble } from "../store/conventions.ts";
 import { splitKey } from "../store/keys.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
@@ -61,10 +61,8 @@ export interface SurfaceOptions {
   build: { rendered(doc: Node): Surface; source(md: string): Surface };
   window: Viewport;
   places: PlacePort;
-  /* 0 when nothing was raised */
-  raise: (s: Said) => number;
-  resolveError: (gen: number) => void;
-  errorShown: () => boolean;
+  /* the entry's own error: a fence refused, a directive's trouble, an entry that cannot render */
+  fenceError: ErrorOwner;
   onView: (md: boolean) => void;
   switched: () => void;
 }
@@ -89,27 +87,24 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   let forced = false, readerView = false;
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
-  let fenceError = 0;
-  const dropFenceError = (): void => { if (fenceError) opts.resolveError(fenceError); fenceError = 0; };
-  const raiseFenceError = (next: () => number): void => { dropFenceError(); fenceError = next(); };
+  const dropFenceError = (): void => opts.fenceError.resolve();
   const mount = (make: () => Surface): void => {
     const old = cur;
     cur = null;
     old?.destroy();
     cur = make();
   };
-  const refusedError = (err: unknown): number => opts.raise(said("cannotRender", { key: ekey, why: (err as Error).message }));
+  const refusedError = (err: unknown): void => opts.fenceError.raise(said("cannotRender", { key: ekey, why: (err as Error).message }));
   /* the entry's refused fences and its directives' trouble, raised as an
      error when it is drawn: told only on the switch back, they were never seen by a
      reader who did not edit the source (pin: surface.test › an entry opened
-     raises its refused fences). On opening it never covers an error
-     standing: it hid a "not saved" (pin: surface.test › the error on open
-     never covers) */
+     raises its refused fences). On opening it goes beneath an error
+     standing: on top it hid a "not saved" (pin: surface.test › the error on
+     open goes beneath) */
   function raiseTold(doc: Node, opening: boolean): void {
-    if (opening && opts.errorShown()) return;
     const refused = fenceRefusals(doc);
     const trouble = directiveTrouble(...splitKey(ekey), directivesIn(doc));
-    if (refused.length || trouble.length) raiseFenceError(() => opts.raise(said("toldOnOpen", { refused, trouble })));
+    if (refused.length || trouble.length) opts.fenceError.raise(said("toldOnOpen", { refused, trouble }), { beneath: opening });
   }
   /* whether the show is of another entry than the one on screen, the view
      it opens in settled */
@@ -148,7 +143,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
     /* AN ERROR, resolved by the next show: an info was covered by the
        entry count before it was read (pin: grid › the faulty entry opened) */
-    raiseFenceError(() => refusedError(err));
+    refusedError(err);
     readerView = mdView; forced = true;
     mdView = true;
     mount(() => build.source(md));
@@ -213,7 +208,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
          the line the message quotes, and an info faded before a slow
          reader found it; resolved by the clean parse below
          (pin: grid › a stray line in a grid, switched back) */
-      raiseFenceError(() => refusedError(err));
+      refusedError(err);
       forced = wasForced;   /* a forced source view stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
       return false;
     }
