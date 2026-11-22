@@ -7,18 +7,18 @@ import type { EditorState } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 import { schema } from "../model/schema.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
+import { said, type Said } from "../model/alertText.ts";
 
-export function linkRefusal(state: EditorState): string {
+export function linkRefusal(state: EditorState): Said | null {
   const $to = state.selection.$to;
-  if ($to.parent.type === schema.nodes.code_block || schema.marks.code.isInSet($to.marks())) return "no link inside a code block";
-  if (schema.marks.link.isInSet($to.marks())) return "no link inside a link";
-  return "";
+  if ($to.parent.type === schema.nodes.code_block || schema.marks.code.isInSet($to.marks())) return said("noLinkInCode");
+  if (schema.marks.link.isInSet($to.marks())) return said("noLinkInLink");
+  return null;
 }
-export const HEADING_REFUSAL = "no link inside a heading — place your cursor below it";
 /* a heading is an entry's name: a new entry's link placed there would
    rename the entry it is minted on (pin: insertLink.test › headingRefusal) */
-export function headingRefusal(state: EditorState): string {
-  return state.selection.$to.parent.type === schema.nodes.heading ? HEADING_REFUSAL : "";
+export function headingRefusal(state: EditorState): Said | null {
+  return state.selection.$to.parent.type === schema.nodes.heading ? said("noLinkInHeading") : null;
 }
 /* a selection that leaves part of a heading behind, the link landing in it;
    one holding a whole heading is the new entry's (pin: lifecycle.test › the

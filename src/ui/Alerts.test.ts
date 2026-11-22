@@ -17,13 +17,13 @@ describe("Alerts", () => {
   });
   it("an info: shown, with its text", () => {
     const a = alertLedger(() => Promise.resolve());
-    a.info("1 word");
+    a.raise("oneWord");
     expect(draw(a)).toMatch(/class="alert info[^"]*show[^"]*">1 word<span class="close/);
   });
   it("an error and a warning at once: both shown, the error first, each with its ×", () => {
     const a = alertLedger(() => Promise.resolve());
-    a.warn("no line numbers here");
-    a.error("not saved", { copy: "detail" });
+    a.raise("noLineNumbers");
+    a.raise("notSaved", { copy: "detail" });
     const html = draw(a);
     expect(html).toMatch(/class="alert error[^"]*show[^"]*">not saved<span class="close/);
     expect(html).toMatch(/class="alert warning[^"]*show[^"]*">no line numbers here<span class="close/);
@@ -38,8 +38,8 @@ describe("Alerts", () => {
   });
   it("an info and a success shown at once, each in its own box", () => {
     const a = alertLedger(() => Promise.resolve());
-    a.info("1 word");
-    a.succeed("Link copied");
+    a.raise("oneWord");
+    a.raise("linkCopied");
     const html = draw(a);
     expect(html).toMatch(/class="alert info[^"]*show[^"]*">1 word/);
     expect(html).toMatch(/class="alert success[^"]*show[^"]*">Link copied/);

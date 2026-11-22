@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { movePlan, moveHref, moveLinks, joined, pictureNames, renamePictures, type MovePlan } from "./move.ts";
+import { alertWords, said } from "../model/alertText.ts";
 
 const ESSAY = "https://x.org/2022/07/31/essay/\n\n# On Growing Older\n\nText.\n";
 const CACHE: Record<string, string> = {
@@ -16,7 +17,7 @@ const CACHE: Record<string, string> = {
 const TO = "bookshelf/Miller, Sean/Essays";
 const plan = (cache = CACHE, from = "commonplace/Essays", to = TO): MovePlan => {
   const p = movePlan(cache, from, to);
-  if ("refuse" in p) throw new Error(p.refuse);
+  if ("refuse" in p) throw new Error(alertWords(p.refuse));
   return p;
 };
 
@@ -36,15 +37,15 @@ describe("movePlan", () => {
     const blank = { ...CACHE, "commonplace/Essays/2022-07-31-essay": "" };
     expect(plan(blank).twins["commonplace/Essays/2022-07-31-essay"]).toBe(TO + "/2022-07-31-essay");
     const other = { ...CACHE, "commonplace/Essays/2022-07-31-essay": "# Something else\n" };
-    expect(movePlan(other, "commonplace/Essays", TO)).toEqual({ refuse: TO + "/2022-07-31-essay is there already" });
+    expect(movePlan(other, "commonplace/Essays", TO)).toEqual({ refuse: said("thereAlready", { at: TO + "/2022-07-31-essay" }) });
   });
   it("a blank twin with sub-entries of its own refuses by its name", () => {
     const deep = { ...CACHE, "commonplace/Essays/2022-07-31-essay": "", "commonplace/Essays/2022-07-31-essay/more": "x\n" };
-    expect(movePlan(deep, "commonplace/Essays", TO)).toEqual({ refuse: "“2022-07-31-essay” is there already and has sub-entries of its own" });
+    expect(movePlan(deep, "commonplace/Essays", TO)).toEqual({ refuse: said("thereAlreadyWithSubs", { name: "2022-07-31-essay" }) });
   });
   it("a twin with sub-entries of its own refuses", () => {
     const deep = { ...CACHE, "commonplace/Essays/2026-07-22-essay/more": "x\n" };
-    expect(movePlan(deep, "commonplace/Essays", TO)).toEqual({ refuse: "“On Growing Older” is there already and has sub-entries of its own" });
+    expect(movePlan(deep, "commonplace/Essays", TO)).toEqual({ refuse: said("thereAlreadyWithSubs", { name: "On Growing Older" }) });
   });
   it("into a place that is no entry yet: nothing is a twin and nothing is joined", () => {
     const p = plan(CACHE, "commonplace/Essays", "bookshelf/Miller, Sean/Letters");
@@ -53,8 +54,8 @@ describe("movePlan", () => {
     expect(p.moves["commonplace/Essays/2026-07-22-essay"]).toBe("bookshelf/Miller, Sean/Letters/2026-07-22-essay");
   });
   it("refuses a place under itself and one whose parent is nothing", () => {
-    expect(movePlan(CACHE, "commonplace/Essays", "commonplace/Essays/x")).toEqual({ refuse: "an entry can’t move under itself" });
-    expect(movePlan(CACHE, "commonplace/Essays", "bookshelf/Nobody/Essays")).toEqual({ refuse: "nothing at bookshelf/Nobody to move it under" });
+    expect(movePlan(CACHE, "commonplace/Essays", "commonplace/Essays/x")).toEqual({ refuse: said("moveUnderItself") });
+    expect(movePlan(CACHE, "commonplace/Essays", "bookshelf/Nobody/Essays")).toEqual({ refuse: said("nothingToMoveUnder", { at: "bookshelf/Nobody" }) });
   });
 });
 

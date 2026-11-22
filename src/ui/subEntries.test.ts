@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, subButtons, renamePrompt, movePrompt, moveConfirm, movedText, deleteConfirm, deleteLanding, hostKey } from "./subEntries.ts";
+import { subEntrySpec, takenText, subTreeHasContent, blankSubTree, subButtons, renamePrompt, movePrompt, moveConfirm, deleteConfirm, deleteLanding, hostKey } from "./subEntries.ts";
+import { alertWords, said } from "../model/alertText.ts";
 
 describe("subEntrySpec", () => {
   it("a day's tag is the typed text; a page's sub-entry takes the filename rule under the page's key", () => {
@@ -9,7 +10,7 @@ describe("subEntrySpec", () => {
   });
   it("a day's tagged entry cannot host; a name the rule empties is refused", () => {
     expect(subEntrySpec("2026-09-07", "Ideas", "x")).toBeNull();
-    expect(subEntrySpec("commonplace", "Books", "--")).toEqual({ refuse: "that name leaves nothing a filename can keep" });
+    expect(subEntrySpec("commonplace", "Books", "--")).toEqual({ refuse: said("nameEmpty") });
   });
 });
 describe("takenText", () => {
@@ -80,7 +81,7 @@ describe("the move's texts", () => {
     expect(moveConfirm({ date: "commonplace", tag: "A", shown: "A" }, "commonplace/B", { moved: 0, into: true, twins: ["X", "Y"] })).toBe("Move the commonplace “A” to commonplace/B? Its own text goes after the text there. 2 sub-entries are there already by title and are deleted, their links going to the one there: “X”, “Y”.");
   });
   it("the outcome counts the entries, the twins, the pictures not found and the links, as the re-file does", () => {
-    expect(movedText("commonplace/B", { moved: 3, twins: 1, lost: 2, updated: 4, left: [], stayed: [] })).toBe("moved to commonplace/B — 3 entries, 1 there already deleted, 2 pictures not found, links updated in 4 others");
-    expect(movedText("commonplace/B", { moved: 1, twins: 0, lost: 0, updated: 0, left: ["commonplace/C"], stayed: ["commonplace/A"] })).toBe("moved to commonplace/B — 1 entry; 1 link not updated: commonplace/C; old copy kept: commonplace/A");
+    expect(alertWords(said("movedDone", { to: "commonplace/B", verb: "moved", o: { moved: 3, twins: 1, lost: 2, updated: 4, left: [], stayed: [] } }))).toBe("moved to commonplace/B — 3 entries, 1 there already deleted, 2 pictures not found, links updated in 4 others");
+    expect(alertWords(said("movedDone", { to: "commonplace/B", verb: "moved", o: { moved: 1, twins: 0, lost: 0, updated: 0, left: ["commonplace/C"], stayed: ["commonplace/A"] } }))).toBe("moved to commonplace/B — 1 entry; 1 link not updated: commonplace/C; old copy kept: commonplace/A");
   });
 });

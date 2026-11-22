@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { oneEach, entryDocs, isDoc, unreadFile, failMsg, type ImportFile } from "./files.ts";
+import { oneEach, entryDocs, isDoc, unreadFile, failWhy, type ImportFile } from "./files.ts";
 
 const f = (dir: string, name: string, handle: string) => ({ dir, name, handle });
 
@@ -47,6 +47,6 @@ test("the records: a doc has text, a sidecar bytes, an unreadable file is kept a
   expect(unreadFile("a.md", "commonplace/")).toEqual({ dir: "commonplace/", name: "a.md", unread: true });
   expect(unreadFile("a.webp", "commonplace/")).toEqual({ dir: "commonplace/", name: "a.webp", unread: true, bytes: null });
   expect(isDoc(unreadFile("a.webp", "commonplace/"))).toBe(false);
-  expect(failMsg("import failed", new Error("boom"))).toBe("import failed — Error: boom");
-  expect(failMsg("import failed", null)).toBe("import failed — see console");
+  expect(failWhy(new Error("boom"))).toBe("Error: boom");
+  expect(failWhy(null)).toBe("see console");
 });

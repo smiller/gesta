@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { typedName, typedAddress, REFUSE_URL, REFUSE_EMPTY, filingForm, shownForm } from "./naming.ts";
+import { typedName, typedAddress, filingForm, shownForm } from "./naming.ts";
+import { said } from "../model/alertText.ts";
 
 describe("typedName", () => {
   it("a cancelled or blank prompt is nothing to say", () => {
@@ -13,11 +14,11 @@ describe("typedName", () => {
   });
   it("a dated article link names the entry by its date and slug", () => {
     expect(typedName("https://x.org/2023/11/12/the-title/")).toEqual({ name: "2023-11-12-the-title" });
-    expect(typedName("https://x.org/2023/11/12/bad slug/")).toEqual({ refuse: REFUSE_URL });
+    expect(typedName("https://x.org/2023/11/12/bad slug/")).toEqual({ refuse: said("nameFromLink") });
   });
   it("a name the filename rule cleans away is refused with the reason", () => {
-    expect(typedName("--")).toEqual({ refuse: REFUSE_EMPTY });
-    expect(typedName("///")).toEqual({ refuse: REFUSE_EMPTY });
+    expect(typedName("--")).toEqual({ refuse: said("nameEmpty") });
+    expect(typedName("///")).toEqual({ refuse: said("nameEmpty") });
   });
 });
 
@@ -58,7 +59,7 @@ describe("typedAddress", () => {
     expect(typedAddress("commonplace/Growth 50%/A")).toEqual({ date: "commonplace", tag: "Growth 50%/A" });
   });
   it("an address with an empty part is refused", () => {
-    for (const raw of ["bookshelf/Miller, Sean/", "commonplace//Essays", "#commonplace//Essays", "#bookshelf/Miller%2C%20Sean/"]) expect(typedAddress(raw)).toEqual({ refuse: "an address can’t have an empty part" });
+    for (const raw of ["bookshelf/Miller, Sean/", "commonplace//Essays", "#commonplace//Essays", "#bookshelf/Miller%2C%20Sean/"]) expect(typedAddress(raw)).toEqual({ refuse: said("addressEmptyPart") });
   });
   it("a name, a day, a namespace alone and nothing are no address", () => {
     for (const raw of ["Essays", "#2026-09-01", "#page", "pages/x", "", null]) expect(typedAddress(raw)).toBeNull();

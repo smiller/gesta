@@ -1,7 +1,8 @@
 import type { Node } from "prosemirror-model";
 import type { Flat } from "../model/flatten.ts";
 import { parseMarkdown } from "../model/parse.ts";
-import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
+import { fenceRefusals } from "../model/fenceRefusals.ts";
+import { said, type Said } from "../model/alertText.ts";
 import { directivesIn, directiveTrouble } from "../store/conventions.ts";
 import { splitKey } from "../store/keys.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
@@ -61,7 +62,7 @@ export interface SurfaceOptions {
   window: Viewport;
   places: PlacePort;
   /* 0 when nothing was raised */
-  error: (text: string) => number;
+  raise: (s: Said) => number;
   resolveError: (gen: number) => void;
   errorShown: () => boolean;
   onView: (md: boolean) => void;
@@ -97,7 +98,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     old?.destroy();
     cur = make();
   };
-  const refusedError = (err: unknown): number => opts.error("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+  const refusedError = (err: unknown): number => opts.raise(said("cannotRender", { key: ekey, why: (err as Error).message }));
   /* the entry's refused fences and its directives' trouble, raised as an
      error when it is drawn: told only on the switch back, they were never seen by a
      reader who did not edit the source (pin: surface.test › an entry opened
@@ -107,8 +108,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   function raiseTold(doc: Node, opening: boolean): void {
     if (opening && opts.errorShown()) return;
     const refused = fenceRefusals(doc);
-    const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(...splitKey(ekey), directivesIn(doc))];
-    if (told.length) raiseFenceError(() => opts.error(told.join("\n")));
+    const trouble = directiveTrouble(...splitKey(ekey), directivesIn(doc));
+    if (refused.length || trouble.length) raiseFenceError(() => opts.raise(said("toldOnOpen", { refused, trouble })));
   }
   /* whether the show is of another entry than the one on screen, the view
      it opens in settled */

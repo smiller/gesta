@@ -3,6 +3,7 @@ import { TextSelection } from "prosemirror-state";
 import { keymap } from "prosemirror-keymap";
 import { schema } from "../model/schema.ts";
 import { sourceTab } from "./sourceKeys.ts";
+import type { Said } from "../model/alertText.ts";
 
 export const exitCodeBlock: Command = (state, dispatch) => {
   const { $from, empty } = state.selection;
@@ -27,13 +28,13 @@ function codeBlockAt(state: EditorState): { start: number; text: string } | null
 }
 /* Tab over the block's text alone: a selection spilling out of the block is
    not the block's, and Shift-Tab with nothing to take is left to the browser */
-export const codeTab = (shift: boolean, warn?: (why: string) => void): Command => (state, dispatch) => {
+export const codeTab = (shift: boolean, raise?: (s: Said) => void): Command => (state, dispatch) => {
   const block = codeBlockAt(state);
   if (!block) return false;
   const { from, to } = state.selection;
   const out = sourceTab(block.text, from - block.start, to - block.start, shift);
   if (!out) return false;
-  if ("refuse" in out) { warn?.(out.refuse); return true; }
+  if ("refuse" in out) { raise?.(out.refuse); return true; }
   if (dispatch) {
     /* each changed line's own span replaced, last first, so a position
        elsewhere in the block maps through the change
@@ -66,6 +67,6 @@ export const selectCodeBlock: Command = (state, dispatch) => {
   dispatch?.(state.tr.setSelection(TextSelection.create(state.doc, block.start, end)));
   return true;
 };
-export function codeKeymap(warn?: (why: string) => void): Plugin {
-  return keymap({ Enter: exitCodeBlock, Tab: codeTab(false, warn), "Shift-Tab": codeTab(true, warn), "Mod-a": selectCodeBlock });
+export function codeKeymap(raise?: (s: Said) => void): Plugin {
+  return keymap({ Enter: exitCodeBlock, Tab: codeTab(false, raise), "Shift-Tab": codeTab(true, raise), "Mod-a": selectCodeBlock });
 }

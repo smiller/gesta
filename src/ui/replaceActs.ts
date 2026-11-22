@@ -3,11 +3,12 @@ import type { Screen } from "./screen.svelte.ts";
 import type { ReplacePort } from "../editor/surface.ts";
 import { matches, nearest, replaceAt, replaceEvery, countLabel, holds } from "../editor/replace.ts";
 import { visibleTop } from "./visibleTop.ts";
+import { type Raise } from "../model/alertText.ts";
 
 export interface ReplaceDeps {
   rb: Screen["replace"];
   session: Pick<Session, "locked" | "mdView" | "replacer" | "setView">;
-  info(text: string, ms?: number): void;
+  raise: Raise;
   opened(): void;
   focusBar(): void;
 }
@@ -16,7 +17,7 @@ export interface ReplaceBar {
   close(): void; closeOver(): void; dismiss(): void; check(): void;
 }
 export function replaceActs(d: ReplaceDeps): ReplaceBar {
-  const { rb, session, info, opened, focusBar } = d;
+  const { rb, session, raise, opened, focusBar } = d;
   /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
      to the source view first, and closing the bar switches back */
   let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
@@ -86,7 +87,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     if (session.mdView) return "there";
     session.setView(true);
     if (!session.mdView) return "refused";
-    info("Source view, to replace", 3000);
+    raise("toReplace");
     return "switched";
   };
   /* typing in the text recounts once a frame, a recount being the whole

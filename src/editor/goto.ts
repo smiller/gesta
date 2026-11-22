@@ -18,6 +18,7 @@ import { hasPages, pages } from "./pages.ts";
 import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
+import { PHRASES } from "../model/alertText.ts";
 type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse" | "proseByParagraphVerseByLine">;
 
 const N = schema.nodes;
@@ -100,18 +101,18 @@ const askedNumber = (n: number | string): number => (typeof n === "number" ? n :
    on a page of several blocks) */
 function severalRefusal(blocks: Unit[][], n: number | string, l: Longest, noun?: string): string {
   const unit = noun ?? unitNoun(l.block), lastName = l.block.at(-1)!.label ?? l.longest;
-  if (askedNumber(n) < l.longest) return "no " + unit + " " + n;
-  if (!repeatsANumber(blocks)) return "no " + unit + " " + n + ", the last " + unit + " is " + lastName;
-  return "no " + unit + " " + n + " — the longest " + (noun ? "block" : formNoun(l.block)) + (l.lowest > 1 ? " ends at " : " has ") + lastName;
+  if (askedNumber(n) < l.longest) return PHRASES.noUnit({ unit, n });
+  if (!repeatsANumber(blocks)) return PHRASES.noUnitLast({ unit, n, last: lastName });
+  return PHRASES.noUnitLongest({ unit, n, form: noun ? "block" : formNoun(l.block), ends: l.lowest > 1, last: lastName });
 }
 function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
   const l = longestBlock(blocks);
-  if (typeof n === "number" && n < 1) return "no " + (noun ?? (l ? unitNoun(l.block) : "line")) + " " + n + " here";
-  if (!l) return "no numbered " + (noun ?? "line") + "s here";
+  if (typeof n === "number" && n < 1) return PHRASES.noUnitHere({ unit: noun ?? (l ? unitNoun(l.block) : "line"), n });
+  if (!l) return PHRASES.noNumbered({ unit: noun ?? "line" });
   if (blocks.length > 1) return severalRefusal(blocks, n, l, noun);
   const unit = noun ?? unitNoun(l.block);
   const firstName = l.block[0].label ?? l.lowest, lastName = l.block.at(-1)!.label ?? l.longest;
-  return firstName === lastName ? "the only " + unit + " here is " + lastName : "the " + unit + "s here are " + firstName + "–" + lastName;
+  return firstName === lastName ? PHRASES.onlyUnit({ unit, last: lastName }) : PHRASES.unitsRange({ unit, first: firstName, last: lastName });
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
@@ -127,7 +128,7 @@ function paragraphHit(doc: Node, n: number): { pos: number } | string {
     });
   });
   if (hit !== null) return { pos: hit };
-  return high === -Infinity ? "no numbered paragraphs here" : "no paragraph " + n + " — the paragraphs here are " + low + "–" + high;
+  return high === -Infinity ? PHRASES.noNumberedParagraphs() : PHRASES.noParagraph({ n, low, high });
 }
 function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);
@@ -138,10 +139,10 @@ function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
    says nothing of the blocks) */
 function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, noun?: string): string | null {
   const several = hits.length > 1;
-  if (hit.skipped) return (noun ?? "line") + " " + n + " is omitted in this edition" + (several ? " — " + (noun ? "block" : formNoun(hit.block)) + " " + hit.nth + " of " + blocks.length : "");
+  if (hit.skipped) return PHRASES.omitted({ unit: noun ?? "line", n }) + (several ? PHRASES.ofBlocks({ form: noun ? "block" : formNoun(hit.block), nth: hit.nth, of: blocks.length }) : "");
   if (!several) return null;
   const oneForm = !noun && blocks.every((rows) => prose(rows) === prose(hit.block));
-  return (noun ?? unitNoun(hit.block)) + " " + n + " — " + (oneForm ? formNoun(hit.block) : "block") + " " + hit.nth + " of " + blocks.length;
+  return PHRASES.unitAt({ unit: noun ?? unitNoun(hit.block), n }) + PHRASES.ofBlocks({ form: oneForm ? formNoun(hit.block) : "block", nth: hit.nth, of: blocks.length });
 }
 function pageHit(doc: Node, tok: string): { pos: number } | null {
   const want = tok.toLowerCase();
@@ -149,15 +150,15 @@ function pageHit(doc: Node, tok: string): { pos: number } | null {
   return leaf ? { pos: leaf.pos } : null;
 }
 function pageRefusal(doc: Node, tok: string): string {
-  return !pages(doc).length ? "no page numbers here" : "no page " + trimLabel(tok, ECHO_CAP) + " here";
+  return !pages(doc).length ? PHRASES.noPageNumbers() : PHRASES.noPage({ page: trimLabel(tok, ECHO_CAP) });
 }
 function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string | null {
   const a = ask.trim();
   const noun = kind === "page" ? "page" : lineNoun;
-  if (!a) return "type a " + noun + " number";
+  if (!a) return PHRASES.typeNumber({ noun });
   const ok = kind === "page" ? PAGE_ONE.test(a) : PAGE_ARABIC.test(a);
   if (ok) return null;
-  return kind === "page" && PAGE_CHARS_RE.test(a) ? "use roman or arabic characters, not both" : trimLabel(a, ECHO_CAP) + " is not a " + noun + " number";
+  return kind === "page" && PAGE_CHARS_RE.test(a) ? PHRASES.romanOrArabic() : PHRASES.notANumber({ typed: trimLabel(a, ECHO_CAP), noun });
 }
 
 /* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).
@@ -166,8 +167,8 @@ function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string
    lands on its first line) */
 function stanzaAskCheck(ask: string): string | null {
   const a = ask.trim();
-  if (!a) return "type a stanza, or stanza.line";
-  return /^\d+(?:\.\d+)?$/.test(a) ? null : trimLabel(a, ECHO_CAP) + " is not a stanza or stanza.line, like 2.1";
+  if (!a) return PHRASES.typeStanzaOrLine();
+  return /^\d+(?:\.\d+)?$/.test(a) ? null : PHRASES.notStanzaOrLine({ typed: trimLabel(a, ECHO_CAP) });
 }
 /* the page, not its work: a plain verse entry beside stanza entries (the
    commendatory verses) has none (pin: goto.test › a page holding a
@@ -191,12 +192,12 @@ function findStanza(doc: Node, s: number): { last: number; found: Found | null }
 function stanzaLine(found: Found, s: number, l: number | undefined): { pos: number } | string {
   const lines = blockUnits(found.node, found.pos, 0).filter((u) => u.line && !u.rest && !u.skip);
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
-  return want ? { pos: want.pos } : "no line " + l + " in stanza " + s + " — it has " + lines.length + " line" + (lines.length === 1 ? "" : "s");
+  return want ? { pos: want.pos } : PHRASES.noLineInStanza({ l, s, count: lines.length });
 }
 function stanzaAt(doc: Node, s: number, l: number | undefined): { pos: number } | string {
   const { last, found } = findStanza(doc, s);
-  if (!last) return "no stanzas here";
-  if (!found) return "no stanza " + s + " here — the last is " + last;
+  if (!last) return PHRASES.noStanzas();
+  if (!found) return PHRASES.noStanza({ s, last });
   return stanzaLine(found, s, l);
 }
 function stanzaHit(doc: Node, ask: string): { pos: number } | string {
@@ -205,10 +206,10 @@ function stanzaHit(doc: Node, ask: string): { pos: number } | string {
 }
 
 const WORDS = {
-  paragraph: { label: "Paragraph", askedFor: "a paragraph", none: "no paragraph numbers here" },
-  verse: { label: "Verse", askedFor: "a verse", none: "no verse numbers here" },
-  proseAndVerse: { label: "Line", askedFor: "a line or a paragraph", none: "no line or paragraph numbers here" },
-  line: { label: "Line", askedFor: "a line or a page", none: "no line or page numbers here" },
+  paragraph: { label: "Paragraph", askedFor: "a paragraph", none: PHRASES.nothingNumbered({ what: "paragraph" }) },
+  verse: { label: "Verse", askedFor: "a verse", none: PHRASES.nothingNumbered({ what: "verse" }) },
+  proseAndVerse: { label: "Line", askedFor: "a line or a paragraph", none: PHRASES.nothingNumbered({ what: "line or paragraph" }) },
+  line: { label: "Line", askedFor: "a line or a page", none: PHRASES.nothingNumbered({ what: "line or page" }) },
 } as const;
 const wordsFor = (c: Asked) => WORDS[c.byBookChapterAndParagraph ? "paragraph" : c.byChapterAndVerse ? "verse" : c.proseByParagraphVerseByLine ? "proseAndVerse" : "line"];
 const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => wordsFor(c).label;
@@ -227,7 +228,7 @@ const labels = (doc: Node | null, c: Asked): BarLabels =>
 /* the bar as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
 export function bar(doc: Node | null, c: Asked): BarLabels & { none: string; inSource: string } {
-  return { ...labels(doc, c), none: wordsFor(c).none, inSource: "Switch to the rendered view to go to " + wordsFor(c).askedFor };
+  return { ...labels(doc, c), none: wordsFor(c).none, inSource: PHRASES.switchToGo({ what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
 export interface Said { text: string; kind: "typed" | "absent" | "landing" }
@@ -276,10 +277,10 @@ function stanzaNumber(typed: string): number | null {
    ⌃⌘G stanza 2, line 1) (pin: stanza › ⌃⌘G line 3, no stanza) */
 function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing): Answer {
   const st = stanza.trim(), ln = line.trim();
-  if (ln && !/^\d+$/.test(ln)) return typedWrong(trimLabel(ln, ECHO_CAP) + " is not a line number");
-  if (!st) return typedWrong(ln ? "type a stanza for line " + ln : "type a stanza number");
+  if (ln && !/^\d+$/.test(ln)) return typedWrong(PHRASES.notANumber({ typed: trimLabel(ln, ECHO_CAP), noun: "line" }));
+  if (!st) return typedWrong(ln ? PHRASES.typeStanzaFor({ line: ln }) : PHRASES.typeStanza());
   const n = stanzaNumber(st);
-  if (n === null) return typedWrong(trimLabel(st, ECHO_CAP) + " is not a stanza number");
+  if (n === null) return typedWrong(PHRASES.notANumber({ typed: trimLabel(st, ECHO_CAP), noun: "stanza" }));
   return placed(stanzaAt(doc, n, ln ? parseInt(ln, 10) : undefined), standing);
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only

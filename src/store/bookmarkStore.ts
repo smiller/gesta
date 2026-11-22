@@ -1,12 +1,12 @@
 import { type Bookmark, parseBookmarks, serializeBookmarks, reachableBookmarks, movedBookmarks } from "./bookmarks.ts";
 import { readRaw } from "./local.ts";
 import { NS } from "./keys.ts";
+import { type Raise } from "../model/alertText.ts";
 
 export interface BookmarkStoreOptions {
   /* written once, when the key is absent */
   seed: Bookmark[];
-  /* an error raised: returns the generation `resolveError` takes back */
-  error(text: string, from: { caught: unknown }): number;
+  raise: Raise;
   resolveError(gen: number): void;
   storage?: () => Pick<Storage, "getItem" | "setItem">;
   /* the keys in the entry store every window shares */
@@ -47,7 +47,7 @@ export function bookmarkStore(opts: BookmarkStoreOptions): BookmarkStore {
   };
   const write = (next: Bookmark[]): boolean => {
     const err = save(next);
-    if (err) { failGen = opts.error("bookmarks not saved", { caught: err }); return false; }
+    if (err) { failGen = opts.raise("bookmarksNotSaved", { caught: err }); return false; }
     opts.resolveError(failGen);
     failGen = 0;
     return true;

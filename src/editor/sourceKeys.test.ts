@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { sourceTab, sourceTyped, headingLineAt } from "./sourceKeys.ts";
+import { said } from "../model/alertText.ts";
 
 describe("headingLineAt", () => {
   it("a heading's line, at its start or end; not a line in a fence, nor the empty line before a heading", () => {
@@ -27,8 +28,8 @@ describe("sourceTab", () => {
   });
   it("an empty line gains nothing, and a selection that moved nothing says why", () => {
     expect(sourceTab("a\n\nb", 0, 4, false)).toEqual({ value: "  a\n\n  b", start: 0, end: 8 });
-    expect(sourceTab("\n\n", 0, 2, false)).toEqual({ refuse: "nothing to indent — those lines are empty" });
-    expect(sourceTab("a\nb", 0, 3, true)).toEqual({ refuse: "no spaces to remove" });
+    expect(sourceTab("\n\n", 0, 2, false)).toEqual({ refuse: said("nothingToIndent") });
+    expect(sourceTab("a\nb", 0, 3, true)).toEqual({ refuse: said("noSpacesToRemove") });
   });
 });
 

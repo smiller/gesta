@@ -1,5 +1,6 @@
 import { test, expect } from "vitest";
 import { BOOKMARK_CAP, ALIAS_RE, parseBookmarks, serializeBookmarks, bookmarkIndex, aliasHolder, numberedBookmarks, aliasedBookmarks, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, reachableBookmarks, movedBookmarks } from "./bookmarks.ts";
+import { said } from "../model/alertText.ts";
 
 const row = (key: string, alias = "") => ({ key, alias });
 const keys = (n: number, prefix = "k") => Array.from({ length: n }, (_, i) => prefix + i);
@@ -65,9 +66,9 @@ test("bookmarksFull counts the numbered rows only; set and add return a NEW list
   expect(numberedBookmarks(setBookmarkAlias(keyed, "k0", "")!).map((b) => b.key)).toEqual(keys(BOOKMARK_CAP));
 });
 test("aliasRefusal: the pattern and nothing about the list; the old shape still reads", () => {
-  expect(aliasRefusal("")).toBe("");
-  for (const a of ["1", "a", "1ab", "A"]) expect(aliasRefusal(a)).toMatch(/a letter b to z/);
-  for (const a of ["fb", "scr12", "purgatorio19"]) expect(aliasRefusal(a)).toBe("");
+  expect(aliasRefusal("")).toBeNull();
+  for (const a of ["1", "a", "1ab", "A"]) expect(aliasRefusal(a)).toEqual(said("keyShape"));
+  for (const a of ["fb", "scr12", "purgatorio19"]) expect(aliasRefusal(a)).toBeNull();
   expect(parseBookmarks(null)).toEqual([]);
   expect(parseBookmarks('["commonplace/A","2026-01-01","bookshelf/M/P"]')!.map((b) => b.key)).toEqual(["commonplace/A", "2026-01-01", "bookshelf/M/P"]);
   expect(parseBookmarks('[{"alias":"c"}]')).toBeNull();

@@ -4,6 +4,7 @@ import { history, undo, redo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
+import { said, type Said } from "../model/alertText.ts";
 import { rowKeymap, pipeInLine, openBlankRow } from "./rowKeys.ts";
 import { fittedMeasure } from "./fit.ts";
 import { marginNotes } from "./margins.ts";
@@ -38,7 +39,7 @@ export interface EditorOptions {
   /* a plain click on an internal link: the fragment to route to */
   onRoute?: (frag: string) => void;
   /* a swallowed press that changed nothing SAYS why */
-  warn?: (why: string) => void;
+  raise?: (s: Said) => void;
   onPasteFile?: (file: File) => void;
   /* a pasted fence the model refused, named with its reason */
   folds?: FoldOptions;
@@ -69,8 +70,8 @@ export function landed(before: EditorState, after: EditorState): { changed: bool
 }
 /* Tab outside a list, a quote, a row or a code block stays in the entry and
    says what it does not do here (pin: editor.test › Tab in prose keeps the key) */
-const proseTab = (warn?: (why: string) => void): Command => (state) => {
-  warn?.(state.selection.empty ? "⌃⌘M toggles markdown" : "Tab indents one list, quote, or code block at a time");
+const proseTab = (raise?: (s: Said) => void): Command => (state) => {
+  raise?.(said(state.selection.empty ? "proseTab" : "tabOneBlock"));
   return true;
 };
 /* a table cannot hold the caret below it: an entry ending in one is given
@@ -89,7 +90,6 @@ const lineBelow = new Plugin({
    either, a join, a cut or a drop, while a change taking the block whole
    lands (pin: editor.test › no change from outside a reference block
    reaches into it) */
-const REFERENCE_HERE = "Reference style is edited in the markdown view (⌃⌘M)";
 function inReference(state: EditorState): boolean {
   const sel = state.selection;
   if (sel instanceof NodeSelection) return sel.node.type === schema.nodes.reference;
@@ -119,13 +119,13 @@ function cutsReference(doc: Node, from: number, to: number): boolean {
 function reachesIntoReference(tr: Transaction): boolean {
   return tr.steps.some((step, i) => stepRanges(step).some(([from, to]) => cutsReference(tr.docs[i], from, to)));
 }
-const inertReference = (warn?: (why: string) => void): Plugin => new Plugin({
+const inertReference = (raise?: (s: Said) => void): Plugin => new Plugin({
   filterTransaction: (tr) => !tr.docChanged || !reachesIntoReference(tr),
   props: {
     handleClickOn: (view, _pos, node, nodePos) => {
       if (node.type !== schema.nodes.reference) return false;
       view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, nodePos + 1)));
-      warn?.(REFERENCE_HERE);
+      raise?.(said("referenceHere"));
       return true;
     },
     handleTextInput: (view) => inReference(view.state),
@@ -145,33 +145,33 @@ export function textOnBlankRow(view: EditorView, text: string): boolean {
   view.dispatch(typed().scrollIntoView());
   return true;
 }
-export function editorState(doc: Node, interval: number, warn?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
+export function editorState(doc: Node, interval: number, raise?: (s: Said) => void, foldOpts?: FoldOptions): EditorState {
   /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a warning
      is raised once per press, not again on every repeat
      (pin: editor.test › a held key acts once) */
   let repeating = false;
-  const warnOnce = warn && ((why: string): void => { if (!repeating) warn(why); });
+  const raiseOnce = raise && ((s: Said): void => { if (!repeating) raise(s); });
   const held = new Plugin({ props: { handleKeyDown: (_view, e) => { repeating = e.repeat; return e.repeat && e.key === "Tab" && !e.shiftKey; } } });
   return EditorState.create({
     doc: withLineBelow(doc),
     plugins: [
       held,
       lock,
-      inertReference(warnOnce),
+      inertReference(raiseOnce),
       history(),
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo, Escape: escapeJump }),
       rowKeymap,
       autolinkEnter,
       typingKeymap,
-      codeKeymap(warnOnce),
-      listKeymap(warnOnce),
-      quoteKeymap(warnOnce),
-      gridKeymap(warnOnce),
+      codeKeymap(raiseOnce),
+      listKeymap(raiseOnce),
+      quoteKeymap(raiseOnce),
+      gridKeymap(raiseOnce),
       tableKeymap,
       formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
-      keymap({ Tab: proseTab(warnOnce) }),
+      keymap({ Tab: proseTab(raiseOnce) }),
       jump,
       lineBelow,
       typing(),
@@ -230,7 +230,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       },
       serializeNode: (node, options) => base.serializeNode(node, options),
     } as DOMSerializer,
-    state: editorState(doc, opts.interval, opts.warn, opts.folds),
+    state: editorState(doc, opts.interval, opts.raise, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     /* the hint is drawn on screen alone, so no copy carries it (pin:
        alerts and surfaces › a link's tooltip)
@@ -239,7 +239,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     attributes: { class: "page", spellcheck: "false" },
     handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
-    ...pasteProps({ file: (f) => opts.onPasteFile?.(f), warn: (text) => opts.warn?.(text), href: () => location.href }),
+    ...pasteProps({ file: (f) => opts.onPasteFile?.(f), raise: (s) => opts.raise?.(s), href: () => location.href }),
     ...copyProps(),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the

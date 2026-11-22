@@ -9,9 +9,9 @@ import { type Command, type EditorState, type Plugin, type Transaction, TextSele
 import { keymap } from "prosemirror-keymap";
 import type { ResolvedPos } from "prosemirror-model";
 import { schema } from "../model/schema.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 const G = schema.nodes.grid, C = schema.nodes.card, P = schema.nodes.paragraph;
-export const GRID_JOIN = "a grid’s cards are joined in the source view (⌃⌘M)";
 
 /* the depth of the card holding the caret's textblock directly, when that
    card is a grid's; 0 otherwise */
@@ -51,10 +51,10 @@ export const enterOutOfGrid: Command = (state, dispatch) => {
   return true;
 };
 
-export function gridKeymap(warn?: (why: string) => void): Plugin {
+export function gridKeymap(raise?: (s: Said) => void): Plugin {
   const refusing = (backward: boolean): Command => (state) => {
     if (!atCardEdge(state, backward)) return false;
-    warn?.(GRID_JOIN);
+    raise?.(said("gridJoin"));
     return true;
   };
   return keymap({ Enter: enterOutOfGrid, Backspace: refusing(true), Delete: refusing(false) });

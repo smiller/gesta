@@ -249,7 +249,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   (syntax highlighting's tokenizer), `fenceRefusals.ts` (the `:::` lines a
   parse left as paragraphs, with their reasons), `flatten.ts` (the document
   as one character stream with a position map, which every search site and
-  the view switch share).
+  the view switch share), `alertText.ts` (every alert by id: its words,
+  kind, when it is raised and its time on screen).
 - `src/editor/` — the editor, DOM-facing:
   - The lines: `numbering.ts` (the unit walk: which rows are lines, their
     numbers; no DOM), `lineNumbers.ts` (drawn as decorations), `rows.ts`
@@ -362,11 +363,10 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     tests, fails, its allowed list giving each exception's reason),
     `hooks-test.sh`, `accepted.sh`, `commitSubject.ts` (the commit-msg
     hook's check: a Conventional Commits subject, 72 characters at most);
-    `alertCatalogue.ts` (every alert src/ raises, by kind, listed in
-    `docs/alerts.md`, and nothing listed that src/ no longer raises);
+    `alertsPage.ts` (writes `docs/alerts.md` from `src/model/alertText.ts`;
+    its test fails when the page is not what the table writes);
     `sourceSpans.ts` (a source file's comments, strings and template
-    text, which `commentRules.ts`, `apostrophes.ts` and
-    `alertCatalogue.ts` read).
+    text, which both `commentRules.ts` and `apostrophes.ts` read).
   - The day's progress, `progress/`: `events.ts` (a day's events replayed
     to a time: each item's state, the counts), `page.ts` (the page, a
     snapshot at a time, or with `--slides` the slideshow, under
@@ -393,5 +393,6 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   conversion's first. `docs/brainstorms/` — the higher-level thinking (and
   mock-ups) a plan may start from, the compound-engineering plugin's.
   `docs/adr/` — architecture decisions, made when the first is (what it
-  holds to be settled then). `docs/alerts.md` — every alert by kind: its
-  words and when it is raised.
+  holds to be settled then). `docs/alerts.md` — every alert by kind, its
+  words and when it is raised, written from the table by
+  `tools/alertsPage.ts`.

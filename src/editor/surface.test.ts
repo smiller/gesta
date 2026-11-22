@@ -4,10 +4,12 @@ import { surfaces, type Surface } from "./surface.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { flattenDoc, flattenText } from "../model/flatten.ts";
-import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
+import { fenceRefusals } from "../model/fenceRefusals.ts";
+import { alertWords, said, type FenceRefusal } from "../model/alertText.ts";
 import { directiveTrouble } from "../store/conventions.ts";
 
 const told = (): string => directiveTrouble("bookshelf", "Chaucer, Geoffrey", ["roman book and canto"]).join("\n");
+const opened = (refused: FenceRefusal[], trouble: string): string => alertWords(said("toldOnOpen", { refused, trouble: trouble ? trouble.split("\n") : [] }));
 
 interface Fake extends Surface { caretAt: number; seen: boolean; top: number | null; text: string }
 
@@ -47,7 +49,7 @@ function world(y = 0, standing = { error: false }) {
       carry: (pos) => { log.push("carry " + pos); },
       release: () => { log.push("release"); },
     },
-    error: (text) => { errors.push(text); return errors.length; },
+    raise: (s) => { errors.push(alertWords(s)); return errors.length; },
     resolveError: (gen) => { released.push(gen); },
     errorShown: () => standing.error,
     onView: (md) => { log.push("view " + md); },
@@ -188,7 +190,7 @@ describe("a text the model refuses", () => {
     w.s.switchTo(true);
     w.last().text = "::: versey\nline\n:::";
     w.s.switchTo(false);
-    expect(w.errors).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::")))]);
+    expect(w.errors).toEqual([opened(fenceRefusals(parseMarkdown("::: versey\nline\n:::")), "")]);
     w.s.switchTo(true);
     w.last().text = "fine";
     w.s.switchTo(false);
@@ -204,7 +206,7 @@ describe("a text the model refuses", () => {
       w.s.switchTo(false);
       return w.errors;
     };
-    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
+    expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([opened(fenceRefusals(parseMarkdown("::: versey\nline\n:::")), told())]);
     expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::")).toEqual([told()]);
   });
   it("a show of another entry is in the rendered view; the same entry shown again keeps the view chosen", () => {
@@ -230,7 +232,7 @@ describe("a text the model refuses", () => {
   it("an entry opened raises its refused fences and its directives' trouble as one error, and the next entry opened resolves it", () => {
     const w = world();
     w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::", "bookshelf/Chaucer, Geoffrey");
-    expect(w.errors).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
+    expect(w.errors).toEqual([opened(fenceRefusals(parseMarkdown("::: versey\nline\n:::")), told())]);
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
     expect(w.errors).toHaveLength(1);

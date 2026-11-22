@@ -3,6 +3,7 @@ import type { EntryLayer } from "../store/entries.ts";
 import type { Journal } from "../store/reference.ts";
 import type { Screen } from "./screen.svelte.ts";
 import { gotoLevels, gotoPick } from "./gotoModel.ts";
+import { said } from "../model/alertText.ts";
 
 export interface GotoDeps {
   gt: Screen["goto"];
@@ -38,7 +39,7 @@ export function gotoActs(d: GotoDeps): GotoRow {
     gotoPicked = true;
     const out = gotoPick(gotoWorld(), { date: c.date, tag: c.tag }, gt.levels, { level: level, value: value, ns: ns });
     if (!out) return;
-    if ("jump" in out) { gotoRow(false); session.goto(out.jump, "already here"); return; }
+    if ("jump" in out) { gotoRow(false); session.goto(out.jump, said("alreadyHere")); return; }
     gt.levels = out.levels;
   };
   const reanswer = (): void => {

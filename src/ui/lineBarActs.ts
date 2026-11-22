@@ -8,14 +8,13 @@ import { openFoldAt } from "../editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
 import { visibleTop } from "./visibleTop.ts";
+import type { Raise } from "../model/alertText.ts";
 
 export interface LineBarDeps {
   lb: Screen["lineBar"];
   session: Pick<Session, "current" | "view" | "mdView">;
   journal: Journal;
-  info(text: string, ms?: number): void;
-  /* why an act did nothing */
-  warn(text: string): void;
+  raise: Raise;
   opened(): void;
   focusBar(): void;
   warmed(): boolean;
@@ -25,7 +24,7 @@ export interface LineBar {
   close(): void; dismiss(): void; landSoon(v: string): void; centreSoon(): void; replayOwed(): void;
 }
 export function lineBarActs(d: LineBarDeps): LineBar {
-  const { lb, session, journal, info, warn, opened, focusBar, warmed } = d;
+  const { lb, session, journal, raise, opened, focusBar, warmed } = d;
   /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
      focus and Enter cycles through the blocks that hold that line. The
      landing is CENTRED in the readable band under the masthead — a
@@ -62,14 +61,12 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
   const conventions = () => conventionsOf(session.current.date, session.current.tag, journal);
-  const SAID_MS = { landing: 2500 };
   const asked = (words: Words, from: "bar" | "link"): boolean => {
     const view = session.view!;
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
     /* a landing's word is an info; a line mistyped or absent is a warning */
-    if (a.said?.kind === "landing") info(a.said.text, SAID_MS.landing);
-    else if (a.said) warn(a.said.text);
+    if (a.said) raise(a.said.kind === "landing" ? "lineBarLanding" : "lineBar", { text: a.said.text });
     return "pos" in a;
   };
   /* before the warm a work's own page, which says how it is referred to, may
@@ -141,11 +138,11 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { warn(bar(null, conventions()).inSource); return; }
+    if (session.mdView) { raise("lineBar", { text: bar(null, conventions()).inSource }); return; }
     const view = session.view;
     if (!view) return;
     const b = bar(view.state.doc, conventions());
-    if (b.kind === "none") { warn(b.none); return; }
+    if (b.kind === "none") { raise("lineBar", { text: b.none }); return; }
     freshAsk();
     opened();
     lb.kind = b.kind;

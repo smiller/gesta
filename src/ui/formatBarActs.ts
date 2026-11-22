@@ -5,6 +5,7 @@ import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRe
 import { blankRowSelected } from "../editor/rowKeys.ts";
 import { passageAt } from "../editor/passage.ts";
 import { visibleTop } from "./visibleTop.ts";
+import { said, type Raise } from "../model/alertText.ts";
 
 type BarView = NonNullable<Session["view"]>;
 type Command = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
@@ -13,8 +14,7 @@ export interface FormatBarDeps {
   bar: Screen["bar"];
   buttons: () => Screen["masthead"]["buttons"];
   session: Pick<Session, "view" | "mdView" | "copyReference" | "showWordCount">;
-  /* why an act did nothing */
-  warn(text: string): void;
+  raise: Raise;
   extract(): void;
   mountEl: HTMLElement;
   head: Element;
@@ -37,7 +37,7 @@ const barSelection = (view: BarView): Selection | null => {
 const drawn = (rect: DOMRect): boolean => !!(rect.width || rect.height);
 
 export function formatBar(d: FormatBarDeps): FormatBar {
-  const { bar, buttons, session, warn, extract, mountEl, head } = d;
+  const { bar, buttons, session, raise, extract, mountEl, head } = d;
   /* THE FLOATING BAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
      source view and over a search jump's selection until a reader next
@@ -88,7 +88,7 @@ export function formatBar(d: FormatBarDeps): FormatBar {
   };
   const format = (view: BarView, act: string): void => {
     const cmd = COMMANDS[act];
-    if (cmd && !cmd(view.state, view.dispatch)) warn((act === "code" && codeBlockRefusal(view.state)) || "nothing to change there");
+    if (cmd && !cmd(view.state, view.dispatch)) raise((act === "code" && codeBlockRefusal(view.state)) || said("nothingToChange"));
     view.focus();
     place();
   };

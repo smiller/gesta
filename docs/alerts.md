@@ -1,97 +1,125 @@
 # Alerts
 
-Every alert Gesta raises, by kind (`GLOSSARY.md`, Alert). The first column
-is what the alert says, `…` standing for a part that varies. A row naming
-a file and a call is an alert whose words are chosen elsewhere: its second
-column says where they come from and what they are.
-
-`tools/alertCatalogue.test.ts` fails when src/ raises an alert this page
-does not list under its kind, or this page lists one src/ no longer
-raises. It reads the first column only.
+Every alert Gesta raises, by kind (`GLOSSARY.md`, Alert), written from
+`src/model/alertText.ts` by `node tools/alertsPage.ts`; a test fails when
+this page is not what the table writes. `…` stands for a part that varies;
+⏎ starts another line.
 
 ## Error
 
-Red. Something went wrong; it stays until what caused it is resolved or
-it is closed, and a click copies its detail. Every error is kept three
-months in the alert log (`gesta.alerts()` in the console).
+Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail. Every error is kept three months in the alert log (`gesta.alerts()` in the console).
 
 | Words | When |
 |---|---|
 | `not saved` | A save of an entry did not reach storage. It stays until every entry owed lands; a click copies the error. |
-| `not saved — changed in another tab, copy your text then reload` | Another tab saved the entry first, so this tab's typing was refused. A click copies the text this tab was holding. |
+| `not saved — changed in another tab, copy your text then reload` | Another tab saved the entry first, so this tab’s typing was refused. A click copies the text this tab was holding. |
 | `not saved — deleted in another tab, copy your text` | Typing into an entry another tab deleted. A click copies what was typed. |
 | `not deleted — changed in another tab, reload` | A delete refused because another tab saved the entry since. |
 | `couldn’t delete — reload` | A delete failed for a reason other than another tab. |
 | `deleted in another tab` | The entry on screen was deleted in another tab, with nothing unsaved. |
 | `couldn’t load entries — reload` | The journal has not loaded eight seconds after launch. Resolved when it does. |
-| `the store could not be read — reload` | The browser's storage could not be read at launch; a click copies the error. |
-| `cannot render … — …; shown as source` | An entry the editor cannot draw (a grid holding a stray line, say): its key and why. It opens in the markdown view, and goes once it parses on the switch back. |
-| `picture not saved — storage full` | A pasted picture could not be stored: the browser's storage is full. |
+| `the store could not be read — reload` | The browser’s storage could not be read at launch; a click copies the error. |
+| `picture not saved — storage full` | A pasted picture could not be stored: the browser’s storage is full. |
 | `picture not saved` | A pasted picture could not be stored, for another reason; a click copies the error. |
 | `the picture had nowhere to land — paste it again` | Another entry or the other view was opened while a pasted picture was being read. |
-| `that picture couldn’t be read — try copying it as a PNG` | A pasted picture's data could not be decoded. |
+| `that picture couldn’t be read — try copying it as a PNG` | A pasted picture’s data could not be decoded. |
 | `line numbers not saved — storage full` | The choice in the Line numbering row (⌃⌘L opens it) could not be kept. |
 | `shortcuts not saved — storage full` | Save in the shortcuts panel could not write. Resolved by the next save that works. |
 | `bookmarks not saved` | A bookmark change could not be written: storage full, or the list kept is damaged. Resolved by the next write that lands. |
 | `Copy failed` | The copy button over a block: the block went, or the clipboard refused. |
-| `couldn’t read the pictures` | The backups panel's sweep of unused pictures could not read the pictures stored. |
-| `backup couldn’t remove … old file(s)` | A backup ran, but old files in its folder would not go; a click copies their names. |
-| `backed up, but gesta.zip for the reader couldn’t be written` | A backup ran, but the reader's bundle could not be written. |
-| `backup blocked — …` | Two entries share a filename in the backup folder; the paused pill shows too. |
-| `couldn’t set up backups — …` | Choosing the backup folder failed; … is the error. |
-| `exported … entries…` | An export wrote every entry, but pictures were missing (“ — 2 pictures missing”); a click copies which. |
-| `nothing to import here — …` | Every file picked for import was refused; … says which and why. |
-| `storage full — imported … of …` | An import stopped when storage filled. |
-| `imported …, … failed` | An import in which some files failed; a click copies which. |
+| `copy failed — see console` | A click on an alert whose words the clipboard refused. A click on it only closes it. |
+| `couldn’t read the pictures` | The backups panel’s sweep of unused pictures could not read the pictures stored. |
+| `backed up, but gesta.zip for the reader couldn’t be written` | A backup ran, but the reader’s bundle could not be written. |
 | `couldn’t rename — nothing was moved` | Renaming a tagged entry failed; it is left as it was. |
-| `… — …` | A move, rename or re-file refused by its plan: “couldn’t move”, “couldn’t rename” or “couldn’t re-file”, a dash, and why (“… is there already”). The old entry is opened again. |
-| `… — copies left: …` | A move whose copies failed and could not all be taken back: the copies left. |
-| `… — nothing was moved` | A move whose copies failed and were all taken back. |
-| `couldn’t build the search index — …` | Search's index could not be built; … is the error. |
-| `open backup: gesta.zip in Dropbox › gesta-backups › reader` | The reader opened with no backup kept in it. |
+| `export failed — …` | An export that failed outright; a click copies the error. |
+| `import failed — …` | An import that failed outright; a click copies the error. |
+| `couldn’t set up backups — …` | Choosing the backup folder failed. |
+| `couldn’t build the search index — …` | Search’s index could not be built. |
 | `couldn’t keep the backup — …` | The reader: a backup picked could not be kept in this browser. |
 | `couldn’t read the backup — …` | The reader: the backup kept could not be read. |
-
-### Words chosen elsewhere
-
-| Raised at | Words and when |
-|---|---|
-| `src/editor/surface.ts › opts.error(told.join("\n"))` | An entry opened, or switched back to from the markdown view, with fences Gesta does not know or reference directives it cannot read: one line each, “::: versey — not a block Gesta knows, so it stayed a paragraph”, several closing with “2 fences stayed paragraphs”. An error, so the block's form can still be copied after ten seconds. |
-| `src/session.ts › opts.error(failText)` | ⌃⌘R or a link copy the clipboard refused: “Couldn’t copy the reference”, “Couldn’t copy the link”. A click copies what was being copied; the next copy that lands resolves it. |
-| `src/ui/alertLedger.svelte.ts › error(text)` | The entry layer's failed writes, the “not saved” and “not deleted” rows above, raised keyed so that their entry's landing resolves them. |
-| `src/ui/alertLedger.svelte.ts › error(COPY_FAILED)` | “copy failed — see console”: a click on an alert whose words the clipboard refused. A click on it only closes it. |
-| `src/ui/folderActs.ts › p.fail(msg)` | An export that failed: “exported 120 entries; 2 file(s) failed”, or “export failed — …”; an import that failed: “import failed — …”. A click copies the files and errors. |
-| `src/ui/folderActs.ts › alerts.error((err as Error).message)` | An import with two files spelling one entry: the message names them; a click copies both. |
-| `src/ui/folderActs.ts › alerts.error(msg)` | An import that failed before its progress line began: “import failed — …”. |
-| `src/ui/lifecycle.ts › ui.error(text)` | A move, rename or re-file that landed but left links not updated or entries standing: “moved to …; 1 link not updated: …”. |
+| `exported … entries — … pictures missing` | An export wrote every entry, but pictures were missing; a click copies which. |
+| `exported … entries; … file(s) failed — … pictures missing` | An export in which some files failed; a click copies the files and errors. |
+| `nothing to import here — … .md files will NOT be imported.` | Every file picked for import was refused. |
+| `storage full — imported … of …` | An import stopped when storage filled. |
+| `imported …, … failed` | An import in which some files failed; a click copies which. |
+| `two files here are the same entry (… and …) — remove one and import again` | An import with two files spelling one entry; a click copies the second. |
+| `Couldn’t copy the reference` | ⌃⌘R the clipboard refused. A click copies the reference; the next copy that lands resolves it. |
+| `Couldn’t copy the link` | A link copy the clipboard refused. A click copies the link; the next copy that lands resolves it. |
+| `cannot render … — …; shown as source` | An entry the editor cannot draw (a grid holding a stray line, say): its key and why. It opens in the markdown view, and goes once it parses on the switch back. |
+| `… fences stayed paragraphs` | An entry opened, or switched back to from the markdown view, with fences Gesta does not know or reference directives it cannot read: one line each. An error, so the block’s form can still be copied after ten seconds. |
+| `… — …` | A move, rename or re-file refused once under way, or failed: why. The old entry is opened again. |
+| `… — copies left: …` | A move whose copies failed and could not all be taken back: the copies left. |
+| `… — nothing was moved` | A move whose copies failed and were all taken back. |
+| `… to … — … entries, … there already deleted, … pictures not found, links updated in … others; links not updated in … entries: …; old copies kept: …` | A move or rename that landed but left links not updated or old copies standing. |
+| `filed under … — … entries moved, … pictures not found, links updated in … others; links not updated in … entries: …; old copies kept: …` | A re-file that landed but left links not updated or old copies standing. |
+| `backup couldn’t remove … old file(s)` | A backup ran, but old files in its folder would not go; a click copies their names. |
+| `backup blocked — …` | Two entries share a filename in the backup folder; the paused pill shows too. |
+| `open backup: gesta.zip in Dropbox › gesta-backups › reader` | The reader opened with no backup kept in it. |
 
 ## Warning
 
-Amber. Why an act just tried did nothing. It fades after ten seconds, or
-goes when closed, replaced by the next, or another entry is opened.
+Amber. Why an act just tried did nothing. It fades after ten seconds, or goes when closed, replaced by the next, or another entry is opened.
 
 | Words | When |
 |---|---|
+| `Select a passage to reference first` | ⌃⌘R with nothing selected. |
+| `A code block can’t be referenced` | ⌃⌘R in a code block. |
+| `A margin-note can’t be referenced — select the text beside it` | ⌃⌘R in a margin-note. |
+| `That spans two verse blocks — reference them one at a time` | ⌃⌘R over two verse blocks that are not one run. |
+| `Those verse blocks aren’t numbered straight on — reference them one at a time` | ⌃⌘R over verse blocks numbered apart. |
+| `No translation lines selected — Ref (all) quotes the Latin too` | Ref over a dual-language block with no English selected. |
+| `already here` | A link or a go-to row to the entry already open. |
+| `already on …` | A bookmark’s link, or a contents link to an author or a book, pressed on the entry it goes to. |
+| `already on today` | ⌃⌘T on today’s entry. |
+| `no such …` | An address naming an entry that does not exist: “no such book”, “no such commonplace”, or a sub-entry’s noun. |
+| `… fences stayed paragraphs` | A paste holding fences Gesta does not know: one line each, with why. |
+| `no spaces to remove` | Shift+Tab in a code block or the markdown view over lines with no spaces to remove. |
+| `nothing to indent — those lines are empty` | Tab in a code block or the markdown view over empty lines. |
+| `can’t indent the first item in a list` | Tab on a list’s first item. |
+| `can’t indent an item more than one deeper than its parent` | Tab on an item already one deeper than the one above. |
+| `at the outer level: switch to markdown (⌃⌘M) to remove` | Shift+Tab at a list’s or a quote’s outer level. |
+| `a grid’s cards are joined in the source view (⌃⌘M)` | Backspace at a card’s start or Delete at its end. |
+| `Reference style is edited in the markdown view (⌃⌘M)` | A click on a reference in the rendered view. |
+| `can’t make a code block from that` | The code button over a picture or a page label. |
+| `an entry can’t move under itself` | A move or rename into a place under the entry itself. |
+| `nothing at … to move it under` | A move or rename under an entry that does not exist. |
+| `“…” is there already and has sub-entries of its own` | A move into an entry holding a sub-entry of the same title that has its own. |
+| `… is there already` | A move onto an entry that already exists. |
+| `the shelves keep their name` | Renaming the Shelves entry. |
+| `the shelves hold no books` | A book made, or a tag placed, on the Shelves entry. |
+| `“…” is the shelves’ own name` | An author named, filed or moved to the Shelves entry’s name. |
+| `that link’s title can’t be a name — type one instead` | A new entry named from a link whose title gives no name. |
+| `that name leaves nothing a filename can keep` | A name typed that leaves no letters a filename keeps. |
+| `an address can’t have an empty part` | A rename typed as an address with an empty part. |
+| `delete the … first` | Deleting an entry whose sub-entries hold text. |
+| `a tagged entry holds no entries of its own` | ⌃⌘N on a day’s tagged entry. |
+| `no link inside a code block` | A link placed with the cursor in code. |
+| `no link inside a link` | A link placed with the cursor in a link. |
+| `no link inside a heading — place your cursor below it` | A new entry’s link placed with the cursor in, or a selection cutting into, a heading. |
+| `a letter b to z, then letters or digits — a adds, a leading digit jumps` | A bookmark key given in a shape keys do not take. |
+| `“…” already goes to …` | A bookmark key given that another bookmark has. |
 | `⌃⌘M toggles markdown` | Tab in prose with nothing selected, or in an empty quote. |
 | `Tab indents one list, quote, or code block at a time` | Tab with text selected in prose, or over a selection that spills out of a quote. |
 | `no line numbers here` | ⌃⌘L on an entry with no numbered lines. |
 | `no earlier entry` | ⌃⌘, at the first entry. |
 | `no later entry` | ⌃⌘. at the last entry. |
-| `no such …` | An address naming an entry that does not exist: “no such book”, “no such commonplace”, or a sub-entry's noun. |
-| `still loading — try that again in a moment` | ⌃⌘R before the entry is drawn. |
+| `still loading — try that again in a moment` | An act tried before the journal is read, or ⌃⌘R before the entry is drawn. |
+| `couldn’t load entries — reload first` | An act tried once the journal’s read has failed. |
 | `switch to the rendered view (⌃⌘M) to copy a reference` | ⌃⌘R in the markdown view. |
 | `no markdown view here` | ⌃⌘M in the reader. |
 | `picture not pasted — one at a time; paste it again` | A picture pasted while the last one is still being read. |
-| `place your cursor in the entry` | A shortcut, or a bookmark's link, chosen with no cursor in the entry. |
+| `place your cursor in the entry` | A shortcut, or a bookmark’s link, chosen with no cursor in the entry. |
 | `no shortcut to insert` | Enter in the shortcuts panel with no row matching. |
 | `already bookmarked` | A in the bookmarks panel on an entry already there. |
 | `bookmarks full — delete one, or give one its own key` | A with nine numbered bookmarks. |
 | `nothing to bookmark here yet` | A on an entry not yet saved anywhere. |
-| `no bookmark …` | A number typed in the bookmarks panel with no row. |
-| `“…” already goes to …` | A bookmark key given that another bookmark has. |
+| `…` | ⌃⌘G with a number mistyped or not in the entry, on an entry with nothing numbered, or in the markdown view; its words are the line bar’s phrases. |
+| `finish the key` | Enter on a bookmark key typed part-way that more than one key starts with. |
+| `no bookmark …` | A number typed in the bookmarks panel with no row, or a key typed that no bookmark has. |
 | `Nothing to copy` | The copy button over a block that has gone. |
 | `nothing to change there` | A toolbar button that would change nothing. |
-| `… is still running` | Export or import pressed while one runs: “an export”, “an import”. |
+| `an export is still running` | Export or import pressed while an export runs. |
+| `an import is still running` | Export or import pressed while an import runs. |
 | `export needs a browser that can open a folder to write into` | Export in a browser without a folder picker. |
 | `import needs a folder picker` | Import in a browser without a folder picker. |
 | `nothing to import` | An import folder with no files to import. |
@@ -100,76 +128,92 @@ goes when closed, replaced by the next, or another entry is opened.
 | `the entry was made — the link was not placed` | A new entry made from a selection landed, but the entry or view on screen changed before its link could be placed. |
 | `the text moved while the entry was made — the link was not placed` | A new entry made from a selection landed, but the selected text changed meanwhile. |
 
-### Words chosen elsewhere
-
-| Raised at | Words and when |
-|---|---|
-| `src/session.ts › warn(REFUSAL_TEXT[out.refused])` | ⌃⌘R over what cannot be referenced: “Select a passage to reference first”, “A code block can’t be referenced”, “A margin-note can’t be referenced — select the text beside it”, “That spans two verse blocks — reference them one at a time”, “Those verse blocks aren’t numbered straight on — reference them one at a time”, “No translation lines selected — Ref (all) quotes the Latin too”. |
-| `src/session.ts › warn(sameMsg)` | ⌃⌘T on today, or a link to where you are: “already on today”, “already here”. |
-| `src/ui/journalLoad.ts › warn(REFUSAL[state])` | An act tried before the journal is read: “still loading — try that again in a moment”, or, once the read has failed, “couldn’t load entries — reload first”. |
-| `src/editor/editor.ts › warn(REFERENCE_HERE)` | A click on a reference in the rendered view: “Reference style is edited in the markdown view (⌃⌘M)”. |
-| `src/editor/codeKeys.ts › warn(out.refuse)` | Tab or Shift+Tab in a code block that moves nothing: “nothing to indent — those lines are empty”, “no spaces to remove”. |
-| `src/editor/sourceView.ts › opts.warn(r.refuse)` | The same in the markdown view. |
-| `src/editor/listKeys.ts › warn(listRefusal(state, shift))` | Tab or Shift+Tab in a list that cannot move: “can’t indent the first item in a list”, “can’t indent an item more than one deeper than its parent”, “at the outer level: switch to markdown (⌃⌘M) to remove”. |
-| `src/editor/quoteKeys.ts › warn(quoteRefusal(state, shift))` | The same in a quote: “⌃⌘M toggles markdown”, “Tab indents one list, quote, or code block at a time”, “at the outer level: switch to markdown (⌃⌘M) to remove”. |
-| `src/editor/gridKeys.ts › warn(GRID_JOIN)` | Backspace at a card's start or Delete at its end: “a grid’s cards are joined in the source view (⌃⌘M)”. |
-| `src/editor/paste.ts › on.warn(r.refused)` | A paste holding fences Gesta does not know: the refused lines, as an entry opened with them says. |
-| `src/ui/formatBarActs.ts › warn((act === "code" && codeBlockRefusal(view.state)) \|\| "nothing to change there")` | The code button over a picture: “can’t make a code block from that”. |
-| `src/ui/bookmarkActs.ts › warn(r.warn)` | A bookmark key typed: “finish the key”, “no bookmark …”. |
-| `src/ui/bookmarkActs.ts › warn(alreadyOn(key, journal))` | A bookmark's link pressed on the entry it goes to: “already on …”. |
-| `src/ui/lifecycle.ts › ui.warn(why)` | A delete, move, rename or re-file refused before it starts: “delete the books first”, an address that cannot be used. |
-| `src/ui/lifecycle.ts › ui.warn(typed.refuse)` | A name typed for a new entry that cannot be one: “that link’s title can’t be a name — type one instead”, “that name leaves nothing a filename can keep”, “an address can’t have an empty part”. |
-| `src/ui/lifecycle.ts › ui.warn(spec.refuse)` | A sub-entry's name: “that name leaves nothing a filename can keep”. |
-| `src/ui/lineBarActs.ts › warn(a.said.text)` | ⌃⌘G with a number mistyped or not in the entry: “the lines here are 1–2”, “x is not a line number”, “type a stanza number”. |
-| `src/ui/lineBarActs.ts › warn(bar(null, conventions()).inSource)` | ⌃⌘G in the markdown view: “Switch to the rendered view to go to a line or a page”, the noun the entry's numbering asks for. |
-| `src/ui/lineBarActs.ts › warn(b.none)` | ⌃⌘G on an entry with nothing numbered: “no line or page numbers here”, or paragraph or verse numbers. |
-
 ## Info
 
-Blue. A count, a progress line or a note, telling of no outcome. It fades
-on its own; a progress line holds its place until the act ends.
+Blue. A count, a progress line or a note, telling of no outcome. It fades on its own; a progress line holds its place until the act ends.
 
 | Words | When |
 |---|---|
 | `1 word` | The Words button or ⌃⌘W over one word. |
-| `… words` | The Words button or ⌃⌘W: the selection's count, or the entry's with nothing selected. |
+| `… words` | The Words button or ⌃⌘W: the selection’s count, or the entry’s with nothing selected. |
+| `…` | ⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the line bar’s phrases. |
 | `… entries stored` | The journal read at launch. |
 | `Source view, to replace` | ⌃⌘E in the rendered view, switching to the markdown view. |
 | `indexing…` | Search before its index is built. |
 | `exporting…` | An export running. |
 | `importing…` | An import running. |
 | `backing up…` | A backup starting. |
-| `backing up… … / …` | A backup running: files written of all. |
+| `backing up… / …` | A backup running: files written of all. |
 | `keeping the backup…` | The reader keeping a backup picked. |
 | `opening the backup…` | The reader opening the backup kept. |
 
-### Words chosen elsewhere
-
-| Raised at | Words and when |
-|---|---|
-| `src/ui/lineBarActs.ts › info(a.said.text)` | ⌃⌘G landing on a number found in more than one block: “line 3 — block 2 of 4”; or on a line the edition omits, the bar or a link: “line 12 is omitted in this edition”. |
-
 ## Success
 
-Green. Something done worked. It fades on its own; a click on it copies
-its words, but for a routine one such as “saved”.
+Green. Something done worked. It fades on its own; a click on it copies its words, but for a routine one such as “saved”.
 
 | Words | When |
 |---|---|
-| `saved` | An entry's save landed. |
+| `saved` | An entry’s save landed. |
 | `copied` | A click on an alert copied its words. |
+| `Reference copied to clipboard` | ⌃⌘R copied a reference. |
+| `Link copied` | A link to the entry copied. |
+| `… to … — … entries, … there already deleted, … pictures not found, links updated in … others; links not updated in … entries: …; old copies kept: …` | A move or rename that landed whole. |
+| `filed under … — … entries moved, … pictures not found, links updated in … others; links not updated in … entries: …; old copies kept: …` | A re-file that landed whole. |
+| `removed … unused pictures` | The backups panel’s sweep removed every unused picture. |
+| `removed … of … unused pictures — the rest would not go` | The backups panel’s sweep removed some unused pictures; the rest would not go. |
 | `shortcuts saved` | Save in the shortcuts panel. |
 | `backed up` | A backup ran with nothing left over. |
-| `exported … entries` | An export wrote every entry and picture. |
 | `nothing to export` | An export with no entries. |
+| `exported … entries` | An export wrote every entry and picture. |
 | `imported … entries` | An import with nothing failed. |
-| `indexed … entries` | Search's index built. |
+| `indexed … entries` | Search’s index built. |
 | `… entries` | The reader: the backup opened, its entries counted. |
 
-### Words chosen elsewhere
+## Phrases
 
-| Raised at | Words and when |
+Words that stand inside the alerts above, never alone: the line bar’s, a refused fence’s reason, a directive’s trouble, a filename clash.
+
+| Words | Name |
 |---|---|
-| `src/session.ts › succeed(okText)` | ⌃⌘R or a link copied: “Reference copied to clipboard”, “Link copied”. |
-| `src/ui/backupsPanelActs.ts › succeed(sweptLine(removed, n))` | The backups panel's sweep: “removed 3 unused pictures”, or “removed 2 of 3 unused pictures — the rest would not go”. |
-| `src/ui/lifecycle.ts › ui.succeed(text)` | A move, rename or re-file that landed whole: “moved to …”, “renamed to …”, “filed under …”. |
+| `no …` | `noUnit` |
+| `no …, the last … is …` | `noUnitLast` |
+| `no … — the longest … ends at …` | `noUnitLongest` |
+| `no … here` | `noUnitHere` |
+| `no numbered …s here` | `noNumbered` |
+| `the only … here is …` | `onlyUnit` |
+| `the …s here are …–…` | `unitsRange` |
+| `no numbered paragraphs here` | `noNumberedParagraphs` |
+| `no paragraph … — the paragraphs here are …–…` | `noParagraph` |
+| `… is omitted in this edition` | `omitted` |
+| ` — … of …` | `ofBlocks` |
+| `…` | `unitAt` |
+| `no page numbers here` | `noPageNumbers` |
+| `no page … here` | `noPage` |
+| `type a … number` | `typeNumber` |
+| `use roman or arabic characters, not both` | `romanOrArabic` |
+| `… is not a … number` | `notANumber` |
+| `no stanzas here` | `noStanzas` |
+| `no stanza … here — the last is …` | `noStanza` |
+| `no line … in stanza … — it has … lines` | `noLineInStanza` |
+| `type a stanza for line …` | `typeStanzaFor` |
+| `type a stanza number` | `typeStanza` |
+| `type a stanza, or stanza.line` | `typeStanzaOrLine` |
+| `… is not a stanza or stanza.line, like 2.1` | `notStanzaOrLine` |
+| `no … numbers here` | `nothingNumbered` |
+| `Switch to the rendered view to go to …` | `switchToGo` |
+| `… takes no numbered: the word is verse’s and prose’s` | `noNumberedTaken` |
+| `numbered goes after the number, like ::: … numbered` | `numberedAfter` |
+| `… takes one number; a second, for the right column, is verse’s alone` | `oneNumberOnly` |
+| `… is not a starting line for the right column` | `notRightStart` |
+| `verse takes two numbers at most: its first line, and its right column’s` | `twoNumbersAtMost` |
+| `… is not a starting …` | `notStarting` |
+| `stanza needs its number, like ::: stanza 2` | `stanzaNeedsNumber` |
+| `… takes nothing after it` | `takesNothing` |
+| `… is not a count` | `notACount` |
+| `card blocks must include a colour, like card-light-green` | `cardNeedsColour` |
+| `not a block Gesta knows` | `unknownBlock` |
+| `“…” is not a reference directive` | `notADirective` |
+| `“…” is read on an author’s page` | `readOnAuthorPage` |
+| `“…” is read on a work’s page` | `readOnWorkPage` |
+| `“…” is read on any page` | `readOnAnyPage` |
+| `two entries would write one file — … is claimed by …. Rename one of them.` | `filenameClash` |

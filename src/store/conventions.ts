@@ -2,6 +2,7 @@ import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { entryKey, titlesRoots } from "./keys.ts";
+import { PHRASES } from "../model/alertText.ts";
 
 export interface Conventions {
   byInnermostTitleAlone: boolean;
@@ -33,14 +34,15 @@ export function referenceDirectives(md: string): string[] {
 
 /* where a directive is read from, given the entry's path, and the one
    depth of page that says it */
-interface Level { pages(segs: string[]): string[]; at(depth: number): boolean; where: string }
-const root: Level = { pages: (segs) => segs.slice(0, 1), at: (d) => d === 1, where: "an author’s page" };
-const work: Level = { pages: (segs) => (segs.length >= 3 ? [segs[0] + "/" + segs[1]] : []), at: (d) => d === 2, where: "a work’s page" };
+interface Level { pages(segs: string[]): string[]; at(depth: number): boolean; where: "author" | "work" | "any" }
+const READ_ON = { author: "readOnAuthorPage", work: "readOnWorkPage", any: "readOnAnyPage" } as const;
+const root: Level = { pages: (segs) => segs.slice(0, 1), at: (d) => d === 1, where: "author" };
+const work: Level = { pages: (segs) => (segs.length >= 3 ? [segs[0] + "/" + segs[1]] : []), at: (d) => d === 2, where: "work" };
 /* the entry's own page or any above it: a root of works with no author says
    it once for all of them, an author's work for its parts (pin:
    conventions.test › by half-line holds from the page that says it
    down) */
-const ownOrAbove: Level = { pages: (segs) => segs.map((_, i) => segs.slice(0, i + 1).join("/")), at: () => true, where: "any page" };
+const ownOrAbove: Level = { pages: (segs) => segs.map((_, i) => segs.slice(0, i + 1).join("/")), at: () => true, where: "any" };
 /* the whole line: a name matched inside a longer line was read, and the
    rest of the line ignored without a word (pin: conventions.test › a
    directive is the whole of its line) */
@@ -71,8 +73,8 @@ export function directiveTrouble(date: string, tag: string | null, lines: string
   const out: string[] = [];
   for (const l of lines.map((x) => x.trim()).filter(Boolean)) {
     const d = DIRECTIVES.find((x) => x.said(l));
-    if (!d) out.push("“" + l + "” is not a reference directive");
-    else if (!d.level.at(segs.length)) out.push("“" + l + "” is read on " + d.level.where);
+    if (!d) out.push(PHRASES.notADirective({ line: l }));
+    else if (!d.level.at(segs.length)) out.push(PHRASES[READ_ON[d.level.where]]({ line: l }));
   }
   return out;
 }

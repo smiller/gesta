@@ -1,5 +1,6 @@
 import type { EntryAlerts } from "../store/entries.ts";
 import { errText } from "../store/files.ts";
+import { asSaid, alertWords, alertKind, alertMs, type AlertId, type Kind as AlertKind, type Raise, type RaiseOpts, type Said } from "../model/alertText.ts";
 
 export interface Line { text: string; shown: boolean }
 export interface AlertState {
@@ -29,21 +30,19 @@ export interface ErrorFrom { caught?: unknown; copy?: string }
    and the line can never be orphaned */
 export interface Progress {
   step(done: number, total: number): void;
-  ok(msg: string, ms?: number): void;
-  fail(msg: string, detail?: string): void;
+  ok(s: Said): void;
+  fail(s: Said, copy?: string): void;
   cancel(): void;
 }
 export interface Alerts {
   readonly state: AlertState;
   /* an error stands */
   readonly errorShown: boolean;
-  info(text: string, ms?: number): void;
-  succeed(text: string, ms?: number): void;
-  warn(text: string): void;
   clearWarning(): void;
-  error(text: string, from?: ErrorFrom): number;
+  /* an alert by its id in the table, shown where its kind goes */
+  raise: Raise;
   resolveError(gen: number): void;
-  progress(text: string): Progress;
+  progress(id: AlertId): Progress;
   click(kind: Kind): void;
   /* the ×: closes the alert without copying */
   dismiss(kind: Kind): void;
@@ -60,13 +59,12 @@ export function liveAlerts(state: AlertState): Live {
   if (state[state.latest].shown) live.latest = state.latest;
   return live;
 }
-export const IDLE_TEXT = "saved";
+export const IDLE_TEXT = alertWords({ id: "saved" });
 export const INFO_MS = 3000;
-export const COPIED_MS = 1200;
 /* a warning is no error: it fades, given longer to read than an info */
 export const WARNING_MS = 10000;
-const COPY_FAILED = "copy failed — see console";
-const ROUTINE = new Set([IDLE_TEXT, "copied", COPY_FAILED]);
+const COPY_FAILED = alertWords({ id: "copyFailed" });
+const ROUTINE = new Set([IDLE_TEXT, alertWords({ id: "copied" })]);
 
 export type Told = (kind: Kept, text: string) => void;
 export function alertLedger(copyText: (text: string) => Promise<void>, told: Told = () => {}): Alerts {
@@ -169,7 +167,8 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   const owed: Record<string, true> = Object.create(null);
   let saveErrorGen = 0;
   let saveErrorLatch: [string, unknown, string | undefined] | null = null;
-  function saveError(text: string, err: unknown, ekey: string, copy?: string): void {
+  function saveError(id: AlertId, err: unknown, ekey: string, copy?: string): void {
+    const text = alertWords({ id } as Said);
     owed[ekey] = true;
     saveErrorLatch = [text, err, copy];
     saveErrorGen = error(text, { caught: err, copy });
@@ -187,7 +186,8 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   /* the line for a user-triggered op that runs longer than a moment: shown
      AT ONCE, in the click, and held until the handle's own terminal call */
-  function progress(text: string): Progress {
+  function progress(id: AlertId): Progress {
+    const text = alertWords({ id } as Said);
     const mine = ++busyGen;
     state.busy = true;
     show("info", text);
@@ -195,23 +195,23 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     const end = (): boolean => { if (!live()) return false; state.busy = false; busyGen++; return true; };
     return {
       step(done, total) { if (live()) state.info.text = text + " " + done + " / " + total; },
-      ok(msg, ms) { if (end()) { hide("info"); succeed(msg, ms); } },
-      fail(msg, detail) { if (end()) { hide("info"); error(msg, { copy: detail }); } },
+      ok(s) { if (end()) { hide("info"); succeed(alertWords(s), alertMs(s.id)); } },
+      fail(s, copy) { if (end()) { hide("info"); error(alertWords(s), { copy }); } },
       cancel() { if (end()) hide("info"); },
     };
   }
   function copyDetail(detail: string): void {
     const mine = ++fadingGen.success;
     copyText(detail).then(
-      () => { if (mine === fadingGen.success) succeed("copied", COPIED_MS); },
-      (err: unknown) => { console.error("copy failed", err, detail); error(COPY_FAILED); },
+      () => { if (mine === fadingGen.success) raise("copied"); },
+      (err: unknown) => { console.error("copy failed", err, detail); raise("copyFailed"); },
     );
   }
   /* an info or a success on screen copies its words, so what it said can be
      pasted elsewhere; a routine one only goes, so a click to clear "saved"
      never takes the clipboard; nothing while an op runs, whose line is the
      only signal (pin: alertLedger.test › a click on an info copies its words)
-     (pin: alertLedger.test › a routine info) (pin: alertLedger.test › a click
+     (pin: alertLedger.test › a routine success) (pin: alertLedger.test › a click
      on the line while busy) */
   function clickFading(place: Fading): void {
     if (place === "info" && state.busy) return;
@@ -239,6 +239,16 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     clearWarning();
     copyDetail(words);
   }
+  const BY_KIND: Record<AlertKind, (words: string, ms: number | undefined, from: RaiseOpts) => number> = {
+    error: (words, _ms, from) => error(words, from),
+    warning: (words) => { warn(words); return 0; },
+    info: (words, ms) => { info(words, ms); return 0; },
+    success: (words, ms) => { succeed(words, ms); return 0; },
+  };
+  const raise = ((a: AlertId | Said, b?: unknown, c?: unknown): number => {
+    const [s, from] = asSaid(a, b, c);
+    return BY_KIND[alertKind(s.id)](alertWords(s), alertMs(s.id), from);
+  }) as Raise;
   const CLICKS: Record<Kind, () => void> = { info: () => clickFading("info"), success: () => clickFading("success"), error: clickError, warning: clickWarning };
   const CLOSES: Record<Kind, () => void> = {
     info: () => { if (!state.busy) hide("info"); },
@@ -249,14 +259,14 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   return {
     get state() { return state; },
     get errorShown() { return state.error.shown; },
-    info, succeed, warn, clearWarning, error, resolveError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
+    clearWarning, raise, resolveError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
     click: (kind) => CLICKS[kind](),
     dismiss: (kind) => CLOSES[kind](),
     entry: {
       landed: resolveSaveError,
       removed: resolveSaveError,
       stuck: saveError,
-      stuckIdle: (text, err) => { error(text, { caught: err }); },
+      stuckIdle: (id, err) => { error(alertWords({ id } as Said), { caught: err }); },
     },
   };
 }

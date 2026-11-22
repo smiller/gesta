@@ -2,7 +2,8 @@ import { test, expect } from "vitest";
 import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { tabInQuote, shiftTabInQuote, enterInQuote, quoteRefusal, QUOTE_FLOOR } from "./quoteKeys.ts";
+import { tabInQuote, shiftTabInQuote, enterInQuote, quoteRefusal } from "./quoteKeys.ts";
+import { said } from "../model/alertText.ts";
 
 function at(md: string, needle: string, to?: string): EditorState {
   const doc = parseMarkdown(md);
@@ -30,13 +31,13 @@ test("Tab pushes the run one level deeper; Shift-Tab lifts it back; the other ru
 test("Shift-Tab at the outermost level refuses and says so; Tab outside a quote is not this command's", () => {
   const s = at("> only", "only");
   expect(refuses(shiftTabInQuote, s)).toBe(true);
-  expect(quoteRefusal(s, true)).toBe(QUOTE_FLOOR);
+  expect(quoteRefusal(s, true)).toEqual(said("outerLevel"));
   expect(refuses(tabInQuote, at("plain", "plain"))).toBe(true);
 });
 test("a selection reaching outside the quote has no single container and says so", () => {
   const s = at("> quoted\n\nafter", "quoted", "after");
   expect(refuses(tabInQuote, s)).toBe(true);
-  expect(quoteRefusal(s, false)).toBe("Tab indents one list, quote, or code block at a time");
+  expect(quoteRefusal(s, false)).toEqual(said("tabOneBlock"));
 });
 test("a selection across two runs of one quote moves both, the blank line between them kept", () => {
   const s = run(tabInQuote, at("> a\n>\n> b\n>\n> c", "a", "b"));
@@ -84,5 +85,5 @@ test("Shift-Tab on the blank line between two runs of a nested quote lifts nothi
   const s0 = at("> intro\n>\n>> a\n>>\n>> b", "a");
   const s = s0.apply(s0.tr.setSelection(TextSelection.create(s0.doc, s0.selection.from + 1)));
   expect(refuses(shiftTabInQuote, s)).toBe(true);
-  expect(quoteRefusal(s, true)).toBe("⌃⌘M toggles markdown");
+  expect(quoteRefusal(s, true)).toEqual(said("proseTab"));
 });

@@ -2,13 +2,14 @@
 import { NS, todayKey } from "./keys.ts";
 import { readRaw, writeRaw } from "./local.ts";
 import { imgHash, type EntryFile } from "./names.ts";
-import { filePath, errText, failMsg, fsaFatal, type ExportFile } from "./files.ts";
+import { filePath, errText, failWhy, fsaFatal, type ExportFile } from "./files.ts";
 import { backupPlan, withheld, READER_ZIP, type Manifest, type Archived, type BackupPlan } from "./plans.ts";
 import { writeBackup, writeBundle, type Failure } from "./io.ts";
 import { exportEntries, archiveRoots } from "./exportEntries.ts";
 import type { EntryLayer } from "./entries.ts";
 import type { ImageStore, BackupStore } from "./store.ts";
 import type { Dir } from "./fsa.ts";
+import { type Raise } from "../model/alertText.ts";
 
 export const BACKUP_SIG = NS + "backup.sig";
 export const BACKUP_DATED = NS + "backup.dated";
@@ -32,15 +33,10 @@ export interface BackupOptions {
   images: ImageStore;
   store: BackupStore;
   picker: (() => Promise<Dir>) | null;
-  info: (text: string) => void;
-  /* something done that worked */
-  succeed: (text: string) => void;
-  /* why an act did nothing */
-  warn: (text: string) => void;
+  raise: Raise;
   /* the ONE writer of the trouble state: "" is healthy, else the reason the
      last run did not complete, click-to-resume */
   onTrouble: (msg: string) => void;
-  error: (text: string, from: { caught: unknown; copy?: string }) => void;
 }
 export interface Backup {
   readonly configured: boolean;
@@ -71,7 +67,7 @@ function logFailures(failures: Failure[]): void {
 }
 const isCollision = (err: unknown): boolean => !!err && !!(err as { collision?: boolean }).collision;
 export function backupRunner(opts: BackupOptions): Backup {
-  const { layer, images, store, picker, info, succeed, warn, error } = opts;
+  const { layer, images, store, picker, raise } = opts;
   /* the signature THIS TAB last committed, never stored: equal to the
      shared one means no other tab has written the folder since, the only
      ground on which this run may delete from it */
@@ -112,7 +108,7 @@ export function backupRunner(opts: BackupOptions): Backup {
     const datedWas = readRaw(BACKUP_DATED) ?? null;
     const plan = backupPlan(today, sig, { dated: datedWas, sig: lastSig, ours: committedSig !== null && lastSig === committedSig });
     if (!plan.writeMirror && !plan.dated) { setTrouble(""); return; }
-    info("backing up…");
+    raise("backingUp");
     /* the census's walk in the SAME tick as the export's snapshot: the
        export yields for seconds, and a walk taken after it reads the
        keys seconds of live typing later than the files it describes */
@@ -123,7 +119,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   function writeRun(c: RunCtx): Promise<void> {
     const { spare, picFaults } = pictureTrouble(c.files);
     return writeBackup({ dir: c.h, files: c.files, plan: c.plan, manifest: c.manifest, archived: c.archived, roots: c.roots,
-      unread: c.plan.reconcile ? spare : null, onProgress: (done, total) => info("backing up… " + done + " / " + total) })
+      unread: c.plan.reconcile ? spare : null, onProgress: (done, total) => raise("backingUpCount", { done, total }) })
       .then((written) => withBundle(c, written))
       .then((written) => settle(c, written.concat(picFaults)));
   }
@@ -150,15 +146,15 @@ export function backupRunner(opts: BackupOptions): Backup {
     if (incomplete) { setTrouble("backup incomplete — click to retry"); return; }
     setTrouble("");
     if (failures.length) reportLeftovers(failures);
-    else succeed("backed up");
+    else raise("backedUp");
   }
   /* a delete-only failure is not backup trouble: a resume click
      could do nothing against a file something else holds open;
      nor is the bundle's, retried when the mirror next moves */
   function reportLeftovers(failures: Failure[]): void {
     const bundle = failures.find((x) => x.name === READER_ZIP), swept = failures.filter((x) => x !== bundle);
-    if (swept.length) error("backup couldn’t remove " + swept.length + " old file(s)", { caught: swept[0].error, copy: swept.map((x) => x.name).join(", ") });
-    if (bundle) error("backed up, but gesta.zip for the reader couldn’t be written", { caught: bundle.error, copy: errText(bundle.error) || READER_ZIP });
+    if (swept.length) raise("backupLeftovers", { n: swept.length }, { caught: swept[0].error, copy: swept.map((x) => x.name).join(", ") });
+    if (bundle) raise("bundleNotWritten", { caught: bundle.error, copy: errText(bundle.error) || READER_ZIP });
   }
   /* the commits, ONE AFTER THE OTHER: both ride in the same record.
      Another tab's dated run voids ours: the shared scalar moved
@@ -184,7 +180,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   function runFailed(err: unknown): void {
     if (isCollision(err)) {
       setTrouble("backup blocked — two entries share a filename");
-      error("backup blocked — " + (err as Error).message, { caught: err, copy: (err as Error).message });
+      raise("backupBlocked", { why: (err as Error).message }, { caught: err, copy: (err as Error).message });
       return;
     }
     console.error("backup failed", err);
@@ -208,7 +204,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   /* the one-time gesture: pick a folder, PERSIST its handle, back up at
      once. The picker opens synchronously in the click. */
   function setupBackupFolder(): Promise<void> {
-    if (!picker) { warn("automatic backups need a Chromium browser"); return Promise.resolve(); }
+    if (!picker) { raise("backupsNeedChromium"); return Promise.resolve(); }
     return picker().then((h) => {
       handle = h;
       return store.set(h as unknown as FileSystemDirectoryHandle).then(() => {
@@ -221,7 +217,7 @@ export function backupRunner(opts: BackupOptions): Backup {
       });
     }).catch((err: unknown) => {
       if (err && (err as Error).name === "AbortError") return;
-      error(failMsg("couldn’t set up backups", err), { caught: err });
+      raise("couldntSetUpBackups", { why: failWhy(err) }, { caught: err });
     });
   }
   /* the paused affordance's click: requestPermission re-grants the CACHED

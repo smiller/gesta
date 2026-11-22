@@ -13,9 +13,10 @@
    nothing) */
 import { curlChar } from "./typing.ts";
 import { FENCE_LINE, HEADING_LINE } from "../model/grammar.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 export interface Edit { value: string; start: number; end: number }
-export type TabResult = Edit | { refuse: string } | null;
+export type TabResult = Edit | { refuse: Said } | null;
 function caretTab(value: string, start: number, shift: boolean): TabResult {
   if (!shift) return { value: value.slice(0, start) + "  " + value.slice(start), start: start + 2, end: start + 2 };
   const run = / {1,2}$/.exec(value.slice(0, start));
@@ -38,7 +39,7 @@ export function sourceTab(value: string, start: number, end: number, shift: bool
   const [open, close] = lineSpan(value, start, end);
   const stepped = value.slice(open, close).split("\n").map((line) => stepLine(line, shift));
   const moved = stepped.reduce((n, [, d]) => n + d, 0);
-  if (!moved) return { refuse: shift ? "no spaces to remove" : "nothing to indent — those lines are empty" };
+  if (!moved) return { refuse: said(shift ? "noSpacesToRemove" : "nothingToIndent") };
   return { value: value.slice(0, open) + stepped.map(([line]) => line).join("\n") + value.slice(close), start: open, end: close + moved };
 }
 /* WHAT A CHARACTER JUST TYPED IN THE SOURCE BECOMES: a -- between spaces

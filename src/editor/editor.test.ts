@@ -12,6 +12,7 @@ import { serializeMarkdown } from "../model/serialize.ts";
 import { editorState, lockKey, landed, textOnBlankRow } from "./editor.ts";
 import { jumpTo } from "./highlight.ts";
 import { codeTab } from "./codeKeys.ts";
+import { alertWords } from "../model/alertText.ts";
 const keymapTab = (s: EditorState, dispatch: (tr: Transaction) => void): boolean => codeTab(false)(s, dispatch);
 
 function at(md: string, needle: string): EditorState {
@@ -93,7 +94,7 @@ function keyed(s: EditorState, key: string, o: { shift?: boolean; mod?: boolean;
 }
 /* the caret before `a`, or a selection from before `a` to after `b` */
 function sel(md: string, said: string[], a: string, b?: string): EditorState {
-  const s = editorState(parseMarkdown(md), 5, (why) => said.push(why));
+  const s = editorState(parseMarkdown(md), 5, (s) => said.push(alertWords(s)));
   const find = (needle: string): number => { let pos = -1; s.doc.descendants((n, p) => { if (pos < 0 && n.text?.includes(needle)) pos = p + n.text!.indexOf(needle); return pos < 0; }); if (pos < 0) throw new Error("needle not found: " + needle); return pos; };
   const from = find(a);
   return s.apply(s.tr.setSelection(TextSelection.create(s.doc, from, b ? find(b) + b.length : from)));
@@ -127,7 +128,7 @@ test("Tab in a code block inserts two spaces; over lines, every line touched shi
 
 test("Tab over a code block's empty lines says so; a selection spilling into prose is refused as prose", () => {
   const said: string[] = [];
-  const s = editorState(parseMarkdown("```\na\n\n\nb\n```"), 5, (why) => said.push(why));
+  const s = editorState(parseMarkdown("```\na\n\n\nb\n```"), 5, (s) => said.push(alertWords(s)));
   const at = (s.doc.firstChild!.textContent.indexOf("\n") + 2);
   const empty = keyed(s.apply(s.tr.setSelection(TextSelection.create(s.doc, at, at + 1))), "Tab");
   expect(empty.taken).toBe(true);

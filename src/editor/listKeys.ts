@@ -16,6 +16,7 @@ import { splitListItem, sinkListItem, liftListItem } from "prosemirror-schema-li
 import type { Plugin } from "prosemirror-state";
 import { schema } from "../model/schema.ts";
 import { itemNumbers } from "../model/serialize.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 const item = schema.nodes.list_item;
 function inListItem(state: EditorState): boolean {
@@ -64,17 +65,17 @@ export const enterInList: Command = (state, dispatch, view) =>
 export const tabInList: Command = (state, dispatch, view) => inListItem(state) && sinkListItem(item)(state, dispatch, view);
 export const shiftTabInList: Command = (state, dispatch, view) =>
   inListItem(state) && nested(state) && liftListItem(item)(state, dispatch, view);
-export function listRefusal(state: EditorState, shift: boolean): string {
-  if (shift) return "at the outer level: switch to markdown (⌃⌘M) to remove";
-  return nested(state) ? "can’t indent an item more than one deeper than its parent" : "can’t indent the first item in a list";
+export function listRefusal(state: EditorState, shift: boolean): Said {
+  if (shift) return said("outerLevel");
+  return said(nested(state) ? "listTooDeep" : "listFirstItem");
 }
 /* a Tab in a list is CONSUMED whether or not it moved: the press must not
    leave the editor for the browser's focus walk */
-export function listKeymap(warn?: (why: string) => void): Plugin {
+export function listKeymap(raise?: (s: Said) => void): Plugin {
   const refusing = (cmd: Command, shift: boolean): Command => (state, dispatch, view) => {
     if (!inListItem(state)) return false;
     if (cmd(state, dispatch, view)) return true;
-    warn?.(listRefusal(state, shift));
+    raise?.(listRefusal(state, shift));
     return true;
   };
   return keymap({ Enter: enterInList, Tab: refusing(tabInList, false), "Shift-Tab": refusing(shiftTabInList, true) });

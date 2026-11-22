@@ -11,6 +11,7 @@ import { destination, serializeMarkdown } from "../model/serialize.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { Transform } from "prosemirror-transform";
+import { said, type Said } from "../model/alertText.ts";
 
 /* `moves` every key that changes its name, the root included; `twins` a
    sub-entry the place already holds by its title, which is deleted and whose
@@ -22,12 +23,12 @@ export interface MovePlan { moves: Record<string, string>; twins: Record<string,
    filed under two dates); a twin with sub-entries of its own refuses, having
    nowhere to put them (pin: move.test › a twin with sub-entries of its own refuses) */
 interface MoveCtx { cache: Record<string, string>; keys: string[]; from: string; to: string }
-type Refusal = { refuse: string };
-function placeRefusal(c: MoveCtx): string | null {
-  if (under(c.to, c.from)) return "an entry can’t move under itself";
+type Refusal = { refuse: Said };
+function placeRefusal(c: MoveCtx): Said | null {
+  if (under(c.to, c.from)) return said("moveUnderItself");
   const [ns, tag] = splitKey(c.to);
   const parent = tagParts(tag || "").parent;
-  if (parent !== null && !registered(c.keys, ns, parent)) return "nothing at " + entryKey(ns, parent) + " to move it under";
+  if (parent !== null && !registered(c.keys, ns, parent)) return said("nothingToMoveUnder", { at: entryKey(ns, parent) });
   return null;
 }
 function titlesThere(c: MoveCtx): Record<string, string> {
@@ -53,7 +54,7 @@ function findTwins(c: MoveCtx): { twins: Record<string, string> } | Refusal {
   for (const leaf of childrenOf(c.keys, c.from)) {
     const twin = twinOf(c, leaf, there), k = entryKey(c.from, leaf);
     if (!twin) continue;
-    if (hasSubEntries(c.keys, k)) return { refuse: "“" + (firstHeading(c.cache[k] || "") || leaf) + "” is there already and has sub-entries of its own" };
+    if (hasSubEntries(c.keys, k)) return { refuse: said("thereAlreadyWithSubs", { name: firstHeading(c.cache[k] || "") || leaf }) };
     twins[k] = twin;
   }
   return { twins };
@@ -62,7 +63,7 @@ function movesOf(c: MoveCtx, twins: Record<string, string>): { moves: Record<str
   const moves: Record<string, string> = Object.create(null);
   for (const k of c.keys.filter((x) => under(x, c.from) && !(x in twins))) {
     const dest = c.to + k.slice(c.from.length);
-    if (k !== c.from && dest in c.cache) return { refuse: dest + " is there already" };
+    if (k !== c.from && dest in c.cache) return { refuse: said("thereAlready", { at: dest }) };
     moves[k] = dest;
   }
   return { moves };

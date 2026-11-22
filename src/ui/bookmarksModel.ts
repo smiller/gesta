@@ -17,6 +17,7 @@ import { SCOPE_EVERYTHING } from "../store/search.ts";
 import { resultLabel } from "./searchModel.ts";
 import { trimLabel, LABEL_CAP, ECHO_CAP } from "./mastheadModel.ts";
 import { type Bookmark, bookmarkParts, ALIAS_RE, aliasedBookmarks, numberedBookmarks, aliasHolder, bookmarkIndex, bookmarksFull } from "../store/bookmarks.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 export function bookmarkLabel(key: string, journal: Journal): string {
   const p = bookmarkParts(key);
@@ -40,17 +41,17 @@ export function bookmarkFoot(list: Bookmark[], here: string, journal: Journal): 
   if (bookmarksFull(list)) return { full: true };
   return { full: false, name: trimLabel(bookmarkLabel(here, journal), LABEL_CAP) };
 }
-export const alreadyOn = (key: string, journal: Journal): string => "already on " + trimLabel(bookmarkLabel(key, journal), ECHO_CAP);
+export const alreadyOn = (key: string, journal: Journal): Said => said("alreadyOn", { label: trimLabel(bookmarkLabel(key, journal), ECHO_CAP) });
 export function aliasCandidates(list: Bookmark[], buf: string): Bookmark[] {
   return aliasedBookmarks(list).filter((b) => b.alias.indexOf(buf) === 0);
 }
-export type Resolved = { buf: string; jump?: Bookmark; warn?: string };
+export type Resolved = { buf: string; jump?: Bookmark; warn?: Said };
 export function resolveAlias(list: Bookmark[], buf: string): Resolved {
   let b = aliasHolder(list, buf);
   const left = aliasCandidates(list, buf);
   if (!b && left.length === 1) b = left[0];
-  if (!b && left.length) return { buf, warn: "finish the key" };
-  return b ? { buf: "", jump: b } : { buf: "", warn: "no bookmark " + buf };
+  if (!b && left.length) return { buf, warn: said("finishKey") };
+  return b ? { buf: "", jump: b } : { buf: "", warn: said("noBookmark", { n: buf }) };
 }
 /* a character typed at the card with `buf` held: null when the press is
    not a key's (the caller's other arms then apply) */

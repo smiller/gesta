@@ -70,3 +70,25 @@ alert by kind, its words and when it is raised.
   session.ts's "Couldn’t copy …".
 - The paste port `refused`, missed by the ports rename, is `warn`, and the
   editor's onPasteRefused, the same function handed in twice, went.
+- U6.2, asked after the catalogue: one table of alert texts, src/model/alertText.ts
+  (each entry its kind, words, when, and time on screen; a hand-written
+  table, no i18n library: none holds a kind and a when). Callers say
+  alerts.raise(id, params?, { caught, copy }), or raise a Said a module
+  chose. The four methods, errorCaught and the acts' named ports gave way
+  to raise.
+- (a), asked: every word an alert shows is in the table. A module making a
+  whole alert returns a Said (the Tab, link, name, move and ⌃⌘R
+  refusals); a module making a piece calls a PHRASES function and keeps
+  returning text (a fence's reason, a directive's trouble, the line bar's
+  words, a filename clash), the alert entry framing the pieces.
+- The types found what the scanner could not: linkRefusal,
+  headingRefusal, aliasRefusal, naming's and subEntries' name refusals,
+  the Shelves refusals, move's refusals and its outcome text all reached
+  alerts through a variable.
+- docs/alerts.md is written by tools/alertsPage.ts from the table, a table
+  per kind and the phrases after; the text scanner went. Steps 1-3 landed
+  as one commit: the table's exports had no users until the callers moved.
+- MEASURED: the Helium verdict matches the approved run with no difference;
+  every word on screen is as it was.
+- Found on the way, not changed: "imported 1 entries" and "1 entries
+  stored" for a count of one.

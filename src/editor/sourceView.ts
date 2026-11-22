@@ -4,11 +4,12 @@ import { clipboardOf, sourcePasted } from "./paste.ts";
 import { sourceTab, sourceTyped } from "./sourceKeys.ts";
 import { wordCount, wordsOf } from "./format.ts";
 import type { Surface, ReplacePort } from "./surface.ts";
+import type { Said } from "../model/alertText.ts";
 
 export interface SourceOptions {
   onChange: () => void;
   onPasteFile: (file: File) => void;
-  warn: (why: string) => void;
+  raise: (s: Said) => void;
 }
 
 const MIRROR = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const;
@@ -63,7 +64,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     const r = sourceTab(ta.value, ta.selectionStart, ta.selectionEnd, e.shiftKey);
     if (r === null) return;
     e.preventDefault();
-    if ("refuse" in r) { if (!e.repeat) opts.warn(r.refuse); return; }
+    if ("refuse" in r) { if (!e.repeat) opts.raise(r.refuse); return; }
     ta.value = r.value;
     ta.setSelectionRange(r.start, r.end);
     ta.dispatchEvent(new Event("input"));

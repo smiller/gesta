@@ -1,6 +1,7 @@
 /* inside a code block only the toggle back out is offered: the block
    commands corrupt code */
 import { type Command, type EditorState, type Transaction, TextSelection } from "prosemirror-state";
+import { said, type Said } from "../model/alertText.ts";
 import type { Node, NodeRange, ResolvedPos } from "prosemirror-model";
 import { toggleMark, setBlockType, wrapIn, lift } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
@@ -27,7 +28,7 @@ export const quote: Command = (state, dispatch) => (inBlock(state, N.blockquote)
 /* a code block holds text alone: a picture or a page marker in the range
    was dropped by the change (pin: format.test › code refuses a paragraph holding a picture or a page marker anywhere in it) */
 const isAtom = (c: Node): boolean => c.isInline && c.isLeaf && !c.isText && c.type !== N.hard_break;
-export function codeBlockRefusal(state: EditorState): string | null {
+export function codeBlockRefusal(state: EditorState): Said | null {
   if (inCode(state)) return null;
   const from = state.selection.from, to = codeEnd(state).pos;
   let atom = false;
@@ -37,7 +38,7 @@ export function codeBlockRefusal(state: EditorState): string | null {
     n.forEach((c) => { if (isAtom(c)) atom = true; });
     return false;
   });
-  return atom ? "can’t make a code block from that" : null;
+  return atom ? said("noCodeBlockHere") : null;
 }
 /* SEVERAL PARAGRAPHS BECOME ONE CODE BLOCK, a line each, and a selection
    ending at the very start of the next paragraph leaves that paragraph be

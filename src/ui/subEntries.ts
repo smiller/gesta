@@ -9,16 +9,17 @@ import { SHELVES } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import { entryName } from "../store/names.ts";
 import { counted } from "./counted.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 export interface SubSpec { tag: string; full: string; listKey: string; href: string }
 /* null when the open entry cannot host (a day's tagged entry — silent, since
    no route in shows) (pin: subEntries.test › a day's tagged entry cannot
    host) */
-export function subEntrySpec(date: string, tag: string | null, typed: string): SubSpec | { refuse: string } | null {
+export function subEntrySpec(date: string, tag: string | null, typed: string): SubSpec | { refuse: Said } | null {
   const ns = nsOf(date);
   if (!ns && tag) return null;
   const name = ns ? entryName(typed) : typed;
-  if (!name) return { refuse: "that name leaves nothing a filename can keep" };
+  if (!name) return { refuse: said("nameEmpty") };
   const full = ns ? tag + "/" + name : name;
   return { tag: name, full, listKey: ns ? entryKey(date, tag) : date, href: entryHash(date, full) };
 }
@@ -93,24 +94,4 @@ export function hostKey(date: string, tag: string): string | null {
   if (!ns) return date;
   const pp = tagParts(tag);
   return pp.sub ? entryKey(date, pp.parent) : null;
-}
-export interface MoveOutcome { moved: number; updated: number; left: string[]; stayed?: string[]; lost?: number; twins?: number }
-const entriesText = (n: number): string => counted(n, " entry", " entries");
-export function refiledText(root: string, o: MoveOutcome): string {
-  return outcome("filed under " + root + " — " + entriesText(o.moved) + " moved" + lostText(o.lost ?? 0), o);
-}
-const lostText = (lost: number): string => lost ? ", " + counted(lost, " picture", " pictures") + " not found" : "";
-export function movedText(to: string, o: MoveOutcome, verb = "moved"): string {
-  const twins = o.twins ? ", " + o.twins + " there already deleted" : "";
-  return outcome(verb + " to " + to + " — " + entriesText(o.moved) + twins + lostText(o.lost ?? 0), o);
-}
-function leftText(left: string[]): string {
-  if (left.length === 1) return "; 1 link not updated: " + left[0];
-  return left.length ? "; links not updated in " + left.length + " entries: " + left.join(", ") : "";
-}
-function outcome(text: string, o: MoveOutcome): string {
-  const stayed = o.stayed ?? [];
-  const updated = o.updated ? ", links updated in " + counted(o.updated, " other", " others") : "";
-  const kept = stayed.length ? "; old " + (stayed.length === 1 ? "copy" : "copies") + " kept: " + stayed.join(", ") : "";
-  return text + updated + leftText(o.left) + kept;
 }

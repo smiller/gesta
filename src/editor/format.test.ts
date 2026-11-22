@@ -3,6 +3,7 @@ import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { bold, heading, quote, codeBlock, codeBlockRefusal, curlQuotes, curlSelection, wordCount, cutMd, replaceWithLink, formatState } from "./format.ts";
+import { said } from "../model/alertText.ts";
 
 function sel(md: string, a: string, b?: string): EditorState {
   const doc = parseMarkdown(md);
@@ -84,9 +85,9 @@ test("code over lines broken by Enter keeps each line, and back again", () => {
 test("code refuses a paragraph holding a picture or a page marker anywhere in it, and says so; the picture stays", () => {
   const s = sel("cap ![](x.png) tion", "cap", "tion");
   expect(codeBlock(s, () => {})).toBe(false);
-  expect(codeBlockRefusal(s)).toBe("can’t make a code block from that");
-  expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toBe("can’t make a code block from that");
-  expect(codeBlockRefusal(sel("cap ![](x.png) tion", "cap"))).toBe("can’t make a code block from that");
+  expect(codeBlockRefusal(s)).toEqual(said("noCodeBlockHere"));
+  expect(codeBlockRefusal(sel("in ⟨8⟩ her degree", "in", "degree"))).toEqual(said("noCodeBlockHere"));
+  expect(codeBlockRefusal(sel("cap ![](x.png) tion", "cap"))).toEqual(said("noCodeBlockHere"));
   expect(codeBlockRefusal(sel("plain words", "plain"))).toBeNull();
   expect(codeBlockRefusal(sel("::: note\ncap ![](x.png) tion\n\nsecond\n:::\n\nafter", "second", "after"))).toBeNull();
 });

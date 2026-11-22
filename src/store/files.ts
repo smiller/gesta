@@ -1,4 +1,5 @@
 import { entryKey } from "./keys.ts";
+import { said, alertWords, type Said } from "../model/alertText.ts";
 import { importTarget, type EntryFile } from "./names.ts";
 
 /* an export file is an entry's markdown (a doc) or a doc's image sidecar,
@@ -38,7 +39,7 @@ export function errText(err: unknown): string {
   return e && e.name ? e.name + ": " + e.message : "";
 }
 /* the ONE shape of a failure's message */
-export function failMsg(op: string, err: unknown): string { return op + " — " + (errText(err) || "see console"); }
+export const failWhy = (err: unknown): string => errText(err) || "see console";
 
 /* the ONE spelling of "counts as an entry on import", so no count can
    drift from another (pin: files.test › oneEach and entryDocs: one file per
@@ -53,7 +54,7 @@ export function fsaFatal(err: unknown): boolean {
   const e = err as { name?: string } | null;
   return !!e && (e.name === "AbortError" || e.name === "NotAllowedError" || e.name === "SecurityError");
 }
-export interface Merged extends Error { merged: string }
+export interface Merged extends Error { merged: string; said: Said }
 /* one file per ENTRY — never per filename, which stopped being an identity
    when entries nested: commonplace/A/Notes.md and commonplace/B/Notes.md are two entries.
    A KEY CLAIMED TWICE IS A REFUSAL with nothing to choose between — one
@@ -72,9 +73,10 @@ export function oneEach<F extends { dir?: string; name: string }>(found: F[]): F
     const id = t ? "e:" + entryKey(t.date, t.tag) : "p:" + path;
     const at = best[id];
     if (at) {
-      const err = new Error("two files here are the same entry (" + filePath(at) +
-        " and " + path + ") — remove one and import again") as Merged;
+      const s = said("twoFilesOneEntry", { first: filePath(at), second: path });
+      const err = new Error(alertWords(s)) as Merged;
       err.merged = path;
+      err.said = s;
       throw err;
     }
     best[id] = e;

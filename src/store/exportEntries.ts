@@ -5,6 +5,7 @@ import type { ExportFile } from "./files.ts";
 import type { ImageStore } from "./store.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
+import { PHRASES } from "../model/alertText.ts";
 
 /* group 1 the address as written, bracketed or bare, a bare one holding one
    level of balanced brackets; a title and brackets in the words allowed */
@@ -64,7 +65,7 @@ export function exportEntries(cache: Record<string, string>, images: ImageStore)
     Promise.resolve()).then(() => all);
 }
 function collisionError(clash: { name: string; keys: string[] }): Collision {
-  const err = new Error("two entries would write one file — " + clash.name + " is claimed by " + clash.keys.join(" and ") + ". Rename one of them.") as Collision;
+  const err = new Error(PHRASES.filenameClash(clash)) as Collision;
   err.collision = true;
   return err;
 }

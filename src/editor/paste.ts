@@ -9,7 +9,8 @@ import { isTerminalCopy, terminalText } from "./terminalCopy.ts";
 import { COPY_MARK } from "./copy.ts";
 import { bareUrl } from "./typing.ts";
 import { namesEntry, internalHash, makeHref } from "../store/nav.ts";
-import { fenceRefusals, refusalsText } from "../model/fenceRefusals.ts";
+import { fenceRefusals } from "../model/fenceRefusals.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 const N = schema.nodes;
 const LINE_BREAK_RE = /\r\n?|[\u2028\u2029]/g;
@@ -66,9 +67,9 @@ function pasteBlocks(raw: string, $context: ResolvedPos): Node[] | null {
 /* a pasted fence the model refuses is named with its reason (pin:
    paste.test › a pasted fence the model refuses is named)
    (pin: editing › a refused fence pasted) */
-function pastedRefusal(blocks: Node[]): string | null {
+function pastedRefusal(blocks: Node[]): Said | null {
   const refused = fenceRefusals(N.doc.create(null, blocks));
-  return refused.length ? refusalsText(refused) : null;
+  return refused.length ? said("fencesPasted", { refused }) : null;
 }
 /* SET DOWN, never fitted: a replace opens a block slice up to fit the
    paragraph it lands in and peels the first cell's text into it (MEASURED:
@@ -231,7 +232,7 @@ export interface Clipboard { plain: string; html: string; types: readonly string
 export function clipboardOf(data: DataTransfer | null): Clipboard {
   return { plain: data?.getData("text/plain") ?? "", html: data?.getData("text/html") ?? "", types: data ? Array.from(data.types) : [], file: pastedImageFile(data) };
 }
-export type Pasted = { tr: Transaction; refused: string | null } | { file: File } | "nothing" | "default";
+export type Pasted = { tr: Transaction; refused: Said | null } | { file: File } | "nothing" | "default";
 /* plain text as one slice: its links made bare, a single node set in whole,
    the transaction tagged a paste */
 function plainPaste(state: EditorState, text: string, href: string): Pasted {
@@ -274,14 +275,14 @@ export function pasted(state: EditorState, clip: Clipboard, href: string): Paste
   return "default";
 }
 type PasteProps = Pick<EditorProps, "handlePaste" | "clipboardTextParser" | "clipboardParser" | "transformPasted">;
-export function pasteProps(on: { file(f: File): void; warn(text: string): void; href(): string }): PasteProps {
+export function pasteProps(on: { file(f: File): void; raise(s: Said): void; href(): string }): PasteProps {
   return {
     handlePaste: (view, event) => {
       const r = pasted(view.state, clipboardOf(event.clipboardData), on.href());
       if (r === "default") return false;
       if (r === "nothing") return true;
       if ("file" in r) on.file(r.file);
-      else { view.dispatch(r.tr); if (r.refused) on.warn(r.refused); }
+      else { view.dispatch(r.tr); if (r.refused) on.raise(r.refused); }
       return true;
     },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),

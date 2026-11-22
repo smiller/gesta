@@ -6,6 +6,7 @@ import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
 import { enterInList, tabInList, shiftTabInList, listRefusal } from "./listKeys.ts";
+import { said } from "../model/alertText.ts";
 
 function at(md: string, needle: string, offset = needle.length, to?: string): EditorState {
   const doc = parseMarkdown(md);
@@ -93,15 +94,15 @@ test("Tab nests the item under the one above; Shift-Tab lifts it back out", () =
 });
 test("Tab on the first item, or one already nested under its neighbour, refuses and says why", () => {
   expect(refuses(tabInList, at("- one\n- two", "one"))).toBe(true);
-  expect(listRefusal(at("- one\n- two", "one"), false)).toBe("can’t indent the first item in a list");
+  expect(listRefusal(at("- one\n- two", "one"), false)).toEqual(said("listFirstItem"));
   const nested = at("- one\n  - two\n- three", "two");
   expect(refuses(tabInList, nested)).toBe(true);
-  expect(listRefusal(nested, false)).toBe("can’t indent an item more than one deeper than its parent");
+  expect(listRefusal(nested, false)).toEqual(said("listTooDeep"));
 });
 test("Shift-Tab at the outermost level does nothing and says so", () => {
   const s = at("- one\n- two", "two");
   expect(refuses(shiftTabInList, s)).toBe(true);
-  expect(listRefusal(s, true)).toBe("at the outer level: switch to markdown (⌃⌘M) to remove");
+  expect(listRefusal(s, true)).toEqual(said("outerLevel"));
 });
 test("several selected items move together, and the ones below an outdented item follow it", () => {
   const s = run(tabInList, at("- one\n- two\n- three\n- four", "two", 0, "three"));

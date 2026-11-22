@@ -1,8 +1,10 @@
 import { test, expect } from "vitest";
 import { parseMarkdown } from "./parse.ts";
-import { fenceRefusals, refusalsText } from "./fenceRefusals.ts";
+import { fenceRefusals } from "./fenceRefusals.ts";
+import { alertWords, said, type FenceRefusal } from "./alertText.ts";
 
 const refused = (md: string) => fenceRefusals(parseMarkdown(md));
+const words = (r: FenceRefusal[]): string => alertWords(said("fencesPasted", { refused: r }));
 test("a fence-shaped line that opens nothing is named with its reason; the words Gesta knows are told what they lack", () => {
   expect(refused("::: versey\nline\n:::")).toEqual([{ line: "::: versey", reason: "not a block Gesta knows" }]);
   expect(refused("::: verse 0\nline\n:::")[0].reason).toBe("0 is not a starting line");
@@ -32,10 +34,10 @@ test("a real fence, a bare closer, a code block's line and a row are none of the
   expect(refused("```\n::: nope\n```")).toEqual([]);
   expect(refused("plain\n\n:::")).toEqual([]);
 });
-test("the error's text: one line with its tail, several one per line with the count", () => {
-  expect(refusalsText(refused("::: versey\nx\n:::"))).toBe("::: versey — not a block Gesta knows, so it stayed a paragraph");
+test("the alert's words: one line with its tail, several one per line with the count", () => {
+  expect(words(refused("::: versey\nx\n:::"))).toBe("::: versey — not a block Gesta knows, so it stayed a paragraph");
   const two = refused("::: versey\nx\n:::\n\n::: card\ny\n:::");
-  expect(refusalsText(two)).toBe("::: versey — not a block Gesta knows\n::: card — card blocks must include a colour, like card-light-green\n2 fences stayed paragraphs");
+  expect(words(two)).toBe("::: versey — not a block Gesta knows\n::: card — card blocks must include a colour, like card-light-green\n2 fences stayed paragraphs");
 });
 
 test("a misplaced or unsupported `numbered` is named as such", () => {

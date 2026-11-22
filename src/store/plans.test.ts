@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { utf8 } from "./names.ts";
-import { isDoc, fileBody, filePath, flatName, errText, failMsg, fsaFatal, type ExportFile } from "./files.ts";
+import { isDoc, fileBody, filePath, flatName, errText, failWhy, fsaFatal, type ExportFile } from "./files.ts";
 import {
   fileSig, fileSize, sidecarOfOurs, reconcilePlan, RECONCILE_FLOOR,
   dedupFiles, backupPlan, rootOf, rootSig, archivePlan, rootManifest, bundleDue, READER_ZIP, withheld,
@@ -11,7 +11,7 @@ const doc = (path: string, text: string): ExportFile => {
   return { dir: path.slice(0, cut + 1), name: path.slice(cut + 1), text };
 };
 
-test("a record is a doc unless it carries bytes; failures share one message shape", () => {
+test("a record is a doc unless it carries bytes; a failure with no text of its own says to see the console", () => {
   const d = doc("commonplace/A.md", "hello");
   expect(isDoc(d)).toBe(true);
   expect(isDoc({ name: "x.webp", bytes: new Uint8Array(1) })).toBe(false);
@@ -20,7 +20,7 @@ test("a record is a doc unless it carries bytes; failures share one message shap
   expect(filePath({ name: "flat.md" })).toBe("flat.md");
   expect(flatName({ dir: "", name: "A.md", flat: "commonplace--A.md" })).toBe("commonplace--A.md");
   expect(errText({ name: "E", message: "m" })).toBe("E: m");
-  expect(failMsg("write", null)).toBe("write — see console");
+  expect(failWhy(null)).toBe("see console");
   expect(fsaFatal({ name: "NotAllowedError" })).toBe(true);
   expect(fsaFatal({ name: "TypeError" })).toBe(false);
 });

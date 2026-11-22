@@ -5,7 +5,8 @@ import { EditorState, TextSelection, type Command } from "prosemirror-state";
 import { baseKeymap, splitBlock } from "prosemirror-commands";
 import { parseMarkdown } from "../model/parse.ts";
 import { serializeMarkdown } from "../model/serialize.ts";
-import { enterOutOfGrid, atCardEdge, GRID_JOIN } from "./gridKeys.ts";
+import { enterOutOfGrid, atCardEdge } from "./gridKeys.ts";
+import { alertWords, said } from "../model/alertText.ts";
 
 /* the caret BEFORE the needle, or after it when `after` */
 function caret(md: string, needle: string, after = false): EditorState {
@@ -53,7 +54,7 @@ test("Backspace at a card's start and Delete at its end inside a grid are the re
   expect(atCardEdge(caret(TWO, "eta"), true)).toBe(false);
   expect(atCardEdge(caret(TWO, "alpha", true), true)).toBe(false);
   expect(atCardEdge(caret("::: card-red\nalpha\n:::", "alpha"), true)).toBe(false);
-  expect(GRID_JOIN).toBe("a grid’s cards are joined in the source view (⌃⌘M)");
+  expect(alertWords(said("gridJoin"))).toBe("a grid’s cards are joined in the source view (⌃⌘M)");
 });
 test("pinned as found: Enter on an empty paragraph MID-card splits the card in two of the same colour, inside the grid", () => {
   const s = caret("::: grid\n::: card-red\nalpha\n\nbeta\n:::\n:::", "alpha", true);

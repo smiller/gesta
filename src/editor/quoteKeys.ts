@@ -16,6 +16,7 @@ import type { Plugin } from "prosemirror-state";
 import { Fragment, NodeRange, type Node, type ResolvedPos } from "prosemirror-model";
 import { liftTarget } from "prosemirror-transform";
 import { schema } from "../model/schema.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 const Q = schema.nodes.blockquote, P = schema.nodes.paragraph, BR = schema.nodes.hard_break;
 /* THE UNIT IS THE RUN: a quote's body is ONE paragraph of lines with
@@ -203,19 +204,18 @@ export const enterInQuote: Command = (state, dispatch) => {
   dispatch?.(state.tr.replaceSelectionWith(BR.create()).scrollIntoView());
   return true;
 };
-export const QUOTE_FLOOR = "at the outer level: switch to markdown (⌃⌘M) to remove";
 const emptyQuote = (n: Node): boolean => n.textContent === "" && n.childCount <= 1;
-export function quoteRefusal(state: EditorState, shift: boolean): string {
-  if (spills(state)) return "Tab indents one list, quote, or code block at a time";
+export function quoteRefusal(state: EditorState, shift: boolean): Said {
+  if (spills(state)) return said("tabOneBlock");
   const $from = state.selection.$from, d = quoteDepth(state);
-  if (d && emptyQuote($from.node(d))) return "⌃⌘M toggles markdown";
-  return shift && d === outermost(state) ? QUOTE_FLOOR : "⌃⌘M toggles markdown";
+  if (d && emptyQuote($from.node(d))) return said("proseTab");
+  return said(shift && d === outermost(state) ? "outerLevel" : "proseTab");
 }
-export function quoteKeymap(warn?: (why: string) => void): Plugin {
+export function quoteKeymap(raise?: (s: Said) => void): Plugin {
   const refusing = (cmd: Command, shift: boolean): Command => (state, dispatch, view) => {
     if (!quoteDepth(state)) return false;
     if (cmd(state, dispatch, view)) return true;
-    warn?.(quoteRefusal(state, shift));
+    raise?.(quoteRefusal(state, shift));
     return true;
   };
   return keymap({ Enter: enterInQuote, Tab: refusing(tabInQuote, false), "Shift-Tab": refusing(shiftTabInQuote, true) });

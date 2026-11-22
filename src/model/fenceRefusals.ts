@@ -9,8 +9,10 @@
 import type { Node } from "prosemirror-model";
 import { schema } from "./schema.ts";
 import { opensFence } from "./grammar.ts";
+import { PHRASES } from "./alertText.ts";
 
-export interface FenceRefusal { line: string; reason: string }
+export type { FenceRefusal } from "./alertText.ts";
+import type { FenceRefusal } from "./alertText.ts";
 /* a line opening in inline code quotes a fence: read as its text, the
    quotation was told as a refused fence (pin: fenceRefusals.test › a line
    that opens in inline code) */
@@ -48,45 +50,33 @@ function specOf(text: string): Spec {
   return { text, kind: raw[1], rest: raw[2], numbers: raw[2].replace(/^numbered\s+|\s+numbered$/g, "") };
 }
 const numberedWord = (s: Spec): string | null =>
-  /\bnumbered\b/.test(s.text) && /^(dual-language|stanza)\b/.test(s.text) ? s.text.split(/\s/)[0] + " takes no numbered: the word is verse’s and prose’s" : null;
+  /\bnumbered\b/.test(s.text) && /^(dual-language|stanza)\b/.test(s.text) ? PHRASES.noNumberedTaken({ word: s.text.split(/\s/)[0] }) : null;
 const numberedFirst = (s: Spec): string | null =>
-  s.kind && s.kind !== "dual-language" && /^numbered\s+[1-9]\d*$/.test(s.rest) ? "numbered goes after the number, like ::: " + s.kind + " " + s.numbers + " numbered" : null;
+  s.kind && s.kind !== "dual-language" && /^numbered\s+[1-9]\d*$/.test(s.rest) ? PHRASES.numberedAfter({ kind: s.kind, numbers: s.numbers }) : null;
 function twoNumbers(s: Spec): string | null {
   const two = s.kind && s.numbers.match(/^(\d+)\s+(\d+)$/);
   if (!two) return null;
-  if (s.kind !== "verse") return s.kind + " takes one number; a second, for the right column, is verse’s alone";
-  return +two[1] > 0 ? two[2] + " is not a starting line for the right column" : two[1] + " is not a starting line";
+  if (s.kind !== "verse") return PHRASES.oneNumberOnly({ kind: s.kind as string });
+  return +two[1] > 0 ? PHRASES.notRightStart({ n: two[2] }) : PHRASES.notStarting({ n: two[1], unit: "line" });
 }
 function startNumber(s: Spec): string | null {
   if (!s.kind) return null;
-  if (s.kind === "verse" && /^\d+\s+\d+\s+\d/.test(s.numbers)) return "verse takes two numbers at most: its first line, and its right column’s";
-  return s.numbers + " is not a starting " + (s.kind === "prose" ? "sentence" : "line");
+  if (s.kind === "verse" && /^\d+\s+\d+\s+\d/.test(s.numbers)) return PHRASES.twoNumbersAtMost();
+  return PHRASES.notStarting({ n: s.numbers, unit: s.kind === "prose" ? "sentence" : "line" });
 }
 const WORDS: [RegExp, (m: RegExpMatchArray) => string][] = [
-  [/^stanza(?:\s+(.+))?$/, (m) => (m[1] ? m[1] + " is not a stanza number" : "stanza needs its number, like ::: stanza 2")],
-  [/^(note|margin-note|reference|card-[\w-]+)\s+\S/, (m) => m[1] + " takes nothing after it"],
-  [/^grid\s+(.+)$/, (m) => m[1] + " is not a count"],
-  [/^card(?:[\s-]|$)/, () => "card blocks must include a colour, like card-light-green"],
+  [/^stanza(?:\s+(.+))?$/, (m) => (m[1] ? PHRASES.notANumber({ typed: m[1], noun: "stanza" }) : PHRASES.stanzaNeedsNumber())],
+  [/^(note|margin-note|reference|card-[\w-]+)\s+\S/, (m) => PHRASES.takesNothing({ word: m[1] })],
+  [/^grid\s+(.+)$/, (m) => PHRASES.notACount({ n: m[1] })],
+  [/^card(?:[\s-]|$)/, () => PHRASES.cardNeedsColour()],
 ];
 function wordTaken(s: Spec): string | null {
-  for (const [re, why] of WORDS) {
-    const m = s.text.match(re);
-    if (m) return why(m);
-  }
-  return null;
+  return WORDS.map(([re, why]) => { const m = s.text.match(re); return m && why(m); }).find(Boolean) ?? null;
 }
 const REASONS = [numberedWord, numberedFirst, twoNumbers, startNumber, wordTaken];
 export function fenceLineReason(l: string): string | null {
   const m = l.match(/^\s*:::\s*(\S.*?)\s*$/);
   if (!m || opensFence(l)) return null;
   const spec = specOf(m[1]);
-  for (const reason of REASONS) {
-    const why = reason(spec);
-    if (why) return why;
-  }
-  return "not a block Gesta knows";
-}
-export function refusalsText(r: FenceRefusal[]): string {
-  const lines = r.map((x) => x.line + " — " + x.reason);
-  return r.length === 1 ? lines[0] + ", so it stayed a paragraph" : lines.join("\n") + "\n" + r.length + " fences stayed paragraphs";
+  return REASONS.map((reason) => reason(spec)).find(Boolean) ?? PHRASES.unknownBlock();
 }

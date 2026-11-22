@@ -8,7 +8,8 @@ import { flattenDocText } from "../model/flatten.ts";
 import { dexieIndexKeeper } from "../store/indexStore.ts";
 import { searchIndex } from "../store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "../store/search.ts";
-import { failMsg, errText } from "../store/files.ts";
+import { failWhy, errText } from "../store/files.ts";
+import { said } from "../model/alertText.ts";
 import { entryKey, NS, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { READER_DB } from "../store/bundle.ts";
@@ -65,7 +66,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     building = false;
     waiting.clear();
     console.error("the search index could not be built", err);
-    indexing?.fail(failMsg("couldn’t build the search index", err), errText(err));
+    indexing?.fail(said("couldntBuildIndex", { why: failWhy(err) }), errText(err));
     indexing = null;
   };
   /* a throw ends this build and says so; the next search starts another */
@@ -75,7 +76,7 @@ export function searchActs(d: SearchDeps): SearchRow {
   };
   const indexBuilt = (total: number): void => {
     building = false;
-    indexing?.ok("indexed " + total + " entries", 1400);
+    indexing?.ok(said("indexed", { n: total }));
     indexing = null;
     keepIndex();
     answer();
@@ -113,7 +114,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     if (index.complete) return false;
     /* not while an op holds the line: its report would be lost
        (pin: alertLedger.test › a newer progress retires the older handle) */
-    if (!indexing && !alerts.state.busy) indexing = alerts.progress("indexing…");
+    if (!indexing && !alerts.state.busy) indexing = alerts.progress("indexing");
     buildIndex(renderSearch);
     return true;
   };

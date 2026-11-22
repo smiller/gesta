@@ -1,4 +1,5 @@
 import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
+import type { AlertId } from "../model/alertText.ts";
 
 export interface EntryAlerts {
   /* a durable landing under ekey: resolve any error owed under it */
@@ -10,11 +11,11 @@ export interface EntryAlerts {
   removed(ekey: string): void;
   /* a write that did not land, keyed so a later landing releases it;
      `rescue` is the refused text, offered for copying */
-  stuck(text: string, err: unknown, ekey: string, rescue?: string): void;
+  stuck(id: AlertId, err: unknown, ekey: string, rescue?: string): void;
   /* a delete that failed for a reason other than staleness: UNKEYED, since
      the removed key can never land a future write — the entry resurrects from the store next launch (pin:
      entries.test › a plain rejected delete reports unkeyed and idle-deferred) */
-  stuckIdle(text: string, err: unknown): void;
+  stuckIdle(id: AlertId, err: unknown): void;
 }
 export interface EntryLayer {
   /* complete once `warmed`: everything written out is enumerated from it */
@@ -184,18 +185,18 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
   function staleRefusal(ekey: string, err: StaleWriteError, seqAt: number | undefined, isDel: boolean): void {
     if (saveSeq[ekey] !== seqAt) return;
     cache[ekey] = err.stored;
-    if (isDel) { alerts.stuck("not deleted — changed in another tab, reload", err, ekey); return; }
-    alerts.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
+    if (isDel) { alerts.stuck("notDeletedChangedElsewhere", err, ekey); return; }
+    alerts.stuck("notSavedChangedElsewhere", err, ekey, err.refused);
   }
   function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
     if (saveSeq[ekey] === seqAt) debts.set(ekey, { err, save: !isDel || unlanded(ekey) });
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
-    else if (isDel) alerts.stuckIdle("couldn’t delete — reload", err);
+    else if (isDel) alerts.stuckIdle("couldntDelete", err);
     /* a key deleted since owes nothing and is told nothing: retried, it
        wrote the deleted entry back (pin: entries.test › a retry whose key is
        deleted), and its error waited on a landing that never comes (pin:
        entries.test › a save that fails after its entry was deleted) */
-    else if (saveSeq[ekey] === seqAt) alerts.stuck("not saved", err, ekey);
+    else if (saveSeq[ekey] === seqAt) alerts.stuck("notSaved", err, ekey);
     return false;
   }
   function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {

@@ -1,5 +1,6 @@
 import type { KeptState, Relocation } from "./keptState.ts";
 import { describe, it, expect } from "vitest";
+import { asSaid, alertWords, alertKind, type Raise } from "../model/alertText.ts";
 import type { Node } from "prosemirror-model";
 import { EditorState, TextSelection, type Transaction } from "prosemirror-state";
 import { lifecycle, type Dialogs, type LifecycleDeps, type UiPort } from "./lifecycle.ts";
@@ -54,7 +55,7 @@ function fakeSession(log: string[], s: WorldState, layer: EntryLayerOf): Lifecyc
     save: loggedSave(log, s, layer),
     open: (date, tag, how) => { log.push("open " + entryKey(date, tag) + (how ? " " + how : "")); s.current = { date, tag }; },
     refresh: () => { log.push("refresh"); return Promise.resolve(); },
-    goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + same : "")); },
+    goto: (hash, same) => { log.push("goto " + hash + (same ? " | " + alertWords(same) : "")); },
   };
 }
 function fakeDialogs(log: string[], asked: string[], answers: (string | null | boolean)[]): Dialogs {
@@ -85,11 +86,10 @@ const shownKept = (r: Relocation): string => [
   r.gone?.length ? "gone " + r.gone.join(", ") : "",
 ].filter(Boolean).join(" | ");
 const fakeKept = (log: string[]): KeptState => ({ relocate: (r, open) => { log.push("kept " + shownKept(r)); open?.(); } });
+const LABEL = { warning: "warn", error: "error", success: "succeed", info: "info" } as const;
 function fakeUi(log: string[]): UiPort {
   return {
-    warn: (text) => { log.push("warn " + text); },
-    succeed: (text) => { log.push("succeed " + text); },
-    error: (text) => { log.push("error " + text); },
+    raise: ((a, b, c) => { const s = asSaid(a, b, c)[0]; log.push(LABEL[alertKind(s.id)] + " " + alertWords(s)); return 1; }) as Raise,
     redraw: () => { log.push("redraw"); },
     replaceHash: (hash) => { log.push("hash " + hash); },
     hideBar: () => { log.push("hideBar"); },

@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { bookmarkStore } from "./bookmarkStore.ts";
+import { asSaid, alertWords, type Raise } from "../model/alertText.ts";
 
 const KEY = "gesta.v1.bookmarks";
 const row = (key: string, alias = "") => ({ key, alias });
@@ -22,7 +23,7 @@ function world(initial?: string) {
   const store = () => bookmarkStore({
     seed: SEED, storage,
     storedKeys: async () => { held.reads++; if (held.unreadable) throw new Error("IndexedDB blocked"); return held.keys; },
-    error: (text) => { errors.push(text); return ++gen; },
+    raise: ((a, b, c) => { errors.push(alertWords(asSaid(a, b, c)[0])); return ++gen; }) as Raise,
     resolveError: (g) => { released.push(g); },
   });
   return { box, store, errors, released, held, fill: (on: boolean) => { full = on; }, block: (on: boolean) => { blocked = on; } };

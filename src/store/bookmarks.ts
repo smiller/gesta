@@ -8,6 +8,7 @@
    unkeyed row goes back as the bare string) */
 import { byName, isDayKey, nsOf } from "./keys.ts";
 import { registered } from "./lists.ts";
+import { said, type Said } from "../model/alertText.ts";
 
 export const BOOKMARK_CAP = 9;
 /* a trigger's first character is neither a (add) nor a digit (the jump)
@@ -61,9 +62,9 @@ export function aliasedBookmarks(list: Bookmark[]): Bookmark[] {
   return list.filter((b) => b.alias).sort((x, y) => byName(x.alias, y.alias));
 }
 export function bookmarksFull(list: Bookmark[]): boolean { return numberedBookmarks(list).length >= BOOKMARK_CAP; }
-export function aliasRefusal(alias: string): string {
-  if (!alias) return "";
-  return ALIAS_RE.test(alias) ? "" : "a letter b to z, then letters or digits — a adds, a leading digit jumps";
+export function aliasRefusal(alias: string): Said | null {
+  if (!alias) return null;
+  return ALIAS_RE.test(alias) ? null : said("keyShape");
 }
 /* a NEW list with the row's trigger set or cleared, or null when the list
    has not got the key: a refused write must leave the cache agreeing with

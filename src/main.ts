@@ -8,7 +8,8 @@ import { readBundle, bundleImages, bundleKeeper, heldLabel, READER_DB, READER_ST
 import { backupRunner, PAUSED_MSG } from "./store/backup.ts";
 import { entryLayer } from "./store/entries.ts";
 import type { Dir } from "./store/fsa.ts";
-import { failMsg, errText } from "./store/files.ts";
+import { failWhy, errText } from "./store/files.ts";
+import { said } from "./model/alertText.ts";
 import { startSession } from "./session.ts";
 import { readRaw, writeRaw, stored } from "./store/local.ts";
 import { alertLog, carryLog, chordName, parseLog, type AlertEntry } from "./ui/alertLog.ts";
@@ -77,7 +78,7 @@ document.addEventListener("click", (e) => {
 }, true);
 const alerts = alertLedger(copyText, (kind, text) => logged.add({ page: document.documentElement.dataset.entry || "", action: lastAction, kind, text }));
 (window as unknown as { gesta: object }).gesta = { alerts: (): AlertEntry[] => { const log = logged.entries(); console.table(log); return log; } };
-const info = alerts.info, succeed = alerts.succeed, warn = alerts.warn;
+const raise = alerts.raise;
 /* the Line numbering choice is kept in this browser, out of the entries, so
    no backup carries it (pin: alerts and surfaces ›
    Line numbering kept across a reload) */
@@ -86,8 +87,8 @@ const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : isNaN(keptInterval) || keptInterval < 0 ? 5 : keptInterval);
 type WalkDir = "prev" | "next";
 function keepPicked(file: File): void {
-  const p = alerts.progress("keeping the backup…");
-  keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn’t keep the backup", err), errText(err)); });
+  const p = alerts.progress("keepingBackup");
+  keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(said("couldntKeepBackup", { why: failWhy(err) }), errText(err)); });
 }
 const acts = {
   today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
@@ -125,7 +126,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* the choice takes effect whether or not it could be kept: a failed
      write says so, and the select and the gutter agree */
   onInterval: (n: number) => {
-    if (!writeRaw(LINES_KEY, String(n))) alerts.error("line numbers not saved — storage full", { caught: null });
+    if (!writeRaw(LINES_KEY, String(n))) raise("lineNumbersNotSaved", { caught: null });
     screen.interval = n; acts.interval(n);
   },
   /* the row closed by its own label hands the keys back as ⌃⌘L does
@@ -213,16 +214,15 @@ const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read"
    both */
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
-  layer, images, succeed, warn, error: (text) => { alerts.error(text); }, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
+  layer, images, raise, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
 });
 const readBackups = bkPanel.read;
 acts.sweep = bkPanel.sweep;
 const backup = backupRunner({
   layer, images, store: idbBackupStore(),
   picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
-  info, succeed, warn,
+  raise,
   onTrouble: (msg) => { alerts.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
-  error: (text, from) => { alerts.error(text, from); },
 });
 armBackup = () => backup.scheduleBackup();
 acts.backups = () => { backup.setupBackupFolder().then(readBackups); };
@@ -259,8 +259,8 @@ const entryShown = (stored: string, ekey: string): void => {
   life.shown(ekey, stored);
 };
 const session = startSession({
-  mount: mountEl, layer, images, interval: screen.interval, info, succeed, warn,
-  error: (text, from) => alerts.error(text, from), errorShown: () => alerts.errorShown, resolveError: (gen) => alerts.resolveError(gen),
+  mount: mountEl, layer, images, interval: screen.interval, raise,
+  errorShown: () => alerts.errorShown, resolveError: (gen) => alerts.resolveError(gen),
   onShow: (stored, ekey) => entryShown(stored, ekey),
   onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),
@@ -291,7 +291,7 @@ acts.interval = (n) => session.setInterval(n);
 acts.today = () => session.today();
 acts.walk = (dir) => session.step(dir);
 acts.lines = (open) => {
-  if (open && !screen.gutter) { warn("no line numbers here"); return; }
+  if (open && !screen.gutter) { raise("noLineNumbers"); return; }
   screen.linesOpen = open;
   if (open) { overlay.open("lines"); setTimeout(() => masthead.focusLines(), 0); }
   else session.focusText();
@@ -353,37 +353,37 @@ const openShortcuts = (): void => {
 };
 const insertShortcut = (expansion: string): void => {
   closePanel();
-  if (!cardCaret || !session.insertText(expansion)) { warn("place your cursor in the entry"); session.focusText(); }
+  if (!cardCaret || !session.insertText(expansion)) { raise("placeCursor"); session.focusText(); }
 };
 acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
 acts.shortcuts.walk = (dir) => { if (sc.rows.length) sc.active = (sc.active + dir + sc.rows.length) % sc.rows.length; };
-acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) insertShortcut(row.expansion); else warn("no shortcut to insert"); };
+acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) insertShortcut(row.expansion); else raise("noShortcut"); };
 acts.shortcuts.pick = (i) => { const row = sc.rows[i]; if (row) insertShortcut(row.expansion); };
 acts.shortcuts.edit = () => showEditor(!sc.editing);
 acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };
 acts.shortcuts.save = () => {
   try { localStorage.setItem(SHORTCUTS_KEY, sc.draft); }
-  catch (e) { shortcutsFailGen = alerts.error("shortcuts not saved — storage full", { caught: e }); return; }
+  catch (e) { shortcutsFailGen = raise("shortcutsNotSaved", { caught: e }); return; }
   alerts.resolveError(shortcutsFailGen); shortcutsFailGen = 0;
   shortcuts = parseShortcuts(sc.draft);
   sc.dirty = false;
   renderShortcuts();
-  succeed("shortcuts saved", 2000);
+  raise("shortcutsSaved");
 };
 acts.shortcuts.escape = () => { closePanel(); session.focusText(); };
 const bm = screen.bookmarks;
 const marks = bookmarkStore({
   seed: [{ key: "commonplace/Making Verity Cards", alias: "" }, { key: "commonplace/Verdour", alias: "" }],
-  error: (text, from) => alerts.error(text, from),
+  raise,
   resolveError: (gen) => alerts.resolveError(gen),
   storedKeys: () => layer.storedKeys(),
 });
 const card = bookmarkActs({
-  bm, marks, session, journal, warn, overlay, closePanel, caretInEntry,
+  bm, marks, session, journal, raise, overlay, closePanel, caretInEntry,
   panel: { isOpen: () => screen.panel === "bookmarks", show: () => { screen.panel = "bookmarks"; } },
   focusCard: () => masthead.focusBookmarks(),
   keysNow: () => Object.keys(layer.cache),
-  warmBlock: () => refuseCold(layer, warn),
+  warmBlock: () => refuseCold(layer, raise),
   warmed: () => layer.warmed,
 });
 acts.bookmarks.key = card.key;
@@ -392,14 +392,14 @@ acts.bookmarks.commit = card.commit;
 acts.bookmarks.act = card.act;
 const openBookmarks = card.open;
 const lineActs = lineBarActs({
-  lb: screen.lineBar, session, journal, info, warn,
+  lb: screen.lineBar, session, journal, raise,
   opened: () => overlay.open("lineBar"),
   focusBar: () => masthead.focusLineBar(),
   warmed: () => layer.warmed,
 });
 Object.assign(acts.lineBar, lineActs);
 Object.assign(acts.replace, replaceActs({
-  rb: screen.replace, session, info,
+  rb: screen.replace, session, raise,
   opened: () => overlay.open("replace"),
   focusBar: () => masthead.focusReplace(),
 }));
@@ -410,11 +410,11 @@ Object.assign(acts.replace, replaceActs({
 const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
 clientW();
 new ResizeObserver(clientW).observe(document.documentElement);
-const copy = copyButton({ cp: screen.copy, session, warn, error: (text) => { alerts.error(text); } });
+const copy = copyButton({ cp: screen.copy, session, raise });
 acts.copyBlock = copy.copyBlock;
 dropStaleCopy = copy.dropStale;
 const fmt = formatBar({
-  bar: screen.bar, buttons: () => screen.masthead.buttons, session, warn, mountEl,
+  bar: screen.bar, buttons: () => screen.masthead.buttons, session, raise, mountEl,
   extract: () => life.extract(), head: document.querySelector(".site-head")!,
 });
 acts.bar = fmt.act;
@@ -431,7 +431,7 @@ const life = lifecycle({
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
   kept,
   ...pictureMoves(images),
-  ui: { succeed, warn, error: (text) => { alerts.error(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
+  ui: { raise, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
 });
 acts.create = () => { life.create(); };
 acts.rename = () => { life.rename(); };
@@ -467,15 +467,15 @@ stage("start");
 /* the kept bundle read into the memory store before the open entry is
    primed from it; none kept, the page says where one is found */
 const openBundle = (): Promise<void> => keptBundle!.get().then((row) => {
-  if (!row) { screen.held = "no backup opened"; alerts.error("open backup: gesta.zip in Dropbox › gesta-backups › reader"); return; }
+  if (!row) { screen.held = "no backup opened"; raise("noBackupKept"); return; }
   screen.held = heldLabel(row.modified);
-  const p = alerts.progress("opening the backup…");
+  const p = alerts.progress("openingBackup");
   return readBundle(row.file, p.step).then((b) => {
     if (b.written !== null) screen.held = heldLabel(b.written);
     bundlePictures = bundleImages(row.file, b.pictures);
     const keys = Object.keys(b.entries);
-    return Promise.all(keys.map((k) => readerStore!.foreignSet(k, b.entries[k]))).then(() => { p.ok(keys.length + " entries"); stage("bundle"); });
-  }).catch((err: unknown) => { console.error("the backup could not be read", err); p.fail(failMsg("couldn’t read the backup", err), errText(err)); });
+    return Promise.all(keys.map((k) => readerStore!.foreignSet(k, b.entries[k]))).then(() => { p.ok(said("bundleOpened", { n: keys.length })); stage("bundle"); });
+  }).catch((err: unknown) => { console.error("the backup could not be read", err); p.fail(said("couldntReadBackup", { why: failWhy(err) }), errText(err)); });
 });
 const wrote = READER ? openBundle() : q.get("store") === "write" ? layer.setEntry("probe/" + Date.now(), "probe").then(() => stage("set"))
   : Promise.resolve();
@@ -511,7 +511,7 @@ if (READER) wrote.then(loadWatch.start); else loadWatch.start();
 primed.then(held).then(() => layer.warm()).then(() => loadWatch.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [(moved) => kept.relocate({ moved })], readOnly: READER })).then((migrated) => {
   if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
   stage("all"); count();
-  info(Object.keys(layer.cache).length + " entries stored");
+  raise("entriesStored", { n: Object.keys(layer.cache).length });
   /* an entry opened from its primed row is redrawn only where the warm
      changes it: the masthead lists, and whether a contents page folds (pin:
      places › the warm landed) */
@@ -527,8 +527,8 @@ primed.then(held).then(() => layer.warm()).then(() => loadWatch.landed(layer)).t
   if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") alerts.setTrouble(PAUSED_MSG); });
 });
 const folders = folderActs({
-  session, layer, images, alerts, warn, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
-  warmBlock: () => refuseCold(layer, warn),
+  session, layer, images, alerts, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
+  warmBlock: () => refuseCold(layer, raise),
 });
 acts.export = folders.exportAll;
 acts.import = folders.importFolder;

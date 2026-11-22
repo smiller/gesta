@@ -9,24 +9,22 @@
 import { entryName, nameFromUrl } from "../store/names.ts";
 import { entryAt } from "../store/nav.ts";
 import { nsOf, NS_KEYS, asAddress, beforeQuery } from "../store/keys.ts";
+import { said, type Said } from "../model/alertText.ts";
 
-export const REFUSE_URL = "that link’s title can’t be a name — type one instead";
-export const REFUSE_EMPTY = "that name leaves nothing a filename can keep";
-export type Typed = { name: string } | { refuse: string } | null;
+export type Typed = { name: string } | { refuse: Said } | null;
 export function typedName(raw: string | null | undefined): Typed {
   const s = (raw || "").trim();
   if (!s) return null;
   const derived = nameFromUrl(s);
-  if (derived === "") return { refuse: REFUSE_URL };
+  if (derived === "") return { refuse: said("nameFromLink") };
   const name = entryName(derived || s.replace(/\//g, "-"));
-  return name ? { name } : { refuse: REFUSE_EMPTY };
+  return name ? { name } : { refuse: said("nameEmpty") };
 }
 
 /* a place typed where a name is asked: an address (`#bookshelf/…`) or one
    spelled from its namespace (`bookshelf/Miller, Sean/Essays`), a commonplace or book there; anything else is a name (pin: naming.test › a typed
    address names a commonplace or book) */
-export const REFUSE_EMPTY_PART = "an address can’t have an empty part";
-type TypedPlace = { date: string; tag: string } | { refuse: string } | null;
+type TypedPlace = { date: string; tag: string } | { refuse: Said } | null;
 const emptyPart = (path: string): boolean => NS_KEYS.some((n) => path.startsWith(n + "/")) && path.split("/").some((p) => !p);
 function addressed(s: string): TypedPlace {
   const p = entryAt(asAddress(s));
@@ -38,11 +36,11 @@ function keyed(s: string): TypedPlace {
   const ns = NS_KEYS.find((n) => s.startsWith(n + "/"));
   if (!ns) return null;
   const parts = s.slice(ns.length + 1).split("/").map(entryName);
-  return parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : { refuse: REFUSE_EMPTY };
+  return parts.indexOf("") === -1 ? { date: ns, tag: parts.join("/") } : { refuse: said("nameEmpty") };
 }
 export function typedAddress(raw: string | null | undefined): TypedPlace {
   const s = (raw || "").trim();
-  if (emptyPart(beforeQuery(s.replace(/^#/, "")))) return { refuse: REFUSE_EMPTY_PART };
+  if (emptyPart(beforeQuery(s.replace(/^#/, "")))) return { refuse: said("addressEmptyPart") };
   return s.startsWith("#") ? addressed(s) : keyed(s);
 }
 
