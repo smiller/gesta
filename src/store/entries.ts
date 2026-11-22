@@ -1,5 +1,5 @@
 import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
-import type { AlertId } from "../model/alertText.ts";
+import type { BareIdOf } from "../model/alertText.ts";
 
 export interface EntryAlerts {
   /* a durable landing under ekey: resolve any error owed under it */
@@ -11,11 +11,11 @@ export interface EntryAlerts {
   removed(ekey: string): void;
   /* a write that did not land, keyed so a later landing releases it;
      `rescue` is the refused text, offered for copying */
-  stuck(id: AlertId, err: unknown, ekey: string, rescue?: string): void;
+  stuck(id: BareIdOf<"error">, err: unknown, ekey: string, rescue?: string): void;
   /* a delete that failed for a reason other than staleness: UNKEYED, since
      the removed key can never land a future write — the entry resurrects from the store next launch (pin:
      entries.test › a plain rejected delete reports unkeyed) */
-  stuckUnkeyed(id: AlertId, err: unknown): void;
+  stuckUnkeyed(id: BareIdOf<"error">, err: unknown): void;
 }
 export interface EntryLayer {
   /* complete once `warmed`: everything written out is enumerated from it */

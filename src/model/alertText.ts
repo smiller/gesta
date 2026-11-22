@@ -1,13 +1,13 @@
 export type Kind = "error" | "warning" | "info" | "success";
 type Words = string | ((p: never) => string);
-interface Entry<W extends Words = Words> { kind: Kind; words: W; when: string; ms?: number }
+interface Entry<W extends Words = Words, K extends Kind = Kind> { kind: K; words: W; when: string; ms?: number }
 /* `ms`: how long an info or a success stays, for one with a time of its own */
-const entry = <W extends Words>(kind: Kind, words: W, when: string, ms?: number): Entry<W> =>
+const entry = <W extends Words, K extends Kind>(kind: K, words: W, when: string, ms?: number): Entry<W, K> =>
   (ms === undefined ? { kind, words, when } : { kind, words, when, ms });
-const error = <W extends Words>(words: W, when: string): Entry<W> => entry("error", words, when);
-const warning = <W extends Words>(words: W, when: string): Entry<W> => entry("warning", words, when);
-const info = <W extends Words>(words: W, when: string, ms?: number): Entry<W> => entry("info", words, when, ms);
-const success = <W extends Words>(words: W, when: string, ms?: number): Entry<W> => entry("success", words, when, ms);
+const error = <W extends Words>(words: W, when: string): Entry<W, "error"> => entry("error", words, when);
+const warning = <W extends Words>(words: W, when: string): Entry<W, "warning"> => entry("warning", words, when);
+const info = <W extends Words>(words: W, when: string, ms?: number): Entry<W, "info"> => entry("info", words, when, ms);
+const success = <W extends Words>(words: W, when: string, ms?: number): Entry<W, "success"> => entry("success", words, when, ms);
 
 const count = (n: number, one: string, many: string): string => n + (n === 1 ? one : many);
 export interface FenceRefusal { line: string; reason: string }
@@ -231,8 +231,12 @@ type Bare<I extends AlertId> = [ParamsOf<I>] extends [never] ? true : false;
 /* an alert chosen by one module for another to raise: its id, and its parameters where it has any */
 export type Said = { [I in AlertId]: Bare<I> extends true ? { id: I } : { id: I; p: ParamsOf<I> } }[AlertId];
 export type ParamsArg<I extends AlertId> = Bare<I> extends true ? [] : [p: ParamsOf<I>];
-export function said<I extends AlertId>(id: I, ...p: ParamsArg<I>): Said {
-  return (p.length ? { id, p: p[0] } : { id }) as Said;
+/* the ids of one kind, and of those the ones whose words take nothing */
+export type IdOf<K extends Kind> = { [I in AlertId]: (typeof ALERTS)[I]["kind"] extends K ? I : never }[AlertId];
+export type BareIdOf<K extends Kind> = { [I in IdOf<K>]: Bare<I> extends true ? I : never }[IdOf<K>];
+export type SaidOf<K extends Kind> = Extract<Said, { id: IdOf<K> }>;
+export function said<I extends AlertId>(id: I, ...p: ParamsArg<I>): Extract<Said, { id: I }> {
+  return (p.length ? { id, p: p[0] } : { id }) as Extract<Said, { id: I }>;
 }
 export function alertWords(s: Said): string {
   const words = ALERTS[s.id].words as Words;

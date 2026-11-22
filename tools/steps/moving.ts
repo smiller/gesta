@@ -19,7 +19,7 @@ section("unused pictures", async () => {
   /* a picture pasted, then deleted from the text: the backups panel offers to remove it, and its button removes it */
   await pictureDeletedTextBackups();
   await removeUnusedPictureClicked();
-  await infoClicked();
+  await successClicked();
 });
 async function pictureDeletedTextBackups(): Promise<void> {
   await go("commonplace/Unused%20Pictures");
@@ -43,9 +43,9 @@ async function removeUnusedPictureClicked(): Promise<void> {
   await log("Remove … unused picture clicked, the confirm accepted", { corner: await cornerText(), left: await A.pictureKeys(page, "commonplace/Unused Pictures"), panel: await R.backups(page) });
   await page.click(".alert.success.show").catch(() => {});
 }
-async function infoClicked(): Promise<void> {
+async function successClicked(): Promise<void> {
   await page.waitForFunction(() => window.__alerts() === "copied", null, { timeout: 3000 }).catch(() => {});
-  await log("the info clicked", { corner: await cornerText(), clipboard: await page.evaluate(async () => { for (let i = 0; i < 20; i++) { try { return await navigator.clipboard.readText(); } catch { await new Promise((r) => setTimeout(r, 50)); } } return null; }) });
+  await log("the success clicked", { corner: await cornerText(), clipboard: await page.evaluate(async () => { for (let i = 0; i < 20; i++) { try { return await navigator.clipboard.readText(); } catch { await new Promise((r) => setTimeout(r, 50)); } } return null; }) });
   await page.keyboard.press("Escape");
 }
 section("a commonplace moved with its sub-entries", async () => {

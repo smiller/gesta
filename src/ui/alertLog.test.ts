@@ -62,3 +62,15 @@ test("a log kept under its key before moves to its own key once, ahead of what i
   carryLog(storage, "old", "new");
   expect(parseLog(keys.get("new") ?? null)).toHaveLength(2);
 });
+
+test("a stored log keeps its entries past an item that is no entry", () => {
+  expect(parseLog(JSON.stringify([entry("2026-11-01T08:00:00"), null, 3, "x"])).map((e) => e.time)).toEqual(["2026-11-01T08:00:00"]);
+});
+
+test("a log kept before that does not read as a list is left where it is, the log under its own key untouched", () => {
+  const keys = new Map<string, string>([["old", "{not json"], ["new", JSON.stringify([entry("2026-11-22T08:00:00", "now")])]]);
+  const storage = { getItem: (k: string) => keys.get(k) ?? null, setItem: (k: string, v: string) => { keys.set(k, v); }, removeItem: (k: string) => { keys.delete(k); } };
+  carryLog(storage, "old", "new");
+  expect(keys.get("old")).toBe("{not json");
+  expect(parseLog(keys.get("new") ?? null)).toHaveLength(1);
+});

@@ -474,3 +474,14 @@ describe("raise", () => {
     expect(n.state.warning.text).toBe("no bookmark 4");
   });
 });
+
+describe("the kinds each place takes", () => {
+  it("a progress line, its ends and the entry layer's errors take only ids of their own kind, refused before they run", () => {
+    // @ts-expect-error a progress line takes an info whose words need nothing
+    void (() => n.progress("backingUpCount"));
+    // @ts-expect-error a progress line's ok ends it in a success
+    void (() => n.progress("exporting").ok(said("alreadyBookmarked")));
+    // @ts-expect-error the entry layer's failures are errors
+    void (() => n.entry.stuck("saved", null, "a"));
+  });
+});

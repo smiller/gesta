@@ -1,6 +1,6 @@
 import type { EntryAlerts } from "../store/entries.ts";
 import { errText } from "../store/files.ts";
-import { asSaid, alertWords, alertKind, alertMs, type AlertId, type Kind as AlertKind, type Raise, type RaiseOpts, type Said } from "../model/alertText.ts";
+import { asSaid, alertWords, alertKind, alertMs, type AlertId, type Kind, type Raise, type RaiseOpts, type Said, type SaidOf, type BareIdOf } from "../model/alertText.ts";
 
 export interface Line { text: string; shown: boolean }
 export interface AlertState {
@@ -19,19 +19,15 @@ export interface AlertState {
   /* the backup's trouble, "" when healthy — drawn as the pill */
   trouble: string;
 }
-export type Kind = "error" | "warning" | "info" | "success";
+export type { Kind } from "../model/alertText.ts";
 export type Fading = "info" | "success";
-export type Kept = "error" | "warning";
-/* what came with an error: the exception caught, logged with its stack and
-   copied by a click unless a copy is given; or the copy alone */
-export interface ErrorFrom { caught?: unknown; copy?: string }
-/* the lifecycle handle a user-triggered op holds: the ONLY thing that
+export type Kept = "error" | "warning";/* the lifecycle handle a user-triggered op holds: the ONLY thing that
    ends the busy state, so a stray info can never sneak past the line
    and the line can never be orphaned */
 export interface Progress {
   step(done: number, total: number): void;
-  ok(s: Said): void;
-  fail(s: Said, copy?: string): void;
+  ok(s: SaidOf<"success">): void;
+  fail(s: SaidOf<"error">, copy?: string): void;
   cancel(): void;
 }
 export interface Alerts {
@@ -42,7 +38,7 @@ export interface Alerts {
   /* an alert by its id in the table, shown where its kind goes */
   raise: Raise;
   resolveError(gen: number): void;
-  progress(id: AlertId): Progress;
+  progress(id: BareIdOf<"info">): Progress;
   click(kind: Kind): void;
   /* the ×: closes the alert without copying */
   dismiss(kind: Kind): void;
@@ -118,7 +114,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   /* a key `caught` logs even when nothing was caught (pin: alertLedger.test ›
      an error with what was caught) */
-  function error(text: string, from: ErrorFrom = {}): number {
+  function error(text: string, from: RaiseOpts = {}): number {
     const caught = "caught" in from;
     if (caught) console.error(text, from.caught);
     const g = showError(text, from.copy || (caught ? errText(from.caught) : ""));
@@ -167,7 +163,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   const owed: Record<string, true> = Object.create(null);
   let saveErrorGen = 0;
   let saveErrorLatch: [string, unknown, string | undefined] | null = null;
-  function saveError(id: AlertId, err: unknown, ekey: string, copy?: string): void {
+  function saveError(id: BareIdOf<"error">, err: unknown, ekey: string, copy?: string): void {
     const text = alertWords({ id } as Said);
     owed[ekey] = true;
     saveErrorLatch = [text, err, copy];
@@ -186,7 +182,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   /* the line for a user-triggered op that runs longer than a moment: shown
      AT ONCE, in the click, and held until the handle's own terminal call */
-  function progress(id: AlertId): Progress {
+  function progress(id: BareIdOf<"info">): Progress {
     const text = alertWords({ id } as Said);
     const mine = ++busyGen;
     state.busy = true;
@@ -239,7 +235,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     clearWarning();
     copyDetail(words);
   }
-  const BY_KIND: Record<AlertKind, (words: string, ms: number | undefined, from: RaiseOpts) => number> = {
+  const BY_KIND: Record<Kind, (words: string, ms: number | undefined, from: RaiseOpts) => number> = {
     error: (words, _ms, from) => error(words, from),
     warning: (words) => { warn(words); return 0; },
     info: (words, ms) => { info(words, ms); return 0; },

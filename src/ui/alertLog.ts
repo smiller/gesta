@@ -23,18 +23,25 @@ function threeMonthsBefore(now: Date): Date {
 }
 const kept = (log: AlertEntry[], now: Date): AlertEntry[] => log.filter((e) => new Date(e.time) >= threeMonthsBefore(now));
 const KIND_BEFORE: Record<string, Kept> = { failure: "error", refusal: "warning" };
-export function parseLog(raw: string | null): AlertEntry[] {
+const isEntry = (e: unknown): e is AlertEntry => !!e && typeof e === "object";
+function list(raw: string | null): unknown[] | null {
   try {
     const v: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(v) ? v.map((e: AlertEntry) => ({ ...e, kind: KIND_BEFORE[e.kind] ?? e.kind })) : [];
-  } catch { return []; }
+    return Array.isArray(v) ? v : null;
+  } catch { return null; }
 }
+/* an item that is no entry is passed over, not the whole log with it
+   (pin: alertLog.test › a stored log keeps its entries past an item) */
+export const parseLog = (raw: string | null): AlertEntry[] =>
+  (list(raw) ?? []).filter(isEntry).map((e) => ({ ...e, kind: KIND_BEFORE[e.kind] ?? e.kind }));
 
 /* once: the log kept under its key before, set ahead of what its own key
-   holds, the old key cleared so it is never read again */
+   holds, the old key cleared so it is never read again; one that does not
+   read as a list stays where it is, so nothing is cleared that was not carried
+   (pin: alertLog.test › a log kept before that does not read as a list) */
 export function carryLog(storage: Pick<Storage, "getItem" | "setItem" | "removeItem">, from: string, to: string): void {
   const before = storage.getItem(from);
-  if (before === null) return;
+  if (before === null || !list(before)) return;
   storage.setItem(to, JSON.stringify([...parseLog(before), ...parseLog(storage.getItem(to))]));
   storage.removeItem(from);
 }

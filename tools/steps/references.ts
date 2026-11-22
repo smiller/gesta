@@ -360,7 +360,7 @@ const TABLE = ["", "  ┌──────┬───────────�
 const TERMINAL_HTML = terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run(CODE, "npm run verify") + " passed\n  before each landed.\n\n  - " + run(CODE, "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run(CODE, "7603f25") + ": the steps made independent.");
 const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";
 section("references across verse blocks", async () => {
-  /* blocks numbered apart refuse ⌃⌘R with an error; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its alert not swallowed by the error */
+  /* blocks numbered apart refuse ⌃⌘R with a warning; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its alert not swallowed by the warning */
   await write("commonplace/Blocks", "# Blocks\n\n::: verse\nfirst block\n:::\n\n::: verse\nsecond block\n:::\n\n## Between\n\n::: verse 2\nthird block\n:::");
   await still(page);
   await R.selectBetween(page, "first block", "second block");

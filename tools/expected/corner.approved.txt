@@ -677,7 +677,7 @@ Rename, Renamed Me typed, Enter: {"prompts":["Rename the commonplace \"Rename Me
 unused pictures: arrived at commonplace/Unused Pictures: {"cursor":"at a line's start"}
 the picture deleted from the text, the backups panel opened: {"kept":["commonplace/Unused Pictures-img-1.webp"],"md":"","panel":{"buttons":["Set up automatic backups…","Remove 1 unused picture"],"status":null},"cursor":"on button","screen":"commonplace/Unused Pictures · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
 Remove … unused picture clicked, the confirm accepted: {"corner":"removed 1 unused picture","left":[],"panel":{"buttons":["Set up automatic backups…"],"status":null},"cursor":"none","screen":"commonplace/Unused Pictures · sel none · bar off · panel backups · rows none · rendered · corner [whatever stood]"}
-the info clicked: {"corner":"copied","clipboard":"removed 1 unused picture","cursor":"none","screen":"commonplace/Unused Pictures · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the success clicked: {"corner":"copied","clipboard":"removed 1 unused picture","cursor":"none","screen":"commonplace/Unused Pictures · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == a commonplace moved with its sub-entries
 a commonplace moved with its sub-entries: arrived at commonplace/Move Source/Essay: {"cursor":"at a line's start"}
 a commonplace moved with its sub-entries: arrived at commonplace/Move Source: {"cursor":"at a line's start"}

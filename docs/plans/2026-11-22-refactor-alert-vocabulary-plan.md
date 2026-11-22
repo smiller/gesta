@@ -104,3 +104,27 @@ alert by kind, its words and when it is raised.
   checked; every fixed form of the old catalogue and its 12 quoted
   examples rendered through the table to the same words. The page tool
   merged a literal "…" into a placeholder; fixed.
+- The batch review (A13): /code-review at HIGH over 9971f9e..HEAD,
+  243,451 tokens (MEASURED: 2 input + 1,916 cache creation + 239,147
+  cache read + 2,386 output, its transcript's last message). Six findings,
+  all nit; fixed in one commit:
+  1. a stored log with one item that is no entry read as empty, and the
+     carry then cleared the old key: items that are no entry are passed
+     over, and an old log that is not a list stays where it is.
+  2. progress, its ends and the entry layer's channel took any id: each
+     takes its own kind now (BareIdOf, SaidOf, said() typed by its id),
+     pinned by @ts-expect-error lines tsc checks.
+  3. the help's ⌃⌘B row said "shortcuts", the name of ⌃⌘S's feature: the
+     reader's words, "a popup with links to the entries you have
+     bookmarked" (the reviewer's "1-9 to jump" left out keyed bookmarks).
+  4. the renamed step "the info clicked" clicks a success: "the success
+     clicked", the run approved with that label alone changed; a comment
+     calling the numbered-apart refusal an error says warning. One it
+     named, filing.ts:166, is right: that refusal raises "cannot render".
+  5. "PINNED, released by" and "the corner's" in comments, CLAUDE.md's
+     "its pins": said as error and resolved. No checker: PINNED's one
+     other use is the comment standard's own (CLAUDE.md:49), and every
+     other "corner" in src/ is a corner of a block or the Helium section's
+     name (MEASURED, grep).
+  6. ErrorFrom and the ledger's Kind repeated the table's RaiseOpts and
+     Kind: the copies went.

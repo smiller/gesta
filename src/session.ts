@@ -428,7 +428,7 @@ export function startSession(opts: SessionOptions): Session {
   function copy(payload: { text: string; html: string }, ok: "referenceCopied" | "linkCopied", fail: "referenceNotCopied" | "linkNotCopied"): void {
     const gen = ++copyGen;
     writeClipboard(payload).then((landed) => {
-      /* the LATEST copy's outcome is the corner's: one that lands resolves a
+      /* the LATEST copy's outcome is the one shown: one that lands resolves a
          failed one's error (pin: entries left and renamed › ⌃⌘C again, the
          clipboard back); an older copy settling late changes nothing
          (unpinned: two writes no step can order) */

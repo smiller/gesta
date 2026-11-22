@@ -321,7 +321,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `heldKeys.ts`, `visibleTop.ts`, `alertArea.ts` (the alert area under
   the header), `journalLoad.ts` (the journal's
   load: loading, failed or in, what an act refused before it says, and
-  its pins). THE ACTS, the page's handlers, each
+  its errors). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,
   `gotoActs.ts`, `lineBarActs.ts`, `replaceActs.ts`, `bookmarkActs.ts`,
   `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
