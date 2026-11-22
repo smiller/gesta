@@ -48,7 +48,7 @@ describe("the pins", () => {
       'import { section, log } from "./kit.ts";\nconst ahead = "⌃⌘W rendered";\n\nsection("source view", async () => {\n  await log("⌃⌘W rendered", 2);\n  await log("never run", 3);\n});\n',
     ],
     corner: '⌃⌘. from 3pr1 over an index: {"entry":"x"}\n⌃⌘, back: {}\n⌃⌘W rendered: {}\nconsole: error: cannot render page/Gridded a grid\nwarning: a later line\n',
-    bridge: 'say("an unknown book is refused", o);\n',
+    bridge: 'log("an unknown book is refused", o);\n',
     bridgeRun: 'an unknown book is refused         {"entry":"2026-09-12"}\n',
     readerRun: 'Escape after the hit: {"hit":""}\nconsole: \n',
     tests: new Map([["nav.test", ['test("hashParts: a commonplace routes; anything less falls back", () => {});\ndescribe.each(xs)("keyed store over %s", () => {});\n']]]),
