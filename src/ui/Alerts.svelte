@@ -1,6 +1,6 @@
 <!-- An alert is transparent to the mouse while hidden and a click target
-     only when shown. The white-space rule is what lets a pinned list (one
-     warning per line) render as lines. Each alert stays a span: a status
+     only when shown. The white-space rule is what lets an error of several lines (one
+     refused fence a line) render as lines. Each alert stays a span: a status
      line whose click is a mouse's convenience, never in the tab order — a
      button here would take focus from the editor on a Tab. -->
 <script lang="ts">

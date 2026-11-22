@@ -158,7 +158,7 @@ async function failedCopyPinClicked(): Promise<void> {
   await restore();
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});
   await rest(page);
-  await log("a failed copy's pin clicked", { clipboard: (await R.clipboardText(page)).replace(/\(#[^)]*\)/, "(…)") });
+  await log("a failed copy's error clicked", { clipboard: (await R.clipboardText(page)).replace(/\(#[^)]*\)/, "(…)") });
   await log("the tab's icon", { icon: await page.evaluate(() => !!document.querySelector("link[rel~='icon']")?.getAttribute("href")) });
 }
 async function shortcutWithNoCursor(before: string): Promise<void> {
@@ -336,7 +336,7 @@ section("alerts and places", async () => {
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
-  await log("⌃⌘R on an entry opened with a warning", await standing());
+  await log("⌃⌘R on an entry opened with an error", await standing());
   await page.click(".alert.warning");
   await rest(page);
   await log("the warning clicked", { ...(await standing()), clipboard: await page.evaluate(() => navigator.clipboard.readText()).catch((e) => "clipboard: " + e) });

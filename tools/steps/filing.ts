@@ -163,7 +163,7 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await rest(page);
   await log("Escape, the switch back refused", await R.replaceBar(page));
   await R.setSource(page, "One*-*two.\n");
-  /* the save, not the corner: the refusal's pin stands over "saved" */
+  /* the save, not the corner: the refusal's error stands over "saved" */
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});

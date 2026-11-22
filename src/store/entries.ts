@@ -1,7 +1,7 @@
 import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
 
 export interface EntryAlerts {
-  /* a durable landing under ekey: release any pin owed under it */
+  /* a durable landing under ekey: resolve any error owed under it */
   landed(ekey: string): void;
   /* the entry is gone: clear every debt under it — the body's AND the
      derived index's — or a failed-then-deleted entry's stale key would
@@ -12,8 +12,7 @@ export interface EntryAlerts {
      `rescue` is the refused text, offered for copying */
   stuck(text: string, err: unknown, ekey: string, rescue?: string): void;
   /* a delete that failed for a reason other than staleness: UNKEYED, since
-     the removed key can never land a future write, and deferred past any
-     busy pin — the entry resurrects from the store next launch (pin:
+     the removed key can never land a future write — the entry resurrects from the store next launch (pin:
      entries.test › a plain rejected delete reports unkeyed and idle-deferred) */
   stuckIdle(text: string, err: unknown): void;
 }
@@ -145,7 +144,7 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
      SEALED — every caller discards it, so a rejected op would otherwise
      float unhandled. The store is the only durable copy, so a failed write
      is real data loss: stick it, keyed; a success is the durable landing
-     and releases the pin. */
+     and resolves the error. */
   function landed(ekey: string, v: unknown): boolean {
     if (v === GONE) return true;
     debts.delete(ekey);
@@ -194,7 +193,7 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
     else if (isDel) alerts.stuckIdle("couldn’t delete — reload", err);
     /* a key deleted since owes nothing and is told nothing: retried, it
        wrote the deleted entry back (pin: entries.test › a retry whose key is
-       deleted), and its pin waited on a landing that never comes (pin:
+       deleted), and its error waited on a landing that never comes (pin:
        entries.test › a save that fails after its entry was deleted) */
     else if (saveSeq[ekey] === seqAt) alerts.stuck("not saved", err, ekey);
     return false;

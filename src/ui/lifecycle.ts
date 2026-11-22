@@ -319,7 +319,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      lifecycle.test › a failed move removes the copies made) (pin:
      lifecycle.test › a failed copy takes the others back). The other
      entries' links are rewritten after the copies land, and one that cannot
-     be is NAMED in a pin rather than undone: the undo is more writes that
+     be is NAMED in an error rather than undone: the undo is more writes that
      can fail the same way (pin: lifecycle.test › a link refused once as
      stale is rewritten on the retry). Only a move asks first; into an entry
      already there, its text joins after the text there and a sub-entry the

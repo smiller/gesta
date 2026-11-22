@@ -1,5 +1,5 @@
 import { test, expect, vi, beforeEach, afterEach } from "vitest";
-import { loadState, refuseCold, loadPins } from "./journalLoad.ts";
+import { loadState, refuseCold, loadErrors } from "./journalLoad.ts";
 
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); });
@@ -23,37 +23,37 @@ test("an act refused while the journal loads says so, and once the read has fail
 
 function rig() {
   const stuck: string[] = [], errs: unknown[] = [], released: number[] = [];
-  const pins = loadPins(8000, {
+  const watch = loadErrors(8000, {
     error: (text, from) => { stuck.push(text); if (from && "caught" in from) errs.push(from.caught); return stuck.length; },
     resolveError: (gen) => { released.push(gen); },
   });
-  return { pins, stuck, errs, released };
+  return { watch, stuck, errs, released };
 }
 
-test("a load still out after its patience pins the words to reload, and its landing lifts them", () => {
+test("a load still out after its patience raises an error saying to reload, and its landing lifts them", () => {
   const r = rig();
-  r.pins.start();
+  r.watch.start();
   vi.advanceTimersByTime(7999);
   expect(r.stuck).toEqual([]);
   vi.advanceTimersByTime(1);
   expect(r.stuck).toEqual(["couldn’t load entries — reload"]);
-  r.pins.landed(IN);
+  r.watch.landed(IN);
   expect(r.released).toEqual([1]);
 });
 
 test("a load that lands in time says nothing, and a start after the landing arms nothing", () => {
   const r = rig();
-  r.pins.start();
-  r.pins.landed(IN);
-  r.pins.start();
+  r.watch.start();
+  r.watch.landed(IN);
+  r.watch.start();
   vi.advanceTimersByTime(20000);
   expect(r.stuck).toEqual([]);
 });
 
-test("a read that failed pins that the store could not be read, with its error to copy", () => {
+test("a read that failed raises an error that the store could not be read, with its error to copy", () => {
   const r = rig();
-  r.pins.start();
-  r.pins.landed(FAILED);
+  r.watch.start();
+  r.watch.landed(FAILED);
   expect(r.stuck).toEqual(["the store could not be read — reload"]);
   expect(r.errs).toEqual([FAILED.storeReadError]);
 });

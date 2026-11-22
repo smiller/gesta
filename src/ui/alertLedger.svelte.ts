@@ -11,7 +11,7 @@ export interface AlertState {
   latest: Fading;
   /* a progress line is live: the info place is the op's, and not clickable */
   busy: boolean;
-  /* pinned until clicked or released by its owner */
+  /* standing until closed or resolved by its owner */
   error: Line;
   /* why an act did nothing: until it fades, is clicked, replaced, or cleared by another entry */
   warning: Line;
@@ -36,7 +36,7 @@ export interface Progress {
 export interface Alerts {
   readonly state: AlertState;
   /* an error stands */
-  readonly pinned: boolean;
+  readonly errorShown: boolean;
   info(text: string, ms?: number): void;
   succeed(text: string, ms?: number): void;
   warn(text: string): void;
@@ -158,12 +158,12 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     tell("warning", text);
   }
   /* the keyed save-error family: a failed save is easy-to-miss data
-     loss, so it pins with the caught error copyable and releases ITSELF
+     loss, so it stands with the caught error copyable and resolves ITSELF
      only when every OWED entry durably lands. Keyed, not journal-level: a
      sibling's success settling milliseconds after the failure would
      otherwise strangle the only signal that this entry lives in the cache
-     alone (pin: alertLedger.test › the pin stands until the LAST owed key
-     lands). Another error can cover it; the latch brings it back when
+     alone (pin: alertLedger.test › the error stands until the LAST owed
+     key lands). Another error can cover it; the latch brings it back when
      that one is clicked, while its keys are still owed (pin: alertLedger.test
      › a save error covered by another error comes back) */
   const owed: Record<string, true> = Object.create(null);
@@ -176,7 +176,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   function resolveSaveError(ekey: string): void {
     delete owed[ekey];
-    for (const k in owed) if (k) return;   /* another key still owed — keep the pin */
+    for (const k in owed) if (k) return;   /* another key still owed — keep the error */
     saveErrorLatch = null;
     resolveError(saveErrorGen);
     saveErrorGen = 0;
@@ -220,14 +220,14 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     if (words) copyDetail(words);
   }
   /* closing the save error itself never replays it, which would make
-     its own pin undismissable; closing another brings it back while owed */
+     its own error undismissable; closing another brings it back while owed */
   function closeError(): string {
     const payload = errorCopy;
     resolveError(errorGen);
     return payload;
   }
   /* the copy-failed error only closes: copying its words would fail again
-     and pin it again (pin: alertLedger.test › a click on the copy-failed error) */
+     and raise it again (pin: alertLedger.test › a click on the copy-failed error) */
   function clickError(): void {
     if (!state.error.shown) return;
     const again = state.error.text === COPY_FAILED, payload = closeError();
@@ -248,7 +248,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   };
   return {
     get state() { return state; },
-    get pinned() { return state.error.shown; },
+    get errorShown() { return state.error.shown; },
     info, succeed, warn, clearWarning, error, resolveError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
     click: (kind) => CLICKS[kind](),
     dismiss: (kind) => CLOSES[kind](),

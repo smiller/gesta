@@ -47,7 +47,7 @@ export interface SessionOptions {
   /* why an act did nothing */
   warn: (text: string) => void;
   error?: (text: string, from?: ErrorFrom) => number;
-  pinned?: () => boolean;
+  errorShown?: () => boolean;
   resolveError?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
@@ -132,7 +132,7 @@ export function startSession(opts: SessionOptions): Session {
     screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
     layer,
     wrote: (landed) => { if (landed) succeed("saved", SAVED_MS); show(); },
-    refused: (md) => { detachedPins.push(opts.error?.("not saved — deleted in another tab, copy your text", { copy: md }) || 0); },
+    refused: (md) => { detachedErrors.push(opts.error?.("not saved — deleted in another tab, copy your text", { copy: md }) || 0); },
   });
   const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
@@ -140,7 +140,7 @@ export function startSession(opts: SessionOptions): Session {
      the gesture is spent. (pin: picture › a picture pasted, then another entry at once) */
   let decoding = false;
   /* a write that fails is not a picture that could not be read, and only
-     a full store is said to be full; the pin copies the caught error
+     a full store is said to be full; the error copies the caught error
      (pin: alerts and surfaces › a picture whose write fails) */
   function pictureNotSaved(err: unknown): void {
     console.error("picture not saved", err);
@@ -217,7 +217,7 @@ export function startSession(opts: SessionOptions): Session {
     window: viewport,
     places: keeper,
     error: (text) => opts.error?.(text) || 0,
-    pinned: () => !!opts.pinned?.(),
+    errorShown: () => !!opts.errorShown?.(),
     resolveError: (gen) => opts.resolveError?.(gen),
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },
@@ -229,8 +229,8 @@ export function startSession(opts: SessionOptions): Session {
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
   function releaseDetached(): void {
-    for (const g of detachedPins) opts.resolveError?.(g);
-    detachedPins = [];
+    for (const g of detachedErrors) opts.resolveError?.(g);
+    detachedErrors = [];
   }
   const pendingNow = (): boolean => pending?.gen === navGen;
   function replayPending(): void {
@@ -350,7 +350,7 @@ export function startSession(opts: SessionOptions): Session {
      (pin: bookmarks from another window › typed into the commonplace deleted in the second) */
   /* the errors of a deleted entry on screen last while it is on screen
      (pin: bookmarks from another window › the deleted commonplace left for the day) */
-  let detachedPins: number[] = [];
+  let detachedErrors: number[] = [];
   const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
   function takeVerdict(ekey: string, md: string | null): ScreenTake {
     const here = onScreenKey(ekey);
@@ -360,7 +360,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function afterTabWrite(ekey: string, verdict: ScreenTake, moved: boolean): void {
     if (!moved) return;
-    if (verdict === "deleted" && !opts.pinned?.()) detachedPins.push(opts.error?.("deleted in another tab") || 0);
+    if (verdict === "deleted" && !opts.errorShown?.()) detachedErrors.push(opts.error?.("deleted in another tab") || 0);
     else if (onScreenKey(ekey)) redraw();
   }
   function takeTabWrite(ekey: string): Promise<void> {
@@ -426,22 +426,22 @@ export function startSession(opts: SessionOptions): Session {
     goto(entryHash(nb[0], nb[1]));
   }
   function today(): void { goto(entryHash(todayKey()), "already on today"); }
-  /* a failed write is pinned, and a click on the pin copies the markdown
+  /* a failed write raises an error, and a click on it copies the markdown
      the write was carrying; the console keeps it too (pin: entries left
      and renamed › ⌃⌘C with the clipboard refused) */
-  let copyPin = 0, copyGen = 0;
+  let copyError = 0, copyGen = 0;
   function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
     const gen = ++copyGen;
     writeClipboard(payload).then((ok) => {
-      /* the LATEST copy's outcome is the corner's: one that lands releases a
-         failed one's pin (pin: entries left and renamed › ⌃⌘C again, the
+      /* the LATEST copy's outcome is the corner's: one that lands resolves a
+         failed one's error (pin: entries left and renamed › ⌃⌘C again, the
          clipboard back); an older copy settling late changes nothing
          (unpinned: two writes no step can order) */
       if (gen !== copyGen) return;
-      if (copyPin) { opts.resolveError?.(copyPin); copyPin = 0; }
+      if (copyError) { opts.resolveError?.(copyError); copyError = 0; }
       if (ok) { succeed(okText); return; }
       console.error(failText, payload.text);
-      copyPin = opts.error ? opts.error(failText, { copy: payload.text }) : 0;
+      copyError = opts.error ? opts.error(failText, { copy: payload.text }) : 0;
     });
   }
   function showWordCount(): void {

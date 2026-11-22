@@ -22,7 +22,7 @@ async function keysOpening(): Promise<void> {
 async function chordsPressedTwice(): Promise<void> {
   await go("commonplace/Horace");
   await view(false);
-  await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's pin, dismissed as a reader does: the alerts below yield to it */
+  await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's error, dismissed as a reader does: the alerts below yield to it */
   /* the click lands on the verse as fitted: before the measuring pass the
      page stood 5628 px tall, not 1277, and the click found another line */
   await still(page);

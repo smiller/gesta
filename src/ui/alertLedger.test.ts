@@ -81,10 +81,10 @@ describe("an info", () => {
 });
 
 describe("an error", () => {
-  it("pins its words, and an info beside it still speaks", () => {
+  it("stands with its words, and an info beside it still speaks", () => {
     n.error("not saved", { copy: "detail" });
     expect(n.state.error).toMatchObject({ text: "not saved", shown: true });
-    expect(n.pinned).toBe(true);
+    expect(n.errorShown).toBe(true);
     n.info("1 word");
     expect(n.state.info).toMatchObject({ text: "1 word", shown: true });
     vi.advanceTimersByTime(10000);
@@ -94,7 +94,7 @@ describe("an error", () => {
     n.error("not saved", { copy: "detail" });
     n.click("error");
     expect(copied).toEqual(["detail"]);
-    expect(n.pinned).toBe(false);
+    expect(n.errorShown).toBe(false);
     expect(n.state.error.shown).toBe(false);
     await flush();
     expect(n.state.success).toMatchObject({ text: "copied", shown: true });
@@ -192,11 +192,11 @@ describe("progress", () => {
     vi.advanceTimersByTime(3000);
     expect(n.state.success.shown).toBe(false);
   });
-  it("its fail pins an error and ends the line; its cancel hides the line", () => {
+  it("its fail raises an error and ends the line; its cancel hides the line", () => {
     n.progress("exporting…").fail("export failed — x", "x");
     expect(n.state.error.text).toBe("export failed — x");
     expect(n.state.info.shown).toBe(false);
-    expect(n.pinned).toBe(true);
+    expect(n.errorShown).toBe(true);
     n.click("error");
     n.progress("importing…").cancel();
     expect(n.state.info.shown).toBe(false);
@@ -218,7 +218,7 @@ describe("progress", () => {
     b.ok("imported 2 entries");
     expect(n.state.busy).toBe(false);
   });
-  it("an error standing is left by an op, and an error during one pins at once", () => {
+  it("an error standing is left by an op, and an error during one shows at once", () => {
     n.error("old error", { copy: "old" });
     const p = n.progress("importing…");
     expect(n.state.error.text).toBe("old error");
@@ -231,34 +231,34 @@ describe("progress", () => {
 });
 
 describe("the keyed save-error family, as the entry layer speaks it", () => {
-  it("a stuck write pins with the refused text as the copy, and its landing releases", () => {
+  it("a stuck write raises an error with the refused text as the copy, and its landing releases", () => {
     n.entry.stuck("not saved — changed in another tab, copy your text then reload", new Error("stale"), "2026-09-07", "# my text");
     expect(n.state.error.text).toBe("not saved — changed in another tab, copy your text then reload");
     n.entry.landed("2026-09-07");
     expect(n.state.error.shown).toBe(false);
-    expect(n.pinned).toBe(false);
+    expect(n.errorShown).toBe(false);
   });
-  it("the pin stands until the LAST owed key lands", () => {
+  it("the error stands until the LAST owed key lands", () => {
     n.entry.stuck("not saved", new Error("a"), "a");
     n.entry.stuck("not saved", new Error("b"), "b");
     n.entry.landed("a");
-    expect(n.pinned).toBe(true);
+    expect(n.errorShown).toBe(true);
     n.entry.landed("other");
-    expect(n.pinned).toBe(true);
+    expect(n.errorShown).toBe(true);
     n.entry.landed("b");
-    expect(n.pinned).toBe(false);
+    expect(n.errorShown).toBe(false);
   });
   it("a removed entry owes nothing", () => {
     n.entry.stuck("not saved", new Error("a"), "a");
     n.entry.removed("a");
-    expect(n.pinned).toBe(false);
+    expect(n.errorShown).toBe(false);
   });
   it("the copy payload is the error's text when no rescue was offered", () => {
     n.entry.stuck("not saved", new DOMException("full", "QuotaExceededError"), "a");
     n.click("error");
     expect(copied).toEqual(["QuotaExceededError: full"]);
   });
-  it("an error during an op pins at once, beside the progress line", () => {
+  it("an error during an op shows at once, beside the progress line", () => {
     n.progress("importing…");
     n.entry.stuck("not saved", new Error("x"), "a");
     expect(n.state.error.text).toBe("not saved");
@@ -277,11 +277,11 @@ describe("the keyed save-error family, as the entry layer speaks it", () => {
     n.click("error");
     expect(n.state.error.shown).toBe(false);
   });
-  it("a delete that failed for another reason pins unkeyed: no landing releases it", () => {
+  it("a delete that failed for another reason raises an error unkeyed: no landing releases it", () => {
     n.entry.stuckIdle("couldn’t delete — reload", new Error("x"));
     expect(n.state.error.text).toBe("couldn’t delete — reload");
     n.entry.landed("anything");
-    expect(n.pinned).toBe(true);
+    expect(n.errorShown).toBe(true);
   });
 });
 
@@ -306,7 +306,7 @@ describe("the dismiss ×", () => {
     await flush();
     expect(copied).toEqual([]);
     expect([n.state.info.shown, n.state.warning.shown, n.state.error.shown]).toEqual([false, false, false]);
-    expect(n.pinned).toBe(false);
+    expect(n.errorShown).toBe(false);
   });
   it("a progress line has none to close; a save error covered by another comes back when that one is closed", () => {
     n.progress("exporting…");

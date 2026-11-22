@@ -140,7 +140,7 @@ section("card copy", async () => {
   { const md = await A.stored(page); console.log("pasted on a fresh page:", JSON.stringify({ fence: md.startsWith("::: card-light-blue"), lines: md.split("\n").length, ...(await R.cardsAndPairs(page)) })); }
 });
 section("grid", async () => {
-  /* a grid of cards: drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason pinned */
+  /* a grid of cards: drawn N across past the measure, hover-copied whole from the band above its top-right corner, ⌘C across two cards carrying the columns, and a stray line inside refused on the switch back with its reason raised as an error */
   await go("commonplace/Gridded");
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid */
@@ -182,7 +182,7 @@ section("grid", async () => {
   await log("the next entry after a refused switch", { source: await R.inSource(page) });
   await go("commonplace/Gridded");
   await rest(page);
-  /* the line fixed and the view restored: the pin released, the grid drawn */
+  /* the line fixed and the view restored: the error resolved, the grid drawn */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
@@ -190,7 +190,7 @@ section("grid", async () => {
   await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await R.gridLayout(page)) });
 });
 section("told on open", async () => {
-  /* a refused fence line and a directive no page reads, pinned when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
+  /* a refused fence line and a directive no page reads, raised as an error when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
   await writeAll({
     "2026-09-02/gesta-wrangling": "# Gesta wrangling\n\n```\nx\n```\n\n::: verse -3\nfealan thalos\n\\:::",
     "bookshelf/Chaucer, Geoffrey": "# Geoffrey Chaucer\n\n::: reference\nroman book and canto\npart titles in roman\n:::",
@@ -236,7 +236,7 @@ section("picture", async () => {
   /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
   await picturePasted();
   await picturePastedEntryS();
-  await picturePastedAnotherEntry();   /* the pin read, dismissed as a reader does: an alert yields to it */
+  await picturePastedAnotherEntry();   /* the error read, dismissed as a reader does: an alert yields to it */
 });
 async function picturePasted(): Promise<void> {
   await go("commonplace/Pictured");
@@ -360,7 +360,7 @@ const TABLE = ["", "  ┌──────┬───────────�
 const TERMINAL_HTML = terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run(CODE, "npm run verify") + " passed\n  before each landed.\n\n  - " + run(CODE, "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run(CODE, "7603f25") + ": the steps made independent.");
 const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";
 section("references across verse blocks", async () => {
-  /* blocks numbered apart refuse ⌃⌘R with a pin; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its alert not swallowed by the pin */
+  /* blocks numbered apart refuse ⌃⌘R with an error; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its alert not swallowed by the error */
   await write("commonplace/Blocks", "# Blocks\n\n::: verse\nfirst block\n:::\n\n::: verse\nsecond block\n:::\n\n## Between\n\n::: verse 2\nthird block\n:::");
   await still(page);
   await R.selectBetween(page, "first block", "second block");

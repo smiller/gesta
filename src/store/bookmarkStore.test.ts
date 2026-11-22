@@ -16,16 +16,16 @@ function world(initial?: string) {
       setItem: (k: string, v: string) => { if (full) throw new Error("QuotaExceededError"); box[k] = v; },
     };
   };
-  const pins: string[] = [], released: number[] = [];
+  const errors: string[] = [], released: number[] = [];
   const held = { keys: [] as string[], unreadable: false, reads: 0 };
   let gen = 0;
   const store = () => bookmarkStore({
     seed: SEED, storage,
     storedKeys: async () => { held.reads++; if (held.unreadable) throw new Error("IndexedDB blocked"); return held.keys; },
-    error: (text) => { pins.push(text); return ++gen; },
+    error: (text) => { errors.push(text); return ++gen; },
     resolveError: (g) => { released.push(g); },
   });
-  return { box, store, pins, released, held, fill: (on: boolean) => { full = on; }, block: (on: boolean) => { blocked = on; } };
+  return { box, store, errors, released, held, fill: (on: boolean) => { full = on; }, block: (on: boolean) => { blocked = on; } };
 }
 
 describe("the load and the seed", () => {
@@ -39,27 +39,27 @@ describe("the load and the seed", () => {
     expect(w.store().list()).toEqual([]);
     expect(w.box[KEY]).toBe("[]");
   });
-  it("a storage that cannot be reached reads as unreadable, seeds nothing, and refuses a write with a pin", () => {
+  it("a storage that cannot be reached reads as unreadable, seeds nothing, and refuses a write with an error", () => {
     const w = world();
     w.block(true);
     const s = w.store();
     expect(s.unreadable()).toBe(true);
     expect(s.list()).toEqual([]);
     expect(s.write([row("commonplace/C")])).toBe(false);
-    expect(w.pins).toEqual(["bookmarks not saved"]);
+    expect(w.errors).toEqual(["bookmarks not saved"]);
     w.block(false);
     expect(KEY in w.box).toBe(false);
   });
 });
 
 describe("the latch", () => {
-  it("text this app would not have written: empty here, every write refused and pinned, the text left as it was", () => {
+  it("text this app would not have written: empty here, every write refused with an error, the text left as it was", () => {
     const w = world("not json");
     const s = w.store();
     expect(s.unreadable()).toBe(true);
     expect(s.list()).toEqual([]);
     expect(s.write([row("commonplace/C")])).toBe(false);
-    expect(w.pins).toEqual(["bookmarks not saved"]);
+    expect(w.errors).toEqual(["bookmarks not saved"]);
     expect(w.box[KEY]).toBe("not json");
   });
   it("the open re-reads a damaged list: repaired by hand, its rows show and a write lands", () => {
@@ -78,7 +78,7 @@ describe("the latch", () => {
     s.open(() => ["commonplace/C"]);
     expect(s.unreadable()).toBe(true);
     expect(w.box[KEY]).toBe("not json");
-    expect(w.pins).toEqual([]);
+    expect(w.errors).toEqual([]);
   });
 });
 
@@ -104,12 +104,12 @@ describe("the open", () => {
 });
 
 describe("the write", () => {
-  it("a failed write pins and leaves the list as it was; the next landed write releases that pin", () => {
+  it("a failed write raises an error and leaves the list as it was; the next landed write resolves it", () => {
     const w = world('["commonplace/C"]');
     const s = w.store();
     w.fill(true);
     expect(s.write([row("commonplace/C"), row("commonplace/D")])).toBe(false);
-    expect(w.pins).toEqual(["bookmarks not saved"]);
+    expect(w.errors).toEqual(["bookmarks not saved"]);
     expect(s.list()).toEqual([row("commonplace/C")]);
     w.fill(false);
     expect(s.write([row("commonplace/C"), row("commonplace/D")])).toBe(true);
@@ -169,7 +169,7 @@ describe("the sweep at the open", () => {
     w.fill(true);
     expect(await s.open(() => [])).toBe(false);
     expect(w.held.reads).toBe(1);
-    expect(w.pins).toEqual([]);
+    expect(w.errors).toEqual([]);
   });
   it("the shared store is not read when every row leads somewhere, and a sweep that drops nothing writes nothing", async () => {
     const w = world('["commonplace/Here"]');
@@ -177,7 +177,7 @@ describe("the sweep at the open", () => {
     w.fill(true);
     expect(await s.open(() => ["commonplace/Here"])).toBe(false);
     expect(w.held.reads).toBe(0);
-    expect(w.pins).toEqual([]);
+    expect(w.errors).toEqual([]);
   });
 });
 

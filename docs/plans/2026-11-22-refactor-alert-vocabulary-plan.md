@@ -49,3 +49,12 @@ alert by kind, its words and when it is raised.
 - The acts' ports (`say`, `refuse`, `stick`, `pin`, `fail`: about 170
   calls under 15 names) are not renamed here: only the ledger's methods
   were decided.
+- Asked after the ports: "pin" for a standing error retires, the
+  comment standard's `(pin: …)` keeping the word. Every such pin is the
+  number `error()` returns, so `pinned` is `errorShown`, not alertShown.
+  The lines an entry opens with (a fence not known, a directive's
+  trouble) stay errors, "because the user might want to copy the
+  unrecognized form of the block after 10 seconds"; the words calling them
+  a warning say error. The help's two "pinned" lines for bookmarks take
+  the reader's words; the help as a whole is B2. "Pinned to the bottom"
+  in Masthead.svelte, a layout's word, stays.

@@ -85,7 +85,7 @@ export function importKeys(files: ImportFile[]): Set<string> {
 export interface Tally { imported: number; failed: number; attempted: number; failures: { path: string; error: string }[]; full?: true }
 /* A single file's failure is COUNTED, not thrown — one bad file must not
    abort the rest of the folder — and named in the tally. A full store
-   stops it: every write after would fail the same way, each its own pin
+   stops it: every write after would fail the same way, each its own error
    (pin: importFiles.test › storage full stops the import)
    (pin: importFiles.test › storage full on a picture) */
 export function importFiles(files: ImportFile[], sink: ImportSink, onProgress?: (done: number, total: number) => void): Promise<Tally> {

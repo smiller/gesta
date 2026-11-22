@@ -618,7 +618,7 @@ describe("a day's tagged entry renamed", () => {
     await w.life.rename();
     expect(w.md("2026-09-05/draft")).toBe("text and more\n");
   });
-  it("a write under the new name that does not land leaves the old entry standing, said in a pin", async () => {
+  it("a write under the new name that does not land leaves the old entry standing, said in an error", async () => {
     const w = await world({ at: ["2026-09-05", "draft"], entries: { "2026-09-05": "[draft](#2026-09-05/draft)\n", "2026-09-05/draft": "text" }, failSet: "2026-09-05/final" });
     w.answer("final");
     await w.life.rename();
@@ -853,14 +853,14 @@ describe("rename re-files an author with books", () => {
     await w.life.rename();
     expect(w.log[w.log.length - 1]).toBe("error couldn’t re-file — copies left: bookshelf/Cavafy, C. P/Walls");
   });
-  it("an old entry whose removal is refused is named in a pin, the rest moved", async () => {
+  it("an old entry whose removal is refused is named in an error, the rest moved", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failDel: "bookshelf/C. P. Cavafy/Walls" });
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     expect(w.md("bookshelf/C. P. Cavafy")).toBeNull();
     expect(w.log[w.log.length - 1]).toBe("error filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; old copy kept: bookshelf/C. P. Cavafy/Walls");
   });
-  it("a link refused once as stale is rewritten on the retry; one whose write fails, or that the rewrite cannot reach, is named in a pin", async () => {
+  it("a link refused once as stale is rewritten on the retry; one whose write fails, or that the rewrite cannot reach, is named in an error", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-15": "[x](file:///g/index.html#bookshelf/C.%20P.%20Cavafy)\n", "commonplace/Broken": "[y](#bookshelf/C.%20P.%20Cavafy/Walls)\n" }, failSet: "commonplace/Broken" });
     await w.foreign("2026-09-14", "Theirs: [the walls](#bookshelf/C.%20P.%20Cavafy/Walls)\n");
     w.answer("Cavafy, C. P.");

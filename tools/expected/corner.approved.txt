@@ -526,7 +526,7 @@ alerts and surfaces: arrived at commonplace/Pic Copy: {"cursor":"at a line's sta
 the copy button after a navigation: {"over":true,"after":false,"cursor":"at a line's start","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a link's tooltip: {"title":"⌘-click to open Horace","outside":"⌘-click to open","cursor":"at a line's start","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the Tag button's tooltip: {"title":"Move selection to a new sub-entry","cursor":"selected 4","screen":"commonplace/Links · sel 4 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
-a failed copy's pin clicked: {"clipboard":"[*Links*](…)","cursor":"none","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a failed copy's error clicked: {"clipboard":"[*Links*](…)","cursor":"none","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the tab's icon: {"icon":true,"cursor":"none","screen":"commonplace/Links · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 alerts and surfaces: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 a shortcut chosen with no cursor in the entry: {"corner":"place your cursor in the entry","unchanged":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -555,7 +555,7 @@ alerts and places: arrived at commonplace/Plain: {"cursor":"at a line's start"}
 ⌃⌘R with nothing selected: {"error":null,"warning":{"text":"Select a passage to reference first","across":true,"under":10},"cursor":"at the end","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ten seconds on: {"error":null,"warning":null,"cursor":"at the end","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 alerts and places: arrived at commonplace/Warned: {"cursor":"at a line's start"}
-⌃⌘R on an entry opened with a warning: {"error":{"text":"::: versey — not a block Gesta knows, so it stayed a paragraph","across":true,"under":10},"warning":{"text":"Select a passage to reference first","across":true,"under":61},"cursor":"at the end","screen":"commonplace/Warned · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘R on an entry opened with an error: {"error":{"text":"::: versey — not a block Gesta knows, so it stayed a paragraph","across":true,"under":10},"warning":{"text":"Select a passage to reference first","across":true,"under":61},"cursor":"at the end","screen":"commonplace/Warned · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the warning clicked: {"error":{"text":"::: versey — not a block Gesta knows, so it stayed a paragraph","across":true,"under":10},"warning":null,"clipboard":"Select a passage to reference first","cursor":"none","screen":"commonplace/Warned · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 alerts and places: arrived at commonplace/Plain: {"cursor":"at a line's start"}
 another entry clears the warning: {"error":null,"warning":null,"cursor":"at a line's start","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}

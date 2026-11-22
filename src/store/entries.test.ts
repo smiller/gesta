@@ -302,7 +302,7 @@ test("a write from another tab before the warm is taken once the warm lands", as
   expect(layer.cache["commonplace/A"]).toBe("theirs");
 });
 
-test("a save refused as stale makes the key owed: another tab's write is skipped and its debts kept, the refused text living in the pin", async () => {
+test("a save refused as stale makes the key owed: another tab's write is skipped and its debts kept, the refused text living in the error", async () => {
   const { layer, mem, calls } = fresh();
   await layer.warm();
   await layer.setEntry("commonplace/A", "mine");
@@ -365,7 +365,7 @@ test("rewriteEntry refused twice, or failing outright, answers failed and says s
   expect(await broken.layer.rewriteEntry("k", retarget)).toBe("failed");
 });
 
-test("rewriteEntry leaves a key whose own save was refused, its rescue pin standing", async () => {
+test("rewriteEntry leaves a key whose own save was refused, its rescue error standing", async () => {
   const { layer, mem, calls } = fresh();
   await layer.setEntry("k", "mine");
   await mem.foreignSet("k", "theirs [x](#old)");
@@ -467,7 +467,7 @@ test("a retry whose key is deleted before its turn, or while it is out, leaves t
   expect("a" in layer.cache || "b" in layer.cache).toBe(false);
 });
 
-test("a save that fails after its entry was deleted is told nowhere: no pin waits on a key that will never land", async () => {
+test("a save that fails after its entry was deleted is told nowhere: no error waits on a key that will never land", async () => {
   let fail: ((e: Error) => void) | null = null;
   const { layer, calls } = fresh((mem) => ({ ...mem, set: () => new Promise<void>((_, rej) => { fail = rej; }) }));
   await layer.warm();

@@ -60,10 +60,10 @@ export interface SurfaceOptions {
   build: { rendered(doc: Node): Surface; source(md: string): Surface };
   window: Viewport;
   places: PlacePort;
-  /* 0 when nothing was pinned */
+  /* 0 when nothing was raised */
   error: (text: string) => number;
   resolveError: (gen: number) => void;
-  pinned: () => boolean;
+  errorShown: () => boolean;
   onView: (md: boolean) => void;
   switched: () => void;
 }
@@ -88,26 +88,27 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   let forced = false, readerView = false;
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
-  let fencePin = 0;
-  const unpin = (): void => { if (fencePin) opts.resolveError(fencePin); fencePin = 0; };
-  const repin = (next: () => number): void => { unpin(); fencePin = next(); };
+  let fenceError = 0;
+  const dropFenceError = (): void => { if (fenceError) opts.resolveError(fenceError); fenceError = 0; };
+  const raiseFenceError = (next: () => number): void => { dropFenceError(); fenceError = next(); };
   const mount = (make: () => Surface): void => {
     const old = cur;
     cur = null;
     old?.destroy();
     cur = make();
   };
-  const refusedPin = (err: unknown): number => opts.error("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
-  /* the entry's refused fences and its directives' trouble, pinned when it
-     is drawn: told only on the switch back, they were never seen by a
+  const refusedError = (err: unknown): number => opts.error("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+  /* the entry's refused fences and its directives' trouble, raised as an
+     error when it is drawn: told only on the switch back, they were never seen by a
      reader who did not edit the source (pin: surface.test › an entry opened
-     pins its refused fences). On opening it never covers a pin standing: it
-     hid a "not saved" (pin: surface.test › the warning on open never covers) */
-  function pinTold(doc: Node, opening: boolean): void {
-    if (opening && opts.pinned()) return;
+     raises its refused fences). On opening it never covers an error
+     standing: it hid a "not saved" (pin: surface.test › the error on open
+     never covers) */
+  function raiseTold(doc: Node, opening: boolean): void {
+    if (opening && opts.errorShown()) return;
     const refused = fenceRefusals(doc);
     const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(...splitKey(ekey), directivesIn(doc))];
-    if (told.length) repin(() => opts.error(told.join("\n")));
+    if (told.length) raiseFenceError(() => opts.error(told.join("\n")));
   }
   /* whether the show is of another entry than the one on screen, the view
      it opens in settled */
@@ -126,18 +127,18 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   }
   function show(md: string, key: string, keepView = false): void {
     const fresh = arrived(key, keepView);
-    /* the carets and a pinned fence refusal belong to the entry left
-       (pin: surface.test › a show releases the entry left's fence pin); a
-       redraw of the entry on screen keeps its warning, and pins it no more
+    /* the carets and a fence refusal's error belong to the entry left
+       (pin: surface.test › a show resolves the entry left's fence error); a
+       redraw of the entry on screen keeps its error, and raises it no more
        (pin: surface.test › a redraw of the entry on screen) */
     carets.rendered = carets.source = null; placedAt = null;
-    if (fresh) unpin();
+    if (fresh) dropFenceError();
     if (mdView) { mount(() => build.source(md)); return; }
     let doc;
     try { doc = parseMarkdown(md); }
     catch (err) { shownForced(md, err); return; }
     mount(() => build.rendered(doc));
-    if (fresh) pinTold(doc, true);
+    if (fresh) raiseTold(doc, true);
   }
   /* not edited as a document — an editor over a lossy parse would save
      the loss — but as source: the switch back parses it again
@@ -146,7 +147,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
     /* PINNED, released by the next show: an info was covered by the
        entry count before it was read (pin: grid › the faulty entry opened) */
-    repin(() => refusedPin(err));
+    raiseFenceError(() => refusedError(err));
     readerView = mdView; forced = true;
     mdView = true;
     mount(() => build.source(md));
@@ -211,14 +212,14 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
          the line the message quotes, and an info faded before a slow
          reader found it; released by the clean parse below
          (pin: grid › a stray line in a grid, switched back) */
-      repin(() => refusedPin(err));
+      raiseFenceError(() => refusedError(err));
       forced = wasForced;   /* a forced source view stays forced, so the next show renders (pin: grid › the next entry after a refused switch) */
       return false;
     }
     mdView = false;
     mount(() => build.rendered(doc));
-    unpin();
-    pinTold(doc, false);
+    dropFenceError();
+    raiseTold(doc, false);
     return true;
   }
   function switchTo(md: boolean): void {

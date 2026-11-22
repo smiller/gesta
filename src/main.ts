@@ -17,7 +17,7 @@ import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { alertLedger } from "./ui/alertLedger.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
 import { screenState } from "./ui/screen.svelte.ts";
-import { loadPins, refuseCold } from "./ui/journalLoad.ts";
+import { loadErrors, refuseCold } from "./ui/journalLoad.ts";
 import { mastheadModel } from "./ui/mastheadModel.ts";
 import { lifecycle } from "./ui/lifecycle.ts";
 import { keptState } from "./ui/keptState.ts";
@@ -209,7 +209,7 @@ const count = (): void => { root.dataset.store = String(Object.keys(layer.cache)
 const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
 /* the backup's status line is an info, each step restarting the clock:
    an autosave "saved" may overwrite "backing up…" (a background backup
-   must not suppress the user's own save feedback), and a pin outranks
+   must not suppress the user's own save feedback), and an error outranks
    both */
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
@@ -260,7 +260,7 @@ const entryShown = (stored: string, ekey: string): void => {
 };
 const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, info, succeed, warn,
-  error: (text, from) => alerts.error(text, from), pinned: () => alerts.pinned, resolveError: (gen) => alerts.resolveError(gen),
+  error: (text, from) => alerts.error(text, from), errorShown: () => alerts.errorShown, resolveError: (gen) => alerts.resolveError(gen),
   onShow: (stored, ekey) => entryShown(stored, ekey),
   onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),
@@ -502,13 +502,13 @@ const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeou
 /* asked once: an unpersisted store may be evicted under storage pressure
    (pin: losing nothing › a store that never answers) */
 navigator.storage?.persist?.().catch(() => {});
-const loadPinned = loadPins(LOAD_PATIENCE_MS, alerts);
+const loadWatch = loadErrors(LOAD_PATIENCE_MS, alerts);
 /* the bundle's own progress line speaks while it is read, however long a
    slow device takes */
-if (READER) wrote.then(loadPinned.start); else loadPinned.start();
+if (READER) wrote.then(loadWatch.start); else loadWatch.start();
 /* the pages became commonplaces before anything reads the keys: the
    lists, the search index, the backup's folders */
-primed.then(held).then(() => layer.warm()).then(() => loadPinned.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [(moved) => kept.relocate({ moved })], readOnly: READER })).then((migrated) => {
+primed.then(held).then(() => layer.warm()).then(() => loadWatch.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [(moved) => kept.relocate({ moved })], readOnly: READER })).then((migrated) => {
   if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
   stage("all"); count();
   info(Object.keys(layer.cache).length + " entries stored");

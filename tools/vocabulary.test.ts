@@ -23,10 +23,18 @@ test("retiredAlertSense: an alert's kind or its area by the names before; never 
   for (const good of ["a refusal", "the store refuses", "L.refusal(name, fp)", "stripSheets(cases)", "a strip of the day's counts", "failures.push(x)"]) expect(retiredAlertSense(good), good).toBe(false);
 });
 
+test("retiredAlertSense: a standing error by its name before, pin, in code; never a checking pin, a fixed clock or a layout's pinned", () => {
+  for (const bad of ["alerts.pinned", "pinned: () => true", "errorShown?: () => boolean; pinned?: () => boolean", "let fencePin = 0", "detachedPins.push(g)", "loadPins(8000, a)", "unpin()", "repin(() => 1)", "export interface Pins {"]) expect(retiredAlertSense(bad), bad).toBe(true);
+  for (const good of ["(pin: surface.test › a show)", "stays pinned to the bottom", "today is pinned, not scrubbed", "test(\"pinned as found: Enter\"", "(unpinned: two writes no step can order)", "Unpinned: a race"]) expect(retiredAlertSense(good), good).toBe(false);
+});
+
 // Milton's own preface to Samson Agonistes uses the verb.
 const QUOTES_A_BOOK = new Set(["one-offs/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
-// The alert log carries a log kept under its kinds' names before.
-const READS_KINDS_BEFORE = new Set(["src/ui/alertLog.ts", "src/ui/alertLog.test.ts"]);
+const ALERT_SENSE_KEPT: Record<string, string> = {
+  "src/ui/alertLog.ts": "carries a log kept under its kinds' names before",
+  "src/ui/alertLog.test.ts": "carries a log kept under its kinds' names before",
+  "tools/commentRules.ts": "its resolvers are the checking pin's, bridgePin and the rest",
+};
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
@@ -36,7 +44,7 @@ function walk(dir: string): string[] {
 }
 test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference and alert: no retired word anywhere", () => {
   const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
-  const retired = (f: string) => (t: string): boolean => retiredWord(t) || (!READS_KINDS_BEFORE.has(f) && retiredAlertSense(t));
+  const retired = (f: string) => (t: string): boolean => retiredWord(t) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retired(f)(t) ? [f + ":" + (i + 1)] : [])));
   expect(found).toEqual([]);
 });

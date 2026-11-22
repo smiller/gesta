@@ -67,7 +67,7 @@ section("bookmarks", async () => {
   await page.keyboard.press("Escape");
 });
 section("bookmarks damaged", async () => {
-  /* a damaged list: ⌃⌘B says so and A is refused with its pin; repaired by hand, the next ⌃⌘B shows its rows without a reload, and A lands, releasing the pin; a reload ends the step so the pin is not carried on, back on the day the next step reads */
+  /* a damaged list: ⌃⌘B says so and A is refused with its error; repaired by hand, the next ⌃⌘B shows its rows without a reload, and A lands, resolving the error; a reload ends the step so the error is not carried on, back on the day the next step reads */
   await go("commonplace/Horace", 5000);
   await page.evaluate((k) => localStorage.setItem(k, "not json"), A.bookmarksKey);
   await page.reload();

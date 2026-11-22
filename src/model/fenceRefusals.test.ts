@@ -32,7 +32,7 @@ test("a real fence, a bare closer, a code block's line and a row are none of the
   expect(refused("```\n::: nope\n```")).toEqual([]);
   expect(refused("plain\n\n:::")).toEqual([]);
 });
-test("the pin's text: one line with its tail, several one per line with the count", () => {
+test("the error's text: one line with its tail, several one per line with the count", () => {
   expect(refusalsText(refused("::: versey\nx\n:::"))).toBe("::: versey — not a block Gesta knows, so it stayed a paragraph");
   const two = refused("::: versey\nx\n:::\n\n::: card\ny\n:::");
   expect(refusalsText(two)).toBe("::: versey — not a block Gesta knows\n::: card — card blocks must include a colour, like card-light-green\n2 fences stayed paragraphs");

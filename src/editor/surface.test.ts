@@ -11,10 +11,10 @@ const told = (): string => directiveTrouble("bookshelf", "Chaucer, Geoffrey", ["
 
 interface Fake extends Surface { caretAt: number; seen: boolean; top: number | null; text: string }
 
-function world(y = 0, standing = { pin: false }) {
+function world(y = 0, standing = { error: false }) {
   const log: string[] = [];
   const built: Fake[] = [];
-  const pins: string[] = [], released: number[] = [];
+  const errors: string[] = [], released: number[] = [];
   const win = { at: y, y: () => win.at, scrollTo: (to: number) => { win.at = to; log.push("scroll " + to); }, under: () => 0 };
   const fake = (source: boolean, text: string, doc?: Node): Fake => {
     const f: Fake = {
@@ -47,13 +47,13 @@ function world(y = 0, standing = { pin: false }) {
       carry: (pos) => { log.push("carry " + pos); },
       release: () => { log.push("release"); },
     },
-    error: (text) => { pins.push(text); return pins.length; },
+    error: (text) => { errors.push(text); return errors.length; },
     resolveError: (gen) => { released.push(gen); },
-    pinned: () => standing.pin,
+    errorShown: () => standing.error,
     onView: (md) => { log.push("view " + md); },
     switched: () => { log.push("switched"); },
   });
-  return { s, log, win, pins, released, last: () => built[built.length - 1] };
+  return { s, log, win, errors, released, last: () => built[built.length - 1] };
 }
 const posOf = (doc: Node, ch: string): number => { const f = flattenDoc(doc); return f.pos[f.text.indexOf(ch)]!; };
 
@@ -152,12 +152,12 @@ describe("the caret across the switch", () => {
 describe("a text the model refuses", () => {
   const BAD = "::: grid\ntext first\n::: card-red\na\n:::\n:::";
   const WHY = 'a grid holds only cards; "text first" is not a card';
-  it("shown, forces the source view, pinned and told; the next show puts the reader's view back", () => {
+  it("shown, forces the source view, raised as an error and told; the next show puts the reader's view back", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
     w.s.show(BAD, "commonplace/Gridded");
     expect(w.log).toEqual(["build source", "view true"]);
-    expect(w.pins).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown as source"]);
+    expect(w.errors).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown as source"]);
     expect(err).toHaveBeenCalledWith("cannot render", "commonplace/Gridded", WHY);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
@@ -167,14 +167,14 @@ describe("a text the model refuses", () => {
     expect(w.s.md).toBe(false);
     err.mockRestore();
   });
-  it("switched back to, keeps the source view, re-pinned, and a forced view stays forced", () => {
+  it("switched back to, keeps the source view, its error raised again, and a forced view stays forced", () => {
     const err = vi.spyOn(console, "error").mockImplementation(() => {});
     const w = world();
     w.s.show(BAD, "commonplace/Gridded");
     w.log.length = 0;
     w.s.switchTo(false);
     expect(w.log).toEqual(["release", "read caret"]);
-    expect(w.pins[1]).toBe("cannot render commonplace/Gridded — " + WHY + "; shown as source");
+    expect(w.errors[1]).toBe("cannot render commonplace/Gridded — " + WHY + "; shown as source");
     expect(w.released).toEqual([1]);
     expect(w.s.md).toBe(true);
     w.log.length = 0;
@@ -182,27 +182,27 @@ describe("a text the model refuses", () => {
     expect(w.log).toEqual(["view false", "destroy source", "build rendered"]);
     err.mockRestore();
   });
-  it("a clean parse back releases the pin; the lines it refused are pinned anew", () => {
+  it("a clean parse back resolves the error; the lines it refused are raised anew", () => {
     const w = world();
     w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
     w.last().text = "::: versey\nline\n:::";
     w.s.switchTo(false);
-    expect(w.pins).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::")))]);
+    expect(w.errors).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::")))]);
     w.s.switchTo(true);
     w.last().text = "fine";
     w.s.switchTo(false);
     expect(w.released).toEqual([1]);
-    expect(w.pins).toHaveLength(1);
+    expect(w.errors).toHaveLength(1);
   });
-  it("a directive the page does not read is pinned on the switch back, with the fences it refused", () => {
+  it("a directive the page does not read is raised as an error on the switch back, with the fences it refused", () => {
     const back = (md: string) => {
       const w = world();
       w.s.show("# Chaucer", "bookshelf/Chaucer, Geoffrey");
       w.s.switchTo(true);
       w.last().text = md;
       w.s.switchTo(false);
-      return w.pins;
+      return w.errors;
     };
     expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::")).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
     expect(back("# Chaucer\n\n::: reference\nroman book and canto\n:::")).toEqual([told()]);
@@ -227,29 +227,29 @@ describe("a text the model refuses", () => {
     w.s.show("fine", "commonplace/B", true);
     expect(w.s.md).toBe(true);
   });
-  it("an entry opened pins its refused fences and its directives' trouble together, and the next entry opened releases them", () => {
+  it("an entry opened raises its refused fences and its directives' trouble as one error, and the next entry opened resolves it", () => {
     const w = world();
     w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::\n\n::: versey\nline\n:::", "bookshelf/Chaucer, Geoffrey");
-    expect(w.pins).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
+    expect(w.errors).toEqual([refusalsText(fenceRefusals(parseMarkdown("::: versey\nline\n:::"))) + "\n" + told()]);
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
-    expect(w.pins).toHaveLength(1);
+    expect(w.errors).toHaveLength(1);
   });
-  it("the warning on open never covers a pin already standing", () => {
-    const w = world(0, { pin: true });
+  it("the error on open never covers an error already standing", () => {
+    const w = world(0, { error: true });
     w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
-    expect(w.pins).toEqual([]);
+    expect(w.errors).toEqual([]);
   });
-  it("a redraw of the entry on screen neither pins its warning again nor releases it", () => {
+  it("a redraw of the entry on screen neither raises its error again nor resolves it", () => {
     const w = world();
     const md = "# Chaucer\n\n::: reference\nroman book and canto\n:::";
     w.s.show(md, "bookshelf/Chaucer, Geoffrey");
     w.s.show(md, "bookshelf/Chaucer, Geoffrey", true);
     w.s.show(md, "bookshelf/Chaucer, Geoffrey");
-    expect(w.pins).toHaveLength(1);
+    expect(w.errors).toHaveLength(1);
     expect(w.released).toEqual([]);
   });
-  it("a show releases the entry left's fence pin", () => {
+  it("a show resolves the entry left's fence error", () => {
     const w = world();
     w.s.show("fine", "commonplace/A");
     w.s.switchTo(true);
