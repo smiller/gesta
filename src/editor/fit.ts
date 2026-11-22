@@ -20,7 +20,8 @@ export const CAP = 1285;
 /* the <main> element's own padding plus a classic scrollbar: 100vw counts the scrollbar,
    documentElement.clientWidth does not */
 export const WINDOW_MARGIN = 64;
-/* em: the English column's reading measure, a line of about 65 characters */
+/* em: the most a dual-language block's English counts toward the entry's
+   width, a line of about 65 characters; the columns then take half each */
 export const DUAL_MEASURE_EM = 30;
 /* the narrowest the English of a dual-language block gives way to before
    the Latin wraps: in px at 18px, and in em for a note's smaller type */
@@ -82,6 +83,11 @@ function wholeCol(room: number, c1: number, c2: number, kept: number | null): nu
   /* (pin: fit.test › a dual-language block's grow only widens) */
   return kept == null ? whole : Math.min(Math.max(whole, kept), Math.max(whole, most));
 }
+/* EQUAL HALVES: the Latin's column is half the room, wider only where its
+   own lines need it, and never so wide the English loses its floor (pin:
+   fit.test › a dual-language block's columns are equal halves) */
+const halvedCol = (room: number, whole: number, c2: number): number =>
+  Math.max(whole, Math.min(Math.round(room / 2), Math.round(room - Math.min(DUAL_MIN_ENGLISH, c2))));
 /* the remembered column, and what this room affords: never less than the
    root carries, never more than the room holds — and the room holds more
    than the fresh answer wherever the translation only needs c2 */
@@ -100,7 +106,7 @@ export function fitWidth(m: Measured, prev: Fit | null, growOnly: boolean): Fit 
      alike, and its English starts half the shortfall in (pin: fit.test ›
      an entry capped below paired prose's measure) */
   const c1 = Math.max(own, Math.round((m.edge ?? 0) - Math.max(0, (m.prose ?? 0) - width) / 2));
-  if (m.whole) return { width, col: wholeCol(room, c1, c2, kept) };
+  if (m.whole) return { width, col: halvedCol(room, wholeCol(room, c1, c2, kept), c2) };
   return { width, col: keptCol(splitCol(room, c1, c2), room, c2, kept) };
 }
 

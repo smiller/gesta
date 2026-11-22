@@ -112,8 +112,15 @@ test("a dual-language block whose sentences are all short keeps its Latin whole:
 
 test("a dual-language block's grow only widens, its column kept against a Latin line just shortened", () => {
   expect(fitWidth(m(300, 540, { cap: 936, whole: true }), { width: 936, col: 461 }, true)).toEqual({ width: 936, col: 461 });
-  // the settle narrows it again
-  expect(fitWidth(m(300, 540, { cap: 936, whole: true }), { width: 936, col: 461 }, false)!.col).toBe(301);
+  // the settle narrows it again, to half the room
+  expect(fitWidth(m(300, 540, { cap: 936, whole: true }), { width: 936, col: 461 }, false)!.col).toBe(415);
+});
+
+test("a dual-language block's columns are equal halves of the room, the Latin wider only where its own lines need it", () => {
+  // width 444 + 541 + 105.4 = 1091, room 985.6: each column 493
+  expect(fitWidth(m(443, 540, { whole: true }), null, false)).toEqual({ width: 1091, col: 493 });
+  // short sentences: the floor's room 606.6 halved
+  expect(fitWidth(m(200, 100, { whole: true }), null, false)).toEqual({ width: 712, col: 303 });
 });
 
 test("beside a dual-language block one over-wide line still takes no more than two thirds", () => {

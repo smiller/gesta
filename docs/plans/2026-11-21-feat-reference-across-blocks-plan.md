@@ -40,5 +40,19 @@ read over text.
   settled ("editing as the help says"), a second selection overwritten
   (that section, reverse order).
 - Progress lists gained U, the reader's requests, at the top (asked).
-- Open: U4, the English column held to 30em against the Latin's fitted
-  width (dual-language plan, decision 7), the reader's call.
+
+## U4: a dual-language block's columns in equal halves
+
+Asked: "the English translation in the reference is much wider than the
+Latin"; then "build equal halves". Replaces decision 7 of
+2026-10-22-feat-dual-language-plan: the English still counts at most 30em
+toward the entry's width, and the room is then split in halves; the Latin
+is wider only where its own lines need it, and the English keeps its floor.
+That decision named no alternative weighed; equal halves had been refused
+only for a quoted pair of verse, whose English lines wrapped.
+
+- MEASURED in headless Helium over the backup's Book 4 at 1280px: Latin
+  508px, English 509px (before: the Latin its own width, the English 30em).
+- The verdict's one changed reading: a pasted dual-language reference's
+  English runs 9 lines where it ran 8.
+
