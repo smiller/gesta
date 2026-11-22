@@ -362,9 +362,11 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     tests, fails, its allowed list giving each exception's reason),
     `hooks-test.sh`, `accepted.sh`, `commitSubject.ts` (the commit-msg
     hook's check: a Conventional Commits subject, 72 characters at most);
-    `sourceSpans.ts` (a source file's
-    comments, strings and template text, which both `commentRules.ts`
-    and `apostrophes.ts` read).
+    `alertCatalogue.ts` (every alert src/ raises, by kind, listed in
+    `docs/alerts.md`, and nothing listed that src/ no longer raises);
+    `sourceSpans.ts` (a source file's comments, strings and template
+    text, which `commentRules.ts`, `apostrophes.ts` and
+    `alertCatalogue.ts` read).
   - The day's progress, `progress/`: `events.ts` (a day's events replayed
     to a time: each item's state, the counts), `page.ts` (the page, a
     snapshot at a time, or with `--slides` the slideshow, under
@@ -391,4 +393,5 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   conversion's first. `docs/brainstorms/` — the higher-level thinking (and
   mock-ups) a plan may start from, the compound-engineering plugin's.
   `docs/adr/` — architecture decisions, made when the first is (what it
-  holds to be settled then).
+  holds to be settled then). `docs/alerts.md` — every alert by kind: its
+  words and when it is raised.

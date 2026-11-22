@@ -117,7 +117,7 @@ test("a pasted link into the app by its full address keeps only its bare address
   const link = (href: string) => schema.text("Horace", [schema.marks.link.create({ href })]);
   const html = new Slice(schema.node("doc", null, [schema.node("paragraph", null, [link(page + "#commonplace/Horace?h=sunt%20quos"), schema.text(" and "), link("https://example.com/#x"), schema.text(" and "), link("file:///Users/someone/writer/index.html#2022-07-05")])]).content, 0, 0);
   const hrefs: string[] = [];
-  const ownPaste = pasteProps({ file: () => {}, refused: () => {}, href: () => page + "#2026-10-16" });
+  const ownPaste = pasteProps({ file: () => {}, warn: () => {}, href: () => page + "#2026-10-16" });
   ownPaste.transformPasted!(html, null as never, false).content.descendants((n) => { n.marks.forEach((m) => hrefs.push(m.attrs.href as string)); });
   expect(hrefs).toEqual(["#commonplace/Horace?h=sunt%20quos", "https://example.com/#x", "file:///Users/someone/writer/index.html#2022-07-05"]);
 });
@@ -126,7 +126,7 @@ test("a link into the app in pasted markdown keeps only its bare address; one wh
   const s = at("start here", "here");
   expect(after(s, `[Horace](${page}#commonplace/Horace)\n\nand [${page}#commonplace/Ode](${page}#commonplace/Ode)`)).toBe(`start here\n\n[Horace](#commonplace/Horace)\n\nand ${page}#commonplace/Ode`);
   const plain = new Slice(parseMarkdown("no links [here](https://example.com/)").content, 0, 0);
-  expect(pasteProps({ file: () => {}, refused: () => {}, href: () => page }).transformPasted!(plain, null as never, false)).toBe(plain);
+  expect(pasteProps({ file: () => {}, warn: () => {}, href: () => page }).transformPasted!(plain, null as never, false)).toBe(plain);
 });
 
 test("pasted HTML keeps its spaces only when every block in it is one this page marked", () => {

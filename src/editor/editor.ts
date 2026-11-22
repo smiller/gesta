@@ -41,7 +41,6 @@ export interface EditorOptions {
   warn?: (why: string) => void;
   onPasteFile?: (file: File) => void;
   /* a pasted fence the model refused, named with its reason */
-  onPasteRefused?: (text: string) => void;
   folds?: FoldOptions;
   /* the window's top a caret scrolled into view must stand below */
   clearOf?: () => number;
@@ -240,7 +239,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     attributes: { class: "page", spellcheck: "false" },
     handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
     handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
-    ...pasteProps({ file: (f) => opts.onPasteFile?.(f), refused: (text) => opts.onPasteRefused?.(text), href: () => location.href }),
+    ...pasteProps({ file: (f) => opts.onPasteFile?.(f), warn: (text) => opts.warn?.(text), href: () => location.href }),
     ...copyProps(),
     dispatchTransaction(this: EditorView, tr: Transaction) {
       /* A SCROLL NEEDS THE FOCUS FIRST: ProseMirror writes a selection to the

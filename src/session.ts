@@ -199,7 +199,6 @@ export function startSession(opts: SessionOptions): Session {
       onRoute: (frag) => goto(frag, "already here"),
       warn: (why) => warn(why),
       onPasteFile: pasteFile,
-      onPasteRefused: (text) => warn(text),
       clearOf: () => Math.max(mastheadHeight, areaClear()),
     });
     return rendered;

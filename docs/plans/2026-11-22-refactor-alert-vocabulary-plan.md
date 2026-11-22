@@ -58,3 +58,15 @@ alert by kind, its words and when it is raised.
   a warning say error. The help's two "pinned" lines for bookmarks take
   the reader's words; the help as a whole is B2. "Pinned to the bottom"
   in Masthead.svelte, a layout's word, stays.
+- The catalogue, docs/alerts.md: 112 raise calls in src/, 33 of them with
+  words chosen elsewhere, named by file and `callee(first argument)`
+  (MEASURED, tools/alertCatalogue.ts over src/). TypeScript 7 gives no
+  scanner to JavaScript, so the checker reads text over sourceSpans. Its
+  rules came from its first run: a bare ok() in passage.ts was a helper,
+  so progress's and the entry layer's names count only called on
+  something; a call handing on its own parameter is wiring; failMsg's
+  words are read through (its form a test against the real function); a
+  ternary's colon after a call was first taken for a signature, missing
+  session.ts's "Couldn’t copy …".
+- The paste port `refused`, missed by the ports rename, is `warn`, and the
+  editor's onPasteRefused, the same function handed in twice, went.

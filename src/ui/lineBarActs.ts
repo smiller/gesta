@@ -67,7 +67,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const view = session.view!;
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
-    /* a landing's word is passing; a line mistyped or absent is a refusal */
+    /* a landing's word is an info; a line mistyped or absent is a warning */
     if (a.said?.kind === "landing") info(a.said.text, SAID_MS.landing);
     else if (a.said) warn(a.said.text);
     return "pos" in a;

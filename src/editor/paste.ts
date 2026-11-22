@@ -274,14 +274,14 @@ export function pasted(state: EditorState, clip: Clipboard, href: string): Paste
   return "default";
 }
 type PasteProps = Pick<EditorProps, "handlePaste" | "clipboardTextParser" | "clipboardParser" | "transformPasted">;
-export function pasteProps(on: { file(f: File): void; refused(text: string): void; href(): string }): PasteProps {
+export function pasteProps(on: { file(f: File): void; warn(text: string): void; href(): string }): PasteProps {
   return {
     handlePaste: (view, event) => {
       const r = pasted(view.state, clipboardOf(event.clipboardData), on.href());
       if (r === "default") return false;
       if (r === "nothing") return true;
       if ("file" in r) on.file(r.file);
-      else { view.dispatch(r.tr); if (r.refused) on.refused(r.refused); }
+      else { view.dispatch(r.tr); if (r.refused) on.warn(r.refused); }
       return true;
     },
     clipboardTextParser: (text, $context) => pasteSlice(text, $context),
