@@ -28,6 +28,10 @@ must keep is restated here.
     between them.
   - Hand over the artifact, not the claim: a command and its output, a
     probe to paste, a file:line.
+  - A command to paste sits in its own code block, nothing after it, on
+    ONE line of 60 characters at most: a copy that wraps picks up two
+    spaces at the break and fails. A file to copy in is put at a short
+    path first (`tools/out/`, gitignored), never named by the scratchpad's.
   - Report who found what, exactly.
   - A reply's first and last sentences carry something not already in it,
     or they go; a restated fact is the commonest filler.
@@ -354,7 +358,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     to its end, a parent's own time, the gaps, the totals),
     `log.ts` (an event appended as it happens, refused when it names no
     list or no item, the day's page and slideshow redrawn after),
-    `day.ts` (a day's events read from its log); each day's events in
+    `day.ts` (a day's events read from its log), `reviewRow.ts` (a typed
+    `/code-review` or `/improve-codebase-architecture` adds and starts its
+    row, run by `hooks/skill-row.sh`); each day's events in
     `docs/progress/`.
 - `one-offs/` — scripts run once or a few times over the backup to set
   its entries right; every check holds over them as over `tools/`. What

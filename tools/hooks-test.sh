@@ -1,9 +1,10 @@
 #!/bin/sh
 # hooks-test.sh — prove the hooks still have teeth: the review gate
 # (hooks/sig.sh, accept.sh, pre-review.sh), the test gates (hooks/stop.sh,
-# hooks/pre-commit) and their wiring. The running app's gate-test.sh, cut
-# to this app's five scripts (2026-09-22). A hook's long-term risk is not
-# being defeated but breaking QUIETLY — a renamed script, a settings
+# hooks/pre-commit), the progress row (hooks/skill-row.sh) and their
+# wiring. The running app's gate-test.sh, cut to this app's five scripts
+# (2026-09-22). A hook's long-term risk is not being defeated but
+# breaking QUIETLY — a renamed script, a settings
 # reload that did not take, a hooksPath never set on a clone — while
 # everyone assumes it is on. Every check here was run by hand once while
 # the hook was built; this makes them repeatable, and `npm run verify`
@@ -236,6 +237,22 @@ git add src/needed.ts
 if git commit -qm "feat: whole" >/dev/null 2>&1 && [ "$(git rev-parse HEAD)" != "$h1" ]; then ok "pre-commit: the same commit staged whole lands"; else bad "pre-commit: the same commit staged whole did not land"; fi
 git reset -q --hard "$h1"; green verify.sh
 
+# === skill-row.sh ==========================================================
+# a typed review writes its row into the fixture's log; the second event
+# for the same command writes nothing; nothing it is fed blocks a prompt
+clean
+mkdir -p tools/progress && cp "$REPO"/tools/progress/*.ts "$REPO"/tools/progress/page.css tools/progress/ && cp "$REPO/hooks/skill-row.sh" hooks/ || exit 1
+rowlog="docs/progress/$(date +%F).jsonl"
+rout=$(printf '%s' '{"hook_event_name":"UserPromptExpansion","command_name":"code-review","command_args":"high a1..b2"}' | sh hooks/skill-row.sh 2>&1); rc=$?
+if [ "$rc" = 0 ] && grep -q '"title":"The batch review: /code-review at HIGH over a1..b2"' "$rowlog" 2>/dev/null && grep -q '"ev":"start"' "$rowlog"; then ok "skill-row: a typed review adds and starts its row"
+else bad "skill-row: a typed review did not write its row (exit $rc): $(printf '%s' "$rout" | head -1)"; fi
+rows=$(wc -l < "$rowlog" 2>/dev/null)
+printf '%s' '{"hook_event_name":"UserPromptSubmit","prompt":"/code-review high a1..b2"}' | sh hooks/skill-row.sh >/dev/null 2>&1; rc=$?
+if [ "$rc" = 0 ] && [ "$(wc -l < "$rowlog" 2>/dev/null)" = "$rows" ]; then ok "skill-row: the same review's second event writes nothing"; else bad "skill-row: the same review's second event wrote rows (exit $rc)"; fi
+printf 'not json' | sh hooks/skill-row.sh >/dev/null 2>&1; rc=$?
+[ "$rc" = 0 ] && ok "skill-row: input it cannot read never blocks the prompt" || bad "skill-row: input it cannot read exited $rc"
+grep -q 'a1\.\.b2' "$(git rev-parse --git-dir)/gesta-hook-input.log" 2>/dev/null && ok "skill-row: each input is kept in the git dir's input log" || bad "skill-row: the input log lacks the input"
+
 # === the wiring, read from THE REAL REPO (read-only) ========================
 wiring=$(python3 - "$REPO" <<'PY'
 import json, sys, os
@@ -250,6 +267,8 @@ for tool in ("Skill", "Agent", "Workflow"):
     if not any(tool in m.split("|") for m in matchers): bad("the pre-review matcher does not cover %s" % tool)
 stop = [h for m in hooks.get("Stop", []) for h in m.get("hooks", []) if "stop.sh" in h.get("command", "")]
 if not stop: bad("Stop does not run hooks/stop.sh")
+for ev in ("UserPromptExpansion", "UserPromptSubmit", "SubagentStop"):
+    if not any("skill-row.sh" in h.get("command", "") for m in hooks.get(ev, []) for h in m.get("hooks", [])): bad("%s does not run hooks/skill-row.sh" % ev)
 deny = s.get("permissions", {}).get("deny", [])
 for rule in ("Edit(hooks/**)", "Write(hooks/**)", "Edit(.claude/settings.json)", "Write(.claude/settings.json)"):
     if rule not in deny: bad("permissions.deny is missing %s" % rule)
@@ -257,7 +276,7 @@ if not any(r.startswith("Bash(") and "accept.sh" in r for r in deny): bad("permi
 print("\n".join(out))
 PY
 )
-if [ -z "$wiring" ]; then ok "settings.json wires pre-review.sh and stop.sh, the matcher covers Skill, Agent and Workflow, hooks/** and accept.sh are denied"
+if [ -z "$wiring" ]; then ok "settings.json wires pre-review.sh, stop.sh and skill-row.sh, the matcher covers Skill, Agent and Workflow, hooks/** and accept.sh are denied"
 else printf '%s\n' "$wiring" | while IFS= read -r w; do [ -n "$w" ] && echo "  FAIL  wiring: $w"; done; fail=$((fail + $(printf '%s\n' "$wiring" | grep -c .))); fi
 [ "$(git -C "$REPO" config core.hooksPath)" = "hooks" ] && ok "the real repo's core.hooksPath is hooks" || bad "the real repo's core.hooksPath is not hooks: git will not run hooks/pre-commit"
 for f in accept.sh pre-review.sh stop.sh pre-commit; do [ -x "$REPO/hooks/$f" ] && ok "hooks/$f is executable" || bad "hooks/$f is not executable"; done

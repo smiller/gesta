@@ -21,6 +21,27 @@
           { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/stop.sh\"", "timeout": 120, "statusMessage": "Running tsc and the suite before the turn ends" }
         ]
       }
+    ],
+    "UserPromptExpansion": [
+      {
+        "hooks": [
+          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/skill-row.sh\"", "timeout": 20, "statusMessage": "Writing a review’s progress row" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/skill-row.sh\"", "timeout": 20, "statusMessage": "Writing a review’s progress row" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "sh \"$CLAUDE_PROJECT_DIR/hooks/skill-row.sh\"", "timeout": 20, "statusMessage": "Writing a review’s progress row" }
+        ]
+      }
     ]
   }
 }
