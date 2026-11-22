@@ -1,6 +1,7 @@
 /* node tools/progress/reviewRow.ts < a hook's input. It never blocks the
    prompt: whatever goes wrong, it exits 0 */
-import { mkdirSync, readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, openSync, closeSync, statSync, unlinkSync } from "node:fs";
+import { dirname } from "node:path";
 import { replay, type Event, type Item } from "./events.ts";
 import { nextId, opened, logged } from "./log.ts";
 import { DIR, dayEvents, lastDayEvents, today, clock } from "./day.ts";
@@ -66,11 +67,19 @@ export function hookAnswer(event: string, command: string, lines: string[]): str
   const context = "Progress rows written for /" + command + ". Publish both progress pages now, in this turn, before anything else, each with the files beside it:\n" + lines.join("\n");
   return JSON.stringify({ hookSpecificOutput: { hookEventName: event, additionalContext: context } });
 }
-function main(): void {
-  const input: unknown = JSON.parse(readFileSync(0, "utf8") || "null");
-  const c = typed(input);
-  if (!c || !ROWS[c.name]) return;
-  mkdirSync(DIR, { recursive: true });
+/* one row a command: its two hook events fire at once, and each read the
+   log before the other wrote; the file is made only if absent, in one step,
+   and one left by a run that died is taken over (pin: reviewRow.test › of
+   two hook events at once only the first claims the row) */
+const LOCK_LIFE_MS = 15_000;
+export function claimRow(path: string): boolean {
+  try { closeSync(openSync(path, "wx")); return true; } catch { /* held, or left by a run that died */ }
+  try { if (Date.now() - statSync(path).mtimeMs < LOCK_LIFE_MS) return false; unlinkSync(path); } catch { return false; }
+  return claimRow(path);
+}
+export const releaseRow = (path: string): void => { try { unlinkSync(path); } catch { /* already gone */ } };
+const ROW_LOCK = "tools/out/progress/.review-row.lock";
+function writeRows(c: Typed, input: unknown): void {
   const day = today(), at = day + "T" + clock(), logs = dayEvents(day);
   const owed = opened(logs, () => lastDayEvents(day), at);
   const rows = rowEvents(c, [...logs, ...owed], at);
@@ -78,6 +87,15 @@ function main(): void {
   const out = logged(day, [...owed, ...rows]);
   const event = (input as { hook_event_name?: string }).hook_event_name ?? "UserPromptExpansion";
   console.log(hookAnswer(event, c.name, "refused" in out ? ["refused: " + out.refused] : out.lines));
+}
+function main(): void {
+  const input: unknown = JSON.parse(readFileSync(0, "utf8") || "null");
+  const c = typed(input);
+  if (!c || !ROWS[c.name]) return;
+  mkdirSync(DIR, { recursive: true });
+  mkdirSync(dirname(ROW_LOCK), { recursive: true });
+  if (!claimRow(ROW_LOCK)) return;
+  try { writeRows(c, input); } finally { releaseRow(ROW_LOCK); }
 }
 if (import.meta.url === "file://" + process.argv[1]) {
   try { main(); } catch (e) { console.error("reviewRow: " + (e as Error).message); }

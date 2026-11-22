@@ -1,5 +1,8 @@
 import { test, expect } from "vitest";
-import { typed, rowEvents, hookAnswer } from "./reviewRow.ts";
+import { typed, rowEvents, hookAnswer, claimRow, releaseRow } from "./reviewRow.ts";
+import { mkdtempSync, writeFileSync, utimesSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import type { Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-22T" + hm;
@@ -64,4 +67,16 @@ test("the hook's answer is context for the event that fired: the rows written, a
   expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptExpansion");
   expect(out.hookSpecificOutput.additionalContext).toMatch(/^Progress rows written for \/code-review\. Publish both progress pages now, in this turn, before anything else/);
   expect(out.hookSpecificOutput.additionalContext).toContain(lines[1]);
+});
+
+test("of two hook events at once only the first claims the row; once it is released, or left too long, the next may", () => {
+  const lock = join(mkdtempSync(join(tmpdir(), "row-")), "row.lock");
+  expect(claimRow(lock)).toBe(true);
+  expect(claimRow(lock)).toBe(false);
+  releaseRow(lock);
+  expect(claimRow(lock)).toBe(true);
+  const stale = join(mkdtempSync(join(tmpdir(), "row-")), "row.lock");
+  writeFileSync(stale, "");
+  utimesSync(stale, new Date(Date.now() - 60_000), new Date(Date.now() - 60_000));
+  expect(claimRow(stale)).toBe(true);
 });
