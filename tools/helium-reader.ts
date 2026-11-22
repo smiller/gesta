@@ -4,6 +4,7 @@
 // is made here from fixtures/ and the run is the one under a verdict;
 // `node tools/helium-reader.ts <zip>` times a real one instead: the pick,
 // the relaunch, the heap, the first search's index.
+import { installFlashReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -38,6 +39,7 @@ mkdirSync(PROFILE, { recursive: true });
 const logs: string[] = [];
 const launch = async () => {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1024, height: 1366 } });
+  await installFlashReaders(ctx);
   if (!TIMED) await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
   const page = await ctx.newPage();
   page.on("console", (m) => logs.push(m.text()));
@@ -51,7 +53,7 @@ await first.page.goto(PAGE + "#commonplace/Witchcraft");
 await settled(first.page, "bare");
 const screen = (page: Page) => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
-  held: document.querySelector(".held")?.textContent, corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}"))?.trim(),
+  held: document.querySelector(".held")?.textContent, corner: window.__corner()?.trim(),
   editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   tools: [...document.querySelectorAll(".site-tools > :not([hidden])")].map((e) => e.textContent.trim()),
 }));
@@ -73,7 +75,7 @@ const rest = () => page.waitForTimeout(400);
    is the clock's, not the step's */
 const look = (label: string, extra: () => Promise<object> | object = () => ({}), corner = false) => page.evaluate((corner) => ({
   entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
-  ...(corner ? { corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}"))?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
+  ...(corner ? { corner: window.__corner()?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
   crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(),
 }), corner).then(async (r) => console.log(label + ":", JSON.stringify({ ...r, ...(await extra()) })));
 const search = async (q: string): Promise<number> => {

@@ -87,7 +87,6 @@ const shownKept = (r: Relocation): string => [
 const fakeKept = (log: string[]): KeptState => ({ relocate: (r, open) => { log.push("kept " + shownKept(r)); open?.(); } });
 function fakeUi(log: string[]): UiPort {
   return {
-    say: (text) => { log.push("say " + text); },
     refuse: (text) => { log.push("refuse " + text); },
     succeed: (text) => { log.push("succeed " + text); },
     pin: (text) => { log.push("pin " + text); },

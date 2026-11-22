@@ -23,20 +23,20 @@
 <button class="backup-paused" hidden={!notices.state.trouble} onclick={onResume}>{notices.state.trouble}</button>
 
 <style>
-  /* across the page under the masthead, however tall its open folds make
-     it, by its anchor; a page with no masthead puts them at the top */
+  /* the strip: stuck under the header, and always one flash tall, so a
+     flash moving in or out moves no text */
   .notices {
-    position: fixed;
-    position-anchor: --masthead;
-    top: calc(anchor(--masthead bottom, 0px) + 10px);
-    z-index: 80;
-    left: 1.4rem;
-    right: 1.4rem;
+    position: sticky;
+    top: var(--strip-top, 0px);
+    z-index: 55;
+    padding: 10px 1.4rem;
+    background: var(--bg);
+    /* one flash and the strip's own padding: the box is measured with it */
+    min-height: calc(0.8em * (1.35 + 1.6) + 2px + 20px);
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
-    pointer-events: none;
   }
   /* a flash message's box: tinted by kind, bordered in its text's colour, its × at the right */
   .notice {

@@ -6,6 +6,8 @@ export type { Page, BrowserContext };
 declare global {
   interface Window {
     __lastEdit: number;
+    __corner: () => string | undefined;
+    __flashes: () => string;
     __writes: number;
     __typed: number;
     __walks: number;

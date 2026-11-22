@@ -35,6 +35,8 @@ export interface BackupOptions {
   say: (text: string) => void;
   /* something done that worked */
   succeed: (text: string) => void;
+  /* why an act did nothing */
+  refuse: (text: string) => void;
   /* the ONE writer of the trouble state: "" is healthy, else the reason the
      last run did not complete, click-to-resume */
   onTrouble: (msg: string) => void;
@@ -69,7 +71,7 @@ function logFailures(failures: Failure[]): void {
 }
 const isCollision = (err: unknown): boolean => !!err && !!(err as { collision?: boolean }).collision;
 export function backupRunner(opts: BackupOptions): Backup {
-  const { layer, images, store, picker, say, succeed, stick } = opts;
+  const { layer, images, store, picker, say, succeed, refuse, stick } = opts;
   /* the signature THIS TAB last committed, never stored: equal to the
      shared one means no other tab has written the folder since, the only
      ground on which this run may delete from it */
@@ -206,7 +208,7 @@ export function backupRunner(opts: BackupOptions): Backup {
   /* the one-time gesture: pick a folder, PERSIST its handle, back up at
      once. The picker opens synchronously in the click. */
   function setupBackupFolder(): Promise<void> {
-    if (!picker) { say("automatic backups need a Chromium browser"); return Promise.resolve(); }
+    if (!picker) { refuse("automatic backups need a Chromium browser"); return Promise.resolve(); }
     return picker().then((h) => {
       handle = h;
       return store.set(h as unknown as FileSystemDirectoryHandle).then(() => {

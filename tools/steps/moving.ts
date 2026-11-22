@@ -12,7 +12,7 @@ section("a commonplace renamed with every link following", async () => {
   confirms.length = 0;
   await page.click(S.renameSubEntry);
   await A.waitEntry(page, "commonplace/Renamed Me", 5000).catch(() => {});
-  await page.waitForFunction(() => /renamed to/.test(((f) => [f.failure, f.refusal, f.info, f.success].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /renamed to/.test(window.__flashes() || ""), null, { timeout: 3000 }).catch(() => {});
   await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await cornerText(), far: await A.stored(page, "commonplace/Rename Far"), old: await A.stored(page, "commonplace/Rename Me") });
 });
 section("unused pictures", async () => {
@@ -39,12 +39,12 @@ async function pictureDeletedTextBackups(): Promise<void> {
 }
 async function removeUnusedPictureClicked(): Promise<void> {
   await page.click(".backups button:has-text('unused picture')").catch(() => {});
-  await page.waitForFunction(() => /removed/.test(((f) => [f.failure, f.refusal, f.info, f.success].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => /removed/.test(window.__flashes() || ""), null, { timeout: 5000 }).catch(() => {});
   await log("Remove … unused picture clicked, the confirm accepted", { corner: await cornerText(), left: await A.pictureKeys(page, "commonplace/Unused Pictures"), panel: await R.backups(page) });
   await page.click(".notice.success.show").catch(() => {});
 }
 async function whisperClicked(): Promise<void> {
-  await page.waitForFunction(() => ((f) => [f.failure, f.refusal, f.info, f.success].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.flashes || "{}")) === "copied", null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => window.__flashes() === "copied", null, { timeout: 3000 }).catch(() => {});
   await log("the whisper clicked", { corner: await cornerText(), clipboard: await page.evaluate(async () => { for (let i = 0; i < 20; i++) { try { return await navigator.clipboard.readText(); } catch { await new Promise((r) => setTimeout(r, 50)); } } return null; }) });
   await page.keyboard.press("Escape");
 }
@@ -72,7 +72,7 @@ async function renameToBookshelfAddress(): Promise<void> {
   prompts.length = 0;
   confirms.length = 0;
   await page.click(S.renameSubEntry);
-  await page.waitForFunction(() => /moved to/.test(((f) => [f.failure, f.refusal, f.info, f.success].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => /moved to/.test(window.__flashes() || ""), null, { timeout: 5000 }).catch(() => {});
   await log("Rename, an address in the bookshelf typed, Enter, the confirm accepted", {
     prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), hash: page.url().split("#")[1], corner: await cornerText(),
     there: await there(""), essay: await there("/Essay"), twin: await there("/2022-twin"), links: await A.stored(page, "commonplace/Move Links"),

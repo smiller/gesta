@@ -7,6 +7,7 @@
 // dumps before IndexedDB's real-time I/O settles, and --timeout never
 // exited. The profile lives under tools/out, so a run never touches the
 // running Helium's profile.
+import { installFlashReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
@@ -18,6 +19,7 @@ if (queries.includes("--fresh")) { rmSync(PROFILE, { recursive: true, force: tru
 mkdirSync(PROFILE, { recursive: true });
 for (const qs of queries.length ? queries : [""]) {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
+  await installFlashReaders(ctx);
   const page = await ctx.newPage();
   const logs = [];
   page.on("console", (m) => logs.push(m.text()));
@@ -27,7 +29,7 @@ for (const qs of queries.length ? queries : [""]) {
     await page.waitForFunction(() => document.documentElement.dataset.store !== undefined, null, { timeout: 15000 });
   } catch { logs.push("timed out waiting for data-store"); }
   const got = await page.evaluate(() => ({ store: document.documentElement.dataset.store, probe: document.documentElement.dataset.probe,
-    entry: document.documentElement.dataset.entry, status: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "" }));
+    entry: document.documentElement.dataset.entry, status: window.__corner() || "" }));
   console.log("run [" + qs + "]", JSON.stringify(got), "| console:", logs.join(" / "));
   await ctx.close();
 }

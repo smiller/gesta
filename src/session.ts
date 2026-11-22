@@ -31,7 +31,8 @@ import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
-import { mastheadBottom } from "./ui/mastheadBottom.ts";
+import { visibleTop } from "./ui/visibleTop.ts";
+import { stripClear } from "./ui/flashStrip.ts";
 
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
@@ -166,7 +167,7 @@ export function startSession(opts: SessionOptions): Session {
   if (head && typeof ResizeObserver === "function") new ResizeObserver(() => { mastheadHeight = (head as HTMLElement).offsetHeight; }).observe(head);
   /* the masthead is sticky over the page's top: a place is read, and set,
      just under it (pin: places › Back) */
-  const underMasthead = (): number => mastheadBottom() + 4;
+  const underMasthead = (): number => visibleTop() + 4;
   const viewport: Viewport = { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead };
   function browserPage(): Page {
     /* the window's place is the page's alone: the browser's own restore on
@@ -199,7 +200,7 @@ export function startSession(opts: SessionOptions): Session {
       onRefuse: (why) => refuse(why),
       onPasteFile: pasteFile,
       onPasteRefused: (text) => refuse(text),
-      clearOf: () => mastheadHeight,
+      clearOf: () => Math.max(mastheadHeight, stripClear()),
     });
     return rendered;
   }

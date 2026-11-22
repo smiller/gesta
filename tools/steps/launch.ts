@@ -46,8 +46,6 @@ async function afterWarm(): Promise<void> {
   await log("a link to itself", { entry: await A.entry(page), ...(await R.corner(page)) });
 }
 async function plainClickExternalLink(): Promise<void> {
-  /* the refusal "already here" stands over the links below it until it fades or is closed: closed, as a reader would */
-  await page.click(".notice.refusal.show .close", { timeout: 1000 }).catch(() => {});
   await page.click(S.editorLink("https://example.org/"));
   await rest(page);
   await log("a plain click on an external link", { entry: await A.entry(page), url: page.url().split("#")[1] });

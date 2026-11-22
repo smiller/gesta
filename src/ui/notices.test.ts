@@ -403,3 +403,40 @@ describe("the newer of info and success", () => {
     expect(liveFlashes(n.state).latest).toBe(undefined);
   });
 });
+
+describe("the review's findings", () => {
+  it("a save failure covered by another failure comes back when its owner releases that one", () => {
+    n.entry.stuck("not saved", new Error("x"), "a");
+    const g = n.stick("Couldn’t copy the reference", "x");
+    n.releasePin(g);
+    expect(n.state.failure).toMatchObject({ text: "not saved", shown: true });
+  });
+  it("a routine success is held back while a save failure stands; another success is not", () => {
+    n.entry.stuck("not saved", new Error("x"), "a");
+    n.succeed("saved");
+    expect(n.state.success.shown).toBe(false);
+    n.succeed("Link copied");
+    expect(n.state.success).toMatchObject({ text: "Link copied", shown: true });
+    n.entry.landed("a");
+    n.succeed("saved");
+    expect(n.state.success).toMatchObject({ text: "saved", shown: true });
+  });
+  it("a click on the copy-failed error closes it without copying again", async () => {
+    refuseCopy = true;
+    n.stick("not saved", "detail");
+    n.click("failure");
+    await flush();
+    expect(n.state.failure.text).toBe("copy failed — see console");
+    copied = [];
+    n.click("failure");
+    await flush();
+    expect(copied).toEqual([]);
+    expect(n.state.failure.shown).toBe(false);
+  });
+  it("a log that cannot be written leaves the flash shown", () => {
+    const l = noticeLedger(copy, () => { throw new Error("log broken"); });
+    l.refuse("no line numbers here");
+    l.stick("not saved");
+    expect([l.state.refusal.shown, l.state.failure.shown]).toEqual([true, true]);
+  });
+});

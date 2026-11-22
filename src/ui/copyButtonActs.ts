@@ -7,12 +7,11 @@ import { serializeMarkdown } from "../model/serialize.ts";
 import { dropPageLabels } from "../editor/copy.ts";
 import { writeClipboard } from "./clipboard.ts";
 import { richBlockHtml, withPictureBytes } from "./richCopy.ts";
-import { mastheadBottom } from "./mastheadBottom.ts";
+import { visibleTop } from "./visibleTop.ts";
 
 export interface CopyDeps {
   cp: Screen["copy"];
   session: Pick<Session, "view" | "mdView">;
-  say(text: string, ms?: number): void;
   /* why an act did nothing */
   refuse(text: string): void;
   /* an error, standing until closed */
@@ -57,7 +56,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     return (parseFloat(cs.width) + parseFloat(cs.right) || 0) - 4;
   };
   const copyTop = (target: HTMLElement, rect: DOMRect): number =>
-    Math.max(target.classList.contains("grid") ? rect.top - 25 : rect.top + 5, mastheadBottom() + 7);
+    Math.max(target.classList.contains("grid") ? rect.top - 25 : rect.top + 5, visibleTop() + 7);
   const offScreen = (top: number, rect: DOMRect): boolean => top > rect.bottom - 27 || rect.top > window.innerHeight;
   const newTarget = (target: HTMLElement): void => {
     if (copyReset) clearTimeout(copyReset);

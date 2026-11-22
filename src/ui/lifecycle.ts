@@ -32,7 +32,6 @@ export interface Dialogs {
   alert(text: string): void;
 }
 export interface UiPort {
-  say(text: string, ms?: number): void;
   /* something done that worked */
   succeed(text: string, ms?: number): void;
   /* why an act did nothing */

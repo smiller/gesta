@@ -1,3 +1,4 @@
+import type { BrowserContext } from "../heliumPage.ts";
 /* a reading made of top-level functions run in the page as one script: each
    part's source declared, then the first called. A function handed to an
    evaluate travels as its own source alone, so a part it calls must travel
@@ -7,6 +8,16 @@ export const inPage = (main: Function, ...parts: Function[]): string => inPageWi
 export const inPageWith = (arg: unknown, main: Function, ...parts: Function[]): string =>
   "(() => {\n" + parts.map((f) => f.toString()).join("\n") + "\nreturn (" + main.toString() + ")(" + (arg === undefined ? "" : JSON.stringify(arg)) + ");\n})()";
 
+/* the flashes as the page publishes them, read the same way by every
+   reading: the error and the warning standing, else the newer of info and
+   success, as one place showed them; or every one live, in the stack's order */
+export async function installFlashReaders(ctx: BrowserContext): Promise<void> {
+  await ctx.addInitScript(() => {
+    const live = () => JSON.parse(document.documentElement.dataset.flashes || "{}");
+    window.__corner = () => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(live());
+    window.__flashes = () => ((f) => [f.failure, f.refusal, f.info, f.success].filter(Boolean).join(" · "))(live());
+  });
+}
 /* the live flashes as the page publishes them, to compare against after a gesture */
 export function textOf(): string {
   return document.documentElement.dataset.flashes || "{}";

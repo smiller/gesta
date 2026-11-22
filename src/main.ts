@@ -11,7 +11,8 @@ import type { Dir } from "./store/fsa.ts";
 import { failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
 import { readRaw, writeRaw, stored } from "./store/local.ts";
-import { flashLog, chordName, type FlashEntry } from "./ui/flashLog.ts";
+import { flashLog, chordName, parseLog, type FlashEntry } from "./ui/flashLog.ts";
+import { placeStrip } from "./ui/flashStrip.ts";
 import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { noticeLedger } from "./ui/notices.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
@@ -65,7 +66,7 @@ document.head.append(Object.assign(document.createElement("link"), { rel: "icon"
 /* every failure and refusal, kept three months for later debugging, with
    a reader's last key chord or control clicked; read in the console as
    gesta.flashes() */
-const flashes = flashLog(stored(NS + "flashlog", (raw): FlashEntry[] => { try { return raw ? JSON.parse(raw) : []; } catch { return []; } }));
+const flashes = flashLog(stored(NS + "flashlog", parseLog));
 let lastAction = "none";
 document.addEventListener("keydown", (e) => { lastAction = chordName(e) ?? lastAction; }, true);
 document.addEventListener("click", (e) => {
@@ -112,7 +113,6 @@ const overlay = overlays({
   replace: () => acts.replace.closeOver(),
   replaceBack: () => acts.replace.close(),
 });
-mount(Corner, { target: document.body, props: { notices, onResume: () => acts.resume() } });
 if (!READER) {
   mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
   mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
@@ -144,6 +144,9 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
     onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
   },
 } });
+/* the strip of flashes, between the header and the entry (pin: flashStrip.test › the strip is stuck at the header's foot) */
+mount(Corner, { target: document.body, anchor: document.querySelector("main")!, props: { notices, onResume: () => acts.resume() } });
+placeStrip(document.documentElement, document.querySelector(".site-head")!, document.querySelector(".notices")!);
 /* the panels are not modal: a click outside any panel or opener closes
    the slot, and so does Escape. Read from the target, not from
    propagation — the components' handlers are delegated, and a
@@ -208,14 +211,14 @@ const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read"
    both */
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
-  layer, images, say, succeed, refuse, fail: (text) => { notices.stick(text); }, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
+  layer, images, succeed, refuse, fail: (text) => { notices.stick(text); }, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
 });
 const readBackups = bkPanel.read;
 acts.sweep = bkPanel.sweep;
 const backup = backupRunner({
   layer, images, store: idbBackupStore(),
   picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
-  say, succeed,
+  say, succeed, refuse,
   onTrouble: (msg) => { notices.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
   stick: (text, err, copy) => { notices.stickErr(text, err, copy); },
 });
@@ -375,7 +378,7 @@ const marks = bookmarkStore({
   storedKeys: () => layer.storedKeys(),
 });
 const card = bookmarkActs({
-  bm, marks, session, journal, say, refuse, overlay, closePanel, caretInEntry,
+  bm, marks, session, journal, refuse, overlay, closePanel, caretInEntry,
   panel: { isOpen: () => screen.panel === "bookmarks", show: () => { screen.panel = "bookmarks"; } },
   focusCard: () => masthead.focusBookmarks(),
   keysNow: () => Object.keys(layer.cache),
@@ -406,11 +409,11 @@ Object.assign(acts.replace, replaceActs({
 const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
 clientW();
 new ResizeObserver(clientW).observe(document.documentElement);
-const copy = copyButton({ cp: screen.copy, session, say, refuse, fail: (text) => { notices.stick(text); } });
+const copy = copyButton({ cp: screen.copy, session, refuse, fail: (text) => { notices.stick(text); } });
 acts.copyBlock = copy.copyBlock;
 dropStaleCopy = copy.dropStale;
 const fmt = formatBar({
-  bar: screen.bar, buttons: () => screen.masthead.buttons, session, say, refuse, mountEl,
+  bar: screen.bar, buttons: () => screen.masthead.buttons, session, refuse, mountEl,
   extract: () => life.extract(), head: document.querySelector(".site-head")!,
 });
 acts.bar = fmt.act;
@@ -427,7 +430,7 @@ const life = lifecycle({
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
   kept,
   ...pictureMoves(images),
-  ui: { say, succeed, refuse, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
+  ui: { succeed, refuse, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
 });
 acts.create = () => { life.create(); };
 acts.rename = () => { life.rename(); };
@@ -523,7 +526,7 @@ primed.then(held).then(() => layer.warm()).then(() => loadPinned.landed(layer)).
   if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") notices.setTrouble(PAUSED_MSG); });
 });
 const folders = folderActs({
-  session, layer, images, notices, say, refuse, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
+  session, layer, images, notices, refuse, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
   warmBlock: () => refuseCold(layer, refuse),
 });
 acts.export = folders.exportAll;

@@ -303,7 +303,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabNotice.ts`, `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
   `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
-  `heldKeys.ts`, `mastheadBottom.ts`, `journalLoad.ts` (the journal's
+  `heldKeys.ts`, `visibleTop.ts`, `flashStrip.ts` (the strip of flashes under
+  the header), `journalLoad.ts` (the journal's
   load: loading, failed or in, what an act refused before it says, and
   its pins). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,

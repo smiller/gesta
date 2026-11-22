@@ -66,3 +66,27 @@ for them anyway".
   info, success, so a success shows while a progress line holds the info
   place; a hidden flash takes no room and so goes at once, no longer
   fading out.
+
+## Review
+
+- `/code-review high 206f40..8b63f48` (typed for 2062f40..8b63f48; the
+  reviewer took it so): 163,562 tokens (MEASURED, the last message of
+  `subagents/agent-a0284f02d6d2d9f80.jsonl`: 2 input + 2,630 cache
+  creation + 156,752 cache read + 4,178 output); 10 findings, all in
+  the flashes work; 73d8eb4's fit and passage changes traced clean.
+- Fixed (findings 2, 4-10): an owner's release brings back a save failure
+  still owed; a routine "saved" held back while one stands; a flash
+  shown before it is logged, a log that is no list read as empty; the
+  copy-failed error only closes; a named key is an action; three months
+  back stops at the month's last day; the unused `say` deps gone, the
+  Chromium refusal a warning; one in-page reader of the flashes for the
+  tools.
+- Asked (findings 1, 3): a strip one flash tall, kept always, sticky
+  between the header and the entry, so no flash moves the text or
+  covers it; the bars, lists and dialogs that hang from the header start
+  below it, so it covers none of them nor they it (mocked over Book 4,
+  each choice put to the reader). MEASURED in headless Helium over Book
+  4: the heading at 264px whether the strip is empty or holds a warning;
+  the ⌃⌘G bar 211-251px, under the strip's 205; the search results from
+  the strip's foot. The page's visible top, the caret's clearance and a
+  landing's centre all count the strip.

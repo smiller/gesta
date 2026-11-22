@@ -15,7 +15,6 @@ export interface BookmarkCardDeps {
   marks: ReturnType<typeof bookmarkStore>;
   session: Pick<Session, "current" | "goto" | "focusText" | "view" | "mdView" | "insertText" | "save">;
   journal: Journal;
-  say(text: string, ms?: number): void;
   /* why an act did nothing */
   refuse(text: string): void;
   overlay: { open(opening: "bookmarks"): void };

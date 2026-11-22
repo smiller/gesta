@@ -15,7 +15,6 @@ export interface BackupsPanelDeps {
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   images: Pick<ImageStore, "keys" | "del">;
   flushSave: Session["save"]["flush"];
-  say(text: string, ms?: number): void;
   /* something done that worked */
   succeed(text: string, ms?: number): void;
   /* why an act did nothing */

@@ -2,6 +2,7 @@
 // as entries, open each by hash and compare the editor's markdown with the
 // store's, refuse an unknown book, then TYPE into an entry, wait past the
 // debounce, relaunch and read the text back. `node tools/helium-bridge.ts`
+import { installFlashReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
@@ -29,7 +30,7 @@ function firstLineShown(): string | undefined {
 function textsShown(): Record<string, unknown> {
   return {
     crumb: crumbShown(), title: document.querySelector(".page-title")?.textContent,
-    status: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "",
+    status: window.__corner() || "",
     first: firstLineShown(),
   };
 }
@@ -44,6 +45,7 @@ function launchShows(): Record<string, unknown> {
 const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine));
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
+  await installFlashReaders(ctx);
   await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed */
   const page = await ctx.newPage();
   const logs: string[] = [];
@@ -69,7 +71,7 @@ say("an unknown commonplace mints on visit", await launch(PAGE + "#commonplace/B
 say("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
-  await page.waitForFunction(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) === "saved", null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => window.__corner() === "saved", null, { timeout: 5000 }).catch(() => {});
   return read(page);
 }));
 say("relaunch: the text came back", await launch(PAGE + "#commonplace/Brand%20New", read));

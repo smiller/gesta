@@ -15,7 +15,6 @@ export interface FolderDeps {
   layer: Pick<EntryLayer, "cache" | "setEntry" | "writeError">;
   images: ImageStore;
   notices: Pick<Notices, "progress" | "stickErr">;
-  say(text: string, ms?: number): void;
   /* why an act did nothing */
   refuse(text: string): void;
   picker(): ((opts?: { mode?: "read" | "readwrite" }) => Promise<Dir>) | undefined;

@@ -78,9 +78,6 @@ export function noticeLedger(copyText: (text: string) => Promise<void>, told: To
   /* the clipboard payload the failure copies on click; "" is none */
   let failureCopy = "";
 
-  /* the text STAYS as the notice fades: reset to "saved" for the fade, a
-     refusal went out reading as a save (pin: notices.test › shows the text
-     and hides after its time, the text staying for the fade) */
   function stopClock(place: Fading): void {
     const t = timers[place];
     if (t) clearTimeout(t);
@@ -107,10 +104,21 @@ export function noticeLedger(copyText: (text: string) => Promise<void>, told: To
   function whisper(text: string, ms = WHISPER_MS): void {
     if (!state.busy) flash("info", text, ms);
   }
-  const succeed = (text: string, ms = WHISPER_MS): void => flash("success", text, ms);
+  /* a routine "saved" is held back while a save failure stands: shown under
+     the error, another entry's landing read as this one's (pin: notices.test
+     › a routine success is held back while a save failure stands) */
+  function succeed(text: string, ms = WHISPER_MS): void {
+    if (!(text === IDLE_TEXT && saveFailLatch)) flash("success", text, ms);
+  }
+  /* shown first, then logged: a log that throws must not keep a flash from
+     being seen (pin: notices.test › a log that cannot be written) */
+  function tell(kind: "failure" | "refusal", text: string): void {
+    try { told(kind, text); } catch (err) { console.error("the flash log failed", err); }
+  }
   function stick(text: string, copy?: string): number {
-    told("failure", text);
-    return showFailure(text, copy);
+    const g = showFailure(text, copy);
+    tell("failure", text);
+    return g;
   }
   function showFailure(text: string, copy?: string): number {
     failureGen++;
@@ -125,11 +133,15 @@ export function noticeLedger(copyText: (text: string) => Promise<void>, told: To
     console.error(text, err);
     return stick(text, copy || errText(err));
   }
+  /* releasing another failure brings back a save failure still owed
+     (pin: notices.test › a save failure covered by another failure comes
+     back when its owner releases) */
   function releasePin(g: number): void {
     if (!g || g !== failureGen) return;
     failureGen++;
     failureCopy = "";
     state.failure.shown = false;
+    if (g !== saveFailGen) replaySaveFail();
   }
   let refusalTimer: ReturnType<typeof setTimeout> | null = null;
   function clearRefusal(): void {
@@ -138,11 +150,11 @@ export function noticeLedger(copyText: (text: string) => Promise<void>, told: To
     state.refusal.shown = false;
   }
   function refuse(text: string): void {
-    told("refusal", text);
     clearRefusal();
     state.refusal.text = text;
     state.refusal.shown = true;
     refusalTimer = setTimeout(clearRefusal, REFUSAL_MS);
+    tell("refusal", text);
   }
   /* the keyed save-failure family: a failed save is easy-to-miss data
      loss, so it pins with the caught error copyable and releases ITSELF
@@ -209,13 +221,16 @@ export function noticeLedger(copyText: (text: string) => Promise<void>, told: To
   /* closing the save failure itself never replays it, which would make
      its own pin undismissable; closing another brings it back while owed */
   function closeFailure(): string {
-    const payload = failureCopy, wasSaveFail = failureGen === saveFailGen;
+    const payload = failureCopy;
     releasePin(failureGen);
-    if (!wasSaveFail) replaySaveFail();
     return payload;
   }
+  /* the copy-failed error only closes: copying its words would fail again
+     and pin it again (pin: notices.test › a click on the copy-failed error) */
   function clickFailure(): void {
-    if (state.failure.shown) copyDetail(closeFailure());
+    if (!state.failure.shown) return;
+    const again = state.failure.text === COPY_FAILED, payload = closeFailure();
+    if (!again) copyDetail(payload);
   }
   function clickRefusal(): void {
     if (!state.refusal.shown) return;
