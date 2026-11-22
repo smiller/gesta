@@ -1,16 +1,18 @@
 import { writeFileSync } from "node:fs";
 import { ALERTS, PHRASES, type AlertId, type Kind } from "../src/model/alertText.ts";
 
+/* drawn as … once runs of it are one, so a … the words themselves write stays apart */
+const VARY = "\uE000";
 /* a parameter stands as …: whatever is read of it, called on it or joined
    from it is … again, and nothing is iterated out of it; a word looked up by it
    finds none, which shows as … too */
 const varies: unknown = new Proxy(function () {}, {
-  get: (_t, key) => (key === Symbol.toPrimitive ? () => "…" : key === Symbol.iterator ? function* () {} : varies),
+  get: (_t, key) => (key === Symbol.toPrimitive ? () => VARY : key === Symbol.iterator ? function* () {} : varies),
   apply: () => varies,
 });
 type Words = string | ((p: never) => string);
 export const shown = (words: Words): string =>
-  (typeof words === "string" ? words : (words as (p: unknown) => string)(varies)).replace(/\bundefined\b/g, "…").replace(/…(?:\s*…)+/g, "…").replace(/\n/g, " ⏎ ").replace(/\|/g, "\\|");
+  (typeof words === "string" ? words : String((words as (p: unknown) => string)(varies))).replace(/\bundefined\b/g, VARY).replace(/\uE000(?:\s*\uE000)+/g, VARY).replace(/\uE000/g, "…").replace(/\n/g, " ⏎ ").replace(/\|/g, "\\|");
 
 const KINDS: [Kind, string, string][] = [
   ["error", "Error", "Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail. Every error is kept three months in the alert log (`gesta.alerts()` in the console)."],

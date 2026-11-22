@@ -25,11 +25,11 @@ describe("an info", () => {
   it("shows the text and hides after its time, the text staying for the fade", () => {
     expect(n.state.info.text).toBe(IDLE_TEXT);
     n.raise("entriesStored", { n: 1 });
-    expect(n.state.info).toMatchObject({ text: "1 entries stored", shown: true });
+    expect(n.state.info).toMatchObject({ text: "1 entry stored", shown: true });
     vi.advanceTimersByTime(2999);
     expect(n.state.info.shown).toBe(true);
     vi.advanceTimersByTime(1);
-    expect(n.state.info).toMatchObject({ text: "1 entries stored", shown: false });
+    expect(n.state.info).toMatchObject({ text: "1 entry stored", shown: false });
   });
   it("defaults its time", () => {
     n.raise("entriesStored", { n: 5 });
@@ -279,7 +279,7 @@ describe("the keyed save-error family, as the entry layer speaks it", () => {
     expect(n.state.error.shown).toBe(false);
   });
   it("a delete that failed for another reason raises an error unkeyed: no landing releases it", () => {
-    n.entry.stuckIdle("couldntDelete", new Error("x"));
+    n.entry.stuckUnkeyed("couldntDelete", new Error("x"));
     expect(n.state.error.text).toBe("couldn’t delete — reload");
     n.entry.landed("anything");
     expect(n.errorShown).toBe(true);
@@ -344,7 +344,7 @@ describe("the live alerts", () => {
     n.raise("notSaved", { copy: "detail" });
     n.raise("noLineNumbers");
     n.raise("entriesStored", { n: 1 });
-    expect(liveAlerts(n.state)).toEqual({ error: "not saved", warning: "no line numbers here", info: "1 entries stored", latest: "info" });
+    expect(liveAlerts(n.state)).toEqual({ error: "not saved", warning: "no line numbers here", info: "1 entry stored", latest: "info" });
     vi.advanceTimersByTime(INFO_MS);
     expect(liveAlerts(n.state)).toEqual({ error: "not saved", warning: "no line numbers here" });
   });

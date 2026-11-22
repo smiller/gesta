@@ -8,6 +8,7 @@ import { importFiles } from "../src/store/importFiles.ts";
 import { entryLayer } from "../src/store/entries.ts";
 import { memEntryStore, memImageStore } from "../src/store/store.ts";
 import type { ImportFile } from "../src/store/files.ts";
+import { alertWords, type Said } from "../src/model/alertText.ts";
 
 const dir = process.argv[2] ?? join(process.env.HOME!, "Library/CloudStorage/Dropbox/gesta-backups/current");
 const files: ImportFile[] = [];
@@ -24,8 +25,8 @@ walk(dir);
 const stuck: string[] = [];
 const layer = entryLayer(memEntryStore(), {
   landed: () => {}, removed: () => {},
-  stuck: (text, _err, ekey) => stuck.push(text + " " + ekey),
-  stuckIdle: (text) => stuck.push(text),
+  stuck: (id, _err, ekey) => stuck.push(alertWords({ id } as Said) + " " + ekey),
+  stuckUnkeyed: (id) => stuck.push(alertWords({ id } as Said)),
 });
 const images = memImageStore();
 let filed = 0;

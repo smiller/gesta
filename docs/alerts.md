@@ -143,7 +143,7 @@ Blue. A count, a progress line or a note, telling of no outcome. It fades on its
 | `exporting…` | An export running. |
 | `importing…` | An import running. |
 | `backing up…` | A backup starting. |
-| `backing up… / …` | A backup running: files written of all. |
+| `backing up… … / …` | A backup running: files written of all. |
 | `keeping the backup…` | The reader keeping a backup picked. |
 | `opening the backup…` | The reader opening the backup kept. |
 

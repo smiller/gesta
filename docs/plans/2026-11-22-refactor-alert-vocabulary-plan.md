@@ -92,3 +92,15 @@ alert by kind, its words and when it is raised.
   every word on screen is as it was.
 - Found on the way, not changed: "imported 1 entries" and "1 entries
   stored" for a count of one.
+- U6.1: the entry layer's stuckIdle is stuckUnkeyed, and its test no
+  longer says idle-deferred: nothing defers it since U5.
+- U6.3: every count of entries in the table says "1 entry" for one
+  (imported, entries stored, the reader's bundle, exported three ways,
+  indexed). No approved Helium reading showed a count of one.
+- Found on the way, asked "Is there anything else it might have broken?":
+  U6.2 left tools/importCorpus.ts printing an alert's id where it printed
+  its words (an id still adds to a string, so the types passed); fixed.
+  The audit (MEASURED): every consumer of a result that became a Said
+  checked; every fixed form of the old catalogue and its 12 quoted
+  examples rendered through the table to the same words. The page tool
+  merged a literal "…" into a placeholder; fixed.

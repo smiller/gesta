@@ -14,8 +14,8 @@ export interface EntryAlerts {
   stuck(id: AlertId, err: unknown, ekey: string, rescue?: string): void;
   /* a delete that failed for a reason other than staleness: UNKEYED, since
      the removed key can never land a future write — the entry resurrects from the store next launch (pin:
-     entries.test › a plain rejected delete reports unkeyed and idle-deferred) */
-  stuckIdle(id: AlertId, err: unknown): void;
+     entries.test › a plain rejected delete reports unkeyed) */
+  stuckUnkeyed(id: AlertId, err: unknown): void;
 }
 export interface EntryLayer {
   /* complete once `warmed`: everything written out is enumerated from it */
@@ -191,7 +191,7 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
   function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
     if (saveSeq[ekey] === seqAt) debts.set(ekey, { err, save: !isDel || unlanded(ekey) });
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
-    else if (isDel) alerts.stuckIdle("couldntDelete", err);
+    else if (isDel) alerts.stuckUnkeyed("couldntDelete", err);
     /* a key deleted since owes nothing and is told nothing: retried, it
        wrote the deleted entry back (pin: entries.test › a retry whose key is
        deleted), and its error waited on a landing that never comes (pin:

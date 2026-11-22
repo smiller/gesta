@@ -2,10 +2,11 @@ import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { alertsPage, shown } from "./alertsPage.ts";
 
-test("shown: fixed words as they are; a part that varies is …, runs of them one", () => {
+test("shown: fixed words as they are; a part that varies is …, runs of them one, a … the words write kept apart", () => {
   expect(shown("saved")).toBe("saved");
   expect(shown((p: { n: string }) => "no bookmark " + p.n)).toBe("no bookmark …");
   expect(shown((p: { n: number }) => p.n + " " + p.n + " entries")).toBe("… entries");
+  expect(shown((p: { done: number; total: number }) => "backing up… " + p.done + " / " + p.total)).toBe("backing up… … / …");
 });
 
 test("the page has a table per kind, its rows each alert of that kind, and the phrases after", () => {

@@ -101,7 +101,7 @@ async function world(o: Opts) {
   const mem = memEntryStore();
   for (const [k, v] of Object.entries(o.entries ?? {})) await mem.set(k, v);
   const s: WorldState = { current: { date: o.at[0], tag: o.at[1] }, st: EditorState.create({ doc: parseMarkdown("") }), typed: null, dropped: false, onFlush: null, onSet: null };
-  const layer = entryLayer(fakeStore(o, mem, log, s), { landed() {}, removed() {}, stuck() {}, stuckIdle() {} });
+  const layer = entryLayer(fakeStore(o, mem, log, s), { landed() {}, removed() {}, stuck() {}, stuckUnkeyed() {} });
   if (o.warm !== "no") await layer.warm();
   s.st = EditorState.create({ doc: parseMarkdown(o.md ?? (o.entries ?? {})[here(s)] ?? "") });
   const view = { get state() { return s.st; }, dispatch: (tr: Transaction) => { log.push("edit"); s.st = s.st.apply(tr); } };

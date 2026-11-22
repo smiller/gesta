@@ -20,3 +20,14 @@ test("every entry says when it is raised, and no two entries say the same fixed 
   const fixed = ids.filter((id) => typeof ALERTS[id].words === "string").map((id) => ALERTS[id].kind + " " + ALERTS[id].words);
   expect(fixed.filter((w, i) => fixed.indexOf(w) !== i)).toEqual([]);
 });
+
+test("a count of entries says entry for one and entries for any other", () => {
+  expect(alertWords(said("imported", { n: 1 }))).toBe("imported 1 entry");
+  expect(alertWords(said("imported", { n: 2 }))).toBe("imported 2 entries");
+  expect(alertWords(said("entriesStored", { n: 1 }))).toBe("1 entry stored");
+  expect(alertWords(said("bundleOpened", { n: 1 }))).toBe("1 entry");
+  expect(alertWords(said("exported", { n: 1 }))).toBe("exported 1 entry");
+  expect(alertWords(said("indexed", { n: 1 }))).toBe("indexed 1 entry");
+  expect(alertWords(said("exportedPicturesMissing", { n: 1, missing: 2 }))).toBe("exported 1 entry — 2 pictures missing");
+  expect(alertWords(said("exportedSomeFailed", { n: 1, failed: 1, missing: 0 }))).toBe("exported 1 entry; 1 file(s) failed");
+});

@@ -266,7 +266,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
       landed: resolveSaveError,
       removed: resolveSaveError,
       stuck: saveError,
-      stuckIdle: (id, err) => { error(alertWords({ id } as Said), { caught: err }); },
+      stuckUnkeyed: (id, err) => { error(alertWords({ id } as Said), { caught: err }); },
     },
   };
 }

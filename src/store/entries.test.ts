@@ -3,15 +3,15 @@ import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } fro
 import { entryLayer, type EntryAlerts } from "./entries.ts";
 import { alertWords, type Said } from "../model/alertText.ts";
 
-interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckIdle: unknown[][]; announced: string[]; onLanded: string[] }
+interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckUnkeyed: unknown[][]; announced: string[]; onLanded: string[] }
 function fresh(over?: (s: MemEntryStore) => EntryStore) {
   const mem = memEntryStore();
-  const calls: Calls = { landed: [], removed: [], stuck: [], stuckIdle: [], announced: [], onLanded: [] };
+  const calls: Calls = { landed: [], removed: [], stuck: [], stuckUnkeyed: [], announced: [], onLanded: [] };
   const alerts: EntryAlerts = {
     landed: (k) => calls.landed.push(k),
     removed: (k) => calls.removed.push(k),
     stuck: (id, ...a) => calls.stuck.push([alertWords({ id } as Said), ...a]),
-    stuckIdle: (id, ...a) => calls.stuckIdle.push([alertWords({ id } as Said), ...a]),
+    stuckUnkeyed: (id, ...a) => calls.stuckUnkeyed.push([alertWords({ id } as Said), ...a]),
   };
   const layer = entryLayer(over ? over(mem) : mem, alerts, { announce: (k) => calls.announced.push(k), onLanded: (k) => calls.onLanded.push(k) });
   return { layer, mem, calls };
@@ -115,12 +115,12 @@ test("a stale restore is guarded by the counter: a removal in between wins", asy
   expect(calls.stuck).toEqual([]);   // the entry is gone: its refusal is told nowhere
 });
 
-test("a plain rejected delete reports unkeyed and idle-deferred, never into the ledger", async () => {
+test("a plain rejected delete reports unkeyed, never into the ledger", async () => {
   const { layer, calls } = fresh((mem) => ({ ...mem, del: () => Promise.reject(new Error("blocked")) }));
   await layer.setEntry("k", "a");
   await layer.removeEntry("k");
-  expect(calls.stuckIdle.length).toBe(1);
-  expect(calls.stuckIdle[0][0]).toMatch(/couldn’t delete/);
+  expect(calls.stuckUnkeyed.length).toBe(1);
+  expect(calls.stuckUnkeyed[0][0]).toMatch(/couldn’t delete/);
   expect(calls.stuck.length).toBe(0);
 });
 
