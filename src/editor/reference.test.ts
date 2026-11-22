@@ -43,7 +43,7 @@ function quote(doc: Node, a: number, b: number, how: { halves?: boolean; paragra
 }
 function facingOf(doc: Node, a: number, b: number): { pos: number } | null {
   const p = passageAt(doc, a, b);
-  return "refused" in p ? null : p.facing;
+  return "refused" in p ? null : p.facing?.[0] ?? null;
 }
 /* the range a plain work's reference label ends with */
 function rangeOf(doc: Node, a: number, b: number): string {
@@ -155,11 +155,37 @@ test("a block inside a note, the label's top level, an end resting on a row, bla
   [a, b] = span(last, "exit", "exit");
   expect(quote(last, a, b)).toBe("> ::: verse 14\n> *exit* | *exit*\n> :::");
 });
-test("two verse blocks are a refusal", () => {
+test("two verse blocks not numbered straight on are a refusal that says so", () => {
   const doc = parseMarkdown("::: verse\na\nb\n:::\n\n::: verse\nc\n:::");
   const [a, b] = span(doc, "b", "c");
-  expect(quote(doc, a, b)).toBe("two-blocks");
-  expect(referencePayload(state(doc, a, b), { date: "bookshelf", tag: "Milton, John/Paradise Lost/Book 1" }, journal)).toEqual({ refused: "two-blocks" });
+  expect(quote(doc, a, b)).toBe("numbered-apart");
+  expect(referencePayload(state(doc, a, b), { date: "bookshelf", tag: "Milton, John/Paradise Lost/Book 1" }, journal)).toEqual({ refused: "numbered-apart" });
+  const gap = parseMarkdown("::: verse 13\na\nb\n:::\n\n::: verse 20\nc\n:::");
+  expect(quote(gap, ...span(gap, "b", "c"))).toBe("numbered-apart");
+});
+test("verse blocks numbered straight on are one passage: one range, quoted as one block numbered from its first line with a gap where they met", () => {
+  const doc = parseMarkdown("::: verse 13\na\nb\n:::\n\n::: verse 15\nc\nd\n:::\n\n::: verse 17\ne\n:::");
+  const [a, b] = span(doc, "b", "e");
+  expect(quote(doc, a, b)).toBe("> ::: verse 14\n> b\n> \n> c\n> d\n> \n> e\n> :::");
+  expect(rangeOf(doc, a, b)).toBe("14-17");
+});
+test("a heading between verse blocks numbered straight on is left out of the passage", () => {
+  const doc = parseMarkdown("# Book 4\n\n::: dual-language 464\nalpha | One.\nbeta\n:::\n\n## Athamas and Ino\n\n::: dual-language 466\ngamma | Two.\ndelta\n:::");
+  const [a, b] = span(doc, "beta", "gamma");
+  const out = referencePayload(state(doc, a, b), { date: "bookshelf", tag: "Milton, John/Paradise Lost/Book 4" }, journal);
+  expect(out).toMatchObject({ label: "Milton, *Paradise Lost*, 4.465-66", passage: "> ::: dual-language 465\n> beta\n> \n> gamma | Two.\n> :::" });
+});
+test("a block opening with the rest of the line the block before ends on is numbered straight on", () => {
+  const doc = parseMarkdown("::: dual-language 47\nqui nil | He who\nportarit.\n:::\n\n::: dual-language 48\n⟨…⟩Vel dic | Or, tell me\nnaturae\n:::");
+  const [a, b] = span(doc, "portarit", "naturae");
+  expect(quote(doc, a, b)).toBe("> ::: dual-language 48\n> portarit.\n> \n> ⟨…⟩Vel dic | Or, tell me\n> naturae\n> :::");
+  expect(rangeOf(doc, a, b)).toBe("48-49");
+});
+test("verse blocks numbered straight on with more than headings between, or of two kinds, are refused", () => {
+  const prose = parseMarkdown("::: verse 13\na\n:::\n\nA paragraph.\n\n::: verse 14\nc\n:::");
+  expect(quote(prose, ...span(prose, "a", "c"))).toBe("two-blocks");
+  const kinds = parseMarkdown("::: verse 13\na\n:::\n\n::: dual-language 14\nc | C.\n:::");
+  expect(quote(kinds, ...span(kinds, "a", "c"))).toBe("two-blocks");
 });
 
 test("the leaf range is read from the page the selection is on; a leaf inside a note turns no page", () => {
@@ -385,7 +411,7 @@ test("Ref (all): a passage from a block numbered on both sides quotes both colum
   expect("passage" in alone && alone.passage).toBe("> ::: verse 197 264\n>  | Of mightie working furnishest\n> :::");
   expect(golding("quaeque magos", undefined, true)).not.toHaveProperty("refused");
 });
-test("a block can be quoted by its translation alone only where the selection lies wholly inside one numbered on both sides", () => {
+test("a block can be quoted by its translation alone only where the selection lies wholly inside blocks numbered on both sides, one or a run with only headings between", () => {
   const [a, b] = span(GOLDING, "Ye Ayres", "Of standing");
   expect(facingOf(GOLDING, a, b)?.pos).toBe(GOLDING.child(0).nodeSize);
   const [c, d] = span(GOLDING, "Book 7", "Ye Ayres");
@@ -415,10 +441,18 @@ test("the translation alone keeps its verse paragraphs' gaps and its apparatus, 
   expect("passage" in p && p.passage).toBe("> ::: verse 263\n> Ye Charmes\n> \n> ⟨line⟩*Ye Ayres*\n> *Medea*\n> Of standing\n> :::");
   expect("label" in p && p.label).toBe("Ovid, *Metamorphoses*, 7.196-98 (Golding, 7.263-65)");
 });
-test("a passage running from one block numbered on both sides into the next is refused, though it starts on a row with nothing on the left", () => {
+test("a passage running from one block numbered on both sides into the next is refused where either column does not run straight on, though it starts on a row with nothing on the left", () => {
+  const two = parseMarkdown("# Book 7\n\n::: verse 179 244\nTres | Before\n | Untill that Glaucus\n:::\n\n::: verse 180 250\nsidera | The starres\n:::");
+  const [a, b] = span(two, "Untill", "The starres");
+  expect(referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal)).toEqual({ refused: "numbered-apart" });
+});
+test("blocks numbered on both sides and straight on in both columns: the translation alone quoted as one block, both columns' lines in the label", () => {
   const two = parseMarkdown("# Book 7\n\n::: verse 179 244\nTres | Before\n | Untill that Glaucus\n:::\n\n::: verse 180 246\nsidera | The starres\n:::");
   const [a, b] = span(two, "Untill", "The starres");
-  expect(referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal)).toEqual({ refused: "two-blocks" });
+  const p = referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal);
+  expect(p).toMatchObject({ label: "Ovid, *Metamorphoses*, 7.180 (Golding, 7.245-46)", passage: "> ::: verse 245\n> Untill that Glaucus\n> \n> The starres\n> :::" });
+  const all = referencePayload(state(two, a, b), { date: "bookshelf", tag: GOLDING_TAG }, goldingJournal, true);
+  expect("passage" in all && all.passage).toBe("> ::: verse 180 245\n>  | Untill that Glaucus\n> \n> sidera | The starres\n> :::");
 });
 
 // The Vita Nuova: a chapter of prose numbered by Barbi's paragraphs and its

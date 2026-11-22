@@ -26,6 +26,12 @@ test("the process list comes last, after every list of the app's own work", () =
   expect(rows(html).at(-1)).toBe("P1");
 });
 
+test("the reader's own requests come first, before every other list", () => {
+  const html = page([...day, { at: at("10:10"), ev: "add", id: "U1", list: "U", title: "a reference across verse blocks" }], { day: "2026-11-15" });
+  expect(headings(html)).toEqual(["User requests", "Architecture queue", "Side list", "Bigger questions"]);
+  expect(rows(html)[0]).toBe("U1");
+});
+
 test("a section a list, a row an item in its tree's order, each with its number, its label and its three times", () => {
   const html = page(day, { day: "2026-11-15" });
   expect(headings(html)).toEqual(["Architecture queue", "Side list", "Bigger questions"]);

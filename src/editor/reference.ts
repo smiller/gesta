@@ -161,6 +161,7 @@ export const REFUSAL_TEXT: Record<Refusal, string> = {
   code: "A code block can’t be referenced",
   "margin-note": "A margin-note can’t be referenced — select the text beside it",
   "two-blocks": "That spans two verse blocks — reference them one at a time",
+  "numbered-apart": "Those verse blocks aren’t numbered straight on — reference them one at a time",
   "no-translation": "No translation lines selected — Ref (all) quotes the Latin too",
 };
 /* the whole clipboard text: the heading line as the link, a colon outside

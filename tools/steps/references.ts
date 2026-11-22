@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, page, A, R, S, log, go, cornerText, landed, rest, write, caretAt, view, writeAll, jump } from "./kit.ts";
+import { section, page, A, R, S, log, go, cornerText, landed, rest, still, write, caretAt, view, writeAll, jump } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -359,3 +359,18 @@ const terminal = (inner: string): string => '<div style="font-family: monospace;
 const TABLE = ["", "  ┌──────┬──────────────┐", "  │ Item │     What     │", "  ├──────┼──────────────┤", "  │      │ begin failed │", "  │ P1   │  its carries │", "  ├──────┼──────────────┤", "  │ S14  │ the paste    │", "  └──────┴──────────────┘"];
 const TERMINAL_HTML = terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run(CODE, "npm run verify") + " passed\n  before each landed.\n\n  - " + run(CODE, "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run(CODE, "7603f25") + ": the steps made independent.");
 const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";
+section("references across verse blocks", async () => {
+  /* blocks numbered apart refuse ⌃⌘R with a pin; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its whisper not swallowed by the pin */
+  await write("commonplace/Blocks", "# Blocks\n\n::: verse\nfirst block\n:::\n\n::: verse\nsecond block\n:::\n\n## Between\n\n::: verse 2\nthird block\n:::");
+  await still(page);
+  await R.selectBetween(page, "first block", "second block");
+  await R.waitBar(page);
+  const refused = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /straight on/);
+  await log("⌃⌘R over blocks numbered apart", { refused });
+  await still(page);
+  await R.selectBetween(page, "second block", "third block");
+  await R.waitBar(page);
+  const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied/);
+  const copied = await R.clipboardReference(page);
+  await log("⌃⌘R over blocks numbered straight on", { said, textHead: copied.textHead, passage: copied.passage });
+});

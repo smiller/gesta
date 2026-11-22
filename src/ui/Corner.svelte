@@ -25,12 +25,18 @@
     letter-spacing: 0.16em;
     text-transform: uppercase;
     color: var(--muted);
+    background: var(--bg);
+    padding: 0.3em 0.6em;
+    margin: -0.3em -0.6em;
+    border-radius: 3px;
+    z-index: 80;
     opacity: 0;
     transition: opacity .4s ease;
     user-select: none;
     pointer-events: none;
   }
-  .saved.show { opacity: 0.85; cursor: pointer; pointer-events: auto; }
+  /* fully opaque: drawn over the text, any less let the lines beneath show through its words */
+  .saved.show { opacity: 1; cursor: pointer; pointer-events: auto; }
   .backup-paused {
     position: fixed;
     right: 1.4rem;

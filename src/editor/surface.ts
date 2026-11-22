@@ -77,6 +77,9 @@ export interface Surfaces {
   /* a refusal the entry on screen met, pinned until the next show
      (pin: surface.test › a refusal pinned for a paste is released by the next show) */
   pinRefusal(text: string): void;
+  /* that refusal's pin released, the warning pinned on open left standing
+     (pin: surface.test › a refusal's pin is released on asking) */
+  releaseRefusal(): void;
 }
 
 export function surfaces(opts: SurfaceOptions): Surfaces {
@@ -91,9 +94,9 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   let forced = false, readerView = false;
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
-  let fencePin = 0;
-  const unpin = (): void => { if (fencePin) opts.releasePin(fencePin); fencePin = 0; };
-  const repin = (next: () => number): void => { unpin(); fencePin = next(); };
+  let fencePin = 0, refusalPinned = false;
+  const unpin = (): void => { if (fencePin) opts.releasePin(fencePin); fencePin = 0; refusalPinned = false; };
+  const repin = (next: () => number, refusal = false): void => { unpin(); fencePin = next(); refusalPinned = refusal; };
   const mount = (make: () => Surface): void => {
     const old = cur;
     cur = null;
@@ -258,6 +261,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     get md() { return mdView; },
     get forced() { return forced; },
     show, switchTo,
-    pinRefusal: (text) => repin(() => opts.pin(text)),
+    pinRefusal: (text) => repin(() => opts.pin(text), true),
+    releaseRefusal: () => { if (refusalPinned) unpin(); },
   };
 }

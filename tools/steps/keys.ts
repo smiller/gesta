@@ -303,6 +303,7 @@ async function verseLinesCopied(): Promise<void> {
   await write("commonplace/Item Paragraph", "1. one\n\n   more of one\n\n2. two\n");
 }
 async function enterListItemS(): Promise<void> {
+  await still(page);
   await caretAt("more of one", 11);
   await page.keyboard.press("Enter");
   await page.keyboard.type("next");

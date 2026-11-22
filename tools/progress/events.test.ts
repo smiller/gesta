@@ -96,7 +96,7 @@ test("which labels are open, which under way, which done, and the lists there ar
   expect(["unstarted", "in progress", "paused", "done", "done, spawned open", "moved", "dropped"].map((s) => [isOpen(s as never), isUnderway(s as never), isDone(s as never)])).toEqual([
     [true, false, false], [true, true, false], [true, true, false], [false, false, true], [false, false, true], [false, false, false], [false, false, false],
   ]);
-  expect(LISTS).toEqual(["A", "S", "L", "B", "P"]);
+  expect(LISTS).toEqual(["U", "A", "S", "L", "B", "P"]);
 });
 
 test("an item's detail is the one it was added with, or the last detail event's, and is kept through a move", () => {

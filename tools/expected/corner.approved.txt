@@ -114,6 +114,10 @@ a terminal's copy pasted: arrived at commonplace/Terminal Listing: {"cursor":"at
 a terminal's command output of several lines pasted: {"md":"before\n\n⏺ Bash(git log --oneline -3)\n⎿  bfeecd2 docs: A8 added\na03bb5d docs: A7.1.2 done\nff11004 refactor: the verdict\n\n⏺ Done, and the rest wraps.","drawn":{"paragraphs":3,"items":0},"cursor":"at the end","screen":"commonplace/Terminal Listing · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a terminal's copy pasted: arrived at commonplace/Terminal Source: {"cursor":"at a line's start"}
 a terminal's copy pasted in the source view: {"md":"x passed before it landed.","cursor":"at the end","screen":"commonplace/Terminal Source · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+== references across verse blocks
+references across verse blocks: arrived at commonplace/Blocks: {"cursor":"at a line's start"}
+⌃⌘R over blocks numbered apart: {"refused":"Those verse blocks aren’t numbered straight on — reference them one at a time (click to copy)","cursor":"selected 24","screen":"commonplace/Blocks · sel 24 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘R over blocks numbered straight on: {"said":"Reference copied to clipboard","textHead":"[*Blocks*](#commonplace/Blocks?h=second%","passage":"> ::: verse\n> second block\n> \n> third block\n> :::","cursor":"selected 32","screen":"commonplace/Blocks · sel 32 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 == shortcuts
 shortcuts: arrived at commonplace/Expanded: {"cursor":"at a line's start"}
 ⌃⌘S, no table yet: {"rows":["No shortcuts yet — add some below."],"editor":true,"focused":"search-input","cursor":"on input","screen":"commonplace/Expanded · sel none · bar off · panel shortcuts · rows none · rendered · corner [whatever stood]"}

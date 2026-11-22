@@ -446,13 +446,18 @@ export function startSession(opts: SessionOptions): Session {
     const n = surface.current ? surface.current.words() : 0;
     say(n === 1 ? "1 word" : n + " words", 2000);
   }
+  /* a passage's refusal stays pinned until clicked, the next entry, or the
+     next ⌃⌘R, which releases it FIRST: released after, the reference that
+     ⌃⌘R copied was never said (pin: references across verse blocks › ⌃⌘R
+     over blocks numbered straight on) */
   function copyReference(all = false): void {
+    surface.releaseRefusal();
     if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
     if (refuseCold(layer, say)) return;
     if (!view) { say("still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, { date: current.date, tag: current.tag }, journal, all);
-    if ("refused" in out) { say(REFUSAL_TEXT[out.refused]); return; }
+    if ("refused" in out) { surface.pinRefusal(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
     try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }
     copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn’t copy the reference");

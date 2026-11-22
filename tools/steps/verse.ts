@@ -432,6 +432,7 @@ section("prose and verse paired", async () => {
   await page.keyboard.press("Escape");
   await rest(page);
   await R.selectBetween(page, "e con lui", "davante,");
+  await R.waitBar(page);
   await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   const poemLabel = (await R.clipboardLines(page))[0];
   await log("⌃⌘R on the poem's second line", { label: poemLabel });

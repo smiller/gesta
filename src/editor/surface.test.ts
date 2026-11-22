@@ -267,4 +267,16 @@ describe("a text the model refuses", () => {
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1, 2]);
   });
+  it("a refusal's pin is released on asking, and the warning pinned when an entry opened is not", () => {
+    const w = world();
+    w.s.show("fine", "commonplace/A");
+    w.s.pinRefusal("That spans two verse blocks");
+    w.s.releaseRefusal();
+    expect(w.released).toEqual([1]);
+    w.s.releaseRefusal();
+    expect(w.released).toEqual([1]);
+    w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
+    w.s.releaseRefusal();
+    expect(w.released).toEqual([1]);
+  });
 });
