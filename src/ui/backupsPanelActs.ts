@@ -18,9 +18,9 @@ export interface BackupsPanelDeps {
   /* something done that worked */
   succeed(text: string, ms?: number): void;
   /* why an act did nothing */
-  refuse(text: string): void;
+  warn(text: string): void;
   /* an error, standing until closed */
-  fail(text: string): void;
+  error(text: string): void;
   confirm(text: string): boolean;
 }
 export interface BackupsPanel { read(): void; sweep(): void }
@@ -29,7 +29,7 @@ const sweptLine = (removed: number, n: number): string =>
   removed === n ? "removed " + counted(n, " unused picture", " unused pictures") : "removed " + removed + " of " + n + " unused pictures — the rest would not go";
 
 export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
-  const { bk, layer, images, flushSave, succeed, refuse, fail } = d;
+  const { bk, layer, images, flushSave, succeed, warn, error } = d;
   const plannedSweep = (): Promise<ReturnType<typeof sweepPlan>> => flushSave().then(() => images.keys()).then((keys) => sweepPlan(keys, layer.cache));
   const warmth = (): Screen["backups"]["warm"] => {
     const state = loadState(layer);
@@ -52,13 +52,13 @@ export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
     Promise.all(drop.map((k) => images.del(k).then(() => true, () => false))).then((gone) => swept(gone.filter(Boolean).length, drop.length));
   /* counted again at the click, the journal having moved since the panel opened */
   const sweep = (): void => {
-    if (refuseCold(layer, refuse)) return;
+    if (refuseCold(layer, warn)) return;
     plannedSweep().then((plan) => {
       const n = plan.drop.length;
       if (!n) { read(); return; }
       if (!d.confirm("Remove the " + counted(n, " picture", " pictures") + " no entry names? This can’t be undone.")) return;
       return remove(plan.drop);
-    }, () => { fail("couldn’t read the pictures"); });
+    }, () => { error("couldn’t read the pictures"); });
   };
   return { read, sweep };
 }

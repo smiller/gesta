@@ -211,11 +211,11 @@ export function quoteRefusal(state: EditorState, shift: boolean): string {
   if (d && emptyQuote($from.node(d))) return "⌃⌘M toggles markdown";
   return shift && d === outermost(state) ? QUOTE_FLOOR : "⌃⌘M toggles markdown";
 }
-export function quoteKeymap(onRefuse?: (why: string) => void): Plugin {
+export function quoteKeymap(warn?: (why: string) => void): Plugin {
   const refusing = (cmd: Command, shift: boolean): Command => (state, dispatch, view) => {
     if (!quoteDepth(state)) return false;
     if (cmd(state, dispatch, view)) return true;
-    onRefuse?.(quoteRefusal(state, shift));
+    warn?.(quoteRefusal(state, shift));
     return true;
   };
   return keymap({ Enter: enterInQuote, Tab: refusing(tabInQuote, false), "Shift-Tab": refusing(shiftTabInQuote, true) });

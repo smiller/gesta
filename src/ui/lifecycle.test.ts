@@ -87,9 +87,9 @@ const shownKept = (r: Relocation): string => [
 const fakeKept = (log: string[]): KeptState => ({ relocate: (r, open) => { log.push("kept " + shownKept(r)); open?.(); } });
 function fakeUi(log: string[]): UiPort {
   return {
-    refuse: (text) => { log.push("refuse " + text); },
+    warn: (text) => { log.push("warn " + text); },
     succeed: (text) => { log.push("succeed " + text); },
-    pin: (text) => { log.push("pin " + text); },
+    error: (text) => { log.push("error " + text); },
     redraw: () => { log.push("redraw"); },
     replaceHash: (hash) => { log.push("hash " + hash); },
     hideBar: () => { log.push("hideBar"); },
@@ -154,7 +154,7 @@ describe("the cold cache", () => {
     w.answer("Z");
     await w.life.newRoot("commonplace");
     expect(w.asked).toEqual(["Name for the new commonplace:"]);
-    expect(w.log).toEqual(Array(5).fill("refuse " + LOADING));
+    expect(w.log).toEqual(Array(5).fill("warn " + LOADING));
   });
 });
 
@@ -163,7 +163,7 @@ describe("create", () => {
     const w = await world({ at: ["2026-09-30", "x"] });
     await w.life.create();
     expect(w.asked).toEqual([]);
-    expect(w.log).toEqual(["refuse a tagged entry holds no entries of its own"]);
+    expect(w.log).toEqual(["warn a tagged entry holds no entries of its own"]);
   });
   it("does nothing when the prompt is cancelled, and says a name the naming rule refuses", async () => {
     const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n" } });
@@ -171,7 +171,7 @@ describe("create", () => {
     await w.life.create();
     await w.life.create();
     expect(w.asked).toEqual(["Name for the new sub-entry:", "Name for the new sub-entry:"]);
-    expect(w.log).toEqual(["refuse that name leaves nothing a filename can keep"]);
+    expect(w.log).toEqual(["warn that name leaves nothing a filename can keep"]);
   });
   it("goes to a name already there, writing nothing", async () => {
     const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n", "commonplace/A/B": "b\n" } });
@@ -183,19 +183,19 @@ describe("create", () => {
     const none = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n" }, noView: true });
     none.answer("B");
     await none.life.create();
-    expect(none.log).toEqual(["refuse place your cursor in the entry"]);
+    expect(none.log).toEqual(["warn place your cursor in the entry"]);
     const code = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "```\ncode\n```\n" } });
     code.select(pos(code.doc(), "code", true));
     code.answer("B");
     await code.life.create();
-    expect(code.log).toEqual(["refuse no link inside a code block"]);
+    expect(code.log).toEqual(["warn no link inside a code block"]);
     expect(code.md("commonplace/A/B")).toBeNull();
   });
   it("a new name with the caret outside the entry refuses before anything is minted; an existing one still opens", async () => {
     const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n", "commonplace/A/C": "c\n" }, noCaret: true });
     w.answer("B");
     await w.life.create();
-    expect(w.log).toEqual(["refuse place your cursor in the entry"]);
+    expect(w.log).toEqual(["warn place your cursor in the entry"]);
     expect(w.md("commonplace/A/B")).toBeNull();
     w.answer("C");
     await w.life.create();
@@ -211,7 +211,7 @@ describe("create", () => {
     moved.onSet((k) => { if (k === "commonplace/A/B") moved.leave("commonplace", "C"); });
     moved.answer("B");
     await moved.life.create();
-    expect(moved.log).toEqual(["set commonplace/A/B", "refuse the entry was made — the link was not placed"]);
+    expect(moved.log).toEqual(["set commonplace/A/B", "warn the entry was made — the link was not placed"]);
   });
   it("registers the name empty, then puts the link after the caret, saves, redraws, goes", async () => {
     const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "hello\n" } });
@@ -227,7 +227,7 @@ describe("create", () => {
     w.select(pos(w.doc(), "hello", true));
     w.answer("B");
     await w.life.create();
-    expect(w.log).toEqual(["set commonplace/A/B", "refuse couldn’t create the entry — see the error above"]);
+    expect(w.log).toEqual(["set commonplace/A/B", "warn couldn’t create the entry — see the error above"]);
     expect(serializeMarkdown(w.doc())).toBe("hello");
   });
   it("leaves the new entry standing and says so when the editor went away during the write", async () => {
@@ -236,7 +236,7 @@ describe("create", () => {
     w.onSet((k) => { if (k === "commonplace/A/B") w.dropView(); });
     w.answer("B");
     await w.life.create();
-    expect(w.log).toEqual(["set commonplace/A/B", "refuse the entry was made — the link was not placed"]);
+    expect(w.log).toEqual(["set commonplace/A/B", "warn the entry was made — the link was not placed"]);
     expect(w.md("commonplace/A/B")).toBe("");
   });
 });
@@ -246,14 +246,14 @@ describe("create in a heading", () => {
     const w = await world({ at: ["bookshelf", "Author, Test"], entries: { "bookshelf/Author, Test": "# Test Author\n" }, noView: true, source: true, sourceHeading: true });
     w.answer("Pictures");
     await w.life.create();
-    expect(w.log).toEqual(["refuse no link inside a heading — place your cursor below it"]);
+    expect(w.log).toEqual(["warn no link inside a heading — place your cursor below it"]);
   });
   it("the Tag button refuses a selection that cuts into a heading, and takes one that holds a whole heading", async () => {
     const part = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "# A Title\n\nbody\n" } });
     part.select(pos(part.doc(), "Title"), pos(part.doc(), "Title", true));
     part.answer("T");
     await part.life.extract();
-    expect(part.log).toEqual(["refuse no link inside a heading — place your cursor below it"]);
+    expect(part.log).toEqual(["warn no link inside a heading — place your cursor below it"]);
     const whole = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "# A\n\n# Part\n\nbody text\n\nkeep" } });
     whole.select(pos(whole.doc(), "Part"), pos(whole.doc(), "text", true));
     whole.answer("P");
@@ -265,7 +265,7 @@ describe("create in a heading", () => {
     w.select(1);
     w.answer("Pictures");
     await w.life.create();
-    expect(w.log).toEqual(["refuse no link inside a heading — place your cursor below it"]);
+    expect(w.log).toEqual(["warn no link inside a heading — place your cursor below it"]);
     expect(w.md("bookshelf/Author, Test/Pictures")).toBeNull();
   });
 });
@@ -307,7 +307,7 @@ describe("extract", () => {
     w.select(pos(w.doc(), "Part"), pos(w.doc(), "body text", true));
     w.answer("P");
     await w.life.extract();
-    expect(w.log).toEqual(["set commonplace/A/P", "refuse couldn’t create the entry — see the error above"]);
+    expect(w.log).toEqual(["set commonplace/A/P", "warn couldn’t create the entry — see the error above"]);
     expect(serializeMarkdown(w.doc())).toBe(HOST);
   });
   it("places no link when the text moved during the write; the new entry stands", async () => {
@@ -316,7 +316,7 @@ describe("extract", () => {
     w.onSet((k) => { if (k === "commonplace/A/P") w.edit((s) => s.tr.insertText("moved ", 1)); });
     w.answer("P");
     await w.life.extract();
-    expect(w.log).toEqual(["set commonplace/A/P", "refuse the text moved while the entry was made — the link was not placed"]);
+    expect(w.log).toEqual(["set commonplace/A/P", "warn the text moved while the entry was made — the link was not placed"]);
     expect(w.md("commonplace/A/P")).toBe("# Part\n\nbody text");
     expect(serializeMarkdown(w.doc())).not.toContain("#commonplace/A/P");
   });
@@ -430,7 +430,7 @@ describe("the pictures left behind", () => {
     const back = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: PICS, failSet: "commonplace/Letters/A", failDel: "commonplace/Letters" });
     back.answer("commonplace/Letters", true);
     await back.life.rename();
-    expect(back.log[back.log.length - 1]).toBe("pin couldn’t move — copies left: commonplace/Letters");
+    expect(back.log[back.log.length - 1]).toBe("error couldn’t move — copies left: commonplace/Letters");
     expect(back.pics["commonplace/commonplace--Letters-img-1.webp"]).toBe("e");
   });
   it("each copy is checked, renamed or not, one at a time just before it is made; a clash takes back those made, keeps what was typed, and names it", async () => {
@@ -445,7 +445,7 @@ describe("the pictures left behind", () => {
     ]);
     expect(w.pics["bookshelf/Miller, Sean/shared.webp"]).toBeUndefined();
     expect(w.md("commonplace/Essays")).toBe("typed\n");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture named bookshelf--Miller, Sean--Letters--A-img-1.webp is there already in bookshelf/Miller, Sean/Letters"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named bookshelf--Miller, Sean--Letters--A-img-1.webp is there already in bookshelf/Miller, Sean/Letters"]);
   });
   it("a picture read that fails reopens the commonplace, says so, and keeps what was typed", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: ENTRIES, pics: PICS, failClash: true });
@@ -453,7 +453,7 @@ describe("the pictures left behind", () => {
     w.answer("bookshelf/Miller, Sean/Letters", true);
     await w.life.rename();
     expect(w.md("commonplace/Essays")).toBe("typed\n");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture could not be copied, nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture could not be copied, nothing was moved"]);
   });
   it("one picture two commonplaces name under different new names is copied to each", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e", "commonplace/Essays/A": "![](commonplace--Essays--A-img-1.webp)\n", "commonplace/Essays/B": "![](commonplace--Essays--A-img-1.webp)\n" }, pics: { "commonplace/Essays/commonplace--Essays--A-img-1.webp": "a" } });
@@ -501,7 +501,7 @@ describe("rename moves a page with its sub-entries", () => {
     w.answer("commonplace/Other", true);
     await w.life.rename();
     expect(w.log.filter((x) => /^(set|del|pic) /.test(x))).toEqual([]);
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture named photo.jpg is there already in commonplace/Other"]);
     expect(w.pics["commonplace/Other/photo.jpg"]).toBe("theirs");
   });
   it("a picture two commonplaces share is copied once, and one that stays where it is not at all", async () => {
@@ -527,7 +527,7 @@ describe("rename moves a page with its sub-entries", () => {
     await w.life.rename();
     await w.life.rename();
     await w.life.rename();
-    expect(w.log).toEqual(Array(3).fill("refuse an address can’t have an empty part"));
+    expect(w.log).toEqual(Array(3).fill("warn an address can’t have an empty part"));
   });
   it("a twin matched by its name while blank is named by its name in the confirm", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: { "commonplace/Essays": "e", "commonplace/Essays/Old": "", "commonplace/Essays/New": "n\n", "commonplace/Letters": "l", "commonplace/Letters/Old": "# The old one\n" } });
@@ -586,14 +586,14 @@ describe("rename moves a page with its sub-entries", () => {
     await w.life.rename();
     await w.life.rename();
     await w.life.rename();
-    expect(w.log).toEqual(["refuse nothing at bookshelf/Nobody to move it under", "refuse an entry can’t move under itself"]);
+    expect(w.log).toEqual(["warn nothing at bookshelf/Nobody to move it under", "warn an entry can’t move under itself"]);
   });
   it("a picture that cannot be copied stops it before any entry is written; one not found is counted", async () => {
     const w = await world({ at: ["commonplace", "Essays"], entries: ESSAYS, pics: { [PIC]: "png" }, failPic: PIC_THERE });
     w.answer(TO, true);
     await w.life.rename();
     expect(w.log.filter((x) => x.startsWith("set ") || x.startsWith("del "))).toEqual([]);
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — a picture could not be copied, nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — a picture could not be copied, nothing was moved"]);
     const lost = await world({ at: ["commonplace", "Essays"], entries: ESSAYS });
     lost.answer(TO, true);
     await lost.life.rename();
@@ -606,7 +606,7 @@ describe("rename moves a page with its sub-entries", () => {
     for (const [k, v] of Object.entries(ESSAYS)) expect(w.md(k)).toBe(v);
     expect(w.md(TO + "/2024-07-26-birds")).toBeNull();
     expect(w.log).not.toContain("del commonplace/Essays");
-    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "pin couldn’t move — nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open commonplace/Essays", "error couldn’t move — nothing was moved"]);
   });
 });
 
@@ -624,7 +624,7 @@ describe("a day's tagged entry renamed", () => {
     await w.life.rename();
     expect(w.md("2026-09-05/draft")).toBe("text");
     expect(w.log).not.toContain("del 2026-09-05/draft");
-    expect(w.log.slice(-2)).toEqual(["open 2026-09-05/draft", "pin couldn’t rename — nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open 2026-09-05/draft", "error couldn’t rename — nothing was moved"]);
   });
 });
 
@@ -632,7 +632,7 @@ describe("delete", () => {
   it("refuses over sub-entries holding text, and does nothing when the confirm is declined", async () => {
     const full = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": "a\n", "commonplace/A/B": "text\n" } });
     await full.life.remove();
-    expect(full.log).toEqual(["refuse delete the sub-entries first"]);
+    expect(full.log).toEqual(["warn delete the sub-entries first"]);
     const no = await world({ at: ["commonplace", "A/B"], entries: { "commonplace/A/B": "b\n" } });
     no.answer(false);
     await no.life.remove();
@@ -819,7 +819,7 @@ describe("rename re-files an author with books", () => {
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     expect(w.log.filter((x) => /^(set|del) /.test(x))).toEqual([]);
-    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn’t re-file — a picture could not be copied, nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "error couldn’t re-file — a picture could not be copied, nothing was moved"]);
   });
   it("a failed move removes the copies made and leaves the old author whole, opened again", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles" });
@@ -828,7 +828,7 @@ describe("rename re-files an author with books", () => {
     for (const k of Object.keys(CAVAFY)) expect(w.md(k)).toBe(CAVAFY[k as keyof typeof CAVAFY]);
     for (const k of ["", "/Walls", "/Candles"]) expect(w.md("bookshelf/Cavafy, C. P" + k)).toBeNull();
     expect(w.log).not.toContain("del bookshelf/C. P. Cavafy");
-    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "pin couldn’t re-file — nothing was moved"]);
+    expect(w.log.slice(-2)).toEqual(["open bookshelf/C. P. Cavafy", "error couldn’t re-file — nothing was moved"]);
   });
   it("a link spelled with an encoded slash, lowercase hex or angle brackets moves too", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-16": "[a](#bookshelf/C.%20P.%20Cavafy%2FWalls)\n", "2026-09-17": "[b](<#bookshelf/C. P. Cavafy/Candles>)\n", "2026-09-18": "[c](#bookshelf/C.%20P.%20Cav%61fy)\n" } });
@@ -851,14 +851,14 @@ describe("rename re-files an author with books", () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failSet: "bookshelf/Cavafy, C. P/Candles", failDel: "bookshelf/Cavafy, C. P/Walls" });
     w.answer("Cavafy, C. P.");
     await w.life.rename();
-    expect(w.log[w.log.length - 1]).toBe("pin couldn’t re-file — copies left: bookshelf/Cavafy, C. P/Walls");
+    expect(w.log[w.log.length - 1]).toBe("error couldn’t re-file — copies left: bookshelf/Cavafy, C. P/Walls");
   });
   it("an old entry whose removal is refused is named in a pin, the rest moved", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: CAVAFY, failDel: "bookshelf/C. P. Cavafy/Walls" });
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     expect(w.md("bookshelf/C. P. Cavafy")).toBeNull();
-    expect(w.log[w.log.length - 1]).toBe("pin filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; old copy kept: bookshelf/C. P. Cavafy/Walls");
+    expect(w.log[w.log.length - 1]).toBe("error filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; old copy kept: bookshelf/C. P. Cavafy/Walls");
   });
   it("a link refused once as stale is rewritten on the retry; one whose write fails, or that the rewrite cannot reach, is named in a pin", async () => {
     const w = await world({ at: ["bookshelf", "C. P. Cavafy"], entries: { ...CAVAFY, "2026-09-15": "[x](file:///g/index.html#bookshelf/C.%20P.%20Cavafy)\n", "commonplace/Broken": "[y](#bookshelf/C.%20P.%20Cavafy/Walls)\n" }, failSet: "commonplace/Broken" });
@@ -866,7 +866,7 @@ describe("rename re-files an author with books", () => {
     w.answer("Cavafy, C. P.");
     await w.life.rename();
     expect(w.md("2026-09-14")).toBe("Theirs: [the walls](#bookshelf/Cavafy%2C%20C.%20P/Walls)");
-    expect(w.log[w.log.length - 1]).toBe("pin filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; links not updated in 2 entries: 2026-09-15, commonplace/Broken");
+    expect(w.log[w.log.length - 1]).toBe("error filed under Cavafy, C. P — 3 entries moved, links updated in 2 others; links not updated in 2 entries: 2026-09-15, commonplace/Broken");
   });
   it("an author with no page of its own is given one, headed by the old name, so it reads the same", async () => {
     const w = await world({ at: ["bookshelf", "Boethius"], entries: { "bookshelf/Boethius/Consolatio": "- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n", "bookshelf/Boethius/Consolatio/3pr1": "Iam cantum.\n" }, md: "" });
@@ -920,16 +920,16 @@ describe("the shelves", () => {
     await on.life.extract();
     await on.life.rename();
     expect(on.asked).toEqual([]);
-    expect(on.log).toEqual(["refuse the shelves hold no books", "refuse the shelves hold no books", "refuse the shelves keep their name"]);
+    expect(on.log).toEqual(["warn the shelves hold no books", "warn the shelves hold no books", "warn the shelves keep their name"]);
     const author = await world({ at: ["bookshelf", "Horace"], entries: { "bookshelf/Horace": "# Horace\n" } });
     author.answer("Shelves");
     await author.life.rename();
-    expect(author.log).toEqual(["refuse “Shelves” is the shelves’ own name"]);
+    expect(author.log).toEqual(["warn “Shelves” is the shelves’ own name"]);
     expect(author.md("bookshelf/Horace")).toBe("# Horace\n");
     const fresh = await world({ at: ["bookshelf", null] });
     fresh.answer("Horace", "Shelves");
     await fresh.life.newRoot("bookshelf");
-    expect(fresh.log).toEqual(["refuse “Shelves” is the shelves’ own name"]);
+    expect(fresh.log).toEqual(["warn “Shelves” is the shelves’ own name"]);
     expect(fresh.md("bookshelf/Shelves")).toBeNull();
   });
   it("the shelves opened: made with their heading when there are none, opened as they stand when there are", async () => {

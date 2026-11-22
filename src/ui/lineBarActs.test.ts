@@ -7,7 +7,7 @@ import type { Screen } from "./screen.svelte.ts";
 
 function barOf(kind: Screen["lineBar"]["kind"]) {
   const lb: Screen["lineBar"] = { open: true, kind, line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" };
-  const deps = { lb, session: { current: { date: "bookshelf", tag: "A/W" }, view: null, mdView: false }, journal: {} as never, say: () => {}, opened: () => {}, focusBar: () => {}, warmed: () => true } as unknown as LineBarDeps;
+  const deps = { lb, session: { current: { date: "bookshelf", tag: "A/W" }, view: null, mdView: false }, journal: {} as never, info: () => {}, opened: () => {}, focusBar: () => {}, warmed: () => true } as unknown as LineBarDeps;
   return { lb, acts: lineBarActs(deps) };
 }
 

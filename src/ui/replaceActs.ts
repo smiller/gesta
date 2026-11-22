@@ -7,7 +7,7 @@ import { visibleTop } from "./visibleTop.ts";
 export interface ReplaceDeps {
   rb: Screen["replace"];
   session: Pick<Session, "locked" | "mdView" | "replacer" | "setView">;
-  say(text: string, ms?: number): void;
+  info(text: string, ms?: number): void;
   opened(): void;
   focusBar(): void;
 }
@@ -16,7 +16,7 @@ export interface ReplaceBar {
   close(): void; closeOver(): void; dismiss(): void; check(): void;
 }
 export function replaceActs(d: ReplaceDeps): ReplaceBar {
-  const { rb, session, say, opened, focusBar } = d;
+  const { rb, session, info, opened, focusBar } = d;
   /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
      to the source view first, and closing the bar switches back */
   let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
@@ -86,7 +86,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     if (session.mdView) return "there";
     session.setView(true);
     if (!session.mdView) return "refused";
-    say("Source view, to replace", 3000);
+    info("Source view, to replace", 3000);
     return "switched";
   };
   /* typing in the text recounts once a frame, a recount being the whole

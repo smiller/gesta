@@ -61,8 +61,8 @@ export interface SurfaceOptions {
   window: Viewport;
   places: PlacePort;
   /* 0 when nothing was pinned */
-  pin: (text: string) => number;
-  releasePin: (gen: number) => void;
+  error: (text: string) => number;
+  releaseError: (gen: number) => void;
   pinned: () => boolean;
   onView: (md: boolean) => void;
   switched: () => void;
@@ -89,7 +89,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
   let fencePin = 0;
-  const unpin = (): void => { if (fencePin) opts.releasePin(fencePin); fencePin = 0; };
+  const unpin = (): void => { if (fencePin) opts.releaseError(fencePin); fencePin = 0; };
   const repin = (next: () => number): void => { unpin(); fencePin = next(); };
   const mount = (make: () => Surface): void => {
     const old = cur;
@@ -97,7 +97,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     old?.destroy();
     cur = make();
   };
-  const refusedPin = (err: unknown): number => opts.pin("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
+  const refusedPin = (err: unknown): number => opts.error("cannot render " + ekey + " — " + (err as Error).message + "; shown as source");
   /* the entry's refused fences and its directives' trouble, pinned when it
      is drawn: told only on the switch back, they were never seen by a
      reader who did not edit the source (pin: surface.test › an entry opened
@@ -107,7 +107,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     if (opening && opts.pinned()) return;
     const refused = fenceRefusals(doc);
     const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(...splitKey(ekey), directivesIn(doc))];
-    if (told.length) repin(() => opts.pin(told.join("\n")));
+    if (told.length) repin(() => opts.error(told.join("\n")));
   }
   /* whether the show is of another entry than the one on screen, the view
      it opens in settled */

@@ -23,7 +23,7 @@ describe("Alerts", () => {
   it("an error and a warning at once: both shown, the error first, each with its ×", () => {
     const a = alertLedger(() => Promise.resolve());
     a.warn("no line numbers here");
-    a.error("not saved", "detail");
+    a.error("not saved", { copy: "detail" });
     const html = draw(a);
     expect(html).toMatch(/class="alert error[^"]*show[^"]*">not saved<span class="close/);
     expect(html).toMatch(/class="alert warning[^"]*show[^"]*">no line numbers here<span class="close/);

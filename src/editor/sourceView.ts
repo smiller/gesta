@@ -8,7 +8,7 @@ import type { Surface, ReplacePort } from "./surface.ts";
 export interface SourceOptions {
   onChange: () => void;
   onPasteFile: (file: File) => void;
-  onRefuse: (why: string) => void;
+  warn: (why: string) => void;
 }
 
 const MIRROR = ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const;
@@ -63,7 +63,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     const r = sourceTab(ta.value, ta.selectionStart, ta.selectionEnd, e.shiftKey);
     if (r === null) return;
     e.preventDefault();
-    if ("refuse" in r) { if (!e.repeat) opts.onRefuse(r.refuse); return; }
+    if ("refuse" in r) { if (!e.repeat) opts.warn(r.refuse); return; }
     ta.value = r.value;
     ta.setSelectionRange(r.start, r.end);
     ta.dispatchEvent(new Event("input"));

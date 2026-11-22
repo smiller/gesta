@@ -70,11 +70,11 @@ export function listRefusal(state: EditorState, shift: boolean): string {
 }
 /* a Tab in a list is CONSUMED whether or not it moved: the press must not
    leave the editor for the browser's focus walk */
-export function listKeymap(onRefuse?: (why: string) => void): Plugin {
+export function listKeymap(warn?: (why: string) => void): Plugin {
   const refusing = (cmd: Command, shift: boolean): Command => (state, dispatch, view) => {
     if (!inListItem(state)) return false;
     if (cmd(state, dispatch, view)) return true;
-    onRefuse?.(listRefusal(state, shift));
+    warn?.(listRefusal(state, shift));
     return true;
   };
   return keymap({ Enter: enterInList, Tab: refusing(tabInList, false), "Shift-Tab": refusing(shiftTabInList, true) });

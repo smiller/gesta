@@ -28,6 +28,7 @@ import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
 import { screenTake, type ScreenTake } from "./ui/tabWrite.ts";
+import type { ErrorFrom } from "./ui/alertLedger.svelte.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
@@ -40,15 +41,14 @@ export interface SessionOptions {
   layer: EntryLayer;
   images: ImageStore;
   interval: number;
-  say: (text: string, ms?: number) => void;
+  info: (text: string, ms?: number) => void;
   /* something done that worked */
   succeed: (text: string, ms?: number) => void;
   /* why an act did nothing */
-  refuse: (text: string) => void;
-  stick?: (text: string, copy?: string) => void;
-  pin?: (text: string, copy?: string) => number;
+  warn: (text: string) => void;
+  error?: (text: string, from?: ErrorFrom) => number;
   pinned?: () => boolean;
-  releasePin?: (gen: number) => void;
+  releaseError?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
   /* a navigation to the entry already open */
@@ -111,7 +111,7 @@ export const SAVED_MS = 1400;
 const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
 
 export function startSession(opts: SessionOptions): Session {
-  const { mount, layer, images, say, succeed, refuse } = opts;
+  const { mount, layer, images, info, succeed, warn } = opts;
   const journal = journalOf(layer.cache);
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
@@ -132,7 +132,7 @@ export function startSession(opts: SessionOptions): Session {
     screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
     layer,
     wrote: (landed) => { if (landed) succeed("saved", SAVED_MS); show(); },
-    refused: (md) => { detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0); },
+    refused: (md) => { detachedPins.push(opts.error?.("not saved — deleted in another tab, copy your text", { copy: md }) || 0); },
   });
   const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
@@ -144,20 +144,20 @@ export function startSession(opts: SessionOptions): Session {
      (pin: alerts and surfaces › a picture whose write fails) */
   function pictureNotSaved(err: unknown): void {
     console.error("picture not saved", err);
-    opts.stick?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", errText(err));
+    opts.error?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", { copy: errText(err) });
   }
   function landPicture(bytes: Awaited<ReturnType<typeof pastedPictureBytes>>, aimedAt: string, aimedView: boolean): Promise<void> | void {
-    if (aimedAt !== ekeyOf() || aimedView !== surface.md) { opts.stick?.("the picture had nowhere to land — paste it again"); return; }
+    if (aimedAt !== ekeyOf() || aimedView !== surface.md) { opts.error?.("the picture had nowhere to land — paste it again"); return; }
     const name = nextImageName(entryFile(current.date, current.tag).base, imageRefs(currentMd()));
     return images.set(pictureKey(current.date, current.tag, name), bytes).then(() => { surface.current?.insertPicture(name); }, pictureNotSaved);
   }
   function pasteFile(file: File): void {
     if (locked?.has(ekeyOf())) return;
-    if (decoding) { refuse("picture not pasted — one at a time; paste it again"); return; }
+    if (decoding) { warn("picture not pasted — one at a time; paste it again"); return; }
     const aimedAt = ekeyOf(), aimedView = surface.md;
     decoding = true;
     pastedPictureBytes(file).then((bytes) => { decoding = false; return landPicture(bytes, aimedAt, aimedView); })
-      .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.stick?.("that picture couldn’t be read — try copying it as a PNG"); });
+      .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); opts.error?.("that picture couldn’t be read — try copying it as a PNG"); });
   }
   const folds = foldMemory(stored(NS + "folds", parseFoldStore), () => Object.keys(layer.cache));
   /* read at every scroll to the caret, a keystroke's included: a cached
@@ -197,9 +197,9 @@ export function startSession(opts: SessionOptions): Session {
       /* given even off: refreshFolds switches it on */
       folds: { ...start, onChange: (keys) => folds.record(ekey, keys) },
       onRoute: (frag) => goto(frag, "already here"),
-      onRefuse: (why) => refuse(why),
+      warn: (why) => warn(why),
       onPasteFile: pasteFile,
-      onPasteRefused: (text) => refuse(text),
+      onPasteRefused: (text) => warn(text),
       clearOf: () => Math.max(mastheadHeight, areaClear()),
     });
     return rendered;
@@ -212,13 +212,13 @@ export function startSession(opts: SessionOptions): Session {
   const surface = surfaces({
     build: {
       rendered: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
-      source: (md) => { mount.replaceChildren(); return lockedNow(sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => refuse(why) })); },
+      source: (md) => { mount.replaceChildren(); return lockedNow(sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, warn: (why) => warn(why) })); },
     },
     window: viewport,
     places: keeper,
-    pin: (text) => opts.pin?.(text) || 0,
+    error: (text) => opts.error?.(text) || 0,
     pinned: () => !!opts.pinned?.(),
-    releasePin: (gen) => opts.releasePin?.(gen),
+    releaseError: (gen) => opts.releaseError?.(gen),
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },
   });
@@ -229,7 +229,7 @@ export function startSession(opts: SessionOptions): Session {
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
   function releaseDetached(): void {
-    for (const g of detachedPins) opts.releasePin?.(g);
+    for (const g of detachedPins) opts.releaseError?.(g);
     detachedPins = [];
   }
   const pendingNow = (): boolean => pending?.gen === navGen;
@@ -317,7 +317,7 @@ export function startSession(opts: SessionOptions): Session {
        own row is primed, and failing that the warm answers
        (pin: places › a contents link clicked before the warm) */
     if (!layer.warmed) { primeBeforeWarm(want); return; }
-    refuse("no such " + missingNoun(h));
+    warn("no such " + missingNoun(h));
     history.replaceState(null, "", entryHash(current.date, current.tag));
     if (!surface.current) open(current.date, current.tag);
   }
@@ -360,7 +360,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function afterTabWrite(ekey: string, verdict: ScreenTake, moved: boolean): void {
     if (!moved) return;
-    if (verdict === "deleted" && !opts.pinned?.()) detachedPins.push(opts.pin?.("deleted in another tab") || 0);
+    if (verdict === "deleted" && !opts.pinned?.()) detachedPins.push(opts.error?.("deleted in another tab") || 0);
     else if (onScreenKey(ekey)) redraw();
   }
   function takeTabWrite(ekey: string): Promise<void> {
@@ -408,7 +408,7 @@ export function startSession(opts: SessionOptions): Session {
        (pin: a link to a line › a link to a line, clicked again) */
     const line = hashParts(asAddress(hash)).hl?.line;
     if (line) opts.onLine?.(line);
-    else if (sameMsg) refuse(sameMsg);
+    else if (sameMsg) warn(sameMsg);
     if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
   }
   function goto(hash: string, sameMsg?: string): void {
@@ -419,10 +419,10 @@ export function startSession(opts: SessionOptions): Session {
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2) */
   const orderMemo = new Map<string, { md: string; links: ContentsLink[] }>();
   function step(dir: "prev" | "next"): void {
-    if (refuseCold(layer, refuse)) return;
+    if (refuseCold(layer, warn)) return;
     const keys = Object.keys(layer.cache), bearing = (k: string) => !!layer.entryMd(k).trim();
     const nb = navNeighbors({ keys, bearing }, current.date, current.tag, (pk) => subEntryOrder({ keys, bearing }, pk, layer.entryMd(pk), orderMemo).names)[dir];
-    if (!nb) { refuse(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
+    if (!nb) { warn(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
   }
   function today(): void { goto(entryHash(todayKey()), "already on today"); }
@@ -438,29 +438,29 @@ export function startSession(opts: SessionOptions): Session {
          clipboard back); an older copy settling late changes nothing
          (unpinned: two writes no step can order) */
       if (gen !== copyGen) return;
-      if (copyPin) { opts.releasePin?.(copyPin); copyPin = 0; }
+      if (copyPin) { opts.releaseError?.(copyPin); copyPin = 0; }
       if (ok) { succeed(okText); return; }
       console.error(failText, payload.text);
-      copyPin = opts.pin ? opts.pin(failText, payload.text) : 0;
+      copyPin = opts.error ? opts.error(failText, { copy: payload.text }) : 0;
     });
   }
   function showWordCount(): void {
     const n = surface.current ? surface.current.words() : 0;
-    say(n === 1 ? "1 word" : n + " words", 2000);
+    info(n === 1 ? "1 word" : n + " words", 2000);
   }
   function copyReference(all = false): void {
-    if (surface.md) { refuse("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
+    if (surface.md) { warn("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
-    if (refuseCold(layer, refuse)) return;
-    if (!view) { refuse("still loading — try that again in a moment"); return; }
+    if (refuseCold(layer, warn)) return;
+    if (!view) { warn("still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, { date: current.date, tag: current.tag }, journal, all);
-    if ("refused" in out) { refuse(REFUSAL_TEXT[out.refused]); return; }
+    if ("refused" in out) { warn(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
     try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }
     copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn’t copy the reference");
   }
   function copyEntryLink(): void {
-    if (refuseCold(layer, refuse)) return;
+    if (refuseCold(layer, warn)) return;
     const p = entryLinkParts(current.date, current.tag, journal);
     copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn’t copy the link");
   }
@@ -477,7 +477,7 @@ export function startSession(opts: SessionOptions): Session {
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
   function switchView(): void {
-    if (opts.readOnly) { refuse("no markdown view here"); return; }
+    if (opts.readOnly) { warn("no markdown view here"); return; }
     opts.onSwitch?.();
     surface.switchTo(!surface.md);
   }

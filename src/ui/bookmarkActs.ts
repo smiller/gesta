@@ -16,7 +16,7 @@ export interface BookmarkCardDeps {
   session: Pick<Session, "current" | "goto" | "focusText" | "view" | "mdView" | "insertText" | "save">;
   journal: Journal;
   /* why an act did nothing */
-  refuse(text: string): void;
+  warn(text: string): void;
   overlay: { open(opening: "bookmarks"): void };
   panel: { isOpen(): boolean; show(): void };
   closePanel(): void;
@@ -28,7 +28,7 @@ export interface BookmarkCardDeps {
 }
 export interface BookmarkCard { open(): void; key(e: KeyboardEvent): void; draft(v: string): void; commit(typed: string): void; act(key: string, what: BookmarkAct): void }
 export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
-  const { bm, marks, session, journal, refuse, overlay, panel, closePanel, focusCard, caretInEntry, keysNow, warmBlock, warmed } = d;
+  const { bm, marks, session, journal, warn, overlay, panel, closePanel, focusCard, caretInEntry, keysNow, warmBlock, warmed } = d;
   let cardCaret = false;
   const hereKey = (): string => entryKey(session.current.date, session.current.tag);
   /* every render hands focus back: a delete removes the row its own
@@ -55,18 +55,18 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     closePanel();
     session.goto(entryHash(p.date, p.tag), alreadyOn(b.key, journal));
   };
-  const resolved = (r: { buf: string; jump?: Bookmark; say?: string }): void => {
+  const resolved = (r: { buf: string; jump?: Bookmark; warn?: string }): void => {
     bm.buf = r.buf;
     if (r.jump) jumpBookmark(r.jump);
-    else if (r.say) refuse(r.say);
+    else if (r.warn) warn(r.warn);
   };
   const addOpenBookmark = (): void => {
     const here = hereKey();
-    if (bookmarkIndex(marks.list(), here) !== -1) { refuse("already bookmarked"); return; }
-    if (bookmarksFull(marks.list())) { refuse("bookmarks full — delete one, or give one its own key"); return; }
+    if (bookmarkIndex(marks.list(), here) !== -1) { warn("already bookmarked"); return; }
+    if (bookmarksFull(marks.list())) { warn("bookmarks full — delete one, or give one its own key"); return; }
     session.save.flush().then(() => {
       if (!panel.isOpen()) return;
-      if (!reachableBookmarks([{ key: here, alias: "" }], keysNow()).length) { if (!warmBlock()) refuse("nothing to bookmark here yet"); return; }
+      if (!reachableBookmarks([{ key: here, alias: "" }], keysNow()).length) { if (!warmBlock()) warn("nothing to bookmark here yet"); return; }
       const next = addBookmark(marks.list(), here);
       if (next && marks.write(next)) renderBookmarks();
     });
@@ -81,7 +81,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
   const isDigit = (k: string): boolean => k.length === 1 && k >= "1" && k <= "9";
   const jumpNumbered = (k: string): void => {
     const b = numberedBookmarks(marks.list())[+k - 1];
-    if (!b) refuse("no bookmark " + k);
+    if (!b) warn("no bookmark " + k);
     else jumpBookmark(b);
   };
   const firstKey = (e: KeyboardEvent): boolean => {
@@ -109,9 +109,9 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     const key = bm.editing, alias = typed.trim().toLowerCase();
     if (!key) return;
     const holder = aliasHolder(marks.list(), alias);
-    if (holder && holder.key !== key) { refuse("“" + alias + "” already goes to " + trimLabel(bookmarkLabel(holder.key, journal), ECHO_CAP)); return; }
+    if (holder && holder.key !== key) { warn("“" + alias + "” already goes to " + trimLabel(bookmarkLabel(holder.key, journal), ECHO_CAP)); return; }
     const why = aliasRefusal(alias);
-    if (why) { refuse(why); return; }
+    if (why) { warn(why); return; }
     const next = setBookmarkAlias(marks.list(), key, alias);
     if (!next) { bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
     if (!marks.write(next)) { renderBookmarks(); return; }
@@ -138,11 +138,11 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     if (warmBlock()) return;
     closePanel();
     session.focusText();
-    if (key === hereKey()) { refuse(alreadyOn(key, journal)); return; }
+    if (key === hereKey()) { warn(alreadyOn(key, journal)); return; }
     const view = session.view;
-    if (!cardCaret || nowhereToType(view)) { refuse("place your cursor in the entry"); return; }
+    if (!cardCaret || nowhereToType(view)) { warn("place your cursor in the entry"); return; }
     const why = view && linkRefusal(view.state);
-    if (why) { refuse(why); return; }
+    if (why) { warn(why); return; }
     const p = bookmarkParts(key), href = entryHash(p.date, p.tag), label = mdLabel(bookmarkLinkLabel(key, journal), "entry");
     if (view) insertLinkAfter(view, href, label);
     else session.insertText(linkMarkdown(href, label), true);

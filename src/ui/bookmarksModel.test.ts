@@ -32,7 +32,7 @@ describe("the typed key", () => {
     expect(typeAlias(list, "scr1", "2")).toEqual({ buf: "", jump: row("d", "scr12") });
     expect(typeAlias(list, "", "f")).toEqual({ buf: "f" });
     expect(typeAlias(list, "f", "b")).toEqual({ buf: "", jump: row("c", "fb") });
-    expect(typeAlias(list, "", "z")).toEqual({ buf: "", say: "no bookmark z" });
+    expect(typeAlias(list, "", "z")).toEqual({ buf: "", warn: "no bookmark z" });
     expect(typeAlias(list, "", "a")).toBeNull();
     expect(typeAlias(list, "", "1")).toBeNull();
     expect(typeAlias(list, "purg", "1")).toEqual({ buf: "purg1" });
@@ -40,8 +40,8 @@ describe("the typed key", () => {
   it("Enter takes the exact key, the sole candidate, or asks for the rest with the prefix kept", () => {
     expect(resolveAlias(list, "f")).toEqual({ buf: "", jump: row("b", "f") });
     expect(resolveAlias(list, "sc")).toEqual({ buf: "", jump: row("d", "scr12") });
-    expect(resolveAlias(list, "purg")).toEqual({ buf: "purg", say: "finish the key" });
-    expect(resolveAlias(list, "q")).toEqual({ buf: "", say: "no bookmark q" });
+    expect(resolveAlias(list, "purg")).toEqual({ buf: "purg", warn: "finish the key" });
+    expect(resolveAlias(list, "q")).toEqual({ buf: "", warn: "no bookmark q" });
     expect(aliasCandidates(list, "purg").map((b) => b.alias)).toEqual(["purg2", "purg19"]);
   });
 });

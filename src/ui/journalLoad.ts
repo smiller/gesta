@@ -1,4 +1,5 @@
 import type { EntryLayer } from "../store/entries.ts";
+import type { ErrorFrom } from "./alertLedger.svelte.ts";
 
 type Load = Pick<EntryLayer, "warmed" | "storeReadFailed">;
 export type LoadState = "loading" | "failed" | "in";
@@ -9,15 +10,14 @@ const REFUSAL: Record<Exclude<LoadState, "in">, string> = {
   failed: "couldn’t load entries — reload first",
 };
 /* says the refusal and answers whether it refused (pin: journalLoad.test › an act refused while the journal loads) */
-export function refuseCold(layer: Load, refuse: (text: string) => void): boolean {
+export function refuseCold(layer: Load, warn: (text: string) => void): boolean {
   const state = loadState(layer);
-  if (state !== "in") refuse(REFUSAL[state]);
+  if (state !== "in") warn(REFUSAL[state]);
   return state !== "in";
 }
 
 export interface Pins {
-  error(text: string): number;
-  errorCaught(text: string, err: unknown): number;
+  error(text: string, from?: ErrorFrom): number;
   releaseError(gen: number): void;
 }
 /* a store that never answers left a blank page saying nothing
@@ -32,7 +32,7 @@ export function loadPins(ms: number, pins: Pins): { start(): void; landed(layer:
       if (pinned) pins.releaseError(pinned);
       /* an unreadable journal is an error, not a status: it sticks, the
          caught failure copyable */
-      if (layer.storeReadFailed) pins.errorCaught("the store could not be read — reload", layer.storeReadError);
+      if (layer.storeReadFailed) pins.error("the store could not be read — reload", { caught: layer.storeReadError });
     },
   };
 }

@@ -21,6 +21,9 @@ export interface AlertState {
 export type Kind = "error" | "warning" | "info" | "success";
 export type Fading = "info" | "success";
 export type Kept = "error" | "warning";
+/* what came with an error: the exception caught, logged with its stack and
+   copied by a click unless a copy is given; or the copy alone */
+export interface ErrorFrom { caught?: unknown; copy?: string }
 /* the lifecycle handle a user-triggered op holds: the ONLY thing that
    ends the busy state, so a stray info can never sneak past the line
    and the line can never be orphaned */
@@ -38,8 +41,7 @@ export interface Alerts {
   succeed(text: string, ms?: number): void;
   warn(text: string): void;
   clearWarning(): void;
-  error(text: string, copy?: string): number;
-  errorCaught(text: string, err: unknown, copy?: string): number;
+  error(text: string, from?: ErrorFrom): number;
   releaseError(gen: number): void;
   progress(text: string): Progress;
   click(kind: Kind): void;
@@ -116,8 +118,12 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   function tell(kind: Kept, text: string): void {
     try { told(kind, text); } catch (err) { console.error("the alert log failed", err); }
   }
-  function error(text: string, copy?: string): number {
-    const g = showError(text, copy);
+  /* a key `caught` logs even when nothing was caught (pin: alertLedger.test ›
+     an error with what was caught) */
+  function error(text: string, from: ErrorFrom = {}): number {
+    const caught = "caught" in from;
+    if (caught) console.error(text, from.caught);
+    const g = showError(text, from.copy || (caught ? errText(from.caught) : ""));
     tell("error", text);
     return g;
   }
@@ -127,12 +133,6 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     state.error.shown = true;
     errorCopy = copy || text;
     return errorGen;
-  }
-  /* console.error + error with the caught error's detail as the copy
-     payload: the ONE spelling of "report a caught error" */
-  function errorCaught(text: string, err: unknown, copy?: string): number {
-    console.error(text, err);
-    return error(text, copy || errText(err));
   }
   /* releasing another error brings back a save error still owed
      (pin: alertLedger.test › a save error covered by another error comes
@@ -172,7 +172,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   function saveError(text: string, err: unknown, ekey: string, copy?: string): void {
     owed[ekey] = true;
     saveErrorLatch = [text, err, copy];
-    saveErrorGen = errorCaught(text, err, copy);
+    saveErrorGen = error(text, { caught: err, copy });
   }
   function releaseSaveError(ekey: string): void {
     delete owed[ekey];
@@ -196,7 +196,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     return {
       step(done, total) { if (live()) state.info.text = text + " " + done + " / " + total; },
       ok(msg, ms) { if (end()) { hide("info"); succeed(msg, ms); } },
-      fail(msg, detail) { if (end()) { hide("info"); error(msg, detail); } },
+      fail(msg, detail) { if (end()) { hide("info"); error(msg, { copy: detail }); } },
       cancel() { if (end()) hide("info"); },
     };
   }
@@ -249,14 +249,14 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   return {
     get state() { return state; },
     get pinned() { return state.error.shown; },
-    info, succeed, warn, clearWarning, error, errorCaught, releaseError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
+    info, succeed, warn, clearWarning, error, releaseError, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
     click: (kind) => CLICKS[kind](),
     dismiss: (kind) => CLOSES[kind](),
     entry: {
       landed: releaseSaveError,
       removed: releaseSaveError,
       stuck: saveError,
-      stuckIdle: (text, err) => { errorCaught(text, err); },
+      stuckIdle: (text, err) => { error(text, { caught: err }); },
     },
   };
 }

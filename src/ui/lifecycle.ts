@@ -35,8 +35,8 @@ export interface UiPort {
   /* something done that worked */
   succeed(text: string, ms?: number): void;
   /* why an act did nothing */
-  refuse(text: string): void;
-  pin(text: string): void;
+  warn(text: string): void;
+  error(text: string): void;
   redraw(): void;
   replaceHash(hash: string): void;
   hideBar(): void;
@@ -86,7 +86,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      appended at the end; a caret with nowhere to land refuses before
      anything is minted (pin: lifecycle.test › refuses every operation)
      (pin: lifecycle.test › refuses with no editor) */
-  const cold = (): boolean => refuseCold(layer, ui.refuse);
+  const cold = (): boolean => refuseCold(layer, ui.warn);
   /* "Shelves" is no author's: the shelves hold no books, keep their name,
      and no author is filed under it, or it would be hidden from every list
      (pin: lifecycle.test › the shelves are no author) */
@@ -107,13 +107,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   };
   const newName = (ns: ReturnType<typeof nsOf>): string => ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:";
   const refused = (why: string): Promise<void> => {
-    ui.refuse(why);
+    ui.warn(why);
     return done;
   };
   function typedNameAt(raw: string | null): string | null {
     const typed = typedName(raw);
     if (!typed) return null;
-    if ("refuse" in typed) { ui.refuse(typed.refuse); return null; }
+    if ("refuse" in typed) { ui.warn(typed.refuse); return null; }
     return typed.name;
   }
   function askSpec(c: Current): Spec | null {
@@ -121,7 +121,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (name === null) return null;
     const spec = subEntrySpec(c.date, c.tag, name);
     if (!spec) return null;
-    if ("refuse" in spec) { ui.refuse(spec.refuse); return null; }
+    if ("refuse" in spec) { ui.warn(spec.refuse); return null; }
     return spec;
   }
   function createRefusal(c: Current): string | null {
@@ -139,8 +139,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const placeMoved = (p: Placing): boolean =>
     (p.view ? p.view !== deps.view() : p.source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
   function linkPlaced(p: Placing, landed: boolean): Promise<void> | void {
-    if (!landed) { ui.refuse("couldn’t create the entry — see the error above"); return; }
-    if (placeMoved(p)) { ui.refuse("the entry was made — the link was not placed"); return; }
+    if (!landed) { ui.warn("couldn’t create the entry — see the error above"); return; }
+    if (placeMoved(p)) { ui.warn("the entry was made — the link was not placed"); return; }
     const label = mdLabel(p.spec.tag, "entry");
     if (p.view) insertLinkAfter(p.view, p.spec.href, label);
     else p.source!.insertAfter(linkMarkdown(p.spec.href, label));
@@ -174,11 +174,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const md = cutMd(view.state.doc, from, to), cutText = view.state.doc.textBetween(from, to, " ", " ");
     const label = nsOf(c.date) ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
     return layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
-      if (!landed) { ui.refuse("couldn’t create the entry — see the error above"); return; }
+      if (!landed) { ui.warn("couldn’t create the entry — see the error above"); return; }
       /* the positions were taken before the write: a document that moved
          under them keeps its text, the new entry standing
          (pin: lifecycle.test › places no link when the text moved) */
-      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.refuse("the text moved while the entry was made — the link was not placed"); return; }
+      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.warn("the text moved while the entry was made — the link was not placed"); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
       ui.hideBar();
       return session.save.now().then(() => { ui.redraw(); session.goto(spec.href); });
@@ -248,7 +248,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const followedTag = (t: TagMove, text: string): string =>
     retargetLinks(text, { href: entryHash(t.date, t.old), label: t.old }, { href: entryHash(t.date, t.full), label: t.full }) ?? text;
   function tagRenameFailed(t: TagMove): Promise<void> {
-    return t.hand.keep().then(() => { session.open(t.date, t.old); ui.pin("couldn’t rename — nothing was moved"); });
+    return t.hand.keep().then(() => { session.open(t.date, t.old); ui.error("couldn’t rename — nothing was moved"); });
   }
   function tagRenamed(t: TagMove): Promise<void> {
     const oldKey = entryKey(t.date, t.old), newKey = entryKey(t.date, t.full);
@@ -385,7 +385,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   }
   function relocateNow(m: Move, hand: HandOver): Promise<void> {
     const plan = movePlan(layer.cache, m.from, m.to);
-    if ("refuse" in plan) { session.open(m.date, m.old); ui.pin(COULDNT[m.mode] + " — " + plan.refuse); return done; }
+    if ("refuse" in plan) { session.open(m.date, m.old); ui.error(COULDNT[m.mode] + " — " + plan.refuse); return done; }
     const r = relocation(m, plan, hand);
     return carryPictures(r.moved, r.copied).then(
       (carried) => ("clash" in carried ? moveRefused(r, carried.clash) : writeMoved(r, carried)),
@@ -395,7 +395,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   /* typed while the copies ran: kept under the old name (pin:
      lifecycle.test › a failed move keeps what was typed) */
   function moveRefused(r: Relocation, why: string): Promise<void> {
-    return r.hand.keep().then(() => dropUnnamed(r.copied)).then(() => { session.open(r.date, r.old); ui.pin(r.couldnt + " — " + why); });
+    return r.hand.keep().then(() => dropUnnamed(r.copied)).then(() => { session.open(r.date, r.old); ui.error(r.couldnt + " — " + why); });
   }
   const undoCopy = (r: Relocation, m: Moved): Promise<boolean> => (m.to === r.to && r.plan.into ? layer.setEntry(r.to, r.there) : layer.removeEntry(m.to));
   function takeBack(r: Relocation, landed: boolean[]): Promise<void> {
@@ -406,7 +406,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
       .then((undone) => {
         const left = failedOf(tos, undone).filter((_, i) => landed[i]);
         session.open(r.date, r.old);
-        ui.pin(left.length ? r.couldnt + " — copies left: " + left.join(", ") : r.couldnt + " — nothing was moved");
+        ui.error(left.length ? r.couldnt + " — copies left: " + left.join(", ") : r.couldnt + " — nothing was moved");
       });
   }
   function writeMoved(r: Relocation, carried: Carried): Promise<void> {
@@ -449,7 +449,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     deps.kept.relocate({ moved: keptMoves(r), merged }, () => { ui.replaceHash(entryHash(r.toDate, r.toTag)); session.open(r.toDate, r.toTag); });
     ui.redraw();
     const text = outcomeText(r, carried, t);
-    if (t.left.length || t.stayed.length) ui.pin(text);
+    if (t.left.length || t.stayed.length) ui.error(text);
     else ui.succeed(text);
   }
 

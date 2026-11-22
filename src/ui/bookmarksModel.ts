@@ -44,13 +44,13 @@ export const alreadyOn = (key: string, journal: Journal): string => "already on 
 export function aliasCandidates(list: Bookmark[], buf: string): Bookmark[] {
   return aliasedBookmarks(list).filter((b) => b.alias.indexOf(buf) === 0);
 }
-export type Resolved = { buf: string; jump?: Bookmark; say?: string };
+export type Resolved = { buf: string; jump?: Bookmark; warn?: string };
 export function resolveAlias(list: Bookmark[], buf: string): Resolved {
   let b = aliasHolder(list, buf);
   const left = aliasCandidates(list, buf);
   if (!b && left.length === 1) b = left[0];
-  if (!b && left.length) return { buf, say: "finish the key" };
-  return b ? { buf: "", jump: b } : { buf: "", say: "no bookmark " + buf };
+  if (!b && left.length) return { buf, warn: "finish the key" };
+  return b ? { buf: "", jump: b } : { buf: "", warn: "no bookmark " + buf };
 }
 /* a character typed at the card with `buf` held: null when the press is
    not a key's (the caller's other arms then apply) */

@@ -82,7 +82,7 @@ describe("an info", () => {
 
 describe("an error", () => {
   it("pins its words, and an info beside it still speaks", () => {
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     expect(n.state.error).toMatchObject({ text: "not saved", shown: true });
     expect(n.pinned).toBe(true);
     n.info("1 word");
@@ -91,7 +91,7 @@ describe("an error", () => {
     expect(n.state.error.shown).toBe(true);
   });
   it("a click copies the detail, releases, and says copied", async () => {
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.click("error");
     expect(copied).toEqual(["detail"]);
     expect(n.pinned).toBe(false);
@@ -108,32 +108,32 @@ describe("an error", () => {
   });
   it("a refused clipboard says so, as an error", async () => {
     refuseCopy = true;
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.click("error");
     await flush();
     expect(n.state.error).toMatchObject({ text: "copy failed — see console", shown: true });
   });
   it("a success newer than the click stands the copied one down", async () => {
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.click("error");
     n.succeed("saved");
     await flush();
     expect(n.state.success.text).toBe("saved");
   });
-  it("errorCaught logs and copies the error's text, else the shown text", () => {
-    n.errorCaught("backup blocked", new DOMException("denied", "NotAllowedError"));
+  it("an error with what was caught logs it and copies its text, else the shown text", () => {
+    n.error("backup blocked", { caught: new DOMException("denied", "NotAllowedError") });
     n.click("error");
-    n.errorCaught("backup blocked", null);
+    n.error("backup blocked", { caught: null });
     n.click("error");
     expect(copied).toEqual(["NotAllowedError: denied", "backup blocked"]);
     expect(console.error).toHaveBeenCalledTimes(2);
   });
   it("releaseError releases only while the error is still the owner's", () => {
-    const gen = n.errorCaught("fence refused", null);
+    const gen = n.error("fence refused", { caught: null });
     n.releaseError(gen);
     expect(n.state.error.shown).toBe(false);
-    const g2 = n.errorCaught("first", null);
-    n.errorCaught("second", null);
+    const g2 = n.error("first", { caught: null });
+    n.error("second", { caught: null });
     n.releaseError(g2);
     expect(n.state.error.text).toBe("second");
     n.releaseError(0);
@@ -147,7 +147,7 @@ describe("an error", () => {
 
 describe("a warning", () => {
   it("stands beside an error and an info, each untouched", () => {
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.warn("That spans two verse blocks — reference them one at a time");
     n.info("saved");
     expect(n.state.warning).toMatchObject({ text: "That spans two verse blocks — reference them one at a time", shown: true });
@@ -219,10 +219,10 @@ describe("progress", () => {
     expect(n.state.busy).toBe(false);
   });
   it("an error standing is left by an op, and an error during one pins at once", () => {
-    n.error("old error", "old");
+    n.error("old error", { copy: "old" });
     const p = n.progress("importing…");
     expect(n.state.error.text).toBe("old error");
-    n.errorCaught("couldn’t delete — reload", new Error("x"));
+    n.error("couldn’t delete — reload", { caught: new Error("x") });
     expect(n.state.error.text).toBe("couldn’t delete — reload");
     expect(n.state.info.text).toBe("importing…");
     p.ok("imported 1 entry");
@@ -266,14 +266,14 @@ describe("the keyed save-error family, as the entry layer speaks it", () => {
   });
   it("a save error covered by another error comes back when that one is clicked, until its key lands", () => {
     n.entry.stuck("not saved", new Error("x"), "a");
-    n.error("export failed", "x");
+    n.error("export failed", { copy: "x" });
     n.click("error");
     expect(n.state.error.text).toBe("not saved");
     n.click("error");
     expect(n.state.error.shown).toBe(false);
     n.entry.stuck("not saved", new Error("x"), "a");
     n.entry.landed("a");
-    n.error("export failed", "x");
+    n.error("export failed", { copy: "x" });
     n.click("error");
     expect(n.state.error.shown).toBe(false);
   });
@@ -299,7 +299,7 @@ describe("the dismiss ×", () => {
   it("closes each place without copying: an info, a warning, an error", async () => {
     n.info("1 word");
     n.warn("no line numbers here");
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.dismiss("info");
     n.dismiss("warning");
     n.dismiss("error");
@@ -313,7 +313,7 @@ describe("the dismiss ×", () => {
     n.dismiss("info");
     expect(n.state.info.shown).toBe(true);
     n.entry.stuck("not saved", new Error("x"), "a");
-    n.error("export failed", "x");
+    n.error("export failed", { copy: "x" });
     n.dismiss("error");
     expect(n.state.error.text).toBe("not saved");
   });
@@ -340,7 +340,7 @@ describe("a warning fades", () => {
 describe("the live alerts", () => {
   it("each kind present only while live: none at rest, then what stands, the info gone when it fades", () => {
     expect(liveAlerts(n.state)).toEqual({});
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.warn("no line numbers here");
     n.info("saved", 1000);
     expect(liveAlerts(n.state)).toEqual({ error: "not saved", warning: "no line numbers here", info: "saved", latest: "info" });
@@ -356,7 +356,7 @@ describe("each error and warning told as it is raised", () => {
     l.info("saved");
     l.warn("no line numbers here");
     l.entry.stuck("not saved", new Error("x"), "a");
-    l.error("export failed", "x");
+    l.error("export failed", { copy: "x" });
     l.click("error");
     expect(l.state.error.text).toBe("not saved");
     expect(told).toEqual(["warning no line numbers here", "error not saved", "error export failed"]);
@@ -407,7 +407,7 @@ describe("the newer of info and success", () => {
 describe("the review's findings", () => {
   it("a save error covered by another error comes back when its owner releases that one", () => {
     n.entry.stuck("not saved", new Error("x"), "a");
-    const g = n.error("Couldn’t copy the reference", "x");
+    const g = n.error("Couldn’t copy the reference", { copy: "x" });
     n.releaseError(g);
     expect(n.state.error).toMatchObject({ text: "not saved", shown: true });
   });
@@ -423,7 +423,7 @@ describe("the review's findings", () => {
   });
   it("a click on the copy-failed error closes it without copying again", async () => {
     refuseCopy = true;
-    n.error("not saved", "detail");
+    n.error("not saved", { copy: "detail" });
     n.click("error");
     await flush();
     expect(n.state.error.text).toBe("copy failed — see console");

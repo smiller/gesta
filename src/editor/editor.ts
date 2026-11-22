@@ -38,7 +38,7 @@ export interface EditorOptions {
   /* a plain click on an internal link: the fragment to route to */
   onRoute?: (frag: string) => void;
   /* a swallowed press that changed nothing SAYS why */
-  onRefuse?: (why: string) => void;
+  warn?: (why: string) => void;
   onPasteFile?: (file: File) => void;
   /* a pasted fence the model refused, named with its reason */
   onPasteRefused?: (text: string) => void;
@@ -70,8 +70,8 @@ export function landed(before: EditorState, after: EditorState): { changed: bool
 }
 /* Tab outside a list, a quote, a row or a code block stays in the entry and
    says what it does not do here (pin: editor.test › Tab in prose keeps the key) */
-const proseTab = (onRefuse?: (why: string) => void): Command => (state) => {
-  onRefuse?.(state.selection.empty ? "⌃⌘M toggles markdown" : "Tab indents one list, quote, or code block at a time");
+const proseTab = (warn?: (why: string) => void): Command => (state) => {
+  warn?.(state.selection.empty ? "⌃⌘M toggles markdown" : "Tab indents one list, quote, or code block at a time");
   return true;
 };
 /* a table cannot hold the caret below it: an entry ending in one is given
@@ -120,13 +120,13 @@ function cutsReference(doc: Node, from: number, to: number): boolean {
 function reachesIntoReference(tr: Transaction): boolean {
   return tr.steps.some((step, i) => stepRanges(step).some(([from, to]) => cutsReference(tr.docs[i], from, to)));
 }
-const inertReference = (say?: (why: string) => void): Plugin => new Plugin({
+const inertReference = (warn?: (why: string) => void): Plugin => new Plugin({
   filterTransaction: (tr) => !tr.docChanged || !reachesIntoReference(tr),
   props: {
     handleClickOn: (view, _pos, node, nodePos) => {
       if (node.type !== schema.nodes.reference) return false;
       view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, nodePos + 1)));
-      say?.(REFERENCE_HERE);
+      warn?.(REFERENCE_HERE);
       return true;
     },
     handleTextInput: (view) => inReference(view.state),
@@ -146,33 +146,33 @@ export function textOnBlankRow(view: EditorView, text: string): boolean {
   view.dispatch(typed().scrollIntoView());
   return true;
 }
-export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
+export function editorState(doc: Node, interval: number, warn?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
   /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a warning
      is raised once per press, not again on every repeat
      (pin: editor.test › a held key acts once) */
   let repeating = false;
-  const say = onRefuse && ((why: string): void => { if (!repeating) onRefuse(why); });
+  const warnOnce = warn && ((why: string): void => { if (!repeating) warn(why); });
   const held = new Plugin({ props: { handleKeyDown: (_view, e) => { repeating = e.repeat; return e.repeat && e.key === "Tab" && !e.shiftKey; } } });
   return EditorState.create({
     doc: withLineBelow(doc),
     plugins: [
       held,
       lock,
-      inertReference(say),
+      inertReference(warnOnce),
       history(),
       keymap({ "Mod-z": undo, "Mod-Shift-z": redo, "Mod-y": redo, Escape: escapeJump }),
       rowKeymap,
       autolinkEnter,
       typingKeymap,
-      codeKeymap(say),
-      listKeymap(say),
-      quoteKeymap(say),
-      gridKeymap(say),
+      codeKeymap(warnOnce),
+      listKeymap(warnOnce),
+      quoteKeymap(warnOnce),
+      gridKeymap(warnOnce),
       tableKeymap,
       formatKeymap,
       keymap({ "Shift-Enter": chainCommands(exitCode, hardBreak) }),
       keymap(baseKeymap),
-      keymap({ Tab: proseTab(say) }),
+      keymap({ Tab: proseTab(warnOnce) }),
       jump,
       lineBelow,
       typing(),
@@ -231,7 +231,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
       },
       serializeNode: (node, options) => base.serializeNode(node, options),
     } as DOMSerializer,
-    state: editorState(doc, opts.interval, opts.onRefuse, opts.folds),
+    state: editorState(doc, opts.interval, opts.warn, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     /* the hint is drawn on screen alone, so no copy carries it (pin:
        alerts and surfaces › a link's tooltip)

@@ -13,9 +13,9 @@ export interface LineBarDeps {
   lb: Screen["lineBar"];
   session: Pick<Session, "current" | "view" | "mdView">;
   journal: Journal;
-  say(text: string, ms?: number): void;
+  info(text: string, ms?: number): void;
   /* why an act did nothing */
-  refuse(text: string): void;
+  warn(text: string): void;
   opened(): void;
   focusBar(): void;
   warmed(): boolean;
@@ -25,7 +25,7 @@ export interface LineBar {
   close(): void; dismiss(): void; landSoon(v: string): void; centreSoon(): void; replayOwed(): void;
 }
 export function lineBarActs(d: LineBarDeps): LineBar {
-  const { lb, session, journal, say, refuse, opened, focusBar, warmed } = d;
+  const { lb, session, journal, info, warn, opened, focusBar, warmed } = d;
   /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
      focus and Enter cycles through the blocks that hold that line. The
      landing is CENTRED in the readable band under the masthead — a
@@ -68,8 +68,8 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
     /* a landing's word is passing; a line mistyped or absent is a refusal */
-    if (a.said?.kind === "landing") say(a.said.text, SAID_MS.landing);
-    else if (a.said) refuse(a.said.text);
+    if (a.said?.kind === "landing") info(a.said.text, SAID_MS.landing);
+    else if (a.said) warn(a.said.text);
     return "pos" in a;
   };
   /* before the warm a work's own page, which says how it is referred to, may
@@ -141,11 +141,11 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { refuse(bar(null, conventions()).inSource); return; }
+    if (session.mdView) { warn(bar(null, conventions()).inSource); return; }
     const view = session.view;
     if (!view) return;
     const b = bar(view.state.doc, conventions());
-    if (b.kind === "none") { refuse(b.none); return; }
+    if (b.kind === "none") { warn(b.none); return; }
     freshAsk();
     opened();
     lb.kind = b.kind;

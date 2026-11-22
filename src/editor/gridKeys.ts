@@ -51,10 +51,10 @@ export const enterOutOfGrid: Command = (state, dispatch) => {
   return true;
 };
 
-export function gridKeymap(onRefuse?: (why: string) => void): Plugin {
+export function gridKeymap(warn?: (why: string) => void): Plugin {
   const refusing = (backward: boolean): Command => (state) => {
     if (!atCardEdge(state, backward)) return false;
-    onRefuse?.(GRID_JOIN);
+    warn?.(GRID_JOIN);
     return true;
   };
   return keymap({ Enter: enterOutOfGrid, Backspace: refusing(true), Delete: refusing(false) });

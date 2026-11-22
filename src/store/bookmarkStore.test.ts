@@ -22,8 +22,8 @@ function world(initial?: string) {
   const store = () => bookmarkStore({
     seed: SEED, storage,
     storedKeys: async () => { held.reads++; if (held.unreadable) throw new Error("IndexedDB blocked"); return held.keys; },
-    pin: (text) => { pins.push(text); return ++gen; },
-    release: (g) => { released.push(g); },
+    error: (text) => { pins.push(text); return ++gen; },
+    releaseError: (g) => { released.push(g); },
   });
   return { box, store, pins, released, held, fill: (on: boolean) => { full = on; }, block: (on: boolean) => { blocked = on; } };
 }

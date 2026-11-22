@@ -24,6 +24,10 @@ alert by kind, its words and when it is raised.
    message is in the catalogue (`${…}` as `…`); a call passing a variable
    has its file and function named there.
 7. Two commits: the rename, then the catalogue and its test.
+8. Asked after the rename: the acts' ports take the ledger's names, in a
+   commit before the catalogue; `errorCaught` folds into
+   `error(text, { caught, copy })`, one method per kind: `error`, `warn`,
+   `info`, `succeed`.
 
 ## Record
 - Files: notices.svelte.ts → alertLedger.svelte.ts, Corner.svelte →
