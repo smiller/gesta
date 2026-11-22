@@ -5,9 +5,13 @@ Every alert Gesta raises, by kind (`GLOSSARY.md`, Alert), written from
 this page is not what the table writes. `…` stands for a part that varies;
 ⏎ starts another line.
 
+Every error and warning is kept three months in the alert log:
+`gesta.alerts()` in the developer console lists them, each with when it was
+raised, on which entry, and after which key or control.
+
 ## Error
 
-Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail. Every error is kept three months in the alert log (`gesta.alerts()` in the console).
+Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail.
 
 | Words | When |
 |---|---|

@@ -15,7 +15,7 @@ export const shown = (words: Words): string =>
   (typeof words === "string" ? words : String((words as (p: unknown) => string)(varies))).replace(/\bundefined\b/g, VARY).replace(/\uE000(?:\s*\uE000)+/g, VARY).replace(/\uE000/g, "…").replace(/\n/g, " ⏎ ").replace(/\|/g, "\\|");
 
 const KINDS: [Kind, string, string][] = [
-  ["error", "Error", "Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail. Every error is kept three months in the alert log (`gesta.alerts()` in the console)."],
+  ["error", "Error", "Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail."],
   ["warning", "Warning", "Amber. Why an act just tried did nothing. It fades after ten seconds, or goes when closed, replaced by the next, or another entry is opened."],
   ["info", "Info", "Blue. A count, a progress line or a note, telling of no outcome. It fades on its own; a progress line holds its place until the act ends."],
   ["success", "Success", "Green. Something done worked. It fades on its own; a click on it copies its words, but for a routine one such as “saved”."],
@@ -27,6 +27,10 @@ const HEAD = [
   "`src/model/alertText.ts` by `node tools/alertsPage.ts`; a test fails when",
   "this page is not what the table writes. `…` stands for a part that varies;",
   "⏎ starts another line.",
+  "",
+  "Every error and warning is kept three months in the alert log:",
+  "`gesta.alerts()` in the developer console lists them, each with when it was",
+  "raised, on which entry, and after which key or control.",
 ];
 const row = (words: string, other: string): string => "| `" + words + "` | " + other + " |";
 function kindSection([kind, title, about]: [Kind, string, string]): string[] {
