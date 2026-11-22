@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { carryLog, chordName, alertLog, parseLog, type AlertEntry } from "./alertLog.ts";
+import { carryLog, chordName, clickName, alertLog, parseLog, type AlertEntry } from "./alertLog.ts";
 
 const entry = (time: string, text = "no line numbers here"): AlertEntry => ({ time, page: "commonplace/Horace", action: "⌃⌘L", kind: "warning", text });
 
@@ -73,4 +73,17 @@ test("a log kept before that does not read as a list is left where it is, the lo
   carryLog(storage, "old", "new");
   expect(keys.get("old")).toBe("{not json");
   expect(parseLog(keys.get("new") ?? null)).toHaveLength(1);
+});
+
+const control = (attrs: { title?: string; text?: string } | null) => ({
+  closest: (sel: string) => (attrs && sel === "button, a, summary, [title]" ? { getAttribute: (n: string) => (n === "title" ? attrs.title ?? null : null), textContent: attrs.text ?? null } : null),
+});
+
+test("a click on a control is named by its title, else its words, trimmed and cut to forty characters; a click elsewhere names nothing", () => {
+  expect(clickName(control({ title: "Copy as a reference", text: "Ref" }))).toBe("Copy as a reference");
+  expect(clickName(control({ text: "  Backups  " }))).toBe("Backups");
+  expect(clickName(control({ text: "x".repeat(50) }))).toBe("x".repeat(40));
+  expect(clickName(control({ text: "   " }))).toBe(null);
+  expect(clickName(control(null))).toBe(null);
+  expect(clickName(null)).toBe(null);
 });

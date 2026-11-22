@@ -51,3 +51,9 @@ Asked 2026-11-22, from the architecture run over the last two batches:
 - Hand-check: no entry in the backup raises an error when opened (a scan
   of every entry's fences and directives, 0 found), so the beneath-on-open
   path is the step's, not a hand's.
+- Candidate 3, its narrow half (asked): `clickName` in alertLog.ts beside
+  `chordName`, tested; main.ts only wires it. Its other half (an alert's
+  id in the log) and candidate 4 (`REFUSAL_ALERT`) not built now, with no
+  ADR: as the code changes they may come up again.
+- The architecture run's cost: the walk, 122,438 tokens (its transcript's
+  last message: input + cache creation + cache read + output).

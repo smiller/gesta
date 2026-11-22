@@ -12,7 +12,7 @@ import { failWhy, errText } from "./store/files.ts";
 import { said } from "./model/alertText.ts";
 import { startSession } from "./session.ts";
 import { readRaw, writeRaw, stored } from "./store/local.ts";
-import { alertLog, carryLog, chordName, parseLog, type AlertEntry } from "./ui/alertLog.ts";
+import { alertLog, carryLog, chordName, clickName, parseLog, type AlertEntry } from "./ui/alertLog.ts";
 import { placeArea } from "./ui/alertArea.ts";
 import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { alertLedger } from "./ui/alertLedger.svelte.ts";
@@ -72,10 +72,7 @@ try { carryLog(localStorage, NS + "flashlog", NS + "alertlog"); } catch {}
 const logged = alertLog(stored(NS + "alertlog", parseLog));
 let lastAction = "none";
 document.addEventListener("keydown", (e) => { lastAction = chordName(e) ?? lastAction; }, true);
-document.addEventListener("click", (e) => {
-  const c = (e.target as Element | null)?.closest?.("button, a, summary, [title]");
-  if (c) lastAction = (c.getAttribute("title") || c.textContent || "").trim().slice(0, 40) || lastAction;
-}, true);
+document.addEventListener("click", (e) => { lastAction = clickName(e.target instanceof Element ? e.target : null) ?? lastAction; }, true);
 const alerts = alertLedger(copyText, (kind, text) => logged.add({ page: document.documentElement.dataset.entry || "", action: lastAction, kind, text }));
 (window as unknown as { gesta: object }).gesta = { alerts: (): AlertEntry[] => { const log = logged.entries(); console.table(log); return log; } };
 const raise = alerts.raise;

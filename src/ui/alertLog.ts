@@ -57,6 +57,11 @@ export function chordName(e: Chord): string | null {
   if (modifierAlone(e) || !acted(e)) return null;
   return MODIFIERS.filter(([m]) => e[m]).map(([, sign]) => sign).join("") + (e.key.length === 1 ? e.key.toUpperCase() : e.key);
 }
+interface Clicked { closest(sel: string): { getAttribute(name: string): string | null; textContent: string | null } | null }
+export function clickName(target: Clicked | null): string | null {
+  const c = target?.closest("button, a, summary, [title]");
+  return (c?.getAttribute("title") || c?.textContent || "").trim().slice(0, 40) || null;
+}
 
 export function alertLog(port: LogPort, now: () => Date = () => new Date()) {
   return {
