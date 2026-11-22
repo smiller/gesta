@@ -14,6 +14,8 @@ export interface FormatBarDeps {
   buttons: () => Screen["masthead"]["buttons"];
   session: Pick<Session, "view" | "mdView" | "copyReference" | "showWordCount">;
   say(text: string, ms?: number): void;
+  /* why an act did nothing */
+  refuse(text: string): void;
   extract(): void;
   mountEl: HTMLElement;
   head: Element;
@@ -36,7 +38,7 @@ const barSelection = (view: BarView): Selection | null => {
 const drawn = (rect: DOMRect): boolean => !!(rect.width || rect.height);
 
 export function formatBar(d: FormatBarDeps): FormatBar {
-  const { bar, buttons, session, say, extract, mountEl, head } = d;
+  const { bar, buttons, session, refuse, extract, mountEl, head } = d;
   /* THE FLOATING BAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
      source view and over a search jump's selection until a reader next
@@ -87,7 +89,7 @@ export function formatBar(d: FormatBarDeps): FormatBar {
   };
   const format = (view: BarView, act: string): void => {
     const cmd = COMMANDS[act];
-    if (cmd && !cmd(view.state, view.dispatch)) say((act === "code" && codeBlockRefusal(view.state)) || "nothing to change there", 2000);
+    if (cmd && !cmd(view.state, view.dispatch)) refuse((act === "code" && codeBlockRefusal(view.state)) || "nothing to change there");
     view.focus();
     place();
   };

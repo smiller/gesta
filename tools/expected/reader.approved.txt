@@ -1,4 +1,4 @@
-nothing kept: {"entry":"commonplace/Witchcraft","store":"0","held":"no backup opened","corner":"open backup: gesta.zip in Dropbox › gesta-backups › reader (click to copy)","editable":"false","tools":["today","no backup opened","open backup"]}
+nothing kept: {"entry":"commonplace/Witchcraft","store":"0","held":"no backup opened","corner":"open backup: gesta.zip in Dropbox › gesta-backups › reader","editable":"false","tools":["today","no backup opened","open backup"]}
 the bundle picked: {"entry":"commonplace/Witchcraft","store":"6","held":"backup of 12 Sep 2026, 04:30","corner":"6 entries stored","editable":"false","tools":["today","backup of 12 Sep 2026, 04:30","open backup"]}
 relaunched: {"entry":"bookshelf/Horace/Odes","store":"6","held":"backup of 12 Sep 2026, 04:30","corner":"6 entries stored","editable":"false","tools":["today","backup of 12 Sep 2026, 04:30","open backup"]}
 a contents link clicked: {"entry":"bookshelf/Horace/Odes/1.1","editable":"false","hit":"","crumb":"Horace/Odes › 1.1"}

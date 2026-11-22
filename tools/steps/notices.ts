@@ -63,7 +63,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await rest(page);
   await page.evaluate(() => { const P = IDBObjectStore.prototype; window.__idb = [P.put, P.add]; const full = () => { throw new DOMException("full", "QuotaExceededError"); }; P.put = full; P.add = full; });
   await R.pastePng(page);
-  await page.waitForFunction(() => /storage full/.test(document.querySelector(".saved.show")?.textContent || ""), null, { timeout: 1500 }).catch(() => {});
+  await page.waitForFunction(() => /storage full/.test(((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""), null, { timeout: 1500 }).catch(() => {});
   await page.evaluate(() => { const P = IDBObjectStore.prototype; [P.put, P.add] = window.__idb; });
   await log("a picture whose write fails", { corner: await corner() });
   await dismiss();
@@ -223,7 +223,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
 }
 /* a slowed launch's warm, and the page held still after it */
 const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await still(p); };
-const corner = () => page.evaluate(() => document.querySelector(".saved.show, #saved.show")?.textContent || "");
+const corner = () => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "");
 const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
 const picked = (tree: Tree) => page.evaluate((tree) => {
@@ -321,3 +321,39 @@ async function shelvesSearched(): Promise<void> {
 async function shelvesSearchedFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
 }
+section("notices and places", async () => {
+  /* the error and the warning alone: where they stand under the masthead, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it. An info or a success beside them is no part of it */
+  await write("commonplace/Plain", "# Plain\n\nSome words.");
+  await still(page);
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R with nothing selected", await standing());
+  await jump(page, 10000);
+  await log("ten seconds on", await standing());
+  await write("commonplace/Warned", "# Warned\n\n::: versey\nline\n:::");
+  await still(page);
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await log("⌃⌘R on an entry opened with a warning", await standing());
+  await page.click(".notice.refusal");
+  await rest(page);
+  await log("the refusal clicked", { ...(await standing()), clipboard: await page.evaluate(() => navigator.clipboard.readText()).catch((e) => "clipboard: " + e) });
+  await page.click(S.editor);
+  await page.keyboard.press("Control+Meta+r");
+  await rest(page);
+  await go("commonplace/Plain");
+  await still(page);
+  await log("another entry clears the refusal", await standing());
+});
+/* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the masthead */
+const standing = () => page.evaluate(() => {
+  const live = JSON.parse(document.documentElement.dataset.flashes || "{}"), head = document.querySelector("header.site-head")!.getBoundingClientRect().bottom;
+  const one = (kind: string) => {
+    if (!live[kind]) return null;
+    const r = document.querySelector(".notice." + kind)!.getBoundingClientRect();
+    return { text: live[kind], across: Math.round(r.width) >= Math.round(innerWidth * 0.9), under: Math.round(r.top - head) };
+  };
+  return { failure: one("failure"), refusal: one("refusal") };
+});

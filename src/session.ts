@@ -40,10 +40,13 @@ export interface SessionOptions {
   images: ImageStore;
   interval: number;
   say: (text: string, ms?: number) => void;
+  /* something done that worked */
+  succeed: (text: string, ms?: number) => void;
+  /* why an act did nothing */
+  refuse: (text: string) => void;
   stick?: (text: string, copy?: string) => void;
   pin?: (text: string, copy?: string) => number;
   pinned?: () => boolean;
-  holds?: (gen: number) => boolean;
   releasePin?: (gen: number) => void;
   onShow?: (stored: string, ekey: string) => void;
   onView?: (md: boolean) => void;
@@ -107,7 +110,7 @@ export const SAVED_MS = 1400;
 const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", svg: "image/svg+xml" };
 
 export function startSession(opts: SessionOptions): Session {
-  const { mount, layer, images, say } = opts;
+  const { mount, layer, images, say, succeed, refuse } = opts;
   const journal = journalOf(layer.cache);
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
@@ -127,7 +130,7 @@ export function startSession(opts: SessionOptions): Session {
   const save = entrySave({
     screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
     layer,
-    wrote: (landed) => { if (landed) say("saved", SAVED_MS); show(); },
+    wrote: (landed) => { if (landed) succeed("saved", SAVED_MS); show(); },
     refused: (md) => { detachedPins.push(opts.pin?.("not saved — deleted in another tab, copy your text", md) || 0); },
   });
   const edited = (): void => { save.edited(); show(); };
@@ -149,7 +152,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function pasteFile(file: File): void {
     if (locked?.has(ekeyOf())) return;
-    if (decoding) { say("picture not pasted — one at a time; paste it again", 2600); return; }
+    if (decoding) { refuse("picture not pasted — one at a time; paste it again"); return; }
     const aimedAt = ekeyOf(), aimedView = surface.md;
     decoding = true;
     pastedPictureBytes(file).then((bytes) => { decoding = false; return landPicture(bytes, aimedAt, aimedView); })
@@ -193,9 +196,9 @@ export function startSession(opts: SessionOptions): Session {
       /* given even off: refreshFolds switches it on */
       folds: { ...start, onChange: (keys) => folds.record(ekey, keys) },
       onRoute: (frag) => goto(frag, "already here"),
-      onRefuse: (why) => say(why),
+      onRefuse: (why) => refuse(why),
       onPasteFile: pasteFile,
-      onPasteRefused: (text) => surface.pinRefusal(text),
+      onPasteRefused: (text) => refuse(text),
       clearOf: () => mastheadHeight,
     });
     return rendered;
@@ -208,13 +211,12 @@ export function startSession(opts: SessionOptions): Session {
   const surface = surfaces({
     build: {
       rendered: (doc) => lockedNow(mountEditor(doc, current.date, current.tag)),
-      source: (md) => { mount.replaceChildren(); return lockedNow(sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => say(why) })); },
+      source: (md) => { mount.replaceChildren(); return lockedNow(sourceView(mount, md, { onChange: edited, onPasteFile: pasteFile, onRefuse: (why) => refuse(why) })); },
     },
     window: viewport,
     places: keeper,
     pin: (text) => opts.pin?.(text) || 0,
     pinned: () => !!opts.pinned?.(),
-    holds: (gen) => !!opts.holds?.(gen),
     releasePin: (gen) => opts.releasePin?.(gen),
     onView: (md) => opts.onView?.(md),
     switched: () => { save.edited(); show(); },
@@ -314,7 +316,7 @@ export function startSession(opts: SessionOptions): Session {
        own row is primed, and failing that the warm answers
        (pin: places › a contents link clicked before the warm) */
     if (!layer.warmed) { primeBeforeWarm(want); return; }
-    say("no such " + missingNoun(h));
+    refuse("no such " + missingNoun(h));
     history.replaceState(null, "", entryHash(current.date, current.tag));
     if (!surface.current) open(current.date, current.tag);
   }
@@ -405,7 +407,7 @@ export function startSession(opts: SessionOptions): Session {
        (pin: a link to a line › a link to a line, clicked again) */
     const line = hashParts(asAddress(hash)).hl?.line;
     if (line) opts.onLine?.(line);
-    else if (sameMsg) say(sameMsg, 1500);
+    else if (sameMsg) refuse(sameMsg);
     if (!opts.mount.contains(document.activeElement)) surface.current?.focus();
   }
   function goto(hash: string, sameMsg?: string): void {
@@ -416,20 +418,19 @@ export function startSession(opts: SessionOptions): Session {
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2) */
   const orderMemo = new Map<string, { md: string; links: ContentsLink[] }>();
   function step(dir: "prev" | "next"): void {
-    if (refuseCold(layer, say)) return;
+    if (refuseCold(layer, refuse)) return;
     const keys = Object.keys(layer.cache), bearing = (k: string) => !!layer.entryMd(k).trim();
     const nb = navNeighbors({ keys, bearing }, current.date, current.tag, (pk) => subEntryOrder({ keys, bearing }, pk, layer.entryMd(pk), orderMemo).names)[dir];
-    if (!nb) { say(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
+    if (!nb) { refuse(dir === "prev" ? "no earlier entry" : "no later entry"); return; }
     goto(entryHash(nb[0], nb[1]));
   }
   function today(): void { goto(entryHash(todayKey()), "already on today"); }
   /* a failed write is pinned, and a click on the pin copies the markdown
-     the write was carrying; the console keeps it too. A failure landing
-     after the entry changed is whispered, not pinned over another entry
-     (pin: entries left and renamed › ⌃⌘C with the clipboard refused) */
+     the write was carrying; the console keeps it too (pin: entries left
+     and renamed › ⌃⌘C with the clipboard refused) */
   let copyPin = 0, copyGen = 0;
   function copy(payload: { text: string; html: string }, okText: string, failText: string): void {
-    const gen = ++copyGen, from = ekeyOf();
+    const gen = ++copyGen;
     writeClipboard(payload).then((ok) => {
       /* the LATEST copy's outcome is the corner's: one that lands releases a
          failed one's pin (pin: entries left and renamed › ⌃⌘C again, the
@@ -437,35 +438,28 @@ export function startSession(opts: SessionOptions): Session {
          (unpinned: two writes no step can order) */
       if (gen !== copyGen) return;
       if (copyPin) { opts.releasePin?.(copyPin); copyPin = 0; }
-      if (ok) { say(okText); return; }
+      if (ok) { succeed(okText); return; }
       console.error(failText, payload.text);
-      if (from !== ekeyOf()) { say(failText, 3000); return; }
       copyPin = opts.pin ? opts.pin(failText, payload.text) : 0;
-      if (!copyPin) say(failText);
     });
   }
   function showWordCount(): void {
     const n = surface.current ? surface.current.words() : 0;
     say(n === 1 ? "1 word" : n + " words", 2000);
   }
-  /* a passage's refusal stays pinned until clicked, the next entry, or the
-     next ⌃⌘R, which releases it FIRST: released after, the reference that
-     ⌃⌘R copied was never said (pin: references across verse blocks › ⌃⌘R
-     over blocks numbered straight on) */
   function copyReference(all = false): void {
-    surface.releaseRefusal();
-    if (surface.md) { say("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
+    if (surface.md) { refuse("switch to the rendered view (⌃⌘M) to copy a reference"); return; }
     const view = live();
-    if (refuseCold(layer, say)) return;
-    if (!view) { say("still loading — try that again in a moment"); return; }
+    if (refuseCold(layer, refuse)) return;
+    if (!view) { refuse("still loading — try that again in a moment"); return; }
     const out = referencePayload(view.state, { date: current.date, tag: current.tag }, journal, all);
-    if ("refused" in out) { surface.pinRefusal(REFUSAL_TEXT[out.refused]); return; }
+    if ("refused" in out) { refuse(REFUSAL_TEXT[out.refused]); return; }
     let html = "";
     try { html = richReferenceHtml(view.dom, out.url, out.label, out.passage); } catch (err) { console.error("the rich flavour failed", err); }
     copy({ text: out.text, html }, "Reference copied to clipboard", "Couldn’t copy the reference");
   }
   function copyEntryLink(): void {
-    if (refuseCold(layer, say)) return;
+    if (refuseCold(layer, refuse)) return;
     const p = entryLinkParts(current.date, current.tag, journal);
     copy({ text: "[" + p.label + "](" + p.url + ")", html: referenceAnchorHTML(p.url, p.label) }, "Link copied", "Couldn’t copy the link");
   }
@@ -482,7 +476,7 @@ export function startSession(opts: SessionOptions): Session {
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
   function switchView(): void {
-    if (opts.readOnly) { say("no markdown view here", 2000); return; }
+    if (opts.readOnly) { refuse("no markdown view here"); return; }
     opts.onSwitch?.();
     surface.switchTo(!surface.md);
   }

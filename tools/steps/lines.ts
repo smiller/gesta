@@ -81,7 +81,7 @@ async function linkLineAnotherNo(): Promise<void> {
   await rest(page);
   await log("a link to a line, then another with no press", await seen());
 }
-const seen = () => page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent ?? null, selected: getSelection().toString(), address: location.hash.split("?")[1] ?? null, said: document.querySelector(".saved.show")?.textContent ?? null }));
+const seen = () => page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent ?? null, selected: getSelection().toString(), address: location.hash.split("?")[1] ?? null, said: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) ?? null }));
 const click = async (text: string) => { await page.locator("#editor a", { hasText: text }).first().click(); await rest(page); await rest(page); };
 const top = () => page.evaluate(() => { const s = getSelection(); return { row: s.anchorNode?.parentElement?.closest(".vrow")?.textContent ?? null, focused: document.activeElement?.closest("#editor") ? "the text" : "elsewhere" }; });
 async function linkParagraphBeforeWarm(): Promise<void> {
@@ -156,7 +156,7 @@ async function linkLetteredLine(): Promise<void> {
   await log("a link to a lettered line", { ...(await seen2()), address: await page.evaluate(() => location.hash.split("?")[1] ?? null) });
 }
 const gutter = () => page.evaluate(() => [...document.querySelectorAll("#editor .ln")].map((r) => getComputedStyle(r, "::before").content.replace(/"/g, "")).filter((c) => c && c !== "none"));
-const seen2 = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? (m.closest(".dual-language") ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null) : null, said: document.querySelector(".saved.show")?.textContent || null }; });
+const seen2 = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? (m.closest(".dual-language") ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null) : null, said: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || null }; });
 const ask = async (n: string) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen2(); };
 section("a bracketed line", async () => {
   /* a line printed moved under its old number in brackets: drawn with it, asked with it, the plain number the plain line's */
@@ -190,7 +190,7 @@ section("a bracketed line", async () => {
 const key = "bookshelf/Statius/Thebaid/Book 16";
 const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
 const askBracketed = async (n: string) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen3(); };
-const seen3 = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null, said: document.querySelector(".saved.show")?.textContent || null }; });
+const seen3 = () => page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null, said: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || null }; });
 section("a line with no English of its own", async () => {
   /* the mark is the row's band across both columns on every row of a dual-language block, the rows the English runs down beside included; nothing moves */
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");

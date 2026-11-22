@@ -202,4 +202,4 @@ const between = async (a: string, b: string) => { await R.selectBetween(page, a,
 const button = async (title: string) => { await page.evaluate((t) => document.querySelector(".fmt button[title='" + t + "']")?.click(), title); await rest(page); };
 const copied = async () => { await page.keyboard.press("Meta+c"); await rest(page); return R.clipboardLines(page); };
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
-const corner = () => page.evaluate(() => document.querySelector(".saved.show")?.textContent || "");
+const corner = () => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "");

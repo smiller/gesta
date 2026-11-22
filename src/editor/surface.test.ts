@@ -49,8 +49,7 @@ function world(y = 0, standing = { pin: false }) {
     },
     pin: (text) => { pins.push(text); return pins.length; },
     releasePin: (gen) => { released.push(gen); },
-    pinned: () => standing.pin || pins.length > released.length,
-    holds: (gen) => gen > 0 && gen === pins.length && !released.includes(gen),
+    pinned: () => standing.pin,
     onView: (md) => { log.push("view " + md); },
     switched: () => { log.push("switched"); },
   });
@@ -258,41 +257,5 @@ describe("a text the model refuses", () => {
     w.s.switchTo(false);
     w.s.show("fine", "commonplace/B");
     expect(w.released).toEqual([1]);
-  });
-  it("a refusal pinned for a paste is released by the next show, and by the next one pinned", () => {
-    const w = world();
-    w.s.show("fine", "commonplace/A");
-    w.s.pinRefusal("::: verse -1 — refused");
-    w.s.pinRefusal("::: verse -2 — refused");
-    expect(w.released).toEqual([1]);
-    w.s.show("fine", "commonplace/B");
-    expect(w.released).toEqual([1, 2]);
-  });
-  it("a refusal's pin is released on asking, and the warning pinned when an entry opened is not", () => {
-    const w = world();
-    w.s.show("fine", "commonplace/A");
-    w.s.pinRefusal("That spans two verse blocks");
-    w.s.releaseRefusal();
-    expect(w.released).toEqual([1]);
-    w.s.releaseRefusal();
-    expect(w.released).toEqual([1]);
-    w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
-    w.s.releaseRefusal();
-    expect(w.released).toEqual([1]);
-  });
-  it("a refusal never covers a pin the surface does not hold", () => {
-    const w = world(0, { pin: true });
-    w.s.show("fine", "commonplace/A");
-    w.s.pinRefusal("That spans two verse blocks");
-    expect(w.pins).toEqual([]);
-  });
-  it("a refusal over the warning pinned when the entry opened puts the warning back when it is released", () => {
-    const w = world();
-    w.s.show("# Chaucer\n\n::: reference\nroman book and canto\n:::", "bookshelf/Chaucer, Geoffrey");
-    w.s.pinRefusal("That spans two verse blocks");
-    expect(w.released).toEqual([1]);
-    w.s.releaseRefusal();
-    expect(w.released).toEqual([1, 2]);
-    expect(w.pins).toEqual([told(), "That spans two verse blocks", told()]);
   });
 });

@@ -160,7 +160,11 @@ export const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { 
 /* the window, a paragraph by its first words, the corner's text */
 export const winY = () => page.evaluate(() => Math.round(scrollY));
 export const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
-export const cornerText = () => page.evaluate((s) => document.querySelector(s)?.textContent || "", S.corner);
+export const cornerText = () => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "");
+/* every flash shown closed by its ×, as a reader clears the stack before clicking under it */
+export async function closeNotices(): Promise<void> {
+  for (const x of await page.locator(".notice.show .close").all()) await x.click().catch(() => {});
+}
 /* a scroll BY A READER'S HAND, a wheel over the page: a script's
    scrollTo is no reader, and an arrival holds the entry's remembered
    place until a wheel, key, pointer or touch — the toolbar step's

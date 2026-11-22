@@ -33,6 +33,10 @@ export interface Dialogs {
 }
 export interface UiPort {
   say(text: string, ms?: number): void;
+  /* something done that worked */
+  succeed(text: string, ms?: number): void;
+  /* why an act did nothing */
+  refuse(text: string): void;
   pin(text: string): void;
   redraw(): void;
   replaceHash(hash: string): void;
@@ -83,7 +87,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
      appended at the end; a caret with nowhere to land refuses before
      anything is minted (pin: lifecycle.test › refuses every operation)
      (pin: lifecycle.test › refuses with no editor) */
-  const cold = (): boolean => refuseCold(layer, ui.say);
+  const cold = (): boolean => refuseCold(layer, ui.refuse);
   /* "Shelves" is no author's: the shelves hold no books, keep their name,
      and no author is filed under it, or it would be hidden from every list
      (pin: lifecycle.test › the shelves are no author) */
@@ -103,14 +107,14 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     return out === null ? Promise.resolve() : layer.setEntry(host, out);
   };
   const newName = (ns: ReturnType<typeof nsOf>): string => ns ? "Name for the new " + ns.subNoun + ":" : "Tag for the new entry:";
-  const refused = (why: string, ms?: number): Promise<void> => {
-    ui.say(why, ms);
+  const refused = (why: string): Promise<void> => {
+    ui.refuse(why);
     return done;
   };
   function typedNameAt(raw: string | null): string | null {
     const typed = typedName(raw);
     if (!typed) return null;
-    if ("refuse" in typed) { ui.say(typed.refuse); return null; }
+    if ("refuse" in typed) { ui.refuse(typed.refuse); return null; }
     return typed.name;
   }
   function askSpec(c: Current): Spec | null {
@@ -118,7 +122,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (name === null) return null;
     const spec = subEntrySpec(c.date, c.tag, name);
     if (!spec) return null;
-    if ("refuse" in spec) { ui.say(spec.refuse); return null; }
+    if ("refuse" in spec) { ui.refuse(spec.refuse); return null; }
     return spec;
   }
   function createRefusal(c: Current): string | null {
@@ -136,8 +140,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   const placeMoved = (p: Placing): boolean =>
     (p.view ? p.view !== deps.view() : p.source !== deps.source() || entryKey(session.current.date, session.current.tag) !== entryKey(p.c.date, p.c.tag));
   function linkPlaced(p: Placing, landed: boolean): Promise<void> | void {
-    if (!landed) { ui.say("couldn’t create the entry — see the corner", 3000); return; }
-    if (placeMoved(p)) { ui.say("the entry was made — the link was not placed", 3000); return; }
+    if (!landed) { ui.refuse("couldn’t create the entry — see the error above"); return; }
+    if (placeMoved(p)) { ui.refuse("the entry was made — the link was not placed"); return; }
     const label = mdLabel(p.spec.tag, "entry");
     if (p.view) insertLinkAfter(p.view, p.spec.href, label);
     else p.source!.insertAfter(linkMarkdown(p.spec.href, label));
@@ -153,13 +157,13 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (cold()) return done;
     const inEntry = deps.caretInEntry(), c = session.current;
     const no = createRefusal(c);
-    if (no) return refused(no, 2500);
+    if (no) return refused(no);
     const spec = askSpec(c);
     if (!spec) return done;
     if (registered(keysNow(), c.date, spec.full)) { session.goto(spec.href, "already here"); return done; }
     const view = deps.view(), source = view ? null : deps.source();
     const why = placeRefusal(inEntry, view, source);
-    if (why) return refused(why, 2000);
+    if (why) return refused(why);
     /* the entry FIRST, the link once it has landed: linked first, a write
        that failed left the host saved with a link to nothing
        (pin: lifecycle.test › says a registration that did not land) */
@@ -171,11 +175,11 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const md = cutMd(view.state.doc, from, to), cutText = view.state.doc.textBetween(from, to, " ", " ");
     const label = nsOf(c.date) ? mdLabel(firstHeading(md), spec.tag) : spec.tag;
     return layer.setEntry(entryKey(c.date, spec.full), md).then((landed) => {
-      if (!landed) { ui.say("couldn’t create the entry — see the corner", 3000); return; }
+      if (!landed) { ui.refuse("couldn’t create the entry — see the error above"); return; }
       /* the positions were taken before the write: a document that moved
          under them keeps its text, the new entry standing
          (pin: lifecycle.test › places no link when the text moved) */
-      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.say("the text moved while the entry was made — the link was not placed", 3000); return; }
+      if (view !== deps.view() || view.state.doc.textBetween(from, to, " ", " ") !== cutText) { ui.refuse("the text moved while the entry was made — the link was not placed"); return; }
       view.dispatch(replaceWithLink(view.state, from, to, spec.href, label));
       ui.hideBar();
       return session.save.now().then(() => { ui.redraw(); session.goto(spec.href); });
@@ -190,8 +194,8 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!view || view.state.selection.empty) return done;
     if (cold()) return done;
     const c = session.current;
-    if (onShelves(c.date, c.tag)) return refused(SHELVES_EMPTY, 2500);
-    if (cutsHeading(view.state)) return refused(HEADING_REFUSAL, 2000);
+    if (onShelves(c.date, c.tag)) return refused(SHELVES_EMPTY);
+    if (cutsHeading(view.state)) return refused(HEADING_REFUSAL);
     const spec = askSpec(c);
     if (!spec) return done;
     if (childrenOf(keysNow(), spec.listKey).includes(spec.tag)) { dialogs.alert(takenText(spec.listKey, spec.tag)); return done; }
@@ -212,7 +216,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!c.tag || renaming) return done;
     if (cold()) return done;
     const date = c.date, old = c.tag;
-    if (onShelves(date, old)) return refused(SHELVES_KEEP, 2500);
+    if (onShelves(date, old)) return refused(SHELVES_KEEP);
     if (nsOf(date)?.titledRoots && !tagParts(old).sub) return refile(date, old);
     return renameAsked(date, old);
   }
@@ -304,7 +308,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
   function refile(date: string, old: string): Promise<void> {
     const root = typedNameAt(dialogs.prompt(renamePrompt(date, old, shownName(date, old)), old));
     if (root === null || root === old) return done;
-    if (onShelves(date, root)) return refused(SHELVES_TAKEN, 2500);
+    if (onShelves(date, root)) return refused(SHELVES_TAKEN);
     if (childrenOf(keysNow(), date).includes(root)) { dialogs.alert(takenText(date, root)); return done; }
     return relocate(date, old, entryKey(date, root), "refile");
   }
@@ -342,9 +346,9 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const from = entryKey(date, old);
     if (to === from) return done;
     const [toDate, toTag] = splitKey(to) as [string, string];
-    if (shelvesPlace(toDate, toTag)) return refused(tagParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN, 2500);
+    if (shelvesPlace(toDate, toTag)) return refused(tagParts(toTag).sub ? SHELVES_EMPTY : SHELVES_TAKEN);
     const first = movePlan(layer.cache, from, to);
-    if ("refuse" in first) return refused(first.refuse, 3000);
+    if ("refuse" in first) return refused(first.refuse);
     if (mode === "move" && !moveAsked(date, old, to, first)) return done;
     return flushedMove({ date, old, to, toDate, toTag, from, mode });
   }
@@ -447,7 +451,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     ui.redraw();
     const text = outcomeText(r, carried, t);
     if (t.left.length || t.stayed.length) ui.pin(text);
-    else ui.say(text);
+    else ui.succeed(text);
   }
 
   function removeAt(date: string, tag: string): Promise<void> {
@@ -472,7 +476,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const c = session.current;
     if (!c.tag || cold()) return done;
     const date = c.date, tag = c.tag, ns = nsOf(date);
-    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) return refused("delete the " + plural(ns.subNoun) + " first", 2500);
+    if (ns && subTreeHasContent(keysNow(), layer.cache, entryKey(date, tag))) return refused("delete the " + plural(ns.subNoun) + " first");
     if (!dialogs.confirm(deleteConfirm(date, tag, shownName(date, tag)))) return done;
     return removeAt(date, tag);
   }
@@ -488,7 +492,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     const shown = shownForm(raw);
     const filed = typedNameAt(dialogs.prompt("Sorted under:", filingForm(shown)));
     if (filed === null) return done;
-    if (onShelves(ns, filed)) return refused(SHELVES_TAKEN, 2500);
+    if (onShelves(ns, filed)) return refused(SHELVES_TAKEN);
     if (registered(keysNow(), ns, filed)) { goRoot(ns, filed); return done; }
     return layer.setEntry(entryKey(ns, filed), "# " + shown + "\n").then((landed) => { if (landed) goRoot(ns, filed); });
   }

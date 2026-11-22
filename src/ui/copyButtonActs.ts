@@ -13,9 +13,13 @@ export interface CopyDeps {
   cp: Screen["copy"];
   session: Pick<Session, "view" | "mdView">;
   say(text: string, ms?: number): void;
+  /* why an act did nothing */
+  refuse(text: string): void;
+  /* an error, standing until closed */
+  fail(text: string): void;
 }
 export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void } {
-  const { cp, session, say } = d;
+  const { cp, session, refuse, fail } = d;
   /* THE COPY BUTTON: over whichever code block, quote, card, verse or
      prose block, note or reference the mouse is nearest inside; a quote
      inside a quote is ONE block with levels, so the copy is the whole
@@ -137,11 +141,11 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
     : withPictureBytes(richBlockHtml(mine)).then((html) => writeClipboard({ text: serializeMarkdown(schema.nodes.doc.create(null, dropPageLabels(Fragment.from(node)))), html })));
   const copyBlock = (): void => {
     const view = session.view;
-    if (copyGone(view)) { hideCopy(); say("Nothing to copy", 2000); return; }
+    if (copyGone(view)) { hideCopy(); refuse("Nothing to copy"); return; }
     const mine = copyTarget!, seq = ++copySeq, done = settled(mine, seq);
     const node = blockAt(mine);
-    if (!node) { done(false); say("Copy failed", 3000); return; }
-    written(node, mine).then((ok) => { done(ok); if (!ok && seq === copySeq) say("Copy failed", 3000); });
+    if (!node) { done(false); fail("Copy failed"); return; }
+    written(node, mine).then((ok) => { done(ok); if (!ok && seq === copySeq) fail("Copy failed"); });
   };
   return { copyBlock, dropStale };
 }

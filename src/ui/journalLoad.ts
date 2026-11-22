@@ -9,9 +9,9 @@ const REFUSAL: Record<Exclude<LoadState, "in">, string> = {
   failed: "couldn’t load entries — reload first",
 };
 /* says the refusal and answers whether it refused (pin: journalLoad.test › an act refused while the journal loads) */
-export function refuseCold(layer: Load, say: (text: string, ms?: number) => void): boolean {
+export function refuseCold(layer: Load, refuse: (text: string) => void): boolean {
   const state = loadState(layer);
-  if (state !== "in") say(REFUSAL[state], 2500);
+  if (state !== "in") refuse(REFUSAL[state]);
   return state !== "in";
 }
 

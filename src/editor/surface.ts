@@ -64,7 +64,6 @@ export interface SurfaceOptions {
   pin: (text: string) => number;
   releasePin: (gen: number) => void;
   pinned: () => boolean;
-  holds: (gen: number) => boolean;
   onView: (md: boolean) => void;
   switched: () => void;
 }
@@ -75,13 +74,6 @@ export interface Surfaces {
   /* keepView: the same entry under a new key (a rename), not an arrival */
   show(md: string, ekey: string, keepView?: boolean): void;
   switchTo(md: boolean): void;
-  /* a refusal the entry on screen met, pinned until the next show
-     (pin: surface.test › a refusal pinned for a paste is released by the next show) */
-  pinRefusal(text: string): void;
-  /* that refusal's pin released, and the warning it covered pinned again
-     (pin: surface.test › a refusal's pin is released on asking)
-     (pin: surface.test › a refusal over the warning pinned when the entry opened) */
-  releaseRefusal(): void;
 }
 
 export function surfaces(opts: SurfaceOptions): Surfaces {
@@ -96,9 +88,9 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   let forced = false, readerView = false;
   const carets: { rendered: Hold | null; source: Hold | null } = { rendered: null, source: null };
   let placedAt: number | null = null;
-  let fencePin = 0, refusalPinned = false, warning = "";
-  const unpin = (): void => { if (fencePin) opts.releasePin(fencePin); fencePin = 0; refusalPinned = false; };
-  const repin = (next: () => number, refusal = false): void => { unpin(); fencePin = next(); refusalPinned = refusal; };
+  let fencePin = 0;
+  const unpin = (): void => { if (fencePin) opts.releasePin(fencePin); fencePin = 0; };
+  const repin = (next: () => number): void => { unpin(); fencePin = next(); };
   const mount = (make: () => Surface): void => {
     const old = cur;
     cur = null;
@@ -114,8 +106,8 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   function pinTold(doc: Node, opening: boolean): void {
     if (opening && opts.pinned()) return;
     const refused = fenceRefusals(doc);
-    warning = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(...splitKey(ekey), directivesIn(doc))].join("\n");
-    if (warning) repin(() => opts.pin(warning));
+    const told = [...(refused.length ? [refusalsText(refused)] : []), ...directiveTrouble(...splitKey(ekey), directivesIn(doc))];
+    if (told.length) repin(() => opts.pin(told.join("\n")));
   }
   /* whether the show is of another entry than the one on screen, the view
      it opens in settled */
@@ -139,7 +131,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
        redraw of the entry on screen keeps its warning, and pins it no more
        (pin: surface.test › a redraw of the entry on screen) */
     carets.rendered = carets.source = null; placedAt = null;
-    if (fresh) { unpin(); warning = ""; }
+    if (fresh) unpin();
     if (mdView) { mount(() => build.source(md)); return; }
     let doc;
     try { doc = parseMarkdown(md); }
@@ -263,10 +255,5 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     get md() { return mdView; },
     get forced() { return forced; },
     show, switchTo,
-    /* a pin the surface does not hold is a failure standing, such as a
-       "not saved" whose click copies the text: a refusal covering it lost
-       that copy (pin: surface.test › a refusal never covers a pin) */
-    pinRefusal: (text) => { if (opts.pinned() && !opts.holds(fencePin)) return; repin(() => opts.pin(text), true); },
-    releaseRefusal: () => { if (!refusalPinned) return; unpin(); if (warning) fencePin = opts.pin(warning); },
   };
 }

@@ -51,7 +51,7 @@ await first.page.goto(PAGE + "#commonplace/Witchcraft");
 await settled(first.page, "bare");
 const screen = (page: Page) => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
-  held: document.querySelector(".held")?.textContent, corner: document.querySelector(".saved")?.textContent?.trim(),
+  held: document.querySelector(".held")?.textContent, corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}"))?.trim(),
   editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   tools: [...document.querySelectorAll(".site-tools > :not([hidden])")].map((e) => e.textContent.trim()),
 }));
@@ -73,7 +73,7 @@ const rest = () => page.waitForTimeout(400);
    is the clock's, not the step's */
 const look = (label: string, extra: () => Promise<object> | object = () => ({}), corner = false) => page.evaluate((corner) => ({
   entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
-  ...(corner ? { corner: document.querySelector(".saved.show")?.textContent?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
+  ...(corner ? { corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}"))?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
   crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(),
 }), corner).then(async (r) => console.log(label + ":", JSON.stringify({ ...r, ...(await extra()) })));
 const search = async (q: string): Promise<number> => {

@@ -48,3 +48,20 @@ A printed page of a book, begun in its text by a page label, `⟨138⟩`.
 "p. 138", "pp. 138-9".
 _Avoid_: leaf, folio; page for a Commonplace or for whichever entry is
 open.
+
+**Flash**:
+A notification across the top of the page, under the masthead, one under
+another, each with an × that closes it; a click on its words copies them.
+Its kind says what it tells, whoever started what it reports:
+- **Error**, red: something went wrong (a save, a copy, a fence the page
+  could not read); stays until it is resolved or closed.
+- **Warning**, amber: why an act just tried did nothing; fades after ten
+  seconds, or goes when closed, replaced by the next, or another entry is
+  opened.
+- **Info**, blue: a count, a progress line or a note, telling of no outcome
+  ("12 entries stored", "exporting… 2000 / 7500"); fades on its own.
+- **Success**, green: something done worked ("saved", "Link copied",
+  "backed up"); fades on its own.
+They stack in that order, at most one of each. Every error and warning is
+kept three months in the flash log.
+_Avoid_: the corner; failure, refusal, passing (their names before).

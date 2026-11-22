@@ -154,6 +154,7 @@
      so it stays pinned to the bottom whatever the height. The side gutter
      is declared HERE so the panels hanging off the bar inherit it. */
   .site-head {
+    anchor-name: --masthead;
     position: sticky;
     top: 0;
     z-index: 60;

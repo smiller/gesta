@@ -7,11 +7,22 @@ export const inPage = (main: Function, ...parts: Function[]): string => inPageWi
 export const inPageWith = (arg: unknown, main: Function, ...parts: Function[]): string =>
   "(() => {\n" + parts.map((f) => f.toString()).join("\n") + "\nreturn (" + main.toString() + ")(" + (arg === undefined ? "" : JSON.stringify(arg)) + ");\n})()";
 
-export function textOf(s: string): string {
-  return document.querySelector(s)?.textContent || "";
+/* the live flashes as the page publishes them, to compare against after a gesture */
+export function textOf(): string {
+  return document.documentElement.dataset.flashes || "{}";
 }
-/* the corner's text once it differs from what it said before the gesture, or says what is awaited */
-export function whisperSince([s, b, src]: [string, string, string]): string | false {
-  const t = document.querySelector(s)?.textContent || "";
-  return (t && t !== b) || new RegExp(src).test(t) ? t : false;
+/* the awaited flash once the gesture raised it; or, where the gesture
+   changed nothing, one already live that says what is awaited, raised again.
+   A count shown at launch while the gesture ran is no answer of its own */
+export function whisperSince([b, src]: [string, string]): string | false {
+  const was = JSON.parse(b), now = JSON.parse(document.documentElement.dataset.flashes || "{}"), re = new RegExp(src);
+  const kinds = ["failure", "refusal", "info", "success"];
+  const changed = kinds.filter((k) => now[k] && now[k] !== was[k]).map((k) => now[k] as string);
+  const awaited = (changed.length ? changed : kinds.map((k) => now[k]).filter(Boolean)).filter((t) => re.test(t));
+  return awaited.length ? awaited.join(" · ") : false;
+}
+/* what the gesture changed, the awaited answer or not, for a wait that ran out */
+export function changedSince(b: string): string {
+  const was = JSON.parse(b), now = JSON.parse(document.documentElement.dataset.flashes || "{}");
+  return ["failure", "refusal", "info", "success"].filter((k) => now[k] && now[k] !== was[k]).map((k) => now[k]).join(" · ");
 }

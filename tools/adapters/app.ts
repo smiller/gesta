@@ -4,7 +4,7 @@ import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.
 import { tmpdir } from "node:os";
 import { blankRowReader } from "./blankRow.ts";
 import type { Page } from "../heliumPage.ts";
-import { inPage, textOf, whisperSince } from "./inPage.ts";
+import { inPage, textOf, whisperSince, changedSince } from "./inPage.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -62,7 +62,7 @@ export const sel = {
   editor: "#editor .ProseMirror", editorFirst: "#editor .ProseMirror > :first-child",
   commonplacesOpener: ".opener[title='List the commonplaces']", booksOpener: ".opener[title='List the authors on the bookshelf']",
   panelRow: (name: string) => ".lists a[title='" + name + "']",
-  corner: ".saved.show", backupsButton: ".toolbtn[title='Automatic folder backups']",
+  corner: ".notice.show", backupsButton: ".toolbtn[title='Automatic folder backups']",
   replaceWith: "#replacewith", replaceAll: ".replacebar button[title^='Replace every']", replaceSkip: ".replacebar button[title^='Leave this']",
   source: "textarea.source", copybtn: ".copybtn", fmtB: ".fmt .b", fmtTag: ".fmt .t",
   shortcutsEditor: ".shortcuts .shortcut-edit", shortcutsSave: ".shortcuts .editbox .toolbtn", shortcutsInput: ".shortcuts .search-input",
@@ -91,13 +91,12 @@ function openRows(): string {
   return rows.length ? rows.join("+") : "none";
 }
 function screenLine(): string {
-  const corner = document.querySelector(".saved.show")?.textContent || "";
+  const corner = ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "";
   return [document.documentElement.dataset.entry, "sel " + selectedNow(), "bar " + (document.querySelector(".fmt")?.classList.contains("show") ? "on" : "off"),
     "panel " + openPanel(), "rows " + openRows(),
     pageShows(".mode") ? "source" : "rendered", "corner " + JSON.stringify(corner)].join(" · ");
 }
 export const screen = (page: Page): Promise<string> => page.evaluate(inPage(screenLine, pageShows, selectedNow, openPanel, openRows));
-const SAVED = ".saved.show";   /* the corner, for cornerAfter */
 /* where the selection stands, noted before a gesture moves it: the wait
    ends at a selectionchange that finds it moved, so an event an earlier
    gesture had queued, finding it where it was, is passed over. Two frames
@@ -249,18 +248,20 @@ export const read = {
   }),
   clipboardLines: (page: Page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page: Page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
-  corner: (page: Page) => page.evaluate(() => { const s = document.querySelector(".saved"); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
-  cornerText: (page: Page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent),
-  cornerTextOrEmpty: (page: Page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),
+  corner: (page: Page) => page.evaluate(() => { const s = document.querySelector(".notice.show") ?? [document.querySelector(".notice.success"), document.querySelector(".notice.info")].find((e) => e?.textContent); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
+  /* the error and the warning live, and nothing a passing flash's clock decides */
+  standingText: (page: Page) => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.flashes || "{}")) || undefined),
+  cornerText: (page: Page) => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}"))),
+  cornerTextOrEmpty: (page: Page) => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""),
   masthead: (page: Page) => page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; }),
   panel: (page: Page) => page.evaluate(() => { const p = document.querySelector(".lists"); return p ? { rows: [...p.querySelectorAll("a")].map((a) => a.textContent), create: p.querySelector(".panel-new")?.textContent, empty: p.querySelector(".panel-empty")?.textContent } : null; }),
   afterModClick: (page: Page) => page.evaluate(() => ({ stayed: document.documentElement.dataset.entry, nodeSelected: !!document.querySelector(".ProseMirror-selectednode"), selection: document.getSelection()?.toString().slice(0, 20), bar: document.querySelector(".fmt")?.classList.contains("show") })),
   pairs: (page: Page) => page.evaluate(() => document.querySelectorAll("#editor .vpair").length),
-  refusedFence: (page: Page) => page.evaluate(() => ({ corner: document.querySelector(".saved.show")?.textContent, paragraphs: document.querySelectorAll("#editor p").length })),
-  cleanSwitch: (page: Page) => page.evaluate(() => ({ corner: document.querySelector(".saved.show")?.textContent || "", verse: !!document.querySelector("#editor .verse") })),
+  refusedFence: (page: Page) => page.evaluate(() => ({ corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")), paragraphs: document.querySelectorAll("#editor p").length })),
+  cleanSwitch: (page: Page) => page.evaluate(() => ({ corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "", verse: !!document.querySelector("#editor .verse") })),
   linesRow: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open, focused: document.activeElement?.getAttribute("aria-label"), options: [...document.querySelectorAll(".page-lines option")].map((o) => o.textContent) })),
   linesRowOpen: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open })),
-  clipboardReference: (page: Page) => page.evaluate(async () => { const corner = document.querySelector(".saved.show")?.textContent; try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#commonplace\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } }),
+  clipboardReference: (page: Page) => page.evaluate(async () => { const corner = ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")); try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#commonplace\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } }),
   codeBlock: (page: Page) => page.evaluate(() => { const pre = document.querySelector("#editor pre"); return { lang: pre.dataset.lang, label: getComputedStyle(pre, "::after").content, tokens: [...pre.querySelectorAll("[class^=tok-]")].map((t) => t.className + ":" + t.textContent) }; }),
   copyHover: (page: Page) => page.evaluate(() => { const b = document.querySelector(".copybtn"); const pre = document.querySelector("#editor pre").getBoundingClientRect(); const r = b.getBoundingClientRect(); return { show: b.classList.contains("show"), title: b.title, insideBlock: r.top >= pre.top && r.right <= pre.right + 1, labelHidden: getComputedStyle(document.querySelector("#editor pre"), "::after").opacity }; }),
   /* read once the label has settled: read a rest after the click, it once
@@ -303,7 +304,7 @@ export const read = {
   /* the source scrolled until a text is at the window's top, measured on a twin that wraps as the textarea does: its paragraphs wrap, and a line count stopped a Book short */
   sourceScrollTo: (page: Page, text: string) => page.evaluate((t) => { const a = document.querySelector("textarea.source"), cs = getComputedStyle(a), twin = document.createElement("div"); for (const p of ["fontFamily", "fontSize", "fontWeight", "lineHeight", "letterSpacing", "wordSpacing", "tabSize", "padding", "borderWidth", "borderStyle", "boxSizing", "overflowWrap", "wordBreak"] as const) twin.style[p] = cs[p]; Object.assign(twin.style, { position: "absolute", visibility: "hidden", left: "-9999px", top: "0", whiteSpace: "pre-wrap", width: a.getBoundingClientRect().width + "px" }); twin.textContent = a.value.slice(0, a.value.indexOf(t)); const mark = twin.appendChild(document.createElement("span")); mark.textContent = "x"; document.body.appendChild(twin); const y = mark.offsetTop; twin.remove(); const under = document.querySelector(".site-head").getBoundingClientRect().bottom + 4; scrollTo(0, scrollY + a.getBoundingClientRect().top + y - under); }, text),
   inSource: (page: Page) => page.evaluate(() => !!document.querySelector("textarea.source")),
-  gridCorner: (page: Page) => page.evaluate(() => document.querySelector(".saved.show")?.textContent || ""),
+  gridCorner: (page: Page) => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""),
   cardsAndPairs: (page: Page) => page.evaluate(() => ({ cards: document.querySelectorAll("#editor .card-light-blue").length, pairs: document.querySelectorAll("#editor .vpair").length })),
   picture: (page: Page) => page.evaluate(() => { const img = document.querySelector("#editor img"); return { src: img.getAttribute("src")?.slice(0, 5), width: img.naturalWidth, height: img.naturalHeight, last: document.querySelector("#editor .ProseMirror").lastElementChild?.tagName }; }),
   shortcuts: (page: Page) => page.evaluate(() => { const c = document.querySelector(".shortcuts"); return c ? { rows: [...c.querySelectorAll("li")].map((li) => li.textContent.trim()), editor: !!c.querySelector(".shortcut-edit"), focused: document.activeElement?.className.split(" ")[0] } : null; }),
@@ -314,7 +315,7 @@ export const read = {
   backupsOpen: (page: Page) => page.evaluate(() => !!document.querySelector(".backups")),
   help: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden, lists: !!document.querySelector(".lists"), heading: document.querySelector(".helppanel h3")?.textContent })),
   helpOpen: (page: Page) => page.evaluate(() => ({ help: !document.querySelector(".helppanel").hidden })),
-  linebar: (page: Page) => page.evaluate(() => { const b = document.querySelector(".linebar"); const marked = document.querySelector("#editor .landed"); const r = marked?.getBoundingClientRect(); return { open: !b.hidden, focused: document.activeElement?.classList.contains("ProseMirror") ? "editor" : document.activeElement?.id, ...(b.querySelector("label[for=stanzainput]") && !b.querySelector("label[for=stanzainput]").parentElement.hidden ? { stanzaBox: true } : {}), lineBox: !b.querySelector("label[for=lineinput]").parentElement.hidden, pageBox: !b.querySelector("label[for=pageinput]").parentElement.hidden, marked: marked ? (marked.dataset.line || marked.dataset.page || marked.className) : null, centred: r ? Math.round((r.top + r.bottom) / 2 - innerHeight / 2) : null, corner: document.querySelector(".saved.show")?.textContent || "" }; }),
+  linebar: (page: Page) => page.evaluate(() => { const b = document.querySelector(".linebar"); const marked = document.querySelector("#editor .landed"); const r = marked?.getBoundingClientRect(); return { open: !b.hidden, focused: document.activeElement?.classList.contains("ProseMirror") ? "editor" : document.activeElement?.id, ...(b.querySelector("label[for=stanzainput]") && !b.querySelector("label[for=stanzainput]").parentElement.hidden ? { stanzaBox: true } : {}), lineBox: !b.querySelector("label[for=lineinput]").parentElement.hidden, pageBox: !b.querySelector("label[for=pageinput]").parentElement.hidden, marked: marked ? (marked.dataset.line || marked.dataset.page || marked.className) : null, centred: r ? Math.round((r.top + r.bottom) / 2 - innerHeight / 2) : null, corner: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "" }; }),
   caretRow: (page: Page) => page.evaluate(() => document.getSelection()?.anchorNode?.parentElement?.closest(".vrow")?.dataset.line),
   waitPairGrew: (page: Page, prev: string, ms: number, phrase: string) => page.waitForFunction(([root, prev, phrase]) => { const rows = [...document.querySelectorAll(root + " blockquote:has(.vrow) .vrow")]; const row = rows.find((r) => r.textContent.includes(phrase)); if (!row) return false; const cells = [...row.children], line = parseFloat(getComputedStyle(cells[0]).lineHeight); const wrapped = cells.some((x) => x.getBoundingClientRect().height > line * 1.5); return !wrapped && getComputedStyle(row).gridTemplateColumns.split(" ").map((w) => Math.round(parseFloat(w))).join(" ") !== prev; }, ["#editor", prev, phrase], { timeout: ms, polling: "raf" }).then(() => true, () => false),
   quotedPair: (page: Page) => page.evaluate((root) => { const quotes = document.querySelectorAll(root + " blockquote").length; const plain = document.querySelector(root + " blockquote:not(:has(.vrow))"), paired = document.querySelector(root + " blockquote:has(.vrow)"); if (!plain || !paired) return { quotes, plain: !!plain, paired: !!paired }; const textLeft = (el: Element) => { const t = document.createTreeWalker(el, NodeFilter.SHOW_TEXT).nextNode(); if (!t) return null; const r = document.createRange(); r.selectNodeContents(t); return r.getBoundingClientRect().left; }; const left = textLeft(plain), cells = [...paired.querySelectorAll(".vrow > *")], c0 = cells[0]?.getBoundingClientRect(); if (left == null || !c0) return { quotes, text: left != null, cells: cells.length }; const line = parseFloat(getComputedStyle(cells[0]).lineHeight), a = plain.getBoundingClientRect(), b = paired.getBoundingClientRect(); return { quotes, indent: Math.round(c0.left - left), cols: getComputedStyle(cells[0].parentElement).gridTemplateColumns.split(" ").map((w) => Math.round(parseFloat(w))).join(" "), wrapped: cells.some((c) => c.getBoundingClientRect().height > line * 1.5), sameBox: Math.round(b.left - a.left) === 0 && Math.round(b.width - a.width) === 0 }; }, "#editor"),
@@ -359,7 +360,7 @@ export const read = {
   caretAfter: (page: Page, needle: string, offset: number) => placed(page, () => page.evaluate(([needle, offset]) => { const walker = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let t; while ((t = walker.nextNode())) if (t.textContent.includes(needle)) break; const r = document.createRange(); r.setStart(t, t.textContent.indexOf(needle) + offset); r.collapse(true); const sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(r); }, [needle, offset] as [string, number])),
   pasteText: (page: Page, text: string) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page: Page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise<Blob>((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),
-  waitCorner: (page: Page, text: string, ms = 5000) => page.waitForFunction((t) => document.querySelector(".saved.show")?.textContent === t, text, { timeout: ms }).catch(() => {}),
+  waitCorner: (page: Page, text: string, ms = 5000) => page.waitForFunction((t) => ((f) => f.info === t || f.success === t)(JSON.parse(document.documentElement.dataset.flashes || "{}")), text, { timeout: ms }).catch(() => {}),
   /* the corner's FIRST new text after a gesture, matching or not: a wait for
      the match alone swallowed its timeout, and a refusal's 3s whisper had
      faded by the 5s read, so a chord that did not take read as no corner and
@@ -367,12 +368,12 @@ export const read = {
      standing — a count shown at launch — is not the gesture's answer unless
      it is the one asked for. */
   cornerAfter: async (page: Page, gesture: () => Promise<unknown>, re: RegExp) => {
-    const before = await page.evaluate(textOf, SAVED);
+    const before = await page.evaluate(textOf);
     await gesture();
-    const h = await page.waitForFunction(whisperSince, [SAVED, before, re.source] as [string, string, string], { timeout: 5000 }).catch((): null => null);
-    return h ? await h.jsonValue() : "(no whisper within 5s)";
+    const h = await page.waitForFunction(whisperSince, [before, re.source] as [string, string], { timeout: 5000 }).catch((): null => null);
+    return h ? await h.jsonValue() : (await page.evaluate(changedSince, before)) || "(no whisper within 5s)";
   },
-  settle: (page: Page) => page.waitForFunction(() => !document.querySelector(".saved.show"), null, { timeout: 5000 }).catch(() => {}),
+  settle: (page: Page) => page.waitForFunction(() => !document.querySelector(".notice.info.show, .notice.success.show"), null, { timeout: 5000 }).catch(() => {}),
   waitSelection: (page: Page, text: string) => page.waitForFunction((t) => document.getSelection()?.toString().toLowerCase() === t, text, { timeout: 5000 }).catch(() => {}),
   waitEntryAndSelection: (page: Page, key: string, text: string) => page.waitForFunction(([k, t]) => document.documentElement.dataset.entry === k && document.getSelection()?.toString() === t, [key, text], { timeout: 5000 }),
   waitImg: (page: Page) => page.waitForFunction(() => document.querySelector("#editor img"), null, { timeout: 8000 }),

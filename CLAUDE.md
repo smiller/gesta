@@ -295,7 +295,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `entrySave.ts` (the open entry's save: the debounce, leaving an
   entry, a rename's or move's hand-over, an entry deleted elsewhere).
 - `src/ui/` — the UI, Svelte 5. The models, pure and node-tested:
-  `notices.svelte.ts` (the notice ledger), `screen.svelte.ts` (shared
+  `notices.svelte.ts` (the notice ledger), `flashLog.ts` (every failure
+  and refusal kept three months, read in the console as `gesta.flashes()`), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
   `gotoModel.ts`, `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry

@@ -29,7 +29,7 @@ function firstLineShown(): string | undefined {
 function textsShown(): Record<string, unknown> {
   return {
     crumb: crumbShown(), title: document.querySelector(".page-title")?.textContent,
-    status: document.querySelector(".saved.show")?.textContent || "",
+    status: ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || "",
     first: firstLineShown(),
   };
 }
@@ -69,7 +69,7 @@ say("an unknown commonplace mints on visit", await launch(PAGE + "#commonplace/B
 say("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
-  await page.waitForFunction(() => document.querySelector(".saved.show")?.textContent === "saved", null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) === "saved", null, { timeout: 5000 }).catch(() => {});
   return read(page);
 }));
 say("relaunch: the text came back", await launch(PAGE + "#commonplace/Brand%20New", read));

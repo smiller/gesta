@@ -278,7 +278,7 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await R.pastePng(page);
   await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
   await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
-  await page.waitForFunction(() => /nowhere to land/.test(document.querySelector(".saved.show")?.textContent || ""), null, { timeout: 1500 }).catch(() => {});
+  await page.waitForFunction(() => /nowhere to land/.test(((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) || ""), null, { timeout: 1500 }).catch(() => {});
   await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await cornerText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
   await page.click(S.corner).catch(() => {});
 }

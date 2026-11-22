@@ -14,15 +14,17 @@ export interface FolderDeps {
   session: Pick<Session, "save" | "focusText" | "lockEntries" | "refresh">;
   layer: Pick<EntryLayer, "cache" | "setEntry" | "writeError">;
   images: ImageStore;
-  notices: Pick<Notices, "progress" | "stickErrIdle">;
+  notices: Pick<Notices, "progress" | "stickErr">;
   say(text: string, ms?: number): void;
+  /* why an act did nothing */
+  refuse(text: string): void;
   picker(): ((opts?: { mode?: "read" | "readwrite" }) => Promise<Dir>) | undefined;
   warmBlock(): boolean;
   count(): void;
   refreshMasthead(): void;
 }
 export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): void } {
-  const { session, layer, images, notices, say, picker, warmBlock, count, refreshMasthead } = d;
+  const { session, layer, images, notices, refuse, picker, warmBlock, count, refreshMasthead } = d;
   /* the manual export: a folder the user picks, filled with the journal as
      it stands. The picker opens FIRST, in the click, and so does the
      progress line; the flush and the walk run alongside. Nothing here
@@ -31,7 +33,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
      the first's, and its report was lost
      (pin: losing nothing › export pressed again while one runs) */
   let longRun: "an export" | "an import" | null = null;
-  const stillRunning = (): boolean => { if (longRun) say(longRun + " is still running", 2000); return !!longRun; };
+  const stillRunning = (): boolean => { if (longRun) refuse(longRun + " is still running"); return !!longRun; };
   type ExportTally = { docs: number; missing: number; lostNote: string; lostList: string };
   const lostNoteOf = (missing: number): string => (missing ? " — " + counted(missing, " picture", " pictures") + " missing" : "");
   const lostListOf = (files: Awaited<ReturnType<typeof exportEntries>>): string =>
@@ -62,7 +64,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
        again (pin: losing nothing › export pressed again while one runs) */
     session.focusText();
     const pick = picker();
-    if (!pick) { say("export needs a browser that can open a folder to write into"); return; }
+    if (!pick) { refuse("export needs a browser that can open a folder to write into"); return; }
     if (warmBlock()) return;
     if (stillRunning()) return;
     longRun = "an export";
@@ -87,8 +89,8 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     /* a folder whose every page is refused says so until clicked (pin:
        notices and surfaces › an import of refused
        files only) */
-    if (!n && refused) { notices.stickErrIdle("nothing to import here — " + refusedNote, null); return false; }
-    if (!n) { say("nothing to import"); return false; }
+    if (!n && refused) { notices.stickErr("nothing to import here — " + refusedNote, null); return false; }
+    if (!n) { refuse("nothing to import"); return false; }
     return confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + counted(n, " entry", " entries") +
       " from this folder? Each one overwrites that entry in this journal, and there is no undo.");
   };
@@ -120,13 +122,13 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
        import of two files for one entry) */
     const merged = (err as Partial<Merged>)?.merged;
     if (p) { console.error("import failed", err); p.fail(msg, msg); }
-    else if (merged) notices.stickErrIdle((err as Error).message, null, merged);
-    else notices.stickErrIdle(msg, err);
+    else if (merged) notices.stickErr((err as Error).message, null, merged);
+    else notices.stickErr(msg, err);
   };
   const importFolder = (): void => {
     session.focusText();
     const pick = picker();
-    if (!pick) { say("import needs a folder picker"); return; }
+    if (!pick) { refuse("import needs a folder picker"); return; }
     if (stillRunning()) return;
     longRun = "an import";
     session.save.flush();

@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, seededIn, rest, still, fixture, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
+import { section, page, A, R, S, log, go, seededIn, rest, still, fixture, writeAll, AUGUSTINE_SEEDS, closeNotices } from "./kit.ts";
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
@@ -139,6 +139,7 @@ async function lineBarSkippedLine(): Promise<void> {
   await page.keyboard.press("Escape");
   await rest(page);
   /* a drag over one sentence's English: it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R refers to and quotes that Latin */
+  await closeNotices();
   await R.dragCell(page, "Through this the River Peneus");
   await rest(page);
   await log("a drag over one sentence's English", await R.dualSelection(page));
@@ -247,7 +248,12 @@ section("scripture's Verse box", async () => {
     await A.foreignWrite(page, "bookshelf/" + root + "/Genesis", "# Genesis\n");
     await A.foreignWrite(page, chapter, "# Genesis 1\n\n" + fence + "\n");
     await page.goto(A.url(chapter));
+    /* reloaded, and the warm waited for: a hash change alone left the work's
+       entry to arrive as another tab's write, and a ⌃⌘G before it landed said
+       Line where the convention says Verse */
+    await page.reload();
     await A.waitEntry(page, chapter, 5000).catch(() => {});
+    await page.waitForFunction(() => (document.documentElement.dataset.probe || "").includes("all;"), null, { timeout: 5000 }).catch(() => {});
     await R.settle(page);
     await rest(page);
     await page.keyboard.press("Control+Meta+g");
@@ -260,7 +266,7 @@ section("scripture's Verse box", async () => {
     await page.keyboard.type("99");
     await page.keyboard.press("Enter");
     await rest(page);
-    await log("⌃⌘G 99 in " + root, { said: await page.evaluate(() => document.querySelector(".saved.show")?.textContent ?? null) });
+    await log("⌃⌘G 99 in " + root, { said: await page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) ?? null) });
     await page.keyboard.press("Escape");
     await rest(page);
   }
@@ -297,12 +303,12 @@ async function lineBarOnWorkByParagraph(): Promise<void> {
   await page.keyboard.type("61x");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 61x on a work by paragraph", { said: await page.evaluate(() => document.querySelector(".saved.show")?.textContent ?? null) });
+  await log("⌃⌘G 61x on a work by paragraph", { said: await page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) ?? null) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("99");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 99 on a work by paragraph", { landedOn: await landed(), said: await page.evaluate(() => document.querySelector(".saved.show")?.textContent ?? null) });
+  await log("⌃⌘G 99 on a work by paragraph", { landedOn: await landed(), said: await page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · ") || f[f.latest])(JSON.parse(document.documentElement.dataset.flashes || "{}")) ?? null) });
   await page.keyboard.press("Escape");
   await rest(page);
 }

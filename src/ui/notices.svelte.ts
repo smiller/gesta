@@ -1,17 +1,28 @@
 import type { EntryNotices } from "../store/entries.ts";
 import { errText } from "../store/files.ts";
 
+export interface Line { text: string; shown: boolean }
 export interface NoticeState {
-  text: string;
-  shown: boolean;
-  /* a progress line is live: the indicator is the op's, and not clickable */
+  /* a count, a progress line or a note, telling of no outcome */
+  info: Line;
+  /* something done worked */
+  success: Line;
+  /* the one of info and success shown last */
+  latest: Fading;
+  /* a progress line is live: the info place is the op's, and not clickable */
   busy: boolean;
+  /* pinned until clicked or released by its owner */
+  failure: Line;
+  /* why an act did nothing: until it fades, is clicked, replaced, or cleared by another entry */
+  refusal: Line;
   /* the backup's trouble, "" when healthy — drawn as the pill */
   trouble: string;
 }
+export type Place = "failure" | "refusal" | "info" | "success";
+export type Fading = "info" | "success";
 /* the lifecycle handle a user-triggered op holds: the ONLY thing that
-   ends the busy state, so a stray whisper can never sneak past the pin
-   and the pin can never be orphaned */
+   ends the busy state, so a stray whisper can never sneak past the line
+   and the line can never be orphaned */
 export interface Progress {
   step(done: number, total: number): void;
   ok(msg: string, ms?: number): void;
@@ -20,75 +31,93 @@ export interface Progress {
 }
 export interface Notices {
   readonly state: NoticeState;
+  /* a failure stands */
   readonly pinned: boolean;
   whisper(text: string, ms?: number): void;
-  refuse(e: { repeat: boolean }, why: string, ms?: number): void;
+  succeed(text: string, ms?: number): void;
+  refuse(text: string): void;
+  clearRefusal(): void;
   stick(text: string, copy?: string): number;
   stickErr(text: string, err: unknown, copy?: string): number;
-  stickErrIdle(text: string, err: unknown, copy?: string): number;
   releasePin(gen: number): void;
-  holds(gen: number): boolean;
   progress(text: string): Progress;
-  click(): void;
+  click(place: Place): void;
+  /* the ×: closes the place without copying */
+  dismiss(place: Place): void;
   setTrouble(msg: string): void;
   /* the entry layer's channel, wired to the keyed family */
   readonly entry: EntryNotices;
 }
+/* what each place holds while it is live, for the headless tools to read
+   without waiting on what is drawn (pin: notices.test › each kind present only while live) */
+export type Live = Partial<Record<Place, string>> & { latest?: Fading };
+export function liveFlashes(state: NoticeState): Live {
+  const live: Live = {};
+  for (const place of ["failure", "refusal", "info", "success"] as const) if (state[place].shown) live[place] = state[place].text;
+  if (state[state.latest].shown) live.latest = state.latest;
+  return live;
+}
 export const IDLE_TEXT = "saved";
 export const WHISPER_MS = 3000;
 export const COPIED_MS = 1200;
+/* a refusal is no error: it fades, given longer to read than a whisper */
+export const REFUSAL_MS = 10000;
 const COPY_FAILED = "copy failed — see console";
 const ROUTINE = new Set([IDLE_TEXT, "copied", COPY_FAILED]);
 
-export function noticeLedger(copyText: (text: string) => Promise<void>): Notices {
-  const state = $state<NoticeState>({ text: IDLE_TEXT, shown: false, busy: false, trouble: "" });
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  /* the clipboard payload a pinned notice copies on click; "" is no pin */
-  let stuckCopy = "";
-  /* bumped on every notice change, so a late async callback (a slow
-     clipboard write) can tell it was superseded and stay quiet, and an
-     owner can release only while the notice is still its own */
-  let gen = 0;
-  /* the progress handle's supersession token: a step from a retired handle
-     is dropped, a newer progress retires the older */
-  let busyGen = 0;
-  function show(text: string): void {
-    gen++;
-    state.text = text;
-    state.shown = true;
-    if (timer) clearTimeout(timer);
-    timer = null;
-  }
+export type Told = (kind: "failure" | "refusal", text: string) => void;
+export function noticeLedger(copyText: (text: string) => Promise<void>, told: Told = () => {}): Notices {
+  const line = (text = ""): Line => ({ text, shown: false });
+  const state = $state<NoticeState>({ info: line(IDLE_TEXT), success: line(), latest: "info", busy: false, failure: line(), refusal: line(), trouble: "" });
+  const timers: Record<Fading, ReturnType<typeof setTimeout> | null> = { info: null, success: null };
+  /* each place's generation, bumped on every change to it: a late clipboard
+     answer stays quiet once a newer success moved in, and an owner releases
+     its failure only while that failure is still its own */
+  const fadingGen: Record<Fading, number> = { info: 0, success: 0 };
+  let failureGen = 0, busyGen = 0;
+  /* the clipboard payload the failure copies on click; "" is none */
+  let failureCopy = "";
+
   /* the text STAYS as the notice fades: reset to "saved" for the fade, a
      refusal went out reading as a save (pin: notices.test › shows the text
      and hides after its time, the text staying for the fade) */
-  function hide(): void { state.shown = false; }
-  /* a stuck failure is PINNED and a live progress line holds the indicator
-     too: a routine whisper (an autosave "saved", a word count) must not
-     wipe either or drop the pin; only a click, or the handle's own terminal
-     call, clears it (pin: notices.test › pins with the copy affordance in its
-     own text, and a whisper yields to it). A save failure that fires under a
-     busy pin is the keyed family's, and it latches to replay when the op
-     ends. */
+  function stopClock(place: Fading): void {
+    const t = timers[place];
+    if (t) clearTimeout(t);
+    timers[place] = null;
+  }
+  function show(place: Fading, text: string): void {
+    fadingGen[place]++;
+    state.latest = place;
+    state[place].text = text;
+    state[place].shown = true;
+    stopClock(place);
+  }
+  function hide(place: Fading): void {
+    stopClock(place);
+    state[place].shown = false;
+  }
+  function flash(place: Fading, text: string, ms: number): void {
+    show(place, text);
+    timers[place] = setTimeout(() => hide(place), ms);
+  }
+  /* a live progress line holds the info place: a word count must not wipe
+     it (pin: notices.test › shows at once, holds the info place against a
+     whisper) */
   function whisper(text: string, ms = WHISPER_MS): void {
-    if (stuckCopy || state.busy) return;
-    show(text);
-    timer = setTimeout(hide, ms);
+    if (!state.busy) flash("info", text, ms);
   }
-  /* a swallowed press that changed nothing SAYS why: an action the app
-     quietly ignores cannot be told apart from a key that does nothing at
-     all. Once per PRESS: a held key would otherwise stamp its line at
-     key-repeat rate (pin: notices.test › refuse says why once per press) */
-  function refuse(e: { repeat: boolean }, why: string, ms?: number): void {
-    if (!e.repeat) whisper(why, ms);
-  }
-  /* the notice STAYS, with no timer, and PINS the indicator; a click copies
-     `copy` (else the shown text). The affordance is written here so no
-     caller can omit it. */
+  const succeed = (text: string, ms = WHISPER_MS): void => flash("success", text, ms);
   function stick(text: string, copy?: string): number {
-    show(text + " (click to copy)");
-    stuckCopy = copy || text;
-    return gen;
+    told("failure", text);
+    return showFailure(text, copy);
+  }
+  function showFailure(text: string, copy?: string): number {
+    failureGen++;
+    state.failure.text = text;
+    state.failure.shown = true;
+    failureCopy = copy || text;
+    return failureGen;
   }
   /* console.error + stick with the error's detail as the copy payload: the
      ONE spelling of "report a caught error sticky" */
@@ -96,49 +125,40 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
     console.error(text, err);
     return stick(text, copy || errText(err));
   }
-  /* stickErr DEFERRED while a progress line owns the indicator: the trace
-     always lands, the notice waits in ONE slot (a newer deflected failure
-     supersedes an older unseen one; the console holds both) to resurface
-     when the op ends or a pin is dismissed (pin: notices.test › one slot: a
-     newer deferred failure supersedes an older unseen one). Returns 0 when
-     deferred: a deferred notice has no owner-release and clears by click
-     once shown. */
-  let idleStick: [string, string] | null = null;
-  function stickErrIdle(text: string, err: unknown, copy?: string): number {
-    console.error(text, err);
-    if (state.busy) { idleStick = [text, copy || errText(err)]; return 0; }
-    return stick(text, copy || errText(err));
-  }
-  function replayIdleStick(): void {
-    if (!idleStick) return;
-    const d = idleStick;
-    idleStick = null;
-    stick(d[0], d[1]);
-  }
   function releasePin(g: number): void {
-    if (!g || g !== gen) return;
-    stuckCopy = "";
-    gen++;
-    hide();
+    if (!g || g !== failureGen) return;
+    failureGen++;
+    failureCopy = "";
+    state.failure.shown = false;
+  }
+  let refusalTimer: ReturnType<typeof setTimeout> | null = null;
+  function clearRefusal(): void {
+    if (refusalTimer) clearTimeout(refusalTimer);
+    refusalTimer = null;
+    state.refusal.shown = false;
+  }
+  function refuse(text: string): void {
+    told("refusal", text);
+    clearRefusal();
+    state.refusal.text = text;
+    state.refusal.shown = true;
+    refusalTimer = setTimeout(clearRefusal, REFUSAL_MS);
   }
   /* the keyed save-failure family: a failed save is easy-to-miss data
      loss, so it pins with the caught error copyable and releases ITSELF
      only when every OWED entry durably lands. Keyed, not journal-level: a
      sibling's success settling milliseconds after the failure would
      otherwise strangle the only signal that this entry lives in the cache
-     alone. The latch holds the last failure that spoke, not only under a
-     busy pin: progress() wipes a pre-op pin for its own display, so the
-     op's end must be able to resurface a failure whose keys are still
-     owed; it dies only when they all land (pin: notices.test › the pin
-     stands until the LAST owed key lands) (pin: notices.test › the latch
-     stays armed across a later op until the key lands) */
+     alone (pin: notices.test › the pin stands until the LAST owed key
+     lands). Another failure can cover it; the latch brings it back when
+     that one is clicked, while its keys are still owed (pin: notices.test
+     › a save failure covered by another failure comes back) */
   const owed: Record<string, true> = Object.create(null);
   let saveFailGen = 0;
   let saveFailLatch: [string, unknown, string | undefined] | null = null;
   function stickSaveFail(text: string, err: unknown, ekey: string, copy?: string): void {
     owed[ekey] = true;
     saveFailLatch = [text, err, copy];
-    if (state.busy) { console.error(text, err); return; }
     saveFailGen = stickErr(text, err, copy);
   }
   function releaseSaveFail(ekey: string): void {
@@ -149,76 +169,78 @@ export function noticeLedger(copyText: (text: string) => Promise<void>): Notices
     saveFailGen = 0;
   }
   function replaySaveFail(): void {
-    if (!saveFailLatch) return;
-    saveFailGen = stickErr(saveFailLatch[0], saveFailLatch[1], saveFailLatch[2]);
+    /* shown again, not told again: it was told when it was raised */
+    if (saveFailLatch) saveFailGen = showFailure(saveFailLatch[0], saveFailLatch[2] || errText(saveFailLatch[1]));
   }
-  /* the "in progress" line for a user-triggered op that runs longer than a
-     moment: shown AT ONCE, in the click, and held until the handle's own
-     terminal call. A new user-driven op supersedes an unclicked prior
-     failure — its pin is dropped so the op's own end is not yielded to the
-     stale one, and a later click cannot copy the previous payload. With
-     BOTH latches armed at the end, only the save failure shows (data loss
-     outranks) and the one-shot waits for that pin's dismiss click:
-     replaying both would flash the one-shot for zero frames (pin:
-     notices.test › a user-driven op drops a prior unclicked pin) (pin:
-     notices.test › with both latches armed only the save failure shows) */
+  /* the line for a user-triggered op that runs longer than a moment: shown
+     AT ONCE, in the click, and held until the handle's own terminal call */
   function progress(text: string): Progress {
     const mine = ++busyGen;
     state.busy = true;
-    stuckCopy = "";
-    show(text);
+    show("info", text);
     const live = (): boolean => mine === busyGen;
     const end = (): boolean => { if (!live()) return false; state.busy = false; busyGen++; return true; };
-    const settle = (): void => { if (!saveFailLatch) replayIdleStick(); replaySaveFail(); };
     return {
-      step(done, total) { if (live()) state.text = text + " " + done + " / " + total; },
-      ok(msg, ms) { if (end()) { whisper(msg, ms); settle(); } },
-      fail(msg, detail) { if (end()) stick(msg, detail); },
-      cancel() { if (end()) { hide(); settle(); } },
+      step(done, total) { if (live()) state.info.text = text + " " + done + " / " + total; },
+      ok(msg, ms) { if (end()) { hide("info"); succeed(msg, ms); } },
+      fail(msg, detail) { if (end()) { hide("info"); stick(msg, detail); } },
+      cancel() { if (end()) hide("info"); },
     };
   }
-  /* the indicator's click: nothing while an op runs (hiding the line would
-     lose the only signal); a whisper dismisses; a pin copies its payload,
-     releases, and the outcome whispers unless a newer notice moved in.
-     Dismissing one pin surfaces the next deferred one-shot, never the
-     save-fail latch, which would make its own pin undismissable (pin:
-     notices.test › resurfaces on the dismiss click of another pin) */
-  function click(): void {
-    if (state.busy) return;
-    gen++;
-    /* a whisper on screen copies its words, as a pin does, so what it said
-       can be pasted elsewhere; a routine one only goes, so a click to clear
-       "saved" never takes the clipboard (pin: notices.test › a click on a
-       whisper copies its words) (pin: notices.test › a routine whisper) */
-    const detail = stuckCopy || shownWords();
-    stuckCopy = "";
-    if (detail) copyDetail(detail);
-    else dismiss();
-    replayIdleStick();
-  }
-  function dismiss(): void {
-    if (timer) clearTimeout(timer);
-    hide();
-  }
-  const shownWords = (): string => (state.shown && !ROUTINE.has(state.text) ? state.text : "");
   function copyDetail(detail: string): void {
-    const mine = gen;
+    const mine = ++fadingGen.success;
     copyText(detail).then(
-      () => { if (mine === gen) whisper("copied", COPIED_MS); },
-      (err: unknown) => { console.error("copy failed", err, detail); if (mine === gen) whisper(COPY_FAILED); },
+      () => { if (mine === fadingGen.success) succeed("copied", COPIED_MS); },
+      (err: unknown) => { console.error("copy failed", err, detail); stick(COPY_FAILED); },
     );
   }
-  function setTrouble(msg: string): void { state.trouble = msg || ""; }
+  /* an info or a success on screen copies its words, so what it said can be
+     pasted elsewhere; a routine one only goes, so a click to clear "saved"
+     never takes the clipboard; nothing while an op runs, whose line is the
+     only signal (pin: notices.test › a click on a whisper copies its words)
+     (pin: notices.test › a routine whisper) (pin: notices.test › a click on
+     the line while busy) */
+  function clickFading(place: Fading): void {
+    if (place === "info" && state.busy) return;
+    const words = state[place].shown && !ROUTINE.has(state[place].text) ? state[place].text : "";
+    hide(place);
+    if (words) copyDetail(words);
+  }
+  /* closing the save failure itself never replays it, which would make
+     its own pin undismissable; closing another brings it back while owed */
+  function closeFailure(): string {
+    const payload = failureCopy, wasSaveFail = failureGen === saveFailGen;
+    releasePin(failureGen);
+    if (!wasSaveFail) replaySaveFail();
+    return payload;
+  }
+  function clickFailure(): void {
+    if (state.failure.shown) copyDetail(closeFailure());
+  }
+  function clickRefusal(): void {
+    if (!state.refusal.shown) return;
+    const words = state.refusal.text;
+    clearRefusal();
+    copyDetail(words);
+  }
+  const CLICKS: Record<Place, () => void> = { info: () => clickFading("info"), success: () => clickFading("success"), failure: clickFailure, refusal: clickRefusal };
+  const CLOSES: Record<Place, () => void> = {
+    info: () => { if (!state.busy) hide("info"); },
+    success: () => hide("success"),
+    failure: () => { if (state.failure.shown) closeFailure(); },
+    refusal: clearRefusal,
+  };
   return {
     get state() { return state; },
-    get pinned() { return !!stuckCopy; },
-    holds: (g: number) => !!g && g === gen && !!stuckCopy,
-    whisper, refuse, stick, stickErr, stickErrIdle, releasePin, progress, click, setTrouble,
+    get pinned() { return state.failure.shown; },
+    whisper, succeed, refuse, clearRefusal, stick, stickErr, releasePin, progress, setTrouble: (msg) => { state.trouble = msg || ""; },
+    click: (place) => CLICKS[place](),
+    dismiss: (place) => CLOSES[place](),
     entry: {
       landed: releaseSaveFail,
       removed: releaseSaveFail,
       stuck: stickSaveFail,
-      stuckIdle: (text, err) => { stickErrIdle(text, err); },
+      stuckIdle: (text, err) => { stickErr(text, err); },
     },
   };
 }
