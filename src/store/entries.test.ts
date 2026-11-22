@@ -3,15 +3,25 @@ import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } fro
 import { entryLayer, type EntryAlerts } from "./entries.ts";
 import { alertWords, asSaid, type ErrorOwner, type Raise } from "../model/alertText.ts";
 
-interface Calls { stuck: unknown[][]; resolved: number; raised: string[]; announced: string[]; onLanded: string[] }
+interface Calls { stuck: unknown[][]; resolved: number; raised: string[]; announced: string[]; onLanded: string[]; standing: () => string[] }
+// each owner the layer takes keeps what it has standing; a resolve counts only when something stood
+function owners(calls: Pick<Calls, "stuck" | "resolved">) {
+  const held: (string | null)[] = [];
+  const owner = (): ErrorOwner => {
+    const me = held.push(null) - 1;
+    return {
+      raise: ((a, b, c) => { const [s, o] = asSaid(a, b, c); held[me] = alertWords(s); calls.stuck.push([held[me], o.caught, o.copy]); }) as ErrorOwner["raise"],
+      resolve: () => { if (held[me] !== null) calls.resolved++; held[me] = null; },
+    };
+  };
+  return { owner, standing: () => held.filter((x): x is string => x !== null) };
+}
 function fresh(over?: (s: MemEntryStore) => EntryStore) {
   const mem = memEntryStore();
-  const calls: Calls = { stuck: [], resolved: 0, raised: [], announced: [], onLanded: [] };
-  const saves = {
-    raise: ((a, b, c) => { const [s, o] = asSaid(a, b, c); calls.stuck.push([alertWords(s), o.caught, o.copy]); }) as ErrorOwner["raise"],
-    resolve: () => { calls.resolved++; },
-  };
-  const alerts: EntryAlerts = { saves, raise: ((a, b, c) => { calls.raised.push(alertWords(asSaid(a, b, c)[0])); }) as Raise };
+  const calls = { stuck: [], resolved: 0, raised: [], announced: [], onLanded: [] } as unknown as Calls;
+  const made = owners(calls);
+  calls.standing = made.standing;
+  const alerts: EntryAlerts = { owner: made.owner, raise: ((a, b, c) => { calls.raised.push(alertWords(asSaid(a, b, c)[0])); }) as Raise };
   const layer = entryLayer(over ? over(mem) : mem, alerts, { announce: (k) => calls.announced.push(k), onLanded: (k) => calls.onLanded.push(k) });
   return { layer, mem, calls };
 }
@@ -535,4 +545,19 @@ test("the save error stands until the last owed entry lands, a removed entry owi
   failing.delete("c");
   await layer.setEntry("c", "2");
   expect(calls.resolved).toBe(1);
+});
+
+test("a save refused as stale stands for its own entry: a later failure on another entry neither replaces it nor, landing, resolves it; the entry gone, it goes", async () => {
+  let failB = true;
+  const { layer, mem, calls } = fresh((m) => ({ ...m, set: (k, md) => (k === "b" && failB ? Promise.reject(new Error("quota")) : m.set(k, md)) }));
+  await layer.setEntry("a", "mine");
+  await mem.foreignSet("a", "theirs");
+  await layer.setEntry("a", "mine edited");
+  await layer.setEntry("b", "x");
+  expect(calls.standing()).toEqual(["not saved", "not saved — changed in another tab, copy your text then reload"]);
+  failB = false;
+  await layer.setEntry("b", "y");
+  expect(calls.standing()).toEqual(["not saved — changed in another tab, copy your text then reload"]);
+  await layer.removeEntry("a");
+  expect(calls.standing()).not.toContain("not saved — changed in another tab, copy your text then reload");
 });

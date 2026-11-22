@@ -193,7 +193,7 @@ const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastCh
    (pin: entries.test › a landed write and a landed delete are told to onLanded) */
 let armBackup = (): void => {};
 const readerStore = READER ? memEntryStore() : null;
-const layer = entryLayer(readerStore ?? idbEntryStore(), { saves: alerts.owner({ holdsSaved: true }), raise }, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
+const layer = entryLayer(readerStore ?? idbEntryStore(), { owner: () => alerts.owner({ holdsSaved: true }), raise }, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
 let bundlePictures: ImageStore | null = null;
 const images: ImageStore = READER ? {
   get: (id) => bundlePictures ? bundlePictures.get(id) : Promise.resolve(null),

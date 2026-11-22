@@ -107,7 +107,7 @@ const MIME: Record<string, string> = { webp: "image/webp", png: "image/png", jpg
 
 export function startSession(opts: SessionOptions): Session {
   const { mount, layer, images, raise } = opts;
-  const detached = opts.owner(), copied = opts.owner(), fenced = opts.owner();
+  const deleted = opts.owner(), rescued = opts.owner(), copied = opts.owner(), fenced = opts.owner();
   const journal = journalOf(layer.cache);
   let interval = opts.interval;
   let current = { date: todayKey(), tag: null as string | null };
@@ -128,7 +128,7 @@ export function startSession(opts: SessionOptions): Session {
     screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
     layer,
     wrote: (landed) => { if (landed) raise("saved"); show(); },
-    refused: (md) => { detached.raise("notSavedDeletedElsewhere", { copy: md }); },
+    refused: (md) => { rescued.raise("notSavedDeletedElsewhere", { copy: md }); },
   });
   const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
@@ -222,7 +222,8 @@ export function startSession(opts: SessionOptions): Session {
       return URL.createObjectURL(new Blob([row.bytes as BlobPart], { type: MIME[ext] || "application/octet-stream" }));
     });
   function releaseDetached(): void {
-    detached.resolve();
+    deleted.resolve();
+    rescued.resolve();
   }
   const pendingNow = (): boolean => pending?.gen === navGen;
   function replayPending(): void {
@@ -351,7 +352,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   function afterTabWrite(ekey: string, verdict: ScreenTake, moved: boolean): void {
     if (!moved) return;
-    if (verdict === "deleted") detached.raise("deletedElsewhere", { beneath: true });
+    if (verdict === "deleted") deleted.raise("deletedElsewhere", { beneath: true });
     else if (onScreenKey(ekey)) redraw();
   }
   function takeTabWrite(ekey: string): Promise<void> {

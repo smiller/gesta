@@ -35,7 +35,7 @@ export interface Alerts {
   clearWarning(): void;
   /* an alert by its id in the table, shown where its kind goes */
   raise: Raise;
-  /* `holdsSaved`: while this owner's error stands, a routine "saved" is held back */
+  /* `holdsSaved`: from this owner's raise to its resolve, a routine "saved" is held back */
   owner(opts?: { holdsSaved?: boolean }): ErrorOwner;
   progress(id: BareIdOf<"info">): Progress;
   click(kind: Kind): void;
@@ -102,23 +102,20 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
      it goes, the one beneath comes back (pin: alertLedger.test › the newest
      error shows) */
   const standing: Standing[] = [];
-  const holdingSaved = new Set<object>();
+  const holding = new Set<object>();
   function showTop(): void {
     const top = standing.at(-1);
     if (top) state.error.text = top.text;
     state.error.shown = !!top;
   }
-  /* an owner's error is replaced where it stands; one with no owner, raised
-     again in the same words, moves to the top as one (pin: alertLedger.test ›
-     an owner raising again replaces its error) (pin: alertLedger.test › an
-     error with no owner goes only when closed) */
+  /* an error raised again, by its owner or with no owner in the same words,
+     goes to the top and its old one comes out (pin: alertLedger.test › an
+     owner raising again takes its error to the top) (pin: alertLedger.test ›
+     an error with no owner goes only when closed) */
   function place(s: Standing, beneath: boolean): void {
     const at = standing.findIndex((x) => (s.owner ? x.owner === s.owner : !x.owner && x.text === s.text));
-    if (at >= 0 && s.owner) standing[at] = s;
-    else {
-      if (at >= 0) standing.splice(at, 1);
-      standing.splice(beneath && standing.length ? standing.length - 1 : standing.length, 0, s);
-    }
+    if (at >= 0) standing.splice(at, 1);
+    standing.splice(beneath && standing.length ? standing.length - 1 : standing.length, 0, s);
     showTop();
   }
   function take(s: Standing | undefined): void {
@@ -126,13 +123,12 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     standing.splice(standing.indexOf(s), 1);
     showTop();
   }
-  /* a routine "saved" is held back while a `holdsSaved` owner's error
-     stands: another entry's landing would read as that one's (pin:
-     alertLedger.test › a routine success is held back while a save error
-     stands) */
-  const savedHeld = (): boolean => standing.some((x) => !!x.owner && holdingSaved.has(x.owner));
+  /* a routine "saved" is held back from a `holdsSaved` owner's raise to its
+     resolve, its error closed or not: another entry's landing would read as
+     that one's (pin: alertLedger.test › a routine success is held back while
+     a save error stands) (pin: alertLedger.test › an owner holding back) */
   function succeed(text: string, ms = INFO_MS): void {
-    if (!(text === IDLE_TEXT && savedHeld())) showFor("success", text, ms);
+    if (!(text === IDLE_TEXT && holding.size)) showFor("success", text, ms);
   }
   /* shown first, then logged: a log that throws must not keep an alert from
      being seen (pin: alertLedger.test › a log that cannot be written) */
@@ -149,13 +145,13 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   function owner(opts: { holdsSaved?: boolean } = {}): ErrorOwner {
     const me = {};
-    if (opts.holdsSaved) holdingSaved.add(me);
     return {
       raise: ((a: AlertId | Said, b?: unknown, c?: unknown): void => {
         const [s, from] = asSaid(a, b, c);
+        if (opts.holdsSaved) holding.add(me);
         error(alertWords(s), from, me);
       }) as ErrorOwner["raise"],
-      resolve: () => take(standing.find((x) => x.owner === me)),
+      resolve: () => { holding.delete(me); take(standing.find((x) => x.owner === me)); },
     };
   }
   let warningTimer: ReturnType<typeof setTimeout> | null = null;

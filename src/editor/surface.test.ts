@@ -247,6 +247,13 @@ describe("a text the model refuses", () => {
     w.s.switchTo(false);
     expect([w.errors, w.beneath]).toEqual([[told(), told()], [told()]]);
   });
+  it("an entry that cannot render, opened, goes beneath an error already standing", () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const w = world();
+    w.s.show(BAD, "commonplace/Gridded");
+    expect(w.beneath).toEqual(["cannot render commonplace/Gridded — " + WHY + "; shown as source"]);
+    err.mockRestore();
+  });
   it("a redraw of the entry on screen neither raises its error again nor resolves it", () => {
     const w = world();
     const md = "# Chaucer\n\n::: reference\nroman book and canto\n:::";

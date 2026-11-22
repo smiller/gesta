@@ -23,8 +23,9 @@ function walk(d: string): void {
 }
 walk(dir);
 const stuck: string[] = [];
-const told = ((a, b, c) => { stuck.push(alertWords(asSaid(a, b, c)[0])); }) as Raise;
-const layer = entryLayer(memEntryStore(), { saves: { raise: told as ErrorOwner["raise"], resolve: () => {} }, raise: told });
+// a save error's key is printed with the OWED lines below; a plain failure has none
+const quiet: ErrorOwner = { raise: () => {}, resolve: () => {} };
+const layer = entryLayer(memEntryStore(), { owner: () => quiet, raise: ((a, b, c) => { stuck.push(alertWords(asSaid(a, b, c)[0])); }) as Raise });
 const images = memImageStore();
 let filed = 0;
 const t0 = Date.now();

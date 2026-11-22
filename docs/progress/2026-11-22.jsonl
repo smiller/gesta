@@ -84,3 +84,8 @@
 {"at":"2026-11-22T18:30","ev":"done","id":"A13.1.1","note":"3aae8e4, accepted"}
 {"at":"2026-11-22T18:33","ev":"add","id":"A13.1.2","list":"A","title":"A click's name for the alert log, beside chordName: candidate 3's narrow half","parent":"A13.1","detail":"Asked: 'Yes to narrow half of candidate 3. Don't do the other half of 3 or 4, but also don't refuse them with an ADR'. Why: a click is named inline in main.ts, untested, while a key press is named in alertLog.ts and tested. Done when: clickName in alertLog.ts, tested; main.ts only wires it; verify green."}
 {"at":"2026-11-22T18:33","ev":"start","id":"A13.1.2"}
+{"at":"2026-11-22T18:40","ev":"done","id":"A13.1.2","note":"b52685b, accepted"}
+{"at":"2026-11-22T18:40","ev":"done","id":"A13.1","note":"1 and 2 built (3aae8e4), 3's narrow half (b52685b); the rest set aside, no ADR"}
+{"at":"2026-11-22T18:40","ev":"done","id":"A9.1","note":"the run was A13.1"}
+{"at":"2026-11-22T18:41","ev":"add","id":"A14","list":"A","title":"The batch review: /code-review at HIGH over a28fb71..HEAD","detail":"Asked: /code-review high a28fb71..HEAD, typed at 18:41. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-22T18:41","ev":"start","id":"A14"}

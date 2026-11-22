@@ -140,18 +140,28 @@ describe("an error", () => {
     bookmarks.resolve();
     expect(n.state.error.shown).toBe(false);
   });
-  it("an owner raising again replaces its error where it stands; its resolve after a close does nothing", () => {
+  it("an owner raising again takes its error to the top, one of it; its resolve after a close does nothing", () => {
     const fence = n.owner(), other = n.owner(), third = n.owner();
     third.raise("shortcutsNotSaved");
     fence.raise("cannotRender", { key: "commonplace/A", why: "x" });
     other.raise("bookmarksNotSaved");
     fence.raise("cannotRender", { key: "commonplace/A", why: "y" });
-    expect(n.state.error.text).toBe("bookmarks not saved");
-    other.resolve();
     expect(n.state.error.text).toBe("cannot render commonplace/A — y; shown as source");
     n.dismiss("error");
     fence.resolve();
+    expect(n.state.error.text).toBe("bookmarks not saved");
+    other.resolve();
     expect(n.state.error).toMatchObject({ text: "shortcuts not saved — storage full", shown: true });
+  });
+  it("an owner holding back \"saved\" holds it from its raise until its resolve, its error closed or not", () => {
+    const saves = n.owner({ holdsSaved: true });
+    saves.raise("notSaved");
+    n.dismiss("error");
+    n.raise("saved");
+    expect(n.state.success.shown).toBe(false);
+    saves.resolve();
+    n.raise("saved");
+    expect(n.state.success).toMatchObject({ text: "saved", shown: true });
   });
   it("an error with no owner goes only when closed; raised again in the same words it moves to the top, one of it", () => {
     const owned = n.owner();

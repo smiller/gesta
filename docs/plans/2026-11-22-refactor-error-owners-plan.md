@@ -57,3 +57,18 @@ Asked 2026-11-22, from the architecture run over the last two batches:
   ADR: as the code changes they may come up again.
 - The architecture run's cost: the walk, 122,438 tokens (its transcript's
   last message: input + cache creation + cache read + output).
+- The batch review (A14), `/code-review high a28fb71..HEAD`: 106,985 tokens
+  (its transcript's last message). Seven findings, fixed (asked: "yes"):
+  1. Decision 4 changed: an owner raising again goes to the top, its old
+     error taken out, unless `beneath`.
+  2. `holdsSaved` holds "saved" from the owner's raise to its resolve, the
+     error closed or not; the closed error stays gone (decision 6).
+  3. Session's "deleted in another tab" and its not-saved rescue have an
+     owner each. Not measured: a Helium reading of a second delete showed
+     the rescue standing with the old code too, so it was taken out.
+  4. (pre-existing) A save another tab refused, with its text to copy, has
+     an owner per entry, resolved when that entry settles; "not saved"
+     stays one.
+  5. (pre-existing) "cannot render" on opening goes beneath.
+  6. (nit) Errors with no owner piling up: left, decision 5.
+  7. (nit) importCorpus prints save errors only as OWED lines, by key.

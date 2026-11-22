@@ -1,9 +1,9 @@
 import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
 import type { BareIdOf, ErrorOwner, Raise } from "../model/alertText.ts";
 
-/* `saves`: the save error, standing until every entry whose write did not
-   land has landed or gone; `raise`: a failure no landing resolves */
-export interface EntryAlerts { saves: ErrorOwner; raise: Raise }
+/* `owner`: a save error's handle, taken once for "not saved" and once per
+   entry whose save another tab refused; `raise`: a failure no landing resolves */
+export interface EntryAlerts { owner(): ErrorOwner; raise: Raise }
 export interface EntryLayer {
   /* complete once `warmed`: everything written out is enumerated from it */
   cache: Record<string, string>;
@@ -59,18 +59,27 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
      (pin: entries.test › a save refused as stale makes the key owed) */
   const debts = new Map<string, { err: unknown; save: boolean }>();
   const unlanded = (ekey: string): boolean => !!debts.get(ekey)?.save;
-  /* the entries whose write did not land: the save error stands until none
-     is left, so a sibling landing a moment after a failure does not take it
+  /* the entries whose write did not land: "not saved" stands until none is
+     left, so a sibling landing a moment after a failure does not take it
      down (pin: entries.test › the save error stands until the last owed
      entry lands) (pin: entries.test › removeEntry clears the cache, the
-     store, and every debt the key owed) */
+     store, and every debt the key owed). A refused save's text to copy
+     stands under its own entry: another failure would replace it, and the
+     text with it (pin: entries.test › a save refused as stale stands for its
+     own entry) */
+  const saves = alerts.owner();
   const owed = new Set<string>();
+  const rescues = new Map<string, ErrorOwner>();
   function stuck(id: BareIdOf<"error">, err: unknown, ekey: string, rescue?: string): void {
-    owed.add(ekey);
-    alerts.saves.raise(id, { caught: err, copy: rescue });
+    if (rescue === undefined) { owed.add(ekey); saves.raise(id, { caught: err }); return; }
+    const own = rescues.get(ekey) ?? alerts.owner();
+    rescues.set(ekey, own);
+    own.raise(id, { caught: err, copy: rescue });
   }
   function settled(ekey: string): void {
-    if (owed.delete(ekey) && !owed.size) alerts.saves.resolve();
+    rescues.get(ekey)?.resolve();
+    rescues.delete(ekey);
+    if (owed.delete(ekey) && !owed.size) saves.resolve();
   }
   const chain: Record<string, Promise<unknown>> = Object.create(null);
   /* false until the warm has filled the cache: a backup run before it would
@@ -209,7 +218,9 @@ export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOp
     for (const k of Object.keys(cache)) delete cache[k];
     debts.clear();
     owed.clear();
-    alerts.saves.resolve();
+    saves.resolve();
+    for (const own of rescues.values()) own.resolve();
+    rescues.clear();
     return store.clear();
   }
   /* one row into the cache. Additive and idempotent: a key already held is

@@ -94,7 +94,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     old?.destroy();
     cur = make();
   };
-  const refusedError = (err: unknown): void => opts.fenceError.raise(said("cannotRender", { key: ekey, why: (err as Error).message }));
+  const refusedError = (err: unknown, beneath = false): void => opts.fenceError.raise(said("cannotRender", { key: ekey, why: (err as Error).message }), { beneath });
   /* the entry's refused fences and its directives' trouble, raised as an
      error when it is drawn: told only on the switch back, they were never seen by a
      reader who did not edit the source (pin: surface.test › an entry opened
@@ -142,8 +142,10 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
   function shownForced(md: string, err: unknown): void {
     console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
     /* AN ERROR, resolved by the next show: an info was covered by the
-       entry count before it was read (pin: grid › the faulty entry opened) */
-    refusedError(err);
+       entry count before it was read (pin: grid › the faulty entry opened);
+       beneath an error standing, as the told lines go (pin: surface.test ›
+       an entry that cannot render, opened) */
+    refusedError(err, true);
     readerView = mdView; forced = true;
     mdView = true;
     mount(() => build.source(md));
