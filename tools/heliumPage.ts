@@ -7,7 +7,7 @@ declare global {
   interface Window {
     __lastEdit: number;
     __corner: () => string | undefined;
-    __flashes: () => string;
+    __alerts: () => string;
     __writes: number;
     __typed: number;
     __walks: number;

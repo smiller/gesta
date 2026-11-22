@@ -4,7 +4,7 @@ import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.
 import { tmpdir } from "node:os";
 import { blankRowReader } from "./blankRow.ts";
 import type { Page } from "../heliumPage.ts";
-import { inPage, textOf, whisperSince, changedSince } from "./inPage.ts";
+import { inPage, textOf, alertSince, changedSince } from "./inPage.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -62,7 +62,7 @@ export const sel = {
   editor: "#editor .ProseMirror", editorFirst: "#editor .ProseMirror > :first-child",
   commonplacesOpener: ".opener[title='List the commonplaces']", booksOpener: ".opener[title='List the authors on the bookshelf']",
   panelRow: (name: string) => ".lists a[title='" + name + "']",
-  corner: ".notice.show", backupsButton: ".toolbtn[title='Automatic folder backups']",
+  corner: ".alert.show", backupsButton: ".toolbtn[title='Automatic folder backups']",
   replaceWith: "#replacewith", replaceAll: ".replacebar button[title^='Replace every']", replaceSkip: ".replacebar button[title^='Leave this']",
   source: "textarea.source", copybtn: ".copybtn", fmtB: ".fmt .b", fmtTag: ".fmt .t",
   shortcutsEditor: ".shortcuts .shortcut-edit", shortcutsSave: ".shortcuts .editbox .toolbtn", shortcutsInput: ".shortcuts .search-input",
@@ -129,7 +129,7 @@ export const read = {
   /* the triangle stands beside the heading's FIRST line: a two-line heading's middle is below it (the step's first aim) */
   clickFoldTriangle: async (page: Page, text: string) => { const at = await page.evaluate((t) => { const h = [...document.querySelectorAll("#editor h2")].find((x) => x.textContent.startsWith(t)); if (!h) return null; const r = h.getBoundingClientRect(); return { x: r.left - 12, y: r.top + 14 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(200); } },
   /* the places step: the line just under the masthead, and whether the window is at the top */
-  place: (page: Page) => page.evaluate(() => { const top = Math.max(0, ...[".site-head", ".notices"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
+  place: (page: Page) => page.evaluate(() => { const top = Math.max(0, ...[".site-head", ".alerts"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
   /* the margin-note step: each margin-note's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which margin-note holds the caret */
   margins: (page: Page) => page.waitForFunction(() => [...document.querySelectorAll("#editor .margin-note")].every((n) => n.classList.contains("in-margin") === (n.style.getPropertyValue("--mn-w") !== "")), null, { timeout: 3000 }).catch(() => {}).then(() => page.evaluate(() => {
     const caret = getSelection().anchorNode;
@@ -153,8 +153,8 @@ export const read = {
       const cell = [...document.querySelectorAll("#editor .dual-language > .vpair > .vcell + .vcell")].find((c) => c.textContent.startsWith(s));
       if (!cell) return null;
       cell.scrollIntoView({ block: "center" });
-      /* a cell tall enough to start under the strip stuck below the header is scrolled clear of it */
-      const clear = Math.max(0, ...[".site-head", ".notices"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 10, top = cell.getBoundingClientRect().top;
+      /* a cell tall enough to start under the alert area stuck below the header is scrolled clear of it */
+      const clear = Math.max(0, ...[".site-head", ".alerts"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 10, top = cell.getBoundingClientRect().top;
       if (top < clear) scrollBy(0, top - clear);
       const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT); const ts = []; for (let t = w.nextNode(); t; t = w.nextNode()) ts.push(t);
       const box = (t: Node, i: number) => { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 1); return r.getBoundingClientRect(); };
@@ -251,9 +251,9 @@ export const read = {
   }),
   clipboardLines: (page: Page) => page.evaluate(async () => { try { return (await navigator.clipboard.readText()).split("\n").map((l) => l.replace(/\(#[^)]*\)/, "(…)").slice(0, 70)); } catch (e) { return [String(e)]; } }),
   landedText: (page: Page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
-  corner: (page: Page) => page.evaluate(() => { const s = document.querySelector(".notice.show") ?? [document.querySelector(".notice.success"), document.querySelector(".notice.info")].find((e) => e?.textContent); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
-  /* the error and the warning live, and nothing a passing flash's clock decides */
-  standingText: (page: Page) => page.evaluate(() => ((f) => [f.failure, f.refusal].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.flashes || "{}")) || undefined),
+  corner: (page: Page) => page.evaluate(() => { const s = document.querySelector(".alert.show") ?? [document.querySelector(".alert.success"), document.querySelector(".alert.info")].find((e) => e?.textContent); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
+  /* the error and the warning live, and nothing a fading alert's clock decides */
+  standingText: (page: Page) => page.evaluate(() => ((f) => [f.error, f.warning].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.alerts || "{}")) || undefined),
   cornerText: (page: Page) => page.evaluate(() => window.__corner()),
   cornerTextOrEmpty: (page: Page) => page.evaluate(() => window.__corner() || ""),
   masthead: (page: Page) => page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; }),
@@ -287,7 +287,7 @@ export const read = {
   sourceCaretTo: (page: Page, text: string) => page.evaluate((t) => { const a = document.querySelector("textarea.source"); const i = a.value.indexOf(t); a.focus(); a.setSelectionRange(i, i); }, text),
   /* the stanza at the window's top, just under the masthead: in the rendered view the first verse still showing; in the source the stanza whose lines hold the top line, or the next after a gap (the lines unwrapped: the step's are short) */
   topStanza: (page: Page) => page.evaluate(() => {
-    const under = Math.max(0, ...[".site-head", ".notices"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 2;
+    const under = Math.max(0, ...[".site-head", ".alerts"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 2;
     const ta = document.querySelector("textarea.source");
     if (!ta) { const v = [...document.querySelectorAll("#editor .verse[data-stanza]")].find((x) => x.getBoundingClientRect().bottom > under); return v ? +v.dataset.stanza : null; }
     const cs = getComputedStyle(ta), lines = ta.value.split("\n");
@@ -363,20 +363,20 @@ export const read = {
   caretAfter: (page: Page, needle: string, offset: number) => placed(page, () => page.evaluate(([needle, offset]) => { const walker = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let t; while ((t = walker.nextNode())) if (t.textContent.includes(needle)) break; const r = document.createRange(); r.setStart(t, t.textContent.indexOf(needle) + offset); r.collapse(true); const sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(r); }, [needle, offset] as [string, number])),
   pasteText: (page: Page, text: string) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page: Page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise<Blob>((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),
-  waitCorner: (page: Page, text: string, ms = 5000) => page.waitForFunction((t) => ((f) => f.info === t || f.success === t)(JSON.parse(document.documentElement.dataset.flashes || "{}")), text, { timeout: ms }).catch(() => {}),
+  waitCorner: (page: Page, text: string, ms = 5000) => page.waitForFunction((t) => ((f) => f.info === t || f.success === t)(JSON.parse(document.documentElement.dataset.alerts || "{}")), text, { timeout: ms }).catch(() => {}),
   /* the corner's FIRST new text after a gesture, matching or not: a wait for
-     the match alone swallowed its timeout, and a refusal's 3s whisper had
+     the match alone swallowed its timeout, and a refusal's 3s info had
      faded by the 5s read, so a chord that did not take read as no corner and
-     an older clipboard, with nothing to say why. "New": a whisper already
+     an older clipboard, with nothing to say why. "New": an info already
      standing — a count shown at launch — is not the gesture's answer unless
      it is the one asked for. */
   cornerAfter: async (page: Page, gesture: () => Promise<unknown>, re: RegExp) => {
     const before = await page.evaluate(textOf);
     await gesture();
-    const h = await page.waitForFunction(whisperSince, [before, re.source] as [string, string], { timeout: 5000 }).catch((): null => null);
-    return h ? await h.jsonValue() : (await page.evaluate(changedSince, before)) || "(no whisper within 5s)";
+    const h = await page.waitForFunction(alertSince, [before, re.source] as [string, string], { timeout: 5000 }).catch((): null => null);
+    return h ? await h.jsonValue() : (await page.evaluate(changedSince, before)) || "(no alert within 5s)";
   },
-  settle: (page: Page) => page.waitForFunction(() => !document.querySelector(".notice.info.show, .notice.success.show"), null, { timeout: 5000 }).catch(() => {}),
+  settle: (page: Page) => page.waitForFunction(() => !document.querySelector(".alert.info.show, .alert.success.show"), null, { timeout: 5000 }).catch(() => {}),
   waitSelection: (page: Page, text: string) => page.waitForFunction((t) => document.getSelection()?.toString().toLowerCase() === t, text, { timeout: 5000 }).catch(() => {}),
   waitEntryAndSelection: (page: Page, key: string, text: string) => page.waitForFunction(([k, t]) => document.documentElement.dataset.entry === k && document.getSelection()?.toString() === t, [key, text], { timeout: 5000 }),
   waitImg: (page: Page) => page.waitForFunction(() => document.querySelector("#editor img"), null, { timeout: 8000 }),

@@ -144,7 +144,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
      (pin: grid › the faulty entry opened) */
   function shownForced(md: string, err: unknown): void {
     console.error("cannot render", ekey, (err as Error).message);   /* the message, not the stack: minified names churn per build (pin: console › cannot render commonplace/Gridded) */
-    /* PINNED, released by the next show: a whisper was covered by the
+    /* PINNED, released by the next show: an info was covered by the
        entry count before it was read (pin: grid › the faulty entry opened) */
     repin(() => refusedPin(err));
     readerView = mdView; forced = true;
@@ -208,7 +208,7 @@ export function surfaces(opts: SurfaceOptions): Surfaces {
     try { doc = parseMarkdown(text); }
     catch (err) {
       /* PINNED, in the show path's words: the writer stays in source to fix
-         the line the message quotes, and a whisper faded before a slow
+         the line the message quotes, and an info faded before a slow
          reader found it; released by the clean parse below
          (pin: grid › a stray line in a grid, switched back) */
       repin(() => refusedPin(err));

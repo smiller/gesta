@@ -96,11 +96,11 @@
   .search-results {
     list-style: none; margin: 0; padding: 0;
     position: absolute;
-    /* 100% stops short of the header's border and rule: 2px more meets the strip's foot */
-    top: calc(100% + var(--strip-h, 0px) + 2px);
+    /* 100% stops short of the header's border and rule: 2px more meets the alert area's foot */
+    top: calc(100% + var(--alert-area-h, 0px) + 2px);
     left: 0;
     right: 0;
-    max-height: calc(100vh - 100% - var(--strip-h, 0px) - 8px);
+    max-height: calc(100vh - 100% - var(--alert-area-h, 0px) - 8px);
     overflow-y: auto;
     background: var(--card-bg);
     border-bottom: 1px solid var(--rule);
@@ -121,7 +121,7 @@
   .search-results li.active { background: var(--aside-bg); box-shadow: inset 3px 0 0 var(--accent); }
   .search-results .where { display: block; font-family: var(--sans); font-variant-numeric: tabular-nums; color: var(--accent); margin-bottom: 2px; }
   .search-results .snip { color: var(--muted); }
-  .search-results mark { background: var(--flash); color: inherit; }
+  .search-results mark { background: var(--glow); color: inherit; }
   .search-results .empty, .search-results .more { color: var(--muted); font-style: italic; cursor: default; }
   .search-results .empty:hover, .search-results .more:hover { background: none; }
 </style>

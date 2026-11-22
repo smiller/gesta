@@ -27,3 +27,12 @@ function unlisted(file: string): string[] {
 test("every function a part of an in-page reading calls, among its module's own, travels with it", () => {
   expect(sources.flatMap(unlisted)).toEqual([]);
 });
+
+test("a gesture's new error or warning is its answer, as an info or a success is, read by the kinds the page publishes", async () => {
+  const { alertSince, changedSince } = await import("./inPage.ts");
+  const at = (alerts: object) => { (globalThis as { document?: unknown }).document = { documentElement: { dataset: { alerts: JSON.stringify(alerts) } } }; };
+  at({ error: "not saved", warning: "no line numbers here" });
+  expect(alertSince(["{}", "line numbers"])).toBe("no line numbers here");
+  expect(changedSince("{}")).toBe("not saved · no line numbers here");
+  delete (globalThis as { document?: unknown }).document;
+});

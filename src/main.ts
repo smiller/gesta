@@ -11,10 +11,10 @@ import type { Dir } from "./store/fsa.ts";
 import { failMsg, errText } from "./store/files.ts";
 import { startSession } from "./session.ts";
 import { readRaw, writeRaw, stored } from "./store/local.ts";
-import { flashLog, chordName, parseLog, type FlashEntry } from "./ui/flashLog.ts";
-import { placeStrip } from "./ui/flashStrip.ts";
+import { alertLog, carryLog, chordName, parseLog, type AlertEntry } from "./ui/alertLog.ts";
+import { placeArea } from "./ui/alertArea.ts";
 import { bookmarkStore } from "./store/bookmarkStore.ts";
-import { noticeLedger } from "./ui/notices.svelte.ts";
+import { alertLedger } from "./ui/alertLedger.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
 import { screenState } from "./ui/screen.svelte.ts";
 import { loadPins, refuseCold } from "./ui/journalLoad.ts";
@@ -41,7 +41,7 @@ import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash } from "./store/keys.ts";
 import { hashParts } from "./store/nav.ts";
-import Corner from "./ui/Corner.svelte";
+import Alerts from "./ui/Alerts.svelte";
 import Masthead from "./ui/Masthead.svelte";
 import Toolbar from "./ui/Toolbar.svelte";
 import CopyButton from "./ui/CopyButton.svelte";
@@ -60,31 +60,33 @@ const q = new URLSearchParams(location.search);
 /* ms before a store that has not answered is said not to have loaded */
 const LOAD_PATIENCE_MS = 8000;
 
-/* the tab's icon, inlined: the page is one file (pin: notices and surfaces ›
+/* the tab's icon, inlined: the page is one file (pin: alerts and surfaces ›
    the tab's icon) */
 document.head.append(Object.assign(document.createElement("link"), { rel: "icon", href: icon }));
-/* every failure and refusal, kept three months for later debugging, with
+/* every error and warning, kept three months for later debugging, with
    a reader's last key chord or control clicked; read in the console as
-   gesta.flashes() */
-const flashes = flashLog(stored(NS + "flashlog", parseLog));
+   gesta.alerts(); the log kept under its key before is carried over first,
+   and a storage that refuses leaves it where it is */
+try { carryLog(localStorage, NS + "flashlog", NS + "alertlog"); } catch {}
+const logged = alertLog(stored(NS + "alertlog", parseLog));
 let lastAction = "none";
 document.addEventListener("keydown", (e) => { lastAction = chordName(e) ?? lastAction; }, true);
 document.addEventListener("click", (e) => {
   const c = (e.target as Element | null)?.closest?.("button, a, summary, [title]");
   if (c) lastAction = (c.getAttribute("title") || c.textContent || "").trim().slice(0, 40) || lastAction;
 }, true);
-const notices = noticeLedger(copyText, (kind, text) => flashes.add({ page: document.documentElement.dataset.entry || "", action: lastAction, kind, text }));
-(window as unknown as { gesta: object }).gesta = { flashes: (): FlashEntry[] => { const log = flashes.entries(); console.table(log); return log; } };
-const say = notices.whisper, succeed = notices.succeed, refuse = notices.refuse;
+const alerts = alertLedger(copyText, (kind, text) => logged.add({ page: document.documentElement.dataset.entry || "", action: lastAction, kind, text }));
+(window as unknown as { gesta: object }).gesta = { alerts: (): AlertEntry[] => { const log = logged.entries(); console.table(log); return log; } };
+const say = alerts.info, succeed = alerts.succeed, refuse = alerts.warn;
 /* the Line numbering choice is kept in this browser, out of the entries, so
-   no backup carries it (pin: notices and surfaces ›
+   no backup carries it (pin: alerts and surfaces ›
    Line numbering kept across a reload) */
 const LINES_KEY = NS + "lineinterval";
 const keptInterval = parseInt(readRaw(LINES_KEY) ?? "", 10);
 const screen = screenState(q.get("interval") !== null ? +q.get("interval")! : isNaN(keptInterval) || keptInterval < 0 ? 5 : keptInterval);
 type WalkDir = "prev" | "next";
 function keepPicked(file: File): void {
-  const p = notices.progress("keeping the backup…");
+  const p = alerts.progress("keeping the backup…");
   keptBundle!.keep(file).then(() => location.reload(), (err: unknown) => { console.error("the backup could not be kept", err); p.fail(failMsg("couldn’t keep the backup", err), errText(err)); });
 }
 const acts = {
@@ -123,7 +125,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* the choice takes effect whether or not it could be kept: a failed
      write says so, and the select and the gutter agree */
   onInterval: (n: number) => {
-    if (!writeRaw(LINES_KEY, String(n))) notices.stickErr("line numbers not saved — storage full", null);
+    if (!writeRaw(LINES_KEY, String(n))) alerts.errorCaught("line numbers not saved — storage full", null);
     screen.interval = n; acts.interval(n);
   },
   /* the row closed by its own label hands the keys back as ⌃⌘L does
@@ -144,9 +146,9 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
     onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
   },
 } });
-/* the strip of flashes, between the header and the entry (pin: flashStrip.test › the strip is stuck at the header's foot) */
-mount(Corner, { target: document.body, anchor: document.querySelector("main")!, props: { notices, onResume: () => acts.resume() } });
-placeStrip(document.documentElement, document.querySelector(".site-head")!, document.querySelector(".notices")!);
+/* the alert area, between the header and the entry (pin: alertArea.test › the alert area is stuck at the header's foot) */
+mount(Alerts, { target: document.body, anchor: document.querySelector("main")!, props: { alerts, onResume: () => acts.resume() } });
+placeArea(document.documentElement, document.querySelector(".site-head")!, document.querySelector(".alerts")!);
 /* the panels are not modal: a click outside any panel or opener closes
    the slot, and so does Escape. Read from the target, not from
    propagation — the components' handlers are delegated, and a
@@ -178,7 +180,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
   if (!plainChord(e)) return;
   /* a letter is matched in either case: Caps Lock leaves the chord a
-     chord (pin: notices and surfaces › ⌃⌘K with Caps Lock) */
+     chord (pin: alerts and surfaces › ⌃⌘K with Caps Lock) */
   const k = e.key.toLowerCase();
   if (READER && "hbsne".includes(k)) return;
   const chord = CHORDS[k];
@@ -193,7 +195,7 @@ const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastCh
    (pin: entries.test › a landed write and a landed delete are told to onLanded) */
 let armBackup = (): void => {};
 const readerStore = READER ? memEntryStore() : null;
-const layer = entryLayer(readerStore ?? idbEntryStore(), notices.entry, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
+const layer = entryLayer(readerStore ?? idbEntryStore(), alerts.entry, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
 let bundlePictures: ImageStore | null = null;
 const images: ImageStore = READER ? {
   get: (id) => bundlePictures ? bundlePictures.get(id) : Promise.resolve(null),
@@ -205,13 +207,13 @@ const images: ImageStore = READER ? {
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
 const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
-/* the backup's status line is a whisper, each step restarting the clock:
+/* the backup's status line is an info, each step restarting the clock:
    an autosave "saved" may overwrite "backing up…" (a background backup
    must not suppress the user's own save feedback), and a pin outranks
    both */
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
-  layer, images, succeed, refuse, fail: (text) => { notices.stick(text); }, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
+  layer, images, succeed, refuse, fail: (text) => { alerts.error(text); }, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),
 });
 const readBackups = bkPanel.read;
 acts.sweep = bkPanel.sweep;
@@ -219,8 +221,8 @@ const backup = backupRunner({
   layer, images, store: idbBackupStore(),
   picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
   say, succeed, refuse,
-  onTrouble: (msg) => { notices.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
-  stick: (text, err, copy) => { notices.stickErr(text, err, copy); },
+  onTrouble: (msg) => { alerts.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
+  stick: (text, err, copy) => { alerts.errorCaught(text, err, copy); },
 });
 armBackup = () => backup.scheduleBackup();
 acts.backups = () => { backup.setupBackupFolder().then(readBackups); };
@@ -244,11 +246,11 @@ const leftEntry = (): void => {
 const entryShown = (stored: string, ekey: string): void => {
   dropStaleCopy();
   screen.gutter = !!session.view && offersInterval(session.view.dom);
-  /* a refusal belongs to the entry it was met on (pin: notices and places
-     › another entry clears the refusal); one met before any entry was
+  /* a warning belongs to the entry it was met on (pin: alerts and places
+     › another entry clears the warning); one met before any entry was
      shown, an address refused at launch, stays (pin: bridge › an unknown
      book is refused) */
-  if (ekey !== shown.ekey) { leftEntry(); if (shown.ekey) notices.clearRefusal(); }
+  if (ekey !== shown.ekey) { leftEntry(); if (shown.ekey) alerts.clearWarning(); }
   else acts.replace.check();
   if (screen.lineBar.open) acts.lineBar.reask();
   if (ekey === shown.ekey && stored === shown.stored) return;
@@ -258,8 +260,8 @@ const entryShown = (stored: string, ekey: string): void => {
 };
 const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, say, succeed, refuse,
-  stick: (text, copy) => { notices.stick(text, copy); },
-  pin: (text, copy) => notices.stick(text, copy), pinned: () => notices.pinned, releasePin: (gen) => notices.releasePin(gen),
+  stick: (text, copy) => { alerts.error(text, copy); },
+  pin: (text, copy) => alerts.error(text, copy), pinned: () => alerts.pinned, releasePin: (gen) => alerts.releaseError(gen),
   onShow: (stored, ekey) => entryShown(stored, ekey),
   onView: (md) => { dropStaleCopy(); screen.mdView = md; if (md) overlay.open("sourceView"); else acts.replace.dismiss(); },
   onSwitch: () => overlay.open("view"),
@@ -280,7 +282,7 @@ if (tabs) tabs.onmessage = (e: MessageEvent) => {
     hearing = null;
     const keys = [...heard];
     heard.clear();
-    Promise.all(keys.map((k) => session.takeNotice(k))).then(() => { refreshMasthead(); count(); });
+    Promise.all(keys.map((k) => session.takeTabWrite(k))).then(() => { refreshMasthead(); count(); });
   }, 50);
 };
 /* leaving the tab with a backup still pending writes it at once, after the
@@ -296,7 +298,7 @@ acts.lines = (open) => {
   else session.focusText();
 };
 const search = searchActs({
-  sr: screen.search, session, layer, journal, notices, reader: READER,
+  sr: screen.search, session, layer, journal, alerts, reader: READER,
   opened: () => overlay.open("search"),
   focusRow: () => masthead.focusSearch(),
 });
@@ -336,7 +338,7 @@ const showEditor = (on: boolean): void => {
 /* WHERE THE KEYS WERE when a card opened or an act began: the window's
    selection, which a button's press leaves where it was. A card that
    inserts reads it at its opening, so a card opened from outside the
-   entry inserts nothing (pin: notices and surfaces › a shortcut chosen with
+   entry inserts nothing (pin: alerts and surfaces › a shortcut chosen with
    no cursor in the entry) */
 const caretInEntry = (): boolean => { const a = document.getSelection()?.anchorNode; return !!a && mountEl.contains(a); };
 const sourcePort = { insertAfter: (text: string) => { session.insertText(text, true); }, inHeading: () => session.sourceLineIsHeading() };
@@ -362,8 +364,8 @@ acts.shortcuts.edit = () => showEditor(!sc.editing);
 acts.shortcuts.draft = (v) => { sc.draft = v; sc.dirty = true; };
 acts.shortcuts.save = () => {
   try { localStorage.setItem(SHORTCUTS_KEY, sc.draft); }
-  catch (e) { shortcutsFailGen = notices.stickErr("shortcuts not saved — storage full", e); return; }
-  notices.releasePin(shortcutsFailGen); shortcutsFailGen = 0;
+  catch (e) { shortcutsFailGen = alerts.errorCaught("shortcuts not saved — storage full", e); return; }
+  alerts.releaseError(shortcutsFailGen); shortcutsFailGen = 0;
   shortcuts = parseShortcuts(sc.draft);
   sc.dirty = false;
   renderShortcuts();
@@ -373,8 +375,8 @@ acts.shortcuts.escape = () => { closePanel(); session.focusText(); };
 const bm = screen.bookmarks;
 const marks = bookmarkStore({
   seed: [{ key: "commonplace/Making Verity Cards", alias: "" }, { key: "commonplace/Verdour", alias: "" }],
-  pin: (text, err) => notices.stickErr(text, err),
-  release: (gen) => notices.releasePin(gen),
+  pin: (text, err) => alerts.errorCaught(text, err),
+  release: (gen) => alerts.releaseError(gen),
   storedKeys: () => layer.storedKeys(),
 });
 const card = bookmarkActs({
@@ -409,7 +411,7 @@ Object.assign(acts.replace, replaceActs({
 const clientW = (): void => { document.documentElement.style.setProperty("--client-w", document.documentElement.clientWidth + "px"); };
 clientW();
 new ResizeObserver(clientW).observe(document.documentElement);
-const copy = copyButton({ cp: screen.copy, session, refuse, fail: (text) => { notices.stick(text); } });
+const copy = copyButton({ cp: screen.copy, session, refuse, fail: (text) => { alerts.error(text); } });
 acts.copyBlock = copy.copyBlock;
 dropStaleCopy = copy.dropStale;
 const fmt = formatBar({
@@ -430,7 +432,7 @@ const life = lifecycle({
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
   kept,
   ...pictureMoves(images),
-  ui: { succeed, refuse, pin: (text) => { notices.stick(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
+  ui: { succeed, refuse, pin: (text) => { alerts.error(text); }, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
 });
 acts.create = () => { life.create(); };
 acts.rename = () => { life.rename(); };
@@ -445,9 +447,9 @@ acts.panel = panels.panel;
    been picked in it, its focus put back on its first select; an open
    panel once the pointer has left it, so no row is rebuilt under a
    click, its rows keyed so the keys stay where they were; and the
-   backups status (pin: notices and surfaces ›
-   Search opened before the warm) (pin: notices and surfaces › Go to opened
-   before the warm) (pin: notices and
+   backups status (pin: alerts and surfaces ›
+   Search opened before the warm) (pin: alerts and surfaces › Go to opened
+   before the warm) (pin: alerts and
    surfaces › the bookshelf opened before the warm, the keys on its button) */
 const reanswerOpen = (): void => {
   search.reanswer();
@@ -466,9 +468,9 @@ stage("start");
 /* the kept bundle read into the memory store before the open entry is
    primed from it; none kept, the page says where one is found */
 const openBundle = (): Promise<void> => keptBundle!.get().then((row) => {
-  if (!row) { screen.held = "no backup opened"; notices.stick("open backup: gesta.zip in Dropbox › gesta-backups › reader"); return; }
+  if (!row) { screen.held = "no backup opened"; alerts.error("open backup: gesta.zip in Dropbox › gesta-backups › reader"); return; }
   screen.held = heldLabel(row.modified);
-  const p = notices.progress("opening the backup…");
+  const p = alerts.progress("opening the backup…");
   return readBundle(row.file, p.step).then((b) => {
     if (b.written !== null) screen.held = heldLabel(b.written);
     bundlePictures = bundleImages(row.file, b.pictures);
@@ -486,7 +488,7 @@ const wrote = READER ? openBundle() : q.get("store") === "write" ? layer.setEntr
    the warm to answer whether it is refused. The masthead lists read the
    whole cache, so they are redrawn when the warm lands. */
 let opened = false;
-/* a bare launch names the day it opens in the address (pin: notices and
+/* a bare launch names the day it opens in the address (pin: alerts and
    surfaces › a bare launch) */
 if (!location.hash) history.replaceState(null, "", entryHash(todayKey()));
 const h0 = hashParts(asAddress(location.hash));
@@ -501,7 +503,7 @@ const held = q.get("warm") === "slow" ? () => new Promise<void>((r) => setTimeou
 /* asked once: an unpersisted store may be evicted under storage pressure
    (pin: losing nothing › a store that never answers) */
 navigator.storage?.persist?.().catch(() => {});
-const loadPinned = loadPins(LOAD_PATIENCE_MS, notices);
+const loadPinned = loadPins(LOAD_PATIENCE_MS, alerts);
 /* the bundle's own progress line speaks while it is read, however long a
    slow device takes */
 if (READER) wrote.then(loadPinned.start); else loadPinned.start();
@@ -523,10 +525,10 @@ primed.then(held).then(() => layer.warm()).then(() => loadPinned.landed(layer)).
   /* `?corner=pill` draws the paused pill on a profile with no backup
      folder, AFTER the launch run, which clears the trouble of an
      unconfigured backup: the one state no headless run reaches */
-  if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") notices.setTrouble(PAUSED_MSG); });
+  if (!READER) backup.runBackup().then(() => { if (q.get("corner") === "pill") alerts.setTrouble(PAUSED_MSG); });
 });
 const folders = folderActs({
-  session, layer, images, notices, refuse, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
+  session, layer, images, alerts, refuse, picker: () => win.showDirectoryPicker?.bind(window), count, refreshMasthead,
   warmBlock: () => refuseCold(layer, refuse),
 });
 acts.export = folders.exportAll;

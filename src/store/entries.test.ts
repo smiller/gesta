@@ -1,18 +1,18 @@
 import { test, expect, vi } from "vitest";
 import { memEntryStore, staleWriteErr, type EntryStore, type MemEntryStore } from "./store.ts";
-import { entryLayer, type EntryNotices } from "./entries.ts";
+import { entryLayer, type EntryAlerts } from "./entries.ts";
 
 interface Calls { landed: string[]; removed: string[]; stuck: unknown[][]; stuckIdle: unknown[][]; announced: string[]; onLanded: string[] }
 function fresh(over?: (s: MemEntryStore) => EntryStore) {
   const mem = memEntryStore();
   const calls: Calls = { landed: [], removed: [], stuck: [], stuckIdle: [], announced: [], onLanded: [] };
-  const notices: EntryNotices = {
+  const alerts: EntryAlerts = {
     landed: (k) => calls.landed.push(k),
     removed: (k) => calls.removed.push(k),
     stuck: (...a) => calls.stuck.push(a),
     stuckIdle: (...a) => calls.stuckIdle.push(a),
   };
-  const layer = entryLayer(over ? over(mem) : mem, notices, { announce: (k) => calls.announced.push(k), onLanded: (k) => calls.onLanded.push(k) });
+  const layer = entryLayer(over ? over(mem) : mem, alerts, { announce: (k) => calls.announced.push(k), onLanded: (k) => calls.onLanded.push(k) });
   return { layer, mem, calls };
 }
 
@@ -229,93 +229,93 @@ test("a landed write and a landed delete are told to onLanded, which arms the fo
   expect(calls.onLanded).toEqual(["commonplace/A", "commonplace/A"]);
 });
 
-test("a notice takes the stored row into the cache and the base: a save after it lands", async () => {
+test("a write from another tab takes the stored row into the cache and the base: a save after it lands", async () => {
   const { layer, mem } = fresh();
   await layer.warm();
   await layer.setEntry("commonplace/A", "mine");
   await mem.foreignSet("commonplace/A", "theirs");
-  expect(await layer.takeNotice("commonplace/A")).toBe(true);
+  expect(await layer.takeTabWrite("commonplace/A")).toBe(true);
   expect(layer.cache["commonplace/A"]).toBe("theirs");
   expect(await layer.setEntry("commonplace/A", "theirs, then mine")).toBe(true);
   await mem.foreignSet("commonplace/New", "made there");
-  expect(await layer.takeNotice("commonplace/New")).toBe(true);
+  expect(await layer.takeTabWrite("commonplace/New")).toBe(true);
   expect(layer.cache["commonplace/New"]).toBe("made there");
 });
 
-test("a notice of a delete takes the key out of the cache; an empty row stays, a registration", async () => {
+test("a delete from another tab takes the key out of the cache; an empty row stays, a registration", async () => {
   const { layer, mem } = fresh();
   await layer.warm();
   await layer.setEntry("commonplace/Gone", "old");
   await layer.setEntry("2026-09-06/Ideas", "");
   await mem.del("commonplace/Gone");
-  expect(await layer.takeNotice("commonplace/Gone")).toBe(true);
+  expect(await layer.takeTabWrite("commonplace/Gone")).toBe(true);
   expect("commonplace/Gone" in layer.cache).toBe(false);
-  expect(await layer.takeNotice("2026-09-06/Ideas")).toBe(false);
+  expect(await layer.takeTabWrite("2026-09-06/Ideas")).toBe(false);
   expect("2026-09-06/Ideas" in layer.cache).toBe(true);
 });
 
-test("a notice is skipped for a key whose own write has not landed: its text is the only copy", async () => {
+test("a write from another tab is skipped for a key whose own write has not landed: its text is the only copy", async () => {
   let fail = true;
   const { layer, mem } = fresh((m) => ({ ...m, set: (k, md) => fail ? Promise.reject(new Error("QuotaExceededError")) : m.set(k, md) }));
   await layer.warm();
   await layer.setEntry("commonplace/A", "unsaved");
   await mem.foreignSet("commonplace/A", "theirs");
-  expect(await layer.takeNotice("commonplace/A")).toBe(false);
+  expect(await layer.takeTabWrite("commonplace/A")).toBe(false);
   expect(layer.cache["commonplace/A"]).toBe("unsaved");
   fail = false;
 });
 
-test("a notice waits for the key's queued ops, and is skipped when this tab wrote or removed the key meanwhile", async () => {
+test("a write from another tab waits for the key's queued ops, and is skipped when this tab wrote or removed the key meanwhile", async () => {
   const { layer, mem } = fresh();
   await layer.warm();
   await layer.setEntry("commonplace/A", "one");
   await mem.foreignSet("commonplace/A", "theirs");
-  const taken = layer.takeNotice("commonplace/A");
+  const taken = layer.takeTabWrite("commonplace/A");
   layer.setEntry("commonplace/A", "mine, newer");
   expect(await taken).toBe(false);
   expect(layer.cache["commonplace/A"]).toBe("mine, newer");
   await layer.setEntry("commonplace/B", "b");
   const removed = layer.removeEntry("commonplace/B");
-  expect(await layer.takeNotice("commonplace/B")).toBe(false);
+  expect(await layer.takeTabWrite("commonplace/B")).toBe(false);
   await removed;
   expect("commonplace/B" in layer.cache).toBe(false);
 });
 
-test("a notice the caller declines leaves the cache and the base: a save after it is refused", async () => {
+test("a write from another tab the caller declines leaves the cache and the base: a save after it is refused", async () => {
   const { layer, mem } = fresh();
   await layer.warm();
   await layer.setEntry("commonplace/A", "mine");
   await mem.foreignSet("commonplace/A", "theirs");
   let offered: string | null | undefined;
-  expect(await layer.takeNotice("commonplace/A", (md) => { offered = md; return false; })).toBe(false);
+  expect(await layer.takeTabWrite("commonplace/A", (md) => { offered = md; return false; })).toBe(false);
   expect(offered).toBe("theirs");
   expect(layer.cache["commonplace/A"]).toBe("mine");
   expect(await layer.setEntry("commonplace/A", "mine, edited")).toBe(false);
 });
 
-test("a notice before the warm is taken once the warm lands", async () => {
+test("a write from another tab before the warm is taken once the warm lands", async () => {
   const { layer, mem } = fresh();
-  const taken = layer.takeNotice("commonplace/A");
+  const taken = layer.takeTabWrite("commonplace/A");
   await mem.foreignSet("commonplace/A", "theirs");
   await layer.warm();
   expect(await taken).toBe(false);
   expect(layer.cache["commonplace/A"]).toBe("theirs");
 });
 
-test("a save refused as stale makes the key owed: another tab's notice is skipped and its debts kept, the refused text living in the pin", async () => {
+test("a save refused as stale makes the key owed: another tab's write is skipped and its debts kept, the refused text living in the pin", async () => {
   const { layer, mem, calls } = fresh();
   await layer.warm();
   await layer.setEntry("commonplace/A", "mine");
   await mem.foreignSet("commonplace/A", "theirs");
   expect(await layer.setEntry("commonplace/A", "mine, edited")).toBe(false);
   await mem.foreignSet("commonplace/A", "theirs again");
-  expect(await layer.takeNotice("commonplace/A")).toBe(false);
+  expect(await layer.takeTabWrite("commonplace/A")).toBe(false);
   expect(calls.removed).toEqual([]);
 });
 
-test("a notice when the warm could not read the store resolves false, not never", async () => {
+test("a write from another tab when the warm could not read the store resolves false, not never", async () => {
   const { layer } = fresh((m) => ({ ...m, all: () => Promise.reject(new Error("blocked")) }));
-  const taken = layer.takeNotice("commonplace/A");
+  const taken = layer.takeTabWrite("commonplace/A");
   await layer.warm();
   expect(await taken).toBe(false);
 });
@@ -329,7 +329,7 @@ test("rewriteEntry lands an edit over the cache's text, and writes nothing when 
   expect(await layer.rewriteEntry("k", retarget)).toBe("unchanged");
 });
 
-test("rewriteEntry refused as stale is redone ONCE over the stored text, with no notice stuck", async () => {
+test("rewriteEntry refused as stale is redone ONCE over the stored text, with no error raised", async () => {
   const { layer, mem, calls } = fresh();
   await layer.setEntry("k", "a [x](#old)");
   await mem.foreignSet("k", "theirs [x](#old)");

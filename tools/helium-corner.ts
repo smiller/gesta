@@ -1,5 +1,5 @@
 // `node tools/helium-corner.ts [profileDir] [screenshot.png]`
-import { installFlashReaders } from "./adapters/inPage.ts";
+import { installAlertReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import * as A from "./adapters/app.ts";
 import { runSteps, TODAY } from "./helium-steps.ts";
@@ -17,7 +17,7 @@ if (PROFILE === A.profile) {
 }
 const logs: string[] = [];
 const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1000, height: 600 } });
-await installFlashReaders(ctx);
+await installAlertReaders(ctx);
 await ctx.grantPermissions(["clipboard-read", "clipboard-write"]).catch(() => {});
 await ctx.clock.install({ time: new Date(TODAY + "T12:00:00") });
 await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));

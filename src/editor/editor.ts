@@ -147,8 +147,8 @@ export function textOnBlankRow(view: EditorView, text: string): boolean {
   return true;
 }
 export function editorState(doc: Node, interval: number, onRefuse?: (why: string) => void, foldOpts?: FoldOptions): EditorState {
-  /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a refusal
-     is said once per press, not over its own whisper on every repeat
+  /* A HELD KEY ACTS ONCE: an auto-repeated Tab is swallowed, and a warning
+     is raised once per press, not again on every repeat
      (pin: editor.test › a held key acts once) */
   let repeating = false;
   const say = onRefuse && ((why: string): void => { if (!repeating) onRefuse(why); });
@@ -234,7 +234,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     state: editorState(doc, opts.interval, opts.onRefuse, opts.folds),
     nodeViews: { ...rowNodeViews, ...(opts.nodeViews || {}) },
     /* the hint is drawn on screen alone, so no copy carries it (pin:
-       notices and surfaces › a link's tooltip)
+       alerts and surfaces › a link's tooltip)
        (pin: schema.test › a link's DOM) */
     markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = linkTitle(mark.attrs.href as string); return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },

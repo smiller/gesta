@@ -246,7 +246,7 @@ export function writeBackup(run: BackupRun): Promise<Failure[]> {
     });
   }
   /* ONE CUMULATIVE COUNT across the run: an archive is one unit, a doc one
-     unit, so the notice never holds still through the archives and reads
+     unit, so the progress line never holds still through the archives and reads
      as a stall (MEASURED: a whole-corpus first run is ~3.6 s) (pin: io.test ›
     writeBackup: one cumulative progress count spans the archives and the
     mirror) */

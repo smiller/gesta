@@ -24,9 +24,9 @@ test("an act refused while the journal loads says so, and once the read has fail
 function rig() {
   const stuck: string[] = [], errs: unknown[] = [], released: number[] = [];
   const pins = loadPins(8000, {
-    stick: (text) => { stuck.push(text); return stuck.length; },
-    stickErr: (text, err) => { stuck.push(text); errs.push(err); return stuck.length; },
-    releasePin: (gen) => { released.push(gen); },
+    error: (text) => { stuck.push(text); return stuck.length; },
+    errorCaught: (text, err) => { stuck.push(text); errs.push(err); return stuck.length; },
+    releaseError: (gen) => { released.push(gen); },
   });
   return { pins, stuck, errs, released };
 }

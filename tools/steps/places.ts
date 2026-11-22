@@ -137,7 +137,7 @@ async function heldPlaceRenderedView(): Promise<void> {
   await rest(page);
   /* the row under the masthead, read mid-column: 40px in is the gutter */
   const heldLine = await rowUnderHead();
-  /* the line's own words left out: which line tops the page is the strip's height, a second flash's or not */
+  /* the line's own words left out: which line tops the page is the alert area's height, a second alert's or not */
   await log("a held place in the rendered view, the masthead shrinking under it", await shrunk(async () => ({ sameText: (await rowUnderHead()) === heldLine })));
   /* a scroll the page did not make and no hand did — the browser's find —
      is a reader moving: the hold lets go */
@@ -156,7 +156,7 @@ const shrunk = async (fn: () => Promise<unknown>) => {
     try { await rest(page); return await fn(); }
     finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await rest(page); }
   };
-const rowUnderHead = () => page.evaluate(() => { const top = Math.max(0, ...[".site-head", ".notices"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
+const rowUnderHead = () => page.evaluate(() => { const top = Math.max(0, ...[".site-head", ".alerts"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
 async function backToInlineCodeLines(): Promise<void> {
   await go("commonplace/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }
@@ -355,7 +355,7 @@ async function pageOpenFirstSaved(): Promise<void> {
   await again.click(S.editor);
   await again.keyboard.type(", the second again");
   await landed(again, 2500);
-  /* the second's save arrives in the first by its notice */
+  /* the second's save arrives in the first by its tab message */
   await page.waitForFunction(() => document.querySelector("#editor")?.textContent?.includes(", the second again"), null, { timeout: 2500 }).catch(() => {});
   await log("the commonplace open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
   await page.click(S.editor);

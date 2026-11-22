@@ -206,7 +206,7 @@ function verdictOn(row: EntryRow | null, base: string, record: EntryRow | null):
    with no base lands unjudged). The ledger
    is only touched after the verdict settles: a base recorded ahead of the
    store refuses every later write to that key for the session, turning one
-   transient failure into a permanent notice blaming a tab that does not
+   transient failure into a permanent error blaming a tab that does not
    exist. TWO OBLIGATIONS ride on the caller: await get/all before writing
    (an unawaited read writes unjudged), and serialize same-key writes from
    ONE handle (two in flight and the second is refused as if foreign). */

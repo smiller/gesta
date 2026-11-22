@@ -1,6 +1,6 @@
 // The headless tools under a VERDICT: each tool's whole printed run is
 // compared against its approved copy in tools/expected/, the volatile
-// bits scrubbed — a fade's opacity, a whisper still on screen at an
+// bits scrubbed — a fade's opacity, an info still on screen at an
 // incidental step, the app's path. A difference writes the received copy
 // beside the approved one, prints the diff and exits 1; `--approve` makes
 // that received copy the approved one without playing again, which is a
@@ -40,7 +40,7 @@ const run = names.length ? names : Object.keys(TOOLS);
 function scrub(text: string): string {
   return text
     .replace(/"opacity":"[0-9.e-]+"/g, '"opacity":"[fading]"')
-    /* the corner's text in the screen line is a whisper's clock against
+    /* the corner's text in the screen line is an info's clock against
        the tool's waits: the steps that care read the corner themselves */
     .replace(/· corner \\"(?:[^"\\]|\\.)*\\"/g, "· corner [whatever stood]")
     .replace(/file:\/\/\/[^"\\ ]*\/dist\/index\.html/g, "file:///[app]/index.html")

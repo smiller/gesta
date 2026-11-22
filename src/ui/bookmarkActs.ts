@@ -132,7 +132,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
      land says why, nothing is appended at the end, and the keys go back
      to the text either way (pin: editing › a
      bookmark's link pressed in inline code); in the markdown view it is
-     typed there as markdown (pin: notices and surfaces › a bookmark's link in
+     typed there as markdown (pin: alerts and surfaces › a bookmark's link in
      the markdown view) */
   const bookmarkLink = (key: string): void => {
     if (warmBlock()) return;

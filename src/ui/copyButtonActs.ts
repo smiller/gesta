@@ -41,7 +41,7 @@ export function copyButton(d: CopyDeps): { copyBlock(): void; dropStale(): void 
   const idle = (t: HTMLElement | null): string => t?.classList.contains("grid") ? "copy grid" : "copy";
   const hideCopy = (): void => { copyTarget = null; cp.show = false; if (copyReset) clearTimeout(copyReset); cp.label = "copy"; };
   /* a block gone from the screen takes its copy button with it, whether or
-     not the window scrolled (pin: notices and surfaces › the copy button
+     not the window scrolled (pin: alerts and surfaces › the copy button
      after a navigation) */
   const dropStale = (): void => { if (copyTarget && !session.view?.dom.contains(copyTarget)) hideCopy(); };
   const COPY_TITLES: [string, string][] = [["grid", "Copy this grid"], ["verse", "Copy this verse"], ["prose", "Copy this prose"], ["reference", "Copy this reference"], ["note", "Copy this note"]];

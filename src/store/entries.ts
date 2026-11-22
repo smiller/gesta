@@ -1,6 +1,6 @@
 import { type EntryStore, isStale, type StaleWriteError } from "./store.ts";
 
-export interface EntryNotices {
+export interface EntryAlerts {
   /* a durable landing under ekey: release any pin owed under it */
   landed(ekey: string): void;
   /* the entry is gone: clear every debt under it — the body's AND the
@@ -21,7 +21,7 @@ export interface EntryLayer {
   /* complete once `warmed`: everything written out is enumerated from it */
   cache: Record<string, string>;
   entryMd(ekey: string): string;
-  /* resolves whether the write LANDED, never rejects: the notices carry the
+  /* resolves whether the write LANDED, never rejects: the alerts carry the
      failure, but a tally needs the answer */
   setEntry(ekey: string, md: string): Promise<boolean>;
   /* why the key's last write did not land; nothing once one lands */
@@ -42,7 +42,7 @@ export interface EntryLayer {
   storedKeys(): Promise<string[]>;
   /* another tab landed a write under ekey: its row read into the cache and
      the base, where `accept` takes it; resolves whether the cache moved */
-  takeNotice(ekey: string, accept?: (md: string | null) => boolean): Promise<boolean>;
+  takeTabWrite(ekey: string, accept?: (md: string | null) => boolean): Promise<boolean>;
   readonly warmed: boolean;
   readonly storeReadFailed: boolean;
   readonly storeReadError: unknown;
@@ -58,7 +58,7 @@ export interface LayerOptions {
 const GONE = Symbol("gone");
 const rewriteOutcome = (ok: boolean, unchanged: boolean): Rewrite => (!ok ? "failed" : unchanged ? "unchanged" : "landed");
 interface RewriteTry { ekey: string; edit: (md: string) => string | null; seqAt: number | undefined; writeAt: number; unchanged: boolean }
-export function entryLayer(store: EntryStore, notices: EntryNotices, opts: LayerOptions = {}): EntryLayer {
+export function entryLayer(store: EntryStore, alerts: EntryAlerts, opts: LayerOptions = {}): EntryLayer {
   const cache: Record<string, string> = Object.create(null);
   /* per key, bumped by removal: a save caught in an async gap commits only
      while still the latest issued (pin: entries.test › a stale restore is
@@ -66,9 +66,9 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   const saveSeq: Record<string, number> = Object.create(null);
   const writeSeq: Record<string, number> = Object.create(null);
   /* each key's last failure here, and whether a save is what failed: then
-     the text lives only in the cache, or in a stale refusal's notice, and
-     another tab's notice for the key is skipped until a write lands
-     (pin: entries.test › a notice is skipped for a key whose own write has not landed)
+     the text lives only in the cache, or in a stale refusal's error, and
+     another tab's write for the key is skipped until a write lands
+     (pin: entries.test › a write from another tab is skipped for a key whose own write has not landed)
      (pin: entries.test › a save refused as stale makes the key owed) */
   const debts = new Map<string, { err: unknown; save: boolean }>();
   const unlanded = (ekey: string): boolean => !!debts.get(ekey)?.save;
@@ -131,7 +131,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
     saveSeq[ekey] = (saveSeq[ekey] || 0) + 1;
     delete cache[ekey];
     debts.delete(ekey);
-    notices.removed(ekey);
+    alerts.removed(ekey);
   }
   function removeEntry(ekey: string): Promise<boolean> {
     forgetRow(ekey);
@@ -149,7 +149,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   function landed(ekey: string, v: unknown): boolean {
     if (v === GONE) return true;
     debts.delete(ekey);
-    notices.landed(ekey);
+    alerts.landed(ekey);
     opts.announce?.(ekey);
     opts.onLanded?.(ekey);
     /* a landing says the store takes writes again */
@@ -185,18 +185,18 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   function staleRefusal(ekey: string, err: StaleWriteError, seqAt: number | undefined, isDel: boolean): void {
     if (saveSeq[ekey] !== seqAt) return;
     cache[ekey] = err.stored;
-    if (isDel) { notices.stuck("not deleted — changed in another tab, reload", err, ekey); return; }
-    notices.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
+    if (isDel) { alerts.stuck("not deleted — changed in another tab, reload", err, ekey); return; }
+    alerts.stuck("not saved — changed in another tab, copy your text then reload", err, ekey, err.refused);
   }
   function refused(ekey: string, err: unknown, seqAt: number | undefined, isDel: boolean): boolean {
     if (saveSeq[ekey] === seqAt) debts.set(ekey, { err, save: !isDel || unlanded(ekey) });
     if (isStale(err)) staleRefusal(ekey, err, seqAt, isDel);
-    else if (isDel) notices.stuckIdle("couldn’t delete — reload", err);
+    else if (isDel) alerts.stuckIdle("couldn’t delete — reload", err);
     /* a key deleted since owes nothing and is told nothing: retried, it
        wrote the deleted entry back (pin: entries.test › a retry whose key is
        deleted), and its pin waited on a landing that never comes (pin:
        entries.test › a save that fails after its entry was deleted) */
-    else if (saveSeq[ekey] === seqAt) notices.stuck("not saved", err, ekey);
+    else if (saveSeq[ekey] === seqAt) alerts.stuck("not saved", err, ekey);
     return false;
   }
   function persistEntry(ekey: string, op: () => Promise<unknown> | void, isDel = false): Promise<boolean> {
@@ -229,26 +229,26 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   }
   /* read after the key's queued ops; dropped when this tab wrote or
      removed the key while the read was out, its own write being the newer
-     (pin: entries.test › a notice waits for the key's queued ops). Before
-     the warm a notice waits for it, and a warm that failed answers false
-     (pin: entries.test › a notice before the warm)
-     (pin: entries.test › a notice when the warm could not read the store).
+     (pin: entries.test › a write from another tab waits for the key's queued ops). Before
+     the warm a write from another tab waits for it, and a warm that failed answers false
+     (pin: entries.test › a write from another tab before the warm)
+     (pin: entries.test › a write from another tab when the warm could not read the store).
      A delete taken clears the key's debts, as removeEntry does */
   let warmLanded: () => void = () => {};
   const afterWarm = new Promise<void>((r) => { warmLanded = r; });
-  function takeNotice(ekey: string, accept: (md: string | null) => boolean = () => true): Promise<boolean> {
-    if (!warmed) return storeReadFailed ? Promise.resolve(false) : afterWarm.then(() => warmed ? takeNotice(ekey, accept) : false);
+  function takeTabWrite(ekey: string, accept: (md: string | null) => boolean = () => true): Promise<boolean> {
+    if (!warmed) return storeReadFailed ? Promise.resolve(false) : afterWarm.then(() => warmed ? takeTabWrite(ekey, accept) : false);
     const seqAt = saveSeq[ekey], writeAt = writeSeq[ekey];
     const moved = (): boolean => saveSeq[ekey] !== seqAt || writeSeq[ekey] !== writeAt || unlanded(ekey);
     const read = (): Promise<boolean> => store.peek(ekey).then((row) => {
       if (moved()) return false;
       const md = row ? row.md : null, held = ekey in cache ? cache[ekey] : null;
       if (md === held || !accept(md)) return false;
-      return noticeTaken(ekey, md);
+      return tabWriteTaken(ekey, md);
     });
     return (chain[ekey] || Promise.resolve()).then(read, read);
   }
-  function noticeTaken(ekey: string, md: string | null): true {
+  function tabWriteTaken(ekey: string, md: string | null): true {
     store.rebase(ekey, md);
     if (md !== null) cache[ekey] = md;
     else forgetRow(ekey);
@@ -266,7 +266,7 @@ export function entryLayer(store: EntryStore, notices: EntryNotices, opts: Layer
   }
   return {
     cache, entryMd, setEntry, writeError: (ekey: string) => debts.get(ekey)?.err, owes, retryOwed, removeEntry, rewriteEntry, primeEntry, warm, clear,
-    storedKeys: () => store.keys(), takeNotice,
+    storedKeys: () => store.keys(), takeTabWrite,
     get warmed() { return warmed; },
     get storeReadFailed() { return storeReadFailed; },
     get storeReadError() { return storeReadError; },

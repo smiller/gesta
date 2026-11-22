@@ -4,7 +4,7 @@
 // is made here from fixtures/ and the run is the one under a verdict;
 // `node tools/helium-reader.ts <zip>` times a real one instead: the pick,
 // the relaunch, the heap, the first search's index.
-import { installFlashReaders } from "./adapters/inPage.ts";
+import { installAlertReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -39,7 +39,7 @@ mkdirSync(PROFILE, { recursive: true });
 const logs: string[] = [];
 const launch = async () => {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true, viewport: { width: 1024, height: 1366 } });
-  await installFlashReaders(ctx);
+  await installAlertReaders(ctx);
   if (!TIMED) await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));
   const page = await ctx.newPage();
   page.on("console", (m) => logs.push(m.text()));
@@ -71,7 +71,7 @@ await settled(page, "relaunched");
 console.log("relaunched" + ms(t) + ":", JSON.stringify({ ...(await screen(page)), ...(TIMED ? { heap: Math.round(await page.evaluate(() => (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0) / 1e6) + " MB" } : {}) }));
 const rest = () => page.waitForTimeout(400);
 
-/* the corner only where a step is about what it says: a whisper's fade
+/* the corner only where a step is about what it says: an info's fade
    is the clock's, not the step's */
 const look = (label: string, extra: () => Promise<object> | object = () => ({}), corner = false) => page.evaluate((corner) => ({
   entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),

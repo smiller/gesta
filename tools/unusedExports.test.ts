@@ -34,6 +34,7 @@ const ALLOWED: Record<string, string> = {
   "src/store/io.ts setYieldWatch": "the tests' watch on the backup yielding",
   "tools/unusedExports.ts unusedExports": "a checker's rule, run by its own test",
   "tools/vocabulary.ts retiredWord": "a checker's rule, run by its own test",
+  "tools/vocabulary.ts retiredAlertSense": "a checker's rule, run by its own test",
   "tools/apostrophes.ts straightInStrings": "a checker's rule, run by its own test",
   "tools/apostrophes.ts straightInMarkup": "a checker's rule, run by its own test",
 };

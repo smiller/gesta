@@ -27,12 +27,12 @@ import { surfaces, type Surface, type Viewport, type ReplacePort } from "./edito
 import { placeKeeper, type Page } from "./editor/placeKeeper.ts";
 import { renderedView, type RenderedView } from "./editor/renderedView.ts";
 import { sourceView } from "./editor/sourceView.ts";
-import { screenNotice, type ScreenNotice } from "./ui/tabNotice.ts";
+import { screenTake, type ScreenTake } from "./ui/tabWrite.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
 import { visibleTop } from "./ui/visibleTop.ts";
-import { stripClear } from "./ui/flashStrip.ts";
+import { areaClear } from "./ui/alertArea.ts";
 
 export type OpenHow = "arrive" | "keep";
 export interface SessionOptions {
@@ -77,7 +77,7 @@ export interface Session {
   open(date: string, tag: string | null, how?: OpenHow): void;
   openHash(): void;
   /* another tab landed a write under ekey */
-  takeNotice(ekey: string): Promise<void>;
+  takeTabWrite(ekey: string): Promise<void>;
   readonly save: Pick<EntrySave, "now" | "flush" | "handOver">;
   refresh(): Promise<void>;
   surfaceMd(): string;
@@ -141,7 +141,7 @@ export function startSession(opts: SessionOptions): Session {
   let decoding = false;
   /* a write that fails is not a picture that could not be read, and only
      a full store is said to be full; the pin copies the caught error
-     (pin: notices and surfaces › a picture whose write fails) */
+     (pin: alerts and surfaces › a picture whose write fails) */
   function pictureNotSaved(err: unknown): void {
     console.error("picture not saved", err);
     opts.stick?.((err as { name?: string })?.name === "QuotaExceededError" ? "picture not saved — storage full" : "picture not saved", errText(err));
@@ -200,7 +200,7 @@ export function startSession(opts: SessionOptions): Session {
       onRefuse: (why) => refuse(why),
       onPasteFile: pasteFile,
       onPasteRefused: (text) => refuse(text),
-      clearOf: () => Math.max(mastheadHeight, stripClear()),
+      clearOf: () => Math.max(mastheadHeight, areaClear()),
     });
     return rendered;
   }
@@ -345,30 +345,30 @@ export function startSession(opts: SessionOptions): Session {
   /* the entry on screen redrawn where it was, or left to its unsaved
      typing (a rename's suspension counted as such), or, deleted, kept on
      screen with its saves refused
-     (pin: tabNotice.test › the entry on screen)
+     (pin: tabWrite.test › the entry on screen)
      (pin: bookmarks from another window › the commonplace open in the first, saved in the second)
      (pin: bookmarks from another window › typed into the commonplace deleted in the second) */
-  /* the notices of a deleted entry on screen last while it is on screen
+  /* the errors of a deleted entry on screen last while it is on screen
      (pin: bookmarks from another window › the deleted commonplace left for the day) */
   let detachedPins: number[] = [];
   const onScreenKey = (ekey: string): boolean => !!surface.current && ekey === ekeyOf();
-  function noticeVerdict(ekey: string, md: string | null): ScreenNotice {
+  function takeVerdict(ekey: string, md: string | null): ScreenTake {
     const here = onScreenKey(ekey);
-    const verdict = screenNotice(here, here && save.unsaved(), md);
+    const verdict = screenTake(here, here && save.unsaved(), md);
     if (verdict === "deleted") save.deleted();
     return verdict;
   }
-  function afterNotice(ekey: string, verdict: ScreenNotice, moved: boolean): void {
+  function afterTabWrite(ekey: string, verdict: ScreenTake, moved: boolean): void {
     if (!moved) return;
     if (verdict === "deleted" && !opts.pinned?.()) detachedPins.push(opts.pin?.("deleted in another tab") || 0);
     else if (onScreenKey(ekey)) redraw();
   }
-  function takeNotice(ekey: string): Promise<void> {
-    let verdict: ScreenNotice = "take";
-    return layer.takeNotice(ekey, (md) => {
-      verdict = noticeVerdict(ekey, md);
+  function takeTabWrite(ekey: string): Promise<void> {
+    let verdict: ScreenTake = "take";
+    return layer.takeTabWrite(ekey, (md) => {
+      verdict = takeVerdict(ekey, md);
       return verdict !== "leave";
-    }).then((moved) => afterNotice(ekey, verdict, moved));
+    }).then((moved) => afterTabWrite(ekey, verdict, moved));
   }
   /* the open entry drawn again from the cache, the caret where it was and
      the focus kept: a reader may be mid-sentence. Carried by its count
@@ -500,7 +500,7 @@ export function startSession(opts: SessionOptions): Session {
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeNotice, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
+    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },

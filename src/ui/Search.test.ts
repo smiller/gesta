@@ -21,7 +21,7 @@ describe("Search", () => {
     expect(html).not.toMatch(/<details class="page-search[^"]*" open/);
     expect(html).toMatch(/<optgroup label="Commonplaces">(<!--[^>]*-->)*<option value="2" selected[^>]*>Books/);
   });
-  it("open, with rows: the where, the marked snippet, the active bar, the cap notice", () => {
+  it("open, with rows: the where, the marked snippet, the active bar, the cap line", () => {
     const html = draw({ open: true, query: "sister", options, active: 1, capped: true, rows: [
       { result: { date: "2026-09-07", tag: null, nth: 0, snippet: "" }, where: "2026-09-07", runs: [{ text: "her ", mark: false }, { text: "sister", mark: true }] },
       { result: { date: "commonplace", tag: "Books", nth: 0, snippet: "" }, where: "Books", runs: [{ text: "x", mark: false }] },

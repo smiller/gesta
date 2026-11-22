@@ -5,7 +5,7 @@ import { NS } from "./keys.ts";
 export interface BookmarkStoreOptions {
   /* written once, when the key is absent */
   seed: Bookmark[];
-  /* a failure's notice: returns the generation `release` takes back */
+  /* an error raised: returns the generation `release` takes back */
   pin(text: string, err: unknown): number;
   release(gen: number): void;
   storage?: () => Pick<Storage, "getItem" | "setItem">;

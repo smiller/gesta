@@ -1,45 +1,45 @@
-<!-- A notice is transparent to the mouse while hidden and a click target
+<!-- An alert is transparent to the mouse while hidden and a click target
      only when shown. The white-space rule is what lets a pinned list (one
-     refusal per line) render as lines. Each notice stays a span: a status
+     warning per line) render as lines. Each alert stays a span: a status
      line whose click is a mouse's convenience, never in the tab order — a
      button here would take focus from the editor on a Tab. -->
 <script lang="ts">
-  import { liveFlashes, type Notices, type Place } from "./notices.svelte.ts";
-  let { notices, onResume }: { notices: Notices; onResume: () => void } = $props();
-  $effect(() => { document.documentElement.dataset.flashes = JSON.stringify(liveFlashes(notices.state)); });
+  import { liveAlerts, type Alerts, type Kind } from "./alertLedger.svelte.ts";
+  let { alerts, onResume }: { alerts: Alerts; onResume: () => void } = $props();
+  $effect(() => { document.documentElement.dataset.alerts = JSON.stringify(liveAlerts(alerts.state)); });
 </script>
 
-<div class="notices">
-  {@render notice("failure")}
-  {@render notice("refusal")}
-  {@render notice("info")}
-  {@render notice("success")}
+<div class="alerts">
+  {@render alert("error")}
+  {@render alert("warning")}
+  {@render alert("info")}
+  {@render alert("success")}
 </div>
-<!-- the × is drawn by its style, so a notice's text is its words alone -->
-{#snippet notice(place: Place)}
+<!-- the × is drawn by its style, so an alert's text is its words alone -->
+{#snippet alert(kind: Kind)}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <span class="notice {place}" class:show={notices.state[place].shown} onclick={() => notices.click(place)}>{notices.state[place].text}<span class="close" title="Close" onclick={(e) => { e.stopPropagation(); notices.dismiss(place); }}></span></span>
+  <span class="alert {kind}" class:show={alerts.state[kind].shown} onclick={() => alerts.click(kind)}>{alerts.state[kind].text}<span class="close" title="Close" onclick={(e) => { e.stopPropagation(); alerts.dismiss(kind); }}></span></span>
 {/snippet}
-<button class="backup-paused" hidden={!notices.state.trouble} onclick={onResume}>{notices.state.trouble}</button>
+<button class="backup-paused" hidden={!alerts.state.trouble} onclick={onResume}>{alerts.state.trouble}</button>
 
 <style>
-  /* the strip: stuck under the header, and always one flash tall, so a
-     flash moving in or out moves no text */
-  .notices {
+  /* the alert area: stuck under the header, and always one alert tall, so
+     an alert moving in or out moves no text */
+  .alerts {
     position: sticky;
-    top: var(--strip-top, 0px);
+    top: var(--alert-area-top, 0px);
     z-index: 55;
     padding: 10px 1.4rem;
     background: var(--bg);
-    /* one flash and the strip's own padding: the box is measured with it */
+    /* one alert and the area's own padding: the box is measured with it */
     min-height: calc(0.8em * (1.35 + 1.6) + 2px + 20px);
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: 6px;
   }
-  /* a flash message's box: tinted by kind, bordered in its text's colour, its × at the right */
-  .notice {
+  /* an alert's box: tinted by kind, bordered in its text's colour, its × at the right */
+  .alert {
     position: relative;
     white-space: pre-line;
     font-family: var(--sans);
@@ -53,14 +53,14 @@
     user-select: none;
     pointer-events: none;
   }
-  .failure { color: #b94a48; background: #f2dede; }
-  .refusal { color: #8a6d3b; background: #fcf8e3; }
+  .error { color: #b94a48; background: #f2dede; }
+  .warning { color: #8a6d3b; background: #fcf8e3; }
   .info { color: #3a87ad; background: #d9edf7; }
-  /* a hidden notice takes no room in the stack */
-  .notice:not(.show) { display: none; }
+  /* a hidden alert takes no room in the stack */
+  .alert:not(.show) { display: none; }
   .close { position: absolute; top: 0; right: 0; bottom: 0; width: 2.6em; cursor: pointer; }
   .close::before { content: "×"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -52%); font-size: 1.4em; }
-  .notice.show { cursor: pointer; pointer-events: auto; }
+  .alert.show { cursor: pointer; pointer-events: auto; }
   .backup-paused {
     position: fixed;
     right: 1.4rem;

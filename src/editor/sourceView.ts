@@ -153,7 +153,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
     focus: () => ta.focus({ preventScroll: true }),
     place: (pos) => { const at = Math.min(pos, ta.value.length); ta.setSelectionRange(at, at); ta.focus({ preventScroll: true }); },
   };
-  /* `after`: typed at the selection's end, the caret after it (pin: notices
+  /* `after`: typed at the selection's end, the caret after it (pin: alerts
      and surfaces › a bookmark's link in the markdown view) */
   const insertText = (text: string, after = false): void => {
     if (ta.readOnly) return;

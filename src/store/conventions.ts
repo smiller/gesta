@@ -42,7 +42,7 @@ const work: Level = { pages: (segs) => (segs.length >= 3 ? [segs[0] + "/" + segs
    down) */
 const ownOrAbove: Level = { pages: (segs) => segs.map((_, i) => segs.slice(0, i + 1).join("/")), at: () => true, where: "any page" };
 /* the whole line: a name matched inside a longer line was read, and the
-   rest of the line ignored with no notice (pin: conventions.test › a
+   rest of the line ignored without a word (pin: conventions.test › a
    directive is the whole of its line) */
 const line = (words: string) => (l: string): boolean => l.trim().toLowerCase() === words;
 /* EVERY DIRECTIVE, its words and its level written once: what is read and

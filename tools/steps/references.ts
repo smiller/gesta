@@ -236,7 +236,7 @@ section("picture", async () => {
   /* a pasted picture: a PNG drawn on a canvas, pasted as a file, filed beside the entry and placed */
   await picturePasted();
   await picturePastedEntryS();
-  await picturePastedAnotherEntry();   /* the pin read, dismissed as a reader does: a whisper yields to it */
+  await picturePastedAnotherEntry();   /* the pin read, dismissed as a reader does: an alert yields to it */
 });
 async function picturePasted(): Promise<void> {
   await go("commonplace/Pictured");
@@ -360,7 +360,7 @@ const TABLE = ["", "  ┌──────┬───────────�
 const TERMINAL_HTML = terminal(run("color: rgb(255, 255, 255);", "&#9210;") + " Two commits today, and " + run(CODE, "npm run verify") + " passed\n  before each landed.\n\n  - " + run(CODE, "f2db598") + ": the one-offs split, with every\n    check still covering them.\n  - " + run(CODE, "7603f25") + ": the steps made independent.");
 const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  before each landed.\n\n  - f2db598: the one-offs split, with every\n    check still covering them.\n  - 7603f25: the steps made independent.";
 section("references across verse blocks", async () => {
-  /* blocks numbered apart refuse ⌃⌘R with a pin; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its whisper not swallowed by the pin */
+  /* blocks numbered apart refuse ⌃⌘R with a pin; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its alert not swallowed by the pin */
   await write("commonplace/Blocks", "# Blocks\n\n::: verse\nfirst block\n:::\n\n::: verse\nsecond block\n:::\n\n## Between\n\n::: verse 2\nthird block\n:::");
   await still(page);
   await R.selectBetween(page, "first block", "second block");

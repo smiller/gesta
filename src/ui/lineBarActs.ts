@@ -156,7 +156,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   /* the boxes follow the entry under the open bar, and a box hidden under
      the focus hands it to the one shown; an entry that answers neither keeps
-     both (pin: notices and surfaces › the line bar
+     both (pin: alerts and surfaces › the line bar
      re-asked when the entry gains a page marker) */
   const switchKind = (kind: typeof lb.kind): void => {
     const held = document.activeElement?.closest(".linebar") ? document.activeElement : null;
@@ -192,7 +192,7 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const closeBar = putLineCaret;
   /* a click whose press began in the bar is a drag out of a box, not a
-     click away (pin: notices and surfaces › a drag
+     click away (pin: alerts and surfaces › a drag
      from the Line box out over the entry) */
   let pressedInBar = false;
   document.addEventListener("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".linebar"); }, true);

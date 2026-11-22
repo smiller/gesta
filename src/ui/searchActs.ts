@@ -2,7 +2,7 @@ import type { Session } from "../session.ts";
 import type { EntryLayer } from "../store/entries.ts";
 import type { Journal } from "../store/reference.ts";
 import type { Screen } from "./screen.svelte.ts";
-import type { Notices, Progress } from "./notices.svelte.ts";
+import type { Alerts, Progress } from "./alertLedger.svelte.ts";
 import { parseMarkdown } from "../model/parse.ts";
 import { flattenDocText } from "../model/flatten.ts";
 import { dexieIndexKeeper } from "../store/indexStore.ts";
@@ -20,7 +20,7 @@ export interface SearchDeps {
   session: Pick<Session, "current" | "save" | "focusText" | "jump">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   journal: Journal;
-  notices: Pick<Notices, "progress" | "state">;
+  alerts: Pick<Alerts, "progress" | "state">;
   reader: boolean;
   opened(): void;
   focusRow(): void;
@@ -30,7 +30,7 @@ export interface SearchRow {
   buildIndex(): void; reanswer(): void;
 }
 export function searchActs(d: SearchDeps): SearchRow {
-  const { sr, session, layer, journal, notices, reader: READER, opened, focusRow } = d;
+  const { sr, session, layer, journal, alerts, reader: READER, opened, focusRow } = d;
   /* SEARCH. The index is built from the parsed text, once per session:
      MEASURED 4.4 s over the whole mirror under node, so it is built in
      chunks that yield, in idle time, and finished on demand under a progress
@@ -104,7 +104,7 @@ export function searchActs(d: SearchDeps): SearchRow {
   let searchTimer: ReturnType<typeof setTimeout> | null = null;
   const scopeNow = () => sr.options[sr.scopeAt]?.scope || defaultScope(session.current.date, session.current.tag);
   /* the query the rows on screen were built for: a row clicked after the
-     query was typed on highlights what it was found for (pin: notices and
+     query was typed on highlights what it was found for (pin: alerts and
      surfaces › a result clicked after more typing) */
   let builtFor = "";
   const notReady = (): boolean => {
@@ -112,8 +112,8 @@ export function searchActs(d: SearchDeps): SearchRow {
     if (state !== "in") { sr.empty = state === "failed" ? "Couldn’t load entries." : "Still loading…"; return true; }
     if (index.complete) return false;
     /* not while an op holds the line: its report would be lost
-       (pin: notices.test › a newer progress retires the older handle) */
-    if (!indexing && !notices.state.busy) indexing = notices.progress("indexing…");
+       (pin: alertLedger.test › a newer progress retires the older handle) */
+    if (!indexing && !alerts.state.busy) indexing = alerts.progress("indexing…");
     buildIndex(renderSearch);
     return true;
   };

@@ -1,3 +1,3 @@
-/* where the page shows from: under the header and the strip of flashes
+/* where the page shows from: under the header and the alert area
    stuck beneath it, whichever reaches lower */
-export const visibleTop = (): number => Math.max(0, ...[".site-head", ".notices"].map((s) => document.querySelector(s)?.getBoundingClientRect().bottom ?? 0));
+export const visibleTop = (): number => Math.max(0, ...[".site-head", ".alerts"].map((s) => document.querySelector(s)?.getBoundingClientRect().bottom ?? 0));

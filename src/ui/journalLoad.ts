@@ -16,23 +16,23 @@ export function refuseCold(layer: Load, refuse: (text: string) => void): boolean
 }
 
 export interface Pins {
-  stick(text: string): number;
-  stickErr(text: string, err: unknown): number;
-  releasePin(gen: number): void;
+  error(text: string): number;
+  errorCaught(text: string, err: unknown): number;
+  releaseError(gen: number): void;
 }
 /* a store that never answers left a blank page saying nothing
    (pin: losing nothing › a store that never answers) */
 export function loadPins(ms: number, pins: Pins): { start(): void; landed(layer: Load & Pick<EntryLayer, "storeReadError">): void } {
   let pinned = 0, timer: ReturnType<typeof setTimeout> | undefined, landed = false;
   return {
-    start: () => { if (!landed) timer = setTimeout(() => { pinned = pins.stick("couldn’t load entries — reload"); }, ms); },
+    start: () => { if (!landed) timer = setTimeout(() => { pinned = pins.error("couldn’t load entries — reload"); }, ms); },
     landed: (layer) => {
       landed = true;
       clearTimeout(timer);
-      if (pinned) pins.releasePin(pinned);
+      if (pinned) pins.releaseError(pinned);
       /* an unreadable journal is an error, not a status: it sticks, the
          caught failure copyable */
-      if (layer.storeReadFailed) pins.stickErr("the store could not be read — reload", layer.storeReadError);
+      if (layer.storeReadFailed) pins.errorCaught("the store could not be read — reload", layer.storeReadError);
     },
   };
 }

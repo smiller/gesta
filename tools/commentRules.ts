@@ -167,7 +167,7 @@ const ROLES: [RegExp, string[]][] = [
   [/\bthe schema['’]s\b/, ["src/model/schema"]],
   [/\bthe layer['’]s\b/, ["src/store/entries"]],
   [/\bthe warm['’]s\b/, ["src/store/entries"]],
-  [/\bthe ledger['’]s\b/, ["src/ui/notices"]],
+  [/\bthe ledger['’]s\b/, ["src/ui/alertLedger"]],
   [/\bthe gutter['’]s\b/, ["src/editor/linenumbers"]],
   [/\bthe masthead['’]s\b/, ["src/ui/masthead", "src/ui/mastheadmodel"]],
   [/\bthe landing['’]s\b/, ["src/editor/landing"]],

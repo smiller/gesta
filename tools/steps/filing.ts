@@ -25,7 +25,7 @@ async function newAuthorSeanMiller(): Promise<void> {
   await rest(page);
   setAnswer("Odes");
   await A.act.create(page);
-  await page.waitForFunction(() => /heading/.test(window.__flashes() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /heading/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
   await log("+ book with the caret in the heading", { corner: await cornerText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   /* the same in the markdown view, the caret on the heading's line */
   await page.keyboard.press("Control+Meta+m");
@@ -35,7 +35,7 @@ async function bookCaretHeadingS(): Promise<void> {
   await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.source);
   setAnswer("Odes");
   await A.act.create(page);
-  await page.waitForFunction(() => /heading/.test(window.__flashes() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /heading/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
   await log("+ book with the caret on the heading's line, markdown view", { corner: await cornerText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { state: "detached", timeout: 3000 }).catch(() => {});
@@ -60,7 +60,7 @@ async function renameAuthorTyped(): Promise<void> {
   prompts.length = 0;
   await page.click(S.renameAuthor);
   await A.waitEntry(page, "bookshelf/Sean Miller", 5000).catch(() => {});
-  await page.waitForFunction(() => /filed under/.test(window.__flashes() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /filed under/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
   await log("Rename, Sean Miller typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await cornerText(), author: await A.stored(page, "bookshelf/Sean Miller"), book: await A.stored(page, "bookshelf/Sean Miller/Odes"), oldAuthor: await A.stored(page, "bookshelf/Miller, Sean"), oldBook: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.click(S.booksOpener);
   await log("the bookshelf after the re-file", await R.panel(page));
@@ -74,7 +74,7 @@ async function reFiledBookPicture(): Promise<void> {
   await log("the re-filed book, its picture", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Sean Miller/Odes"), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
 }
 section("replace", async () => {
-  /* find and replace: ⌃⌘E in the rendered view switches to the source view and opens the bar, the corner whispering; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
+  /* find and replace: ⌃⌘E in the rendered view switches to the source view and opens the bar, an info showing; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
   await replaceInRenderedView();
   await replaceInSourceView();
   await escapeSwitchBackRefused();
@@ -187,7 +187,7 @@ async function entrySavedAnotherWindow(): Promise<void> {
     await other.goto(A.url("commonplace/Replaced")); await A.waitEntry(other, "commonplace/Replaced");
     await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
     await R.waitCorner(other, "saved");
-    /* the landed write reaches this window by its notice: waited for, so a reading never races it */
+    /* the landed write reaches this window by its tab message: waited for, so a reading never races it */
     await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
     await rest(page);
     await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
@@ -218,7 +218,7 @@ async function fenceWordsBothViews(): Promise<void> {
   await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
-  await R.waitCorner(page, "saved");   /* the save landed first: its whisper would stand over the refusal's */
+  await R.waitCorner(page, "saved");   /* the save landed first: its "saved" would stand over the warning's */
   await R.selectBetween(page, "cap", "tion");
   await rest(page);
   await page.click(".fmt .code");
@@ -280,7 +280,7 @@ async function typedIntoEntryImport(): Promise<void> {
   await landed(page, 1000);
   await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tally });
 }
-const tallied = (): boolean => /^imported /.test(JSON.parse(document.documentElement.dataset.flashes || "{}").success || "");
+const tallied = (): boolean => /^imported /.test(JSON.parse(document.documentElement.dataset.alerts || "{}").success || "");
 const textStart = (e: string): string => (document.querySelector(e)?.textContent || "").slice(0, 40);
 async function storeThatNeverAnswers(): Promise<void> {
   /* a page of its own, the persist call watched from before the app's first line */

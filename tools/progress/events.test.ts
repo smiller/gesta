@@ -13,7 +13,7 @@ const day: Event[] = [
   { at: at("09:56"), ev: "done", id: "A1.1", commits: ["d88609d"] },
   { at: at("09:56"), ev: "done", id: "A1", commits: ["d88609d"] },
   { at: at("09:56"), ev: "add", id: "A1.2", list: "A", parent: "A1", title: "phase review" },
-  { at: at("10:06"), ev: "add", id: "A1.2.1", list: "S", parent: "A1.2", title: "the notices' owed record" },
+  { at: at("10:06"), ev: "add", id: "A1.2.1", list: "S", parent: "A1.2", title: "the alerts' owed record" },
   { at: at("11:04"), ev: "move", id: "S3", to: "B1", list: "B" },
   { at: at("11:05"), ev: "start", id: "S1" },
   { at: at("12:14"), ev: "start", id: "A1.2.1" },

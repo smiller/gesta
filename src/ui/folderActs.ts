@@ -2,7 +2,7 @@ import type { Session } from "../session.ts";
 import type { EntryLayer } from "../store/entries.ts";
 import type { ImageStore } from "../store/store.ts";
 import type { Dir } from "../store/fsa.ts";
-import type { Notices, Progress } from "./notices.svelte.ts";
+import type { Alerts, Progress } from "./alertLedger.svelte.ts";
 import { exportEntries, missingPictures } from "../store/exportEntries.ts";
 import { writeFilesTo } from "../store/io.ts";
 import { pickImportFiles } from "../store/pick.ts";
@@ -14,7 +14,7 @@ export interface FolderDeps {
   session: Pick<Session, "save" | "focusText" | "lockEntries" | "refresh">;
   layer: Pick<EntryLayer, "cache" | "setEntry" | "writeError">;
   images: ImageStore;
-  notices: Pick<Notices, "progress" | "stickErr">;
+  alerts: Pick<Alerts, "progress" | "errorCaught">;
   /* why an act did nothing */
   refuse(text: string): void;
   picker(): ((opts?: { mode?: "read" | "readwrite" }) => Promise<Dir>) | undefined;
@@ -23,7 +23,7 @@ export interface FolderDeps {
   refreshMasthead(): void;
 }
 export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): void } {
-  const { session, layer, images, notices, refuse, picker, warmBlock, count, refreshMasthead } = d;
+  const { session, layer, images, alerts, refuse, picker, warmBlock, count, refreshMasthead } = d;
   /* the manual export: a folder the user picks, filled with the journal as
      it stands. The picker opens FIRST, in the click, and so does the
      progress line; the flush and the walk run alongside. Nothing here
@@ -69,7 +69,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     longRun = "an export";
     const dirPicked = pick({ mode: "readwrite" });
     dirPicked.catch(() => {});
-    const p = notices.progress("exporting…");
+    const p = alerts.progress("exporting…");
     session.save.flush().then(() => exportEntries(layer.cache, images)).then((files) => {
       if (!files.length) { p.ok("nothing to export"); return; }
       const tally = exportTally(files);
@@ -86,9 +86,9 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     const refused = files.filter(isDoc).length - n;
     const refusedNote = refused ? counted(refused, " .md file", " .md files") + " will NOT be imported." : "";
     /* a folder whose every page is refused says so until clicked (pin:
-       notices and surfaces › an import of refused
+       alerts and surfaces › an import of refused
        files only) */
-    if (!n && refused) { notices.stickErr("nothing to import here — " + refusedNote, null); return false; }
+    if (!n && refused) { alerts.errorCaught("nothing to import here — " + refusedNote, null); return false; }
     if (!n) { refuse("nothing to import"); return false; }
     return confirm((refusedNote ? refusedNote + "\n\n" : "") + "Import " + counted(n, " entry", " entries") +
       " from this folder? Each one overwrites that entry in this journal, and there is no undo.");
@@ -117,12 +117,12 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     if ((err as Error)?.name === "AbortError") { p?.cancel(); return; }   /* the picker dismissed */
     const msg = failMsg("import failed", err);
     /* two files spelling one entry say which, on screen; any other
-       failure names its error there too (pin: notices and surfaces › an
+       failure names its error there too (pin: alerts and surfaces › an
        import of two files for one entry) */
     const merged = (err as Partial<Merged>)?.merged;
     if (p) { console.error("import failed", err); p.fail(msg, msg); }
-    else if (merged) notices.stickErr((err as Error).message, null, merged);
-    else notices.stickErr(msg, err);
+    else if (merged) alerts.errorCaught((err as Error).message, null, merged);
+    else alerts.errorCaught(msg, err);
   };
   const importFolder = (): void => {
     session.focusText();
@@ -134,7 +134,7 @@ export function folderActs(d: FolderDeps): { exportAll(): void; importFolder(): 
     let p: Progress | null = null;
     pick().then(pickImportFiles).then((files) => {
       if (!importAsked(files)) return;
-      const progress = notices.progress("importing…");
+      const progress = alerts.progress("importing…");
       p = progress;
       session.lockEntries(importKeys(files));
       return importFiles(files, { setEntry: layer.setEntry, setImage: images.set, writeError: layer.writeError }, progress.step).then((tally) => imported(progress, tally));

@@ -1,11 +1,11 @@
 import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, still, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
-section("notices and surfaces", async () => {
-  await noticesOpening();
+section("alerts and surfaces", async () => {
+  await alertsOpening();
   await importRefusedFilesOnly();
   await blockPictureHoverCopied();
 });
-async function noticesOpening(): Promise<void> {
+async function alertsOpening(): Promise<void> {
   await chordWithCapsLock();
   await lineNumberingKeptAcross();
 }
@@ -321,8 +321,8 @@ async function shelvesSearched(): Promise<void> {
 async function shelvesSearchedFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
 }
-section("notices and places", async () => {
-  /* the error and the warning alone: where they stand under the header, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open bar under the strip. An info or a success beside them is no part of it */
+section("alerts and places", async () => {
+  /* the error and the warning alone: where they stand under the header, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open bar under the alert area. An info or a success beside them is no part of it */
   await write("commonplace/Plain", "# Plain\n\nSome words.");
   await still(page);
   await page.click(S.editor);
@@ -337,15 +337,15 @@ section("notices and places", async () => {
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on an entry opened with a warning", await standing());
-  await page.click(".notice.refusal");
+  await page.click(".alert.warning");
   await rest(page);
-  await log("the refusal clicked", { ...(await standing()), clipboard: await page.evaluate(() => navigator.clipboard.readText()).catch((e) => "clipboard: " + e) });
+  await log("the warning clicked", { ...(await standing()), clipboard: await page.evaluate(() => navigator.clipboard.readText()).catch((e) => "clipboard: " + e) });
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await go("commonplace/Plain");
   await still(page);
-  await log("another entry clears the refusal", await standing());
+  await log("another entry clears the warning", await standing());
   await write("commonplace/Lined", "# Lined\n\n::: verse\nthe first line\nthe second line\n:::");
   await still(page);
   await page.click(S.editor);
@@ -354,16 +354,16 @@ section("notices and places", async () => {
   await page.keyboard.type("9");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheStrip: await page.evaluate(() => Math.round(document.querySelector(".linebar")!.getBoundingClientRect().top - document.querySelector(".notices")!.getBoundingClientRect().bottom)) });
+  await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheAlertArea: await page.evaluate(() => Math.round(document.querySelector(".linebar")!.getBoundingClientRect().top - document.querySelector(".alerts")!.getBoundingClientRect().bottom)) });
   await page.keyboard.press("Escape");
 });
 /* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the header */
 const standing = () => page.evaluate(() => {
-  const live = JSON.parse(document.documentElement.dataset.flashes || "{}"), head = document.querySelector("header.site-head")!.getBoundingClientRect().bottom;
+  const live = JSON.parse(document.documentElement.dataset.alerts || "{}"), head = document.querySelector("header.site-head")!.getBoundingClientRect().bottom;
   const one = (kind: string) => {
     if (!live[kind]) return null;
-    const r = document.querySelector(".notice." + kind)!.getBoundingClientRect();
+    const r = document.querySelector(".alert." + kind)!.getBoundingClientRect();
     return { text: live[kind], across: Math.round(r.width) >= Math.round(innerWidth * 0.9), under: Math.round(r.top - head) };
   };
-  return { failure: one("failure"), refusal: one("refusal") };
+  return { error: one("error"), warning: one("warning") };
 });

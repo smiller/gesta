@@ -2,7 +2,7 @@
 // as entries, open each by hash and compare the editor's markdown with the
 // store's, refuse an unknown book, then TYPE into an entry, wait past the
 // debounce, relaunch and read the text back. `node tools/helium-bridge.ts`
-import { installFlashReaders } from "./adapters/inPage.ts";
+import { installAlertReaders } from "./adapters/inPage.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
@@ -45,7 +45,7 @@ function launchShows(): Record<string, unknown> {
 const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine));
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
-  await installFlashReaders(ctx);
+  await installAlertReaders(ctx);
   await ctx.clock.setFixedTime(new Date(TODAY + "T12:00:00"));   /* the refusals land on today: pinned, not scrubbed */
   const page = await ctx.newPage();
   const logs: string[] = [];

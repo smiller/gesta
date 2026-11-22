@@ -119,7 +119,7 @@ must keep is restated here.
   docs/plans/2026-11-22-feat-notices-apart-plan.md (U5 took about four
   and a half hours, the design moving some fifteen times in code).
 - A HELIUM READING READS THE APP'S STATE, NOT ITS PIXELS: what a step
-  checks the app publishes (`data-*` on the root, e.g. `data-flashes`),
+  checks the app publishes (`data-*` on the root, e.g. `data-alerts`),
   and the reading reads that; positions and drawn text are read only in a
   section that exists to check layout. A reading that a clock or a layout
   can change is a flaky reading.
@@ -309,15 +309,15 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `entrySave.ts` (the open entry's save: the debounce, leaving an
   entry, a rename's or move's hand-over, an entry deleted elsewhere).
 - `src/ui/` — the UI, Svelte 5. The models, pure and node-tested:
-  `notices.svelte.ts` (the notice ledger), `flashLog.ts` (every failure
-  and refusal kept three months, read in the console as `gesta.flashes()`), `screen.svelte.ts` (shared
+  `alertLedger.svelte.ts` (the alert ledger), `alertLog.ts` (every error
+  and warning kept three months, read in the console as `gesta.alerts()`), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
   `gotoModel.ts`, `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
-  `tabNotice.ts`, `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
+  `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
   `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
-  `heldKeys.ts`, `visibleTop.ts`, `flashStrip.ts` (the strip of flashes under
+  `heldKeys.ts`, `visibleTop.ts`, `alertArea.ts` (the alert area under
   the header), `journalLoad.ts` (the journal's
   load: loading, failed or in, what an act refused before it says, and
   its pins). THE ACTS, the page's handlers, each
@@ -325,7 +325,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `gotoActs.ts`, `lineBarActs.ts`, `replaceActs.ts`, `bookmarkActs.ts`,
   `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
   `panelActs.ts`, `backupsPanelActs.ts`. The components: `Masthead`,
-  `Corner`, `Search`, `Goto`, `Toolbar`, `LineBar`, `ReplaceBar`, `Help`
+  `Alerts`, `Search`, `Goto`, `Toolbar`, `LineBar`, `ReplaceBar`, `Help`
   (over `help.html`), `Bookmarks`, `Shortcuts`, `Backups`, `CopyButton`;
   `ui.css`.
 - `src/session.ts` — THE BRIDGE: the editor over the journal; open by

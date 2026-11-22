@@ -34,7 +34,7 @@ async function afterWarm(): Promise<void> {
   await R.waitCorner(page, "saved");
   await log("after typing", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
-  await page.click(".notice.success.show");
+  await page.click(".alert.success.show");
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
   await rest(page);

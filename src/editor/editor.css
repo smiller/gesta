@@ -8,7 +8,7 @@
   --rule: #cdd6c2;
   --accent: #3d6b2c;
   --aside-bg: #eef4dd;
-  --flash: rgba(245, 215, 110, 0.55);
+  --glow: rgba(245, 215, 110, 0.55);
   --serif: Georgia, "Times New Roman", serif;
   --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --mono: ui-monospace, Menlo, Consolas, monospace;
@@ -30,14 +30,14 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
   caret-color: var(--accent);
 }
 .page p { margin: 0 0 1em; }
-/* a selection is painted in the flash, as a found passage is */
-.page ::selection { background: var(--flash); }
-.page .jump-hit { background: var(--flash); }
-/* THE LANDING MARK, ⌃⌘G's: the row in the flash; a leaf marker is a
-   zero-width span, so a spread shadow gives the flash a body at the exact
+/* a selection is painted in the glow, as a found passage is */
+.page ::selection { background: var(--glow); }
+.page .jump-hit { background: var(--glow); }
+/* THE LANDING MARK, ⌃⌘G's: the row in the glow; a leaf marker is a
+   zero-width span, so a spread shadow gives the glow a body at the exact
    turn and moves no character */
-.page .landed { background: var(--flash); }
-.page .page-label.landed { box-shadow: 0 0 0 3px var(--flash); }
+.page .landed { background: var(--glow); }
+.page .page-label.landed { box-shadow: 0 0 0 3px var(--glow); }
 .page img { max-width: 100%; height: auto; display: block; margin: 0.8em 0; border: 1px solid var(--rule); border-radius: 3px; }
 /* a picture ending its paragraph is followed by ProseMirror's caret
    placeholder, an empty line under a block picture: 77px below it against
@@ -272,7 +272,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
    drag ending in its overflow ended in the Latin row beside it (pin:
    dual-language › a drag over one sentence's English) */
 .page .verse.dual-language > .vpair > .vcell + .vcell { align-self: start; margin-bottom: -100000px; }
-.page .dl-covered { background: var(--flash); }
+.page .dl-covered { background: var(--glow); }
 .page .verse.dual-language > :is(.vrow:not(.vpair), .note) { max-width: var(--vb-col, 520px); }
 /* the mark crosses both columns on a row with no English of its own too, its
    padding keeping the words at the column's measure; not while the fit
@@ -496,7 +496,7 @@ main { max-width: 760px; margin: 0 auto; padding: 24px; }
 .source-marks { position: absolute; z-index: 0; pointer-events: none; color: transparent; white-space: pre-wrap; }
 .source-marks[hidden] { display: none; }
 .source-marks mark { color: transparent; background: rgba(245, 215, 110, 0.35); border-radius: 2px; }
-.source-marks mark.now { background: var(--flash); box-shadow: 0 0 0 2px #d9a400; }
+.source-marks mark.now { background: var(--glow); box-shadow: 0 0 0 2px #d9a400; }
 
 
 /* ---------- a work's contents, folding under its headings ---------- */

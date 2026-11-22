@@ -224,7 +224,7 @@
      the create row. */
   .lists {
     position: absolute;
-    top: calc(100% + var(--strip-h, 0px) + 6px);
+    top: calc(100% + var(--alert-area-h, 0px) + 6px);
     left: var(--head-gutter);
     z-index: 80;
     min-width: 190px;
@@ -236,7 +236,7 @@
     padding: 6px;
     display: flex;
     flex-direction: column;
-    max-height: max(48px, calc(100dvh - 100% - var(--strip-h, 0px) - 18px));
+    max-height: max(48px, calc(100dvh - 100% - var(--alert-area-h, 0px) - 18px));
     overflow-y: auto;
   }
   /* every line on one vertical rhythm, tight: every 10px off a line is

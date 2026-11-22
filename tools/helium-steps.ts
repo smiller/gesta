@@ -9,7 +9,7 @@ import "./steps/places.ts";
 import "./steps/filing.ts";
 import "./steps/keys.ts";
 import "./steps/editing.ts";
-import "./steps/notices.ts";
+import "./steps/alerts.ts";
 import "./steps/verse.ts";
 import "./steps/lines.ts";
 import "./steps/moving.ts";

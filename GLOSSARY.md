@@ -49,9 +49,9 @@ A printed page of a book, begun in its text by a page label, `⟨138⟩`.
 _Avoid_: leaf, folio; page for a Commonplace or for whichever entry is
 open.
 
-**Flash**:
-A notification across the top of the page, under the masthead, one under
-another, each with an × that closes it; a click on its words copies them.
+**Alert**:
+A notification in the alert area, one under another, each with an × that
+closes it; a click on its words copies them.
 Its kind says what it tells, whoever started what it reports:
 - **Error**, red: something went wrong (a save, a copy, a fence the page
   could not read); stays until it is resolved or closed.
@@ -63,5 +63,13 @@ Its kind says what it tells, whoever started what it reports:
 - **Success**, green: something done worked ("saved", "Link copied",
   "backed up"); fades on its own.
 They stack in that order, at most one of each. Every error and warning is
-kept three months in the flash log.
-_Avoid_: the corner; failure, refusal, passing (their names before).
+kept three months in the alert log.
+_Avoid_: the corner; the retired words `tools/vocabulary.ts` lists; failure,
+refusal, passing for its kinds (an act that does nothing is still refused).
+
+**Alert area**:
+The band under the masthead where alerts show, stuck there as the page
+scrolls and always one alert tall, so an alert coming or going moves no
+text; the bars, lists and dialogs that hang from the masthead open below
+it.
+_Avoid_: strip.

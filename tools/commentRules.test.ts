@@ -210,7 +210,7 @@ describe("another module named", () => {
   test("a directory's role noun is every file's under it, and names it from outside", () => {
     const raw = "/* the UI's pill follows */";
     expect(named("src/ui/mastheadModel.ts", raw)).toEqual([]);
-    expect(named("src/ui/notices.svelte.ts", raw)).toEqual([]);
+    expect(named("src/ui/alertLedger.svelte.ts", raw)).toEqual([]);
     expect(named("src/editor/surface.ts", raw)).toEqual(["the UI's"]);
     expect(named("src/editor/surface.ts", "/* The UI's pill follows */")).toEqual(["The UI's"]);
     expect(named("src/editor/surface.ts", "/* The session's place wins */")).toEqual(["The session's"]);

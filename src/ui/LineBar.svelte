@@ -50,7 +50,7 @@
 <style>
   .linebar {
     position: absolute;
-    top: calc(100% + var(--strip-h, 0px) + 8px);
+    top: calc(100% + var(--alert-area-h, 0px) + 8px);
     right: var(--head-gutter);
     z-index: 70;
     display: flex;

@@ -81,7 +81,7 @@
   .helppanel {
     position: fixed;
     z-index: 80;
-    top: calc(var(--strip-bottom, var(--masthead-h)) + 20px);
+    top: calc(var(--alert-area-bottom, var(--masthead-h)) + 20px);
     left: 50%;
     transform: translateX(-50%);
     width: min(680px, calc(100% - 28px));
@@ -107,7 +107,7 @@
   .bookmark-key { font-family: var(--sans); font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; min-width: 2.2em; }
   li.bookmark-keyed .bookmark-key { min-width: min(12em, max(2.2em, var(--alias-col, 0px))); max-width: 12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   li.bookmark-cut { margin-top: 1.1em; }
-  li.bookmark-typing .bookmark-key { background: var(--flash); border-radius: 3px; }
+  li.bookmark-typing .bookmark-key { background: var(--glow); border-radius: 3px; }
   .bookmark-aliasinput { width: 7.5em; font: inherit; font-family: var(--sans); font-weight: 600; padding: 0 3px; border: 1px solid var(--accent); border-radius: 3px; background: transparent; color: var(--accent); }
   .bookmark-setalias, .bookmark-link { flex: none; border: 0; background: none; cursor: pointer; padding: 0 0.2em; font: 0.9em/1 var(--sans); color: var(--rule); }
   li:hover .bookmark-setalias, li:hover .bookmark-link { color: var(--muted); }

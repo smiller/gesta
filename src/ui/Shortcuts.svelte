@@ -48,7 +48,7 @@
   .helppanel {
     position: fixed;
     z-index: 80;
-    top: calc(var(--strip-bottom, var(--masthead-h)) + 20px);
+    top: calc(var(--alert-area-bottom, var(--masthead-h)) + 20px);
     left: 50%;
     transform: translateX(-50%);
     width: min(680px, calc(100% - 28px));
