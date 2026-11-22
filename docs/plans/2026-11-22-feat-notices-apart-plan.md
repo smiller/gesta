@@ -90,3 +90,20 @@ for them anyway".
   the ⌃⌘G bar 211-251px, under the strip's 205; the search results from
   the strip's foot. The page's visible top, the caret's clearance and a
   landing's centre all count the strip.
+
+## Post-mortem
+
+- MEASURED (the day's log): U5 09:20-12:37, its review's fixes
+  12:39-13:57; 22 whole Helium verdicts begun, about 4 minutes each.
+- The design moved some fifteen times in code (two corners, one stack,
+  full width, a strip kept in and then out of the header; four kinds;
+  fading; info and success apart; bars, dialogs, lists below the strip),
+  each change rewriting tests and reshaping a 700-line approved run; the
+  reader asked twice for mock-ups, and one design (the strip in the
+  header) was built before it was seen.
+- Readings tied to the drawn corner and to a fade's clock broke on each
+  layout change and flaked on timing, until the readings read
+  data-flashes (the reader's suggestion).
+- Asked: three rules for CLAUDE.md (a visible change designed before it
+  is built; a reading reads the app's state; only the touched sections
+  played while a design moves), and working habits kept in memory.

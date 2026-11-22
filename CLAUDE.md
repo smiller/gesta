@@ -111,6 +111,20 @@ must keep is restated here.
   Every step a probe can play is played headless first and its expectation
   is MEASURED; a step not played says so. A step no hand can reach (a
   forgotten store, a failed write) is named as the tests', not handed over.
+- A VISIBLE CHANGE IS DESIGNED BEFORE IT IS BUILT: every state it can
+  show is mocked on the real page, side by side (idle; one and two of a
+  kind; scrolled; beside each bar, list and dialog that can be open), and
+  the reader picks before any code is written; a choice still open is
+  asked with its mock, never built to be looked at. Record:
+  docs/plans/2026-11-22-feat-notices-apart-plan.md (U5 took about four
+  and a half hours, the design moving some fifteen times in code).
+- A HELIUM READING READS THE APP'S STATE, NOT ITS PIXELS: what a step
+  checks the app publishes (`data-*` on the root, e.g. `data-flashes`),
+  and the reading reads that; positions and drawn text are read only in a
+  section that exists to check layout. A reading that a clock or a layout
+  can change is a flaky reading.
+- WHILE A DESIGN IS MOVING, PLAY ONLY THE SECTIONS IT TOUCHES (`STEPS=`);
+  the whole verdict runs once the design holds, before the hand-over.
 - TEST-FIRST, AND VERIFIED: new behaviour is built test-first (`npm test`,
   Vitest), and `npm run verify` (tsc, the suite, the checkers, then the
   headless tools under their verdict) passes before work is called done.
