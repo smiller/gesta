@@ -1,6 +1,6 @@
 == launch, menus, the corner, links
 the launch's stages: "start;primed;all;"
-after warm: {"text":"10 entries stored","show":true,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+after warm: {"text":"10 entries stored","pill":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 masthead over Horace: {"crumb":"Horace","title":"","titleHidden":true,"lines":true,"today":true,"backups":"backups","height":111.21875,"sticky":"sticky","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 the commonplace menu: {"rows":["Horace","Links","Williams"],"create":"New commonplace…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 the bookshelf menu, displacing it: {"rows":["Boethius","Browning, Robert"],"create":"New author…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}

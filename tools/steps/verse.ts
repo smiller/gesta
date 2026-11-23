@@ -317,7 +317,10 @@ async function escapeOnWorkByParagraph(): Promise<void> {
   await rest(page);
 }
 async function referenceOnWorkByParagraph(): Promise<void> {
-  await log("⌃⌘R on a work by paragraph", { label: await page.evaluate(async () => { for (let i = 0; i < 40; i++) { const t = await navigator.clipboard.readText().catch(() => ""); if (t.includes("Augustine")) return t.split("\n")[0].replace(/\]\(#[^)]*\)/, "]"); await new Promise((r) => setTimeout(r, 50)); } return "not landed"; }) });
+  const label = await page.evaluate(async () => { for (let i = 0; i < 40; i++) { const t = await navigator.clipboard.readText().catch(() => ""); if (t.includes("Augustine")) return t.split("\n")[0].replace(/\]\(#[^)]*\)/, "]"); await new Promise((r) => setTimeout(r, 50)); } return "not landed"; });
+  /* a miss carries the selection's last calls and the editor's last writes */
+  const missed = label === "not landed" ? await page.evaluate(() => ({ missed: "the reference did not land", selected: getSelection().toString().length, calls: window.__selCalls ?? [], writes: window.__muts ?? [] })) : {};
+  await log("⌃⌘R on a work by paragraph", { label, ...missed });
   await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
   await R.settle(page);
   await rest(page);

@@ -138,26 +138,20 @@ export const watchSelection = (page: Page) => page.evaluate(() => {
 export const selectionMoved = (page: Page, ms = 1000) => page.waitForFunction(() => window.__selSeen, null, { timeout: ms }).catch(() => {});
 /* each placement is a script's, the selection standing where it lands once
    it returns: one onto the selection already there has no change to wait
-   for, and waited a second for it. Placed on a settled page, and a range
-   placed again once if it stands collapsed after: a write to a row's
-   attributes in the moment before the editor reads a script's range
-   redraws the caret it held (MEASURED: 20 of 20 in a probe), and the
-   bookmarks section's range was collapsed so, 1 ms after it was placed
-   (pin: bookmarks › fb over a selection, already here) */
-async function placed<T>(page: Page, place: () => Promise<T>, range = false): Promise<T> {
+   for, and waited a second for it. Placed on a settled page: a write to a
+   row's attributes in the moment before the editor reads a script's range
+   redraws the caret it held (MEASURED: 20 of 20 in a probe). Placed once,
+   never again on a collapse, so a collapse still fails its step with the
+   editor's last writes (pin: bookmarks › fb over a selection, already here) */
+async function placed<T>(page: Page, place: () => Promise<T>): Promise<T> {
   await settled(page);
-  const out = await placedOnce(page, place);
-  if (range && (await page.evaluate(() => getSelection().isCollapsed))) { await settled(page); return placedOnce(page, place); }
-  return out;
-}
-async function placedOnce<T>(page: Page, place: () => Promise<T>): Promise<T> {
   await watchSelection(page);
   const out = await place();
   const unmoved = await page.evaluate(() => window.__selUnmoved());
   if (!unmoved) await selectionMoved(page);
   return out;
 }
-const placeBetween = (page: Page, a: string, b: string) => placed(page, () => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n: string): [Node, number] | null => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]), true);
+const placeBetween = (page: Page, a: string, b: string) => placed(page, () => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n: string): [Node, number] | null => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]));
 export const read = {
   blankRow: blankRowReader("#editor .ProseMirror"),
   /* the contents-folds step: the headings that fold, which are open, their counts, the links showing, the followed link's place */
@@ -398,7 +392,7 @@ export const read = {
   searchOpen: (page: Page) => page.evaluate(() => document.querySelector(".page-search")?.open),
   selectionText: (page: Page) => page.evaluate(() => document.getSelection()?.toString()),
   pill: (page: Page) => page.evaluate(() => { const b = document.querySelector(".backup-paused"); const r = b.getBoundingClientRect(); return { text: b.textContent, hidden: b.hidden, display: getComputedStyle(b).display, right: innerWidth - r.right, bottom: innerHeight - r.bottom }; }),
-  selectAll: (page: Page, sel: string) => placed(page, () => page.evaluate((sel) => { const v = document.querySelector(sel); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }, sel), true),
+  selectAll: (page: Page, sel: string) => placed(page, () => page.evaluate((sel) => { const v = document.querySelector(sel); const r = document.createRange(); r.selectNodeContents(v); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); }, sel)),
   caretAfter: (page: Page, needle: string, offset: number) => placed(page, () => page.evaluate(([needle, offset]) => { const walker = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let t; while ((t = walker.nextNode())) if (t.textContent.includes(needle)) break; const r = document.createRange(); r.setStart(t, t.textContent.indexOf(needle) + offset); r.collapse(true); const sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(r); }, [needle, offset] as [string, number])),
   pasteText: (page: Page, text: string) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page: Page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise<Blob>((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),

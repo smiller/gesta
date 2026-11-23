@@ -44,12 +44,17 @@ function created(items: Items, e: Event): void {
   items.set(e.to, { id: e.to, list: e.list, title: was.title, detail: was.detail, watch: was.watch, starting: was.starting, movedFrom: e.id, reported: was.reported, commits: [], status: "unstarted", work: [] });
 }
 function changed(it: Item, e: Event): void {
-  if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; it.watch = undefined; it.note = e.note ?? it.note; }
+  if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; it.watch = undefined; it.note = e.note ?? it.note; reopened(it); }
   else if (e.ev === "stop") { it.stopped = stamp(e); it.note = e.note ?? it.note; }
   else if (e.ev === "done") { it.ended = stamp(e); it.commits = e.commits ?? []; it.note = e.note ?? it.note; it.status = "done"; }
   else if (e.ev === "drop") { it.ended = stamp(e); it.note = e.note ?? it.note; it.status = "dropped"; }
   else if (e.ev === "detail") it.detail = e.text;
   else if (e.ev === "watch") it.watch = e.text;
+}
+function reopened(it: Item): void {
+  if (it.status !== "done") return;
+  it.status = "unstarted";
+  it.ended = undefined;
 }
 /* moved, or started and so in progress or, stopped since, paused */
 function begun(it: Item): Status {

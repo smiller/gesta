@@ -145,3 +145,16 @@ test("an item's stretches of work: each start to its stop, done, drop or move, h
   expect(work("U1")).toEqual([["08:00", "09:40", "done", undefined]]);
   expect(work("U2")).toEqual([]);
 });
+
+test("a done item started again is open again: in progress, then paused once stopped", () => {
+  const ev: Event[] = [
+    { at: at("09:00"), ev: "add", id: "S1", list: "S", title: "a flake" },
+    { at: at("09:02"), ev: "start", id: "S1" },
+    { at: at("09:30"), ev: "done", id: "S1", commits: ["abc1234"] },
+    { at: at("10:00"), ev: "start", id: "S1", note: "reopened" },
+  ];
+  const now = replay(ev).find((i) => i.id === "S1")!;
+  expect([now.status, now.ended]).toEqual(["in progress", undefined]);
+  const later = replay([...ev, { at: at("10:05"), ev: "stop", id: "S1" }]).find((i) => i.id === "S1")!;
+  expect(later.status).toBe("paused");
+});

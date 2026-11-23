@@ -76,3 +76,10 @@
 {"at":"2026-11-23T14:23","ev":"done","id":"S27","commits":["a48abe2"],"note":"its selection placed through selectBetween; 0 of 6 five-window verdicts"}
 {"at":"2026-11-23T14:23","ev":"start","id":"S25"}
 {"at":"2026-11-23T14:25","ev":"done","id":"S25","commits":["8fba266"]}
+{"at":"2026-11-23T14:30","ev":"start","id":"S6.1","note":"reopened as asked: held by a settled wait, cause unknown; the silent second placement removed"}
+{"at":"2026-11-23T14:30","ev":"stop","id":"S6.1","note":"paused: wakes on 'the toolbar did not show'; read its writes list to find what collapsed the range"}
+{"at":"2026-11-23T14:30","ev":"start","id":"S27","note":"reopened as asked: cause unknown, never reproduced; its miss now carries the selection calls and the editor's writes"}
+{"at":"2026-11-23T14:30","ev":"watch","id":"S27","text":"\"label\":\"not landed\""}
+{"at":"2026-11-23T14:30","ev":"stop","id":"S27","note":"paused: wakes on a miss of ⌃⌘R on a work by paragraph; read its calls and writes"}
+{"at":"2026-11-23T14:31","ev":"watch","id":"S27","text":"the reference did not land"}
+{"at":"2026-11-23T14:31","ev":"watch","id":"S6.1","text":"the toolbar did not show"}

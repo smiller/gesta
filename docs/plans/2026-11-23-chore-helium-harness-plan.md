@@ -18,10 +18,11 @@ fail too often to show a byte-identical run.
    pure merge (`tools/heliumShards.ts`) puts the windows' prints back as
    the one window's, byte for byte. Dealt in turn, so the merge needs
    only each block's place.
-3. S6.1 and S27: a script's range is placed on a settled page, and
-   placed again once if it stands collapsed after; the driver's trace
-   keeps the editor's last six DOM writes, so the next collapse names
-   its writer. S27's selection takes the same path (`selectBetween`).
+3. S6.1 and S27: a script's range is placed on a settled page, once;
+   the driver's trace keeps the editor's last six DOM writes, so the next
+   collapse names its writer. S27's selection takes the same path
+   (`selectBetween`), and its miss prints the same trace. Neither cause
+   is found: both stay paused, each watching its failure.
 5. S25: `tools/helium-mock.ts <spec>` over a spec in `tools/out/mocks/`
    (backup entries, states, options); a "now" column always first; the
    frame with every floating bar lifted and outlined, and the text at
@@ -93,3 +94,13 @@ fail too often to show a byte-identical run.
   probe of the same page with no wheel read the masthead at 0. Now a
   wheel of just the scroll.
 - 14:25, S25 committed 8fba266. Nothing owed: the batch touched tools/ alone, no DOM seam, so no review and no architecture run.
+- 14:31, S6.1 and S27 reopened (asked: "Does that mean we think we've
+  fixed S6.1 and S27, even though we couldn't determine what caused the
+  problem?"). They were not fixed: S6.1's writer was never found, S27
+  never reproduced, and 0 of 6 against 1 of 3 is about 9% likely with no
+  change at all. The second placement on a collapse is removed (it would
+  have hidden a recurrence and its trace); S27's miss now carries the
+  trace; both paused with watches. a48abe2's message overstates it ("3 of
+  3 before" counts every flake, not these two). The progress replay now
+  reopens a done item that is started again (`tools/progress/events.ts`).
+- 14:35, the hook's verdict read "after warm" with `show: false`: whether the warm's info still shows is a clock reading the fresh start's length under load decides. The step logs its words and the pill alone; approved.

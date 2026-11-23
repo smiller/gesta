@@ -6,7 +6,9 @@ section("launch, menus, the corner, links", async () => {
 });
 async function afterWarm(): Promise<void> {
   console.log("the launch's stages:", JSON.stringify(stages));
-  await log("after warm", await R.corner(page));
+  /* the info's words, not whether they still show: a run's load decides that */
+  const { text, pill } = await R.corner(page);
+  await log("after warm", { text, pill });
   await log("masthead over Horace", await laid(R.masthead));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-masthead.png"), clip: { x: 0, y: 0, width: 1000, height: 130 } });
   await page.click(S.commonplaceOpener);
