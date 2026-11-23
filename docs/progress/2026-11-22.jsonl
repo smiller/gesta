@@ -125,3 +125,4 @@
 {"at":"2026-11-22T22:11","ev":"done","id":"A15.1","note":"2 and 1 built (e0e739f), 3 and 4 built (3103156), 5 queued behind U8 as A15.1.2; walk 138,554 tokens"}
 {"at":"2026-11-22T22:12","ev":"add","id":"A16","list":"A","title":"The batch review: /code-review at HIGH over d2740d7..HEAD","detail":"Asked: /code-review high d2740d7..HEAD, typed at 22:12. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-22T22:12","ev":"start","id":"A16"}
+{"at":"2026-11-22T22:28","ev":"done","id":"A16","note":"416e511, accepted; 124,513 tokens"}
