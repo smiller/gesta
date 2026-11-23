@@ -17,3 +17,8 @@
 {"at":"2026-11-23T09:01","ev":"done","id":"P15","commits":["5bca4bd"]}
 {"at":"2026-11-23T09:52","ev":"add","id":"P16","list":"P","title":"The day in order counts no time for an item carried in under way","detail":"Asked: \"the visualizer says we have done 1 minute of work in that time, which is clearly wrong\". Why: spans.ts opened a span only at a start event, and U8 (carried in under way since P15) had none on 2026-11-23, so the day read 1 minute, P15 alone. Done when: an item carried in under way opens a span at the day's start, by a test in spans.test.ts."}
 {"at":"2026-11-23T09:52","ev":"start","id":"P16"}
+{"at":"2026-11-23T09:52","ev":"done","id":"P16","commits":["aee850d"]}
+{"at":"2026-11-23T10:18","ev":"done","id":"U8","commits":["3d80430","d227c72","07fed95"],"note":"accepted at 36af25075f3e"}
+{"at":"2026-11-23T10:20","ev":"add","id":"A17","list":"A","title":"The batch review: /code-review at HIGH over 416e511..HEAD","detail":"Asked: /code-review high 416e511..HEAD, typed at 10:20. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-23T10:20","ev":"start","id":"A17"}
+{"at":"2026-11-23T10:28","ev":"watch","id":"S6.1","text":"the toolbar did not show"}

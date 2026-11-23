@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, rest, still, writeAll, seededIn, wheelTo, caretAt, fixture, STANZA_SEEDS } from "./kit.ts";
+import { section, page, A, R, S, log, go, rest, still, writeAll, seededIn, wheelTo, caretAt, fixture, STANZA_SEEDS, MARGIN_SEEDS } from "./kit.ts";
 
 const OVID = "bookshelf/Ovid/Metamorphoses/Book 1";
 const SHELVES = "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Ovid](#bookshelf/Ovid)\n\n## English\n";
@@ -7,6 +7,7 @@ section("menus", async () => {
   await writeAll({ "bookshelf/Shelves": SHELVES, "bookshelf/Spenser, Edmund": STANZA_SEEDS["bookshelf/Spenser, Edmund"], "bookshelf/Ovid": "# Ovid\n", [OVID]: fixture("ovid-metamorphoses-1.md") });
   const seeded = await seededIn(OVID);
   await keysOverRows(seeded);
+  await gridRoom();
   await focusBack();
   await roomMade();
 });
@@ -29,6 +30,10 @@ async function keysOverRows(seeded: boolean): Promise<void> {
   await page.click(S.commonplaceOpener);
   await page.keyboard.press("End");
   await log("the commonplace menu, End", await sel());
+  /* one menu over the other opens afresh, its first row selected */
+  await page.click(S.bookshelfOpener);
+  await rest(page);
+  await log("the commonplace icon over the bookshelf menu", await sel());
 }
 async function focusBack(): Promise<void> {
   /* the caret where it stood, after Escape, Tab and the icon pressed again */
@@ -63,6 +68,31 @@ async function roomMade(): Promise<void> {
   await page.click(S.bookshelfOpener);
   await still(page);
   await log("Ovid 1 at 860 px, the menu open", { room: (await R.menuNow(page)).room });
+  await page.keyboard.press("Escape");
+  await page.setViewportSize(size);
+}
+const GRID = "commonplace/Three Cards";
+async function gridRoom(): Promise<void> {
+  /* a grid hangs left of the page's own edge: a window wide enough for the page to clear the menu still has the grid under it */
+  await writeAll({ [GRID]: "::: grid\n::: card-light-green\nOne\n:::\n::: card-light-blue\nTwo\n:::\n::: card-light-red\nThree\n:::\n:::\n" });
+  const size = page.viewportSize()!;
+  await page.setViewportSize({ width: 1400, height: size.height });
+  await go(GRID);
+  await page.click(S.bookshelfOpener);
+  await still(page);
+  await log("three cards at 1400 px, the menu open", { room: (await R.menuNow(page)).room });
+  await page.keyboard.press("Escape");
+  /* a note in the margin hangs left of the page too, and with room made is set clear of the menu */
+  await writeAll(MARGIN_SEEDS);
+  await page.setViewportSize({ width: 1500, height: size.height });
+  await go("bookshelf/Donne, John/Anniversaries/The First Anniversarie");
+  await page.click(S.bookshelfOpener);
+  await still(page);
+  await log("Donne's margin notes at 1500 px, the menu open", await page.evaluate(() => {
+    const menu = document.querySelector(".menu")!.getBoundingClientRect().right;
+    const notes = [...document.querySelectorAll("#editor .margin-note.in-margin")].map((n) => n.getBoundingClientRect().left);
+    return { inMargin: notes.length > 0, clearOfMenu: notes.every((l) => l >= menu) };
+  }));
   await page.keyboard.press("Escape");
   await page.setViewportSize(size);
 }

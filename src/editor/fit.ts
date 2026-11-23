@@ -198,6 +198,7 @@ export function leaveRoom(px: number): void {
   root.classList.toggle("menu-room", px > 0);
   window.dispatchEvent(new Event("resize"));
 }
+export const menuRoom = (): number => room;
 const across = (): number => window.innerWidth - room;
 export function fitCap(): number { return Math.min(CAP, across() - WINDOW_MARGIN); }
 

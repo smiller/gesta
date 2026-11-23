@@ -7,7 +7,7 @@ import { menuRows } from "./mastheadModel.ts";
 import { entryKey, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { loadState } from "./journalLoad.ts";
-import { roomFor } from "./menuModel.ts";
+import { roomFor, isMenu } from "./menuModel.ts";
 import { leaveRoom } from "../editor/fit.ts";
 
 export type Ns = "commonplace" | "bookshelf";
@@ -37,7 +37,15 @@ const emptyLine = (ns: Ns, layer: OpenerDeps["layer"]): string => {
   if (ns !== "bookshelf") return "";
   return { in: "No authors yet — import a folder, or start one below.", failed: "Couldn’t load the bookshelf.", loading: "Still loading…" }[loadState(layer)];
 };
-const isMenu = (ns: Opened | null): ns is Ns => ns === "commonplace" || ns === "bookshelf";
+/* the leftmost thing drawn: a grid and a note in the margin both hang left
+   of the page's own edge */
+const DRAWN = "#editor .page, #editor textarea, #editor .page > div.grid, #editor .margin-note.in-margin";
+const drawnLeft = (): number | null => {
+  const lefts = [...document.querySelectorAll(DRAWN)].map((e) => e.getBoundingClientRect().left);
+  return lefts.length ? Math.min(...lefts) : null;
+};
+/* a control a menu took the focus from may have closed under it */
+const shown = (el: Element | null): el is HTMLElement => el instanceof HTMLElement && el.isConnected && el.checkVisibility();
 
 export function openerActs(d: OpenerDeps): Openers {
   const { screen, layer, journal, session } = d;
@@ -87,16 +95,15 @@ export function openerActs(d: OpenerDeps): Openers {
      reading place is held across the reflow it makes */
   let made = 0;
   const room = (menuRight: number | null): void => {
-    const page = document.querySelector("#editor .page, #editor textarea");
-    const px = menuRight === null || !page ? 0 : roomFor({ menuRight, textLeft: page.getBoundingClientRect().left, width: document.documentElement.clientWidth });
+    const textLeft = menuRight === null ? null : drawnLeft();
+    const px = textLeft === null ? 0 : roomFor({ menuRight: menuRight!, textLeft, width: document.documentElement.clientWidth });
     if (px === made) return;
     made = px;
     session.holdTop();
     leaveRoom(px);
   };
   const back = (was: Element | null): void => {
-    const other = was === document.body ? null : was;
-    if (other instanceof HTMLElement && !other.closest("#editor")) other.focus({ preventScroll: true });
+    if (shown(was) && !was.matches("body, #editor, #editor *")) was.focus({ preventScroll: true });
     else session.focusText();
   };
   return { opener, reanswer, room, back };

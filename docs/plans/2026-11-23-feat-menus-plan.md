@@ -86,3 +86,24 @@ conversation.
   'the'"): a small word inside a name is passed over, the name's first
   word counting whatever it is; "o" goes to Ovid, not Hildegard of Bingen
   (MEASURED, the probe over the backup's bookshelf).
+- 10:20, the batch review (A17), `/code-review high 416e511..HEAD`:
+  202,763 tokens (its transcript's last message), 7 findings, all acted
+  on in one fix commit:
+  1. One menu opened over the other kept its selection, letters and
+     scroll (the component was never taken down): reset on the name.
+  2. The rename moved "the bar did not show" to "the toolbar did not
+     show", and S6.1's watch could never wake: S6.1 watches the new words,
+     and tools/progress/watches.test.ts fails on an open watch no tool can
+     print (MEASURED: one hit, S6.1, before the watch was moved).
+  3. The room read the page's edge alone; a grid and a margin note hang
+     left of it: the leftmost drawn of them is read, and margins.ts sets
+     a note clear of the room (MEASURED: three cards at 1400 px, 288 px of
+     room; Donne's notes at 1500 px clear of the menu).
+  4. A focus handed back to a control that closed under the menu went
+     nowhere: only one still shown takes it.
+  5. A resize with a menu open kept the room read for the old width: a
+     window resized closes the menu (chosen here: a Mac menu closes so).
+  6. The act by index and two predicates sat in components: menuActs,
+     isMenu and givesFocusBack in menuModel.ts, with tests.
+  7. BackupsPanelDeps was renamed BackupsOpenerDeps by the rename
+     script's /PanelDeps/: restored.

@@ -4,18 +4,28 @@
      pointer at rest. -->
 <script lang="ts">
   import type { MenuRow } from "./mastheadModel.ts";
-  import { menuItems, menuKey, typedAhead, type Typed } from "./menuModel.ts";
-  let { rows, empty, acts, onAct, onClose, onLeave, onRoom, onBack }: {
-    rows: MenuRow[]; empty: string; acts: string[];
-    onAct: (i: number) => void; onClose: () => void; onLeave: (e: FocusEvent) => void;
+  import { menuItems, menuKey, typedAhead, givesFocusBack, type Typed, type MenuName, type MenuAct, type FocusAt } from "./menuModel.ts";
+  let { name, rows, empty, acts, onAct, onClose, onLeave, onRoom, onBack }: {
+    name: MenuName; rows: MenuRow[]; empty: string; acts: MenuAct[];
+    onAct: (act: MenuAct["act"]) => void; onClose: () => void; onLeave: (e: FocusEvent) => void;
     onRoom: (menuRight: number | null) => void; onBack: (was: Element | null) => void;
   } = $props();
-  const items = $derived(menuItems(rows, acts));
+  const items = $derived(menuItems(rows, acts.map((a) => a.text)));
   const rowItem = $derived(new Map(items.flatMap((it, j) => (it.row === null ? [] : [[it.row, j] as const]))));
   const actItem = $derived(new Map(items.flatMap((it, j) => (it.act === null ? [] : [[it.act, j] as const]))));
   let sel = $state(0);
   let typed: Typed = { buf: "", at: 0 };
   const els: HTMLElement[] = $state([]);
+  let nav: HTMLElement | undefined = $state();
+  /* one menu replacing the other keeps this one standing: it opens afresh,
+     its first item selected, its letters and its scroll forgotten
+     (pin: menus › the commonplace icon over the bookshelf menu) */
+  $effect(() => {
+    void name;
+    sel = 0;
+    typed = { buf: "", at: 0 };
+    if (nav) nav.scrollTop = 0;
+  });
   $effect(() => { if (sel >= items.length) sel = Math.max(0, items.length - 1); });
   $effect(() => { els[sel]?.scrollIntoView({ block: "nearest" }); });
   function keydown(e: KeyboardEvent): void {
@@ -30,25 +40,35 @@
       if (typed.sel !== null) sel = typed.sel;
     }
   }
+  const focusAt = (el: HTMLElement): FocusAt => {
+    const a = document.activeElement;
+    if (!a) return "none";
+    if (a === document.body) return "body";
+    return el.contains(a) ? "menu" : "elsewhere";
+  };
   function opened(el: HTMLElement): { destroy(): void } {
     const was = document.activeElement;
     el.focus({ preventScroll: true });
     onRoom(el.getBoundingClientRect().right);
+    /* a window resized closes the menu, as a Mac menu closes: the room it
+       made was read for the window it opened in */
+    const resized = (e: Event): void => { if (e.isTrusted) onClose(); };
+    window.addEventListener("resize", resized);
     /* by the time the menu is taken down the focus it held has fallen to
        the body: that, or still inside, is a focus to give back; one a
        click put elsewhere stays there */
-    return { destroy: () => { const a = document.activeElement; onRoom(null); if (!a || a === document.body || el.contains(a)) onBack(was); } };
+    return { destroy: () => { window.removeEventListener("resize", resized); const at = focusAt(el); onRoom(null); if (givesFocusBack(at)) onBack(was); } };
   }
 </script>
 
-<nav class="menu" tabindex="-1" use:opened onkeydown={keydown} onfocusout={onLeave}>
+<nav class="menu" tabindex="-1" bind:this={nav} use:opened onkeydown={keydown} onfocusout={onLeave}>
   {#each rows as r, i (r.href || "shelf " + r.text)}
     {#if r.shelf}<span class="shelf">{r.text}</span>
     {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => { sel = rowItem.get(i)!; }} onclick={onClose}>{r.text}</a>{/if}
   {/each}
   {#if !rows.length && empty}<span class="menu-empty">{empty}</span>{/if}
-  {#each acts as a, k (a)}
-    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => { sel = actItem.get(k)!; }} onclick={() => onAct(k)}>{a}</button>
+  {#each acts as a, k (a.text)}
+    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => { sel = actItem.get(k)!; }} onclick={() => onAct(a.act)}>{a.text}</button>
   {/each}
 </nav>
 

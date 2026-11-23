@@ -53,3 +53,16 @@ export function roomFor(at: { menuRight: number; textLeft: number; width: number
   if (at.width < MENU_ROOM_FROM || at.textLeft >= at.menuRight) return 0;
   return at.menuRight + MENU_GAP;
 }
+
+export type MenuName = "bookshelf" | "commonplace";
+export const isMenu = (name: string | null): name is MenuName => name === "bookshelf" || name === "commonplace";
+export interface MenuAct { text: string; act: "new" | "shelves" }
+const ACTS: Record<MenuName, MenuAct[]> = {
+  bookshelf: [{ text: "New author…", act: "new" }, { text: "Shelves…", act: "shelves" }],
+  commonplace: [{ text: "New commonplace…", act: "new" }],
+};
+export const menuActs = (name: MenuName, readOnly: boolean): MenuAct[] => (readOnly ? [] : ACTS[name]);
+/* where the focus stands as the menu is taken down: in it, fallen to the
+   body, nowhere, or put elsewhere by a click */
+export type FocusAt = "menu" | "body" | "none" | "elsewhere";
+export const givesFocusBack = (at: FocusAt): boolean => at !== "elsewhere";

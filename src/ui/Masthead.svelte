@@ -17,6 +17,7 @@
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
   import Menu from "./Menu.svelte";
+  import { isMenu, menuActs, type MenuName, type MenuAct } from "./menuModel.ts";
   let { screen, onToday, onExport, onImport, onInterval, onLines, onOpener, onCloseOpened, onNewRoot, onShelves, onRoom, onBack, search, goto, gotoToolbar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
     /* the read-only page: a new bundle picked */
@@ -51,8 +52,7 @@
   export function focusGoto(): void { gotoRow?.focusFirst(); }
   let searchRow: { focusInput(): void } | undefined = $state();
   export function focusSearch(): void { searchRow?.focusInput(); }
-  const ACTS = { commonplace: ["New commonplace…"], bookshelf: ["New author…", "Shelves…"] } as const;
-  const act = (ns: "commonplace" | "bookshelf", i: number): void => { if (ns === "bookshelf" && i === 1) onShelves(); else onNewRoot(ns); };
+  const act = (ns: MenuName, a: MenuAct["act"]): void => { if (a === "shelves") onShelves(); else onNewRoot(ns); };
   /* a panel's focus going nowhere is a row deleted under it, not a leaving
      (pin: where the keys go › Tab twelve times from the bookmarks panel);
      a menu's is the window left */
@@ -64,7 +64,7 @@
   /* a menu taken down with the focus in it leaves too, after a panel has
      taken the slot: only a menu still open is closed by its leaving
      (pin: help › ⌃⌘H over an open menu) */
-  const leaveMenu = (e: FocusEvent): void => { if (screen.opened === "commonplace" || screen.opened === "bookshelf") leave(e); };
+  const leaveMenu = (e: FocusEvent): void => { if (isMenu(screen.opened)) leave(e); };
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
   export function focusLines(): void { linesSelect?.focus(); }
@@ -128,9 +128,9 @@
   {#if screen.opened === "bookmarks"}<Bookmarks bind:this={bookmarksPanel} bookmarks={screen.bookmarks} {...bookmarks} onLeave={leavePanel} />{/if}
   {#if screen.opened === "shortcuts"}<Shortcuts bind:this={shortcutsPanel} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leavePanel} />{/if}
   {#if screen.opened === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
-  {#if screen.opened === "commonplace" || screen.opened === "bookshelf"}
+  {#if isMenu(screen.opened)}
     {@const ns = screen.opened}
-    <Menu rows={screen.menuRows} empty={screen.menuEmpty} acts={reader ? [] : [...ACTS[ns]]} onAct={(i) => act(ns, i)} onClose={onCloseOpened} onLeave={leaveMenu} {onRoom} {onBack} />
+    <Menu name={ns} rows={screen.menuRows} empty={screen.menuEmpty} acts={menuActs(ns, !!reader)} onAct={(a) => act(ns, a)} onClose={onCloseOpened} onLeave={leaveMenu} {onRoom} {onBack} />
   {/if}
   <GotoToolbar bind:this={gotoToolbarEl} gotoToolbar={screen.gotoToolbar} {...gotoToolbar} />
   <ReplaceToolbar bind:this={replaceEl} replace={screen.replace} {...replace} />

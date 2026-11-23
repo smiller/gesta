@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { menuItems, menuKey, typedAhead, roomFor, MENU_ROOM_FROM } from "./menuModel.ts";
+import { menuItems, menuKey, typedAhead, roomFor, MENU_ROOM_FROM, menuActs, isMenu, givesFocusBack } from "./menuModel.ts";
 import type { MenuRow } from "./mastheadModel.ts";
 
 const SHELVED: MenuRow[] = [
@@ -72,5 +72,22 @@ describe("the room a menu makes", () => {
     expect(roomFor({ menuRight: 269, textLeft: 284, width: 1280 })).toBe(0);
     expect(roomFor({ menuRight: 269, textLeft: 24, width: MENU_ROOM_FROM - 1 })).toBe(0);
     expect(roomFor({ menuRight: 269, textLeft: 24, width: MENU_ROOM_FROM })).toBe(285);
+  });
+});
+
+describe("a menu's acts", () => {
+  it("are named by what they do, so their order is the menu's alone; a read-only page has none", () => {
+    expect(menuActs("bookshelf", false)).toEqual([{ text: "New author…", act: "new" }, { text: "Shelves…", act: "shelves" }]);
+    expect(menuActs("commonplace", false)).toEqual([{ text: "New commonplace…", act: "new" }]);
+    expect(menuActs("bookshelf", true)).toEqual([]);
+  });
+});
+
+describe("what is a menu, and the focus it gives back", () => {
+  it("the bookshelf and the commonplaces are menus; a panel or nothing is none", () => {
+    expect(["bookshelf", "commonplace", "help", "backups", null].map(isMenu)).toEqual([true, true, false, false, false]);
+  });
+  it("a menu taken down gives the focus back from itself, the body or nowhere, never from where a click put it", () => {
+    expect((["menu", "body", "none", "elsewhere"] as const).map(givesFocusBack)).toEqual([true, true, true, false]);
   });
 });
