@@ -567,8 +567,15 @@ alerts and places: arrived at commonplace/Lined: {"cursor":"at a line's start"}
 == the entry's top
 the entry's top: arrived at commonplace/Plain: {"cursor":"at a line's start"}
 an entry opening on a heading: {"below":0,"cursor":"at a line's start","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+a word on the first line double-clicked: {"selected":"Plain","clearOfAlerts":true,"overSelection":true,"textMoved":true,"cursor":"selected 5","screen":"commonplace/Plain · sel 5 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
+the selection collapsed: {"below":0,"cursor":"at a line's start","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 the entry's top: arrived at commonplace/Para: {"cursor":"at a line's start"}
 an entry opening on a paragraph: {"below":0,"cursor":"at a line's start","screen":"commonplace/Para · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the entry's top: arrived at commonplace/Verse First: {"cursor":"at a line's start"}
+an entry opening on a verse block: {"below":0,"cursor":"at a line's start","screen":"commonplace/Verse First · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the entry's top: arrived at commonplace/Grid First: {"cursor":"at a line's start"}
+an entry opening on a grid: {"below":0,"cursor":"at a line's start","screen":"commonplace/Grid First · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the entry's top: arrived at commonplace/Para: {"cursor":"at a line's start"}
 the source view: {"below":0,"cursor":"at a line's start","screen":"commonplace/Para · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
 the Go to row open: {"below":0,"cursor":"on select","screen":"commonplace/Para · sel none · bar off · panel none · rows goto · rendered · corner [whatever stood]"}
 == a work in stanzas

@@ -35,7 +35,7 @@ test("headerForMasthead: the band at the top or one of its rows called a header;
 
 test("popupByOldName: the Go to popup by its name before, in prose, an identifier or a CSS class; never a line or a bar alone", () => {
   for (const bad of ["the line bar", "Line bar", "lineBarActs", "LineBar.svelte", ".linebar .ask", "line-bar"]) expect(popupByOldName(bad), bad).toBe(true);
-  for (const good of ["the Go to popup", "a line", "the format bar", "a line, bar none", "linebreak"]) expect(popupByOldName(good), good).toBe(false);
+  for (const good of ["the Go to popup", "a line", "the format bar", "a line, bar none", "linebreak", "the line barely fits", "an underline bar"]) expect(popupByOldName(good), good).toBe(false);
 });
 
 // Milton's own preface to Samson Agonistes uses the verb.

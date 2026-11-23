@@ -34,9 +34,6 @@ function presses(doc: Node, typed: string, times: number, c = LINES): { at: stri
   return out;
 }
 const idOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said?.id ?? null;
-// the ids that say a box was given what is not its number, not that the number is not here
-const TYPED = new Set(["typeNumber", "romanOrArabic", "notANumber", "typeStanzaFor", "typeStanza", "typeStanzaOrLine", "notStanzaOrLine"]);
-const typedWrong = (id: string | null): boolean => !!id && TYPED.has(id);
 
 const two = parseMarkdown("::: verse\na\nb\nc\nd\n:::\n\nprose between\n\n::: verse 2\nx\ny\n:::");
 const mixed = parseMarkdown("::: prose\nSentence one. | Un.\nSentence two. | Deux.\n:::\n\n::: verse\nline one\nline two\nline three\n:::");
@@ -178,8 +175,8 @@ describe("the refusals", () => {
   });
   it("askCheck: empty, mixed numerals, and anything else named back as typed", () => {
     expect(says(two, "  ")).toBe("type a line number");
-    expect(typedWrong(idOf(two, "254"))).toBe(false);
-    expect(typedWrong(idOf(two, "xiv", LINES, "page"))).toBe(false);
+    expect(idOf(two, "254")).toBe("noUnitLongest");
+    expect(idOf(two, "xiv", LINES, "page")).toBe("noPageNumbers");
     expect(says(two, "xiv")).toBe("xiv is not a line number");
     expect(says(two, "9z", LINES, "page")).toBe("9z is not a page number");
     expect(says(two, "x9", LINES, "page")).toBe("use roman or arabic characters, not both");
@@ -234,7 +231,7 @@ describe("a page in stanzas: the Stanza and Line boxes", () => {
     expect(boxes("iiv", "1")).toBe("iiv is not a stanza number");
     expect(boxes("2", "2.1")).toBe("2.1 is not a line number");
     expect(boxes("2", "iii")).toBe("iii is not a line number");
-    expect(typedWrong(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "popup").said?.id ?? null)).toBe(true);
+    expect(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "popup").said?.id).toBe("notANumber");
   });
   it("a roman stanza is read in the modern form or the old print's additive one: iv and iiii are 4; a numeral in neither is not a number", () => {
     expect(boxes("iv", "")).toBe("no stanza 4 here — the last is 3");
@@ -325,7 +322,7 @@ describe("the words of a box that asks for a paragraph", () => {
     expect(says(two, "", PARAGRAPHS)).toBe("type a paragraph number");
     expect(says(two, "61x", PARAGRAPHS)).toBe("61x is not a paragraph number");
     expect(says(two, "", PARAGRAPHS, "page")).toBe("type a page number");
-    expect(typedWrong(idOf(two, "61", PARAGRAPHS))).toBe(false);
+    expect(idOf(two, "61", PARAGRAPHS)).toBe("nothingNumbered");
     expect(says(two, "")).toBe("type a line number");
   });
 });

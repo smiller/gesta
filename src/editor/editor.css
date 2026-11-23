@@ -16,9 +16,12 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
 body { font-family: var(--serif); line-height: 1.55; font-size: 18px; }
-/* no top margin: the alert area above is one, so the entry starts at its foot (pin: the entry's top › an entry opening on a heading) */
+/* no top margin: the alert area above is one, so the entry starts at its foot
+   (pin: the entry's top › an entry opening on a heading); an id's weight,
+   since a block's own margin, a verse's or a card's, outranks a class's
+   (pin: the entry's top › an entry opening on a verse block) */
 main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
-.page > :first-child { margin-top: 0; }
+#editor .page > :first-child { margin-top: 0; }
 
 /* what prosemirror-view's own stylesheet asks of the root */
 .ProseMirror { position: relative; white-space: pre-wrap; word-wrap: break-word; -webkit-font-variant-ligatures: none; font-variant-ligatures: none; }

@@ -277,7 +277,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     (a terminal's copy: whether some HTML is one, and the text it pastes
     as), `copy.ts` (what a copy
     says, `copyProps`).
-  - ⌃⌘G: `goto.ts` (`ask` and `bar`: the Go to popup and a link to a line alike,
+  - ⌃⌘G: `goto.ts` (`ask` and `popup`: the Go to popup and a link to a line alike,
     a stanza page by its Stanza and Line boxes), `landing.ts` (the landing
     mark). ⌃⌘E: `replace.ts`.
   - THE SURFACE, `surface.ts`: what the rendered view (`renderedView.ts`)

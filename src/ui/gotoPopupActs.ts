@@ -65,7 +65,6 @@ export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
     const view = session.view!;
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
-    /* a landing's word is an info; a line mistyped or absent is a warning */
     if (a.said) raise(a.said);
     return "pos" in a;
   };

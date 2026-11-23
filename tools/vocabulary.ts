@@ -20,4 +20,4 @@ const BAND_SENSE = /\b(?:the|a) header(?:['’]s)?\b|\bheader rows?\b|underHeade
 export const headerForMasthead = (line: string): boolean => BAND_SENSE.test(line.replace(OTHER_HEADER, ""));
 /* the popup ⌃⌘G opens goes to a page, a paragraph, a verse or a stanza as
    well as a line: it is the Go to popup */
-export const popupByOldName = (line: string): boolean => /line[ -]?bar/i.test(line.replace(RECORD, ""));
+export const popupByOldName = (line: string): boolean => /(?<![A-Za-z])[Ll]ine[ -]?[Bb]ar(?![a-z])/.test(line.replace(RECORD, ""));

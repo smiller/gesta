@@ -371,8 +371,20 @@ section("the entry's top", async () => {
   /* the entry starts at the alert area's foot, whatever its first block or view: the area is its top margin */
   await write("commonplace/Plain", "# Plain\n\nSome words.");
   await log("an entry opening on a heading", await belowAlerts());
+  const word = await page.evaluate(() => { const r = document.createRange(); r.selectNodeContents(document.querySelector(".page > h1")!.firstChild!); const b = r.getBoundingClientRect(); return { x: b.left + 4, y: b.top + b.height / 2 }; });
+  await page.mouse.dblclick(word.x, word.y);
+  await rest(page);
+  await log("a word on the first line double-clicked", await barAgainstAlerts());
+  await page.keyboard.press("ArrowRight");
+  await rest(page);
+  await log("the selection collapsed", await belowAlerts());
   await write("commonplace/Para", "Some words first.\n\n# Later");
   await log("an entry opening on a paragraph", await belowAlerts());
+  await write("commonplace/Verse First", "::: verse\nOne line\nTwo lines\n:::");
+  await log("an entry opening on a verse block", await belowAlerts());
+  await write("commonplace/Grid First", "::: grid\n::: card-light-green\nA card\n:::\n:::");
+  await log("an entry opening on a grid", await belowAlerts());
+  await write("commonplace/Para", "Some words first.\n\n# Later");
   await view(true);
   await log("the source view", await belowAlerts());
   await view(false);
@@ -381,8 +393,20 @@ section("the entry's top", async () => {
   await log("the Go to row open", await belowAlerts());
   await page.keyboard.press("Escape");
 });
-const belowAlerts = () => page.evaluate(([src]) => {
-  const foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
-  const first = document.querySelector(src) ?? document.querySelector(".page > :first-child");
-  return { below: first ? Math.round(first.getBoundingClientRect().top - foot) : null };
-}, [S.source]);
+/* read once the alert area has followed the masthead: a row the entry left drew it a frame lower than the text */
+const settledAlerts = () => page.waitForFunction(() => Math.round(document.querySelector(".alerts")!.getBoundingClientRect().top) === Math.round(document.querySelector(".site-head")!.getBoundingClientRect().bottom), null, { timeout: 2000 }).catch(() => {});
+const belowAlerts = async () => {
+  await settledAlerts();
+  return page.evaluate(([src]) => {
+    window.scrollTo(0, 0);
+    const foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
+    const first = document.querySelector(src) ?? document.querySelector(".page > :first-child");
+    return { below: first ? Math.round(first.getBoundingClientRect().top - foot) : null };
+  }, [S.source]);
+};
+const barAgainstAlerts = () => page.evaluate(() => {
+  const bar = document.querySelector(".fmt.show")?.getBoundingClientRect(), foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
+  const sel = getSelection()!.rangeCount ? getSelection()!.getRangeAt(0).getBoundingClientRect() : null;
+  const moved = parseFloat((document.querySelector("#editor") as HTMLElement).style.paddingTop) || 0;
+  return bar && sel ? { selected: getSelection()!.toString(), clearOfAlerts: bar.top >= foot, overSelection: bar.bottom <= sel.top, textMoved: moved > 0 } : { shown: false };
+});

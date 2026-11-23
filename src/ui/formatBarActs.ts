@@ -36,6 +36,11 @@ const barSelection = (view: BarView): Selection | null => {
 
 const drawn = (rect: DOMRect): boolean => !!(rect.width || rect.height);
 
+/* the bar is 39px tall and stands 10px over its anchor, so it needs 49px above
+   the selection and 8 more clear of the page's top: what it lacks, the text
+   moves down by, where a first line's bar covered the alert area (pin:
+   formatBarActs.test › the text moves down) */
+export const roomAbove = (selTop: number, pageTop: number): number => Math.max(0, pageTop + 57 - selTop);
 export function formatBar(d: FormatBarDeps): FormatBar {
   const { bar, buttons, session, raise, extract, mountEl, head } = d;
   /* THE FLOATING BAR: placed over the selection on every selection change
@@ -49,10 +54,20 @@ export function formatBar(d: FormatBarDeps): FormatBar {
     if (!view || session.mdView) return null;
     return barSuppressed ? null : view;
   };
+  /* the text moves only when a gesture settles, a button or a key let go:
+     moved under a drag or a scroll, it would stretch the selection or fight
+     the scroll (pin: the entry's top › a word on the first line double-clicked) */
+  let moved = 0;
+  const moveText = (by: number): void => { moved = by; mountEl.style.paddingTop = by ? by + "px" : ""; };
+  const settled = (rect: DOMRect): DOMRect => {
+    const by = roomAbove(rect.top - moved, visibleTop());
+    if (by === moved) return rect;
+    moveText(by);
+    return placedOver() ?? rect;
+  };
   const showAt = (view: BarView, rect: DOMRect): void => {
-    const floor = visibleTop() + 8;
     bar.left = rect.left + rect.width / 2;
-    bar.top = Math.max(rect.top, floor);
+    bar.top = Math.max(rect.top, visibleTop() + 8);
     bar.incode = inCode(view.state);
     bar.on = formatState(view.state);
     bar.canTag = buttons().canCreate;
@@ -66,20 +81,22 @@ export function formatBar(d: FormatBarDeps): FormatBar {
     const rect = view ? barSelection(view)?.getRangeAt(0).getBoundingClientRect() : undefined;
     return rect && drawn(rect) ? rect : null;
   };
-  const place = (): void => {
+  const hide = (): void => { bar.show = false; if (moved) moveText(0); };
+  const place = (settle = false): void => {
     const rect = placedOver();
-    if (rect) showAt(session.view!, rect);
-    else bar.show = false;
+    if (rect) showAt(session.view!, settle ? settled(rect) : rect);
+    else hide();
   };
-  document.addEventListener("selectionchange", () => requestAnimationFrame(place));
-  window.addEventListener("scroll", place, { passive: true });
+  document.addEventListener("selectionchange", () => requestAnimationFrame(() => place()));
+  for (const ev of ["mouseup", "keyup"]) document.addEventListener(ev, () => requestAnimationFrame(() => place(true)));
+  window.addEventListener("scroll", () => place(), { passive: true });
   /* a masthead row opening or closing moves the text under the bar (pin:
      alerts and surfaces › the format bar after
      Line numbering opens) */
-  new ResizeObserver(() => requestAnimationFrame(place)).observe(head);
+  new ResizeObserver(() => requestAnimationFrame(() => place())).observe(head);
   document.addEventListener("mousedown", () => { barSuppressed = false; });
   mountEl.addEventListener("keydown", () => { barSuppressed = false; });
-  const suppress = (): void => { barSuppressed = true; bar.show = false; };
+  const suppress = (): void => { barSuppressed = true; hide(); };
   const elsewhere: Record<string, () => void> = {
     reference: () => session.copyReference(),
     referenceAll: () => session.copyReference(true),
