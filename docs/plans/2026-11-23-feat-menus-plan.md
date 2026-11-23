@@ -181,3 +181,10 @@ conversation.
   9. The menu area's position readings sat in the menus section: a
      section of their own, "menu area", a layout check.
   10. The watch checker searched only .ts: the approved runs too.
+- 13:10, found at the reader's hand-check of A18 (step 2): a click on the
+  open entry's own row in a menu left the caret nowhere; Enter gave it
+  back. The click closed as "chosen" without asking whether the row was
+  the open entry (MEASURED: a probe on the backup's Ovid, Enter "text",
+  click "body"). A plain click now chooses as Enter does; a modified one
+  closes as "stayed". Shift with an arrow (step 3) worked once the
+  reader's page was reloaded.

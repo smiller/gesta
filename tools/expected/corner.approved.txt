@@ -723,6 +723,7 @@ menus: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 closed by Escape: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 closed by Tab: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 closed by icon: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+closed by a click on the open entry's row: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == menu area
 menu area: arrived at commonplace/Three Cards: {"cursor":"at a line's start"}
 three cards at 1400 px, the menu open: {"menuArea":"288","cursor":"on nav","screen":"commonplace/Three Cards · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}

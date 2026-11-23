@@ -35,16 +35,22 @@ async function keysOverRows(seeded: boolean): Promise<void> {
   await page.keyboard.press("Escape");
 }
 async function focusBack(): Promise<void> {
-  /* the caret where it stood, after Escape, Tab and the icon pressed again */
+  /* the caret where it stood, after Escape, Tab, the icon pressed again and a click on the open entry's own row */
   await go("commonplace/Horace");
   await caretAt("Maecenas", 4);
+  const after = async () => ({ menu: await R.menu(page), beforeCaret: (await R.menuNow(page)).beforeCaret });
   for (const close of ["Escape", "Tab", "icon"]) {
     await page.click(S.bookshelfOpener);
     await rest(page);
     if (close === "icon") await page.click(S.bookshelfOpener); else await page.keyboard.press(close);
     await rest(page);
-    await log("closed by " + close, { menu: await R.menu(page), beforeCaret: (await R.menuNow(page)).beforeCaret });
+    await log("closed by " + close, await after());
   }
+  await page.click(S.commonplaceOpener);
+  await rest(page);
+  await page.click('.menu a[href="#commonplace/Horace"]');
+  await rest(page);
+  await log("closed by a click on the open entry's row", await after());
 }
 section("menu area", async () => {
   /* a layout check: where the page stands beside an open menu, read as positions */

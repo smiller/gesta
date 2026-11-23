@@ -26,6 +26,14 @@
     els[at]?.scrollIntoView({ block: "nearest" });
   });
   const hover = (j: number): void => { if (j !== sel) { byPointer = true; menus.onHover(j); } };
+  /* a plain click chooses as Enter does, so the open entry's own row gives
+     the focus back; a modified one opens elsewhere and leaves this window
+     where it is (pin: menus › closed by a click on the open entry's row) */
+  const rowClicked = (e: MouseEvent, j: number): void => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) { menus.onClose("stayed"); return; }
+    e.preventDefault();
+    menus.onChoose(j);
+  };
   function opened(el: HTMLElement): { destroy(): void } {
     el.focus({ preventScroll: true });
     menus.onMounted(el.getBoundingClientRect().right);
@@ -39,7 +47,7 @@
 <nav class="menu" tabindex="-1" bind:this={nav} use:opened onkeydown={(e) => { if (menus.onKey(e)) e.preventDefault(); }} onfocusout={onLeave}>
   {#each rows as r, i (r.href || "shelf " + r.text)}
     {#if r.shelf}<span class="shelf">{r.text}</span>
-    {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => hover(rowItem.get(i)!)} onclick={() => menus.onClose("chosen")}>{r.text}</a>{/if}
+    {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => hover(rowItem.get(i)!)} onclick={(e) => rowClicked(e, rowItem.get(i)!)}>{r.text}</a>{/if}
   {/each}
   {#if !rows.length && empty}<span class="menu-empty">{empty}</span>{/if}
   {#each acts as a, k (a.text)}
