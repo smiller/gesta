@@ -166,10 +166,13 @@ must keep is restated here.
   files. Not in the Stop hook: it is a judgement that always finds a
   candidate. A batch made only of an architecture run's own builds gets
   its review but no further architecture run: its files are the ones that
-  run just read. Each candidate is grilled, then built test-first or set
-  aside for now; an ADR in `docs/adr/`, which the skill reads, is written
-  only when the reader asks that a candidate not be raised again. "It
-  suggests nothing" means every candidate built or set aside. Its cost is
+  run just read. A Strong candidate is grilled, then built test-first or
+  set aside for now; a Worth-exploring one gets one decision: built now,
+  kept on the W list (Worth exploring) with its files and the friction
+  the run saw, or dismissed, to come up again if the code makes it
+  stronger. An ADR in `docs/adr/`, which the skill reads, is written only
+  when the reader asks that a candidate not be raised again. "It suggests
+  nothing" means every candidate built, kept or set aside. Its cost is
   recorded like a review's.
 - THE GATE: no review-shaped call while `src/` or `index.html` has moved
   past the last acceptance. Finish the work, make the suite green, tell the

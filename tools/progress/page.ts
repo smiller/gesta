@@ -5,7 +5,7 @@ import { dayEvents, today, clock as wallClock, neighbours, logNames, type Days }
 import { inOrder, minutes, type Gap, type Order, type Piece, type Span } from "./spans.ts";
 import { replay, counts, isOpen, isDone, isUnderway, own, LISTS, type Event, type Item, type List, type Stamp, type Status, type Tally } from "./events.ts";
 
-const NAME: Record<List, string> = { U: "User requests", A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions", P: "Process" };
+const NAME: Record<List, string> = { U: "User requests", A: "Architecture queue", S: "Side list", L: "For later", B: "Bigger questions", W: "Worth exploring", P: "Process" };
 const CHIP: Record<Status, [string, string]> = {
   "unstarted": ["s-open", "unstarted"], "in progress": ["s-prog", "in progress"], "paused": ["s-paused", "paused"], "done": ["s-done", "done"],
   "done, spawned open": ["s-part", "done · spawned open"], "moved": ["s-moved", "moved"], "dropped": ["s-dropped", "dropped"],

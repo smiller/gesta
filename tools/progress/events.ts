@@ -1,4 +1,4 @@
-export type List = "U" | "A" | "S" | "L" | "B" | "P";
+export type List = "U" | "A" | "S" | "L" | "B" | "W" | "P";
 export interface Stamp { at: string; approx: boolean }
 interface Base { at: string; approx?: boolean }
 export type Event = Base & (
@@ -59,7 +59,7 @@ function begun(it: Item): Status {
 }
 /* THE ONE PLACE a label's group is said: written out at each use, adding
    "paused" meant finding every copy (pin: events.test › which labels are open) */
-export const LISTS: List[] = ["U", "A", "S", "L", "B", "P"];
+export const LISTS: List[] = ["U", "A", "S", "L", "B", "W", "P"];
 const OPEN = new Set<Status>(["unstarted", "in progress", "paused"]);
 const UNDERWAY = new Set<Status>(["in progress", "paused"]);
 const DONE = new Set<Status>(["done", "done, spawned open"]);

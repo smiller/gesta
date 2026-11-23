@@ -50,3 +50,12 @@
 {"at":"2026-11-23T12:12","ev":"start","id":"A17.1.4"}
 {"at":"2026-11-23T12:14","ev":"start","id":"A17.1.5"}
 {"at":"2026-11-23T12:15","ev":"start","id":"A17.1.6"}
+{"at":"2026-11-23T12:23","ev":"done","id":"A17.1.4","commits":["13d7e0f"]}
+{"at":"2026-11-23T12:23","ev":"done","id":"A17.1.5","commits":["13d7e0f"]}
+{"at":"2026-11-23T12:23","ev":"done","id":"A17.1.6","commits":["13d7e0f"]}
+{"at":"2026-11-23T12:23","ev":"done","id":"A17.1","commits":["62aac6b","75e9ccd","7e692a4","13d7e0f"],"note":"walk 124,362 tokens; 2, 1, 3, 4, 5 and 6(a) built, 6(b) to B7"}
+{"at":"2026-11-23T12:26","ev":"add","id":"A18","list":"A","title":"The batch review: /code-review at HIGH over 07fed95..HEAD","detail":"Asked: /code-review high 07fed95..HEAD, typed at 12:26. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-23T12:26","ev":"start","id":"A18"}
+{"at":"2026-11-23T12:31","ev":"add","id":"P17","list":"P","title":"No whole verdict until the comment and title ledgers are read; only the touched sections while building","detail":"Asked: yes to the proposals after U8 (2026-11-23). Why: ten whole verdicts played that morning at about 4 min 40 s each, at least two only because comments were edited after a run (08:30 then 08:43, 11:15 then 11:26). Done when: CLAUDE.md's verdict clause and memory say it."}
+{"at":"2026-11-23T12:31","ev":"add","id":"P18","list":"P","title":"A W list, Worth exploring, for architecture candidates kept for later","detail":"Asked: \"Maybe we add a W- list for Worth exploring?\", then yes (2026-11-23). Why: the B list is for bigger questions, and a Worth-exploring candidate not built now was either dropped or misfiled there (B7). Done when: the progress tool takes W, drawn after the bigger questions and before Process, by a test; B7 moved to W1; CLAUDE.md's architecture clause says each Worth-exploring candidate is built now, put on W or dismissed."}
+{"at":"2026-11-23T12:31","ev":"start","id":"P18"}

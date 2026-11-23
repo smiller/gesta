@@ -26,6 +26,12 @@ test("the process list comes last, after every list of the app's own work", () =
   expect(rows(html).at(-1)).toBe("P1");
 });
 
+test("the worth-exploring list stands after the bigger questions and before the process", () => {
+  const html = page([...day, { at: at("10:10"), ev: "add", id: "P1", list: "P", title: "a tool" }, { at: at("10:11"), ev: "add", id: "W1", list: "W", title: "a candidate kept" }], { day: "2026-11-15" });
+  expect(headings(html)).toEqual(["Architecture queue", "Side list", "Bigger questions", "Worth exploring", "Process"]);
+  expect(rows(html).slice(-2)).toEqual(["W1", "P1"]);
+});
+
 test("the reader's own requests come first, before every other list", () => {
   const html = page([...day, { at: at("10:10"), ev: "add", id: "U1", list: "U", title: "a reference across verse blocks" }], { day: "2026-11-15" });
   expect(headings(html)).toEqual(["User requests", "Architecture queue", "Side list", "Bigger questions"]);
