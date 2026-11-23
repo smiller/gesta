@@ -69,7 +69,7 @@ link?" A link was followed only by a mouse press (`links.ts`).
   `holdsHere` become `openAddress`, both answers worked out in menuActs
   through nav.ts and tested there with a bare comma and `?line=5`. The
   verdict played whole and passed unchanged.
-- 18:58 A22.1.2: ⌃⌘Enter is the editor's own key (`followAtCaret` in
+- 18:49 A22.1.2: ⌃⌘Enter is the editor's own key (`followAtCaret` in
   links.ts, installed by `keydownHandler` in createEditor beside the click
   handlers), over `LinkPorts`: route, and open for the new tab, which the
   session gives as `window.open`. The session's binding, its in-text guard
