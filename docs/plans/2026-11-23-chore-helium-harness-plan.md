@@ -133,3 +133,13 @@ fail too often to show a byte-identical run.
   order run read "column marks" otherwise once; its received copy was
   gone when the next play passed. The Stop hook's suite, run beside the
   plays, failed a 100 ms wall-clock bound (261.6 ms): F3. P20 done.
+- 15:25-15:37, P21 built (the deal by each section's last time, the
+  merge by printed place, the times kept in tools/out) and dropped. On
+  the saved times the five windows' work evened from 55.6-78.1 s to
+  68.7-69.0 s; played, the corner run's windows took 47-68 s in turn
+  (68 s to the last) and 46-71 s by time (71 s); four whole verdicts
+  87.73 s in turn, then 90.65, 86.14, 90.15 s by time, all passing.
+  A section's time moves too much from run to run to plan by. Asked:
+  "Yes, let's drop P21, with a record of why. This might actually be a
+  case where a docs/adrs/ describing why we aren't doing something
+  makes sense." The files went back to HEAD; docs/adr/0001 records it.
