@@ -15,7 +15,8 @@ import { isDayKey, tagParts, entryKey } from "../store/keys.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING } from "../store/search.ts";
 import { resultLabel } from "./searchModel.ts";
-import { trimLabel, LABEL_CAP, ECHO_CAP } from "./mastheadModel.ts";
+import { LABEL_CAP } from "./mastheadModel.ts";
+import { trimLabel } from "../model/trim.ts";
 import { type Bookmark, bookmarkParts, ALIAS_RE, aliasedBookmarks, numberedBookmarks, aliasHolder, bookmarkIndex, bookmarksFull } from "../store/bookmarks.ts";
 import { said, type Said } from "../model/alertText.ts";
 
@@ -41,7 +42,7 @@ export function bookmarkFoot(list: Bookmark[], here: string, journal: Journal): 
   if (bookmarksFull(list)) return { full: true };
   return { full: false, name: trimLabel(bookmarkLabel(here, journal), LABEL_CAP) };
 }
-export const alreadyOn = (key: string, journal: Journal): Said => said("alreadyOn", { label: trimLabel(bookmarkLabel(key, journal), ECHO_CAP) });
+export const alreadyOn = (key: string, journal: Journal): Said => said("alreadyOn", { label: bookmarkLabel(key, journal) });
 export function aliasCandidates(list: Bookmark[], buf: string): Bookmark[] {
   return aliasedBookmarks(list).filter((b) => b.alias.indexOf(buf) === 0);
 }

@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { ALERTS, alertWords, alertKind, alertMs, said, type AlertId } from "./alertText.ts";
+import { ALERTS, PHRASES, alertWords, alertKind, alertMs, said, type AlertId } from "./alertText.ts";
 
 test("an alert's words by its id: fixed words as they are, words with parameters filled in", () => {
   expect(alertWords(said("saved"))).toBe("saved");
@@ -30,4 +30,15 @@ test("a count of entries says entry for one and entries for any other", () => {
   expect(alertWords(said("indexed", { n: 1 }))).toBe("indexed 1 entry");
   expect(alertWords(said("exportedPicturesMissing", { n: 1, missing: 2 }))).toBe("exported 1 entry — 2 pictures missing");
   expect(alertWords(said("exportedSomeFailed", { n: 1, failed: 1, missing: 0 }))).toBe("exported 1 entry; 1 file(s) failed");
+});
+
+test("an alert quoting what was typed, a page or a bookmark's name and key cuts it at 24 characters; a refused fence quotes its word in full", () => {
+  const long = "abcdefghijklmnopqrstuvwxyz0123";
+  const cut = "abcdefghijklmnopqrstuvw…";
+  expect(alertWords(said("notANumber", { typed: long, noun: "line" }))).toBe(cut + " is not a line number");
+  expect(alertWords(said("notStanzaOrLine", { typed: long }))).toBe(cut + " is not a stanza or stanza.line, like 2.1");
+  expect(alertWords(said("noPage", { page: long }))).toBe("no page " + cut + " here");
+  expect(alertWords(said("alreadyOn", { label: long }))).toBe("already on " + cut);
+  expect(alertWords(said("keyTaken", { key: long, label: long }))).toBe("“" + cut + "” already goes to " + cut);
+  expect(PHRASES.notANumber({ typed: long, noun: "stanza" })).toBe(long + " is not a stanza number");
 });

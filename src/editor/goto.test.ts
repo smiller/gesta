@@ -381,3 +381,11 @@ describe("a work of prose by paragraph and verse by line, beyond the popup's two
     expect("pos" in ask(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM, { page: "3" }, FRESH, "popup")).toBe(true);
   });
 });
+
+describe("what each box finds", () => {
+  it("is read once with its label: on a page in stanzas, whatever the work's convention, the popup asks Stanza and Line, and no word reaches the paragraphs", () => {
+    const stanzas = parseMarkdown("::: stanza 1\nOne line\nTwo lines\n:::");
+    expect(popup(stanzas, PROSIMETRUM).kind).toBe("stanza");
+    expect(idOf(stanzas, "1", PROSIMETRUM, "page")).toBe("noPageNumbers");
+  });
+});

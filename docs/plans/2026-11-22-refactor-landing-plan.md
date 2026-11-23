@@ -32,10 +32,10 @@ explore 2 with 1 folded in", yes to seven questions, then "Go".
 
 ## Record
 - The architecture run's cost: the walk, 138,554 tokens (its transcript's
-  last message). Its five candidates: 2 and 1 built here; 3 (the popup's
-  boxes decided twice), 4 (the echo cap in the alert's words) and 5 (a
-  namespace's shelved roots listed three times, after U8) set aside for
-  now, no ADR.
+  last message). Its five candidates: 2 and 1 built here; 3 and 4 built
+  next (docs/plans/2026-11-22-refactor-boxes-and-echo-plan.md); 5 queued
+  behind U8 (A15.1.2), asked: "Set aside 5, maybe make a note to look at it
+  once U8 is done."
 - Built: landingActs.ts with `answer`, `forgetAsked`, `caretBack`,
   `unmark`, `followSoon`, `centreSoon`, `replayOwed`, over a page port and
   a hand port (`windowPage`, `windowHand` the browser's); the ask and its

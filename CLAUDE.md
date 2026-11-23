@@ -252,7 +252,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   grammar, and the pure string transforms both arms share), `table.ts` (a markdown table's lines: where one
   starts, its cells read and written), `parse.ts`, `serialize.ts`, `tokens.ts`
   (syntax highlighting's tokenizer), `fenceRefusals.ts` (the `:::` lines a
-  parse left as paragraphs, with their reasons), `flatten.ts` (the document
+  parse left as paragraphs, with their reasons), `trim.ts` (a name or what was typed, cut at a cap),
+  `flatten.ts` (the document
   as one character stream with a position map, which every search site and
   the view switch share), `alertText.ts` (every alert by id: its words,
   kind, when it is raised and its time on screen).

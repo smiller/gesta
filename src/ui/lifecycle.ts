@@ -13,7 +13,7 @@ import { imageRefs } from "../store/exportEntries.ts";
 import { splitKey } from "../store/keys.ts";
 import { pictureKey } from "../store/names.ts";
 import { unnamed, picturesOf } from "../store/pictures.ts";
-import { rootLabel, trimLabel, ECHO_CAP } from "./mastheadModel.ts";
+import { rootLabel } from "./mastheadModel.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, headingRefusal, cutsHeading, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";
@@ -474,7 +474,7 @@ export function lifecycle(deps: LifecycleDeps): Lifecycle {
     if (!dialogs.confirm(deleteConfirm(date, tag, shownName(date, tag)))) return done;
     return removeAt(date, tag);
   }
-  const goRoot = (ns: string, root: string): void => session.goto(entryHash(ns, root), said("alreadyOn", { label: trimLabel(rootLabel(ns, root, journal), ECHO_CAP) }));
+  const goRoot = (ns: string, root: string): void => session.goto(entryHash(ns, root), said("alreadyOn", { label: rootLabel(ns, root, journal) }));
   function knownRoot(ns: string, name: string, raw: string | null): string | null {
     if (registered(keysNow(), ns, name)) return name;
     const asTyped = [(raw || "").trim().toLowerCase(), name.toLowerCase()];

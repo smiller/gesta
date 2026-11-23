@@ -1,3 +1,5 @@
+import { trimLabel } from "./trim.ts";
+
 export type Kind = "error" | "warning" | "info" | "success";
 type Words = string | ((p: never) => string);
 interface Entry<W extends Words = Words, K extends Kind = Kind> { kind: K; words: W; when: string; ms?: number }
@@ -37,6 +39,10 @@ const moved = (p: { to: string; verb: "moved" | "renamed"; o: MoveOutcome }): st
 const refiled = (p: { root: string; o: MoveOutcome }): string =>
   outcome("filed under " + p.root + " — " + entriesText(p.o.moved) + " moved" + lostText(p.o.lost ?? 0), p.o);
 
+/* how much of what was typed, or of a name, an alert quotes back: short,
+   since it lands mid-sentence (pin: alertText.test › an alert quoting what
+   was typed) */
+const echo = (s: string): string => trimLabel(s, 24);
 /* which of several blocks a landing is in */
 interface Of { form: string; nth: number; of: number }
 /* words that stand inside alerts, never alone */
@@ -114,7 +120,7 @@ export const ALERTS = {
   refNumberedApart: warning("Those verse blocks aren’t numbered straight on — reference them one at a time", "⌃⌘R over verse blocks numbered apart."),
   refNoTranslation: warning("No translation lines selected — Ref (all) quotes the Latin too", "Ref over a dual-language block with no English selected."),
   alreadyHere: warning("already here", "A link or a go-to row to the entry already open."),
-  alreadyOn: warning((p: { label: string }) => "already on " + p.label, "A bookmark’s link, or a contents link to an author or a book, pressed on the entry it goes to."),
+  alreadyOn: warning((p: { label: string }) => "already on " + echo(p.label), "A bookmark’s link, or a contents link to an author or a book, pressed on the entry it goes to."),
   alreadyOnToday: warning("already on today", "⌃⌘T on today’s entry."),
   noSuch: warning((p: { noun: string }) => "no such " + p.noun, "An address naming an entry that does not exist: “no such book”, “no such commonplace”, or a sub-entry’s noun."),
   fencesPasted: warning((p: { refused: FenceRefusal[] }) => refusedText(p.refused), "A paste holding fences Gesta does not know: one line each, with why."),
@@ -142,7 +148,7 @@ export const ALERTS = {
   noLinkInLink: warning("no link inside a link", "A link placed with the cursor in a link."),
   noLinkInHeading: warning("no link inside a heading — place your cursor below it", "A new entry’s link placed with the cursor in, or a selection cutting into, a heading."),
   keyShape: warning("a letter b to z, then letters or digits — a adds, a leading digit jumps", "A bookmark key given in a shape keys do not take."),
-  keyTaken: warning((p: { key: string; label: string }) => "“" + p.key + "” already goes to " + p.label, "A bookmark key given that another bookmark has."),
+  keyTaken: warning((p: { key: string; label: string }) => "“" + echo(p.key) + "” already goes to " + echo(p.label), "A bookmark key given that another bookmark has."),
   proseTab: warning("⌃⌘M toggles markdown", "Tab in prose with nothing selected, or in an empty quote."),
   tabOneBlock: warning("Tab indents one list, quote, or code block at a time", "Tab with text selected in prose, or over a selection that spills out of a quote."),
   noLineNumbers: warning("no line numbers here", "⌃⌘L on an entry with no numbered lines."),
@@ -167,17 +173,17 @@ export const ALERTS = {
   unitsRange: warning((p: { unit: string; first: number | string; last: number | string }) => "the " + p.unit + "s here are " + p.first + "–" + p.last, "⌃⌘G, or a link to a line, with a number not in the entry’s one numbered block."),
   noParagraph: warning((p: { n: number; low: number; high: number }) => "no paragraph " + p.n + " — the paragraphs here are " + p.low + "–" + p.high, "⌃⌘G, or a link to a line, with a paragraph number not on the page."),
   noPageNumbers: warning("no page numbers here", "⌃⌘G with a page, on an entry with no page labels."),
-  noPage: warning((p: { page: string }) => "no page " + p.page + " here", "⌃⌘G with a page not in the entry."),
+  noPage: warning((p: { page: string }) => "no page " + echo(p.page) + " here", "⌃⌘G with a page not in the entry."),
   typeNumber: warning((p: { noun: string }) => "type a " + p.noun + " number", "Enter in the Go to popup with its box empty, or a link to a line that names no number."),
   romanOrArabic: warning("use roman or arabic characters, not both", "A page typed with roman and arabic characters together."),
-  notANumber: warning((p: { typed: string; noun: string }) => PHRASES.notANumber(p), "A box of the Go to popup, or a link to a line, given what is not its kind of number."),
+  notANumber: warning((p: { typed: string; noun: string }) => PHRASES.notANumber({ ...p, typed: echo(p.typed) }), "A box of the Go to popup, or a link to a line, given what is not its kind of number."),
   noStanzas: warning("no stanzas here", "A stanza asked for on a page with no stanzas."),
   noStanza: warning((p: { s: number; last: number }) => "no stanza " + p.s + " here — the last is " + p.last, "⌃⌘G, or a link to a line, with a stanza past the page’s last."),
   noLineInStanza: warning((p: { l: number | undefined; s: number; count: number }) => "no line " + p.l + " in stanza " + p.s + " — it has " + count(p.count, " line", " lines"), "⌃⌘G, or a link to a line, with a line past its stanza’s last."),
   typeStanzaFor: warning((p: { line: string }) => "type a stanza for line " + p.line, "⌃⌘G with a line and no stanza, on a page in stanzas."),
   typeStanza: warning("type a stanza number", "Enter with the Stanza and Line boxes both empty."),
   typeStanzaOrLine: warning("type a stanza, or stanza.line", "A link to a page in stanzas that names no stanza."),
-  notStanzaOrLine: warning((p: { typed: string }) => p.typed + " is not a stanza or stanza.line, like 2.1", "A link to a page in stanzas whose number is not a stanza or stanza.line."),
+  notStanzaOrLine: warning((p: { typed: string }) => echo(p.typed) + " is not a stanza or stanza.line, like 2.1", "A link to a page in stanzas whose number is not a stanza or stanza.line."),
   nothingNumbered: warning((p: { what: string }) => "no " + p.what + " numbers here", "⌃⌘G on an entry with nothing numbered; or a paragraph asked for, by ⌃⌘G or a link, on a page of a work referenced by paragraph that holds no `::: prose` block."),
   switchToGo: warning((p: { what: string }) => "Switch to the rendered view to go to " + p.what, "⌃⌘G in the markdown view."),
   finishKey: warning("finish the key", "Enter on a bookmark key typed part-way that more than one key starts with."),

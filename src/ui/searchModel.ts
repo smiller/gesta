@@ -10,7 +10,8 @@ import { rootGroups, type ShelfGroup } from "../store/shelves.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_COMMONPLACES, bookScope, type Scope, type Result } from "../store/search.ts";
-import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
+import { rootLabel, LABEL_CAP } from "./mastheadModel.ts";
+import { trimLabel } from "../model/trim.ts";
 
 export interface ScopeOption { label: string; scope: Scope; group: string | null }
 export function defaultScope(date: string, tag: string | null): Scope {

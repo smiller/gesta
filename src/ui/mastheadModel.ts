@@ -16,6 +16,7 @@ import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
 import { rootGroups } from "../store/shelves.ts";
+import { trimLabel } from "../model/trim.ts";
 
 export interface Crumb { text: string; href: string | null; title: string }
 export interface Link { text: string; href: string }
@@ -60,17 +61,8 @@ export function mastheadModel(date: string, tag: string | null, w: Where): Masth
 }
 
 /* the row-label cap every list surface shares, so their truncation of an
-   untrusted name cannot drift apart (pin: mastheadModel.test › trimLabel);
-   and how much of what was TYPED a refusal may quote back, shorter because
-   it lands mid-sentence */
+   untrusted name cannot drift apart */
 export const LABEL_CAP = 60;
-export const ECHO_CAP = 24;
-export function trimLabel(s: string, max: number): string {
-  if (s.length <= max) return s;
-  let cut = max - 1;
-  if (/[\uD800-\uDBFF]/.test(s.charAt(cut - 1))) cut--;
-  return s.slice(0, cut) + "…";
-}
 export function panelRows(ns: string, keys: string[], journal: Journal, shelvesMd = ""): PanelRow[] {
   const row = (name: string, under: boolean): PanelRow => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name), ...(under ? { shelved: true as const } : {}) });
   return rootGroups(ns, childrenOf(keys, ns), shelvesMd, null).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))

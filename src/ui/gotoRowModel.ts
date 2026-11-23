@@ -17,7 +17,8 @@ import { isDayKey, nsOf, tagParts, entryKey, entryHash, monthLabel, capitalized,
 import { dayKeys, childrenOf } from "../store/lists.ts";
 import { subEntryOrder, subEntryDisplayList, type Bearing, type OrderMemo, type SubOrder } from "../store/contents.ts";
 import type { Journal } from "../store/reference.ts";
-import { rootLabel, trimLabel, LABEL_CAP } from "./mastheadModel.ts";
+import { rootLabel, LABEL_CAP } from "./mastheadModel.ts";
+import { trimLabel } from "../model/trim.ts";
 import { nsGroupLabel } from "./searchModel.ts";
 import { rootGroups, SHELVES, type ShelfGroup } from "../store/shelves.ts";
 

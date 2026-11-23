@@ -17,7 +17,6 @@ import { schema } from "../model/schema.ts";
 import { hasPages, pages } from "./pages.ts";
 import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
 import type { Conventions } from "../store/conventions.ts";
-import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
 import { said, type Said } from "../model/alertText.ts";
 type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse" | "proseByParagraphVerseByLine">;
 
@@ -150,7 +149,7 @@ function pageHit(doc: Node, tok: string): { pos: number } | null {
   return leaf ? { pos: leaf.pos } : null;
 }
 function pageRefusal(doc: Node, tok: string): Said {
-  return !pages(doc).length ? said("noPageNumbers") : said("noPage", { page: trimLabel(tok, ECHO_CAP) });
+  return !pages(doc).length ? said("noPageNumbers") : said("noPage", { page: tok });
 }
 function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): Said | null {
   const a = ask.trim();
@@ -158,7 +157,7 @@ function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): Said |
   if (!a) return said("typeNumber", { noun });
   const ok = kind === "page" ? PAGE_ONE.test(a) : PAGE_ARABIC.test(a);
   if (ok) return null;
-  return kind === "page" && PAGE_CHARS_RE.test(a) ? said("romanOrArabic") : said("notANumber", { typed: trimLabel(a, ECHO_CAP), noun });
+  return kind === "page" && PAGE_CHARS_RE.test(a) ? said("romanOrArabic") : said("notANumber", { typed: a, noun });
 }
 
 /* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).
@@ -168,7 +167,7 @@ function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): Said |
 function stanzaAskCheck(ask: string): Said | null {
   const a = ask.trim();
   if (!a) return said("typeStanzaOrLine");
-  return /^\d+(?:\.\d+)?$/.test(a) ? null : said("notStanzaOrLine", { typed: trimLabel(a, ECHO_CAP) });
+  return /^\d+(?:\.\d+)?$/.test(a) ? null : said("notStanzaOrLine", { typed: a });
 }
 /* the page, not its work: a plain verse entry beside stanza entries (the
    commendatory verses) has none (pin: goto.test › a page holding a
@@ -222,13 +221,22 @@ function proseAndVerse(doc: Node): PopupLabels {
   if (verse && proseHere) return { kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" };
   return { kind: verse ? "line" : proseHere ? "page" : "none", label: "Line", pageLabel: "Paragraph" };
 }
-/* stanzas and printed pages keep the popup their fences ask for, whatever the work's convention */
-const labels = (doc: Node | null, c: Asked): PopupLabels =>
-  doc && c.proseByParagraphVerseByLine && !hasStanzas(doc) && !hasPages(doc) ? proseAndVerse(doc) : { kind: doc ? askKind(doc) : "none", label: lineLabel(c), pageLabel: "Page" };
+/* what the line box and the second box find on this entry, read with their
+   labels so a box never finds what its label does not say: stanzas and
+   printed pages keep the popup their fences ask for, whatever the work's
+   convention (pin: goto.test › is read once with its label) */
+type Finds = { line: "stanza" | "number"; page: "paragraph" | "page" };
+const byForm = (doc: Node, c: Asked): boolean => c.proseByParagraphVerseByLine && !hasStanzas(doc) && !hasPages(doc);
+function boxesOf(doc: Node | null, c: Asked): PopupLabels & { finds: Finds } {
+  if (!doc) return { kind: "none", label: lineLabel(c), pageLabel: "Page", finds: { line: "number", page: "page" } };
+  if (byForm(doc, c)) return { ...proseAndVerse(doc), finds: { line: "number", page: "paragraph" } };
+  return { kind: askKind(doc), label: lineLabel(c), pageLabel: "Page", finds: { line: hasStanzas(doc) ? "stanza" : "number", page: "page" } };
+}
 /* the popup as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
 export function popup(doc: Node | null, c: Asked): PopupLabels & { none: Said; inSource: Said } {
-  return { ...labels(doc, c), none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
+  const { finds: _, ...labels } = boxesOf(doc, c);
+  return { ...labels, none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
 export type Answer = { pos: number; asked: number | string; said: Said | null } | { said: Said };
@@ -275,10 +283,10 @@ function stanzaNumber(typed: string): number | null {
    ⌃⌘G stanza 2, line 1) (pin: stanza › ⌃⌘G line 3, no stanza) */
 function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing): Answer {
   const st = stanza.trim(), ln = line.trim();
-  if (ln && !/^\d+$/.test(ln)) return refused(said("notANumber", { typed: trimLabel(ln, ECHO_CAP), noun: "line" }));
+  if (ln && !/^\d+$/.test(ln)) return refused(said("notANumber", { typed: ln, noun: "line" }));
   if (!st) return refused(ln ? said("typeStanzaFor", { line: ln }) : said("typeStanza"));
   const n = stanzaNumber(st);
-  if (n === null) return refused(said("notANumber", { typed: trimLabel(st, ECHO_CAP), noun: "stanza" }));
+  if (n === null) return refused(said("notANumber", { typed: st, noun: "stanza" }));
   return placed(stanzaAt(doc, n, ln ? parseInt(ln, 10) : undefined), standing);
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only
@@ -302,7 +310,8 @@ function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from
    a link to a line › a link to a stanza, and line) */
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
 export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "popup" | "link"): Answer {
-  if ("page" in words) return c.proseByParagraphVerseByLine && !hasPages(doc) ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
+  const { finds } = boxesOf(doc, c);
+  if ("page" in words) return finds.page === "paragraph" ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
-  return hasStanzas(doc) ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);
+  return finds.line === "stanza" ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);
 }

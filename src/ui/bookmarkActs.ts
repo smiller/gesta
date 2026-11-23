@@ -7,7 +7,6 @@ import { linkRefusal, insertLinkAfter, linkMarkdown } from "../editor/insertLink
 import { mdLabel } from "../store/reference.ts";
 import { bookmarkIndex, bookmarkParts, reachableBookmarks, aliasHolder, aliasRefusal, setBookmarkAlias, addBookmark, bookmarksFull, numberedBookmarks, type Bookmark } from "../store/bookmarks.ts";
 import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn, typeAlias, resolveAlias, aliasCandidates, type Resolved } from "./bookmarksModel.ts";
-import { trimLabel, ECHO_CAP } from "./mastheadModel.ts";
 import type { Raise } from "../model/alertText.ts";
 
 export type BookmarkAct = "jump" | "del" | "key" | "link";
@@ -110,7 +109,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     const key = bm.editing, alias = typed.trim().toLowerCase();
     if (!key) return;
     const holder = aliasHolder(marks.list(), alias);
-    if (holder && holder.key !== key) { raise("keyTaken", { key: alias, label: trimLabel(bookmarkLabel(holder.key, journal), ECHO_CAP) }); return; }
+    if (holder && holder.key !== key) { raise("keyTaken", { key: alias, label: bookmarkLabel(holder.key, journal) }); return; }
     const why = aliasRefusal(alias);
     if (why) { raise(why); return; }
     const next = setBookmarkAlias(marks.list(), key, alias);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mastheadModel, rootLabel, panelRows, trimLabel } from "./mastheadModel.ts";
+import { mastheadModel, rootLabel, panelRows } from "./mastheadModel.ts";
 import { journalOf } from "../store/headings.ts";
 import { prettyDate } from "../store/keys.ts";
 
@@ -110,10 +110,5 @@ describe("the panels", () => {
       { text: "John Milton", href: "#bookshelf/Milton%2C%20John", shelved: true },
     ]);
     expect(panelRows("bookshelf", Object.keys(c), journalOf(c))).toEqual([{ text: "Horace", href: "#bookshelf/Horace" }, { text: "John Milton", href: "#bookshelf/Milton%2C%20John" }]);
-  });
-  it("trimLabel keeps a short label, cuts a long one to the cap with an ellipsis, never inside a surrogate pair", () => {
-    expect(trimLabel("short", 10)).toBe("short");
-    expect(trimLabel("a long label indeed", 8)).toBe("a long …");
-    expect(trimLabel("ab😀cd", 4)).toBe("ab…");
   });
 });
