@@ -55,6 +55,12 @@ describe("letters typed toward an item", () => {
     expect(typedAhead({ buf: "", at: 0 }, "S", 1000, items).sel).toBe(4);
     expect(typedAhead({ buf: "", at: 0 }, "e", 1000, menuItems([{ text: "Édouard", href: "#x" }], [])).sel).toBe(0);
   });
+  it("pass over a small word inside a name, of, the, at and the like, but not one the name begins with", () => {
+    const names = menuItems([{ text: "Hildegard of Bingen", href: "#h" }, { text: "Ovid", href: "#o" }, { text: "The Fight at Finnsburh", href: "#f" }, { text: "Alcuin", href: "#a" }], []);
+    expect(typedAhead({ buf: "", at: 0 }, "o", 1000, names).sel).toBe(1);
+    expect(typedAhead({ buf: "", at: 0 }, "t", 1000, names).sel).toBe(2);
+    expect(typedAhead({ buf: "", at: 0 }, "a", 1000, names).sel).toBe(3);
+  });
   it("matching nothing, keep the selection where it is", () => {
     expect(typedAhead({ buf: "", at: 0 }, "z", 1000, items).sel).toBeNull();
   });

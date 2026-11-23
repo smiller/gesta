@@ -34,7 +34,9 @@ export function menuKey(e: Key, sel: number, n: number): MenuMove | null {
 /* ms: letters typed closer together than this make one string, as a <select>'s do */
 export const TYPED_GAP = 1000;
 const fold = (s: string): string => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
-const wordsOf = (s: string): string[] => fold(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+/* a small word inside a name is passed over: "o" is Ovid, not Hildegard of Bingen; the name's first word counts whatever it is */
+const SMALL = new Set(["a", "an", "and", "at", "by", "for", "in", "of", "on", "the", "to"]);
+const wordsOf = (s: string): string[] => fold(s).split(/[^\p{L}\p{N}]+/u).filter(Boolean).filter((w, i) => i === 0 || !SMALL.has(w));
 export interface Typed { buf: string; at: number }
 export function typedAhead(was: Typed, letter: string, now: number, items: MenuItem[]): Typed & { sel: number | null } {
   const buf = (now - was.at <= TYPED_GAP ? was.buf : "") + fold(letter);

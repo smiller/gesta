@@ -82,3 +82,7 @@ conversation.
   no room at 860 px; the caret back after "Maec" on Escape, Tab and the
   icon again. The whole verdict re-approved: the menus hold the focus,
   hand it back on closing, and a click outside lands on the moved text.
+- 10:00, asked after the look ("let's not count stop words like 'of' or
+  'the'"): a small word inside a name is passed over, the name's first
+  word counting whatever it is; "o" goes to Ovid, not Hildegard of Bingen
+  (MEASURED, the probe over the backup's bookshelf).
