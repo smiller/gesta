@@ -83,3 +83,5 @@
 {"at":"2026-11-23T14:30","ev":"stop","id":"S27","note":"paused: wakes on a miss of ⌃⌘R on a work by paragraph; read its calls and writes"}
 {"at":"2026-11-23T14:31","ev":"watch","id":"S27","text":"the reference did not land"}
 {"at":"2026-11-23T14:31","ev":"watch","id":"S6.1","text":"the toolbar did not show"}
+{"at":"2026-11-23T14:40","ev":"move","id":"S6.1","to":"F1","list":"F"}
+{"at":"2026-11-23T14:40","ev":"move","id":"S27","to":"F2","list":"F"}

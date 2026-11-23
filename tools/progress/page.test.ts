@@ -32,6 +32,11 @@ test("the worth-exploring list stands after the bigger questions and before the 
   expect(rows(html).slice(-2)).toEqual(["W1", "P1"]);
 });
 
+test("the flaky tests stand after the side list and before the bigger questions", () => {
+  const html = page([...day, { at: at("10:10"), ev: "add", id: "F1", list: "F", title: "a step that fails once in a run" }], { day: "2026-11-15" });
+  expect(headings(html)).toEqual(["Architecture queue", "Side list", "Flaky tests", "Bigger questions"]);
+});
+
 test("the reader's own requests come first, before every other list", () => {
   const html = page([...day, { at: at("10:10"), ev: "add", id: "U1", list: "U", title: "a reference across verse blocks" }], { day: "2026-11-15" });
   expect(headings(html)).toEqual(["User requests", "Architecture queue", "Side list", "Bigger questions"]);
