@@ -20,7 +20,7 @@ const printable = (key: string): boolean => key.length === 1 && key !== " ";
 export function menuKey(e: Key, sel: number, n: number): MenuMove | null {
   if (modified(e)) return null;
   if (CLOSERS[e.key]) return { close: CLOSERS[e.key] };
-  const k = listKey(e, true);
+  const k = listKey({ key: e.key, isComposing: e.isComposing, shiftKey: false, metaKey: e.metaKey, ctrlKey: e.ctrlKey, altKey: e.altKey }, true);
   if (k === "enter") return { choose: sel };
   if (k !== null) return { sel: stepped(sel, k, n) };
   return printable(e.key) ? { typed: e.key } : null;
@@ -52,10 +52,12 @@ const ACTS: Record<MenuName, MenuAct[]> = {
 };
 export const menuActs = (name: MenuName, readOnly: boolean): MenuAct[] => (readOnly ? [] : ACTS[name]);
 /* why a menu closed: "displaced", a panel or a masthead row opened over it;
-   "left", the focus gone elsewhere; "chosen", a row or an act taken */
-export const CLOSE_REASONS = ["escape", "tab", "icon", "resize", "displaced", "chosen", "outside", "left", "navigated"] as const;
+   "lost", the focus gone nowhere; "left", the focus taken by another
+   control; "stayed", a row for the entry already open or an act, which no
+   arrival follows; "chosen", a row for another entry */
+export const CLOSE_REASONS = ["escape", "tab", "icon", "resize", "displaced", "lost", "stayed", "chosen", "outside", "left", "navigated"] as const;
 export type CloseReason = (typeof CLOSE_REASONS)[number];
-const GIVES_BACK = new Set<CloseReason>(["escape", "tab", "icon", "resize", "displaced"]);
+const GIVES_BACK = new Set<CloseReason>(["escape", "tab", "icon", "resize", "displaced", "lost", "stayed"]);
 export const handsFocusBack = (reason: CloseReason): boolean => GIVES_BACK.has(reason);
 const NAVIGATING = new Set<Opening>(["navigated", "view", "sourceView", "here"]);
 export const reasonOpened = (by: Opening): CloseReason => (by === "escape" ? "escape" : NAVIGATING.has(by) ? "navigated" : "displaced");

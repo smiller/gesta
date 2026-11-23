@@ -58,6 +58,13 @@ test("the second hook event of an architecture run, the first's row written and 
   const ended: Event[] = [...reviewed, ...first, { at: at("09:30"), ev: "done", id: "A9.1" }];
   expect(rowEvents(run, ended, at("10:00"))).toMatchObject([{ ev: "add", id: "A9.2" }, { ev: "start", id: "A9.2" }]);
 });
+test("a run row done with what it spawned still open, or moved, is not the next run's: that run gets a row of its own", () => {
+  const reviewed: Event[] = [...begun, { at: at("07:30"), ev: "add", id: "A9", list: "A", title: REVIEW }];
+  const run = { name: "improve-codebase-architecture", args: "" };
+  const first = rowEvents(run, reviewed, at("09:00"));
+  const spawnedOpen: Event[] = [...reviewed, ...first, { at: at("09:10"), ev: "add", id: "A9.1.1", list: "A", parent: "A9.1", title: "a candidate" }, { at: at("09:30"), ev: "done", id: "A9.1" }];
+  expect(rowEvents(run, spawnedOpen, at("10:00"))).toMatchObject([{ ev: "add", id: "A9.2" }, { ev: "start", id: "A9.2" }]);
+});
 test("an architecture run's row says what its candidates end as: built or set aside", () => {
   const [row] = rowEvents({ name: "improve-codebase-architecture", args: "" }, begun, at("09:00"));
   expect(row).toMatchObject({ detail: expect.stringContaining("every candidate built or set aside") });

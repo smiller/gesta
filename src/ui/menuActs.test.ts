@@ -8,7 +8,7 @@ const ROWS: Record<string, MenuRow[]> = {
 };
 const key = (k: string) => ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false });
 
-function world(focusAt: string = "text") {
+function world(focusAt: string = "text", here = "#commonplace/Elsewhere") {
   const log: string[] = [];
   let focus = focusAt;
   const screen = { opened: null as string | null, menuRows: [] as MenuRow[], menuEmpty: "", menu: { sel: -1 } };
@@ -21,6 +21,7 @@ function world(focusAt: string = "text") {
     focus: { here: () => focus as unknown as Element, back: (was) => { focus = String(was); log.push("focus back to " + String(was)); } },
     area: { open: (right) => log.push("menu area for " + right), close: () => log.push("menu area closed") },
     go: (href) => log.push("go " + href),
+    isHere: (href) => href === here,
     act: (name, act) => log.push(act + " in " + name),
   };
   const menus = menuActs(deps);
@@ -61,7 +62,7 @@ describe("keys and the pointer in an open menu", () => {
     expect(w.screen.menu.sel).toBe(2);
     expect(w.menus.key(key("F5"))).toBe(false);
   });
-  it("Enter on a row goes there and on an act does it, the menu closed and no focus given back", () => {
+  it("Enter on a row for another entry goes there, the menu closed and no focus given back; on an act does it", () => {
     const w = world();
     w.menus.open("bookshelf");
     w.takeFocus();
@@ -121,5 +122,30 @@ describe("the other menu's icon over an open menu", () => {
     expect(w.screen.menu.sel).toBe(1);
     w.menus.close("escape");
     expect(w.focusNow()).toBe("text");
+  });
+});
+
+describe("a choice that goes nowhere", () => {
+  it("a row for the entry already open, or an act, gives the focus back, since no arrival will place it", () => {
+    const w = world("text", "#bookshelf/Horace");
+    w.menus.open("bookshelf");
+    w.takeFocus();
+    w.menus.key(key("Enter"));
+    expect(w.focusNow()).toBe("text");
+    w.menus.open("bookshelf");
+    w.takeFocus();
+    w.menus.key(key("End"));
+    w.menus.key(key("Enter"));
+    expect([w.log.at(-1), w.focusNow()]).toEqual(["shelves in bookshelf", "text"]);
+  });
+});
+
+describe("an open menu answered again", () => {
+  it("asks its menu area to open again from where it was drawn: a page drawn since is measured", () => {
+    const w = world();
+    w.menus.open("bookshelf");
+    w.menus.mounted(272);
+    w.menus.answer();
+    expect(w.log.filter((l) => l.startsWith("menu area"))).toEqual(["menu area for 272", "menu area for 272"]);
   });
 });

@@ -7,9 +7,7 @@ section("menus", async () => {
   await writeAll({ "bookshelf/Shelves": SHELVES, "bookshelf/Spenser, Edmund": STANZA_SEEDS["bookshelf/Spenser, Edmund"], "bookshelf/Ovid": "# Ovid\n", [OVID]: fixture("ovid-metamorphoses-1.md") });
   const seeded = await seededIn(OVID);
   await keysOverRows(seeded);
-  await gridMenuArea();
   await focusBack();
-  await menuAreaOpened();
 });
 async function keysOverRows(seeded: boolean): Promise<void> {
   const sel = async () => ({ sel: (await R.menuNow(page)).sel });
@@ -34,6 +32,7 @@ async function keysOverRows(seeded: boolean): Promise<void> {
   await page.click(S.bookshelfOpener);
   await rest(page);
   await log("the commonplace icon over the bookshelf menu", await sel());
+  await page.keyboard.press("Escape");
 }
 async function focusBack(): Promise<void> {
   /* the caret where it stood, after Escape, Tab and the icon pressed again */
@@ -47,6 +46,13 @@ async function focusBack(): Promise<void> {
     await log("closed by " + close, { menu: await R.menu(page), beforeCaret: (await R.menuNow(page)).beforeCaret });
   }
 }
+section("menu area", async () => {
+  /* a layout check: where the page stands beside an open menu, read as positions */
+  await writeAll({ "bookshelf/Ovid": "# Ovid\n", [OVID]: fixture("ovid-metamorphoses-1.md") });
+  await seededIn(OVID);
+  await gridMenuArea();
+  await menuAreaOpened();
+});
 async function menuAreaOpened(): Promise<void> {
   /* a wide entry moves over for the open menu, the line at the top held there; a narrow window keeps the menu over the text */
   const area = async () => { const m = await R.menuNow(page); return { menuArea: m.menuArea, textLeft: m.textLeft }; };

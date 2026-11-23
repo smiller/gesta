@@ -333,8 +333,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   and warning kept three months, read in the console as `gesta.alerts()`), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
   `gotoRowModel.ts`, `rootListing.ts` (a namespace's roots as listed rows: by shelf,
-  labelled, capped where a dropdown shows them), `menuModel.ts` (a menu's items, keys, letters typed and the room it
-  makes), `subEntries.ts`, `lifecycle.ts` (the six acts over
+  labelled, capped where a dropdown shows them), `menuModel.ts` (a menu's items, keys, letters typed, its acts,
+  why it closed and what the one slot holds), `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,

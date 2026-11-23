@@ -23,7 +23,7 @@ export interface MenuArea {
 }
 
 /* the reading place is held before the root moves: the reflow the width
-   makes would move it (pin: menus › Ovid 1 scrolled, the menu open) */
+   makes would move it (pin: menu area › Ovid 1 scrolled, the menu open) */
 export function menuArea(layout: LayoutPort, place: PlacePort): MenuArea {
   let px = 0;
   const heard = new Set<() => void>();
@@ -34,7 +34,10 @@ export function menuArea(layout: LayoutPort, place: PlacePort): MenuArea {
     layout.write(px);
     for (const fn of heard) fn();
   };
+  /* open, the page has moved clear: measured again it would read as clear
+     and close itself */
   const open = (menuRight: number): void => {
+    if (px > 0) return;
     const textLeft = layout.drawnLeft();
     set(textLeft === null ? 0 : menuAreaFor({ menuRight, textLeft, width: layout.width() }));
   };

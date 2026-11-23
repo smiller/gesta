@@ -25,7 +25,14 @@
   let input: HTMLInputElement | undefined = $state();
   export function focusInput(): void { input?.focus(); }
   const hits: HTMLElement[] = $state([]);
-  $effect(() => { if (search.active >= 0) hits[search.active]?.scrollIntoView({ block: "nearest" }); });
+  /* the keys' walk scrolls the selected row into view; the pointer's does
+     not, or a half-cut row scrolls out from under it */
+  let byPointer = false;
+  $effect(() => {
+    const at = search.active;
+    if (byPointer) { byPointer = false; return; }
+    if (at >= 0) hits[at]?.scrollIntoView({ block: "nearest" });
+  });
   const keydown = (e: KeyboardEvent): void => {
     const k = listKey(e);
     if (k === null) return;
@@ -53,7 +60,7 @@
       {#if search.empty}<li class="empty">{search.empty}</li>{/if}
       {#each search.rows as r, i (i)}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-        <li class="hit" bind:this={hits[i]} class:active={i === search.active} onmousemove={() => onHover(i)} onclick={() => onPick(i)}>
+        <li class="hit" bind:this={hits[i]} class:active={i === search.active} onmousemove={() => { if (i !== search.active) { byPointer = true; onHover(i); } }} onclick={() => onPick(i)}>
           <span class="where">{r.where}</span>
           <span class="snip">{#each r.runs as run, k (k)}{#if run.mark}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}</span>
         </li>

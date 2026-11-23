@@ -156,3 +156,28 @@ conversation.
 - 12:50, found: each wait on a verdict ran to its 10-minute timeout, the
   wait's pgrep matching its own command line; a verdict takes about
   4 min 40 s; about 50-55 minutes lost this morning (the reader's count).
+- 12:26, the batch review (A18), `/code-review high 07fed95..HEAD` over
+  the A17 fixes, A15.1.2, S24 and the architecture builds: 157,131 tokens
+  (its transcript's last message); its republish of the day page was
+  refused as "Sensitive Information Leakage", published here instead.
+  Ten findings, all acted on:
+  1. A menu whose focus went nowhere (a blank click, the window left)
+     kept no focus: "lost" gives it back; "left" is the focus taken.
+  2. A row for the entry already open, or an act, closed as "chosen" and
+     no arrival followed: "stayed" gives the focus back.
+  3. A run row done with its spawned items open, or moved, counted as
+     open, and a later run wrote no row: open is isOpen's three labels.
+  4. A menu opened before the page was drawn never measured again: the
+     menu area opens again on the menu's answer, ignored while open.
+  5. The pointer over a half-cut row scrolled the list: only the keys'
+     walk scrolls, in the search results and the menus.
+  6. Shift with an arrow stopped walking a menu: Shift ignored. Its fix
+     first spread the KeyboardEvent, which in a browser copies no key
+     (its fields are the prototype's getters): every walk stopped in
+     Helium, the unit tests passing on plain objects; a test now reads a
+     getter-backed key.
+  7. The cap was written after the session began: written before.
+  8. CLAUDE.md's menuModel line and an adapter comment said room.
+  9. The menu area's position readings sat in the menus section: a
+     section of their own, "menu area", a layout check.
+  10. The watch checker searched only .ts: the approved runs too.

@@ -17,7 +17,15 @@
   /* the other menu opened over this one starts at its top
      (pin: menus › the commonplace icon over the bookshelf menu) */
   $effect(() => { void name; if (nav) nav.scrollTop = 0; });
-  $effect(() => { els[sel]?.scrollIntoView({ block: "nearest" }); });
+  /* the keys' walk scrolls the selected row into view; the pointer's does
+     not, or a half-cut row scrolls out from under it */
+  let byPointer = false;
+  $effect(() => {
+    const at = sel;
+    if (byPointer) { byPointer = false; return; }
+    els[at]?.scrollIntoView({ block: "nearest" });
+  });
+  const hover = (j: number): void => { if (j !== sel) { byPointer = true; menus.onHover(j); } };
   function opened(el: HTMLElement): { destroy(): void } {
     el.focus({ preventScroll: true });
     menus.onMounted(el.getBoundingClientRect().right);
@@ -31,11 +39,11 @@
 <nav class="menu" tabindex="-1" bind:this={nav} use:opened onkeydown={(e) => { if (menus.onKey(e)) e.preventDefault(); }} onfocusout={onLeave}>
   {#each rows as r, i (r.href || "shelf " + r.text)}
     {#if r.shelf}<span class="shelf">{r.text}</span>
-    {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => menus.onHover(rowItem.get(i)!)} onclick={() => menus.onClose("chosen")}>{r.text}</a>{/if}
+    {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => hover(rowItem.get(i)!)} onclick={() => menus.onClose("chosen")}>{r.text}</a>{/if}
   {/each}
   {#if !rows.length && empty}<span class="menu-empty">{empty}</span>{/if}
   {#each acts as a, k (a.text)}
-    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => menus.onHover(actItem.get(k)!)} onclick={() => menus.onChoose(actItem.get(k)!)}>{a.text}</button>
+    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => hover(actItem.get(k)!)} onclick={() => menus.onChoose(actItem.get(k)!)}>{a.text}</button>
   {/each}
 </nav>
 

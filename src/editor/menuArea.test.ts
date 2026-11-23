@@ -44,3 +44,17 @@ describe("a menu area opened and closed", () => {
     expect(heard).toEqual(["heard"]);
   });
 });
+
+describe("a menu area asked to open again", () => {
+  it("measures again while closed, and while open leaves the page where it moved it", () => {
+    let drawn: number | null = null;
+    const log: string[] = [];
+    const area = menuArea({ width: () => 1280, drawnLeft: () => drawn, write: (px) => log.push("written " + px) }, { hold: () => {} });
+    area.open(272);
+    drawn = 46;
+    area.open(272);
+    drawn = 320;
+    area.open(272);
+    expect([log, area.width()]).toEqual([["written 288"], 288]);
+  });
+});

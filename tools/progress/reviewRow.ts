@@ -2,7 +2,7 @@
    prompt: whatever goes wrong, it exits 0 */
 import { mkdirSync, readFileSync, openSync, closeSync, statSync, unlinkSync } from "node:fs";
 import { dirname } from "node:path";
-import { replay, type Event, type Item } from "./events.ts";
+import { replay, isOpen, type Event, type Item } from "./events.ts";
 import { nextId, opened, logged } from "./log.ts";
 import { DIR, dayEvents, lastDayEvents, today, clock } from "./day.ts";
 
@@ -46,7 +46,7 @@ function added(events: Event[], at: string, { title, detail, parent }: Row): Eve
 /* the row a command's second hook event finds is the first's, written and
    started: an open row is the command's, whatever its state (pin:
    reviewRow.test › the second hook event of an architecture run) */
-const openRow = (i: Item): boolean => i.status !== "done" && i.status !== "dropped";
+const openRow = (i: Item): boolean => isOpen(i.status);
 function reviewRow(c: Typed, events: Event[], at: string): Event[] {
   const title = reviewTitle(c.args), items = replay(events);
   const open = items.find((i) => i.title === title && openRow(i));

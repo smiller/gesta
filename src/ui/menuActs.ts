@@ -16,6 +16,8 @@ export interface MenuDeps {
   focus: FocusPort;
   area: MenuAreaPort;
   go(href: string): void;
+  /* whether a row's address is the entry already open */
+  isHere(href: string): boolean;
   act(name: MenuName, act: MenuAct["act"]): void;
 }
 interface Key { key: string; shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }
@@ -37,7 +39,7 @@ export interface Menus {
    open does nothing) */
 export function menuActs(d: MenuDeps): Menus {
   const { screen } = d;
-  let open: MenuName | null = null, was: Element | null = null, typed: Typed = { buf: "", at: 0 };
+  let open: MenuName | null = null, was: Element | null = null, typed: Typed = { buf: "", at: 0 }, drawnAt: number | null = null;
   const items = () => (open ? menuItems(screen.menuRows, actsOf(open, d.readOnly).map((a) => a.text)) : []);
   const answer = (): void => {
     if (!open) return;
@@ -45,6 +47,8 @@ export function menuActs(d: MenuDeps): Menus {
     screen.menuRows = a.rows;
     screen.menuEmpty = a.empty;
     screen.menu.sel = Math.min(Math.max(0, screen.menu.sel), Math.max(0, items().length - 1));
+    /* the journal read since the menu was drawn may have drawn the page under it */
+    if (drawnAt !== null) d.area.open(drawnAt);
   };
   const show = (name: MenuName): void => {
     if (!open) { was = d.focus.here(); d.overlay(); }
@@ -59,6 +63,7 @@ export function menuActs(d: MenuDeps): Menus {
     if (!open) return;
     if (screen.opened === open) screen.opened = null;
     open = null;
+    drawnAt = null;
     screen.menu.sel = -1;
     d.area.close();
     if (handsFocusBack(reason)) d.focus.back(was);
@@ -66,8 +71,9 @@ export function menuActs(d: MenuDeps): Menus {
   const choose = (i: number): void => {
     const name = open, it = items()[i];
     if (!name || !it) return;
-    close("chosen");
-    if (it.row !== null) d.go(screen.menuRows[it.row].href);
+    const href = it.row === null ? null : screen.menuRows[it.row].href;
+    close(href !== null && !d.isHere(href) ? "chosen" : "stayed");
+    if (href !== null) d.go(href);
     else d.act(name, actsOf(name, d.readOnly)[it.act!].act);
   };
   const typing = (letter: string): void => {
@@ -88,6 +94,6 @@ export function menuActs(d: MenuDeps): Menus {
   return {
     open: show, close, key, choose, answer,
     hover: (i) => { if (open) screen.menu.sel = i; },
-    mounted: (menuRight) => { if (open) d.area.open(menuRight); },
+    mounted: (menuRight) => { if (!open) return; drawnAt = menuRight; d.area.open(menuRight); },
   };
 }

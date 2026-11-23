@@ -26,6 +26,14 @@ describe("a key in an open menu", () => {
     expect(menuKey(key("ArrowDown"), n - 1, n)).toEqual({ sel: 0 });
     expect(menuKey(key("ArrowUp"), 0, n)).toEqual({ sel: n - 1 });
   });
+  it("a key read from an event whose fields are its prototype's, as a browser's are, walks as a plain one does", () => {
+    class Proto { get key() { return "End"; } get shiftKey() { return true; } get metaKey() { return false; } get ctrlKey() { return false; } get altKey() { return false; } get isComposing() { return false; } }
+    expect(menuKey(new Proto(), 0, n)).toEqual({ sel: n - 1 });
+  });
+  it("a held Shift walks as the bare key does", () => {
+    expect(menuKey(key("ArrowDown", { shiftKey: true }), 0, n)).toEqual({ sel: 1 });
+    expect(menuKey(key("End", { shiftKey: true }), 0, n)).toEqual({ sel: n - 1 });
+  });
   it("Home and End go to the first and the last item", () => {
     expect(menuKey(key("Home"), 3, n)).toEqual({ sel: 0 });
     expect(menuKey(key("End"), 0, n)).toEqual({ sel: n - 1 });
@@ -78,8 +86,8 @@ describe("what is a menu, and the focus it gives back", () => {
   it("the bookshelf and the commonplaces are menus; a panel or nothing is none", () => {
     expect(["bookshelf", "commonplace", "help", "backups", null].map(isMenu)).toEqual([true, true, false, false, false]);
   });
-  it("a menu closed by a key, its icon, a resize or something opened over it gives the focus back; one closed by a choice, a click, the focus leaving or a navigation does not", () => {
-    expect(CLOSE_REASONS.filter(handsFocusBack)).toEqual(["escape", "tab", "icon", "resize", "displaced"]);
+  it("a menu closed by a key, its icon, a resize, something opened over it, its focus going nowhere or a choice that goes nowhere gives the focus back; one closed by a choice that goes, a click into something, the focus taken or a navigation does not", () => {
+    expect(CLOSE_REASONS.filter(handsFocusBack)).toEqual(["escape", "tab", "icon", "resize", "displaced", "lost", "stayed"]);
     expect(CLOSE_REASONS.filter((r) => !handsFocusBack(r))).toEqual(["chosen", "outside", "left", "navigated"]);
   });
 });

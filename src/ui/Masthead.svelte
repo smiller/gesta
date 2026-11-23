@@ -52,11 +52,11 @@
   /* a panel's focus going nowhere is a row deleted under it, not a leaving
      (pin: where the keys go › Tab twelve times from the bookmarks panel);
      a menu's is the window left */
-  const leaving = (nowhere: boolean, close: () => void) => (e: FocusEvent): void => {
+  const leaving = (nowhere: boolean, close: (toNothing: boolean) => void) => (e: FocusEvent): void => {
     const to = e.relatedTarget;
-    if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) close();
+    if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) close(!to);
   };
-  const leavePanel = leaving(false, () => onCloseOpened()), leaveMenu = leaving(true, () => menus.onClose("left"));
+  const leavePanel = leaving(false, () => onCloseOpened()), leaveMenu = leaving(true, (toNothing) => menus.onClose(toNothing ? "lost" : "left"));
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
   export function focusLines(): void { linesSelect?.focus(); }

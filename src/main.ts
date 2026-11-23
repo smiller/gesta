@@ -170,7 +170,7 @@ placeArea(document.documentElement, document.querySelector(".site-head")!, docum
    stopPropagation there would not reach a document listener anyway. */
 document.addEventListener("click", (e) => {
   const t = e.target as Element | null;
-  if (!t?.closest(".menu, .opener, .helppanel")) closeOpened("outside");
+  if (!t?.closest(".menu, .opener, .helppanel")) closeOpened(document.activeElement === document.body ? "lost" : "outside");
   /* the results are an opaque overlay over the entry: a click into the
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
@@ -272,6 +272,8 @@ const entryShown = (stored: string, ekey: string): void => {
   refreshMasthead();
   life.shown(ekey, stored);
 };
+/* the cap on the root before anything is drawn */
+writeCap(document.documentElement);
 const session = startSession({
   mount: mountEl, layer, images, interval: screen.interval, raise,
   owner: () => alerts.owner(),
@@ -284,10 +286,9 @@ const session = startSession({
   onLine: (line) => landing.followSoon(line),
   readOnly: READER,
 });
-/* the one menu area, given before any entry is drawn; the cap written beside it */
+/* the one menu area, given before any entry is drawn */
 const area = menuArea(browserLayout(document.documentElement), { hold: () => session.holdTop() });
 provideMenuArea(area);
-writeCap(document.documentElement);
 /* gathered for a beat and the masthead redrawn once: an import in
    another tab announces every entry it writes */
 const heard = new Set<string>();
@@ -467,7 +468,7 @@ const openers = openerActs({
 acts.opener = openers.opener;
 acts.menus = menuActs({
   ...openers.ports(), area, screen, readOnly: READER, flush: () => session.save.flush(), overlay: () => overlay.open("menu"),
-  go: (href) => { location.hash = href; }, act: (name, act) => (act === "shelves" ? acts.shelves() : acts.newRoot(name)),
+  go: (href) => { location.hash = href; }, isHere: (href) => href === location.hash, act: (name, act) => (act === "shelves" ? acts.shelves() : acts.newRoot(name)),
 });
 /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
    read ends, well or badly: the search; the Go to row while nothing has
