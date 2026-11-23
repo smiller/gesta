@@ -111,7 +111,7 @@ section("code block", async () => {
   await rest(page);
   await log("a js block typed", await R.codeBlock(page));
   await page.hover(S.editorPre);
-  await rest(page);
+  await page.waitForFunction(() => document.querySelector(".copybtn")?.classList.contains("show"), null, { timeout: 3000 }).catch(() => {});
   await log("hovered", await R.copyHover(page));
   await page.click(S.copybtn);
   await rest(page);

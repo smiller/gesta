@@ -28,8 +28,9 @@ const TOOLS: Record<string, Tool> = {
   bridge: { script: "tools/helium-bridge.ts" },
   reader: { script: "tools/helium-reader.ts" },
 };
-/* played side by side: the two longest, measured to read the same so */
-const TOGETHER = [["corner", "order"], ["bridge"], ["reader"]];
+/* all four at once: the whole verdict 86-94 s, where bridge and reader
+   played after corner and order took 92-101 s */
+const TOGETHER = [["corner", "order", "bridge", "reader"]];
 const args = process.argv.slice(2);
 const approve = args.includes("--approve");
 const names = args.filter((a) => a in TOOLS);

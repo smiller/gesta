@@ -134,7 +134,7 @@ async function heldPlaceRenderedView(): Promise<void> {
   await jump(page, 700);
   await go("commonplace/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
-  await rest(page);
+  await settled(page);
   /* the row under the masthead, read mid-column: 40px in is the gutter */
   const heldLine = await rowUnderHead();
   /* the line's own words left out: which line tops the page is the alert area's height, a second alert's or not */
@@ -153,8 +153,8 @@ async function heldPlaceRenderedView(): Promise<void> {
 }
 const shrunk = async (fn: () => Promise<unknown>) => {
     await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = "50px"; h.style.overflow = "hidden"; });
-    try { await rest(page); return await fn(); }
-    finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await rest(page); }
+    try { await settled(page); return await fn(); }
+    finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await settled(page); }
   };
 const rowUnderHead = () => page.evaluate(() => { const top = window.__pageTop() + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
 async function backToInlineCodeLines(): Promise<void> {

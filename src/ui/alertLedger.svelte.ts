@@ -17,6 +17,8 @@ export interface AlertState {
   warning: Line;
   /* the backup's trouble, "" when healthy — drawn as the pill */
   trouble: string;
+  /* each kind's last words as raised, kept after they fade or close */
+  said: Live;
 }
 export type { Kind } from "../model/alertText.ts";
 export type Fading = "info" | "success";
@@ -52,6 +54,10 @@ export function liveAlerts(state: AlertState): Live {
   if (state[state.latest].shown) live.latest = state.latest;
   return live;
 }
+/* what the page has said, whether or not it still shows: an alert's
+   words outlast its time on screen (pin: alertLedger.test › nothing said
+   at rest) */
+export const saidAlerts = (state: AlertState): Live => ({ ...state.said });
 export const IDLE_TEXT = alertWords({ id: "saved" });
 export const INFO_MS = 3000;
 /* a warning is no error: it fades, given longer to read than an info */
@@ -65,7 +71,7 @@ interface Standing { owner: object | null; text: string; copy: string }
 export type Told = (kind: Kept, text: string) => void;
 export function alertLedger(copyText: (text: string) => Promise<void>, told: Told = () => {}): Alerts {
   const line = (text = ""): Line => ({ text, shown: false });
-  const state = $state<AlertState>({ info: line(IDLE_TEXT), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "" });
+  const state = $state<AlertState>({ info: line(IDLE_TEXT), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "", said: {} });
   const timers: Record<Fading, ReturnType<typeof setTimeout> | null> = { info: null, success: null };
   /* each fading place's generation, bumped on every change to it: a late
      clipboard answer stays quiet once a newer success moved in */
@@ -77,7 +83,12 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     if (t) clearTimeout(t);
     timers[place] = null;
   }
+  function say(kind: Kind, text: string): void {
+    state.said[kind] = text;
+    if (kind === "info" || kind === "success") state.said.latest = kind;
+  }
   function show(place: Fading, text: string): void {
+    say(place, text);
     fadingGen[place]++;
     state.latest = place;
     state[place].text = text;
@@ -140,6 +151,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   function error(text: string, from: OwnerOpts = {}, owner: object | null = null): void {
     const caught = "caught" in from;
     if (caught) console.error(text, from.caught);
+    say("error", text);
     place({ owner, text, copy: from.copy || (caught ? errText(from.caught) : "") || text }, !!from.beneath);
     tell("error", text);
   }
@@ -162,6 +174,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
   }
   function warn(text: string): void {
     clearWarning();
+    say("warning", text);
     state.warning.text = text;
     state.warning.shown = true;
     warningTimer = setTimeout(clearWarning, WARNING_MS);
@@ -177,7 +190,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     const live = (): boolean => mine === busyGen;
     const end = (): boolean => { if (!live()) return false; state.busy = false; busyGen++; return true; };
     return {
-      step(done, total) { if (live()) state.info.text = text + " " + done + " / " + total; },
+      step(done, total) { if (live()) { state.info.text = text + " " + done + " / " + total; say("info", state.info.text); } },
       ok(s) { if (end()) { hide("info"); succeed(alertWords(s), alertMs(s.id)); } },
       fail(s, copy) { if (end()) { hide("info"); error(alertWords(s), { copy }); } },
       cancel() { if (end()) hide("info"); },

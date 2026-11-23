@@ -104,3 +104,32 @@ fail too often to show a byte-identical run.
   3 before" counts every flake, not these two). The progress replay now
   reopens a done item that is started again (`tools/progress/events.ts`).
 - 14:35, the hook's verdict read "after warm" with `show: false`: whether the warm's info still shows is a clock reading the fresh start's length under load decides. The step logs its words and the pill alone; approved.
+- 14:53, P20 and P21 added (asked: "Let's add 1 and 2 as P items and
+  start with 1"), from the timings: a stamped verify 14 s; bridge 7.46 s
+  and reader 10.92 s played after corner and order; the corner run's 5
+  windows 47.6-69.3 s, fixed sleeps 26 s of 291 s, no wait run out.
+- 14:53-14:58, P20: all four runs in one group. Three whole verdicts
+  passing, 91.26, 85.94, 87.13 s, against 91.80-101.20 s before: about 8
+  to 10 s saved, not the 18 s estimated, corner and order slower beside
+  two more browsers.
+- 15:00-15:05, P20, three more whole plays: one passed whole; the
+  bridge's status read "" for "10 entries stored" twice, the reader's
+  corner lost "6 entries stored" once, and the code block's copy button
+  read mid-fade once. The first two read an info whose 3 s on screen
+  the load outlasted; the "places" fix (`settled()` round the squeezed
+  masthead) holds otherwise.
+- 15:10, asked: "Don't we already have an interface for that for errors
+  and warnings so we don't need to rely on what's on screen? Can we do
+  that for info as well?", then "does it make sense that we're testing
+  css hover values?". The ledger keeps each kind's last words as raised
+  and which of info and success spoke last, published as `data-said`;
+  `window.__said()` reads standing errors and warnings, then the last
+  info or success said. The bridge's status and the reader's corners
+  read it. The hover step waits for the copy button to show and no
+  longer reads its label's opacity, a CSS transition. The other corner
+  readings, 80-odd, read an alert raised by the gesture just before.
+- 15:15-15:20, three whole plays after `data-said`: bridge and reader
+  passed all three (2 of 3 failed before); 93.99, 87.33, 89.36 s. The
+  order run read "column marks" otherwise once; its received copy was
+  gone when the next play passed. The Stop hook's suite, run beside the
+  plays, failed a 100 ms wall-clock bound (261.6 ms): F3. P20 done.

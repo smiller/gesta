@@ -1,6 +1,6 @@
 /* Timers are faked; the clipboard is a fake that can refuse. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { alertLedger, liveAlerts, IDLE_TEXT, INFO_MS, WARNING_MS, type Alerts } from "./alertLedger.svelte.ts";
+import { alertLedger, liveAlerts, saidAlerts, IDLE_TEXT, INFO_MS, WARNING_MS, type Alerts } from "./alertLedger.svelte.ts";
 import { said } from "../model/alertText.ts";
 
 let copied: string[];
@@ -336,6 +336,27 @@ describe("the live alerts", () => {
     expect(liveAlerts(n.state)).toEqual({ error: "not saved", warning: "no line numbers here", info: "1 entry stored", latest: "info" });
     vi.advanceTimersByTime(INFO_MS);
     expect(liveAlerts(n.state)).toEqual({ error: "not saved", warning: "no line numbers here" });
+  });
+});
+
+describe("what each kind last said", () => {
+  it("nothing said at rest; each kind's last words, and which of info and success spoke last, kept after they fade", () => {
+    expect(saidAlerts(n.state)).toEqual({});
+    n.raise("entriesStored", { n: 1 });
+    n.raise("noLineNumbers");
+    vi.advanceTimersByTime(WARNING_MS);
+    expect(liveAlerts(n.state)).toEqual({});
+    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", latest: "info" });
+    n.raise("notSaved", { copy: "detail" });
+    n.raise("saved");
+    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success" });
+  });
+  it("a progress line says each step; an info held back by it says nothing", () => {
+    const p = n.progress("importing");
+    p.step(1, 2);
+    n.raise("entriesStored", { n: 3 });
+    expect(saidAlerts(n.state)).toMatchObject({ info: n.state.info.text, latest: "info" });
+    expect(n.state.info.text).toMatch(/ 1 \/ 2$/);
   });
 });
 

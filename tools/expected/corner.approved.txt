@@ -52,7 +52,7 @@ the page's own reference pasted mid-sentence: {"copied":"in-page","references":2
 == code block
 code block: arrived at commonplace/Coded: {"cursor":"at a line's start"}
 a js block typed: {"lang":"js","label":"\"js\"","tokens":["tok-k:const","tok-n:42","tok-c:// answer"],"cursor":"at the end","screen":"commonplace/Coded · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-hovered: {"show":true,"title":"Copy this code block","insideBlock":true,"labelHidden":"0","cursor":"at the end","screen":"commonplace/Coded · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+hovered: {"show":true,"title":"Copy this code block","insideBlock":true,"cursor":"at the end","screen":"commonplace/Coded · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 clicked: {"value":"copied","cursor":"at the end","screen":"commonplace/Coded · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == card copy
 card copy: arrived at commonplace/Carded: {"cursor":"at a line's start"}

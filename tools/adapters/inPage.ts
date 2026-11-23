@@ -14,7 +14,12 @@ export const inPageWith = (arg: unknown, main: Function, ...parts: Function[]): 
 export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
   await ctx.addInitScript(() => {
     const live = () => JSON.parse(document.documentElement.dataset.alerts || "{}");
+    const said = () => JSON.parse(document.documentElement.dataset.said || "{}");
     window.__corner = () => ((f) => [f.error, f.warning].filter(Boolean).join(" · ") || f[f.latest])(live());
+    /* the corner with the newer of info and success as last said, not as
+       still shown: its time on screen is the clock's, which a run's load can
+       outlast */
+    window.__said = () => ((f, s) => [f.error, f.warning].filter(Boolean).join(" · ") || s[s.latest])(live(), said());
     window.__alerts = () => ((f) => [f.error, f.warning, f.info, f.success].filter(Boolean).join(" · "))(live());
     /* where the page shows from, as the page publishes it */
     window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;

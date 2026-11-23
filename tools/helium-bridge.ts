@@ -30,7 +30,7 @@ function firstLineShown(): string | undefined {
 function textsShown(): Record<string, unknown> {
   return {
     crumb: crumbShown(), title: document.querySelector(".page-title")?.textContent,
-    status: window.__corner() || "",
+    status: window.__said() || "",
     first: firstLineShown(),
   };
 }

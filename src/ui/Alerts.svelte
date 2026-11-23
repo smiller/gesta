@@ -4,9 +4,10 @@
      line whose click is a mouse's convenience, never in the tab order — a
      button here would take focus from the editor on a Tab. -->
 <script lang="ts">
-  import { liveAlerts, type Alerts, type Kind } from "./alertLedger.svelte.ts";
+  import { liveAlerts, saidAlerts, type Alerts, type Kind } from "./alertLedger.svelte.ts";
   let { alerts, onResume }: { alerts: Alerts; onResume: () => void } = $props();
   $effect(() => { document.documentElement.dataset.alerts = JSON.stringify(liveAlerts(alerts.state)); });
+  $effect(() => { document.documentElement.dataset.said = JSON.stringify(saidAlerts(alerts.state)); });
 </script>
 
 <div class="alerts">

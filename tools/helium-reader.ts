@@ -53,7 +53,7 @@ await first.page.goto(PAGE + "#commonplace/Witchcraft");
 await settled(first.page, "bare");
 const screen = (page: Page) => page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
-  held: document.querySelector(".held")?.textContent, corner: window.__corner()?.trim(),
+  held: document.querySelector(".held")?.textContent, corner: window.__said()?.trim(),
   editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   tools: [...document.querySelectorAll(".site-tools > :not([hidden])")].map((e) => e.textContent.trim()),
 }));
@@ -71,11 +71,10 @@ await settled(page, "relaunched");
 console.log("relaunched" + ms(t) + ":", JSON.stringify({ ...(await screen(page)), ...(TIMED ? { heap: Math.round(await page.evaluate(() => (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0) / 1e6) + " MB" } : {}) }));
 const rest = () => page.waitForTimeout(400);
 
-/* the corner only where a step is about what it says: an info's fade
-   is the clock's, not the step's */
+/* the corner only where a step is about what it says */
 const look = (label: string, extra: () => Promise<object> | object = () => ({}), corner = false) => page.evaluate((corner) => ({
   entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
-  ...(corner ? { corner: window.__corner()?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
+  ...(corner ? { corner: window.__said()?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
   crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(),
 }), corner).then(async (r) => console.log(label + ":", JSON.stringify({ ...r, ...(await extra()) })));
 const search = async (q: string): Promise<number> => {
