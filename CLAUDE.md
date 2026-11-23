@@ -325,7 +325,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `alertLedger.svelte.ts` (the alert ledger), `alertLog.ts` (every error
   and warning kept three months, read in the console as `gesta.alerts()`), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
-  `gotoRowModel.ts`, `menuModel.ts` (a menu's items, keys, letters typed and the room it
+  `gotoRowModel.ts`, `rootListing.ts` (a namespace's roots as listed rows: by shelf,
+  labelled, capped where a dropdown shows them), `menuModel.ts` (a menu's items, keys, letters typed and the room it
   makes), `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),

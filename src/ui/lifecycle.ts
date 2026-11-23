@@ -13,7 +13,7 @@ import { imageRefs } from "../store/exportEntries.ts";
 import { splitKey } from "../store/keys.ts";
 import { pictureKey } from "../store/names.ts";
 import { unnamed, picturesOf } from "../store/pictures.ts";
-import { rootLabel } from "./mastheadModel.ts";
+import { rootLabel } from "./rootListing.ts";
 import { retargetLinks, relabelLinks } from "../store/links.ts";
 import { linkRefusal, headingRefusal, cutsHeading, insertLinkAfter, linkMarkdown } from "../editor/insertLink.ts";
 import { cutMd, replaceWithLink } from "../editor/format.ts";

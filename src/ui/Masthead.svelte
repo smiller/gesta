@@ -17,7 +17,7 @@
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
   import Menu from "./Menu.svelte";
-  import { isMenu, menuActs, type CloseReason } from "./menuModel.ts";
+  import { isMenu, menuActs, type CloseReason, type Opened } from "./menuModel.ts";
   let { screen, onToday, onExport, onImport, onInterval, onLines, onOpener, onCloseOpened, menus, search, goto, gotoToolbar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
     /* the read-only page: a new bundle picked */
@@ -26,7 +26,7 @@
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     onLines: (open: boolean) => void;
-    onOpener: (ns: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
+    onOpener: (ns: Opened) => void;
     onCloseOpened: () => void;
     menus: { onKey: (e: KeyboardEvent) => boolean; onHover: (i: number) => void; onChoose: (i: number) => void; onClose: (reason: CloseReason) => void; onMounted: (menuRight: number) => void };
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void; onHover: (i: number) => void };

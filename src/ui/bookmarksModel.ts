@@ -15,7 +15,7 @@ import { isDayKey, tagParts, entryKey } from "../store/keys.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING } from "../store/search.ts";
 import { resultLabel } from "./searchModel.ts";
-import { LABEL_CAP } from "./mastheadModel.ts";
+import { LABEL_CAP } from "./rootListing.ts";
 import { trimLabel } from "../model/trim.ts";
 import { type Bookmark, bookmarkParts, ALIAS_RE, aliasedBookmarks, numberedBookmarks, aliasHolder, bookmarkIndex, bookmarksFull } from "../store/bookmarks.ts";
 import { said, type Said } from "../model/alertText.ts";

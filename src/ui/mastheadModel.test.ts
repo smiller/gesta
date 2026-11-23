@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { mastheadModel, rootLabel, menuRows } from "./mastheadModel.ts";
+import { mastheadModel, menuRows } from "./mastheadModel.ts";
+import { rootLabel } from "./rootListing.ts";
 import { journalOf } from "../store/headings.ts";
 import { prettyDate } from "../store/keys.ts";
 

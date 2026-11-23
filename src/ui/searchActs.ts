@@ -1,4 +1,6 @@
 import type { Session } from "../session.ts";
+import { stepped } from "./pickKeys.ts";
+import { shelvesText } from "./rootListing.ts";
 import type { EntryLayer } from "../store/entries.ts";
 import type { Journal } from "../store/reference.ts";
 import type { Screen } from "./screen.svelte.ts";
@@ -10,8 +12,7 @@ import { searchIndex } from "../store/searchIndex.ts";
 import { searchEntries, snippetRuns, SEARCH_CAP } from "../store/search.ts";
 import { failWhy, errText } from "../store/files.ts";
 import { said } from "../model/alertText.ts";
-import { entryKey, NS, NS_BOOK } from "../store/keys.ts";
-import { SHELVES } from "../store/shelves.ts";
+import { NS } from "../store/keys.ts";
 import { READER_DB } from "../store/bundle.ts";
 import { scopeOptions, defaultScope, sameScope, resultLabel } from "./searchModel.ts";
 import { loadState } from "./journalLoad.ts";
@@ -144,7 +145,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     opened();
     session.save.flush();
     const c = session.current;
-    sr.options = scopeOptions(c.date, c.tag, { keys: Object.keys(layer.cache), journal: journal, shelvesMd: layer.cache[entryKey(NS_BOOK.key, SHELVES)] || "" });
+    sr.options = scopeOptions(c.date, c.tag, { keys: Object.keys(layer.cache), journal: journal, shelvesMd: shelvesText(layer.cache) });
     const pre = defaultScope(c.date, c.tag);
     sr.scopeAt = Math.max(0, sr.options.findIndex((o) => sameScope(o.scope, pre)));
     setTimeout(() => focusRow(), 0);
@@ -156,8 +157,7 @@ export function searchActs(d: SearchDeps): SearchRow {
   const walkSearch = (dir: 1 | -1): void => {
     flushScan();
     if (!sr.rows.length) return;
-    sr.active = (sr.active + dir + sr.rows.length) % sr.rows.length;
-    document.querySelectorAll(".search-results li.hit")[sr.active]?.scrollIntoView({ block: "nearest" });
+    sr.active = stepped(sr.active, dir, sr.rows.length);
   };
   const pickSearch = (i: number): void => {
     const row = sr.rows[i];

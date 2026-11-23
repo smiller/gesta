@@ -1,5 +1,6 @@
 import type { MenuRow } from "./mastheadModel.ts";
 import type { Opening } from "./overlays.ts";
+import { listKey, stepped } from "./pickKeys.ts";
 
 /* `row`: the row's index among the menu's rows, null for an act; `act`: the
    act's index, null for a row */
@@ -13,22 +14,15 @@ export function menuItems(rows: MenuRow[], acts: string[]): MenuItem[] {
 
 export type MenuMove = { sel: number } | { choose: number } | { close: "escape" | "tab" } | { typed: string };
 interface Key { key: string; shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }
-const closedBy = (key: "escape" | "tab") => (): MenuMove => ({ close: key });
-const NAMED: Record<string, (sel: number, n: number) => MenuMove> = {
-  ArrowDown: (sel, n) => ({ sel: (sel + 1) % n }),
-  ArrowUp: (sel, n) => ({ sel: (sel - 1 + n) % n }),
-  Home: () => ({ sel: 0 }),
-  End: (_sel, n) => ({ sel: n - 1 }),
-  Enter: (sel) => ({ choose: sel }),
-  Escape: closedBy("escape"),
-  Tab: closedBy("tab"),
-};
+const CLOSERS: Record<string, "escape" | "tab"> = { Escape: "escape", Tab: "tab" };
 const modified = (e: Key): boolean => [e.isComposing, e.metaKey, e.ctrlKey, e.altKey].some(Boolean);
 const printable = (key: string): boolean => key.length === 1 && key !== " ";
 export function menuKey(e: Key, sel: number, n: number): MenuMove | null {
   if (modified(e)) return null;
-  const named = NAMED[e.key];
-  if (named) return named(sel, n);
+  if (CLOSERS[e.key]) return { close: CLOSERS[e.key] };
+  const k = listKey(e, true);
+  if (k === "enter") return { choose: sel };
+  if (k !== null) return { sel: stepped(sel, k, n) };
   return printable(e.key) ? { typed: e.key } : null;
 }
 
@@ -47,6 +41,9 @@ export function typedAhead(was: Typed, letter: string, now: number, items: MenuI
 
 
 export type MenuName = "bookshelf" | "commonplace";
+export type PanelName = "help" | "bookmarks" | "shortcuts" | "backups";
+/* what the one slot over the page holds */
+export type Opened = MenuName | PanelName;
 export const isMenu = (name: string | null): name is MenuName => name === "bookshelf" || name === "commonplace";
 export interface MenuAct { text: string; act: "new" | "shelves" }
 const ACTS: Record<MenuName, MenuAct[]> = {

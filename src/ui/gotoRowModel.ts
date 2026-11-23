@@ -13,14 +13,13 @@
    a walk (pin: gotoRowModel.test › a sole child that is itself a parent
    collapses). A book's sections and its order come from one reading of the
    parent's contents. */
-import { isDayKey, nsOf, tagParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, COMMONPLACE_KEY, NS_BOOK } from "../store/keys.ts";
+import { isDayKey, nsOf, tagParts, entryKey, entryHash, monthLabel, capitalized, todayKey, NS_KEYS, KEYED_NS, COMMONPLACE_KEY } from "../store/keys.ts";
 import { dayKeys, childrenOf } from "../store/lists.ts";
 import { subEntryOrder, subEntryDisplayList, type Bearing, type OrderMemo, type SubOrder } from "../store/contents.ts";
 import type { Journal } from "../store/reference.ts";
-import { rootLabel, LABEL_CAP } from "./mastheadModel.ts";
+import { listing as rootsListing, shelvesText, LABEL_CAP, type Listed } from "./rootListing.ts";
 import { trimLabel } from "../model/trim.ts";
 import { nsGroupLabel } from "./searchModel.ts";
-import { shelvedRoots, SHELVES, type ShelfGroup } from "../store/shelves.ts";
 
 export interface Row { v: string; label: string; group?: string | null; ns?: string; here?: boolean }
 export interface Level { level: number; aria: string; rows: Row[]; value: string | null; valueNs?: string; sentinel: string | null; path: string | null }
@@ -46,12 +45,12 @@ function dayRows(w: GotoWorld, days: string[], ym: string): Row[] {
     return { v: d.slice(8, 10), label: +d.slice(8, 10) + (h ? " — " + trimLabel(h, LABEL_CAP) : "") };
   });
 }
-function groupRows(w: GotoWorld, key: string, g: ShelfGroup): Row[] {
-  const group = g.shelf === null ? nsGroupLabel(key) : trimLabel(g.shelf, LABEL_CAP);
-  return g.roots.map((n) => ({ v: n, label: trimLabel(rootLabel(key, n, w.journal), LABEL_CAP), ns: key, group }));
+function groupRows(key: string, g: Listed): Row[] {
+  const group = g.shelfLabel ?? nsGroupLabel(key);
+  return g.roots.map((r) => ({ v: r.name, label: r.label, ns: key, group }));
 }
 function nsDestinations(w: GotoWorld, key: string, open: string | null): Row[] {
-  return shelvedRoots(key, w.keys, w.cache[entryKey(NS_BOOK.key, SHELVES)] || "", open).flatMap((g) => groupRows(w, key, g));
+  return rootsListing(key, { keys: w.keys, journal: w.journal, shelvesMd: shelvesText(w.cache) }, open, true).flatMap((g) => groupRows(key, g));
 }
 export function destinationRows(w: GotoWorld, date: string, tag: string | null): Row[] {
   const open = nsOf(date) && tag ? tagParts(tag).name : null;

@@ -37,11 +37,12 @@ import { pictureMoves } from "./store/pictures.ts";
 import { afterLoad } from "./store/toCommonplaces.ts";
 import { formatToolbar } from "./ui/formatToolbarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
-import { openerActs, type Opened, type Ns } from "./ui/openerActs.ts";
+import { openerActs } from "./ui/openerActs.ts";
 import { menuActs } from "./ui/menuActs.ts";
+import { stepped } from "./ui/pickKeys.ts";
 import { menuArea, browserLayout, provideMenuArea } from "./editor/menuArea.ts";
 import { writeCap } from "./editor/fit.ts";
-import { isMenu, reasonOpened, type CloseReason, type MenuName } from "./ui/menuModel.ts";
+import { isMenu, reasonOpened, type CloseReason, type MenuName, type Opened } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -96,7 +97,7 @@ function keepPicked(file: File): void {
 const acts = {
   today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
   backupsPanel: () => {},
-  interval: (_n: number) => {}, opener: (_ns: Opened, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {}, shelves: () => {},
+  interval: (_n: number) => {}, opener: (_ns: Opened, _byKey?: boolean) => {}, newRoot: (_ns: MenuName) => {}, shelves: () => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
   formatToolbar: (_act: string) => {},
@@ -373,7 +374,7 @@ const insertShortcut = (expansion: string): void => {
   if (!cardCaret || !session.insertText(expansion)) { raise("placeCursor"); session.focusText(); }
 };
 acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
-acts.shortcuts.walk = (dir) => { if (sc.rows.length) sc.active = (sc.active + dir + sc.rows.length) % sc.rows.length; };
+acts.shortcuts.walk = (dir) => { sc.active = stepped(sc.active, dir, sc.rows.length); };
 acts.shortcuts.enter = () => { const row = sc.rows[sc.active]; if (row) insertShortcut(row.expansion); else raise("noShortcut"); };
 acts.shortcuts.pick = (i) => { const row = sc.rows[i]; if (row) insertShortcut(row.expansion); };
 acts.shortcuts.edit = () => showEditor(!sc.editing);

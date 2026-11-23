@@ -6,10 +6,9 @@
    name a row the list does not hold (pin: searchModel.test › the open
    unregistered book joins its own group) */
 import { nsOf, tagParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, COMMONPLACE_KEY, capitalized, plural } from "../store/keys.ts";
-import { shelvedRoots, type ShelfGroup } from "../store/shelves.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_COMMONPLACES, bookScope, type Scope, type Result } from "../store/search.ts";
-import { rootLabel, LABEL_CAP } from "./mastheadModel.ts";
+import { rootLabel, listing, LABEL_CAP, type Listed } from "./rootListing.ts";
 import { trimLabel } from "../model/trim.ts";
 
 export interface ScopeOption { label: string; scope: Scope; group: string | null }
@@ -24,14 +23,14 @@ export function sameScope(a: Scope, b: Scope): boolean {
 export function nsGroupLabel(ns: string): string { return capitalized(plural(KEYED_NS[ns].noun)); }
 export interface ScopeWorld { keys: string[]; journal: Journal; shelvesMd?: string }
 const openBook = (open: Scope, ns: string): string | null => (open.kind === "book" && open.ns === ns ? open.book : null);
-function groupOptions(ns: string, g: ShelfGroup, journal: Journal): ScopeOption[] {
-  const group = g.shelf === null ? nsGroupLabel(ns) : trimLabel(g.shelf, LABEL_CAP);
-  const books = g.roots.map((name): ScopeOption => ({ label: trimLabel(rootLabel(ns, name, journal), LABEL_CAP), scope: bookScope(ns, name), group }));
+function groupOptions(ns: string, g: Listed): ScopeOption[] {
+  const group = g.shelfLabel ?? nsGroupLabel(ns);
+  const books = g.roots.map((r): ScopeOption => ({ label: r.label, scope: bookScope(ns, r.name), group }));
   if (g.shelf === null || g.roots.length < 2) return books;
-  return [{ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: new Set(g.roots) }, group }, ...books];
+  return [{ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: new Set(g.roots.map((r) => r.name)) }, group }, ...books];
 }
 function nsOptions(ns: string, open: Scope, w: ScopeWorld): ScopeOption[] {
-  return shelvedRoots(ns, w.keys, w.shelvesMd ?? "", openBook(open, ns)).flatMap((g) => groupOptions(ns, g, w.journal));
+  return listing(ns, { keys: w.keys, journal: w.journal, shelvesMd: w.shelvesMd ?? "" }, openBook(open, ns), true).flatMap((g) => groupOptions(ns, g));
 }
 export function scopeOptions(date: string, tag: string | null, w: ScopeWorld): ScopeOption[] {
   const open = defaultScope(date, tag);

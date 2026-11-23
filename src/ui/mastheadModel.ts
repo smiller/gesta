@@ -11,12 +11,11 @@
    names itself in the crumb (pin: mastheadModel.test › a sub-entry: the parent
    crumb links back) (pin: mastheadModel.test › deeper down every ancestor is
    its own link) */
-import { nsOf, tagParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots } from "../store/keys.ts";
+import { nsOf, tagParts, entryKey, entryHash, prettyDate, isDayKey } from "../store/keys.ts";
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
-import { shelvedRoots } from "../store/shelves.ts";
-import { trimLabel } from "../model/trim.ts";
+import { listing, rootLabel } from "./rootListing.ts";
 
 export interface Crumb { text: string; href: string | null; title: string }
 export interface Link { text: string; href: string }
@@ -31,9 +30,6 @@ export interface MastheadModel {
   tags: Link[];
   showToday: boolean;
   buttons: SubButtons;
-}
-export function rootLabel(ns: string, name: string, journal: Journal): string {
-  return (titlesRoots(ns) && journal.heading(entryKey(ns, name))) || name;
 }
 export interface Where { keys: string[]; journal: Journal; today: string }
 type Head = Pick<MastheadModel, "crumbs" | "leaf" | "title" | "tags">;
@@ -60,11 +56,9 @@ export function mastheadModel(date: string, tag: string | null, w: Where): Masth
   return { ...head, showToday: date !== w.today, buttons: subButtons(date, tag) };
 }
 
-/* the row-label cap every list surface shares, so their truncation of an
-   untrusted name cannot drift apart */
-export const LABEL_CAP = 60;
 export function menuRows(ns: string, keys: string[], journal: Journal, shelvesMd = ""): MenuRow[] {
-  const row = (name: string, under: boolean): MenuRow => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name), ...(under ? { shelved: true as const } : {}) });
-  return shelvedRoots(ns, keys, shelvesMd, null).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))
-    : [{ text: trimLabel(g.shelf, LABEL_CAP), href: "", shelf: true as const }, ...g.roots.map((name) => row(name, true))]);
+  return listing(ns, { keys, journal, shelvesMd }, null, false).flatMap((g) => {
+    const rows = g.roots.map((r): MenuRow => ({ text: r.label, href: entryHash(ns, r.name), ...(g.shelf === null ? {} : { shelved: true as const }) }));
+    return g.shelfLabel === null ? rows : [{ text: g.shelfLabel, href: "", shelf: true as const }, ...rows];
+  });
 }

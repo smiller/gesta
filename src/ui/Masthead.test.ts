@@ -2,6 +2,7 @@
    shape: what the markup says. The sticky bar, the wrap and the clicks are
    looked at in Helium. */
 import { describe, it, expect } from "vitest";
+import type { Opened } from "./menuModel.ts";
 import { render } from "svelte/server";
 import Masthead from "./Masthead.svelte";
 import { screenState } from "./screen.svelte.ts";
@@ -11,7 +12,7 @@ import { journalOf } from "../store/headings.ts";
 const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "commonplace/Books/Essay": "# The essay\n\nb" };
 const journal = journalOf(cache);
 const none = () => {};
-function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; opened: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups"; rows: MenuRow[]; empty: string; reader: boolean }> = {}): string {
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; opened: Opened; rows: MenuRow[]; empty: string; reader: boolean }> = {}): string {
   const screen = screenState(extra.interval ?? 5);
   screen.masthead = mastheadModel(date, tag, { keys: Object.keys(cache), journal, today: "2026-09-07" });
   screen.gutter = !!extra.gutter;

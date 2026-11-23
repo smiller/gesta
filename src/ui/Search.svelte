@@ -24,6 +24,8 @@
   } = $props();
   let input: HTMLInputElement | undefined = $state();
   export function focusInput(): void { input?.focus(); }
+  const hits: HTMLElement[] = $state([]);
+  $effect(() => { if (search.active >= 0) hits[search.active]?.scrollIntoView({ block: "nearest" }); });
   const keydown = (e: KeyboardEvent): void => {
     const k = listKey(e);
     if (k === null) return;
@@ -51,7 +53,7 @@
       {#if search.empty}<li class="empty">{search.empty}</li>{/if}
       {#each search.rows as r, i (i)}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-        <li class="hit" class:active={i === search.active} onmousemove={() => onHover(i)} onclick={() => onPick(i)}>
+        <li class="hit" bind:this={hits[i]} class:active={i === search.active} onmousemove={() => onHover(i)} onclick={() => onPick(i)}>
           <span class="where">{r.where}</span>
           <span class="snip">{#each r.runs as run, k (k)}{#if run.mark}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}</span>
         </li>

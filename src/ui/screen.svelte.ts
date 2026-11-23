@@ -1,4 +1,5 @@
 import type { MastheadModel, MenuRow } from "./mastheadModel.ts";
+import type { Opened } from "./menuModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
 import type { Level } from "./gotoRowModel.ts";
 import type { AskKind } from "../editor/goto.ts";
@@ -29,7 +30,7 @@ export interface Screen {
      opening one closes the others by construction (pin: launch, menus, the
      corner, links › the bookshelf menu, displacing it). The in-flow rows
      compete for no spot and are not in it. */
-  opened: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
+  opened: Opened | null;
   menuRows: MenuRow[];
   /* an empty menu's one explanatory line, "" for none */
   menuEmpty: string;

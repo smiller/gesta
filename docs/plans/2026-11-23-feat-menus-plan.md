@@ -143,3 +143,16 @@ conversation.
   walk gone (events.ts's spawned, which follows moves, serves both).
   Every logged day's page, slideshow and terminal output byte for byte
   the same (MEASURED: 15 files over 5 days, diff -rq).
+- 12:45-13:10, A17.1.4-6, the three worth exploring (asked: yes; 6(b) to
+  B7): src/ui/rootListing.ts lists a namespace's roots by shelf, labelled,
+  capped only where a <select> shows them (LABEL_CAP and rootLabel moved
+  there; the Shelves text read in one place); pickKeys.ts's listKey and
+  stepped serve the menus, the search results and the shortcuts panel,
+  Home and End the menu's alone (in a text box they move the caret, so
+  the search results did not gain them, unlike what Q20 said); the
+  search results scroll their own selected row into view; MenuName and
+  Opened are the only names for the menus and the slot. The verdict
+  unchanged.
+- 12:50, found: each wait on a verdict ran to its 10-minute timeout, the
+  wait's pgrep matching its own command line; a verdict takes about
+  4 min 40 s; about 50-55 minutes lost this morning (the reader's count).

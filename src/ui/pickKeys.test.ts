@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { listKey, enterKey, holdsFocus, focusLeaves } from "./pickKeys.ts";
+import { listKey, stepped, enterKey, holdsFocus, focusLeaves } from "./pickKeys.ts";
 
 const key = (k: string, mods: Partial<{ shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }> = {}) =>
   ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false, ...mods });
@@ -44,5 +44,17 @@ describe("focus leaving a panel", () => {
   it("to nowhere leaves only where nowhere is a leaving", () => {
     expect(focusLeaves(null, true)).toBe(true);
     expect(focusLeaves(null, false)).toBe(false);
+  });
+});
+
+describe("a list's walk", () => {
+  it("Home and End go to a list's ends only where the list holds the focus itself; in a text box they are the box's", () => {
+    expect(listKey(key("Home"), true)).toBe("home");
+    expect(listKey(key("End"), true)).toBe("end");
+    expect(listKey(key("Home"))).toBeNull();
+    expect(listKey(key("End"))).toBeNull();
+  });
+  it("steps wrap at either end, go to the first or the last, and stay put in an empty list", () => {
+    expect([stepped(4, 1, 5), stepped(0, -1, 5), stepped(2, "home", 5), stepped(2, "end", 5), stepped(0, 1, 0)]).toEqual([0, 4, 0, 4, 0]);
   });
 });
