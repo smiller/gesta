@@ -316,7 +316,7 @@ describe("a work by book, chapter, and paragraph: the Line box asks for a paragr
   it("names the paragraphs there are", () => {
     expect(at(99)).toBe("no paragraph 99 — the paragraphs here are 60–62");
     expect(at(0)).toBe("no paragraph 0 — the paragraphs here are 60–62");
-    expect(lands(parseMarkdown("# Book 2\n\nLoose."), "1", PARAGRAPHS)).toBe("no numbered paragraphs here");
+    expect(lands(parseMarkdown("# Book 2\n\nLoose."), "1", PARAGRAPHS)).toBe("no paragraph numbers here");
   });
 });
 

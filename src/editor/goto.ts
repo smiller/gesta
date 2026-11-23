@@ -128,7 +128,7 @@ function paragraphHit(doc: Node, n: number): { pos: number } | Said {
     });
   });
   if (hit !== null) return { pos: hit };
-  return high === -Infinity ? said("noNumberedParagraphs") : said("noParagraph", { n, low, high });
+  return high === -Infinity ? said("nothingNumbered", { what: "paragraph" }) : said("noParagraph", { n, low, high });
 }
 function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);

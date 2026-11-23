@@ -24,3 +24,8 @@ table's Said` mean?", answered.
 - goto.test reads words through `alertWords`; "typed" is a set of seven
   ids, and an "absent" number measured as `noUnit`.
 - Helium: the verdict played and matched the approved run unchanged.
+- Asked, after reading the whens: "make both say 'no paragraph numbers
+  here'". A paragraph asked for on a page with no `::: prose` block said
+  "no numbered paragraphs here", a word from `nothingNumbered`'s "no
+  paragraph numbers here"; it raises `nothingNumbered` now, and
+  `noNumberedParagraphs` is gone.

@@ -124,7 +124,6 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `no numbered …s here` | ⌃⌘G with a number, on an entry whose blocks number no lines. |
 | `the only … here is …` | ⌃⌘G with a number not in the entry’s one numbered block, which holds a single line. |
 | `the …s here are …–…` | ⌃⌘G with a number not in the entry’s one numbered block. |
-| `no numbered paragraphs here` | ⌃⌘G with a paragraph number, on a page of a work by paragraph that numbers none. |
 | `no paragraph … — the paragraphs here are …–…` | ⌃⌘G with a paragraph number not on the page. |
 | `no page numbers here` | ⌃⌘G with a page, on an entry with no page labels. |
 | `no page … here` | ⌃⌘G with a page not in the entry. |
@@ -138,7 +137,7 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `type a stanza number` | Enter with the Stanza and Line boxes both empty. |
 | `type a stanza, or stanza.line` | A link to a page in stanzas that names no stanza. |
 | `… is not a stanza or stanza.line, like 2.1` | A link to a page in stanzas whose number is not a stanza or stanza.line. |
-| `no … numbers here` | ⌃⌘G on an entry with nothing numbered. |
+| `no … numbers here` | ⌃⌘G on an entry with nothing numbered; or a paragraph asked for, by ⌃⌘G or a link, on a page of a work referenced by paragraph that holds no `::: prose` block. |
 | `Switch to the rendered view to go to …` | ⌃⌘G in the markdown view. |
 | `finish the key` | Enter on a bookmark key typed part-way that more than one key starts with. |
 | `no bookmark …` | A number typed in the bookmarks panel with no row, or a key typed that no bookmark has. |
