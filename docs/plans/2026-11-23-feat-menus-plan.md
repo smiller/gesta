@@ -137,3 +137,9 @@ conversation.
   data-menu-area (Helium reads it) and --menu-area-w; fit writes
   --fit-cap and --window-margin, so 1285 and 64 are spelled once. The
   glossary has "Menu area"; vocabulary.ts retires the room's names.
+- 12:25-12:40, A17.1.3, candidate 3 (grilled, all yes): replay gives each
+  item its stretches of work, the carry-in-under-way rule written once;
+  spans.ts is a view over the items, its begun, ended, stamp and parent
+  walk gone (events.ts's spawned, which follows moves, serves both).
+  Every logged day's page, slideshow and terminal output byte for byte
+  the same (MEASURED: 15 files over 5 days, diff -rq).

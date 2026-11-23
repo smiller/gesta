@@ -22,13 +22,18 @@ export interface Item {
   closed?: Stamp;
   commits: string[]; note?: string;
   status: Status;
+  /* each start to its stop, done, drop or move, in the order they began */
+  work: Stretch[];
 }
+/* `seq`: where its start stands among the day's events, which orders
+   stretches begun in the same minute */
+export interface Stretch { from: Stamp; to?: Stamp; ending: Status; note?: string; seq: number }
 
 const stamp = (e: Base): Stamp => ({ at: e.at, approx: !!e.approx });
 type Items = Map<string, Item>;
 function created(items: Items, e: Event): void {
   if (e.ev === "carry" || e.ev === "add") {
-    items.set(e.id, { id: e.id, list: e.list, title: e.title, parent: e.parent, detail: e.detail, watch: e.watch, starting: e.ev === "carry", reported: e.ev === "add" ? stamp(e) : undefined, started: e.started, stopped: e.stopped, commits: [], status: "unstarted" });
+    items.set(e.id, { id: e.id, list: e.list, title: e.title, parent: e.parent, detail: e.detail, watch: e.watch, starting: e.ev === "carry", reported: e.ev === "add" ? stamp(e) : undefined, started: e.started, stopped: e.stopped, commits: [], status: "unstarted", work: [] });
     return;
   }
   if (e.ev !== "move") return;
@@ -36,7 +41,7 @@ function created(items: Items, e: Event): void {
   if (!was) return;
   was.movedTo = e.to;
   was.ended = stamp(e);
-  items.set(e.to, { id: e.to, list: e.list, title: was.title, detail: was.detail, watch: was.watch, starting: was.starting, movedFrom: e.id, reported: was.reported, commits: [], status: "unstarted" });
+  items.set(e.to, { id: e.to, list: e.list, title: was.title, detail: was.detail, watch: was.watch, starting: was.starting, movedFrom: e.id, reported: was.reported, commits: [], status: "unstarted", work: [] });
 }
 function changed(it: Item, e: Event): void {
   if (e.ev === "start") { it.started = stamp(e); it.stopped = undefined; it.watch = undefined; it.note = e.note ?? it.note; }
@@ -63,12 +68,16 @@ export const isUnderway = (s: Status): boolean => UNDERWAY.has(s);
 export const isDone = (s: Status): boolean => DONE.has(s);
 /* the items that count: a moved one counts once, where it started */
 export const own = (items: Item[]): Item[] => items.filter((i) => !i.movedFrom);
-function settled(items: Items): void {
-  const all = [...items.values()];
-  /* what an item spawned, a moved one followed to the item it became: its
-     parent's work is not done while that is open */
-  const became = (it: Item): Item[] => { const to = it.movedTo ? items.get(it.movedTo) : undefined; return to ? [to, ...became(to)] : []; };
+/* what an item spawned, a moved one followed to the item it became */
+export function spawned(all: Item[]): (id: string) => Item[] {
+  const byId = new Map(all.map((i) => [i.id, i]));
+  const became = (it: Item): Item[] => { const to = it.movedTo ? byId.get(it.movedTo) : undefined; return to ? [to, ...became(to)] : []; };
   const below = (id: string): Item[] => all.filter((i) => i.parent === id).flatMap((c) => [c, ...became(c), ...below(c.id)]);
+  return below;
+}
+/* an item's work is not done while what it spawned is open */
+function settled(items: Items): void {
+  const all = [...items.values()], below = spawned(all);
   for (const it of all) it.status = begun(it);
   for (const it of all) if (it.status === "done" && below(it.id).some((c) => isOpen(c.status))) it.status = "done, spawned open";
   for (const it of all) closing(it, below(it.id));
@@ -80,10 +89,21 @@ function closing(it: Item, under: Item[]): void {
   it.closed = tree.map((x) => x.ended).reduce(later, undefined);
 }
 const opens = (e: Event): boolean => e.ev === "carry" || e.ev === "add" || e.ev === "move";
-function applied(items: Items, e: Event): void {
-  if (opens(e)) { created(items, e); return; }
-  const it = "id" in e ? items.get(e.id) : undefined;
-  if (it) changed(it, e);
+const ENDING: Partial<Record<Event["ev"], Status>> = { stop: "paused", done: "done", drop: "dropped", move: "moved" };
+/* an item carried in under way is at work from the day's start */
+const startsWork = (e: Event): boolean => e.ev === "start" || (e.ev === "carry" && !!e.started && !e.stopped);
+function worked(it: Item, e: Event, seq: number): void {
+  const open = it.work.find((w) => !w.to), ending = ENDING[e.ev];
+  if (startsWork(e) && !open) it.work.push({ from: stamp(e), ending: "in progress", seq });
+  else if (open && ending) Object.assign(open, { to: stamp(e), ending }, "note" in e && e.note ? { note: e.note } : {});
+}
+function applied(items: Items, e: Event, seq: number): void {
+  const was = "id" in e ? items.get(e.id) : undefined;
+  if (was) worked(was, e, seq);
+  if (opens(e)) created(items, e);
+  else if (was) changed(was, e);
+  const made = "id" in e && !was ? items.get(e.id) : undefined;
+  if (made) worked(made, e, seq);
 }
 /* the day's items as they stood at `until` (all of it when absent), in
    the order they were reported */
@@ -91,9 +111,9 @@ export function replay(events: Event[], until?: string): Item[] {
   const items: Items = new Map();
   /* in time order: an event logged late, with an earlier time, lands where it belongs */
   const timed = [...events].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
-  for (const e of timed) {
+  for (const [seq, e] of timed.entries()) {
     if (until && e.at > until) break;
-    applied(items, e);
+    applied(items, e, seq);
   }
   settled(items);
   return [...items.values()];

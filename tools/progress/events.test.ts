@@ -129,3 +129,19 @@ test("a start given a note takes it as the item's note, as a stop does", () => {
   const started = replay([...day, { at: at("13:10"), ev: "add", id: "S9", list: "S", title: "s9" }, { at: at("13:20"), ev: "start", id: "S9", note: "woken" }]);
   expect(started.find((i) => i.id === "S9")!.note).toBe("woken");
 });
+
+test("an item's stretches of work: each start to its stop, done, drop or move, how it ended and its note; one carried in under way from the carry; none carried in paused", () => {
+  const events: Event[] = [
+    { at: at("08:00"), ev: "begin", next: {} },
+    { at: at("08:00"), ev: "carry", id: "U1", list: "U", title: "under way", started: { at: "2026-11-14T22:00", approx: false } },
+    { at: at("08:00"), ev: "carry", id: "U2", list: "U", title: "paused", started: { at: "2026-11-14T20:00", approx: false }, stopped: { at: "2026-11-14T21:00", approx: false } },
+    { at: at("09:00"), ev: "add", id: "A1", list: "A", title: "a" },
+    { at: at("09:00"), ev: "start", id: "A1" }, { at: at("09:10"), ev: "stop", id: "A1", note: "waiting" },
+    { at: at("09:20"), ev: "start", id: "A1" }, { at: at("09:30"), ev: "done", id: "A1", note: "built" },
+    { at: at("09:40"), ev: "done", id: "U1" },
+  ];
+  const work = (id: string) => replay(events).find((i) => i.id === id)!.work.map((w) => [w.from.at.slice(11), w.to?.at.slice(11), w.ending, w.note]);
+  expect(work("A1")).toEqual([["09:00", "09:10", "paused", "waiting"], ["09:20", "09:30", "done", "built"]]);
+  expect(work("U1")).toEqual([["08:00", "09:40", "done", undefined]]);
+  expect(work("U2")).toEqual([]);
+});
