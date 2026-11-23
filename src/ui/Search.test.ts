@@ -7,7 +7,7 @@ const none = () => {};
 function draw(patch: Partial<ReturnType<typeof screenState>["search"]>): string {
   const screen = screenState(5);
   Object.assign(screen.search, patch);
-  return render(Search, { props: { search: screen.search, onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none } }).body;
+  return render(Search, { props: { search: screen.search, onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none, onHover: none } }).body;
 }
 const options = [
   { label: "Everything", scope: { kind: "everything" as const }, group: null },

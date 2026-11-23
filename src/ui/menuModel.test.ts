@@ -1,0 +1,70 @@
+import { describe, it, expect } from "vitest";
+import { menuItems, menuKey, typedAhead, roomFor, MENU_ROOM_FROM } from "./menuModel.ts";
+import type { MenuRow } from "./mastheadModel.ts";
+
+const SHELVED: MenuRow[] = [
+  { text: "Latin", href: "", shelf: true }, { text: "Horace", href: "#bookshelf/Horace", shelved: true }, { text: "Ovid", href: "#bookshelf/Ovid", shelved: true },
+  { text: "English", href: "", shelf: true }, { text: "John Milton", href: "#bookshelf/Milton, John", shelved: true },
+];
+const ACTS = ["New author…", "Shelves…"];
+const key = (k: string, mods: Partial<{ shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }> = {}) =>
+  ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false, ...mods });
+
+describe("a menu's items", () => {
+  it("are its rows a reader can go to, in order, then its acts; a shelf's heading is none", () => {
+    const items = menuItems(SHELVED, ACTS);
+    expect(items.map((i) => i.text)).toEqual(["Horace", "Ovid", "John Milton", "New author…", "Shelves…"]);
+    expect(items.map((i) => i.row)).toEqual([1, 2, 4, null, null]);
+    expect(items.map((i) => i.act)).toEqual([null, null, null, 0, 1]);
+  });
+});
+
+describe("a key in an open menu", () => {
+  const n = menuItems(SHELVED, ACTS).length;
+  it("↓ and ↑ walk the items and wrap at either end", () => {
+    expect(menuKey(key("ArrowDown"), 0, n)).toEqual({ sel: 1 });
+    expect(menuKey(key("ArrowDown"), n - 1, n)).toEqual({ sel: 0 });
+    expect(menuKey(key("ArrowUp"), 0, n)).toEqual({ sel: n - 1 });
+  });
+  it("Home and End go to the first and the last item", () => {
+    expect(menuKey(key("Home"), 3, n)).toEqual({ sel: 0 });
+    expect(menuKey(key("End"), 0, n)).toEqual({ sel: n - 1 });
+  });
+  it("Enter chooses the selected item; Escape and Tab close the menu, the focus back where it was", () => {
+    expect(menuKey(key("Enter"), 2, n)).toEqual({ choose: 2 });
+    expect(menuKey(key("Escape"), 2, n)).toEqual({ close: true });
+    expect(menuKey(key("Tab"), 2, n)).toEqual({ close: true });
+    expect(menuKey(key("Tab", { shiftKey: true }), 2, n)).toEqual({ close: true });
+  });
+  it("a letter is typed toward an item; a chord, a composing key and any other key are not the menu's", () => {
+    expect(menuKey(key("m"), 0, n)).toEqual({ typed: "m" });
+    expect(menuKey(key("m", { metaKey: true }), 0, n)).toBeNull();
+    expect(menuKey(key("ArrowDown", { ctrlKey: true, metaKey: true }), 0, n)).toBeNull();
+    expect(menuKey(key("m", { isComposing: true }), 0, n)).toBeNull();
+    expect(menuKey(key("F5"), 0, n)).toBeNull();
+  });
+});
+
+describe("letters typed toward an item", () => {
+  const items = menuItems(SHELVED, ACTS);
+  it("go to the first item with a word starting so, case and accents aside, the letters a second apart at most making one string", () => {
+    const m = typedAhead({ buf: "", at: 0 }, "m", 1000, items);
+    expect(m).toEqual({ buf: "m", at: 1000, sel: 2 });
+    expect(typedAhead(m, "i", 1500, items)).toEqual({ buf: "mi", at: 1500, sel: 2 });
+    expect(typedAhead(m, "o", 2500, items)).toEqual({ buf: "o", at: 2500, sel: 1 });
+    expect(typedAhead({ buf: "", at: 0 }, "S", 1000, items).sel).toBe(4);
+    expect(typedAhead({ buf: "", at: 0 }, "e", 1000, menuItems([{ text: "Édouard", href: "#x" }], [])).sel).toBe(0);
+  });
+  it("matching nothing, keep the selection where it is", () => {
+    expect(typedAhead({ buf: "", at: 0 }, "z", 1000, items).sel).toBeNull();
+  });
+});
+
+describe("the room a menu makes", () => {
+  it("is the menu's right edge and a gap, where the menu would cover the text and the window is wide enough; none otherwise", () => {
+    expect(roomFor({ menuRight: 269, textLeft: 46, width: 1280 })).toBe(285);
+    expect(roomFor({ menuRight: 269, textLeft: 284, width: 1280 })).toBe(0);
+    expect(roomFor({ menuRight: 269, textLeft: 24, width: MENU_ROOM_FROM - 1 })).toBe(0);
+    expect(roomFor({ menuRight: 269, textLeft: 24, width: MENU_ROOM_FROM })).toBe(285);
+  });
+});

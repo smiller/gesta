@@ -21,6 +21,12 @@ body { font-family: var(--serif); line-height: 1.55; font-size: 18px; }
    since a block's own margin, a verse's or a card's, outranks a class's
    (pin: the entry's top › an entry opening on a verse block) */
 main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
+/* an open menu's room: the page centred in what the menu leaves */
+:root.menu-room main {
+  max-width: min(760px, 100% - var(--menu-room));
+  margin-left: calc(var(--menu-room) + (100% - var(--menu-room) - min(760px, 100% - var(--menu-room))) / 2);
+  margin-right: 0;
+}
 #editor .page > :first-child { margin-top: 0; }
 
 /* what prosemirror-view's own stylesheet asks of the root */
@@ -29,7 +35,7 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
 .ProseMirror-selectednode { outline: 2px solid #8cf; }
 
 .page {
-  --par-w: min(1285px, 100vw - 64px);
+  --par-w: min(1285px, 100vw - 64px - var(--menu-room, 0px));
   min-height: 60vh;
   outline: none;
   caret-color: var(--accent);
@@ -173,7 +179,7 @@ main { max-width: 760px; margin: 0 auto; padding: 0 24px 24px; }
 .page div.grid:has(> :nth-child(5):last-child) { --cards: 5; }
 .page > div.grid {
   --across: min(var(--n), var(--cards, 99));
-  --grid-w: min(var(--client-w, 100vw) - 48px, calc(var(--across) * 650px + (var(--across) - 1) * 1em));
+  --grid-w: min(var(--client-w, 100vw) - 48px - var(--menu-room, 0px), calc(var(--across) * 650px + (var(--across) - 1) * 1em));
   width: var(--grid-w);
   margin: 1.2em calc(50% - var(--grid-w) / 2);
 }

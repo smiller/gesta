@@ -7,6 +7,8 @@ import { menuRows } from "./mastheadModel.ts";
 import { entryKey, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { loadState } from "./journalLoad.ts";
+import { roomFor } from "./menuModel.ts";
+import { leaveRoom } from "../editor/fit.ts";
 
 export type Ns = "commonplace" | "bookshelf";
 export type Opened = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
@@ -15,14 +17,21 @@ export interface OpenerDeps {
   screen: Pick<Screen, "opened" | "menuRows" | "menuEmpty">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   journal: Journal;
-  session: Pick<Session, "focusText" | "save">;
+  session: Pick<Session, "focusText" | "save" | "holdTop">;
   open(opening: Opening): void;
   closeOpened(): void;
   openBookmarks(): void;
   openShortcuts(): void;
   readBackups(): void;
 }
-export interface Openers { opener(ns: Opened, byKey?: boolean): void; reanswer(): void }
+export interface Openers {
+  opener(ns: Opened, byKey?: boolean): void;
+  reanswer(): void;
+  /* an open menu's right edge, null once it closes */
+  room(menuRight: number | null): void;
+  /* the focus back where it stood before a menu took it */
+  back(was: Element | null): void;
+}
 
 const emptyLine = (ns: Ns, layer: OpenerDeps["layer"]): string => {
   if (ns !== "bookshelf") return "";
@@ -74,5 +83,21 @@ export function openerActs(d: OpenerDeps): Openers {
     }
     if (ns === "backups") d.readBackups();
   };
-  return { opener, reanswer };
+  /* the room is read against the page as it stands with none, and the
+     reading place is held across the reflow it makes */
+  let made = 0;
+  const room = (menuRight: number | null): void => {
+    const page = document.querySelector("#editor .page, #editor textarea");
+    const px = menuRight === null || !page ? 0 : roomFor({ menuRight, textLeft: page.getBoundingClientRect().left, width: document.documentElement.clientWidth });
+    if (px === made) return;
+    made = px;
+    session.holdTop();
+    leaveRoom(px);
+  };
+  const back = (was: Element | null): void => {
+    const other = was === document.body ? null : was;
+    if (other instanceof HTMLElement && !other.closest("#editor")) other.focus({ preventScroll: true });
+    else session.focusText();
+  };
+  return { opener, reanswer, room, back };
 }

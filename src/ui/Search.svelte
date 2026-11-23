@@ -4,15 +4,15 @@
      block's own coordinates, so it is never measured and never stale. The
      keys live on the INPUT: the arrows belong to whatever else has focus,
      and the select's arrows open its own list. A modified arrow is not a
-     walk. The row ↑↓ landed on carries an inset bar a hover never paints,
-     since the overlay drops onto wherever the pointer already rests (pin:
-     search › after ↓). -->
+     walk. ONE HIGHLIGHT, the selected row's, which the pointer moves only
+     by MOVING: the overlay drops onto wherever the pointer already rests,
+     and a row under it was taken for the top match (pin: search › after ↓). -->
 <script lang="ts">
   import type { SearchState } from "./screen.svelte.ts";
   import { SEARCH_CAP } from "../store/search.ts";
   import { optionGroups } from "./searchModel.ts";
   import { listKey } from "./pickKeys.ts";
-  let { search, onToggle, onQuery, onScope, onWalk, onEnter, onPick }: {
+  let { search, onToggle, onQuery, onScope, onWalk, onEnter, onPick, onHover }: {
     search: SearchState;
     onToggle: (open: boolean) => void;
     onQuery: (q: string) => void;
@@ -20,6 +20,7 @@
     onWalk: (dir: 1 | -1) => void;
     onEnter: () => void;
     onPick: (i: number) => void;
+    onHover: (i: number) => void;
   } = $props();
   let input: HTMLInputElement | undefined = $state();
   export function focusInput(): void { input?.focus(); }
@@ -50,7 +51,7 @@
       {#if search.empty}<li class="empty">{search.empty}</li>{/if}
       {#each search.rows as r, i (i)}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
-        <li class="hit" class:active={i === search.active} onclick={() => onPick(i)}>
+        <li class="hit" class:active={i === search.active} onmousemove={() => onHover(i)} onclick={() => onPick(i)}>
           <span class="where">{r.where}</span>
           <span class="snip">{#each r.runs as run, k (k)}{#if run.mark}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}</span>
         </li>
@@ -117,7 +118,6 @@
     cursor: pointer;
   }
   .search-results li:first-child { border-top: none; }
-  .search-results li:hover { background: var(--aside-bg); }
   .search-results li.active { background: var(--aside-bg); box-shadow: inset 3px 0 0 var(--accent); }
   .search-results .where { display: block; font-family: var(--sans); font-variant-numeric: tabular-nums; color: var(--accent); margin-bottom: 2px; }
   .search-results .snip { color: var(--muted); }

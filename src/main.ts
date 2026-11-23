@@ -102,7 +102,11 @@ const acts = {
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
   gotoToolbar: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page" | "stanza", _v: string) => {}, enter: (_kind: "line" | "page" | "stanza", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
   replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, closeOver: () => {}, dismiss: () => {}, check: () => {} },
-  search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
+  search: {
+    toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {},
+    hover: (_i: number) => {},
+  },
+  menu: { room: (_right: number | null) => {}, back: (_was: Element | null) => {} },
 };
 const closeOpened = (): void => { screen.opened = null; };
 const overlay = overlays({
@@ -131,7 +135,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* the row closed by its own label hands the keys back as ⌃⌘L does
      (pin: where the keys go › Line numbering closed by its label) */
   onLines: (open: boolean) => acts.lines(open),
-  onOpener: (ns: Opened) => acts.opener(ns), onCloseOpened: closeOpened, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
+  onOpener: (ns: Opened) => acts.opener(ns), onCloseOpened: closeOpened, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(), onRoom: (right: number | null) => acts.menu.room(right), onBack: (was: Element | null) => acts.menu.back(was),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   /* a new pick is kept, then read as at any launch */
   reader: READER ? { onOpen: keepPicked, onWalk: (dir: WalkDir) => acts.walk(dir) } : null,
@@ -143,7 +147,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   bookmarks: { onKey: (e: KeyboardEvent) => acts.bookmarks.key(e), onAct: (key: string, what: "jump" | "del" | "key" | "link") => acts.bookmarks.act(key, what), onDraft: (v: string) => acts.bookmarks.draft(v), onCommit: (v: string) => acts.bookmarks.commit(v) },
   search: {
     onToggle: (open: boolean) => acts.search.toggle(open), onQuery: (q: string) => acts.search.query(q), onScope: (at: number) => acts.search.scope(at),
-    onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
+    onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i), onHover: (i: number) => acts.search.hover(i),
   },
 } });
 /* the alert area, between the masthead and the entry (pin: alertArea.test › the alert area is stuck at the masthead's foot) */
@@ -445,6 +449,7 @@ const openers = openerActs({
   open: (opening) => overlay.open(opening),
 });
 acts.opener = openers.opener;
+acts.menu = { room: openers.room, back: openers.back };
 /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
    read ends, well or badly: the search; the Go to row while nothing has
    been picked in it, its focus put back on its first select; an open

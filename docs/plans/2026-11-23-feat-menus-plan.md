@@ -40,7 +40,45 @@ Grilled over eight rounds; "index" and "control" discussed and set aside.
 
 ## Record
 
-- Keys before (MEASURED, a headless probe over the backup's 53 authors and
-  13 commonplaces): a click left the focus on the icon; ↓ scrolled the
-  page; the first row was the 13th Tab (12th in the commonplaces); Escape
-  from a row dropped the focus on the body.
+Times are the progress log's or a commit's; "~" marks one read off the
+conversation.
+
+- 2026-11-22 22:48, started. Keys before (MEASURED, a headless probe over
+  the backup's 53 authors and 13 commonplaces): a click left the focus on
+  the icon; ↓ scrolled the page; the first row was the 13th Tab (12th in
+  the commonplaces); Escape from a row dropped the focus on the body.
+- ~22:55, the review mock of the states:
+  https://claude.ai/artifact/UGNdWR84563XofzJFwk9bs.
+- 2026-11-23 08:23, grilled to the words (Decisions 1-3).
+- 08:59, the words, 3d80430: 65 files; the Helium verdict re-approved,
+  every changed line a rename (MEASURED: the approved copy with the
+  renames applied, diffed against the run).
+- ~08:50, asked mid-build: the open menu covers Ovid's two columns ("push
+  all the text to the right by the width of the menu"), and the two
+  menus' widths differ ("make them the same width"): natural widths 237
+  and 199 px (MEASURED). ~09:05 mocked:
+  https://claude.ai/artifact/5Khh6uPddSBhgxBmuVk7dA.
+- 09:01, 5bca4bd (P15): U8 had shown unstarted, its carry holding no start.
+- ~09:15, decided after the mocks: room made only where the menu would
+  cover the text (A′), from 900 px wide; one width, 240 px; the acts at the
+  foot in the accent green, italic, under a rule (d,
+  https://claude.ai/artifact/XnH7mpLLsJ4xgMteEwE4CB).
+- ~09:15-09:50, built: src/ui/menuModel.ts (items, keys, letters typed,
+  the room) and src/ui/Menu.svelte; fit.ts's leaveRoom writes
+  --menu-room and the page, the fitted measure and the grids read it; the
+  session's holdTop carries the line at the window's top across the
+  reflow (the ⌃⌘M carry).
+- The pointer selects by MOVING, not by entering a row: the search
+  results drop under a pointer at rest, and a row under it was taken for
+  the top match.
+- Found by probe: the menu was taken down before its focus hand-back
+  read where the focus was; it had fallen to the body. Read as a focus
+  to give back.
+- Found by the verdict: ⌃⌘H over an open menu opened help and shut it, the
+  menu's leaving closing the slot help had taken; only a menu still open
+  is closed by it now.
+- Helium, section "menus" (MEASURED, two plays alike): room 288 px on
+  Ovid 1, the text from 32 to 320 and back, the top line held both ways;
+  no room at 860 px; the caret back after "Maec" on Escape, Tab and the
+  icon again. The whole verdict re-approved: the menus hold the focus,
+  hand it back on closing, and a click outside lands on the moved text.

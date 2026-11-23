@@ -16,7 +16,7 @@ function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean
   screen.masthead = mastheadModel(date, tag, { keys: Object.keys(cache), journal, today: "2026-09-07" });
   screen.gutter = !!extra.gutter;
   if (extra.opened) { screen.opened = extra.opened; screen.menuRows = extra.rows || []; screen.menuEmpty = extra.empty || ""; }
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onInterval: none, onOpener: none, onCloseOpened: none, onNewRoot: none, onShelves: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, gotoToolbar: { onInput: none, onEnter: none, onClose: none }, replace: { onFind: none, onWith: none, onNext: none, onOne: none, onAll: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none, onSweep: none }, reader: extra.reader ? { onOpen: none, onWalk: none } : null } }).body;
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onInterval: none, onOpener: none, onCloseOpened: none, onNewRoot: none, onShelves: none, onRoom: none, onBack: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none, onHover: none }, goto: { onToggle: none, onPick: none }, gotoToolbar: { onInput: none, onEnter: none, onClose: none }, replace: { onFind: none, onWith: none, onNext: none, onOne: none, onAll: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none, onSweep: none }, reader: extra.reader ? { onOpen: none, onWalk: none } : null } }).body;
 }
 
 describe("Masthead", () => {
@@ -54,10 +54,10 @@ describe("Masthead", () => {
     expect(html).toMatch(/New author…<\/button>(<!--[^>]*-->|\s)*<button class="menu-act[^"]*" type="button">Shelves…<\/button>/);
     expect(draw("2026-09-07", null, { opened: "commonplace", rows: [] })).not.toMatch(/>Shelves…</);
   });
-  it("no menu by default; an open commonplace menu lists its rows and the create row; an empty shelf explains itself", () => {
+  it("no menu by default; an open commonplace menu lists its rows, its first selected, and the create row; an empty shelf explains itself", () => {
     expect(draw("2026-09-07", null)).not.toContain('class="menu');
     const html = draw("2026-09-07", null, { opened: "commonplace", rows: [{ text: "Books", href: "#commonplace/Books" }] });
-    expect(html).toMatch(/<nav class="menu[^"]*">(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books"[^>]*>Books<\/a>/);
+    expect(html).toMatch(/<nav class="menu[^"]*"[^>]*>(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books" class="[^"]*\bsel\b[^"]*">Books<\/a>/);
     expect(html).toContain(">New commonplace…</button>");
     expect(html).not.toContain("menu-empty");
     const shelf = draw("2026-09-07", null, { opened: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });

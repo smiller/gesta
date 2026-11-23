@@ -323,7 +323,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `alertLedger.svelte.ts` (the alert ledger), `alertLog.ts` (every error
   and warning kept three months, read in the console as `gesta.alerts()`), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
-  `gotoRowModel.ts`, `subEntries.ts`, `lifecycle.ts` (the six acts over
+  `gotoRowModel.ts`, `menuModel.ts` (a menu's items, keys, letters typed and the room it
+  makes), `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
@@ -338,7 +339,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `formatToolbarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
   `openerActs.ts` (a menu or panel opened, toggled, answered again),
   `backupsPanelActs.ts`. The components: `Masthead`,
-  `Alerts`, `Search`, `GotoRow`, `FormatToolbar`, `GotoToolbar`, `ReplaceToolbar`, `Help`
+  `Alerts`, `Search`, `GotoRow`, `Menu`, `FormatToolbar`, `GotoToolbar`, `ReplaceToolbar`, `Help`
   (over `help.html`), `Bookmarks`, `Shortcuts`, `Backups`, `CopyButton`;
   `ui.css`.
 - `src/session.ts` — THE BRIDGE: the editor over the journal; open by

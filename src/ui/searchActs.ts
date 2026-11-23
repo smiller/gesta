@@ -27,7 +27,7 @@ export interface SearchDeps {
   focusRow(): void;
 }
 export interface SearchRow {
-  toggle(open: boolean): void; query(q: string): void; scope(at: number): void; walk(dir: 1 | -1): void; pick(i: number): void; enter(): void;
+  toggle(open: boolean): void; query(q: string): void; scope(at: number): void; walk(dir: 1 | -1): void; hover(i: number): void; pick(i: number): void; enter(): void;
   buildIndex(): void; reanswer(): void;
 }
 export function searchActs(d: SearchDeps): SearchRow {
@@ -169,6 +169,7 @@ export function searchActs(d: SearchDeps): SearchRow {
   const enterSearch = (): void => { flushScan(); if (sr.active >= 0) pickSearch(sr.active); };
   return {
     toggle: toggleSearch, query: querySearch, scope: scopeSearch, walk: walkSearch, pick: pickSearch, enter: enterSearch,
+    hover: (i: number) => { sr.active = i; },
     buildIndex: () => buildIndex(), reanswer: () => { if (sr.open) renderSearch(); },
   };
 }

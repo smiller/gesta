@@ -67,6 +67,9 @@ export interface Session {
   /* the focus back to the text in either view, its selection as it stands
      (pin: source view › ⌃⌘K, then Escape, in the source view) */
   focusText(): void;
+  /* the line at the window's top kept there while the page reflows, until
+     a hand moves; at the entry's very top, nothing is held */
+  holdTop(): void;
   /* null: every entry takes typing again */
   lockEntries(keys: Set<string> | null): void;
   open(date: string, tag: string | null, how?: OpenHow): void;
@@ -485,6 +488,13 @@ export function startSession(opts: SessionOptions): Session {
     get view() { return live(); },
     get locked() { return !!opts.readOnly || !!locked?.has(ekeyOf()); },
     focusText: () => { surface.current?.focus(); },
+    holdTop: () => {
+      const s = surface.current?.source ? null : surface.current;
+      if (!s) return;
+      if (viewport.y() <= 0) return;
+      const pos = s.topAt(underMasthead());
+      if (pos !== null) keeper.carry(pos);
+    },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
     open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
     replacer: () => surface.current?.replace ?? null,

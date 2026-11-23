@@ -2,11 +2,11 @@
 the launch's stages: "start;primed;all;"
 after warm: {"text":"10 entries stored","show":true,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 masthead over Horace: {"crumb":"Horace","title":"","titleHidden":true,"lines":true,"today":true,"backups":"backups","height":111.21875,"sticky":"sticky","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-the commonplace menu: {"rows":["Horace","Links","Williams"],"create":"New commonplace…","cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-the bookshelf menu, displacing it: {"rows":["Boethius","Browning, Robert"],"create":"New author…","cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-its own opener again: {"value":null,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-after Escape: {"value":null,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-after a click outside: {"value":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+the commonplace menu: {"rows":["Horace","Links","Williams"],"create":"New commonplace…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+the bookshelf menu, displacing it: {"rows":["Boethius","Browning, Robert"],"create":"New author…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+its own opener again: {"value":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+after Escape: {"value":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+after a click outside: {"value":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 after a row click: {"entry":"commonplace/Williams","menu":null,"cursor":"at a line's start","screen":"commonplace/Williams · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 3.2 s later: {"text":"10 entries stored","show":false,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"commonplace/Williams · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 after typing: {"text":"saved","show":true,"opacity":"[fading]","pill":true,"cursor":"at the end","screen":"commonplace/Williams · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
@@ -152,8 +152,8 @@ bookmarks damaged: arrived at 2026-09-06: {"cursor":"at a line's start"}
 backups: {"buttons":["Set up automatic backups…"],"status":null,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened backups · rows none · rendered · corner [whatever stood]"}
 Escape: {"panel":false,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == help
-⌃⌘H over an open menu: {"help":true,"menu":false,"heading":"Custom keys","cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened help · rows none · rendered · corner [whatever stood]"}
-Escape: {"help":false,"cursor":"on button","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+⌃⌘H over an open menu: {"help":true,"menu":false,"heading":"Custom keys","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened help · rows none · rendered · corner [whatever stood]"}
+Escape: {"help":false,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == Go to toolbar
 Go to toolbar: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 ⌃⌘G over Horace: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows goto-toolbar · rendered · corner [whatever stood]"}
@@ -359,12 +359,12 @@ bookmarks from another window: arrived at 2026-09-06: {"cursor":"at a line's sta
 == author filing
 author filing: arrived at 2026-09-06: {"cursor":"at a line's start"}
 New author…, Sean Miller, Enter twice: {"prompts":["Name for the new author: []","Sorted under: [Miller, Sean]"],"entry":"bookshelf/Miller, Sean","stored":"# Sean Miller\n","cursor":"at a line's start","screen":"bookshelf/Miller, Sean · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-the bookshelf lists it by its heading: {"rows":["Boethius","Browning, Robert","Sean Miller"],"create":"New author…","cursor":"on button","screen":"bookshelf/Miller, Sean · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+the bookshelf lists it by its heading: {"rows":["Boethius","Browning, Robert","Sean Miller"],"create":"New author…","cursor":"on nav","screen":"bookshelf/Miller, Sean · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 + book with the caret in the heading: {"corner":"no link inside a heading — place your cursor below it","stored":"# Sean Miller\n","book":null,"cursor":"at a line's start","screen":"bookshelf/Miller, Sean · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 + book with the caret on the heading's line, markdown view: {"corner":"no link inside a heading — place your cursor below it","stored":"# Sean Miller","book":null,"cursor":"inside a line","screen":"bookshelf/Miller, Sean · sel none · toolbar off · opened none · rows none · source · corner [whatever stood]"}
 author filing: arrived at bookshelf/Miller, Sean: {"cursor":"at a line's start"}
 Rename, Sean Miller typed, Enter: {"prompts":["File and sort “Sean Miller” under: [Miller, Sean]"],"entry":"bookshelf/Sean Miller","corner":"filed under Sean Miller — 2 entries moved","author":"# Sean Miller\n\n[Odes](#bookshelf/Sean%20Miller/Odes)","book":"A book. ![](Odes-img-1.webp)","oldAuthor":null,"oldBook":null,"cursor":"on button","screen":"bookshelf/Sean Miller · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-the bookshelf after the re-file: {"rows":["Boethius","Browning, Robert","Sean Miller"],"create":"New author…","cursor":"on button","screen":"bookshelf/Sean Miller · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+the bookshelf after the re-file: {"rows":["Boethius","Browning, Robert","Sean Miller"],"create":"New author…","cursor":"on nav","screen":"bookshelf/Sean Miller · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 author filing: arrived at bookshelf/Sean Miller/Odes: {"cursor":"at a line's start"}
 the re-filed book, its picture: {"entry":"bookshelf/Sean Miller/Odes","md":"A book. ![](Odes-img-1.webp)","missing":null,"src":"blob:","width":1400,"height":700,"last":"P","cursor":"at a line's start","screen":"bookshelf/Sean Miller/Odes · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == replace
@@ -545,9 +545,9 @@ a rename keeps a label's marks: arrived at commonplace/Rename Host: {"cursor":"a
 a rename keeps a label's marks: arrived at commonplace/Rename Host/Ideas: {"cursor":"at a line's start"}
 renamed under a label part italic: {"entry":"commonplace/Rename Host/Plans","host":"See [the *Ideas* page](#commonplace/Rename%20Host/Plans) here.","cursor":"on button","screen":"commonplace/Rename Host/Plans · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == shelves
-the bookshelf on its shelves: {"seeded":true,"shelvesShown":true,"rows":["## Latin","  Boethius @26","  Browning, Robert @26","## English","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on button","screen":"2026-09-06 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+the bookshelf on its shelves: {"seeded":true,"shelvesShown":true,"rows":["## Latin","  Boethius @26","  Browning, Robert @26","## English","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on nav","screen":"2026-09-06 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 Shelves… clicked: {"entry":"bookshelf/Shelves","menu":null,"cursor":"at a line's start","screen":"bookshelf/Shelves · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-a shelf renamed, the list opened at once: {"rows":["## Classical","  Boethius @26","  Browning, Robert @26","## English","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on button","screen":"bookshelf/Shelves · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+a shelf renamed, the list opened at once: {"rows":["## Classical","  Boethius @26","  Browning, Robert @26","## English","  Edmund Spenser @26","New author…","Shelves…"],"cursor":"on nav","screen":"bookshelf/Shelves · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 shelves: arrived at 2026-09-06: {"cursor":"at a line's start"}
 the go-to box on its shelves: {"value":["Commonplaces: 3 commonplaces","Classical: Boethius|Browning, Robert","English: Edmund Spenser"],"cursor":"on select","screen":"2026-09-06 · sel none · toolbar off · opened none · rows goto · rendered · corner [whatever stood]"}
 the search scopes on their shelves: {"value":["Commonplaces: 3 commonplaces","Classical: All Classical|Boethius|Browning, Robert","English: Edmund Spenser"],"cursor":"on input","screen":"2026-09-06 · sel none · toolbar off · opened none · rows search · rendered · corner [whatever stood]"}
@@ -703,6 +703,31 @@ the place's links, hovered: {"titles":["⌘-click to open 2022-twin","⌘-click 
 a commonplace moved with its sub-entries: arrived at bookshelf/Mover, Test/Essays/Essay: {"cursor":"at a line's start"}
 the pictures under the old commonplace and the new address: {"old":[],"now":["bookshelf/Mover, Test/Essays/Essay-img-1.webp"],"cursor":"at a line's start","screen":"bookshelf/Mover, Test/Essays/Essay · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 the moved essay, its picture: {"entry":"bookshelf/Mover, Test/Essays/Essay","missing":null,"src":"blob:","width":1400,"height":700,"last":"P","cursor":"at a line's start","screen":"bookshelf/Mover, Test/Essays/Essay · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+== menus
+menus: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+the bookshelf menu opened: {"seeded":true,"sel":"Boethius","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+ArrowDown: {"sel":"Ovid","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+ArrowDown: {"sel":"Browning, Robert","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+ArrowDown: {"sel":"Edmund Spenser","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+ArrowDown: {"sel":"New author…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+ArrowDown: {"sel":"Shelves…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Home: {"sel":"Boethius","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+ArrowUp: {"sel":"Shelves…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+End: {"sel":"Shelves…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+spe typed: {"sel":"Edmund Spenser","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Enter on Edmund Spenser: {"entry":"bookshelf/Spenser, Edmund","menu":null,"cursor":"at a line's start","screen":"bookshelf/Spenser, Edmund · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+menus: arrived at commonplace/Horace: {"cursor":"at a line's start"}
+the commonplace menu, End: {"sel":"New commonplace…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+menus: arrived at commonplace/Horace: {"cursor":"on nav"}
+closed by Escape: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+closed by Tab: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+closed by icon: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+menus: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line's start"}
+Ovid 1, the menu closed: {"room":"0px","textLeft":32,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, the menu open: {"room":"288px","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1, the menu closed again: {"room":"0px","textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+menus: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line's start"}
+Ovid 1 at 860 px, the menu open: {"room":"0px","cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render commonplace/Gridded a grid holds only cards; "loose" is not a card
 error: cannot render commonplace/Gridded a grid holds only cards; "loose" is not a card
 error: bookmarks not saved Error: bookmarks unreadable

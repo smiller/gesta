@@ -13,6 +13,7 @@ import "./steps/alerts.ts";
 import "./steps/verse.ts";
 import "./steps/lines.ts";
 import "./steps/moving.ts";
+import "./steps/menus.ts";
 
 export { TODAY, type RunOptions } from "./steps/kit.ts";
 

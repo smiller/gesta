@@ -16,7 +16,8 @@
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onLines, onOpener, onCloseOpened, onNewRoot, onShelves, search, goto, gotoToolbar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
+  import Menu from "./Menu.svelte";
+  let { screen, onToday, onExport, onImport, onInterval, onLines, onOpener, onCloseOpened, onNewRoot, onShelves, onRoom, onBack, search, goto, gotoToolbar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
     /* the read-only page: a new bundle picked */
     reader?: { onOpen: (file: File) => void; onWalk: (dir: "prev" | "next") => void } | null;
@@ -28,7 +29,9 @@
     onCloseOpened: () => void;
     onNewRoot: (ns: "commonplace" | "bookshelf") => void;
     onShelves: () => void;
-    search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
+    onRoom: (menuRight: number | null) => void;
+    onBack: (was: Element | null) => void;
+    search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void; onHover: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
     gotoToolbar: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
     replace: { onFind: (value: string) => void; onWith: (value: string) => void; onNext: (back: boolean) => void; onOne: () => void; onAll: () => void; onClose: () => void };
@@ -48,7 +51,8 @@
   export function focusGoto(): void { gotoRow?.focusFirst(); }
   let searchRow: { focusInput(): void } | undefined = $state();
   export function focusSearch(): void { searchRow?.focusInput(); }
-  const NOUN = { commonplace: "commonplace", bookshelf: "author" } as const;
+  const ACTS = { commonplace: ["New commonplace…"], bookshelf: ["New author…", "Shelves…"] } as const;
+  const act = (ns: "commonplace" | "bookshelf", i: number): void => { if (ns === "bookshelf" && i === 1) onShelves(); else onNewRoot(ns); };
   /* a panel's focus going nowhere is a row deleted under it, not a leaving
      (pin: where the keys go › Tab twelve times from the bookmarks panel);
      a menu's is the window left */
@@ -57,6 +61,10 @@
     if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) onCloseOpened();
   };
   const leave = leaving(true), leavePanel = leaving(false);
+  /* a menu taken down with the focus in it leaves too, after a panel has
+     taken the slot: only a menu still open is closed by its leaving
+     (pin: help › ⌃⌘H over an open menu) */
+  const leaveMenu = (e: FocusEvent): void => { if (screen.opened === "commonplace" || screen.opened === "bookshelf") leave(e); };
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
   export function focusLines(): void { linesSelect?.focus(); }
@@ -64,14 +72,14 @@
 
 <header class="site-head">
   <nav class="site-home">
-    <button class="datebtn opener" title="Bookshelf menu" aria-label="Bookshelf menu" onclick={() => onOpener("bookshelf")}>
+    <button class="datebtn opener" title="Bookshelf menu" aria-label="Bookshelf menu" onmousedown={(e) => e.preventDefault()} onclick={() => onOpener("bookshelf")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M8 4.6C6.5 3.6 4.8 3.4 3 3.7v8c1.8-.3 3.5-.1 5 .9 1.5-1 3.2-1.2 5-.9v-8c-1.8-.3-3.5-.1-5 .9z"></path>
         <path d="M8 4.6v8.9"></path>
       </svg>
       <span class="caret">▾</span>
     </button>
-    <button class="datebtn opener" title="Commonplace menu" aria-label="Commonplace menu" onclick={() => onOpener("commonplace")}>
+    <button class="datebtn opener" title="Commonplace menu" aria-label="Commonplace menu" onmousedown={(e) => e.preventDefault()} onclick={() => onOpener("commonplace")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 1.8 h5.2 L12 4.6 v9.6 H4 z"></path>
         <path d="M9.2 1.8 v2.8 H12"></path>
@@ -121,14 +129,8 @@
   {#if screen.opened === "shortcuts"}<Shortcuts bind:this={shortcutsPanel} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leavePanel} />{/if}
   {#if screen.opened === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
   {#if screen.opened === "commonplace" || screen.opened === "bookshelf"}
-    <nav class="menu" onfocusout={leave}>
-      {#each screen.menuRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onCloseOpened}>{r.text}</a>{/if}{/each}
-      {#if !screen.menuRows.length && screen.menuEmpty}<span class="menu-empty">{screen.menuEmpty}</span>{/if}
-      {#if !reader}
-      <button class="menu-act" type="button" onclick={() => onNewRoot(screen.opened!)}>New {NOUN[screen.opened]}…</button>
-      {#if screen.opened === "bookshelf"}<button class="menu-act" type="button" onclick={onShelves}>Shelves…</button>{/if}
-      {/if}
-    </nav>
+    {@const ns = screen.opened}
+    <Menu rows={screen.menuRows} empty={screen.menuEmpty} acts={reader ? [] : [...ACTS[ns]]} onAct={(i) => act(ns, i)} onClose={onCloseOpened} onLeave={leaveMenu} {onRoom} {onBack} />
   {/if}
   <GotoToolbar bind:this={gotoToolbarEl} gotoToolbar={screen.gotoToolbar} {...gotoToolbar} />
   <ReplaceToolbar bind:this={replaceEl} replace={screen.replace} {...replace} />
@@ -214,44 +216,6 @@
   .datebtn { display: inline-flex; align-items: center; gap: 3px; }
   .datebtn svg { width: 17px; height: 17px; display: block; pointer-events: none; }
   .datebtn .caret { font-size: 0.7em; opacity: 0.8; pointer-events: none; }
-  /* A MENU, hung off the bar's bottom edge at the gutter. The
-     cap is the room below the masthead, in CSS rather than a measurement:
-     a JS cap is taken at a MOMENT and the bar grows under an open menu.
-     The 100% is the sticky bar's own height (a percentage against the
-     containing block's padding box); 18px is the 6px hang plus a 12px
-     breathing gap; dvh, not vh, under a phone's retracting URL bar; the
-     floor is ONE ROW, since a floor above the room overhangs and strands
-     the create row. */
-  .menu {
-    position: absolute;
-    top: calc(100% + var(--alert-area-h, 0px) + 6px);
-    left: var(--head-gutter);
-    z-index: 80;
-    min-width: 190px;
-    max-width: 320px;
-    background: var(--card-bg);
-    border: 1px solid var(--rule);
-    border-radius: 6px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    max-height: max(48px, calc(100dvh - 100% - var(--alert-area-h, 0px) - 18px));
-    overflow-y: auto;
-  }
-  /* every line on one vertical rhythm, tight: every 10px off a line is
-     another root on the screen; flex: none so the lines hold their size
-     under the max-height and the menu scrolls */
-  .menu a, .menu button, .menu .menu-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
-  .menu a, .menu button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
-  .menu a:hover, .menu button:hover { background: var(--aside-bg); }
-  .menu a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .menu .menu-act { color: var(--bar-link); }
-  /* a shelf's heading in the list's own type, its authors set in under it */
-  .menu .shelf { flex: none; line-height: 1.35; padding: 8px 12px 2px; font-size: 0.95em; font-family: var(--sans); font-weight: 600; color: var(--ink); }
-  .menu .shelf:first-child { padding-top: 5px; }
-  .menu a.shelved { padding-left: 26px; }
-  .menu .menu-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
   .mode {
     font-family: var(--sans);

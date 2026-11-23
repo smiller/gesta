@@ -186,7 +186,20 @@ function writeFit(host: HTMLElement, fit: Fit | null): void {
   if (fit.col == null) host.style.removeProperty("--vb-col");
   else host.style.setProperty("--vb-col", fit.col + "px");
 }
-export function fitCap(): number { return Math.min(CAP, window.innerWidth - WINDOW_MARGIN); }
+/* px the page leaves at the window's left for an open menu, written on the
+   root for the stylesheet. A resize is dispatched for it: every pass that
+   lays out by the window's width runs again, as when the window narrows */
+let room = 0;
+export function leaveRoom(px: number): void {
+  if (px === room) return;
+  room = px;
+  const root = document.documentElement;
+  root.style.setProperty("--menu-room", px + "px");
+  root.classList.toggle("menu-room", px > 0);
+  window.dispatchEvent(new Event("resize"));
+}
+const across = (): number => window.innerWidth - room;
+export function fitCap(): number { return Math.min(CAP, across() - WINDOW_MARGIN); }
 
 /* a measuring pass's class on `host` for `read` alone. The bracket is the
    invariant: one throw between the class going on and coming off would
@@ -393,7 +406,7 @@ class FitView implements PluginView {
   private frame = 0;
   private settle = 0;
   private window = 0;
-  private readonly onResize = (): void => { if (window.innerWidth !== this.window) this.schedule(false); };
+  private readonly onResize = (): void => { if (across() !== this.window) this.schedule(false); };
   /* the boxes again when a box's WIDTH has settled, the root's and each
      box's own: at the window's resize event a card in a grid still had
      the last width, each split one resize behind (MEASURED, commonplace/3x3 from
@@ -468,7 +481,7 @@ class FitView implements PluginView {
     /* paired prose alone asks its measure, not a measurement: its cells wrap */
     if (typeof m !== "object" || m === null) writeFit(host, flatFit(m));
     else if (!this.fitPairs(host, m, growOnly)) return;
-    if (!growOnly) this.window = window.innerWidth;
+    if (!growOnly) this.window = across();
   }
   private fitPairs(host: HTMLElement, m: Measured, growOnly: boolean): boolean {
     const fit = fitWidth(m, readFit(host), growOnly);
