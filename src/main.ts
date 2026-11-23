@@ -177,10 +177,10 @@ document.addEventListener("click", (e) => {
 });
 listenHeldKeys(document, window);
 /* ⌃⌘N is "new": a tagged entry, a sub-entry, a book; ⌃⌘L toggles the Line
-   numbering row — L for lines; Tab belongs to indent, so no masthead row is
-   reachable from the editor without a chord of its own; ⌃⌘R is the
-   reference, so replace is ⌃⌘E, for exchange; ⌃⌘J goes round the two
-   menus and the Go to row, B being bookmarks */
+   numbering row — L for lines; Tab belongs to indent, so a masthead row is
+   reached from the editor only by a chord; ⌃⌘R is the reference, so
+   replace is ⌃⌘E, for exchange; the menus share ⌃⌘J with the Go to row,
+   B being bookmarks */
 const roundTo = (to: ReturnType<typeof jRound>): void => {
   if (to === "goto" || to === "none") acts.goto.toggle(to === "goto");
   else acts.opener(to, true);

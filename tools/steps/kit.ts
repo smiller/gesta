@@ -65,7 +65,8 @@ export async function rest(p: Page) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }
 export async function openGotoRow(p: Page) {
-  for (const _ of [1, 2, 3]) { await p.keyboard.press("Control+Meta+j"); await rest(p); }
+  const open = () => p.evaluate(() => !!document.querySelector(".page-goto")?.open);
+  for (let n = 0; n < 4 && !(await open()); n++) { await p.keyboard.press("Control+Meta+j"); await rest(p); }
 }
 
 export { A };

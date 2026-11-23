@@ -75,6 +75,15 @@ async function menuAreaOpened(): Promise<void> {
   await page.keyboard.press("Escape");
   await settled(page);
   await log("Ovid 1, the menu closed again", { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
+  /* ⌃⌘J's round opens the menu area and closes it on the way to the Go to row */
+  for (const n of [1, 2, 3]) {
+    await page.keyboard.press("Control+Meta+j");
+    await settled(page);
+    await log("Ovid 1 scrolled, ⌃⌘J pressed " + n, { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
+  }
+  await page.keyboard.press("Escape");
+  await settled(page);
+  await log("Ovid 1, the Go to row closed", { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
   const size = page.viewportSize()!;
   await page.setViewportSize({ width: 860, height: size.height });
   await go(OVID);

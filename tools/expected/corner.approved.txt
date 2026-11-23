@@ -742,6 +742,10 @@ menu area: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line'
 Ovid 1, the menu closed: {"menuArea":"0","textLeft":32,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 Ovid 1 scrolled, the menu open: {"menuArea":"288","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 Ovid 1, the menu closed again: {"menuArea":"0","textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, ⌃⌘J pressed 1: {"menuArea":"288","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, ⌃⌘J pressed 2: {"menuArea":"288","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, ⌃⌘J pressed 3: {"menuArea":"0","textLeft":32,"sameTopLine":true,"cursor":"on select","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows goto · rendered · corner [whatever stood]"}
+Ovid 1, the Go to row closed: {"menuArea":"0","textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 menu area: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line's start"}
 Ovid 1 at 860 px, the menu open: {"menuArea":"0","cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 console: error: cannot render commonplace/Gridded a grid holds only cards; "loose" is not a card
