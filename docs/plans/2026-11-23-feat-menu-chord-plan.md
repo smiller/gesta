@@ -34,11 +34,11 @@ scratchpad worktree) before the build: "That looks really good."
 - 17:00 The verdict differed in two hunks only: the Go to row's two
   readings relabelled and the round's nine; approved. `npm run verify`
   passes.
-- 17:08 Accepted. `/code-review high 0beccfe..692b805` started; the
+- 17:08 Accepted. `/code-review high 0beccfe..184b71e` started; the
   architecture run waits for the stories that follow this one (asked: "I
   think there will be other stories here, so deferring the arch review
   until after that").
-- 17:13 A19, `/code-review high 0beccfe..692b805`: 111,752 tokens (the
+- 17:13 A19, `/code-review high 0beccfe..184b71e`: 111,752 tokens (the
   transcript's last message). Five findings, all fixed: the round's menu
   area unread at 1400 px (now read in "menu area": the top line holds at
   each press); `openGotoRow` presses until the row is open, four at most;

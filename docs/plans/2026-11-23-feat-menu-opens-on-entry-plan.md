@@ -25,11 +25,11 @@ should open with Ovid selected."
   Ovid by the icon, Books on its Essay, the first row from a journal day.
   The verdict differed only in those readings and the round's gaining
   `sel`; approved.
-- 17:31 A20, `/code-review high 50d72be..fab47aa`: 86,309 tokens (the
+- 17:31 A20, `/code-review high d99dfec..a26e426`: 86,309 tokens (the
   transcript's last message). Six findings:
   - A menu answered again kept the selection's number: opened on Ovid's
     Book 1 before the warm, it moved to Boethius once the warm ended
-    (played on fab47aa's menuActs.ts). Now the open entry's row is found
+    (played on a26e426's menuActs.ts). Now the open entry's row is found
     again until a key or the pointer moves the selection, and after that
     the row moved to, by its address. This replaces decision 1's "the
     first row stays" for a menu opened before the warm.

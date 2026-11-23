@@ -25,7 +25,7 @@ link?" A link was followed only by a mouse press (`links.ts`).
   just after one, away from one, on a link to itself and on an external
   link (a new tab); the verdict differed only in those readings,
   approved.
-- 17:58 A21, `/code-review high d72fcb1..53caf0f`: 108,963 tokens (the
+- 17:58 A21, `/code-review high dfa0eea..2fe290e`: 108,963 tokens (the
   transcript's last message). Six findings:
   - ⌃⌘Enter in the search box, the shortcuts or bookmarks panel said to
     follow a link once the text took the focus: not reproduced. In the
