@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { retiredWord, retiredAlertSense, headerForMasthead, popupByOldName } from "./vocabulary.ts";
+import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName } from "./vocabulary.ts";
 
 test("retiredWord: the noun, the verb and an identifier built on either; never a word that only contains the letters", () => {
   for (const bad of ["a citation", "Citations", "it cites both", "cited by", "citing", "re-cited", "citesLocator", "citationAnchorHTML", "referenceCitation", "A CITATION", "const CITATION = 1", "CitationAnchor", "citeRange", "CITED_LINES", "cite_x", "type CitesLocator", "_citation", "uncited", "miscited"]) expect(retiredWord(bad), bad).toBe(true);
@@ -33,9 +33,14 @@ test("headerForMasthead: the band at the top or one of its rows called a header;
   for (const good of ["its first row the header, a row's", "pad or trim to the header's column count", "trims each to the header\", () =>", "the header pair agrees", "a header row, a <code>| --- |", "A table's header row is not one", "the header in bold", "opens on a header of its own line", "<header class=\"site-head\">", "header: r === 0", "{ headers: { \"User-Agent\" } }"]) expect(headerForMasthead(good), good).toBe(false);
 });
 
-test("popupByOldName: the Go to popup by its name before, in prose, an identifier or a CSS class; never a line or a bar alone", () => {
-  for (const bad of ["the line bar", "Line bar", "lineBarActs", "LineBar.svelte", ".linebar .ask", "line-bar"]) expect(popupByOldName(bad), bad).toBe(true);
-  for (const good of ["the Go to popup", "a line", "the format bar", "a line, bar none", "linebreak", "the line barely fits", "an underline bar"]) expect(popupByOldName(good), good).toBe(false);
+test("toolbarByOldName: a toolbar by its names before, a popup or a bar, in prose, an identifier or a CSS class; never a line or a bar alone", () => {
+  for (const bad of ["the line bar", "Line bar", "lineBarActs", "LineBar.svelte", ".linebar .ask", "line-bar", "the Go to popup", "gotoPopupActs", ".goto-popup", "THE GO TO POPUP", "the format bar", "formatBarActs", "the replace bar", "ReplaceBar.svelte", ".replacebar", "the Selection toolbar", "a formatting toolbar", "a popup with links"]) expect(toolbarByOldName(bad), bad).toBe(true);
+  for (const good of ["the Go to toolbar", "the format toolbar", "the replace toolbar", "a line", "a line, bar none", "linebreak", "the line barely fits", "an underline bar", "the sticky bar", "the tag bar"]) expect(toolbarByOldName(good), good).toBe(false);
+});
+
+test("menuOrPanelByOldName: a menu or a panel by its names before; never a menu, a panel or a card in an entry", () => {
+  for (const bad of ["THE DROPDOWN PANEL", "an open lists panel", "books panel, displacing it", "the bookshelf list", "the commonplaces list", "Tab out of the bookmarks card", "the help card's promises"]) expect(menuOrPanelByOldName(bad), bad).toBe(true);
+  for (const good of ["the bookshelf menu", "the commonplace menu", "the bookmarks panel", "a card hover-copied", "a list of commonplaces", "the backups panel"]) expect(menuOrPanelByOldName(good), good).toBe(false);
 });
 
 // Milton's own preface to Samson Agonistes uses the verb.
@@ -52,9 +57,9 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference, alert, masthead and Go to popup: no retired word anywhere", () => {
+test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference, alert, masthead, toolbar, menu and panel: no retired word anywhere", () => {
   const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
-  const retired = (f: string) => (t: string): boolean => retiredWord(t) || headerForMasthead(t) || popupByOldName(t) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
+  const retired = (f: string) => (t: string): boolean => retiredWord(t) || headerForMasthead(t) || toolbarByOldName(t) || menuOrPanelByOldName(t) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retired(f)(t) ? [f + ":" + (i + 1)] : [])));
   expect(found).toEqual([]);
 });

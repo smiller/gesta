@@ -12,19 +12,19 @@ export interface ReplaceDeps {
   opened(): void;
   focusBar(): void;
 }
-export interface ReplaceBar {
+export interface ReplaceToolbar {
   open(): void; find(v: string): void; with(v: string): void; next(back: boolean): void; one(): void; all(): void;
   close(): void; closeOver(): void; dismiss(): void; check(): void;
 }
-export function replaceActs(d: ReplaceDeps): ReplaceBar {
+export function replaceActs(d: ReplaceDeps): ReplaceToolbar {
   const { rb, session, raise, opened, focusBar } = d;
   /* FIND AND REPLACE, on the markdown: ⌃⌘E in the rendered view switches
-     to the source view first, and closing the bar switches back */
+     to the source view first, and closing the toolbar switches back */
   let hits: number[] = [], at = -1, fromRendered = false, unwatch: (() => void) | null = null, editing = false, counting = 0;
   /* THE BAR HOLDS THE VIEW IT OPENED ON: the offsets are that text's, and
      a save from another window rebuilt the view under them, so a Replace
      wrote at the old offsets into the new text
-     (pin: replace › the entry saved in another window, the bar open) */
+     (pin: replace › the entry saved in another window, the toolbar open) */
   let barPort: ReplacePort | null = null;
   const draw = (port: ReplacePort): void => {
     rb.count = countLabel(rb.find, hits.length, at);
@@ -50,7 +50,7 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     barPort = null;
     hits = []; at = -1;
   };
-  /* the port the bar opened on, or null with the bar closed when the view was replaced */
+  /* the port the toolbar opened on, or null with the toolbar closed when the view was replaced */
   const port = (): ReplacePort | null => {
     if (!rb.open) return null;
     if (session.replacer() === barPort) return barPort;
@@ -58,9 +58,9 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     return null;
   };
   const dismiss = () => { dismissReplace(); fromRendered = false; };
-  /* a rebuilt view's caret sits at its end: put back at the match the bar
-     stood on (pin: replace › the entry saved in another window, the bar open) */
-  const freeOrInBar = (a: Element | null): boolean => !a || a === document.body || !!a.closest(".replacebar");
+  /* a rebuilt view's caret sits at its end: put back at the match the toolbar
+     stood on (pin: replace › the entry saved in another window, the toolbar open) */
+  const freeOrInBar = (a: Element | null): boolean => !a || a === document.body || !!a.closest(".replace-toolbar");
   const check = () => {
     if (!rb.open) return;
     const was = at >= 0 ? hits[at] : 0;
@@ -68,16 +68,16 @@ export function replaceActs(d: ReplaceDeps): ReplaceBar {
     const a = document.activeElement;
     if (session.mdView && freeOrInBar(a)) session.replacer()?.place(was);
   };
-  /* every close switches back to the view the bar was opened from, but a
+  /* every close switches back to the view the toolbar was opened from, but a
      navigation or a rebuilt view, which only closes it
-     (pin: replace › ⌃⌘H over the bar). A switch back the parse refuses
+     (pin: replace › ⌃⌘H over the toolbar). A switch back the parse refuses
      leaves the source view open and the cursor in its text, not in the
      hidden Find box (pin: replace › Escape, the switch back refused) */
   const closeBack = (focus: boolean): void => {
     if (!port()) return;
     const back = fromRendered;
     dismiss();
-    const wanted = focus || !!document.activeElement?.closest(".replacebar");
+    const wanted = focus || !!document.activeElement?.closest(".replace-toolbar");
     if (back) session.setView(false);
     if (session.mdView && wanted) session.replacer()?.focus();
   };

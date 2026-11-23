@@ -1,13 +1,13 @@
 <!-- ONE PAIR PER KIND OF NUMBER, label and box together so the entry can
      hide either as a unit — a box with a fixed label cannot lie about what
      it wants — and an "or" between them where there are two. No press on
-     the popup may move focus except into a box: a mousedown anywhere but an
+     the toolbar may move focus except into a box: a mousedown anywhere but an
      input or its label is swallowed. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  import { enterKey, holdsFocus } from "./cardKeys.ts";
-  let { gotoPopup, onInput, onEnter, onClose }: {
-    gotoPopup: Screen["gotoPopup"];
+  import { enterKey, holdsFocus } from "./pickKeys.ts";
+  let { gotoToolbar, onInput, onEnter, onClose }: {
+    gotoToolbar: Screen["gotoToolbar"];
     onInput: (kind: "line" | "page" | "stanza", value: string) => void;
     onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void;
     onClose: () => void;
@@ -16,7 +16,7 @@
   let pageInput: HTMLInputElement | undefined = $state();
   let stanzaInput: HTMLInputElement | undefined = $state();
   export function focusAsk(): void {
-    const el = gotoPopup.kind === "page" ? pageInput : gotoPopup.kind === "stanza" ? stanzaInput : lineInput;
+    const el = gotoToolbar.kind === "page" ? pageInput : gotoToolbar.kind === "stanza" ? stanzaInput : lineInput;
     el?.focus(); el?.select();
   }
   const key = (kind: "line" | "page" | "stanza") => (e: KeyboardEvent): void => {
@@ -30,25 +30,25 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div class="goto-popup" hidden={!gotoPopup.open} onmousedown={press} role="search">
-  <span class="ask" hidden={gotoPopup.kind !== "stanza"}>
+<div class="goto-toolbar" hidden={!gotoToolbar.open} onmousedown={press} role="search">
+  <span class="ask" hidden={gotoToolbar.kind !== "stanza"}>
     <label for="stanzainput">Stanza</label>
-    <input id="stanzainput" type="text" autocomplete="off" spellcheck="false" bind:this={stanzaInput} value={gotoPopup.stanza} oninput={(e) => onInput("stanza", e.currentTarget.value)} onkeydown={key("stanza")}>
+    <input id="stanzainput" type="text" autocomplete="off" spellcheck="false" bind:this={stanzaInput} value={gotoToolbar.stanza} oninput={(e) => onInput("stanza", e.currentTarget.value)} onkeydown={key("stanza")}>
   </span>
-  <span class="ask" hidden={gotoPopup.kind === "page"}>
-    <label for="lineinput">{gotoPopup.lineLabel}</label>
-    <input id="lineinput" type="text" autocomplete="off" spellcheck="false" bind:this={lineInput} value={gotoPopup.line} oninput={(e) => onInput("line", e.currentTarget.value)} onkeydown={key("line")}>
+  <span class="ask" hidden={gotoToolbar.kind === "page"}>
+    <label for="lineinput">{gotoToolbar.lineLabel}</label>
+    <input id="lineinput" type="text" autocomplete="off" spellcheck="false" bind:this={lineInput} value={gotoToolbar.line} oninput={(e) => onInput("line", e.currentTarget.value)} onkeydown={key("line")}>
   </span>
-  <span class="askor" hidden={gotoPopup.kind !== "both"}>, or</span>
-  <span class="ask" hidden={gotoPopup.kind === "line" || gotoPopup.kind === "stanza"}>
-    <label for="pageinput">{gotoPopup.pageLabel}</label>
-    <input id="pageinput" type="text" autocomplete="off" spellcheck="false" bind:this={pageInput} value={gotoPopup.page} oninput={(e) => onInput("page", e.currentTarget.value)} onkeydown={key("page")}>
+  <span class="askor" hidden={gotoToolbar.kind !== "both"}>, or</span>
+  <span class="ask" hidden={gotoToolbar.kind === "line" || gotoToolbar.kind === "stanza"}>
+    <label for="pageinput">{gotoToolbar.pageLabel}</label>
+    <input id="pageinput" type="text" autocomplete="off" spellcheck="false" bind:this={pageInput} value={gotoToolbar.page} oninput={(e) => onInput("page", e.currentTarget.value)} onkeydown={key("page")}>
   </span>
   <button type="button" title="Close (Esc)" onclick={onClose}>×</button>
 </div>
 
 <style>
-  .goto-popup {
+  .goto-toolbar {
     position: absolute;
     top: calc(100% + var(--alert-area-h, 0px) + 8px);
     right: var(--head-gutter);
@@ -66,7 +66,7 @@
     font-weight: 600;
     letter-spacing: 0.06em;
   }
-  .goto-popup[hidden] { display: none; }
+  .goto-toolbar[hidden] { display: none; }
   .ask { display: flex; align-items: center; gap: 8px; }
   .ask[hidden] { display: none; }
   .askor { margin-left: -5px; }

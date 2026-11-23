@@ -21,7 +21,7 @@ import { trimLabel } from "../model/trim.ts";
 export interface Crumb { text: string; href: string | null; title: string }
 export interface Link { text: string; href: string }
 /* a shelf's own row names it and leads nowhere; an author under one is set in */
-export interface PanelRow extends Link { shelf?: true; shelved?: true }
+export interface MenuRow extends Link { shelf?: true; shelved?: true }
 export interface MastheadModel {
   crumbs: Crumb[];
   /* the open entry's own bold name; null on a day's main entry */
@@ -63,8 +63,8 @@ export function mastheadModel(date: string, tag: string | null, w: Where): Masth
 /* the row-label cap every list surface shares, so their truncation of an
    untrusted name cannot drift apart */
 export const LABEL_CAP = 60;
-export function panelRows(ns: string, keys: string[], journal: Journal, shelvesMd = ""): PanelRow[] {
-  const row = (name: string, under: boolean): PanelRow => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name), ...(under ? { shelved: true as const } : {}) });
+export function menuRows(ns: string, keys: string[], journal: Journal, shelvesMd = ""): MenuRow[] {
+  const row = (name: string, under: boolean): MenuRow => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name), ...(under ? { shelved: true as const } : {}) });
   return rootGroups(ns, childrenOf(keys, ns), shelvesMd, null).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))
     : [{ text: trimLabel(g.shelf, LABEL_CAP), href: "", shelf: true as const }, ...g.roots.map((name) => row(name, true))]);
 }

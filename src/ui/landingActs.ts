@@ -33,7 +33,7 @@ export interface LandingDeps {
 }
 export interface Landing {
   /* asks the entry for the words, lands on the answer or says why not; true when it landed */
-  answer(words: Words, from: "popup" | "link"): boolean;
+  answer(words: Words, from: "toolbar" | "link"): boolean;
   /* the next ask starts its cycle afresh */
   forgetAsked(): void;
   caretBack(): void;
@@ -72,7 +72,7 @@ export function landingActs(d: LandingDeps): Landing {
     const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
-  const answer = (words: Words, from: "popup" | "link"): boolean => {
+  const answer = (words: Words, from: "toolbar" | "link"): boolean => {
     const view = session.view!;
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(view, a.pos); }
@@ -117,7 +117,7 @@ export function landingActs(d: LandingDeps): Landing {
        line › a link to a line, a key after arriving) */
     caretBack();
     view.focus();
-    /* no popup stands open to end the mark: a click or a key that moves does, a
+    /* no toolbar stands open to end the mark: a click or a key that moves does, a
        scrollbar's press and a tap's scroll not
        (pin: a link to a line › a link to a line, the next click)
        (pin: landing.test › a key that moves or writes) */

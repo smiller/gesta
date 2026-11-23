@@ -71,34 +71,60 @@ refusal, passing for its kinds (an act that does nothing is still refused).
 **Alert area**:
 The band under the masthead where alerts show, stuck there as the page
 scrolls and always one alert tall, so an alert coming or going moves no
-text; the bars, lists and dialogs that hang from the masthead open below
-it.
+text; the toolbars, menus and panels that hang from the masthead open
+below it.
 _Avoid_: strip.
 
 **Masthead**:
 The dark band across the top of the page: the entry's date or name with the
-previous and next arrows, its sub-entries or its breadcrumb, the
-commonplace and bookshelf lists, and the tools on the right.
+previous and next arrows, its sub-entries or its breadcrumb, the icons
+that open the bookshelf menu and the commonplace menu, and the masthead's
+buttons on the right: today, rename, delete, export, import, backups, help.
 _Avoid_: header, which is a table's first row and sits too near an entry's
-heading.
+heading; toolbar, for its buttons.
 
 **Masthead row**:
 One of the rows that open in the masthead under its top line: Go to,
-Search, Line numbering and Replace, one at a time.
+Search and Line numbering, one at a time.
 _Avoid_: bar; a table's header row is not one.
 
 **Go to row**:
 The masthead row ⌃⌘J opens: dropdowns that go to another entry, a day of
 the journal or any commonplace.
 
-**Go to popup**:
-The popup ⌃⌘G opens under the masthead, at the right: it asks for a line, a
-page, a paragraph, a verse, or a stanza and its line, whichever the entry
+**Menu**:
+One of the two lists the masthead's icons open, to go somewhere from: the
+bookshelf menu, its authors by shelf, with New author… and Shelves… at its
+foot; the commonplace menu, every commonplace in name order, with New
+commonplace… at its foot. Opening one selects its first row.
+_Avoid_: list, index, dropdown (a `<select>`), panel.
+
+**Search results**:
+What the Search row drops below the masthead: a row for each match, where
+it is and its words around it.
+_Avoid_: hits; menu.
+
+**Toolbar**:
+One of three that work on the entry in front of you: the Go to toolbar
+(⌃⌘G), the format toolbar, over a selection, and the replace toolbar (⌃⌘E,
+in the source view).
+_Avoid_: bar; control, every button's word and the ⌃ key's name; the
+retired words `tools/vocabulary.ts` lists, a panel popping up too.
+
+**Go to toolbar**:
+The toolbar ⌃⌘G opens under the masthead, at the right: it asks for a line,
+a page, a paragraph, a verse, or a stanza and its line, whichever the entry
 numbers, and goes there.
 _Avoid_: the retired words `tools/vocabulary.ts` lists.
+
+**Panel**:
+One of four the masthead opens over the page, to read or pick from: help
+(⌃⌘H), backups, bookmarks (⌃⌘B) and shortcuts (⌃⌘S).
+_Avoid_: card, which is a `::: card` box in an entry; the retired words
+`tools/vocabulary.ts` lists.
 
 **Landing**:
 Where ⌃⌘G or a link to a line puts the reader: the line centred in the band
 under the masthead and the alert area, and marked. ⌃⌘G's mark goes when
-the popup closes; a link's at the hand's next click or key that moves. A
+the toolbar closes; a link's at the hand's next click or key that moves. A
 jump to a search highlight is centred the same way, but not marked.

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { mastheadModel, rootLabel, panelRows } from "./mastheadModel.ts";
+import { mastheadModel, rootLabel, menuRows } from "./mastheadModel.ts";
 import { journalOf } from "../store/headings.ts";
 import { prettyDate } from "../store/keys.ts";
 
@@ -97,18 +97,18 @@ describe("the bookshelf", () => {
 
 describe("the panels", () => {
   it("a namespace's roots as rows, labelled as roots are, in key order", () => {
-    expect(panelRows("commonplace", keys, journal)).toEqual([{ text: "Books", href: "#commonplace/Books" }]);
-    expect(panelRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }, { text: "Edmund Spenser", href: "#bookshelf/Spenser%2C%20Edmund" }]);
-    expect(panelRows("nowhere", keys, journal)).toEqual([]);
+    expect(menuRows("commonplace", keys, journal)).toEqual([{ text: "Books", href: "#commonplace/Books" }]);
+    expect(menuRows("bookshelf", keys, journal)).toEqual([{ text: "John Milton", href: "#bookshelf/Milton%2C%20John" }, { text: "Edmund Spenser", href: "#bookshelf/Spenser%2C%20Edmund" }]);
+    expect(menuRows("nowhere", keys, journal)).toEqual([]);
   });
   it("the bookshelf on its shelves: a heading row per shelf, its authors set in under it; the shelves entry never an author", () => {
     const c = { "bookshelf/Horace": "# Horace", "bookshelf/Milton, John": "# John Milton", "bookshelf/Shelves": "# Shelves\n\n## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n" };
-    expect(panelRows("bookshelf", Object.keys(c), journalOf(c), c["bookshelf/Shelves"])).toEqual([
+    expect(menuRows("bookshelf", Object.keys(c), journalOf(c), c["bookshelf/Shelves"])).toEqual([
       { text: "Latin", href: "", shelf: true },
       { text: "Horace", href: "#bookshelf/Horace", shelved: true },
       { text: "English", href: "", shelf: true },
       { text: "John Milton", href: "#bookshelf/Milton%2C%20John", shelved: true },
     ]);
-    expect(panelRows("bookshelf", Object.keys(c), journalOf(c))).toEqual([{ text: "Horace", href: "#bookshelf/Horace" }, { text: "John Milton", href: "#bookshelf/Milton%2C%20John" }]);
+    expect(menuRows("bookshelf", Object.keys(c), journalOf(c))).toEqual([{ text: "Horace", href: "#bookshelf/Horace" }, { text: "John Milton", href: "#bookshelf/Milton%2C%20John" }]);
   });
 });

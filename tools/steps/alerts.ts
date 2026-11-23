@@ -87,20 +87,20 @@ async function pictureBlockHoverCopied(): Promise<void> {
   await go("commonplace/Horace");
   await view(false);
   const before = await A.stored(page, "commonplace/Horace");
-  await gotoPopupReasked(before);
+  await gotoToolbarReasked(before);
   await resultAfterMoreTyping();
-  await formatBarUnderMasthead();
+  await formatToolbarUnderMasthead();
   await copyButtonAfterNavigation();
   await failedCopyPinClicked();
   await shortcutWithNoCursor(before);
 }
-async function gotoPopupReasked(before: string): Promise<void> {
+async function gotoToolbarReasked(before: string): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   const asked = await boxes();
   await A.foreignWrite(page, "commonplace/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
   await page.waitForTimeout(1200);
-  await log("the Go to popup re-asked when the entry gains a page marker", { before: asked, after: await boxes() });
+  await log("the Go to toolbar re-asked when the entry gains a page marker", { before: asked, after: await boxes() });
   const lineBox = await page.evaluate(() => { const r = document.querySelector("#lineinput")?.getBoundingClientRect(); return r ? { x: r.left + 5, y: r.top + r.height / 2 } : null; });
   const into = await page.evaluate((s) => { const r = document.querySelector(s)?.getBoundingClientRect(); return r ? { x: r.left + 60, y: r.top + 120 } : null; }, S.editor);
   if (lineBox && into) { await page.mouse.move(lineBox.x, lineBox.y); await page.mouse.down(); await page.mouse.move(into.x, into.y, { steps: 6 }); await page.mouse.up(); }
@@ -121,17 +121,17 @@ async function resultAfterMoreTyping(): Promise<void> {
   await page.waitForTimeout(600);
   await log("a result clicked after more typing", { selected: await page.evaluate(() => document.getSelection()?.toString() || "") });
 }
-async function formatBarUnderMasthead(): Promise<void> {
+async function formatToolbarUnderMasthead(): Promise<void> {
   await go("commonplace/Horace");
   await view(false);
   await page.keyboard.press("Escape");
   await R.selectBetween(page, "Maecenas", "Maecenas");
   await rest(page);
-  /* the bar over the first line, under the masthead: a row opening grows the masthead down over it */
+  /* the toolbar over the first line, under the masthead: a row opening grows the masthead down over it */
   const was = await underMasthead();
   await page.keyboard.press("Control+Meta+l");
   await page.waitForTimeout(400);
-  await log("the format bar after Line numbering opens", { clearBefore: was, clearAfter: await underMasthead() });
+  await log("the format toolbar after Line numbering opens", { clearBefore: was, clearAfter: await underMasthead() });
 }
 async function copyButtonAfterNavigation(): Promise<void> {
   await page.keyboard.press("Control+Meta+l");
@@ -209,16 +209,16 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   const gotoBefore = await options();
   await warmed(slow);
   await log("Go to opened before the warm", { more: (await options()) > gotoBefore, focusInRow: await slow.evaluate(() => !!document.activeElement?.closest(".page-goto, #pagegoto")) });
-  const shelf = () => slow.evaluate(() => { const p = document.querySelector(".lists, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
+  const shelf = () => slow.evaluate(() => { const p = document.querySelector(".menu, #bookspanel"); return p ? p.querySelectorAll("a").length : -1; });
   await slow.goto(A.url("commonplace/Horace", "warm=slow&again=2"));
   await rest(slow);
-  await slow.click(S.booksOpener, { timeout: 2000 }).catch(() => {});
+  await slow.click(S.bookshelfOpener, { timeout: 2000 }).catch(() => {});
   await rest(slow);
-  await slow.evaluate(() => document.querySelector(".lists .panel-new, #bookspanel .panel-new")?.focus());
+  await slow.evaluate(() => document.querySelector(".menu .menu-act, #bookspanel .menu-act")?.focus());
   await slow.mouse.move(5, 700);
   const shelfBefore = await shelf();
   await warmed(slow);
-  await log("the bookshelf opened before the warm, the keys on its button", { before: shelfBefore, after: await shelf(), keysOnButton: await slow.evaluate(() => !!document.activeElement?.matches(".panel-new")) });
+  await log("the bookshelf opened before the warm, the keys on its button", { before: shelfBefore, after: await shelf(), keysOnButton: await slow.evaluate(() => !!document.activeElement?.matches(".menu-act")) });
   await slow.close();
 }
 /* a slowed launch's warm, and the page held still after it */
@@ -275,25 +275,25 @@ async function bookshelfShelves(): Promise<void> {
   const seeded = await seededIn("bookshelf/Shelves");
   await page.goto(A.url("2026-09-06"));
   await A.waitEntry(page, "2026-09-06", 5000).catch(() => {});
-  await page.click(S.booksOpener);
+  await page.click(S.bookshelfOpener);
   /* the list is answered again when the store's read ends: the shelves come with it */
-  const shelvesShown = await page.waitForSelector(".lists .shelf", { timeout: 5000 }).then(() => true, () => false);
+  const shelvesShown = await page.waitForSelector(".menu .shelf", { timeout: 5000 }).then(() => true, () => false);
   await log("the bookshelf on its shelves", { seeded, shelvesShown, rows: await list() });
-  await page.click(".lists button.panel-new:has-text('Shelves…')");
+  await page.click(".menu button.menu-act:has-text('Shelves…')");
   await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
-  await log("Shelves… clicked", { entry: await A.entry(page), panel: await R.panel(page) });
+  await log("Shelves… clicked", { entry: await A.entry(page), menu: await R.menu(page) });
   /* a shelf renamed, the list opened at once: the list reads the text as typed */
   const latin = await R.wordAt(page, "Latin", 5);
   await page.mouse.dblclick(latin.x, latin.y);
   await rest(page);
   await page.keyboard.type("Classical");
-  /* the bar the double-click floated hides once the typing has collapsed the selection: read before it went, the screen said so */
+  /* the toolbar the double-click floated hides once the typing has collapsed the selection: read before it went, the screen said so */
   await page.waitForFunction(() => !document.querySelector(".fmt")?.classList.contains("show"), null, { timeout: 2000 }).catch(() => {});
-  await page.click(S.booksOpener);
-  await page.waitForSelector(".lists .shelf", { timeout: 5000 }).catch(() => {});
+  await page.click(S.bookshelfOpener);
+  await page.waitForSelector(".menu .shelf", { timeout: 5000 }).catch(() => {});
   await log("a shelf renamed, the list opened at once", { rows: await list() });
 }
-const list = () => page.evaluate(() => { const p = document.querySelector(".lists"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
+const list = () => page.evaluate(() => { const p = document.querySelector(".menu"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
 async function goBoxShelves(): Promise<void> {
   await page.keyboard.press("Escape");
   await go("2026-09-06");
@@ -322,7 +322,7 @@ async function shelvesSearchedFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
 }
 section("alerts and places", async () => {
-  /* the error and the warning alone: where they stand under the masthead, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open bar under the alert area. An info or a success beside them is no part of it */
+  /* the error and the warning alone: where they stand under the masthead, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open toolbar under the alert area. An info or a success beside them is no part of it */
   await write("commonplace/Plain", "# Plain\n\nSome words.");
   await still(page);
   await page.click(S.editor);
@@ -354,7 +354,7 @@ section("alerts and places", async () => {
   await page.keyboard.type("9");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheAlertArea: await page.evaluate(() => Math.round(document.querySelector(".goto-popup")!.getBoundingClientRect().top - document.querySelector(".alerts")!.getBoundingClientRect().bottom)) });
+  await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheAlertArea: await page.evaluate(() => Math.round(document.querySelector(".goto-toolbar")!.getBoundingClientRect().top - document.querySelector(".alerts")!.getBoundingClientRect().bottom)) });
   await page.keyboard.press("Escape");
 });
 /* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the masthead */
@@ -405,8 +405,8 @@ const belowAlerts = async () => {
   }, [S.source]);
 };
 const barAgainstAlerts = () => page.evaluate(() => {
-  const bar = document.querySelector(".fmt.show")?.getBoundingClientRect(), foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
+  const toolbar = document.querySelector(".fmt.show")?.getBoundingClientRect(), foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
   const sel = getSelection()!.rangeCount ? getSelection()!.getRangeAt(0).getBoundingClientRect() : null;
   const moved = parseFloat((document.querySelector("#editor") as HTMLElement).style.paddingTop) || 0;
-  return bar && sel ? { selected: getSelection()!.toString(), clearOfAlerts: bar.top >= foot, overSelection: bar.bottom <= sel.top, textMoved: moved > 0 } : { shown: false };
+  return toolbar && sel ? { selected: getSelection()!.toString(), clearOfAlerts: toolbar.top >= foot, overSelection: toolbar.bottom <= sel.top, textMoved: moved > 0 } : { shown: false };
 });

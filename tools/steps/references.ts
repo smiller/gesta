@@ -6,8 +6,8 @@ section("reference copy", async () => {
   /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the reference anchor and the pair's grid inline */
   await go("commonplace/Horace");
   await R.selectAll(page, S.editorCell);
-  /* the bar, not 100ms: it shows after the selectionchange the editor takes the selection on */
-  /* the bar has missed about 1 full run in 15 and never in this step's
+  /* the format toolbar, not 100ms: it shows after the selectionchange the editor takes the selection on */
+  /* the format toolbar has missed about 1 full run in 15 and never in this step's
      replays: its cause unknown, a miss is selected again once and appended
      to tools/out/flakes.log, outside the verdict; a second miss reads as
      itself */
@@ -21,7 +21,7 @@ section("reference copy", async () => {
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   await log("⌃⌘R", { ...(barMissed ? { barMissed } : {}), said, ...await R.clipboardReference(page) });
 });
-const barMiss = () => R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
+const barMiss = () => R.waitToolbar(page).then((): string | null => null, (e: Error) => e.message);
 section("a reference pasted", async () => {
   /* ⌃⌘R's reference pasted with ⌘V into another entry: the link stored by its bare address (#commonplace/…), never the app's full file address */
   await referencePasted();
@@ -32,7 +32,7 @@ section("a reference pasted", async () => {
 async function referencePasted(): Promise<void> {
   await go("commonplace/Horace");
   await R.selectAll(page, S.editorCell);
-  const barMissed = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
+  const barMissed = await R.waitToolbar(page).then((): string | null => null, (e: Error) => e.message);
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   /* the HTML flavour is the paste's source and carries the full address, so a bare link stored is the paste's own doing */
   const copied = await page.evaluate(inPage(copiedLink, linkKind, htmlLink));
@@ -66,7 +66,7 @@ async function proseTwoSpacesPasted(): Promise<void> {
   /* prose with two spaces after a full stop: the paste keeps them as the entry has them */
   await go("commonplace/Williams/Witchcraft 3");
   const spanned = await R.selectBetween(page, "though they were not vampires", "could take again");
-  const barMissedProse = await R.waitBar(page).then((): string | null => null, (e: Error) => e.message);
+  const barMissedProse = await R.waitToolbar(page).then((): string | null => null, (e: Error) => e.message);
   const saidProse = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   await go("commonplace/Referred");
   /* over the whole page: a paste at a paragraph's start joins its last line to that paragraph */
@@ -364,12 +364,12 @@ section("references across verse blocks", async () => {
   await write("commonplace/Blocks", "# Blocks\n\n::: verse\nfirst block\n:::\n\n::: verse\nsecond block\n:::\n\n## Between\n\n::: verse 2\nthird block\n:::");
   await still(page);
   await R.selectBetween(page, "first block", "second block");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   const refused = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /straight on/);
   await log("⌃⌘R over blocks numbered apart", { refused });
   await still(page);
   await R.selectBetween(page, "second block", "third block");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied/);
   const copied = await R.clipboardReference(page);
   await log("⌃⌘R over blocks numbered straight on", { said, textHead: copied.textHead, passage: copied.passage });
@@ -387,12 +387,12 @@ section("references across blocks of each kind", async () => {
   await write("commonplace/Dual", "# Dual\n\n::: dual-language 1\nArma virumque | Arms and the man\ncano.\n:::\n\n## Between\n\n::: dual-language 3\nTroiae qui | who from Troy\n:::");
   await still(page);
   await R.selectBetween(page, "cano.", "Troiae qui");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await log("⌃⌘R over dual-language blocks with a heading between", await copiedBy(() => page.keyboard.press("Control+Meta+r")));
   await write("commonplace/Facing", "# Facing\n\n::: verse 1 10\nprima | first\n | second\n:::\n\n::: verse 2 11\n⟨…⟩ | the rest\nsecunda | third\n:::");
   await still(page);
   await R.selectBetween(page, "second", "third");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await log("⌃⌘R over blocks numbered on both sides, the second opening with a rest", await copiedBy(() => page.keyboard.press("Control+Meta+r")));
   await log("Ref (all) over the same", await copiedBy(() => page.click(".fmt button[title='Copy a reference to both columns']")));
 });

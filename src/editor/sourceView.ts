@@ -118,7 +118,7 @@ export function sourceView(mount: HTMLElement, md: string, opts: SourceOptions):
   }
   const repaint = (): void => { if (shown) paint(); };
   window.addEventListener("resize", repaint);
-  /* a textarea paints no selection while the cursor is in the bar: the
+  /* a textarea paints no selection while the cursor is in the replace toolbar: the
      current match is drawn on a layer behind the text instead
      (pin: replace › *-* typed into Find) */
   const replace: ReplacePort = {

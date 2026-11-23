@@ -18,6 +18,12 @@ export const retiredAlertSense = (line: string): boolean => ALERT_SENSE.test(lin
 const OTHER_HEADER = /first row the header|header['’]s column|to the header"|header pair|a header row, a <code>|table['’]s header row|header in bold|on a header of its own line/gi;
 const BAND_SENSE = /\b(?:the|a) header(?:['’]s)?\b|\bheader rows?\b|underHeader/i;
 export const headerForMasthead = (line: string): boolean => BAND_SENSE.test(line.replace(OTHER_HEADER, ""));
-/* the popup ⌃⌘G opens goes to a page, a paragraph, a verse or a stanza as
-   well as a line: it is the Go to popup */
-export const popupByOldName = (line: string): boolean => /(?<![A-Za-z])[Ll]ine[ -]?[Bb]ar(?![a-z])/.test(line.replace(RECORD, ""));
+/* what works on the entry in front of a reader is a toolbar: the go to,
+   the format and the replace toolbar; nothing in Gesta is a popup, a panel
+   pops up too */
+const OLD_TOOLBAR = /(?<![A-Za-z])(?:[Ll]ine|[Ff]ormat|[Rr]eplace)[ -]?[Bb]ar(?![a-z])|[Pp]opup|POPUP|\b(?:[Ss]election|[Ff]ormatting) toolbar\b/;
+export const toolbarByOldName = (line: string): boolean => OLD_TOOLBAR.test(line.replace(RECORD, ""));
+/* the two icons open menus; help, backups, bookmarks and shortcuts are
+   panels, and a card is a box in an entry */
+const OLD_MENU = /\b(?:dropdown|lists|books) panel\b|\b(?:bookshelf|commonplaces?) list\b|\b(?:bookmarks?|shortcuts|help) card\b/i;
+export const menuOrPanelByOldName = (line: string): boolean => OLD_MENU.test(line.replace(RECORD, ""));

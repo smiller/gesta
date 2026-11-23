@@ -286,7 +286,7 @@ describe("extract", () => {
     await w.life.extract();
     expect(w.log).toEqual(['alert A "P" sub-entry already exists.']);
   });
-  it("moves the selection into the new entry, leaves a link labelled by its heading, hides the bar, saves, goes", async () => {
+  it("moves the selection into the new entry, leaves a link labelled by its heading, hides the toolbar, saves, goes", async () => {
     const w = await world({ at: ["commonplace", "A"], entries: { "commonplace/A": HOST } });
     w.select(pos(w.doc(), "Part"), pos(w.doc(), "body text", true));
     w.answer("P");

@@ -36,7 +36,8 @@ const ALLOWED: Record<string, string> = {
   "tools/vocabulary.ts retiredWord": "a checker's rule, run by its own test",
   "tools/vocabulary.ts retiredAlertSense": "a checker's rule, run by its own test",
   "tools/vocabulary.ts headerForMasthead": "a checker's rule, run by its own test",
-  "tools/vocabulary.ts popupByOldName": "a checker's rule, run by its own test",
+  "tools/vocabulary.ts toolbarByOldName": "a checker's rule, run by its own test",
+  "tools/vocabulary.ts menuOrPanelByOldName": "a checker's rule, run by its own test",
   "tools/apostrophes.ts straightInStrings": "a checker's rule, run by its own test",
   "tools/apostrophes.ts straightInMarkup": "a checker's rule, run by its own test",
 };

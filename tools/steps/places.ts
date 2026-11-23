@@ -330,12 +330,12 @@ async function secondWindow(): Promise<void> {
   await rest(other);
   await other.keyboard.press("a");
   await other.waitForTimeout(500);
-  await log("A in a second window", { card: await R.bookmarks(other) });
+  await log("A in a second window", { panel: await R.bookmarks(other) });
   await other.close();
   await page.bringToFront();
   await page.keyboard.press("Control+Meta+b");
   await page.waitForTimeout(500);
-  await log("⌃⌘B back in the first", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await log("⌃⌘B back in the first", { panel: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.click(".bookmarks .bookmark-label:text-is('Made Elsewhere')", { timeout: 1000 }).catch(() => {});
   await A.waitEntry(page, "commonplace/Made Elsewhere", 5000).catch(() => {});
   await rest(page);
@@ -392,7 +392,7 @@ async function pageOpenFirstSaved(): Promise<void> {
   await rest(page);
   await page.click(S.bookmarkDel);
   await rest(page);
-  await log("× on its first row", { card: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await log("× on its first row", { panel: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.keyboard.press("Escape");
 }
 const textEnd = () => page.evaluate((s) => document.querySelector(s)?.textContent.slice(-30), S.editor);

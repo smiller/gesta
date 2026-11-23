@@ -8,7 +8,7 @@ import { refuseCold, loadState } from "./journalLoad.ts";
 import { counted } from "./counted.ts";
 import { said, type Raise, type Said } from "../model/alertText.ts";
 
-export interface BackupsPanelDeps {
+export interface BackupsOpenerDeps {
   bk: Screen["backups"];
   canPick(): boolean;
   reader: boolean;
@@ -23,7 +23,7 @@ export interface BackupsPanel { read(): void; sweep(): void }
 
 const sweptLine = (removed: number, n: number): Said => (removed === n ? said("picturesRemoved", { n }) : said("picturesPartlyRemoved", { removed, n }));
 
-export function backupsPanel(d: BackupsPanelDeps): BackupsPanel {
+export function backupsPanel(d: BackupsOpenerDeps): BackupsPanel {
   const { bk, layer, images, flushSave, raise } = d;
   const plannedSweep = (): Promise<ReturnType<typeof sweepPlan>> => flushSave().then(() => images.keys()).then((keys) => sweepPlan(keys, layer.cache));
   const warmth = (): Screen["backups"]["warm"] => {

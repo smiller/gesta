@@ -5,18 +5,18 @@ import { describe, it, expect } from "vitest";
 import { render } from "svelte/server";
 import Masthead from "./Masthead.svelte";
 import { screenState } from "./screen.svelte.ts";
-import { mastheadModel, type PanelRow } from "./mastheadModel.ts";
+import { mastheadModel, type MenuRow } from "./mastheadModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache = { "2026-09-07": "# Titled\n\nx", "2026-09-07/Ideas": "i", "commonplace/Books/Essay": "# The essay\n\nb" };
 const journal = journalOf(cache);
 const none = () => {};
-function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; panel: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups"; rows: PanelRow[]; empty: string; reader: boolean }> = {}): string {
+function draw(date: string, tag: string | null, extra: Partial<{ gutter: boolean; interval: number; opened: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups"; rows: MenuRow[]; empty: string; reader: boolean }> = {}): string {
   const screen = screenState(extra.interval ?? 5);
   screen.masthead = mastheadModel(date, tag, { keys: Object.keys(cache), journal, today: "2026-09-07" });
   screen.gutter = !!extra.gutter;
-  if (extra.panel) { screen.panel = extra.panel; screen.panelRows = extra.rows || []; screen.panelEmpty = extra.empty || ""; }
-  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onInterval: none, onPanel: none, onClosePanel: none, onNewRoot: none, onShelves: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, gotoPopup: { onInput: none, onEnter: none, onClose: none }, replace: { onFind: none, onWith: none, onNext: none, onOne: none, onAll: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none, onSweep: none }, reader: extra.reader ? { onOpen: none, onWalk: none } : null } }).body;
+  if (extra.opened) { screen.opened = extra.opened; screen.menuRows = extra.rows || []; screen.menuEmpty = extra.empty || ""; }
+  return render(Masthead, { props: { screen, onToday: none, onExport: none, onImport: none, onInterval: none, onOpener: none, onCloseOpened: none, onNewRoot: none, onShelves: none, onCreate: none, onRename: none, onDelete: none, search: { onToggle: none, onQuery: none, onScope: none, onWalk: none, onEnter: none, onPick: none }, goto: { onToggle: none, onPick: none }, gotoToolbar: { onInput: none, onEnter: none, onClose: none }, replace: { onFind: none, onWith: none, onNext: none, onOne: none, onAll: none, onClose: none }, bookmarks: { onKey: none, onAct: none, onDraft: none, onCommit: none }, shortcuts: { onQuery: none, onPick: none, onWalk: none, onEnter: none, onEdit: none, onDraft: none, onSave: none, onEscape: none }, backups: { onSetup: none, onResume: none, onSweep: none }, reader: extra.reader ? { onOpen: none, onWalk: none } : null } }).body;
 }
 
 describe("Masthead", () => {
@@ -48,20 +48,20 @@ describe("Masthead", () => {
     expect(html).toMatch(/<option value="3"[^>]*>every 3rd/);
   });
   it("the bookshelf on its shelves: a shelf's row is a heading, not a link, its authors set in; the shelves entry its own row at the foot, made when there is none", () => {
-    const html = draw("2026-09-07", null, { panel: "bookshelf", rows: [{ text: "Latin", href: "", shelf: true }, { text: "Horace", href: "#bookshelf/Horace", shelved: true }] });
+    const html = draw("2026-09-07", null, { opened: "bookshelf", rows: [{ text: "Latin", href: "", shelf: true }, { text: "Horace", href: "#bookshelf/Horace", shelved: true }] });
     expect(html).toMatch(/<span class="shelf[^"]*">Latin<\/span>/);
     expect(html).toMatch(/<a href="#bookshelf\/Horace" title="Horace" class="[^"]*shelved[^"]*">Horace<\/a>/);
-    expect(html).toMatch(/New author…<\/button>(<!--[^>]*-->|\s)*<button class="panel-new[^"]*" type="button">Shelves…<\/button>/);
-    expect(draw("2026-09-07", null, { panel: "commonplace", rows: [] })).not.toMatch(/>Shelves…</);
+    expect(html).toMatch(/New author…<\/button>(<!--[^>]*-->|\s)*<button class="menu-act[^"]*" type="button">Shelves…<\/button>/);
+    expect(draw("2026-09-07", null, { opened: "commonplace", rows: [] })).not.toMatch(/>Shelves…</);
   });
-  it("no panel by default; an open commonplaces panel lists its rows and the create row; an empty shelf explains itself", () => {
-    expect(draw("2026-09-07", null)).not.toContain('class="lists');
-    const html = draw("2026-09-07", null, { panel: "commonplace", rows: [{ text: "Books", href: "#commonplace/Books" }] });
-    expect(html).toMatch(/<nav class="lists[^"]*">(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books"[^>]*>Books<\/a>/);
+  it("no menu by default; an open commonplace menu lists its rows and the create row; an empty shelf explains itself", () => {
+    expect(draw("2026-09-07", null)).not.toContain('class="menu');
+    const html = draw("2026-09-07", null, { opened: "commonplace", rows: [{ text: "Books", href: "#commonplace/Books" }] });
+    expect(html).toMatch(/<nav class="menu[^"]*">(<!--[^>]*-->)*<a href="#commonplace\/Books" title="Books"[^>]*>Books<\/a>/);
     expect(html).toContain(">New commonplace…</button>");
-    expect(html).not.toContain("panel-empty");
-    const shelf = draw("2026-09-07", null, { panel: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });
-    expect(shelf).toMatch(/<span class="panel-empty[^"]*">No authors yet/);
+    expect(html).not.toContain("menu-empty");
+    const shelf = draw("2026-09-07", null, { opened: "bookshelf", rows: [], empty: "No authors yet — import a folder, or start one below." });
+    expect(shelf).toMatch(/<span class="menu-empty[^"]*">No authors yet/);
     expect(shelf).toContain(">New author…</button>");
   });
   it("the sub-entry buttons: a day offers the create only, a tagged entry rename and delete only, a commonplace all three with its nouns", () => {

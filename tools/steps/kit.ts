@@ -144,7 +144,7 @@ function cursorKind([ed, src]: [string, string]): string {
 export const log = async (label: string, x: unknown) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); };
 /* an arrival is read before the step's own gestures, whose helpers focus
    the text themselves; a focus that never comes reads as "none" after
-   the wait. No screen: the last section's bar may still be fading */
+   the wait. No screen: the last section's format toolbar may still be fading */
 export const go = async (hash: string, ms = 15000) => {
   await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms);
   await page.waitForFunction(([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source], { timeout: 1000 }).catch(() => {});

@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import { render } from "svelte/server";
-import Toolbar from "./Toolbar.svelte";
+import FormatToolbar from "./FormatToolbar.svelte";
 import { screenState } from "./screen.svelte.ts";
 
-const draw = (patch: Partial<ReturnType<typeof screenState>["bar"]>): string => {
+const draw = (patch: Partial<ReturnType<typeof screenState>["formatToolbar"]>): string => {
   const screen = screenState(5);
-  Object.assign(screen.bar, patch);
-  return render(Toolbar, { props: { bar: screen.bar, onAct: () => {} } }).body;
+  Object.assign(screen.formatToolbar, patch);
+  return render(FormatToolbar, { props: { toolbar: screen.formatToolbar, onAct: () => {} } }).body;
 };
-describe("Toolbar", () => {
+describe("FormatToolbar", () => {
   it("hidden by default; shown at its place with the lit state and the Tag button where the entry hosts", () => {
     expect(draw({})).not.toMatch(/class="fmt[^"]*show/);
     const html = draw({ show: true, left: 120, top: 80, on: { bold: true }, canTag: true, tagTitle: "Move selection to a new sub-entry" });

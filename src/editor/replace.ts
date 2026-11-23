@@ -27,7 +27,7 @@ export function replaceEvery(text: string, q: string, w: string, keep: number): 
   return { text: hits.length ? text.split(q).join(w) : text, n: hits.length, caret: keep + before * (w.length - q.length) };
 }
 
-/* `at` -1: no current match, the text having moved under the bar */
+/* `at` -1: no current match, the text having moved under the replace toolbar */
 export function countLabel(q: string, n: number, at: number): string {
   if (!q) return "";
   if (!n) return "none";

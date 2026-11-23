@@ -127,9 +127,9 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `no paragraph … — the paragraphs here are …–…` | ⌃⌘G, or a link to a line, with a paragraph number not on the page. |
 | `no page numbers here` | ⌃⌘G with a page, on an entry with no page labels. |
 | `no page … here` | ⌃⌘G with a page not in the entry. |
-| `type a … number` | Enter in the Go to popup with its box empty, or a link to a line that names no number. |
+| `type a … number` | Enter in the Go to toolbar with its box empty, or a link to a line that names no number. |
 | `use roman or arabic characters, not both` | A page typed with roman and arabic characters together. |
-| `… is not a … number` | A box of the Go to popup, or a link to a line, given what is not its kind of number. |
+| `… is not a … number` | A box of the Go to toolbar, or a link to a line, given what is not its kind of number. |
 | `no stanzas here` | A stanza asked for on a page with no stanzas. |
 | `no stanza … here — the last is …` | ⌃⌘G, or a link to a line, with a stanza past the page’s last. |
 | `no line … in stanza … — it has … lines` | ⌃⌘G, or a link to a line, with a line past its stanza’s last. |

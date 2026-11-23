@@ -1,22 +1,22 @@
-<!-- A panel's rows are anchors, so ⌘-click and middle-click work; a row
-     click closes the panel itself, since a click on the open entry's own
-     row moves no hash (pin: launch, panels, the corner, links › after a row
-     click). Attention leaving a panel (a Tab out) dismisses it like a click
-     outside (pin: launch, panels, the corner, links › after a click
+<!-- A menu's rows are anchors, so ⌘-click and middle-click work; a row
+     click closes the menu itself, since a click on the open entry's own
+     row moves no hash (pin: launch, menus, the corner, links › after a row
+     click). Attention leaving a menu (a Tab out) dismisses it like a click
+     outside (pin: launch, menus, the corner, links › after a click
      outside); relatedTarget, not activeElement, which is mid-flight during
      focusout. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  import { focusLeaves } from "./cardKeys.ts";
+  import { focusLeaves } from "./pickKeys.ts";
   import Search from "./Search.svelte";
   import GotoRow from "./GotoRow.svelte";
-  import GotoPopup from "./GotoPopup.svelte";
-  import ReplaceBar from "./ReplaceBar.svelte";
+  import GotoToolbar from "./GotoToolbar.svelte";
+  import ReplaceToolbar from "./ReplaceToolbar.svelte";
   import Help from "./Help.svelte";
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, onShelves, search, goto, gotoPopup, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
+  let { screen, onToday, onExport, onImport, onInterval, onLines, onOpener, onCloseOpened, onNewRoot, onShelves, search, goto, gotoToolbar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
     /* the read-only page: a new bundle picked */
     reader?: { onOpen: (file: File) => void; onWalk: (dir: "prev" | "next") => void } | null;
@@ -24,24 +24,24 @@
     onCreate: () => void; onRename: () => void; onDelete: () => void;
     onInterval: (n: number) => void;
     onLines: (open: boolean) => void;
-    onPanel: (ns: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
-    onClosePanel: () => void;
+    onOpener: (ns: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups") => void;
+    onCloseOpened: () => void;
     onNewRoot: (ns: "commonplace" | "bookshelf") => void;
     onShelves: () => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
-    gotoPopup: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
+    gotoToolbar: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
     replace: { onFind: (value: string) => void; onWith: (value: string) => void; onNext: (back: boolean) => void; onOne: () => void; onAll: () => void; onClose: () => void };
     bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
     shortcuts: { onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void };
     backups: { onSetup: () => void; onResume: () => void; onSweep: () => void };
   } = $props();
-  let shortcutsCard: { focusInput(): void } | undefined = $state();
-  export function focusShortcuts(): void { shortcutsCard?.focusInput(); }
-  let bookmarksCard: { focusCard(): void } | undefined = $state();
-  export function focusBookmarks(): void { bookmarksCard?.focusCard(); }
-  let gotoPopupEl: { focusAsk(): void } | undefined = $state();
-  export function focusGotoPopup(): void { gotoPopupEl?.focusAsk(); }
+  let shortcutsPanel: { focusInput(): void } | undefined = $state();
+  export function focusShortcuts(): void { shortcutsPanel?.focusInput(); }
+  let bookmarksPanel: { focusPanel(): void } | undefined = $state();
+  export function focusBookmarks(): void { bookmarksPanel?.focusPanel(); }
+  let gotoToolbarEl: { focusAsk(): void } | undefined = $state();
+  export function focusGotoToolbar(): void { gotoToolbarEl?.focusAsk(); }
   let replaceEl: { focusFind(): void; focusWith(): void } | undefined = $state();
   export function focusReplace(): void { replaceEl?.focusFind(); }
   let gotoRow: { focusFirst(): void } | undefined = $state();
@@ -49,14 +49,14 @@
   let searchRow: { focusInput(): void } | undefined = $state();
   export function focusSearch(): void { searchRow?.focusInput(); }
   const NOUN = { commonplace: "commonplace", bookshelf: "author" } as const;
-  /* a card's focus going nowhere is a row deleted under it, not a leaving
-     (pin: where the keys go › Tab twelve times from the bookmarks card);
-     the lists panel's is the window left */
+  /* a panel's focus going nowhere is a row deleted under it, not a leaving
+     (pin: where the keys go › Tab twelve times from the bookmarks panel);
+     a menu's is the window left */
   const leaving = (nowhere: boolean) => (e: FocusEvent): void => {
     const to = e.relatedTarget;
-    if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) onClosePanel();
+    if (focusLeaves(to instanceof Node ? (e.currentTarget as HTMLElement).contains(to) : null, nowhere)) onCloseOpened();
   };
-  const leave = leaving(true), leaveCard = leaving(false);
+  const leave = leaving(true), leavePanel = leaving(false);
   const INTERVALS = [[0, "none"], [1, "every line"], [2, "every 2nd"], [3, "every 3rd"], [4, "every 4th"], [5, "every 5th"], [10, "every 10th"]] as const;
   let linesSelect: HTMLSelectElement | undefined = $state();
   export function focusLines(): void { linesSelect?.focus(); }
@@ -64,14 +64,14 @@
 
 <header class="site-head">
   <nav class="site-home">
-    <button class="datebtn opener" title="List the authors on the bookshelf" aria-label="List the authors on the bookshelf" onclick={() => onPanel("bookshelf")}>
+    <button class="datebtn opener" title="Bookshelf menu" aria-label="Bookshelf menu" onclick={() => onOpener("bookshelf")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M8 4.6C6.5 3.6 4.8 3.4 3 3.7v8c1.8-.3 3.5-.1 5 .9 1.5-1 3.2-1.2 5-.9v-8c-1.8-.3-3.5-.1-5 .9z"></path>
         <path d="M8 4.6v8.9"></path>
       </svg>
       <span class="caret">▾</span>
     </button>
-    <button class="datebtn opener" title="List the commonplaces" aria-label="List the commonplaces" onclick={() => onPanel("commonplace")}>
+    <button class="datebtn opener" title="Commonplace menu" aria-label="Commonplace menu" onclick={() => onOpener("commonplace")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 1.8 h5.2 L12 4.6 v9.6 H4 z"></path>
         <path d="M9.2 1.8 v2.8 H12"></path>
@@ -109,29 +109,29 @@
     <button class="toolbtn" type="button" title={screen.masthead.buttons.deleteTitle} hidden={!screen.masthead.buttons.canEdit} onclick={onDelete}>delete</button>
     <button class="toolbtn" type="button" title="Export every entry as Markdown files" onclick={onExport}>export</button>
     <button class="toolbtn" type="button" title="Import Markdown files from a folder" onclick={onImport}>import</button>
-    <button class="toolbtn opener" type="button" title="Automatic folder backups" onclick={() => onPanel("backups")}>backups</button>
-    <button class="toolbtn opener" type="button" title="How Gesta works (⌃⌘H)" onclick={() => onPanel("help")}>help</button>
+    <button class="toolbtn opener" type="button" title="Automatic folder backups" onclick={() => onOpener("backups")}>backups</button>
+    <button class="toolbtn opener" type="button" title="How Gesta works (⌃⌘H)" onclick={() => onOpener("help")}>help</button>
     {/if}
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
   <GotoRow bind:this={gotoRow} goto={screen.goto} {...goto} />
   <Search bind:this={searchRow} search={screen.search} {...search} />
-  <Help open={screen.panel === "help"} />
-  {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} onLeave={leaveCard} />{/if}
-  {#if screen.panel === "shortcuts"}<Shortcuts bind:this={shortcutsCard} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leaveCard} />{/if}
-  {#if screen.panel === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
-  {#if screen.panel === "commonplace" || screen.panel === "bookshelf"}
-    <nav class="lists" onfocusout={leave}>
-      {#each screen.panelRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onClosePanel}>{r.text}</a>{/if}{/each}
-      {#if !screen.panelRows.length && screen.panelEmpty}<span class="panel-empty">{screen.panelEmpty}</span>{/if}
+  <Help open={screen.opened === "help"} />
+  {#if screen.opened === "bookmarks"}<Bookmarks bind:this={bookmarksPanel} bookmarks={screen.bookmarks} {...bookmarks} onLeave={leavePanel} />{/if}
+  {#if screen.opened === "shortcuts"}<Shortcuts bind:this={shortcutsPanel} shortcuts={screen.shortcuts} {...shortcuts} onLeave={leavePanel} />{/if}
+  {#if screen.opened === "backups"}<Backups backups={screen.backups} {...backups} />{/if}
+  {#if screen.opened === "commonplace" || screen.opened === "bookshelf"}
+    <nav class="menu" onfocusout={leave}>
+      {#each screen.menuRows as r (r.href || "shelf " + r.text)}{#if r.shelf}<span class="shelf">{r.text}</span>{:else}<a href={r.href} title={r.text} class:shelved={r.shelved} onclick={onCloseOpened}>{r.text}</a>{/if}{/each}
+      {#if !screen.menuRows.length && screen.menuEmpty}<span class="menu-empty">{screen.menuEmpty}</span>{/if}
       {#if !reader}
-      <button class="panel-new" type="button" onclick={() => onNewRoot(screen.panel!)}>New {NOUN[screen.panel]}…</button>
-      {#if screen.panel === "bookshelf"}<button class="panel-new" type="button" onclick={onShelves}>Shelves…</button>{/if}
+      <button class="menu-act" type="button" onclick={() => onNewRoot(screen.opened!)}>New {NOUN[screen.opened]}…</button>
+      {#if screen.opened === "bookshelf"}<button class="menu-act" type="button" onclick={onShelves}>Shelves…</button>{/if}
       {/if}
     </nav>
   {/if}
-  <GotoPopup bind:this={gotoPopupEl} gotoPopup={screen.gotoPopup} {...gotoPopup} />
-  <ReplaceBar bind:this={replaceEl} replace={screen.replace} {...replace} />
+  <GotoToolbar bind:this={gotoToolbarEl} gotoToolbar={screen.gotoToolbar} {...gotoToolbar} />
+  <ReplaceToolbar bind:this={replaceEl} replace={screen.replace} {...replace} />
   <!-- the label opens the row through the state, never the browser: a render
        landing between the browser's toggle and its event shut it again (pin:
        reader › Line numbering clicked under a redraw) -->
@@ -152,7 +152,7 @@
      nowrap date prints straight over the tools. Grows past --masthead-h
      when a day's tag list wraps; the sage rule rides along as a box-shadow
      so it stays pinned to the bottom whatever the height. The side gutter
-     is declared HERE so the panels hanging off the bar inherit it. */
+     is declared HERE so the menus hanging off the bar inherit it. */
   .site-head {
     position: sticky;
     top: 0;
@@ -208,21 +208,21 @@
   .datelabel a:hover { text-decoration: underline; }
   .datelabel { white-space: nowrap; }
   /* on a wide bar the crumb may STACK a long date+tag onto its own line
-     instead of painting over the toolbar; 900 prices the toolbar's width */
+     instead of painting over the masthead's buttons; 900 prices their width */
   @media (min-width: 900px) { .datelabel { white-space: normal; } }
   .date-unit { white-space: nowrap; }
   .datebtn { display: inline-flex; align-items: center; gap: 3px; }
   .datebtn svg { width: 17px; height: 17px; display: block; pointer-events: none; }
   .datebtn .caret { font-size: 0.7em; opacity: 0.8; pointer-events: none; }
-  /* THE DROPDOWN PANEL, hung off the bar's bottom edge at the gutter. The
+  /* A MENU, hung off the bar's bottom edge at the gutter. The
      cap is the room below the masthead, in CSS rather than a measurement:
-     a JS cap is taken at a MOMENT and the bar grows under an open panel.
+     a JS cap is taken at a MOMENT and the bar grows under an open menu.
      The 100% is the sticky bar's own height (a percentage against the
      containing block's padding box); 18px is the 6px hang plus a 12px
      breathing gap; dvh, not vh, under a phone's retracting URL bar; the
      floor is ONE ROW, since a floor above the room overhangs and strands
      the create row. */
-  .lists {
+  .menu {
     position: absolute;
     top: calc(100% + var(--alert-area-h, 0px) + 6px);
     left: var(--head-gutter);
@@ -241,17 +241,17 @@
   }
   /* every line on one vertical rhythm, tight: every 10px off a line is
      another root on the screen; flex: none so the lines hold their size
-     under the max-height and the panel scrolls */
-  .lists a, .lists button, .lists .panel-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
-  .lists a, .lists button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
-  .lists a:hover, .lists button:hover { background: var(--aside-bg); }
-  .lists a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lists .panel-new { color: var(--bar-link); }
+     under the max-height and the menu scrolls */
+  .menu a, .menu button, .menu .menu-empty { flex: none; line-height: 1.35; padding: 5px 12px; font-size: 0.95em; }
+  .menu a, .menu button { text-align: left; background: none; border: none; font-family: var(--sans); color: var(--ink); border-radius: 4px; cursor: pointer; }
+  .menu a:hover, .menu button:hover { background: var(--aside-bg); }
+  .menu a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .menu .menu-act { color: var(--bar-link); }
   /* a shelf's heading in the list's own type, its authors set in under it */
-  .lists .shelf { flex: none; line-height: 1.35; padding: 8px 12px 2px; font-size: 0.95em; font-family: var(--sans); font-weight: 600; color: var(--ink); }
-  .lists .shelf:first-child { padding-top: 5px; }
-  .lists a.shelved { padding-left: 26px; }
-  .lists .panel-empty { color: var(--muted); }
+  .menu .shelf { flex: none; line-height: 1.35; padding: 8px 12px 2px; font-size: 0.95em; font-family: var(--sans); font-weight: 600; color: var(--ink); }
+  .menu .shelf:first-child { padding-top: 5px; }
+  .menu a.shelved { padding-left: 26px; }
+  .menu .menu-empty { color: var(--muted); }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
   .mode {
     font-family: var(--sans);

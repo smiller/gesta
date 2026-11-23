@@ -14,6 +14,6 @@ a line clicked, xyz, Enter and Backspace typed: {"entry":"commonplace/Witchcraft
 ⌃⌘H, B, S, N and E: {"entry":"commonplace/Witchcraft","editable":"false","hit":"","crumb":"Witchcraft","open":[]}
 a day with a picture: {"entry":"2026-09-10","editable":"false","hit":"","crumb":"Past — Thursday, 10 September 2026","pictures":[1]}
 › clicked on the day: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026"}
-the bookshelf list: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026","rows":["Horace"],"buttons":0}
+the bookshelf menu: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026","rows":["Horace"],"buttons":0}
 Go to: {"entry":"2026-09-11","editable":"false","hit":"","crumb":"Past — Friday, 11 September 2026","selects":4}
 console: 

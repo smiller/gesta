@@ -4,7 +4,7 @@
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
   import { typedToward, rowAct } from "./bookmarksModel.ts";
-  import { enterKey } from "./cardKeys.ts";
+  import { enterKey } from "./pickKeys.ts";
   let { bookmarks, onKey, onAct, onDraft, onCommit, onLeave }: {
     bookmarks: Screen["bookmarks"];
     onLeave: (e: FocusEvent) => void;
@@ -13,13 +13,13 @@
     onDraft: (value: string) => void;
     onCommit: (value: string) => void;
   } = $props();
-  let card: HTMLElement | undefined = $state();
+  let panel: HTMLElement | undefined = $state();
   let list: HTMLElement | undefined = $state();
   let aliasCol = $state("");
-  export function focusCard(): void {
+  export function focusPanel(): void {
     const inp = list?.querySelector<HTMLInputElement>(".bookmark-aliasinput");
     if (inp) { inp.focus(); if (bookmarks.opening) inp.select(); }
-    else card?.focus({ preventScroll: true });
+    else panel?.focus({ preventScroll: true });
   }
   $effect(() => {
     const keyed = bookmarks.rows.filter((r) => r.keyed);
@@ -42,16 +42,16 @@
   };
 </script>
 
-<!-- the card holds focus itself so the bare keys reach the handler; the
+<!-- the panel holds focus itself so the bare keys reach the handler; the
      row editor is the one field -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_to_interactive_role, a11y_no_noninteractive_element_interactions -->
-<section class="helppanel bookmarks" bind:this={card} tabindex="-1" role="dialog" aria-label="Bookmarks" onkeydown={onKey} onfocusout={onLeave}>
+<section class="helppanel bookmarks" bind:this={panel} tabindex="-1" role="dialog" aria-label="Bookmarks" onkeydown={onKey} onfocusout={onLeave}>
   <h3>Bookmarks</h3>
   <ul class="search-results" bind:this={list} style={aliasCol ? "--alias-col: " + aliasCol : ""}>
     {#if bookmarks.unreadable}<li class="empty">your saved bookmarks are damaged — nothing has been changed</li>
     {:else if !bookmarks.rows.length}<li class="empty">No bookmarks yet.</li>{/if}
     {#each bookmarks.rows as r (r.key)}
-      <!-- a row is the jump the pointer cursor promises; the keys reach it through the card -->
+      <!-- a row is the jump the pointer cursor promises; the keys reach it through the panel -->
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
       <li class="hit" class:bookmark-keyed={r.keyed} class:bookmark-cut={r.cut} class:bookmark-typing={typedToward(bookmarks.buf, r)} data-key={r.key} onclick={(e) => click(e, r.key)}>
         <span class="bookmark-key">

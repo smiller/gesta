@@ -1,21 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { render } from "svelte/server";
-import ReplaceBar from "./ReplaceBar.svelte";
+import ReplaceToolbar from "./ReplaceToolbar.svelte";
 import { screenState } from "./screen.svelte.ts";
 
 const none = () => {};
 const draw = (patch: Partial<ReturnType<typeof screenState>["replace"]>): string => {
   const screen = screenState(5);
   Object.assign(screen.replace, patch);
-  return render(ReplaceBar, { props: { replace: screen.replace, onFind: none, onWith: none, onNext: none, onOne: none, onAll: none, onClose: none } }).body;
+  return render(ReplaceToolbar, { props: { replace: screen.replace, onFind: none, onWith: none, onNext: none, onOne: none, onAll: none, onClose: none } }).body;
 };
-describe("ReplaceBar", () => {
+describe("ReplaceToolbar", () => {
   it("hidden when closed", () => {
-    expect(draw({})).toMatch(/<div class="replacebar[^"]*" hidden/);
+    expect(draw({})).toMatch(/<div class="replace-toolbar[^"]*" hidden/);
   });
   it("open: Find with its count, Replace with with Skip, Replace and Replace All in that order, and the ×", () => {
     const html = draw({ open: true, find: "*-*", with: "-", count: "2 of 7", any: true });
-    expect(html).not.toMatch(/<div class="replacebar[^"]*" hidden/);
+    expect(html).not.toMatch(/<div class="replace-toolbar[^"]*" hidden/);
     expect(html).toMatch(/<label for="replacefind"[^>]*>Find/);
     expect(html).toMatch(/id="replacefind"[^>]*value="\*-\*"/);
     expect(html).toMatch(/class="count[^"]*"[^>]*>2 of 7/);

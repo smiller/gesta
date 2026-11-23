@@ -1,6 +1,6 @@
 import { section, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
 
-section("launch, panels, the corner, links", async () => {
+section("launch, menus, the corner, links", async () => {
   await afterWarm();
   await plainClickExternalLink();
 });
@@ -9,23 +9,23 @@ async function afterWarm(): Promise<void> {
   await log("after warm", await R.corner(page));
   await log("masthead over Horace", await R.masthead(page));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-masthead.png"), clip: { x: 0, y: 0, width: 1000, height: 130 } });
-  await page.click(S.commonplacesOpener);
-  await log("lists panel", await R.panel(page));
+  await page.click(S.commonplaceOpener);
+  await log("the commonplace menu", await R.menu(page));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-panel.png"), clip: { x: 0, y: 0, width: 600, height: 260 } });
-  await page.click(S.booksOpener);
-  await log("books panel, displacing it", await R.panel(page));
-  await page.click(S.booksOpener);
-  await log("its own opener again", await R.panel(page));
-  await page.click(S.commonplacesOpener);
+  await page.click(S.bookshelfOpener);
+  await log("the bookshelf menu, displacing it", await R.menu(page));
+  await page.click(S.bookshelfOpener);
+  await log("its own opener again", await R.menu(page));
+  await page.click(S.commonplaceOpener);
   await page.keyboard.press("Escape");
-  await log("after Escape", await R.panel(page));
-  await page.click(S.commonplacesOpener);
+  await log("after Escape", await R.menu(page));
+  await page.click(S.commonplaceOpener);
   await page.mouse.click(500, 400);
-  await log("after a click outside", await R.panel(page));
-  await page.click(S.commonplacesOpener);
-  await page.click(S.panelRow("Williams"));
+  await log("after a click outside", await R.menu(page));
+  await page.click(S.commonplaceOpener);
+  await page.click(S.menuRow("Williams"));
   await A.waitEntry(page, "commonplace/Williams", 5000);
-  await log("after a row click", { entry: await A.entry(page), panel: await R.panel(page) });
+  await log("after a row click", { entry: await A.entry(page), menu: await R.menu(page) });
   await jump(page, 3200);
   await log("3.2 s later", await R.corner(page));
   await page.click(S.editor);
@@ -49,14 +49,14 @@ async function plainClickExternalLink(): Promise<void> {
   await page.click(S.editorLink("https://example.org/"));
   await rest(page);
   await log("a plain click on an external link", { entry: await A.entry(page), url: page.url().split("#")[1] });
-  const popup = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
+  const newTab = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
   await page.click(S.editorLink("#commonplace/Horace"), { modifiers: ["Meta"] });
   await rest(page);
-  await log("⌘-click on an internal link", { newTab: (await popup).split("#")[1], ...(await R.afterModClick(page)) });
-  const popup2 = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
+  await log("⌘-click on an internal link", { newTab: (await newTab).split("#")[1], ...(await R.afterModClick(page)) });
+  const newTab2 = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
   await page.click(S.editorLink("https://example.org/"), { modifiers: ["Meta"] });
   await rest(page);
-  await log("⌘-click on an external link", { newTab: (await popup2) !== "(no new tab)", ...(await R.afterModClick(page)) });   /* headless has no network: whether a tab opened, not where it got */
+  await log("⌘-click on an external link", { newTab: (await newTab2) !== "(no new tab)", ...(await R.afterModClick(page)) });   /* headless has no network: whether a tab opened, not where it got */
   await page.click(S.editorLink("#commonplace/Horace"));
   await A.waitEntry(page, "commonplace/Horace", 5000);
   await log("a plain click on an internal link", { entry: await A.entry(page) });

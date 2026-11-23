@@ -80,8 +80,12 @@ must keep is restated here.
   `one-offs/shelfLines.ts` calls a typed attribution a "source line".
   The band at the top is THE MASTHEAD and its rows masthead rows; "header"
   is a table's first row.
-  ⌃⌘J opens THE GO TO ROW, to another entry; ⌃⌘G THE GO TO POPUP, to a
+  ⌃⌘J opens THE GO TO ROW, to another entry; ⌃⌘G THE GO TO TOOLBAR, to a
   line, page, paragraph, verse or stanza in this one, by no older name.
+  The masthead's two icons open THE BOOKSHELF MENU and THE COMMONPLACE
+  MENU; the go to, format and replace TOOLBARS work on the entry in front
+  of you; help, backups, bookmarks and shortcuts are PANELS; a dropdown is
+  a `<select>`.
   `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
   one-offs/, this file or the glossary; dated plan records keep their words.
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
@@ -278,7 +282,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     (a terminal's copy: whether some HTML is one, and the text it pastes
     as), `copy.ts` (what a copy
     says, `copyProps`).
-  - ⌃⌘G: `goto.ts` (`ask` and `popup`: the Go to popup and a link to a line alike,
+  - ⌃⌘G: `goto.ts` (`ask` and `toolbarFor`: the Go to toolbar and a link to a line alike,
     a stanza page by its Stanza and Line boxes), `landing.ts` (the landing
     mark). ⌃⌘E: `replace.ts`.
   - THE SURFACE, `surface.ts`: what the rendered view (`renderedView.ts`)
@@ -286,7 +290,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     DOM, tested over fake views. `placeKeeper.ts`: where an entry was left
     and the arrival back; no DOM.
   - Keys and acts: `typing.ts` (markdown as you type), `format.ts` (the
-    toolbar's acts), `sourceKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
+    format toolbar's acts), `sourceKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
     `gridKeys.ts`, `tableKeys.ts` (Enter a cell down, out from the last
     row), `listKeys.ts`, `links.ts` (a click on a link), `insertLink.ts`,
     `highlight.ts` (the jump to a highlight), `folds.ts` (a contents
@@ -323,17 +327,18 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
-  `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
+  `pickKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
   `heldKeys.ts`, `alertArea.ts` (the alert area under the masthead, and
   where the page shows from), `journalLoad.ts` (the journal's
   load: loading, failed or in, what an act refused before it says, and
   its errors). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,
-  `gotoRowActs.ts`, `gotoPopupActs.ts`, `landingActs.ts` (a landing, ⌃⌘G's or
+  `gotoRowActs.ts`, `gotoToolbarActs.ts`, `landingActs.ts` (a landing, ⌃⌘G's or
   a link to a line's, and a search jump centred), `replaceActs.ts`, `bookmarkActs.ts`,
-  `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
-  `panelActs.ts`, `backupsPanelActs.ts`. The components: `Masthead`,
-  `Alerts`, `Search`, `GotoRow`, `Toolbar`, `GotoPopup`, `ReplaceBar`, `Help`
+  `formatToolbarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
+  `openerActs.ts` (a menu or panel opened, toggled, answered again),
+  `backupsPanelActs.ts`. The components: `Masthead`,
+  `Alerts`, `Search`, `GotoRow`, `FormatToolbar`, `GotoToolbar`, `ReplaceToolbar`, `Help`
   (over `help.html`), `Bookmarks`, `Shortcuts`, `Backups`, `CopyButton`;
   `ui.css`.
 - `src/session.ts` — THE BRIDGE: the editor over the journal; open by

@@ -383,7 +383,7 @@ export function startSession(opts: SessionOptions): Session {
   }
   /* a navigation that lands where it already is SAYS so, when given the
      words: silence reads as a dead control
-     (pin: launch, panels, the corner, links › a link to itself) */
+     (pin: launch, menus, the corner, links › a link to itself) */
   /* the hash already there fires no hashchange: what stands over the
      entry is closed and the focus given back here, the selection as it stood
      (pin: bookmarks › b typed, already here) (pin: bookmarks › fb over a selection, already here)

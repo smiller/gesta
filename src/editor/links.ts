@@ -5,7 +5,7 @@
    an external link does nothing). THE MODIFIED PRESS IS TAKEN ON MOUSEDOWN:
    a ⌘-mousedown is ProseMirror's own "select this node" gesture, and a
    handler on click ran after it had selected the whole paragraph and raised
-   the format bar (pin: launch, panels, the corner, links › ⌘-click on an
+   the format toolbar (pin: launch, menus, the corner, links › ⌘-click on an
    external link). The plain click stays a click, so a drag that starts on
    a link routes nothing. */
 import type { EditorView } from "prosemirror-view";

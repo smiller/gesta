@@ -2,7 +2,7 @@
      Skip, Replace or Replace All leaves the cursor in the box it was in. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  import { enterKey, holdsFocus } from "./cardKeys.ts";
+  import { enterKey, holdsFocus } from "./pickKeys.ts";
   let { replace, onFind, onWith, onNext, onOne, onAll, onClose }: {
     replace: Screen["replace"];
     onFind: (value: string) => void;
@@ -32,7 +32,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<div class="replacebar" hidden={!replace.open} onmousedown={press} role="search">
+<div class="replace-toolbar" hidden={!replace.open} onmousedown={press} role="search">
   <div class="rows">
     <label for="replacefind">Find</label>
     <input id="replacefind" type="text" autocomplete="off" spellcheck="false" bind:this={findInput} value={replace.find} oninput={(e) => onFind(e.currentTarget.value)} onkeydown={findKey}>
@@ -49,7 +49,7 @@
 </div>
 
 <style>
-  .replacebar {
+  .replace-toolbar {
     position: absolute;
     top: calc(100% + var(--alert-area-h, 0px) + 8px);
     right: var(--head-gutter);
@@ -67,7 +67,7 @@
     font-weight: 600;
     letter-spacing: 0.06em;
   }
-  .replacebar[hidden] { display: none; }
+  .replace-toolbar[hidden] { display: none; }
   /* ONE GRID for both rows, so the two boxes share their left and right
      edges (pin: replace › ⌃⌘E in the rendered view) */
   .rows { display: grid; grid-template-columns: auto 13rem auto; align-items: center; gap: 4px 8px; }

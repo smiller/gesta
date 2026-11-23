@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
-import { ask, popup, type Standing, type Answer } from "./goto.ts";
+import { ask, toolbarFor, type Standing, type Answer } from "./goto.ts";
 import { alertWords } from "../model/alertText.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
@@ -13,12 +13,12 @@ const VERSES = { ...LINES, byChapterAndVerse: true };
 const FRESH: Standing = { pos: null, asked: 0 };
 /* the text of the row an ask lands on, or what it says instead */
 function lands(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string {
-  const a = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup");
+  const a = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "toolbar");
   return "pos" in a ? doc.nodeAt(a.pos)!.textContent : alertWords(a.said);
 }
 /* what an ask says, landing or not */
 function says(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null {
-  const s = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said;
+  const s = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "toolbar").said;
   return s ? alertWords(s) : null;
 }
 /* Enter pressed again and again on the same ask: what each press says and where it lands */
@@ -26,14 +26,14 @@ function presses(doc: Node, typed: string, times: number, c = LINES): { at: stri
   const out: { at: string; said: string | null }[] = [];
   let standing: Standing = FRESH;
   for (let i = 0; i < times; i++) {
-    const a: Answer = ask(doc, c, { line: typed }, standing, "popup");
+    const a: Answer = ask(doc, c, { line: typed }, standing, "toolbar");
     if (!("pos" in a)) throw new Error(alertWords(a.said));
     out.push({ at: doc.nodeAt(a.pos)!.textContent, said: a.said ? alertWords(a.said) : null });
     standing = { pos: a.pos, asked: a.asked };
   }
   return out;
 }
-const idOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said?.id ?? null;
+const idOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "toolbar").said?.id ?? null;
 
 const two = parseMarkdown("::: verse\na\nb\nc\nd\n:::\n\nprose between\n\n::: verse 2\nx\ny\n:::");
 const mixed = parseMarkdown("::: prose\nSentence one. | Un.\nSentence two. | Deux.\n:::\n\n::: verse\nline one\nline two\nline three\n:::");
@@ -48,17 +48,17 @@ describe("the noun a work asks by", () => {
 
 describe("askKind", () => {
   it("line for verse, page for a book of leaves, both, none; sentences count as lines", () => {
-    expect(popup(parseMarkdown(horace), LINES).kind).toBe("line");
-    expect(popup(parseMarkdown(williams), LINES).kind).toBe("page");
-    expect(popup(parseMarkdown("::: prose\nOne. | Un.\n:::"), LINES).kind).toBe("line");
-    expect(popup(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), LINES).kind).toBe("both");
-    expect(popup(parseMarkdown("plain"), LINES).kind).toBe("none");
+    expect(toolbarFor(parseMarkdown(horace), LINES).kind).toBe("line");
+    expect(toolbarFor(parseMarkdown(williams), LINES).kind).toBe("page");
+    expect(toolbarFor(parseMarkdown("::: prose\nOne. | Un.\n:::"), LINES).kind).toBe("line");
+    expect(toolbarFor(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), LINES).kind).toBe("both");
+    expect(toolbarFor(parseMarkdown("plain"), LINES).kind).toBe("none");
   });
 });
-const worded = (p: ReturnType<typeof popup>) => ({ ...p, none: alertWords(p.none), inSource: alertWords(p.inSource) });
-describe("the popup's words", () => {
-  it("the boxes' labels and what is said where nothing can be asked follow the work's conventions; with no document the popup asks nothing", () => {
-    expect([LINES, VERSES, PARAGRAPHS].map((c) => worded(popup(null, c)))).toEqual([
+const worded = (p: ReturnType<typeof toolbarFor>) => ({ ...p, none: alertWords(p.none), inSource: alertWords(p.inSource) });
+describe("the toolbar's words", () => {
+  it("the boxes' labels and what is said where nothing can be asked follow the work's conventions; with no document the toolbar asks nothing", () => {
+    expect([LINES, VERSES, PARAGRAPHS].map((c) => worded(toolbarFor(null, c)))).toEqual([
       { kind: "none", label: "Line", pageLabel: "Page", none: "no line or page numbers here", inSource: "Switch to the rendered view to go to a line or a page" },
       { kind: "none", label: "Verse", pageLabel: "Page", none: "no verse numbers here", inSource: "Switch to the rendered view to go to a verse" },
       { kind: "none", label: "Paragraph", pageLabel: "Page", none: "no paragraph numbers here", inSource: "Switch to the rendered view to go to a paragraph" },
@@ -73,11 +73,11 @@ describe("lineHits and the cycle", () => {
   });
   it("a line in two blocks is two hits; Enter again cycles and wraps; an edit between presses keeps the standing row", () => {
     expect(presses(two, "3", 3).map((p) => p.said)).toEqual(["line 3 — verse block 1 of 2", "line 3 — verse block 2 of 2", "line 3 — verse block 1 of 2"]);
-    const [first, second] = [ask(two, LINES, { line: "3" }, FRESH, "popup"), ask(two, LINES, { line: "3" }, { pos: null, asked: 3 }, "popup")];
+    const [first, second] = [ask(two, LINES, { line: "3" }, FRESH, "toolbar"), ask(two, LINES, { line: "3" }, { pos: null, asked: 3 }, "toolbar")];
     if (!("pos" in first) || !("pos" in second)) throw new Error("no landing");
     /* a different number asked, or a standing row that is no hit, starts again at the first */
-    expect(ask(two, LINES, { line: "3" }, { pos: first.pos, asked: 2 }, "popup")).toMatchObject({ pos: first.pos });
-    expect(ask(two, LINES, { line: "3" }, { pos: 9999, asked: 3 }, "popup")).toMatchObject({ pos: first.pos });
+    expect(ask(two, LINES, { line: "3" }, { pos: first.pos, asked: 2 }, "toolbar")).toMatchObject({ pos: first.pos });
+    expect(ask(two, LINES, { line: "3" }, { pos: 9999, asked: 3 }, "toolbar")).toMatchObject({ pos: first.pos });
     expect(second).toMatchObject({ pos: first.pos });
   });
   it("says where it landed only where the number is in several blocks, form-neutral in a prosimetrum", () => {
@@ -168,8 +168,8 @@ describe("the refusals", () => {
   it("a leaf is found case-blind and named back when missing", () => {
     const w = parseMarkdown(williams);
     expect(idOf(w, "61", LINES, "page")).toBeNull();
-    expect(ask(w, LINES, { page: "61" }, FRESH, "popup")).toHaveProperty("pos");
-    expect(ask(parseMarkdown("⟨xiv⟩ text"), LINES, { page: "XIV" }, FRESH, "popup")).toHaveProperty("pos");
+    expect(ask(w, LINES, { page: "61" }, FRESH, "toolbar")).toHaveProperty("pos");
+    expect(ask(parseMarkdown("⟨xiv⟩ text"), LINES, { page: "XIV" }, FRESH, "toolbar")).toHaveProperty("pos");
     expect(says(w, "999", LINES, "page")).toBe("no page 999 here");
     expect(says(parseMarkdown("plain"), "9", LINES, "page")).toBe("no page numbers here");
   });
@@ -210,9 +210,9 @@ describe("stanza.line", () => {
 
 describe("a page in stanzas: the Stanza and Line boxes", () => {
   const canto = parseMarkdown("# Book I, Canto i\n\n::: stanza 1\na1\na2\na3\n:::\n\n::: stanza 2\nb1\nb2\nb3\n:::\n\n::: stanza 3\nc1\nc2\nc3\n:::");
-  const boxes = (stanza: string, line: string): string => { const a = ask(canto, LINES, { stanza, line }, FRESH, "popup"); return "pos" in a ? canto.nodeAt(a.pos)!.textContent : alertWords(a.said); };
-  it("the popup shows a Stanza box and a Line box", () => {
-    expect(popup(canto, LINES).kind).toBe("stanza");
+  const boxes = (stanza: string, line: string): string => { const a = ask(canto, LINES, { stanza, line }, FRESH, "toolbar"); return "pos" in a ? canto.nodeAt(a.pos)!.textContent : alertWords(a.said); };
+  it("the toolbar shows a Stanza box and a Line box", () => {
+    expect(toolbarFor(canto, LINES).kind).toBe("stanza");
   });
   it("a stanza alone lands on its first line, a stanza and a line on that line; the stanza in arabic or roman", () => {
     expect(boxes("2", "")).toBe("b1");
@@ -231,7 +231,7 @@ describe("a page in stanzas: the Stanza and Line boxes", () => {
     expect(boxes("iiv", "1")).toBe("iiv is not a stanza number");
     expect(boxes("2", "2.1")).toBe("2.1 is not a line number");
     expect(boxes("2", "iii")).toBe("iii is not a line number");
-    expect(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "popup").said?.id).toBe("notANumber");
+    expect(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "toolbar").said?.id).toBe("notANumber");
   });
   it("a roman stanza is read in the modern form or the old print's additive one: iv and iiii are 4; a numeral in neither is not a number", () => {
     expect(boxes("iv", "")).toBe("no stanza 4 here — the last is 3");
@@ -350,11 +350,11 @@ describe("a work of prose by paragraph and verse by line: Verse Line, or Prose P
   const proseOnly = parseMarkdown("::: prose 8\nOne. | Un.\n:::");
   const verseOnly = parseMarkdown("::: verse\nx\ny\n:::");
   it("a chapter of both asks Verse Line, or Prose Paragraph; of prose alone, Paragraph; of verse alone, Line", () => {
-    expect(popup(chapter, PROSIMETRUM)).toMatchObject({ kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" });
-    expect(popup(proseOnly, PROSIMETRUM)).toMatchObject({ kind: "page", pageLabel: "Paragraph" });
-    expect(popup(verseOnly, PROSIMETRUM)).toMatchObject({ kind: "line", label: "Line" });
-    expect(popup(parseMarkdown("plain"), PROSIMETRUM).kind).toBe("none");
-    expect(worded(popup(null, PROSIMETRUM))).toMatchObject({ none: "no line or paragraph numbers here", inSource: "Switch to the rendered view to go to a line or a paragraph" });
+    expect(toolbarFor(chapter, PROSIMETRUM)).toMatchObject({ kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" });
+    expect(toolbarFor(proseOnly, PROSIMETRUM)).toMatchObject({ kind: "page", pageLabel: "Paragraph" });
+    expect(toolbarFor(verseOnly, PROSIMETRUM)).toMatchObject({ kind: "line", label: "Line" });
+    expect(toolbarFor(parseMarkdown("plain"), PROSIMETRUM).kind).toBe("none");
+    expect(worded(toolbarFor(null, PROSIMETRUM))).toMatchObject({ none: "no line or paragraph numbers here", inSource: "Switch to the rendered view to go to a line or a paragraph" });
   });
   it("the Paragraph box lands on the paragraph a reference names, its first sentence", () => {
     expect(lands(chapter, "3", PROSIMETRUM, "page")).toContain("First one.");
@@ -369,23 +369,23 @@ describe("a work of prose by paragraph and verse by line: Verse Line, or Prose P
   });
 });
 
-describe("a work of prose by paragraph and verse by line, beyond the popup's two boxes", () => {
+describe("a work of prose by paragraph and verse by line, beyond the toolbar's two boxes", () => {
   const proseChapter = parseMarkdown("::: prose\nOne. | Un.\nTwo. | Deux.\nThree. | Trois.\n:::");
-  it("a link to a line in a chapter of prose lands on that sentence, as before the popup counted verse alone", () => {
+  it("a link to a line in a chapter of prose lands on that sentence, as before the toolbar counted verse alone", () => {
     const a = ask(proseChapter, PROSIMETRUM, { line: "3" }, FRESH, "link");
     expect("pos" in a && proseChapter.nodeAt(a.pos)!.textContent).toContain("Three.");
   });
-  it("a chapter in stanzas or with printed pages keeps the popup its fences ask for", () => {
-    expect(popup(parseMarkdown("::: stanza 1\na\nb\n:::"), PROSIMETRUM)).toMatchObject({ kind: "stanza" });
-    expect(popup(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM)).toMatchObject({ kind: "both", label: "Line", pageLabel: "Page" });
-    expect("pos" in ask(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM, { page: "3" }, FRESH, "popup")).toBe(true);
+  it("a chapter in stanzas or with printed pages keeps the toolbar its fences ask for", () => {
+    expect(toolbarFor(parseMarkdown("::: stanza 1\na\nb\n:::"), PROSIMETRUM)).toMatchObject({ kind: "stanza" });
+    expect(toolbarFor(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM)).toMatchObject({ kind: "both", label: "Line", pageLabel: "Page" });
+    expect("pos" in ask(parseMarkdown("::: verse\nx\n:::\n\n⟨3⟩ text"), PROSIMETRUM, { page: "3" }, FRESH, "toolbar")).toBe(true);
   });
 });
 
 describe("what each box finds", () => {
-  it("is read once with its label: on a page in stanzas, whatever the work's convention, the popup asks Stanza and Line, and no word reaches the paragraphs", () => {
+  it("is read once with its label: on a page in stanzas, whatever the work's convention, the toolbar asks Stanza and Line, and no word reaches the paragraphs", () => {
     const stanzas = parseMarkdown("::: stanza 1\nOne line\nTwo lines\n:::");
-    expect(popup(stanzas, PROSIMETRUM).kind).toBe("stanza");
+    expect(toolbarFor(stanzas, PROSIMETRUM).kind).toBe("stanza");
     expect(idOf(stanzas, "1", PROSIMETRUM, "page")).toBe("noPageNumbers");
   });
 });

@@ -212,29 +212,29 @@ const WORDS = {
 } as const;
 const wordsFor = (c: Asked) => WORDS[c.byBookChapterAndParagraph ? "paragraph" : c.byChapterAndVerse ? "verse" : c.proseByParagraphVerseByLine ? "proseAndVerse" : "line"];
 const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => wordsFor(c).label;
-type PopupLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" };
+type ToolbarLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" };
 /* a work of prose by paragraph and verse by line asks its verse by line and
    its prose by paragraph, each box only where the entry holds that form, the
    form named only where both stand */
-function proseAndVerse(doc: Node): PopupLabels {
+function proseAndVerse(doc: Node): ToolbarLabels {
   const blocks = blocksOf(askedUnits(doc)), verse = blocks.some((b) => !prose(b)), proseHere = blocks.some(prose);
   if (verse && proseHere) return { kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" };
   return { kind: verse ? "line" : proseHere ? "page" : "none", label: "Line", pageLabel: "Paragraph" };
 }
 /* what the line box and the second box find on this entry, read with their
    labels so a box never finds what its label does not say: stanzas and
-   printed pages keep the popup their fences ask for, whatever the work's
+   printed pages keep the toolbar their fences ask for, whatever the work's
    convention (pin: goto.test › is read once with its label) */
 type Finds = { line: "stanza" | "number"; page: "paragraph" | "page" };
 const byForm = (doc: Node, c: Asked): boolean => c.proseByParagraphVerseByLine && !hasStanzas(doc) && !hasPages(doc);
 const findsOf = (doc: Node, c: Asked): Finds => (byForm(doc, c) ? { line: "number", page: "paragraph" } : { line: hasStanzas(doc) ? "stanza" : "number", page: "page" });
-function boxesOf(doc: Node | null, c: Asked): PopupLabels {
+function boxesOf(doc: Node | null, c: Asked): ToolbarLabels {
   if (!doc) return { kind: "none", label: lineLabel(c), pageLabel: "Page" };
   return findsOf(doc, c).page === "paragraph" ? proseAndVerse(doc) : { kind: askKind(doc), label: lineLabel(c), pageLabel: "Page" };
 }
-/* the popup as this entry asks it: which boxes, their labels, what is said
+/* the toolbar as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
-export function popup(doc: Node | null, c: Asked): PopupLabels & { none: Said; inSource: Said } {
+export function toolbarFor(doc: Node | null, c: Asked): ToolbarLabels & { none: Said; inSource: Said } {
   return { ...boxesOf(doc, c), none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
@@ -277,7 +277,7 @@ function stanzaNumber(typed: string): number | null {
   const n = [...r].reduce((sum, ch, i) => sum + (VALUE[ch] < (VALUE[r[i + 1]] ?? 0) ? -VALUE[ch] : VALUE[ch]), 0);
   return modern(n) === r ? n : null;
 }
-/* the popup on a page in stanzas: a Stanza box and a Line box, a stanza alone
+/* the toolbar on a page in stanzas: a Stanza box and a Line box, a stanza alone
    its first line; each box names back what is not its number (pin: stanza ›
    ⌃⌘G stanza 2, line 1) (pin: stanza › ⌃⌘G line 3, no stanza) */
 function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing): Answer {
@@ -290,16 +290,16 @@ function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only
    where the same number is asked again */
-function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "popup" | "link"): Answer {
+function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "toolbar" | "link"): Answer {
   if (typeof n === "number" && c.byBookChapterAndParagraph) return placed(paragraphHit(doc, n), standing);
-  /* the popup's Verse Line box counts verse alone; a link to a line still counts the prose's sentences, as it always has */
-  const found = lineHits(doc, n, c.proseByParagraphVerseByLine && from === "popup"), noun = c.byChapterAndVerse ? "verse" : undefined;
+  /* the toolbar's Verse Line box counts verse alone; a link to a line still counts the prose's sentences, as it always has */
+  const found = lineHits(doc, n, c.proseByParagraphVerseByLine && from === "toolbar"), noun = c.byChapterAndVerse ? "verse" : undefined;
   if (!found.hits.length) return refused(lineRefusal(found.blocks, n, noun));
   const hit = nextHit(found.hits, standing.pos, n === standing.asked);
   const word = landingWord(hit, found, n, noun);
-  return { pos: hit.pos, asked: n, said: word && (from === "popup" || hit.skipped) ? word : null };
+  return { pos: hit.pos, asked: n, said: word && (from === "toolbar" || hit.skipped) ? word : null };
 }
-function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from: "popup" | "link"): Answer {
+function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from: "toolbar" | "link"): Answer {
   const label = askedLabel(doc, typed);
   if (label) return numberAnswer(doc, c, label, standing, from);
   const why = askCheck(typed, "line", lineLabel(c).toLowerCase());
@@ -308,7 +308,7 @@ function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from
 /* what a box's words name on this page, typed or followed from a link (pin:
    a link to a line › a link to a stanza, and line) */
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
-export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "popup" | "link"): Answer {
+export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "toolbar" | "link"): Answer {
   const finds = findsOf(doc, c);
   if ("page" in words) return finds.page === "paragraph" ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);

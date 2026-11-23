@@ -1,7 +1,7 @@
 import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, still, jump, keep } from "./kit.ts";
 
 section("where the keys go", async () => {
-  /* the caret or the focus that went nowhere: a card's chord pressed again, a row closed by its label, the bookmark card's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a card, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
+  /* the caret or the focus that went nowhere: a panel's chord pressed again, a row closed by its label, the bookmarks panel's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a panel, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
   /* a missing control fails its own step, not the section */
   await keysOpening();
   await keysAfterSearch();
@@ -16,7 +16,7 @@ async function keysOpening(): Promise<void> {
   await enterHeldShortcut();
   await enterHeldFollowing();
   await enterCaretAboveWindow();
-  await digitHeldBookmarksCard();
+  await digitHeldBookmarksPanel();
   await refusedEntryRedrawnUnder();
 }
 async function chordsPressedTwice(): Promise<void> {
@@ -112,20 +112,20 @@ async function tabCodeBlock(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await page.keyboard.press("Escape");
-  /* an arrival at the entry already open, under the shortcuts popup and the Search row */
+  /* an arrival at the entry already open, under the shortcuts panel and the Search row */
   await go(TODAY);
   await page.keyboard.press("Control+Meta+s");
   await rest(page);
   await page.keyboard.press("Control+Meta+t");
   await rest(page);
-  await log("⌃⌘T on today from the shortcuts popup", {});
+  await log("⌃⌘T on today from the shortcuts panel", {});
   await searchFor(page, "one");
   await landed(page, 600);
   await page.keyboard.press("Control+Meta+t");
   await rest(page);
   await log("⌃⌘T on today from Search", {});
   await page.keyboard.press("Escape");
-  /* Tab out of a card */
+  /* Tab out of a panel */
   await tap(S.editor);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
@@ -133,17 +133,17 @@ async function tabCodeBlock(): Promise<void> {
 async function tabTwelveTimesBookmarks(): Promise<void> {
   for (let i = 0; i < 12; i++) await page.keyboard.press("Tab");
   await rest(page);
-  await log("Tab twelve times from the bookmarks card", {});
+  await log("Tab twelve times from the bookmarks panel", {});
   await page.keyboard.press("Escape");
   await tap(S.editor);
   await page.keyboard.press("Control+Meta+s");
   await rest(page);
   await page.keyboard.press("Shift+Tab");
   await rest(page);
-  await log("Shift-Tab from the shortcuts popup", {});
+  await log("Shift-Tab from the shortcuts panel", {});
   await page.keyboard.press("Escape");
   /* held keys: a key down again before it is up is the browser's auto-repeat */
-  await page.focus(S.booksOpener);
+  await page.focus(S.bookshelfOpener);
   await hold("Tab", 11);
   await rest(page);
   await log("Tab held from the bookshelf button", { focus: await page.evaluate(() => document.activeElement?.getAttribute("title") ?? document.activeElement?.tagName) });
@@ -193,7 +193,7 @@ async function enterCaretAboveWindow(): Promise<void> {
   await log("Enter with the caret above the window", { clear: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect(); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r ? Math.round(r.top - head) : null; }) });
   await page.keyboard.press("Backspace");
 }
-async function digitHeldBookmarksCard(): Promise<void> {
+async function digitHeldBookmarksPanel(): Promise<void> {
   /* a picture that finishes preparing while Search is typed in */
   /* the digit that opens a bookmark, held: nothing typed into the entry it opened */
   await page.evaluate(() => { window.__typed = 0; document.addEventListener("beforeinput", () => { window.__typed++; }, true); });
@@ -202,7 +202,7 @@ async function digitHeldBookmarksCard(): Promise<void> {
   await rest(page);
   await hold("1", 4);
   await page.waitForTimeout(800);
-  await log("a digit held on the bookmarks card", { typed: await page.evaluate(() => window.__typed) });
+  await log("a digit held on the bookmarks panel", { typed: await page.evaluate(() => window.__typed) });
   /* a refused entry redrawn by another tab's write: Search, open over it, stays */
   await go("commonplace/Refused");
   await view(true);
@@ -249,7 +249,7 @@ async function picturePastedSearchTyped(): Promise<void> {
   await page.keyboard.press("Escape");
 }
 section("editing as the help says", async () => {
-  /* the help card's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
+  /* the help panel's promises: a verse passage copied keeps its numbering, Enter in a countdown list counts down, Enter in a list item's own paragraph stays in the item, Tab in a quote carries its heading and table, and the line numbers while typing */
   /* a placed selection is read by the editor a moment later: a Tab pressed at once went where the arrival had left the caret */
   await verseLines23Copied();
   await tabTableQuote();
@@ -266,7 +266,7 @@ async function verseLinesCopied(): Promise<void> {
   await page.keyboard.press("Meta+c");
   await rest(page);
   await log("verse lines 2–3 copied", { clipboard: await R.clipboardLines(page) });
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on verse lines 2–3", { lines: (await R.clipboardLines(page)).map((l) => l.replace(/\(#[^)]*\)/, "(…)")) });

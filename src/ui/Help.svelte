@@ -1,4 +1,4 @@
-<!-- An overlay card, not a route: entries keep sole ownership of the hash. -->
+<!-- An overlay panel, not a route: entries keep sole ownership of the hash. -->
 <script lang="ts">
   import text from "./help.html?raw";
   let { open }: { open: boolean } = $props();

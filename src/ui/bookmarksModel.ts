@@ -54,7 +54,7 @@ export function resolveAlias(list: Bookmark[], buf: string): Resolved {
   if (!b && left.length) return { buf, warn: said("finishKey") };
   return b ? { buf: "", jump: b } : { buf: "", warn: said("noBookmark", { n: buf }) };
 }
-/* a character typed at the card with `buf` held: null when the press is
+/* a character typed at the panel with `buf` held: null when the press is
    not a key's (the caller's other arms then apply) */
 export function typeAlias(list: Bookmark[], buf: string, ch: string): Resolved | null {
   if (!ALIAS_RE.test(buf + ch)) return null;

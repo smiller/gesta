@@ -10,14 +10,14 @@ section("author filing", async () => {
 });
 async function newAuthorSeanMiller(): Promise<void> {
   await go("2026-09-06");
-  await page.click(S.booksOpener);
+  await page.click(S.bookshelfOpener);
   setAnswer(["Sean Miller", "Miller, Sean"]);
   prompts.length = 0;
   await page.click(S.newAuthor);
   await A.waitEntry(page, "bookshelf/Miller, Sean", 5000).catch(() => {});
   await log("New author…, Sean Miller, Enter twice", { prompts: prompts.slice(), entry: await A.entry(page), stored: await A.stored(page, "bookshelf/Miller, Sean") });
-  await page.click(S.booksOpener);
-  await log("the bookshelf lists it by its heading", await R.panel(page));
+  await page.click(S.bookshelfOpener);
+  await log("the bookshelf lists it by its heading", await R.menu(page));
   await page.keyboard.press("Escape");
   /* + book with the caret inside the heading: refused, the author's name kept */
   const mid = await page.evaluate((s) => { const h = document.querySelector(s); const b = h.getBoundingClientRect(); return { x: b.left + 8, y: b.top + b.height / 2 }; }, S.editorFirst);
@@ -62,8 +62,8 @@ async function renameAuthorTyped(): Promise<void> {
   await A.waitEntry(page, "bookshelf/Sean Miller", 5000).catch(() => {});
   await page.waitForFunction(() => /filed under/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
   await log("Rename, Sean Miller typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await cornerText(), author: await A.stored(page, "bookshelf/Sean Miller"), book: await A.stored(page, "bookshelf/Sean Miller/Odes"), oldAuthor: await A.stored(page, "bookshelf/Miller, Sean"), oldBook: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
-  await page.click(S.booksOpener);
-  await log("the bookshelf after the re-file", await R.panel(page));
+  await page.click(S.bookshelfOpener);
+  await log("the bookshelf after the re-file", await R.menu(page));
   await page.keyboard.press("Escape");
   await go("bookshelf/Sean%20Miller/Odes", 5000);
 }
@@ -74,7 +74,7 @@ async function reFiledBookPicture(): Promise<void> {
   await log("the re-filed book, its picture", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Sean Miller/Odes"), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
 }
 section("replace", async () => {
-  /* find and replace: ⌃⌘E in the rendered view switches to the source view and opens the bar, an info showing; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
+  /* find and replace: ⌃⌘E in the rendered view switches to the source view and opens the replace toolbar, an info showing; Enter in Find steps on, Enter in Replace with replaces the outlined match and moves on, Skip moves on leaving it, Replace All replaces the rest, ⌘Z in the text undoes the All in one step, Escape closes and switches back; opened in the source view it stays there */
   await replaceInRenderedView();
   await replaceInSourceView();
   await escapeSwitchBackRefused();
@@ -93,48 +93,48 @@ async function replaceInRenderedView(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
-  await log("⌃⌘E in the rendered view", { ...(await R.replaceBar(page)), corner: await R.cornerTextOrEmpty(page) });
+  await log("⌃⌘E in the rendered view", { ...(await R.replaceToolbar(page)), corner: await R.cornerTextOrEmpty(page) });
   await page.keyboard.type("*-*");
   await rest(page);
-  await log("*-* typed into Find", await R.replaceBar(page));
+  await log("*-* typed into Find", await R.replaceToolbar(page));
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("Enter in Find", await R.replaceBar(page));
+  await log("Enter in Find", await R.replaceToolbar(page));
   await page.click(S.replaceWith, { timeout: 2000 }).catch(() => {});
   await page.keyboard.type("-");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("Enter in Replace with", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await log("Enter in Replace with", { ...(await R.replaceToolbar(page)), stored: await A.stored(page) });
   await page.click(S.replaceSkip, { timeout: 2000 }).catch(() => {});
   await rest(page);
-  await log("Skip", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await log("Skip", { ...(await R.replaceToolbar(page)), stored: await A.stored(page) });
   await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
   await rest(page);
-  await log("Replace All, the rest replaced", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await log("Replace All, the rest replaced", { ...(await R.replaceToolbar(page)), stored: await A.stored(page) });
   await page.click(S.source, { timeout: 2000 }).catch(() => {});
   await page.keyboard.press("Meta+z");
   await rest(page);
-  await log("⌘Z in the text", { ...(await R.replaceBar(page)), stored: await A.stored(page) });
+  await log("⌘Z in the text", { ...(await R.replaceToolbar(page)), stored: await A.stored(page) });
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape, opened in the rendered view", await R.replaceBar(page));
+  await log("Escape, opened in the rendered view", await R.replaceToolbar(page));
   await page.keyboard.press("Control+Meta+m");
 }
 async function replaceInSourceView(): Promise<void> {
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
-  await log("⌃⌘E in the source view", await R.replaceBar(page));
+  await log("⌃⌘E in the source view", await R.replaceToolbar(page));
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape, opened in the source view", await R.replaceBar(page));
+  await log("Escape, opened in the source view", await R.replaceToolbar(page));
   /* a long entry: the layer the matches are drawn on keeps the text's line pitch to its last line, where 27.54px set it 79px low over 2,706 lines of Paradise Lost */
   await R.setSource(page, Array.from({ length: 1500 }, (_, i) => "Line " + i + " of a long entry, with *-* in it and more words after it to wrap.").join("\n\n"));
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await log("a long entry's matches", await R.replaceDrift(page));
   /* Replace All far from the end keeps the window where it was: the whole-text edit put the caret, and the window, at the entry's last line */
-  { const y = await winY(); await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {}); await rest(page); await log("Replace All in a long entry", { count: (await R.replaceBar(page)).count, kept: Math.abs((await winY()) - y) < 60 }); }
+  { const y = await winY(); await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {}); await rest(page); await log("Replace All in a long entry", { count: (await R.replaceToolbar(page)).count, kept: Math.abs((await winY()) - y) < 60 }); }
   await page.keyboard.press("Escape");
   /* a replacement holding the find: the rest are counted, not "none" */
   await R.setSource(page, "cat and cat\n");
@@ -144,7 +144,7 @@ async function replaceInSourceView(): Promise<void> {
   await page.fill("#replacewith", "cats").catch(() => {});
   await page.click(S.replaceAll, { timeout: 2000 }).catch(() => {});
   await rest(page);
-  await log("Replace All, the replacement holding the find", await R.replaceBar(page));
+  await log("Replace All, the replacement holding the find", await R.replaceToolbar(page));
   await page.keyboard.press("Escape");
   /* a switch back the parse refuses: the cursor goes back to the text, not into the hidden Find box */
   await R.setSource(page, "::: grid 2\n::: card-red\nx\n:::\n:::\n");
@@ -161,21 +161,21 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape, the switch back refused", await R.replaceBar(page));
+  await log("Escape, the switch back refused", await R.replaceToolbar(page));
   await R.setSource(page, "One*-*two.\n");
   /* the save, not the corner: the refusal's error stands over "saved" */
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
-  /* another panel opened over the bar closes it, and switches back as Escape does */
+  /* a panel opened over the replace toolbar closes it, and switches back as Escape does */
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await page.keyboard.press("Control+Meta+h");
   await rest(page);
-  await log("⌃⌘H over the bar", { ...(await R.replaceBar(page)), help: (await R.helpOpen(page)).help });
+  await log("⌃⌘H over the toolbar", { ...(await R.replaceToolbar(page)), help: (await R.helpOpen(page)).help });
   await page.keyboard.press("Escape");
   await rest(page);
-  /* the same entry saved in another window rebuilds the source view under the bar: the bar closes, its offsets belonging to the text it was opened on, and the caret goes back to the match it stood on, not to the text's end */
+  /* the same entry saved in another window rebuilds the source view under the replace toolbar: the toolbar closes, its offsets belonging to the text it was opened on, and the caret goes back to the match it stood on, not to the text's end */
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await page.fill("#replacefind", "*-*").catch(() => {});
@@ -190,7 +190,7 @@ async function entrySavedAnotherWindow(): Promise<void> {
     /* the landed write reaches this window by its tab message: waited for, so a reading never races it */
     await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
     await rest(page);
-    await log("the entry saved in another window, the bar open", { ...(await R.replaceBar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
+    await log("the entry saved in another window, the toolbar open", { ...(await R.replaceToolbar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
     await other.close(); }
 }
 async function savedElsewhereFollowing(): Promise<void> {

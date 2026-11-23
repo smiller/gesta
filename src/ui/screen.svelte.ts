@@ -1,4 +1,4 @@
-import type { MastheadModel, PanelRow } from "./mastheadModel.ts";
+import type { MastheadModel, MenuRow } from "./mastheadModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
 import type { Level } from "./gotoRowModel.ts";
 import type { AskKind } from "../editor/goto.ts";
@@ -25,14 +25,14 @@ export interface SearchState {
 
 export interface Screen {
   masthead: MastheadModel;
-  /* THE ONE SLOT the overlay panels share: every opener sets it, so opening
-     one closes the others by construction (pin: launch, panels, the corner,
-     links › books panel, displacing it). The in-flow rows compete for no
-     spot and are not in it. */
-  panel: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
-  panelRows: PanelRow[];
-  /* an empty panel's one explanatory line, "" for none */
-  panelEmpty: string;
+  /* THE ONE SLOT the menus and panels share: every opener sets it, so
+     opening one closes the others by construction (pin: launch, menus, the
+     corner, links › the bookshelf menu, displacing it). The in-flow rows
+     compete for no spot and are not in it. */
+  opened: "commonplace" | "bookshelf" | "help" | "bookmarks" | "shortcuts" | "backups" | null;
+  menuRows: MenuRow[];
+  /* an empty menu's one explanatory line, "" for none */
+  menuEmpty: string;
   search: SearchState;
   /* the Go to row: open, and its run of selects; the body is EMPTY when
      closed, so a dismissed control is a dead mechanism */
@@ -41,11 +41,11 @@ export interface Screen {
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   /* `unused` the pictures no entry names; `overHalf` that count where it is more than half of them */
   backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed"; unused: number; overHalf: number };
-  gotoPopup: { open: boolean; kind: AskKind; line: string; page: string; stanza: string; lineLabel: string; pageLabel: string };
-  /* ⌃⌘E's bar: `count` the line after Find, `any` whether there is a match to replace */
+  gotoToolbar: { open: boolean; kind: AskKind; line: string; page: string; stanza: string; lineLabel: string; pageLabel: string };
+  /* ⌃⌘E's toolbar: `count` the line after Find, `any` whether there is a match to replace */
   replace: { open: boolean; find: string; with: string; count: string; any: boolean };
   copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
-  bar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean; canRefAll: boolean; tagTitle: string };
+  formatToolbar: { show: boolean; left: number; top: number; incode: boolean; on: Record<string, boolean>; canTag: boolean; canRefAll: boolean; tagTitle: string };
   /* the open entry draws a gutter: the Line numbering row shows; and
      whether the row stands open (⌃⌘L, the summary) */
   gutter: boolean;
@@ -59,12 +59,12 @@ export interface Screen {
 export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false, buttons: { create: "", createTitle: "", tagTitle: "", canCreate: false, canEdit: false, renameTitle: "", deleteTitle: "" } };
 export function screenState(interval: number): Screen {
   const screen = $state<Screen>({
-    masthead: EMPTY_MASTHEAD, panel: null, panelRows: [], panelEmpty: "",
+    masthead: EMPTY_MASTHEAD, opened: null, menuRows: [], menuEmpty: "",
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
-    bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, canRefAll: false, tagTitle: "" },
+    formatToolbar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, canRefAll: false, tagTitle: "" },
     copy: { show: false, top: 0, right: 0, minWidth: 0, title: "", label: "copy" },
-    gotoPopup: { open: false, kind: "none", line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" },
+    gotoToolbar: { open: false, kind: "none", line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" },
     replace: { open: false, find: "", with: "", count: "", any: false },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },

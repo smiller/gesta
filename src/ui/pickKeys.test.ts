@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { listKey, enterKey, holdsFocus, focusLeaves } from "./cardKeys.ts";
+import { listKey, enterKey, holdsFocus, focusLeaves } from "./pickKeys.ts";
 
 const key = (k: string, mods: Partial<{ shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }> = {}) =>
   ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false, ...mods });
@@ -22,13 +22,13 @@ describe("a key in a list", () => {
   });
 });
 
-describe("a key in a bar's field", () => {
+describe("a key in a toolbar's field", () => {
   it("Enter acts, but not while a composition is open", () => {
     expect(enterKey({ key: "Enter", isComposing: false })).toBe(true);
     expect(enterKey({ key: "Enter", isComposing: true })).toBe(false);
     expect(enterKey({ key: "a", isComposing: false })).toBe(false);
   });
-  it("a press on the bar holds the focus where it is, but a field or its label takes it", () => {
+  it("a press on the toolbar holds the focus where it is, but a field or its label takes it", () => {
     expect(holdsFocus("DIV")).toBe(true);
     expect(holdsFocus("BUTTON")).toBe(true);
     expect(holdsFocus("INPUT")).toBe(false);
@@ -36,7 +36,7 @@ describe("a key in a bar's field", () => {
   });
 });
 
-describe("focus leaving a card", () => {
+describe("focus leaving a panel", () => {
   it("to somewhere outside it leaves; inside it stays", () => {
     expect(focusLeaves(false, true)).toBe(true);
     expect(focusLeaves(true, true)).toBe(false);

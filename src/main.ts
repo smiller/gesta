@@ -28,16 +28,16 @@ import { overlays } from "./ui/overlays.ts";
 import { bookmarkActs } from "./ui/bookmarkActs.ts";
 import { replaceActs } from "./ui/replaceActs.ts";
 import { copyButton } from "./ui/copyButtonActs.ts";
-import { gotoPopupActs } from "./ui/gotoPopupActs.ts";
+import { gotoToolbarActs } from "./ui/gotoToolbarActs.ts";
 import { folderActs } from "./ui/folderActs.ts";
 import { searchActs } from "./ui/searchActs.ts";
 import { gotoRowActs } from "./ui/gotoRowActs.ts";
 import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
 import { pictureMoves } from "./store/pictures.ts";
 import { afterLoad } from "./store/toCommonplaces.ts";
-import { formatBar } from "./ui/formatBarActs.ts";
+import { formatToolbar } from "./ui/formatToolbarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
-import { panelActs, type PanelName, type Ns } from "./ui/panelActs.ts";
+import { openerActs, type Opened, type Ns } from "./ui/openerActs.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -46,7 +46,7 @@ import { todayKey, entryKey, entryHash } from "./store/keys.ts";
 import { hashParts } from "./store/nav.ts";
 import Alerts from "./ui/Alerts.svelte";
 import Masthead from "./ui/Masthead.svelte";
-import Toolbar from "./ui/Toolbar.svelte";
+import FormatToolbar from "./ui/FormatToolbar.svelte";
 import CopyButton from "./ui/CopyButton.svelte";
 import icon from "./favicon.ico?inline";
 
@@ -92,31 +92,31 @@ function keepPicked(file: File): void {
 const acts = {
   today: () => {}, walk: (_dir: "prev" | "next") => {}, export: () => {}, import: () => {}, backups: () => {}, resume: () => {}, sweep: () => {},
   backupsPanel: () => {},
-  interval: (_n: number) => {}, panel: (_ns: PanelName, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {}, shelves: () => {},
+  interval: (_n: number) => {}, opener: (_ns: Opened, _byKey?: boolean) => {}, newRoot: (_ns: Ns) => {}, shelves: () => {},
   create: () => {}, rename: () => {}, delete: () => {},
   goto: { toggle: (_open: boolean) => {}, pick: (_level: number, _value: string, _ns?: string) => {} },
-  bar: (_act: string) => {},
+  formatToolbar: (_act: string) => {},
   copyBlock: () => {},
   lines: (_open: boolean) => {},
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
-  gotoPopup: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page" | "stanza", _v: string) => {}, enter: (_kind: "line" | "page" | "stanza", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
+  gotoToolbar: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page" | "stanza", _v: string) => {}, enter: (_kind: "line" | "page" | "stanza", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
   replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, closeOver: () => {}, dismiss: () => {}, check: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
-const closePanel = (): void => { screen.panel = null; };
+const closeOpened = (): void => { screen.opened = null; };
 const overlay = overlays({
-  panel: closePanel,
+  opened: closeOpened,
   search: () => acts.search.toggle(false),
   goto: () => acts.goto.toggle(false),
-  gotoPopup: () => acts.gotoPopup.dismiss(),
-  gotoPopupCaret: () => acts.gotoPopup.close(),
+  gotoToolbar: () => acts.gotoToolbar.dismiss(),
+  gotoToolbarCaret: () => acts.gotoToolbar.close(),
   lines: () => { if (screen.linesOpen) acts.lines(false); },
   replace: () => acts.replace.closeOver(),
   replaceBack: () => acts.replace.close(),
 });
 if (!READER) {
-  mount(Toolbar, { target: document.body, props: { bar: screen.bar, onAct: (act: string) => acts.bar(act) } });
+  mount(FormatToolbar, { target: document.body, props: { toolbar: screen.formatToolbar, onAct: (act: string) => acts.formatToolbar(act) } });
   mount(CopyButton, { target: document.body, props: { copy: screen.copy, onCopy: () => acts.copyBlock() } });
 }
 const keptBundle = READER ? bundleKeeper(dexieKeyedStore<BundleRow>(READER_DB, READER_STORE, "k")) : null;
@@ -131,12 +131,12 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* the row closed by its own label hands the keys back as ⌃⌘L does
      (pin: where the keys go › Line numbering closed by its label) */
   onLines: (open: boolean) => acts.lines(open),
-  onPanel: (ns: PanelName) => acts.panel(ns), onClosePanel: closePanel, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
+  onOpener: (ns: Opened) => acts.opener(ns), onCloseOpened: closeOpened, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(),
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   /* a new pick is kept, then read as at any launch */
   reader: READER ? { onOpen: keepPicked, onWalk: (dir: WalkDir) => acts.walk(dir) } : null,
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
-  gotoPopup: { onInput: (kind: "line" | "page" | "stanza", v: string) => acts.gotoPopup.input(kind, v), onEnter: (kind: "line" | "page" | "stanza", v: string, repeat: boolean) => acts.gotoPopup.enter(kind, v, repeat), onClose: () => acts.gotoPopup.close() },
+  gotoToolbar: { onInput: (kind: "line" | "page" | "stanza", v: string) => acts.gotoToolbar.input(kind, v), onEnter: (kind: "line" | "page" | "stanza", v: string, repeat: boolean) => acts.gotoToolbar.enter(kind, v, repeat), onClose: () => acts.gotoToolbar.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
   shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
   backups: { onSetup: () => acts.backups(), onResume: () => acts.resume(), onSweep: () => acts.sweep() },
@@ -155,7 +155,7 @@ placeArea(document.documentElement, document.querySelector(".site-head")!, docum
    stopPropagation there would not reach a document listener anyway. */
 document.addEventListener("click", (e) => {
   const t = e.target as Element | null;
-  if (!t?.closest(".lists, .opener, .helppanel")) closePanel();
+  if (!t?.closest(".menu, .opener, .helppanel")) closeOpened();
   /* the results are an opaque overlay over the entry: a click into the
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
@@ -168,10 +168,10 @@ listenHeldKeys(document, window);
 const CHORDS: Record<string, () => void> = {
   k: () => acts.search.toggle(!screen.search.open),
   j: () => acts.goto.toggle(!screen.goto.open),
-  g: () => acts.gotoPopup.toggle(),
-  h: () => acts.panel("help", true),
-  b: () => acts.panel("bookmarks", true),
-  s: () => acts.panel("shortcuts", true),
+  g: () => acts.gotoToolbar.toggle(),
+  h: () => acts.opener("help", true),
+  b: () => acts.opener("bookmarks", true),
+  s: () => acts.opener("shortcuts", true),
   l: () => acts.lines(!screen.linesOpen),
   n: () => acts.create(),
   e: () => acts.replace.open(),
@@ -221,7 +221,7 @@ const backup = backupRunner({
   layer, images, store: idbBackupStore(),
   picker: win.showDirectoryPicker ? () => win.showDirectoryPicker!({ mode: "readwrite" }) : null,
   raise,
-  onTrouble: (msg) => { alerts.setTrouble(msg); if (screen.panel === "backups") readBackups(); },
+  onTrouble: (msg) => { alerts.setTrouble(msg); if (screen.opened === "backups") readBackups(); },
 });
 armBackup = () => backup.scheduleBackup();
 acts.backups = () => { backup.setupBackupFolder().then(readBackups); };
@@ -251,7 +251,7 @@ const entryShown = (stored: string, ekey: string): void => {
      book is refused) */
   if (ekey !== shown.ekey) { leftEntry(); if (shown.ekey) alerts.clearWarning(); }
   else acts.replace.check();
-  if (screen.gotoPopup.open) acts.gotoPopup.reask();
+  if (screen.gotoToolbar.open) acts.gotoToolbar.reask();
   if (ekey === shown.ekey && stored === shown.stored) return;
   shown = { ekey, stored };
   refreshMasthead();
@@ -309,7 +309,7 @@ const goRow = gotoRowActs({
 acts.goto.toggle = goRow.toggle;
 acts.goto.pick = goRow.pick;
 /* CUSTOM SHORTCUTS (⌃⌘S): a code → text table in ONE localStorage key,
-   raw text verbatim, device-local. The popup filters by prefix as you
+   raw text verbatim, device-local. The panel filters by prefix as you
    type and Enter or a row inserts the highlighted expansion at the
    caret, in either view. The editor's text is loaded ONLY on its
    hidden→shown transition and never while dirty, so a reopen after a
@@ -347,11 +347,11 @@ const openShortcuts = (): void => {
   sc.query = "";
   sc.editing = false;
   renderShortcuts();
-  screen.panel = "shortcuts";
+  screen.opened = "shortcuts";
   setTimeout(() => masthead.focusShortcuts(), 0);
 };
 const insertShortcut = (expansion: string): void => {
-  closePanel();
+  closeOpened();
   if (!cardCaret || !session.insertText(expansion)) { raise("placeCursor"); session.focusText(); }
 };
 acts.shortcuts.query = (q) => { sc.query = q; renderShortcuts(); };
@@ -369,7 +369,7 @@ acts.shortcuts.save = () => {
   renderShortcuts();
   raise("shortcutsSaved");
 };
-acts.shortcuts.escape = () => { closePanel(); session.focusText(); };
+acts.shortcuts.escape = () => { closeOpened(); session.focusText(); };
 const bm = screen.bookmarks;
 const marks = bookmarkStore({
   seed: [{ key: "commonplace/Making Verity Cards", alias: "" }, { key: "commonplace/Verdour", alias: "" }],
@@ -377,9 +377,9 @@ const marks = bookmarkStore({
   storedKeys: () => layer.storedKeys(),
 });
 const card = bookmarkActs({
-  bm, marks, session, journal, raise, overlay, closePanel, caretInEntry,
-  panel: { isOpen: () => screen.panel === "bookmarks", show: () => { screen.panel = "bookmarks"; } },
-  focusCard: () => masthead.focusBookmarks(),
+  bm, marks, session, journal, raise, overlay, closeOpened, caretInEntry,
+  panel: { isOpen: () => screen.opened === "bookmarks", show: () => { screen.opened = "bookmarks"; } },
+  focusPanel: () => masthead.focusBookmarks(),
   keysNow: () => Object.keys(layer.cache),
   warmBlock: () => refuseCold(layer, raise),
   warmed: () => layer.warmed,
@@ -395,13 +395,13 @@ const landing = landingActs({
   warmed: () => layer.warmed,
   page: windowPage, hand: windowHand,
 });
-const gotoPopup = gotoPopupActs({
-  lb: screen.gotoPopup, session, journal, raise, landing,
-  opened: () => overlay.open("gotoPopup"),
-  focusBar: () => masthead.focusGotoPopup(),
+const gotoToolbar = gotoToolbarActs({
+  lb: screen.gotoToolbar, session, journal, raise, landing,
+  opened: () => overlay.open("gotoToolbar"),
+  focusBar: () => masthead.focusGotoToolbar(),
   listen: (type, f) => document.addEventListener(type, f, true),
 });
-Object.assign(acts.gotoPopup, gotoPopup);
+Object.assign(acts.gotoToolbar, gotoToolbar);
 Object.assign(acts.replace, replaceActs({
   rb: screen.replace, session, raise,
   opened: () => overlay.open("replace"),
@@ -417,11 +417,11 @@ new ResizeObserver(clientW).observe(document.documentElement);
 const copy = copyButton({ cp: screen.copy, session, raise });
 acts.copyBlock = copy.copyBlock;
 dropStaleCopy = copy.dropStale;
-const fmt = formatBar({
-  bar: screen.bar, buttons: () => screen.masthead.buttons, session, raise, mountEl,
+const fmt = formatToolbar({
+  toolbar: screen.formatToolbar, buttons: () => screen.masthead.buttons, session, raise, mountEl,
   extract: () => life.extract(), head: document.querySelector(".site-head")!,
 });
-acts.bar = fmt.act;
+acts.formatToolbar = fmt.act;
 const kept = keptState({
   places: { move: session.movePlace, moveAll: session.movePlaces },
   folds: { move: session.moveFolds, drop: session.dropFolds },
@@ -435,16 +435,16 @@ const life = lifecycle({
   dialogs: { prompt: (text, value) => prompt(text, value), confirm: (text) => confirm(text), alert: (text) => alert(text) },
   kept,
   ...pictureMoves(images),
-  ui: { raise, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.bar.show = false; }, focus: () => session.focusText() },
+  ui: { raise, redraw: refreshMasthead, replaceHash: (hash) => history.replaceState(null, "", hash), hideBar: () => { screen.formatToolbar.show = false; }, focus: () => session.focusText() },
 });
 acts.create = () => { life.create(); };
 acts.rename = () => { life.rename(); };
 acts.delete = () => { life.remove(); };
-const panels = panelActs({
-  screen, layer, journal, session, closePanel, openBookmarks, openShortcuts, readBackups,
+const openers = openerActs({
+  screen, layer, journal, session, closeOpened, openBookmarks, openShortcuts, readBackups,
   open: (opening) => overlay.open(opening),
 });
-acts.panel = panels.panel;
+acts.opener = openers.opener;
 /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
    read ends, well or badly: the search; the Go to row while nothing has
    been picked in it, its focus put back on its first select; an open
@@ -457,14 +457,14 @@ acts.panel = panels.panel;
 const reanswerOpen = (): void => {
   search.reanswer();
   goRow.reanswer();
-  panels.reanswer();
+  openers.reanswer();
 };
 acts.newRoot = (ns) => {
-  closePanel();
+  closeOpened();
   life.newRoot(ns);
 };
 acts.shelves = () => {
-  closePanel();
+  closeOpened();
   life.shelves();
 };
 stage("start");

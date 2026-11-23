@@ -8,12 +8,12 @@ section("a work in stanzas", async () => {
   await A.waitEntry(page, "bookshelf/Havamal", 5000).catch(() => {});
   await R.settle(page);
   await R.selectBetween(page, "Deyr fé", "it sama");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on three lines of a stanza", { seeded, lines: await R.clipboardLines(page) });
   await R.selectBetween(page, "orðstírr", "ek veit einn");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R across two stanzas", { lines: await R.clipboardLines(page) });
@@ -24,7 +24,7 @@ section("a work in stanzas", async () => {
   await page.keyboard.type("4");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza 77, line 4", { ...(await R.gotoPopup(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza 77, line 4", { ...(await R.gotoToolbar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Escape");
 });
 section("Old English verse", async () => {
@@ -35,12 +35,12 @@ section("Old English verse", async () => {
   await A.waitEntry(page, "bookshelf/Beowulf", 5000).catch(() => {});
   await R.settle(page);
   await R.selectBetween(page, "Men ne cunnon", "onfeng");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R from a second half-line", { seeded, lines: await R.clipboardLines(page) });
   await R.selectBetween(page, "murnende", "mod");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on a first half-line", { lines: await R.clipboardLines(page) });
@@ -51,7 +51,7 @@ section("Old English verse", async () => {
   await A.waitEntry(page, "bookshelf/Seafarer", 5000).catch(() => {});
   await R.settle(page);
   await R.selectBetween(page, "Dagas sind", "ealle onmedlan");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R from a second half-line beside its translation", { seeded: paired, lines: await R.clipboardLines(page) });
@@ -72,7 +72,7 @@ section("split lines", async () => {
   await rest(page);
   await log("typed into the first half of a split line", await R.splitRests(page));
   await R.selectBetween(page, "By Samson", "By Samson");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on the rest of a split line", { lines: await R.clipboardLines(page) });
@@ -90,7 +90,7 @@ section("dual-language", async () => {
 });
 async function dualLanguageOvid(): Promise<void> {
   await dualLanguageInOvid();
-  await gotoPopupSkippedLine();
+  await gotoToolbarSkippedLine();
 }
 async function dualLanguageInOvid(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses/Book 1", fixture("ovid-metamorphoses-1.md"));
@@ -133,9 +133,9 @@ async function dualLanguageInOvid(): Promise<void> {
   await page.keyboard.type("546");
   await page.keyboard.press("Enter");
 }
-async function gotoPopupSkippedLine(): Promise<void> {
+async function gotoToolbarSkippedLine(): Promise<void> {
   await rest(page);
-  await log("⌃⌘G for a skipped line", { ...(await R.gotoPopup(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
+  await log("⌃⌘G for a skipped line", { ...(await R.gotoToolbar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
   /* a drag over one sentence's English: it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R refers to and quotes that Latin */
@@ -149,7 +149,7 @@ async function gotoPopupSkippedLine(): Promise<void> {
   await rest(page);
   /* quoted, the block stays dual-language: two Latin lines beside a six-line sentence keep together, the English held inside the quotation */
   await R.selectBetween(page, "ut canis in vacuo", "ille salutem;");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   const quoted = await R.clipboardLines(page);
@@ -176,7 +176,7 @@ section("facing numbers", async () => {
   /* Ovid's Latin beside Golding's verse: a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R refers to both */
   await facingNumbersOpening();
   await verseBlockNumberedBoth();
-  await gotoPopupGoldingLine();
+  await gotoToolbarGoldingLine();
   await goldingLineFollowing();
 });
 async function facingNumbersOpening(): Promise<void> {
@@ -209,17 +209,17 @@ async function verseBlockNumberedBoth(): Promise<void> {
     };
   }));
 }
-async function gotoPopupGoldingLine(): Promise<void> {
+async function gotoToolbarGoldingLine(): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   await page.keyboard.type("265");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G for a Golding line", { ...(await R.gotoPopup(page)), landed: (await R.landedText(page))?.slice(0, 40) ?? null });
+  await log("⌃⌘G for a Golding line", { ...(await R.gotoToolbar(page)), landed: (await R.landedText(page))?.slice(0, 40) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
   await R.selectBetween(page, "Ye Ayres and windes", "darkes the Sun at Noone.");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   const shown = await refAll();
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
@@ -231,7 +231,7 @@ async function gotoPopupGoldingLine(): Promise<void> {
   await page.keyboard.press("Escape");
   await rest(page);
   await R.selectBetween(page, "Jason", "Medea");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await rest(page);
   await log("Ref (all) across Prospero's borrowing", { label: all[0], fence: all.find((l) => l.includes(":::")), rows: all.length, refAllOverHeading: await refAll() });
 }
@@ -281,12 +281,12 @@ async function byParagraphOpening(): Promise<void> {
 }
 const AUGUSTINE = "bookshelf/Augustine/De Doctrina Christiana", AUGUSTINE_BOOK = AUGUSTINE + "/Book 2";
 async function byParagraphWork(): Promise<void> {
-  await gotoPopupOnWorkByParagraph();
+  await gotoToolbarOnWorkByParagraph();
   await escapeOnWorkByParagraph();
   await referenceOnWorkByParagraph();
-  await gotoPopupNextPageAfterWork();
+  await gotoToolbarNextPageAfterWork();
 }
-async function gotoPopupOnWorkByParagraph(): Promise<void> {
+async function gotoToolbarOnWorkByParagraph(): Promise<void> {
   await writeAll(AUGUSTINE_SEEDS);
   await page.goto(A.url(AUGUSTINE_BOOK.replace(/ /g, "%20")));
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
@@ -297,7 +297,7 @@ async function gotoPopupOnWorkByParagraph(): Promise<void> {
   await page.keyboard.type("61");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 61 on a work by paragraph", { ...(await R.gotoPopup(page)), landedOn: await landed(), box: await boxLabel() });
+  await log("⌃⌘G 61 on a work by paragraph", { ...(await R.gotoToolbar(page)), landedOn: await landed(), box: await boxLabel() });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("61x");
   await page.keyboard.press("Enter");
@@ -325,8 +325,8 @@ async function referenceOnWorkByParagraph(): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
 }
-async function gotoPopupNextPageAfterWork(): Promise<void> {
-  await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-popup").hidden), box: await boxLabel() });
+async function gotoToolbarNextPageAfterWork(): Promise<void> {
+  await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-toolbar").hidden), box: await boxLabel() });
   await page.evaluate((h) => { location.hash = h; }, "#" + AUGUSTINE_BOOK.replace(/ /g, "%20"));
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
 }
@@ -335,7 +335,7 @@ async function backWorkParagraph(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await log("back on a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-popup").hidden), box: await boxLabel() });
+  await log("back on a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-toolbar").hidden), box: await boxLabel() });
 }
 const landed = () => page.evaluate(() => document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null);
 const boxLabel = () => page.evaluate(() => document.querySelector("label[for=lineinput]").textContent);
@@ -420,7 +420,7 @@ section("prose and verse paired", async () => {
   await page.setViewportSize({ width: 1000, height: 600 });
   await still(page);
   /* ⌃⌘G on a chapter of prose and verse: Verse Line, or Prose Paragraph, each box landing in its own form */
-  const shown = () => page.evaluate(() => [...document.querySelectorAll(".goto-popup .ask:not([hidden]) label, .goto-popup .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
+  const shown = () => page.evaluate(() => [...document.querySelectorAll(".goto-toolbar .ask:not([hidden]) label, .goto-toolbar .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
   const landedOn = () => page.evaluate(() => (document.querySelector("#editor .landed")?.textContent ?? "").slice(0, 28));
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
@@ -437,7 +437,7 @@ section("prose and verse paired", async () => {
   await page.keyboard.press("Escape");
   await rest(page);
   await R.selectBetween(page, "e con lui", "davante,");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied|copy/);
   const poemLabel = (await R.clipboardLines(page))[0];
   await log("⌃⌘R on the poem's second line", { label: poemLabel });

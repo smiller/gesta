@@ -21,10 +21,10 @@ describe("heldKeys", () => {
   });
   it("a repeat of a key released or forgotten is not swallowed", () => {
     const held = heldKeys();
-    held.swallows(key("Digit1"), "card");
+    held.swallows(key("Digit1"), "panel");
     held.release("Digit1");
     expect(held.swallows(key("Digit1", { repeat: true }), "editor")).toBe(false);
-    held.swallows(key("Digit2"), "card");
+    held.swallows(key("Digit2"), "panel");
     held.clear();
     expect(held.swallows(key("Digit2", { repeat: true }), "editor")).toBe(false);
   });

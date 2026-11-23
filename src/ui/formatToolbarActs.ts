@@ -10,8 +10,8 @@ import { said, type Raise } from "../model/alertText.ts";
 type BarView = NonNullable<Session["view"]>;
 type Command = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
 
-export interface FormatBarDeps {
-  bar: Screen["bar"];
+export interface FormatToolbarDeps {
+  toolbar: Screen["formatToolbar"];
   buttons: () => Screen["masthead"]["buttons"];
   session: Pick<Session, "view" | "mdView" | "copyReference" | "showWordCount">;
   raise: Raise;
@@ -19,7 +19,7 @@ export interface FormatBarDeps {
   mountEl: HTMLElement;
   head: Element;
 }
-export interface FormatBar { place(): void; suppress(): void; act(act: string): void }
+export interface FormatToolbar { place(): void; suppress(): void; act(act: string): void }
 
 const COMMANDS: Record<string, Command> = { bold, italic, underline, strike, heading, quote, code: codeBlock, curl: curlSelection };
 
@@ -36,18 +36,18 @@ const barSelection = (view: BarView): Selection | null => {
 
 const drawn = (rect: DOMRect): boolean => !!(rect.width || rect.height);
 
-/* the bar is 39px tall and stands 10px over its anchor, so it needs 49px above
+/* the toolbar is 39px tall and stands 10px over its anchor, so it needs 49px above
    the selection and 8 more clear of the page's top: what it lacks, the text
-   moves down by, where a first line's bar covered the alert area (pin:
-   formatBarActs.test › the text moves down) */
+   moves down by, where a first line's toolbar covered the alert area (pin:
+   formatToolbarActs.test › the text moves down) */
 export const roomAbove = (selTop: number, pageTop: number): number => Math.max(0, pageTop + 57 - selTop);
-export function formatBar(d: FormatBarDeps): FormatBar {
-  const { bar, buttons, session, raise, extract, mountEl, head } = d;
-  /* THE FLOATING BAR: placed over the selection on every selection change
+export function formatToolbar(d: FormatToolbarDeps): FormatToolbar {
+  const { toolbar, buttons, session, raise, extract, mountEl, head } = d;
+  /* THE FORMAT TOOLBAR: placed over the selection on every selection change
      (a frame later) and scroll, clamped under the masthead; hidden in the
      source view and over a search jump's selection until a reader next
-     touches the page — the bar is for text a reader chose to format (pin:
-     toolbar › a word double-clicked) */
+     touches the page — the toolbar is for text a reader chose to format (pin:
+     format toolbar › a word double-clicked) */
   let barSuppressed = false;
   const barView = (): Session["view"] => {
     const view = session.view;
@@ -66,22 +66,22 @@ export function formatBar(d: FormatBarDeps): FormatBar {
     return placedOver() ?? rect;
   };
   const showAt = (view: BarView, rect: DOMRect): void => {
-    bar.left = rect.left + rect.width / 2;
-    bar.top = Math.max(rect.top, pageTop() + 8);
-    bar.incode = inCode(view.state);
-    bar.on = formatState(view.state);
-    bar.canTag = buttons().canCreate;
+    toolbar.left = rect.left + rect.width / 2;
+    toolbar.top = Math.max(rect.top, pageTop() + 8);
+    toolbar.incode = inCode(view.state);
+    toolbar.on = formatState(view.state);
+    toolbar.canTag = buttons().canCreate;
     const p = passageAt(view.state.doc, view.state.selection.from, view.state.selection.to);
-    bar.canRefAll = !("refused" in p) && !!p.facing;
-    bar.tagTitle = buttons().tagTitle;
-    bar.show = true;
+    toolbar.canRefAll = !("refused" in p) && !!p.facing;
+    toolbar.tagTitle = buttons().tagTitle;
+    toolbar.show = true;
   };
   const placedOver = (): DOMRect | null => {
     const view = barView();
     const rect = view ? barSelection(view)?.getRangeAt(0).getBoundingClientRect() : undefined;
     return rect && drawn(rect) ? rect : null;
   };
-  const hide = (): void => { bar.show = false; if (moved) moveText(0); };
+  const hide = (): void => { toolbar.show = false; if (moved) moveText(0); };
   const place = (settle = false): void => {
     const rect = placedOver();
     if (rect) showAt(session.view!, settle ? settled(rect) : rect);
@@ -90,8 +90,8 @@ export function formatBar(d: FormatBarDeps): FormatBar {
   document.addEventListener("selectionchange", () => requestAnimationFrame(() => place()));
   for (const ev of ["mouseup", "keyup"]) document.addEventListener(ev, () => requestAnimationFrame(() => place(true)));
   window.addEventListener("scroll", () => place(), { passive: true });
-  /* a masthead row opening or closing moves the text under the bar (pin:
-     alerts and surfaces › the format bar after
+  /* a masthead row opening or closing moves the text under the toolbar (pin:
+     alerts and surfaces › the format toolbar after
      Line numbering opens) */
   new ResizeObserver(() => requestAnimationFrame(() => place())).observe(head);
   document.addEventListener("mousedown", () => { barSuppressed = false; });

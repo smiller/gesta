@@ -18,7 +18,7 @@ function sel(md: string, a: string, b?: string): EditorState {
 const run = (cmd: Command, s: EditorState): EditorState => { let n = s; if (!cmd(s, (tr) => { n = s.apply(tr); })) throw new Error("refused"); return n; };
 const md = (s: EditorState): string => serializeMarkdown(s.doc);
 
-test("the marks toggle over the selection and light the bar", () => {
+test("the marks toggle over the selection and light the toolbar", () => {
   const s = run(bold, sel("some words here", "words"));
   expect(md(s)).toBe("some **words** here");
   expect(formatState(s).bold).toBe(true);

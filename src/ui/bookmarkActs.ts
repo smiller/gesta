@@ -10,7 +10,7 @@ import { bookmarkRows, bookmarkFoot, bookmarkLabel, bookmarkLinkLabel, alreadyOn
 import type { Raise } from "../model/alertText.ts";
 
 export type BookmarkAct = "jump" | "del" | "key" | "link";
-export interface BookmarkCardDeps {
+export interface BookmarkPanelDeps {
   bm: Screen["bookmarks"];
   marks: ReturnType<typeof bookmarkStore>;
   session: Pick<Session, "current" | "goto" | "focusText" | "view" | "mdView" | "insertText" | "save">;
@@ -19,16 +19,16 @@ export interface BookmarkCardDeps {
   raise: Raise;
   overlay: { open(opening: "bookmarks"): void };
   panel: { isOpen(): boolean; show(): void };
-  closePanel(): void;
-  focusCard(): void;
+  closeOpened(): void;
+  focusPanel(): void;
   caretInEntry(): boolean;
   keysNow(): string[];
   warmBlock(): boolean;
   warmed(): boolean;
 }
-export interface BookmarkCard { open(): void; key(e: KeyboardEvent): void; draft(v: string): void; commit(typed: string): void; act(key: string, what: BookmarkAct): void }
-export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
-  const { bm, marks, session, journal, raise, overlay, panel, closePanel, focusCard, caretInEntry, keysNow, warmBlock, warmed } = d;
+export interface BookmarkPanel { open(): void; key(e: KeyboardEvent): void; draft(v: string): void; commit(typed: string): void; act(key: string, what: BookmarkAct): void }
+export function bookmarkActs(d: BookmarkPanelDeps): BookmarkPanel {
+  const { bm, marks, session, journal, raise, overlay, panel, closeOpened, focusPanel, caretInEntry, keysNow, warmBlock, warmed } = d;
   let cardCaret = false;
   const hereKey = (): string => entryKey(session.current.date, session.current.tag);
   /* every render hands focus back: a delete removes the row its own
@@ -40,7 +40,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     bm.rows = bookmarkRows(bookmarks, hereKey(), journal);
     bm.foot = bookmarkFoot(bookmarks, hereKey(), journal);
     if (bm.buf && !aliasCandidates(bookmarks, bm.buf).length) bm.buf = "";
-    setTimeout(() => { focusCard(); bm.opening = 0; }, 0);
+    setTimeout(() => { focusPanel(); bm.opening = 0; }, 0);
   };
   const openBookmarks = (): void => {
     cardCaret = caretInEntry();
@@ -52,7 +52,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
   };
   const jumpBookmark = (b: Bookmark): void => {
     const p = bookmarkParts(b.key);
-    closePanel();
+    closeOpened();
     session.goto(entryHash(p.date, p.tag), alreadyOn(b.key, journal));
   };
   const resolved = (r: Resolved): void => {
@@ -74,7 +74,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
   const bookmarkEscape = (e: KeyboardEvent): void => {
     if (bm.editing) { e.stopPropagation(); bm.editing = ""; bm.draft = ""; renderBookmarks(); return; }
     if (bm.buf) { e.stopPropagation(); bm.buf = ""; return; }
-    closePanel();
+    closeOpened();
     session.focusText();
   };
   const modded = (e: KeyboardEvent): boolean => e.metaKey || e.ctrlKey || e.altKey;
@@ -128,7 +128,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
     renderBookmarks();
   };
   const nowhereToType = (view: typeof session.view): boolean => !view && !session.mdView;
-  /* the link after the caret the card opened on; every way it cannot
+  /* the link after the caret the panel opened on; every way it cannot
      land says why, nothing is appended at the end, and the keys go back
      to the text either way (pin: editing › a
      bookmark's link pressed in inline code); in the markdown view it is
@@ -136,7 +136,7 @@ export function bookmarkActs(d: BookmarkCardDeps): BookmarkCard {
      the markdown view) */
   const bookmarkLink = (key: string): void => {
     if (warmBlock()) return;
-    closePanel();
+    closeOpened();
     session.focusText();
     if (key === hereKey()) { raise(alreadyOn(key, journal)); return; }
     const view = session.view;

@@ -14,7 +14,7 @@ export interface HeldKeys {
    into the text it opened, splitting it — and a held ⌃⌘ chord always: a
    walk went on entry after entry. A held Tab moves one control, by
    decision (pin: where the keys go › Enter held on a search result)
-   (pin: where the keys go › a digit held on the bookmarks card)
+   (pin: where the keys go › a digit held on the bookmarks panel)
    (pin: where the keys go › ⌃⌘. held from 3pr1)
    (pin: where the keys go › Tab held from the bookshelf button) */
 export function heldKeys(): HeldKeys {

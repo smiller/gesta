@@ -11,7 +11,7 @@
   import type { SearchState } from "./screen.svelte.ts";
   import { SEARCH_CAP } from "../store/search.ts";
   import { optionGroups } from "./searchModel.ts";
-  import { listKey } from "./cardKeys.ts";
+  import { listKey } from "./pickKeys.ts";
   let { search, onToggle, onQuery, onScope, onWalk, onEnter, onPick }: {
     search: SearchState;
     onToggle: (open: boolean) => void;

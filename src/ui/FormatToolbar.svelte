@@ -1,27 +1,27 @@
-<!-- A mousedown on the bar is swallowed so the editor's selection survives
-     the click (pin: toolbar › B clicked). Inside a code block it offers ONE
+<!-- A mousedown on the toolbar is swallowed so the editor's selection survives
+     the click (pin: format toolbar › B clicked). Inside a code block it offers ONE
      thing, the toggle back out. -->
 <script lang="ts">
   import type { Screen } from "./screen.svelte.ts";
-  let { bar, onAct }: { bar: Screen["bar"]; onAct: (act: string) => void } = $props();
+  let { toolbar, onAct }: { toolbar: Screen["formatToolbar"]; onAct: (act: string) => void } = $props();
 </script>
 
 <!-- a mouse's surface: focus stays in the editor, whose selection the
-     bar acts on, so the bar itself takes none -->
+     toolbar acts on, so the toolbar itself takes none -->
 <!-- svelte-ignore a11y_interactive_supports_focus -->
-<div class="fmt" class:show={bar.show} class:incode={bar.incode} style="left: {bar.left}px; top: {bar.top}px" onmousedown={(e) => e.preventDefault()} role="toolbar" aria-label="Formatting">
-  <button class="b" class:on={bar.on.bold} title="Bold (⌘B)" onclick={() => onAct("bold")}>B</button>
-  <button class="i" class:on={bar.on.italic} title="Italic (⌘I)" onclick={() => onAct("italic")}>I</button>
-  <button class="u" class:on={bar.on.underline} title="Underline (⌘U)" onclick={() => onAct("underline")}>U</button>
-  <button class="s" class:on={bar.on.strike} title="Strikethrough" onclick={() => onAct("strike")}>S</button>
-  <button class="h" class:on={bar.on.heading} title="Heading" onclick={() => onAct("heading")}>H</button>
-  <button class:on={bar.on.quote} title="Quote" onclick={() => onAct("quote")}>❝</button>
-  <button class="code" class:on={bar.on.code} title="Code block" onclick={() => onAct("code")}>&lt;/&gt;</button>
+<div class="fmt" class:show={toolbar.show} class:incode={toolbar.incode} style="left: {toolbar.left}px; top: {toolbar.top}px" onmousedown={(e) => e.preventDefault()} role="toolbar" aria-label="Formatting">
+  <button class="b" class:on={toolbar.on.bold} title="Bold (⌘B)" onclick={() => onAct("bold")}>B</button>
+  <button class="i" class:on={toolbar.on.italic} title="Italic (⌘I)" onclick={() => onAct("italic")}>I</button>
+  <button class="u" class:on={toolbar.on.underline} title="Underline (⌘U)" onclick={() => onAct("underline")}>U</button>
+  <button class="s" class:on={toolbar.on.strike} title="Strikethrough" onclick={() => onAct("strike")}>S</button>
+  <button class="h" class:on={toolbar.on.heading} title="Heading" onclick={() => onAct("heading")}>H</button>
+  <button class:on={toolbar.on.quote} title="Quote" onclick={() => onAct("quote")}>❝</button>
+  <button class="code" class:on={toolbar.on.code} title="Code block" onclick={() => onAct("code")}>&lt;/&gt;</button>
   <button title="Curl straight quotes (⌘')" onclick={() => onAct("curl")}>‘’</button>
   <button class="ct" title="Copy a reference to this passage (⌃⌘R)" onclick={() => onAct("reference")}>Ref</button>
-  <button class="ct" title="Copy a reference to both columns" hidden={!bar.canRefAll} onclick={() => onAct("referenceAll")}>Ref (all)</button>
+  <button class="ct" title="Copy a reference to both columns" hidden={!toolbar.canRefAll} onclick={() => onAct("referenceAll")}>Ref (all)</button>
   <button class="wc" title="Word count of the selection (⌃⌘W)" onclick={() => onAct("words")}>Words</button>
-  <button class="t" title={bar.tagTitle} hidden={!bar.canTag} onclick={() => onAct("tag")}>Tag</button>
+  <button class="t" title={toolbar.tagTitle} hidden={!toolbar.canTag} onclick={() => onAct("tag")}>Tag</button>
 </div>
 
 <style>

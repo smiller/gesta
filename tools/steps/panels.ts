@@ -17,7 +17,7 @@ section("shortcuts", async () => {
   await log("m typed", (await R.shortcuts(page)).rows);
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("Enter", { card: await R.shortcuts(page), text: await R.editorTextHead(page) });
+  await log("Enter", { panel: await R.shortcuts(page), text: await R.editorTextHead(page) });
 });
 section("bookmarks", async () => {
   /* bookmarks: ⌃⌘B on a day, A adds it, 1 jumps to it from elsewhere, a key given and typed, × deletes */
@@ -34,7 +34,7 @@ section("bookmarks", async () => {
   await rest(page);
   await page.keyboard.press("1");
   await A.waitEntry(page, "2026-09-06", 5000);
-  await log("1 from Horace", { entry: await A.entry(page), card: await R.bookmarks(page) });
+  await log("1 from Horace", { entry: await A.entry(page), panel: await R.bookmarks(page) });
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.click(S.bookmarkKey);
@@ -48,12 +48,12 @@ section("bookmarks", async () => {
   await log("f typed", { lit: await R.bookmarksLit(page) });
   await page.keyboard.press("b");
   await rest(page);
-  await log("b typed, already here", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
+  await log("b typed, already here", { panel: await R.bookmarks(page), corner: await R.cornerText(page) });
   /* the same press over a selection: the focus back, the selection as it stood */
   await R.selectBetween(page, "food", "love");
-  /* the bar shown before the chord: two frames after the selection, under
+  /* the format toolbar shown before the chord: two frames after the selection, under
      load, the chord came first and the reading lost the selection */
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await page.keyboard.type("fb");
@@ -78,7 +78,7 @@ section("bookmarks damaged", async () => {
   await log("⌃⌘B over a damaged list", await R.bookmarks(page));
   await page.keyboard.press("a");
   await rest(page);
-  await log("A over a damaged list", { card: await R.bookmarks(page), corner: await R.cornerText(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
+  await log("A over a damaged list", { panel: await R.bookmarks(page), corner: await R.cornerText(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.keyboard.press("Escape");
   await page.evaluate((k) => localStorage.setItem(k, '["2026-09-06"]'), A.bookmarksKey);
   await page.keyboard.press("Control+Meta+b");
@@ -86,7 +86,7 @@ section("bookmarks damaged", async () => {
   await log("⌃⌘B over the list repaired", await R.bookmarks(page));
   await page.keyboard.press("a");
   await rest(page);
-  await log("A over the list repaired", { card: await R.bookmarks(page), corner: await R.cornerText(page) });
+  await log("A over the list repaired", { panel: await R.bookmarks(page), corner: await R.cornerText(page) });
   await page.keyboard.press("Escape");
   await page.reload();
   await A.waitEntry(page, "commonplace/Horace").catch(() => {});
@@ -94,53 +94,53 @@ section("bookmarks damaged", async () => {
   await go("2026-09-06");
 });
 section("backups", async () => {
-  /* the backups panel: the button opens the card; unconfigured, the setup button alone; Escape closes */
+  /* the backups panel: the button opens the panel; unconfigured, the setup button alone; Escape closes */
   await page.click(S.backupsButton);
   await rest(page);
   await log("backups", await R.backups(page));
   await page.keyboard.press("Escape");
-  await log("Escape", { card: await R.backupsOpen(page) });
+  await log("Escape", { panel: await R.backupsOpen(page) });
 });
 section("help", async () => {
-  /* help: ⌃⌘H opens the card over the entry and closes the lists panel; Escape closes it */
-  await page.click(S.commonplacesOpener);
+  /* help: ⌃⌘H opens the panel over the entry and closes the menu; Escape closes it */
+  await page.click(S.commonplaceOpener);
   await page.keyboard.press("Control+Meta+h");
   await rest(page);
-  await log("⌃⌘H over an open lists panel", await R.help(page));
+  await log("⌃⌘H over an open menu", await R.help(page));
   await page.keyboard.press("Escape");
   await log("Escape", await R.helpOpen(page));
 });
-section("Go to popup", async () => {
-  /* ⌃⌘G: the bar over verse takes a line, cycles nothing on one block, marks and centres; Escape hands the caret to the row; over a book of leaves the Page box */
+section("Go to toolbar", async () => {
+  /* ⌃⌘G: the Go to toolbar over verse takes a line, cycles nothing on one block, marks and centres; Escape hands the caret to the row; over a book of leaves the Page box */
   await go("commonplace/Horace");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await log("⌃⌘G over Horace", await R.gotoPopup(page));
+  await log("⌃⌘G over Horace", await R.gotoToolbar(page));
   await page.keyboard.type("3");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("3, Enter", await R.gotoPopup(page));
+  await log("3, Enter", await R.gotoToolbar(page));
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("Enter again on one block", await R.gotoPopup(page));
+  await log("Enter again on one block", await R.gotoToolbar(page));
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape", { ...(await R.gotoPopup(page)), caretRow: await R.caretRow(page) });
+  await log("Escape", { ...(await R.gotoToolbar(page)), caretRow: await R.caretRow(page) });
   await go("commonplace/Williams/Witchcraft%203");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await log("⌃⌘G over Witchcraft", await R.gotoPopup(page));
+  await log("⌃⌘G over Witchcraft", await R.gotoToolbar(page));
   await page.keyboard.type("9z");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("9z, Enter", await R.gotoPopup(page));
+  await log("9z, Enter", await R.gotoToolbar(page));
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("61");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("61, Enter", await R.gotoPopup(page));
+  await log("61, Enter", await R.gotoToolbar(page));
   await page.keyboard.press("Escape");
 });
 section("reference paste", async () => {
@@ -159,7 +159,7 @@ section("reference paste", async () => {
   /* the link's passage is deep in a long entry: the jump must SCROLL to it,
      not only select it — the one-line case above never needed a scroll,
      and the jump landed at the top of Paradise Lost (found by hand); the
-     bar stays off, the passage is to be read in context */
+     format toolbar stays off, the passage is to be read in context */
   await go("commonplace/Pasted");
   await page.click(S.editor);
   await R.pasteText(page, "[*Pippa*](#bookshelf/Browning%2C%20Robert/Pippa%20Passes?h=Power%20shall%20fall%20short%20in%20or%20exceed)");
@@ -184,18 +184,18 @@ section("reference paste", async () => {
   await page.waitForTimeout(600);
   await log("typed into the quoted pair, settled", await R.quotedPair(page));
 });
-section("toolbar", async () => {
-  /* the toolbar: a double-click selects a word and floats the bar; B bolds it; Tag moves it out */
+section("format toolbar", async () => {
+  /* the format toolbar: a double-click selects a word and floats it; B bolds it; Tag moves it out */
   await go("2026-09-06");
   await wheelTo(0);
   const word = await R.wordAt(page, "music", 5);
   await page.mouse.dblclick(word.x, word.y);
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await rest(page);   /* the editor's own selection lands a beat after the DOM's */
-  await log("a word double-clicked", await R.bar(page));
+  await log("a word double-clicked", await R.toolbar(page));
   await page.click(S.fmtB);
   await rest(page);
-  await log("B clicked", { ...(await R.bar(page)), md: (await A.stored(page)).includes("**music**") });
+  await log("B clicked", { ...(await R.toolbar(page)), md: (await A.stored(page)).includes("**music**") });
   setAnswer("Music");
   await page.click(S.fmtTag);
   await A.waitEntry(page, "2026-09-06/Music", 5000);

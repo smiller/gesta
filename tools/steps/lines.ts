@@ -1,7 +1,7 @@
 import { section, page, A, R, log, rest, jump, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
 
 section("a link to a line", async () => {
-  /* an address naming a line marks it as ⌃⌘G does: no selection, no format bar, and gone at the next press */
+  /* an address naming a line marks it as ⌃⌘G does: no selection, no format toolbar, and gone at the next press */
   await linkLineClicked();
   await linkParagraphBeforeWarm();
   await keyBeforeWarm();
@@ -51,7 +51,7 @@ async function linkToLineClicked(): Promise<void> {
   await page.keyboard.press("ArrowDown");
   await rest(page);
   await log("a link to a line, a key after arriving", { ...(await seen()), ...(await top()) });
-  /* a stanza: the same words name the same place as the bar, and an omitted line says so */
+  /* a stanza: the same words name the same place as the Go to toolbar, and an omitted line says so */
   const stanzas = "bookshelf/Statius/Stanzas", skips = "bookshelf/Statius/Skips";
   await A.foreignWrite(page, stanzas, "# Stanzas\n\n[2.1](#bookshelf/Statius/Stanzas?line=2.1) [2](#bookshelf/Statius/Stanzas?line=2)\n\n::: stanza 1\nalpha\nbeta\n:::\n\n::: stanza 2\ngamma\ndelta\n:::\n");
   await A.foreignWrite(page, skips, "# Skips\n\n[2](#bookshelf/Statius/Skips?line=2)\n\n::: verse\nfirst\n⟨skipped line number⟩\nthird\n:::\n");
@@ -247,5 +247,5 @@ const ask2 = async (n: string) => {
     if (n) { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); }
     await page.keyboard.press("Enter");
     await rest(page);
-    return { ...(await R.gotoPopup(page)), landed: await R.landedText(page) };
+    return { ...(await R.gotoToolbar(page)), landed: await R.landedText(page) };
   };

@@ -204,7 +204,7 @@ section("walk", async () => {
   await go("bookshelf/Boethius/Consolatio/3pr1");
   await page.keyboard.press("Control+Meta+.");
   await R.waitEntryNot(page, "bookshelf/Boethius/Consolatio/3pr1");
-  await rest(page);   /* a selection left on the last entry keeps the bar up one frame into this one (MEASURED, 10 ms) */
+  await rest(page);   /* a selection left on the last entry keeps the format toolbar up one frame into this one (MEASURED, 10 ms) */
   await log("⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+.");
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
@@ -228,12 +228,12 @@ section("stanza", async () => {
   await R.settle(page);
   await log("a canto opened", { ...(await R.stanzas(page)), crumb: (await R.masthead(page)).crumb, title: (await R.masthead(page)).title });
   await R.selectBetween(page, "bloudie Crosse", "bloudie Crosse");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R on a line", { lines: await R.clipboardLines(page) });
   await R.selectBetween(page, "deepe wounds", "bloudie Crosse");
-  await R.waitBar(page);
+  await R.waitToolbar(page);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await log("⌃⌘R across a stanza gap", { lines: await R.clipboardLines(page) });
@@ -245,12 +245,12 @@ section("stanza", async () => {
   await page.keyboard.type("1");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza 2, line 1", { ...(await R.gotoPopup(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza 2, line 1", { ...(await R.gotoToolbar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("9");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza 2, line 9", await R.gotoPopup(page));
+  await log("⌃⌘G stanza 2, line 9", await R.gotoToolbar(page));
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("3");
   await page.keyboard.press("Shift+Tab");
@@ -258,16 +258,16 @@ section("stanza", async () => {
   await page.keyboard.type("ii");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza ii, line 3", { ...(await R.gotoPopup(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza ii, line 3", { ...(await R.gotoToolbar(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.press("Backspace");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G line 3, no stanza", await R.gotoPopup(page));
+  await log("⌃⌘G line 3, no stanza", await R.gotoToolbar(page));
   await page.keyboard.press("Escape");
 });
 section("a blank row", async () => {
-  /* a blank row between stanzas is an empty line: clicked, the caret drawn on it, no box and no bar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
+  /* a blank row between stanzas is an empty line: clicked, the caret drawn on it, no box and no format toolbar, and not drawn once the search row has the focus; typed into, it becomes the line typed, a quotation mark curled as in any line; Backspace takes it out, the caret at the end of the line above */
   await go("2026-09-06");
   await R.settle(page);
   /* the locator's click, which waits for the row to stop moving: an arrival's
