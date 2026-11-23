@@ -48,7 +48,7 @@ import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcut
 import { nsOf } from "./store/keys.ts";
 import { journalOf } from "./store/headings.ts";
 import { todayKey, entryKey, entryHash } from "./store/keys.ts";
-import { hashParts, holdsEntry } from "./store/nav.ts";
+import { hashParts } from "./store/nav.ts";
 import Alerts from "./ui/Alerts.svelte";
 import Masthead from "./ui/Masthead.svelte";
 import FormatToolbar from "./ui/FormatToolbar.svelte";
@@ -473,7 +473,7 @@ const openers = openerActs({
 acts.opener = openers.opener;
 acts.menus = menuActs({
   ...openers.ports(), area, screen, readOnly: READER, flush: () => session.save.flush(), overlay: () => overlay.open("menu"),
-  go: (href) => { location.hash = href; }, isHere: (href) => href === location.hash, holdsHere: (href) => holdsEntry(asAddress(href), hashParts(asAddress(location.hash))), act: (name, act) => (act === "shelves" ? acts.shelves() : acts.newRoot(name)),
+  go: (href) => { location.hash = href; }, openAddress: () => location.hash, act: (name, act) => (act === "shelves" ? acts.shelves() : acts.newRoot(name)),
 });
 /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
    read ends, well or badly: the search; the Go to row while nothing has

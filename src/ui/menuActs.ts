@@ -1,5 +1,7 @@
 import type { Screen } from "./screen.svelte.ts";
 import type { MenuRow } from "./mastheadModel.ts";
+import { asAddress } from "../store/keys.ts";
+import { hashParts, holdsEntry, sameEntry } from "../store/nav.ts";
 import { menuItems, menuKey, typedAhead, menuActs as actsOf, handsFocusBack, type MenuItem, type MenuName, type MenuAct, type CloseReason, type Typed } from "./menuModel.ts";
 
 /* where the focus stands, and the focus given back where it stood */
@@ -16,10 +18,7 @@ export interface MenuDeps {
   focus: FocusPort;
   area: MenuAreaPort;
   go(href: string): void;
-  /* whether a row's address is the entry already open */
-  isHere(href: string): boolean;
-  /* whether a row's address is the entry already open or one it sits under */
-  holdsHere(href: string): boolean;
+  openAddress(): string;
   act(name: MenuName, act: MenuAct["act"]): void;
 }
 interface Key { key: string; shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }
@@ -45,12 +44,14 @@ export function menuActs(d: MenuDeps): Menus {
   const items = () => (open ? menuItems(screen.menuRows, actsOf(open, d.readOnly).map((a) => a.text)) : []);
   const idOf = (it: MenuItem | undefined): string | null => (!it ? null : it.row === null ? "act " + it.act : screen.menuRows[it.row].href);
   const select = (i: number): void => { moved = true; screen.menu.sel = i; };
+  const isHere = (href: string): boolean => sameEntry(asAddress(href), asAddress(d.openAddress()));
+  const holdsHere = (href: string): boolean => holdsEntry(asAddress(href), hashParts(asAddress(d.openAddress())));
   /* until a key or the pointer moves it, the selection is the open entry's
      row, found again whenever the rows are answered; after, the row it was
      moved to, found by its address (pin: menuActs.test › answered again,
      stays on the open entry's row) */
   const selectedAfter = (wasId: string | null): number => {
-    const now = items(), at = now.findIndex((it) => (moved ? idOf(it) === wasId : it.row !== null && d.holdsHere(screen.menuRows[it.row].href)));
+    const now = items(), at = now.findIndex((it) => (moved ? idOf(it) === wasId : it.row !== null && holdsHere(screen.menuRows[it.row].href)));
     return at >= 0 ? at : Math.min(Math.max(0, screen.menu.sel), Math.max(0, now.length - 1));
   };
   const answer = (): void => {
@@ -86,9 +87,10 @@ export function menuActs(d: MenuDeps): Menus {
     const name = open, it = items()[i];
     if (!name || !it) return;
     const href = it.row === null ? null : screen.menuRows[it.row].href;
-    close(href !== null && !d.isHere(href) ? "chosen" : "stayed");
-    if (href !== null) d.go(href);
-    else d.act(name, actsOf(name, d.readOnly)[it.act!].act);
+    const goes = href !== null && !isHere(href);
+    close(goes ? "chosen" : "stayed");
+    if (goes) d.go(href);
+    else if (href === null) d.act(name, actsOf(name, d.readOnly)[it.act!].act);
   };
   const typing = (letter: string): void => {
     const t = typedAhead(typed, letter, Date.now(), items());

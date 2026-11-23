@@ -125,3 +125,8 @@
 {"at":"2026-11-23T18:12","ev":"add","id":"A22","list":"A","title":"The batch review: /code-review at HIGH over 2fe290e..41731a4","detail":"Asked: /code-review high 2fe290e..41731a4, typed at 18:12. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-23T18:12","ev":"start","id":"A22"}
 {"at":"2026-11-23T18:19","ev":"done","id":"A22","commits":["48955f6"]}
+{"at":"2026-11-23T18:25","ev":"add","id":"A22.1","list":"A","title":"The architecture run over the batch's files","parent":"A22","detail":"Asked: /improve-codebase-architecture tools/out/arch-files.txt, typed at 18:25. Why: CLAUDE.md's architecture run, beside each batch's review. Done when: every candidate built or set aside, its cost recorded."}
+{"at":"2026-11-23T18:25","ev":"start","id":"A22.1"}
+{"at":"2026-11-23T18:42","ev":"add","id":"A22.1.1","list":"A","title":"One address for the open entry: the menu decides here and under here (candidate 1)","parent":"A22.1","detail":"Asked: 'Let's explore 1 and 2', then 'go' to the grilling round (2026-11-23). Why: the architecture run over 0beccfe..33b6d54. Done when: built test-first, verify green, committed with its code."}
+{"at":"2026-11-23T18:42","ev":"add","id":"A22.1.2","list":"A","title":"⌃⌘Enter as an editor command beside the link click (candidate 2)","parent":"A22.1","detail":"Asked: 'Let's explore 1 and 2', then 'go' to the grilling round (2026-11-23). Why: the architecture run over 0beccfe..33b6d54. Done when: built test-first, verify green, committed with its code."}
+{"at":"2026-11-23T18:42","ev":"start","id":"A22.1.1"}

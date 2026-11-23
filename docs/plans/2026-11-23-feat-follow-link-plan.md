@@ -52,3 +52,20 @@ link?" A link was followed only by a mouse press (`links.ts`).
   - The search step's wait says whether a hit was there.
   - Left: every ⌃⌘ chord the page answers is swallowed whether or not it
     acts, ⌃⌘Enter included; no control on the page answers ⌃⌘Enter.
+- 18:35 A22.1, the architecture run over 0beccfe..33b6d54's 20 files
+  (`tools/out/arch-files.txt`): its walk 141,994 tokens (the transcript's
+  last message). Five candidates: 1 the menu decides "here" and "under
+  here" from one address (Strong); 2 ⌃⌘Enter as an editor command beside
+  the link click (Strong); 3 one table of the ⌃⌘ chords (Worth
+  exploring); 4 the open menu's items built once (Worth exploring); 5 the
+  app publishes what is open (Speculative). The ⌃⌘J round: no candidate.
+- 18:50 Grilled (asked: "Let's explore 1 and 2", then "go"): the menu
+  takes one port, the open entry's address; "is it" is the same entry,
+  any line or search ignored, and a row for it chosen goes nowhere; the
+  session's `goto` keeps comparing the whole address (a link to a line in
+  this entry lands); ⌃⌘Enter becomes an editor command, swallowed in the
+  text as today, with the new tab behind an opener given to the editor.
+- 18:55 A22.1.1: `sameEntry` in nav.ts; MenuDeps' `isHere` and
+  `holdsHere` become `openAddress`, both answers worked out in menuActs
+  through nav.ts and tested there with a bare comma and `?line=5`. The
+  verdict played whole and passed unchanged.

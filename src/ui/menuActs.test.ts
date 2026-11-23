@@ -21,8 +21,7 @@ function world(focusAt: string = "text", here = "#commonplace/Elsewhere", rows: 
     focus: { here: () => focus as unknown as Element, back: (was) => { focus = String(was); log.push("focus back to " + String(was)); } },
     area: { open: (right) => log.push("menu area for " + right), close: () => log.push("menu area closed") },
     go: (href) => log.push("go " + href),
-    isHere: (href) => href === here,
-    holdsHere: (href) => href === here || here.startsWith(href + "/"),
+    openAddress: () => here,
     act: (name, act) => log.push(act + " in " + name),
   };
   const menus = menuActs(deps);
@@ -153,6 +152,17 @@ describe("the other menu's icon over an open menu", () => {
 });
 
 describe("a choice that goes nowhere", () => {
+  it("is a row for the open entry however the address is spelt, a bare comma or a line asked for: it is selected on opening, and chosen goes nowhere", () => {
+    const rows = { bookshelf: [{ text: "Horace", href: "#bookshelf/Horace" }, { text: "William Blake", href: "#bookshelf/Blake%2C%20William" }], commonplace: [] as MenuRow[] };
+    for (const here of ["#bookshelf/Blake,%20William", "#bookshelf/Blake%2C%20William?line=5"]) {
+      const w = world("text", here, rows);
+      w.menus.open("bookshelf");
+      expect(w.screen.menu.sel).toBe(1);
+      w.takeFocus();
+      w.menus.key(key("Enter"));
+      expect([w.log.some((l) => l.startsWith("go ")), w.focusNow()]).toEqual([false, "text"]);
+    }
+  });
   it("a row for the entry already open, or an act, gives the focus back, since no arrival will place it", () => {
     const w = world("text", "#bookshelf/Horace");
     w.menus.open("bookshelf");

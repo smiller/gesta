@@ -18,6 +18,10 @@ export function entryAt(a: Address): HashParts | null {
 }
 export const namesEntry = (a: Address): boolean => entryAt(a) !== null;
 const keyOf = (p: Pick<HashParts, "date" | "tag">): string => (p.tag === null ? p.date : p.date + "/" + p.tag);
+export function sameEntry(a: Address, b: Address): boolean {
+  const e = entryAt(a), f = entryAt(b);
+  return !!e && !!f && keyOf(e) === keyOf(f);
+}
 export function holdsEntry(a: Address, at: Pick<HashParts, "date" | "tag">): boolean {
   const e = entryAt(a);
   if (!e) return false;

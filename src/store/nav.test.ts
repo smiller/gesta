@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { hashParts, namesEntry, entryAt, internalHash, makeHref, holdsEntry } from "./nav.ts";
+import { hashParts, namesEntry, entryAt, internalHash, makeHref, holdsEntry, sameEntry } from "./nav.ts";
 import { todayKey, entryHash, asAddress } from "./keys.ts";
 
 const today = todayKey();
@@ -132,4 +132,12 @@ test("an address holds the entry it names and every entry under it, nothing besi
   expect(holdsEntry(entryHash("2026-09-07"), { date: "2026-09-07", tag: "Ideas" })).toBe(true);
   expect(holdsEntry(entryHash("2026-09-07"), { date: "bookshelf", tag: "Ovid" })).toBe(false);
   expect(holdsEntry(asAddress(""), { date: "bookshelf", tag: "Ovid" })).toBe(false);
+});
+
+test("two addresses name the same entry however they are spelt, whatever line or search either asks for", () => {
+  const blake = entryHash("bookshelf", "Blake, William");
+  expect(sameEntry(blake, asAddress("#bookshelf/Blake,%20William"))).toBe(true);
+  expect(sameEntry(entryHash("bookshelf", "Ovid"), asAddress("#bookshelf/Ovid?line=5"))).toBe(true);
+  expect(sameEntry(entryHash("bookshelf", "Ovid"), asAddress("#bookshelf/Ovid/Metamorphoses"))).toBe(false);
+  expect(sameEntry(asAddress(""), asAddress("#bookshelf/Ovid"))).toBe(false);
 });
