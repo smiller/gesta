@@ -9,6 +9,8 @@
    external link). The plain click stays a click, so a drag that starts on
    a link routes nothing. */
 import type { EditorView } from "prosemirror-view";
+import type { EditorState } from "prosemirror-state";
+import type { Node } from "prosemirror-model";
 import { internalHash, entryAt } from "../store/nav.ts";
 
 export type LinkAction = { kind: "open"; href: string } | { kind: "route"; frag: string } | null;
@@ -27,6 +29,20 @@ export function linkTitle(href: string, docHref: string = location.href): string
   if (!p) return hint;
   return hint + " " + (p.tag ? p.tag.slice(p.tag.lastIndexOf("/") + 1) : p.date);
 }
+const hrefOf = (n: Node | null | undefined): string | null => n?.marks.find((m) => m.type.name === "link")?.attrs.href ?? null;
+export function linkAtCaret(state: EditorState): string | null {
+  const $h = state.selection.$head;
+  return hrefOf($h.nodeAfter) ?? hrefOf($h.nodeBefore);
+}
+/* a key has no modifier to spare for "elsewhere": a link out of the
+   journal opens in a new tab, or the key would do nothing (pin: links.test
+   › is followed by the key in this tab when it names an entry) */
+export const keyAction = (href: string, docHref: string = location.href): LinkAction => linkAction(href, false, docHref) ?? { kind: "open", href };
+export function followLink(act: LinkAction, onRoute: (frag: string) => void): void {
+  if (!act) return;
+  if (act.kind === "open") window.open(new URL(act.href, location.href).href, "_blank", "noopener");
+  else onRoute(act.frag);
+}
 export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {
   return (_view, e) => {
     const a = (e.target as Element | null)?.closest("a");
@@ -36,8 +52,7 @@ export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | 
     const act = linkAction(a.getAttribute("href"), modified);
     if (!act) return false;
     e.preventDefault();
-    if (act.kind === "open") window.open(new URL(act.href, location.href).href, "_blank", "noopener");
-    else onRoute(act.frag);
+    followLink(act, onRoute);
     return true;
   };
 }

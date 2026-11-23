@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { linkAction, linkTitle } from "./links.ts";
+import { EditorState, TextSelection } from "prosemirror-state";
+import { parseMarkdown } from "../model/parse.ts";
+import { linkAction, linkTitle, linkAtCaret, keyAction } from "./links.ts";
 
 const DOC = "file:///Users/x/gesta/dist/index.html#2026-09-07";
 describe("linkAction", () => {
@@ -31,5 +33,30 @@ describe("linkTitle", () => {
   });
   it("a link out of the journal, or to nothing it can name, says only how to open it", () => {
     for (const href of ["https://x.org/a", "#nonsense", "file:///elsewhere.html#commonplace/Books", ""]) expect(linkTitle(href, DOC)).toBe("⌘-click to open");
+  });
+});
+
+function caret(md: string): EditorState {
+  const doc = parseMarkdown(md);
+  let at = -1;
+  doc.descendants((n, pos) => {
+    if (at >= 0) return false;
+    if (n.text?.includes("|")) at = pos + n.text.indexOf("|");
+  });
+  const s = EditorState.create({ doc });
+  const tr = s.tr.delete(at, at + 1);
+  return s.apply(tr.setSelection(TextSelection.create(tr.doc, at)));
+}
+describe("the link at the caret", () => {
+  it("is the link the caret is inside or at either edge of; between two, the one after it; none away from a link", () => {
+    expect(linkAtCaret(caret("- [Bo|ok 1](#b1)"))).toBe("#b1");
+    expect(linkAtCaret(caret("- |[Book 1](#b1)"))).toBe("#b1");
+    expect(linkAtCaret(caret("- [Book 1](#b1)|"))).toBe("#b1");
+    expect(linkAtCaret(caret("[a](#a)|[b](#b)"))).toBe("#b");
+    expect(linkAtCaret(caret("Some | words [x](#x)"))).toBeNull();
+  });
+  it("is followed by the key in this tab when it names an entry, in a new tab when it goes elsewhere", () => {
+    expect(keyAction("#commonplace/Horace", DOC)).toEqual({ kind: "route", frag: "#commonplace/Horace" });
+    expect(keyAction("https://example.org/", DOC)).toEqual({ kind: "open", href: "https://example.org/" });
   });
 });

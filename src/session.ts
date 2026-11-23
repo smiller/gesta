@@ -32,6 +32,7 @@ import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./mode
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
+import { linkAtCaret, keyAction, followLink } from "./editor/links.ts";
 import { pageTop, pageTopCached } from "./ui/alertArea.ts";
 
 export type OpenHow = "arrive" | "keep";
@@ -465,6 +466,11 @@ export function startSession(opts: SessionOptions): Session {
     const view = live();
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
+  function followAtCaret(): void {
+    const view = live();
+    const href = view?.hasFocus() ? linkAtCaret(view.state) : null;
+    if (href) followLink(keyAction(href), (frag) => goto(frag, said("alreadyHere")));
+  }
   function switchView(): void {
     if (opts.readOnly) { raise("noMarkdownView"); return; }
     opts.onSwitch?.();
@@ -475,7 +481,7 @@ export function startSession(opts: SessionOptions): Session {
      (pin: source view › ⌃⌘W rendered) */
   const chords = new Map<string, () => void>([
     [",", () => step("prev")], [".", () => step("next")], ["t", today], ["r", () => copyReference()],
-    ["c", copyEntryLink], ["m", switchView], ["w", showWordCount],
+    ["c", copyEntryLink], ["m", switchView], ["w", showWordCount], ["enter", followAtCaret],
   ]);
   document.addEventListener("keydown", (e) => {
     const act = plainChord(e) ? chords.get(e.key.toLowerCase()) : undefined;

@@ -1,8 +1,9 @@
-import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
+import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
   await plainClickExternalLink();
+  await followedByKey();
 });
 async function afterWarm(): Promise<void> {
   console.log("the launch's stages:", JSON.stringify(stages));
@@ -63,6 +64,22 @@ async function plainClickExternalLink(): Promise<void> {
   await page.click(S.editorLink("#commonplace/Horace"));
   await A.waitEntry(page, "commonplace/Horace", 5000);
   await log("a plain click on an internal link", { entry: await A.entry(page) });
+}
+async function followedByKey(): Promise<void> {
+  const followed = async (label: string, needle: string, offset: number, said = false) => {
+    await go("commonplace/Links");
+    await caretAt(needle, offset);
+    await page.keyboard.press("Control+Meta+Enter");
+    await rest(page);
+    await log(label, { entry: await A.entry(page), ...(said ? { said: (await R.corner(page)).text } : {}) });
+  };
+  await followed("⌃⌘Enter inside a link", "Horace", 3);
+  await followed("⌃⌘Enter just after a link", "Horace", 6);
+  await followed("⌃⌘Enter away from a link", "A link to", 2);
+  await followed("⌃⌘Enter on a link to itself", "itself", 2, true);
+  const newTab = ctx.waitForEvent("page", { timeout: 5000 }).then(() => true, () => false);
+  await followed("⌃⌘Enter on an external link", "outside", 2);
+  await log("an external link's new tab", { newTab: await newTab });
 }
 section("fence", async () => {
   /* a verse fence pasted as TEXT mid-paragraph is set down between the halves, its first line inside */

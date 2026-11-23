@@ -18,6 +18,17 @@ a plain click on an external link: {"entry":"commonplace/Links","url":"commonpla
 ⌘-click on an internal link: {"newTab":"commonplace/Horace","stayed":"commonplace/Links","nodeSelected":false,"selection":"","toolbar":false,"cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 ⌘-click on an external link: {"newTab":true,"stayed":"commonplace/Links","nodeSelected":false,"selection":"","toolbar":false,"cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 a plain click on an internal link: {"entry":"commonplace/Horace","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"at a line's start"}
+⌃⌘Enter inside a link: {"entry":"commonplace/Horace","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"at a line's start"}
+⌃⌘Enter just after a link: {"entry":"commonplace/Horace","cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"at a line's start"}
+⌃⌘Enter away from a link: {"entry":"commonplace/Links","cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"inside a line"}
+⌃⌘Enter on a link to itself: {"entry":"commonplace/Links","said":"already here","cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"inside a line"}
+⌃⌘Enter on an external link: {"entry":"commonplace/Links","cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+an external link's new tab: {"newTab":true,"cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == fence
 fence: arrived at commonplace/Pasted Fence: {"cursor":"at a line's start"}
 a fence pasted as text mid-paragraph: {"md":"start\n\n::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::\n\n end","cursor":"at a line's start","screen":"commonplace/Pasted Fence · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
