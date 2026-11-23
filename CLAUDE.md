@@ -132,7 +132,11 @@ must keep is restated here.
   section that exists to check layout. A reading that a clock or a layout
   can change is a flaky reading.
 - WHILE A DESIGN IS MOVING, PLAY ONLY THE SECTIONS IT TOUCHES (`STEPS=`);
-  the whole verdict runs once the design holds, before the hand-over.
+  the whole verdict runs once the design holds, before the hand-over, and
+  only after the comment and title ledgers are read: an edit after it,
+  even to a comment, plays it again (record:
+  docs/plans/2026-11-23-feat-menus-plan.md). A run is waited on by its own
+  word that it has ended, never a loop that can match itself.
 - TEST-FIRST, AND VERIFIED: new behaviour is built test-first (`npm test`,
   Vitest), and `npm run verify` (tsc, the suite, the checkers, then the
   headless tools under their verdict) passes before work is called done.
