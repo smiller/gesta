@@ -2,9 +2,9 @@ export type Closer = "panel" | "search" | "goto" | "lineBar" | "lineBarCaret" | 
 export type Opening = "search" | "goto" | "lineBar" | "lines" | "replace" | "help" | "bookmarks" | "shortcuts" | "backups" | "lists" | "navigated" | "view" | "sourceView" | "here" | "escape";
 
 /* ONE THING OPEN AT A TIME: each opening closes every other open thing —
-   a panel every header row, a header row the panel and the other rows —
+   a panel every masthead row, a masthead row the panel and the other rows —
    and a navigation all of them, drawn as they were for the entry left
-   (pin: overlays.test › a header row, opened) (pin: overlays.test › a panel, opened).
+   (pin: overlays.test › a masthead row, opened) (pin: overlays.test › a panel, opened).
    ⌃⌘M and an arrival where it already is hand the caret to the entry, so
    whatever stands over it goes; a switch the surface makes by itself, a
    refused entry redrawn, closes only the line bar (pin: overlays.test › a navigation closes everything).

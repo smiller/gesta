@@ -74,3 +74,15 @@ scrolls and always one alert tall, so an alert coming or going moves no
 text; the bars, lists and dialogs that hang from the masthead open below
 it.
 _Avoid_: strip.
+
+**Masthead**:
+The dark band across the top of the page: the entry's date or name with the
+previous and next arrows, its sub-entries or its breadcrumb, the
+commonplace and bookshelf lists, and the tools on the right.
+_Avoid_: header, which is a table's first row and sits too near an entry's
+heading.
+
+**Masthead row**:
+One of the rows that open in the masthead under its top line: Go to,
+Search, Line numbering and Replace, one at a time.
+_Avoid_: bar; a table's header row is not one.

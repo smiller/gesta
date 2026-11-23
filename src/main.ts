@@ -144,7 +144,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
     onWalk: (dir: 1 | -1) => acts.search.walk(dir), onEnter: () => acts.search.enter(), onPick: (i: number) => acts.search.pick(i),
   },
 } });
-/* the alert area, between the header and the entry (pin: alertArea.test › the alert area is stuck at the header's foot) */
+/* the alert area, between the masthead and the entry (pin: alertArea.test › the alert area is stuck at the masthead's foot) */
 mount(Alerts, { target: document.body, anchor: document.querySelector("main")!, props: { alerts, onResume: () => acts.resume() } });
 placeArea(document.documentElement, document.querySelector(".site-head")!, document.querySelector(".alerts")!);
 /* the panels are not modal: a click outside any panel or opener closes

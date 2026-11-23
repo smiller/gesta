@@ -78,6 +78,8 @@ must keep is restated here.
 - THE WORD IS "REFERENCE", for what ⌃⌘R makes and every part of it, in
   code, tests, help, tools and replies; a label is a link's text;
   `one-offs/shelfLines.ts` calls a typed attribution a "source line".
+  The band at the top is THE MASTHEAD and its rows masthead rows; "header"
+  is a table's first row.
   `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
   one-offs/, this file or the glossary; dated plan records keep their words.
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
@@ -320,7 +322,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
   `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
   `heldKeys.ts`, `visibleTop.ts`, `alertArea.ts` (the alert area under
-  the header), `journalLoad.ts` (the journal's
+  the masthead), `journalLoad.ts` (the journal's
   load: loading, failed or in, what an act refused before it says, and
   its errors). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,

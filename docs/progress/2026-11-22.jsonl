@@ -89,3 +89,6 @@
 {"at":"2026-11-22T18:40","ev":"done","id":"A9.1","note":"the run was A13.1"}
 {"at":"2026-11-22T18:41","ev":"add","id":"A14","list":"A","title":"The batch review: /code-review at HIGH over a28fb71..HEAD","detail":"Asked: /code-review high a28fb71..HEAD, typed at 18:41. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-22T18:41","ev":"start","id":"A14"}
+{"at":"2026-11-22T19:03","ev":"done","id":"A14","note":"a52e7e3, accepted; 106,985 tokens"}
+{"at":"2026-11-22T19:04","ev":"start","id":"U7"}
+{"at":"2026-11-22T19:13","ev":"detail","id":"U7","text":"Asked: 'I am really looking forward to adding header to the glossary...', then, discussed: 'Yes, keep masthead and go that way.' (masthead can't be confused with a table's header row or an entry's heading). Why: the reader and the replies used two words; the code is masthead, about 15 places say header for the band. Done when: GLOSSARY.md defines Masthead and Masthead row (a table's header row is not one); the help, comments and code say masthead where they mean the band; a word check refuses the band's senses of header."}

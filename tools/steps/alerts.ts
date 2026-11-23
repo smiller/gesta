@@ -128,10 +128,10 @@ async function formatBarUnderMasthead(): Promise<void> {
   await R.selectBetween(page, "Maecenas", "Maecenas");
   await rest(page);
   /* the bar over the first line, under the masthead: a row opening grows the masthead down over it */
-  const was = await underHeader();
+  const was = await underMasthead();
   await page.keyboard.press("Control+Meta+l");
   await page.waitForTimeout(400);
-  await log("the format bar after Line numbering opens", { clearBefore: was, clearAfter: await underHeader() });
+  await log("the format bar after Line numbering opens", { clearBefore: was, clearAfter: await underMasthead() });
 }
 async function copyButtonAfterNavigation(): Promise<void> {
   await page.keyboard.press("Control+Meta+l");
@@ -233,7 +233,7 @@ const picked = (tree: Tree) => page.evaluate((tree) => {
     window.confirm = () => false;
   }, tree);
 const boxes = () => page.evaluate(() => { const v = (s: string) => { const e = document.querySelector(s); return !!e && e.offsetParent !== null; }; return { line: v("#lineinput"), page: v("#pageinput") }; });
-const underHeader = () => page.evaluate(() => { const b = document.querySelector(".fmt")?.getBoundingClientRect(), h = document.querySelector(".site-head, header")?.getBoundingClientRect(); return b && h ? b.top >= h.bottom - 1 : null; });
+const underMasthead = () => page.evaluate(() => { const b = document.querySelector(".fmt")?.getBoundingClientRect(), h = document.querySelector(".site-head, header")?.getBoundingClientRect(); return b && h ? b.top >= h.bottom - 1 : null; });
 const refuse = () => page.evaluate(() => { const c = navigator.clipboard; window.__clip = [c.write, c.writeText, document.execCommand]; c.write = () => Promise.reject(new Error("refused")); c.writeText = () => Promise.reject(new Error("refused")); document.execCommand = () => false; });
 const restore = () => page.evaluate(() => { const c = navigator.clipboard, [a, b, x] = window.__clip; c.write = a; c.writeText = b; document.execCommand = x; });
 section("pill", async () => {
@@ -322,7 +322,7 @@ async function shelvesSearchedFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
 }
 section("alerts and places", async () => {
-  /* the error and the warning alone: where they stand under the header, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open bar under the alert area. An info or a success beside them is no part of it */
+  /* the error and the warning alone: where they stand under the masthead, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open bar under the alert area. An info or a success beside them is no part of it */
   await write("commonplace/Plain", "# Plain\n\nSome words.");
   await still(page);
   await page.click(S.editor);
@@ -357,7 +357,7 @@ section("alerts and places", async () => {
   await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheAlertArea: await page.evaluate(() => Math.round(document.querySelector(".linebar")!.getBoundingClientRect().top - document.querySelector(".alerts")!.getBoundingClientRect().bottom)) });
   await page.keyboard.press("Escape");
 });
-/* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the header */
+/* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the masthead */
 const standing = () => page.evaluate(() => {
   const live = JSON.parse(document.documentElement.dataset.alerts || "{}"), head = document.querySelector("header.site-head")!.getBoundingClientRect().bottom;
   const one = (kind: string) => {

@@ -14,14 +14,14 @@ const world = () => {
 const closes = (row: Opening): Closer[] => { const w = world(); w.o.open(row); return w.log; };
 
 describe("one thing open at a time", () => {
-  it("a header row, opened, closes the panel and every other header row", () => {
+  it("a masthead row, opened, closes the panel and every other masthead row", () => {
     expect(closes("search")).toEqual(["panel", "goto", "lineBar", "lines", "replace"]);
     expect(closes("goto")).toEqual(["panel", "search", "lineBar", "lines", "replace"]);
     expect(closes("lineBar")).toEqual(["panel", "search", "goto", "lines", "replace"]);
     expect(closes("lines")).toEqual(["panel", "search", "goto", "lineBar", "replace"]);
     expect(closes("replace")).toEqual(["panel", "search", "goto", "lineBar", "lines"]);
   });
-  it("a panel, opened, closes every header row; it replaces any other panel by itself", () => {
+  it("a panel, opened, closes every masthead row; it replaces any other panel by itself", () => {
     for (const p of ["help", "backups", "bookmarks", "shortcuts", "lists"] as const) expect(closes(p)).toEqual(["search", "goto", "lineBar", "lines", "replace"]);
   });
   it("a navigation closes everything; ⌃⌘M and an arrival where it already is close what stands over the entry, Go to and Line numbering kept; any switch to the source closes the line bar", () => {

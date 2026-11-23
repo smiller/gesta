@@ -96,7 +96,7 @@
   .search-results {
     list-style: none; margin: 0; padding: 0;
     position: absolute;
-    /* 100% stops short of the header's border and rule: 2px more meets the alert area's foot */
+    /* 100% ends 2px short of the alert area's foot, a border and a rule between: the 2px meets it */
     top: calc(100% + var(--alert-area-h, 0px) + 2px);
     left: 0;
     right: 0;

@@ -73,7 +73,7 @@ export function formatBar(d: FormatBarDeps): FormatBar {
   };
   document.addEventListener("selectionchange", () => requestAnimationFrame(place));
   window.addEventListener("scroll", place, { passive: true });
-  /* a header row opening or closing moves the text under the bar (pin:
+  /* a masthead row opening or closing moves the text under the bar (pin:
      alerts and surfaces › the format bar after
      Line numbering opens) */
   new ResizeObserver(() => requestAnimationFrame(place)).observe(head);

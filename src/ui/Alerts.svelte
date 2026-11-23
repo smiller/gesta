@@ -23,7 +23,7 @@
 <button class="backup-paused" hidden={!alerts.state.trouble} onclick={onResume}>{alerts.state.trouble}</button>
 
 <style>
-  /* the alert area: stuck under the header, and always one alert tall, so
+  /* the alert area: stuck under the masthead, and always one alert tall, so
      an alert moving in or out moves no text */
   .alerts {
     position: sticky;

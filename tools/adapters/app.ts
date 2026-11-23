@@ -153,7 +153,7 @@ export const read = {
       const cell = [...document.querySelectorAll("#editor .dual-language > .vpair > .vcell + .vcell")].find((c) => c.textContent.startsWith(s));
       if (!cell) return null;
       cell.scrollIntoView({ block: "center" });
-      /* a cell tall enough to start under the alert area stuck below the header is scrolled clear of it */
+      /* a cell tall enough to start under the alert area stuck below the masthead is scrolled clear of it */
       const clear = Math.max(0, ...[".site-head", ".alerts"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 10, top = cell.getBoundingClientRect().top;
       if (top < clear) scrollBy(0, top - clear);
       const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT); const ts = []; for (let t = w.nextNode(); t; t = w.nextNode()) ts.push(t);
