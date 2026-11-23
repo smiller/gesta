@@ -19,11 +19,13 @@ function ended(open: Map<string, Begun>, e: Event & { id: string }): void {
   if ("note" in e && e.note) was.note = e.note;
   open.delete(e.id);
 }
+/* an item carried in under way is at work from the day's start */
+const underway = (e: Event): boolean => e.ev === "carry" && !!e.started && !e.stopped;
 function begun(timed: Event[]): Begun[] {
   const all: Begun[] = [], open = new Map<string, Begun>();
   for (const e of timed) {
     if (!("id" in e)) continue;
-    if (e.ev !== "start") { ended(open, e); continue; }
+    if (e.ev !== "start" && !underway(e)) { ended(open, e); continue; }
     if (open.has(e.id)) continue;
     const s: Begun = { id: e.id, from: stamp(e), ending: "in progress" };
     all.push(s);

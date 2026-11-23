@@ -64,3 +64,15 @@ test("every stretch of a minute or more no span covers is a gap, in its place am
 test("a day with no events has no rows and no time", () => {
   expect(inOrder([])).toEqual({ rows: [], from: 0, to: 0, working: 0, idle: 0, inside: 0 });
 });
+test("an item carried in under way opens a span at the day's start; one carried in paused, or never begun, opens none", () => {
+  const carried = (id: string, more: Partial<Event> = {}): Event => ({ at: at("08:23"), ev: "carry", id, list: "U", title: id, ...more } as Event);
+  const events: Event[] = [
+    { at: at("08:23"), ev: "begin", next: {} },
+    carried("U8", { started: { at: "2026-11-15T22:48", approx: false } } as Partial<Event>),
+    carried("U9", { started: { at: "2026-11-15T20:00", approx: false }, stopped: { at: "2026-11-15T21:00", approx: false } } as Partial<Event>),
+    carried("U10"),
+    ev("09:40", "done", "U8"),
+  ];
+  expect(spansOf(events).map((s) => [s.id, s.from.at.slice(11), s.to?.at.slice(11), s.ending])).toEqual([["U8", "08:23", "09:40", "done"]]);
+  expect(inOrder(events).working).toBe(hm(9, 40) - hm(8, 23));
+});
