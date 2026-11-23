@@ -1,7 +1,7 @@
 import { EditorState, NodeSelection, Plugin, PluginKey, TextSelection, type Transaction, type Command } from "prosemirror-state";
 import { EditorView, type NodeViewConstructor } from "prosemirror-view";
 import { history, undo, redo } from "prosemirror-history";
-import { keymap } from "prosemirror-keymap";
+import { keymap, keydownHandler } from "prosemirror-keymap";
 import { baseKeymap, chainCommands, exitCode } from "prosemirror-commands";
 import { schema } from "../model/schema.ts";
 import { said, type Said } from "../model/alertText.ts";
@@ -17,7 +17,7 @@ import { DOMSerializer, Fragment, type Node } from "prosemirror-model";
 import { inlineBlockStyles } from "./inlineStyles.ts";
 import { lineNumbers } from "./lineNumbers.ts";
 import { rowNodeViews } from "./rows.ts";
-import { linkClick, linkTitle } from "./links.ts";
+import { linkClick, linkTitle, followAtCaret, type LinkPorts } from "./links.ts";
 import { listKeymap } from "./listKeys.ts";
 import { formatKeymap } from "./format.ts";
 import { codeKeymap } from "./codeKeys.ts";
@@ -38,6 +38,7 @@ export interface EditorOptions {
   nodeViews?: Record<string, NodeViewConstructor>;
   /* a plain click on an internal link: the fragment to route to */
   onRoute?: (frag: string) => void;
+  onOpen?: (url: string) => void;
   /* a swallowed press that changed nothing SAYS why */
   raise?: (s: Said) => void;
   onPasteFile?: (file: File) => void;
@@ -207,6 +208,7 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
      go › Enter with the caret above the window). Objects the view reads at
      each scroll, set before it, since setProps copies the props it is given */
   const threshold = { top: 0, bottom: 0, left: 0, right: 0 }, margin = { top: 5, bottom: 5, left: 5, right: 5 };
+  const links: LinkPorts = { route: (frag) => opts.onRoute?.(frag), open: (url) => opts.onOpen?.(url) };
   const view: EditorView = new EditorView(mount, {
     scrollThreshold: threshold,
     scrollMargin: margin,
@@ -238,7 +240,8 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = linkTitle(mark.attrs.href as string); return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },
     handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
-    handleDOMEvents: { mousedown: linkClick((frag) => opts.onRoute?.(frag), "mousedown"), click: linkClick((frag) => opts.onRoute?.(frag), "click") },
+    handleKeyDown: keydownHandler({ "Ctrl-Mod-Enter": followAtCaret(links) }),
+    handleDOMEvents: { mousedown: linkClick(links, "mousedown"), click: linkClick(links, "click") },
     ...pasteProps({ file: (f) => opts.onPasteFile?.(f), raise: (s) => opts.raise?.(s), href: () => location.href }),
     ...copyProps(),
     dispatchTransaction(this: EditorView, tr: Transaction) {

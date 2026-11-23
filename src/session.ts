@@ -32,7 +32,6 @@ import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./mode
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
-import { linkAtCaret, keyAction, followLink } from "./editor/links.ts";
 import { pageTop, pageTopCached } from "./ui/alertArea.ts";
 
 export type OpenHow = "arrive" | "keep";
@@ -191,6 +190,7 @@ export function startSession(opts: SessionOptions): Session {
       /* given even off: refreshFolds switches it on */
       folds: { ...start, onChange: (keys) => folds.record(ekey, keys) },
       onRoute: (frag) => goto(frag, said("alreadyHere")),
+      onOpen: (url) => { window.open(url, "_blank", "noopener"); },
       raise: (s) => { raise(s); },
       onPasteFile: pasteFile,
       clearOf: pageTopCached,
@@ -466,14 +466,6 @@ export function startSession(opts: SessionOptions): Session {
     const view = live();
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
-  /* only a press made in the text: a press elsewhere that hands the text
-     the focus would follow whatever link its caret stands on */
-  function followAtCaret(e: KeyboardEvent): void {
-    const view = live();
-    const inText = !!view && e.target instanceof Element && view.dom.contains(e.target);
-    const href = inText ? linkAtCaret(view.state) : null;
-    if (href) followLink(keyAction(href), (frag) => goto(frag, said("alreadyHere")));
-  }
   function switchView(): void {
     if (opts.readOnly) { raise("noMarkdownView"); return; }
     opts.onSwitch?.();
@@ -481,17 +473,16 @@ export function startSession(opts: SessionOptions): Session {
   }
   /* the ⌃⌘ chords the page answers, each one Helium lets through
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-     (pin: source view › ⌃⌘W rendered)
-     (pin: launch, menus, the corner, links › ⌃⌘Enter inside a link) */
-  const chords = new Map<string, (e: KeyboardEvent) => void>([
+     (pin: source view › ⌃⌘W rendered) */
+  const chords = new Map<string, () => void>([
     [",", () => step("prev")], [".", () => step("next")], ["t", today], ["r", () => copyReference()],
-    ["c", copyEntryLink], ["m", switchView], ["w", showWordCount], ["enter", followAtCaret],
+    ["c", copyEntryLink], ["m", switchView], ["w", showWordCount],
   ]);
   document.addEventListener("keydown", (e) => {
     const act = plainChord(e) ? chords.get(e.key.toLowerCase()) : undefined;
     if (!act) return;
     e.preventDefault();
-    act(e);
+    act();
   });
   return {
     get current() { return current; },

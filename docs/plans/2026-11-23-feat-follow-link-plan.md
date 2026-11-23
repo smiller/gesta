@@ -59,13 +59,20 @@ link?" A link was followed only by a mouse press (`links.ts`).
   the link click (Strong); 3 one table of the ⌃⌘ chords (Worth
   exploring); 4 the open menu's items built once (Worth exploring); 5 the
   app publishes what is open (Speculative). The ⌃⌘J round: no candidate.
-- 18:50 Grilled (asked: "Let's explore 1 and 2", then "go"): the menu
+- 18:42 Grilled (asked: "Let's explore 1 and 2", then "go"): the menu
   takes one port, the open entry's address; "is it" is the same entry,
   any line or search ignored, and a row for it chosen goes nowhere; the
   session's `goto` keeps comparing the whole address (a link to a line in
   this entry lands); ⌃⌘Enter becomes an editor command, swallowed in the
   text as today, with the new tab behind an opener given to the editor.
-- 18:55 A22.1.1: `sameEntry` in nav.ts; MenuDeps' `isHere` and
+- 18:45 A22.1.1: `sameEntry` in nav.ts; MenuDeps' `isHere` and
   `holdsHere` become `openAddress`, both answers worked out in menuActs
   through nav.ts and tested there with a bare comma and `?line=5`. The
   verdict played whole and passed unchanged.
+- 18:58 A22.1.2: ⌃⌘Enter is the editor's own key (`followAtCaret` in
+  links.ts, installed by `keydownHandler` in createEditor beside the click
+  handlers), over `LinkPorts`: route, and open for the new tab, which the
+  session gives as `window.open`. The session's binding, its in-text guard
+  and its second route closure are deleted. Command tests cover the route,
+  the opener and the press away from a link; the verdict played whole and
+  passed unchanged.

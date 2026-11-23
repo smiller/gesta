@@ -9,7 +9,7 @@
    external link). The plain click stays a click, so a drag that starts on
    a link routes nothing. */
 import type { EditorView } from "prosemirror-view";
-import type { EditorState } from "prosemirror-state";
+import type { Command, EditorState } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { internalHash, entryAt } from "../store/nav.ts";
 
@@ -46,12 +46,21 @@ export function linkAtCaret(state: EditorState): string | null {
    journal opens in a new tab, or the key would do nothing (pin: links.test
    › is followed by the key in this tab when it names an entry) */
 export const keyAction = (href: string, docHref: string = location.href): LinkAction => linkAction(href, false, docHref) ?? opens(href, docHref);
-export function followLink(act: LinkAction, onRoute: (frag: string) => void): void {
+export interface LinkPorts { route(frag: string): void; open(url: string): void }
+function followLink(act: LinkAction, ports: LinkPorts, docHref: string): void {
   if (!act) return;
-  if (act.kind === "open") window.open(new URL(act.href, location.href).href, "_blank", "noopener");
-  else onRoute(act.frag);
+  if (act.kind === "open") ports.open(new URL(act.href, docHref).href);
+  else ports.route(act.frag);
 }
-export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {
+/* ⌃⌘Enter is swallowed in the text whether or not a link is there, by
+   decision, not handed on to the browser (pin: links.test › answers
+   handled even where it follows nothing) */
+export const followAtCaret = (ports: LinkPorts, docHref: string = location.href): Command => (state) => {
+  const href = linkAtCaret(state);
+  followLink(href ? keyAction(href, docHref) : null, ports, docHref);
+  return true;
+};
+export function linkClick(ports: LinkPorts, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {
   return (_view, e) => {
     const a = (e.target as Element | null)?.closest("a");
     if (!a) return false;
@@ -60,7 +69,7 @@ export function linkClick(onRoute: (frag: string) => void, phase: "mousedown" | 
     const act = linkAction(a.getAttribute("href"), modified);
     if (!act) return false;
     e.preventDefault();
-    followLink(act, onRoute);
+    followLink(act, ports, location.href);
     return true;
   };
 }

@@ -130,3 +130,5 @@
 {"at":"2026-11-23T18:42","ev":"add","id":"A22.1.1","list":"A","title":"One address for the open entry: the menu decides here and under here (candidate 1)","parent":"A22.1","detail":"Asked: 'Let's explore 1 and 2', then 'go' to the grilling round (2026-11-23). Why: the architecture run over 0beccfe..33b6d54. Done when: built test-first, verify green, committed with its code."}
 {"at":"2026-11-23T18:42","ev":"add","id":"A22.1.2","list":"A","title":"⌃⌘Enter as an editor command beside the link click (candidate 2)","parent":"A22.1","detail":"Asked: 'Let's explore 1 and 2', then 'go' to the grilling round (2026-11-23). Why: the architecture run over 0beccfe..33b6d54. Done when: built test-first, verify green, committed with its code."}
 {"at":"2026-11-23T18:42","ev":"start","id":"A22.1.1"}
+{"at":"2026-11-23T18:45","ev":"done","id":"A22.1.1","commits":["6231ba4"]}
+{"at":"2026-11-23T18:45","ev":"start","id":"A22.1.2"}

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
-import { linkAction, linkTitle, linkAtCaret, keyAction } from "./links.ts";
+import { linkAction, linkTitle, linkAtCaret, keyAction, followAtCaret } from "./links.ts";
 
 const DOC = "file:///Users/x/gesta/dist/index.html#2026-09-07";
 describe("linkAction", () => {
@@ -73,5 +73,20 @@ describe("the link at the caret", () => {
       expect(linkAction(href, true, DOC)).toBeNull();
     }
     expect(keyAction("mailto:a@example.org", DOC)).toEqual({ kind: "open", href: "mailto:a@example.org" });
+  });
+});
+
+describe("⌃⌘Enter's command", () => {
+  const ports = () => { const log: string[] = []; return { log, ports: { route: (f: string) => log.push("route " + f), open: (u: string) => log.push("open " + u) } }; };
+  it("follows the link at the caret, an entry in this tab, any other through the opener, its address made whole", () => {
+    const here = ports(), out = ports();
+    followAtCaret(here.ports, DOC)(caret("[Hor|ace](#commonplace/Horace)"));
+    followAtCaret(out.ports, DOC)(caret("[out|side](https://example.org/)"));
+    expect([here.log, out.log]).toEqual([["route #commonplace/Horace"], ["open https://example.org/"]]);
+  });
+  it("answers handled even where it follows nothing, as every ⌃⌘ chord the page answers is swallowed", () => {
+    const none = ports();
+    expect(followAtCaret(none.ports, DOC)(caret("Some | words"))).toBe(true);
+    expect(none.log).toEqual([]);
   });
 });
