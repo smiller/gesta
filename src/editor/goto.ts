@@ -18,7 +18,7 @@ import { hasPages, pages } from "./pages.ts";
 import { PAGE_ONE, PAGE_ARABIC, PAGE_CHARS_RE } from "../model/grammar.ts";
 import type { Conventions } from "../store/conventions.ts";
 import { trimLabel, ECHO_CAP } from "../ui/mastheadModel.ts";
-import { PHRASES } from "../model/alertText.ts";
+import { said, type Said } from "../model/alertText.ts";
 type Asked = Pick<Conventions, "byBookChapterAndParagraph" | "byChapterAndVerse" | "proseByParagraphVerseByLine">;
 
 const N = schema.nodes;
@@ -99,24 +99,24 @@ function longestBlock(blocks: Unit[][]): Longest | null {
 const askedNumber = (n: number | string): number => (typeof n === "number" ? n : parseInt(n.replace("[", ""), 10));
 /* the last line says why only a number past it is not there (pin: goto.test ›
    on a page of several blocks) */
-function severalRefusal(blocks: Unit[][], n: number | string, l: Longest, noun?: string): string {
+function severalRefusal(blocks: Unit[][], n: number | string, l: Longest, noun?: string): Said {
   const unit = noun ?? unitNoun(l.block), lastName = l.block.at(-1)!.label ?? l.longest;
-  if (askedNumber(n) < l.longest) return PHRASES.noUnit({ unit, n });
-  if (!repeatsANumber(blocks)) return PHRASES.noUnitLast({ unit, n, last: lastName });
-  return PHRASES.noUnitLongest({ unit, n, form: noun ? "block" : formNoun(l.block), ends: l.lowest > 1, last: lastName });
+  if (askedNumber(n) < l.longest) return said("noUnit", { unit, n });
+  if (!repeatsANumber(blocks)) return said("noUnitLast", { unit, n, last: lastName });
+  return said("noUnitLongest", { unit, n, form: noun ? "block" : formNoun(l.block), ends: l.lowest > 1, last: lastName });
 }
-function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): string {
+function lineRefusal(blocks: Unit[][], n: number | string, noun?: string): Said {
   const l = longestBlock(blocks);
-  if (typeof n === "number" && n < 1) return PHRASES.noUnitHere({ unit: noun ?? (l ? unitNoun(l.block) : "line"), n });
-  if (!l) return PHRASES.noNumbered({ unit: noun ?? "line" });
+  if (typeof n === "number" && n < 1) return said("noUnitHere", { unit: noun ?? (l ? unitNoun(l.block) : "line"), n });
+  if (!l) return said("noNumbered", { unit: noun ?? "line" });
   if (blocks.length > 1) return severalRefusal(blocks, n, l, noun);
   const unit = noun ?? unitNoun(l.block);
   const firstName = l.block[0].label ?? l.lowest, lastName = l.block.at(-1)!.label ?? l.longest;
-  return firstName === lastName ? PHRASES.onlyUnit({ unit, last: lastName }) : PHRASES.unitsRange({ unit, first: firstName, last: lastName });
+  return firstName === lastName ? said("onlyUnit", { unit, last: lastName }) : said("unitsRange", { unit, first: firstName, last: lastName });
 }
 /* a paragraph names one place, its first sentence, though a chapter may turn
    inside it (pin: goto.test › a work by book, chapter, and paragraph) */
-function paragraphHit(doc: Node, n: number): { pos: number } | string {
+function paragraphHit(doc: Node, n: number): { pos: number } | Said {
   let hit: number | null = null, low = Infinity, high = -Infinity;
   doc.forEach((block, blockPos) => {
     if (block.type !== N.prose) return;
@@ -128,7 +128,7 @@ function paragraphHit(doc: Node, n: number): { pos: number } | string {
     });
   });
   if (hit !== null) return { pos: hit };
-  return high === -Infinity ? PHRASES.noNumberedParagraphs() : PHRASES.noParagraph({ n, low, high });
+  return high === -Infinity ? said("noNumberedParagraphs") : said("noParagraph", { n, low, high });
 }
 function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
   const was = standing === null ? -1 : hits.findIndex((h) => h.pos === standing);
@@ -137,38 +137,38 @@ function nextHit(hits: Hit[], standing: number | null, sameAsk: boolean): Hit {
 /* the ordinal is said only where the number names several places: a page of
    many blocks numbered straight on has one place for each (pin: goto.test ›
    says nothing of the blocks) */
-function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, noun?: string): string | null {
+function landingWord(hit: Hit, { hits, blocks }: LineHits, n: number | string, noun?: string): Said | null {
   const several = hits.length > 1;
-  if (hit.skipped) return PHRASES.omitted({ unit: noun ?? "line", n }) + (several ? PHRASES.ofBlocks({ form: noun ? "block" : formNoun(hit.block), nth: hit.nth, of: blocks.length }) : "");
+  if (hit.skipped) return said("omitted", { unit: noun ?? "line", n, ...(several ? { of: { form: noun ? "block" : formNoun(hit.block), nth: hit.nth, of: blocks.length } } : {}) });
   if (!several) return null;
   const oneForm = !noun && blocks.every((rows) => prose(rows) === prose(hit.block));
-  return PHRASES.unitAt({ unit: noun ?? unitNoun(hit.block), n }) + PHRASES.ofBlocks({ form: oneForm ? formNoun(hit.block) : "block", nth: hit.nth, of: blocks.length });
+  return said("unitAt", { unit: noun ?? unitNoun(hit.block), n, of: { form: oneForm ? formNoun(hit.block) : "block", nth: hit.nth, of: blocks.length } });
 }
 function pageHit(doc: Node, tok: string): { pos: number } | null {
   const want = tok.toLowerCase();
   const leaf = pages(doc).find((l) => l.label.toLowerCase() === want);
   return leaf ? { pos: leaf.pos } : null;
 }
-function pageRefusal(doc: Node, tok: string): string {
-  return !pages(doc).length ? PHRASES.noPageNumbers() : PHRASES.noPage({ page: trimLabel(tok, ECHO_CAP) });
+function pageRefusal(doc: Node, tok: string): Said {
+  return !pages(doc).length ? said("noPageNumbers") : said("noPage", { page: trimLabel(tok, ECHO_CAP) });
 }
-function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): string | null {
+function askCheck(ask: string, kind: "line" | "page", lineNoun = "line"): Said | null {
   const a = ask.trim();
   const noun = kind === "page" ? "page" : lineNoun;
-  if (!a) return PHRASES.typeNumber({ noun });
+  if (!a) return said("typeNumber", { noun });
   const ok = kind === "page" ? PAGE_ONE.test(a) : PAGE_ARABIC.test(a);
   if (ok) return null;
-  return kind === "page" && PAGE_CHARS_RE.test(a) ? PHRASES.romanOrArabic() : PHRASES.notANumber({ typed: trimLabel(a, ECHO_CAP), noun });
+  return kind === "page" && PAGE_CHARS_RE.test(a) ? said("romanOrArabic") : said("notANumber", { typed: trimLabel(a, ECHO_CAP), noun });
 }
 
 /* a stanza ask is `N` (stanza N, at its first line) or `N.M` (its line M).
    A stanza number names one place — the stanzas are numbered in the text,
    each once — so there is nothing to cycle (pin: goto.test › a stanza
    lands on its first line) */
-function stanzaAskCheck(ask: string): string | null {
+function stanzaAskCheck(ask: string): Said | null {
   const a = ask.trim();
-  if (!a) return PHRASES.typeStanzaOrLine();
-  return /^\d+(?:\.\d+)?$/.test(a) ? null : PHRASES.notStanzaOrLine({ typed: trimLabel(a, ECHO_CAP) });
+  if (!a) return said("typeStanzaOrLine");
+  return /^\d+(?:\.\d+)?$/.test(a) ? null : said("notStanzaOrLine", { typed: trimLabel(a, ECHO_CAP) });
 }
 /* the page, not its work: a plain verse entry beside stanza entries (the
    commendatory verses) has none (pin: goto.test › a page holding a
@@ -189,27 +189,27 @@ function findStanza(doc: Node, s: number): { last: number; found: Found | null }
   });
   return { last, found: found as Found | null };
 }
-function stanzaLine(found: Found, s: number, l: number | undefined): { pos: number } | string {
+function stanzaLine(found: Found, s: number, l: number | undefined): { pos: number } | Said {
   const lines = blockUnits(found.node, found.pos, 0).filter((u) => u.line && !u.rest && !u.skip);
   const want = l === undefined ? lines[0] : lines.find((u) => u.line === l);
-  return want ? { pos: want.pos } : PHRASES.noLineInStanza({ l, s, count: lines.length });
+  return want ? { pos: want.pos } : said("noLineInStanza", { l, s, count: lines.length });
 }
-function stanzaAt(doc: Node, s: number, l: number | undefined): { pos: number } | string {
+function stanzaAt(doc: Node, s: number, l: number | undefined): { pos: number } | Said {
   const { last, found } = findStanza(doc, s);
-  if (!last) return PHRASES.noStanzas();
-  if (!found) return PHRASES.noStanza({ s, last });
+  if (!last) return said("noStanzas");
+  if (!found) return said("noStanza", { s, last });
   return stanzaLine(found, s, l);
 }
-function stanzaHit(doc: Node, ask: string): { pos: number } | string {
+function stanzaHit(doc: Node, ask: string): { pos: number } | Said {
   const [s, l] = ask.trim().split(".").map((x) => parseInt(x, 10));
   return stanzaAt(doc, s, l);
 }
 
 const WORDS = {
-  paragraph: { label: "Paragraph", askedFor: "a paragraph", none: PHRASES.nothingNumbered({ what: "paragraph" }) },
-  verse: { label: "Verse", askedFor: "a verse", none: PHRASES.nothingNumbered({ what: "verse" }) },
-  proseAndVerse: { label: "Line", askedFor: "a line or a paragraph", none: PHRASES.nothingNumbered({ what: "line or paragraph" }) },
-  line: { label: "Line", askedFor: "a line or a page", none: PHRASES.nothingNumbered({ what: "line or page" }) },
+  paragraph: { label: "Paragraph", askedFor: "a paragraph", none: said("nothingNumbered", { what: "paragraph" }) },
+  verse: { label: "Verse", askedFor: "a verse", none: said("nothingNumbered", { what: "verse" }) },
+  proseAndVerse: { label: "Line", askedFor: "a line or a paragraph", none: said("nothingNumbered", { what: "line or paragraph" }) },
+  line: { label: "Line", askedFor: "a line or a page", none: said("nothingNumbered", { what: "line or page" }) },
 } as const;
 const wordsFor = (c: Asked) => WORDS[c.byBookChapterAndParagraph ? "paragraph" : c.byChapterAndVerse ? "verse" : c.proseByParagraphVerseByLine ? "proseAndVerse" : "line"];
 const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => wordsFor(c).label;
@@ -227,30 +227,28 @@ const labels = (doc: Node | null, c: Asked): PopupLabels =>
   doc && c.proseByParagraphVerseByLine && !hasStanzas(doc) && !hasPages(doc) ? proseAndVerse(doc) : { kind: doc ? askKind(doc) : "none", label: lineLabel(c), pageLabel: "Page" };
 /* the popup as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
-export function popup(doc: Node | null, c: Asked): PopupLabels & { none: string; inSource: string } {
-  return { ...labels(doc, c), none: wordsFor(c).none, inSource: PHRASES.switchToGo({ what: wordsFor(c).askedFor }) };
+export function popup(doc: Node | null, c: Asked): PopupLabels & { none: Said; inSource: Said } {
+  return { ...labels(doc, c), none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
-export interface Said { text: string; kind: "typed" | "absent" | "landing" }
 export type Answer = { pos: number; asked: number | string; said: Said | null } | { said: Said };
-const typedWrong = (text: string): Answer => ({ said: { text, kind: "typed" } });
-const absent = (text: string): Answer => ({ said: { text, kind: "absent" } });
-const placed = (hit: { pos: number } | string, standing: Standing): Answer => (typeof hit === "string" ? absent(hit) : { pos: hit.pos, asked: standing.asked, said: null });
+const refused = (s: Said): Answer => ({ said: s });
+const placed = (hit: { pos: number } | Said, standing: Standing): Answer => ("id" in hit ? refused(hit) : { pos: hit.pos, asked: standing.asked, said: null });
 function pageAnswer(doc: Node, c: Asked, typed: string, standing: Standing): Answer {
   const why = askCheck(typed, "page", lineLabel(c).toLowerCase());
-  if (why) return typedWrong(why);
+  if (why) return refused(why);
   const tok = typed.trim(), hit = pageHit(doc, tok);
-  return hit ? placed(hit, standing) : absent(pageRefusal(doc, tok));
+  return hit ? placed(hit, standing) : refused(pageRefusal(doc, tok));
 }
 function paragraphAnswer(doc: Node, typed: string, standing: Standing): Answer {
   const why = askCheck(typed, "line", "paragraph");
-  return why ? typedWrong(why) : placed(paragraphHit(doc, parseInt(typed.trim(), 10)), standing);
+  return why ? refused(why) : placed(paragraphHit(doc, parseInt(typed.trim(), 10)), standing);
 }
 /* a link's words on a page holding stanzas are `N` or `N.M`, stanza and line,
    one place each (pin: a link to a line › a link to a stanza, and line) */
 function stanzaAnswer(doc: Node, typed: string, standing: Standing): Answer {
   const bad = stanzaAskCheck(typed);
-  return bad ? typedWrong(bad) : placed(stanzaHit(doc, typed), standing);
+  return bad ? refused(bad) : placed(stanzaHit(doc, typed), standing);
 }
 /* a stanza in arabic, or in roman in the modern form (iv, ix) or the old
    print's additive one (iiii, viiii): its digits never rising, v, l and d
@@ -277,10 +275,10 @@ function stanzaNumber(typed: string): number | null {
    ⌃⌘G stanza 2, line 1) (pin: stanza › ⌃⌘G line 3, no stanza) */
 function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing): Answer {
   const st = stanza.trim(), ln = line.trim();
-  if (ln && !/^\d+$/.test(ln)) return typedWrong(PHRASES.notANumber({ typed: trimLabel(ln, ECHO_CAP), noun: "line" }));
-  if (!st) return typedWrong(ln ? PHRASES.typeStanzaFor({ line: ln }) : PHRASES.typeStanza());
+  if (ln && !/^\d+$/.test(ln)) return refused(said("notANumber", { typed: trimLabel(ln, ECHO_CAP), noun: "line" }));
+  if (!st) return refused(ln ? said("typeStanzaFor", { line: ln }) : said("typeStanza"));
   const n = stanzaNumber(st);
-  if (n === null) return typedWrong(PHRASES.notANumber({ typed: trimLabel(st, ECHO_CAP), noun: "stanza" }));
+  if (n === null) return refused(said("notANumber", { typed: trimLabel(st, ECHO_CAP), noun: "stanza" }));
   return placed(stanzaAt(doc, n, ln ? parseInt(ln, 10) : undefined), standing);
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only
@@ -289,16 +287,16 @@ function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standin
   if (typeof n === "number" && c.byBookChapterAndParagraph) return placed(paragraphHit(doc, n), standing);
   /* the popup's Verse Line box counts verse alone; a link to a line still counts the prose's sentences, as it always has */
   const found = lineHits(doc, n, c.proseByParagraphVerseByLine && from === "popup"), noun = c.byChapterAndVerse ? "verse" : undefined;
-  if (!found.hits.length) return absent(lineRefusal(found.blocks, n, noun));
+  if (!found.hits.length) return refused(lineRefusal(found.blocks, n, noun));
   const hit = nextHit(found.hits, standing.pos, n === standing.asked);
   const word = landingWord(hit, found, n, noun);
-  return { pos: hit.pos, asked: n, said: word && (from === "popup" || hit.skipped) ? { text: word, kind: "landing" } : null };
+  return { pos: hit.pos, asked: n, said: word && (from === "popup" || hit.skipped) ? word : null };
 }
 function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from: "popup" | "link"): Answer {
   const label = askedLabel(doc, typed);
   if (label) return numberAnswer(doc, c, label, standing, from);
   const why = askCheck(typed, "line", lineLabel(c).toLowerCase());
-  return why ? typedWrong(why) : numberAnswer(doc, c, parseInt(typed.trim(), 10), standing, from);
+  return why ? refused(why) : numberAnswer(doc, c, parseInt(typed.trim(), 10), standing, from);
 }
 /* what a box's words name on this page, typed or followed from a link (pin:
    a link to a line › a link to a stanza, and line) */

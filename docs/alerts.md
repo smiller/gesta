@@ -117,7 +117,29 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `already bookmarked` | A in the bookmarks panel on an entry already there. |
 | `bookmarks full — delete one, or give one its own key` | A with nine numbered bookmarks. |
 | `nothing to bookmark here yet` | A on an entry not yet saved anywhere. |
-| `…` | ⌃⌘G with a number mistyped or not in the entry, on an entry with nothing numbered, or in the markdown view; its words are the Go to popup’s phrases. |
+| `no …` | ⌃⌘G with a number below the longest block’s last line but in no block, on a page of several numbered blocks. |
+| `no …, the last … is …` | ⌃⌘G with a number past the last, on a page of several blocks numbered straight on. |
+| `no … — the longest … ends at …` | ⌃⌘G with a number past the longest block’s last line, on a page of several blocks that repeat a number. |
+| `no … here` | ⌃⌘G with 0. |
+| `no numbered …s here` | ⌃⌘G with a number, on an entry whose blocks number no lines. |
+| `the only … here is …` | ⌃⌘G with a number not in the entry’s one numbered block, which holds a single line. |
+| `the …s here are …–…` | ⌃⌘G with a number not in the entry’s one numbered block. |
+| `no numbered paragraphs here` | ⌃⌘G with a paragraph number, on a page of a work by paragraph that numbers none. |
+| `no paragraph … — the paragraphs here are …–…` | ⌃⌘G with a paragraph number not on the page. |
+| `no page numbers here` | ⌃⌘G with a page, on an entry with no page labels. |
+| `no page … here` | ⌃⌘G with a page not in the entry. |
+| `type a … number` | Enter in the Go to popup with its box empty. |
+| `use roman or arabic characters, not both` | A page typed with roman and arabic characters together. |
+| `… is not a … number` | A box of the Go to popup given what is not its kind of number. |
+| `no stanzas here` | A stanza asked for on a page with no stanzas. |
+| `no stanza … here — the last is …` | ⌃⌘G with a stanza past the page’s last. |
+| `no line … in stanza … — it has … lines` | ⌃⌘G with a line past its stanza’s last. |
+| `type a stanza for line …` | ⌃⌘G with a line and no stanza, on a page in stanzas. |
+| `type a stanza number` | Enter with the Stanza and Line boxes both empty. |
+| `type a stanza, or stanza.line` | A link to a page in stanzas that names no stanza. |
+| `… is not a stanza or stanza.line, like 2.1` | A link to a page in stanzas whose number is not a stanza or stanza.line. |
+| `no … numbers here` | ⌃⌘G on an entry with nothing numbered. |
+| `Switch to the rendered view to go to …` | ⌃⌘G in the markdown view. |
 | `finish the key` | Enter on a bookmark key typed part-way that more than one key starts with. |
 | `no bookmark …` | A number typed in the bookmarks panel with no row, or a key typed that no bookmark has. |
 | `Nothing to copy` | The copy button over a block that has gone. |
@@ -140,7 +162,8 @@ Blue. A count, a progress line or a note, telling of no outcome. It fades on its
 |---|---|
 | `1 word` | Word count: from the Words button or ⌃⌘W: one word, in the selection or the entry. |
 | `… words` | Word count: from the Words button or ⌃⌘W: the selection’s, or the entry’s with nothing selected. |
-| `…` | ⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the Go to popup’s phrases. |
+| `… — … of …` | ⌃⌘G landing on a number found in more than one block: the block it landed in. |
+| `… is omitted in this edition — … of …` | ⌃⌘G, or a link to a line, landing on a line the edition omits; with its block where the number is in several. |
 | `… entries stored` | The journal read at launch. |
 | `Source view, to replace` | ⌃⌘E in the rendered view, switching to the markdown view. |
 | `indexing…` | Search before its index is built. |
@@ -175,36 +198,12 @@ Green. Something done worked. It fades on its own; a click on it copies its word
 
 ## Phrases
 
-Words that stand inside the alerts above, never alone: the Go to popup’s, a refused fence’s reason, a directive’s trouble, a filename clash.
+Words that stand inside the alerts above, never alone: which of several blocks a landing is in, a refused fence’s reason, a directive’s trouble, a filename clash.
 
 | Words | Name |
 |---|---|
-| `no …` | `noUnit` |
-| `no …, the last … is …` | `noUnitLast` |
-| `no … — the longest … ends at …` | `noUnitLongest` |
-| `no … here` | `noUnitHere` |
-| `no numbered …s here` | `noNumbered` |
-| `the only … here is …` | `onlyUnit` |
-| `the …s here are …–…` | `unitsRange` |
-| `no numbered paragraphs here` | `noNumberedParagraphs` |
-| `no paragraph … — the paragraphs here are …–…` | `noParagraph` |
-| `… is omitted in this edition` | `omitted` |
 | ` — … of …` | `ofBlocks` |
-| `…` | `unitAt` |
-| `no page numbers here` | `noPageNumbers` |
-| `no page … here` | `noPage` |
-| `type a … number` | `typeNumber` |
-| `use roman or arabic characters, not both` | `romanOrArabic` |
 | `… is not a … number` | `notANumber` |
-| `no stanzas here` | `noStanzas` |
-| `no stanza … here — the last is …` | `noStanza` |
-| `no line … in stanza … — it has … lines` | `noLineInStanza` |
-| `type a stanza for line …` | `typeStanzaFor` |
-| `type a stanza number` | `typeStanza` |
-| `type a stanza, or stanza.line` | `typeStanzaOrLine` |
-| `… is not a stanza or stanza.line, like 2.1` | `notStanzaOrLine` |
-| `no … numbers here` | `nothingNumbered` |
-| `Switch to the rendered view to go to …` | `switchToGo` |
 | `… takes no numbered: the word is verse’s and prose’s` | `noNumberedTaken` |
 | `numbered goes after the number, like ::: … numbered` | `numberedAfter` |
 | `… takes one number; a second, for the right column, is verse’s alone` | `oneNumberOnly` |

@@ -66,7 +66,7 @@ export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
     /* a landing's word is an info; a line mistyped or absent is a warning */
-    if (a.said) raise(a.said.kind === "landing" ? "gotoPopupLanding" : "gotoPopup", { text: a.said.text });
+    if (a.said) raise(a.said);
     return "pos" in a;
   };
   /* before the warm a work's own page, which says how it is referred to, may
@@ -138,11 +138,11 @@ export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { raise("gotoPopup", { text: popup(null, conventions()).inSource }); return; }
+    if (session.mdView) { raise(popup(null, conventions()).inSource); return; }
     const view = session.view;
     if (!view) return;
     const b = popup(view.state.doc, conventions());
-    if (b.kind === "none") { raise("gotoPopup", { text: b.none }); return; }
+    if (b.kind === "none") { raise(b.none); return; }
     freshAsk();
     opened();
     lb.kind = b.kind;

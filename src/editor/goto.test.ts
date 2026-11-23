@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { Node } from "prosemirror-model";
 import { parseMarkdown } from "../model/parse.ts";
 import { ask, popup, type Standing, type Answer } from "./goto.ts";
+import { alertWords } from "../model/alertText.ts";
 import horace from "../../fixtures/horace-odes-1.1.md?raw";
 import williams from "../../fixtures/williams-witchcraft-3.md?raw";
 
@@ -13,11 +14,12 @@ const FRESH: Standing = { pos: null, asked: 0 };
 /* the text of the row an ask lands on, or what it says instead */
 function lands(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string {
   const a = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup");
-  return "pos" in a ? doc.nodeAt(a.pos)!.textContent : a.said.text;
+  return "pos" in a ? doc.nodeAt(a.pos)!.textContent : alertWords(a.said);
 }
 /* what an ask says, landing or not */
 function says(doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null {
-  return ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said?.text ?? null;
+  const s = ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said;
+  return s ? alertWords(s) : null;
 }
 /* Enter pressed again and again on the same ask: what each press says and where it lands */
 function presses(doc: Node, typed: string, times: number, c = LINES): { at: string; said: string | null }[] {
@@ -25,13 +27,16 @@ function presses(doc: Node, typed: string, times: number, c = LINES): { at: stri
   let standing: Standing = FRESH;
   for (let i = 0; i < times; i++) {
     const a: Answer = ask(doc, c, { line: typed }, standing, "popup");
-    if (!("pos" in a)) throw new Error(a.said.text);
-    out.push({ at: doc.nodeAt(a.pos)!.textContent, said: a.said?.text ?? null });
+    if (!("pos" in a)) throw new Error(alertWords(a.said));
+    out.push({ at: doc.nodeAt(a.pos)!.textContent, said: a.said ? alertWords(a.said) : null });
     standing = { pos: a.pos, asked: a.asked };
   }
   return out;
 }
-const kindOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said?.kind ?? null;
+const idOf = (doc: Node, typed: string, c = LINES, box: "line" | "page" = "line"): string | null => ask(doc, c, box === "page" ? { page: typed } : { line: typed }, FRESH, "popup").said?.id ?? null;
+// the ids that say a box was given what is not its number, not that the number is not here
+const TYPED = new Set(["typeNumber", "romanOrArabic", "notANumber", "typeStanzaFor", "typeStanza", "typeStanzaOrLine", "notStanzaOrLine"]);
+const typedWrong = (id: string | null): boolean => !!id && TYPED.has(id);
 
 const two = parseMarkdown("::: verse\na\nb\nc\nd\n:::\n\nprose between\n\n::: verse 2\nx\ny\n:::");
 const mixed = parseMarkdown("::: prose\nSentence one. | Un.\nSentence two. | Deux.\n:::\n\n::: verse\nline one\nline two\nline three\n:::");
@@ -53,9 +58,10 @@ describe("askKind", () => {
     expect(popup(parseMarkdown("plain"), LINES).kind).toBe("none");
   });
 });
+const worded = (p: ReturnType<typeof popup>) => ({ ...p, none: alertWords(p.none), inSource: alertWords(p.inSource) });
 describe("the popup's words", () => {
   it("the boxes' labels and what is said where nothing can be asked follow the work's conventions; with no document the popup asks nothing", () => {
-    expect([LINES, VERSES, PARAGRAPHS].map((c) => popup(null, c))).toEqual([
+    expect([LINES, VERSES, PARAGRAPHS].map((c) => worded(popup(null, c)))).toEqual([
       { kind: "none", label: "Line", pageLabel: "Page", none: "no line or page numbers here", inSource: "Switch to the rendered view to go to a line or a page" },
       { kind: "none", label: "Verse", pageLabel: "Page", none: "no verse numbers here", inSource: "Switch to the rendered view to go to a verse" },
       { kind: "none", label: "Paragraph", pageLabel: "Page", none: "no paragraph numbers here", inSource: "Switch to the rendered view to go to a paragraph" },
@@ -164,7 +170,7 @@ describe("the refusals", () => {
   });
   it("a leaf is found case-blind and named back when missing", () => {
     const w = parseMarkdown(williams);
-    expect(kindOf(w, "61", LINES, "page")).toBeNull();
+    expect(idOf(w, "61", LINES, "page")).toBeNull();
     expect(ask(w, LINES, { page: "61" }, FRESH, "popup")).toHaveProperty("pos");
     expect(ask(parseMarkdown("⟨xiv⟩ text"), LINES, { page: "XIV" }, FRESH, "popup")).toHaveProperty("pos");
     expect(says(w, "999", LINES, "page")).toBe("no page 999 here");
@@ -172,8 +178,8 @@ describe("the refusals", () => {
   });
   it("askCheck: empty, mixed numerals, and anything else named back as typed", () => {
     expect(says(two, "  ")).toBe("type a line number");
-    expect(kindOf(two, "254")).not.toBe("typed");
-    expect(kindOf(two, "xiv", LINES, "page")).not.toBe("typed");
+    expect(typedWrong(idOf(two, "254"))).toBe(false);
+    expect(typedWrong(idOf(two, "xiv", LINES, "page"))).toBe(false);
     expect(says(two, "xiv")).toBe("xiv is not a line number");
     expect(says(two, "9z", LINES, "page")).toBe("9z is not a page number");
     expect(says(two, "x9", LINES, "page")).toBe("use roman or arabic characters, not both");
@@ -197,8 +203,8 @@ describe("stanza.line", () => {
     expect(says(canto, "0")).toBe("no stanza 0 here — the last is 3");
   });
   it("the ask is a stanza or stanza.line, named back as typed when it is neither", () => {
-    expect(kindOf(canto, "2")).toBeNull();
-    expect(kindOf(canto, " 2.1 ")).toBeNull();
+    expect(idOf(canto, "2")).toBeNull();
+    expect(idOf(canto, " 2.1 ")).toBeNull();
     expect(says(canto, "")).toBe("type a stanza, or stanza.line");
     expect(says(canto, "I.i.2")).toBe("I.i.2 is not a stanza or stanza.line, like 2.1");
     expect(says(canto, "2.")).toBe("2. is not a stanza or stanza.line, like 2.1");
@@ -207,7 +213,7 @@ describe("stanza.line", () => {
 
 describe("a page in stanzas: the Stanza and Line boxes", () => {
   const canto = parseMarkdown("# Book I, Canto i\n\n::: stanza 1\na1\na2\na3\n:::\n\n::: stanza 2\nb1\nb2\nb3\n:::\n\n::: stanza 3\nc1\nc2\nc3\n:::");
-  const boxes = (stanza: string, line: string): string => { const a = ask(canto, LINES, { stanza, line }, FRESH, "popup"); return "pos" in a ? canto.nodeAt(a.pos)!.textContent : a.said.text; };
+  const boxes = (stanza: string, line: string): string => { const a = ask(canto, LINES, { stanza, line }, FRESH, "popup"); return "pos" in a ? canto.nodeAt(a.pos)!.textContent : alertWords(a.said); };
   it("the popup shows a Stanza box and a Line box", () => {
     expect(popup(canto, LINES).kind).toBe("stanza");
   });
@@ -228,7 +234,7 @@ describe("a page in stanzas: the Stanza and Line boxes", () => {
     expect(boxes("iiv", "1")).toBe("iiv is not a stanza number");
     expect(boxes("2", "2.1")).toBe("2.1 is not a line number");
     expect(boxes("2", "iii")).toBe("iii is not a line number");
-    expect(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "popup").said?.kind).toBe("typed");
+    expect(typedWrong(ask(canto, LINES, { stanza: "5-az", line: "" }, FRESH, "popup").said?.id ?? null)).toBe(true);
   });
   it("a roman stanza is read in the modern form or the old print's additive one: iv and iiii are 4; a numeral in neither is not a number", () => {
     expect(boxes("iv", "")).toBe("no stanza 4 here — the last is 3");
@@ -269,7 +275,7 @@ describe("a skipped line number", () => {
   });
   it("says so where the landing came from a link, which says no other landing word", () => {
     const d = parseMarkdown("::: verse 10\na\n⟨skipped line number⟩\n:::");
-    expect(ask(d, LINES, { line: "11" }, FRESH, "link").said?.text).toBe("line 11 is omitted in this edition");
+    expect(alertWords(ask(d, LINES, { line: "11" }, FRESH, "link").said!)).toBe("line 11 is omitted in this edition");
     expect(ask(two, LINES, { line: "3" }, FRESH, "link").said).toBeNull();
   });
 });
@@ -288,14 +294,14 @@ describe("a page of blocks numbered on both sides", () => {
     const d = parseMarkdown("::: verse 179 244\nTres | Before\n | So softly\nvivaque\n:::\n\n::: verse 182 246\nsidera | The starres\n:::");
     expect(lands(d, "245")).toBe("So softly");
     expect(lands(d, "246")).toBe("sideraThe starres");
-    expect(kindOf(d, "180")).toBe("absent");
+    expect(idOf(d, "180")).toBe("noUnit");
     expect(says(d, "300")).toBe("no line 300, the last line is 246");
   });
   it("asks a plain verse block on the same page by its own numbers", () => {
     const d = parseMarkdown("::: verse\nan epigraph\nits second line\n:::\n\n::: verse 179 244\nTres | Before\n | So softly\n:::");
     expect(lands(d, "2")).toBe("its second line");
     expect(lands(d, "245")).toBe("So softly");
-    expect(kindOf(d, "180")).toBe("absent");
+    expect(idOf(d, "180")).toBe("noUnit");
   });
 });
 
@@ -319,7 +325,7 @@ describe("the words of a box that asks for a paragraph", () => {
     expect(says(two, "", PARAGRAPHS)).toBe("type a paragraph number");
     expect(says(two, "61x", PARAGRAPHS)).toBe("61x is not a paragraph number");
     expect(says(two, "", PARAGRAPHS, "page")).toBe("type a page number");
-    expect(kindOf(two, "61", PARAGRAPHS)).not.toBe("typed");
+    expect(typedWrong(idOf(two, "61", PARAGRAPHS))).toBe(false);
     expect(says(two, "")).toBe("type a line number");
   });
 });
@@ -351,7 +357,7 @@ describe("a work of prose by paragraph and verse by line: Verse Line, or Prose P
     expect(popup(proseOnly, PROSIMETRUM)).toMatchObject({ kind: "page", pageLabel: "Paragraph" });
     expect(popup(verseOnly, PROSIMETRUM)).toMatchObject({ kind: "line", label: "Line" });
     expect(popup(parseMarkdown("plain"), PROSIMETRUM).kind).toBe("none");
-    expect(popup(null, PROSIMETRUM)).toMatchObject({ none: "no line or paragraph numbers here", inSource: "Switch to the rendered view to go to a line or a paragraph" });
+    expect(worded(popup(null, PROSIMETRUM))).toMatchObject({ none: "no line or paragraph numbers here", inSource: "Switch to the rendered view to go to a line or a paragraph" });
   });
   it("the Paragraph box lands on the paragraph a reference names, its first sentence", () => {
     expect(lands(chapter, "3", PROSIMETRUM, "page")).toContain("First one.");
