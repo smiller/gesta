@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, rest, still, writeAll, seededIn, wheelTo, caretAt, fixture, STANZA_SEEDS, MARGIN_SEEDS } from "./kit.ts";
+import { section, page, A, R, S, log, go, rest, settled, writeAll, seededIn, wheelTo, caretAt, fixture, STANZA_SEEDS, MARGIN_SEEDS } from "./kit.ts";
 
 const OVID = "bookshelf/Ovid/Metamorphoses/Book 1";
 const SHELVES = "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Ovid](#bookshelf/Ovid)\n\n## English\n";
@@ -63,22 +63,22 @@ async function menuAreaOpened(): Promise<void> {
   /* a wide entry moves over for the open menu, the line at the top held there; a narrow window keeps the menu over the text */
   const area = async () => { const m = await R.menuNow(page); return { menuArea: m.menuArea, textLeft: m.textLeft }; };
   await go(OVID);
-  await still(page);
+  await settled(page);
   await log("Ovid 1, the menu closed", await area());
   await wheelTo(2400);
-  await still(page);
+  await settled(page);
   const top = (await R.menuNow(page)).topLine;
   await page.click(S.bookshelfOpener);
-  await still(page);
+  await settled(page);
   await log("Ovid 1 scrolled, the menu open", { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
   await page.keyboard.press("Escape");
-  await still(page);
+  await settled(page);
   await log("Ovid 1, the menu closed again", { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
   const size = page.viewportSize()!;
   await page.setViewportSize({ width: 860, height: size.height });
   await go(OVID);
   await page.click(S.bookshelfOpener);
-  await still(page);
+  await settled(page);
   await log("Ovid 1 at 860 px, the menu open", { menuArea: (await R.menuNow(page)).menuArea });
   await page.keyboard.press("Escape");
   await page.setViewportSize(size);
@@ -91,7 +91,7 @@ async function gridMenuArea(): Promise<void> {
   await page.setViewportSize({ width: 1400, height: size.height });
   await go(GRID);
   await page.click(S.bookshelfOpener);
-  await still(page);
+  await settled(page);
   await log("three cards at 1400 px, the menu open", { menuArea: (await R.menuNow(page)).menuArea });
   await page.keyboard.press("Escape");
   /* a note in the margin hangs left of the page too, and with a menu area open is set clear of the menu */
@@ -99,7 +99,7 @@ async function gridMenuArea(): Promise<void> {
   await page.setViewportSize({ width: 1500, height: size.height });
   await go("bookshelf/Donne, John/Anniversaries/The First Anniversarie");
   await page.click(S.bookshelfOpener);
-  await still(page);
+  await settled(page);
   await log("Donne's margin notes at 1500 px, the menu open", await page.evaluate(() => {
     const menu = document.querySelector(".menu")!.getBoundingClientRect().right;
     const notes = [...document.querySelectorAll("#editor .margin-note.in-margin")].map((n) => n.getBoundingClientRect().left);

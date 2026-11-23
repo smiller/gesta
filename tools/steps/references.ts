@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, page, A, R, S, log, go, cornerText, landed, rest, still, write, caretAt, view, writeAll, jump } from "./kit.ts";
+import { section, laid, page, A, R, S, log, go, cornerText, landed, rest, settled, write, caretAt, view, writeAll, jump } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -145,7 +145,7 @@ section("grid", async () => {
   await page.click(S.editor);
   await R.pasteText(page, "::: card-light-green\nabove\n:::\n\n::: grid 2\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nbeta\n:::\n:::");   /* a card directly above: the band over its foot still finds the grid */
   await rest(page);
-  await log("a grid pasted", await R.gridLayout(page));
+  await log("a grid pasted", await laid(R.gridLayout));
   const hover = await R.gridHover(page);
   await log("hovered above its corner", hover);
   if (hover.show) { await page.click(S.copybtn); await rest(page); }
@@ -160,7 +160,7 @@ section("grid", async () => {
   await page.keyboard.type("prose first ");
   await page.keyboard.press("Meta+v");
   await rest(page);
-  await log("two cards pasted mid-paragraph", await R.gridLayout(page));
+  await log("two cards pasted mid-paragraph", await laid(R.gridLayout));
   await go("commonplace/Gridded");
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
@@ -187,7 +187,7 @@ section("grid", async () => {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForTimeout(400);
   await R.waitCorner(page, "saved");   /* read after the switch's save: at 400ms alone it was there one run in two */
-  await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await R.gridLayout(page)) });
+  await log("the line made a card, switched back", { corner: await R.gridCorner(page), ...(await laid(R.gridLayout)) });
 });
 section("told on open", async () => {
   /* a refused fence line and a directive no page reads, raised as an error when the entry opens: told only on the switch back from the source, a reader who never opened it there never saw them */
@@ -362,12 +362,12 @@ const TERMINAL_TEXT = "⏺ Two commits today, and npm run verify passed\n  befor
 section("references across verse blocks", async () => {
   /* blocks numbered apart refuse ⌃⌘R with a warning; the next ⌃⌘R, over blocks numbered straight on, copies them as one, its alert not swallowed by the warning */
   await write("commonplace/Blocks", "# Blocks\n\n::: verse\nfirst block\n:::\n\n::: verse\nsecond block\n:::\n\n## Between\n\n::: verse 2\nthird block\n:::");
-  await still(page);
+  await settled(page);
   await R.selectBetween(page, "first block", "second block");
   await R.waitToolbar(page);
   const refused = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /straight on/);
   await log("⌃⌘R over blocks numbered apart", { refused });
-  await still(page);
+  await settled(page);
   await R.selectBetween(page, "second block", "third block");
   await R.waitToolbar(page);
   const said = await R.cornerAfter(page, () => page.keyboard.press("Control+Meta+r"), /copied/);
@@ -385,12 +385,12 @@ async function copiedBy(act: () => Promise<unknown>): Promise<{ said: string | f
 section("references across blocks of each kind", async () => {
   /* the run on each row kind it lands on: dual-language blocks with a heading between; blocks numbered on both sides, the second opening with the rest of the translation's last line, by Ref and by Ref (all) */
   await write("commonplace/Dual", "# Dual\n\n::: dual-language 1\nArma virumque | Arms and the man\ncano.\n:::\n\n## Between\n\n::: dual-language 3\nTroiae qui | who from Troy\n:::");
-  await still(page);
+  await settled(page);
   await R.selectBetween(page, "cano.", "Troiae qui");
   await R.waitToolbar(page);
   await log("⌃⌘R over dual-language blocks with a heading between", await copiedBy(() => page.keyboard.press("Control+Meta+r")));
   await write("commonplace/Facing", "# Facing\n\n::: verse 1 10\nprima | first\n | second\n:::\n\n::: verse 2 11\n⟨…⟩ | the rest\nsecunda | third\n:::");
-  await still(page);
+  await settled(page);
   await R.selectBetween(page, "second", "third");
   await R.waitToolbar(page);
   await log("⌃⌘R over blocks numbered on both sides, the second opening with a rest", await copiedBy(() => page.keyboard.press("Control+Meta+r")));

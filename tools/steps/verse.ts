@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, seededIn, rest, still, fixture, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
+import { section, page, A, R, S, log, go, seededIn, rest, settled, fixture, writeAll, AUGUSTINE_SEEDS } from "./kit.ts";
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
@@ -118,7 +118,7 @@ async function dualLanguageInOvid(): Promise<void> {
   await rest(page);
   await log("ArrowDown from a sentence above a note under the English", { cell: await R.caretCell(page) });
   await R.caretAfter(page, "Her gleaming beauty alone remained.", "Her gleaming beauty alone remained.".length);
-  await still(page);
+  await settled(page);
   await page.keyboard.press("ArrowDown");
   await rest(page);
   await log("ArrowDown from a block's last sentence", { cell: await R.caretCell(page) });
@@ -406,7 +406,7 @@ section("prose and verse paired", async () => {
     "bookshelf/Dante/Vita Nuova/12": "# Vita Nuova, 12\n\n::: prose\nOra, tornando al proposito, dico che poi che la mia beatitudine mi fue negata, mi giunse tanto dolore, che, partito me da le genti, in solinga parte andai a bagnare la terra d’amarissime lagrime. | And now, resuming my discourse, I will go on to relate that when, for the first time, this beatitude was denied me, I fell into such grief that, parting myself from others, I went into a lonely place to bathe the ground with most bitter tears.\n:::\n\n::: verse\nBallata, i’ voi che tu ritrovi Amore, | Song, ’tis my will that thou do seek out Love,\ne con lui vade a madonna davante, | And go with him where my dear lady is;\n:::",
   });
   await go("bookshelf/Dante/Vita%20Nuova/12");
-  await still(page);
+  await settled(page);
   const englishes = () => page.evaluate(() => {
     const english = (sel: string) => document.querySelector(`#editor ${sel} > .vpair > .vcell + .vcell`)!.getBoundingClientRect().left;
     /* within a pixel: the shrunken prose's columns stand at fractions of one */
@@ -415,10 +415,10 @@ section("prose and verse paired", async () => {
   await log("the two Englishes", await englishes());
   /* a window narrower than paired prose's measure: its columns shrink, and the verse's English with them */
   await page.setViewportSize({ width: 900, height: 600 });
-  await still(page);
+  await settled(page);
   await log("the two Englishes in a narrower window", await englishes());
   await page.setViewportSize({ width: 1000, height: 600 });
-  await still(page);
+  await settled(page);
   /* ⌃⌘G on a chapter of prose and verse: Verse Line, or Prose Paragraph, each box landing in its own form */
   const shown = () => page.evaluate(() => [...document.querySelectorAll(".goto-toolbar .ask:not([hidden]) label, .goto-toolbar .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
   const landedOn = () => page.evaluate(() => (document.querySelector("#editor .landed")?.textContent ?? "").slice(0, 28));

@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
+import { section, laid, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -7,7 +7,7 @@ section("launch, menus, the corner, links", async () => {
 async function afterWarm(): Promise<void> {
   console.log("the launch's stages:", JSON.stringify(stages));
   await log("after warm", await R.corner(page));
-  await log("masthead over Horace", await R.masthead(page));
+  await log("masthead over Horace", await laid(R.masthead));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-masthead.png"), clip: { x: 0, y: 0, width: 1000, height: 130 } });
   await page.click(S.commonplaceOpener);
   await log("the commonplace menu", await R.menu(page));

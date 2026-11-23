@@ -1,4 +1,4 @@
-import { section, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, still, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
+import { section, laid, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, settled, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
 section("alerts and surfaces", async () => {
   await alertsOpening();
@@ -222,7 +222,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await slow.close();
 }
 /* a slowed launch's warm, and the page held still after it */
-const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await still(p); };
+const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await settled(p); };
 const corner = () => page.evaluate(() => window.__corner() || "");
 const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
@@ -242,7 +242,7 @@ section("pill", async () => {
   /* the pill is set after the launch's backup run, which ends after the
      warm: read on the warm alone, it was missed 1 run in 10 */
   await page.waitForFunction(() => document.querySelector(".backup-paused")?.hidden === false, null, { timeout: 5000 }).catch(() => {});
-  await log("with ?corner=pill", await R.pill(page));
+  await log("with ?corner=pill", await laid(R.pill));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
 });
 section("a rename keeps a label's marks", async () => {
@@ -324,7 +324,7 @@ async function shelvesSearchedFollowing(): Promise<void> {
 section("alerts and places", async () => {
   /* the error and the warning alone: where they stand under the masthead, the warning faded ten seconds on, the error above it, the warning's click, another entry clearing it, an open toolbar under the alert area. An info or a success beside them is no part of it */
   await write("commonplace/Plain", "# Plain\n\nSome words.");
-  await still(page);
+  await settled(page);
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
@@ -332,7 +332,7 @@ section("alerts and places", async () => {
   await jump(page, 10000);
   await log("ten seconds on", await standing());
   await write("commonplace/Warned", "# Warned\n\n::: versey\nline\n:::");
-  await still(page);
+  await settled(page);
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
@@ -344,10 +344,10 @@ section("alerts and places", async () => {
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
   await go("commonplace/Plain");
-  await still(page);
+  await settled(page);
   await log("another entry clears the warning", await standing());
   await write("commonplace/Lined", "# Lined\n\n::: verse\nthe first line\nthe second line\n:::");
-  await still(page);
+  await settled(page);
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
@@ -393,10 +393,8 @@ section("the entry's top", async () => {
   await log("the Go to row open", await belowAlerts());
   await page.keyboard.press("Escape");
 });
-/* read once the alert area has followed the masthead: a row the entry left drew it a frame lower than the text */
-const settledAlerts = () => page.waitForFunction(() => Math.round(document.querySelector(".alerts")!.getBoundingClientRect().top) === Math.round(document.querySelector(".site-head")!.getBoundingClientRect().bottom), null, { timeout: 2000 }).catch(() => {});
 const belowAlerts = async () => {
-  await settledAlerts();
+  await settled(page);
   return page.evaluate(([src]) => {
     window.scrollTo(0, 0);
     const foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
@@ -404,9 +402,9 @@ const belowAlerts = async () => {
     return { below: first ? Math.round(first.getBoundingClientRect().top - foot) : null };
   }, [S.source]);
 };
-const barAgainstAlerts = () => page.evaluate(() => {
+const barAgainstAlerts = async () => { await settled(page); return page.evaluate(() => {
   const toolbar = document.querySelector(".fmt.show")?.getBoundingClientRect(), foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
   const sel = getSelection()!.rangeCount ? getSelection()!.getRangeAt(0).getBoundingClientRect() : null;
   const moved = parseFloat((document.querySelector("#editor") as HTMLElement).style.paddingTop) || 0;
   return toolbar && sel ? { selected: getSelection()!.toString(), clearOfAlerts: toolbar.top >= foot, overSelection: toolbar.bottom <= sel.top, textMoved: moved > 0 } : { shown: false };
-});
+}); };

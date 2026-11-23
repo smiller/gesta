@@ -1,4 +1,4 @@
-import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, still, jump, keep } from "./kit.ts";
+import { section, caretAt, view, write, page, A, R, S, log, go, cornerText, wheelTo, TODAY, landed, searchFor, rest, settled, jump, keep } from "./kit.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a panel's chord pressed again, a row closed by its label, the bookmarks panel's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a panel, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
@@ -25,7 +25,7 @@ async function chordsPressedTwice(): Promise<void> {
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});   /* an earlier section's error, dismissed as a reader does: the alerts below yield to it */
   /* the click lands on the verse as fitted: before the measuring pass the
      page stood 5628 px tall, not 1277, and the click found another line */
-  await still(page);
+  await settled(page);
   await tap(S.editor);
   await twice("Control+Meta+s");
   await log("⌃⌘S pressed twice", {});
@@ -303,7 +303,7 @@ async function verseLinesCopied(): Promise<void> {
   await write("commonplace/Item Paragraph", "1. one\n\n   more of one\n\n2. two\n");
 }
 async function enterListItemS(): Promise<void> {
-  await still(page);
+  await settled(page);
   await caretAt("more of one", 11);
   await page.keyboard.press("Enter");
   await page.keyboard.type("next");

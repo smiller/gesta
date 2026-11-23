@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
+import { section, laid, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -113,7 +113,7 @@ section("sub-entries", async () => {
   await A.foreignWrite(page, "2026-09-06/Music", "**music**\n");
   await A.foreignWrite(page, "2026-09-06", (await A.stored(page, "2026-09-06")) + "\n[Music](#2026-09-06/Music)\n");
   await go("2026-09-06");
-  await log("the masthead over the day after the rows closed", await R.rowsClosed(page));
+  await log("the masthead over the day after the rows closed", await laid(R.rowsClosed));
   /* the link goes in at the caret: the click's caret is the editor's only
      once its selectionchange has reached it. ⌘↓ takes it to the body's end;
      End moves no caret on a Mac, and the click alone left it mid-heading,
@@ -174,7 +174,7 @@ section("list", async () => {
   await rest(page);
   await log("a code block typed, Enter twice out of it", { md: await A.stored(page) });
   await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), ...(await R.corner(page)) });
-  await log("the gap between the two outer items, and a line's height", await R.listGaps(page));
+  await log("the gap between the two outer items, and a line's height", await laid(R.listGaps));
 });
 section("search", async () => {
   await go("commonplace/Links");

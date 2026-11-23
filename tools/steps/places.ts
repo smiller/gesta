@@ -1,4 +1,4 @@
-import { section, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, still, keep, seed, landed, jump } from "./kit.ts";
+import { section, laid, page, ctx, A, R, S, log, go, winY, inView, cornerText, wheelTo, setAnswer, MARGIN_SEEDS, rest, settled, keep, seed, landed, jump } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -13,35 +13,35 @@ async function pippaScrolledDown(): Promise<void> {
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await wheelTo(1200);
   await jump(page, 700);
-  await log("Pippa scrolled down", await R.place(page));
+  await log("Pippa scrolled down", await laid(R.place));
   await go("commonplace/Horace");
   await rest(page);
-  await log("Horace followed", await R.place(page));
+  await log("Horace followed", await laid(R.place));
   await page.goBack();
   await A.waitEntry(page, pippa, 5000).catch(() => {});
   await rest(page);
-  await log("Back", await R.place(page));
+  await log("Back", await laid(R.place));
   await page.goForward();
   await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
   await rest(page);
-  await log("Forward", await R.place(page));
+  await log("Forward", await laid(R.place));
   await page.goBack();
   await A.waitEntry(page, pippa, 5000).catch(() => {});
   await rest(page);
-  await log("Back again", await R.place(page));
+  await log("Back again", await laid(R.place));
   await page.reload();
   await A.waitEntry(page, pippa).catch(() => {});
   await A.waitWarm(page).catch(() => {});
   await rest(page);
-  await log("reloaded", await R.place(page));
+  await log("reloaded", await laid(R.place));
   await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);   /* the page grows above the held place, as a picture resolving does */
   await rest(page);
-  await log("400px grown above the held place", await R.place(page));
+  await log("400px grown above the held place", await laid(R.place));
   await page.waitForTimeout(500);
   await go("commonplace/Horace");
   await go("bookshelf/Browning%2C%20Robert/Pippa%20Passes");
   await rest(page);
-  await log("Pippa after the growth", await R.place(page));
+  await log("Pippa after the growth", await laid(R.place));
   /* a place inside a section closed on the way back: Consolatio grown to six Books, left in Book 5, its fold state forgotten, returned to */
   let consolatio = "# De consolatione philosophiae\n\n";
   for (let b = 1; b <= 6; b++) { consolatio += "## Book " + b + "\n\n- [3pr1](#bookshelf/Boethius/Consolatio/3pr1)\n\n"; for (let i = 1; i <= 6; i++) consolatio += "Filler " + b + "." + i + " " + "words to fill a line of the page out ".repeat(6) + "\n\n"; }
@@ -263,7 +263,7 @@ section("margin-note", async () => {
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("bookshelf/Donne%2C%20John/Anniversaries/The%20First%20Anniversarie");
   await R.settle(page);
-  await log("margin-notes in verse at 1500px", await R.margins(page));
+  await log("margin-notes in verse at 1500px", await laid(R.margins));
   await R.clickMargin(page, "What life");
   await page.keyboard.type(" X");
   await log("typed into a margin-note in the margin", { lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
@@ -271,12 +271,12 @@ section("margin-note", async () => {
   /* the resize's measuring pass run before the reading */
   await R.settle(page);
   await page.keyboard.type("Y");
-  await still(page);
-  await log("narrowed to 1000px, typed on", { ...(await R.margins(page)), lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
+  await settled(page);
+  await log("narrowed to 1000px, typed on", { ...(await laid(R.margins)), lines: ((await A.stored(page)) || "").split("\n").filter((l) => /X/.test(l)) });
   await page.setViewportSize({ width: 1500, height: 900 });
   await go("commonplace/Margins");
   await R.settle(page);
-  await log("margin-notes between paragraphs and in a grid at 1500px", await R.margins(page));
+  await log("margin-notes between paragraphs and in a grid at 1500px", await laid(R.margins));
   await page.setViewportSize({ width: 1000, height: 600 });
 });
 section("footnote marks", async () => {

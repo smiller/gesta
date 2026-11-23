@@ -64,17 +64,22 @@ export async function jump(p: Page, ms: number) {
 export async function rest(p: Page) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }
-/* the page held still: the scroll and the layout's height the same over four
-   frames, a measuring pass a frame after a change having run */
-export async function still(p: Page) {
+/* the alert area flush under the masthead, which it follows a frame late
+   on a resize (read 27 px under the text on a grid after a verse entry),
+   and the scroll and the layout's height the same over four frames, a
+   measuring pass a frame after a change having run
+   (pin: the entry's top › an entry opening on a grid) */
+export async function settled(p: Page) {
   await p.evaluate(() => new Promise<void>((done) => {
     let last = "", same = 0, frames = 0;
-    const tick = () => { const now = scrollY + ":" + document.documentElement.scrollHeight; same = now === last ? same + 1 : 0; last = now; if (same >= 4 || ++frames > 120) done(); else requestAnimationFrame(tick); };
+    const flush = () => { const a = document.querySelector(".alerts"), h = document.querySelector(".site-head"); return !a || !h || Math.round(a.getBoundingClientRect().top) === Math.round(h.getBoundingClientRect().bottom); };
+    const tick = () => { const now = scrollY + ":" + document.documentElement.scrollHeight; same = now === last && flush() ? same + 1 : 0; last = now; if (same >= 4 || ++frames > 120) done(); else requestAnimationFrame(tick); };
     requestAnimationFrame(tick);
   })).catch(() => {});
 }
 
 export { A };
+export const laid = async <T>(read: (p: Page) => Promise<T>): Promise<T> => { await settled(page); return read(page); };
 export const R = A.read, S = A.sel;
 /* the run's page and context, bound before the first section */
 export let page: Page, ctx: BrowserContext, shot: string | undefined;
