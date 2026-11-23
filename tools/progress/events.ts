@@ -4,7 +4,7 @@ interface Base { at: string; approx?: boolean }
 export type Event = Base & (
   | { ev: "begin"; next: Partial<Record<List, number>> }
   | { ev: "carry" | "add"; id: string; list: List; title: string; parent?: string; detail?: string; watch?: string; started?: Stamp; stopped?: Stamp }
-  | { ev: "detail" | "watch"; id: string; text: string }
+  | { ev: "detail" | "watch" | "title"; id: string; text: string }
   | { ev: "start" | "stop" | "drop"; id: string; note?: string }
   | { ev: "done"; id: string; commits?: string[]; note?: string }
   | { ev: "move"; id: string; to: string; list: List }
@@ -49,6 +49,7 @@ function changed(it: Item, e: Event): void {
   else if (e.ev === "done") { it.ended = stamp(e); it.commits = e.commits ?? []; it.note = e.note ?? it.note; it.status = "done"; }
   else if (e.ev === "drop") { it.ended = stamp(e); it.note = e.note ?? it.note; it.status = "dropped"; }
   else if (e.ev === "detail") it.detail = e.text;
+  else if (e.ev === "title") it.title = e.text;
   else if (e.ev === "watch") it.watch = e.text;
 }
 function reopened(it: Item): void {

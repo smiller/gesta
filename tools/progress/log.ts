@@ -3,6 +3,7 @@
      begin                       the day's start: yesterday's open items carried in
      add <list> <title…>         [--parent ID] [--detail text]; prints the number it took
      detail <id> <text…>         the fuller description a click on its row opens
+     title <id> <text…>          the item's title reworded
      watch <id> <text…>          a Helium run whose output holds the text starts it
      start | stop | done | drop <id>   [--commits a,b] [--note text]
      move <id> <list>
@@ -62,6 +63,7 @@ const plain = (ev: "start" | "stop" | "drop") => (a: Asked): Event => ({ ...a.ba
 const BUILT: Record<string, (a: Asked) => Event> = {
   add: (a) => { const list = a.rest[0] as List; return { ...a.base, ev: "add", id: nextId(a.events, list, a.parent), list, title: a.rest.slice(1).join(" "), ...(a.parent ? { parent: a.parent } : {}), ...(a.detail ? { detail: a.detail } : {}) }; },
   detail: (a) => ({ ...a.base, ev: "detail", id: a.rest[0], text: a.rest.slice(1).join(" ") }),
+  title: (a) => ({ ...a.base, ev: "title", id: a.rest[0], text: a.rest.slice(1).join(" ") }),
   watch: (a) => ({ ...a.base, ev: "watch", id: a.rest[0], text: a.rest.slice(1).join(" ") }),
   move: (a) => ({ ...a.base, ev: "move", id: a.rest[0], to: nextId(a.events, a.rest[1] as List), list: a.rest[1] as List }),
   done: (a) => ({ ...a.base, ev: "done", id: a.rest[0], ...(a.commits ? { commits: a.commits.split(",") } : {}), ...noted(a) }),

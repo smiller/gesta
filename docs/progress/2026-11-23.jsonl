@@ -85,3 +85,5 @@
 {"at":"2026-11-23T14:31","ev":"watch","id":"S6.1","text":"the toolbar did not show"}
 {"at":"2026-11-23T14:40","ev":"move","id":"S6.1","to":"F1","list":"F"}
 {"at":"2026-11-23T14:40","ev":"move","id":"S27","to":"F2","list":"F"}
+{"at":"2026-11-23T14:43","ev":"title","id":"S23","text":"The format toolbar stays up after another entry opens, with nothing selected"}
+{"at":"2026-11-23T14:43","ev":"detail","id":"S23","text":"Asked: found while building the A15 fixes (2026-11-22, not asked). Why: in the Helium section the entry's top, a word double-clicked on commonplace/Plain, then commonplace/Para opened, read sel none · toolbar on (MEASURED then, a STEPS run); INFERRED the selectionchange that hides the format toolbar does not fire when the entry is replaced. That step now presses the right arrow to collapse the selection before opening the next entry, so no Helium step plays this case today. Done when: played first to see whether it still happens; if it does, the format toolbar hides when another entry opens, read in Helium."}

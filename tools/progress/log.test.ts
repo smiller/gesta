@@ -73,6 +73,13 @@ test("an item's detail is given with --detail on add, or later by the detail com
   const told: Event[] = [...day, { at: at("10:00"), ev: "detail", id: "S6", text: "why" }];
   expect(beginning(told, "2026-11-16T09:00").find((e) => "id" in e && e.id === "S6")).toMatchObject({ detail: "why" });
 });
+test("an item's title is reworded by the title command, refused for an item the day does not know, and carried into the next day", () => {
+  expect(built(commandLine(["title", "S6", "said", "anew"]), day)).toMatchObject({ ev: "title", id: "S6", text: "said anew" });
+  expect(refusal({ at: at("10:00"), ev: "title", id: "S99", text: "t" }, day)).toBe("no item S99 on this day");
+  const reworded: Event[] = [...day, { at: at("10:00"), ev: "title", id: "S6", text: "said anew" }];
+  expect(replay(reworded).find((i) => i.id === "S6")?.title).toBe("said anew");
+  expect(beginning(reworded, "2026-11-16T09:00").find((e) => "id" in e && e.id === "S6")).toMatchObject({ title: "said anew" });
+});
 test("a watch is given by the watch command, refused for an item the day does not know, and carried into the next day", () => {
   expect(built(commandLine(["watch", "S6", "the", "bar", "did", "not", "show"]), day)).toMatchObject({ ev: "watch", id: "S6", text: "the bar did not show" });
   expect(refusal({ at: at("10:00"), ev: "watch", id: "S99", text: "t" }, day)).toBe("no item S99 on this day");
