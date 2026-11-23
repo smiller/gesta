@@ -25,8 +25,7 @@ export function fingerprint(s: string): string {
 
 /* ONE PASS over the keys, bucketed by their first segment: filtering the
    whole key list once per day, O(days × keys), MEASURED 500–708 ms a call
-   over 13,600 keys, paid on every scan; this is under 100 ms (pin:
-   searchIndex.test › orders 13,600 keys in one pass). A day with no main
+   over 13,600 keys, paid on every scan. A day with no main
    entry of its own stands in date order among the days (pin:
    searchIndex.test › keyed namespaces first by name, then the days newest
    first) */
@@ -99,8 +98,7 @@ export function searchIndex(cache: Record<string, string>, flatten: (md: string)
     return cut === -1 ? { date: key, tag: null } : { date: key.slice(0, cut), tag: key.slice(cut + 1) };
   };
   /* the order is kept while the KEY SET stands: a scan per keystroke
-     re-ordered 13,600 keys before it read a byte (pin: searchIndex.test ›
-     orders 13,600 keys in one pass, and rows() reuses the order) */
+     re-ordered every key before it read a byte */
   let orderSig = "", ordered: string[] = [];
   const currentOrder = (): string[] => {
     const keys = Object.keys(cache), sig = JSON.stringify(keys);   /* a key may hold any character; the join is unambiguous */
