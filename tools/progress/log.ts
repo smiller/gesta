@@ -11,7 +11,7 @@
    redrawn after, each named with the artifact to republish it to */
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { replay, isOpen, LISTS, type Event, type List } from "./events.ts";
+import { replay, isOpen, LISTS, type Event, type Item, type List } from "./events.ts";
 import { DIR, dayEvents, lastDayEvents, today, clock } from "./day.ts";
 import { drawn } from "./page.ts";
 
@@ -37,8 +37,10 @@ export function beginning(last: Event[], at: string): Event[] {
   const open = replay(last).filter((i) => isOpen(i.status));
   const carried = new Set(open.map((i) => i.id));
   const under = (p?: string) => (p && carried.has(p) ? { parent: p } : {});
-  return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent), ...(i.detail ? { detail: i.detail } : {}), ...(i.watch ? { watch: i.watch } : {}) }))];
+  return [{ at, ev: "begin", next }, ...open.map((i): Event => ({ at, ev: "carry", id: i.id, list: i.list, title: i.title, ...under(i.parent), ...kept(i) }))];
 }
+const KEPT = ["detail", "watch", "started", "stopped"] as const;
+const kept = (i: Item): Partial<Pick<Item, (typeof KEPT)[number]>> => Object.fromEntries(KEPT.filter((k) => i[k]).map((k) => [k, i[k]]));
 
 /* ---------- the command ---------- */
 /* a yes-or-no flag: taken off the line alone, the word after it left */

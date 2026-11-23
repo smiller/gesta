@@ -3,7 +3,7 @@ export interface Stamp { at: string; approx: boolean }
 interface Base { at: string; approx?: boolean }
 export type Event = Base & (
   | { ev: "begin"; next: Partial<Record<List, number>> }
-  | { ev: "carry" | "add"; id: string; list: List; title: string; parent?: string; detail?: string; watch?: string }
+  | { ev: "carry" | "add"; id: string; list: List; title: string; parent?: string; detail?: string; watch?: string; started?: Stamp; stopped?: Stamp }
   | { ev: "detail" | "watch"; id: string; text: string }
   | { ev: "start" | "stop" | "drop"; id: string; note?: string }
   | { ev: "done"; id: string; commits?: string[]; note?: string }
@@ -28,7 +28,7 @@ const stamp = (e: Base): Stamp => ({ at: e.at, approx: !!e.approx });
 type Items = Map<string, Item>;
 function created(items: Items, e: Event): void {
   if (e.ev === "carry" || e.ev === "add") {
-    items.set(e.id, { id: e.id, list: e.list, title: e.title, parent: e.parent, detail: e.detail, watch: e.watch, starting: e.ev === "carry", reported: e.ev === "add" ? stamp(e) : undefined, commits: [], status: "unstarted" });
+    items.set(e.id, { id: e.id, list: e.list, title: e.title, parent: e.parent, detail: e.detail, watch: e.watch, starting: e.ev === "carry", reported: e.ev === "add" ? stamp(e) : undefined, started: e.started, stopped: e.stopped, commits: [], status: "unstarted" });
     return;
   }
   if (e.ev !== "move") return;

@@ -1,6 +1,6 @@
 import { test, expect } from "vitest";
 import { nextId, beginning, commandLine, refusal, batchRefusal, built, opened } from "./log.ts";
-import type { Event } from "./events.ts";
+import { replay, type Event } from "./events.ts";
 
 const at = (hm: string): string => "2026-11-15T" + hm;
 const day: Event[] = [
@@ -54,6 +54,14 @@ test("a batch is read against the day as it will stand: a begin lets its own car
 test("a paused item is carried into the next day as an open one", () => {
   const paused: Event[] = [...day, { at: at("10:00"), ev: "start", id: "S6" }, { at: at("10:05"), ev: "stop", id: "S6", note: "waiting" }];
   expect(beginning(paused, "2026-11-16T09:00").some((e) => "id" in e && e.id === "S6")).toBe(true);
+});
+test("an item in progress or paused is carried in as it stood, its start and stop kept, and shows so on the new day", () => {
+  const going: Event[] = [...day, { at: at("10:00"), ev: "start", id: "S6" }];
+  const paused: Event[] = [...going, { at: at("10:05"), ev: "stop", id: "S6", note: "waiting" }];
+  const carriedIn = (last: Event[]) => replay(beginning(last, "2026-11-16T09:00")).find((i) => i.id === "S6");
+  expect(carriedIn(going)).toMatchObject({ status: "in progress", started: { at: at("10:00") } });
+  expect(carriedIn(paused)).toMatchObject({ status: "paused", started: { at: at("10:00") }, stopped: { at: at("10:05") } });
+  expect(carriedIn(day)).toMatchObject({ status: "unstarted" });
 });
 
 test("an item's detail is given with --detail on add, or later by the detail command, and carried into the next day", () => {

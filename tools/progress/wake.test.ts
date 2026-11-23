@@ -26,9 +26,9 @@ test("a run wakes each open item not under way whose watch its output holds, wit
 test("a woken item's line is cut to 300 characters", () => {
   expect(woken(replay(day), "the bar did not show " + "x".repeat(400))[0].line.length).toBe(300);
 });
-test("on a day not begun, a run wakes what the begin would carry in, and the begin is written ahead of its start; nothing woken, nothing written", () => {
+test("on a day not begun, a run wakes what the begin would carry in that is not under way, and the begin is written ahead of its start; nothing woken, nothing written", () => {
   const written = wakeEvents([], () => day, RUN, "2026-11-17T08:00");
-  expect(written.map((e) => e.ev + ("id" in e ? " " + e.id : ""))).toEqual(["begin", "carry S6.1", "carry S7", "carry S8", "start S6.1", "start S8"]);
+  expect(written.map((e) => e.ev + ("id" in e ? " " + e.id : ""))).toEqual(["begin", "carry S6.1", "carry S7", "carry S8", "start S6.1"]);
   expect(wakeEvents([], () => day, "== keys\nok", "2026-11-17T08:00")).toEqual([]);
   expect(wakeEvents(day, () => [], RUN, "2026-11-16T10:00").map((e) => e.ev)).toEqual(["start"]);
 });
