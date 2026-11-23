@@ -50,6 +50,19 @@ test("an architecture run starts the row waiting under the last review, or adds 
   ]);
 });
 
+test("the second hook event of an architecture run, the first's row written and started, writes nothing; a row done or dropped is followed by a new one", () => {
+  const reviewed: Event[] = [...begun, { at: at("07:30"), ev: "add", id: "A9", list: "A", title: REVIEW }];
+  const run = { name: "improve-codebase-architecture", args: "tools/out/arch.txt" };
+  const first = rowEvents(run, reviewed, at("09:00"));
+  expect(rowEvents(run, [...reviewed, ...first], at("09:00"))).toEqual([]);
+  const ended: Event[] = [...reviewed, ...first, { at: at("09:30"), ev: "done", id: "A9.1" }];
+  expect(rowEvents(run, ended, at("10:00"))).toMatchObject([{ ev: "add", id: "A9.2" }, { ev: "start", id: "A9.2" }]);
+});
+test("an architecture run's row says what its candidates end as: built or set aside", () => {
+  const [row] = rowEvents({ name: "improve-codebase-architecture", args: "" }, begun, at("09:00"));
+  expect(row).toMatchObject({ detail: expect.stringContaining("every candidate built or set aside") });
+  expect((row as { detail: string }).detail).not.toContain("ADR");
+});
 test("an architecture run with no review on the day is a row of its own", () => {
   expect(rowEvents({ name: "improve-codebase-architecture", args: "" }, begun, at("09:00"))).toMatchObject([
     { ev: "add", id: "A9", list: "A", title: "The architecture run over the batch's files" },

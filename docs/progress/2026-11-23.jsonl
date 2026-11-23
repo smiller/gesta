@@ -22,3 +22,13 @@
 {"at":"2026-11-23T10:20","ev":"add","id":"A17","list":"A","title":"The batch review: /code-review at HIGH over 416e511..HEAD","detail":"Asked: /code-review high 416e511..HEAD, typed at 10:20. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-23T10:20","ev":"start","id":"A17"}
 {"at":"2026-11-23T10:28","ev":"watch","id":"S6.1","text":"the toolbar did not show"}
+{"at":"2026-11-23T10:44","ev":"start","id":"A15.1.2"}
+{"at":"2026-11-23T10:56","ev":"done","id":"A15.1.2","commits":["7e9cb44"]}
+{"at":"2026-11-23T11:00","ev":"done","id":"A17","commits":["6149437"],"note":"6149437, accepted at 26a21191d67d; 202,763 tokens"}
+{"at":"2026-11-23T11:02","ev":"add","id":"A17.1","list":"A","title":"The architecture run over the batch's files","parent":"A17","detail":"Asked: /improve-codebase-architecture tools/out/arch.txt, typed at 11:02. Why: CLAUDE.md's architecture run, beside each batch's review. Done when: every candidate built or refused as an ADR, its cost recorded."}
+{"at":"2026-11-23T11:02","ev":"start","id":"A17.1"}
+{"at":"2026-11-23T11:02","ev":"add","id":"A17.2","list":"A","title":"The architecture run over the batch's files","parent":"A17","detail":"Asked: /improve-codebase-architecture tools/out/arch.txt, typed at 11:02. Why: CLAUDE.md's architecture run, beside each batch's review. Done when: every candidate built or refused as an ADR, its cost recorded."}
+{"at":"2026-11-23T11:02","ev":"start","id":"A17.2"}
+{"at":"2026-11-23T11:02","ev":"drop","id":"A17.2","note":"a duplicate of A17.1: the second hook event's row (S24)"}
+{"at":"2026-11-23T11:03","ev":"start","id":"S24"}
+{"at":"2026-11-23T11:04","ev":"detail","id":"A17.1","text":"Asked: /improve-codebase-architecture tools/out/arch.txt, typed at 11:02. Why: CLAUDE.md's architecture run, beside each batch's review. Done when: every candidate built or set aside, its cost recorded."}

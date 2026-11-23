@@ -33,7 +33,7 @@ const asked = (c: Typed, at: string, why: string, done: string): string =>
 const REVIEW_WHY = "CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase.";
 const REVIEW_DONE = "its findings land in one fix commit and its cost is recorded in the plan.";
 const RUN_WHY = "CLAUDE.md's architecture run, beside each batch's review.";
-const RUN_DONE = "every candidate built or refused as an ADR, its cost recorded.";
+const RUN_DONE = "every candidate built or set aside, its cost recorded.";
 
 function started(it: Item, at: string): Event[] {
   return it.status === "unstarted" ? [{ at, ev: "start", id: it.id }] : [];
@@ -43,16 +43,20 @@ function added(events: Event[], at: string, { title, detail, parent }: Row): Eve
   const id = nextId(events, "A", parent);
   return [{ at, ev: "add", id, list: "A", title, ...(parent ? { parent } : {}), detail }, { at, ev: "start", id }];
 }
+/* the row a command's second hook event finds is the first's, written and
+   started: an open row is the command's, whatever its state (pin:
+   reviewRow.test › the second hook event of an architecture run) */
+const openRow = (i: Item): boolean => i.status !== "done" && i.status !== "dropped";
 function reviewRow(c: Typed, events: Event[], at: string): Event[] {
   const title = reviewTitle(c.args), items = replay(events);
-  const open = items.find((i) => i.title === title && i.status !== "done" && i.status !== "dropped");
+  const open = items.find((i) => i.title === title && openRow(i));
   return open ? started(open, at) : added(events, at, { title, detail: asked(c, at, REVIEW_WHY, REVIEW_DONE) });
 }
 function runRow(c: Typed, events: Event[], at: string): Event[] {
   const items = replay(events);
   const review = items.filter((i) => i.list === "A" && i.title.startsWith(REVIEW)).pop();
-  const waiting = review && items.find((i) => i.parent === review.id && i.title === RUN && i.status === "unstarted");
-  return waiting ? started(waiting, at) : added(events, at, { title: RUN, detail: asked(c, at, RUN_WHY, RUN_DONE), parent: review?.id });
+  const open = review && items.find((i) => i.parent === review.id && i.title === RUN && openRow(i));
+  return open ? started(open, at) : added(events, at, { title: RUN, detail: asked(c, at, RUN_WHY, RUN_DONE), parent: review?.id });
 }
 const ROWS: Record<string, (c: Typed, events: Event[], at: string) => Event[]> = {
   "code-review": reviewRow,
