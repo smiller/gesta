@@ -112,3 +112,19 @@ conversation.
   src/store/shelves.ts, beside rootGroups, for the Go to row, the search
   scope and the menus; the two numeric localeCompare sorts become
   childrenOf's byName, the same collation with a tie-break.
+- 11:02, the architecture run (A17.1), over tools/out/arch.txt: the walk
+  124,362 tokens (its transcript's last message); six candidates, report
+  /var/folders/zm/cy9h0p2s2494qnlj576f3v9r0000gn/T/architecture-review-20261123-110536.html.
+- 11:04, S24 (0468857): the run's row written twice again (A17.2 dropped);
+  a run's second hook event now finds the first's row.
+- 11:20-11:55, A17.1.1, candidate 2 (asked: "explore 2, then 1, then 3";
+  grilled, all yes): src/ui/menuActs.ts, the menu controller: open,
+  close(reason), key, hover, choose, mounted, answer, over a focus port and
+  a room port. It keeps its own record of the open menu, so a panel taking
+  the slot never has it cleared. The focus given back is decided by the
+  close's reason (menuModel.ts's table; a masthead row opened over the menu
+  counts as "displaced", as a panel does); focusAt and givesFocusBack go.
+  The overlays tell a closer which opening closed it. Menu.svelte only
+  draws; the masthead loses onNewRoot, onShelves, onRoom and onBack.
+  CodeScene: main.ts fell to 9.09 (duplication with the new wiring block)
+  until openerActs handed its browser ports over as one object.

@@ -1,4 +1,5 @@
 import type { MenuRow } from "./mastheadModel.ts";
+import type { Opening } from "./overlays.ts";
 
 /* `row`: the row's index among the menu's rows, null for an act; `act`: the
    act's index, null for a row */
@@ -10,17 +11,17 @@ export function menuItems(rows: MenuRow[], acts: string[]): MenuItem[] {
   return items;
 }
 
-export type MenuMove = { sel: number } | { choose: number } | { close: true } | { typed: string };
+export type MenuMove = { sel: number } | { choose: number } | { close: "escape" | "tab" } | { typed: string };
 interface Key { key: string; shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }
-const close = (): MenuMove => ({ close: true });
+const closedBy = (key: "escape" | "tab") => (): MenuMove => ({ close: key });
 const NAMED: Record<string, (sel: number, n: number) => MenuMove> = {
   ArrowDown: (sel, n) => ({ sel: (sel + 1) % n }),
   ArrowUp: (sel, n) => ({ sel: (sel - 1 + n) % n }),
   Home: () => ({ sel: 0 }),
   End: (_sel, n) => ({ sel: n - 1 }),
   Enter: (sel) => ({ choose: sel }),
-  Escape: close,
-  Tab: close,
+  Escape: closedBy("escape"),
+  Tab: closedBy("tab"),
 };
 const modified = (e: Key): boolean => [e.isComposing, e.metaKey, e.ctrlKey, e.altKey].some(Boolean);
 const printable = (key: string): boolean => key.length === 1 && key !== " ";
@@ -62,7 +63,11 @@ const ACTS: Record<MenuName, MenuAct[]> = {
   commonplace: [{ text: "New commonplace…", act: "new" }],
 };
 export const menuActs = (name: MenuName, readOnly: boolean): MenuAct[] => (readOnly ? [] : ACTS[name]);
-/* where the focus stands as the menu is taken down: in it, fallen to the
-   body, nowhere, or put elsewhere by a click */
-export type FocusAt = "menu" | "body" | "none" | "elsewhere";
-export const givesFocusBack = (at: FocusAt): boolean => at !== "elsewhere";
+/* why a menu closed: "displaced", a panel or a masthead row opened over it;
+   "left", the focus gone elsewhere; "chosen", a row or an act taken */
+export const CLOSE_REASONS = ["escape", "tab", "icon", "resize", "displaced", "chosen", "outside", "left", "navigated"] as const;
+export type CloseReason = (typeof CLOSE_REASONS)[number];
+const GIVES_BACK = new Set<CloseReason>(["escape", "tab", "icon", "resize", "displaced"]);
+export const handsFocusBack = (reason: CloseReason): boolean => GIVES_BACK.has(reason);
+const NAVIGATING = new Set<Opening>(["navigated", "view", "sourceView", "here"]);
+export const reasonOpened = (by: Opening): CloseReason => (by === "escape" ? "escape" : NAVIGATING.has(by) ? "navigated" : "displaced");

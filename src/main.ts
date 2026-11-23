@@ -38,6 +38,8 @@ import { afterLoad } from "./store/toCommonplaces.ts";
 import { formatToolbar } from "./ui/formatToolbarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
 import { openerActs, type Opened, type Ns } from "./ui/openerActs.ts";
+import { menuActs } from "./ui/menuActs.ts";
+import { isMenu, reasonOpened, type CloseReason, type MenuName } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -106,11 +108,14 @@ const acts = {
     toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {},
     hover: (_i: number) => {},
   },
-  menu: { room: (_right: number | null) => {}, back: (_was: Element | null) => {} },
+  menus: {
+    open: (_name: MenuName) => {}, close: (_reason: CloseReason) => {}, key: (_e: KeyboardEvent) => false, hover: (_i: number) => {}, choose: (_i: number) => {},
+    mounted: (_right: number) => {}, answer: () => {},
+  },
 };
-const closeOpened = (): void => { screen.opened = null; };
+const closeOpened = (reason: CloseReason = "displaced"): void => { if (isMenu(screen.opened)) acts.menus.close(reason); else screen.opened = null; };
 const overlay = overlays({
-  opened: closeOpened,
+  opened: (by) => closeOpened(reasonOpened(by)),
   search: () => acts.search.toggle(false),
   goto: () => acts.goto.toggle(false),
   gotoToolbar: () => acts.gotoToolbar.dismiss(),
@@ -135,7 +140,10 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* the row closed by its own label hands the keys back as ⌃⌘L does
      (pin: where the keys go › Line numbering closed by its label) */
   onLines: (open: boolean) => acts.lines(open),
-  onOpener: (ns: Opened) => acts.opener(ns), onCloseOpened: closeOpened, onNewRoot: (ns: Ns) => acts.newRoot(ns), onShelves: () => acts.shelves(), onRoom: (right: number | null) => acts.menu.room(right), onBack: (was: Element | null) => acts.menu.back(was),
+  onOpener: (ns: Opened) => acts.opener(ns), onCloseOpened: closeOpened, menus: {
+    onKey: (e: KeyboardEvent) => acts.menus.key(e), onHover: (i: number) => acts.menus.hover(i), onChoose: (i: number) => acts.menus.choose(i),
+    onClose: (reason: CloseReason) => acts.menus.close(reason), onMounted: (right: number) => acts.menus.mounted(right),
+  },
   onCreate: () => acts.create(), onRename: () => acts.rename(), onDelete: () => acts.delete(),
   /* a new pick is kept, then read as at any launch */
   reader: READER ? { onOpen: keepPicked, onWalk: (dir: WalkDir) => acts.walk(dir) } : null,
@@ -159,7 +167,7 @@ placeArea(document.documentElement, document.querySelector(".site-head")!, docum
    stopPropagation there would not reach a document listener anyway. */
 document.addEventListener("click", (e) => {
   const t = e.target as Element | null;
-  if (!t?.closest(".menu, .opener, .helppanel")) closeOpened();
+  if (!t?.closest(".menu, .opener, .helppanel")) closeOpened("outside");
   /* the results are an opaque overlay over the entry: a click into the
      writing lands on them, so a click outside the row closes it */
   if (!t?.closest(".page-search")) acts.search.toggle(false);
@@ -446,10 +454,14 @@ acts.rename = () => { life.rename(); };
 acts.delete = () => { life.remove(); };
 const openers = openerActs({
   screen, layer, journal, session, closeOpened, openBookmarks, openShortcuts, readBackups,
+  menus: { open: (name) => acts.menus.open(name), close: (reason) => acts.menus.close(reason), answer: () => acts.menus.answer() },
   open: (opening) => overlay.open(opening),
 });
 acts.opener = openers.opener;
-acts.menu = { room: openers.room, back: openers.back };
+acts.menus = menuActs({
+  ...openers.ports(), screen, readOnly: READER, flush: () => session.save.flush(), overlay: () => overlay.open("menu"),
+  go: (href) => { location.hash = href; }, act: (name, act) => (act === "shelves" ? acts.shelves() : acts.newRoot(name)),
+});
 /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the
    read ends, well or badly: the search; the Go to row while nothing has
    been picked in it, its focus put back on its first select; an open

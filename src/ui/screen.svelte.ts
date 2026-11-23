@@ -33,6 +33,8 @@ export interface Screen {
   menuRows: MenuRow[];
   /* an empty menu's one explanatory line, "" for none */
   menuEmpty: string;
+  /* the open menu's selected item, -1 with none open */
+  menu: { sel: number };
   search: SearchState;
   /* the Go to row: open, and its run of selects; the body is EMPTY when
      closed, so a dismissed control is a dead mechanism */
@@ -59,7 +61,7 @@ export interface Screen {
 export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: "", tags: [], showToday: false, buttons: { create: "", createTitle: "", tagTitle: "", canCreate: false, canEdit: false, renameTitle: "", deleteTitle: "" } };
 export function screenState(interval: number): Screen {
   const screen = $state<Screen>({
-    masthead: EMPTY_MASTHEAD, opened: null, menuRows: [], menuEmpty: "",
+    masthead: EMPTY_MASTHEAD, opened: null, menuRows: [], menuEmpty: "", menu: { sel: -1 },
     search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
     goto: { open: false, levels: [] },
     formatToolbar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, canRefAll: false, tagTitle: "" },

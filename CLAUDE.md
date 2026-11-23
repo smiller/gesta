@@ -336,7 +336,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   a factory over the parts main.ts hands it: `searchActs.ts`,
   `gotoRowActs.ts`, `gotoToolbarActs.ts`, `landingActs.ts` (a landing, ⌃⌘G's or
   a link to a line's, and a search jump centred), `replaceActs.ts`, `bookmarkActs.ts`,
-  `formatToolbarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
+  `formatToolbarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`, `menuActs.ts` (an open
+  menu: its selection, keys, every closing and the focus it gives back),
   `openerActs.ts` (a menu or panel opened, toggled, answered again),
   `backupsPanelActs.ts`. The components: `Masthead`,
   `Alerts`, `Search`, `GotoRow`, `Menu`, `FormatToolbar`, `GotoToolbar`, `ReplaceToolbar`, `Help`

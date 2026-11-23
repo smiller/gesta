@@ -32,6 +32,6 @@ export const CLOSES: Record<Opening, readonly Closer[]> = {
   escape: ["opened", "gotoToolbarCaret", "search", "goto", "lines", "replaceBack"],
 };
 
-export function overlays(closers: Record<Closer, () => void>): { open(opening: Opening): void } {
-  return { open: (opening) => { for (const c of CLOSES[opening]) closers[c](); } };
+export function overlays(closers: Record<Closer, (by: Opening) => void>): { open(opening: Opening): void } {
+  return { open: (opening) => { for (const c of CLOSES[opening]) closers[c](opening); } };
 }

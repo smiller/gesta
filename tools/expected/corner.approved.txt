@@ -6,7 +6,7 @@ the commonplace menu: {"rows":["Horace","Links","Williams"],"create":"New common
 the bookshelf menu, displacing it: {"rows":["Boethius","Browning, Robert"],"create":"New author…","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 its own opener again: {"value":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 after Escape: {"value":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-after a click outside: {"value":null,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+after a click outside: {"value":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 after a row click: {"entry":"commonplace/Williams","menu":null,"cursor":"at a line's start","screen":"commonplace/Williams · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 3.2 s later: {"text":"10 entries stored","show":false,"opacity":"[fading]","pill":true,"cursor":"at a line's start","screen":"commonplace/Williams · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 after typing: {"text":"saved","show":true,"opacity":"[fading]","pill":true,"cursor":"at the end","screen":"commonplace/Williams · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}

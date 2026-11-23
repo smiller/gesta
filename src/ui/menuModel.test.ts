@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { menuItems, menuKey, typedAhead, roomFor, MENU_ROOM_FROM, menuActs, isMenu, givesFocusBack } from "./menuModel.ts";
+import { menuItems, menuKey, typedAhead, roomFor, MENU_ROOM_FROM, menuActs, isMenu, handsFocusBack, CLOSE_REASONS, reasonOpened } from "./menuModel.ts";
 import type { MenuRow } from "./mastheadModel.ts";
 
 const SHELVED: MenuRow[] = [
@@ -30,11 +30,11 @@ describe("a key in an open menu", () => {
     expect(menuKey(key("Home"), 3, n)).toEqual({ sel: 0 });
     expect(menuKey(key("End"), 0, n)).toEqual({ sel: n - 1 });
   });
-  it("Enter chooses the selected item; Escape and Tab close the menu, the focus back where it was", () => {
+  it("Enter chooses the selected item; Escape and Tab close the menu, each named as the reason", () => {
     expect(menuKey(key("Enter"), 2, n)).toEqual({ choose: 2 });
-    expect(menuKey(key("Escape"), 2, n)).toEqual({ close: true });
-    expect(menuKey(key("Tab"), 2, n)).toEqual({ close: true });
-    expect(menuKey(key("Tab", { shiftKey: true }), 2, n)).toEqual({ close: true });
+    expect(menuKey(key("Escape"), 2, n)).toEqual({ close: "escape" });
+    expect(menuKey(key("Tab"), 2, n)).toEqual({ close: "tab" });
+    expect(menuKey(key("Tab", { shiftKey: true }), 2, n)).toEqual({ close: "tab" });
   });
   it("a letter is typed toward an item; a chord, a composing key and any other key are not the menu's", () => {
     expect(menuKey(key("m"), 0, n)).toEqual({ typed: "m" });
@@ -87,7 +87,14 @@ describe("what is a menu, and the focus it gives back", () => {
   it("the bookshelf and the commonplaces are menus; a panel or nothing is none", () => {
     expect(["bookshelf", "commonplace", "help", "backups", null].map(isMenu)).toEqual([true, true, false, false, false]);
   });
-  it("a menu taken down gives the focus back from itself, the body or nowhere, never from where a click put it", () => {
-    expect((["menu", "body", "none", "elsewhere"] as const).map(givesFocusBack)).toEqual([true, true, true, false]);
+  it("a menu closed by a key, its icon, a resize or something opened over it gives the focus back; one closed by a choice, a click, the focus leaving or a navigation does not", () => {
+    expect(CLOSE_REASONS.filter(handsFocusBack)).toEqual(["escape", "tab", "icon", "resize", "displaced"]);
+    expect(CLOSE_REASONS.filter((r) => !handsFocusBack(r))).toEqual(["chosen", "outside", "left", "navigated"]);
+  });
+});
+
+describe("a menu closed by something opened", () => {
+  it("is closed by Escape as Escape, by a navigation, a view switched or an arrival as a navigation, by anything else as displaced", () => {
+    expect((["escape", "navigated", "view", "sourceView", "here", "search", "help", "gotoToolbar"] as const).map(reasonOpened)).toEqual(["escape", "navigated", "navigated", "navigated", "navigated", "displaced", "displaced", "displaced"]);
   });
 });

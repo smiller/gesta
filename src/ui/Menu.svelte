@@ -1,74 +1,41 @@
-<!-- The menu takes the focus as it opens, its first item selected, and gives
-     it back where it stood when it closes, however it closes. One highlight,
-     which the pointer moves only by moving: the menu may open under a
-     pointer at rest. -->
+<!-- One highlight, which the pointer moves only by moving: the menu may
+     open under a pointer at rest. A window resized closes the menu, as a Mac
+     menu closes: the room it made was read for the window it opened in. -->
 <script lang="ts">
   import type { MenuRow } from "./mastheadModel.ts";
-  import { menuItems, menuKey, typedAhead, givesFocusBack, type Typed, type MenuName, type MenuAct, type FocusAt } from "./menuModel.ts";
-  let { name, rows, empty, acts, onAct, onClose, onLeave, onRoom, onBack }: {
-    name: MenuName; rows: MenuRow[]; empty: string; acts: MenuAct[];
-    onAct: (act: MenuAct["act"]) => void; onClose: () => void; onLeave: (e: FocusEvent) => void;
-    onRoom: (menuRight: number | null) => void; onBack: (was: Element | null) => void;
+  import { menuItems, type MenuName, type MenuAct, type CloseReason } from "./menuModel.ts";
+  let { name, rows, empty, acts, sel, menus, onLeave }: {
+    name: MenuName; rows: MenuRow[]; empty: string; acts: MenuAct[]; sel: number;
+    menus: { onKey: (e: KeyboardEvent) => boolean; onHover: (i: number) => void; onChoose: (i: number) => void; onClose: (reason: CloseReason) => void; onMounted: (menuRight: number) => void };
+    onLeave: (e: FocusEvent) => void;
   } = $props();
   const items = $derived(menuItems(rows, acts.map((a) => a.text)));
   const rowItem = $derived(new Map(items.flatMap((it, j) => (it.row === null ? [] : [[it.row, j] as const]))));
   const actItem = $derived(new Map(items.flatMap((it, j) => (it.act === null ? [] : [[it.act, j] as const]))));
-  let sel = $state(0);
-  let typed: Typed = { buf: "", at: 0 };
   const els: HTMLElement[] = $state([]);
   let nav: HTMLElement | undefined = $state();
-  /* one menu replacing the other keeps this one standing: it opens afresh,
-     its first item selected, its letters and its scroll forgotten
+  /* the other menu opened over this one starts at its top
      (pin: menus › the commonplace icon over the bookshelf menu) */
-  $effect(() => {
-    void name;
-    sel = 0;
-    typed = { buf: "", at: 0 };
-    if (nav) nav.scrollTop = 0;
-  });
-  $effect(() => { if (sel >= items.length) sel = Math.max(0, items.length - 1); });
+  $effect(() => { void name; if (nav) nav.scrollTop = 0; });
   $effect(() => { els[sel]?.scrollIntoView({ block: "nearest" }); });
-  function keydown(e: KeyboardEvent): void {
-    const m = menuKey(e, sel, items.length);
-    if (!m || (!items.length && !("close" in m))) return;
-    e.preventDefault();
-    if ("sel" in m) sel = m.sel;
-    else if ("choose" in m) els[m.choose]?.click();
-    else if ("close" in m) onClose();
-    else {
-      typed = typedAhead(typed, m.typed, Date.now(), items);
-      if (typed.sel !== null) sel = typed.sel;
-    }
-  }
-  const focusAt = (el: HTMLElement): FocusAt => {
-    const a = document.activeElement;
-    if (!a) return "none";
-    if (a === document.body) return "body";
-    return el.contains(a) ? "menu" : "elsewhere";
-  };
   function opened(el: HTMLElement): { destroy(): void } {
-    const was = document.activeElement;
     el.focus({ preventScroll: true });
-    onRoom(el.getBoundingClientRect().right);
-    /* a window resized closes the menu, as a Mac menu closes: the room it
-       made was read for the window it opened in */
-    const resized = (e: Event): void => { if (e.isTrusted) onClose(); };
+    menus.onMounted(el.getBoundingClientRect().right);
+    const resized = (e: Event): void => { if (e.isTrusted) menus.onClose("resize"); };
     window.addEventListener("resize", resized);
-    /* by the time the menu is taken down the focus it held has fallen to
-       the body: that, or still inside, is a focus to give back; one a
-       click put elsewhere stays there */
-    return { destroy: () => { window.removeEventListener("resize", resized); const at = focusAt(el); onRoom(null); if (givesFocusBack(at)) onBack(was); } };
+    /* taken down by a panel taking the slot, the menu is closed all the same */
+    return { destroy: () => { window.removeEventListener("resize", resized); menus.onClose("displaced"); } };
   }
 </script>
 
-<nav class="menu" tabindex="-1" bind:this={nav} use:opened onkeydown={keydown} onfocusout={onLeave}>
+<nav class="menu" tabindex="-1" bind:this={nav} use:opened onkeydown={(e) => { if (menus.onKey(e)) e.preventDefault(); }} onfocusout={onLeave}>
   {#each rows as r, i (r.href || "shelf " + r.text)}
     {#if r.shelf}<span class="shelf">{r.text}</span>
-    {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => { sel = rowItem.get(i)!; }} onclick={onClose}>{r.text}</a>{/if}
+    {:else}<a href={r.href} title={r.text} class:shelved={r.shelved} class:sel={rowItem.get(i) === sel} bind:this={els[rowItem.get(i)!]} onmousemove={() => menus.onHover(rowItem.get(i)!)} onclick={() => menus.onClose("chosen")}>{r.text}</a>{/if}
   {/each}
   {#if !rows.length && empty}<span class="menu-empty">{empty}</span>{/if}
   {#each acts as a, k (a.text)}
-    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => { sel = actItem.get(k)!; }} onclick={() => onAct(a.act)}>{a.text}</button>
+    <button class="menu-act" type="button" class:sel={actItem.get(k) === sel} bind:this={els[actItem.get(k)!]} onmousemove={() => menus.onHover(actItem.get(k)!)} onclick={() => menus.onChoose(actItem.get(k)!)}>{a.text}</button>
   {/each}
 </nav>
 

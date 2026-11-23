@@ -34,3 +34,12 @@ describe("one thing open at a time", () => {
     expect(closes("escape")).toEqual(["opened", "gotoToolbarCaret", "search", "goto", "lines", "replaceBack"]);
   });
 });
+
+describe("a closer", () => {
+  it("is told the opening that closed it", () => {
+    const by: string[] = [];
+    const none = (): void => {};
+    overlays({ opened: (o) => by.push(o), search: none, goto: none, gotoToolbar: none, gotoToolbarCaret: none, lines: none, replace: none, replaceBack: none }).open("navigated");
+    expect(by).toEqual(["navigated"]);
+  });
+});
