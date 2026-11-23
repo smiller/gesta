@@ -4,8 +4,8 @@ import { menuItems, menuKey, typedAhead, menuActs as actsOf, handsFocusBack, typ
 
 /* where the focus stands, and the focus given back where it stood */
 export interface FocusPort { here(): Element | null; back(was: Element | null): void }
-/* the room an open menu makes at the page's left, from its drawn right edge */
-export interface RoomPort { make(menuRight: number): void; clear(): void }
+/* the menu area, opened from the menu's drawn right edge */
+export interface MenuAreaPort { open(menuRight: number): void; close(): void }
 export interface MenuDeps {
   screen: Pick<Screen, "opened" | "menuRows" | "menuEmpty" | "menu">;
   answer(name: MenuName): { rows: MenuRow[]; empty: string };
@@ -14,7 +14,7 @@ export interface MenuDeps {
   flush(): void;
   overlay(): void;
   focus: FocusPort;
-  room: RoomPort;
+  area: MenuAreaPort;
   go(href: string): void;
   act(name: MenuName, act: MenuAct["act"]): void;
 }
@@ -33,7 +33,7 @@ export interface Menus {
 
 /* ONE MENU OPEN AT MOST, and this module's own record of which: a panel may
    take the slot without closing it, and the menu taken down then still
-   clears its room, never the panel's slot (pin: menuActs.test › with no menu
+   closes its menu area, never the panel's slot (pin: menuActs.test › with no menu
    open does nothing) */
 export function menuActs(d: MenuDeps): Menus {
   const { screen } = d;
@@ -60,7 +60,7 @@ export function menuActs(d: MenuDeps): Menus {
     if (screen.opened === open) screen.opened = null;
     open = null;
     screen.menu.sel = -1;
-    d.room.clear();
+    d.area.close();
     if (handsFocusBack(reason)) d.focus.back(was);
   };
   const choose = (i: number): void => {
@@ -88,6 +88,6 @@ export function menuActs(d: MenuDeps): Menus {
   return {
     open: show, close, key, choose, answer,
     hover: (i) => { if (open) screen.menu.sel = i; },
-    mounted: (menuRight) => { if (open) d.room.make(menuRight); },
+    mounted: (menuRight) => { if (open) d.area.open(menuRight); },
   };
 }

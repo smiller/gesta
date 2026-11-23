@@ -45,15 +45,6 @@ export function typedAhead(was: Typed, letter: string, now: number, items: MenuI
   return { buf, at: now, sel: sel < 0 ? null : sel };
 }
 
-/* px: the narrowest window a menu makes room in; narrower, the room left
-   for the text is too narrow to read in, and the menu lies over it */
-export const MENU_ROOM_FROM = 900;
-/* px between the menu's edge and the text it makes room for */
-export const MENU_GAP = 16;
-export function roomFor(at: { menuRight: number; textLeft: number; width: number }): number {
-  if (at.width < MENU_ROOM_FROM || at.textLeft >= at.menuRight) return 0;
-  return at.menuRight + MENU_GAP;
-}
 
 export type MenuName = "bookshelf" | "commonplace";
 export const isMenu = (name: string | null): name is MenuName => name === "bookshelf" || name === "commonplace";

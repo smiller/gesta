@@ -7,6 +7,7 @@
    inside one synchronous call, so no frame is painted in that state. */
 import { Plugin, PluginKey, type PluginView } from "prosemirror-state";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
+import { menuAreaWidth, onMenuAreaChange } from "./menuArea.ts";
 
 /* px. The narrowest original the fit will ask for — a caret target rather
    than a reading measure — so a block whose translations are typed before
@@ -186,21 +187,13 @@ function writeFit(host: HTMLElement, fit: Fit | null): void {
   if (fit.col == null) host.style.removeProperty("--vb-col");
   else host.style.setProperty("--vb-col", fit.col + "px");
 }
-/* px the page leaves at the window's left for an open menu, written on the
-   root for the stylesheet. A resize is dispatched for it: every pass that
-   lays out by the window's width runs again, as when the window narrows */
-let room = 0;
-export function leaveRoom(px: number): void {
-  if (px === room) return;
-  room = px;
-  const root = document.documentElement;
-  root.style.setProperty("--menu-room", px + "px");
-  root.classList.toggle("menu-room", px > 0);
-  window.dispatchEvent(new Event("resize"));
-}
-export const menuRoom = (): number => room;
-const across = (): number => window.innerWidth - room;
+const across = (): number => window.innerWidth - menuAreaWidth();
 export function fitCap(): number { return Math.min(CAP, across() - WINDOW_MARGIN); }
+/* the cap and the window's margin on the root, so each is spelled once */
+export function writeCap(root: HTMLElement): void {
+  root.style.setProperty("--fit-cap", CAP + "px");
+  root.style.setProperty("--window-margin", WINDOW_MARGIN + "px");
+}
 
 /* a measuring pass's class on `host` for `read` alone. The bracket is the
    invariant: one throw between the class going on and coming off would
@@ -429,8 +422,10 @@ class FitView implements PluginView {
     this.view = view;
     this.observer.observe(view.dom);
     window.addEventListener("resize", this.onResize);
+    this.offMenuArea = onMenuAreaChange(this.onResize);
     this.schedule(false);
   }
+  private readonly offMenuArea: () => void;
   update(view: EditorView, prev: { doc: unknown }): void {
     if (view.state.doc === prev.doc) return;
     if (growAsked(view)) this.schedule(true);
@@ -443,6 +438,7 @@ class FitView implements PluginView {
     this.observer.disconnect();
     if (this.insetFrame) cancelAnimationFrame(this.insetFrame);
     window.removeEventListener("resize", this.onResize);
+    this.offMenuArea();
     if (this.frame) cancelAnimationFrame(this.frame);
     clearTimeout(this.settle);
     writeFit(this.view.dom, null);

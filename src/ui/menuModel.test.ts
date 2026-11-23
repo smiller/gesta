@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { menuItems, menuKey, typedAhead, roomFor, MENU_ROOM_FROM, menuActs, isMenu, handsFocusBack, CLOSE_REASONS, reasonOpened } from "./menuModel.ts";
+import { menuItems, menuKey, typedAhead, menuActs, isMenu, handsFocusBack, CLOSE_REASONS, reasonOpened } from "./menuModel.ts";
 import type { MenuRow } from "./mastheadModel.ts";
 
 const SHELVED: MenuRow[] = [
@@ -63,15 +63,6 @@ describe("letters typed toward an item", () => {
   });
   it("matching nothing, keep the selection where it is", () => {
     expect(typedAhead({ buf: "", at: 0 }, "z", 1000, items).sel).toBeNull();
-  });
-});
-
-describe("the room a menu makes", () => {
-  it("is the menu's right edge and a gap, where the menu would cover the text and the window is wide enough; none otherwise", () => {
-    expect(roomFor({ menuRight: 269, textLeft: 46, width: 1280 })).toBe(285);
-    expect(roomFor({ menuRight: 269, textLeft: 284, width: 1280 })).toBe(0);
-    expect(roomFor({ menuRight: 269, textLeft: 24, width: MENU_ROOM_FROM - 1 })).toBe(0);
-    expect(roomFor({ menuRight: 269, textLeft: 24, width: MENU_ROOM_FROM })).toBe(285);
   });
 });
 

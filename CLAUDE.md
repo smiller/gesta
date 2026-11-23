@@ -268,7 +268,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     the typed pipe under a fence), `fit.ts` (the fitted measure),
     `margins.ts` (a margin-note's form and push), `measurePass.ts` (the
     measuring pass's scheduler), `continuations.ts` (a split line's rest),
-    `dualLanguage.ts` (a dual-language block's waits and notes),
+    `menuArea.ts` (the menu area: the
+    band an open menu stands in, and the page moved over to keep it
+    clear), `dualLanguage.ts` (a dual-language block's waits and notes),
     `pages.ts` (a book's printed pages: which page labels count, where
     each page begins; no DOM), `pageGutter.ts` (the labels drawn in the
     gutter).

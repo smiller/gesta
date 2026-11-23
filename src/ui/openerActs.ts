@@ -7,9 +7,8 @@ import { menuRows, type MenuRow } from "./mastheadModel.ts";
 import { entryKey, NS_BOOK } from "../store/keys.ts";
 import { SHELVES } from "../store/shelves.ts";
 import { loadState } from "./journalLoad.ts";
-import { roomFor, isMenu } from "./menuModel.ts";
+import { isMenu } from "./menuModel.ts";
 import type { Menus, MenuDeps } from "./menuActs.ts";
-import { leaveRoom } from "../editor/fit.ts";
 
 export type Ns = "commonplace" | "bookshelf";
 export type Opened = Ns | "help" | "bookmarks" | "shortcuts" | "backups";
@@ -19,7 +18,7 @@ export interface OpenerDeps {
   menus: Pick<Menus, "open" | "close" | "answer">;
   layer: Pick<EntryLayer, "cache" | "warmed" | "storeReadFailed">;
   journal: Journal;
-  session: Pick<Session, "focusText" | "save" | "holdTop">;
+  session: Pick<Session, "focusText" | "save">;
   open(opening: Opening): void;
   closeOpened(): void;
   openBookmarks(): void;
@@ -29,25 +28,16 @@ export interface OpenerDeps {
 export interface Openers {
   opener(ns: Opened, byKey?: boolean): void;
   reanswer(): void;
-  /* an open menu's right edge, null once it closes */
-  room(menuRight: number | null): void;
   /* the focus back where it stood before a menu took it */
   back(was: Element | null): void;
   /* the browser's side of an open menu: its rows read from the journal,
-     the focus, and the room */
-  ports(): Pick<MenuDeps, "answer" | "focus" | "room">;
+     and the focus */
+  ports(): Pick<MenuDeps, "answer" | "focus">;
 }
 
 const emptyLine = (ns: Ns, layer: OpenerDeps["layer"]): string => {
   if (ns !== "bookshelf") return "";
   return { in: "No authors yet — import a folder, or start one below.", failed: "Couldn’t load the bookshelf.", loading: "Still loading…" }[loadState(layer)];
-};
-/* the leftmost thing drawn: a grid and a note in the margin both hang left
-   of the page's own edge */
-const DRAWN = "#editor .page, #editor textarea, #editor .page > div.grid, #editor .margin-note.in-margin";
-const drawnLeft = (): number | null => {
-  const lefts = [...document.querySelectorAll(DRAWN)].map((e) => e.getBoundingClientRect().left);
-  return lefts.length ? Math.min(...lefts) : null;
 };
 /* a control a menu took the focus from may have closed under it */
 const shown = (el: Element | null): el is HTMLElement => el instanceof HTMLElement && el.isConnected && el.checkVisibility();
@@ -89,25 +79,10 @@ export function openerActs(d: OpenerDeps): Openers {
     }
     if (ns === "backups") d.readBackups();
   };
-  /* the room is read against the page as it stands with none, and the
-     reading place is held across the reflow it makes */
-  let made = 0;
-  const room = (menuRight: number | null): void => {
-    const textLeft = menuRight === null ? null : drawnLeft();
-    const px = textLeft === null ? 0 : roomFor({ menuRight: menuRight!, textLeft, width: document.documentElement.clientWidth });
-    if (px === made) return;
-    made = px;
-    session.holdTop();
-    leaveRoom(px);
-  };
   const back = (was: Element | null): void => {
     if (shown(was) && !was.matches("body, #editor, #editor *")) was.focus({ preventScroll: true });
     else session.focusText();
   };
-  const ports = (): Pick<MenuDeps, "answer" | "focus" | "room"> => ({
-    answer,
-    focus: { here: () => document.activeElement, back },
-    room: { make: (right) => room(right), clear: () => room(null) },
-  });
-  return { opener, reanswer, room, back, ports };
+  const ports = (): Pick<MenuDeps, "answer" | "focus"> => ({ answer, focus: { here: () => document.activeElement, back } });
+  return { opener, reanswer, back, ports };
 }

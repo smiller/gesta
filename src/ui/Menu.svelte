@@ -1,6 +1,6 @@
 <!-- One highlight, which the pointer moves only by moving: the menu may
      open under a pointer at rest. A window resized closes the menu, as a Mac
-     menu closes: the room it made was read for the window it opened in. -->
+     menu closes: its menu area was read for the window it opened in. -->
 <script lang="ts">
   import type { MenuRow } from "./mastheadModel.ts";
   import { menuItems, type MenuName, type MenuAct, type CloseReason } from "./menuModel.ts";
@@ -21,7 +21,7 @@
   function opened(el: HTMLElement): { destroy(): void } {
     el.focus({ preventScroll: true });
     menus.onMounted(el.getBoundingClientRect().right);
-    const resized = (e: Event): void => { if (e.isTrusted) menus.onClose("resize"); };
+    const resized = (): void => menus.onClose("resize");
     window.addEventListener("resize", resized);
     /* taken down by a panel taking the slot, the menu is closed all the same */
     return { destroy: () => { window.removeEventListener("resize", resized); menus.onClose("displaced"); } };

@@ -1,8 +1,9 @@
 import type { PluginView } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
+import { onMenuAreaChange } from "./menuArea.ts";
 
-/* a measuring pass run once a frame after the document changes or the
-   window resizes. A window wider than the page moves the page's left edge
+/* a measuring pass run once a frame after the document changes, the
+   window resizes or the menu area opens or closes. A window wider than the page moves the page's left edge
    and not its size: a pass on the root's size alone missed it (pin:
    margin-note › narrowed to 1000px, typed on) */
 export function measurePass(run: (view: EditorView) => void): (view: EditorView) => PluginView {
@@ -15,12 +16,14 @@ export function measurePass(run: (view: EditorView) => void): (view: EditorView)
     const observer = new ResizeObserver(schedule);
     observer.observe(view.dom);
     window.addEventListener("resize", schedule);
+    const offMenuArea = onMenuAreaChange(schedule);
     schedule();
     return {
       update: (v, prev) => { if (v.state.doc !== prev.doc) schedule(); },
       destroy: () => {
         observer.disconnect();
         window.removeEventListener("resize", schedule);
+        offMenuArea();
         if (frame) cancelAnimationFrame(frame);
       },
     };

@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName } from "./vocabulary.ts";
+import { retiredWord, retiredAlertSense, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName } from "./vocabulary.ts";
 
 test("retiredWord: the noun, the verb and an identifier built on either; never a word that only contains the letters", () => {
   for (const bad of ["a citation", "Citations", "it cites both", "cited by", "citing", "re-cited", "citesLocator", "citationAnchorHTML", "referenceCitation", "A CITATION", "const CITATION = 1", "CitationAnchor", "citeRange", "CITED_LINES", "cite_x", "type CitesLocator", "_citation", "uncited", "miscited"]) expect(retiredWord(bad), bad).toBe(true);
@@ -43,6 +43,11 @@ test("menuOrPanelByOldName: a menu or a panel by its names before; never a menu,
   for (const good of ["the bookshelf menu", "the commonplace menu", "the bookmarks panel", "a card hover-copied", "a list of commonplaces", "the backups panel"]) expect(menuOrPanelByOldName(good), good).toBe(false);
 });
 
+test("menuAreaByOldName: the menu area by its names before; never room in its plain sense", () => {
+  for (const bad of ["the menu room", "Menu-room", "menuRoom()", "leaveRoom(px)", "var(--menu-room)"]) expect(menuAreaByOldName(bad), bad).toBe(true);
+  for (const good of ["the menu area", "makes room for one more bookmark", "--menu-area-w", "a roomy menu"]) expect(menuAreaByOldName(good), good).toBe(false);
+});
+
 // Milton's own preface to Samson Agonistes uses the verb.
 const QUOTES_A_BOOK = new Set(["one-offs/miltonSamsonRun.ts", "tools/vocabulary.ts", "tools/vocabulary.test.ts"]);
 const ALERT_SENSE_KEPT: Record<string, string> = {
@@ -57,9 +62,10 @@ function walk(dir: string): string[] {
     return statSync(p).isDirectory() ? walk(p) : [p];
   });
 }
-test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference, alert, masthead, toolbar, menu and panel: no retired word anywhere", () => {
+test("the app, its tools, its one-off scripts, CLAUDE.md and the glossary say reference, alert, masthead, toolbar, menu, menu area and panel: no retired word anywhere", () => {
   const files = [...walk("src"), ...walk("tools"), ...walk("one-offs"), "CLAUDE.md", "GLOSSARY.md", "index.html"].filter((f) => !QUOTES_A_BOOK.has(f) && /\.(ts|mjs|svelte|html|css|sh|txt|md)$/.test(f));
-  const retired = (f: string) => (t: string): boolean => retiredWord(t) || headerForMasthead(t) || toolbarByOldName(t) || menuOrPanelByOldName(t) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
+  const rules = [retiredWord, headerForMasthead, toolbarByOldName, menuOrPanelByOldName, menuAreaByOldName];
+  const retired = (f: string) => (t: string): boolean => rules.some((rule) => rule(t)) || (!(f in ALERT_SENSE_KEPT) && retiredAlertSense(t));
   const found = files.flatMap((f) => readFileSync(f, "utf8").split("\n").flatMap((t, i) => (retired(f)(t) ? [f + ":" + (i + 1)] : [])));
   expect(found).toEqual([]);
 });

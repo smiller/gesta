@@ -75,6 +75,13 @@ text; the toolbars, menus and panels that hang from the masthead open
 below it.
 _Avoid_: strip.
 
+**Menu area**:
+The band down the window's left that an open menu stands in. From 900 px
+wide, an entry the menu would cover moves over to keep the menu area clear.
+Unlike the alert area it exists only while a menu is open, and only where
+an entry would lie under it.
+_Avoid_: the retired words `tools/vocabulary.ts` lists.
+
 **Masthead**:
 The dark band across the top of the page: the entry's date or name with the
 previous and next arrows, its sub-entries or its breadcrumb, the icons

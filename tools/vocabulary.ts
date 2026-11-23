@@ -27,3 +27,6 @@ export const toolbarByOldName = (line: string): boolean => OLD_TOOLBAR.test(line
    panels, and a card is a box in an entry */
 const OLD_MENU = /\b(?:dropdown|lists|books) panel\b|\b(?:bookshelf|commonplaces?) list\b|\b(?:bookmarks?|shortcuts|help) card\b/i;
 export const menuOrPanelByOldName = (line: string): boolean => OLD_MENU.test(line.replace(RECORD, ""));
+/* the band an open menu stands in is the menu area, beside the alert area */
+const OLD_MENU_AREA = /\bmenu[ -]room\b|menuRoom|leaveRoom|--menu-room/i;
+export const menuAreaByOldName = (line: string): boolean => OLD_MENU_AREA.test(line.replace(RECORD, ""));

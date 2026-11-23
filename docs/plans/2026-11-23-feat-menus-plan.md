@@ -128,3 +128,12 @@ conversation.
   draws; the masthead loses onNewRoot, onShelves, onRoom and onBack.
   CodeScene: main.ts fell to 9.09 (duplication with the new wiring block)
   until openerActs handed its browser ports over as one object.
+- 11:55-12:20, A17.1.2, candidate 1 (grilled, all yes; "menu area" asked
+  for, a band like the alert area): src/editor/menuArea.ts owns the band
+  an open menu stands in, behind open, close, width and onChange over a
+  layout port and a place port, tested with fakes. The fit and the
+  measuring passes hear its change directly: the synthetic resize and
+  Menu.svelte's isTrusted guard are gone. The root carries
+  data-menu-area (Helium reads it) and --menu-area-w; fit writes
+  --fit-cap and --window-margin, so 1285 and 64 are spelled once. The
+  glossary has "Menu area"; vocabulary.ts retires the room's names.

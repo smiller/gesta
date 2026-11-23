@@ -19,7 +19,7 @@ function world(focusAt: string = "text") {
     flush: () => log.push("flush"),
     overlay: () => log.push("rows closed"),
     focus: { here: () => focus as unknown as Element, back: (was) => { focus = String(was); log.push("focus back to " + String(was)); } },
-    room: { make: (right) => log.push("room for " + right), clear: () => log.push("room cleared") },
+    area: { open: (right) => log.push("menu area for " + right), close: () => log.push("menu area closed") },
     go: (href) => log.push("go " + href),
     act: (name, act) => log.push(act + " in " + name),
   };
@@ -38,12 +38,12 @@ describe("a menu opened", () => {
     w.menus.close("escape");
     expect(w.focusNow()).toBe("text");
   });
-  it("makes its room once it is drawn, and clears it on any close", () => {
+  it("opens its menu area once it is drawn, and closes it on any close", () => {
     const w = world();
     w.menus.open("bookshelf");
     w.menus.mounted(272);
     w.menus.close("outside");
-    expect(w.log.slice(2)).toEqual(["room for 272", "room cleared"]);
+    expect(w.log.slice(2)).toEqual(["menu area for 272", "menu area closed"]);
   });
 });
 
@@ -67,7 +67,7 @@ describe("keys and the pointer in an open menu", () => {
     w.takeFocus();
     w.menus.key(key("ArrowDown"));
     w.menus.key(key("Enter"));
-    expect(w.log.slice(-2)).toEqual(["room cleared", "go #bookshelf/Ovid"]);
+    expect(w.log.slice(-2)).toEqual(["menu area closed", "go #bookshelf/Ovid"]);
     expect([w.screen.opened, w.focusNow()]).toEqual([null, "menu"]);
     w.menus.open("bookshelf");
     w.menus.key(key("End"));

@@ -39,6 +39,8 @@ import { formatToolbar } from "./ui/formatToolbarActs.ts";
 import { backupsPanel } from "./ui/backupsPanelActs.ts";
 import { openerActs, type Opened, type Ns } from "./ui/openerActs.ts";
 import { menuActs } from "./ui/menuActs.ts";
+import { menuArea, browserLayout, provideMenuArea } from "./editor/menuArea.ts";
+import { writeCap } from "./editor/fit.ts";
 import { isMenu, reasonOpened, type CloseReason, type MenuName } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
@@ -281,6 +283,10 @@ const session = startSession({
   onLine: (line) => landing.followSoon(line),
   readOnly: READER,
 });
+/* the one menu area, given before any entry is drawn; the cap written beside it */
+const area = menuArea(browserLayout(document.documentElement), { hold: () => session.holdTop() });
+provideMenuArea(area);
+writeCap(document.documentElement);
 /* gathered for a beat and the masthead redrawn once: an import in
    another tab announces every entry it writes */
 const heard = new Set<string>();
@@ -459,7 +465,7 @@ const openers = openerActs({
 });
 acts.opener = openers.opener;
 acts.menus = menuActs({
-  ...openers.ports(), screen, readOnly: READER, flush: () => session.save.flush(), overlay: () => overlay.open("menu"),
+  ...openers.ports(), area, screen, readOnly: READER, flush: () => session.save.flush(), overlay: () => overlay.open("menu"),
   go: (href) => { location.hash = href; }, act: (name, act) => (act === "shelves" ? acts.shelves() : acts.newRoot(name)),
 });
 /* A SURFACE OPENED BEFORE THE JOURNAL WAS READ is answered again when the

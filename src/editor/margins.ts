@@ -3,7 +3,7 @@
    a change of form (pin: margin-note › narrowed to 1000px, typed on) */
 import { Plugin, PluginKey } from "prosemirror-state";
 import { measurePass } from "./measurePass.ts";
-import { menuRoom } from "./fit.ts";
+import { menuAreaWidth } from "./menuArea.ts";
 
 /* em of the host's text; 2.2 of gap and 2.4 for the line numbers (pin:
    margins.test › the margin form's width) */
@@ -59,7 +59,7 @@ function measureHost(el: HTMLElement): Host {
 function noteForm(n: HTMLElement, hostOf: (el: HTMLElement) => Host): Form | null {
   if (n.closest(".grid")) return null;
   const host = hostOf(n.parentElement!), noteFont = parseFloat(getComputedStyle(n).fontSize);
-  const w = marginWidth(host.left - menuRoom(), host.font, noteFont);
+  const w = marginWidth(host.left - menuAreaWidth(), host.font, noteFont);
   return w == null ? null : { w: w + "em", x: marginShift(w, host.font, noteFont, host.inset) + "px" };
 }
 function writeForm(n: HTMLElement, f: Form | null): void {

@@ -7,9 +7,9 @@ section("menus", async () => {
   await writeAll({ "bookshelf/Shelves": SHELVES, "bookshelf/Spenser, Edmund": STANZA_SEEDS["bookshelf/Spenser, Edmund"], "bookshelf/Ovid": "# Ovid\n", [OVID]: fixture("ovid-metamorphoses-1.md") });
   const seeded = await seededIn(OVID);
   await keysOverRows(seeded);
-  await gridRoom();
+  await gridMenuArea();
   await focusBack();
-  await roomMade();
+  await menuAreaOpened();
 });
 async function keysOverRows(seeded: boolean): Promise<void> {
   const sel = async () => ({ sel: (await R.menuNow(page)).sel });
@@ -47,32 +47,32 @@ async function focusBack(): Promise<void> {
     await log("closed by " + close, { menu: await R.menu(page), beforeCaret: (await R.menuNow(page)).beforeCaret });
   }
 }
-async function roomMade(): Promise<void> {
+async function menuAreaOpened(): Promise<void> {
   /* a wide entry moves over for the open menu, the line at the top held there; a narrow window keeps the menu over the text */
-  const room = async () => { const m = await R.menuNow(page); return { room: m.room, textLeft: m.textLeft }; };
+  const area = async () => { const m = await R.menuNow(page); return { menuArea: m.menuArea, textLeft: m.textLeft }; };
   await go(OVID);
   await still(page);
-  await log("Ovid 1, the menu closed", await room());
+  await log("Ovid 1, the menu closed", await area());
   await wheelTo(2400);
   await still(page);
   const top = (await R.menuNow(page)).topLine;
   await page.click(S.bookshelfOpener);
   await still(page);
-  await log("Ovid 1 scrolled, the menu open", { ...(await room()), sameTopLine: (await R.menuNow(page)).topLine === top });
+  await log("Ovid 1 scrolled, the menu open", { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
   await page.keyboard.press("Escape");
   await still(page);
-  await log("Ovid 1, the menu closed again", { ...(await room()), sameTopLine: (await R.menuNow(page)).topLine === top });
+  await log("Ovid 1, the menu closed again", { ...(await area()), sameTopLine: (await R.menuNow(page)).topLine === top });
   const size = page.viewportSize()!;
   await page.setViewportSize({ width: 860, height: size.height });
   await go(OVID);
   await page.click(S.bookshelfOpener);
   await still(page);
-  await log("Ovid 1 at 860 px, the menu open", { room: (await R.menuNow(page)).room });
+  await log("Ovid 1 at 860 px, the menu open", { menuArea: (await R.menuNow(page)).menuArea });
   await page.keyboard.press("Escape");
   await page.setViewportSize(size);
 }
 const GRID = "commonplace/Three Cards";
-async function gridRoom(): Promise<void> {
+async function gridMenuArea(): Promise<void> {
   /* a grid hangs left of the page's own edge: a window wide enough for the page to clear the menu still has the grid under it */
   await writeAll({ [GRID]: "::: grid\n::: card-light-green\nOne\n:::\n::: card-light-blue\nTwo\n:::\n::: card-light-red\nThree\n:::\n:::\n" });
   const size = page.viewportSize()!;
@@ -80,9 +80,9 @@ async function gridRoom(): Promise<void> {
   await go(GRID);
   await page.click(S.bookshelfOpener);
   await still(page);
-  await log("three cards at 1400 px, the menu open", { room: (await R.menuNow(page)).room });
+  await log("three cards at 1400 px, the menu open", { menuArea: (await R.menuNow(page)).menuArea });
   await page.keyboard.press("Escape");
-  /* a note in the margin hangs left of the page too, and with room made is set clear of the menu */
+  /* a note in the margin hangs left of the page too, and with a menu area open is set clear of the menu */
   await writeAll(MARGIN_SEEDS);
   await page.setViewportSize({ width: 1500, height: size.height });
   await go("bookshelf/Donne, John/Anniversaries/The First Anniversarie");
