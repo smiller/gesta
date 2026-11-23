@@ -367,3 +367,22 @@ const standing = () => page.evaluate(() => {
   };
   return { error: one("error"), warning: one("warning") };
 });
+section("the entry's top", async () => {
+  /* the entry starts at the alert area's foot, whatever its first block or view: the area is its top margin */
+  await write("commonplace/Plain", "# Plain\n\nSome words.");
+  await log("an entry opening on a heading", await belowAlerts());
+  await write("commonplace/Para", "Some words first.\n\n# Later");
+  await log("an entry opening on a paragraph", await belowAlerts());
+  await view(true);
+  await log("the source view", await belowAlerts());
+  await view(false);
+  await page.keyboard.press("Control+Meta+j");
+  await rest(page);
+  await log("the Go to row open", await belowAlerts());
+  await page.keyboard.press("Escape");
+});
+const belowAlerts = () => page.evaluate(([src]) => {
+  const foot = document.querySelector(".alerts")!.getBoundingClientRect().bottom;
+  const first = document.querySelector(src) ?? document.querySelector(".page > :first-child");
+  return { below: first ? Math.round(first.getBoundingClientRect().top - foot) : null };
+}, [S.source]);

@@ -157,8 +157,8 @@ Escape: {"help":false,"cursor":"on button","screen":"commonplace/Horace · sel n
 == line bar
 line bar: arrived at commonplace/Horace: {"cursor":"at a line's start"}
 ⌃⌘G over Horace: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-3, Enter: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":61,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-Enter again on one block: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":61,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+3, Enter: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":2,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+Enter again on one block: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"3","centred":2,"corner":"","cursor":"on input","screen":"commonplace/Horace · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 Escape: {"open":false,"focused":"editor","lineBox":true,"pageBox":false,"marked":null,"centred":null,"corner":"","caretRow":"3","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 line bar: arrived at commonplace/Williams/Witchcraft 3: {"cursor":"at a line's start"}
 ⌃⌘G over Witchcraft: {"open":true,"focused":"pageinput","lineBox":false,"pageBox":true,"marked":null,"centred":null,"corner":"","cursor":"on input","screen":"commonplace/Williams/Witchcraft 3 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
@@ -251,7 +251,7 @@ a long canto switched at its middle: {"rendered":20,"source":20,"back":20,"curso
 the switch's place remembered: {"matches":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘M back, then 400px grown above: {"top":20,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a long canto switched at its end: {"rendered":true,"source":true,"back":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-⌃⌘M from 20px down: {"source":25,"back":0,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+⌃⌘M from 20px down: {"source":1,"back":0,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a caret seen in the source, ⌃⌘M back: {"caretInView":true,"cursor":"inside a line","screen":"commonplace/Long Canto · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == sections fold on a journal day and a commonplace
 sections fold on a journal day and a commonplace: arrived at 2026-09-03: {"cursor":"at a line's start"}
@@ -273,9 +273,9 @@ back on the contents: {"folds":1,"open":["Book I: The "],"counts":["1 entry"],"l
 places: arrived at bookshelf/Browning, Robert/Pippa Passes: {"cursor":"at a line's start"}
 Pippa scrolled down: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 places: arrived at commonplace/Horace: {"cursor":"at a line's start"}
-Horace followed: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Horace followed: {"atTop":true,"line":"Odes, 1.1","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Back: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
-Forward: {"atTop":true,"line":"Odes, 1.1Maecenas atavis edite r","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Forward: {"atTop":true,"line":"Odes, 1.1","cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Back again: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 reloaded: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 400px grown above the held place: {"atTop":false,"line":"A large mean airy chamber. A gir","cursor":"at a line's start","screen":"bookshelf/Browning, Robert/Pippa Passes · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
@@ -425,7 +425,7 @@ where the keys go: arrived at commonplace/Held: {"cursor":"at a line's start"}
 Enter held on a shortcut: {"md":"Sean Miller then.","cursor":"at the end","screen":"commonplace/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 Tab held in a quote: {"md":">> quoted","cursor":"inside a line","screen":"commonplace/Held · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 where the keys go: arrived at 2026-09-05: {"cursor":"at a line's start"}
-Enter with the caret above the window: {"clear":89,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+Enter with the caret above the window: {"clear":88,"cursor":"at a line's start","screen":"2026-09-05 · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 a digit held on the bookmarks card: {"typed":0,"cursor":"at a line's start","screen":"commonplace/Horace · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 where the keys go: arrived at commonplace/Refused: {"cursor":"at a line's start"}
 where the keys go: arrived at commonplace/Held: {"cursor":"at a line's start"}
@@ -564,6 +564,13 @@ alerts and places: arrived at commonplace/Plain: {"cursor":"at a line's start"}
 another entry clears the warning: {"error":null,"warning":null,"cursor":"at a line's start","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 alerts and places: arrived at commonplace/Lined: {"cursor":"at a line's start"}
 ⌃⌘G with a line the entry lacks: {"error":null,"warning":{"text":"the lines here are 1–2","across":true,"under":10},"barUnderTheAlertArea":7,"cursor":"on input","screen":"commonplace/Lined · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+== the entry's top
+the entry's top: arrived at commonplace/Plain: {"cursor":"at a line's start"}
+an entry opening on a heading: {"below":0,"cursor":"at a line's start","screen":"commonplace/Plain · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the entry's top: arrived at commonplace/Para: {"cursor":"at a line's start"}
+an entry opening on a paragraph: {"below":0,"cursor":"at a line's start","screen":"commonplace/Para · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
+the source view: {"below":0,"cursor":"at a line's start","screen":"commonplace/Para · sel none · bar off · panel none · rows none · source · corner [whatever stood]"}
+the Go to row open: {"below":0,"cursor":"on select","screen":"commonplace/Para · sel none · bar off · panel none · rows goto · rendered · corner [whatever stood]"}
 == a work in stanzas
 ⌃⌘R on three lines of a stanza: {"seeded":true,"lines":["[*Hávamál*, 76.1-3](…):","","> ::: stanza 76","> Deyr fé | Cattle die,","> deyja frændr | kinsmen die,","> deyr sjálfr it sama | the self dies likewise;","> :::"],"cursor":"selected 65","screen":"bookshelf/Havamal · sel 65 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
 ⌃⌘R across two stanzas: {"lines":["[*Hávamál*, 76.4–77.4](…):","","> ::: verse 4","> en orðstírr | but the renown","> deyr aldregi | for the one who gets good fame","> hveim er sér góðan getr | dies never.","> :::","> ","> ::: stanza 77","> Deyr fé | Cattle die,","> deyja frændr | kinsmen die,","> deyr sjálfr it sama | the self dies likewise;","> ek veit einn | I know one thing","> :::"],"cursor":"selected 206","screen":"bookshelf/Havamal · sel 206 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
@@ -603,7 +610,7 @@ Ref (all) across Prospero's borrowing: {"label":"[Ovid, *Metamorphoses*, 7.197-2
 ⌃⌘G 2 in Douay-Rheims: {"box":"Verse","landedOn":"Terra autem.And the eart","cursor":"on input","screen":"bookshelf/Douay-Rheims/Genesis/1 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G 99 in Douay-Rheims: {"said":"the verses here are 1–3","cursor":"on input","screen":"bookshelf/Douay-Rheims/Genesis/1 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 == by book, chapter, and paragraph
-⌃⌘G 61 on a work by paragraph: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"vrow vpair landed","centred":148,"corner":"","landedOn":"61. Nam quid aliud.61. A","box":"Paragraph","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+⌃⌘G 61 on a work by paragraph: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"vrow vpair landed","centred":109,"corner":"","landedOn":"61. Nam quid aliud.61. A","box":"Paragraph","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G 61x on a work by paragraph: {"said":"61x is not a paragraph number","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G 99 on a work by paragraph: {"landedOn":"61. Nam quid aliud.61. A","said":"no paragraph 99 — the paragraphs here are 60–62","cursor":"on input","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘R on a work by paragraph: {"label":"[Augustine, *De Doctrina Christiana*, book 2, chapter 40 (para 61)]:","cursor":"selected 14","screen":"bookshelf/Augustine/De Doctrina Christiana/Book 2 · sel 14 chars · bar on · panel none · rows none · rendered · corner [whatever stood]"}
@@ -668,9 +675,9 @@ a line with no English, unmarked: {"words":368,"wordsTop":31,"rows":[28,28,28],"
 ⌃⌘G to a line with no English: {"words":368,"wordsTop":31,"rows":[28,28,28],"acrossBoth":true,"marked":true,"cursor":"on input","screen":"bookshelf/Statius/Band · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 a link to a line with no English: {"words":368,"wordsTop":31,"rows":[28,28,28],"acrossBoth":true,"marked":true,"cursor":"inside a line","screen":"bookshelf/Statius/Band · sel none · bar off · panel none · rows none · rendered · corner [whatever stood]"}
 == the block a line is in
-⌃⌘G for a line in one of two blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"2","centred":62,"corner":"","landed":"beta","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-⌃⌘G for a line in both blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":35,"corner":"line 1 — verse block 1 of 2","landed":"alpha","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
-Enter again for a line in both blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":103,"corner":"line 1 — verse block 2 of 2","landed":"gamma","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+⌃⌘G for a line in one of two blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"2","centred":3,"corner":"","landed":"beta","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+⌃⌘G for a line in both blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":-25,"corner":"line 1 — verse block 1 of 2","landed":"alpha","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
+Enter again for a line in both blocks: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":53,"corner":"line 1 — verse block 2 of 2","landed":"gamma","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 ⌃⌘G past the last line where blocks repeat a number: {"open":true,"focused":"lineinput","lineBox":true,"pageBox":false,"marked":"1","centred":103,"corner":"no line 9 — the longest verse block has 2","landed":"gamma","cursor":"on input","screen":"bookshelf/Statius/Twice · sel none · bar off · panel none · rows linebar · rendered · corner [whatever stood]"}
 == a commonplace renamed with every link following
 a commonplace renamed with every link following: arrived at commonplace/Rename Far: {"cursor":"at a line's start"}
