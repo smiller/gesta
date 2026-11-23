@@ -85,10 +85,11 @@ fail too often to show a byte-identical run.
   (the 13:56–14:01 plays); a small sample, the trace now naming the
   writer if it comes back.
 - 14:23, P19, S6.1 and S27 committed a48abe2; S25 started.
-- 14:30, S25: the demo spec (`tools/out/mocks/demo.ts`, the journal day
+- 14:24, S25: the demo spec (`tools/out/mocks/demo.ts`, the journal day
   2026-06-25 idle and with a word double-clicked, the format toolbar as
   it stands and moved 48 px down) plays in 14.5 s, four frames and two
   lifted ones. Every frame first showed a band above the masthead (277
   px; 148 with the bars lifted): a wheel of -100000 past the top. A
   probe of the same page with no wheel read the masthead at 0. Now a
   wheel of just the scroll.
+- 14:25, S25 committed 8fba266. Nothing owed: the batch touched tools/ alone, no DOM seam, so no review and no architecture run.

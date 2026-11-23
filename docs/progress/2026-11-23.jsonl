@@ -75,3 +75,4 @@
 {"at":"2026-11-23T14:23","ev":"done","id":"S6.1","commits":["a48abe2"],"note":"held: a script's range placed on a settled page, placed again once if collapsed; 0 of 6 five-window verdicts after, 1 of 3 before"}
 {"at":"2026-11-23T14:23","ev":"done","id":"S27","commits":["a48abe2"],"note":"its selection placed through selectBetween; 0 of 6 five-window verdicts"}
 {"at":"2026-11-23T14:23","ev":"start","id":"S25"}
+{"at":"2026-11-23T14:25","ev":"done","id":"S25","commits":["8fba266"]}
