@@ -8,13 +8,13 @@ const ROWS: Record<string, MenuRow[]> = {
 };
 const key = (k: string) => ({ key: k, shiftKey: false, metaKey: false, ctrlKey: false, altKey: false, isComposing: false });
 
-function world(focusAt: string = "text", here = "#commonplace/Elsewhere") {
+function world(focusAt: string = "text", here = "#commonplace/Elsewhere", rows: Record<string, MenuRow[]> = ROWS) {
   const log: string[] = [];
   let focus = focusAt;
   const screen = { opened: null as string | null, menuRows: [] as MenuRow[], menuEmpty: "", menu: { sel: -1 } };
   const deps: MenuDeps = {
     screen: screen as MenuDeps["screen"],
-    answer: (name) => ({ rows: ROWS[name], empty: "" }),
+    answer: (name) => ({ rows: rows[name], empty: "" }),
     readOnly: false,
     flush: () => log.push("flush"),
     overlay: () => log.push("rows closed"),
@@ -56,6 +56,22 @@ describe("a menu opened", () => {
     const recipes = world("text", "#commonplace/Recipes");
     recipes.menus.open("commonplace");
     expect(recipes.screen.menu.sel).toBe(1);
+  });
+  it("answered again, stays on the open entry's row until a key or the pointer moves it, then on the row moved to, found by its address", () => {
+    const rows = { bookshelf: [{ text: "Ovid", href: "#bookshelf/Ovid" }], commonplace: [] as MenuRow[] };
+    const w = world("text", "#bookshelf/Ovid/Metamorphoses", rows);
+    w.menus.open("bookshelf");
+    rows.bookshelf = [{ text: "Boethius", href: "#bookshelf/Boethius" }, { text: "Horace", href: "#bookshelf/Horace" }, { text: "Ovid", href: "#bookshelf/Ovid" }];
+    w.menus.answer();
+    expect(w.screen.menu.sel).toBe(2);
+    w.menus.key(key("ArrowUp"));
+    rows.bookshelf = [{ text: "Augustine", href: "#bookshelf/Augustine" }, ...rows.bookshelf];
+    w.menus.answer();
+    expect(w.screen.menu.sel).toBe(2);
+    w.menus.hover(4);
+    rows.bookshelf = rows.bookshelf.slice(1);
+    w.menus.answer();
+    expect(w.screen.menu.sel).toBe(3);
   });
 });
 

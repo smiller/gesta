@@ -2,6 +2,7 @@
      open under a pointer at rest. A window resized closes the menu, as a Mac
      menu closes: its menu area was read for the window it opened in. -->
 <script lang="ts">
+  import { untrack } from "svelte";
   import type { MenuRow } from "./mastheadModel.ts";
   import { menuItems, type MenuName, type MenuAct, type CloseReason } from "./menuModel.ts";
   let { name, rows, empty, acts, sel, menus, onLeave }: {
@@ -14,9 +15,15 @@
   const actItem = $derived(new Map(items.flatMap((it, j) => (it.act === null ? [] : [[it.act, j] as const]))));
   const els: HTMLElement[] = $state([]);
   let nav: HTMLElement | undefined = $state();
-  /* the other menu opened over this one starts at its top
+  /* the other menu opened over this one starts at its top, its selected
+     row then scrolled into view whether or not its number changed
      (pin: menus › the commonplace icon over the bookshelf menu) */
-  $effect(() => { void name; if (nav) nav.scrollTop = 0; });
+  $effect(() => { void name; if (!nav) return; nav.scrollTop = 0; untrack(() => els[sel]?.scrollIntoView({ block: "nearest" })); });
+  $effect(() => {
+    const root = document.documentElement;
+    root.dataset.menuSel = items[sel]?.text ?? "";
+    return () => { delete root.dataset.menuSel; };
+  });
   /* the keys' walk scrolls the selected row into view; the pointer's does
      not, or a half-cut row scrolls out from under it */
   let byPointer = false;

@@ -60,7 +60,25 @@ section("menu area", async () => {
   await seededIn(OVID);
   await gridMenuArea();
   await menuAreaOpened();
+  await longShelf();
 });
+async function longShelf(): Promise<void> {
+  const authors = Array.from({ length: 60 }, (_, i) => "Author " + String(i + 1).padStart(2, "0"));
+  const stored = () => page.evaluate(() => Number(document.documentElement.dataset.store));
+  const before = await stored();
+  await writeAll(Object.fromEntries(authors.map((a) => ["bookshelf/" + a, "# " + a + "\n"])));
+  const shown = () => page.evaluate(() => { const m = document.querySelector(".menu")!.getBoundingClientRect(), r = document.querySelector(".menu .sel")?.getBoundingClientRect(); return { sel: document.documentElement.dataset.menuSel, inView: !!r && r.top >= m.top && r.bottom <= m.bottom, scrolled: document.querySelector(".menu")!.scrollTop > 0 }; });
+  await go("bookshelf/Author 60");
+  await page.waitForFunction((n) => Number(document.documentElement.dataset.store) >= n, before + authors.length, { timeout: 8000 }).catch(() => {});
+  await page.keyboard.press("Control+Meta+j");
+  await settled(page);
+  await log("Author 60 of 60, ⌃⌘J", await shown());
+  await page.click(S.commonplaceOpener);
+  await page.click(S.bookshelfOpener);
+  await settled(page);
+  await log("Author 60, the book icon over the commonplace menu", await shown());
+  await page.keyboard.press("Escape");
+}
 async function menuAreaOpened(): Promise<void> {
   /* a wide entry moves over for the open menu, the line at the top held there; a narrow window keeps the menu over the text */
   const area = async () => { const m = await R.menuNow(page); return { menuArea: m.menuArea, textLeft: m.textLeft }; };
@@ -120,7 +138,6 @@ async function gridMenuArea(): Promise<void> {
   await page.setViewportSize(size);
 }
 async function round(): Promise<void> {
-  /* ⌃⌘J round the two menus and the Go to row to nothing and on again; from an open panel; an icon clicked */
   await go("commonplace/Horace");
   for (const n of [1, 2, 3, 4, 5]) {
     await page.keyboard.press("Control+Meta+j");
@@ -141,8 +158,7 @@ async function round(): Promise<void> {
   await page.keyboard.press("Escape");
 }
 async function opensOnEntry(): Promise<void> {
-  /* a menu opens on the row the open entry is or sits under: a book two deep, an author by its icon, a sub-entry; the first row where none is listed */
-  await writeAll({ "commonplace/Books": "# Books\n\n- [Essay](#commonplace/Books/Essay)\n", "commonplace/Books/Essay": "# The essay\n\nWords.\n" });
+  await writeAll({ "commonplace/Zibaldone": "# Zibaldone\n\n- [Essay](#commonplace/Zibaldone/Essay)\n", "commonplace/Zibaldone/Essay": "# The essay\n\nWords.\n" });
   const pressed = async (label: string) => { await page.keyboard.press("Control+Meta+j"); await rest(page); await log(label, await R.round(page)); };
   await go(OVID);
   await pressed("⌃⌘J on Ovid's Book 1");
@@ -153,11 +169,18 @@ async function opensOnEntry(): Promise<void> {
   await rest(page);
   await log("the book icon clicked on Ovid", await R.round(page));
   await page.keyboard.press("Escape");
-  await go("commonplace/Books/Essay");
+  await go("commonplace/Zibaldone/Essay");
   await page.keyboard.press("Control+Meta+j");
-  await pressed("⌃⌘J twice on Books' Essay");
+  await pressed("⌃⌘J twice on Zibaldone's Essay");
   await page.keyboard.press("Escape");
   await go("2026-09-06");
   await pressed("⌃⌘J on a journal day");
+  await page.keyboard.press("Escape");
+  await page.goto(A.url(OVID, "warm=slow"));
+  await A.waitEntry(page, OVID).catch(() => {});
+  await pressed("⌃⌘J on Ovid's Book 1 before the warm");
+  await A.waitWarm(page).catch(() => {});
+  await rest(page);
+  await log("the warm done, the menu still open", await R.round(page));
   await page.keyboard.press("Escape");
 }
