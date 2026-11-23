@@ -103,9 +103,9 @@ entry, a day of the journal or any commonplace.
 One of the two lists the masthead's icons open, to go somewhere from: the
 bookshelf menu, its authors by shelf, with New author… and Shelves… at its
 foot; the commonplace menu, every commonplace in name order, with New
-commonplace… at its foot. Opening one selects its first row and shows its
-icon reversed. ⌃⌘J opens the bookshelf menu, and pressed again the
-commonplace menu.
+commonplace… at its foot. Opening one selects the row the open entry is or
+sits under, else its first row, and shows its icon reversed. ⌃⌘J opens
+the bookshelf menu, and pressed again the commonplace menu.
 _Avoid_: list, index, dropdown (a `<select>`), panel.
 
 **Search results**:

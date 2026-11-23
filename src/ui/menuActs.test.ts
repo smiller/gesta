@@ -22,6 +22,7 @@ function world(focusAt: string = "text", here = "#commonplace/Elsewhere") {
     area: { open: (right) => log.push("menu area for " + right), close: () => log.push("menu area closed") },
     go: (href) => log.push("go " + href),
     isHere: (href) => href === here,
+    holdsHere: (href) => href === here || here.startsWith(href + "/"),
     act: (name, act) => log.push(act + " in " + name),
   };
   const menus = menuActs(deps);
@@ -45,6 +46,16 @@ describe("a menu opened", () => {
     w.menus.mounted(272);
     w.menus.close("outside");
     expect(w.log.slice(2)).toEqual(["menu area for 272", "menu area closed"]);
+  });
+  it("selects the row of the open entry, or of the entry it sits under, at any depth; the first item where neither is listed", () => {
+    const ovid = world("text", "#bookshelf/Ovid/Metamorphoses/Book%201");
+    ovid.menus.open("bookshelf");
+    expect(ovid.screen.menu.sel).toBe(1);
+    ovid.menus.open("commonplace");
+    expect(ovid.screen.menu.sel).toBe(0);
+    const recipes = world("text", "#commonplace/Recipes");
+    recipes.menus.open("commonplace");
+    expect(recipes.screen.menu.sel).toBe(1);
   });
 });
 

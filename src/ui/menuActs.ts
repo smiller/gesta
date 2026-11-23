@@ -18,6 +18,8 @@ export interface MenuDeps {
   go(href: string): void;
   /* whether a row's address is the entry already open */
   isHere(href: string): boolean;
+  /* whether a row's address is the entry already open or one it sits under */
+  holdsHere(href: string): boolean;
   act(name: MenuName, act: MenuAct["act"]): void;
 }
 interface Key { key: string; shiftKey: boolean; metaKey: boolean; ctrlKey: boolean; altKey: boolean; isComposing: boolean }
@@ -57,6 +59,7 @@ export function menuActs(d: MenuDeps): Menus {
     typed = { buf: "", at: 0 };
     screen.menu.sel = 0;
     answer();
+    screen.menu.sel = Math.max(0, items().findIndex((it) => it.row !== null && d.holdsHere(screen.menuRows[it.row].href)));
     screen.opened = name;
   };
   const close = (reason: CloseReason): void => {

@@ -110,3 +110,5 @@
 {"at":"2026-11-23T17:07","ev":"add","id":"A19","list":"A","title":"The batch review: /code-review at HIGH over 0beccfe..692b805","detail":"Asked: /code-review high 0beccfe..692b805, typed at 17:07. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-23T17:07","ev":"start","id":"A19"}
 {"at":"2026-11-23T17:08","ev":"add","id":"U14","list":"U","title":"A menu opens with the open entry's author or commonplace selected","detail":"Asked (2026-11-23): 'if I'm on the Ovid page and hit ⌃⌘J, the bookshelf menu should open with Ovid selected.' Why: every opening selects the first row (the menus plan, decision 4), so a reader on Ovid walks down to it. Done when: the reader settles which openings and entries it covers, it is built test-first after A19's fixes, and pressed by hand in Helium."}
+{"at":"2026-11-23T17:15","ev":"done","id":"A19","commits":["50d72be"]}
+{"at":"2026-11-23T17:15","ev":"start","id":"U14"}

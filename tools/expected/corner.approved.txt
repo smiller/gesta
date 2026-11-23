@@ -725,14 +725,23 @@ closed by Tab: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","scree
 closed by icon: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 closed by a click on the open entry's row: {"menu":null,"beforeCaret":"Maec","cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 menus: arrived at commonplace/Horace: {"cursor":"inside a line"}
-⌃⌘J pressed 1: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-⌃⌘J pressed 2: {"icons":["Commonplace menu"],"goto":false,"focus":"menu","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-⌃⌘J pressed 3: {"icons":[],"goto":true,"focus":"page-goto","cursor":"on select","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows goto · rendered · corner [whatever stood]"}
-⌃⌘J pressed 4: {"icons":[],"goto":false,"focus":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-⌃⌘J pressed 5: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-⌃⌘H: {"icons":[],"goto":false,"focus":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened help · rows none · rendered · corner [whatever stood]"}
-⌃⌘J over the help panel: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-the commonplace icon clicked: {"icons":["Commonplace menu"],"goto":false,"focus":"menu","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+⌃⌘J pressed 1: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Boethius","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+⌃⌘J pressed 2: {"icons":["Commonplace menu"],"goto":false,"focus":"menu","sel":"Horace","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+⌃⌘J pressed 3: {"icons":[],"goto":true,"focus":"page-goto","sel":null,"cursor":"on select","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows goto · rendered · corner [whatever stood]"}
+⌃⌘J pressed 4: {"icons":[],"goto":false,"focus":null,"sel":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+⌃⌘J pressed 5: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Boethius","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+⌃⌘H: {"icons":[],"goto":false,"focus":null,"sel":null,"cursor":"inside a line","screen":"commonplace/Horace · sel none · toolbar off · opened help · rows none · rendered · corner [whatever stood]"}
+⌃⌘J over the help panel: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Boethius","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+the commonplace icon clicked: {"icons":["Commonplace menu"],"goto":false,"focus":"menu","sel":"Horace","cursor":"on nav","screen":"commonplace/Horace · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+menus: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line's start"}
+⌃⌘J on Ovid's Book 1: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Ovid","cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+⌃⌘J again on Ovid's Book 1: {"icons":["Commonplace menu"],"goto":false,"focus":"menu","sel":"Books","cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+menus: arrived at bookshelf/Ovid: {"cursor":"at a line's start"}
+the book icon clicked on Ovid: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Ovid","cursor":"on nav","screen":"bookshelf/Ovid · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+menus: arrived at commonplace/Books/Essay: {"cursor":"at a line's start"}
+⌃⌘J twice on Books' Essay: {"icons":["Commonplace menu"],"goto":false,"focus":"menu","sel":"Books","cursor":"on nav","screen":"commonplace/Books/Essay · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+menus: arrived at 2026-09-06: {"cursor":"at a line's start"}
+⌃⌘J on a journal day: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Boethius","cursor":"on nav","screen":"2026-09-06 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 == menu area
 menu area: arrived at commonplace/Three Cards: {"cursor":"at a line's start"}
 three cards at 1400 px, the menu open: {"menuArea":"288","cursor":"on nav","screen":"commonplace/Three Cards · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}

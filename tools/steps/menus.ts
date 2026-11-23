@@ -9,6 +9,7 @@ section("menus", async () => {
   await keysOverRows(seeded);
   await focusBack();
   await round();
+  await opensOnEntry();
 });
 async function keysOverRows(seeded: boolean): Promise<void> {
   const sel = async () => ({ sel: (await R.menuNow(page)).sel });
@@ -137,5 +138,26 @@ async function round(): Promise<void> {
   await page.click(S.commonplaceOpener);
   await rest(page);
   await log("the commonplace icon clicked", await R.round(page));
+  await page.keyboard.press("Escape");
+}
+async function opensOnEntry(): Promise<void> {
+  /* a menu opens on the row the open entry is or sits under: a book two deep, an author by its icon, a sub-entry; the first row where none is listed */
+  await writeAll({ "commonplace/Books": "# Books\n\n- [Essay](#commonplace/Books/Essay)\n", "commonplace/Books/Essay": "# The essay\n\nWords.\n" });
+  const pressed = async (label: string) => { await page.keyboard.press("Control+Meta+j"); await rest(page); await log(label, await R.round(page)); };
+  await go(OVID);
+  await pressed("⌃⌘J on Ovid's Book 1");
+  await pressed("⌃⌘J again on Ovid's Book 1");
+  await page.keyboard.press("Escape");
+  await go("bookshelf/Ovid");
+  await page.click(S.bookshelfOpener);
+  await rest(page);
+  await log("the book icon clicked on Ovid", await R.round(page));
+  await page.keyboard.press("Escape");
+  await go("commonplace/Books/Essay");
+  await page.keyboard.press("Control+Meta+j");
+  await pressed("⌃⌘J twice on Books' Essay");
+  await page.keyboard.press("Escape");
+  await go("2026-09-06");
+  await pressed("⌃⌘J on a journal day");
   await page.keyboard.press("Escape");
 }

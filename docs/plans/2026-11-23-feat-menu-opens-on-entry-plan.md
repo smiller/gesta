@@ -17,3 +17,11 @@ should open with Ovid selected."
    read.
 
 ## Record
+
+- 17:16 `holdsEntry` in `nav.ts` and the opening's selection in
+  `menuActs.ts`, each test-first; main.ts hands `holdsHere` the open
+  entry. Help and the glossary say where a menu opens.
+- 17:18 "menus" reads the selected row: Ovid on Book 1 by ⌃⌘J and on
+  Ovid by the icon, Books on its Essay, the first row from a journal day.
+  The verdict differed only in those readings and the round's gaining
+  `sel`; approved.

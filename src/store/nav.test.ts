@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { hashParts, namesEntry, entryAt, internalHash, makeHref } from "./nav.ts";
+import { hashParts, namesEntry, entryAt, internalHash, makeHref, holdsEntry } from "./nav.ts";
 import { todayKey, entryHash, asAddress } from "./keys.ts";
 
 const today = todayKey();
@@ -120,4 +120,16 @@ test("entryAt reads an address once: the entry it names, or null where hashParts
   expect(entryAt(asAddress("#commonplace/Books/Essay?h=x"))).toEqual({ date: "commonplace", tag: "Books/Essay", hl: { q: "x", nth: 0 } });
   expect(entryAt(asAddress("#garbage"))).toBeNull();
   expect(entryAt(asAddress("commonplace/Books"))).toBeNull();
+});
+
+test("an address holds the entry it names and every entry under it, nothing beside it or in another namespace", () => {
+  const ovid = entryHash("bookshelf", "Ovid");
+  expect(holdsEntry(ovid, { date: "bookshelf", tag: "Ovid" })).toBe(true);
+  expect(holdsEntry(ovid, { date: "bookshelf", tag: "Ovid/Metamorphoses (with Golding’s translation)/Book 7" })).toBe(true);
+  expect(holdsEntry(ovid, { date: "bookshelf", tag: "Ovidius" })).toBe(false);
+  expect(holdsEntry(ovid, { date: "commonplace", tag: "Ovid" })).toBe(false);
+  expect(holdsEntry(entryHash("bookshelf", "Blake, William"), { date: "bookshelf", tag: "Blake, William/Songs" })).toBe(true);
+  expect(holdsEntry(entryHash("2026-09-07"), { date: "2026-09-07", tag: "Ideas" })).toBe(true);
+  expect(holdsEntry(entryHash("2026-09-07"), { date: "bookshelf", tag: "Ovid" })).toBe(false);
+  expect(holdsEntry(asAddress(""), { date: "bookshelf", tag: "Ovid" })).toBe(false);
 });

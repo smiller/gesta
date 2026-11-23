@@ -17,6 +17,13 @@ export function entryAt(a: Address): HashParts | null {
   return a.startsWith("#") ? namedBy(a.slice(1)) : null;
 }
 export const namesEntry = (a: Address): boolean => entryAt(a) !== null;
+const keyOf = (p: Pick<HashParts, "date" | "tag">): string => (p.tag === null ? p.date : p.date + "/" + p.tag);
+export function holdsEntry(a: Address, at: Pick<HashParts, "date" | "tag">): boolean {
+  const e = entryAt(a);
+  if (!e) return false;
+  const k = keyOf(at), held = keyOf(e);
+  return k === held || k.startsWith(held + "/");
+}
 function searchedFor(query: string): Highlight | null {
   try {
     const m = query.match(/(?:^|&)h=([^&]*)(?:&n=(\d+))?/);
