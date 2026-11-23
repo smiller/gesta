@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, laid, page, A, R, S, log, go, cornerText, landed, rest, settled, write, caretAt, view, writeAll, jump } from "./kit.ts";
+import { section, laid, storedWith, page, A, R, S, log, go, cornerText, landed, rest, settled, write, caretAt, view, writeAll, jump } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -244,7 +244,7 @@ async function picturePasted(): Promise<void> {
   await page.keyboard.type("A picture: ");
   await R.pastePng(page);
   await R.waitImg(page);
-  await R.waitCorner(page, "saved");
+  await storedWith("img-1.webp");
   await log("a picture pasted", { md: await A.stored(page), ...(await R.picture(page)) });
   await go("commonplace/Pictured%20End");
   await page.click(S.editor);
@@ -252,7 +252,8 @@ async function picturePasted(): Promise<void> {
   await page.keyboard.press("Enter");
   await R.pastePng(page);
   await R.waitImg(page);
-  await R.waitCorner(page, "saved");
+  /* on the store, not the corner: the first paste's "saved" may still stand */
+  await storedWith("img-1.webp");
 }
 async function picturePastedEntryS(): Promise<void> {
   await log("a picture pasted at the entry's end", { md: await A.stored(page), lineBelowPicture: await page.evaluate(lineBelowPicture, S.editor), caretBelowPicture: await page.evaluate(caretBelowPicture, S.editor) });

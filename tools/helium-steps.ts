@@ -1,6 +1,7 @@
 import type { Page, BrowserContext } from "./heliumPage.ts";
 import { bind, setSection, freshStart, SECTIONS, type RunOptions } from "./steps/kit.ts";
 import { startClock, report, type Clock } from "./steps/timing.ts";
+import { dealt } from "./heliumShards.ts";
 import "./steps/launch.ts";
 import "./steps/references.ts";
 import "./steps/panels.ts";
@@ -42,10 +43,12 @@ async function playSection(page: Page, [name, fn]: (typeof SECTIONS)[number], cl
   }
   clock?.sections.push([name, Date.now() - t0, clock.slept - s0]);
 }
-export async function runSteps(page: Page, ctx: BrowserContext, opts: RunOptions = {}) {
+export async function runSteps(page: Page, ctx: BrowserContext, opts: RunOptions = {}): Promise<string[]> {
   bind(page, ctx, opts);
   const clock = process.env.TIMING ? startClock(ctx) : null;
-  const order = opts.reverse ? [...SECTIONS].reverse() : SECTIONS;
-  for (const s of order) if (!skipped(opts, s[0])) await playSection(page, s, clock);
+  const ordered = opts.reverse ? [...SECTIONS].reverse() : SECTIONS;
+  const order = (opts.shard ? dealt(ordered, opts.shard) : ordered).filter((s) => !skipped(opts, s[0]));
+  for (const s of order) await playSection(page, s, clock);
   if (clock) report(clock);
+  return order.map((s) => s[0]);
 }

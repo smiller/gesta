@@ -5,7 +5,7 @@ import * as A from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
 
 export type Tree = { name: string; text?: string; kids?: Tree[] };
-export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean }
+export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean; shard?: [number, number] }
 /* the day the page's Date is pinned to (context.clock.setFixedTime). Never
    a seeded day: a run on a day whose
    number a seeded day shares (the 5th, the 6th) read one Day option fewer,
@@ -64,21 +64,9 @@ export async function jump(p: Page, ms: number) {
 export async function rest(p: Page) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }
-/* the alert area flush under the masthead, which it follows a frame late
-   on a resize (read 27 px under the text on a grid after a verse entry),
-   and the scroll and the layout's height the same over four frames, a
-   measuring pass a frame after a change having run
-   (pin: the entry's top › an entry opening on a grid) */
-export async function settled(p: Page) {
-  await p.evaluate(() => new Promise<void>((done) => {
-    let last = "", same = 0, frames = 0;
-    const flush = () => { const a = document.querySelector(".alerts"), h = document.querySelector(".site-head"); return !a || !h || Math.round(a.getBoundingClientRect().top) === Math.round(h.getBoundingClientRect().bottom); };
-    const tick = () => { const now = scrollY + ":" + document.documentElement.scrollHeight; same = now === last && flush() ? same + 1 : 0; last = now; if (same >= 4 || ++frames > 120) done(); else requestAnimationFrame(tick); };
-    requestAnimationFrame(tick);
-  })).catch(() => {});
-}
 
 export { A };
+export const settled = A.settled;
 export const laid = async <T>(read: (p: Page) => Promise<T>): Promise<T> => { await settled(page); return read(page); };
 export const R = A.read, S = A.sel;
 /* the run's page and context, bound before the first section */
@@ -162,6 +150,8 @@ export const seed = (seeds: Record<string, string>) => A.reseeded(page, seeds);
 export const keep = (name: string, value: string) => page.evaluate(([k, v]) => localStorage.setItem(k, v), [A.ns + name, value]);
 /* whether a foreign write has landed in the store, read back for up to 30 rests: the reading says so when it has not */
 export const seededIn = async (key: string) => { for (let i = 0; i < 30; i++) { if (await A.stored(page, key)) return true; await rest(page); } return false; };
+/* the open entry's stored text holding `text`, read back for up to 40 rests */
+export const storedWith = async (text: string) => { for (let i = 0; i < 40; i++) { if (((await A.stored(page)) ?? "").includes(text)) return; await rest(page); } };
 /* the window, a paragraph by its first words, the corner's text */
 export const winY = () => page.evaluate(() => Math.round(scrollY));
 export const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);

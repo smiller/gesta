@@ -1,4 +1,4 @@
-import { section, laid, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
+import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -20,6 +20,7 @@ async function afterWarm(): Promise<void> {
   await page.keyboard.press("Escape");
   await log("after Escape", await R.menu(page));
   await page.click(S.commonplaceOpener);
+  await settled(page);
   await page.mouse.click(500, 400);
   await log("after a click outside", await R.menu(page));
   await page.click(S.commonplaceOpener);

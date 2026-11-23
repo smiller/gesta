@@ -19,6 +19,7 @@ declare global {
     __selFrom: unknown[];
     __selUnmoved: () => boolean;
     __selCalls: { m: string; t: number; collapsed: boolean; by: string }[];
+    __muts: { t: number; type: string; attr: string; on: string }[];
     __persistAsked: boolean;
     __clip: [Clipboard["write"], Clipboard["writeText"], Document["execCommand"]];
     __idb: [IDBObjectStore["put"], IDBObjectStore["add"]];

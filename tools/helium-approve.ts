@@ -18,12 +18,13 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
 import { compared, ledger, type Compared } from "./heliumVerdict.ts";
+import { merged } from "./heliumShards.ts";
 
 const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
-interface Tool { script: string; args?: string[]; env?: Record<string, string>; heldTo?: string }
+interface Tool { script: string; args?: string[]; env?: Record<string, string>; heldTo?: string; dealt?: boolean }
 const TOOLS: Record<string, Tool> = {
-  corner: { script: "tools/helium-corner.ts" },
-  order: { script: "tools/helium-corner.ts", args: [profileOf("order")], env: { ORDER: "reverse" }, heldTo: "corner" },
+  corner: { script: "tools/helium-corner.ts", dealt: true },
+  order: { script: "tools/helium-corner.ts", args: [profileOf("order")], env: { ORDER: "reverse" }, heldTo: "corner", dealt: true },
   bridge: { script: "tools/helium-bridge.ts" },
   reader: { script: "tools/helium-reader.ts" },
 };
@@ -86,22 +87,35 @@ function approveOne(name: string): void {
   console.log(spawnSync("diff", ["-u", L.approvedPath(name), L.receivedPath(name)], { encoding: "utf8" }).stdout || "");
   console.log(name + ": approved, the run that was played (" + L.approve(name, () => fingerprint(inputsFor(name))).split("\n").length + " lines)");
 }
+/* the sections dealt over this many windows, each with its own browser
+   and profile: corner and order together took 268 s in 1, 122 in 3, 96
+   in 4, 74-82 in 5, 100 in 6 on ten cores, and 8 read one section
+   otherwise */
+const WINDOWS = Math.max(1, +(process.env.WINDOWS ?? 5));
+const windowsOf = (name: string): string[] => (TOOLS[name].dealt && WINDOWS > 1 ? [...Array(WINDOWS).keys()].map((k) => name + "-" + k) : [name]);
 /* the last run's browser may still be exiting: kill, then retry the
    delete for a few seconds rather than fail on a held directory */
 function clearProfile(name: string): void {
   spawnSync("pkill", ["-f", "gesta-helium-" + name + "-profile"]);
   for (let i = 0; i < 20; i++) { try { rmSync(profileOf(name), { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); } }
 }
-function play(tool: Tool): Promise<string> {
+interface Printed { out: string; tail: string }
+function playOne(tool: Tool, args: string[], more: Record<string, string>): Promise<Printed> {
   return new Promise((done) => {
     let out = "", err = "", settled = false;
-    const finish = (tail: string): void => { if (!settled) { settled = true; done(scrub(out + tail)); } };
-    const child = spawn("node", [tool.script, ...(tool.args ?? [])], { env: { ...env, ...tool.env } });
+    const finish = (tail: string): void => { if (!settled) { settled = true; done({ out, tail }); } };
+    const child = spawn("node", [tool.script, ...args], { env: { ...env, ...tool.env, ...more } });
     child.stdout.on("data", (b) => { out += b; });
     child.stderr.on("data", (b) => { err += b; });
     child.on("error", (e) => finish("\nEXIT " + e.message + "\n"));
     child.on("close", (code, signal) => { const bad = code || signal; finish(bad ? "\nEXIT " + bad + "\n" + err : ""); });
   });
+}
+async function play(name: string): Promise<string> {
+  const tool = TOOLS[name], ws = windowsOf(name);
+  if (ws.length === 1) { const p = await playOne(tool, tool.args ?? [], {}); return scrub(p.out + p.tail); }
+  const ps = await Promise.all(ws.map((w, k) => playOne(tool, [profileOf(w)], { SHARD: k + "/" + ws.length })));
+  return scrub(merged(ps.map((p) => p.out)) + ps.map((p) => p.tail).join(""));
 }
 function said(name: string, c: Exclude<Compared, { pass: true }>): string {
   if ("failed" in c) return name + ": FAILED — " + c.failed;
@@ -120,7 +134,7 @@ function prepare(name: string): Playing | null {
   const fp = fingerprint(inputsFor(name));
   if (L.reusable(name, fp, !!process.env.STEPS)) { console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   L.clear(name);
-  clearProfile(name);
+  for (const w of windowsOf(name)) clearProfile(w);
   return { name, played: fp };
 }
 /* a run held to another is held to that one's run played beside it, so a
@@ -137,7 +151,7 @@ function judge({ name, played }: Playing, received: string, baseline: string | n
 }
 async function playGroup(group: string[]): Promise<void> {
   const runs = group.filter((n) => run.includes(n)).map(prepare).filter((r): r is Playing => r !== null);
-  const outs = await Promise.all(runs.map((r) => play(TOOLS[r.name])));
+  const outs = await Promise.all(runs.map((r) => play(r.name)));
   const played = new Map(runs.map((r, i) => [r.name, outs[i]]));
   for (const r of runs) judge(r, played.get(r.name)!, baselineOf(r.name, played));
 }

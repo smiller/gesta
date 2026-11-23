@@ -1,4 +1,4 @@
-import { section, laid, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
+import { section, laid, settled, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -357,7 +357,7 @@ async function switchFrom20pxDown(): Promise<void> {
   await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
-  await rest(page);
+  await settled(page);
   await page.mouse.click(400, (await page.evaluate(() => innerHeight)) - 30);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});

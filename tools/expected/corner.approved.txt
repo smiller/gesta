@@ -28,7 +28,7 @@ a verse block copied and pasted: {"fence":true,"pairs":36,"head":["::: verse","M
 == refused fence
 refused fence: arrived at commonplace/Fenced: {"cursor":"at a line's start"}
 a refused fence: {"corner":"::: versey — not a block Gesta knows, so it stayed a paragraph","paragraphs":1,"cursor":"at the end","screen":"commonplace/Fenced · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-a clean switch: {"corner":"10 entries stored","verse":true,"cursor":"at the end","screen":"commonplace/Fenced · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+a clean switch: {"refusalStands":false,"verse":true,"cursor":"at the end","screen":"commonplace/Fenced · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 == quote tab
 quote tab: arrived at commonplace/Quoted: {"cursor":"at a line's start"}
 Tab in a quote: {"md":">> quoted words","cursor":"at the end","screen":"commonplace/Quoted · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}

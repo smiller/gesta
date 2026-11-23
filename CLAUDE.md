@@ -373,7 +373,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     module a group, over `steps/kit.ts` and `steps/timing.ts`; `TODAY` the
     fixed date the page's clock is set to), `adapters/app.ts` (the
     readings over the app), `helium-corner.ts` (the driver: `STEPS=`,
-    `ORDER=reverse`, `TIMING=1`), `helium-approve.ts` (the verdict),
+    `ORDER=reverse`, `TIMING=1`, `SHARD=k/n`), `helium-approve.ts` (the verdict;
+    `WINDOWS=n`), `heliumShards.ts` (the sections dealt over windows and
+    their prints merged back as one window's),
     `heliumStamp.ts`, `heliumOrder.ts`, `helium-probe.ts`,
     `helium-bridge.ts`, `helium-reader.ts`. These are checked by their own
     `tsconfig.helium.json` under `npm run check`, over `heliumPage.ts`

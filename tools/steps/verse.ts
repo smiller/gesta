@@ -312,8 +312,7 @@ async function gotoToolbarOnWorkByParagraph(): Promise<void> {
   await rest(page);
 }
 async function escapeOnWorkByParagraph(): Promise<void> {
-  await page.evaluate(() => { const w = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) { const i = n.data.indexOf("Nam quid aliud"); if (i >= 0) { getSelection().setBaseAndExtent(n, i, n, i + 14); break; } } });
-  await rest(page);
+  await R.selectBetween(page, "Nam quid aliud", "Nam quid aliud");
   await page.keyboard.press("Control+Meta+r");
   await rest(page);
 }
