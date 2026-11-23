@@ -107,3 +107,8 @@ conversation.
      isMenu and givesFocusBack in menuModel.ts, with tests.
   7. BackupsPanelDeps was renamed BackupsOpenerDeps by the rename
      script's /PanelDeps/: restored.
+- 10:46, A15.1.2 (the A15.1 architecture run's candidate 5, asked: "fold
+  it in to the fixes"): shelvedRoots(ns, keys, shelvesMd, open) in
+  src/store/shelves.ts, beside rootGroups, for the Go to row, the search
+  scope and the menus; the two numeric localeCompare sorts become
+  childrenOf's byName, the same collation with a tie-break.

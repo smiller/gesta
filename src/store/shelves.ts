@@ -3,7 +3,8 @@ import { parseMarkdown } from "../model/parse.ts";
 import { schema } from "../model/schema.ts";
 import { linkRuns } from "./links.ts";
 import { entryAt } from "./nav.ts";
-import { NS_BOOK, asAddress } from "./keys.ts";
+import { NS_BOOK, asAddress, byName } from "./keys.ts";
+import { childrenOf } from "./lists.ts";
 
 export const SHELVES = "Shelves";
 export interface Shelf { name: string; roots: string[] }
@@ -69,4 +70,10 @@ export function rootGroups(ns: string, roots: string[], shelvesMd: string, openR
   const groups = shelved(roots, parseShelves(shelvesMd));
   if (openRoot === SHELVES) groups.push({ shelf: null, roots: [SHELVES] });
   return groups;
+}
+/* the roots a list shows: the keys' own, and the open one when no key yet holds it */
+export function shelvedRoots(ns: string, keys: string[], shelvesMd: string, open: string | null): ShelfGroup[] {
+  const roots = childrenOf(keys, ns);
+  if (open !== null && !roots.includes(open)) roots.push(open);
+  return rootGroups(ns, roots.sort(byName), shelvesMd, open);
 }

@@ -20,7 +20,7 @@ import type { Journal } from "../store/reference.ts";
 import { rootLabel, LABEL_CAP } from "./mastheadModel.ts";
 import { trimLabel } from "../model/trim.ts";
 import { nsGroupLabel } from "./searchModel.ts";
-import { rootGroups, SHELVES, type ShelfGroup } from "../store/shelves.ts";
+import { shelvedRoots, SHELVES, type ShelfGroup } from "../store/shelves.ts";
 
 export interface Row { v: string; label: string; group?: string | null; ns?: string; here?: boolean }
 export interface Level { level: number; aria: string; rows: Row[]; value: string | null; valueNs?: string; sentinel: string | null; path: string | null }
@@ -51,10 +51,7 @@ function groupRows(w: GotoWorld, key: string, g: ShelfGroup): Row[] {
   return g.roots.map((n) => ({ v: n, label: trimLabel(rootLabel(key, n, w.journal), LABEL_CAP), ns: key, group }));
 }
 function nsDestinations(w: GotoWorld, key: string, open: string | null): Row[] {
-  const roots = childrenOf(w.keys, key);
-  if (open && !roots.includes(open)) roots.push(open);
-  roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  return rootGroups(key, roots, w.cache[entryKey(NS_BOOK.key, SHELVES)] || "", open).flatMap((g) => groupRows(w, key, g));
+  return shelvedRoots(key, w.keys, w.cache[entryKey(NS_BOOK.key, SHELVES)] || "", open).flatMap((g) => groupRows(w, key, g));
 }
 export function destinationRows(w: GotoWorld, date: string, tag: string | null): Row[] {
   const open = nsOf(date) && tag ? tagParts(tag).name : null;

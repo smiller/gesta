@@ -6,8 +6,7 @@
    name a row the list does not hold (pin: searchModel.test › the open
    unregistered book joins its own group) */
 import { nsOf, tagParts, entryKey, isDayKey, KEYED_NS, NS_KEYS, COMMONPLACE_KEY, capitalized, plural } from "../store/keys.ts";
-import { rootGroups, type ShelfGroup } from "../store/shelves.ts";
-import { childrenOf } from "../store/lists.ts";
+import { shelvedRoots, type ShelfGroup } from "../store/shelves.ts";
 import type { Journal } from "../store/reference.ts";
 import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_COMMONPLACES, bookScope, type Scope, type Result } from "../store/search.ts";
 import { rootLabel, LABEL_CAP } from "./mastheadModel.ts";
@@ -32,10 +31,7 @@ function groupOptions(ns: string, g: ShelfGroup, journal: Journal): ScopeOption[
   return [{ label: trimLabel("All " + g.shelf, LABEL_CAP), scope: { kind: "shelf", ns, shelf: g.shelf, books: new Set(g.roots) }, group }, ...books];
 }
 function nsOptions(ns: string, open: Scope, w: ScopeWorld): ScopeOption[] {
-  const book = openBook(open, ns), roots = childrenOf(w.keys, ns);
-  if (book !== null && !roots.includes(book)) roots.push(book);
-  roots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  return rootGroups(ns, roots, w.shelvesMd ?? "", book).flatMap((g) => groupOptions(ns, g, w.journal));
+  return shelvedRoots(ns, w.keys, w.shelvesMd ?? "", openBook(open, ns)).flatMap((g) => groupOptions(ns, g, w.journal));
 }
 export function scopeOptions(date: string, tag: string | null, w: ScopeWorld): ScopeOption[] {
   const open = defaultScope(date, tag);

@@ -1,5 +1,5 @@
 import { test, expect } from "vitest";
-import { parseShelves, shelved, rootGroups, SHELVES } from "./shelves.ts";
+import { parseShelves, shelved, rootGroups, shelvedRoots, SHELVES } from "./shelves.ts";
 
 const PAGE = `# Shelves
 
@@ -65,4 +65,12 @@ test("the groups every list draws: the bookshelf's by shelf, the shelves entry o
   expect(rootGroups("bookshelf", ["Horace", "Milton, John", SHELVES], md, null)).toEqual([{ shelf: "Latin", roots: ["Horace"] }, { shelf: "English", roots: ["Milton, John"] }]);
   expect(rootGroups("bookshelf", ["Horace", SHELVES], md, SHELVES)).toEqual([{ shelf: "Latin", roots: ["Horace"] }, { shelf: null, roots: [SHELVES] }]);
   expect(rootGroups("commonplace", ["Notes", SHELVES], md, null)).toEqual([{ shelf: null, roots: ["Notes", SHELVES] }]);
+});
+
+test("a namespace's roots on their shelves, from the keys: the open root joined in its place by name when the keys hold none of it, once", () => {
+  const md = "## Latin\n- [Horace](#bookshelf/Horace)\n\n## English\n";
+  const keys = ["bookshelf/Horace", "bookshelf/Horace/Odes", "bookshelf/Milton, John", "commonplace/Books", "commonplace/2 Notes", "commonplace/10 Notes"];
+  expect(shelvedRoots("bookshelf", keys, md, null)).toEqual([{ shelf: "Latin", roots: ["Horace"] }, { shelf: "English", roots: ["Milton, John"] }]);
+  expect(shelvedRoots("commonplace", keys, "", "3 New")).toEqual([{ shelf: null, roots: ["2 Notes", "3 New", "10 Notes", "Books"] }]);
+  expect(shelvedRoots("commonplace", keys, "", "Books")).toEqual([{ shelf: null, roots: ["2 Notes", "10 Notes", "Books"] }]);
 });

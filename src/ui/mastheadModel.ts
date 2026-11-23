@@ -15,7 +15,7 @@ import { nsOf, tagParts, entryKey, entryHash, prettyDate, isDayKey, titlesRoots 
 import { childrenOf } from "../store/lists.ts";
 import type { Journal } from "../store/reference.ts";
 import { subButtons, type SubButtons } from "./subEntries.ts";
-import { rootGroups } from "../store/shelves.ts";
+import { shelvedRoots } from "../store/shelves.ts";
 import { trimLabel } from "../model/trim.ts";
 
 export interface Crumb { text: string; href: string | null; title: string }
@@ -65,6 +65,6 @@ export function mastheadModel(date: string, tag: string | null, w: Where): Masth
 export const LABEL_CAP = 60;
 export function menuRows(ns: string, keys: string[], journal: Journal, shelvesMd = ""): MenuRow[] {
   const row = (name: string, under: boolean): MenuRow => ({ text: rootLabel(ns, name, journal), href: entryHash(ns, name), ...(under ? { shelved: true as const } : {}) });
-  return rootGroups(ns, childrenOf(keys, ns), shelvesMd, null).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))
+  return shelvedRoots(ns, keys, shelvesMd, null).flatMap((g) => g.shelf === null ? g.roots.map((name) => row(name, false))
     : [{ text: trimLabel(g.shelf, LABEL_CAP), href: "", shelf: true as const }, ...g.roots.map((name) => row(name, true))]);
 }
