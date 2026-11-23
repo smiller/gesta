@@ -5,14 +5,14 @@ import { ALERTS, PHRASES, type AlertId, type Kind } from "../src/model/alertText
 const VARY = "\uE000";
 /* a parameter stands as …: whatever is read of it, called on it or joined
    from it is … again, and nothing is iterated out of it; a word looked up by it
-   finds none, which shows as … too; cut short, its ellipsis is part of it */
+   finds none, which shows as … too; weighed as a number it is none, so nothing cuts it */
 const varies: unknown = new Proxy(function () {}, {
-  get: (_t, key) => (key === Symbol.toPrimitive ? () => VARY : key === Symbol.iterator ? function* () {} : varies),
+  get: (_t, key) => (key === Symbol.toPrimitive ? (hint: string) => (hint === "number" ? 0 : VARY) : key === Symbol.iterator ? function* () {} : varies),
   apply: () => varies,
 });
 type Words = string | ((p: never) => string);
 export const shown = (words: Words): string =>
-  (typeof words === "string" ? words : String((words as (p: unknown) => string)(varies))).replace(/\bundefined\b/g, VARY).replace(/\uE000…/g, VARY).replace(/\uE000(?:\s*\uE000)+/g, VARY).replace(/\uE000/g, "…").replace(/\n/g, " ⏎ ").replace(/\|/g, "\\|");
+  (typeof words === "string" ? words : String((words as (p: unknown) => string)(varies))).replace(/\bundefined\b/g, VARY).replace(/\uE000(?:\s*\uE000)+/g, VARY).replace(/\uE000/g, "…").replace(/\n/g, " ⏎ ").replace(/\|/g, "\\|");
 
 const KINDS: [Kind, string, string][] = [
   ["error", "Error", "Red. Something went wrong; it stays until what caused it is resolved or it is closed, and a click copies its detail."],

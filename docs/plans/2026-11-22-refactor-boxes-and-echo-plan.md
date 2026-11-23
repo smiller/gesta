@@ -29,3 +29,21 @@ look at candidates 3 and 4", yes to four questions, then "go".
   longer imports src/ui/. The catalogue folds a cut stand-in into one "…",
   so docs/alerts.md is unchanged.
 - Helium: the verdict matched the approved run unchanged.
+- The batch review (A16), `/code-review high d2740d7..HEAD` over this and
+  the landing: 124,513 tokens (its transcript's last message; its own line
+  saying it spent none was wrong). Six findings, fixed (asked: "Yes, fix
+  all six"):
+  1. The four tool readings call one in-page reader, `__pageTop`, beside
+     the alert readers; they still read the published value.
+  2. GLOSSARY.md's Landing: a search jump is centred, not marked; ⌃⌘G's
+     mark goes with the popup, a link's at the next click or moving key.
+  3. alertArea.ts's and landingActs.ts' moved comments say their own
+     reasons, not their callers'.
+  4. `findsOf` reads what the boxes find; `ask()` no longer walks the
+     blocks for labels it throws away.
+  5. The catalogue's stand-in weighs as 0 when compared as a number, so
+     `trimLabel` leaves it whole; the fold that would have swallowed a real
+     "…" went. A length of 0 was tried first: it broke the rows of entries
+     that read a parameter's length.
+  6. (pre-existing) typeStanzaFor, thereAlreadyWithSubs and shelvesTaken
+     cap what they quote too.

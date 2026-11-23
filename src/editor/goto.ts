@@ -227,16 +227,15 @@ function proseAndVerse(doc: Node): PopupLabels {
    convention (pin: goto.test › is read once with its label) */
 type Finds = { line: "stanza" | "number"; page: "paragraph" | "page" };
 const byForm = (doc: Node, c: Asked): boolean => c.proseByParagraphVerseByLine && !hasStanzas(doc) && !hasPages(doc);
-function boxesOf(doc: Node | null, c: Asked): PopupLabels & { finds: Finds } {
-  if (!doc) return { kind: "none", label: lineLabel(c), pageLabel: "Page", finds: { line: "number", page: "page" } };
-  if (byForm(doc, c)) return { ...proseAndVerse(doc), finds: { line: "number", page: "paragraph" } };
-  return { kind: askKind(doc), label: lineLabel(c), pageLabel: "Page", finds: { line: hasStanzas(doc) ? "stanza" : "number", page: "page" } };
+const findsOf = (doc: Node, c: Asked): Finds => (byForm(doc, c) ? { line: "number", page: "paragraph" } : { line: hasStanzas(doc) ? "stanza" : "number", page: "page" });
+function boxesOf(doc: Node | null, c: Asked): PopupLabels {
+  if (!doc) return { kind: "none", label: lineLabel(c), pageLabel: "Page" };
+  return findsOf(doc, c).page === "paragraph" ? proseAndVerse(doc) : { kind: askKind(doc), label: lineLabel(c), pageLabel: "Page" };
 }
 /* the popup as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
 export function popup(doc: Node | null, c: Asked): PopupLabels & { none: Said; inSource: Said } {
-  const { finds: _, ...labels } = boxesOf(doc, c);
-  return { ...labels, none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
+  return { ...boxesOf(doc, c), none: wordsFor(c).none, inSource: said("switchToGo", { what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
 export type Answer = { pos: number; asked: number | string; said: Said | null } | { said: Said };
@@ -310,7 +309,7 @@ function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from
    a link to a line › a link to a stanza, and line) */
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
 export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "popup" | "link"): Answer {
-  const { finds } = boxesOf(doc, c);
+  const finds = findsOf(doc, c);
   if ("page" in words) return finds.page === "paragraph" ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
   return finds.line === "stanza" ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);

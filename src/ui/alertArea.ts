@@ -5,11 +5,10 @@ export function areaPlace(headHeight: number, areaHeight: number): Record<string
   return { "--alert-area-top": headHeight + "px", "--alert-area-h": areaHeight + "px", "--alert-area-bottom": headHeight + areaHeight + "px" };
 }
 
-/* where the page shows from, under the masthead and the alert area: measured
-   now, for placing anything just after a change, since a frame queued as a row
-   opens runs before the observer below has told the new height; or as the
-   last resize left it, for the scroll to the caret at every keystroke, which
-   a layout forced per key would slow (pin: alertArea.test › the page's top) */
+/* where the page shows from, under the masthead and the alert area:
+   measured, at the cost of a layout forced at the call; or as the observer
+   below last told it, with none, a frame behind a change it has not yet seen
+   (pin: alertArea.test › the page's top) */
 let clear = 0, bands: HTMLElement[] = [];
 export const pageTop = (): number => Math.max(0, ...bands.map((b) => b.getBoundingClientRect().bottom));
 export const pageTopCached = (): number => clear;

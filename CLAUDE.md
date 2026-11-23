@@ -329,8 +329,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   load: loading, failed or in, what an act refused before it says, and
   its errors). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,
-  `gotoRowActs.ts`, `gotoPopupActs.ts`, `landingActs.ts` (a landing: ⌃⌘G's,
-  a link to a line's, a search jump's), `replaceActs.ts`, `bookmarkActs.ts`,
+  `gotoRowActs.ts`, `gotoPopupActs.ts`, `landingActs.ts` (a landing, ⌃⌘G's or
+  a link to a line's, and a search jump centred), `replaceActs.ts`, `bookmarkActs.ts`,
   `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
   `panelActs.ts`, `backupsPanelActs.ts`. The components: `Masthead`,
   `Alerts`, `Search`, `GotoRow`, `Toolbar`, `GotoPopup`, `ReplaceBar`, `Help`

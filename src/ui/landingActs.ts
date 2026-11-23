@@ -34,7 +34,7 @@ export interface LandingDeps {
 export interface Landing {
   /* asks the entry for the words, lands on the answer or says why not; true when it landed */
   answer(words: Words, from: "popup" | "link"): boolean;
-  /* a box typed in: the next ask starts its cycle afresh */
+  /* the next ask starts its cycle afresh */
   forgetAsked(): void;
   caretBack(): void;
   unmark(): void;

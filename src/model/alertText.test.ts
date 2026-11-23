@@ -32,7 +32,7 @@ test("a count of entries says entry for one and entries for any other", () => {
   expect(alertWords(said("exportedSomeFailed", { n: 1, failed: 1, missing: 0 }))).toBe("exported 1 entry; 1 file(s) failed");
 });
 
-test("an alert quoting what was typed, a page or a bookmark's name and key cuts it at 24 characters; a refused fence quotes its word in full", () => {
+test("an alert quoting what was typed, a page or a name cuts it at 24 characters; a refused fence quotes its word in full", () => {
   const long = "abcdefghijklmnopqrstuvwxyz0123";
   const cut = "abcdefghijklmnopqrstuvw…";
   expect(alertWords(said("notANumber", { typed: long, noun: "line" }))).toBe(cut + " is not a line number");
@@ -40,5 +40,8 @@ test("an alert quoting what was typed, a page or a bookmark's name and key cuts 
   expect(alertWords(said("noPage", { page: long }))).toBe("no page " + cut + " here");
   expect(alertWords(said("alreadyOn", { label: long }))).toBe("already on " + cut);
   expect(alertWords(said("keyTaken", { key: long, label: long }))).toBe("“" + cut + "” already goes to " + cut);
+  expect(alertWords(said("typeStanzaFor", { line: long }))).toBe("type a stanza for line " + cut);
+  expect(alertWords(said("thereAlreadyWithSubs", { name: long }))).toBe("“" + cut + "” is there already and has sub-entries of its own");
+  expect(alertWords(said("shelvesTaken", { name: long }))).toBe("“" + cut + "” is the shelves’ own name");
   expect(PHRASES.notANumber({ typed: long, noun: "stanza" })).toBe(long + " is not a stanza number");
 });

@@ -16,6 +16,8 @@ export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
     const live = () => JSON.parse(document.documentElement.dataset.alerts || "{}");
     window.__corner = () => ((f) => [f.error, f.warning].filter(Boolean).join(" · ") || f[f.latest])(live());
     window.__alerts = () => ((f) => [f.error, f.warning, f.info, f.success].filter(Boolean).join(" · "))(live());
+    /* where the page shows from, as the page publishes it */
+    window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;
   });
 }
 /* the live alerts as the page publishes them, to compare against after a gesture */

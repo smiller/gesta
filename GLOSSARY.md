@@ -98,6 +98,7 @@ numbers, and goes there.
 _Avoid_: the retired words `tools/vocabulary.ts` lists.
 
 **Landing**:
-Where ⌃⌘G, a link to a line or a search jump puts the reader: the place
-centred in the band under the masthead and the alert area, marked until the
-hand next clicks or presses a key that moves.
+Where ⌃⌘G or a link to a line puts the reader: the line centred in the band
+under the masthead and the alert area, and marked. ⌃⌘G's mark goes when
+the popup closes; a link's at the hand's next click or key that moves. A
+jump to a search highlight is centred the same way, but not marked.

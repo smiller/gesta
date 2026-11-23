@@ -129,7 +129,7 @@ export const read = {
   /* the triangle stands beside the heading's FIRST line: a two-line heading's middle is below it (the step's first aim) */
   clickFoldTriangle: async (page: Page, text: string) => { const at = await page.evaluate((t) => { const h = [...document.querySelectorAll("#editor h2")].find((x) => x.textContent.startsWith(t)); if (!h) return null; const r = h.getBoundingClientRect(); return { x: r.left - 12, y: r.top + 14 }; }, text); if (at) { await page.mouse.click(at.x, at.y); await page.waitForTimeout(200); } },
   /* the places step: the line just under the masthead, and whether the window is at the top */
-  place: (page: Page) => page.evaluate(() => { const top = (parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
+  place: (page: Page) => page.evaluate(() => { const top = window.__pageTop() + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + 40, top); return { atTop: scrollY === 0, line: (el?.closest("p, li, h1, h2, h3, .row, .verse > *") || el)?.textContent.trim().slice(0, 32) || null }; }),
   /* the margin-note step: each margin-note's form and width, the row it stands beside, its middle against that row's first line, how far it was pushed; the line numbers shown; which margin-note holds the caret */
   margins: (page: Page) => page.waitForFunction(() => [...document.querySelectorAll("#editor .margin-note")].every((n) => n.classList.contains("in-margin") === (n.style.getPropertyValue("--mn-w") !== "")), null, { timeout: 3000 }).catch(() => {}).then(() => page.evaluate(() => {
     const caret = getSelection().anchorNode;
@@ -154,7 +154,7 @@ export const read = {
       if (!cell) return null;
       cell.scrollIntoView({ block: "center" });
       /* a cell tall enough to start under the alert area stuck below the masthead is scrolled clear of it */
-      const clear = (parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0) + 10, top = cell.getBoundingClientRect().top;
+      const clear = window.__pageTop() + 10, top = cell.getBoundingClientRect().top;
       if (top < clear) scrollBy(0, top - clear);
       const w = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT); const ts = []; for (let t = w.nextNode(); t; t = w.nextNode()) ts.push(t);
       const box = (t: Node, i: number) => { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + 1); return r.getBoundingClientRect(); };
@@ -287,7 +287,7 @@ export const read = {
   sourceCaretTo: (page: Page, text: string) => page.evaluate((t) => { const a = document.querySelector("textarea.source"); const i = a.value.indexOf(t); a.focus(); a.setSelectionRange(i, i); }, text),
   /* the stanza at the window's top, just under the masthead: in the rendered view the first verse still showing; in the source the stanza whose lines hold the top line, or the next after a gap (the lines unwrapped: the step's are short) */
   topStanza: (page: Page) => page.evaluate(() => {
-    const under = (parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0) + 2;
+    const under = window.__pageTop() + 2;
     const ta = document.querySelector("textarea.source");
     if (!ta) { const v = [...document.querySelectorAll("#editor .verse[data-stanza]")].find((x) => x.getBoundingClientRect().bottom > under); return v ? +v.dataset.stanza : null; }
     const cs = getComputedStyle(ta), lines = ta.value.split("\n");

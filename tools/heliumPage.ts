@@ -8,6 +8,7 @@ declare global {
     __lastEdit: number;
     __corner: () => string | undefined;
     __alerts: () => string;
+    __pageTop: () => number;
     __writes: number;
     __typed: number;
     __walks: number;

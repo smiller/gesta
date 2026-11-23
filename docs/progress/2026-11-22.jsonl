@@ -121,3 +121,7 @@
 {"at":"2026-11-22T21:57","ev":"done","id":"A15.1.1","note":"e0e739f, accepted"}
 {"at":"2026-11-22T22:00","ev":"add","id":"A15.1.3","list":"A","title":"The popup's boxes read once, and the echo cap in the alert's words: candidates 3 and 4","parent":"A15.1","detail":"Asked: 'Let's look at candidates 3 and 4', yes to four questions, then 'go'. Why: goto.ts decides what the popup's second box means twice, by conditions that agree only by accident; eight sites cap quoted text by hand and goto.ts imports src/ui/ to do it. Done when: one per-entry reading of the boxes feeds popup() and ask(); the five quoting entries cap their own parameters; trimLabel in src/model/trim.ts; the Helium verdict unchanged."}
 {"at":"2026-11-22T22:00","ev":"start","id":"A15.1.3"}
+{"at":"2026-11-22T22:11","ev":"done","id":"A15.1.3","note":"3103156, accepted"}
+{"at":"2026-11-22T22:11","ev":"done","id":"A15.1","note":"2 and 1 built (e0e739f), 3 and 4 built (3103156), 5 queued behind U8 as A15.1.2; walk 138,554 tokens"}
+{"at":"2026-11-22T22:12","ev":"add","id":"A16","list":"A","title":"The batch review: /code-review at HIGH over d2740d7..HEAD","detail":"Asked: /code-review high d2740d7..HEAD, typed at 22:12. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-22T22:12","ev":"start","id":"A16"}
