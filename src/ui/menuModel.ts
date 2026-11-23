@@ -45,6 +45,11 @@ export type PanelName = "help" | "bookmarks" | "shortcuts" | "backups";
 /* what the one slot over the page holds */
 export type Opened = MenuName | PanelName;
 export const isMenu = (name: string | null): name is MenuName => name === "bookshelf" || name === "commonplace";
+export function jRound(opened: Opened | null, gotoOpen: boolean): MenuName | "goto" | "none" {
+  if (opened === "bookshelf") return "commonplace";
+  if (opened === "commonplace") return "goto";
+  return gotoOpen ? "none" : "bookshelf";
+}
 export interface MenuAct { text: string; act: "new" | "shelves" }
 const ACTS: Record<MenuName, MenuAct[]> = {
   bookshelf: [{ text: "New author…", act: "new" }, { text: "Shelves…", act: "shelves" }],

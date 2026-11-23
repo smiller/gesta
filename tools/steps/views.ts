@@ -1,4 +1,4 @@
-import { section, laid, settled, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, seed } from "./kit.ts";
+import { section, laid, settled, page, A, R, S, log, go, write, winY, cornerText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, openGotoRow, seed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -89,18 +89,18 @@ async function wordCountInSourceView(): Promise<void> {
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
 }
 section("go to", async () => {
-  /* the Go to row: ⌃⌘J on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
+  /* the Go to row: opened on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
   await go("2026-09-06");
-  await page.keyboard.press("Control+Meta+j");
+  await openGotoRow(page);
   await rest(page);
-  await log("⌃⌘J on a day", await R.goto(page));
+  await log("the Go to row on a day", await R.goto(page));
   await page.selectOption(S.gotoDay, "05");
   await A.waitEntry(page, "2026-09-05", 5000);
   await log("a day picked", { entry: await A.entry(page), open: await R.gotoOpen(page) });
   await go("bookshelf/Browning,%20Robert/Pippa%20Passes");
-  await page.keyboard.press("Control+Meta+j");
+  await openGotoRow(page);
   await rest(page);
-  await log("⌃⌘J on a book", await R.goto(page));
+  await log("the Go to row on a book", await R.goto(page));
   await page.selectOption(S.gotoDestination, "");
   await rest(page);
   await log("Journal picked from the book", (await R.goto(page)).selects);

@@ -42,7 +42,7 @@ import { menuActs } from "./ui/menuActs.ts";
 import { stepped } from "./ui/pickKeys.ts";
 import { menuArea, browserLayout, provideMenuArea } from "./editor/menuArea.ts";
 import { writeCap } from "./editor/fit.ts";
-import { isMenu, reasonOpened, type CloseReason, type MenuName, type Opened } from "./ui/menuModel.ts";
+import { isMenu, jRound, reasonOpened, type CloseReason, type MenuName, type Opened } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
 import { nsOf } from "./store/keys.ts";
@@ -179,10 +179,15 @@ listenHeldKeys(document, window);
 /* ⌃⌘N is "new": a tagged entry, a sub-entry, a book; ⌃⌘L toggles the Line
    numbering row — L for lines; Tab belongs to indent, so no masthead row is
    reachable from the editor without a chord of its own; ⌃⌘R is the
-   reference, so replace is ⌃⌘E, for exchange */
+   reference, so replace is ⌃⌘E, for exchange; ⌃⌘J goes round the two
+   menus and the Go to row, B being bookmarks */
+const roundTo = (to: ReturnType<typeof jRound>): void => {
+  if (to === "goto" || to === "none") acts.goto.toggle(to === "goto");
+  else acts.opener(to, true);
+};
 const CHORDS: Record<string, () => void> = {
   k: () => acts.search.toggle(!screen.search.open),
-  j: () => acts.goto.toggle(!screen.goto.open),
+  j: () => roundTo(jRound(screen.opened, screen.goto.open)),
   g: () => acts.gotoToolbar.toggle(),
   h: () => acts.opener("help", true),
   b: () => acts.opener("bookmarks", true),

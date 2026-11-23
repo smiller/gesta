@@ -65,6 +65,14 @@ describe("Masthead", () => {
     expect(shelf).toMatch(/<span class="menu-empty[^"]*">No authors yet/);
     expect(shelf).toContain(">New author…</button>");
   });
+  it("the open menu's icon says it is expanded, the other icon not; no ▾ beside either", () => {
+    const expanded = (html: string, label: string) => html.match(new RegExp(`aria-label="${label}" aria-expanded="(\\w+)"`))?.[1];
+    for (const [opened, shelf, place] of [[undefined, "false", "false"], ["bookshelf", "true", "false"], ["commonplace", "false", "true"], ["help", "false", "false"]] as const) {
+      const html = draw("2026-09-07", null, opened ? { opened } : {});
+      expect([expanded(html, "Bookshelf menu"), expanded(html, "Commonplace menu")]).toEqual([shelf, place]);
+      expect(html).not.toContain("▾");
+    }
+  });
   it("the sub-entry buttons: a day offers the create only, a tagged entry rename and delete only, a commonplace all three with its nouns", () => {
     const day = draw("2026-09-07", null);
     expect(day).toMatch(/title="Create a tagged sub-entry for this day"[^>]*>\+ tagged entry/);

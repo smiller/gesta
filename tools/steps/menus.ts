@@ -8,6 +8,7 @@ section("menus", async () => {
   const seeded = await seededIn(OVID);
   await keysOverRows(seeded);
   await focusBack();
+  await round();
 });
 async function keysOverRows(seeded: boolean): Promise<void> {
   const sel = async () => ({ sel: (await R.menuNow(page)).sel });
@@ -107,4 +108,25 @@ async function gridMenuArea(): Promise<void> {
   }));
   await page.keyboard.press("Escape");
   await page.setViewportSize(size);
+}
+async function round(): Promise<void> {
+  /* ⌃⌘J round the two menus and the Go to row to nothing and on again; from an open panel; an icon clicked */
+  await go("commonplace/Horace");
+  for (const n of [1, 2, 3, 4, 5]) {
+    await page.keyboard.press("Control+Meta+j");
+    await rest(page);
+    await log("⌃⌘J pressed " + n, await R.round(page));
+  }
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Control+Meta+h");
+  await rest(page);
+  await log("⌃⌘H", await R.round(page));
+  await page.keyboard.press("Control+Meta+j");
+  await rest(page);
+  await log("⌃⌘J over the help panel", await R.round(page));
+  await page.keyboard.press("Escape");
+  await page.click(S.commonplaceOpener);
+  await rest(page);
+  await log("the commonplace icon clicked", await R.round(page));
+  await page.keyboard.press("Escape");
 }

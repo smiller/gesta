@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { menuItems, menuKey, typedAhead, menuActs, isMenu, handsFocusBack, CLOSE_REASONS, reasonOpened } from "./menuModel.ts";
+import { menuItems, menuKey, typedAhead, menuActs, isMenu, handsFocusBack, CLOSE_REASONS, reasonOpened, jRound } from "./menuModel.ts";
 import type { MenuRow } from "./mastheadModel.ts";
 
 const SHELVED: MenuRow[] = [
@@ -95,5 +95,17 @@ describe("what is a menu, and the focus it gives back", () => {
 describe("a menu closed by something opened", () => {
   it("is closed by Escape as Escape, by a navigation, a view switched or an arrival as a navigation, by anything else as displaced", () => {
     expect((["escape", "navigated", "view", "sourceView", "here", "search", "help", "gotoToolbar"] as const).map(reasonOpened)).toEqual(["escape", "navigated", "navigated", "navigated", "navigated", "displaced", "displaced", "displaced"]);
+  });
+});
+
+describe("⌃⌘J's round", () => {
+  it("goes from nothing open to the bookshelf menu, then the commonplace menu, then the Go to row, then nothing", () => {
+    expect(jRound(null, false)).toBe("bookshelf");
+    expect(jRound("bookshelf", false)).toBe("commonplace");
+    expect(jRound("commonplace", false)).toBe("goto");
+    expect(jRound(null, true)).toBe("none");
+  });
+  it("starts at the bookshelf menu from an open panel", () => {
+    expect((["help", "bookmarks", "shortcuts", "backups"] as const).map((p) => jRound(p, false))).toEqual(["bookshelf", "bookshelf", "bookshelf", "bookshelf"]);
   });
 });

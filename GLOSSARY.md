@@ -96,14 +96,16 @@ Search and Line numbering, one at a time.
 _Avoid_: bar; a table's header row is not one.
 
 **Go to row**:
-The masthead row ⌃⌘J opens: dropdowns that go to another entry, a day of
-the journal or any commonplace.
+The masthead row ⌃⌘J opens on its third press: dropdowns that go to another
+entry, a day of the journal or any commonplace.
 
 **Menu**:
 One of the two lists the masthead's icons open, to go somewhere from: the
 bookshelf menu, its authors by shelf, with New author… and Shelves… at its
 foot; the commonplace menu, every commonplace in name order, with New
-commonplace… at its foot. Opening one selects its first row.
+commonplace… at its foot. Opening one selects its first row and shows its
+icon reversed. ⌃⌘J opens the bookshelf menu, and pressed again the
+commonplace menu.
 _Avoid_: list, index, dropdown (a `<select>`), panel.
 
 **Search results**:

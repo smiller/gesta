@@ -1,4 +1,4 @@
-import { section, laid, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, settled, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
+import { section, laid, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, openGotoRow, settled, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
 
 section("alerts and surfaces", async () => {
   await alertsOpening();
@@ -204,7 +204,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   const options = () => slow.evaluate(() => [...document.querySelectorAll(".page-goto select, #pagegoto select")].reduce((n, s) => n + s.options.length, 0));
   await slow.goto(A.url("commonplace/Horace", "warm=slow&again=1"));
   await rest(slow);
-  await slow.keyboard.press("Control+Meta+j");
+  await openGotoRow(slow);
   await rest(slow);
   const gotoBefore = await options();
   await warmed(slow);
@@ -297,7 +297,7 @@ const list = () => page.evaluate(() => { const p = document.querySelector(".menu
 async function goBoxShelves(): Promise<void> {
   await page.keyboard.press("Escape");
   await go("2026-09-06");
-  await page.keyboard.press("Control+Meta+j");
+  await openGotoRow(page);
   await rest(page);
   await log("the go-to box on its shelves", await groups(S.gotoDestination));
   await page.keyboard.press("Escape");
@@ -388,7 +388,7 @@ section("the entry's top", async () => {
   await view(true);
   await log("the source view", await belowAlerts());
   await view(false);
-  await page.keyboard.press("Control+Meta+j");
+  await openGotoRow(page);
   await rest(page);
   await log("the Go to row open", await belowAlerts());
   await page.keyboard.press("Escape");

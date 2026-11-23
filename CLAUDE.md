@@ -80,7 +80,8 @@ must keep is restated here.
   `one-offs/shelfLines.ts` calls a typed attribution a "source line".
   The band at the top is THE MASTHEAD and its rows masthead rows; "header"
   is a table's first row.
-  ⌃⌘J opens THE GO TO ROW, to another entry; ⌃⌘G THE GO TO TOOLBAR, to a
+  ⌃⌘J goes round THE BOOKSHELF MENU, THE COMMONPLACE MENU and THE GO TO
+  ROW, to another entry; ⌃⌘G THE GO TO TOOLBAR, to a
   line, page, paragraph, verse or stanza in this one, by no older name.
   The masthead's two icons open THE BOOKSHELF MENU and THE COMMONPLACE
   MENU; the go to, format and replace TOOLBARS work on the entry in front

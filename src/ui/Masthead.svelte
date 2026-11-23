@@ -64,19 +64,17 @@
 
 <header class="site-head">
   <nav class="site-home">
-    <button class="datebtn opener" title="Bookshelf menu" aria-label="Bookshelf menu" onmousedown={(e) => e.preventDefault()} onclick={() => onOpener("bookshelf")}>
+    <button class="datebtn opener" title="Bookshelf menu" aria-label="Bookshelf menu" aria-expanded={screen.opened === "bookshelf"} onmousedown={(e) => e.preventDefault()} onclick={() => onOpener("bookshelf")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M8 4.6C6.5 3.6 4.8 3.4 3 3.7v8c1.8-.3 3.5-.1 5 .9 1.5-1 3.2-1.2 5-.9v-8c-1.8-.3-3.5-.1-5 .9z"></path>
         <path d="M8 4.6v8.9"></path>
       </svg>
-      <span class="caret">▾</span>
     </button>
-    <button class="datebtn opener" title="Commonplace menu" aria-label="Commonplace menu" onmousedown={(e) => e.preventDefault()} onclick={() => onOpener("commonplace")}>
+    <button class="datebtn opener" title="Commonplace menu" aria-label="Commonplace menu" aria-expanded={screen.opened === "commonplace"} onmousedown={(e) => e.preventDefault()} onclick={() => onOpener("commonplace")}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M4 1.8 h5.2 L12 4.6 v9.6 H4 z"></path>
         <path d="M9.2 1.8 v2.8 H12"></path>
       </svg>
-      <span class="caret">▾</span>
     </button>
     <button class="datebtn" title="Go to today" aria-label="Go to today" onclick={onToday}>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
@@ -207,7 +205,7 @@
   .date-unit { white-space: nowrap; }
   .datebtn { display: inline-flex; align-items: center; gap: 3px; }
   .datebtn svg { width: 17px; height: 17px; display: block; pointer-events: none; }
-  .datebtn .caret { font-size: 0.7em; opacity: 0.8; pointer-events: none; }
+  .opener[aria-expanded="true"] { background: var(--bar-ink); color: var(--bar-bg); border-radius: 3px; padding: 3px 5px; margin: -3px -5px; }
   .site-tools { flex: 1 1 auto; justify-content: flex-end; display: flex; align-items: center; gap: 10px; min-width: 0; }
   .mode {
     font-family: var(--sans);
