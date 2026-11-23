@@ -4,7 +4,7 @@ import type { Screen } from "./screen.svelte.ts";
 import { bold, italic, underline, strike, heading, quote, codeBlock, codeBlockRefusal, curlSelection, inCode, formatState } from "../editor/format.ts";
 import { blankRowSelected } from "../editor/rowKeys.ts";
 import { passageAt } from "../editor/passage.ts";
-import { visibleTop } from "./visibleTop.ts";
+import { pageTop } from "./alertArea.ts";
 import { said, type Raise } from "../model/alertText.ts";
 
 type BarView = NonNullable<Session["view"]>;
@@ -60,14 +60,14 @@ export function formatBar(d: FormatBarDeps): FormatBar {
   let moved = 0;
   const moveText = (by: number): void => { moved = by; mountEl.style.paddingTop = by ? by + "px" : ""; };
   const settled = (rect: DOMRect): DOMRect => {
-    const by = roomAbove(rect.top - moved, visibleTop());
+    const by = roomAbove(rect.top - moved, pageTop());
     if (by === moved) return rect;
     moveText(by);
     return placedOver() ?? rect;
   };
   const showAt = (view: BarView, rect: DOMRect): void => {
     bar.left = rect.left + rect.width / 2;
-    bar.top = Math.max(rect.top, visibleTop() + 8);
+    bar.top = Math.max(rect.top, pageTop() + 8);
     bar.incode = inCode(view.state);
     bar.on = formatState(view.state);
     bar.canTag = buttons().canCreate;

@@ -32,8 +32,7 @@ import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./mode
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { plainChord } from "./ui/heldKeys.ts";
-import { visibleTop } from "./ui/visibleTop.ts";
-import { areaClear } from "./ui/alertArea.ts";
+import { pageTop, pageTopCached } from "./ui/alertArea.ts";
 
 export type OpenHow = "arrive" | "keep";
 /* what a navigation to where you already are says */
@@ -156,14 +155,9 @@ export function startSession(opts: SessionOptions): Session {
       .catch((err: unknown) => { decoding = false; console.error("picture not pasted", err); raise("pictureUnreadable"); });
   }
   const folds = foldMemory(stored(NS + "folds", parseFoldStore), () => Object.keys(layer.cache));
-  /* read at every scroll to the caret, a keystroke's included: a cached
-     height, not a layout forced on the page the keystroke just changed */
-  let mastheadHeight = 0;
-  const head = document.querySelector(".site-head");
-  if (head && typeof ResizeObserver === "function") new ResizeObserver(() => { mastheadHeight = (head as HTMLElement).offsetHeight; }).observe(head);
   /* the masthead is sticky over the page's top: a place is read, and set,
      just under it (pin: places › Back) */
-  const underMasthead = (): number => visibleTop() + 4;
+  const underMasthead = (): number => pageTop() + 4;
   const viewport: Viewport = { y: () => window.scrollY, scrollTo: (y) => window.scrollTo(0, y), under: underMasthead };
   function browserPage(): Page {
     /* the window's place is the page's alone: the browser's own restore on
@@ -195,7 +189,7 @@ export function startSession(opts: SessionOptions): Session {
       onRoute: (frag) => goto(frag, said("alreadyHere")),
       raise: (s) => { raise(s); },
       onPasteFile: pasteFile,
-      clearOf: () => Math.max(mastheadHeight, areaClear()),
+      clearOf: pageTopCached,
     });
     return rendered;
   }

@@ -156,7 +156,7 @@ const shrunk = async (fn: () => Promise<unknown>) => {
     try { await rest(page); return await fn(); }
     finally { await page.evaluate(() => { const h = document.querySelector(".site-head"); h.style.maxHeight = ""; h.style.overflow = ""; }); await rest(page); }
   };
-const rowUnderHead = () => page.evaluate(() => { const top = Math.max(0, ...[".site-head", ".alerts"].map((q) => document.querySelector(q)?.getBoundingClientRect().bottom ?? 0)) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
+const rowUnderHead = () => page.evaluate(() => { const top = (parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0) + 6; const box = document.querySelector("#editor .ProseMirror").getBoundingClientRect(); const el = document.elementFromPoint(box.left + box.width / 2, top); return (el?.closest(".vrow, p, li, h1, h2, h3") || el)?.textContent.trim().slice(0, 32) || null; });
 async function backToInlineCodeLines(): Promise<void> {
   await go("commonplace/Horace");
   if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await rest(page); }

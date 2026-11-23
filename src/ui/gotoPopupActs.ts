@@ -3,12 +3,9 @@ import type { Screen } from "./screen.svelte.ts";
 import type { Journal } from "../store/reference.ts";
 import { conventionsOf } from "../store/conventions.ts";
 import { entryKey } from "../store/keys.ts";
-import { ask, popup, type Words } from "../editor/goto.ts";
-import { openFoldAt } from "../editor/folds.ts";
-import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
-import { caretNear } from "../editor/rowKeys.ts";
-import { visibleTop } from "./visibleTop.ts";
+import { popup, type Words } from "../editor/goto.ts";
 import type { Raise } from "../model/alertText.ts";
+import type { Landing } from "./landingActs.ts";
 
 export interface GotoPopupDeps {
   lb: Screen["gotoPopup"];
@@ -17,123 +14,44 @@ export interface GotoPopupDeps {
   raise: Raise;
   opened(): void;
   focusBar(): void;
-  warmed(): boolean;
+  landing: Landing;
+  /* a listener on the document, in its capture phase */
+  listen(type: "mousedown" | "click", f: (e: MouseEvent) => void): void;
 }
 export interface GotoPopup {
   toggle(): void; reask(): void; input(kind: "line" | "page" | "stanza", v: string): void; enter(kind: "line" | "page" | "stanza", v: string, repeat: boolean): void;
-  close(): void; dismiss(): void; landSoon(v: string): void; centreSoon(): void; replayOwed(): void;
+  close(): void; dismiss(): void;
 }
 export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
-  const { lb, session, journal, raise, opened, focusBar, warmed } = d;
+  const { lb, session, journal, raise, opened, focusBar, landing, listen } = d;
   /* ⌃⌘G: GO TO A LINE, A PAGE, A PARAGRAPH, A VERSE OR A STANZA. Like a find bar, not a prompt: the popup keeps
-     focus and Enter cycles through the blocks that hold that line. The
-     landing is CENTRED in the readable band under the masthead — a
-     reader who asked for line 254 wants the lines around it, and so does
-     one following a reference link, which lands the same way. The three
+     focus and Enter cycles through the blocks that hold that line. The three
      routes aimed at the popup (Escape, the ×, ⌃⌘G again) hand the caret
-     back to the landed row, the first cell of a pair, or just after a
-     leaf marker; a navigation and a click outside take the plain close.
+     back to the landed row; a navigation and a click outside take the
+     plain close.
      A number is a coordinate into ONE text, so the boxes empty when the
      popup opens on another entry. */
-  let lineAsked: number | string = 0, lastAskKey = "";
-  function scrollIntoBand(rect: { top: number; bottom: number }): void {
-    const top = visibleTop();
-    const mid = top + (document.documentElement.clientHeight - top) / 2;
-    window.scrollBy(0, (rect.top + rect.bottom) / 2 - mid);
-  }
-  function centreSelection(): void {
-    const view = session.view;
-    if (!view || session.mdView) return;
-    if (view.state.selection.empty) return;
-    const { from, to } = view.state.selection;
-    const a = view.coordsAtPos(from), b = view.coordsAtPos(to);
-    scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
-  }
-  const landOn = (pos: number): void => {
-    const view = session.view!;
-    /* a landing inside a closed contents section opens it first: it stayed
-       hidden and scrolled to nothing (pin: folds.test › openFoldAt opens the
-       section a position is in) */
-    openFoldAt(pos)(view.state, view.dispatch);
-    setLanding(view, pos);
-    const node = view.state.doc.nodeAt(pos)!;
-    const a = view.coordsAtPos(pos + (node.isLeaf ? 0 : 1)), b = view.coordsAtPos(pos + node.nodeSize - (node.isLeaf ? 0 : 1));
-    scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
-  };
+  let lastAskKey = "";
   const conventions = () => conventionsOf(session.current.date, session.current.tag, journal);
-  const asked = (words: Words, from: "popup" | "link"): boolean => {
-    const view = session.view!;
-    const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
-    if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
-    if (a.said) raise(a.said);
-    return "pos" in a;
-  };
-  /* before the warm a work's own page, which says how it is referred to, may
-     not be read (pin: a link to a line › a link to a paragraph before the warm) */
-  let lineOwed: { v: string; key: string } | null = null;
-  let endLinkMark: (() => void) | null = null;
-  const untilHand = (act: () => void): (() => void) => {
-    const onKey = (e: KeyboardEvent): void => { if (endsLineMark(e.key, e.metaKey)) stop(); };
-    const stop = (): void => {
-      removeEventListener("click", stop, true);
-      removeEventListener("keydown", onKey, true);
-      endLinkMark = null;
-      act();
-    };
-    addEventListener("click", stop, true);
-    addEventListener("keydown", onKey, true);
-    return stop;
-  };
-  const landFromLink = (v: string): void => {
-    const view = session.view;
-    if (!view || session.mdView) return;
-    endLinkMark?.();
-    if (!warmed()) {
-      lineOwed = { v, key: entryKey(session.current.date, session.current.tag) };
-      /* what the hand does meanwhile stands: a landing owed moves no caret (pin:
-         a link to a line › a key before the warm) */
-      endLinkMark = untilHand(() => { lineOwed = null; });
-      return;
-    }
-    if (!asked({ line: v }, "link")) return;
-    /* the next key goes from the line, not the page's top (pin: a link to a
-       line › a link to a line, a key after arriving) */
-    const landed = landingPos(view.state);
-    if (landed !== null) caretOn(view, landed);
-    view.focus();
-    /* no popup stands open to end the mark: a click or a key that moves does, a
-       scrollbar's press and a tap's scroll not
-       (pin: a link to a line › a link to a line, the next click)
-       (pin: landing.test › a key that moves or writes) */
-    endLinkMark = untilHand(() => { if (session.view) setLanding(session.view, null); });
-  };
   const closeGotoPopup = (): void => {
     if (!lb.open) return;
-    if (session.view) setLanding(session.view, null);
+    landing.unmark();
     lb.open = false;
   };
   const dismissBar = closeGotoPopup;
   /* the caret hand-back: only the routes aimed at the popup */
-  const caretOn = (view: NonNullable<typeof session.view>, pos: number): void => {
-    const node = view.state.doc.nodeAt(pos);
-    if (!node) return;
-    const at = node.isLeaf ? pos + 1 : pos + 1 + (node.type.name === "pair" ? 1 : 0);
-    view.dispatch(view.state.tr.setSelection(caretNear(view.state.doc, at)));
-  };
   const putLineCaret = (): void => {
     if (!lb.open) return;
     const view = session.view;
     const had = document.querySelector(".goto-popup")?.contains(document.activeElement);
-    const pos = view ? landingPos(view.state) : null;
+    if (had) landing.caretBack();
     closeGotoPopup();
-    if (!view) return;
-    if (had && pos !== null) caretOn(view, pos);
-    view.focus();
+    view?.focus();
   };
   const freshAsk = (): void => {
     const c = session.current, askKey = entryKey(c.date, c.tag);
     if (askKey === lastAskKey) return;
-    lastAskKey = askKey; lb.line = ""; lb.page = ""; lb.stanza = ""; lineAsked = 0;
+    lastAskKey = askKey; lb.line = ""; lb.page = ""; lb.stanza = ""; landing.forgetAsked();
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
@@ -171,10 +89,10 @@ export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
   /* two boxes joined by "or" ask one number: typing in one empties the
      other, which stayed and read as asked too */
   const inputBar = (kind: "line" | "page" | "stanza", v: string): void => {
-    if (kind === "line") { lb.line = v; lineAsked = 0; } else lb[kind] = v;
+    if (kind === "line") { lb.line = v; landing.forgetAsked(); } else lb[kind] = v;
     if (lb.kind !== "both" || !v) return;
     if (kind === "line") lb.page = "";
-    else if (kind === "page") { lb.line = ""; lineAsked = 0; }
+    else if (kind === "page") { lb.line = ""; landing.forgetAsked(); }
   };
   /* on a page in stanzas Enter in either box asks with both */
   const wordsOf = (kind: "line" | "page" | "stanza", v: string): Words => {
@@ -184,15 +102,15 @@ export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
   const enterBar = (kind: "line" | "page" | "stanza", v: string, repeat: boolean): void => {
     if (repeat) return;
     if (session.mdView || !session.view) return;
-    asked(wordsOf(kind, v), "popup");
+    landing.answer(wordsOf(kind, v), "popup");
   };
   const closeBar = putLineCaret;
   /* a click whose press began in the popup is a drag out of a box, not a
      click away (pin: alerts and surfaces › a drag
      from the Line box out over the entry) */
   let pressedInBar = false;
-  document.addEventListener("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".goto-popup"); }, true);
-  document.addEventListener("click", (e) => {
+  listen("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".goto-popup"); });
+  listen("click", (e) => {
     const fromBar = pressedInBar;
     pressedInBar = false;
     if (!lb.open || fromBar) return;
@@ -200,19 +118,5 @@ export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
     if ((e.target as Element).closest(".goto-popup")) return;
     closeGotoPopup();
   });
-  const replayOwed = (): void => {
-    if (!lineOwed) return;
-    const owed = lineOwed;
-    endLinkMark?.();
-    if (owed.key === entryKey(session.current.date, session.current.tag)) landFromLink(owed.v);
-  };
-  /* a jump's selection is centred A FRAME AFTER it was placed: centred at
-     once, a passage in Horace sat exactly mid-band, then a paired entry's
-     rows re-wrapped, the page shrank from 6611px to 2065px, the scroll
-     clamped and the passage sat 304px above centre, under the masthead
-     (MEASURED in headless Helium); a frame later the box has settled (pin:
-     reference paste › the reference link followed) */
-  const centreSoon = (): void => { requestAnimationFrame(centreSelection); };
-  const landSoon = (v: string): void => { requestAnimationFrame(() => landFromLink(v)); };
-  return { toggle: toggleBar, reask: reaskBar, input: inputBar, enter: enterBar, close: closeBar, dismiss: dismissBar, landSoon, centreSoon, replayOwed };
+  return { toggle: toggleBar, reask: reaskBar, input: inputBar, enter: enterBar, close: closeBar, dismiss: dismissBar };
 }

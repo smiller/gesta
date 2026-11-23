@@ -96,3 +96,8 @@ The popup ⌃⌘G opens under the masthead, at the right: it asks for a line, a
 page, a paragraph, a verse, or a stanza and its line, whichever the entry
 numbers, and goes there.
 _Avoid_: the retired words `tools/vocabulary.ts` lists.
+
+**Landing**:
+Where ⌃⌘G, a link to a line or a search jump puts the reader: the place
+centred in the band under the masthead and the alert area, marked until the
+hand next clicks or presses a key that moves.

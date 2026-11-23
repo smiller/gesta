@@ -323,12 +323,13 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
   `cardKeys.ts`, `richCopy.ts`, `clipboard.ts`, `counted.ts`,
-  `heldKeys.ts`, `visibleTop.ts`, `alertArea.ts` (the alert area under
-  the masthead), `journalLoad.ts` (the journal's
+  `heldKeys.ts`, `alertArea.ts` (the alert area under the masthead, and
+  where the page shows from), `journalLoad.ts` (the journal's
   load: loading, failed or in, what an act refused before it says, and
   its errors). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,
-  `gotoRowActs.ts`, `gotoPopupActs.ts`, `replaceActs.ts`, `bookmarkActs.ts`,
+  `gotoRowActs.ts`, `gotoPopupActs.ts`, `landingActs.ts` (a landing: ⌃⌘G's,
+  a link to a line's, a search jump's), `replaceActs.ts`, `bookmarkActs.ts`,
   `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
   `panelActs.ts`, `backupsPanelActs.ts`. The components: `Masthead`,
   `Alerts`, `Search`, `GotoRow`, `Toolbar`, `GotoPopup`, `ReplaceBar`, `Help`

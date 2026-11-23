@@ -2,12 +2,10 @@ import { test, expect } from "vitest";
 import { gotoPopupActs, type GotoPopupDeps } from "./gotoPopupActs.ts";
 import type { Screen } from "./screen.svelte.ts";
 
-/* node has no document to listen on */
-(globalThis as { document?: unknown }).document ??= { addEventListener: () => {} };
-
 function barOf(kind: Screen["gotoPopup"]["kind"]) {
   const lb: Screen["gotoPopup"] = { open: true, kind, line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" };
-  const deps = { lb, session: { current: { date: "bookshelf", tag: "A/W" }, view: null, mdView: false }, journal: {} as never, info: () => {}, opened: () => {}, focusBar: () => {}, warmed: () => true } as unknown as GotoPopupDeps;
+  const landing = { answer: () => false, forgetAsked: () => {}, caretBack: () => {}, unmark: () => {}, followSoon: () => {}, centreSoon: () => {}, replayOwed: () => {} };
+  const deps: GotoPopupDeps = { lb, session: { current: { date: "bookshelf", tag: "A/W" }, view: null, mdView: false }, journal: {} as never, raise: () => {}, opened: () => {}, focusBar: () => {}, landing, listen: () => {} };
   return { lb, acts: gotoPopupActs(deps) };
 }
 

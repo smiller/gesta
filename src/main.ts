@@ -14,6 +14,8 @@ import { startSession } from "./session.ts";
 import { readRaw, writeRaw, stored } from "./store/local.ts";
 import { alertLog, carryLog, chordName, clickName, parseLog, type AlertEntry } from "./ui/alertLog.ts";
 import { placeArea } from "./ui/alertArea.ts";
+import { landingActs, windowPage, windowHand } from "./ui/landingActs.ts";
+import { conventionsOf } from "./store/conventions.ts";
 import { bookmarkStore } from "./store/bookmarkStore.ts";
 import { alertLedger } from "./ui/alertLedger.svelte.ts";
 import { copyText } from "./ui/clipboard.ts";
@@ -263,8 +265,8 @@ const session = startSession({
   onSwitch: () => overlay.open("view"),
   onHere: () => overlay.open("here"),
   onSelect: () => requestAnimationFrame(() => fmt.place()),
-  onHighlight: () => { fmt.suppress(); lineActs.centreSoon(); },
-  onLine: (line) => lineActs.landSoon(line),
+  onHighlight: () => { fmt.suppress(); landing.centreSoon(); },
+  onLine: (line) => landing.followSoon(line),
   readOnly: READER,
 });
 /* gathered for a beat and the masthead redrawn once: an import in
@@ -387,13 +389,19 @@ acts.bookmarks.draft = card.draft;
 acts.bookmarks.commit = card.commit;
 acts.bookmarks.act = card.act;
 const openBookmarks = card.open;
-const lineActs = gotoPopupActs({
-  lb: screen.gotoPopup, session, journal, raise,
+const landing = landingActs({
+  session, raise,
+  conventions: () => conventionsOf(session.current.date, session.current.tag, journal),
+  warmed: () => layer.warmed,
+  page: windowPage, hand: windowHand,
+});
+const gotoPopup = gotoPopupActs({
+  lb: screen.gotoPopup, session, journal, raise, landing,
   opened: () => overlay.open("gotoPopup"),
   focusBar: () => masthead.focusGotoPopup(),
-  warmed: () => layer.warmed,
+  listen: (type, f) => document.addEventListener(type, f, true),
 });
-Object.assign(acts.gotoPopup, lineActs);
+Object.assign(acts.gotoPopup, gotoPopup);
 Object.assign(acts.replace, replaceActs({
   rb: screen.replace, session, raise,
   opened: () => overlay.open("replace"),
@@ -515,7 +523,7 @@ primed.then(held).then(() => layer.warm()).then(() => loadWatch.landed(layer)).t
   /* an entry opened before the migration shows the links it rewrote */
   if (migrated) session.refresh();
   reanswerOpen();
-  lineActs.replayOwed();
+  landing.replayOwed();
   search.buildIndex();
   /* `?corner=pill` draws the paused pill on a profile with no backup
      folder, AFTER the launch run, which clears the trouble of an
