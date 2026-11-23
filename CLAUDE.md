@@ -377,6 +377,12 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     `WINDOWS=n`), `heliumShards.ts` (the sections dealt over windows and
     their prints merged back as one window's),
     `heliumStamp.ts`, `heliumOrder.ts`, `helium-probe.ts`,
+    `helium-mock.ts` with `mockPage.ts` (a design's mock: `node
+    tools/helium-mock.ts <spec>`, a spec under `tools/out/mocks/` naming
+    the backup's entries, the states and the options; each state shot as
+    the app stands and under each option, every floating bar lifted and
+    outlined in a second frame with the text it covers, onto one page
+    under `tools/out/mocks/<spec>/`, ready to publish),
     `helium-bridge.ts`, `helium-reader.ts`. These are checked by their own
     `tsconfig.helium.json` under `npm run check`, over `heliumPage.ts`
     (the page's hooks and playwright's types) and `heliumDom.d.ts` (a query

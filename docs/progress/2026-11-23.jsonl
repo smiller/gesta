@@ -71,3 +71,7 @@
 {"at":"2026-11-23T13:36","ev":"done","id":"S26","commits":["9786c1d"]}
 {"at":"2026-11-23T13:36","ev":"start","id":"P19"}
 {"at":"2026-11-23T14:01","ev":"start","id":"S6.1","note":"woken 13:58 in a 5-window verdict (P19): the bookmarks section's collapse by ProseMirror's setSelection 1 ms after addRange, again"}
+{"at":"2026-11-23T14:23","ev":"done","id":"P19","commits":["a48abe2"]}
+{"at":"2026-11-23T14:23","ev":"done","id":"S6.1","commits":["a48abe2"],"note":"held: a script's range placed on a settled page, placed again once if collapsed; 0 of 6 five-window verdicts after, 1 of 3 before"}
+{"at":"2026-11-23T14:23","ev":"done","id":"S27","commits":["a48abe2"],"note":"its selection placed through selectBetween; 0 of 6 five-window verdicts"}
+{"at":"2026-11-23T14:23","ev":"start","id":"S25"}

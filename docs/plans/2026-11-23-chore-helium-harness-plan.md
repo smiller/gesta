@@ -22,6 +22,12 @@ fail too often to show a byte-identical run.
    placed again once if it stands collapsed after; the driver's trace
    keeps the editor's last six DOM writes, so the next collapse names
    its writer. S27's selection takes the same path (`selectBetween`).
+5. S25: `tools/helium-mock.ts <spec>` over a spec in `tools/out/mocks/`
+   (backup entries, states, options); a "now" column always first; the
+   frame with every floating bar lifted and outlined, and the text at
+   each bar's middle read by `elementFromPoint`, not a real click (a click
+   would change the state the next frame shows); `tools/mockPage.ts`
+   writes one page, images inline. The backup's pictures are not seeded.
 4. "a clean switch" reads whether the refusal still stands, not which
    info stands in the corner.
 
@@ -78,3 +84,11 @@ fail too often to show a byte-identical run.
   waits, 0 of 6 whole verdicts showed S6.1 or S27, against 1 of 3 before
   (the 13:56–14:01 plays); a small sample, the trace now naming the
   writer if it comes back.
+- 14:23, P19, S6.1 and S27 committed a48abe2; S25 started.
+- 14:30, S25: the demo spec (`tools/out/mocks/demo.ts`, the journal day
+  2026-06-25 idle and with a word double-clicked, the format toolbar as
+  it stands and moved 48 px down) plays in 14.5 s, four frames and two
+  lifted ones. Every frame first showed a band above the masthead (277
+  px; 148 with the bars lifted): a wheel of -100000 past the top. A
+  probe of the same page with no wheel read the masthead at 0. Now a
+  wheel of just the scroll.
