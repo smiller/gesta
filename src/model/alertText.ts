@@ -180,7 +180,7 @@ export const ALERTS = {
   alreadyBookmarked: warning("already bookmarked", "A in the bookmarks panel on an entry already there."),
   bookmarksFull: warning("bookmarks full — delete one, or give one its own key", "A with nine numbered bookmarks."),
   nothingToBookmark: warning("nothing to bookmark here yet", "A on an entry not yet saved anywhere."),
-  lineBar: warning((p: { text: string }) => p.text, "⌃⌘G with a number mistyped or not in the entry, on an entry with nothing numbered, or in the markdown view; its words are the line bar’s phrases."),
+  gotoPopup: warning((p: { text: string }) => p.text, "⌃⌘G with a number mistyped or not in the entry, on an entry with nothing numbered, or in the markdown view; its words are the Go to popup’s phrases."),
   finishKey: warning("finish the key", "Enter on a bookmark key typed part-way that more than one key starts with."),
   noBookmark: warning((p: { n: string }) => "no bookmark " + p.n, "A number typed in the bookmarks panel with no row, or a key typed that no bookmark has."),
   nothingToCopy: warning("Nothing to copy", "The copy button over a block that has gone."),
@@ -197,7 +197,7 @@ export const ALERTS = {
 
   oneWord: info("1 word", "Word count: from the Words button or ⌃⌘W: one word, in the selection or the entry.", 2000),
   words: info((p: { n: number }) => p.n + " words", "Word count: from the Words button or ⌃⌘W: the selection’s, or the entry’s with nothing selected.", 2000),
-  lineBarLanding: info((p: { text: string }) => p.text, "⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the line bar’s phrases.", 2500),
+  gotoPopupLanding: info((p: { text: string }) => p.text, "⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the Go to popup’s phrases.", 2500),
   entriesStored: info((p: { n: number }) => entriesText(p.n) + " stored", "The journal read at launch."),
   toReplace: info("Source view, to replace", "⌃⌘E in the rendered view, switching to the markdown view.", 3000),
   indexing: info("indexing…", "Search before its index is built."),

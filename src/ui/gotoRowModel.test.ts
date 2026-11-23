@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { gotoLevels, gotoPick, destinationRows, rowGroups, isPicked, type Level } from "./gotoModel.ts";
+import { gotoLevels, gotoPick, destinationRows, rowGroups, isPicked, type Level } from "./gotoRowModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache: Record<string, string> = {

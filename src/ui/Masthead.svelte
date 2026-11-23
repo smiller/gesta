@@ -9,14 +9,14 @@
   import type { Screen } from "./screen.svelte.ts";
   import { focusLeaves } from "./cardKeys.ts";
   import Search from "./Search.svelte";
-  import Goto from "./Goto.svelte";
-  import LineBar from "./LineBar.svelte";
+  import GotoRow from "./GotoRow.svelte";
+  import GotoPopup from "./GotoPopup.svelte";
   import ReplaceBar from "./ReplaceBar.svelte";
   import Help from "./Help.svelte";
   import Bookmarks from "./Bookmarks.svelte";
   import Shortcuts from "./Shortcuts.svelte";
   import Backups from "./Backups.svelte";
-  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, onShelves, search, goto, lineBar, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
+  let { screen, onToday, onExport, onImport, onInterval, onLines, onPanel, onClosePanel, onNewRoot, onShelves, search, goto, gotoPopup, replace, bookmarks, shortcuts, backups, onCreate, onRename, onDelete, reader = null }: {
     screen: Screen;
     /* the read-only page: a new bundle picked */
     reader?: { onOpen: (file: File) => void; onWalk: (dir: "prev" | "next") => void } | null;
@@ -30,7 +30,7 @@
     onShelves: () => void;
     search: { onToggle: (open: boolean) => void; onQuery: (q: string) => void; onScope: (at: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onPick: (i: number) => void };
     goto: { onToggle: (open: boolean) => void; onPick: (level: number, value: string, ns?: string) => void };
-    lineBar: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
+    gotoPopup: { onInput: (kind: "line" | "page" | "stanza", value: string) => void; onEnter: (kind: "line" | "page" | "stanza", value: string, repeat: boolean) => void; onClose: () => void };
     replace: { onFind: (value: string) => void; onWith: (value: string) => void; onNext: (back: boolean) => void; onOne: () => void; onAll: () => void; onClose: () => void };
     bookmarks: { onKey: (e: KeyboardEvent) => void; onAct: (key: string, what: "jump" | "del" | "key" | "link") => void; onDraft: (value: string) => void; onCommit: (value: string) => void };
     shortcuts: { onQuery: (q: string) => void; onPick: (i: number) => void; onWalk: (dir: 1 | -1) => void; onEnter: () => void; onEdit: () => void; onDraft: (v: string) => void; onSave: () => void; onEscape: () => void };
@@ -40,8 +40,8 @@
   export function focusShortcuts(): void { shortcutsCard?.focusInput(); }
   let bookmarksCard: { focusCard(): void } | undefined = $state();
   export function focusBookmarks(): void { bookmarksCard?.focusCard(); }
-  let lineBarEl: { focusAsk(): void } | undefined = $state();
-  export function focusLineBar(): void { lineBarEl?.focusAsk(); }
+  let gotoPopupEl: { focusAsk(): void } | undefined = $state();
+  export function focusGotoPopup(): void { gotoPopupEl?.focusAsk(); }
   let replaceEl: { focusFind(): void; focusWith(): void } | undefined = $state();
   export function focusReplace(): void { replaceEl?.focusFind(); }
   let gotoRow: { focusFirst(): void } | undefined = $state();
@@ -114,7 +114,7 @@
     {/if}
   </div>
   <span class="page-title" hidden={!screen.masthead.title}>{screen.masthead.title}</span>
-  <Goto bind:this={gotoRow} goto={screen.goto} {...goto} />
+  <GotoRow bind:this={gotoRow} goto={screen.goto} {...goto} />
   <Search bind:this={searchRow} search={screen.search} {...search} />
   <Help open={screen.panel === "help"} />
   {#if screen.panel === "bookmarks"}<Bookmarks bind:this={bookmarksCard} bookmarks={screen.bookmarks} {...bookmarks} onLeave={leaveCard} />{/if}
@@ -130,7 +130,7 @@
       {/if}
     </nav>
   {/if}
-  <LineBar bind:this={lineBarEl} lineBar={screen.lineBar} {...lineBar} />
+  <GotoPopup bind:this={gotoPopupEl} gotoPopup={screen.gotoPopup} {...gotoPopup} />
   <ReplaceBar bind:this={replaceEl} replace={screen.replace} {...replace} />
   <!-- the label opens the row through the state, never the browser: a render
        landing between the browser's toggle and its event shut it again (pin:

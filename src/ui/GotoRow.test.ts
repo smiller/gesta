@@ -1,15 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { render } from "svelte/server";
-import Goto from "./Goto.svelte";
-import { gotoLevels } from "./gotoModel.ts";
+import GotoRow from "./GotoRow.svelte";
+import { gotoLevels } from "./gotoRowModel.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache = { "2026-09-07": "# Titled", "2026-09-07/Ideas": "i", "commonplace/Books": "[E](#commonplace/Books/E)", "commonplace/Books/E": "# The essay", "commonplace/Books/F": "f" };
 const w = { keys: Object.keys(cache), cache, journal: journalOf(cache), today: "2026-09-07" };
 const none = () => {};
-const draw = (open: boolean, date: string, tag: string | null) => render(Goto, { props: { goto: { open, levels: open ? gotoLevels(w, date, tag) : [] }, onToggle: none, onPick: none } }).body;
+const draw = (open: boolean, date: string, tag: string | null) => render(GotoRow, { props: { goto: { open, levels: open ? gotoLevels(w, date, tag) : [] }, onToggle: none, onPick: none } }).body;
 
-describe("Goto", () => {
+describe("GotoRow", () => {
   it("closed: the summary alone", () => {
     const html = draw(false, "2026-09-07", null);
     expect(html).toMatch(/<details class="page-goto[^"]*">/);
@@ -30,7 +30,7 @@ describe("Goto", () => {
   it("a placeholder leads a level with no preselect", () => {
     const levels = gotoLevels(w, "commonplace", "Books/E");
     levels[1].value = null;
-    const html = render(Goto, { props: { goto: { open: true, levels }, onToggle: none, onPick: none } }).body;
+    const html = render(GotoRow, { props: { goto: { open: true, levels }, onToggle: none, onPick: none } }).body;
     expect(html).toMatch(/<option value=""[^>]*disabled[^>]*>— go to —/);
   });
 });

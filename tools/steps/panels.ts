@@ -110,37 +110,37 @@ section("help", async () => {
   await page.keyboard.press("Escape");
   await log("Escape", await R.helpOpen(page));
 });
-section("line bar", async () => {
+section("Go to popup", async () => {
   /* ⌃⌘G: the bar over verse takes a line, cycles nothing on one block, marks and centres; Escape hands the caret to the row; over a book of leaves the Page box */
   await go("commonplace/Horace");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await log("⌃⌘G over Horace", await R.linebar(page));
+  await log("⌃⌘G over Horace", await R.gotoPopup(page));
   await page.keyboard.type("3");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("3, Enter", await R.linebar(page));
+  await log("3, Enter", await R.gotoPopup(page));
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("Enter again on one block", await R.linebar(page));
+  await log("Enter again on one block", await R.gotoPopup(page));
   await page.keyboard.press("Escape");
   await rest(page);
-  await log("Escape", { ...(await R.linebar(page)), caretRow: await R.caretRow(page) });
+  await log("Escape", { ...(await R.gotoPopup(page)), caretRow: await R.caretRow(page) });
   await go("commonplace/Williams/Witchcraft%203");
   await R.settle(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await log("⌃⌘G over Witchcraft", await R.linebar(page));
+  await log("⌃⌘G over Witchcraft", await R.gotoPopup(page));
   await page.keyboard.type("9z");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("9z, Enter", await R.linebar(page));
+  await log("9z, Enter", await R.gotoPopup(page));
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("61");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("61, Enter", await R.linebar(page));
+  await log("61, Enter", await R.gotoPopup(page));
   await page.keyboard.press("Escape");
 });
 section("reference paste", async () => {

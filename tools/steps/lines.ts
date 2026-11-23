@@ -247,5 +247,5 @@ const ask2 = async (n: string) => {
     if (n) { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); }
     await page.keyboard.press("Enter");
     await rest(page);
-    return { ...(await R.linebar(page)), landed: await R.landedText(page) };
+    return { ...(await R.gotoPopup(page)), landed: await R.landedText(page) };
   };

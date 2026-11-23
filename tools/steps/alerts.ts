@@ -87,20 +87,20 @@ async function pictureBlockHoverCopied(): Promise<void> {
   await go("commonplace/Horace");
   await view(false);
   const before = await A.stored(page, "commonplace/Horace");
-  await lineBarReasked(before);
+  await gotoPopupReasked(before);
   await resultAfterMoreTyping();
   await formatBarUnderMasthead();
   await copyButtonAfterNavigation();
   await failedCopyPinClicked();
   await shortcutWithNoCursor(before);
 }
-async function lineBarReasked(before: string): Promise<void> {
+async function gotoPopupReasked(before: string): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   const asked = await boxes();
   await A.foreignWrite(page, "commonplace/Horace", before.replace(/\n*$/, "") + "\n\nand on ⟨5⟩ here\n");
   await page.waitForTimeout(1200);
-  await log("the line bar re-asked when the entry gains a page marker", { before: asked, after: await boxes() });
+  await log("the Go to popup re-asked when the entry gains a page marker", { before: asked, after: await boxes() });
   const lineBox = await page.evaluate(() => { const r = document.querySelector("#lineinput")?.getBoundingClientRect(); return r ? { x: r.left + 5, y: r.top + r.height / 2 } : null; });
   const into = await page.evaluate((s) => { const r = document.querySelector(s)?.getBoundingClientRect(); return r ? { x: r.left + 60, y: r.top + 120 } : null; }, S.editor);
   if (lineBox && into) { await page.mouse.move(lineBox.x, lineBox.y); await page.mouse.down(); await page.mouse.move(into.x, into.y, { steps: 6 }); await page.mouse.up(); }
@@ -354,7 +354,7 @@ section("alerts and places", async () => {
   await page.keyboard.type("9");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheAlertArea: await page.evaluate(() => Math.round(document.querySelector(".linebar")!.getBoundingClientRect().top - document.querySelector(".alerts")!.getBoundingClientRect().bottom)) });
+  await log("⌃⌘G with a line the entry lacks", { ...(await standing()), barUnderTheAlertArea: await page.evaluate(() => Math.round(document.querySelector(".goto-popup")!.getBoundingClientRect().top - document.querySelector(".alerts")!.getBoundingClientRect().bottom)) });
   await page.keyboard.press("Escape");
 });
 /* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the masthead */

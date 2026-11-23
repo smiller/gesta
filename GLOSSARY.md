@@ -86,3 +86,13 @@ heading.
 One of the rows that open in the masthead under its top line: Go to,
 Search, Line numbering and Replace, one at a time.
 _Avoid_: bar; a table's header row is not one.
+
+**Go to row**:
+The masthead row ⌃⌘J opens: dropdowns that go to another entry, a day of
+the journal or any commonplace.
+
+**Go to popup**:
+The popup ⌃⌘G opens under the masthead, at the right: it asks for a line, a
+page, a paragraph, a verse, or a stanza and its line, whichever the entry
+numbers, and goes there.
+_Avoid_: the retired words `tools/vocabulary.ts` lists.

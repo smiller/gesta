@@ -3,15 +3,15 @@ import type { Screen } from "./screen.svelte.ts";
 import type { Journal } from "../store/reference.ts";
 import { conventionsOf } from "../store/conventions.ts";
 import { entryKey } from "../store/keys.ts";
-import { ask, bar, type Words } from "../editor/goto.ts";
+import { ask, popup, type Words } from "../editor/goto.ts";
 import { openFoldAt } from "../editor/folds.ts";
 import { endsLineMark, landingPos, setLanding } from "../editor/landing.ts";
 import { caretNear } from "../editor/rowKeys.ts";
 import { visibleTop } from "./visibleTop.ts";
 import type { Raise } from "../model/alertText.ts";
 
-export interface LineBarDeps {
-  lb: Screen["lineBar"];
+export interface GotoPopupDeps {
+  lb: Screen["gotoPopup"];
   session: Pick<Session, "current" | "view" | "mdView">;
   journal: Journal;
   raise: Raise;
@@ -19,22 +19,22 @@ export interface LineBarDeps {
   focusBar(): void;
   warmed(): boolean;
 }
-export interface LineBar {
+export interface GotoPopup {
   toggle(): void; reask(): void; input(kind: "line" | "page" | "stanza", v: string): void; enter(kind: "line" | "page" | "stanza", v: string, repeat: boolean): void;
   close(): void; dismiss(): void; landSoon(v: string): void; centreSoon(): void; replayOwed(): void;
 }
-export function lineBarActs(d: LineBarDeps): LineBar {
+export function gotoPopupActs(d: GotoPopupDeps): GotoPopup {
   const { lb, session, journal, raise, opened, focusBar, warmed } = d;
-  /* ⌃⌘G: GO TO A LINE, OR A PAGE. A find bar, not a prompt: the bar keeps
+  /* ⌃⌘G: GO TO A LINE, A PAGE, A PARAGRAPH, A VERSE OR A STANZA. Like a find bar, not a prompt: the popup keeps
      focus and Enter cycles through the blocks that hold that line. The
      landing is CENTRED in the readable band under the masthead — a
      reader who asked for line 254 wants the lines around it, and so does
      one following a reference link, which lands the same way. The three
-     routes aimed at the bar (Escape, the ×, ⌃⌘G again) hand the caret
+     routes aimed at the popup (Escape, the ×, ⌃⌘G again) hand the caret
      back to the landed row, the first cell of a pair, or just after a
      leaf marker; a navigation and a click outside take the plain close.
      A number is a coordinate into ONE text, so the boxes empty when the
-     bar opens on another entry. */
+     popup opens on another entry. */
   let lineAsked: number | string = 0, lastAskKey = "";
   function scrollIntoBand(rect: { top: number; bottom: number }): void {
     const top = visibleTop();
@@ -61,12 +61,12 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     scrollIntoBand({ top: Math.min(a.top, b.top), bottom: Math.max(a.bottom, b.bottom) });
   };
   const conventions = () => conventionsOf(session.current.date, session.current.tag, journal);
-  const asked = (words: Words, from: "bar" | "link"): boolean => {
+  const asked = (words: Words, from: "popup" | "link"): boolean => {
     const view = session.view!;
     const a = ask(view.state.doc, conventions(), words, { pos: landingPos(view.state), asked: lineAsked }, from);
     if ("pos" in a) { lineAsked = a.asked; landOn(a.pos); }
     /* a landing's word is an info; a line mistyped or absent is a warning */
-    if (a.said) raise(a.said.kind === "landing" ? "lineBarLanding" : "lineBar", { text: a.said.text });
+    if (a.said) raise(a.said.kind === "landing" ? "gotoPopupLanding" : "gotoPopup", { text: a.said.text });
     return "pos" in a;
   };
   /* before the warm a work's own page, which says how it is referred to, may
@@ -102,19 +102,19 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     const landed = landingPos(view.state);
     if (landed !== null) caretOn(view, landed);
     view.focus();
-    /* no bar stands open to end the mark: a click or a key that moves does, a
+    /* no popup stands open to end the mark: a click or a key that moves does, a
        scrollbar's press and a tap's scroll not
        (pin: a link to a line › a link to a line, the next click)
        (pin: landing.test › a key that moves or writes) */
     endLinkMark = untilHand(() => { if (session.view) setLanding(session.view, null); });
   };
-  const closeLineBar = (): void => {
+  const closeGotoPopup = (): void => {
     if (!lb.open) return;
     if (session.view) setLanding(session.view, null);
     lb.open = false;
   };
-  const dismissBar = closeLineBar;
-  /* the caret hand-back: only the routes aimed at the bar */
+  const dismissBar = closeGotoPopup;
+  /* the caret hand-back: only the routes aimed at the popup */
   const caretOn = (view: NonNullable<typeof session.view>, pos: number): void => {
     const node = view.state.doc.nodeAt(pos);
     if (!node) return;
@@ -124,9 +124,9 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   const putLineCaret = (): void => {
     if (!lb.open) return;
     const view = session.view;
-    const had = document.querySelector(".linebar")?.contains(document.activeElement);
+    const had = document.querySelector(".goto-popup")?.contains(document.activeElement);
     const pos = view ? landingPos(view.state) : null;
-    closeLineBar();
+    closeGotoPopup();
     if (!view) return;
     if (had && pos !== null) caretOn(view, pos);
     view.focus();
@@ -138,11 +138,11 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   };
   const toggleBar = () => {
     if (lb.open) { putLineCaret(); return; }
-    if (session.mdView) { raise("lineBar", { text: bar(null, conventions()).inSource }); return; }
+    if (session.mdView) { raise("gotoPopup", { text: popup(null, conventions()).inSource }); return; }
     const view = session.view;
     if (!view) return;
-    const b = bar(view.state.doc, conventions());
-    if (b.kind === "none") { raise("lineBar", { text: b.none }); return; }
+    const b = popup(view.state.doc, conventions());
+    if (b.kind === "none") { raise("gotoPopup", { text: b.none }); return; }
     freshAsk();
     opened();
     lb.kind = b.kind;
@@ -151,19 +151,19 @@ export function lineBarActs(d: LineBarDeps): LineBar {
     lb.open = true;
     setTimeout(() => focusBar(), 0);
   };
-  /* the boxes follow the entry under the open bar, and a box hidden under
+  /* the boxes follow the entry under the open popup, and a box hidden under
      the focus hands it to the one shown; an entry that answers neither keeps
-     both (pin: alerts and surfaces › the line bar
+     both (pin: alerts and surfaces › the Go to popup
      re-asked when the entry gains a page marker) */
   const switchKind = (kind: typeof lb.kind): void => {
-    const held = document.activeElement?.closest(".linebar") ? document.activeElement : null;
+    const held = document.activeElement?.closest(".goto-popup") ? document.activeElement : null;
     lb.kind = kind;
     if (held) setTimeout(() => { if (held.closest("[hidden]")) focusBar(); }, 0);
   };
   const reaskBar = (): void => {
     const view = session.view;
     if (!lb.open || !view) return;
-    const b = bar(view.state.doc, conventions());
+    const b = popup(view.state.doc, conventions());
     lb.lineLabel = b.label;
     lb.pageLabel = b.pageLabel;
     const kind = b.kind === "none" ? "both" : b.kind;
@@ -185,21 +185,21 @@ export function lineBarActs(d: LineBarDeps): LineBar {
   const enterBar = (kind: "line" | "page" | "stanza", v: string, repeat: boolean): void => {
     if (repeat) return;
     if (session.mdView || !session.view) return;
-    asked(wordsOf(kind, v), "bar");
+    asked(wordsOf(kind, v), "popup");
   };
   const closeBar = putLineCaret;
-  /* a click whose press began in the bar is a drag out of a box, not a
+  /* a click whose press began in the popup is a drag out of a box, not a
      click away (pin: alerts and surfaces › a drag
      from the Line box out over the entry) */
   let pressedInBar = false;
-  document.addEventListener("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".linebar"); }, true);
+  document.addEventListener("mousedown", (e) => { pressedInBar = !!(e.target as Element | null)?.closest(".goto-popup"); }, true);
   document.addEventListener("click", (e) => {
     const fromBar = pressedInBar;
     pressedInBar = false;
     if (!lb.open || fromBar) return;
     if (e.clientX > document.documentElement.clientWidth || e.clientY > document.documentElement.clientHeight) return;
-    if ((e.target as Element).closest(".linebar")) return;
-    closeLineBar();
+    if ((e.target as Element).closest(".goto-popup")) return;
+    closeGotoPopup();
   });
   const replayOwed = (): void => {
     if (!lineOwed) return;

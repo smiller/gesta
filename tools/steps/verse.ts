@@ -24,7 +24,7 @@ section("a work in stanzas", async () => {
   await page.keyboard.type("4");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza 77, line 4", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza 77, line 4", { ...(await R.gotoPopup(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Escape");
 });
 section("Old English verse", async () => {
@@ -90,7 +90,7 @@ section("dual-language", async () => {
 });
 async function dualLanguageOvid(): Promise<void> {
   await dualLanguageInOvid();
-  await lineBarSkippedLine();
+  await gotoPopupSkippedLine();
 }
 async function dualLanguageInOvid(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses/Book 1", fixture("ovid-metamorphoses-1.md"));
@@ -133,9 +133,9 @@ async function dualLanguageInOvid(): Promise<void> {
   await page.keyboard.type("546");
   await page.keyboard.press("Enter");
 }
-async function lineBarSkippedLine(): Promise<void> {
+async function gotoPopupSkippedLine(): Promise<void> {
   await rest(page);
-  await log("⌃⌘G for a skipped line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
+  await log("⌃⌘G for a skipped line", { ...(await R.gotoPopup(page)), landed: (await R.landedText(page))?.slice(0, 30) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
   /* a drag over one sentence's English: it selects that sentence alone, the Latin it stands beside marked as selected, and ⌃⌘R refers to and quotes that Latin */
@@ -176,7 +176,7 @@ section("facing numbers", async () => {
   /* Ovid's Latin beside Golding's verse: a verse block numbered on both sides, Golding's numbers drawn on the right; a row with nothing on the left takes no Latin number; ⌃⌘G goes by Golding's numbers; ⌃⌘R refers to both */
   await facingNumbersOpening();
   await verseBlockNumberedBoth();
-  await lineBarGoldingLine();
+  await gotoPopupGoldingLine();
   await goldingLineFollowing();
 });
 async function facingNumbersOpening(): Promise<void> {
@@ -209,13 +209,13 @@ async function verseBlockNumberedBoth(): Promise<void> {
     };
   }));
 }
-async function lineBarGoldingLine(): Promise<void> {
+async function gotoPopupGoldingLine(): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
   await page.keyboard.type("265");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G for a Golding line", { ...(await R.linebar(page)), landed: (await R.landedText(page))?.slice(0, 40) ?? null });
+  await log("⌃⌘G for a Golding line", { ...(await R.gotoPopup(page)), landed: (await R.landedText(page))?.slice(0, 40) ?? null });
   await page.keyboard.press("Escape");
   await rest(page);
   await R.selectBetween(page, "Ye Ayres and windes", "darkes the Sun at Noone.");
@@ -281,12 +281,12 @@ async function byParagraphOpening(): Promise<void> {
 }
 const AUGUSTINE = "bookshelf/Augustine/De Doctrina Christiana", AUGUSTINE_BOOK = AUGUSTINE + "/Book 2";
 async function byParagraphWork(): Promise<void> {
-  await lineBarOnWorkByParagraph();
+  await gotoPopupOnWorkByParagraph();
   await escapeOnWorkByParagraph();
   await referenceOnWorkByParagraph();
-  await lineBarNextPageAfterWork();
+  await gotoPopupNextPageAfterWork();
 }
-async function lineBarOnWorkByParagraph(): Promise<void> {
+async function gotoPopupOnWorkByParagraph(): Promise<void> {
   await writeAll(AUGUSTINE_SEEDS);
   await page.goto(A.url(AUGUSTINE_BOOK.replace(/ /g, "%20")));
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
@@ -297,7 +297,7 @@ async function lineBarOnWorkByParagraph(): Promise<void> {
   await page.keyboard.type("61");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G 61 on a work by paragraph", { ...(await R.linebar(page)), landedOn: await landed(), box: await boxLabel() });
+  await log("⌃⌘G 61 on a work by paragraph", { ...(await R.gotoPopup(page)), landedOn: await landed(), box: await boxLabel() });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("61x");
   await page.keyboard.press("Enter");
@@ -325,8 +325,8 @@ async function referenceOnWorkByParagraph(): Promise<void> {
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
 }
-async function lineBarNextPageAfterWork(): Promise<void> {
-  await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".linebar").hidden), box: await boxLabel() });
+async function gotoPopupNextPageAfterWork(): Promise<void> {
+  await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-popup").hidden), box: await boxLabel() });
   await page.evaluate((h) => { location.hash = h; }, "#" + AUGUSTINE_BOOK.replace(/ /g, "%20"));
   await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
 }
@@ -335,7 +335,7 @@ async function backWorkParagraph(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Control+Meta+g");
   await rest(page);
-  await log("back on a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".linebar").hidden), box: await boxLabel() });
+  await log("back on a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-popup").hidden), box: await boxLabel() });
 }
 const landed = () => page.evaluate(() => document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null);
 const boxLabel = () => page.evaluate(() => document.querySelector("label[for=lineinput]").textContent);
@@ -420,7 +420,7 @@ section("prose and verse paired", async () => {
   await page.setViewportSize({ width: 1000, height: 600 });
   await still(page);
   /* ⌃⌘G on a chapter of prose and verse: Verse Line, or Prose Paragraph, each box landing in its own form */
-  const shown = () => page.evaluate(() => [...document.querySelectorAll(".linebar .ask:not([hidden]) label, .linebar .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
+  const shown = () => page.evaluate(() => [...document.querySelectorAll(".goto-popup .ask:not([hidden]) label, .goto-popup .askor:not([hidden])")].map((l) => (l.textContent ?? "").trim()));
   const landedOn = () => page.evaluate(() => (document.querySelector("#editor .landed")?.textContent ?? "").slice(0, 28));
   await page.keyboard.press("Control+Meta+g");
   await rest(page);

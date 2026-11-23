@@ -117,7 +117,7 @@ Amber. Why an act just tried did nothing. It fades after ten seconds, or goes wh
 | `already bookmarked` | A in the bookmarks panel on an entry already there. |
 | `bookmarks full — delete one, or give one its own key` | A with nine numbered bookmarks. |
 | `nothing to bookmark here yet` | A on an entry not yet saved anywhere. |
-| `…` | ⌃⌘G with a number mistyped or not in the entry, on an entry with nothing numbered, or in the markdown view; its words are the line bar’s phrases. |
+| `…` | ⌃⌘G with a number mistyped or not in the entry, on an entry with nothing numbered, or in the markdown view; its words are the Go to popup’s phrases. |
 | `finish the key` | Enter on a bookmark key typed part-way that more than one key starts with. |
 | `no bookmark …` | A number typed in the bookmarks panel with no row, or a key typed that no bookmark has. |
 | `Nothing to copy` | The copy button over a block that has gone. |
@@ -140,7 +140,7 @@ Blue. A count, a progress line or a note, telling of no outcome. It fades on its
 |---|---|
 | `1 word` | Word count: from the Words button or ⌃⌘W: one word, in the selection or the entry. |
 | `… words` | Word count: from the Words button or ⌃⌘W: the selection’s, or the entry’s with nothing selected. |
-| `…` | ⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the line bar’s phrases. |
+| `…` | ⌃⌘G landing on a number found in more than one block, or on a line the edition omits; its words are the Go to popup’s phrases. |
 | `… entries stored` | The journal read at launch. |
 | `Source view, to replace` | ⌃⌘E in the rendered view, switching to the markdown view. |
 | `indexing…` | Search before its index is built. |
@@ -175,7 +175,7 @@ Green. Something done worked. It fades on its own; a click on it copies its word
 
 ## Phrases
 
-Words that stand inside the alerts above, never alone: the line bar’s, a refused fence’s reason, a directive’s trouble, a filename clash.
+Words that stand inside the alerts above, never alone: the Go to popup’s, a refused fence’s reason, a directive’s trouble, a filename clash.
 
 | Words | Name |
 |---|---|

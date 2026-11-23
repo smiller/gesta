@@ -245,12 +245,12 @@ section("stanza", async () => {
   await page.keyboard.type("1");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza 2, line 1", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza 2, line 1", { ...(await R.gotoPopup(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("9");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza 2, line 9", await R.linebar(page));
+  await log("⌃⌘G stanza 2, line 9", await R.gotoPopup(page));
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("3");
   await page.keyboard.press("Shift+Tab");
@@ -258,12 +258,12 @@ section("stanza", async () => {
   await page.keyboard.type("ii");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G stanza ii, line 3", { ...(await R.linebar(page)), landedText: await R.landedText(page) });
+  await log("⌃⌘G stanza ii, line 3", { ...(await R.gotoPopup(page)), landedText: await R.landedText(page) });
   await page.keyboard.press("Meta+a");
   await page.keyboard.press("Backspace");
   await page.keyboard.press("Enter");
   await rest(page);
-  await log("⌃⌘G line 3, no stanza", await R.linebar(page));
+  await log("⌃⌘G line 3, no stanza", await R.gotoPopup(page));
   await page.keyboard.press("Escape");
 });
 section("a blank row", async () => {

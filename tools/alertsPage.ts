@@ -39,7 +39,7 @@ function kindSection([kind, title, about]: [Kind, string, string]): string[] {
 }
 function phraseSection(): string[] {
   const names = Object.keys(PHRASES) as (keyof typeof PHRASES)[];
-  return ["", "## Phrases", "", "Words that stand inside the alerts above, never alone: the line bar’s, a refused fence’s reason, a directive’s trouble, a filename clash.", "", "| Words | Name |", "|---|---|", ...names.map((n) => row(shown(PHRASES[n]), "`" + n + "`"))];
+  return ["", "## Phrases", "", "Words that stand inside the alerts above, never alone: the Go to popup’s, a refused fence’s reason, a directive’s trouble, a filename clash.", "", "| Words | Name |", "|---|---|", ...names.map((n) => row(shown(PHRASES[n]), "`" + n + "`"))];
 }
 export const alertsPage = (): string => [...HEAD, ...KINDS.flatMap(kindSection), ...phraseSection(), ""].join("\n");
 

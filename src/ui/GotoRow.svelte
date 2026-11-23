@@ -5,7 +5,7 @@
      pickable "← the thing itself" row, value "". Groups are minted on first
      use, so the ungrouped rows above keep their place. -->
 <script lang="ts">
-  import { rowGroups, isPicked, type Level } from "./gotoModel.ts";
+  import { rowGroups, isPicked, type Level } from "./gotoRowModel.ts";
   let { goto, onToggle, onPick }: {
     goto: { open: boolean; levels: Level[] };
     onToggle: (open: boolean) => void;

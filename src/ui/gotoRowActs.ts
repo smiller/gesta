@@ -2,10 +2,10 @@ import type { Session } from "../session.ts";
 import type { EntryLayer } from "../store/entries.ts";
 import type { Journal } from "../store/reference.ts";
 import type { Screen } from "./screen.svelte.ts";
-import { gotoLevels, gotoPick } from "./gotoModel.ts";
+import { gotoLevels, gotoPick } from "./gotoRowModel.ts";
 import { said } from "../model/alertText.ts";
 
-export interface GotoDeps {
+export interface GotoRowDeps {
   gt: Screen["goto"];
   session: Pick<Session, "current" | "save" | "focusText" | "goto">;
   layer: Pick<EntryLayer, "cache">;
@@ -14,7 +14,7 @@ export interface GotoDeps {
   focusRow(): void;
 }
 export interface GotoRow { toggle(open: boolean): void; pick(level: number, value: string, ns?: string): void; reanswer(): void }
-export function gotoActs(d: GotoDeps): GotoRow {
+export function gotoRowActs(d: GotoRowDeps): GotoRow {
   const { gt, session, layer, journal, opened, focusRow } = d;
   /* THE GO TO ROW: built fresh on every open — the lazy fill that keeps
      the list walks off the navigation hot path — with the first select

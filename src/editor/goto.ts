@@ -213,21 +213,21 @@ const WORDS = {
 } as const;
 const wordsFor = (c: Asked) => WORDS[c.byBookChapterAndParagraph ? "paragraph" : c.byChapterAndVerse ? "verse" : c.proseByParagraphVerseByLine ? "proseAndVerse" : "line"];
 const lineLabel = (c: Asked): "Line" | "Verse" | "Paragraph" => wordsFor(c).label;
-type BarLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" };
+type PopupLabels = { kind: AskKind; label: "Line" | "Verse" | "Paragraph" | "Verse Line"; pageLabel: "Page" | "Paragraph" | "Prose Paragraph" };
 /* a work of prose by paragraph and verse by line asks its verse by line and
    its prose by paragraph, each box only where the entry holds that form, the
    form named only where both stand */
-function proseAndVerse(doc: Node): BarLabels {
+function proseAndVerse(doc: Node): PopupLabels {
   const blocks = blocksOf(askedUnits(doc)), verse = blocks.some((b) => !prose(b)), proseHere = blocks.some(prose);
   if (verse && proseHere) return { kind: "both", label: "Verse Line", pageLabel: "Prose Paragraph" };
   return { kind: verse ? "line" : proseHere ? "page" : "none", label: "Line", pageLabel: "Paragraph" };
 }
-/* stanzas and printed pages keep the bar their fences ask for, whatever the work's convention */
-const labels = (doc: Node | null, c: Asked): BarLabels =>
+/* stanzas and printed pages keep the popup their fences ask for, whatever the work's convention */
+const labels = (doc: Node | null, c: Asked): PopupLabels =>
   doc && c.proseByParagraphVerseByLine && !hasStanzas(doc) && !hasPages(doc) ? proseAndVerse(doc) : { kind: doc ? askKind(doc) : "none", label: lineLabel(c), pageLabel: "Page" };
-/* the bar as this entry asks it: which boxes, their labels, what is said
+/* the popup as this entry asks it: which boxes, their labels, what is said
    where nothing can be asked, and where there is no document to ask */
-export function bar(doc: Node | null, c: Asked): BarLabels & { none: string; inSource: string } {
+export function popup(doc: Node | null, c: Asked): PopupLabels & { none: string; inSource: string } {
   return { ...labels(doc, c), none: wordsFor(c).none, inSource: PHRASES.switchToGo({ what: wordsFor(c).askedFor }) };
 }
 export interface Standing { pos: number | null; asked: number | string }
@@ -272,7 +272,7 @@ function stanzaNumber(typed: string): number | null {
   const n = [...r].reduce((sum, ch, i) => sum + (VALUE[ch] < (VALUE[r[i + 1]] ?? 0) ? -VALUE[ch] : VALUE[ch]), 0);
   return modern(n) === r ? n : null;
 }
-/* the bar on a page in stanzas: a Stanza box and a Line box, a stanza alone
+/* the popup on a page in stanzas: a Stanza box and a Line box, a stanza alone
    its first line; each box names back what is not its number (pin: stanza ›
    ⌃⌘G stanza 2, line 1) (pin: stanza › ⌃⌘G line 3, no stanza) */
 function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing): Answer {
@@ -285,16 +285,16 @@ function boxesAnswer(doc: Node, stanza: string, line: string, standing: Standing
 }
 /* a link's landing says only an omitted line's word; the cycle goes on only
    where the same number is asked again */
-function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "bar" | "link"): Answer {
+function numberAnswer(doc: Node, c: Asked, n: number | string, standing: Standing, from: "popup" | "link"): Answer {
   if (typeof n === "number" && c.byBookChapterAndParagraph) return placed(paragraphHit(doc, n), standing);
-  /* the bar's Verse Line box counts verse alone; a link to a line still counts the prose's sentences, as it always has */
-  const found = lineHits(doc, n, c.proseByParagraphVerseByLine && from === "bar"), noun = c.byChapterAndVerse ? "verse" : undefined;
+  /* the popup's Verse Line box counts verse alone; a link to a line still counts the prose's sentences, as it always has */
+  const found = lineHits(doc, n, c.proseByParagraphVerseByLine && from === "popup"), noun = c.byChapterAndVerse ? "verse" : undefined;
   if (!found.hits.length) return absent(lineRefusal(found.blocks, n, noun));
   const hit = nextHit(found.hits, standing.pos, n === standing.asked);
   const word = landingWord(hit, found, n, noun);
-  return { pos: hit.pos, asked: n, said: word && (from === "bar" || hit.skipped) ? { text: word, kind: "landing" } : null };
+  return { pos: hit.pos, asked: n, said: word && (from === "popup" || hit.skipped) ? { text: word, kind: "landing" } : null };
 }
-function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from: "bar" | "link"): Answer {
+function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from: "popup" | "link"): Answer {
   const label = askedLabel(doc, typed);
   if (label) return numberAnswer(doc, c, label, standing, from);
   const why = askCheck(typed, "line", lineLabel(c).toLowerCase());
@@ -303,7 +303,7 @@ function lineAnswer(doc: Node, c: Asked, typed: string, standing: Standing, from
 /* what a box's words name on this page, typed or followed from a link (pin:
    a link to a line › a link to a stanza, and line) */
 export type Words = { line: string } | { page: string } | { stanza: string; line: string };
-export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "bar" | "link"): Answer {
+export function ask(doc: Node, c: Asked, words: Words, standing: Standing, from: "popup" | "link"): Answer {
   if ("page" in words) return c.proseByParagraphVerseByLine && !hasPages(doc) ? paragraphAnswer(doc, words.page, standing) : pageAnswer(doc, c, words.page, standing);
   if ("stanza" in words) return boxesAnswer(doc, words.stanza, words.line, standing);
   return hasStanzas(doc) ? stanzaAnswer(doc, words.line, standing) : lineAnswer(doc, c, words.line, standing, from);

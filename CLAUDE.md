@@ -80,6 +80,8 @@ must keep is restated here.
   `one-offs/shelfLines.ts` calls a typed attribution a "source line".
   The band at the top is THE MASTHEAD and its rows masthead rows; "header"
   is a table's first row.
+  ⌃⌘J opens THE GO TO ROW, to another entry; ⌃⌘G THE GO TO POPUP, to a
+  line, page, paragraph, verse or stanza in this one, by no older name.
   `tools/vocabulary.test.ts` fails on a retired word in src/, tools/,
   one-offs/, this file or the glossary; dated plan records keep their words.
 - THE DOMAIN'S WORDS are in `GLOSSARY.md`, the file
@@ -275,7 +277,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     (a terminal's copy: whether some HTML is one, and the text it pastes
     as), `copy.ts` (what a copy
     says, `copyProps`).
-  - ⌃⌘G: `goto.ts` (`ask` and `bar`: the bar and a link to a line alike,
+  - ⌃⌘G: `goto.ts` (`ask` and `bar`: the Go to popup and a link to a line alike,
     a stanza page by its Stanza and Line boxes), `landing.ts` (the landing
     mark). ⌃⌘E: `replace.ts`.
   - THE SURFACE, `surface.ts`: what the rendered view (`renderedView.ts`)
@@ -316,7 +318,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `alertLedger.svelte.ts` (the alert ledger), `alertLog.ts` (every error
   and warning kept three months, read in the console as `gesta.alerts()`), `screen.svelte.ts` (shared
   screen state), `mastheadModel.ts`, `naming.ts`, `searchModel.ts`,
-  `gotoModel.ts`, `subEntries.ts`, `lifecycle.ts` (the six acts over
+  `gotoRowModel.ts`, `subEntries.ts`, `lifecycle.ts` (the six acts over
   entries, over ports), `keptState.ts` (what the browser keeps by entry
   key: places, folds, bookmarks, told once per act), `overlays.ts` (one thing open at a time),
   `tabWrite.ts` (another tab's write: taken, left or said deleted), `viewCarets.ts`, `bookmarksModel.ts`, `backupsModel.ts`,
@@ -326,10 +328,10 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   load: loading, failed or in, what an act refused before it says, and
   its errors). THE ACTS, the page's handlers, each
   a factory over the parts main.ts hands it: `searchActs.ts`,
-  `gotoActs.ts`, `lineBarActs.ts`, `replaceActs.ts`, `bookmarkActs.ts`,
+  `gotoRowActs.ts`, `gotoPopupActs.ts`, `replaceActs.ts`, `bookmarkActs.ts`,
   `formatBarActs.ts`, `copyButtonActs.ts`, `folderActs.ts`,
   `panelActs.ts`, `backupsPanelActs.ts`. The components: `Masthead`,
-  `Alerts`, `Search`, `Goto`, `Toolbar`, `LineBar`, `ReplaceBar`, `Help`
+  `Alerts`, `Search`, `GotoRow`, `Toolbar`, `GotoPopup`, `ReplaceBar`, `Help`
   (over `help.html`), `Bookmarks`, `Shortcuts`, `Backups`, `CopyButton`;
   `ui.css`.
 - `src/session.ts` — THE BRIDGE: the editor over the journal; open by

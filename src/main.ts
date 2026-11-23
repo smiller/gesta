@@ -26,10 +26,10 @@ import { overlays } from "./ui/overlays.ts";
 import { bookmarkActs } from "./ui/bookmarkActs.ts";
 import { replaceActs } from "./ui/replaceActs.ts";
 import { copyButton } from "./ui/copyButtonActs.ts";
-import { lineBarActs } from "./ui/lineBarActs.ts";
+import { gotoPopupActs } from "./ui/gotoPopupActs.ts";
 import { folderActs } from "./ui/folderActs.ts";
 import { searchActs } from "./ui/searchActs.ts";
-import { gotoActs } from "./ui/gotoActs.ts";
+import { gotoRowActs } from "./ui/gotoRowActs.ts";
 import { listenHeldKeys, plainChord } from "./ui/heldKeys.ts";
 import { pictureMoves } from "./store/pictures.ts";
 import { afterLoad } from "./store/toCommonplaces.ts";
@@ -98,7 +98,7 @@ const acts = {
   lines: (_open: boolean) => {},
   shortcuts: { query: (_q: string) => {}, pick: (_i: number) => {}, walk: (_d: 1 | -1) => {}, enter: () => {}, edit: () => {}, draft: (_v: string) => {}, save: () => {}, escape: () => {} },
   bookmarks: { key: (_e: KeyboardEvent) => {}, act: (_key: string, _what: "jump" | "del" | "key" | "link") => {}, draft: (_v: string) => {}, commit: (_v: string) => {} },
-  lineBar: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page" | "stanza", _v: string) => {}, enter: (_kind: "line" | "page" | "stanza", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
+  gotoPopup: { toggle: () => {}, reask: () => {}, input: (_kind: "line" | "page" | "stanza", _v: string) => {}, enter: (_kind: "line" | "page" | "stanza", _v: string, _repeat: boolean) => {}, close: () => {}, dismiss: () => {} },
   replace: { open: () => {}, find: (_v: string) => {}, with: (_v: string) => {}, next: (_back: boolean) => {}, one: () => {}, all: () => {}, close: () => {}, closeOver: () => {}, dismiss: () => {}, check: () => {} },
   search: { toggle: (_open: boolean) => {}, query: (_q: string) => {}, scope: (_at: number) => {}, walk: (_dir: 1 | -1) => {}, enter: () => {}, pick: (_i: number) => {} },
 };
@@ -107,8 +107,8 @@ const overlay = overlays({
   panel: closePanel,
   search: () => acts.search.toggle(false),
   goto: () => acts.goto.toggle(false),
-  lineBar: () => acts.lineBar.dismiss(),
-  lineBarCaret: () => acts.lineBar.close(),
+  gotoPopup: () => acts.gotoPopup.dismiss(),
+  gotoPopupCaret: () => acts.gotoPopup.close(),
   lines: () => { if (screen.linesOpen) acts.lines(false); },
   replace: () => acts.replace.closeOver(),
   replaceBack: () => acts.replace.close(),
@@ -134,7 +134,7 @@ const masthead = mount(Masthead, { target: document.body, anchor: document.query
   /* a new pick is kept, then read as at any launch */
   reader: READER ? { onOpen: keepPicked, onWalk: (dir: WalkDir) => acts.walk(dir) } : null,
   goto: { onToggle: (open: boolean) => acts.goto.toggle(open), onPick: (level: number, value: string, ns?: string) => acts.goto.pick(level, value, ns) },
-  lineBar: { onInput: (kind: "line" | "page" | "stanza", v: string) => acts.lineBar.input(kind, v), onEnter: (kind: "line" | "page" | "stanza", v: string, repeat: boolean) => acts.lineBar.enter(kind, v, repeat), onClose: () => acts.lineBar.close() },
+  gotoPopup: { onInput: (kind: "line" | "page" | "stanza", v: string) => acts.gotoPopup.input(kind, v), onEnter: (kind: "line" | "page" | "stanza", v: string, repeat: boolean) => acts.gotoPopup.enter(kind, v, repeat), onClose: () => acts.gotoPopup.close() },
   replace: { onFind: (v: string) => acts.replace.find(v), onWith: (v: string) => acts.replace.with(v), onNext: (back: boolean) => acts.replace.next(back), onOne: () => acts.replace.one(), onAll: () => acts.replace.all(), onClose: () => acts.replace.close() },
   shortcuts: { onQuery: (q: string) => acts.shortcuts.query(q), onPick: (i: number) => acts.shortcuts.pick(i), onWalk: (d: 1 | -1) => acts.shortcuts.walk(d), onEnter: () => acts.shortcuts.enter(), onEdit: () => acts.shortcuts.edit(), onDraft: (v: string) => acts.shortcuts.draft(v), onSave: () => acts.shortcuts.save(), onEscape: () => acts.shortcuts.escape() },
   backups: { onSetup: () => acts.backups(), onResume: () => acts.resume(), onSweep: () => acts.sweep() },
@@ -166,7 +166,7 @@ listenHeldKeys(document, window);
 const CHORDS: Record<string, () => void> = {
   k: () => acts.search.toggle(!screen.search.open),
   j: () => acts.goto.toggle(!screen.goto.open),
-  g: () => acts.lineBar.toggle(),
+  g: () => acts.gotoPopup.toggle(),
   h: () => acts.panel("help", true),
   b: () => acts.panel("bookmarks", true),
   s: () => acts.panel("shortcuts", true),
@@ -249,7 +249,7 @@ const entryShown = (stored: string, ekey: string): void => {
      book is refused) */
   if (ekey !== shown.ekey) { leftEntry(); if (shown.ekey) alerts.clearWarning(); }
   else acts.replace.check();
-  if (screen.lineBar.open) acts.lineBar.reask();
+  if (screen.gotoPopup.open) acts.gotoPopup.reask();
   if (ekey === shown.ekey && stored === shown.stored) return;
   shown = { ekey, stored };
   refreshMasthead();
@@ -299,7 +299,7 @@ const search = searchActs({
   focusRow: () => masthead.focusSearch(),
 });
 Object.assign(acts.search, search);
-const goRow = gotoActs({
+const goRow = gotoRowActs({
   gt: screen.goto, session, layer, journal,
   opened: () => overlay.open("goto"),
   focusRow: () => masthead.focusGoto(),
@@ -387,13 +387,13 @@ acts.bookmarks.draft = card.draft;
 acts.bookmarks.commit = card.commit;
 acts.bookmarks.act = card.act;
 const openBookmarks = card.open;
-const lineActs = lineBarActs({
-  lb: screen.lineBar, session, journal, raise,
-  opened: () => overlay.open("lineBar"),
-  focusBar: () => masthead.focusLineBar(),
+const lineActs = gotoPopupActs({
+  lb: screen.gotoPopup, session, journal, raise,
+  opened: () => overlay.open("gotoPopup"),
+  focusBar: () => masthead.focusGotoPopup(),
   warmed: () => layer.warmed,
 });
-Object.assign(acts.lineBar, lineActs);
+Object.assign(acts.gotoPopup, lineActs);
 Object.assign(acts.replace, replaceActs({
   rb: screen.replace, session, raise,
   opened: () => overlay.open("replace"),

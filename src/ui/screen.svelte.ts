@@ -1,6 +1,6 @@
 import type { MastheadModel, PanelRow } from "./mastheadModel.ts";
 import type { ScopeOption } from "./searchModel.ts";
-import type { Level } from "./gotoModel.ts";
+import type { Level } from "./gotoRowModel.ts";
 import type { AskKind } from "../editor/goto.ts";
 import type { BookmarkRow } from "./bookmarksModel.ts";
 import type { Shortcut } from "../store/shortcuts.ts";
@@ -41,7 +41,7 @@ export interface Screen {
   shortcuts: { query: string; rows: Shortcut[]; active: number; empty: string; editing: boolean; draft: string; dirty: boolean };
   /* `unused` the pictures no entry names; `overHalf` that count where it is more than half of them */
   backups: { canPick: boolean; configured: boolean; trouble: string; warm: "ok" | "loading" | "failed"; unused: number; overHalf: number };
-  lineBar: { open: boolean; kind: AskKind; line: string; page: string; stanza: string; lineLabel: string; pageLabel: string };
+  gotoPopup: { open: boolean; kind: AskKind; line: string; page: string; stanza: string; lineLabel: string; pageLabel: string };
   /* ⌃⌘E's bar: `count` the line after Find, `any` whether there is a match to replace */
   replace: { open: boolean; find: string; with: string; count: string; any: boolean };
   copy: { show: boolean; top: number; right: number; minWidth: number; title: string; label: string };
@@ -64,7 +64,7 @@ export function screenState(interval: number): Screen {
     goto: { open: false, levels: [] },
     bar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, canRefAll: false, tagTitle: "" },
     copy: { show: false, top: 0, right: 0, minWidth: 0, title: "", label: "copy" },
-    lineBar: { open: false, kind: "none", line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" },
+    gotoPopup: { open: false, kind: "none", line: "", page: "", stanza: "", lineLabel: "Line", pageLabel: "Page" },
     replace: { open: false, find: "", with: "", count: "", any: false },
     bookmarks: { rows: [], foot: null, editing: "", draft: "", buf: "", unreadable: false, opening: 0 },
     shortcuts: { query: "", rows: [], active: 0, empty: "", editing: false, draft: "", dirty: false },
