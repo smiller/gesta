@@ -467,8 +467,7 @@ export function startSession(opts: SessionOptions): Session {
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
   /* only a press made in the text: a press elsewhere that hands the text
-     the focus would follow whatever link its caret stands on (pin: launch,
-     menus, the corner, links › ⌃⌘Enter on a search result inside a link) */
+     the focus would follow whatever link its caret stands on */
   function followAtCaret(e: KeyboardEvent): void {
     const view = live();
     const inText = !!view && e.target instanceof Element && view.dom.contains(e.target);

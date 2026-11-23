@@ -122,3 +122,5 @@
 {"at":"2026-11-23T17:49","ev":"add","id":"A21","list":"A","title":"The batch review: /code-review at HIGH over dfa0eea..2fe290e","detail":"Asked: /code-review high dfa0eea..2fe290e, typed at 17:49. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-23T17:49","ev":"start","id":"A21"}
 {"at":"2026-11-23T18:01","ev":"done","id":"A21","commits":["41731a4"]}
+{"at":"2026-11-23T18:12","ev":"add","id":"A22","list":"A","title":"The batch review: /code-review at HIGH over 2fe290e..41731a4","detail":"Asked: /code-review high 2fe290e..41731a4, typed at 18:12. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-23T18:12","ev":"start","id":"A22"}

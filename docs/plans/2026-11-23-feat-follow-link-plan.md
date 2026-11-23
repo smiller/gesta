@@ -40,3 +40,15 @@ link?" A link was followed only by a mouse press (`links.ts`).
   - A link to an in-page address that names no entry is routed, as a
     click already did: help now says "within Gesta", and the tests use
     entries' addresses.
+- 18:18 A22, the confirmation pass, `/code-review high 2fe290e..41731a4`:
+  80,455 tokens (the transcript's last message). Six findings:
+  - A `javascript:` or `data:` address opened by ⌃⌘Enter or ⌘-click
+    (before: ⌘-click alone): only http, https, mailto and file addresses
+    open now, by either; an unreadable one by neither.
+  - The "press made in the text" pin named a reading that reads the same
+    without the guard: dropped, the decision left unpinned, no path
+    reaching it being known.
+  - Help says ⌃⌘Enter works in the rendered text, not the source.
+  - The search step's wait says whether a hit was there.
+  - Left: every ⌃⌘ chord the page answers is swallowed whether or not it
+    acts, ⌃⌘Enter included; no control on the page answers ⌃⌘Enter.

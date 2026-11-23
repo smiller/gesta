@@ -83,11 +83,11 @@ async function followedByKey(): Promise<void> {
   for (const [key, label] of [["Enter", "Enter on a search result inside a link"], ["Control+Meta+Enter", "⌃⌘Enter on a search result inside a link"]]) {
     await go("commonplace/Links");
     await searchFor(page, "outside");
-    await page.waitForSelector(S.searchRows + ".hit", { timeout: 5000 }).catch(() => {});
+    const hits = await page.waitForSelector(S.searchRows + ".hit", { timeout: 5000 }).then(() => true, () => false);
     const opened = ctx.waitForEvent("page", { timeout: 2000 }).then(() => true, () => false);
     await page.keyboard.press(key);
     await settled(page);
-    await log(label, { entry: await A.entry(page), search: await R.searchOpen(page), newTab: await opened });
+    await log(label, { hits, entry: await A.entry(page), search: await R.searchOpen(page), newTab: await opened });
   }
 }
 section("fence", async () => {

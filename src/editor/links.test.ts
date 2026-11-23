@@ -67,4 +67,11 @@ describe("the link at the caret", () => {
   it("is not followed by the key when its address cannot be read as one", () => {
     expect(keyAction("http://[::1", DOC)).toBeNull();
   });
+  it("is opened, by the key or the modifier, only as a web, mail or file address: never a script, data or unreadable one", () => {
+    for (const href of ["javascript:alert(1)", "data:text/html,x", "http://[::1"]) {
+      expect(keyAction(href, DOC)).toBeNull();
+      expect(linkAction(href, true, DOC)).toBeNull();
+    }
+    expect(keyAction("mailto:a@example.org", DOC)).toEqual({ kind: "open", href: "mailto:a@example.org" });
+  });
 });

@@ -14,9 +14,16 @@ import type { Node } from "prosemirror-model";
 import { internalHash, entryAt } from "../store/nav.ts";
 
 export type LinkAction = { kind: "open"; href: string } | { kind: "route"; frag: string } | null;
+/* a link may arrive in pasted HTML from any page: a script or data address
+   opened in a new tab would run beside the journal's own storage
+   (pin: links.test › is opened, by the key or the modifier, only as a web) */
+const OPENED = new Set(["http:", "https:", "mailto:", "file:"]);
+const opens = (href: string, docHref: string): LinkAction => {
+  try { return OPENED.has(new URL(href, docHref).protocol) ? { kind: "open", href } : null; } catch { return null; }
+};
 export function linkAction(href: string | null, modified: boolean, docHref: string = location.href): LinkAction {
   if (!href) return null;
-  if (modified) return { kind: "open", href };
+  if (modified) return opens(href, docHref);
   const frag = internalHash(href, docHref);
   return frag ? { kind: "route", frag } : null;
 }
@@ -35,14 +42,10 @@ export function linkAtCaret(state: EditorState): string | null {
   const $h = state.selection.$head;
   return hrefOf($h.nodeAfter) ?? hrefOf($h.nodeBefore);
 }
-const readable = (href: string, docHref: string): boolean => { try { new URL(href, docHref); return true; } catch { return false; } };
 /* a key has no modifier to spare for "elsewhere": a link out of the
    journal opens in a new tab, or the key would do nothing (pin: links.test
    › is followed by the key in this tab when it names an entry) */
-export function keyAction(href: string, docHref: string = location.href): LinkAction {
-  if (!readable(href, docHref)) return null;
-  return linkAction(href, false, docHref) ?? { kind: "open", href };
-}
+export const keyAction = (href: string, docHref: string = location.href): LinkAction => linkAction(href, false, docHref) ?? opens(href, docHref);
 export function followLink(act: LinkAction, onRoute: (frag: string) => void): void {
   if (!act) return;
   if (act.kind === "open") window.open(new URL(act.href, location.href).href, "_blank", "noopener");
