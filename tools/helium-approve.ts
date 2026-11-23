@@ -12,12 +12,12 @@
 // where corner was not played; it has no copy of its own to approve.
 // `node tools/helium-approve.ts [--approve] [corner|order|bridge|reader ...]`
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, readFileSync, rmSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, readdirSync, writeFileSync, mkdirSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
-import { compared, ledger, type Compared } from "./heliumVerdict.ts";
+import { compared, ledger, readOtherwise, type Compared } from "./heliumVerdict.ts";
 import { merged } from "./heliumShards.ts";
 
 const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
@@ -149,6 +149,20 @@ function judge({ name, played }: Playing, received: string, baseline: string | n
   if (c.pass === true) { console.log(name + ": ok"); return; }
   failed++;
   console.log(said(name, c));
+  const otherwise = readOtherwise(name, c, received, baseline);
+  for (const l of otherwise) console.log(l);
+  outputs.push(otherwise.join("\n"));
+  console.log(name + ": this run kept at " + relative(process.cwd(), keptFailed(name, received)));
+}
+/* a failed run's print kept under its time: the received copy goes when
+   the next play passes, and a flake's diff went with it */
+function keptFailed(name: string, received: string): string {
+  const d = new Date(), two = (n: number): string => String(n).padStart(2, "0");
+  const dir = resolve("tools/out/helium-failed"), at = d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "-" + two(d.getHours()) + two(d.getMinutes()) + two(d.getSeconds());
+  mkdirSync(dir, { recursive: true });
+  const path = resolve(dir, name + "-" + at + ".txt");
+  writeFileSync(path, received);
+  return path;
 }
 async function playGroup(group: string[]): Promise<void> {
   const runs = group.filter((n) => run.includes(n)).map(prepare).filter((r): r is Playing => r !== null);

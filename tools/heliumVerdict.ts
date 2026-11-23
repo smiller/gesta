@@ -18,6 +18,15 @@ export function compared(received: string, baseline: string | null, held: boolea
   return { pass: false, differs: baseline === null ? "new" : "changed" };
 }
 
+export const READ_OTHERWISE = "section read otherwise — ";
+/* each section a failed comparison read otherwise, a line of its own:
+   the section's name alone heads every run's print, passed or not
+   (pin: heliumVerdict.test › a run that differs names each section) */
+export function readOtherwise(name: string, c: Compared, received: string, baseline: string | null): string[] {
+  const sections = "order" in c ? c.order : "differs" in c && baseline !== null ? orderDifferences(baseline, received) : [];
+  return sections.map((s) => name + ": " + READ_OTHERWISE + s);
+}
+
 export interface Played { received: string; fp: string; steps: boolean; held: boolean }
 /* a run's four files: its approved copy and its received copy under
    `expected`, its pass stamp and its played print under `stamps` */

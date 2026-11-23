@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compared, ledger } from "./heliumVerdict.ts";
+import { compared, ledger, readOtherwise, READ_OTHERWISE } from "./heliumVerdict.ts";
 
 const dirs = () => { const root = mkdtempSync(join(tmpdir(), "verdict-")); return { expected: join(root, "expected"), stamps: join(root, "stamps") }; };
 const has = (d: { expected: string; stamps: string }) => (name: string) => ({
@@ -65,4 +65,13 @@ test("a run held to another fails on a failed run of its own, even one reading a
   expect(compared(RUN, RUN, false)).toEqual({ pass: true });
   expect(compared(RUN, null, false)).toEqual({ pass: false, differs: "new" });
   expect(compared(RUN + "y: 2\n", RUN, false)).toEqual({ pass: false, differs: "changed" });
+});
+
+test("a run that differs names each section it reads otherwise, one line each, for a watch to wake on", () => {
+  const approved = "== a\na: 1\n== b\nb: 1\n== c\nc: 1\nconsole: (nothing)\n";
+  const played = "== a\na: 1\n== b\nb: 2\n== c\nc: 2\nconsole: (nothing)\n";
+  expect(readOtherwise("order", compared(played, approved, true), played, approved)).toEqual(["order: " + READ_OTHERWISE + "b", "order: " + READ_OTHERWISE + "c"]);
+  expect(readOtherwise("corner", compared(played, approved, false), played, approved)).toEqual(["corner: " + READ_OTHERWISE + "b", "corner: " + READ_OTHERWISE + "c"]);
+  expect(readOtherwise("corner", compared(approved, approved, false), approved, approved)).toEqual([]);
+  expect(readOtherwise("corner", compared(played, null, false), played, null)).toEqual([]);
 });

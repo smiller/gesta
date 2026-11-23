@@ -151,6 +151,11 @@ must keep is restated here.
   run with the same fingerprint prints "ok — not replayed"; `STEPS=` always
   plays. The comparisons with the `../writer` version, in Helium and in
   the corpus tool, are retired; git history has them.
+- A FLAKE WAKES ITSELF: a Helium step that fails now and then goes on F
+  (flaky tests) with a watch only its failure prints, set when it is
+  added: a failing line, or `section read otherwise — <section>`, which
+  the verdict prints for each section a failed run reads otherwise. A
+  failed run's print is kept under `tools/out/helium-failed/`.
 - REVIEWS, BY BATCH: the free checkers first, then ONE `/code-review` at
   HIGH over a commit range, when a batch touches a DOM seam (main.ts,
   session.ts, editor.ts, paste.ts, renderedView.ts, sourceView.ts) or

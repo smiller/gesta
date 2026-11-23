@@ -359,7 +359,8 @@ async function marksAfterDrag(key: string, label: string, [from, at]: [string, n
   await go(key);
   /* the last drag's marks split the words they cover: the caret is put back at the entry's start first */
   await page.evaluate(() => { const t = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT).nextNode(); getSelection().collapse(t, 0); });
-  await rest(page);
+  /* aimed at where the words stand once the page has settled */
+  await settled(page);
   await dragText(from, at, to, end);
   await rest(page);
   const shown = await page.evaluate(() => ({
@@ -367,8 +368,10 @@ async function marksAfterDrag(key: string, label: string, [from, at]: [string, n
     marked: [...document.querySelectorAll("#editor .dl-covered")].map((e) => e.textContent),
     refAll: !(document.querySelector(".fmt button[title='Copy a reference to both columns']") as HTMLElement | null)?.hidden,
   }));
+  /* the clipboard emptied first, and read once the reference has filled it */
+  await page.evaluate(() => navigator.clipboard.writeText("")).catch(() => {});
   await page.keyboard.press("Control+Meta+r");
-  await rest(page);
+  await page.evaluate(async () => { for (let i = 0; i < 40; i++) { if (await navigator.clipboard.readText().catch(() => "")) return; await new Promise((r) => setTimeout(r, 50)); } });
   await log(label, { ...shown, quoted: await R.clipboardLines(page) });
   await page.keyboard.press("Escape");
 }
