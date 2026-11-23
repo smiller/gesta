@@ -307,7 +307,8 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   - Keys and acts: `typing.ts` (markdown as you type), `format.ts` (the
     format toolbar's acts), `sourceKeys.ts`, `codeKeys.ts`, `quoteKeys.ts`,
     `gridKeys.ts`, `tableKeys.ts` (Enter a cell down, out from the last
-    row), `listKeys.ts`, `links.ts` (a click on a link), `insertLink.ts`,
+    row), `listKeys.ts`, `links.ts` (a click on a link, and the link at
+    the caret, which ⌃⌘Enter follows), `insertLink.ts`,
     `highlight.ts` (the jump to a highlight), `folds.ts` (a contents
     page's folds), `codeHighlight.ts`, `images.ts` (the image node view),
     `inlineStyles.ts`.

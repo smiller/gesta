@@ -466,9 +466,13 @@ export function startSession(opts: SessionOptions): Session {
     const view = live();
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
-  function followAtCaret(): void {
+  /* only a press made in the text: a press elsewhere that hands the text
+     the focus would follow whatever link its caret stands on (pin: launch,
+     menus, the corner, links › ⌃⌘Enter on a search result inside a link) */
+  function followAtCaret(e: KeyboardEvent): void {
     const view = live();
-    const href = view?.hasFocus() ? linkAtCaret(view.state) : null;
+    const inText = !!view && e.target instanceof Element && view.dom.contains(e.target);
+    const href = inText ? linkAtCaret(view.state) : null;
     if (href) followLink(keyAction(href), (frag) => goto(frag, said("alreadyHere")));
   }
   function switchView(): void {
@@ -478,8 +482,9 @@ export function startSession(opts: SessionOptions): Session {
   }
   /* the ⌃⌘ chords the page answers, each one Helium lets through
      (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-     (pin: source view › ⌃⌘W rendered) */
-  const chords = new Map<string, () => void>([
+     (pin: source view › ⌃⌘W rendered)
+     (pin: launch, menus, the corner, links › ⌃⌘Enter inside a link) */
+  const chords = new Map<string, (e: KeyboardEvent) => void>([
     [",", () => step("prev")], [".", () => step("next")], ["t", today], ["r", () => copyReference()],
     ["c", copyEntryLink], ["m", switchView], ["w", showWordCount], ["enter", followAtCaret],
   ]);
@@ -487,7 +492,7 @@ export function startSession(opts: SessionOptions): Session {
     const act = plainChord(e) ? chords.get(e.key.toLowerCase()) : undefined;
     if (!act) return;
     e.preventDefault();
-    act();
+    act(e);
   });
   return {
     get current() { return current; },

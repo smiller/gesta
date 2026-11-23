@@ -31,13 +31,18 @@ export function linkTitle(href: string, docHref: string = location.href): string
 }
 const hrefOf = (n: Node | null | undefined): string | null => n?.marks.find((m) => m.type.name === "link")?.attrs.href ?? null;
 export function linkAtCaret(state: EditorState): string | null {
+  if (!state.selection.empty) return null;
   const $h = state.selection.$head;
   return hrefOf($h.nodeAfter) ?? hrefOf($h.nodeBefore);
 }
+const readable = (href: string, docHref: string): boolean => { try { new URL(href, docHref); return true; } catch { return false; } };
 /* a key has no modifier to spare for "elsewhere": a link out of the
    journal opens in a new tab, or the key would do nothing (pin: links.test
    › is followed by the key in this tab when it names an entry) */
-export const keyAction = (href: string, docHref: string = location.href): LinkAction => linkAction(href, false, docHref) ?? { kind: "open", href };
+export function keyAction(href: string, docHref: string = location.href): LinkAction {
+  if (!readable(href, docHref)) return null;
+  return linkAction(href, false, docHref) ?? { kind: "open", href };
+}
 export function followLink(act: LinkAction, onRoute: (frag: string) => void): void {
   if (!act) return;
   if (act.kind === "open") window.open(new URL(act.href, location.href).href, "_blank", "noopener");

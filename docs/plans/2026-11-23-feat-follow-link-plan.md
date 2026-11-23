@@ -25,3 +25,18 @@ link?" A link was followed only by a mouse press (`links.ts`).
   just after one, away from one, on a link to itself and on an external
   link (a new tab); the verdict differed only in those readings,
   approved.
+- 17:58 A21, `/code-review high d72fcb1..53caf0f`: 108,963 tokens (the
+  transcript's last message). Six findings:
+  - ⌃⌘Enter in the search box, the shortcuts or bookmarks panel said to
+    follow a link once the text took the focus: not reproduced. In the
+    search box it neither picks the result nor follows (played: the row
+    stays open, no tab); the lists ignore a modified Enter. The chord now
+    acts only on a press made in the text all the same.
+  - An address `new URL` refuses is not followed (it threw).
+  - A selected passage follows nothing; help says so.
+  - The chord comment pins the ⌃⌘Enter reading; the reader pressed it in
+    Helium in the hand-check before the accept.
+  - CLAUDE.md's layout names what `links.ts` now holds.
+  - A link to an in-page address that names no entry is routed, as a
+    click already did: help now says "within Gesta", and the tests use
+    entries' addresses.

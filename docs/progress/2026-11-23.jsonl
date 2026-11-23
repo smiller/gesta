@@ -118,3 +118,6 @@
 {"at":"2026-11-23T17:32","ev":"done","id":"A20","commits":["b4640cf"]}
 {"at":"2026-11-23T17:39","ev":"add","id":"U15","list":"U","title":"A key follows the link at the caret","detail":"Asked (2026-11-23): 'What if ⌃⌘J if the caret is on a link follows the link?' Why: a link is followed only by a mouse press (links.ts), so a contents page is walked by keyboard only through the Go to row. Done when: the reader settles the key and which caret positions count, it is built test-first, and pressed by hand in Helium."}
 {"at":"2026-11-23T17:40","ev":"start","id":"U15"}
+{"at":"2026-11-23T17:48","ev":"done","id":"U15","commits":["53caf0f"]}
+{"at":"2026-11-23T17:49","ev":"add","id":"A21","list":"A","title":"The batch review: /code-review at HIGH over d72fcb1..53caf0f","detail":"Asked: /code-review high d72fcb1..53caf0f, typed at 17:49. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-23T17:49","ev":"start","id":"A21"}

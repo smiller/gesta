@@ -49,14 +49,22 @@ function caret(md: string): EditorState {
 }
 describe("the link at the caret", () => {
   it("is the link the caret is inside or at either edge of; between two, the one after it; none away from a link", () => {
-    expect(linkAtCaret(caret("- [Bo|ok 1](#b1)"))).toBe("#b1");
-    expect(linkAtCaret(caret("- |[Book 1](#b1)"))).toBe("#b1");
-    expect(linkAtCaret(caret("- [Book 1](#b1)|"))).toBe("#b1");
-    expect(linkAtCaret(caret("[a](#a)|[b](#b)"))).toBe("#b");
-    expect(linkAtCaret(caret("Some | words [x](#x)"))).toBeNull();
+    const b1 = "#bookshelf/Ovid/Metamorphoses/Book%201";
+    expect(linkAtCaret(caret(`- [Bo|ok 1](${b1})`))).toBe(b1);
+    expect(linkAtCaret(caret(`- |[Book 1](${b1})`))).toBe(b1);
+    expect(linkAtCaret(caret(`- [Book 1](${b1})|`))).toBe(b1);
+    expect(linkAtCaret(caret("[a](#commonplace/A)|[b](#commonplace/B)"))).toBe("#commonplace/B");
+    expect(linkAtCaret(caret("Some | words [x](#commonplace/X)"))).toBeNull();
+  });
+  it("is none while a passage is selected, whatever link its ends touch", () => {
+    const s = caret("Some words [x|](#commonplace/X)");
+    expect(linkAtCaret(s.apply(s.tr.setSelection(TextSelection.create(s.doc, 1, s.selection.head))))).toBeNull();
   });
   it("is followed by the key in this tab when it names an entry, in a new tab when it goes elsewhere", () => {
     expect(keyAction("#commonplace/Horace", DOC)).toEqual({ kind: "route", frag: "#commonplace/Horace" });
     expect(keyAction("https://example.org/", DOC)).toEqual({ kind: "open", href: "https://example.org/" });
+  });
+  it("is not followed by the key when its address cannot be read as one", () => {
+    expect(keyAction("http://[::1", DOC)).toBeNull();
   });
 });

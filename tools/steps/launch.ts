@@ -1,4 +1,4 @@
-import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt } from "./kit.ts";
+import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -80,6 +80,15 @@ async function followedByKey(): Promise<void> {
   const newTab = ctx.waitForEvent("page", { timeout: 5000 }).then(() => true, () => false);
   await followed("⌃⌘Enter on an external link", "outside", 2);
   await log("an external link's new tab", { newTab: await newTab });
+  for (const [key, label] of [["Enter", "Enter on a search result inside a link"], ["Control+Meta+Enter", "⌃⌘Enter on a search result inside a link"]]) {
+    await go("commonplace/Links");
+    await searchFor(page, "outside");
+    await page.waitForSelector(S.searchRows + ".hit", { timeout: 5000 }).catch(() => {});
+    const opened = ctx.waitForEvent("page", { timeout: 2000 }).then(() => true, () => false);
+    await page.keyboard.press(key);
+    await settled(page);
+    await log(label, { entry: await A.entry(page), search: await R.searchOpen(page), newTab: await opened });
+  }
 }
 section("fence", async () => {
   /* a verse fence pasted as TEXT mid-paragraph is set down between the halves, its first line inside */
