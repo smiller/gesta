@@ -42,6 +42,7 @@ import { menuActs } from "./ui/menuActs.ts";
 import { stepped } from "./ui/pickKeys.ts";
 import { menuArea, browserLayout, provideMenuArea } from "./editor/menuArea.ts";
 import { writeCap } from "./editor/fit.ts";
+import { chordAct, type ChordAct } from "./ui/chords.ts";
 import { isMenu, jRound, reasonOpened, type CloseReason, type MenuName, type Opened } from "./ui/menuModel.ts";
 import { NS, asAddress } from "./store/keys.ts";
 import { parseShortcuts, filterShortcuts, type Shortcut } from "./store/shortcuts.ts";
@@ -176,37 +177,33 @@ document.addEventListener("click", (e) => {
   if (!t?.closest(".page-search")) acts.search.toggle(false);
 });
 listenHeldKeys(document, window);
-/* ⌃⌘N is "new": a tagged entry, a sub-entry, a book; ⌃⌘L toggles the Line
-   numbering row — L for lines; Tab belongs to indent, so a masthead row is
-   reached from the editor only by a chord; ⌃⌘R is the reference, so
-   replace is ⌃⌘E, for exchange; the menus share ⌃⌘J with the Go to row,
-   B being bookmarks */
 const roundTo = (to: ReturnType<typeof jRound>): void => {
   if (to === "goto" || to === "none") acts.goto.toggle(to === "goto");
   else acts.opener(to, true);
 };
-const CHORDS: Record<string, () => void> = {
-  k: () => acts.search.toggle(!screen.search.open),
-  j: () => roundTo(jRound(screen.opened, screen.goto.open)),
-  g: () => acts.gotoToolbar.toggle(),
-  h: () => acts.opener("help", true),
-  b: () => acts.opener("bookmarks", true),
-  s: () => acts.opener("shortcuts", true),
-  l: () => acts.lines(!screen.linesOpen),
-  n: () => acts.create(),
-  e: () => acts.replace.open(),
+const CHORD_ACTS: Record<ChordAct, () => void> = {
+  previous: () => session.step("prev"), next: () => session.step("next"),
+  round: () => roundTo(jRound(screen.opened, screen.goto.open)),
+  search: () => acts.search.toggle(!screen.search.open),
+  lines: () => acts.lines(!screen.linesOpen),
+  gotoToolbar: () => acts.gotoToolbar.toggle(),
+  today: () => session.today(),
+  create: () => acts.create(),
+  bookmarks: () => acts.opener("bookmarks", true),
+  wordCount: () => session.showWordCount(),
+  shortcuts: () => acts.opener("shortcuts", true),
+  reference: () => session.copyReference(),
+  entryLink: () => session.copyEntryLink(),
+  view: () => session.switchView(),
+  replace: () => acts.replace.open(),
+  help: () => acts.opener("help", true),
 };
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") overlay.open("escape");
-  if (!plainChord(e)) return;
-  /* a letter is matched in either case: Caps Lock leaves the chord a
-     chord (pin: alerts and surfaces › ⌃⌘K with Caps Lock) */
-  const k = e.key.toLowerCase();
-  if (READER && "hbsne".includes(k)) return;
-  const chord = CHORDS[k];
-  if (!chord) return;
+  const act = plainChord(e) ? chordAct(e.key, READER) : null;
+  if (!act) return;
   e.preventDefault();
-  chord();
+  CHORD_ACTS[act]();
 });
 
 const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;

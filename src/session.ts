@@ -31,7 +31,6 @@ import { screenTake, type ScreenTake } from "./ui/tabWrite.ts";
 import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./model/alertText.ts";
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
-import { plainChord } from "./ui/heldKeys.ts";
 import { pageTop, pageTopCached } from "./ui/alertArea.ts";
 
 export type OpenHow = "arrive" | "keep";
@@ -101,6 +100,8 @@ export interface Session {
   replacer(): ReplacePort | null;
   readonly mdView: boolean;
   setView(md: boolean): void;
+  /* the other view, refused on a read-only page */
+  switchView(): void;
   showWordCount(): void;
   jump(date: string, tag: string | null, hl: Highlight, honorMarkers: boolean): void;
   setInterval(n: number): void;
@@ -471,19 +472,6 @@ export function startSession(opts: SessionOptions): Session {
     opts.onSwitch?.();
     surface.switchTo(!surface.md);
   }
-  /* the ⌃⌘ chords the page answers, each one Helium lets through
-     (pin: walk › ⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2)
-     (pin: source view › ⌃⌘W rendered) */
-  const chords = new Map<string, () => void>([
-    [",", () => step("prev")], [".", () => step("next")], ["t", today], ["r", () => copyReference()],
-    ["c", copyEntryLink], ["m", switchView], ["w", showWordCount],
-  ]);
-  document.addEventListener("keydown", (e) => {
-    const act = plainChord(e) ? chords.get(e.key.toLowerCase()) : undefined;
-    if (!act) return;
-    e.preventDefault();
-    act();
-  });
   return {
     get current() { return current; },
     get view() { return live(); },
@@ -497,7 +485,7 @@ export function startSession(opts: SessionOptions): Session {
       if (pos !== null) keeper.carry(pos);
     },
     lockEntries: (keys) => { locked = keys; if (surface.current) lockedNow(surface.current); },
-    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), showWordCount, insertText, sourceLineIsHeading,
+    open, openHash, takeTabWrite, save, refresh, surfaceMd: currentMd, goto, step, today, copyReference, copyEntryLink, highlight, jump, setView: (md) => surface.switchTo(md), switchView, showWordCount, insertText, sourceLineIsHeading,
     replacer: () => surface.current?.replace ?? null,
     get mdView() { return surface.md; },
     get hashDeferred() { return hashDeferred; },

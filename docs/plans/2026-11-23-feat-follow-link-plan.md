@@ -76,3 +76,14 @@ link?" A link was followed only by a mouse press (`links.ts`).
   and its second route closure are deleted. Command tests cover the route,
   the opener and the press away from a link; the verdict played whole and
   passed unchanged.
+- 18:54 The run's other candidates (asked): 3 built now (A22.1.3); 4 kept
+  on W (W2, with its files and friction); 5 dropped, to come up again if
+  the code makes it stronger.
+- 19:00 A22.1.3, grilled (asked: yes to one listener over one table, the
+  table a module, help checked not drawn, swallowing unchanged; ⌃⌘I's help
+  row in the reader's words). `src/ui/chords.ts` lists every ⌃⌘ chord:
+  its key, help line, act, and whether the reader has it, ⌃⌘I and
+  ⌃⌘Enter as the editor's. main.ts holds the one listener; the session's
+  map and listener go, `switchView` joins its interface. A test reads
+  help's table against the module: help lacked ⌃⌘I, now listed. The
+  verdict played whole and passed unchanged, the reader's included.
