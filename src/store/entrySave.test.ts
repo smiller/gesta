@@ -260,6 +260,16 @@ test("a hand-over that stops the debounce of an entry deleted elsewhere leaves n
   expect(r.pending.at(-1)).toBe(0);
 });
 
+test("a hand-over's write is told as pending from its start until it lands", async () => {
+  const r = await rig({ "commonplace/A": "typed" });
+  const h = (await r.save.handOver("commonplace/A"))!;
+  r.at.screen = { ekey: "commonplace/A", md: "typed more" };
+  const landed = h.land("commonplace/B", (md) => md);
+  expect(r.pending.at(-1)).toBe(1);
+  await landed;
+  expect(r.pending.at(-1)).toBe(0);
+});
+
 test("a save whose write did not land is made again by the next, and the entry is unsaved until one lands", async () => {
   const r = await rig();
   r.io.lands = false;

@@ -48,6 +48,9 @@ export function entrySave(p: SaveParts): EntrySave {
      the store moved is told from the stored text alone) */
   let base: OnScreen | null = null;
   let edits = 0, written = 0, writing = 0, told = 0;
+  /* told once each act has changed what it changes: a debounce ended
+     then told before its write began would read as nothing pending
+     between them (pin: entrySave.test › the saves pending are told) */
   const tell = (): void => {
     const n = (timer ? 1 : 0) + writing;
     if (n !== told) p.pending((told = n));
@@ -73,6 +76,7 @@ export function entrySave(p: SaveParts): EntrySave {
     if (p.layer.storeReadFailed) return Promise.resolve(false);
     const at = edits;
     writing++;
+    tell();
     return p.layer.setEntry(key, md).then((landed) => {
       if (landed && key === base?.ekey) { base = { ekey: key, md }; written = at; }
       p.wrote(landed);

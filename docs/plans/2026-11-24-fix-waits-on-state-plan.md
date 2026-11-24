@@ -184,3 +184,10 @@ and F7 once.
   laid over lines is found; its allowed list empty. Its own cases: one
   line, over lines with a semicolon in the waited function, a catch that
   says why, a click.
+- 12:49 The architecture run's other candidates (A26.1): 3, 4, 5 kept on W
+  (W3-W5, each with its files and friction); 6 built (A26.1.3). Its test
+  first: a hand-over's write told nothing (expected 1, got nothing
+  told). `put` now tells as its write begins, as its `finally` did as
+  it ended. The tells stay after each act rather than in `cancel`: a
+  debounce ended and told before its write began would read as nothing
+  pending between them, which the save wait takes as landed.
