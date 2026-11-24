@@ -382,7 +382,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     fixed date the page's clock is set to), `adapters/app.ts` (the
     readings over the app), `adapters/said.ts` (what the page said since a
     step's mark), `adapters/saves.ts` (the write watcher and the wait for
-    a save to land), `adapters/launch.ts` (headless Helium launched over a
+    a save to land), `adapters/searchShown.ts` (what the search row
+    publishes, as the steps read it; `heliumSearch.test.ts` holds the two
+    to one shape), `adapters/launch.ts` (headless Helium launched over a
     fresh profile, for every tool here), `helium-corner.ts` (the driver: `STEPS=`,
     `ORDER=reverse`, `TIMING=1`, `SHARD=k/n`), `helium-approve.ts` (the verdict;
     `WINDOWS=n`), `heliumLedger.ts` (each verdict play appended to

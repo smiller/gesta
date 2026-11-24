@@ -1,5 +1,5 @@
 // `node tools/heliumThrottle.ts <rate> [windows]`
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -17,11 +17,13 @@ function playWindow(k: number): Promise<string> {
   freshProfile(profile(k));
   return new Promise((done) => {
     let out = "";
-    const child = spawn("node", ["tools/helium-corner.ts", profile(k)], { env: { ...process.env, THROTTLE: String(rate), SHARD: k + "/" + windows } });
+    const child = spawn("node", ["tools/helium-corner.ts", profile(k)], { env: { ...process.env, THROTTLE: String(rate), SHARD: k + "/" + windows }, stdio: ["ignore", "pipe", "inherit"] });
     child.stdout.on("data", (b) => { out += b; });
     child.on("close", () => done(out));
   });
 }
+const build = spawnSync("npm", ["run", "build"], { encoding: "utf8" });
+if (build.status !== 0) { console.error(build.stdout, build.stderr); process.exit(1); }
 const outs = await Promise.all([...Array(windows).keys()].map(playWindow));
 const received = scrub(merged(outs));
 const approved = readFileSync("tools/expected/corner.approved.txt", "utf8");

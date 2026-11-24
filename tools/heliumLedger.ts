@@ -9,7 +9,8 @@ export interface PlayContext { at: string; head: string; committed: boolean; ste
 export interface LedgerLine extends PlayContext {
   runs: Record<string, RunResult>;
   readOtherwise: Record<string, string[]>;
-  saveRanOut: number;
+  /* each wait that ran out, by what it waited for: "save", "search" */
+  ranOut: Record<string, number>;
 }
 const RESULT: [RegExp, RunResult][] = [[/^ok — not replayed/, "not replayed"], [/^ok$/, "ok"], [/^FAILED/, "failed"], [/^DIFFERS/, "differs"]];
 function runsIn(print: string): Record<string, RunResult> {
@@ -28,8 +29,13 @@ function otherwiseIn(print: string): Record<string, string[]> {
   }
   return out;
 }
+function ranOutIn(print: string): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const m of print.matchAll(/^an? (.+?)'s wait ran out/gm)) out[m[1]] = (out[m[1]] ?? 0) + 1;
+  return out;
+}
 export function ledgerLine(print: string, context: PlayContext): LedgerLine {
-  return { ...context, runs: runsIn(print), readOtherwise: otherwiseIn(print), saveRanOut: (print.match(/^a save's wait ran out/gm) ?? []).length };
+  return { ...context, runs: runsIn(print), readOtherwise: otherwiseIn(print), ranOut: ranOutIn(print) };
 }
 /* only a whole play of a committed tree is flake evidence: on an
    uncommitted tree, or a play of some sections, a section read otherwise
@@ -49,22 +55,35 @@ export function rateOf(lines: LedgerLine[]): Rate {
 }
 const DIR = resolve("docs/helium-runs");
 const day = (at: string): string => at.slice(0, 10);
-function contextNow(windows: number, steps: boolean, secs: number): PlayContext {
+interface Tree { head: string; committed: boolean }
+/* every input a play reads, fixtures and packages too, is outside docs/,
+   where the ledger itself is written */
+const TREE_PATHS = [".", ":!docs"];
+function treeNow(): Tree {
+  const committed = execSync("git status --porcelain -- " + TREE_PATHS.map((p) => "'" + p + "'").join(" "), { encoding: "utf8" }).trim() === "";
+  return { head: execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim(), committed };
+}
+function contextNow(tree: Tree, windows: number, steps: boolean, secs: number): PlayContext {
   const d = new Date(), two = (n: number): string => String(n).padStart(2, "0");
   const at = d.getFullYear() + "-" + two(d.getMonth() + 1) + "-" + two(d.getDate()) + "T" + two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds());
-  const committed = execSync("git status --porcelain -- src tools index.html", { encoding: "utf8" }).trim() === "";
-  return { at, head: execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim(), committed, steps, windows, secs, load: Math.round(loadavg()[0] * 10) / 10 };
+  return { at, ...tree, steps, windows, secs, load: Math.round(loadavg()[0] * 10) / 10 };
 }
 export function readLedger(): LedgerLine[] {
   let files: string[] = [];
   try { files = readdirSync(DIR).filter((f) => f.endsWith(".jsonl")).sort(); } catch { return []; }
   return files.flatMap((f) => readFileSync(join(DIR, f), "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l) as LedgerLine));
 }
-/* `node tools/heliumLedger.ts <windows> <steps 0|1> <secs>`, the play's
-   print on stdin: its line appended to the day's ledger */
+/* `node tools/heliumLedger.ts --tree` prints the tree as a play starts,
+   not at its end, where an edit or a commit made while it played would
+   count as what it played. `node tools/heliumLedger.ts <windows>
+   <steps 0|1> <secs> <tree>`, the play's print on stdin: its line
+   appended to the day's ledger */
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const print = readFileSync(0, "utf8");
-  const line = ledgerLine(print, contextNow(+process.argv[2], process.argv[3] === "1", +process.argv[4]));
-  mkdirSync(DIR, { recursive: true });
-  appendFileSync(join(DIR, day(line.at) + ".jsonl"), JSON.stringify(line) + "\n");
+  if (process.argv[2] === "--tree") process.stdout.write(JSON.stringify(treeNow()));
+  else {
+    const print = readFileSync(0, "utf8");
+    const line = ledgerLine(print, contextNow(JSON.parse(process.argv[5]) as Tree, +process.argv[2], process.argv[3] === "1", +process.argv[4]));
+    mkdirSync(DIR, { recursive: true });
+    appendFileSync(join(DIR, day(line.at) + ".jsonl"), JSON.stringify(line) + "\n");
+  }
 }

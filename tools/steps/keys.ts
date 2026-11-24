@@ -246,7 +246,7 @@ async function keysAfterSearch(): Promise<void> {
   await R.pastePng(page);
   await searchFor(page, "abc");
   await release();
-  await page.waitForFunction((s) => document.querySelector(s), S.editorImg, { timeout: 5000 }).catch(() => console.log("the held picture did not land within 5 s"));
+  await page.waitForFunction((s) => document.querySelector(s), S.editorImg, { timeout: 5000 }).catch(() => console.log("a held picture's wait ran out after 5000 ms"));
   await landed(page, 1500);
 }
 async function picturePastedSearchTyped(): Promise<void> {

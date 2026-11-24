@@ -49,7 +49,8 @@ export const landed = (p: Page, ms: number) => waitSaveLanded(p, ms + 2000);
    rows answer the box's query; no words, the kept query stands */
 export async function searchFor(p: Page, words: string) {
   await p.keyboard.press("Control+Meta+k");
-  await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
+  const focused = await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).then(() => true, () => false);
+  if (!focused) { console.log("a search box's wait ran out after 2000 ms: the box not focused"); return null; }
   if (words) { await p.keyboard.press("Meta+a"); await p.keyboard.type(words); }
   const q = await p.evaluate(() => document.querySelector<HTMLInputElement>(".search-input")?.value ?? "");
   return A.waitSearchAnswered(p, q.trim());
@@ -61,7 +62,7 @@ export async function searchFor(p: Page, words: string) {
    line's English into the next line's Latin) */
 export async function aimable(p: Page) {
   await p.evaluate(() => { for (const c of document.querySelectorAll<HTMLElement>(".alert.info.show .close, .alert.success.show .close")) c.click(); });
-  await p.waitForFunction(() => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; }, null, { timeout: 2000 }).catch(() => console.log("an alert still stood after its close"));
+  await p.waitForFunction(() => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; }, null, { timeout: 2000 }).catch(() => console.log("an alert's wait ran out after 2000 ms: one still stood after its close"));
   await A.settled(p);
 }
 /* the page's picture decodes held until the step lets them go: what it

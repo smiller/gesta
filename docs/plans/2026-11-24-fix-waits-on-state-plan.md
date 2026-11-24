@@ -88,3 +88,25 @@ and F7 once.
   each; on 2026-11-23 at 5 windows, 1 of 5, 86-90 s.
 - 10:15 B9 and ⌃⌘Enter decided (4, 5). "Search reopened and typed in"
   played alone: `{"value":"outside sky","caret":11,"end":11}`.
+- 10:18 `/code-review high f7d619b..8c721b0` (A26): 1 important, 8 nits;
+  124,415 tokens (input 2, cache creation 3,306, cache read 116,933,
+  output 4,174).
+  - 1, the save wait reading early after a write not through the entry
+    save (important): its case does not stand, the create writing before
+    it moves the hash (`src/ui/lifecycle.ts:491`). Probed: after each
+    "landed", 700 ms watched for a write opening. 229 of 230 quiet at 1x
+    and 203 of 230 at 4x; every late one at the section start's seed
+    check, the one named the search index's (`gesta.v1.index:texts`),
+    none after a gesture. Not changed.
+  - 2, a hand-over stopping a deleted entry's debounce left one pending:
+    shown by its test, fixed.
+  - 3, a save that throws as it is made: does not stand, the store's
+    call runs inside `.then` (`src/store/entries.ts:219`).
+  - 4, `searchFor` pressing ⌘A with the box unfocused: it now says so and
+    types nothing. 5, a search wait that runs out answers null.
+  - 6, the throttle tool: builds first; stderr inherited.
+  - 7, the ledger's tree: everything outside docs/, read as the play
+    starts. 8, each wait that ran out counted by what it waited for, each
+    such line now "<a thing>'s wait ran out".
+  - 9, the search shape in two places: `adapters/searchShown.ts`, held to
+    the app's by `heliumSearch.test.ts`.

@@ -118,7 +118,7 @@ export function entrySave(p: SaveParts): EntrySave {
     return { md, land: end, keep: () => end(ekey, (t) => t) };
   }
   function handOver(ekey: string): Promise<HandOver | null> {
-    if (deletedHere?.ekey === ekey) cancel();
+    if (deletedHere?.ekey === ekey) { cancel(); tell(); }
     return flush().then(() => (p.screen()?.ekey === ekey ? handed(ekey) : null));
   }
   const typedSince = (): boolean => !!timer || suspended || edits !== written;

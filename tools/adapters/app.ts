@@ -4,9 +4,10 @@ import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.
 import { tmpdir } from "node:os";
 import { blankRowReader } from "./blankRow.ts";
 import type { Page } from "../heliumPage.ts";
-import { inPage } from "./inPage.ts";
+import { inPage, inPageWith } from "./inPage.ts";
 import { said, saidAfterGesture } from "./said.ts";
 import { waitSaveLanded } from "./saves.ts";
+import { answers, type SearchShown } from "./searchShown.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -48,14 +49,18 @@ export async function fresh(page: Page, seeds: Record<string, string>) {
 }
 export const entry = (page: Page) => page.evaluate(() => document.documentElement.dataset.entry);
 export const waitEntry = (page: Page, key: string, ms = 15000) => page.waitForFunction((k) => document.documentElement.dataset.entry === k, key, { timeout: ms });
-export interface SearchShown { open: boolean; answered: string | null; rows: number; empty: string }
+function answeredNow(q: string): boolean {
+  return answers(JSON.parse(document.documentElement.dataset.search || "null"), q);
+}
 /* once the search's rows answer `q`, or once `ms` has gone by: a wait
-   that runs out says so in the run's own output, with what the box held */
+   that runs out says so in the run's own output, with what the box held,
+   and answers null, the rows then those of some other query */
 export async function waitSearchAnswered(page: Page, q: string, ms = 5000): Promise<SearchShown | null> {
-  const answered = await page.waitForFunction((q) => JSON.parse(document.documentElement.dataset.search || "{}").answered === q, q, { timeout: ms, polling: 25 }).then(() => true, () => false);
+  const answered = await page.waitForFunction(inPageWith(q, answeredNow, answers), undefined, { timeout: ms, polling: 25 }).then(() => true, () => false);
+  if (answered) return page.evaluate(() => JSON.parse(document.documentElement.dataset.search || "null") as SearchShown | null);
   const shown = await page.evaluate(() => ({ shown: JSON.parse(document.documentElement.dataset.search || "null") as SearchShown | null, typed: document.querySelector<HTMLInputElement>(".search-input")?.value ?? null, focused: String(document.activeElement?.className || document.activeElement?.tagName).slice(0, 30) }));
-  if (!answered) console.log("a search's wait ran out after " + ms + " ms: " + JSON.stringify({ q, ...shown }));
-  return shown.shown;
+  console.log("a search's wait ran out after " + ms + " ms: " + JSON.stringify({ q, ...shown }));
+  return null;
 }
 export const waitWarm = (page: Page) => page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 /* the markdown the store holds, read straight from IndexedDB after the

@@ -251,6 +251,15 @@ test("a hand-over of an entry deleted elsewhere hands nothing back before it lan
   expect(r.writes).toEqual([["commonplace/B", "typed more"]]);
 });
 
+test("a hand-over that stops the debounce of an entry deleted elsewhere leaves nothing pending, the screen gone from it", async () => {
+  const r = await rig({ "commonplace/A": "typed" });
+  r.save.deleted();
+  r.save.edited();
+  r.at.screen = { ekey: "commonplace/B", md: "" };
+  expect(await r.save.handOver("commonplace/A")).toBe(null);
+  expect(r.pending.at(-1)).toBe(0);
+});
+
 test("a save whose write did not land is made again by the next, and the entry is unsaved until one lands", async () => {
   const r = await rig();
   r.io.lands = false;

@@ -174,9 +174,11 @@ function wakeOnce(): void {
 }
 /* every play into the ledger, for a flake rate across sessions; a child,
    as the wake is, so an edit to it is not the run's input */
+const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
+const treeAtStart = spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout;
 function ledgered(): void {
   if (!outputs.length) return;
-  const args = [fileURLToPath(new URL("./heliumLedger.ts", import.meta.url)), String(WINDOWS), process.env.STEPS ? "1" : "0", String(Math.round(process.uptime()))];
+  const args = [LEDGER, String(WINDOWS), process.env.STEPS ? "1" : "0", String(Math.round(process.uptime())), treeAtStart];
   const l = spawnSync("node", args, { input: [...told, ...outputs].join("\n"), encoding: "utf8" });
   if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
 }

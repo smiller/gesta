@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { ledgerLine, rateOf, type LedgerLine } from "./heliumLedger.ts";
 
-const play = (o: Partial<LedgerLine>): LedgerLine => ({ at: "2026-11-23T22:29:00", head: "abc1234", committed: true, steps: false, windows: 5, secs: 90, load: 7, runs: { corner: "ok", order: "ok" }, readOtherwise: {}, saveRanOut: 0, ...o });
+const play = (o: Partial<LedgerLine>): LedgerLine => ({ at: "2026-11-23T22:29:00", head: "abc1234", committed: true, steps: false, windows: 5, secs: 90, load: 7, runs: { corner: "ok", order: "ok" }, readOtherwise: {}, ranOut: {}, ...o });
 
 describe("a verdict play's line", () => {
-  it("names each run's result and, once each, the sections each read otherwise, from the verdict's own print", () => {
-    const print = ["corner: ok", "order: DIFFERS in another order — launch, menus, the corner, links", "order: section read otherwise — launch, menus, the corner, links", "order: this run kept at x", "order: section read otherwise — launch, menus, the corner, links", "bridge: ok — not replayed, its inputs those of a passing run", "a save's wait ran out after 3000 ms: {}"].join("\n");
+  it("names each run's result, once each the sections each read otherwise, and each wait that ran out by what it waited for, from the verdict's own print", () => {
+    const print = ["corner: ok", "order: DIFFERS in another order — launch, menus, the corner, links", "order: section read otherwise — launch, menus, the corner, links", "order: this run kept at x", "order: section read otherwise — launch, menus, the corner, links", "bridge: ok — not replayed, its inputs those of a passing run", "a save's wait ran out after 3000 ms: {}", "a search's wait ran out after 5000 ms: {}", "a save's wait ran out after 3000 ms: {}", "an alert's wait ran out after 2000 ms: one still stood"].join("\n");
     const l = ledgerLine(print, { at: "2026-11-23T22:33:00", head: "abc1234", committed: true, steps: false, windows: 5, secs: 87, load: 27.2 });
-    expect([l.runs, l.readOtherwise, l.saveRanOut]).toEqual([{ corner: "ok", order: "differs", bridge: "not replayed" }, { order: ["launch, menus, the corner, links"] }, 1]);
+    expect([l.runs, l.readOtherwise, l.ranOut]).toEqual([{ corner: "ok", order: "differs", bridge: "not replayed" }, { order: ["launch, menus, the corner, links"] }, { save: 2, search: 1, alert: 1 }]);
   });
 });
 

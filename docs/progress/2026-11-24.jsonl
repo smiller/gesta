@@ -31,3 +31,5 @@
 {"at":"2026-11-24T07:50","ev":"done","id":"U19","commits":["b292795"]}
 {"at":"2026-11-24T07:50","ev":"done","id":"F6","commits":["b292795"],"note":"cause found under THROTTLE=4: the search's kept query; held by searchFor"}
 {"at":"2026-11-24T10:12","ev":"done","id":"B9","note":"the reader keeps the caret at the end; a launch reading holds it"}
+{"at":"2026-11-24T10:18","ev":"add","id":"A26","list":"A","title":"The batch review: /code-review at HIGH over f7d619b..8c721b0","detail":"Asked: /code-review high f7d619b..8c721b0, typed at 10:18. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-24T10:18","ev":"start","id":"A26"}
