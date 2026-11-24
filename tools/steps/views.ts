@@ -1,4 +1,4 @@
-import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, openGotoRow, seed } from "./kit.ts";
+import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, openGotoRow, seed, landed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -34,7 +34,7 @@ async function switchViews(): Promise<void> {
   await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
   await page.keyboard.type("FOOD ");
   await page.keyboard.press("Tab");
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 });
   await log("⌃⌘M back", await R.sourceBack(page));

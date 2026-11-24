@@ -221,7 +221,7 @@ async function unknownPageLeftUntouched(): Promise<void> {
   await A.waitEntry(page, "2026-09-05/Long", 5000).catch(() => {});
   await page.click(S.editor);
   await R.pasteText(page, Array.from({ length: 80 }, (_, i) => "Line " + (i + 1) + " of a long entry.").join("\n\n"));
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await wheelTo(900);
   await jump(page, 700);
   const before = await winY();

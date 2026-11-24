@@ -24,7 +24,7 @@
 </table>
 <h3>Writing &amp; saving</h3>
 <ul>
-<li>Each day has one entry, and the app opens at today’s. Everything autosaves to this browser’s storage as you type; “saved” shows under the masthead when it lands.</li>
+<li>Each day has one entry, and the app opens at today’s. Everything autosaves to this browser’s storage as you type, quietly; if a save fails, “not saved” stands under the masthead until it lands, and “saved” says when it has.</li>
 <li>There is no server and no account: entries exist only in this browser. Alerts show in the alert area across the top of the page, under the masthead, one under another, each in the colour of its kind. An error, in red, stays until it is resolved or closed: if a save ever fails, “not saved” stays until saving works again. A newer error covers an older one, which comes back when the newer goes. A warning, in amber — why something you just tried did nothing, such as a reference over blocks not numbered straight on — fades after ten seconds, or goes when you close it or open another entry. An info, in blue — a word count, an export’s progress — and a success, in green — “saved”, “Link copied”, “backed up” — fade on their own; they stack in that order, error first. Each has an × that closes it. A click on an alert’s words copies them, an error its details, so what it said can be pasted elsewhere — but for a routine one such as “saved”, which a click only clears. Every error and warning is also kept for three months, for tracking down what went wrong: in the developer console, <code>gesta.alerts()</code> lists them with when, on which entry, and after which key or control.</li>
 </ul>
 <h3>Navigating</h3>

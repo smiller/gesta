@@ -130,7 +130,7 @@ export function startSession(opts: SessionOptions): Session {
   const save = entrySave({
     screen: () => (surface.current ? { ekey: ekeyOf(), md: currentMd() } : null),
     layer,
-    wrote: (landed) => { if (landed) raise("saved"); show(); },
+    wrote: () => { show(); },
     refused: (md) => { rescued.raise("notSavedDeletedElsewhere", { copy: md }); },
   });
   const edited = (): void => { save.edited(); show(); };

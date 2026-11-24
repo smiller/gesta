@@ -179,7 +179,7 @@ Green. Something done worked. It fades on its own; a click on it copies its word
 
 | Words | When |
 |---|---|
-| `saved` | An entry’s save landed. |
+| `saved` | The saves owed after a failed save landed; a routine save says nothing. |
 | `copied` | A click on an alert copied its words. |
 | `Reference copied to clipboard` | ⌃⌘R copied a reference. |
 | `Link copied` | A link to the entry copied. |

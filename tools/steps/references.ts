@@ -251,7 +251,6 @@ async function picturePasted(): Promise<void> {
   await page.keyboard.press("Enter");
   await R.pastePng(page);
   await R.waitImg(page);
-  /* on the store, not the corner: the first paste's "saved" may still stand */
   await storedWith("img-1.webp");
 }
 async function picturePastedEntryS(): Promise<void> {

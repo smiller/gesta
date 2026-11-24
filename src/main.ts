@@ -212,7 +212,7 @@ const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastCh
    (pin: entries.test › a landed write and a landed delete are told to onLanded) */
 let armBackup = (): void => {};
 const readerStore = READER ? memEntryStore() : null;
-const layer = entryLayer(readerStore ?? idbEntryStore(), { owner: () => alerts.owner({ holdsSaved: true }), raise }, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
+const layer = entryLayer(readerStore ?? idbEntryStore(), { owner: () => alerts.owner({ saves: true }), raise }, { announce: (ekey) => tabs?.postMessage(ekey), onLanded: () => armBackup() });
 let bundlePictures: ImageStore | null = null;
 const images: ImageStore = READER ? {
   get: (id) => bundlePictures ? bundlePictures.get(id) : Promise.resolve(null),
@@ -224,10 +224,8 @@ const images: ImageStore = READER ? {
 const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
 
 const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
-/* the backup's status line is an info, each step restarting the clock:
-   an autosave "saved" may overwrite "backing up…" (a background backup
-   must not suppress the user's own save feedback), and an error outranks
-   both */
+/* the backup's status line is an info, each step restarting the clock,
+   and an error outranks it */
 const bkPanel = backupsPanel({
   bk: screen.backups, canPick: () => !!win.showDirectoryPicker, reader: READER, backup: () => backup,
   layer, images, raise, confirm: (text) => confirm(text), flushSave: () => session.save.flush(),

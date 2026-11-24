@@ -153,15 +153,17 @@ describe("an error", () => {
     other.resolve();
     expect(n.state.error).toMatchObject({ text: "shortcuts not saved — storage full", shown: true });
   });
-  it("an owner holding back \"saved\" holds it from its raise until its resolve, its error closed or not", () => {
-    const saves = n.owner({ holdsSaved: true });
+  it("an owner of saves says \"saved\" once when it resolves after an error it raised, its error closed or not; a resolve with none before it says nothing", () => {
+    const saves = n.owner({ saves: true });
+    saves.resolve();
+    expect(n.state.success.shown).toBe(false);
     saves.raise("notSaved");
     n.dismiss("error");
-    n.raise("saved");
-    expect(n.state.success.shown).toBe(false);
     saves.resolve();
-    n.raise("saved");
     expect(n.state.success).toMatchObject({ text: "saved", shown: true });
+    vi.advanceTimersByTime(5000);
+    saves.resolve();
+    expect(n.state.success.shown).toBe(false);
   });
   it("an error with no owner goes only when closed; raised again in the same words it moves to the top, one of it", () => {
     const owned = n.owner();
@@ -416,17 +418,6 @@ describe("the newer of info and success", () => {
 });
 
 describe("the review's findings", () => {
-  it("a routine success is held back while a save error stands; another success is not", () => {
-    const saves = n.owner({ holdsSaved: true });
-    saves.raise("notSaved", { caught: new Error("x") });
-    n.raise("saved");
-    expect(n.state.success.shown).toBe(false);
-    n.raise("linkCopied");
-    expect(n.state.success).toMatchObject({ text: "Link copied", shown: true });
-    saves.resolve();
-    n.raise("saved");
-    expect(n.state.success).toMatchObject({ text: "saved", shown: true });
-  });
   it("a click on the copy-failed error closes it without copying again", async () => {
     refuseCopy = true;
     n.raise("notSaved", { copy: "detail" });

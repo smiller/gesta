@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, saidText, setAnswer, prompts, confirms, rest } from "./kit.ts";
+import { section, page, A, R, S, log, go, saidText, setAnswer, prompts, confirms, rest, landed } from "./kit.ts";
 
 section("a commonplace renamed with every link following", async () => {
   /* Rename on a commonplace with no sub-entries, a plain name typed: a link to it on another entry follows, and the corner says so */
@@ -27,11 +27,10 @@ async function pictureDeletedTextBackups(): Promise<void> {
   await page.keyboard.type("A picture: ");
   await R.pastePng(page);
   await R.waitImg(page);
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   const kept = await A.pictureKeys(page, "commonplace/Unused Pictures");
   await page.keyboard.press("Meta+a");
   await page.keyboard.press("Backspace");
-  /* the corner may still say "saved" from the paste: the stored text is what the panel counts */
   for (let i = 0; i < 40 && ((await A.stored(page, "commonplace/Unused Pictures")) || "").includes("!["); i++) await rest(page);
   await page.click(S.backupsButton);
   await page.waitForFunction(() => /unused picture/.test(document.querySelector(".backups")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
@@ -66,7 +65,7 @@ async function renameToBookshelfAddress(): Promise<void> {
   await page.keyboard.type("An essay with a picture: ");
   await R.pastePng(page);
   await R.waitImg(page);
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await go("commonplace/Move%20Source");
   setAnswer(["bookshelf/Mover, Test/Essays"]);
   prompts.length = 0;

@@ -214,7 +214,7 @@ export const ALERTS = {
   keepingBackup: info("keeping the backup…", "The reader keeping a backup picked."),
   openingBackup: info("opening the backup…", "The reader opening the backup kept."),
 
-  saved: success("saved", "An entry’s save landed.", 1400),
+  saved: success("saved", "The saves owed after a failed save landed; a routine save says nothing.", 1400),
   copied: success("copied", "A click on an alert copied its words.", 1200),
   referenceCopied: success("Reference copied to clipboard", "⌃⌘R copied a reference."),
   linkCopied: success("Link copied", "A link to the entry copied."),

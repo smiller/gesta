@@ -1,4 +1,4 @@
-import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor, view, writeAll } from "./kit.ts";
+import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor, view, writeAll, landed } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -35,10 +35,13 @@ async function afterWarm(): Promise<void> {
   await page.click(S.editor);
   await page.keyboard.press("End");
   await page.keyboard.type(" corner");
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await log("after typing", await R.corner(page));
+  await page.keyboard.press("Control+Meta+c");
+  await page.waitForSelector(".alert.success.show", { timeout: 2000 }).catch(() => {});
+  await log("after ⌃⌘C", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
-  await page.click(".alert.success.show");
+  await page.click(".alert.success.show", { timeout: 2000 }).catch(() => {});
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
   await rest(page);

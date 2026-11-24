@@ -146,3 +146,8 @@
 {"at":"2026-11-23T19:18","ev":"done","id":"A23","commits":["50479c1"]}
 {"at":"2026-11-23T19:35","ev":"start","id":"F5"}
 {"at":"2026-11-23T19:45","ev":"done","id":"F5","commits":["7db6014"]}
+{"at":"2026-11-23T19:59","ev":"add","id":"U16","list":"U","title":"Readings see only what the act said: the app numbers what it says","detail":"Asked: 'We definitely shouldn't be checking for wording which isn't even related to the actions in the test', then yes to: the ledger numbers each alert and publishes the last eight; a reading of what was said gives what was said since the step's previous log; several joined oldest first; what stands is errors only; the checker refuses an unwindowed alert reading or wait (2026-11-23). Why: after F5 the go to toolbar's readings showed the launch's '10 entries stored'. Done when: built test-first, the verdict's diff read and approved, verify green, committed."}
+{"at":"2026-11-23T19:59","ev":"start","id":"U16"}
+{"at":"2026-11-23T20:16","ev":"add","id":"U17","list":"U","title":"No alert when an autosave lands; \"saved\" once when a save error resolves","detail":"Asked (2026-11-23): 'since saved is every few seconds and it's an auto-save, I'm not sure we even need the alert for that. I've been typing in the app and it's been very distracting', then yes to: a landed autosave says nothing, \"not saved\" unchanged; \"saved\" said once when a save error resolves; no mock, played headless; built before U16 ('I'm typing in the app right now'). Done when: built test-first, played headless, the verdict's diff read, verify green, committed."}
+{"at":"2026-11-23T20:16","ev":"stop","id":"U16","note":"set aside in a stash for U17, asked first"}
+{"at":"2026-11-23T20:16","ev":"start","id":"U17"}

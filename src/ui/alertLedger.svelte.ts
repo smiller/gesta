@@ -37,8 +37,8 @@ export interface Alerts {
   clearWarning(): void;
   /* an alert by its id in the table, shown where its kind goes */
   raise: Raise;
-  /* `holdsSaved`: from this owner's raise to its resolve, a routine "saved" is held back */
-  owner(opts?: { holdsSaved?: boolean }): ErrorOwner;
+  /* `saves`: this owner's errors are saves'; its resolve after one says "saved" */
+  owner(opts?: { saves?: boolean }): ErrorOwner;
   progress(id: BareIdOf<"info">): Progress;
   click(kind: Kind): void;
   /* the ×: closes the alert without copying */
@@ -114,7 +114,6 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
      it goes, the one beneath comes back (pin: alertLedger.test › the newest
      error shows) */
   const standing: Standing[] = [];
-  const holding = new Set<object>();
   function showTop(): void {
     const top = standing.at(-1);
     if (top) state.error.text = top.text;
@@ -135,12 +134,8 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     standing.splice(standing.indexOf(s), 1);
     showTop();
   }
-  /* a routine "saved" is held back from a `holdsSaved` owner's raise to its
-     resolve, its error closed or not: another entry's landing would read as
-     that one's (pin: alertLedger.test › a routine success is held back while
-     a save error stands) (pin: alertLedger.test › an owner holding back) */
   function succeed(text: string, ms = INFO_MS): void {
-    if (!(text === IDLE_TEXT && holding.size)) showFor("success", text, ms);
+    showFor("success", text, ms);
   }
   /* shown first, then logged: a log that throws must not keep an alert from
      being seen (pin: alertLedger.test › a log that cannot be written) */
@@ -156,15 +151,23 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     place({ owner, text, copy: from.copy || (caught ? errText(from.caught) : "") || text }, !!from.beneath);
     tell("error", text);
   }
-  function owner(opts: { holdsSaved?: boolean } = {}): ErrorOwner {
+  /* a landed save says nothing, but the one that ends a save's failure
+     says "saved", its error closed or not (pin: alertLedger.test › an owner
+     of saves says "saved" once) */
+  function owner(opts: { saves?: boolean } = {}): ErrorOwner {
     const me = {};
+    let failed = false;
     return {
       raise: ((a: AlertId | Said, b?: unknown, c?: unknown): void => {
         const [s, from] = asSaid(a, b, c);
-        if (opts.holdsSaved) holding.add(me);
+        failed = true;
         error(alertWords(s), from, me);
       }) as ErrorOwner["raise"],
-      resolve: () => { holding.delete(me); take(standing.find((x) => x.owner === me)); },
+      resolve: () => {
+        take(standing.find((x) => x.owner === me));
+        if (opts.saves && failed) succeed(IDLE_TEXT, alertMs("saved"));
+        failed = false;
+      },
     };
   }
   let warningTimer: ReturnType<typeof setTimeout> | null = null;

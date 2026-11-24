@@ -54,7 +54,7 @@ async function renameAuthorTyped(): Promise<void> {
   await page.keyboard.type("A book. ");
   await R.pastePng(page);
   await R.waitImg(page);
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await go("bookshelf/Miller%2C%20Sean", 5000);
   setAnswer("Sean Miller");
   prompts.length = 0;
@@ -87,7 +87,7 @@ async function replaceInRenderedView(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
   await R.setSource(page, "One*-*two *-*three, and *,* four.\n\nFive*-*six.\n");
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
   await rest(page);
@@ -148,7 +148,7 @@ async function replaceInSourceView(): Promise<void> {
   await page.keyboard.press("Escape");
   /* a switch back the parse refuses: the cursor goes back to the text, not into the hidden Find box */
   await R.setSource(page, "::: grid 2\n::: card-red\nx\n:::\n:::\n");
-  await R.waitCorner(page, "saved");
+  await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
 }
 async function escapeSwitchBackRefused(): Promise<void> {
@@ -163,7 +163,6 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await rest(page);
   await log("Escape, the switch back refused", await R.replaceToolbar(page));
   await R.setSource(page, "One*-*two.\n");
-  /* the save, not the corner: the refusal's error stands over "saved" */
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
@@ -186,7 +185,7 @@ async function entrySavedAnotherWindow(): Promise<void> {
   { const other = await page.context().newPage();
     await other.goto(A.url("commonplace/Replaced")); await A.waitEntry(other, "commonplace/Replaced");
     await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
-    await R.waitCorner(other, "saved");
+    await landed(other, 1500);
     /* the landed write reaches this window by its tab message: waited for, so a reading never races it */
     await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
     await rest(page);
@@ -218,7 +217,7 @@ async function fenceWordsBothViews(): Promise<void> {
   await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
-  await R.waitCorner(page, "saved");   /* the save landed first: its "saved" would stand over the warning's */
+  await landed(page, 1500);
   await R.selectBetween(page, "cap", "tion");
   await rest(page);
   await page.click(".fmt .code");

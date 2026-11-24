@@ -10,7 +10,7 @@ import { join } from "node:path";
    its count and reason. */
 const ALLOWED: Record<string, { corner: number; fade: number; why: string }> = {
   "adapters/app.ts": { corner: 1, fade: 0, why: "the screen line, whose corner the verdict scrubs" },
-  "steps/launch.ts": { corner: 0, fade: 5, why: "the launch's fade and pill, read under the page's own clock" },
+  "steps/launch.ts": { corner: 0, fade: 6, why: "the launch's fade and pill, read under the page's own clock" },
 };
 const count = (text: string, re: RegExp): number => text.match(re)?.length ?? 0;
 const readingsOf = (text: string): { corner: number; fade: number } => ({ corner: count(text, /__corner\(\)/g), fade: count(text, /\bR\.corner\(/g) });
