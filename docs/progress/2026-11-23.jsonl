@@ -151,3 +151,4 @@
 {"at":"2026-11-23T20:16","ev":"add","id":"U17","list":"U","title":"No alert when an autosave lands; \"saved\" once when a save error resolves","detail":"Asked (2026-11-23): 'since saved is every few seconds and it's an auto-save, I'm not sure we even need the alert for that. I've been typing in the app and it's been very distracting', then yes to: a landed autosave says nothing, \"not saved\" unchanged; \"saved\" said once when a save error resolves; no mock, played headless; built before U16 ('I'm typing in the app right now'). Done when: built test-first, played headless, the verdict's diff read, verify green, committed."}
 {"at":"2026-11-23T20:16","ev":"stop","id":"U16","note":"set aside in a stash for U17, asked first"}
 {"at":"2026-11-23T20:16","ev":"start","id":"U17"}
+{"at":"2026-11-23T20:24","ev":"done","id":"U17","commits":["eeb8e04"]}

@@ -19,7 +19,7 @@ right now".
 ## Record
 
 - 20:16 Started; U16's half-built work set aside in a stash.
-- 20:25 The ledger, test-first: an owner of saves says "saved" once on
+- 20:24 The ledger, test-first: an owner of saves says "saved" once on
   the resolve after an error it raised; the two holding-back tests go.
   The session's routine raise goes; the alert table, `docs/alerts.md`
   and help say so. Eleven Helium steps waited on "saved" before their
