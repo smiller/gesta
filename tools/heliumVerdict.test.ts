@@ -76,11 +76,13 @@ test("a run that differs names each section it reads otherwise, one line each, f
   expect(readOtherwise("corner", compared(played, null, false), played, null)).toEqual([]);
 });
 
-test("a whole play is replayed, both orders together, only where the two orders read the same steps otherwise", () => {
-  expect(replayed({ corner: "ok", order: "differs", bridge: "ok", reader: "ok" }, false)).toEqual(["corner", "order"]);
-  expect(replayed({ corner: "differs", order: "differs" }, false)).toEqual(["corner", "order"]);
-  expect(replayed({ corner: "differs", order: "ok", bridge: "differs", reader: "differs" }, false)).toEqual([]);
-  expect(replayed({ corner: "ok", order: "failed" }, false)).toEqual([]);
-  expect(replayed({ corner: "ok", order: "differs" }, true)).toEqual([]);
-  expect(replayed({ bridge: "differs" }, false)).toEqual([]);
+test("a whole play is replayed, both orders together, only where the two orders read the same steps otherwise and both were asked for", () => {
+  const both = ["corner", "order", "bridge", "reader"];
+  expect(replayed({ corner: "ok", order: "differs", bridge: "ok", reader: "ok" }, false, both)).toEqual(["corner", "order"]);
+  expect(replayed({ corner: "differs", order: "differs" }, false, both)).toEqual(["corner", "order"]);
+  expect(replayed({ corner: "differs", order: "ok", bridge: "differs", reader: "differs" }, false, both)).toEqual([]);
+  expect(replayed({ corner: "ok", order: "failed" }, false, both)).toEqual([]);
+  expect(replayed({ corner: "ok", order: "differs" }, true, both)).toEqual([]);
+  expect(replayed({ bridge: "differs" }, false, both)).toEqual([]);
+  expect(replayed({ order: "differs" }, false, ["order"])).toEqual([]);
 });

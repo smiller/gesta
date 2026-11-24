@@ -46,8 +46,9 @@ export function readOtherwise(name: string, c: Compared, received: string, basel
    reading changed on purpose differs alike in both and leaves order ok.
    Both are played again, unchanged, to put the pair on record. Bridge,
    reader and a failed section have no second play to tell them by */
-export function replayed(results: Record<string, string>, steps: boolean): string[] {
-  return !steps && results.order === "differs" ? ["corner", "order"] : [];
+export function replayed(results: Record<string, string>, steps: boolean, asked: string[]): string[] {
+  const both = ["corner", "order"];
+  return !steps && results.order === "differs" && both.every((n) => asked.includes(n)) ? both : [];
 }
 
 export interface Played { received: string; fp: string; steps: boolean; held: boolean }

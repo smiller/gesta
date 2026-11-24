@@ -14,21 +14,23 @@ export interface LedgerLine extends PlayContext {
   ranOut: Record<string, number>;
   /* each run's inputs fingerprinted as it began; absent before they were kept */
   inputs?: Record<string, string>;
+  replay?: boolean;
 }
 export interface Tree { head: string; committed: boolean }
 /* a play's results as it ends, each run's by its name; its print kept
    only for the waits that ran out in it */
-export interface PlayRecord { runs: Record<string, RunResult>; readOtherwise: Record<string, string[]>; windows: number; steps: boolean; secs: number; tree: Tree; print: string; inputs: Record<string, string> }
+export interface PlayRecord { runs: Record<string, RunResult>; readOtherwise: Record<string, string[]>; windows: number; steps: boolean; secs: number; tree: Tree; print: string; inputs: Record<string, string>; replay?: boolean }
 export function ledgerLine(r: PlayRecord, at: string, load: number): LedgerLine {
-  return { at, ...r.tree, steps: r.steps, windows: r.windows, secs: r.secs, load, runs: r.runs, readOtherwise: r.readOtherwise, ranOut: ranOutCounts(r.print), inputs: r.inputs };
+  return { at, ...r.tree, steps: r.steps, windows: r.windows, secs: r.secs, load, runs: r.runs, readOtherwise: r.readOtherwise, ranOut: ranOutCounts(r.print), inputs: r.inputs, ...(r.replay ? { replay: true } : {}) };
 }
 /* only a whole play of a committed tree is flake evidence: on an
    uncommitted tree, or a play of some sections, a section read otherwise
-   may be the change in hand; a run not replayed played nothing */
+   may be the change in hand; a run not replayed played nothing; a
+   verdict's replay is the same play again, its pair read by readTwoWays */
 export interface Rate { plays: number; flaky: number; byWindows: Record<number, { plays: number; flaky: number }>; bySection: Record<string, number> }
 export function rateOf(lines: LedgerLine[]): Rate {
   const r: Rate = { plays: 0, flaky: 0, byWindows: {}, bySection: {} };
-  const whole = (x: LedgerLine): boolean => x.committed && !x.steps && !Object.values(x.runs).includes("not replayed");
+  const whole = (x: LedgerLine): boolean => x.committed && !x.steps && !x.replay && !Object.values(x.runs).includes("not replayed");
   for (const l of lines.filter(whole)) {
     const sections = Object.values(l.readOtherwise).flat(), w = (r.byWindows[l.windows] ??= { plays: 0, flaky: 0 });
     r.plays++; w.plays++;

@@ -8,8 +8,8 @@ import { splitKey } from "../store/keys.ts";
 import { countBefore, positionAt, arrivingCount, crossViewOffset, type Hold } from "../ui/viewCarets.ts";
 
 export interface Surface {
-  /* markdown mode's stream holds every fence line HTML mode's lacks: a count
-     crosses between the two, never carried over as equal */
+  /* the stream in markdown mode holds every fence line the one in HTML mode
+     lacks: a count crosses between the two, never carried over as equal */
   readonly markdownMode: boolean;
   md(): string;
   flat(): Flat;

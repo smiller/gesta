@@ -49,8 +49,8 @@ test("menuAreaByOldName: the menu area by its names before; never room in its pl
 });
 
 test("viewByOldName: the two views by their names before, in prose, an identifier or a file; never a reference's source, a line's or a view's rendering", () => {
-  for (const bad of ["in the source view", "Source view, to replace", "source-view", "sourceView.ts", "SourceView", "SOURCE_VIEW", "replaceInSourceView", "the rendered view", "renderedView", "heldPlaceRenderedView", "between rendered text and", "the reading view", "the markdown view", "its markdown source", "screen.mdView", "MdView", "THE SOURCE VIEW: the markdown", "IN THE MARKDOWN VIEW ONLY"]) expect(viewByOldName(bad), bad).toBe(true);
-  for (const good of ["in markdown mode", "HTML mode", "htmlMode", "markdownMode", "a source line", "the source named the way a reader would", "renders as a table", "Wikisource", "sourceSpans", "the markdown it carries", "markdown sources"]) expect(viewByOldName(good), good).toBe(false);
+  for (const bad of ["in the source view", "Source view, to replace", "source-view", "sourceView.ts", "SourceView", "SOURCE_VIEW", "replaceInSourceView", "the rendered view", "renderedView", "heldPlaceRenderedView", "between rendered text and", "the reading view", "the markdown view", "its markdown source", "screen.mdView", "MdView", "THE SOURCE VIEW: the markdown", "IN THE MARKDOWN VIEW ONLY", "noMarkdownView", "bookmarkLinkInMarkdownView", "source_view"]) expect(viewByOldName(bad), bad).toBe(true);
+  for (const good of ["in markdown mode", "HTML mode", "htmlMode", "markdownMode", "a source line", "the source named the way a reader would", "renders as a table", "Wikisource", "sourceSpans", "the markdown it carries", "markdown sources", "source/view", "source.view", "source1view", "rendered=text", "markdownSourcesOf"]) expect(viewByOldName(good), good).toBe(false);
 });
 
 // Milton's own preface to Samson Agonistes uses the verb.

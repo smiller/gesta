@@ -2,7 +2,7 @@
    first that cannot move. An item never sits more than one level deeper
    than the one above it, so Tab on a list's first item does nothing;
    Shift-Tab at the outermost level does nothing — leaving a list
-   altogether is markdown mode's job — and each says so (pin:
+   altogether is done in markdown mode — and each says so (pin:
    listKeys.test › Tab on the first item, or one already nested under its
    neighbour, refuses and says why) (pin: listKeys.test › Shift-Tab at the
    outermost level does nothing and says so). The TWO TRUTHS of the Tab

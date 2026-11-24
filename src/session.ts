@@ -470,7 +470,7 @@ export function startSession(opts: SessionOptions): Session {
     if (e.key === "Escape" && view) escapeJump(view.state, view.dispatch);
   });
   function switchView(): void {
-    if (opts.readOnly) { raise("noMarkdownView"); return; }
+    if (opts.readOnly) { raise("noMarkdownMode"); return; }
     opts.onSwitch?.();
     surface.switchTo(!surface.md);
   }

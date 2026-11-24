@@ -92,16 +92,16 @@ function said(name: string, c: Exclude<Compared, { pass: true }>): string {
     "read " + relative(process.cwd(), L.receivedPath(name)) + "; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
 interface Playing { name: string; played: string }
-interface Play { results: Record<string, RunResult>; otherwiseBy: Record<string, string[]>; inputsBy: Record<string, string>; outputs: string[]; failed: number; tree: string; since: number }
+interface Play { results: Record<string, RunResult>; otherwiseBy: Record<string, string[]>; inputsBy: Record<string, string>; outputs: string[]; failed: number; tree: string; since: number; replay: boolean }
 const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
-const newPlay = (since: number): Play => ({ results: {}, otherwiseBy: {}, inputsBy: {}, outputs: [], failed: 0, tree: spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout, since });
+const newPlay = (since: number, replay: boolean): Play => ({ results: {}, otherwiseBy: {}, inputsBy: {}, outputs: [], failed: 0, tree: spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout, since, replay });
 /* a run to play, its stamps cleared and its profile emptied before any run
    of its group starts; null where a passing run's stamp stands */
 function prepare(p: Play, name: string): Playing | null {
   /* an edit made while it plays is not what it played */
   const fp = fingerprint(inputsFor(name));
   p.inputsBy[name] = fp.slice(0, 16);
-  if (L.reusable(name, fp, !!process.env.STEPS)) { p.results[name] = "not replayed"; console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  if (!p.replay && L.reusable(name, fp, !!process.env.STEPS)) { p.results[name] = "not replayed"; console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   L.clear(name);
   for (const w of windowsOf(name)) clearProfile(w);
   return { name, played: fp };
@@ -160,12 +160,14 @@ function ledgered(p: Play): void {
   if (!p.outputs.length) return;
   const tree = treeOf(p.tree);
   if (!tree) { console.log("ledger failed: the tree was not read as the play started"); return; }
-  const record: PlayRecord = { runs: p.results, readOtherwise: p.otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime() - p.since), tree, print: p.outputs.join("\n"), inputs: p.inputsBy };
+  const record: PlayRecord = { runs: p.results, readOtherwise: p.otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime() - p.since), tree, print: p.outputs.join("\n"), inputs: p.inputsBy, replay: p.replay };
   const l = spawnSync("node", [LEDGER], { input: JSON.stringify(record), encoding: "utf8" });
   if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
 }
-async function played(only: string[], since: number): Promise<Play> {
-  const p = newPlay(since);
+/* a replay plays every run it names, a stamp a passing run left in the
+   first play notwithstanding: the pair is both orders played together */
+async function played(only: string[], replay: boolean): Promise<Play> {
+  const p = newPlay(process.uptime(), replay);
   for (const group of TOGETHER) await playGroup(p, group, only);
   ledgered(p);
   return p;
@@ -173,14 +175,14 @@ async function played(only: string[], since: number): Promise<Play> {
 /* a flake shows only as the same inputs read two ways; the play that
    read otherwise still fails the verdict, its replay passing or not */
 async function verdict(): Promise<number> {
-  const first = await played(run, 0), again = replayed(first.results, !!process.env.STEPS);
+  const first = await played(run, false), again = replayed(first.results, !!process.env.STEPS, run);
   if (!again.length) {
     if (first.failed && !process.env.STEPS) console.log("replay it unchanged before any edit: a run its same inputs read another way is a flake (node tools/heliumRate.ts)");
     wakeOnce([first]);
     return first.failed;
   }
   console.log("order read otherwise beside corner: both played again, unchanged");
-  const second = await played(again, process.uptime());
+  const second = await played(again, true);
   wakeOnce([first, second]);
   return first.failed + second.failed;
 }

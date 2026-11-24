@@ -353,7 +353,7 @@ async function switchFrom20pxDown(): Promise<void> {
   await waitShown(page, { name: "HTML mode", ms: 5000 }, S.editor);
   await rest(page);
   await log("⌃⌘M from 20px down", { markdown: nearTop, back: await winY() });
-  /* a caret placed low in markdown mode's window, then back: it is still in view */
+  /* a caret placed low in the window in markdown mode, then back: it is still in view */
   await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
   await page.keyboard.press("Control+Meta+m");
   await waitShown(page, { name: "markdown mode", ms: 5000 }, S.markdown);

@@ -12,18 +12,18 @@ describe("a verdict play's line", () => {
 });
 
 describe("the flake rate", () => {
-  it("counts only whole plays of a committed tree, every run played, per window count and per section", () => {
-    const lines = [play({}), play({ readOtherwise: { order: ["grid"] }, runs: { corner: "ok", order: "differs" } }), play({ windows: 3 }), play({ committed: false, readOtherwise: { corner: ["x"] } }), play({ steps: true, readOtherwise: { corner: ["y"] } }), play({ runs: { corner: "not replayed", order: "differs" }, readOtherwise: { order: ["z"] } })];
+  it("counts only whole plays of a committed tree, every run played, per window count and per section, a verdict's replay not a play of its own", () => {
+    const lines = [play({}), play({ readOtherwise: { order: ["grid"] }, runs: { corner: "ok", order: "differs" } }), play({ windows: 3 }), play({ committed: false, readOtherwise: { corner: ["x"] } }), play({ steps: true, readOtherwise: { corner: ["y"] } }), play({ runs: { corner: "not replayed", order: "differs" }, readOtherwise: { order: ["z"] } }), play({ replay: true, runs: { corner: "differs", order: "differs" }, readOtherwise: { order: ["w"] } })];
     expect(rateOf(lines)).toEqual({ plays: 3, flaky: 1, byWindows: { 5: { plays: 2, flaky: 1 }, 3: { plays: 1, flaky: 0 } }, bySection: { grid: 1 } });
   });
 });
 
 describe("a run read two ways", () => {
   const at = (n: number): string => "2026-11-24T1" + n + ":00:00";
-  it("is a run whose same inputs, played whole on any tree, read more than one way: its result and the sections it read otherwise", () => {
+  it("is a run whose same inputs, played whole on any tree, a replay included, read more than one way: its result and the sections it read otherwise", () => {
     const lines = [
       play({ at: at(0), committed: false, inputs: { corner: "c1", order: "o1" }, runs: { corner: "differs", order: "differs" }, readOtherwise: { corner: ["menu area"], order: ["links"] } }),
-      play({ at: at(1), committed: false, inputs: { corner: "c1", order: "o1" }, runs: { corner: "differs", order: "ok" }, readOtherwise: { corner: ["menu area"] } }),
+      play({ at: at(1), committed: false, replay: true, inputs: { corner: "c1", order: "o1" }, runs: { corner: "differs", order: "ok" }, readOtherwise: { corner: ["menu area"] } }),
       play({ at: at(2), inputs: { corner: "c1", order: "o1" }, runs: { corner: "differs", order: "differs" }, readOtherwise: { corner: ["menu area"], order: ["grid"] } }),
     ];
     expect(readTwoWays(lines)).toEqual({

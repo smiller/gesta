@@ -106,8 +106,8 @@ export function placeKeeper(opts: PlaceKeeperOptions): PlaceKeeper {
   });
   page.on("leave", record);
   /* recorded BEFORE the next view is shown: shown first, a forced markdown
-     mode released, its place read as HTML mode's with no view
-     and was lost (pin: places › a forced entry left scrolled, returned to)
+     mode released, its place was read as a place in HTML mode with no view
+     and lost (pin: places › a forced entry left scrolled, returned to)
      (pin: placeKeeper.test › records the entry left) */
   function open(ekey: string, how: Arrival, show: () => void): void {
     record();

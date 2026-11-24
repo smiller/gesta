@@ -160,7 +160,7 @@ export const ALERTS = {
   stillLoading: warning("still loading — try that again in a moment", "An act tried before the journal is read, or ⌃⌘R before the entry is drawn."),
   loadFailedFirst: warning("couldn’t load entries — reload first", "An act tried once the journal’s read has failed."),
   referenceInMarkdown: warning("switch to HTML mode (⌃⌘M) to copy a reference", "⌃⌘R in markdown mode."),
-  noMarkdownView: warning("no markdown mode here", "⌃⌘M in the reader."),
+  noMarkdownMode: warning("no markdown mode here", "⌃⌘M in the reader."),
   pictureOneAtATime: warning("picture not pasted — one at a time; paste it again", "A picture pasted while the last one is still being read."),
   placeCursor: warning("place your cursor in the entry", "A shortcut, or a bookmark’s link, chosen with no cursor in the entry."),
   noShortcut: warning("no shortcut to insert", "Enter in the shortcuts panel with no row matching."),

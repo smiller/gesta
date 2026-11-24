@@ -27,3 +27,14 @@ words everywhere.
   the renames alone; corner and reader approved; verify green.
 - The checker, as a trial for S28: of its flags, none was a word in
   another sense; it missed the line-broken and the capitalised forms.
+- 18:11 A28, `/code-review high e04e71c..2dd06e1`: 153,059 tokens; seven
+  findings, all fixed. In the verdict's replay (U20.1): corner was left
+  "not replayed" by its own fresh stamp (a replay now plays every run it
+  names; a probe at 18:08 played both); a replay line counted as a play
+  in the rate (marked `replay`, left out of the rate, kept for the pair);
+  corner replayed when only order was asked for; a play's `secs` now
+  starts after the build, so lines from here time the play alone. In the
+  rename: `[ -_]` was a range (now `[ _-]`); `noMarkdownView` and
+  `bookmarkLinkInMarkdownView` survived (the rule reads camel case);
+  "markdown mode's" and "HTML mode's" named their modules in eight
+  blocks (now role nouns for the checker; the blocks reworded).

@@ -5,7 +5,7 @@
    outermost quote has no single container and says so (pin: quoteKeys.test
    › a selection reaching outside the quote has no single container);
    Shift-Tab on an outermost quote does nothing and says so — leaving a
-   quote altogether is markdown mode's job (pin: quoteKeys.test ›
+   quote altogether is done in markdown mode (pin: quoteKeys.test ›
    Shift-Tab at the outermost level refuses and says so). A held Tab must
    not go on nesting: a quote has no ceiling, so the press acts once per
    press where Shift-Tab may repeat, having a floor. */

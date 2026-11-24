@@ -290,7 +290,7 @@ export function pasteProps(on: { file(f: File): void; raise(s: Said): void; href
     transformPasted: (slice) => bareLinks(slice, on.href()),
   };
 }
-/* markdown mode's answer: a picture handed on, a terminal's copy as its
+/* a paste in markdown mode: a picture handed on, a terminal's copy as its
    text, unwrapped; null leaves the paste to the browser */
 export function markdownPasted(clip: Clipboard): { file: File } | { text: string } | null {
   if (clip.file) return { file: clip.file };

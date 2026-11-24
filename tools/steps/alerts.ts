@@ -81,7 +81,7 @@ async function importRefusedFilesOnly(): Promise<void> {
 const importButton = ".toolbtn[title^='Import'], #importbtn";
 async function blockPictureHoverCopied(): Promise<void> {
   await pictureBlockHoverCopied();
-  await bookmarkLinkInMarkdownView();
+  await bookmarkLinkInMarkdownMode();
 }
 async function pictureBlockHoverCopied(): Promise<void> {
   await log("a block with a picture hover-copied", { pictureCarried: await page.evaluate(async () => { try { const items = await navigator.clipboard.read(); const html = items[0].types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; return /<img[^>]+src="data:image\//.test(html); } catch (e) { return String(e); } }) });
@@ -178,7 +178,7 @@ async function shortcutWithNoCursor(before: string): Promise<void> {
   await rest(page);
   await log("a shortcut chosen with no cursor in the entry", { corner: await corner(), unchanged: (await A.stored(page, "commonplace/Horace")) === before });
 }
-async function bookmarkLinkInMarkdownView(): Promise<void> {
+async function bookmarkLinkInMarkdownMode(): Promise<void> {
   await page.keyboard.press("Escape");
   await write("commonplace/Source Link", "x\n");
   await view(true);

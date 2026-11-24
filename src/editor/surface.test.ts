@@ -96,7 +96,7 @@ describe("the switch", () => {
     w.s.switchTo(true);
     const src = w.last();
     expect(w.log).toContain("align " + src.text.indexOf("C"));
-    /* back: HTML mode's alignment carries the place */
+    /* back: the alignment in HTML mode carries the place */
     src.top = src.text.indexOf("D");
     w.log.length = 0;
     w.s.switchTo(false);

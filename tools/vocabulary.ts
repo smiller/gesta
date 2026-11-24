@@ -32,5 +32,5 @@ const OLD_MENU_AREA = /\bmenu[ -]room\b|menuRoom|leaveRoom|--menu-room/i;
 export const menuAreaByOldName = (line: string): boolean => OLD_MENU_AREA.test(line.replace(RECORD, ""));
 /* the two views are markdown mode and HTML mode: "source" stays for where
    a reference or a line comes from, "rendered" for what a view does */
-const OLD_VIEW = /source[ -_]?view|rendered[ -_]?(?:view|text)|reading view|markdown (?:source|view)\b|(?<![a-z])mdView/i;
+const OLD_VIEW = /source[ _-]?view|rendered[ _-]?(?:view|text)|reading view|markdown[ _-]?(?:source|view)\b|(?<![a-z])mdView/i;
 export const viewByOldName = (line: string): boolean => OLD_VIEW.test(line.replace(RECORD, ""));
