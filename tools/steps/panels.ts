@@ -71,8 +71,8 @@ section("bookmarks damaged", async () => {
   await go("commonplace/Horace", 5000);
   await page.evaluate((k) => localStorage.setItem(k, "not json"), A.bookmarksKey);
   await page.reload();
-  await A.waitEntry(page, "commonplace/Horace").catch(() => {});
-  await A.waitWarm(page).catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace");
+  await A.waitWarm(page);
   await page.keyboard.press("Control+Meta+b");
   await rest(page);
   await log("⌃⌘B over a damaged list", await R.bookmarks(page));
@@ -89,8 +89,8 @@ section("bookmarks damaged", async () => {
   await log("A over the list repaired", { panel: await R.bookmarks(page), standing: (await R.standingText(page)) ?? "none" });
   await page.keyboard.press("Escape");
   await page.reload();
-  await A.waitEntry(page, "commonplace/Horace").catch(() => {});
-  await A.waitWarm(page).catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace");
+  await A.waitWarm(page);
   await go("2026-09-06");
 });
 section("backups", async () => {

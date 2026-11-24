@@ -1,5 +1,6 @@
 import type { Page } from "../heliumPage.ts";
 import { inPage, inPageWith } from "./inPage.ts";
+import { waitState } from "./waits.ts";
 
 export interface SaidLog { n: number; recent: { n: number; text: string }[] }
 /* read from the numbered log, not the alerts on screen: an alert's time
@@ -34,7 +35,7 @@ const counted = (page: Page): Promise<number> => page.evaluate(inPage(saidLogNow
    gone by: given back either way */
 export async function waitSaid(page: Page, re: RegExp, ms = 3000): Promise<string> {
   const from = await page.evaluate(() => window.__saidMark ?? 0);
-  await page.waitForFunction(inPageWith([from, re.source], matchesAfter, saidSince, saidLogNow), undefined, { timeout: ms }).catch(() => {});
+  await waitState(page, { name: "said", ms }, inPageWith([from, re.source], matchesAfter, saidSince, saidLogNow));
   return said(page);
 }
 /* what a gesture said, matching `re` or not: a wait for the match alone
@@ -45,6 +46,6 @@ export async function waitSaid(page: Page, re: RegExp, ms = 3000): Promise<strin
 export async function saidAfterGesture(page: Page, gesture: () => Promise<unknown>, re: RegExp): Promise<string> {
   const from = await counted(page);
   await gesture();
-  await page.waitForFunction(inPageWith([from, re.source], matchesAfter, saidSince, saidLogNow), undefined, { timeout: 5000 }).catch(() => {});
+  await waitState(page, { name: "said", ms: 5000 }, inPageWith([from, re.source], matchesAfter, saidSince, saidLogNow));
   return (await page.evaluate(inPageWith(from, saidAfter, saidSince, saidLogNow)) as string) || "(no alert within 5s)";
 }

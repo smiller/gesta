@@ -1,4 +1,5 @@
 import { section, aimable, caretAt, view, write, page, A, R, S, log, go, saidText, wheelTo, TODAY, landed, searchFor, rest, settled, jump, keep, closeCorner, holdDecodes } from "./kit.ts";
+import { waitState } from "../adapters/waits.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a panel's chord pressed again, a row closed by its label, the bookmarks panel's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a panel, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
@@ -180,7 +181,7 @@ async function enterHeldShortcut(): Promise<void> {
   await page.keyboard.press("Enter");
 }
 async function enterHeldFollowing(): Promise<void> {
-  await page.waitForFunction(() => { const s = getSelection(); const r = s.rangeCount && (s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect()); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r && r.top >= head; }, null, { timeout: 2000 }).catch(() => {});
+  await waitState(page, { name: "caret", ms: 2000 }, () => { const s = getSelection(); const r = s.rangeCount && (s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect()); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r && r.top >= head; });
 }
 async function enterCaretAboveWindow(): Promise<void> {
   await log("Enter with the caret above the window", { clear: await page.evaluate(() => { const s = getSelection(); if (!s.rangeCount) return null; const r = s.getRangeAt(0).getClientRects()[0] || s.anchorNode.parentElement?.getBoundingClientRect(); const head = document.querySelector(".site-head")?.getBoundingClientRect().bottom || 0; return r ? Math.round(r.top - head) : null; }) });
@@ -230,7 +231,7 @@ async function keysAfterSearch(): Promise<void> {
   await R.pastePng(page);
   await searchFor(page, "abc");
   await release();
-  await page.waitForFunction((s) => document.querySelector(s), S.editorImg, { timeout: 5000 }).catch(() => console.log("a held picture's wait ran out after 5000 ms"));
+  await waitState(page, { name: "picture", ms: 5000 }, (s) => document.querySelector(s), S.editorImg);
   await landed(page, 1500);
 }
 async function picturePastedSearchTyped(): Promise<void> {

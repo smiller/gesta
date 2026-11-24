@@ -1,4 +1,5 @@
 import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, searchAnswered, rest, openGotoRow, seed, landed } from "./kit.ts";
+import { waitShown, waitState } from "../adapters/waits.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -16,7 +17,7 @@ async function sourceViewOpening(): Promise<void> {
      the selection itself, when it puts its own back: under a busy machine
      the caret was carried from the top with "food of love" selected on
      screen, so it is placed until it stays */
-  await page.waitForFunction((ed) => document.querySelector(ed)?.contains(document.activeElement), S.editor, { timeout: 2000 }).catch(() => {});
+  await waitState(page, { name: "focus", ms: 2000 }, (ed) => document.querySelector(ed)?.contains(document.activeElement), S.editor);
 }
 async function sourceViewFollowing(): Promise<void> {
   for (let tries = 0; tries < 3; tries++) {
@@ -30,43 +31,43 @@ async function sourceViewFollowing(): Promise<void> {
 }
 async function switchViews(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 });
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await log("⌃⌘M", await R.sourceView(page, await A.stored(page)));
   await page.keyboard.type("FOOD ");
   await page.keyboard.press("Tab");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 });
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await log("⌃⌘M back", await R.sourceBack(page));
   /* the caret moved in the source without an edit: back, it stands where it was moved to, not where it came from */
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.sourceCaretTo(page, "play on");
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowLeft");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await rest(page);
   await log("the caret moved in the source, ⌃⌘M back", await R.sourceBack(page));
   await wheelTo(0);
   await page.click(S.editorFirst);
   await rest(page);   /* the click's caret is read a beat later, as the section's first caret is: a chord at once switched with the caret before the click */
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await rest(page);
   await log("⌃⌘M from the top", { y: await winY() });
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await page.click(S.editorFirst);
   await wheelTo(600);
   const away = await winY();
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await rest(page);
   /* within two lines, not to the top or to the caret: the switch carries the text at the window's top, and the pixel offset follows the other view's layout */
   await log("⌃⌘M scrolled away from the caret", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await rest(page);
   await log("⌃⌘M back, still scrolled away", { stayed: Math.abs((await winY()) - away) < 60 });
   await page.keyboard.press("Control+Meta+w");
@@ -75,7 +76,7 @@ async function switchViews(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
 }
 async function wordCountInSourceView(): Promise<void> {
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await page.keyboard.press("Control+Meta+w");
   await rest(page);
   await log("⌃⌘W in the source view", { corner: await saidText() });
@@ -86,7 +87,7 @@ async function wordCountInSourceView(): Promise<void> {
   await rest(page);
   await log("⌃⌘K, then Escape, in the source view", {});
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
 }
 section("go to", async () => {
   /* the Go to row: opened on a day, a year pick refilling the months, a day pick navigating; on a book, the chain and the sentinel */
@@ -208,15 +209,15 @@ section("walk", async () => {
   await rest(page);   /* a selection left on the last entry keeps the format toolbar up one frame into this one (MEASURED, 10 ms) */
   await log("⌃⌘. from 3pr1 over an index of 3pr1, 3m1, 3pr2", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+.");
-  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000);
   await log("⌃⌘. again", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+,");
-  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3m1", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3m1", 5000);
   await log("⌃⌘, back", { entry: await A.entry(page) });
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await page.keyboard.press("Control+Meta+.");
-  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000);
   await rest(page);
   await log("⌃⌘M, then ⌃⌘.", { entry: await A.entry(page), source: await R.inSource(page) });
 });
@@ -310,10 +311,10 @@ async function switchCarriesTextOpening(): Promise<void> {
   await go("commonplace/Long%20Canto");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.setSource(page, canto);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await page.waitForTimeout(600);
   await wheelTo(0);
   await page.click(S.editorFirst);
@@ -323,11 +324,11 @@ async function switchPlaceRemembered(): Promise<void> {
     await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) * where));
     const rendered = await R.topStanza(page), renderedEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
-    await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+    await waitShown(page, { name: "source view", ms: 5000 }, S.source);
     await rest(page);
     const source = await R.topStanza(page), sourceEnd = await R.lastStanzaShowing(page);
     await page.keyboard.press("Control+Meta+m");
-    await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+    await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
     await rest(page);
     /* at the end the source, the shorter, stops at its own foot: the last stanza showing in both, not one stanza at both tops */
     await log(label, where < 1 ? { rendered, source, back: await R.topStanza(page) } : { rendered: renderedEnd, source: sourceEnd, back: await R.lastStanzaShowing(page) });
@@ -345,21 +346,21 @@ async function switchPlaceRemembered(): Promise<void> {
 async function switchFrom20pxDown(): Promise<void> {
   await wheelTo(20);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await rest(page);
   const nearTop = await winY();
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await rest(page);
   await log("⌃⌘M from 20px down", { source: nearTop, back: await winY() });
   /* a caret placed low in the source view's window, then back: it is still in view */
   await wheelTo(Math.round((await page.evaluate(() => document.documentElement.scrollHeight - innerHeight)) / 2));
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await settled(page);
   await page.mouse.click(400, (await page.evaluate(() => innerHeight)) - 30);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await page.waitForTimeout(400);
 }
 async function caretSeenSourceM(): Promise<void> {
@@ -390,7 +391,7 @@ section("contents folds", async () => {
   await R.clickFoldTriangle(page, "Book I");
   await log("the triangle clicked", await R.folds(page));
   await page.click(S.editorLink("#bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene/1.1")).catch(() => {});
-  await A.waitEntry(page, "bookshelf/Spenser, Edmund/The Faerie Queene/1.1", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Spenser, Edmund/The Faerie Queene/1.1", 5000);
   await log("its canto followed", { entry: await A.entry(page) });
   await wheelTo(0);
   await go("bookshelf/Spenser%2C%20Edmund/The%20Faerie%20Queene");

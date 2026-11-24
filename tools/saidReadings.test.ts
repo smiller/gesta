@@ -16,7 +16,7 @@ const ALLOWED: Record<string, Reads & { why: string }> = {
   "steps/launch.ts": { corner: 0, fade: 6, live: 0, said: 0, why: "the launch's fade and pill, read under the page's own clock" },
   "steps/alerts.ts": { corner: 0, fade: 0, live: 1, said: 0, why: "where each standing alert is drawn, in a section about the alerts' layout" },
   "steps/references.ts": { corner: 0, fade: 0, live: 1, said: 0, why: "a wait for no error to stand" },
-  "steps/kit.ts": { corner: 0, fade: 0, live: 1, said: 0, why: "a wait for the info and success alerts to be gone before a point is measured, their height moving the text" },
+  "steps/kit.ts": { corner: 0, fade: 0, live: 2, said: 0, why: "a wait for the info and success alerts to be gone before a point is measured, their height moving the text, and what stood when it ran out" },
 };
 const count = (text: string, re: RegExp): number => text.match(re)?.length ?? 0;
 const readingsOf = (text: string): Reads => ({ corner: count(text, /__corner\(\)/g), fade: count(text, /\bR\.corner\(/g), live: count(text, /dataset\.alerts\b/g), said: count(text, /dataset\.saidLog\b|__saidMark\b/g) });

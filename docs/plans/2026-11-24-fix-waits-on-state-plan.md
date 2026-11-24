@@ -168,3 +168,13 @@ and F7 once.
   attached alone, the reading came before the focus ("at a line's
   start", not "on input"), which the 5 s had covered. Both sections as
   approved, no wait run out.
+- 12:35 Candidate 2's module (A26.1.2): `adapters/waits.ts`, every wait
+  on the page's state named by what it waits for, a run-out printing
+  `<a thing>'s wait ran out after N ms: <what stood>` and the step going
+  on, a failure other than a timeout failing the step; `nothingCame` for
+  the three new-tab waits that should stay empty. The adapters' waits
+  (entry, warm, selection, said, link, picture and the rest) go through
+  it, and every raw wait in the steps, about 130 that swallowed their
+  timeout and 11 that threw; `waitToolbar` kept, its thrown line being
+  F1's watch. The ledger counts the lines through `ranOutCounts`. The
+  whole corner at 1x: 0 sections read otherwise, no wait ran out.

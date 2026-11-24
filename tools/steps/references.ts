@@ -1,6 +1,7 @@
 import { appendFileSync, mkdirSync } from "node:fs";
 import { section, laid, storedWith, page, A, R, S, log, go, saidText, landed, rest, settled, write, caretAt, view, writeAll, jump, closeCorner, waitForSaid, holdDecodes } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
+import { waitState } from "../adapters/waits.ts";
 
 section("reference copy", async () => {
   /* the rich flavour: ⌃⌘R over a selection in a paired verse block writes markdown and HTML, the HTML carrying the reference anchor and the pair's grid inline */
@@ -111,7 +112,7 @@ section("code block", async () => {
   await rest(page);
   await log("a js block typed", await R.codeBlock(page));
   await page.hover(S.editorPre);
-  await page.waitForFunction(() => document.querySelector(".copybtn")?.classList.contains("show"), null, { timeout: 3000 }).catch(() => {});
+  await waitState(page, { name: "copy button", ms: 3000 }, () => document.querySelector(".copybtn")?.classList.contains("show"));
   await log("hovered", await R.copyHover(page));
   await page.click(S.copybtn);
   await rest(page);
@@ -185,7 +186,7 @@ section("grid", async () => {
   /* the line fixed and the view restored: the error resolved, the grid drawn */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForFunction(() => !JSON.parse(document.documentElement.dataset.alerts || "{}").error, null, { timeout: 5000 }).catch(() => {});
+  await waitState(page, { name: "alert", ms: 5000 }, () => !JSON.parse(document.documentElement.dataset.alerts || "{}").error);
   await log("the line made a card, switched back", { standing: (await R.standingText(page)) ?? "none", ...(await laid(R.gridLayout)) });
 });
 section("told on open", async () => {
@@ -277,7 +278,7 @@ async function picturePastedAnotherEntry(): Promise<void> {
   const release = await holdDecodes(page);
   await R.pastePng(page);
   await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
-  await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace", 5000);
   await release();
   await waitForSaid(/nowhere to land/, 1500);
   await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await saidText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
@@ -380,7 +381,7 @@ section("references across verse blocks", async () => {
 async function copiedBy(act: () => Promise<unknown>): Promise<{ said: string | false; lines: string[] }> {
   await page.evaluate(() => navigator.clipboard.writeText(""));
   const said = await R.cornerAfter(page, act, /copied/);
-  await page.waitForFunction(async () => !!(await navigator.clipboard.readText()), null, { timeout: 2000, polling: 25 }).catch(() => {});
+  await waitState(page, { name: "clipboard", ms: 2000, polling: 25 }, async () => !!(await navigator.clipboard.readText()));
   return { said, lines: await R.clipboardLines(page) };
 }
 section("references across blocks of each kind", async () => {

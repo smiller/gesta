@@ -1,4 +1,5 @@
 import { section, laid, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, openGotoRow, settled, jump, keep, STANZA_SEEDS, type Tree, closeCorner, saidText, waitForSaid } from "./kit.ts";
+import { waitShown, waitState } from "../adapters/waits.ts";
 
 section("alerts and surfaces", async () => {
   await alertsOpening();
@@ -20,7 +21,7 @@ async function chordWithCapsLock(): Promise<void> {
   await log("⌃⌘K with Caps Lock", { searchOpen: await page.evaluate(() => { const d = document.querySelector(".page-search, #pagesearch"); return !!d && (d.tagName === "DETAILS" ? d.open : !d.hidden); }) });
   await page.keyboard.press("Escape");
   await page.goto(A.url("").replace(/#$/, ""));
-  await page.waitForFunction(() => location.hash.length > 1, null, { timeout: 2000 }).catch(() => {});
+  await waitState(page, { name: "entry", ms: 2000 }, () => location.hash.length > 1);
   await log("a bare launch", { hash: await page.evaluate(() => location.hash) });
   await go("commonplace/Horace");
   await view(false);
@@ -32,7 +33,7 @@ async function chordWithCapsLock(): Promise<void> {
   await page.reload();
 }
 async function lineNumberingKeptAcross(): Promise<void> {
-  await A.waitEntry(page, "commonplace/Horace").catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace");
   await page.waitForTimeout(500);
   await log("Line numbering kept across a reload", { interval: await page.evaluate((s) => document.querySelector(s)?.value ?? null, LINES) });
   await page.keyboard.press("Control+Meta+l");
@@ -71,7 +72,7 @@ async function importRefusedFilesOnly(): Promise<void> {
   await R.caretAfter(page, "x", 1);
   await rest(page);
   await R.pastePng(page);
-  await page.waitForSelector(S.editor + " div.note img", { timeout: 1500 }).catch(() => {});
+  await waitShown(page, { name: "picture", ms: 1500 }, S.editor + " div.note img");
   await page.hover(S.editor + " div.note");
   await rest(page);
   await page.click(S.copybtn, { timeout: 2000 }).catch(() => {});
@@ -142,7 +143,7 @@ async function copyButtonAfterNavigation(): Promise<void> {
   await rest(page);
   const over = await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn);
   await page.evaluate(() => { location.hash = "#commonplace/Links"; });
-  await A.waitEntry(page, "commonplace/Links", 800).catch(() => {});
+  await A.waitEntry(page, "commonplace/Links", 800);
   await rest(page);
   await log("the copy button after a navigation", { over, after: await page.evaluate((s) => document.querySelector(s)?.classList.contains("show") ?? null, S.copybtn) });
   await log("a link's tooltip", { title: await page.evaluate((s) => document.querySelector(s + " a")?.title ?? null, S.editor), outside: await page.evaluate((s) => document.querySelector(s + " a[href^='https:']")?.title ?? null, S.editor) });
@@ -222,7 +223,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
   await slow.close();
 }
 /* a slowed launch's warm, and the page held still after it */
-const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await settled(p); };
+const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p); await settled(p); };
 const corner = saidText;
 const dismiss = closeCorner;
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
@@ -241,7 +242,7 @@ section("pill", async () => {
   await A.waitWarm(page);
   /* the pill is set after the launch's backup run, which ends after the
      warm: read on the warm alone, it was missed 1 run in 10 */
-  await page.waitForFunction(() => document.querySelector(".backup-paused")?.hidden === false, null, { timeout: 5000 }).catch(() => {});
+  await waitState(page, { name: "backup", ms: 5000 }, () => document.querySelector(".backup-paused")?.hidden === false);
   await log("with ?corner=pill", await laid(R.pill));
   if (shot) await page.screenshot({ path: shot.replace(/\.png$/, "-pill.png"), clip: { x: 500, y: 500, width: 500, height: 100 } });
 });
@@ -255,7 +256,7 @@ section("a rename keeps a label's marks", async () => {
   await go("commonplace/Rename%20Host/Ideas");
   setAnswer("Plans");
   await page.click(S.renameSubEntry);
-  await A.waitEntry(page, "commonplace/Rename Host/Plans", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Rename Host/Plans", 5000);
   for (let i = 0; i < 30 && !((await A.stored(page, "commonplace/Rename Host")) || "").includes("/Plans"); i++) await rest(page);
   await log("renamed under a label part italic", { entry: await A.entry(page), host: ((await A.stored(page, "commonplace/Rename Host")) || "").split("\n")[0] });
   setAnswer(null);
@@ -274,22 +275,22 @@ async function bookshelfShelves(): Promise<void> {
   /* read back before the reload: a reload during the write's commit read the store without it */
   const seeded = await seededIn("bookshelf/Shelves");
   await page.goto(A.url("2026-09-06"));
-  await A.waitEntry(page, "2026-09-06", 5000).catch(() => {});
+  await A.waitEntry(page, "2026-09-06", 5000);
   await page.click(S.bookshelfOpener);
   /* the list is answered again when the store's read ends: the shelves come with it */
-  const shelvesShown = await page.waitForSelector(".menu .shelf", { timeout: 5000 }).then(() => true, () => false);
+  const shelvesShown = await waitShown(page, { name: "shelf", ms: 5000 }, ".menu .shelf");
   await log("the bookshelf on its shelves", { seeded, shelvesShown, rows: await list() });
   await page.click(".menu button.menu-act:has-text('Shelves…')");
-  await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Shelves", 5000);
   await log("Shelves… clicked", { entry: await A.entry(page), menu: await R.menu(page) });
   /* a shelf renamed, the list opened at once: the list reads the text as typed */
   await R.selectFrom(page, ["Latin", 0], ["Latin", 5]);
   await rest(page);
   await page.keyboard.type("Classical");
   /* the toolbar the double-click floated hides once the typing has collapsed the selection: read before it went, the screen said so */
-  await page.waitForFunction(() => !document.querySelector(".fmt")?.classList.contains("show"), null, { timeout: 2000 }).catch(() => {});
+  await waitState(page, { name: "toolbar", ms: 2000 }, () => !document.querySelector(".fmt")?.classList.contains("show"));
   await page.click(S.bookshelfOpener);
-  await page.waitForSelector(".menu .shelf", { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "shelf", ms: 5000 }, ".menu .shelf");
   await log("a shelf renamed, the list opened at once", { rows: await list() });
 }
 const list = () => page.evaluate(() => { const p = document.querySelector(".menu"); return p ? [...p.children].map((e) => (e.classList.contains("shelf") ? "## " : e.classList.contains("shelved") ? "  " : "") + e.textContent + (e.classList.contains("shelved") ? " @" + Math.round(parseFloat(getComputedStyle(e).paddingLeft)) : "")) : null; });
@@ -301,7 +302,7 @@ async function goBoxShelves(): Promise<void> {
   await log("the go-to box on its shelves", await groups(S.gotoDestination));
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForFunction((s) => document.querySelector(s + " optgroup") && document.activeElement?.classList.contains("search-input"), S.searchScope, { timeout: 5000 }).catch(() => {});
+  await waitState(page, { name: "search", ms: 5000 }, (s) => document.querySelector(s + " optgroup") && document.activeElement?.classList.contains("search-input"), S.searchScope);
   await log("the search scopes on their shelves", await groups(S.searchScope));
   await page.selectOption(S.searchScope, { label: "All Classical" });
 }
@@ -312,8 +313,8 @@ async function shelvesSearched(): Promise<void> {
     await page.click(".page-search input");
     await page.keyboard.press("Meta+a");
     await page.keyboard.type(q);
-    await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {});
-    await page.waitForFunction((q) => { const li = [...document.querySelectorAll(".search-results li")]; return li.length > 0 && li.every((e) => e.innerText.toLowerCase().includes(q)); }, q, { timeout: 5000 }).catch(() => {});
+    await waitState(page, { name: "search", ms: 5000 }, (q) => document.querySelector(".page-search input")?.value === q, q);
+    await waitState(page, { name: "search", ms: 5000 }, (q) => { const li = [...document.querySelectorAll(".search-results li")]; return li.length > 0 && li.every((e) => e.innerText.toLowerCase().includes(q)); }, q);
     await log("searched " + q + " under All Classical", await page.evaluate(() => ({ scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, where: [...document.querySelectorAll(".search-results .where")].map((w) => w.textContent) })));
   }
 }

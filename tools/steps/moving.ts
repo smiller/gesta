@@ -1,4 +1,5 @@
 import { section, page, A, R, S, log, go, saidText, setAnswer, prompts, confirms, rest, landed, waitForSaid } from "./kit.ts";
+import { waitState } from "../adapters/waits.ts";
 
 section("a commonplace renamed with every link following", async () => {
   /* Rename on a commonplace with no sub-entries, a plain name typed: a link to it on another entry follows, and the corner says so */
@@ -11,7 +12,7 @@ section("a commonplace renamed with every link following", async () => {
   prompts.length = 0;
   confirms.length = 0;
   await page.click(S.renameSubEntry);
-  await A.waitEntry(page, "commonplace/Renamed Me", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Renamed Me", 5000);
   await waitForSaid(/renamed to/, 3000);
   await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await saidText(), far: await A.stored(page, "commonplace/Rename Far"), old: await A.stored(page, "commonplace/Rename Me") });
 });
@@ -33,7 +34,7 @@ async function pictureDeletedTextBackups(): Promise<void> {
   await page.keyboard.press("Backspace");
   for (let i = 0; i < 40 && ((await A.stored(page, "commonplace/Unused Pictures")) || "").includes("!["); i++) await rest(page);
   await page.click(S.backupsButton);
-  await page.waitForFunction(() => /unused picture/.test(document.querySelector(".backups")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+  await waitState(page, { name: "backup", ms: 5000 }, () => /unused picture/.test(document.querySelector(".backups")?.textContent || ""));
   await log("the picture deleted from the text, the backups panel opened", { kept, pictureInText: ((await A.stored(page, "commonplace/Unused Pictures")) ?? "").includes("!["), panel: await R.backups(page) });
 }
 async function removeUnusedPictureClicked(): Promise<void> {
@@ -82,8 +83,8 @@ async function renameToBookshelfAddress(): Promise<void> {
 }
 const there = (k: string) => A.stored(page, "bookshelf/Mover, Test/Essays" + k);
 async function picturesUnderOldEntry(): Promise<void> {
-  await R.waitImg(page).catch(() => {});
-  await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
+  await R.waitImg(page);
+  await waitState(page, { name: "picture", ms: 5000 }, () => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); });
   await log("the pictures under the old commonplace and the new address", { old: await A.pictureKeys(page, "commonplace/Move Source/"), now: await A.pictureKeys(page, "bookshelf/Mover, Test/Essays/") });
 }
 async function movedEssayPicture(): Promise<void> {

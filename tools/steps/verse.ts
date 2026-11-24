@@ -1,11 +1,12 @@
 import { section, page, A, R, S, log, go, seededIn, rest, settled, fixture, writeAll, AUGUSTINE_SEEDS, saidText } from "./kit.ts";
+import { waitState } from "../adapters/waits.ts";
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
   await A.foreignWrite(page, "bookshelf/Havamal", "# Hávamál\n\n::: reference\nby title alone\n:::\n\n::: stanza 76\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nen orðstírr | but the renown\ndeyr aldregi | for the one who gets good fame\nhveim er sér góðan getr | dies never.\n:::\n\n::: stanza 77\nDeyr fé | Cattle die,\ndeyja frændr | kinsmen die,\ndeyr sjálfr it sama | the self dies likewise;\nek veit einn | I know one thing\nat aldri deyr | that never dies:\ndómr um dauðan hvern | the repute of each of the dead.\n:::");
   const seeded = await seededIn("bookshelf/Havamal");
   await page.goto(A.url("bookshelf/Havamal"));
-  await A.waitEntry(page, "bookshelf/Havamal", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Havamal", 5000);
   await R.settle(page);
   await R.selectBetween(page, "Deyr fé", "it sama");
   await R.waitToolbar(page);
@@ -32,7 +33,7 @@ section("Old English verse", async () => {
   await A.foreignWrite(page, "bookshelf/Beowulf", "# Beowulf\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 49\ngeafon on garsecg;  him wæs geomor sefa,\nmurnende mod.  Men ne cunnon\nsecgan to soðe,  selerædende,\nhæleð under heofenum,  hwa þæm hlæste onfeng.\n:::");
   const seeded = await seededIn("bookshelf/Beowulf");
   await page.goto(A.url("bookshelf/Beowulf"));
-  await A.waitEntry(page, "bookshelf/Beowulf", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Beowulf", 5000);
   await R.settle(page);
   await R.selectBetween(page, "Men ne cunnon", "onfeng");
   await R.waitToolbar(page);
@@ -48,7 +49,7 @@ section("Old English verse", async () => {
   await A.foreignWrite(page, "bookshelf/Seafarer", "# The Seafarer\n\n::: reference\nby title alone\nby half-line\n:::\n\n::: verse 80\ndream mid dugeþum.  Dagas sind gewitene, | joy with the Hosts. The days are gone\nealle onmedlan  eorþan rices; | of all the glory of the kingdoms of the earth;\nnearon nu cyningas  ne caseras | there are not now kings, nor Cæsars,\n:::");
   const paired = await seededIn("bookshelf/Seafarer");
   await page.goto(A.url("bookshelf/Seafarer"));
-  await A.waitEntry(page, "bookshelf/Seafarer", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Seafarer", 5000);
   await R.settle(page);
   await R.selectBetween(page, "Dagas sind", "ealle onmedlan");
   await R.waitToolbar(page);
@@ -62,7 +63,7 @@ section("split lines", async () => {
   await A.foreignWrite(page, "bookshelf/Milton, John/Samson Agonistes", fixture("samson-split-lines.md"));
   const seeded = await seededIn("bookshelf/Milton, John/Samson Agonistes");
   await page.goto(A.url("bookshelf/Milton%2C%20John/Samson%20Agonistes"));
-  await A.waitEntry(page, "bookshelf/Milton, John/Samson Agonistes", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Milton, John/Samson Agonistes", 5000);
   await R.settle(page);
   await rest(page);
   await log("split lines in Samson", { seeded, ...(await R.splitRests(page)) });
@@ -96,7 +97,7 @@ async function dualLanguageInOvid(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses/Book 1", fixture("ovid-metamorphoses-1.md"));
   const seeded = await seededIn("bookshelf/Ovid/Metamorphoses/Book 1");
   await page.goto(A.url("bookshelf/Ovid/Metamorphoses/Book%201"));
-  await A.waitEntry(page, "bookshelf/Ovid/Metamorphoses/Book 1", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Ovid/Metamorphoses/Book 1", 5000);
   await R.settle(page);
   await rest(page);
   await log("dual-language in Ovid", { seeded, ...(await R.dualLayout(page)) });
@@ -157,7 +158,7 @@ async function gotoToolbarSkippedLine(): Promise<void> {
   await go("commonplace/Quoted%20Ovid");
   await page.click(S.editor);
   await page.keyboard.press("Meta+v");
-  const fitted = await page.waitForFunction(() => document.querySelector("#editor .ProseMirror.fitted"), null, { timeout: 3000 }).then(() => true, () => false);
+  const fitted = await waitState(page, { name: "fitted measure", ms: 3000 }, () => document.querySelector("#editor .ProseMirror.fitted"));
   /* the fit's settle, the app's own clock */
   await page.waitForTimeout(600);
   await rest(page);
@@ -167,7 +168,7 @@ async function dualLanguageBlockNote(): Promise<void> {
   /* a dual-language block in a note: Satire 1.10's bracketed lines, their English at the page's English edge, each note under its own column, the Latin unwrapped */
   await A.foreignWrite(page, "bookshelf/Horace/Satires/1.10", fixture("horace-satires-1.10.md"));
   await page.goto(A.url("bookshelf/Horace/Satires/1.10"));
-  await A.waitEntry(page, "bookshelf/Horace/Satires/1.10", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Horace/Satires/1.10", 5000);
   await R.settle(page);
   await rest(page);
   await log("a dual-language block in a note", await R.dualInset(page));
@@ -183,7 +184,7 @@ async function facingNumbersOpening(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)", "# *Metamorphoses* (with Golding’s translation)\n\n- [Book 7](#bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207)\n");
   await A.foreignWrite(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", fixture("ovid-golding-7.md"));
   await page.goto(A.url("bookshelf/Ovid/Metamorphoses%20(with%20Golding%E2%80%99s%20translation)/Book%207"));
-  await A.waitEntry(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Ovid/Metamorphoses (with Golding’s translation)/Book 7", 5000);
   await R.settle(page);
   await rest(page);
 }
@@ -251,8 +252,8 @@ section("scripture's Verse box", async () => {
        entry to arrive as another tab's write, and a ⌃⌘G before it landed said
        Line where the convention says Verse */
     await page.reload();
-    await A.waitEntry(page, chapter, 5000).catch(() => {});
-    await page.waitForFunction(() => (document.documentElement.dataset.probe || "").includes("all;"), null, { timeout: 5000 }).catch(() => {});
+    await A.waitEntry(page, chapter, 5000);
+    await waitState(page, { name: "warm", ms: 5000 }, () => (document.documentElement.dataset.probe || "").includes("all;"));
     await R.settle(page);
     await rest(page);
     await page.keyboard.press("Control+Meta+g");
@@ -289,7 +290,7 @@ async function byParagraphWork(): Promise<void> {
 async function gotoToolbarOnWorkByParagraph(): Promise<void> {
   await writeAll(AUGUSTINE_SEEDS);
   await page.goto(A.url(AUGUSTINE_BOOK.replace(/ /g, "%20")));
-  await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
+  await A.waitEntry(page, AUGUSTINE_BOOK, 5000);
   await R.settle(page);
   await rest(page);
   await page.keyboard.press("Control+Meta+g");
@@ -330,7 +331,7 @@ async function referenceOnWorkByParagraph(): Promise<void> {
 async function gotoToolbarNextPageAfterWork(): Promise<void> {
   await log("⌃⌘G on the next page after a work by paragraph", { open: await page.evaluate(() => !document.querySelector(".goto-toolbar").hidden), box: await boxLabel() });
   await page.evaluate((h) => { location.hash = h; }, "#" + AUGUSTINE_BOOK.replace(/ /g, "%20"));
-  await A.waitEntry(page, AUGUSTINE_BOOK, 5000).catch(() => {});
+  await A.waitEntry(page, AUGUSTINE_BOOK, 5000);
 }
 async function backWorkParagraph(): Promise<void> {
   await R.settle(page);

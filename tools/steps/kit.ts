@@ -5,6 +5,7 @@ import * as A from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
 import { said, markSaid, waitSaid } from "../adapters/said.ts";
 import { waitSaveLanded } from "../adapters/saves.ts";
+import { waitState } from "../adapters/waits.ts";
 
 export type Tree = { name: string; text?: string; kids?: Tree[] };
 export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean; shard?: [number, number] }
@@ -49,8 +50,7 @@ export const landed = (p: Page, ms: number) => waitSaveLanded(p, ms + 2000);
    rows answer the box's query; no words, the kept query stands */
 export async function searchFor(p: Page, words: string) {
   await p.keyboard.press("Control+Meta+k");
-  const focused = await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).then(() => true, () => false);
-  if (!focused) { console.log("a search box's wait ran out after 2000 ms: the box not focused"); return null; }
+  if (!(await waitState(p, { name: "search box", ms: 2000 }, () => document.activeElement?.classList.contains("search-input")))) return null;
   if (words) { await p.keyboard.press("Meta+a"); await p.keyboard.type(words); }
   return searchAnswered(p);
 }
@@ -66,7 +66,7 @@ export async function searchAnswered(p: Page) {
    (pin: where the keys go › a click below a table at the end, z typed) */
 export async function aimable(p: Page) {
   await p.evaluate(() => { for (const c of document.querySelectorAll<HTMLElement>(".alert.info.show .close, .alert.success.show .close")) c.click(); });
-  await p.waitForFunction(() => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; }, null, { timeout: 2000 }).catch(() => console.log("an alert's wait ran out after 2000 ms: one still stood after its close"));
+  await waitState(p, { name: "alert", ms: 2000, stood: () => p.evaluate(() => document.documentElement.dataset.alerts) }, () => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; });
   await A.settled(p);
 }
 /* the page's picture decodes held until the step lets them go: what it
@@ -180,7 +180,7 @@ export const log = async (label: string, x: unknown) => { const base = x !== nul
    the wait. No screen: the last section's format toolbar may still be fading */
 export const go = async (hash: string, ms = 15000) => {
   await page.goto(A.url(hash)); await A.waitEntry(page, decodeURIComponent(hash).replace(/%20/g, " "), ms);
-  await page.waitForFunction(([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source], { timeout: 1000 }).catch(() => {});
+  await waitState(page, { name: "focus", ms: 1000 }, ([ed, src]) => [ed, src].some((q) => document.querySelector(q)?.contains(document.activeElement)), [S.editor, S.source]);
   console.log(current + ": arrived at " + decodeURIComponent(hash) + ":", JSON.stringify({ cursor: await cursor() }));
 };
 /* entries written as another tab would, in turn */
@@ -216,7 +216,7 @@ export async function closeCorner(): Promise<void> {
 export const wheelTo = async (y: number) => {
   await page.mouse.move(500, 400);
   await page.mouse.wheel(0, y - (await page.evaluate(() => scrollY)));
-  await page.waitForFunction((y) => Math.abs(scrollY - Math.min(y, document.documentElement.scrollHeight - innerHeight)) < 2, y, { timeout: 3000 }).catch(() => {});
+  await waitState(page, { name: "scroll", ms: 3000 }, (y) => Math.abs(scrollY - Math.min(y, document.documentElement.scrollHeight - innerHeight)) < 2, y);
 };
 /* the dialogs, answered by the harness: `answer` is what a prompt gets
    (a list: one per prompt, in turn), a confirm is accepted; `prompts`

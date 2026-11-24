@@ -3,6 +3,7 @@ import { join, resolve } from "node:path";
 import { loadavg } from "node:os";
 import { execSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { ranOutCounts } from "./adapters/waits.ts";
 
 export type RunResult = "ok" | "differs" | "not replayed" | "failed";
 export interface PlayContext { at: string; head: string; committed: boolean; steps: boolean; windows: number; secs: number; load: number }
@@ -29,13 +30,8 @@ function otherwiseIn(print: string): Record<string, string[]> {
   }
   return out;
 }
-function ranOutIn(print: string): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const m of print.matchAll(/^an? (.+?)'s wait ran out/gm)) out[m[1]] = (out[m[1]] ?? 0) + 1;
-  return out;
-}
 export function ledgerLine(print: string, context: PlayContext): LedgerLine {
-  return { ...context, runs: runsIn(print), readOtherwise: otherwiseIn(print), ranOut: ranOutIn(print) };
+  return { ...context, runs: runsIn(print), readOtherwise: otherwiseIn(print), ranOut: ranOutCounts(print) };
 }
 /* only a whole play of a committed tree is flake evidence: on an
    uncommitted tree, or a play of some sections, a section read otherwise

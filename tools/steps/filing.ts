@@ -1,4 +1,5 @@
 import { section, page, A, R, S, log, go, cursor, winY, saidText, setAnswer, prompts, landed, rest, waitForSaid } from "./kit.ts";
+import { waitShown, waitState } from "../adapters/waits.ts";
 
 section("author filing", async () => {
   /* "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so */
@@ -14,7 +15,7 @@ async function newAuthorSeanMiller(): Promise<void> {
   setAnswer(["Sean Miller", "Miller, Sean"]);
   prompts.length = 0;
   await page.click(S.newAuthor);
-  await A.waitEntry(page, "bookshelf/Miller, Sean", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Miller, Sean", 5000);
   await log("New author…, Sean Miller, Enter twice", { prompts: prompts.slice(), entry: await A.entry(page), stored: await A.stored(page, "bookshelf/Miller, Sean") });
   await page.click(S.bookshelfOpener);
   await log("the bookshelf lists it by its heading", await R.menu(page));
@@ -27,7 +28,7 @@ async function newAuthorSeanMiller(): Promise<void> {
   await log("+ book with the caret in the heading", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   /* the same in the markdown view, the caret on the heading's line */
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 3000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 3000 }, S.source);
 }
 async function bookCaretHeadingS(): Promise<void> {
   await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.source);
@@ -36,14 +37,14 @@ async function bookCaretHeadingS(): Promise<void> {
   await waitForSaid(/heading/, 3000);
   await log("+ book with the caret on the heading's line, markdown view", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { state: "detached", timeout: 3000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 3000 }, S.source, "detached");
   await R.selectFrom(page, ["Sean Miller", 11], ["Sean Miller", 11]);
   await page.keyboard.press("Enter");
   setAnswer("Odes");
   await A.act.create(page);
 }
 async function renameAuthorTyped(): Promise<void> {
-  await A.waitEntry(page, "bookshelf/Miller, Sean/Odes", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Miller, Sean/Odes", 5000);
   await page.click(S.editor);
   await page.keyboard.type("A book. ");
   await R.pastePng(page);
@@ -53,7 +54,7 @@ async function renameAuthorTyped(): Promise<void> {
   setAnswer("Sean Miller");
   prompts.length = 0;
   await page.click(S.renameAuthor);
-  await A.waitEntry(page, "bookshelf/Sean Miller", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Sean Miller", 5000);
   await waitForSaid(/filed under/, 3000);
   await log("Rename, Sean Miller typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await saidText(), author: await A.stored(page, "bookshelf/Sean Miller"), book: await A.stored(page, "bookshelf/Sean Miller/Odes"), oldAuthor: await A.stored(page, "bookshelf/Miller, Sean"), oldBook: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.click(S.bookshelfOpener);
@@ -62,7 +63,7 @@ async function renameAuthorTyped(): Promise<void> {
   await go("bookshelf/Sean%20Miller/Odes", 5000);
 }
 async function renameAuthorFollowing(): Promise<void> {
-  await page.waitForFunction(() => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); }, null, { timeout: 5000 }).catch(() => {});
+  await waitState(page, { name: "picture", ms: 5000 }, () => { const i = document.querySelector("#editor img"); return i && (i.naturalWidth || i.dataset.missing); });
 }
 async function reFiledBookPicture(): Promise<void> {
   await log("the re-filed book, its picture", { entry: await A.entry(page), md: await A.stored(page, "bookshelf/Sean Miller/Odes"), missing: await page.evaluate(() => document.querySelector("#editor img")?.dataset.missing || null), ...(await R.picture(page).catch(() => ({}))) });
@@ -79,11 +80,11 @@ async function replaceInRenderedView(): Promise<void> {
   await go("commonplace/Replaced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.setSource(page, "One*-*two *-*three, and *,* four.\n\nFive*-*six.\n");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await rest(page);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
@@ -115,7 +116,7 @@ async function replaceInRenderedView(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
 }
 async function replaceInSourceView(): Promise<void> {
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await log("⌃⌘E in the source view", await R.replaceToolbar(page));
@@ -146,7 +147,7 @@ async function replaceInSourceView(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
 }
 async function escapeSwitchBackRefused(): Promise<void> {
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
   await page.fill("#replacefind", "::: card-red").catch(() => {});
@@ -159,7 +160,7 @@ async function escapeSwitchBackRefused(): Promise<void> {
   await R.setSource(page, "One*-*two.\n");
   await landed(page, 1500);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   /* a panel opened over the replace toolbar closes it, and switches back as Escape does */
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
@@ -181,14 +182,14 @@ async function entrySavedAnotherWindow(): Promise<void> {
     await other.click(S.editor); await other.keyboard.press("End"); await other.keyboard.type(" Seven*-*eight.");
     await landed(other, 1500);
     /* the landed write reaches this window by its tab message: waited for, so a reading never races it */
-    await page.waitForFunction(() => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
+    await waitState(page, { name: "text", ms: 5000 }, () => /Seven/.test(document.querySelector("textarea.source")?.value || document.querySelector("#editor")?.textContent || ""));
     await rest(page);
     await log("the entry saved in another window, the toolbar open", { ...(await R.replaceToolbar(page)), text: await page.evaluate(() => document.querySelector("textarea.source")?.value ?? null), caret: await page.evaluate(() => document.querySelector("textarea.source")?.selectionStart ?? null) });
     await other.close(); }
 }
 async function savedElsewhereFollowing(): Promise<void> {
   await page.keyboard.press("Escape");
-  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {}); }
+  if (await R.inSource(page)) { await page.keyboard.press("Control+Meta+m"); await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor); }
 }
 section("losing nothing", async () => {
   /* what was lost and is kept now: a fence's words after its language, a picture under the code button, a selection under a paste of line breaks, page markers in a copy, a second export's report, a store that never answers */
@@ -202,12 +203,12 @@ async function fenceWordsBothViews(): Promise<void> {
   await go("commonplace/Kept");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.setSource(page, "```not code\nx = 1\n```\n\ncap ![](x.png) tion\n\n::: note\nin her degree ⟨8⟩ and on\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await rest(page);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await log("a fence's words after the language, through both views", { fence: await page.evaluate((s) => document.querySelector(s)?.value.split("\n")[0] ?? null, S.source) });
   await page.keyboard.press("Control+Meta+m");
   await rest(page);

@@ -1,4 +1,5 @@
 import { section, page, A, R, log, rest, jump, writeAll, AUGUSTINE_SEEDS, saidText } from "./kit.ts";
+import { waitState } from "../adapters/waits.ts";
 
 section("a link to a line", async () => {
   /* an address naming a line marks it as ⌃⌘G does: no selection, no format toolbar, and gone at the next press */
@@ -15,7 +16,7 @@ async function linkToLineClicked(): Promise<void> {
   await A.foreignWrite(page, work, "# Statius\n\n- [To line 3](" + href + "3)\n");
   await A.foreignWrite(page, book, "# Book 1\n\n::: note\n[3-4](" + href + "3) and [nowhere](" + href + "99)\n:::\n\n::: verse\none\ntwo\n:::\n\n::: verse 3\nthree\nfour\n:::\n\n[Five](" + href + "5)\n\n::: dual-language 5\nquinque | Five, a sentence that runs on over the lines it translates.\nsex\nseptem\n:::\n");
   await page.goto(A.url(book.replace(/ /g, "%20")));
-  await A.waitEntry(page, book, 5000).catch(() => {});
+  await A.waitEntry(page, book, 5000);
   await R.settle(page);
   await rest(page);
   await click("3-4");
@@ -33,11 +34,11 @@ async function linkToLineClicked(): Promise<void> {
   await click("Five");
   await log("a link to a line in a dual-language block", await page.evaluate(() => { const r = document.querySelector("#editor .landed"), on = (e: Element) => getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)"; return { row: on(r), latin: on(r.children[0]), english: on(r.children[1]), latinText: r.children[0].textContent }; }));
   await page.goto(A.url(work));
-  await A.waitEntry(page, work, 5000).catch(() => {});
+  await A.waitEntry(page, work, 5000);
   await R.settle(page);
   await rest(page);
   await click("To line 3");
-  await A.waitEntry(page, book, 5000).catch(() => {});
+  await A.waitEntry(page, book, 5000);
   await R.settle(page);
   await rest(page);
   await rest(page);
@@ -56,20 +57,20 @@ async function linkToLineClicked(): Promise<void> {
   await A.foreignWrite(page, stanzas, "# Stanzas\n\n[2.1](#bookshelf/Statius/Stanzas?line=2.1) [2](#bookshelf/Statius/Stanzas?line=2)\n\n::: stanza 1\nalpha\nbeta\n:::\n\n::: stanza 2\ngamma\ndelta\n:::\n");
   await A.foreignWrite(page, skips, "# Skips\n\n[2](#bookshelf/Statius/Skips?line=2)\n\n::: verse\nfirst\n⟨skipped line number⟩\nthird\n:::\n");
   await page.goto(A.url(stanzas));
-  await A.waitEntry(page, stanzas, 5000).catch(() => {});
+  await A.waitEntry(page, stanzas, 5000);
   await R.settle(page);
   await rest(page);
   await click("2.1");
   await log("a link to a stanza, and line", await seen());
   await page.goto(A.url(skips));
-  await A.waitEntry(page, skips, 5000).catch(() => {});
+  await A.waitEntry(page, skips, 5000);
   await R.settle(page);
   await rest(page);
   await click("2");
   await log("a link to an omitted line", await seen());
   /* no press between two landings: the second keeps its mark */
   await page.goto(A.url(book.replace(/ /g, "%20") + "?line=3"));
-  await A.waitEntry(page, book, 5000).catch(() => {});
+  await A.waitEntry(page, book, 5000);
   await R.settle(page);
   await rest(page);
   await rest(page);
@@ -88,14 +89,14 @@ async function linkParagraphBeforeWarm(): Promise<void> {
   /* opened before the warm: the work's own page says how it counts, and a rename follows */
   await writeAll(AUGUSTINE_SEEDS);
   await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
-  await A.waitEntry(page, work2, 8000).catch(() => {});
+  await A.waitEntry(page, work2, 8000);
   await R.settle(page);
-  await page.waitForFunction(() => document.querySelector("#editor .landed"), null, { timeout: 8000 }).catch(() => {});
+  await waitState(page, { name: "landing", ms: 8000 }, () => document.querySelector("#editor .landed"));
   await rest(page);
   await log("a link to a paragraph before the warm", await page.evaluate(() => ({ landed: document.querySelector("#editor .landed")?.textContent.slice(0, 24) ?? null })));
   /* a key before the warm ends: the landing owed is dropped, its two seconds timed by the app's own clock */
   await page.goto(A.url(work2.replace(/ /g, "%20") + "?line=61", "warm=slow"));
-  await A.waitEntry(page, work2, 8000).catch(() => {});
+  await A.waitEntry(page, work2, 8000);
   await page.keyboard.press("ArrowDown");
   await jump(page, 2600);
 }
@@ -113,7 +114,7 @@ async function letteredLineGutter(): Promise<void> {
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, work, "# Thebaid\n");
   await A.foreignWrite(page, key, "# Book 8\n\n[To the letter](" + href + "157a)\n\n::: dual-language 155\nquintus | Five, a sentence that runs on down beside the lines after it, and past them.\nsextus\nseptimus\n⟨line 157a⟩littera sola\n⟨line 157b⟩littera par | Its own English.\noctavus\n:::\n\n::: verse 200\nplanus\n⟨line 200a⟩littera in versu\n:::\n");
-  const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
+  const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000); await R.settle(page); await rest(page); await rest(page); };
   await open();
   await log("the gutter at the page's setting", { drawn: await gutter() });
   await page.keyboard.press("Control+Meta+l");
@@ -188,7 +189,7 @@ section("a bracketed line", async () => {
   await log("a link to a bracketed line", { ...(await seen3()), address: await page.evaluate(() => decodeURI(location.hash.split("?")[1] ?? "")) });
 });
 const key = "bookshelf/Statius/Thebaid/Book 16";
-const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000).catch(() => {}); await R.settle(page); await rest(page); await rest(page); };
+const open = async () => { await page.goto(A.url(key.replace(/ /g, "%20"))); await A.waitEntry(page, key, 5000); await R.settle(page); await rest(page); await rest(page); };
 const askBracketed = async (n: string) => { await page.keyboard.press("Meta+a"); await page.keyboard.type(n); await page.keyboard.press("Enter"); await rest(page); return seen3(); };
 const seen3 = async () => ({ ...(await page.evaluate(() => { const m = document.querySelector("#editor .landed"), widest = Math.max(...[...document.querySelectorAll("#editor .verse.dual-language > .vpair")].map((p) => p.getBoundingClientRect().width)); return { landed: m?.textContent ?? null, label: m?.dataset.line ?? null, band: m ? Math.abs(m.getBoundingClientRect().width - widest) < 1 : null, said: "" }; })), said: (await saidText()) || null });
 section("a line with no English of its own", async () => {
@@ -196,7 +197,7 @@ section("a line with no English of its own", async () => {
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, band, "# Band\n\n[The second](#bookshelf/Statius/Band?line=2)\n\n::: dual-language\nprimus | First, a sentence that runs on down over the lines it translates, and past them.\nsecundus, a Latin line long enough to measure\ntertius\n:::\n");
   await page.goto(A.url(band));
-  await A.waitEntry(page, band, 5000).catch(() => {});
+  await A.waitEntry(page, band, 5000);
   await R.settle(page);
   await rest(page);
   await rest(page);
@@ -210,7 +211,7 @@ section("a line with no English of its own", async () => {
   await page.keyboard.press("Escape");
   await rest(page);
   await page.goto(A.url(band));
-  await A.waitEntry(page, band, 5000).catch(() => {});
+  await A.waitEntry(page, band, 5000);
   await R.settle(page);
   await rest(page);
   await page.locator("#editor a", { hasText: "The second" }).first().click();
@@ -230,7 +231,7 @@ section("the block a line is in", async () => {
   await A.foreignWrite(page, "bookshelf/Statius", "# Statius\n");
   await A.foreignWrite(page, twice, "# Twice\n\n::: verse\nalpha\nbeta\n:::\n\n::: verse\ngamma\n:::\n");
   await page.goto(A.url(twice));
-  await A.waitEntry(page, twice, 5000).catch(() => {});
+  await A.waitEntry(page, twice, 5000);
   await R.settle(page);
   await rest(page);
   await page.keyboard.press("Control+Meta+g");

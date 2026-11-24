@@ -1,4 +1,5 @@
 import { section, page, A, R, S, log, go, rest, settled, writeAll, seededIn, wheelTo, caretAt, fixture, STANZA_SEEDS, MARGIN_SEEDS } from "./kit.ts";
+import { waitShown, waitState } from "../adapters/waits.ts";
 
 const OVID = "bookshelf/Ovid/Metamorphoses/Book 1";
 const SHELVES = "# Shelves\n\n## Latin\n- [Boethius](#bookshelf/Boethius)\n- [Ovid](#bookshelf/Ovid)\n\n## English\n";
@@ -15,7 +16,7 @@ async function keysOverRows(seeded: boolean): Promise<void> {
   const sel = async () => ({ sel: (await R.menuNow(page)).sel });
   await go("commonplace/Horace");
   await page.click(S.bookshelfOpener);
-  await page.waitForSelector(".menu .shelf", { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "shelf", ms: 5000 }, ".menu .shelf");
   await log("the bookshelf menu opened", { seeded, ...(await sel()) });
   for (const k of ["ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "ArrowDown", "Home", "ArrowUp", "End"]) {
     await page.keyboard.press(k);
@@ -24,7 +25,7 @@ async function keysOverRows(seeded: boolean): Promise<void> {
   await page.keyboard.type("spe");
   await log("spe typed", await sel());
   await page.keyboard.press("Enter");
-  await A.waitEntry(page, "bookshelf/Spenser, Edmund", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Spenser, Edmund", 5000);
   await log("Enter on Edmund Spenser", { entry: await A.entry(page), menu: await R.menu(page) });
   await go("commonplace/Horace");
   await page.click(S.commonplaceOpener);
@@ -69,7 +70,7 @@ async function longShelf(): Promise<void> {
   await writeAll(Object.fromEntries(authors.map((a) => ["bookshelf/" + a, "# " + a + "\n"])));
   const shown = () => page.evaluate(() => { const m = document.querySelector(".menu")!.getBoundingClientRect(), r = document.querySelector(".menu .sel")?.getBoundingClientRect(); return { sel: document.documentElement.dataset.menuSel, inView: !!r && r.top >= m.top && r.bottom <= m.bottom, scrolled: document.querySelector(".menu")!.scrollTop > 0 }; });
   await go("bookshelf/Author 60");
-  await page.waitForFunction((n) => Number(document.documentElement.dataset.store) >= n, before + authors.length, { timeout: 8000 }).catch(() => {});
+  await waitState(page, { name: "store", ms: 8000 }, (n) => Number(document.documentElement.dataset.store) >= n, before + authors.length);
   await page.keyboard.press("Control+Meta+j");
   await settled(page);
   await log("Author 60 of 60, ⌃⌘J", await shown());
@@ -177,9 +178,9 @@ async function opensOnEntry(): Promise<void> {
   await pressed("⌃⌘J on a journal day");
   await page.keyboard.press("Escape");
   await page.goto(A.url(OVID, "warm=slow"));
-  await A.waitEntry(page, OVID).catch(() => {});
+  await A.waitEntry(page, OVID);
   await pressed("⌃⌘J on Ovid's Book 1 before the warm");
-  await A.waitWarm(page).catch(() => {});
+  await A.waitWarm(page);
   await rest(page);
   await log("the warm done, the menu still open", await R.round(page));
   await page.keyboard.press("Escape");

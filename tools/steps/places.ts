@@ -1,4 +1,5 @@
 import { section, laid, page, ctx, A, R, S, log, go, winY, inView, saidText, wheelTo, setAnswer, MARGIN_SEEDS, rest, settled, keep, seed, landed, jump, closeCorner } from "./kit.ts";
+import { waitShown, waitState } from "../adapters/waits.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -18,20 +19,20 @@ async function pippaScrolledDown(): Promise<void> {
   await rest(page);
   await log("Horace followed", await laid(R.place));
   await page.goBack();
-  await A.waitEntry(page, pippa, 5000).catch(() => {});
+  await A.waitEntry(page, pippa, 5000);
   await rest(page);
   await log("Back", await laid(R.place));
   await page.goForward();
-  await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Horace", 5000);
   await rest(page);
   await log("Forward", await laid(R.place));
   await page.goBack();
-  await A.waitEntry(page, pippa, 5000).catch(() => {});
+  await A.waitEntry(page, pippa, 5000);
   await rest(page);
   await log("Back again", await laid(R.place));
   await page.reload();
-  await A.waitEntry(page, pippa).catch(() => {});
-  await A.waitWarm(page).catch(() => {});
+  await A.waitEntry(page, pippa);
+  await A.waitWarm(page);
   await rest(page);
   await log("reloaded", await laid(R.place));
   await page.evaluate((s) => { document.querySelector(s).style.paddingTop = "400px"; }, S.editor);   /* the page grows above the held place, as a picture resolving does */
@@ -67,38 +68,38 @@ async function backPlaceClosedSection(): Promise<void> {
   await log("back to a place in a closed section", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
   /* the same page reloaded with the warm held back: drawn unfolded from its one row, then folded when the warm lands, the place set again */
   await page.goto(A.url("bookshelf/Boethius/Consolatio", "warm=slow"));
-  await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000);
   await rest(page);
   await log("before the warm", { folds: (await R.folds(page)).folds, fillerInView: await inView("Filler 5.4") });
-  await A.waitWarm(page).catch(() => {});
+  await A.waitWarm(page);
   await rest(page);
   await log("the warm landed", { folds: (await R.folds(page)).folds, open: (await R.folds(page)).open, fillerInView: await inView("Filler 5.4") });
   await page.goto(A.url("bookshelf/Boethius/Consolatio", "warm=slow"));
-  await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio", 5000);
   /* Book 5's link, beside the held place: Book 1's lies far above it, and the held place moved the page under the click */
   await page.locator(S.editorLink("#bookshelf/Boethius/Consolatio/3pr1")).nth(4).click().catch(() => {});
 }
 async function contentsLinkBeforeWarm(): Promise<void> {
-  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000).catch(() => {});
+  await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr1", 5000);
   await log("a contents link clicked before the warm", { entry: await A.entry(page), refused: /no such/.test(await saidText()) });
-  await A.waitWarm(page).catch(() => {});
+  await A.waitWarm(page);
   /* the source read down to text a closed section hides, then back to the rendered view: the section opens */
   await go("bookshelf/Boethius/Consolatio");
   await rest(page);
   for (const b of (await R.folds(page)).open) await R.clickFoldTriangle(page, b.trim().split(":")[0]);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.sourceScrollTo(page, "Filler 3.4");
   await rest(page);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "rendered view", ms: 5000 }, S.editor);
   await page.waitForTimeout(400);
   await log("a closed section's text switched to", { open: (await R.folds(page)).open, fillerInView: await inView("Filler 3.4") });
   /* a forced entry: refused on the open path, scrolled, left and returned to */
   await go("commonplace/Forced%20Long");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
 }
 async function forcedEntryLeftScrolled(): Promise<void> {
   await forcedEntryReturned();
@@ -164,7 +165,7 @@ async function backToInlineCodeLines(): Promise<void> {
   await go("commonplace/Coded%20Lines");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.setSource(page, Array.from({ length: 60 }, (_, i) => "I `go` and the sea, line " + (i + 1) + ".").join("\n"));
   await page.keyboard.press("Control+Meta+m");
   await landed(page, 1500);
@@ -178,7 +179,7 @@ async function backToInlineCodeLines(): Promise<void> {
   await go("commonplace/Long%20Paragraph");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source, { timeout: 5000 }).catch(() => {});
+  await waitShown(page, { name: "source view", ms: 5000 }, S.source);
   await R.setSource(page, Array.from({ length: 300 }, (_, i) => "Sentence " + (i + 1) + " of one long paragraph.").join(" ") + "\n\n::: grid\n::: card-light-blue\nalpha\n:::\nloose\n:::\n");
   await page.keyboard.press("Control+Meta+m");
   await landed(page, 1500);
@@ -218,7 +219,7 @@ async function unknownPageLeftUntouched(): Promise<void> {
   await R.caretAfter(page, "The most famous story", "The most famous story".length);
   setAnswer("Long");
   await A.act.create(page);
-  await A.waitEntry(page, "2026-09-05/Long", 5000).catch(() => {});
+  await A.waitEntry(page, "2026-09-05/Long", 5000);
   await page.click(S.editor);
   await R.pasteText(page, Array.from({ length: 80 }, (_, i) => "Line " + (i + 1) + " of a long entry.").join("\n\n"));
   await landed(page, 1500);
@@ -227,13 +228,13 @@ async function unknownPageLeftUntouched(): Promise<void> {
   const before = await winY();
   setAnswer("Longer");
   await page.click(S.renameButton);
-  await A.waitEntry(page, "2026-09-05/Longer", 5000).catch(() => {});
+  await A.waitEntry(page, "2026-09-05/Longer", 5000);
   await rest(page);
   await log("a long entry renamed, scrolled", { entry: await A.entry(page), stayed: Math.abs((await winY()) - before) < 3 });
   await wheelTo(600);
   await page.waitForTimeout(700);
   await page.click(S.deleteButton);
-  await A.waitEntry(page, "2026-09-05", 5000).catch(() => {});
+  await A.waitEntry(page, "2026-09-05", 5000);
   await rest(page);
 }
 async function deletedScrolledPlaceDropped(): Promise<void> {
@@ -252,7 +253,7 @@ async function copyWithClipboardRefused(): Promise<void> {
   const blocked = await ctx.newPage();
   await blocked.addInitScript(() => { Object.defineProperty(window, "localStorage", { get() { throw new DOMException("site data blocked", "SecurityError"); } }); });
   await blocked.goto(A.url("commonplace/Horace"));
-  await A.waitEntry(blocked, "commonplace/Horace", 8000).catch(() => {});
+  await A.waitEntry(blocked, "commonplace/Horace", 8000);
   /* localStorage alone refused: the profile's IndexedDB still answers, so the store's own failure path is not what this reads */
   await log("a commonplace opened with localStorage refused", { entry: (await A.entry(blocked)) ?? null, blockedScreen: ((await A.screen(blocked).catch(() => "")) || "").split(" · corner")[0] });
   await blocked.close();
@@ -310,7 +311,7 @@ section("footnote marks", async () => {
   await log("typed 4 m²", await R.search(page));
   await page.keyboard.press("Escape");
 });
-const searched = async (q: string) => { await page.waitForFunction((q) => document.querySelector(".page-search input")?.value === q, q, { timeout: 5000 }).catch(() => {}); await jump(page, 400); };
+const searched = async (q: string) => { await waitState(page, { name: "search", ms: 5000 }, (q) => document.querySelector(".page-search input")?.value === q, q); await jump(page, 400); };
 section("bookmarks from another window", async () => {
   /* two windows, last of the steps that read the lists, the commonplace made here joining them: a commonplace made in a second one and bookmarked there; ⌃⌘B in the first shows its row and keeps it stored, though the first never loaded it; opened from that row, it is read from the store with the second window's text and takes the typing after it; saved again in the second while open in the first, it is redrawn there; saved in the second while the first has typing not yet saved, the first's save is refused; open in the first and deleted in the second, it stays on screen, the corner says so, typing there is refused and the commonplace opened again is blank; and a × there writes the list with it kept */
   await secondWindow();
@@ -321,8 +322,8 @@ async function secondWindow(): Promise<void> {
   await go("2026-09-06");
   const other = await page.context().newPage();
   await other.goto(A.url("commonplace/Made%20Elsewhere"));
-  await A.waitEntry(other, "commonplace/Made Elsewhere").catch(() => {});
-  await A.waitWarm(other).catch(() => {});
+  await A.waitEntry(other, "commonplace/Made Elsewhere");
+  await A.waitWarm(other);
   await other.click(S.editor);
   await other.keyboard.type("made in the second window");
   await landed(other, 2500);
@@ -337,7 +338,7 @@ async function secondWindow(): Promise<void> {
   await page.waitForTimeout(500);
   await log("⌃⌘B back in the first", { panel: await R.bookmarks(page), stored: await page.evaluate((k) => localStorage.getItem(k), A.bookmarksKey) });
   await page.click(".bookmarks .bookmark-label:text-is('Made Elsewhere')", { timeout: 1000 }).catch(() => {});
-  await A.waitEntry(page, "commonplace/Made Elsewhere", 5000).catch(() => {});
+  await A.waitEntry(page, "commonplace/Made Elsewhere", 5000);
   await rest(page);
   await log("its row's commonplace opened from the first", { entry: await A.entry(page), text: await R.editorTextHead(page) });
   await page.click(S.editor);
@@ -348,15 +349,15 @@ async function secondWindow(): Promise<void> {
 async function pageOpenFirstSaved(): Promise<void> {
   const again = await page.context().newPage();
   await again.goto(A.url("commonplace/Made%20Elsewhere"));
-  await A.waitEntry(again, "commonplace/Made Elsewhere").catch(() => {});
-  await A.waitWarm(again).catch(() => {});
+  await A.waitEntry(again, "commonplace/Made Elsewhere");
+  await A.waitWarm(again);
   await page.bringToFront();
   await page.click(S.editor);
   await again.click(S.editor);
   await again.keyboard.type(", the second again");
   await landed(again, 2500);
   /* the second's save arrives in the first by its tab message */
-  await page.waitForFunction(() => document.querySelector("#editor")?.textContent?.includes(", the second again"), null, { timeout: 2500 }).catch(() => {});
+  await waitState(page, { name: "text", ms: 2500 }, () => document.querySelector("#editor")?.textContent?.includes(", the second again"));
   await log("the commonplace open in the first, saved in the second", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), focused: await page.evaluate((s) => !!document.querySelector(s)?.contains(document.activeElement), S.editor) });
   await page.click(S.editor);
   await page.keyboard.type(", the first unsaved");

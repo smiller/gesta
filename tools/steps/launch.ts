@@ -1,4 +1,5 @@
 import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor, view, writeAll, landed, saidText, waitForSaid } from "./kit.ts";
+import { expected, nothingCame, waitShown, waitState } from "../adapters/waits.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -41,7 +42,7 @@ async function cornerShown(): Promise<void> {
   await landed(page, 1500);
   await log("after typing", await R.corner(page));
   await page.keyboard.press("Control+Meta+c");
-  await page.waitForSelector(".alert.success.show", { timeout: 2000 }).catch(() => {});
+  await waitShown(page, { name: "alert", ms: 2000 }, ".alert.success.show");
   await log("after ⌃⌘C", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
   await page.click(".alert.success.show", { timeout: 2000 }).catch(() => {});
@@ -53,7 +54,7 @@ async function cornerShown(): Promise<void> {
   await go("commonplace/Links");
   await page.click(S.editorLink("#commonplace/Links"));
   /* the editor takes a click's caret a tick after the click */
-  await page.waitForFunction(() => { const s = getSelection(); return !!s.rangeCount && s.anchorOffset > 0; }, null, { timeout: 1000 }).catch(() => {});
+  await waitState(page, { name: "selection", ms: 1000 }, () => { const s = getSelection(); return !!s.rangeCount && s.anchorOffset > 0; });
   await log("a link to itself", { entry: await A.entry(page), text: await saidText() });
 }
 async function plainClickExternalLink(): Promise<void> {
@@ -64,10 +65,10 @@ async function plainClickExternalLink(): Promise<void> {
   await page.click(S.editorLink("#commonplace/Horace"), { modifiers: ["Meta"] });
   await rest(page);
   await log("⌘-click on an internal link", { newTab: (await newTab).split("#")[1], ...(await R.afterModClick(page)) });
-  const newTab2 = ctx.waitForEvent("page", { timeout: 5000 }).then((p) => p.url(), () => "(no new tab)");
+  const newTab2 = expected("new tab", 5000, (ms) => ctx.waitForEvent("page", { timeout: ms }));
   await page.click(S.editorLink("https://example.org/"), { modifiers: ["Meta"] });
   await rest(page);
-  await log("⌘-click on an external link", { newTab: (await newTab2) !== "(no new tab)", ...(await R.afterModClick(page)) });   /* headless has no network: whether a tab opened, not where it got */
+  await log("⌘-click on an external link", { newTab: await newTab2, ...(await R.afterModClick(page)) });   /* headless has no network: whether a tab opened, not where it got */
   await page.click(S.editorLink("#commonplace/Horace"));
   await A.waitEntry(page, "commonplace/Horace", 5000);
   await log("a plain click on an internal link", { entry: await A.entry(page) });
@@ -84,7 +85,7 @@ async function followedByKey(): Promise<void> {
   await followed("⌃⌘Enter just after a link", "Horace", 6);
   await followed("⌃⌘Enter away from a link", "A link to", 2);
   await followed("⌃⌘Enter on a link to itself", "itself", 2, true);
-  const newTab = ctx.waitForEvent("page", { timeout: 5000 }).then(() => true, () => false);
+  const newTab = expected("new tab", 5000, (ms) => ctx.waitForEvent("page", { timeout: ms }));
   await followed("⌃⌘Enter on an external link", "outside", 2);
   await log("an external link's new tab", { newTab: await newTab });
   await go("commonplace/Links");
@@ -98,23 +99,23 @@ async function followedByKey(): Promise<void> {
   await view(false);
   await writeAll({ "commonplace/Script Link": "A [script](javascript:void(0)) link.\n" });
   await go("commonplace/Script%20Link");
-  const scriptTab = ctx.waitForEvent("page", { timeout: 2000 }).then(() => true, () => false);
+  const noTab = nothingCame(ctx.waitForEvent("page", { timeout: 2000 }));
   await page.click("#editor a[href^='javascript']", { modifiers: ["Meta"] });
   await rest(page);
-  await log("⌘-click on a script link", { newTab: await scriptTab, ...(await R.afterModClick(page)) });
+  await log("⌘-click on a script link", { newTab: !(await noTab), ...(await R.afterModClick(page)) });
   for (const [key, label] of [["Enter", "Enter on a search result inside a link"], ["Control+Meta+Enter", "⌃⌘Enter on a search result inside a link"]]) {
     await go("commonplace/Links");
     const hits = ((await searchFor(page, "outside"))?.rows ?? 0) > 0;
-    const opened = ctx.waitForEvent("page", { timeout: 2000 }).then(() => true, () => false);
+    const none = nothingCame(ctx.waitForEvent("page", { timeout: 2000 }));
     await page.keyboard.press(key);
     await settled(page);
-    await log(label, { hits, entry: await A.entry(page), search: await R.searchOpen(page), newTab: await opened });
+    await log(label, { hits, entry: await A.entry(page), search: await R.searchOpen(page), newTab: !(await none) });
   }
   await searchReopened();
 }
 async function searchReopened(): Promise<void> {
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
+  await waitState(page, { name: "search", ms: 2000 }, () => document.activeElement?.classList.contains("search-input"));
   await page.keyboard.type(" sky");
   const box = await page.evaluate(() => { const b = document.querySelector<HTMLInputElement>(".search-input"); return b && { value: b.value, caret: b.selectionStart, end: b.selectionEnd }; });
   await log("Search reopened and typed in: what is typed goes after the kept query", { box, answered: await A.waitSearchAnswered(page, box?.value.trim() ?? "") });
@@ -152,18 +153,18 @@ section("refused fence", async () => {
   await go("commonplace/Fenced");
   await page.click(S.editor);
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source);
+  await waitShown(page, { name: "source view", ms: 30000 }, S.source);
   await page.keyboard.type("::: versey\nline\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor);
+  await waitShown(page, { name: "rendered view", ms: 30000 }, S.editor);
   await rest(page);
   await log("a refused fence", await R.refusedFence(page));
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.source);
+  await waitShown(page, { name: "source view", ms: 30000 }, S.source);
   await page.keyboard.press("Meta+a");
   await page.keyboard.type("::: verse\nline\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor);
+  await waitShown(page, { name: "rendered view", ms: 30000 }, S.editor);
   await rest(page);
   await log("a clean switch", await R.cleanSwitch(page));
 });

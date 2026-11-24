@@ -1,5 +1,6 @@
 import { section, caretAt, view, write, page, A, R, log, go, rest, saidText } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
+import { waitState } from "../adapters/waits.ts";
 
 section("editing", async () => {
   /* a placed selection is read by the editor a moment later */
@@ -133,7 +134,7 @@ async function quotationInsideNote(): Promise<void> {
   await log("a quotation inside a note", await page.evaluate(() => { const q = document.querySelector("#editor .note blockquote, #page .note blockquote"); if (!q) return { quote: null as string | null }; const cs = getComputedStyle(q); return { fill: cs.backgroundColor !== "rgba(0, 0, 0, 0)", rule: parseFloat(cs.borderLeftWidth) > 0 || getComputedStyle(q, "::before").content !== "none" }; }));
   const box = "data:image/svg+xml;base64," + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120"><rect width="300" height="120" fill="#ccc"/></svg>').toString("base64");
   await write("commonplace/Spacing", `early light:\n\n![](${box})\n\n~ ~\n\nA paragraph.\n\n> ::: verse 265\n> ye Elves of Hilles,\n> :::\n\n> ::: verse 197 265\n> auraeque | Ye Ayres\n> :::\n\n> A quoted paragraph.\n`);
-  await page.waitForFunction(() => [...document.querySelectorAll("#editor img:not(.ProseMirror-separator)")].every((i) => i.complete), null, { timeout: 2000 }).catch(() => {});
+  await waitState(page, { name: "picture", ms: 2000 }, () => [...document.querySelectorAll("#editor img:not(.ProseMirror-separator)")].every((i) => i.complete));
 }
 async function pictureGapsAndQuotation(): Promise<void> {
   await log("a picture's gaps and a quotation's top", await page.evaluate(() => {

@@ -382,7 +382,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     fixed date the page's clock is set to), `adapters/app.ts` (the
     readings over the app), `adapters/said.ts` (what the page said since a
     step's mark), `adapters/saves.ts` (the write watcher and the wait for
-    a save to land), `adapters/searchShown.ts` (what the search row
+    a save to land), `adapters/waits.ts` (every wait on the page's state:
+    named by what it waits for, one line printed when it runs out, and
+    the wait for what should not come), `adapters/searchShown.ts` (what the search row
     publishes, as the steps read it; `heliumSearch.test.ts` holds the two
     to one shape), `adapters/textPoint.ts` (a point in the
     editor's text by a needle and an offset, and the text node it falls
