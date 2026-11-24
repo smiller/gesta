@@ -41,11 +41,40 @@ export const MARGIN_SEEDS = {
 };
 export const landed = (p: Page, ms: number) => waitSaveLanded(p, ms + 2000);
 /* ⌃⌘K, then the words once the box holds the focus: typed at once, they
-   went to the entry under it (pin: where the keys go › ⌃⌘T on today from Search) */
+   went to the entry under it (pin: where the keys go › ⌃⌘T on today from
+   Search). They replace the query the box kept: typed after it, the
+   rows read were the kept query's, drawn as the box opened, until the
+   scan of both together cleared them (pin: launch, menus, the corner,
+   links › ⌃⌘Enter on a search result inside a link). Given back once the
+   rows answer the box's query; no words, the kept query stands */
 export async function searchFor(p: Page, words: string) {
   await p.keyboard.press("Control+Meta+k");
   await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
-  await p.keyboard.type(words);
+  if (words) { await p.keyboard.press("Meta+a"); await p.keyboard.type(words); }
+  const q = await p.evaluate(() => document.querySelector<HTMLInputElement>(".search-input")?.value ?? "");
+  return A.waitSearchAnswered(p, q.trim());
+}
+/* a page a point can be measured on and then aimed at: the info and
+   success alerts closed and the layout settled after. One standing moves
+   the text by its height (a reference's success, 50 px), and its time can
+   run out between the measuring and the aim (pin: column marks › a paired
+   line's English into the next line's Latin) */
+export async function aimable(p: Page) {
+  await p.evaluate(() => { for (const c of document.querySelectorAll<HTMLElement>(".alert.info.show .close, .alert.success.show .close")) c.click(); });
+  await p.waitForFunction(() => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; }, null, { timeout: 2000 }).catch(() => console.log("an alert still stood after its close"));
+  await A.settled(p);
+}
+/* the page's picture decodes held until the step lets them go: what it
+   does meanwhile comes before the bytes are ready in every play, where a
+   decode timed against the step's gestures came first under a slowed page
+   (pin: picture › a picture pasted, then another entry at once) */
+export async function holdDecodes(p: Page): Promise<() => Promise<void>> {
+  await p.evaluate(() => {
+    const own = window.createImageBitmap.bind(window);
+    const gate = new Promise<void>((go) => { window.__releaseDecodes = go; });
+    window.createImageBitmap = ((...a: Parameters<typeof own>) => gate.then(() => own(...a))) as typeof own;
+  });
+  return () => p.evaluate(() => window.__releaseDecodes());
 }
 /* every page timer due within ms fired at once, the run's clock being
    installed; what those timers start (a store write, a fade they schedule)
@@ -58,8 +87,14 @@ export async function jump(p: Page, ms: number) {
    Svelte drawing within them, where a fixed sleep of up to 300 ms stood;
    a window not in front may have its frames slowed, so 100 ms at most */
 export async function rest(p: Page) {
-  await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
+  const by = await p.evaluate(() => new Promise<string>((done) => { requestAnimationFrame(() => requestAnimationFrame(() => done("frames"))); setTimeout(() => done("cap"), 100); })).catch(() => "gone");
+  const r = (rests[current] ??= { all: 0, capped: 0 });
+  r.all++;
+  if (by === "cap") r.capped++;
 }
+/* each section's rests, and those the 100 ms ended before the frames: a
+   step after one of those went on before the page had drawn */
+export const rests: Record<string, { all: number; capped: number }> = {};
 export async function openGotoRow(p: Page) {
   const open = () => p.evaluate(() => !!document.querySelector(".page-goto")?.open);
   for (let n = 0; n < 4 && !(await open()); n++) { await p.keyboard.press("Control+Meta+j"); await rest(p); }

@@ -5,7 +5,6 @@ export type { Page, BrowserContext };
 /* what the drivers install in the page */
 declare global {
   interface Window {
-    __lastEdit: number;
     __corner: () => string | undefined;
     __saidMark?: number;
     __pageTop: () => number;
@@ -15,6 +14,7 @@ declare global {
     __pickers: number;
     __pickerAbort: () => void;
     __releaseTyped: () => void;
+    __releaseDecodes: () => void;
     __selSeen: boolean;
     __selFrom: unknown[];
     __selUnmoved: () => boolean;

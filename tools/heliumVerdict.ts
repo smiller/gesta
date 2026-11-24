@@ -18,6 +18,21 @@ export function compared(received: string, baseline: string | null, held: boolea
   return { pass: false, differs: baseline === null ? "new" : "changed" };
 }
 
+/* today is pinned, not scrubbed: a scrub of today's key, its crumb label
+   and its day number missed the day number until a verify on another day
+   went red on it */
+export function scrub(text: string): string {
+  return text
+    .replace(/"opacity":"[0-9.e-]+"/g, '"opacity":"[fading]"')
+    /* the corner's text in the screen line is an info's clock against
+       the tool's waits: the steps that care read the corner themselves */
+    .replace(/· corner \\"(?:[^"\\]|\\.)*\\"/g, "· corner [whatever stood]")
+    .replace(/file:\/\/\/[^"\\ ]*\/dist\/index\.html/g, "file:///[app]/index.html")
+    /* a logged Error's frames are the minified build's line and column,
+       moved by any change elsewhere in the bundle */
+    .replace(/^ +at .*\n/gm, "");
+}
+
 export const READ_OTHERWISE = "section read otherwise — ";
 /* each section a failed comparison read otherwise, a line of its own:
    the section's name alone heads every run's print, passed or not

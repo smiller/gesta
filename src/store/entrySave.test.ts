@@ -18,11 +18,11 @@ async function rig(stored: Record<string, string> = {}, screen: OnScreen | null 
   };
   const layer = entryLayer(store, QUIET);
   await layer.warm();
-  const wrote: boolean[] = [], refused: string[] = [];
+  const wrote: boolean[] = [], refused: string[] = [], pending: number[] = [];
   const at = { screen };
-  const save = entrySave({ screen: () => at.screen, layer, wrote: (landed) => wrote.push(landed), refused: (md) => refused.push(md) });
+  const save = entrySave({ screen: () => at.screen, layer, wrote: (landed) => wrote.push(landed), refused: (md) => refused.push(md), pending: (n) => pending.push(n) });
   return {
-    save, io, wrote, refused, at, writes: io.writes,
+    save, io, wrote, refused, at, pending, writes: io.writes,
     stored: async (k: string): Promise<string | undefined> => (await mem.peek(k))?.md,
     /* the store moved under the entry by a write through the layer, not counted as the save's */
     imported: async (k: string, md: string): Promise<void> => { const n = io.writes.length; await layer.setEntry(k, md); io.writes.splice(n); },
@@ -44,6 +44,33 @@ test("an edit is written once typing has paused for the debounce, and each write
   r.at.screen = { ekey: "commonplace/A", md: "typed again" };
   expect(await r.save.now()).toBe(false);
   expect(r.wrote).toEqual([true, false]);
+});
+
+test("the saves pending are told as they change: a debounce running, then its write until it lands or fails", async () => {
+  const r = await rig();
+  r.save.edited();
+  r.save.edited();
+  expect(r.pending).toEqual([1]);
+  await vi.advanceTimersByTimeAsync(SAVE_DEBOUNCE_MS);
+  expect(r.writes).toEqual([["commonplace/A", "typed"]]);
+  expect(r.pending).toEqual([1, 0]);
+  r.io.lands = false;
+  r.at.screen = { ekey: "commonplace/A", md: "typed again" };
+  r.save.edited();
+  const written = r.save.now();
+  expect(r.pending.slice(2)).toEqual([1]);
+  await written;
+  expect(r.pending).toEqual([1, 0, 1, 0]);
+});
+
+test("a save with nothing to write, or a flush with no debounce running, leaves nothing pending", async () => {
+  const r = await rig({ "commonplace/A": "typed" });
+  r.save.edited();
+  await r.save.flush();
+  expect(r.pending).toEqual([1, 0]);
+  await r.save.flush();
+  await r.save.now();
+  expect(r.pending).toEqual([1, 0]);
 });
 
 test("nothing changed, or an empty entry never stored, writes nothing and answers true", async () => {

@@ -10,7 +10,7 @@
 <script lang="ts">
   import type { SearchState } from "./screen.svelte.ts";
   import { SEARCH_CAP } from "../store/search.ts";
-  import { optionGroups } from "./searchModel.ts";
+  import { optionGroups, searchShown } from "./searchModel.ts";
   import { listKey } from "./pickKeys.ts";
   let { search, onToggle, onQuery, onScope, onWalk, onEnter, onPick, onHover }: {
     search: SearchState;
@@ -22,6 +22,7 @@
     onPick: (i: number) => void;
     onHover: (i: number) => void;
   } = $props();
+  $effect(() => { document.documentElement.dataset.search = JSON.stringify(searchShown(search)); });
   let input: HTMLInputElement | undefined = $state();
   export function focusInput(): void { input?.focus(); }
   const hits: HTMLElement[] = $state([]);

@@ -17,7 +17,7 @@ import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
-import { compared, ledger, readOtherwise, type Compared } from "./heliumVerdict.ts";
+import { compared, ledger, readOtherwise, scrub, type Compared } from "./heliumVerdict.ts";
 import { merged } from "./heliumShards.ts";
 
 const profileOf = (name: string): string => resolve(tmpdir(), "gesta-helium-" + name + "-profile");
@@ -36,21 +36,10 @@ const approve = args.includes("--approve");
 const names = args.filter((a) => a in TOOLS);
 const run = names.length ? names : Object.keys(TOOLS);
 
-/* today is pinned, not scrubbed: a scrub of today's key, its crumb label
-   and its day number missed the day number until a verify on another day
-   went red on it */
-function scrub(text: string): string {
-  return text
-    .replace(/"opacity":"[0-9.e-]+"/g, '"opacity":"[fading]"')
-    /* the corner's text in the screen line is an info's clock against
-       the tool's waits: the steps that care read the corner themselves */
-    .replace(/· corner \\"(?:[^"\\]|\\.)*\\"/g, "· corner [whatever stood]")
-    .replace(/file:\/\/\/[^"\\ ]*\/dist\/index\.html/g, "file:///[app]/index.html")
-    /* a logged Error's frames are the minified build's line and column,
-       moved by any change elsewhere in the bundle */
-    .replace(/^ +at .*\n/gm, "");
-}
-const env = { ...process.env, NODE_OPTIONS: "" };
+/* the verdict reads the page at its own speed: a throttled page is a
+   tool for finding a step that waits on a clock */
+const { THROTTLE: _throttle, ...unthrottled } = process.env;
+const env = { ...unthrottled, NODE_OPTIONS: "" };
 /* WHAT A RUN READS, fingerprinted after the build: the pages (every line of
    the app and its libraries), the fixtures the steps seed, the code its
    drivers reach through their imports, the approved copy, and the browser,

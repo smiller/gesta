@@ -41,7 +41,7 @@ function fakeStore(o: Opts, mem: ReturnType<typeof memEntryStore>, log: string[]
 const here = (s: WorldState): string => entryKey(s.current.date, s.current.tag);
 /* the real save over the world's store, its acts logged; a hand-over runs the world's flush hook first */
 function loggedSave(log: string[], s: WorldState, layer: EntryLayerOf): EntrySave {
-  const save = entrySave({ screen: () => ({ ekey: here(s), md: s.typed ?? serializeMarkdown(s.st.doc) }), layer, wrote: () => {}, refused: () => {} });
+  const save = entrySave({ screen: () => ({ ekey: here(s), md: s.typed ?? serializeMarkdown(s.st.doc) }), layer, wrote: () => {}, refused: () => {}, pending: () => {} });
   return {
     ...save,
     flush: () => { log.push("flush"); return save.flush(); },

@@ -128,12 +128,13 @@ export function searchActs(d: SearchDeps): SearchRow {
     builtFor = q;
     sr.active = 0;
   };
+  const answerQuery = (q: string): void => { showResults(q); sr.answered = q; };
   const renderSearch = (): void => {
     if (!sr.open) return;
     const q = sr.query.trim();
-    sr.rows = []; sr.capped = false; sr.active = -1; sr.empty = "";
-    if (!q || notReady()) return;
-    showResults(q);
+    sr.rows = []; sr.capped = false; sr.active = -1; sr.empty = ""; sr.answered = null;
+    if (!q) { sr.answered = q; return; }
+    if (!notReady()) answerQuery(q);
   };
   const cancelScan = (): void => { if (searchTimer) clearTimeout(searchTimer); searchTimer = null; };
   const flushScan = (): void => { if (searchTimer) { cancelScan(); renderSearch(); } };
@@ -141,6 +142,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     if (sr.open === open) return;
     cancelScan();
     sr.open = open;
+    sr.answered = null;
     if (!open) { session.focusText(); return; }
     opened();
     session.save.flush();
@@ -152,7 +154,7 @@ export function searchActs(d: SearchDeps): SearchRow {
     renderSearch();
   };
   const toggleSearch = openRow;
-  const querySearch = (q: string): void => { sr.query = q; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
+  const querySearch = (q: string): void => { sr.query = q; sr.answered = null; cancelScan(); searchTimer = setTimeout(() => { searchTimer = null; renderSearch(); }, 150); };
   const scopeSearch = (at: number): void => { sr.scopeAt = at; cancelScan(); renderSearch(); };
   const walkSearch = (dir: 1 | -1): void => {
     flushScan();

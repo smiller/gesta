@@ -9,6 +9,8 @@ export interface SaveParts {
   wrote(landed: boolean): void;
   /* text typed into an entry deleted elsewhere, which no write will keep */
   refused(md: string): void;
+  /* told as it changes: a debounce running, and each write until it lands or fails */
+  pending(n: number): void;
 }
 /* a rename or move under way: the stored text when it began, and its two
    ends for what was typed since */
@@ -45,7 +47,11 @@ export function entrySave(p: SaveParts): EntrySave {
      than the editor writes back never read as moved (pin: entrySave.test ›
      the store moved is told from the stored text alone) */
   let base: OnScreen | null = null;
-  let edits = 0, written = 0;
+  let edits = 0, written = 0, writing = 0, told = 0;
+  const tell = (): void => {
+    const n = (timer ? 1 : 0) + writing;
+    if (n !== told) p.pending((told = n));
+  };
   const cancel = (): void => { if (timer) clearTimeout(timer); timer = null; };
   /* a key whose last write did not land always has something to save:
      judged from the text alone, the next save wrote nothing and a closed
@@ -66,11 +72,12 @@ export function entrySave(p: SaveParts): EntrySave {
   function put(key: string, md: string): Promise<boolean> {
     if (p.layer.storeReadFailed) return Promise.resolve(false);
     const at = edits;
+    writing++;
     return p.layer.setEntry(key, md).then((landed) => {
       if (landed && key === base?.ekey) { base = { ekey: key, md }; written = at; }
       p.wrote(landed);
       return landed;
-    });
+    }).finally(() => { writing--; tell(); });
   }
   /* typed into an entry deleted elsewhere: handed back, never written */
   function refusedHere(s: OnScreen): boolean {
@@ -78,12 +85,17 @@ export function entrySave(p: SaveParts): EntrySave {
     if (s.md !== deletedHere.md) p.refused(s.md);
     return true;
   }
-  function now(): Promise<boolean> {
+  function saveNow(): Promise<boolean> {
     cancel();
     const s = p.screen();
     if (!s || refusedHere(s)) return Promise.resolve(false);
     if (!p.layer.storeReadFailed && nothingToSave(s)) return Promise.resolve(current(s));
     return put(s.ekey, s.md);
+  }
+  function now(): Promise<boolean> {
+    const saved = saveNow();
+    tell();
+    return saved;
   }
   const flush = (): Promise<boolean> => (timer ? now() : Promise.resolve(true));
   /* the ends write past the deleted-elsewhere refusal: refused there, the
@@ -96,6 +108,7 @@ export function entrySave(p: SaveParts): EntrySave {
   }
   function handed(ekey: string): HandOver {
     cancel();
+    tell();
     suspended = true;
     const md = p.layer.entryMd(ekey);
     const end = (key: string, rewrite: (t: string) => string): Promise<boolean> => {
@@ -120,9 +133,9 @@ export function entrySave(p: SaveParts): EntrySave {
     flush,
     handOver,
     moved,
-    edited: () => { edits++; if (suspended) return; cancel(); timer = setTimeout(() => { now(); }, SAVE_DEBOUNCE_MS); },
+    edited: () => { edits++; if (suspended) return; cancel(); timer = setTimeout(() => { now(); }, SAVE_DEBOUNCE_MS); tell(); },
     leave: (then) => flush().then(() => then()),
-    opened: (ekey, stored) => { cancel(); suspended = false; deletedHere = null; base = { ekey, md: stored }; written = edits; },
+    opened: (ekey, stored) => { cancel(); tell(); suspended = false; deletedHere = null; base = { ekey, md: stored }; written = edits; },
     deleted: () => { deletedHere = p.screen(); },
     unsaved: () => {
       if (timer || suspended) return true;

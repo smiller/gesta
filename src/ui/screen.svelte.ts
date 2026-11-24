@@ -22,6 +22,9 @@ export interface SearchState {
   capped: boolean;
   /* the row ↑↓ landed on, -1 for none */
   active: number;
+  /* the query, trimmed, that the rows or the explanatory line answer; null
+     while a scan, the load or the index is still to answer it */
+  answered: string | null;
 }
 
 export interface Screen {
@@ -63,7 +66,7 @@ export const EMPTY_MASTHEAD: MastheadModel = { crumbs: [], leaf: null, title: ""
 export function screenState(interval: number): Screen {
   const screen = $state<Screen>({
     masthead: EMPTY_MASTHEAD, opened: null, menuRows: [], menuEmpty: "", menu: { sel: -1 },
-    search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1 },
+    search: { open: false, query: "", options: [], scopeAt: 0, rows: [], empty: "", capped: false, active: -1, answered: null },
     goto: { open: false, levels: [] },
     formatToolbar: { show: false, left: 0, top: 0, incode: false, on: {}, canTag: false, canRefAll: false, tagTitle: "" },
     copy: { show: false, top: 0, right: 0, minWidth: 0, title: "", label: "copy" },

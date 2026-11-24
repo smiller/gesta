@@ -132,6 +132,7 @@ export function startSession(opts: SessionOptions): Session {
     layer,
     wrote: () => { show(); },
     refused: (md) => { rescued.raise("notSavedDeletedElsewhere", { copy: md }); },
+    pending: (n) => { document.documentElement.dataset.savesPending = String(n); },
   });
   const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader

@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, laid, storedWith, page, A, R, S, log, go, saidText, landed, rest, settled, write, caretAt, view, writeAll, jump, closeCorner, waitForSaid } from "./kit.ts";
+import { section, laid, storedWith, page, A, R, S, log, go, saidText, landed, rest, settled, write, caretAt, view, writeAll, jump, closeCorner, waitForSaid, holdDecodes } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -274,9 +274,11 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await go("commonplace/Pictured%20Away");
   await page.click(S.editor);
   await page.keyboard.type("Aimed here");
+  const release = await holdDecodes(page);
   await R.pastePng(page);
   await page.evaluate(() => { location.hash = "#commonplace/Horace"; });
   await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
+  await release();
   await waitForSaid(/nowhere to land/, 1500);
   await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await saidText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
   await closeCorner();

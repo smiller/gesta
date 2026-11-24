@@ -388,7 +388,9 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     `WINDOWS=n`), `heliumLedger.ts` (each verdict play appended to
     `docs/helium-runs/<day>.jsonl`; only a whole play of a committed tree
     is flake evidence), `heliumRate.ts` (the flake rate from it, per day,
-    window count and section), `heliumShards.ts` (the sections dealt over windows and
+    window count and section), `heliumThrottle.ts` (the corner's steps
+    with every page's CPU n times slower, `THROTTLE=n`, and the sections
+    that read otherwise: a step that waits on a clock), `heliumShards.ts` (the sections dealt over windows and
     their prints merged back as one window's),
     `heliumStamp.ts`, `heliumOrder.ts`, `helium-probe.ts`,
     `helium-mock.ts` with `mockPage.ts` (a design's mock: `node

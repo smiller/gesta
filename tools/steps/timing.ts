@@ -1,5 +1,5 @@
 import type { Page, BrowserContext } from "../heliumPage.ts";
-import { current } from "./kit.ts";
+import { current, rests } from "./kit.ts";
 
 /* TIMING=1: each section's time and the fixed waits within it, to stderr */
 export interface Clock {
@@ -42,6 +42,9 @@ export function report(c: Clock): void {
   for (const [n, ms, w] of c.sections.sort((a, b) => b[1] - a[1])) console.error(String(Math.round(ms / 100) / 10).padStart(6) + "s " + String(Math.round(w / 100) / 10).padStart(6) + "s waits  " + n);
   console.error("total " + c.sections.reduce((a, t) => a + t[1], 0) / 1000 + "s, fixed waits " + c.slept / 1000 + "s");
   for (const [k, ms] of Object.entries(c.sites).sort((a, b) => b[1] - a[1]).slice(0, 30)) console.error("sleep " + seconds(ms, 6) + "s  " + k);
+  const capped = Object.entries(rests).filter(([, r]) => r.capped).sort((a, b) => b[1].capped - a[1].capped);
+  console.error("rests " + Object.values(rests).reduce((a, r) => a + r.all, 0) + ", ended by the 100 ms before two frames " + capped.reduce((a, [, r]) => a + r.capped, 0));
+  for (const [s, r] of capped) console.error("rest capped " + r.capped + " of " + r.all + "  " + s);
   console.error("condition waits run out: " + c.expired / 1000 + "s");
   for (const [k, ms] of Object.entries(c.lapses).sort((a, b) => b[1] - a[1]).slice(0, 25)) console.error(seconds(ms, 7) + "s  " + k);
 }

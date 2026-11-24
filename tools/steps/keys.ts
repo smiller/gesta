@@ -1,4 +1,4 @@
-import { section, caretAt, view, write, page, A, R, S, log, go, saidText, wheelTo, TODAY, landed, searchFor, rest, settled, jump, keep, closeCorner } from "./kit.ts";
+import { section, aimable, caretAt, view, write, page, A, R, S, log, go, saidText, wheelTo, TODAY, landed, searchFor, rest, settled, jump, keep, closeCorner, holdDecodes } from "./kit.ts";
 
 section("where the keys go", async () => {
   /* the caret or the focus that went nowhere: a panel's chord pressed again, a row closed by its label, the bookmarks panel's link, Tab outside a list, a code block's Tab and ⌘A, Escape after a jump, ⌃⌘M and an arrival under an open row, Tab out of a panel, held keys, a caret under the masthead, a line below a table, a picture landing while Search is typed in */
@@ -46,6 +46,7 @@ async function chordsPressedTwice(): Promise<void> {
   /* the line's place once the measuring passes after an arrival are done:
      two readings a frame apart agree. Measured at once, a full run's click
      landed a word later as often as not */
+  await aimable(page);
   let at = await R.wordAt(page, "Maecenas atavis", 8);
   for (let i = 0; i < 20; i++) { await rest(page); const again = await R.wordAt(page, "Maecenas atavis", 8); if (again.x === at.x && again.y === at.y) break; at = again; }
   /* the click's caret is the editor's only once its selectionchange has
@@ -92,6 +93,7 @@ async function tabCodeBlock(): Promise<void> {
   await page.keyboard.press("Meta+a");
   await rest(page);
   await log("⌘A in a code block", {});
+  await aimable(page);
   const below = await page.evaluate((e) => { const t = document.querySelector(e + " table"); if (!t) return null; const r = t.getBoundingClientRect(); return { x: r.left + 20, y: r.bottom + 14, last: document.querySelector(e).lastElementChild?.tagName }; }, S.editor);
   if (below) await page.mouse.click(below.x, below.y);
   await page.keyboard.type("z");
@@ -227,6 +229,7 @@ const tap = (sel: string) => page.click(sel, { timeout: 3000 }).catch(() => {});
 const twice = async (chord: string) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await rest(page); } };
 const clickWord = async (w: string) => {
     for (let i = 0; i < 3; i++) {
+      await aimable(page);
       const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await rest(page);
       if (await page.evaluate((w) => (getSelection().anchorNode?.textContent || "").includes(w), w)) return;
       await rest(page); await rest(page);
@@ -239,10 +242,12 @@ const hold = async (key: string, times: number, mods: string[] = []) => {
     for (const m of mods.reverse()) await page.keyboard.up(m);
   };
 async function keysAfterSearch(): Promise<void> {
-  await page.evaluate(() => { const own = window.createImageBitmap; window.createImageBitmap = ((...a: [ImageBitmapSource]) => new Promise<ImageBitmap>((r) => setTimeout(() => r(own(...a)), 800))) as typeof own; });
+  const release = await holdDecodes(page);
   await R.pastePng(page);
   await searchFor(page, "abc");
-  await page.waitForTimeout(2000);
+  await release();
+  await page.waitForFunction((s) => document.querySelector(s), S.editorImg, { timeout: 5000 }).catch(() => console.log("the held picture did not land within 5 s"));
+  await landed(page, 1500);
 }
 async function picturePastedSearchTyped(): Promise<void> {
   await log("a picture pasted, then Search typed in", { query: await page.evaluate(() => document.querySelector(".search-input")?.value ?? null), pictures: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), md: await A.stored(page) });

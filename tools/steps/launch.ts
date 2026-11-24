@@ -104,8 +104,7 @@ async function followedByKey(): Promise<void> {
   await log("⌘-click on a script link", { newTab: await scriptTab, ...(await R.afterModClick(page)) });
   for (const [key, label] of [["Enter", "Enter on a search result inside a link"], ["Control+Meta+Enter", "⌃⌘Enter on a search result inside a link"]]) {
     await go("commonplace/Links");
-    await searchFor(page, "outside");
-    const hits = await page.waitForSelector(S.searchRows + ".hit", { timeout: 5000 }).then(() => true, () => false);
+    const hits = ((await searchFor(page, "outside"))?.rows ?? 0) > 0;
     const opened = ctx.waitForEvent("page", { timeout: 2000 }).then(() => true, () => false);
     await page.keyboard.press(key);
     await settled(page);

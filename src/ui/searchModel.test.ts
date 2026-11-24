@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { defaultScope, scopeOptions, resultLabel, sameScope, optionGroups } from "./searchModel.ts";
+import { defaultScope, scopeOptions, resultLabel, sameScope, optionGroups, searchShown } from "./searchModel.ts";
+import { screenState } from "./screen.svelte.ts";
 import { journalOf } from "../store/headings.ts";
 
 const cache = {
@@ -75,5 +76,14 @@ describe("optionGroups", () => {
     expect(optionGroups(o).map((g) => [g.group, g.at.map((i) => o[i].label)])).toEqual([
       [null, ["Everything", "Journal", "All Commonplaces"]], ["Commonplaces", ["Notes"]], ["Commonplaces", ["All Commonplaces", "Horace", "Virgil"]],
     ]);
+  });
+});
+
+describe("searchShown", () => {
+  it("what the row shows: open, the query its rows answer, how many rows, the explanatory line", () => {
+    const sr = screenState(5).search;
+    expect(searchShown(sr)).toEqual({ open: false, answered: null, rows: 0, empty: "" });
+    Object.assign(sr, { open: true, query: "outside ", answered: "outside", rows: [{ result: r("commonplace", "Links"), where: "Links", runs: [] }] });
+    expect(searchShown(sr)).toEqual({ open: true, answered: "outside", rows: 1, empty: "" });
   });
 });

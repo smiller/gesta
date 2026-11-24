@@ -48,6 +48,15 @@ export async function fresh(page: Page, seeds: Record<string, string>) {
 }
 export const entry = (page: Page) => page.evaluate(() => document.documentElement.dataset.entry);
 export const waitEntry = (page: Page, key: string, ms = 15000) => page.waitForFunction((k) => document.documentElement.dataset.entry === k, key, { timeout: ms });
+export interface SearchShown { open: boolean; answered: string | null; rows: number; empty: string }
+/* once the search's rows answer `q`, or once `ms` has gone by: a wait
+   that runs out says so in the run's own output, with what the box held */
+export async function waitSearchAnswered(page: Page, q: string, ms = 5000): Promise<SearchShown | null> {
+  const answered = await page.waitForFunction((q) => JSON.parse(document.documentElement.dataset.search || "{}").answered === q, q, { timeout: ms, polling: 25 }).then(() => true, () => false);
+  const shown = await page.evaluate(() => ({ shown: JSON.parse(document.documentElement.dataset.search || "null") as SearchShown | null, typed: document.querySelector<HTMLInputElement>(".search-input")?.value ?? null, focused: String(document.activeElement?.className || document.activeElement?.tagName).slice(0, 30) }));
+  if (!answered) console.log("a search's wait ran out after " + ms + " ms: " + JSON.stringify({ q, ...shown }));
+  return shown.shown;
+}
 export const waitWarm = (page: Page) => page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;"), null, { timeout: 15000 });
 /* the markdown the store holds, read straight from IndexedDB after the
    save's debounce */

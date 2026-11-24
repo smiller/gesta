@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, cursor, winY, saidText, setAnswer, prompts, landed, rest, waitForSaid } from "./kit.ts";
+import { section, aimable, page, A, R, S, log, go, cursor, winY, saidText, setAnswer, prompts, landed, rest, waitForSaid } from "./kit.ts";
 
 section("author filing", async () => {
   /* "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so */
@@ -20,6 +20,7 @@ async function newAuthorSeanMiller(): Promise<void> {
   await log("the bookshelf lists it by its heading", await R.menu(page));
   await page.keyboard.press("Escape");
   /* + book with the caret inside the heading: refused, the author's name kept */
+  await aimable(page);
   const mid = await page.evaluate((s) => { const h = document.querySelector(s); const b = h.getBoundingClientRect(); return { x: b.left + 8, y: b.top + b.height / 2 }; }, S.editorFirst);
   await page.mouse.click(mid.x, mid.y);
   await rest(page);
@@ -40,6 +41,7 @@ async function bookCaretHeadingS(): Promise<void> {
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { state: "detached", timeout: 3000 }).catch(() => {});
   /* a click just past the heading's last letter, the caret at its end */
+  await aimable(page);
   const end = await page.evaluate((s) => { const h = document.querySelector(s); const r = document.createRange(); r.selectNodeContents(h); const b = r.getBoundingClientRect(); return { x: b.right + 3, y: b.top + b.height / 2 }; }, S.editorFirst);
   await page.mouse.click(end.x, end.y);
   /* the editor takes a click's caret on the selection's change, a tick later than the click */

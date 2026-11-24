@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, seededIn, rest, settled, fixture, writeAll, AUGUSTINE_SEEDS, saidText } from "./kit.ts";
+import { section, aimable, page, A, R, S, log, go, seededIn, rest, settled, fixture, writeAll, AUGUSTINE_SEEDS, saidText } from "./kit.ts";
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
@@ -359,8 +359,7 @@ async function marksAfterDrag(key: string, label: string, [from, at]: [string, n
   await go(key);
   /* the last drag's marks split the words they cover: the caret is put back at the entry's start first */
   await page.evaluate(() => { const t = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT).nextNode(); getSelection().collapse(t, 0); });
-  /* aimed at where the words stand once the page has settled */
-  await settled(page);
+  await aimable(page);
   await dragText(from, at, to, end);
   await rest(page);
   const shown = await page.evaluate(() => ({
