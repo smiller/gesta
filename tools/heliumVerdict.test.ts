@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { compared, ledger, readOtherwise, READ_OTHERWISE } from "./heliumVerdict.ts";
+import { compared, ledger, readOtherwise, replayed, READ_OTHERWISE } from "./heliumVerdict.ts";
 
 const dirs = () => { const root = mkdtempSync(join(tmpdir(), "verdict-")); return { expected: join(root, "expected"), stamps: join(root, "stamps") }; };
 const has = (d: { expected: string; stamps: string }) => (name: string) => ({
@@ -74,4 +74,13 @@ test("a run that differs names each section it reads otherwise, one line each, f
   expect(readOtherwise("corner", compared(played, approved, false), played, approved)).toEqual(["corner: " + READ_OTHERWISE + "b", "corner: " + READ_OTHERWISE + "c"]);
   expect(readOtherwise("corner", compared(approved, approved, false), approved, approved)).toEqual([]);
   expect(readOtherwise("corner", compared(played, null, false), played, null)).toEqual([]);
+});
+
+test("a whole play is replayed, both orders together, only where the two orders read the same steps otherwise", () => {
+  expect(replayed({ corner: "ok", order: "differs", bridge: "ok", reader: "ok" }, false)).toEqual(["corner", "order"]);
+  expect(replayed({ corner: "differs", order: "differs" }, false)).toEqual(["corner", "order"]);
+  expect(replayed({ corner: "differs", order: "ok", bridge: "differs", reader: "differs" }, false)).toEqual([]);
+  expect(replayed({ corner: "ok", order: "failed" }, false)).toEqual([]);
+  expect(replayed({ corner: "ok", order: "differs" }, true)).toEqual([]);
+  expect(replayed({ bridge: "differs" }, false)).toEqual([]);
 });

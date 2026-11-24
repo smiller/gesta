@@ -136,7 +136,8 @@ tools' switches. `tools/claudeLayout.test.ts` fails on a module under
     the screen), `adapters/launch.ts` (headless Helium launched over a
     fresh profile, for every tool here), `helium-corner.ts` (the driver: `STEPS=`,
     `ORDER=reverse`, `TIMING=1`, `SHARD=k/n`), `helium-approve.ts` (the verdict;
-    `WINDOWS=n`), `heliumLedger.ts` (each verdict play appended to
+    `WINDOWS=n`; a whole play whose order run reads otherwise beside
+    corner played again once, unchanged), `heliumLedger.ts` (each verdict play appended to
     `docs/helium-runs/<day>.jsonl`; only a whole play of a committed tree
     is evidence for the rate, each run's inputs fingerprinted), `heliumRate.ts`
     (the flake rate from it, per day, window count and section, and each

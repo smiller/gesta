@@ -16,7 +16,7 @@ import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from 
 import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
-import { compared, ledger, readOtherwise, scrub, READ_OTHERWISE, type Compared } from "./heliumVerdict.ts";
+import { compared, ledger, readOtherwise, replayed, scrub, READ_OTHERWISE, type Compared } from "./heliumVerdict.ts";
 import type { PlayRecord, RunResult } from "./heliumLedger.ts";
 import { built, clearProfile, playDealt, playEnv, playOne, profileOf, windowNames } from "./heliumPlay.ts";
 
@@ -61,7 +61,6 @@ function inputsFor(name: string) {
   ];
 }
 let failed = 0;
-const outputs: string[] = [];
 built(["build", "build:reader"], env);
 
 function approveOne(name: string): void {
@@ -93,14 +92,16 @@ function said(name: string, c: Exclude<Compared, { pass: true }>): string {
     "read " + relative(process.cwd(), L.receivedPath(name)) + "; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
 interface Playing { name: string; played: string }
-const results: Record<string, RunResult> = {}, otherwiseBy: Record<string, string[]> = {}, inputsBy: Record<string, string> = {};
+interface Play { results: Record<string, RunResult>; otherwiseBy: Record<string, string[]>; inputsBy: Record<string, string>; outputs: string[]; failed: number; tree: string; since: number }
+const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
+const newPlay = (since: number): Play => ({ results: {}, otherwiseBy: {}, inputsBy: {}, outputs: [], failed: 0, tree: spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout, since });
 /* a run to play, its stamps cleared and its profile emptied before any run
    of its group starts; null where a passing run's stamp stands */
-function prepare(name: string): Playing | null {
+function prepare(p: Play, name: string): Playing | null {
   /* an edit made while it plays is not what it played */
   const fp = fingerprint(inputsFor(name));
-  inputsBy[name] = fp.slice(0, 16);
-  if (L.reusable(name, fp, !!process.env.STEPS)) { results[name] = "not replayed"; console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  p.inputsBy[name] = fp.slice(0, 16);
+  if (L.reusable(name, fp, !!process.env.STEPS)) { p.results[name] = "not replayed"; console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   L.clear(name);
   for (const w of windowsOf(name)) clearProfile(w);
   return { name, played: fp };
@@ -109,18 +110,18 @@ function prepare(name: string): Playing | null {
    reading changed on purpose is not taken for an order; else to its copy */
 const baselineOf = (name: string, played: Map<string, string>): string | null =>
   played.get(TOOLS[name].heldTo ?? "") ?? L.baseline(TOOLS[name].heldTo ?? name);
-function judge({ name, played }: Playing, received: string, baseline: string | null): void {
-  outputs.push(received);
+function judge(p: Play, { name, played }: Playing, received: string, baseline: string | null): void {
+  p.outputs.push(received);
   const held = !!TOOLS[name].heldTo, c = compared(received, baseline, held);
   L.after(name, { received, fp: played, steps: !!process.env.STEPS, held }, c);
-  results[name] = c.pass ? "ok" : "failed" in c ? "failed" : "differs";
+  p.results[name] = c.pass ? "ok" : "failed" in c ? "failed" : "differs";
   if (c.pass === true) { console.log(name + ": ok"); return; }
-  failed++;
+  p.failed++;
   console.log(said(name, c));
   const otherwise = readOtherwise(name, c, received, baseline);
-  otherwiseBy[name] = [...new Set(otherwise.map((l) => l.slice(name.length + 2 + READ_OTHERWISE.length)))];
+  p.otherwiseBy[name] = [...new Set(otherwise.map((l) => l.slice(name.length + 2 + READ_OTHERWISE.length)))];
   for (const l of otherwise) console.log(l);
-  outputs.push(otherwise.join("\n"));
+  p.outputs.push(otherwise.join("\n"));
   console.log(name + ": this run kept at " + relative(process.cwd(), keptFailed(name, received)));
 }
 /* a failed run's print kept under its time: the received copy goes when
@@ -133,42 +134,56 @@ function keptFailed(name: string, received: string): string {
   writeFileSync(path, received);
   return path;
 }
-async function playGroup(group: string[]): Promise<void> {
-  const runs = group.filter((n) => run.includes(n)).map(prepare).filter((r): r is Playing => r !== null);
+async function playGroup(p: Play, group: string[], only: string[]): Promise<void> {
+  const runs = group.filter((n) => only.includes(n)).map((n) => prepare(p, n)).filter((r): r is Playing => r !== null);
   const outs = await Promise.all(runs.map((r) => play(r.name)));
   const played = new Map(runs.map((r, i) => [r.name, outs[i]]));
-  for (const r of runs) judge(r, played.get(r.name)!, baselineOf(r.name, played));
+  for (const r of runs) judge(p, r, played.get(r.name)!, baselineOf(r.name, played));
 }
 /* a child, not an import: imported, the progress tools were the run's
    inputs, and an edit to the day's page replayed it; once over every run
    played, and its failure said, a silent one leaving a watched item
    asleep */
-function wakeOnce(): void {
+function wakeOnce(plays: Play[]): void {
+  const outputs = plays.flatMap((p) => p.outputs);
   if (!outputs.length) return;
   const w = spawnSync("node", [fileURLToPath(new URL("./progress/wake.ts", import.meta.url))], { input: outputs.join("\n"), encoding: "utf8" });
   process.stdout.write(w.stdout ?? "");
   if (w.status !== 0) console.log("wake failed (" + (w.status ?? w.signal) + "): " + (w.stderr || w.error?.message || "").trim());
 }
-/* every play into the ledger, for a flake rate across sessions; a child,
-   as the wake is, so an edit to it is not the run's input */
-const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
-const treeAtStart = spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout;
 function treeOf(said: string): PlayRecord["tree"] | null {
   try { return JSON.parse(said); } catch { return null; }
 }
-function ledgered(): void {
-  if (!outputs.length) return;
-  const tree = treeOf(treeAtStart);
+/* every play into the ledger, for a flake rate across sessions; a child,
+   as the wake is, so an edit to it is not the run's input */
+function ledgered(p: Play): void {
+  if (!p.outputs.length) return;
+  const tree = treeOf(p.tree);
   if (!tree) { console.log("ledger failed: the tree was not read as the play started"); return; }
-  const record: PlayRecord = { runs: results, readOtherwise: otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime()), tree, print: outputs.join("\n"), inputs: inputsBy };
+  const record: PlayRecord = { runs: p.results, readOtherwise: p.otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime() - p.since), tree, print: p.outputs.join("\n"), inputs: p.inputsBy };
   const l = spawnSync("node", [LEDGER], { input: JSON.stringify(record), encoding: "utf8" });
   if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
 }
-/* a flake shows only as the same inputs read two ways, so a failed
-   whole play asks to be played again before anything is edited */
-function askReplay(): void {
-  if (failed && !process.env.STEPS) console.log("replay it unchanged before any edit: a run its same inputs read another way is a flake (node tools/heliumRate.ts)");
+async function played(only: string[], since: number): Promise<Play> {
+  const p = newPlay(since);
+  for (const group of TOGETHER) await playGroup(p, group, only);
+  ledgered(p);
+  return p;
+}
+/* a flake shows only as the same inputs read two ways; the play that
+   read otherwise still fails the verdict, its replay passing or not */
+async function verdict(): Promise<number> {
+  const first = await played(run, 0), again = replayed(first.results, !!process.env.STEPS);
+  if (!again.length) {
+    if (first.failed && !process.env.STEPS) console.log("replay it unchanged before any edit: a run its same inputs read another way is a flake (node tools/heliumRate.ts)");
+    wakeOnce([first]);
+    return first.failed;
+  }
+  console.log("order read otherwise beside corner: both played again, unchanged");
+  const second = await played(again, process.uptime());
+  wakeOnce([first, second]);
+  return first.failed + second.failed;
 }
 if (approve) for (const name of run) approveOne(name);
-else { for (const group of TOGETHER) await playGroup(group); wakeOnce(); ledgered(); askReplay(); }
+else failed = await verdict();
 process.exit(failed ? 1 : 0);

@@ -42,6 +42,14 @@ export function readOtherwise(name: string, c: Compared, received: string, basel
   return sections.map((s) => name + ": " + READ_OTHERWISE + s);
 }
 
+/* order differs only where two plays of the same steps disagreed: a
+   reading changed on purpose differs alike in both and leaves order ok.
+   Both are played again, unchanged, to put the pair on record. Bridge,
+   reader and a failed section have no second play to tell them by */
+export function replayed(results: Record<string, string>, steps: boolean): string[] {
+  return !steps && results.order === "differs" ? ["corner", "order"] : [];
+}
+
 export interface Played { received: string; fp: string; steps: boolean; held: boolean }
 /* a run's four files: its approved copy and its received copy under
    `expected`, its pass stamp and its played print under `stamps` */
