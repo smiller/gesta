@@ -12,7 +12,7 @@ section("a commonplace renamed with every link following", async () => {
   confirms.length = 0;
   await page.click(S.renameSubEntry);
   await A.waitEntry(page, "commonplace/Renamed Me", 5000).catch(() => {});
-  await page.waitForFunction(() => /renamed to/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /renamed to/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
   await log("Rename, Renamed Me typed, Enter", { prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), corner: await saidText(), far: await A.stored(page, "commonplace/Rename Far"), old: await A.stored(page, "commonplace/Rename Me") });
 });
 section("unused pictures", async () => {
@@ -38,12 +38,12 @@ async function pictureDeletedTextBackups(): Promise<void> {
 }
 async function removeUnusedPictureClicked(): Promise<void> {
   await page.click(".backups button:has-text('unused picture')").catch(() => {});
-  await page.waitForFunction(() => /removed/.test(window.__alerts() || ""), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => /removed/.test(window.__said()), null, { timeout: 5000 }).catch(() => {});
   await log("Remove … unused picture clicked, the confirm accepted", { corner: await saidText(), left: await A.pictureKeys(page, "commonplace/Unused Pictures"), panel: await R.backups(page) });
   await page.click(".alert.success.show").catch(() => {});
 }
 async function successClicked(): Promise<void> {
-  await page.waitForFunction(() => window.__alerts() === "copied", null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => window.__said() === "copied", null, { timeout: 3000 }).catch(() => {});
   await log("the success clicked", { corner: await saidText(), clipboard: await page.evaluate(async () => { for (let i = 0; i < 20; i++) { try { return await navigator.clipboard.readText(); } catch { await new Promise((r) => setTimeout(r, 50)); } } return null; }) });
   await page.keyboard.press("Escape");
 }
@@ -71,7 +71,7 @@ async function renameToBookshelfAddress(): Promise<void> {
   prompts.length = 0;
   confirms.length = 0;
   await page.click(S.renameSubEntry);
-  await page.waitForFunction(() => /moved to/.test(window.__alerts() || ""), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction(() => /moved to/.test(window.__said()), null, { timeout: 5000 }).catch(() => {});
   await log("Rename, an address in the bookshelf typed, Enter, the confirm accepted", {
     prompts: prompts.slice(), confirms: confirms.slice(), entry: await A.entry(page), hash: page.url().split("#")[1], corner: await saidText(),
     there: await there(""), essay: await there("/Essay"), twin: await there("/2022-twin"), links: await A.stored(page, "commonplace/Move Links"),

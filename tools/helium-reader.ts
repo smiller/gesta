@@ -76,7 +76,7 @@ const look = (label: string, extra: () => Promise<object> | object = () => ({}),
   entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   ...(corner ? { corner: window.__said()?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
   crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(),
-}), corner).then(async (r) => console.log(label + ":", JSON.stringify({ ...r, ...(await extra()) })));
+}), corner).then(async (r) => { console.log(label + ":", JSON.stringify({ ...r, ...(await extra()) })); await page.evaluate(() => window.__mark()); });
 const search = async (q: string): Promise<number> => {
   await page.click(".page-search > summary");
   await page.fill(".search-input", q);

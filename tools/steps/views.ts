@@ -163,6 +163,7 @@ section("list", async () => {
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
   await rest(page);
+  const listSaid = await R.saidText(page);
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await page.keyboard.type("```");
@@ -173,7 +174,7 @@ section("list", async () => {
   await page.keyboard.type("after the block");
   await rest(page);
   await log("a code block typed, Enter twice out of it", { md: await A.stored(page) });
-  await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), text: await R.saidText(page) });
+  await log("a list typed: bullet, Enter, Tab, Enter, Shift-Tab twice", { md: await A.stored(page), text: listSaid });
   await log("the gap between the two outer items, and a line's height", await laid(R.listGaps));
 });
 section("search", async () => {

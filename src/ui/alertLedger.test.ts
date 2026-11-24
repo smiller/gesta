@@ -1,6 +1,6 @@
 /* Timers are faked; the clipboard is a fake that can refuse. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { alertLedger, liveAlerts, saidAlerts, IDLE_TEXT, INFO_MS, WARNING_MS, type Alerts } from "./alertLedger.svelte.ts";
+import { alertLedger, liveAlerts, saidAlerts, saidLog, IDLE_TEXT, INFO_MS, WARNING_MS, type Alerts } from "./alertLedger.svelte.ts";
 import { said } from "../model/alertText.ts";
 
 let copied: string[];
@@ -352,6 +352,23 @@ describe("what each kind last said", () => {
     n.raise("notSaved", { copy: "detail" });
     n.raise("saved");
     expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success", last: "success" });
+  });
+  it("numbers each thing said and keeps the last eight, oldest first, with their kinds", () => {
+    n.raise("entriesStored", { n: 1 });
+    n.raise("noLineNumbers");
+    n.raise("linkCopied");
+    expect(saidLog(n.state)).toEqual({ n: 2, recent: [{ n: 1, kind: "warning", text: "no line numbers here" }, { n: 2, kind: "success", text: "Link copied" }] });
+    for (let i = 0; i < 8; i++) n.raise("linkCopied");
+    const s = saidLog(n.state);
+    expect([s.n, s.recent.length, s.recent[0].n]).toEqual([10, 8, 3]);
+  });
+  it("leaves out what the app says of its own accord: the launch's count, a progress line and each of its steps; an op's end and an answer to a reader's act are in", () => {
+    n.raise("entriesStored", { n: 3 });
+    const p = n.progress("importing");
+    p.step(1, 2);
+    p.ok(said("imported", { n: 2 }));
+    n.raise("linkCopied");
+    expect(saidLog(n.state).recent.map((r) => r.text)).toEqual(["imported 2 entries", "Link copied"]);
   });
   it("a progress line says each step; an info held back by it says nothing", () => {
     const p = n.progress("importing");

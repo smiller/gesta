@@ -1,4 +1,4 @@
-import { section, laid, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, openGotoRow, settled, jump, keep, STANZA_SEEDS, type Tree } from "./kit.ts";
+import { section, laid, view, write, page, ctx, A, R, S, shot, log, go, seededIn, setAnswer, rest, openGotoRow, settled, jump, keep, STANZA_SEEDS, type Tree, closeCorner } from "./kit.ts";
 
 section("alerts and surfaces", async () => {
   await alertsOpening();
@@ -156,7 +156,7 @@ async function failedCopyPinClicked(): Promise<void> {
   await page.keyboard.press("Control+Meta+c");
   await rest(page);
   await restore();
-  await page.click(S.corner, { timeout: 1000 }).catch(() => {});
+  await closeCorner();
   await rest(page);
   await log("a failed copy's error clicked", { clipboard: (await R.clipboardText(page)).replace(/\(#[^)]*\)/, "(…)") });
   await log("the tab's icon", { icon: await page.evaluate(() => !!document.querySelector("link[rel~='icon']")?.getAttribute("href")) });
@@ -224,7 +224,7 @@ async function bookmarkLinkInMarkdownView(): Promise<void> {
 /* a slowed launch's warm, and the page held still after it */
 const warmed = async (p: typeof page): Promise<void> => { await A.waitWarm(p).catch(() => {}); await settled(p); };
 const corner = () => page.evaluate(() => window.__said() || "");
-const dismiss = () => page.click(S.corner, { timeout: 1000 }).catch(() => {});
+const dismiss = closeCorner;
 const stored = async () => ((await A.stored(page)) ?? "").replace(/\n+$/, "");
 const picked = (tree: Tree) => page.evaluate((tree) => {
     const file = (name: string, text: string) => ({ kind: "file", name, getFile: () => Promise.resolve(new File([text], name)) });

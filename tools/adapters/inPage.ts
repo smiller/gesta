@@ -14,33 +14,19 @@ export const inPageWith = (arg: unknown, main: Function, ...parts: Function[]): 
 export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
   await ctx.addInitScript(() => {
     const live = () => JSON.parse(document.documentElement.dataset.alerts || "{}");
-    const said = () => JSON.parse(document.documentElement.dataset.said || "{}");
+    const saidLog = () => JSON.parse(document.documentElement.dataset.saidLog || '{"n":0,"recent":[]}');
     window.__corner = () => ((f) => [f.error, f.warning].filter(Boolean).join(" · ") || f[f.latest])(live());
-    /* what the page said last, of any kind, whether or not it still shows:
-       an alert's time on screen is the clock's, which a run's load can
-       outlast; an error or warning standing comes first */
-    window.__said = () => ((f, s) => [f.error, f.warning].filter(Boolean).join(" · ") || s[s.last])(live(), said());
+    /* what the page said since the mark, oldest first, whether or not it
+       still shows: an alert's time on screen is the clock's, which a run's
+       load can outlast, and what was said before the mark belongs to an
+       earlier step; "…" where more was said than the page keeps */
+    window.__mark = () => { window.__saidMark = saidLog().n; };
+    window.__said = () => {
+      const log = saidLog(), mark = window.__saidMark ?? 0, since = log.recent.filter((r: { n: number }) => r.n > mark);
+      return (log.n - mark > since.length ? "… " : "") + since.map((r: { text: string }) => r.text).join(" · ");
+    };
     window.__alerts = () => ((f) => [f.error, f.warning, f.info, f.success].filter(Boolean).join(" · "))(live());
     /* where the page shows from, as the page publishes it */
     window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;
   });
-}
-/* the live alerts as the page publishes them, to compare against after a gesture */
-export function textOf(): string {
-  return document.documentElement.dataset.alerts || "{}";
-}
-/* the awaited alert once the gesture raised it; or, where the gesture
-   changed nothing, one already live that says what is awaited, raised again.
-   A count shown at launch while the gesture ran is no answer of its own */
-export function alertSince([b, src]: [string, string]): string | false {
-  const was = JSON.parse(b), now = JSON.parse(document.documentElement.dataset.alerts || "{}"), re = new RegExp(src);
-  const kinds = ["error", "warning", "info", "success"];
-  const changed = kinds.filter((k) => now[k] && now[k] !== was[k]).map((k) => now[k] as string);
-  const awaited = (changed.length ? changed : kinds.map((k) => now[k]).filter(Boolean)).filter((t) => re.test(t));
-  return awaited.length ? awaited.join(" · ") : false;
-}
-/* what the gesture changed, the awaited answer or not, for a wait that ran out */
-export function changedSince(b: string): string {
-  const was = JSON.parse(b), now = JSON.parse(document.documentElement.dataset.alerts || "{}");
-  return ["error", "warning", "info", "success"].filter((k) => now[k] && now[k] !== was[k]).map((k) => now[k]).join(" · ");
 }

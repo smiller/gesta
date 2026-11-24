@@ -25,7 +25,7 @@ async function newAuthorSeanMiller(): Promise<void> {
   await rest(page);
   setAnswer("Odes");
   await A.act.create(page);
-  await page.waitForFunction(() => /heading/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /heading/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
   await log("+ book with the caret in the heading", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   /* the same in the markdown view, the caret on the heading's line */
   await page.keyboard.press("Control+Meta+m");
@@ -35,7 +35,7 @@ async function bookCaretHeadingS(): Promise<void> {
   await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.source);
   setAnswer("Odes");
   await A.act.create(page);
-  await page.waitForFunction(() => /heading/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /heading/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
   await log("+ book with the caret on the heading's line, markdown view", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { state: "detached", timeout: 3000 }).catch(() => {});
@@ -60,7 +60,7 @@ async function renameAuthorTyped(): Promise<void> {
   prompts.length = 0;
   await page.click(S.renameAuthor);
   await A.waitEntry(page, "bookshelf/Sean Miller", 5000).catch(() => {});
-  await page.waitForFunction(() => /filed under/.test(window.__alerts() || ""), null, { timeout: 3000 }).catch(() => {});
+  await page.waitForFunction(() => /filed under/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
   await log("Rename, Sean Miller typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await saidText(), author: await A.stored(page, "bookshelf/Sean Miller"), book: await A.stored(page, "bookshelf/Sean Miller/Odes"), oldAuthor: await A.stored(page, "bookshelf/Miller, Sean"), oldBook: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.click(S.bookshelfOpener);
   await log("the bookshelf after the re-file", await R.menu(page));
@@ -279,7 +279,7 @@ async function typedIntoEntryImport(): Promise<void> {
   await landed(page, 1000);
   await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tally });
 }
-const tallied = (): boolean => /^imported /.test(JSON.parse(document.documentElement.dataset.alerts || "{}").success || "");
+const tallied = (): boolean => window.__said().split(" · ").some((t) => /^imported /.test(t));
 const textStart = (e: string): string => (document.querySelector(e)?.textContent || "").slice(0, 40);
 async function storeThatNeverAnswers(): Promise<void> {
   /* a page of its own, the persist call watched from before the app's first line */

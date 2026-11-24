@@ -1,5 +1,5 @@
 import { appendFileSync, mkdirSync } from "node:fs";
-import { section, laid, storedWith, page, A, R, S, log, go, saidText, landed, rest, settled, write, caretAt, view, writeAll, jump } from "./kit.ts";
+import { section, laid, storedWith, page, A, R, S, log, go, saidText, landed, rest, settled, write, caretAt, view, writeAll, jump, closeCorner } from "./kit.ts";
 import { inPage } from "../adapters/inPage.ts";
 
 section("reference copy", async () => {
@@ -279,7 +279,7 @@ async function picturePastedAnotherEntry(): Promise<void> {
   await A.waitEntry(page, "commonplace/Horace", 5000).catch(() => {});
   await page.waitForFunction(() => /nowhere to land/.test(window.__said() || ""), null, { timeout: 1500 }).catch(() => {});
   await log("a picture pasted, then another entry at once", { entry: await A.entry(page), picturesHere: await page.evaluate((s) => document.querySelectorAll(s).length, S.editorImg), corner: await saidText(), aimedAtHasOne: /!\[/.test((await A.stored(page, "commonplace/Pictured Away")) || "") });
-  await page.click(S.corner).catch(() => {});
+  await closeCorner();
 }
 section("a terminal's copy pasted", async () => {
   /* a terminal's copy, its HTML white-space: pre blocks of coloured inline runs and its lines broken at the window's width: pasted as its text, a line not ending a sentence running on into the next, a list item starting its own; one line, and into a list item, the same; a box-drawn table, in a second block, a table; a line opening on -- its own, a line wrapped from it run back on; a command's ⎿ output its own line, and each line of it */

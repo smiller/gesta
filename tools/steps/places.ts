@@ -1,4 +1,4 @@
-import { section, laid, page, ctx, A, R, S, log, go, winY, inView, saidText, wheelTo, setAnswer, MARGIN_SEEDS, rest, settled, keep, seed, landed, jump } from "./kit.ts";
+import { section, laid, page, ctx, A, R, S, log, go, winY, inView, saidText, wheelTo, setAnswer, MARGIN_SEEDS, rest, settled, keep, seed, landed, jump, closeCorner } from "./kit.ts";
 
 section("places", async () => {
   /* every entry returns to where it was left: Pippa scrolled down and left to settle, Horace followed, then Back, Forward, Back and a reload — the browser's own restore on Back and Forward ran against the entry being left and saved the other's offset for it */
@@ -366,10 +366,10 @@ async function pageOpenFirstSaved(): Promise<void> {
   await A.foreignWrite(again, "commonplace/Refused Fence", "::: versey\nline\n:::");
   await go("commonplace/Refused%20Fence");
   await log("an entry with a refused fence opened over the save error", { corner: await R.standingText(page) });
-  await page.click(S.corner);
+  await closeCorner();
   await rest(page);
   await log("the save error closed over the refused fence", { corner: await R.standingText(page) });
-  await page.click(S.corner);
+  await closeCorner();
   await rest(page);
   await go("commonplace/Deleted%20Elsewhere");
   await page.click(S.editor);

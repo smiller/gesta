@@ -138,7 +138,7 @@ function cursorKind([ed, src]: [string, string]): string {
   if (caretAway(root, s)) return "focus, no caret";
   return s.isCollapsed ? caretInLine(root, s) : "selected " + s.toString().length;
 }
-export const log = async (label: string, x: unknown) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); };
+export const log = async (label: string, x: unknown) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); await page.evaluate(() => window.__mark()).catch(() => {}); };
 /* an arrival is read before the step's own gestures, whose helpers focus
    the text themselves; a focus that never comes reads as "none" after
    the wait. No screen: the last section's format toolbar may still be fading */
@@ -160,6 +160,17 @@ export const storedWith = async (text: string) => { for (let i = 0; i < 40; i++)
 export const winY = () => page.evaluate(() => Math.round(scrollY));
 export const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
 export const saidText = () => page.evaluate(() => window.__said() || "");
+/* the window of what was said starts here, as it does at each log */
+export const mark = () => page.evaluate(() => window.__mark());
+/* a click on the corner, as a reader closes it: an error's or an info's
+   click copies its words, and the "copied" lands a moment after; the
+   window starts once it has, or a second on where nothing was copied */
+export async function closeCorner(): Promise<void> {
+  await mark();
+  await page.click(S.corner, { timeout: 1000 }).catch(() => {});
+  await page.waitForFunction(() => window.__said().includes("copied"), null, { timeout: 1000 }).catch(() => {});
+  await mark();
+}
 /* a scroll BY A READER'S HAND, a wheel over the page: a script's
    scrollTo is no reader, and an arrival holds the entry's remembered
    place until a wheel, key, pointer or touch — the toolbar step's

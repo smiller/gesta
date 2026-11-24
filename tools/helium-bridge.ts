@@ -71,7 +71,7 @@ log("an unknown commonplace mints on visit", await launch(PAGE + "#commonplace/B
 log("type, wait past the debounce", await launch(PAGE + "#commonplace/Brand%20New", async (page) => {
   await page.click("#editor .ProseMirror");
   await page.keyboard.type("Typed in headless Helium.");
-  await page.waitForFunction(() => window.__corner() === "saved", null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(1500);
   return read(page);
 }));
 log("relaunch: the text came back", await launch(PAGE + "#commonplace/Brand%20New", read));

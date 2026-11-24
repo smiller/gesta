@@ -1,5 +1,5 @@
 import { errText } from "../store/files.ts";
-import { asSaid, alertWords, alertKind, alertMs, type AlertId, type Kind, type Raise, type RaiseOpts, type OwnerOpts, type ErrorOwner, type Said, type SaidOf, type BareIdOf } from "../model/alertText.ts";
+import { asSaid, alertWords, alertKind, alertMs, alertBackground, type AlertId, type Kind, type Raise, type RaiseOpts, type OwnerOpts, type ErrorOwner, type Said, type SaidOf, type BareIdOf } from "../model/alertText.ts";
 
 export interface Line { text: string; shown: boolean }
 export interface AlertState {
@@ -19,6 +19,7 @@ export interface AlertState {
   trouble: string;
   /* each kind's last words as raised, kept after they fade or close */
   said: Live;
+  log: SaidLog;
 }
 export type { Kind } from "../model/alertText.ts";
 export type Fading = "info" | "success";
@@ -58,6 +59,13 @@ export function liveAlerts(state: AlertState): Live {
    words outlast its time on screen (pin: alertLedger.test › nothing said
    at rest) */
 export const saidAlerts = (state: AlertState): Live => ({ ...state.said });
+/* each thing said, numbered, so a reading can take what was said after a
+   mark it set; what the app says of its own accord is left out (pin:
+   alertLedger.test › numbers each thing said) (pin: alertLedger.test ›
+   leaves out what the app says of its own accord) */
+export interface SaidLog { n: number; recent: { n: number; kind: Kind; text: string }[] }
+const SAID_KEPT = 8;
+export const saidLog = (state: AlertState): SaidLog => ({ n: state.log.n, recent: [...state.log.recent] });
 export const IDLE_TEXT = alertWords({ id: "saved" });
 export const INFO_MS = 3000;
 /* a warning is no error: it fades, given longer to read than an info */
@@ -71,7 +79,7 @@ interface Standing { owner: object | null; text: string; copy: string }
 export type Told = (kind: Kept, text: string) => void;
 export function alertLedger(copyText: (text: string) => Promise<void>, told: Told = () => {}): Alerts {
   const line = (text = ""): Line => ({ text, shown: false });
-  const state = $state<AlertState>({ info: line(IDLE_TEXT), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "", said: {} });
+  const state = $state<AlertState>({ info: line(IDLE_TEXT), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "", said: {}, log: { n: 0, recent: [] } });
   const timers: Record<Fading, ReturnType<typeof setTimeout> | null> = { info: null, success: null };
   /* each fading place's generation, bumped on every change to it: a late
      clipboard answer stays quiet once a newer success moved in */
@@ -83,13 +91,16 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     if (t) clearTimeout(t);
     timers[place] = null;
   }
-  function say(kind: Kind, text: string): void {
+  function say(kind: Kind, text: string, id?: AlertId): void {
     state.said[kind] = text;
     state.said.last = kind;
     if (kind === "info" || kind === "success") state.said.latest = kind;
+    if (id && alertBackground(id)) return;
+    const n = state.log.n + 1;
+    state.log = { n, recent: [...state.log.recent, { n, kind, text }].slice(-SAID_KEPT) };
   }
-  function show(place: Fading, text: string): void {
-    say(place, text);
+  function show(place: Fading, text: string, id?: AlertId): void {
+    say(place, text, id);
     fadingGen[place]++;
     state.latest = place;
     state[place].text = text;
@@ -100,15 +111,15 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     stopClock(place);
     state[place].shown = false;
   }
-  function showFor(place: Fading, text: string, ms: number): void {
-    show(place, text);
+  function showFor(place: Fading, text: string, ms: number, id?: AlertId): void {
+    show(place, text, id);
     timers[place] = setTimeout(() => hide(place), ms);
   }
   /* a live progress line holds the info place: a word count must not wipe
      it (pin: alertLedger.test › shows at once, holds the info place against an
      info) */
-  function info(text: string, ms = INFO_MS): void {
-    if (!state.busy) showFor("info", text, ms);
+  function info(text: string, ms = INFO_MS, id?: AlertId): void {
+    if (!state.busy) showFor("info", text, ms, id);
   }
   /* every error not yet resolved or closed, the newest last and shown; when
      it goes, the one beneath comes back (pin: alertLedger.test › the newest
@@ -134,8 +145,8 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     standing.splice(standing.indexOf(s), 1);
     showTop();
   }
-  function succeed(text: string, ms = INFO_MS): void {
-    showFor("success", text, ms);
+  function succeed(text: string, ms = INFO_MS, id?: AlertId): void {
+    showFor("success", text, ms, id);
   }
   /* shown first, then logged: a log that throws must not keep an alert from
      being seen (pin: alertLedger.test › a log that cannot be written) */
@@ -165,7 +176,7 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
       }) as ErrorOwner["raise"],
       resolve: () => {
         take(standing.find((x) => x.owner === me));
-        if (opts.saves && failed) succeed(IDLE_TEXT, alertMs("saved"));
+        if (opts.saves && failed) succeed(IDLE_TEXT, alertMs("saved"), "saved");
         failed = false;
       },
     };
@@ -176,9 +187,9 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     warningTimer = null;
     state.warning.shown = false;
   }
-  function warn(text: string): void {
+  function warn(text: string, id?: AlertId): void {
     clearWarning();
-    say("warning", text);
+    say("warning", text, id);
     state.warning.text = text;
     state.warning.shown = true;
     warningTimer = setTimeout(clearWarning, WARNING_MS);
@@ -190,12 +201,12 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     const text = alertWords({ id } as Said);
     const mine = ++busyGen;
     state.busy = true;
-    show("info", text);
+    show("info", text, id);
     const live = (): boolean => mine === busyGen;
     const end = (): boolean => { if (!live()) return false; state.busy = false; busyGen++; return true; };
     return {
-      step(done, total) { if (live()) { state.info.text = text + " " + done + " / " + total; say("info", state.info.text); } },
-      ok(s) { if (end()) { hide("info"); succeed(alertWords(s), alertMs(s.id)); } },
+      step(done, total) { if (live()) { state.info.text = text + " " + done + " / " + total; say("info", state.info.text, id); } },
+      ok(s) { if (end()) { hide("info"); succeed(alertWords(s), alertMs(s.id), s.id); } },
       fail(s, copy) { if (end()) { hide("info"); error(alertWords(s), { copy }); } },
       cancel() { if (end()) hide("info"); },
     };
@@ -233,15 +244,15 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     clearWarning();
     copyDetail(words);
   }
-  const BY_KIND: Record<Kind, (words: string, ms: number | undefined, from: RaiseOpts) => void> = {
+  const BY_KIND: Record<Kind, (words: string, ms: number | undefined, from: RaiseOpts, id: AlertId) => void> = {
     error: (words, _ms, from) => error(words, from),
-    warning: (words) => warn(words),
-    info: (words, ms) => info(words, ms),
-    success: (words, ms) => succeed(words, ms),
+    warning: (words, _ms, _from, id) => warn(words, id),
+    info: (words, ms, _from, id) => info(words, ms, id),
+    success: (words, ms, _from, id) => succeed(words, ms, id),
   };
   const raise = ((a: AlertId | Said, b?: unknown, c?: unknown): void => {
     const [s, from] = asSaid(a, b, c);
-    BY_KIND[alertKind(s.id)](alertWords(s), alertMs(s.id), from);
+    BY_KIND[alertKind(s.id)](alertWords(s), alertMs(s.id), from, s.id);
   }) as Raise;
   const CLICKS: Record<Kind, () => void> = { info: () => clickFading("info"), success: () => clickFading("success"), error: clickError, warning: clickWarning };
   const CLOSES: Record<Kind, () => void> = {

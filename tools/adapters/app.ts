@@ -4,7 +4,7 @@ import { ENTRY_DB, ENTRY_STORE, IMG_DB, IMG_STORE } from "../../src/store/store.
 import { tmpdir } from "node:os";
 import { blankRowReader } from "./blankRow.ts";
 import type { Page } from "../heliumPage.ts";
-import { inPage, textOf, alertSince, changedSince } from "./inPage.ts";
+import { inPage } from "./inPage.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -283,7 +283,8 @@ export const read = {
   landedText: (page: Page) => page.evaluate(() => document.querySelector("#editor .landed")?.textContent || null),
   corner: (page: Page) => page.evaluate(() => { const s = document.querySelector(".alert.show") ?? [document.querySelector(".alert.success"), document.querySelector(".alert.info")].find((e) => e?.textContent); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
   /* the error and the warning live, and nothing a fading alert's clock decides */
-  standingText: (page: Page) => page.evaluate(() => ((f) => [f.error, f.warning].filter(Boolean).join(" · "))(JSON.parse(document.documentElement.dataset.alerts || "{}")) || undefined),
+  /* an error stands until something resolves it; a warning fades on the clock */
+  standingText: (page: Page) => page.evaluate(() => JSON.parse(document.documentElement.dataset.alerts || "{}").error || undefined),
   saidText: (page: Page) => page.evaluate(() => window.__said()),
   saidTextOrEmpty: (page: Page) => page.evaluate(() => window.__said() || ""),
   masthead: (page: Page) => page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; }),
@@ -295,7 +296,7 @@ export const read = {
   pairs: (page: Page) => page.evaluate(() => document.querySelectorAll("#editor .vpair").length),
   refusedFence: (page: Page) => page.evaluate(() => ({ corner: window.__said(), paragraphs: document.querySelectorAll("#editor p").length })),
   /* whether the refusal still stands, not which info does: two take turns there by the run's load */
-  cleanSwitch: (page: Page) => page.evaluate(() => ({ refusalStands: Object.values(JSON.parse(document.documentElement.dataset.alerts || "{}")).some((t) => /stayed a paragraph/.test(String(t))), verse: !!document.querySelector("#editor .verse") })),
+  cleanSwitch: (page: Page) => page.evaluate(() => ({ refusalStands: /stayed a paragraph/.test(window.__said()), verse: !!document.querySelector("#editor .verse") })),
   linesRow: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open, focused: document.activeElement?.getAttribute("aria-label"), options: [...document.querySelectorAll(".page-lines option")].map((o) => o.textContent) })),
   linesRowOpen: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open })),
   clipboardReference: (page: Page) => page.evaluate(async () => { const corner = window.__said(); try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#commonplace\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } }),
@@ -396,17 +397,15 @@ export const read = {
   caretAfter: (page: Page, needle: string, offset: number) => placed(page, () => page.evaluate(([needle, offset]) => { const walker = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT); let t; while ((t = walker.nextNode())) if (t.textContent.includes(needle)) break; const r = document.createRange(); r.setStart(t, t.textContent.indexOf(needle) + offset); r.collapse(true); const sel = document.getSelection(); sel.removeAllRanges(); sel.addRange(r); }, [needle, offset] as [string, number])),
   pasteText: (page: Page, text: string) => page.evaluate((text) => { const dt = new DataTransfer(); dt.setData("text/plain", text); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }, text),
   pastePng: (page: Page) => page.evaluate(async () => { const c = document.createElement("canvas"); c.width = 1600; c.height = 800; const x = c.getContext("2d"); x.fillStyle = "#c33"; x.fillRect(0, 0, 1600, 800); const blob = await new Promise<Blob>((r) => c.toBlob(r, "image/png")); const dt = new DataTransfer(); dt.items.add(new File([blob], "shot.png", { type: "image/png" })); document.querySelector("#editor .ProseMirror").dispatchEvent(new ClipboardEvent("paste", { clipboardData: dt, bubbles: true, cancelable: true })); }),
-  /* the corner's FIRST new text after a gesture, matching or not: a wait for
-     the match alone swallowed its timeout, and a refusal's 3s info had
-     faded by the 5s read, so a chord that did not take read as no corner and
-     an older clipboard, with nothing to say why. "New": an info already
-     standing — a count shown at launch — is not the gesture's answer unless
-     it is the one asked for. */
+  /* what the page said after a gesture, matching or not: a wait for the
+     match alone swallowed its timeout, and a refusal's 3s info had faded by
+     the 5s read, so a chord that did not take read as no corner and an
+     older clipboard, with nothing to say why */
   cornerAfter: async (page: Page, gesture: () => Promise<unknown>, re: RegExp) => {
-    const before = await page.evaluate(textOf);
+    await page.evaluate(() => window.__mark());
     await gesture();
-    const h = await page.waitForFunction(alertSince, [before, re.source] as [string, string], { timeout: 5000 }).catch((): null => null);
-    return h ? await h.jsonValue() : (await page.evaluate(changedSince, before)) || "(no alert within 5s)";
+    await page.waitForFunction((src) => new RegExp(src).test(window.__said()), re.source, { timeout: 5000 }).catch(() => {});
+    return (await page.evaluate(() => window.__said())) || "(no alert within 5s)";
   },
   settle: (page: Page) => page.waitForFunction(() => !document.querySelector(".alert.info.show, .alert.success.show"), null, { timeout: 5000 }).catch(() => {}),
   waitSelection: (page: Page, text: string) => page.waitForFunction((t) => document.getSelection()?.toString().toLowerCase() === t, text, { timeout: 5000 }).catch(() => {}),

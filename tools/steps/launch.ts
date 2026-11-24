@@ -30,6 +30,9 @@ async function afterWarm(): Promise<void> {
   await page.click(S.menuRow("Williams"));
   await A.waitEntry(page, "commonplace/Williams", 5000);
   await log("after a row click", { entry: await A.entry(page), menu: await R.menu(page) });
+  await cornerShown();
+}
+async function cornerShown(): Promise<void> {
   await jump(page, 3200);
   await log("3.2 s later", await R.corner(page));
   await page.click(S.editor);
@@ -42,6 +45,7 @@ async function afterWarm(): Promise<void> {
   await log("after ⌃⌘C", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
   await page.click(".alert.success.show", { timeout: 2000 }).catch(() => {});
+  await page.waitForFunction(() => window.__said().includes("copied"), null, { timeout: 2000 }).catch(() => {});
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
   await rest(page);

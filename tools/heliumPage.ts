@@ -7,7 +7,9 @@ declare global {
   interface Window {
     __lastEdit: number;
     __corner: () => string | undefined;
-    __said: () => string | undefined;
+    __said: () => string;
+    __mark: () => void;
+    __saidMark?: number;
     __alerts: () => string;
     __pageTop: () => number;
     __writes: number;

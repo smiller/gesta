@@ -2,7 +2,7 @@ import { trimLabel } from "./trim.ts";
 
 export type Kind = "error" | "warning" | "info" | "success";
 type Words = string | ((p: never) => string);
-interface Entry<W extends Words = Words, K extends Kind = Kind> { kind: K; words: W; when: string; ms?: number }
+interface Entry<W extends Words = Words, K extends Kind = Kind> { kind: K; words: W; when: string; ms?: number; background?: true }
 /* `ms`: how long an info or a success stays, for one with a time of its own */
 const entry = <W extends Words, K extends Kind>(kind: K, words: W, when: string, ms?: number): Entry<W, K> =>
   (ms === undefined ? { kind, words, when } : { kind, words, when, ms });
@@ -10,6 +10,9 @@ const error = <W extends Words>(words: W, when: string): Entry<W, "error"> => en
 const warning = <W extends Words>(words: W, when: string): Entry<W, "warning"> => entry("warning", words, when);
 const info = <W extends Words>(words: W, when: string, ms?: number): Entry<W, "info"> => entry("info", words, when, ms);
 const success = <W extends Words>(words: W, when: string, ms?: number): Entry<W, "success"> => entry("success", words, when, ms);
+/* said by the app of its own accord, or a progress line whose steps a
+   run's speed decides: not the answer to a reader's act */
+const background = <E extends Entry>(e: E): E => ({ ...e, background: true });
 
 const count = (n: number, one: string, many: string): string => n + (n === 1 ? one : many);
 export interface FenceRefusal { line: string; reason: string }
@@ -204,17 +207,17 @@ export const ALERTS = {
   words: info((p: { n: number }) => p.n + " words", "Word count: from the Words button or ⌃⌘W: the selection’s, or the entry’s with nothing selected.", 2000),
   unitAt: info((p: { unit: string; n: number | string; of: Of }) => p.unit + " " + p.n + PHRASES.ofBlocks(p.of), "⌃⌘G landing on a number found in more than one block: the block it landed in.", 2500),
   omitted: info((p: { unit: string; n: number | string; of?: Of }) => p.unit + " " + p.n + " is omitted in this edition" + (p.of ? PHRASES.ofBlocks(p.of) : ""), "⌃⌘G, or a link to a line, landing on a line the edition omits; with its block where the number is in several.", 2500),
-  entriesStored: info((p: { n: number }) => entriesText(p.n) + " stored", "The journal read at launch."),
+  entriesStored: background(info((p: { n: number }) => entriesText(p.n) + " stored", "The journal read at launch.")),
   toReplace: info("Source view, to replace", "⌃⌘E in the rendered view, switching to the markdown view.", 3000),
-  indexing: info("indexing…", "Search before its index is built."),
-  exporting: info("exporting…", "An export running."),
-  importing: info("importing…", "An import running."),
-  backingUp: info("backing up…", "A backup starting."),
-  backingUpCount: info((p: { done: number; total: number }) => "backing up… " + p.done + " / " + p.total, "A backup running: files written of all."),
-  keepingBackup: info("keeping the backup…", "The reader keeping a backup picked."),
-  openingBackup: info("opening the backup…", "The reader opening the backup kept."),
+  indexing: background(info("indexing…", "Search before its index is built.")),
+  exporting: background(info("exporting…", "An export running.")),
+  importing: background(info("importing…", "An import running.")),
+  backingUp: background(info("backing up…", "A backup starting.")),
+  backingUpCount: background(info((p: { done: number; total: number }) => "backing up… " + p.done + " / " + p.total, "A backup running: files written of all.")),
+  keepingBackup: background(info("keeping the backup…", "The reader keeping a backup picked.")),
+  openingBackup: background(info("opening the backup…", "The reader opening the backup kept.")),
 
-  saved: success("saved", "The saves owed after a failed save landed; a routine save says nothing.", 1400),
+  saved: background(success("saved", "The saves owed after a failed save landed; a routine save says nothing.", 1400)),
   copied: success("copied", "A click on an alert copied its words.", 1200),
   referenceCopied: success("Reference copied to clipboard", "⌃⌘R copied a reference."),
   linkCopied: success("Link copied", "A link to the entry copied."),
@@ -223,11 +226,11 @@ export const ALERTS = {
   picturesRemoved: success((p: { n: number }) => "removed " + count(p.n, " unused picture", " unused pictures"), "The backups panel’s sweep removed every unused picture.", 3000),
   picturesPartlyRemoved: success((p: { removed: number; n: number }) => "removed " + p.removed + " of " + p.n + " unused pictures — the rest would not go", "The backups panel’s sweep removed some unused pictures; the rest would not go.", 3000),
   shortcutsSaved: success("shortcuts saved", "Save in the shortcuts panel.", 2000),
-  backedUp: success("backed up", "A backup ran with nothing left over."),
+  backedUp: background(success("backed up", "A backup ran with nothing left over.")),
   nothingToExport: success("nothing to export", "An export with no entries."),
   exported: success((p: { n: number }) => "exported " + entriesText(p.n), "An export wrote every entry and picture."),
   imported: success((p: { n: number }) => "imported " + entriesText(p.n), "An import with nothing failed."),
-  indexed: success((p: { n: number }) => "indexed " + entriesText(p.n), "Search’s index built.", 1400),
+  indexed: background(success((p: { n: number }) => "indexed " + entriesText(p.n), "Search’s index built.", 1400)),
   bundleOpened: success((p: { n: number }) => entriesText(p.n), "The reader: the backup opened, its entries counted."),
 };
 
@@ -256,6 +259,7 @@ export function asSaid(a: AlertId | Said, b?: unknown, c?: unknown): [Said, Rais
 }
 export const alertKind = (id: AlertId): Kind => ALERTS[id].kind;
 export const alertMs = (id: AlertId): number | undefined => (ALERTS[id] as Entry).ms;
+export const alertBackground = (id: AlertId): boolean => !!(ALERTS[id] as Entry).background;
 
 /* what comes with an error: the exception caught, and the text a click on it
    copies */
