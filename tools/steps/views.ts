@@ -219,8 +219,6 @@ section("walk", async () => {
   await A.waitEntry(page, "bookshelf/Boethius/Consolatio/3pr2", 5000).catch(() => {});
   await rest(page);
   await log("⌃⌘M, then ⌃⌘.", { entry: await A.entry(page), source: await R.inSource(page) });
-  await page.keyboard.press("Control+Meta+m");
-  await page.waitForSelector(S.editor, { timeout: 5000 }).catch(() => {});
 });
 section("stanza", async () => {
   /* the Faerie Queene's stanzas, each a `::: stanza N` fence — the number drawn in its own column at every interval, the crumb the canto's key, ⌃⌘R across a stanza gap referring to 1.1.1.3–2.1 and quoting both, ⌃⌘G asking by a Stanza box and a Line box */

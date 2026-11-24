@@ -301,7 +301,7 @@ async function goBoxShelves(): Promise<void> {
   await log("the go-to box on its shelves", await groups(S.gotoDestination));
   await page.keyboard.press("Escape");
   await page.keyboard.press("Control+Meta+k");
-  await page.waitForSelector(S.searchScope + " optgroup", { timeout: 5000 }).catch(() => {});
+  await page.waitForFunction((s) => document.querySelector(s + " optgroup") && document.activeElement?.classList.contains("search-input"), S.searchScope, { timeout: 5000 }).catch(() => {});
   await log("the search scopes on their shelves", await groups(S.searchScope));
   await page.selectOption(S.searchScope, { label: "All Classical" });
 }

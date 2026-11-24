@@ -157,3 +157,14 @@ and F7 once.
   answer to the query the box holds (`searchAnswered` in the kit, which
   `searchFor` now ends with). The section alone: as approved, no wait
   ran out.
+- 12:00 The sweep (`TIMING=1`, waits keyed by call site, every call
+  counted): 3 whole corner runs at 1x and 1 at 4x in 5 windows, all read
+  as approved, 1,211 wait calls each. Two places ran out, each in every
+  run, 5 s each: the shelves' wait for a Search scope `optgroup` to be
+  visible, which an option group never is; the walk's last ⌃⌘M, meant to
+  return to the rendered view it was already in. Nothing else ran out.
+- 12:10 Q16-Q19 yes. The walk's last ⌃⌘M and its wait gone; the
+  shelves' wait now for the groups and the box's focus: waited for
+  attached alone, the reading came before the focus ("at a line's
+  start", not "on input"), which the 5 s had covered. Both sections as
+  approved, no wait run out.
