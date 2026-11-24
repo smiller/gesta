@@ -1,5 +1,5 @@
 import { chromium } from "playwright-core";
-import { mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { basename } from "node:path";
 import { spawnSync } from "node:child_process";
 import type { BrowserContext } from "../heliumPage.ts";
@@ -14,6 +14,7 @@ export function freshProfile(path: string): void {
   for (let i = 0; i < 20; i++) {
     try { rmSync(path, { recursive: true, force: true }); break; } catch { spawnSync("sleep", ["0.5"]); }
   }
+  if (existsSync(path)) throw new Error("the profile at " + path + " would not clear: a run over it would read the last run's entries");
   mkdirSync(path, { recursive: true });
 }
 /* `clock.install`: the page's timers too, for a step to move them on; else

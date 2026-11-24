@@ -39,9 +39,6 @@ export const MARGIN_SEEDS = {
   "bookshelf/Donne, John/Anniversaries/The First Anniversarie": fixture("donne-anniversarie-margin-notes.md"),
   "commonplace/Margins": fixture("margins-prose.md"),
 };
-/* a pause for the page to answer a gesture: two frames, ProseMirror and
-   Svelte drawing within them, where a fixed sleep of up to 300 ms stood;
-   a window not in front may have its frames slowed, so 100 ms at most */
 export const landed = (p: Page, ms: number) => waitSaveLanded(p, ms + 2000);
 /* ⌃⌘K, then the words once the box holds the focus: typed at once, they
    went to the entry under it (pin: where the keys go › ⌃⌘T on today from Search) */
@@ -57,6 +54,9 @@ export async function jump(p: Page, ms: number) {
   await p.clock.fastForward(ms);
   await rest(p);
 }
+/* a pause for the page to answer a gesture: two frames, ProseMirror and
+   Svelte drawing within them, where a fixed sleep of up to 300 ms stood;
+   a window not in front may have its frames slowed, so 100 ms at most */
 export async function rest(p: Page) {
   await p.evaluate(() => new Promise((done) => { requestAnimationFrame(() => requestAnimationFrame(done)); setTimeout(done, 100); })).catch(() => {});
 }

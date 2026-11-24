@@ -1,11 +1,11 @@
 import type { Page } from "../heliumPage.ts";
 import { inPage, inPageWith } from "./inPage.ts";
 
-/* WHAT THE PAGE SAID SINCE A MARK, read from the numbered log it publishes,
-   whether or not each alert still shows: an alert's time on screen is the
-   clock's, which a run's load can outlast, and what was said before the
-   mark belongs to an earlier step (pin: said.test › opens with …) */
 export interface SaidLog { n: number; recent: { n: number; text: string }[] }
+/* read from the numbered log, not the alerts on screen: an alert's time
+   on screen is the clock's, which a run's load can outlast, and what was
+   said before the mark belongs to an earlier step (pin: said.test › opens
+   with …) */
 export function saidSince(log: SaidLog, mark: number): string {
   const since = log.recent.filter((r) => r.n > mark);
   return (log.n - mark > since.length ? "… " : "") + since.map((r) => r.text).join(" · ");
@@ -37,10 +37,11 @@ export async function waitSaid(page: Page, re: RegExp, ms = 3000): Promise<strin
   await page.waitForFunction(inPageWith([from, re.source], matchesAfter, saidSince, saidLogNow), undefined, { timeout: ms }).catch(() => {});
   return said(page);
 }
-/* what a gesture said, matching `re` or not, the step's own window left
-   where it was: a wait for the match alone swallowed its timeout, and a
-   refusal's 3s info had faded by the 5s read, so a chord that did not
-   take read as no corner and an older clipboard, with nothing to say why */
+/* what a gesture said, matching `re` or not: a wait for the match alone
+   swallowed its timeout, and a refusal's 3s info had faded by the 5s read,
+   so a chord that did not take read as no corner and an older clipboard,
+   with nothing to say why. The step's window is left where it was: a
+   reading of what was said after this one still covers the whole step */
 export async function saidAfterGesture(page: Page, gesture: () => Promise<unknown>, re: RegExp): Promise<string> {
   const from = await counted(page);
   await gesture();

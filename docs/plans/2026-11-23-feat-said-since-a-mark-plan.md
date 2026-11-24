@@ -91,3 +91,23 @@ the launch's "10 entries stored" where an act said nothing.
   (inferred); not repeated alone, with the section before it, or in the
   next whole play: F7, waking on "a save's wait ran out". The verdict
   otherwise passed unchanged. CLAUDE.md's layout names the three modules.
+- 22:25 A25, `/code-review high 7980170..b826252`: 150,031 tokens (the
+  transcript's last message). Seven findings:
+  - A refused save's entry landing later said no "saved": not
+    reproduced. A refused entry's next save is refused again (`r1` and
+    `r2` both false, nothing raised), so it never lands.
+  - The watcher counted puts, while a write's transaction reads before it
+    puts, and a put that threw left the count up: it now counts write
+    transactions, once each exists.
+  - `freshProfile` carried on over a profile that would not clear: it
+    now throws.
+  - Comments: `rest`'s moved back to `rest`; said.ts's module header goes;
+    `saidAfterGesture` says which window a later reading covers.
+  - Its first whole play read "unused pictures" otherwise once (the
+    stored text "" against no row), after the watcher's change (inferred
+    cause): the step now reads whether a picture is left in the text,
+    which is what it checks.
+- 22:22 Asked: the clipboard probe. A headless Helium page's write did
+  not reach the system clipboard, and its read gave back its own marker,
+  not the system's: each process keeps its own clipboard, so the windows
+  cannot cross on it. The reader's clipboard was saved and put back.

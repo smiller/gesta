@@ -34,7 +34,7 @@ async function pictureDeletedTextBackups(): Promise<void> {
   for (let i = 0; i < 40 && ((await A.stored(page, "commonplace/Unused Pictures")) || "").includes("!["); i++) await rest(page);
   await page.click(S.backupsButton);
   await page.waitForFunction(() => /unused picture/.test(document.querySelector(".backups")?.textContent || ""), null, { timeout: 5000 }).catch(() => {});
-  await log("the picture deleted from the text, the backups panel opened", { kept, md: await A.stored(page, "commonplace/Unused Pictures"), panel: await R.backups(page) });
+  await log("the picture deleted from the text, the backups panel opened", { kept, pictureInText: ((await A.stored(page, "commonplace/Unused Pictures")) ?? "").includes("!["), panel: await R.backups(page) });
 }
 async function removeUnusedPictureClicked(): Promise<void> {
   await page.click(".backups button:has-text('unused picture')").catch(() => {});

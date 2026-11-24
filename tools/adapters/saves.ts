@@ -2,18 +2,22 @@ import type { BrowserContext, Page } from "../heliumPage.ts";
 import { SAVE_DEBOUNCE_MS } from "../../src/store/entrySave.ts";
 import { inPageWith } from "./inPage.ts";
 
-/* the last edit's time and the store writes still open, for a read of the
-   stored text to wait on rather than sleep */
+/* the last edit's time and the store's write transactions still open, for
+   a read of the stored text to wait on rather than sleep: a transaction,
+   not a put, since a write reads the row before it puts; counted once it
+   exists, so one that throws as it is made leaves no count behind */
 export async function installWriteWatcher(ctx: BrowserContext): Promise<void> {
   await ctx.addInitScript(() => {
     window.__lastEdit = 0; window.__writes = 0;
     for (const t of ["keydown", "input", "paste", "drop", "cut", "pointerdown", "click"]) addEventListener(t, () => { window.__lastEdit = performance.now(); }, true);
-    const put = IDBObjectStore.prototype.put;
-    IDBObjectStore.prototype.put = function (this: IDBObjectStore, ...args: Parameters<IDBObjectStore["put"]>) {
+    const open = IDBDatabase.prototype.transaction;
+    IDBDatabase.prototype.transaction = function (this: IDBDatabase, ...args: Parameters<IDBDatabase["transaction"]>) {
+      const tx = open.apply(this, args);
+      if (tx.mode === "readonly") return tx;
       window.__writes++;
-      const tx = this.transaction, done = () => { window.__writes--; tx.removeEventListener("complete", done); tx.removeEventListener("error", done); tx.removeEventListener("abort", done); };
+      const done = () => { window.__writes--; tx.removeEventListener("complete", done); tx.removeEventListener("error", done); tx.removeEventListener("abort", done); };
       tx.addEventListener("complete", done); tx.addEventListener("error", done); tx.addEventListener("abort", done);
-      return put.apply(this, args);
+      return tx;
     };
   });
 }
