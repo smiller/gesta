@@ -77,3 +77,6 @@ and F7 once.
   at 4x: as approved.
 - 07:47 The whole verdict: the corner differed only in the ⌃⌘Enter
   reading; order, bridge and reader ok. Approved.
+- 07:52-07:57 Five whole plays of the committed tree at 5 windows
+  (`node tools/heliumRate.ts`): 0 of 5 read a section otherwise, 77-80 s
+  each; on 2026-11-23 at 5 windows, 1 of 5, 86-90 s.
