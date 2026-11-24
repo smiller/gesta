@@ -9,9 +9,9 @@ import { alertLedger } from "./alertLedger.svelte.ts";
 const draw = (a = alertLedger(() => Promise.resolve())): string => render(Alerts, { props: { alerts: a, onResume: () => {} } }).body;
 
 describe("Alerts", () => {
-  it("idle: every alert hidden, the info with its idle word, the pill hidden", () => {
+  it("idle: every alert hidden, the info with no words, the pill hidden", () => {
     const html = draw();
-    expect(html).toMatch(/<span class="alert info[^"]*">saved<span class="close/);
+    expect(html).toMatch(/<span class="alert info[^"]*">(<!---->)?<span class="close/);
     expect(html).not.toMatch(/class="alert[^"]*show/);
     expect(html).toMatch(/<button class="backup-paused[^"]*" hidden/);
   });

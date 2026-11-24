@@ -25,7 +25,6 @@ export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
       const log = saidLog(), mark = window.__saidMark ?? 0, since = log.recent.filter((r: { n: number }) => r.n > mark);
       return (log.n - mark > since.length ? "… " : "") + since.map((r: { text: string }) => r.text).join(" · ");
     };
-    window.__alerts = () => ((f) => [f.error, f.warning, f.info, f.success].filter(Boolean).join(" · "))(live());
     /* where the page shows from, as the page publishes it */
     window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;
   });

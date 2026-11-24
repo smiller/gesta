@@ -52,3 +52,17 @@ the launch's "10 entries stored" where an act said nothing.
   - `said.last`, which nothing read, goes.
   - The chord table's comment keeps why every masthead row has a chord.
   The verdict differed only in the bridge's `saveWait`; approved.
+- 21:31 A24.1, the architecture run over d80134b..886f8ad's 37 files:
+  its walk 140,429 tokens (the transcript's last message). Five
+  candidates: 1 one module for what was said since the mark, its window
+  node-tested (Strong); 2 the ledger keeps one record of what was said
+  (Strong, a deletion); 3 the save's landing: watcher and wait in one
+  place (Worth exploring); 4 one launcher for the headless Helium tools
+  (Worth exploring); 5 the editor's chords spelled from the chord table
+  (Speculative).
+- 21:36 Asked: 1 and 2 explored now, 3 and 4 after (A24.1.1-4); 5
+  dropped, to come up again if the code makes it stronger.
+- 21:41 A24.1.2 (grilled, asked yes): the ledger's second record goes
+  (`said`, `saidAlerts`, `data-said`), with `__alerts` and `IDLE_TEXT`;
+  the info place starts empty, the routine set naming "saved" and
+  "copied" by id. The verdict played whole and passed unchanged.

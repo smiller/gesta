@@ -17,8 +17,6 @@ export interface AlertState {
   warning: Line;
   /* the backup's trouble, "" when healthy — drawn as the pill */
   trouble: string;
-  /* each kind's last words as raised, kept after they fade or close */
-  said: Live;
   log: SaidLog;
 }
 export type { Kind } from "../model/alertText.ts";
@@ -54,10 +52,6 @@ export function liveAlerts(state: AlertState): Live {
   if (state[state.latest].shown) live.latest = state.latest;
   return live;
 }
-/* what the page has said, whether or not it still shows: an alert's
-   words outlast its time on screen (pin: alertLedger.test › nothing said
-   at rest) */
-export const saidAlerts = (state: AlertState): Live => ({ ...state.said });
 /* each thing said, numbered, so a reading can take what was said after a
    mark it set; what the app says of its own accord is left out (pin:
    alertLedger.test › numbers each thing said) (pin: alertLedger.test ›
@@ -65,12 +59,11 @@ export const saidAlerts = (state: AlertState): Live => ({ ...state.said });
 export interface SaidLog { n: number; recent: { n: number; kind: Kind; text: string }[] }
 const SAID_KEPT = 8;
 export const saidLog = (state: AlertState): SaidLog => ({ n: state.log.n, recent: [...state.log.recent] });
-export const IDLE_TEXT = alertWords({ id: "saved" });
 export const INFO_MS = 3000;
 /* a warning is no error: it fades, given longer to read than an info */
 export const WARNING_MS = 10000;
 const COPY_FAILED = alertWords({ id: "copyFailed" });
-const ROUTINE = new Set([IDLE_TEXT, alertWords({ id: "copied" })]);
+const ROUTINE = new Set([alertWords({ id: "saved" }), alertWords({ id: "copied" })]);
 
 /* an error standing: whose it is (null, none's), its words, and what a click copies */
 interface Standing { owner: object | null; text: string; copy: string }
@@ -78,7 +71,7 @@ interface Standing { owner: object | null; text: string; copy: string }
 export type Told = (kind: Kept, text: string) => void;
 export function alertLedger(copyText: (text: string) => Promise<void>, told: Told = () => {}): Alerts {
   const line = (text = ""): Line => ({ text, shown: false });
-  const state = $state<AlertState>({ info: line(IDLE_TEXT), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "", said: {}, log: { n: 0, recent: [] } });
+  const state = $state<AlertState>({ info: line(), success: line(), latest: "info", busy: false, error: line(), warning: line(), trouble: "", log: { n: 0, recent: [] } });
   const timers: Record<Fading, ReturnType<typeof setTimeout> | null> = { info: null, success: null };
   /* each fading place's generation, bumped on every change to it: a late
      clipboard answer stays quiet once a newer success moved in */
@@ -91,8 +84,6 @@ export function alertLedger(copyText: (text: string) => Promise<void>, told: Tol
     timers[place] = null;
   }
   function say(kind: Kind, text: string, id?: AlertId): void {
-    state.said[kind] = text;
-    if (kind === "info" || kind === "success") state.said.latest = kind;
     if (id && alertBackground(id)) return;
     const n = state.log.n + 1;
     state.log = { n, recent: [...state.log.recent, { n, kind, text }].slice(-SAID_KEPT) };

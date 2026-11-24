@@ -10,7 +10,6 @@ declare global {
     __said: () => string;
     __mark: () => void;
     __saidMark?: number;
-    __alerts: () => string;
     __pageTop: () => number;
     __writes: number;
     __typed: number;

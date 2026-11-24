@@ -1,6 +1,6 @@
 /* Timers are faked; the clipboard is a fake that can refuse. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { alertLedger, liveAlerts, saidAlerts, saidLog, IDLE_TEXT, INFO_MS, WARNING_MS, type Alerts } from "./alertLedger.svelte.ts";
+import { alertLedger, liveAlerts, saidLog, INFO_MS, WARNING_MS, type Alerts } from "./alertLedger.svelte.ts";
 import { said } from "../model/alertText.ts";
 
 let copied: string[];
@@ -23,7 +23,7 @@ afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
 describe("an info", () => {
   it("shows the text and hides after its time, the text staying for the fade", () => {
-    expect(n.state.info.text).toBe(IDLE_TEXT);
+    expect(n.state.info.text).toBe("");
     n.raise("entriesStored", { n: 1 });
     expect(n.state.info).toMatchObject({ text: "1 entry stored", shown: true });
     vi.advanceTimersByTime(2999);
@@ -329,18 +329,7 @@ describe("the live alerts", () => {
   });
 });
 
-describe("what each kind last said", () => {
-  it("nothing said at rest; each kind's last words, and which of info and success spoke last, kept after they fade", () => {
-    expect(saidAlerts(n.state)).toEqual({});
-    n.raise("entriesStored", { n: 1 });
-    n.raise("noLineNumbers");
-    vi.advanceTimersByTime(WARNING_MS);
-    expect(liveAlerts(n.state)).toEqual({});
-    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", latest: "info" });
-    n.raise("notSaved", { copy: "detail" });
-    n.raise("saved");
-    expect(saidAlerts(n.state)).toEqual({ info: "1 entry stored", warning: "no line numbers here", error: "not saved", success: "saved", latest: "success" });
-  });
+describe("what was said", () => {
   it("numbers each thing said and keeps the last eight, oldest first, with their kinds", () => {
     n.raise("entriesStored", { n: 1 });
     n.raise("noLineNumbers");
@@ -358,11 +347,11 @@ describe("what each kind last said", () => {
     n.raise("linkCopied");
     expect(saidLog(n.state).recent.map((r) => r.text)).toEqual(["imported 2 entries", "Link copied"]);
   });
-  it("a progress line says each step; an info held back by it says nothing", () => {
+  it("an info held back by a progress line says nothing", () => {
     const p = n.progress("importing");
     p.step(1, 2);
-    n.raise("entriesStored", { n: 3 });
-    expect(saidAlerts(n.state)).toMatchObject({ info: n.state.info.text, latest: "info" });
+    n.raise("words", { n: 3 });
+    expect(saidLog(n.state).recent).toEqual([]);
     expect(n.state.info.text).toMatch(/ 1 \/ 2$/);
   });
 });
