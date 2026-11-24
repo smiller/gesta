@@ -22,11 +22,11 @@ A link's text; for a reference, the work and the passage's place in it.
 
 **Reference directive**:
 A line in a `::: reference` block standing at the top level of a root's or
-a book's entry, inside no other block, naming a convention its references follow, the whole of its line. On a
-root's entry: `by chapter and verse`, `by title alone`, `by innermost title
-alone`; on a book's entry, for the entries below it: `prose by paragraph,
+a work's page, inside no other block, naming a convention its references follow, the whole of its line. On a
+root's page: `by chapter and verse`, `by title alone`, `by innermost title
+alone`; on a work's page, for the entries below it: `prose by paragraph,
 verse by line`, `by book, chapter, and paragraph`, `part titles in roman`;
-`by half-line` on any entry, for it and every entry below.
+`by half-line` on any page, for it and every page below.
 _Avoid_: setting, option, flag.
 
 **Terminal copy**:
@@ -41,11 +41,6 @@ A named entry that belongs to no day and no author: Books, Birthdays,
 Verdour. The paper icon lists them; "New commonplace…" makes one, and
 "+ sub-entry" one beneath it. Its address is `#commonplace/Name`.
 _Avoid_: page (the printed page's word), note (a block in an entry).
-
-**Book**:
-What stands below an author on the bookshelf, as an entry of its own: a
-poem, a play, a volume of prose, or the contents of one holding parts.
-_Avoid_: work, title.
 
 **Page**:
 A printed page of a book, begun in its text by a page label, `⟨138⟩`.
