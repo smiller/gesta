@@ -132,3 +132,23 @@ and F7 once.
     nodes at the earlier one's end, and the shelf's rename ran across the
     block before. The rule, pinned: the later node's start unless the
     point closes its needle.
+- 11:21 `/improve-codebase-architecture tools/out/arch-files.txt` (A26.1),
+  25 files: six candidates, 1 and 2 Strong (one mapping from the text to
+  a selection; one module for the waits on the page's state), 3-5 Worth
+  exploring, 6 Speculative. The walk: 171,639 tokens (input 2, cache
+  creation 5,897, cache read 158,488, output 7,252). Checked before the
+  report: `waitSearchRows` still waits on any row (app.ts:433, views.ts
+  187 and 198); a hand-over's write is not told as pending
+  (entrySave.ts:114-117).
+- 11:40 Candidates 1 and 2 grilled (Q1-Q15, all yes): 1 first, its own
+  commit; 2 after, its sweep before its forms.
+- 12:05 Candidate 1 (A26.1.1): `textPoint.ts` owns the mapping, the
+  editor's text in blocks of pieces and two points in, two landings or
+  none out; four node tests from the real splits (marks splitting "o et
+  praes", the caret closing "Sean Miller", a needle only across two
+  cells, a point past its block). In the page, the text nodes grouped by
+  their nearest ancestor not laid out inline; `selectFrom`,
+  `selectBetween`, `caretAfter` (so `caretAt`), `caretBefore` and
+  `wordAt` all through it, a missing needle failing its step by name.
+  Carets set without focusing the editor, selections with it, as before.
+  The whole corner at 1x in 5 windows: 0 sections read otherwise.
