@@ -65,3 +65,4 @@
 {"at":"2026-11-24T14:07","ev":"done","id":"W3","commits":["1516853"]}
 {"at":"2026-11-24T14:11","ev":"add","id":"A27","list":"A","title":"The batch review: /code-review at HIGH over bbf4764..2b5bac3","detail":"Asked: /code-review high bbf4764..2b5bac3, typed at 14:11. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
 {"at":"2026-11-24T14:11","ev":"start","id":"A27"}
+{"at":"2026-11-24T14:21","ev":"done","id":"A27","commits":["a823cc1"],"note":"7 findings, all fixed; 203,657 tokens"}
