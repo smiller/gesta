@@ -56,10 +56,10 @@ export async function searchFor(p: Page, words: string) {
   return A.waitSearchAnswered(p, q.trim());
 }
 /* a page a point can be measured on and then aimed at: the info and
-   success alerts closed and the layout settled after. One standing moves
-   the text by its height (a reference's success, 50 px), and its time can
-   run out between the measuring and the aim (pin: column marks › a paired
-   line's English into the next line's Latin) */
+   success alerts closed and the layout settled after. Those standing move
+   the text by their height (the editor's top at 226 with two, 176 with
+   none), and one's time can run out between the measuring and the aim
+   (pin: where the keys go › a click below a table at the end, z typed) */
 export async function aimable(p: Page) {
   await p.evaluate(() => { for (const c of document.querySelectorAll<HTMLElement>(".alert.info.show .close, .alert.success.show .close")) c.click(); });
   await p.waitForFunction(() => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; }, null, { timeout: 2000 }).catch(() => console.log("an alert's wait ran out after 2000 ms: one still stood after its close"));

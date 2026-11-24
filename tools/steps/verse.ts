@@ -1,4 +1,4 @@
-import { section, aimable, page, A, R, S, log, go, seededIn, rest, settled, fixture, writeAll, AUGUSTINE_SEEDS, saidText } from "./kit.ts";
+import { section, page, A, R, S, log, go, seededIn, rest, settled, fixture, writeAll, AUGUSTINE_SEEDS, saidText } from "./kit.ts";
 
 section("a work in stanzas", async () => {
   /* any work in stanza fences refers by stanza, with no directive: Hávamál, a root that names no author, its stanzas paired with a translation */
@@ -347,20 +347,17 @@ async function byParagraphFollowing(): Promise<void> {
 }
 
 section("column marks", async () => {
-  /* a hand's drag begun on a line's closing punctuation: on every row kind, what the marks show beyond the selection, whether Ref (all) is offered, and what ⌃⌘R quotes */
+  /* a selection begun on a line's closing punctuation, as a hand's drag leaves it: on every row kind, what the marks show beyond the selection, whether Ref (all) is offered, and what ⌃⌘R quotes. Set, not dragged: a drag is aimed by where the text stands on screen, which anything shown above it moves */
   await writeAll({ "commonplace/Golding": fixture("ovid-golding-7.md"), "commonplace/Samson": fixture("samson-split-lines.md") });
-  await marksAfterDrag("commonplace/Horace", "a paired line's closing comma into the next line's Latin", ["ancestors,", 9], ["o et praes", 9]);
-  await marksAfterDrag("commonplace/Horace", "a paired line's English into the next line's Latin", ["born of monarch", 5], ["o et praes", 9]);
-  await marksAfterDrag("commonplace/Golding", "a block numbered on both sides, from a line's closing comma", ["with fulsome face,", 17], ["Medea with", 10]);
-  await marksAfterDrag("commonplace/Samson", "plain verse, from a line's closing stop", ["we long to know.", 15], ["It would burst", 14]);
-  await marksAfterDrag("commonplace/Samson", "a split line's rest, from the closing stop of the line it splits", ["Relate by whom.", 14], ["By Samson.", 6]);
+  await marksAfterSelecting("commonplace/Horace", "a paired line's closing comma into the next line's Latin", ["ancestors,", 9], ["o et praes", 9]);
+  await marksAfterSelecting("commonplace/Horace", "a paired line's English into the next line's Latin", ["born of monarch", 5], ["o et praes", 9]);
+  await marksAfterSelecting("commonplace/Golding", "a block numbered on both sides, from a line's closing comma", ["with fulsome face,", 17], ["Medea with", 10]);
+  await marksAfterSelecting("commonplace/Samson", "plain verse, from a line's closing stop", ["we long to know.", 15], ["It would burst", 14]);
+  await marksAfterSelecting("commonplace/Samson", "a split line's rest, from the closing stop of the line it splits", ["Relate by whom.", 14], ["By Samson.", 6]);
 });
-async function marksAfterDrag(key: string, label: string, [from, at]: [string, number], [to, end]: [string, number]): Promise<void> {
+async function marksAfterSelecting(key: string, label: string, [from, at]: [string, number], [to, end]: [string, number]): Promise<void> {
   await go(key);
-  /* the last drag's marks split the words they cover: the caret is put back at the entry's start first */
-  await page.evaluate(() => { const t = document.createTreeWalker(document.querySelector("#editor .ProseMirror"), NodeFilter.SHOW_TEXT).nextNode(); getSelection().collapse(t, 0); });
-  await aimable(page);
-  await dragText(from, at, to, end);
+  await R.selectFrom(page, [from, at], [to, end]);
   await rest(page);
   const shown = await page.evaluate(() => ({
     selected: getSelection().toString().replace(/\s+/g, " ").slice(0, 60),
@@ -373,33 +370,6 @@ async function marksAfterDrag(key: string, label: string, [from, at]: [string, n
   await page.evaluate(async () => { for (let i = 0; i < 40; i++) { if (await navigator.clipboard.readText().catch(() => "")) return; await new Promise((r) => setTimeout(r, 50)); } });
   await log(label, { ...shown, quoted: await R.clipboardLines(page) });
   await page.keyboard.press("Escape");
-}
-/* a mouse drag from a character of one text to a character of another, each found by its first occurrence in the entry; the page scrolled once, to the first, so both points are read in one place */
-async function dragText(from: string, at: number, to: string, end: number): Promise<void> {
-  const pts = await page.evaluate(([a, i, b, j]) => {
-    const root = document.querySelector("#editor .ProseMirror");
-    const point = (needle: string, k: number, scroll: boolean) => {
-      const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-      for (let t = w.nextNode() as Text; t; t = w.nextNode() as Text) {
-        const n = t.data.indexOf(needle);
-        if (n < 0) continue;
-        if (scroll) (t.parentElement as HTMLElement).scrollIntoView({ block: "center" });
-        const r = document.createRange();
-        r.setStart(t, n + k); r.setEnd(t, n + k);
-        const box = r.getBoundingClientRect();
-        return { x: box.left, y: box.top + box.height / 2 };
-      }
-      return null;
-    };
-    const p = point(a, i, true), q = point(b, j, false);
-    return p && q ? { p, q } : null;
-  }, [from, at, to, end] as [string, number, string, number]);
-  if (!pts) return;
-  await page.mouse.move(pts.p.x, pts.p.y);
-  await page.mouse.down();
-  await page.mouse.move((pts.p.x + pts.q.x) / 2, (pts.p.y + pts.q.y) / 2, { steps: 8 });
-  await page.mouse.move(pts.q.x, pts.q.y, { steps: 8 });
-  await page.mouse.up();
 }
 
 section("prose and verse paired", async () => {

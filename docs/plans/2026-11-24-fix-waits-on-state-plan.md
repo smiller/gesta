@@ -110,3 +110,25 @@ and F7 once.
     such line now "<a thing>'s wait ran out".
   - 9, the search shape in two places: `adapters/searchShown.ts`, held to
     the app's by `heliumSearch.test.ts`.
+- 11:05 F4's cause probed (`tools/out/f4probe.sh`): its drag played three
+  ways, three times each: the alert standing throughout, closed between
+  the aim and the drag, and `aimable` first. All 9 selected as approved.
+  The forced close moved nothing: "Reference copied to clipboard" alone
+  leaves the editor's top at 176; the 226 at 07:33 was with "12 entries
+  stored" standing too. F4's cause stays unshown; it stays on watch.
+- 11:10 The reader: "it feels brittle if we're failing tests because of
+  pixel position. I'd far rather be measuring state than appearance."
+  Steps that aimed the mouse only to place a selection now set it
+  (`R.selectFrom`, over `adapters/textPoint.ts`): column marks' five
+  drags, keys' Horace click and its four word clicks, filing's two
+  heading clicks, the shelf's double-click. Kept as mouse gestures, the
+  gesture being what is read: the click below a table (`aimable` kept
+  for it), the drag out of the Line box, the click outside a menu, the
+  format toolbar's double-click (the toolbar places on mouseup), the
+  wheel scrolls, the click low in the source view; "the entry's top"
+  checks layout. Each changed section played alone reads as approved.
+  - The text is searched across nodes, since an earlier selection's
+    marks split the words; a first mapping put a point between two
+    nodes at the earlier one's end, and the shelf's rename ran across the
+    block before. The rule, pinned: the later node's start unless the
+    point closes its needle.

@@ -8,6 +8,7 @@ import { inPage, inPageWith } from "./inPage.ts";
 import { said, saidAfterGesture } from "./said.ts";
 import { waitSaveLanded } from "./saves.ts";
 import { answers, type SearchShown } from "./searchShown.ts";
+import { pieceAt, closesNeedle, type TextPoint } from "./textPoint.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
    the sync and by the exiting browser, and its delete failed one run in
@@ -166,7 +167,19 @@ async function placed<T>(page: Page, place: () => Promise<T>): Promise<T> {
   if (!unmoved) await selectionMoved(page);
   return out;
 }
-const placeBetween = (page: Page, a: string, b: string) => placed(page, () => page.evaluate(([a, b]) => { const root = document.querySelector("#editor .ProseMirror"); const find = (n: string): [Node, number] | null => { const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); for (let t = w.nextNode(); t; t = w.nextNode()) { const i = t.data.indexOf(n); if (i >= 0) return [t, i]; } return null; }; const x = find(a), y = find(b); if (!x || !y) return false; root.focus(); const r = document.createRange(); r.setStart(x[0], x[1]); r.setEnd(y[0], y[1] + b.length); const s = document.getSelection(); s.removeAllRanges(); s.addRange(r); return true; }, [a, b]));
+/* from one point to another, as a drag from one to the other leaves it: found in the editor's text across its nodes, which marks over an earlier selection split */
+function selectInEditor([from, to]: [TextPoint, TextPoint]): boolean {
+  const root = document.querySelector("#editor .ProseMirror"), nodes: Text[] = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let t = w.nextNode(); t; t = w.nextNode()) nodes.push(t as Text);
+  const text = nodes.map((t) => t.data).join(""), lengths = nodes.map((t) => t.data.length);
+  const [x, y] = [text.indexOf(from[0]), text.indexOf(to[0])];
+  if (x < 0 || y < 0) return false;
+  const [n, p] = pieceAt(lengths, x + from[1], closesNeedle(...from)), [m, q] = pieceAt(lengths, y + to[1], closesNeedle(...to));
+  root.focus();
+  document.getSelection().setBaseAndExtent(nodes[n], p, nodes[m], q);
+  return true;
+}
+const placeFrom = (page: Page, from: TextPoint, to: TextPoint): Promise<boolean> => placed(page, () => page.evaluate(inPageWith([from, to], selectInEditor, pieceAt, closesNeedle)));
 export const read = {
   blankRow: blankRowReader("#editor .ProseMirror"),
   /* the contents-folds step: the headings that fold, which are open, their counts, the links showing, the followed link's place */
@@ -191,7 +204,8 @@ export const read = {
   /* the stanza step: the number each stanza DRAWS (its ::before), and the line numbers shown */
   stanzas: (page: Page) => page.evaluate(() => ({ drawn: [...document.querySelectorAll("#editor .verse")].map((v) => getComputedStyle(v, "::before").content.replace(/"/g, "")), shown: [...document.querySelectorAll("#editor .ln.shown")].map((r) => r.dataset.line) })),
   /* a placement that found no words returned false, which no step read */
-  selectBetween: async (page: Page, a: string, b: string) => { if (!(await placeBetween(page, a, b))) throw new Error("no “" + a + "” or “" + b + "” to select between"); return true; },
+  selectBetween: async (page: Page, a: string, b: string) => { if (!(await placeFrom(page, [a, 0], [b, b.length]))) throw new Error("no “" + a + "” or “" + b + "” to select between"); return true; },
+  selectFrom: async (page: Page, from: TextPoint, to: TextPoint) => { if (!(await placeFrom(page, from, to))) throw new Error("no “" + from[0] + "” or “" + to[0] + "” to select from"); },
   /* a hand's drag over one English cell of a dual-language block, its first letter to its last; then what is selected and what is marked beside it */
   dragCell: async (page: Page, start: string) => {
     const at = await page.evaluate((s) => {

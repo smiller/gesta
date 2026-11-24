@@ -283,8 +283,7 @@ async function bookshelfShelves(): Promise<void> {
   await A.waitEntry(page, "bookshelf/Shelves", 5000).catch(() => {});
   await log("Shelves… clicked", { entry: await A.entry(page), menu: await R.menu(page) });
   /* a shelf renamed, the list opened at once: the list reads the text as typed */
-  const latin = await R.wordAt(page, "Latin", 5);
-  await page.mouse.dblclick(latin.x, latin.y);
+  await R.selectFrom(page, ["Latin", 0], ["Latin", 5]);
   await rest(page);
   await page.keyboard.type("Classical");
   /* the toolbar the double-click floated hides once the typing has collapsed the selection: read before it went, the screen said so */

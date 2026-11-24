@@ -43,16 +43,7 @@ async function chordsPressedTwice(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Escape");
   await go("commonplace/Horace");
-  /* the line's place once the measuring passes after an arrival are done:
-     two readings a frame apart agree. Measured at once, a full run's click
-     landed a word later as often as not */
-  await aimable(page);
-  let at = await R.wordAt(page, "Maecenas atavis", 8);
-  for (let i = 0; i < 20; i++) { await rest(page); const again = await R.wordAt(page, "Maecenas atavis", 8); if (again.x === at.x && again.y === at.y) break; at = again; }
-  /* the click's caret is the editor's only once its selectionchange has
-     reached it: under a full run's load the link landed at the caret before */
-  await A.watchSelection(page);
-  await page.mouse.click(at.x + 30, at.y);
+  await R.selectFrom(page, ["Maecenas atavis", 7], ["Maecenas atavis", 7]);
 }
 async function bookmarkLinkPressed(): Promise<void> {
   await A.selectionMoved(page, 2000);
@@ -75,7 +66,7 @@ async function bookmarkLinkPressed(): Promise<void> {
   /* clicked until the caret stands in the word: a click measured while the
      page settled after a view switch landed at the entry's end
      (pin: where the keys go › Tab held in a quote) */
-  await clickWord("one");
+  await caretIn("one");
   await page.keyboard.press("Tab");
   await rest(page);
   await log("Tab in prose", { corner: await saidText() });
@@ -84,7 +75,7 @@ async function bookmarkLinkPressed(): Promise<void> {
   await page.keyboard.press("Tab");
   await rest(page);
   await log("Tab over two paragraphs", { corner: await saidText() });
-  await clickWord("x = 1");
+  await caretIn("x = 1");
   await page.keyboard.press("Tab");
   await rest(page);
 }
@@ -177,13 +168,13 @@ async function enterHeldShortcut(): Promise<void> {
   await view(true);
   await R.setSource(page, "> quoted\n");
   await view(false);
-  await clickWord("quoted");
+  await caretIn("quoted");
   await hold("Tab", 3);
   await rest(page);
   await log("Tab held in a quote", { md: await A.stored(page) });
   /* a caret scrolled back into view stops below the masthead */
   await go("2026-09-05");
-  await clickWord("The most famous story");
+  await caretIn("The most famous story");
   /* the wheel's scroll settled before the Enter: one landing after it scrolled the caret back out of view */
   await wheelTo((await page.evaluate(() => scrollY)) + 900);
   await page.keyboard.press("Enter");
@@ -227,14 +218,7 @@ async function refusedEntryRedrawnUnder(): Promise<void> {
 }
 const tap = (sel: string) => page.click(sel, { timeout: 3000 }).catch(() => {});
 const twice = async (chord: string) => { for (let i = 0; i < 2; i++) { await page.keyboard.press(chord); await rest(page); } };
-const clickWord = async (w: string) => {
-    for (let i = 0; i < 3; i++) {
-      await aimable(page);
-      const p = await R.wordAt(page, w, 1); await page.mouse.click(p.x, p.y); await rest(page);
-      if (await page.evaluate((w) => (getSelection().anchorNode?.textContent || "").includes(w), w)) return;
-      await rest(page); await rest(page);
-    }
-  };
+const caretIn = (w: string) => R.selectFrom(page, [w, 1], [w, 1]);
 const hold = async (key: string, times: number, mods: string[] = []) => {
     for (const m of mods) await page.keyboard.down(m);
     for (let i = 0; i < times; i++) { await page.keyboard.down(key); await page.waitForTimeout(i ? 50 : 400); }

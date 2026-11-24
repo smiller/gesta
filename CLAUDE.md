@@ -384,7 +384,10 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     step's mark), `adapters/saves.ts` (the write watcher and the wait for
     a save to land), `adapters/searchShown.ts` (what the search row
     publishes, as the steps read it; `heliumSearch.test.ts` holds the two
-    to one shape), `adapters/launch.ts` (headless Helium launched over a
+    to one shape), `adapters/textPoint.ts` (a point in the
+    editor's text by a needle and an offset, and the text node it falls
+    in: what a step's selection is set by, in place of a mouse aimed at
+    the screen), `adapters/launch.ts` (headless Helium launched over a
     fresh profile, for every tool here), `helium-corner.ts` (the driver: `STEPS=`,
     `ORDER=reverse`, `TIMING=1`, `SHARD=k/n`), `helium-approve.ts` (the verdict;
     `WINDOWS=n`), `heliumLedger.ts` (each verdict play appended to
