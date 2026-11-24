@@ -3,6 +3,7 @@ import type { Page, BrowserContext } from "../heliumPage.ts";
 import type { Dialog } from "playwright-core";
 import * as A from "../adapters/app.ts";
 import { inPageWith } from "../adapters/inPage.ts";
+import { said, markSaid, waitSaid } from "../adapters/said.ts";
 
 export type Tree = { name: string; text?: string; kids?: Tree[] };
 export interface RunOptions { screenshot?: string; only?: string[] | null; reverse?: boolean; shard?: [number, number] }
@@ -138,7 +139,7 @@ function cursorKind([ed, src]: [string, string]): string {
   if (caretAway(root, s)) return "focus, no caret";
   return s.isCollapsed ? caretInLine(root, s) : "selected " + s.toString().length;
 }
-export const log = async (label: string, x: unknown) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); await page.evaluate(() => window.__mark()).catch(() => {}); };
+export const log = async (label: string, x: unknown) => { const base = x !== null && typeof x === "object" && !Array.isArray(x) ? x : { value: x }; console.log(label + ":", JSON.stringify({ ...base, cursor: await cursor(), screen: await A.screen(page) })); await markSaid(page).catch(() => {}); };
 /* an arrival is read before the step's own gestures, whose helpers focus
    the text themselves; a focus that never comes reads as "none" after
    the wait. No screen: the last section's format toolbar may still be fading */
@@ -159,16 +160,17 @@ export const storedWith = async (text: string) => { for (let i = 0; i < 40; i++)
 /* the window, a paragraph by its first words, the corner's text */
 export const winY = () => page.evaluate(() => Math.round(scrollY));
 export const inView = (start: string) => page.evaluate(([s, t]) => { const p = [...document.querySelectorAll(s + " p")].find((x) => x.textContent.startsWith(t)); if (!p) return null; const r = p.getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; }, [S.editor, start]);
-export const saidText = () => page.evaluate(() => window.__said() || "");
+export const saidText = () => said(page);
 /* the window of what was said starts here, as it does at each log */
-export const mark = () => page.evaluate(() => window.__mark());
+export const mark = () => markSaid(page);
+export const waitForSaid = (re: RegExp, ms?: number) => waitSaid(page, re, ms);
 /* a click on the corner, as a reader closes it: an error's or an info's
    click copies its words, and the "copied" lands a moment after; the
    window starts once it has, or a second on where nothing was copied */
 export async function closeCorner(): Promise<void> {
   await mark();
   await page.click(S.corner, { timeout: 1000 }).catch(() => {});
-  await page.waitForFunction(() => window.__said().includes("copied"), null, { timeout: 1000 }).catch(() => {});
+  await waitSaid(page, /copied/, 1000);
   await mark();
 }
 /* a scroll BY A READER'S HAND, a wheel over the page: a script's

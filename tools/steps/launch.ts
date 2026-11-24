@@ -1,4 +1,4 @@
-import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor, view, writeAll, landed } from "./kit.ts";
+import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor, view, writeAll, landed, saidText, waitForSaid } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -45,7 +45,7 @@ async function cornerShown(): Promise<void> {
   await log("after ⌃⌘C", await R.corner(page));
   if (shot) await page.screenshot({ path: shot, clip: { x: 0, y: 500, width: 500, height: 100 } });
   await page.click(".alert.success.show", { timeout: 2000 }).catch(() => {});
-  await page.waitForFunction(() => window.__said().includes("copied"), null, { timeout: 2000 }).catch(() => {});
+  await waitForSaid(/copied/, 2000);
   await log("after the click", await R.corner(page));
   await page.keyboard.press("Control+Meta+,");
   await rest(page);
@@ -54,7 +54,7 @@ async function cornerShown(): Promise<void> {
   await page.click(S.editorLink("#commonplace/Links"));
   /* the editor takes a click's caret a tick after the click */
   await page.waitForFunction(() => { const s = getSelection(); return !!s.rangeCount && s.anchorOffset > 0; }, null, { timeout: 1000 }).catch(() => {});
-  await log("a link to itself", { entry: await A.entry(page), text: await R.saidText(page) });
+  await log("a link to itself", { entry: await A.entry(page), text: await saidText() });
 }
 async function plainClickExternalLink(): Promise<void> {
   await page.click(S.editorLink("https://example.org/"));
@@ -78,7 +78,7 @@ async function followedByKey(): Promise<void> {
     await caretAt(needle, offset);
     await page.keyboard.press("Control+Meta+Enter");
     await rest(page);
-    await log(label, { entry: await A.entry(page), ...(said ? { said: await R.saidText(page) } : {}) });
+    await log(label, { entry: await A.entry(page), ...(said ? { said: await saidText() } : {}) });
   };
   await followed("⌃⌘Enter inside a link", "Horace", 3);
   await followed("⌃⌘Enter just after a link", "Horace", 6);
@@ -170,7 +170,7 @@ section("quote tab", async () => {
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
   await rest(page);
-  await log("Shift-Tab twice", { md: await A.stored(page), corner: await R.saidText(page) });
+  await log("Shift-Tab twice", { md: await A.stored(page), corner: await saidText() });
   await go("commonplace/Horace");
   await page.keyboard.press("Control+Meta+l");
   await rest(page);

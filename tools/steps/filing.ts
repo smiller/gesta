@@ -1,4 +1,4 @@
-import { section, page, A, R, S, log, go, cursor, winY, saidText, setAnswer, prompts, landed, rest } from "./kit.ts";
+import { section, page, A, R, S, log, go, cursor, winY, saidText, setAnswer, prompts, landed, rest, waitForSaid } from "./kit.ts";
 
 section("author filing", async () => {
   /* "New author…" asks the name, then where it sorts, filled with the surname first; Rename on an author with a book re-files it, the book and the link to it with it, and the corner says so */
@@ -25,7 +25,7 @@ async function newAuthorSeanMiller(): Promise<void> {
   await rest(page);
   setAnswer("Odes");
   await A.act.create(page);
-  await page.waitForFunction(() => /heading/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
+  await waitForSaid(/heading/, 3000);
   await log("+ book with the caret in the heading", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   /* the same in the markdown view, the caret on the heading's line */
   await page.keyboard.press("Control+Meta+m");
@@ -35,7 +35,7 @@ async function bookCaretHeadingS(): Promise<void> {
   await page.evaluate((s) => { const ta = document.querySelector(s); ta.focus(); ta.setSelectionRange(3, 3); }, S.source);
   setAnswer("Odes");
   await A.act.create(page);
-  await page.waitForFunction(() => /heading/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
+  await waitForSaid(/heading/, 3000);
   await log("+ book with the caret on the heading's line, markdown view", { corner: await saidText(), stored: await A.stored(page, "bookshelf/Miller, Sean"), book: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.keyboard.press("Control+Meta+m");
   await page.waitForSelector(S.source, { state: "detached", timeout: 3000 }).catch(() => {});
@@ -60,7 +60,7 @@ async function renameAuthorTyped(): Promise<void> {
   prompts.length = 0;
   await page.click(S.renameAuthor);
   await A.waitEntry(page, "bookshelf/Sean Miller", 5000).catch(() => {});
-  await page.waitForFunction(() => /filed under/.test(window.__said()), null, { timeout: 3000 }).catch(() => {});
+  await waitForSaid(/filed under/, 3000);
   await log("Rename, Sean Miller typed, Enter", { prompts: prompts.slice(), entry: await A.entry(page), corner: await saidText(), author: await A.stored(page, "bookshelf/Sean Miller"), book: await A.stored(page, "bookshelf/Sean Miller/Odes"), oldAuthor: await A.stored(page, "bookshelf/Miller, Sean"), oldBook: await A.stored(page, "bookshelf/Miller, Sean/Odes") });
   await page.click(S.bookshelfOpener);
   await log("the bookshelf after the re-file", await R.menu(page));
@@ -93,7 +93,7 @@ async function replaceInRenderedView(): Promise<void> {
   await rest(page);
   await page.keyboard.press("Control+Meta+e");
   await rest(page);
-  await log("⌃⌘E in the rendered view", { ...(await R.replaceToolbar(page)), corner: await R.saidTextOrEmpty(page) });
+  await log("⌃⌘E in the rendered view", { ...(await R.replaceToolbar(page)), corner: await saidText() });
   await page.keyboard.type("*-*");
   await rest(page);
   await log("*-* typed into Find", await R.replaceToolbar(page));
@@ -274,12 +274,11 @@ async function typedIntoEntryImport(): Promise<void> {
   await page.keyboard.type("T0 T1 T2 ");
   await landed(page, 1200);
   await page.evaluate(() => window.__releaseTyped());
-  await page.waitForFunction(tallied, null, { timeout: 30000 }).catch(() => {});
+  await waitForSaid(/(?:^|· )imported /, 30000);
   const tally = await saidText();
   await landed(page, 1000);
   await log("typed into an entry an import overwrites", { afterButton, text: await page.evaluate(textStart, S.editor), corner: tally });
 }
-const tallied = (): boolean => window.__said().split(" · ").some((t) => /^imported /.test(t));
 const textStart = (e: string): string => (document.querySelector(e)?.textContent || "").slice(0, 40);
 async function storeThatNeverAnswers(): Promise<void> {
   /* a page of its own, the persist call watched from before the app's first line */

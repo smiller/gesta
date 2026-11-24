@@ -130,7 +130,7 @@ section("sub-entries", async () => {
   await A.act.create(page);
   await A.waitEntry(page, "2026-09-06/Ideas", 5000);
   const onLeaf = await A.act.createOnLeaf(page);
-  await log("⌃⌘N on the tagged entry", onLeaf || { text: await R.saidText(page) });
+  await log("⌃⌘N on the tagged entry", onLeaf || { text: await saidText() });
   await log("⌃⌘N, Ideas typed", { entry: await A.entry(page), crumb: await R.crumb(page), tools: await R.tools(page) });
   await go("2026-09-06", 5000);
   await log("the day's body ends with the link, its tag bar lists it", { link: await R.lastLink(page), tags: await R.tags(page) });
@@ -163,7 +163,7 @@ section("list", async () => {
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Shift+Tab");
   await rest(page);
-  const listSaid = await R.saidText(page);
+  const listSaid = await saidText();
   await page.keyboard.press("Enter");
   await page.keyboard.press("Enter");
   await page.keyboard.type("```");

@@ -8,23 +8,12 @@ export const inPage = (main: Function, ...parts: Function[]): string => inPageWi
 export const inPageWith = (arg: unknown, main: Function, ...parts: Function[]): string =>
   "(() => {\n" + parts.map((f) => f.toString()).join("\n") + "\nreturn (" + main.toString() + ")(" + (arg === undefined ? "" : JSON.stringify(arg)) + ");\n})()";
 
-/* the alerts as the page publishes them, read the same way by every
-   reading: the error and the warning standing, else the newer of info and
-   success, as one place showed them; or every one live, in the stack's order */
+/* the corner as the page publishes it: the error and the warning
+   standing, else the newer of info and success, as one place showed them */
 export async function installAlertReaders(ctx: BrowserContext): Promise<void> {
   await ctx.addInitScript(() => {
     const live = () => JSON.parse(document.documentElement.dataset.alerts || "{}");
-    const saidLog = () => JSON.parse(document.documentElement.dataset.saidLog || '{"n":0,"recent":[]}');
     window.__corner = () => ((f) => [f.error, f.warning].filter(Boolean).join(" · ") || f[f.latest])(live());
-    /* what the page said since the mark, oldest first, whether or not it
-       still shows: an alert's time on screen is the clock's, which a run's
-       load can outlast, and what was said before the mark belongs to an
-       earlier step; "…" where more was said than the page keeps */
-    window.__mark = () => { window.__saidMark = saidLog().n; };
-    window.__said = () => {
-      const log = saidLog(), mark = window.__saidMark ?? 0, since = log.recent.filter((r: { n: number }) => r.n > mark);
-      return (log.n - mark > since.length ? "… " : "") + since.map((r: { text: string }) => r.text).join(" · ");
-    };
     /* where the page shows from, as the page publishes it */
     window.__pageTop = () => parseFloat(document.documentElement.style.getPropertyValue("--alert-area-bottom")) || 0;
   });

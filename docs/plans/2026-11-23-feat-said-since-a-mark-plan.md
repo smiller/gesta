@@ -62,7 +62,19 @@ the launch's "10 entries stored" where an act said nothing.
   (Speculative).
 - 21:36 Asked: 1 and 2 explored now, 3 and 4 after (A24.1.1-4); 5
   dropped, to come up again if the code makes it stronger.
-- 21:41 A24.1.2 (grilled, asked yes): the ledger's second record goes
+- 21:40 A24.1.2 (grilled, asked yes): the ledger's second record goes
   (`said`, `saidAlerts`, `data-said`), with `__alerts` and `IDLE_TEXT`;
   the info place starts empty, the routine set naming "saved" and
   "copied" by id. The verdict played whole and passed unchanged.
+- 21:50 A24.1.1 (grilled, asked yes): `tools/adapters/said.ts` owns what
+  was said since a mark: the window a pure function (`saidSince`,
+  node-tested: an empty window, since the mark, the "…" overflow),
+  carried into the page by `inPage`; the kit's `log` and `closeCorner`
+  the only marks; `saidAfterGesture` reads from its own start without
+  moving the step's window; one wait (`waitForSaid`) for eleven; the
+  page's `__said`/`__mark` globals and the two `R.` readings go; composite
+  readings keep their key's place and fill it from the module. The
+  checker allows the said log only in its owners. The verdict played
+  whole and passed unchanged, but for two line readings that wrote ""
+  for null, kept as null. F6 opened: the order run once read the search
+  result step with no hit, a section this does not touch.

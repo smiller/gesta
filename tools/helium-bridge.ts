@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { TODAY } from "./helium-steps.ts";
 import type { Page } from "./heliumPage.ts";
 import { inPage } from "./adapters/inPage.ts";
+import { said } from "./adapters/said.ts";
 import { reseeded } from "./adapters/app.ts";
 import { SEEDS } from "./steps/kit.ts";
 const H = "/Applications/Helium.app/Contents/MacOS/Helium";
@@ -30,7 +31,7 @@ function firstLineShown(): string | undefined {
 function textsShown(): Record<string, unknown> {
   return {
     crumb: crumbShown(), title: document.querySelector(".page-title")?.textContent,
-    status: window.__said() || "",
+    status: "",
     first: firstLineShown(),
   };
 }
@@ -42,7 +43,7 @@ function launchShows(): Record<string, unknown> {
     images: [...document.querySelectorAll<HTMLElement>("#editor img")].map(imageLine),
   };
 }
-const read = (page: Page): Promise<Record<string, unknown>> => page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine));
+const read = async (page: Page): Promise<Record<string, unknown>> => ({ ...(await page.evaluate(inPage(launchShows, textsShown, crumbShown, firstLineShown, imageLine)) as Record<string, unknown>), status: await said(page) });
 async function launch(url: string, fn: (page: Page) => Promise<Record<string, unknown>>): Promise<Record<string, unknown>> {
   const ctx = await chromium.launchPersistentContext(PROFILE, { executablePath: H, headless: true });
   await installAlertReaders(ctx);

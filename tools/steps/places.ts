@@ -343,7 +343,7 @@ async function secondWindow(): Promise<void> {
   await page.click(S.editor);
   await page.keyboard.type("typed in the first");
   await landed(page, 2500);
-  await log("its row's commonplace typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.saidText(page) });
+  await log("its row's commonplace typed into from the first", { entry: await A.entry(page), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await saidText() });
 }
 async function pageOpenFirstSaved(): Promise<void> {
   const again = await page.context().newPage();
@@ -362,7 +362,7 @@ async function pageOpenFirstSaved(): Promise<void> {
   await page.keyboard.type(", the first unsaved");
   await A.foreignWrite(again, "commonplace/Made Elsewhere", "rewritten in the second");
   await landed(page, 2500);
-  await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await R.saidText(page) });
+  await log("typed in the first as the second saves", { textEnd: await textEnd(), stored: await A.stored(page, "commonplace/Made Elsewhere"), corner: await saidText() });
   await A.foreignWrite(again, "commonplace/Refused Fence", "::: versey\nline\n:::");
   await go("commonplace/Refused%20Fence");
   await log("an entry with a refused fence opened over the save error", { corner: await R.standingText(page) });
@@ -377,11 +377,11 @@ async function pageOpenFirstSaved(): Promise<void> {
   await landed(page, 1500);
   await A.foreignWrite(again, "commonplace/Deleted Elsewhere", null);
   await page.waitForTimeout(500);
-  await log("the commonplace open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await R.saidText(page) });
+  await log("the commonplace open in the first, deleted in the second", { entry: await A.entry(page), textEnd: await textEnd(), corner: await saidText() });
   await page.click(S.editor);
   await page.keyboard.type(", typed after");
   await landed(page, 1500);
-  await log("typed into the commonplace deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await R.saidText(page) });
+  await log("typed into the commonplace deleted in the second", { stored: await A.stored(page, "commonplace/Deleted Elsewhere"), corner: await saidText() });
   await go("2026-09-06");
   await log("the deleted commonplace left for the day", { corner: await R.standingText(page) });
   await go("commonplace/Deleted%20Elsewhere");

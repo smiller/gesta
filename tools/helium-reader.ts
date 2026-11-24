@@ -5,6 +5,7 @@
 // `node tools/helium-reader.ts <zip>` times a real one instead: the pick,
 // the relaunch, the heap, the first search's index.
 import { installAlertReaders } from "./adapters/inPage.ts";
+import { said, markSaid } from "./adapters/said.ts";
 import { chromium } from "playwright-core";
 import { mkdirSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -51,12 +52,12 @@ const ms = (t: number): string => TIMED ? " (" + (Date.now() - t) + " ms)" : "";
 const first = await launch();
 await first.page.goto(PAGE + "#commonplace/Witchcraft");
 await settled(first.page, "bare");
-const screen = (page: Page) => page.evaluate(() => ({
+const screen = async (page: Page) => ({ ...(await page.evaluate(() => ({
   entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
-  held: document.querySelector(".held")?.textContent, corner: window.__said()?.trim(),
+  held: document.querySelector(".held")?.textContent, corner: "",
   editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   tools: [...document.querySelectorAll(".site-tools > :not([hidden])")].map((e) => e.textContent.trim()),
-}));
+}))), corner: (await said(page)).trim() });
 console.log("nothing kept:", JSON.stringify(await screen(first.page)));
 let t = Date.now();
 await first.page.setInputFiles(".site-tools input[type=file]", ZIP);
@@ -74,9 +75,9 @@ const rest = () => page.waitForTimeout(400);
 /* the corner only where a step is about what it says */
 const look = (label: string, extra: () => Promise<object> | object = () => ({}), corner = false) => page.evaluate((corner) => ({
   entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
-  ...(corner ? { corner: window.__said()?.trim() || "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
+  ...(corner ? { corner: "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
   crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(),
-}), corner).then(async (r) => { console.log(label + ":", JSON.stringify({ ...r, ...(await extra()) })); await page.evaluate(() => window.__mark()); });
+}), corner).then(async (r) => { console.log(label + ":", JSON.stringify({ ...r, ...(corner ? { corner: (await said(page)).trim() } : {}), ...(await extra()) })); await markSaid(page); });
 const search = async (q: string): Promise<number> => {
   await page.click(".page-search > summary");
   await page.fill(".search-input", q);
