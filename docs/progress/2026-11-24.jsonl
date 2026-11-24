@@ -40,3 +40,5 @@
 {"at":"2026-11-24T11:46","ev":"add","id":"A26.1.1","list":"A","title":"One mapping from the editor's text to a selection, carets included","parent":"A26.1","detail":"Asked: 11:40, 'yes' to candidate 1 of the architecture run and its grilling (Q1-Q5, Q9-Q11). Why: the tested part of the text mapping was the small one; the caret finders search one text node at a time, which marks split. Done when: every finder goes through textPoint.ts, tested in node on the real splits, the whole verdict as approved."}
 {"at":"2026-11-24T11:46","ev":"add","id":"A26.1.2","list":"A","title":"One module for the waits on the page's state","parent":"A26.1","detail":"Asked: 11:40, 'yes' to candidate 2 of the architecture run and its grilling (Q6-Q8, Q12-Q15). Why: each wait chooses its own timeout, outcome and run-out line, and most swallow their timeout. Done when: waitSearchRows on the answered query; the sweep measured; the waits in two forms, named; a checker on bare catches."}
 {"at":"2026-11-24T11:46","ev":"start","id":"A26.1.1"}
+{"at":"2026-11-24T11:51","ev":"done","id":"A26.1.1","commits":["b275db1"]}
+{"at":"2026-11-24T11:51","ev":"start","id":"A26.1.2"}
