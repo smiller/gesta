@@ -65,12 +65,12 @@ section("menu area", async () => {
 });
 async function longShelf(): Promise<void> {
   const authors = Array.from({ length: 60 }, (_, i) => "Author " + String(i + 1).padStart(2, "0"));
-  const stored = () => page.evaluate(() => Number(document.documentElement.dataset.store));
+  const stored = () => page.evaluate(() => Number(window.__published("store")));
   const before = await stored();
   await writeAll(Object.fromEntries(authors.map((a) => ["bookshelf/" + a, "# " + a + "\n"])));
-  const shown = () => page.evaluate(() => { const m = document.querySelector(".menu")!.getBoundingClientRect(), r = document.querySelector(".menu .sel")?.getBoundingClientRect(); return { sel: document.documentElement.dataset.menuSel, inView: !!r && r.top >= m.top && r.bottom <= m.bottom, scrolled: document.querySelector(".menu")!.scrollTop > 0 }; });
+  const shown = () => page.evaluate(() => { const m = document.querySelector(".menu")!.getBoundingClientRect(), r = document.querySelector(".menu .sel")?.getBoundingClientRect(); return { sel: window.__published("menuSel"), inView: !!r && r.top >= m.top && r.bottom <= m.bottom, scrolled: document.querySelector(".menu")!.scrollTop > 0 }; });
   await go("bookshelf/Author 60");
-  await waitState(page, { name: "store", ms: 8000 }, (n) => Number(document.documentElement.dataset.store) >= n, before + authors.length);
+  await waitState(page, { name: "store", ms: 8000 }, (n) => Number(window.__published("store")) >= n, before + authors.length);
   await page.keyboard.press("Control+Meta+j");
   await settled(page);
   await log("Author 60 of 60, ⌃⌘J", await shown());

@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { saidSince } from "./said.ts";
+import type { SaidLog } from "../../src/published.ts";
 
-const log = (n: number, texts: string[]) => ({ n, recent: texts.map((text, i) => ({ n: n - texts.length + 1 + i, text })) });
+const log = (n: number, texts: string[]): SaidLog => ({ n, recent: texts.map((text, i) => ({ n: n - texts.length + 1 + i, kind: "info", text })) });
 
 describe("what was said since the mark", () => {
   it("is nothing where nothing was said after it", () => {

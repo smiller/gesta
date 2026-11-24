@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { basename } from "node:path";
 import { spawnSync } from "node:child_process";
 import type { BrowserContext, Page } from "../heliumPage.ts";
-import { installAlertReaders } from "./inPage.ts";
+import { installPageReaders } from "./inPage.ts";
 import { installWriteWatcher } from "./saves.ts";
 
 const HELIUM = "/Applications/Helium.app/Contents/MacOS/Helium";
@@ -26,7 +26,7 @@ export interface LaunchOptions {
 }
 export async function launchHelium(profile: string, o: LaunchOptions = {}): Promise<BrowserContext> {
   const ctx = await chromium.launchPersistentContext(profile, { executablePath: HELIUM, headless: true, ...(o.viewport ? { viewport: o.viewport } : {}) });
-  await installAlertReaders(ctx);
+  await installPageReaders(ctx);
   if (o.clock?.install) await ctx.clock.install({ time: o.clock.at });
   if (o.clock) await ctx.clock.setFixedTime(o.clock.at);
   if (o.watcher !== false) await installWriteWatcher(ctx);

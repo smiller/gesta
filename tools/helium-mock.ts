@@ -28,7 +28,7 @@ const PROFILE = resolve(tmpdir(), "gesta-mock-profile");
 
 async function seeded(page: Page, spec: MockSpec): Promise<void> {
   await page.goto(url(spec.entries[0]));
-  await page.waitForFunction(() => document.documentElement.dataset.store !== undefined, null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__published("store") !== null, null, { timeout: 15000 });
   for (const key of spec.entries) await foreignWrite(page, key, readFileSync(join(BACKUP, backupFile(key)), "utf8"));
 }
 /* the entry opened afresh, the warm done, no alert standing, at its top
@@ -41,7 +41,7 @@ async function opened(page: Page, entry: string, width: number, height: number):
   await page.goto(url(entry));
   await waitEntry(page, entry);
   await waitWarm(page).catch(() => {});
-  await page.waitForFunction(() => document.documentElement.dataset.alerts === "{}", null, { timeout: 8000 }).catch(() => {});
+  await page.waitForFunction(() => Object.keys(window.__published("alerts")).length === 0, null, { timeout: 8000 }).catch(() => {});
   await page.mouse.move(width / 2, height / 2);
   const y = await page.evaluate(() => scrollY);
   if (y) { await page.mouse.wheel(0, -y); await page.waitForFunction(() => scrollY === 0, null, { timeout: 3000 }).catch(() => {}); }
@@ -69,7 +69,7 @@ async function covered(page: Page, bars: string[]): Promise<Frame["covered"]> {
   return { png: await shot(page), under };
 }
 const readingOf = (page: Page): Promise<Record<string, unknown>> =>
-  page.evaluate(() => ({ entry: document.documentElement.dataset.entry, alerts: document.documentElement.dataset.alerts, scrollY: Math.round(scrollY) }));
+  page.evaluate(() => ({ entry: window.__published("entry"), alerts: window.__published("alerts"), scrollY: Math.round(scrollY) }));
 
 async function frame(page: Page, spec: MockSpec, state: MockSpec["states"][number], option: MockSpec["options"][number]): Promise<Frame> {
   const width = state.width ?? 1280, height = spec.height ?? 800;

@@ -32,6 +32,7 @@ import { alertWords, said, type Raise, type Said, type ErrorOwner } from "./mode
 import { refuseCold } from "./ui/journalLoad.ts";
 import { countBefore, positionAt, carriedCount } from "./ui/viewCarets.ts";
 import { pageTop, pageTopCached } from "./ui/alertArea.ts";
+import { publish } from "./published.ts";
 
 export type OpenHow = "arrive" | "keep";
 /* what a navigation to where you already are says */
@@ -132,7 +133,7 @@ export function startSession(opts: SessionOptions): Session {
     layer,
     wrote: () => { show(); },
     refused: (md) => { rescued.raise("notSavedDeletedElsewhere", { copy: md }); },
-    pending: (n) => { document.documentElement.dataset.savesPending = String(n); },
+    pending: (n) => { publish("savesPending", n); },
   });
   const edited = (): void => { save.edited(); show(); };
   /* WHERE A PICTURE WAS AIMED is checked when its bytes are ready: a reader
@@ -241,7 +242,7 @@ export function startSession(opts: SessionOptions): Session {
        asked to see (pin: reference paste › the reference link followed) */
     const owed = how === "arrive" && pendingNow();
     keeper.open(ekey, owed ? "owed" : how, () => surface.show(layer.entryMd(ekey), ekey, how === "keep"));
-    document.documentElement.dataset.entry = ekey;
+    publish("entry", ekey);
     show();
     if (!surface.forced) replayPending();
   }

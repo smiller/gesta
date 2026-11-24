@@ -55,6 +55,7 @@ import Masthead from "./ui/Masthead.svelte";
 import FormatToolbar from "./ui/FormatToolbar.svelte";
 import CopyButton from "./ui/CopyButton.svelte";
 import icon from "./favicon.ico?inline";
+import { publish, current } from "./published.ts";
 
 /* the read-only build (`vite build --mode reader`): the entries a picked
    bundle holds, every one locked */
@@ -63,8 +64,7 @@ const READER = import.meta.env.MODE === "reader";
 const offersInterval = (dom: HTMLElement): boolean => dom.classList.contains("versepage") && !dom.classList.contains("ownnumbers");
 if (READER) document.title = "Gesta reader";
 const mountEl = document.getElementById("editor") as HTMLElement;
-const root = document.documentElement;
-const stage = (s: string): void => { root.dataset.probe = (root.dataset.probe || "") + s + ";"; };
+const stage = (s: string): void => { publish("probe", current("probe") + s + ";"); };
 const q = new URLSearchParams(location.search);
 /* ms before a store that has not answered is said not to have loaded */
 const LOAD_PATIENCE_MS = 8000;
@@ -81,7 +81,7 @@ const logged = alertLog(stored(NS + "alertlog", parseLog));
 let lastAction = "none";
 document.addEventListener("keydown", (e) => { lastAction = chordName(e) ?? lastAction; }, true);
 document.addEventListener("click", (e) => { lastAction = clickName(e.target instanceof Element ? e.target : null) ?? lastAction; }, true);
-const alerts = alertLedger(copyText, (kind, text) => logged.add({ page: document.documentElement.dataset.entry || "", action: lastAction, kind, text }));
+const alerts = alertLedger(copyText, (kind, text) => logged.add({ page: current("entry") ?? "", action: lastAction, kind, text }));
 (window as unknown as { gesta: object }).gesta = { alerts: (): AlertEntry[] => { const log = logged.entries(); console.table(log); return log; } };
 const raise = alerts.raise;
 /* the Line numbering choice is kept in this browser, out of the entries, so
@@ -221,7 +221,7 @@ const images: ImageStore = READER ? {
   keys: () => bundlePictures ? bundlePictures.keys() : Promise.resolve([]),
   clear: () => Promise.resolve(),
 } : idbImageStore();
-const count = (): void => { root.dataset.store = String(Object.keys(layer.cache).length); };
+const count = (): void => { publish("store", String(Object.keys(layer.cache).length)); };
 
 const win = window as unknown as { showDirectoryPicker?: (opts?: { mode?: "read" | "readwrite" }) => Promise<Dir> };
 /* the backup's status line is an info, each step restarting the clock,
@@ -538,7 +538,7 @@ if (READER) wrote.then(loadWatch.start); else loadWatch.start();
 /* the pages became commonplaces before anything reads the keys: the
    lists, the search index, the backup's folders */
 primed.then(held).then(() => layer.warm()).then(() => loadWatch.landed(layer)).then(afterLoad({ layer, pictures: pictureMoves(images), kept: [(moved) => kept.relocate({ moved })], readOnly: READER })).then((migrated) => {
-  if (layer.storeReadFailed) { stage("fail"); root.dataset.store = "failed: " + layer.storeReadError; reanswerOpen(); return; }
+  if (layer.storeReadFailed) { stage("fail"); publish("store", "failed: " + layer.storeReadError); reanswerOpen(); return; }
   stage("all"); count();
   raise("entriesStored", { n: Object.keys(layer.cache).length });
   /* an entry opened from its primed row is redrawn only where the warm

@@ -57,3 +57,8 @@
 {"at":"2026-11-24T13:47","ev":"detail","id":"A26.1.3","text":"Asked: 12:47, 'yes' to building architecture candidate 6. Why: a write begun by a hand-over (a rename's or move's land or keep) went through put with no tell, so data-saves-pending said 0 while it was writing. Done when: every write begun is told, by test first; the accept after (src/ moves)."}
 {"at":"2026-11-24T13:48","ev":"done","id":"W5","commits":["b65a38d"]}
 {"at":"2026-11-24T13:48","ev":"start","id":"W4"}
+{"at":"2026-11-24T13:51","ev":"done","id":"W4","commits":["97c6da0"]}
+{"at":"2026-11-24T13:51","ev":"start","id":"W3"}
+{"at":"2026-11-24T14:05","ev":"add","id":"F8","list":"F","title":"No new tab opened for either external link in one order run","detail":"Asked: found 14:02 (not asked), the verdict over W3: in the order run's window, ⌘-click on an external link and ⌃⌘Enter on one both printed 'a new tab's wait ran out after 5000 ms' and read newTab:false, where the corner run beside it opened both; two replays of the order run opened both. Kept at tools/out/helium-failed/order-2026-11-24-140243.txt. Why: both waits in one window ran out together, so the window, not one step, stopped seeing its new pages (inferred). Done when: woken, the window's state at the run-out read and the cause held; or the reader closes it."}
+{"at":"2026-11-24T14:05","ev":"watch","id":"F8","text":"a new tab's wait ran out"}
+{"at":"2026-11-24T14:05","ev":"stop","id":"F8","note":"paused: two replays did not show it; wakes on 'a new tab's wait ran out' in a verdict"}

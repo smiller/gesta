@@ -5,9 +5,10 @@
      button here would take focus from the editor on a Tab. -->
 <script lang="ts">
   import { liveAlerts, saidLog, type Alerts, type Kind } from "./alertLedger.svelte.ts";
+  import { publish } from "../published.ts";
   let { alerts, onResume }: { alerts: Alerts; onResume: () => void } = $props();
-  $effect(() => { document.documentElement.dataset.alerts = JSON.stringify(liveAlerts(alerts.state)); });
-  $effect(() => { document.documentElement.dataset.saidLog = JSON.stringify(saidLog(alerts.state)); });
+  $effect(() => { publish("alerts", liveAlerts(alerts.state)); });
+  $effect(() => { publish("saidLog", saidLog(alerts.state)); });
 </script>
 
 <div class="alerts">

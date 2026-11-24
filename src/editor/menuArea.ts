@@ -1,3 +1,4 @@
+import { publish } from "../published.ts";
 /* px: the narrowest window a menu area opens in; narrower, the width left
    for the text is too narrow to read in, and the menu lies over it */
 export const MENU_AREA_FROM = 900;
@@ -61,7 +62,7 @@ export function browserLayout(root: HTMLElement): LayoutPort {
     },
     write: (px) => {
       root.style.setProperty("--menu-area-w", px + "px");
-      root.dataset.menuArea = String(px);
+      publish("menuArea", px);
     },
   };
 }

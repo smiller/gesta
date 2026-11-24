@@ -19,7 +19,7 @@ const ALLOWED: Record<string, Reads & { why: string }> = {
   "steps/kit.ts": { corner: 0, fade: 0, live: 2, said: 0, why: "a wait for the info and success alerts to be gone before a point is measured, their height moving the text, and what stood when it ran out" },
 };
 const count = (text: string, re: RegExp): number => text.match(re)?.length ?? 0;
-const readingsOf = (text: string): Reads => ({ corner: count(text, /__corner\(\)/g), fade: count(text, /\bR\.corner\(/g), live: count(text, /dataset\.alerts\b/g), said: count(text, /dataset\.saidLog\b|__saidMark\b/g) });
+const readingsOf = (text: string): Reads => ({ corner: count(text, /__corner\(\)/g), fade: count(text, /\bR\.corner\(/g), live: count(text, /dataset\.alerts\b|__published\("alerts"\)/g), said: count(text, /dataset\.saidLog\b|__published\("saidLog"\)|__saidMark\b/g) });
 const OWNERS = new Set(["inPage.ts", "said.ts"]);
 const filesUnder = (dir: string): string[] => readdirSync(dir, { recursive: true, encoding: "utf8" }).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts") && !OWNERS.has(f));
 

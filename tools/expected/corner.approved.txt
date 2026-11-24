@@ -767,19 +767,19 @@ menus: arrived at 2026-09-06: {"cursor":"at a line's start"}
 the warm done, the menu still open: {"icons":["Bookshelf menu"],"goto":false,"focus":"menu","sel":"Ovid","cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 == menu area
 menu area: arrived at commonplace/Three Cards: {"cursor":"at a line's start"}
-three cards at 1400 px, the menu open: {"menuArea":"288","cursor":"on nav","screen":"commonplace/Three Cards · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+three cards at 1400 px, the menu open: {"menuArea":288,"cursor":"on nav","screen":"commonplace/Three Cards · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 menu area: arrived at bookshelf/Donne, John/Anniversaries/The First Anniversarie: {"cursor":"at a line's start"}
 Donne's margin notes at 1500 px, the menu open: {"inMargin":true,"clearOfMenu":true,"cursor":"on nav","screen":"bookshelf/Donne, John/Anniversaries/The First Anniversarie · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 menu area: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line's start"}
-Ovid 1, the menu closed: {"menuArea":"0","textLeft":32,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-Ovid 1 scrolled, the menu open: {"menuArea":"288","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-Ovid 1, the menu closed again: {"menuArea":"0","textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
-Ovid 1 scrolled, ⌃⌘J pressed 1: {"menuArea":"288","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-Ovid 1 scrolled, ⌃⌘J pressed 2: {"menuArea":"288","textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
-Ovid 1 scrolled, ⌃⌘J pressed 3: {"menuArea":"0","textLeft":32,"sameTopLine":true,"cursor":"on select","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows goto · rendered · corner [whatever stood]"}
-Ovid 1, the Go to row closed: {"menuArea":"0","textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+Ovid 1, the menu closed: {"menuArea":0,"textLeft":32,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, the menu open: {"menuArea":288,"textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1, the menu closed again: {"menuArea":0,"textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, ⌃⌘J pressed 1: {"menuArea":288,"textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, ⌃⌘J pressed 2: {"menuArea":288,"textLeft":320,"sameTopLine":true,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1 scrolled, ⌃⌘J pressed 3: {"menuArea":0,"textLeft":32,"sameTopLine":true,"cursor":"on select","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows goto · rendered · corner [whatever stood]"}
+Ovid 1, the Go to row closed: {"menuArea":0,"textLeft":32,"sameTopLine":true,"cursor":"at a line's start","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 menu area: arrived at bookshelf/Ovid/Metamorphoses/Book 1: {"cursor":"at a line's start"}
-Ovid 1 at 860 px, the menu open: {"menuArea":"0","cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
+Ovid 1 at 860 px, the menu open: {"menuArea":0,"cursor":"on nav","screen":"bookshelf/Ovid/Metamorphoses/Book 1 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 menu area: arrived at bookshelf/Author 60: {"cursor":"at a line's start"}
 Author 60 of 60, ⌃⌘J: {"sel":"Author 60","inView":true,"scrolled":true,"cursor":"on nav","screen":"bookshelf/Author 60 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}
 Author 60, the book icon over the commonplace menu: {"sel":"Author 60","inView":true,"scrolled":true,"cursor":"on nav","screen":"bookshelf/Author 60 · sel none · toolbar off · opened menu · rows none · rendered · corner [whatever stood]"}

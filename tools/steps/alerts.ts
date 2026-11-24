@@ -359,8 +359,8 @@ section("alerts and places", async () => {
 });
 /* the error and the warning live, as the page publishes them, and where each is drawn: across the page, how far under the masthead */
 const standing = () => page.evaluate(() => {
-  const live = JSON.parse(document.documentElement.dataset.alerts || "{}"), head = document.querySelector("header.site-head")!.getBoundingClientRect().bottom;
-  const one = (kind: string) => {
+  const live = window.__published("alerts"), head = document.querySelector("header.site-head")!.getBoundingClientRect().bottom;
+  const one = (kind: "error" | "warning") => {
     if (!live[kind]) return null;
     const r = document.querySelector(".alert." + kind)!.getBoundingClientRect();
     return { text: live[kind], across: Math.round(r.width) >= Math.round(innerWidth * 0.9), under: Math.round(r.top - head) };

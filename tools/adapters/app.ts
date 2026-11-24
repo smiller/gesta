@@ -8,7 +8,7 @@ import { inPage, inPageWith } from "./inPage.ts";
 import { said, saidAfterGesture } from "./said.ts";
 import { waitSaveLanded } from "./saves.ts";
 import { ranOutLine, waitState } from "./waits.ts";
-import { answers, type SearchShown } from "./searchShown.ts";
+import type { SearchShown } from "../../src/published.ts";
 import { landings, landing, pieceAt, closesNeedle, type TextPoint } from "./textPoint.ts";
 export const name = "app";
 /* under the system temp, not tools/out: a profile under Dropbox is held by
@@ -35,7 +35,7 @@ async function launch(page: Page, seeds: Record<string, string>) {
   await page.goto(url("commonplace/Horace"));
   await waitWarm(page);
   await reseeded(page, seeds);
-  return page.evaluate(() => document.documentElement.dataset.probe);
+  return page.evaluate(() => window.__published("probe"));
 }
 /* a section's start: the origin's storage cleared — the entries, the
    pictures, the index, localStorage — the clipboard emptied, and the
@@ -49,25 +49,22 @@ export async function fresh(page: Page, seeds: Record<string, string>) {
   await page.evaluate(() => navigator.clipboard.writeText("")).catch(() => {});
   return stages;
 }
-export const entry = (page: Page) => page.evaluate(() => document.documentElement.dataset.entry);
-export const waitEntry = (page: Page, key: string, ms = 15000) => waitState(page, { name: "entry", ms, stood: () => entry(page) }, (k) => document.documentElement.dataset.entry === k, key);
-function answeredNow(q: string): boolean {
-  return answers(JSON.parse(document.documentElement.dataset.search || "null"), q);
-}
+export const entry = (page: Page) => page.evaluate(() => window.__published("entry"));
+export const waitEntry = (page: Page, key: string, ms = 15000) => waitState(page, { name: "entry", ms, stood: () => entry(page) }, (k) => window.__published("entry") === k, key);
 /* once the search's rows answer `q`, or once `ms` has gone by: a wait
    that runs out says so in the run's own output, with what the box held,
    and answers null, the rows then those of some other query */
 export async function waitSearchAnswered(page: Page, q: string, ms = 5000): Promise<SearchShown | null> {
-  const answered = await page.waitForFunction(inPageWith(q, answeredNow, answers), undefined, { timeout: ms, polling: 25 }).then(() => true, () => false);
-  if (answered) return page.evaluate(() => JSON.parse(document.documentElement.dataset.search || "null") as SearchShown | null);
-  const shown = await page.evaluate(() => ({ shown: JSON.parse(document.documentElement.dataset.search || "null") as SearchShown | null, typed: document.querySelector<HTMLInputElement>(".search-input")?.value ?? null, focused: String(document.activeElement?.className || document.activeElement?.tagName).slice(0, 30) }));
+  const answered = await page.waitForFunction((q) => window.__published("search")?.answered === q, q, { timeout: ms, polling: 25 }).then(() => true, () => false);
+  if (answered) return page.evaluate(() => window.__published("search"));
+  const shown = await page.evaluate(() => ({ shown: window.__published("search"), typed: document.querySelector<HTMLInputElement>(".search-input")?.value ?? null, focused: String(document.activeElement?.className || document.activeElement?.tagName).slice(0, 30) }));
   console.log(ranOutLine("search", ms, { q, ...shown }));
   return null;
 }
-export const waitWarm = (page: Page) => waitState(page, { name: "warm", ms: 15000, stood: () => page.evaluate(() => document.documentElement.dataset.probe) }, () => document.documentElement.dataset.probe?.includes("all;"));
+export const waitWarm = (page: Page) => waitState(page, { name: "warm", ms: 15000, stood: () => page.evaluate(() => window.__published("probe")) }, () => window.__published("probe").includes("all;"));
 /* the markdown the store holds, read straight from IndexedDB after the
    save's debounce */
-export const stored = async (page: Page, which?: string) => { await waitSaveLanded(page, 3000); return page.evaluate(([which, dbName, storeName]) => new Promise<string | null>((res, rej) => { const key = which || document.documentElement.dataset.entry; const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [which, ENTRY_DB, ENTRY_STORE]); };
+export const stored = async (page: Page, which?: string) => { await waitSaveLanded(page, 3000); return page.evaluate(([which, dbName, storeName]) => new Promise<string | null>((res, rej) => { const key = which || window.__published("entry"); const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).get(key); g.onsuccess = () => { db.close(); res(g.result?.md ?? null); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [which, ENTRY_DB, ENTRY_STORE]); };
 /* another tab's write or delete, made in `page` straight to the store and announced as a landing is */
 export const pictureKeys = (page: Page, prefix: string) => page.evaluate(([prefix, dbName, storeName]) => new Promise<IDBValidKey[]>((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const g = db.transaction(storeName).objectStore(storeName).getAllKeys(); g.onsuccess = () => { db.close(); res(g.result.filter((k) => String(k).startsWith(prefix)).sort()); }; g.onerror = () => { db.close(); rej(g.error); }; }; }), [prefix, IMG_DB, IMG_STORE]);
 export const foreignWrite = (page: Page, key: string, md: string | null) => page.evaluate(([k, md, dbName, storeName, channel]) => new Promise<void>((res, rej) => { const r = indexedDB.open(dbName); r.onerror = () => rej(r.error); r.onsuccess = () => { const db = r.result; const t = db.transaction(storeName, "readwrite"); const st = t.objectStore(storeName); if (md === null) st.delete(k); else st.put({ key: k, md }); t.onerror = () => rej(t.error); t.oncomplete = () => { db.close(); new BroadcastChannel(channel).postMessage(k); res(); }; }; }), [key, md, ENTRY_DB, ENTRY_STORE, NS + "entries"]);
@@ -109,7 +106,7 @@ function openRows(): string {
 }
 function screenLine(): string {
   const corner = window.__corner() || "";
-  return [document.documentElement.dataset.entry, "sel " + selectedNow(), "toolbar " + (document.querySelector(".fmt")?.classList.contains("show") ? "on" : "off"),
+  return [window.__published("entry"), "sel " + selectedNow(), "toolbar " + (document.querySelector(".fmt")?.classList.contains("show") ? "on" : "off"),
     "opened " + openedNow(), "rows " + openRows(),
     pageShows(".mode") ? "source" : "rendered", "corner " + JSON.stringify(corner)].join(" · ");
 }
@@ -341,17 +338,17 @@ export const read = {
   corner: (page: Page) => page.evaluate(() => { const s = document.querySelector(".alert.show") ?? [document.querySelector(".alert.success"), document.querySelector(".alert.info")].find((e) => e?.textContent); return { text: s?.textContent, show: s?.classList.contains("show"), opacity: getComputedStyle(s).opacity, pill: document.querySelector(".backup-paused")?.hidden }; }),
   /* the error and the warning live, and nothing a fading alert's clock decides */
   /* an error stands until something resolves it; a warning fades on the clock */
-  standingText: (page: Page) => page.evaluate(() => JSON.parse(document.documentElement.dataset.alerts || "{}").error || undefined),
+  standingText: (page: Page) => page.evaluate(() => window.__published("alerts").error || undefined),
   masthead: (page: Page) => page.evaluate(() => { const h = document.querySelector(".site-head"); const r = h.getBoundingClientRect(); return { crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(), title: document.querySelector(".page-title")?.textContent, titleHidden: document.querySelector(".page-title")?.hidden, lines: !document.querySelector(".page-lines")?.hidden, today: !document.querySelector(".toolbtn[title='Go to today']")?.hidden, backups: document.querySelector(".toolbtn[title='Automatic folder backups']")?.textContent, height: r.height, sticky: getComputedStyle(h).position }; }),
   /* an open menu's selected row, the menu area's width, where the page's text starts, and the words before the caret */
-  menuNow: (page: Page) => page.evaluate(() => { const s = getSelection(); const t = s && s.rangeCount && s.anchorNode && s.anchorNode.nodeType === 3 ? (s.anchorNode.textContent || "").slice(Math.max(0, s.anchorOffset - 12), s.anchorOffset) : ""; const under = (window as unknown as { __pageTop?: () => number }).__pageTop?.() ?? 0; const left = document.querySelector("#editor .page")?.getBoundingClientRect().left ?? 0; const first = document.elementFromPoint(left + 40, under + 10)?.closest(".vrow, .page > *"); return { topLine: first?.textContent?.trim().slice(0, 30) ?? null, sel: document.documentElement.dataset.menuSel ?? null, menuArea: document.documentElement.dataset.menuArea ?? "0", textLeft: Math.round(document.querySelector("#editor .page")?.getBoundingClientRect().left ?? -1), beforeCaret: t }; }),
-  round: (page: Page) => page.evaluate(() => ({ icons: [...document.querySelectorAll(".opener[aria-expanded='true']")].map((b) => b.getAttribute("aria-label")), goto: !!document.querySelector(".page-goto")?.open, focus: document.activeElement?.closest(".menu, .page-goto")?.classList[0] ?? null, sel: document.documentElement.dataset.menuSel ?? null })),
+  menuNow: (page: Page) => page.evaluate(() => { const s = getSelection(); const t = s && s.rangeCount && s.anchorNode && s.anchorNode.nodeType === 3 ? (s.anchorNode.textContent || "").slice(Math.max(0, s.anchorOffset - 12), s.anchorOffset) : ""; const under = (window as unknown as { __pageTop?: () => number }).__pageTop?.() ?? 0; const left = document.querySelector("#editor .page")?.getBoundingClientRect().left ?? 0; const first = document.elementFromPoint(left + 40, under + 10)?.closest(".vrow, .page > *"); return { topLine: first?.textContent?.trim().slice(0, 30) ?? null, sel: window.__published("menuSel"), menuArea: window.__published("menuArea"), textLeft: Math.round(document.querySelector("#editor .page")?.getBoundingClientRect().left ?? -1), beforeCaret: t }; }),
+  round: (page: Page) => page.evaluate(() => ({ icons: [...document.querySelectorAll(".opener[aria-expanded='true']")].map((b) => b.getAttribute("aria-label")), goto: !!document.querySelector(".page-goto")?.open, focus: document.activeElement?.closest(".menu, .page-goto")?.classList[0] ?? null, sel: window.__published("menuSel") })),
   menu: (page: Page) => page.evaluate(() => { const p = document.querySelector(".menu"); return p ? { rows: [...p.querySelectorAll("a")].map((a) => a.textContent), create: p.querySelector(".menu-act")?.textContent, empty: p.querySelector(".menu-empty")?.textContent } : null; }),
-  afterModClick: (page: Page) => page.evaluate(() => ({ stayed: document.documentElement.dataset.entry, nodeSelected: !!document.querySelector(".ProseMirror-selectednode"), selection: document.getSelection()?.toString().slice(0, 20), toolbar: document.querySelector(".fmt")?.classList.contains("show") })),
+  afterModClick: (page: Page) => page.evaluate(() => ({ stayed: window.__published("entry"), nodeSelected: !!document.querySelector(".ProseMirror-selectednode"), selection: document.getSelection()?.toString().slice(0, 20), toolbar: document.querySelector(".fmt")?.classList.contains("show") })),
   pairs: (page: Page) => page.evaluate(() => document.querySelectorAll("#editor .vpair").length),
   refusedFence: async (page: Page) => ({ corner: await said(page), paragraphs: await page.evaluate(() => document.querySelectorAll("#editor p").length) }),
   /* whether the refusal still stands, not which info does: two take turns there by the run's load */
-  cleanSwitch: (page: Page) => page.evaluate(() => ({ refusalStands: /stayed a paragraph/.test(JSON.parse(document.documentElement.dataset.alerts || "{}").error || ""), verse: !!document.querySelector("#editor .verse") })),
+  cleanSwitch: (page: Page) => page.evaluate(() => ({ refusalStands: /stayed a paragraph/.test(window.__published("alerts").error || ""), verse: !!document.querySelector("#editor .verse") })),
   linesRow: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open, focused: document.activeElement?.getAttribute("aria-label"), options: [...document.querySelectorAll(".page-lines option")].map((o) => o.textContent) })),
   linesRowOpen: (page: Page) => page.evaluate(() => ({ open: document.querySelector(".page-lines").open })),
   clipboardReference: async (page: Page) => ({ ...(await page.evaluate(async () => { const corner = ""; try { const items = await navigator.clipboard.read(); const types = items[0].types; const html = types.includes("text/html") ? await (await items[0].getType("text/html")).text() : ""; const text = types.includes("text/plain") ? await (await items[0].getType("text/plain")).text() : ""; return { corner, types, textHead: text.slice(0, 40), passage: text.split("\n\n").slice(1).join("\n\n").slice(0, 60), htmlHead: html.replace(/<meta[^>]*>/g, "").replace(/href="[^"]*"/, 'href="…"').slice(0, 160), anchor: /<a href="[^"]*#commonplace\/Horace\?h=/.test(html), em: html.includes("<em>Horace</em>"), grid: /grid-template-columns:/.test(html) }; } catch (e) { return { corner, clipboard: String(e) }; } })), corner: await said(page) }),
@@ -446,7 +443,7 @@ export const read = {
   lastLink: (page: Page) => page.evaluate(() => { const a = [...document.querySelectorAll("#editor a")].pop(); return a && [a.textContent, a.getAttribute("href")]; }),
   tags: (page: Page) => page.evaluate(() => [...document.querySelectorAll(".tagbar a")].map((a) => a.textContent)),
   links: (page: Page) => page.evaluate(() => [...document.querySelectorAll("#editor a")].map((a) => a.getAttribute("href"))),
-  waitLinkGone: (page: Page, href: string) => waitState(page, { name: "link", ms: 5000 }, (href) => document.documentElement.dataset.entry === "2026-09-06" && !document.querySelector("#editor a[href='" + href + "']"), href),
+  waitLinkGone: (page: Page, href: string) => waitState(page, { name: "link", ms: 5000 }, (href) => window.__published("entry") === "2026-09-06" && !document.querySelector("#editor a[href='" + href + "']"), href),
   waitLink: (page: Page, href: string) => waitState(page, { name: "link", ms: 5000 }, (href) => document.querySelector("#editor a[href='" + href + "']"), href),
   listGaps: (page: Page) => page.evaluate(() => { const li = document.querySelectorAll("#editor ul > li"); const a = li[0].getBoundingClientRect(), b = li[li.length - 1].getBoundingClientRect(); const line = (el: Element) => { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); const t = w.nextNode(); const r = document.createRange(); r.selectNodeContents(t); return r.getBoundingClientRect(); }; const l0 = line(li[0]), l1 = line(li[0].querySelector("li")); return { outerGapPastNestedList: +(b.top - a.bottom).toFixed(1), lineToNextLine: +(l1.top - l0.bottom).toFixed(1), line: +l0.height.toFixed(1) }; }),
   search: (page: Page) => page.evaluate(() => { const cls = (s: string) => (s || "").replace(/\s*svelte-\w+/g, ""); return { open: document.querySelector(".page-search")?.open, focused: cls(document.activeElement?.className), scope: document.querySelector(".page-search select")?.selectedOptions[0]?.textContent, options: [...document.querySelectorAll(".page-search option")].map((o) => o.textContent), rows: [...document.querySelectorAll(".search-results li")].map((li) => cls(li.className) + ": " + li.innerText.replace(/\s+/g, " ").trim()) }; }),
@@ -460,7 +457,7 @@ export const read = {
   cornerAfter: saidAfterGesture,
   settle: (page: Page) => waitState(page, { name: "alert", ms: 5000 }, () => !document.querySelector(".alert.info.show, .alert.success.show")),
   waitSelection: (page: Page, text: string) => waitState(page, { name: "selection", ms: 5000, stood: () => page.evaluate(() => document.getSelection()?.toString()) }, (t) => document.getSelection()?.toString().toLowerCase() === t, text),
-  waitEntryAndSelection: (page: Page, key: string, text: string) => waitState(page, { name: "entry", ms: 5000, stood: () => page.evaluate(() => [document.documentElement.dataset.entry, document.getSelection()?.toString()]) }, ([k, t]) => document.documentElement.dataset.entry === k && document.getSelection()?.toString() === t, [key, text]),
+  waitEntryAndSelection: (page: Page, key: string, text: string) => waitState(page, { name: "entry", ms: 5000, stood: () => page.evaluate(() => [window.__published("entry"), document.getSelection()?.toString()]) }, ([k, t]) => window.__published("entry") === k && document.getSelection()?.toString() === t, [key, text]),
   waitImg: (page: Page) => waitState(page, { name: "picture", ms: 8000 }, () => document.querySelector("#editor img")),
-  waitEntryNot: (page: Page, key: string) => waitState(page, { name: "entry", ms: 5000, stood: () => entry(page) }, (k) => document.documentElement.dataset.entry !== k, key),
+  waitEntryNot: (page: Page, key: string) => waitState(page, { name: "entry", ms: 5000, stood: () => entry(page) }, (k) => window.__published("entry") !== k, key),
 };

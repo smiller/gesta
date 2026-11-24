@@ -28,12 +28,12 @@ export function saveLanded(pending: number, writes: number): boolean {
   return !pending && !writes;
 }
 function landedNow(): boolean {
-  return saveLanded(+(document.documentElement.dataset.savesPending ?? 0), window.__writes);
+  return saveLanded(window.__published("savesPending"), window.__writes);
 }
 /* once the last edit's save has landed, or `ms` has gone by: a wait that
    runs out says so in the run's own output, where the verdict reads it */
 export async function waitSaveLanded(page: Page, ms: number): Promise<"landed" | "ran out"> {
   const outcome = await page.waitForFunction(inPage(landedNow, saveLanded), undefined, { timeout: ms, polling: 25 }).then(() => "landed" as const, () => "ran out" as const);
-  if (outcome === "ran out") console.log(ranOutLine("save", ms, await page.evaluate(() => ({ pending: document.documentElement.dataset.savesPending ?? "0", writes: window.__writes })).catch((): null => null)));
+  if (outcome === "ran out") console.log(ranOutLine("save", ms, await page.evaluate(() => ({ pending: window.__published("savesPending"), writes: window.__writes })).catch((): null => null)));
   return outcome;
 }

@@ -11,6 +11,7 @@ import { SCOPE_EVERYTHING, SCOPE_JOURNAL, SCOPE_COMMONPLACES, bookScope, type Sc
 import { rootLabel, listing, LABEL_CAP, type Listed } from "./rootListing.ts";
 import { trimLabel } from "../model/trim.ts";
 import type { SearchState } from "./screen.svelte.ts";
+import type { SearchShown } from "../published.ts";
 
 export interface ScopeOption { label: string; scope: Scope; group: string | null }
 export function defaultScope(date: string, tag: string | null): Scope {
@@ -72,5 +73,4 @@ export function resultLabel(r: Result, scope: Scope, journal: Journal): string {
   if (isDayKey(r.date)) return r.tag ? r.date + " · " + trimLabel(r.tag, LABEL_CAP) : r.date;
   return r.tag ? pageLabel(r.date, r.tag, scope, journal) : "";
 }
-export interface SearchShown { open: boolean; answered: string | null; rows: number; empty: string }
 export const searchShown = (sr: SearchState): SearchShown => ({ open: sr.open, answered: sr.answered, rows: sr.rows.length, empty: sr.empty });

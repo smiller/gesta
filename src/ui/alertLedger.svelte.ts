@@ -1,4 +1,5 @@
 import { errText } from "../store/files.ts";
+import type { Fading, LiveAlerts, SaidLog } from "../published.ts";
 import { asSaid, alertWords, alertKind, alertMs, alertBackground, type AlertId, type Kind, type Raise, type RaiseOpts, type OwnerOpts, type ErrorOwner, type Said, type SaidOf, type BareIdOf } from "../model/alertText.ts";
 
 export interface Line { text: string; shown: boolean }
@@ -20,7 +21,6 @@ export interface AlertState {
   log: SaidLog;
 }
 export type { Kind } from "../model/alertText.ts";
-export type Fading = "info" | "success";
 export type Kept = "error" | "warning";
 /* the lifecycle handle a user-triggered op holds: the ONLY thing that
    ends the busy state, so a stray info can never sneak past the line
@@ -45,19 +45,17 @@ export interface Alerts {
 }
 /* what each kind holds while it is live, for the headless tools to read
    without waiting on what is drawn (pin: alertLedger.test › each kind present only while live) */
-export type Live = Partial<Record<Kind, string>> & { latest?: Fading };
-export function liveAlerts(state: AlertState): Live {
-  const live: Live = {};
+export function liveAlerts(state: AlertState): LiveAlerts {
+  const live: LiveAlerts = {};
   for (const kind of ["error", "warning", "info", "success"] as const) if (state[kind].shown) live[kind] = state[kind].text;
   if (state[state.latest].shown) live.latest = state.latest;
   return live;
 }
+const SAID_KEPT = 8;
 /* each thing said, numbered, so a reading can take what was said after a
    mark it set; what the app says of its own accord is left out (pin:
    alertLedger.test › numbers each thing said) (pin: alertLedger.test ›
    leaves out what the app says of its own accord) */
-export interface SaidLog { n: number; recent: { n: number; kind: Kind; text: string }[] }
-const SAID_KEPT = 8;
 export const saidLog = (state: AlertState): SaidLog => ({ n: state.log.n, recent: [...state.log.recent] });
 export const INFO_MS = 3000;
 /* a warning is no error: it fades, given longer to read than an info */

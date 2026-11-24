@@ -23,10 +23,10 @@ for (const qs of queries.length ? queries : [""]) {
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
   await page.goto(PAGE + qs);
   try {
-    await page.waitForFunction(() => document.documentElement.dataset.store !== undefined, null, { timeout: 15000 });
+    await page.waitForFunction(() => window.__published("store") !== null, null, { timeout: 15000 });
   } catch { logs.push("timed out waiting for data-store"); }
-  const got = await page.evaluate(() => ({ store: document.documentElement.dataset.store, probe: document.documentElement.dataset.probe,
-    entry: document.documentElement.dataset.entry, status: window.__corner() || "" }));
+  const got = await page.evaluate(() => ({ store: window.__published("store"), probe: window.__published("probe"),
+    entry: window.__published("entry"), status: window.__corner() || "" }));
   console.log("run [" + qs + "]", JSON.stringify(got), "| console:", logs.join(" / "));
   await ctx.close();
 }

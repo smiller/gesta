@@ -186,7 +186,7 @@ section("grid", async () => {
   /* the line fixed and the view restored: the error resolved, the grid drawn */
   await R.setSource(page, "::: grid\n::: card-light-blue\nalpha\n:::\n\n::: card-red\nloose\n:::\n:::");
   await page.keyboard.press("Control+Meta+m");
-  await waitState(page, { name: "alert", ms: 5000 }, () => !JSON.parse(document.documentElement.dataset.alerts || "{}").error);
+  await waitState(page, { name: "alert", ms: 5000 }, () => !window.__published("alerts").error);
   await log("the line made a card, switched back", { standing: (await R.standingText(page)) ?? "none", ...(await laid(R.gridLayout)) });
 });
 section("told on open", async () => {

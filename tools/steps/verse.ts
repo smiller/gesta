@@ -253,7 +253,7 @@ section("scripture's Verse box", async () => {
        Line where the convention says Verse */
     await page.reload();
     await A.waitEntry(page, chapter, 5000);
-    await waitState(page, { name: "warm", ms: 5000 }, () => (document.documentElement.dataset.probe || "").includes("all;"));
+    await waitState(page, { name: "warm", ms: 5000 }, () => window.__published("probe").includes("all;"));
     await R.settle(page);
     await rest(page);
     await page.keyboard.press("Control+Meta+g");

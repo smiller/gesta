@@ -35,7 +35,7 @@ function textsShown(): Record<string, unknown> {
 function launchShows(): Record<string, unknown> {
   const { crumb, title, status, first } = textsShown() as Record<string, string>;
   return {
-    entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
+    entry: window.__published("entry"), store: window.__published("store"),
     crumb, title, status, first,
     images: [...document.querySelectorAll<HTMLElement>("#editor img")].map(imageLine),
   };
@@ -50,7 +50,7 @@ async function launch(url: string, fn: (page: Page) => Promise<Record<string, un
   page.on("console", (m) => { if (m.type() === "error") logs.push(m.text()); });
   await page.goto(url);
   /* the WARM, not the primed open: the store count and the status are read at every step */
-  await page.waitForFunction(() => document.documentElement.dataset.probe?.includes("all;") || document.documentElement.dataset.probe?.includes("fail"), null, { timeout: 15000 }).catch(() => logs.push("no warm"));
+  await page.waitForFunction(() => window.__published("probe").includes("all;") || window.__published("probe").includes("fail"), null, { timeout: 15000 }).catch(() => logs.push("no warm"));
   const out = await fn(page);
   if (logs.length) out.logs = logs;
   await ctx.close();

@@ -1,10 +1,12 @@
 import type { Page, BrowserContext } from "playwright-core";
+import type { Published, PublishedName } from "../src/published.ts";
 
 export type { Page, BrowserContext };
 
 /* what the drivers install in the page */
 declare global {
   interface Window {
+    __published: <K extends PublishedName>(name: K) => Published[K];
     __corner: () => string | undefined;
     __saidMark?: number;
     __pageTop: () => number;

@@ -1,8 +1,8 @@
 import type { Page } from "../heliumPage.ts";
 import { inPage, inPageWith } from "./inPage.ts";
 import { waitState } from "./waits.ts";
+import type { SaidLog } from "../../src/published.ts";
 
-export interface SaidLog { n: number; recent: { n: number; text: string }[] }
 /* read from the numbered log, not the alerts on screen: an alert's time
    on screen is the clock's, which a run's load can outlast, and what was
    said before the mark belongs to an earlier step (pin: said.test › opens
@@ -12,7 +12,7 @@ export function saidSince(log: SaidLog, mark: number): string {
   return (log.n - mark > since.length ? "… " : "") + since.map((r) => r.text).join(" · ");
 }
 function saidLogNow(): SaidLog {
-  return JSON.parse(document.documentElement.dataset.saidLog || '{"n":0,"recent":[]}');
+  return window.__published("saidLog");
 }
 function saidNow(): string {
   return saidSince(saidLogNow(), window.__saidMark ?? 0);

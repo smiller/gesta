@@ -3,6 +3,7 @@
      menu closes: its menu area was read for the window it opened in. -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import { publish } from "../published.ts";
   import type { MenuRow } from "./mastheadModel.ts";
   import { menuItems, type MenuName, type MenuAct, type CloseReason } from "./menuModel.ts";
   let { name, rows, empty, acts, sel, menus, onLeave }: {
@@ -20,9 +21,8 @@
      (pin: menus › the commonplace icon over the bookshelf menu) */
   $effect(() => { void name; if (!nav) return; nav.scrollTop = 0; untrack(() => els[sel]?.scrollIntoView({ block: "nearest" })); });
   $effect(() => {
-    const root = document.documentElement;
-    root.dataset.menuSel = items[sel]?.text ?? "";
-    return () => { delete root.dataset.menuSel; };
+    publish("menuSel", items[sel]?.text ?? "");
+    return () => { publish("menuSel", null); };
   });
   /* the keys' walk scrolls the selected row into view; the pointer's does
      not, or a half-cut row scrolls out from under it */

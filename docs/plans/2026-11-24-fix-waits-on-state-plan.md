@@ -207,3 +207,14 @@ and F7 once.
   that ran out); the ledger's regexes over run names and the verdict's
   wording are gone, and a fifth run's result is carried as any other's
   (the test's record has one).
+- 14:05 W3: `src/published.ts` declares each value the page publishes on
+  the root (the entry, the saves pending, the live alerts, the said log,
+  the search row, the menu's selection and area, the store, the launch's
+  stages): its shape, its encoding, its reading while not yet published.
+  The app writes through `publish`; the tools install `decoded` in every
+  page as `__published` and read through it, about 45 reads. The search
+  shape's second declaration, its contract test and said.ts's narrower
+  said log are gone. The corner differed only in `menuArea`, now a
+  number ("288" to 288), approved after reading the whole diff.
+- 14:02 F8 added: in that verdict's order run, both external links'
+  new-tab waits ran out in one window; two replays opened both.

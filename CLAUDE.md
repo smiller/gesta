@@ -361,6 +361,12 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
   `Alerts`, `Search`, `GotoRow`, `Menu`, `FormatToolbar`, `GotoToolbar`, `ReplaceToolbar`, `Help`
   (over `help.html`), `Bookmarks`, `Shortcuts`, `Backups`, `CopyButton`;
   `ui.css`.
+- `src/published.ts` — the page's state published on the root for a
+  reader outside the app (the entry, the saves pending, the live alerts,
+  the said log, the search row, the menu's selection and area, the
+  store, the launch's stages): each value's shape, its encoding and its
+  reading while not yet published, which the Helium tools install in the
+  page as `__published`.
 - `src/session.ts` — THE BRIDGE: the editor over the journal; open by
   hash, the save's flush on leave, the walk, the reference and
   entry link to the clipboard, the two views' builders.
@@ -384,9 +390,7 @@ Tests sit beside their modules as `*.test.ts`; Vitest also reads
     step's mark), `adapters/saves.ts` (the write watcher and the wait for
     a save to land), `adapters/waits.ts` (every wait on the page's state:
     named by what it waits for, one line printed when it runs out, and
-    the wait for what should not come), `adapters/searchShown.ts` (what the search row
-    publishes, as the steps read it; `heliumSearch.test.ts` holds the two
-    to one shape), `adapters/textPoint.ts` (a point in the
+    the wait for what should not come), `adapters/textPoint.ts` (a point in the
     editor's text by a needle and an offset, and the text node it falls
     in: what a step's selection is set by, in place of a mouse aimed at
     the screen), `adapters/launch.ts` (headless Helium launched over a

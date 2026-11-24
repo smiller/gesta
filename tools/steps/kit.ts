@@ -66,7 +66,7 @@ export async function searchAnswered(p: Page) {
    (pin: where the keys go › a click below a table at the end, z typed) */
 export async function aimable(p: Page) {
   await p.evaluate(() => { for (const c of document.querySelectorAll<HTMLElement>(".alert.info.show .close, .alert.success.show .close")) c.click(); });
-  await waitState(p, { name: "alert", ms: 2000, stood: () => p.evaluate(() => document.documentElement.dataset.alerts) }, () => { const live = JSON.parse(document.documentElement.dataset.alerts || "{}"); return !live.info && !live.success; });
+  await waitState(p, { name: "alert", ms: 2000, stood: () => p.evaluate(() => window.__published("alerts")) }, () => { const live = window.__published("alerts"); return !live.info && !live.success; });
   await A.settled(p);
 }
 /* the page's picture decodes held until the step lets them go: what it

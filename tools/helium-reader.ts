@@ -42,13 +42,13 @@ const launch = async () => {
   page.on("pageerror", (e) => logs.push("pageerror: " + e.message));
   return { ctx, page };
 };
-const settled = (page: Page, what: string) => page.waitForFunction(() => /all|fail/.test(document.documentElement.dataset.probe || ""), null, { timeout: 60000 }).catch(() => logs.push("no warm " + what));
+const settled = (page: Page, what: string) => page.waitForFunction(() => /all|fail/.test(window.__published("probe")), null, { timeout: 60000 }).catch(() => logs.push("no warm " + what));
 const ms = (t: number): string => TIMED ? " (" + (Date.now() - t) + " ms)" : "";
 const first = await launch();
 await first.page.goto(PAGE + "#commonplace/Witchcraft");
 await settled(first.page, "bare");
 const screen = async (page: Page) => ({ ...(await page.evaluate(() => ({
-  entry: document.documentElement.dataset.entry, store: document.documentElement.dataset.store,
+  entry: window.__published("entry"), store: window.__published("store"),
   held: document.querySelector(".held")?.textContent, corner: "",
   editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   tools: [...document.querySelectorAll(".site-tools > :not([hidden])")].map((e) => e.textContent.trim()),
@@ -56,7 +56,7 @@ const screen = async (page: Page) => ({ ...(await page.evaluate(() => ({
 console.log("nothing kept:", JSON.stringify(await screen(first.page)));
 let t = Date.now();
 await first.page.setInputFiles(".site-tools input[type=file]", ZIP);
-await first.page.waitForFunction(() => /bundle/.test(document.documentElement.dataset.probe || ""), null, { timeout: 120000 }).catch(() => logs.push("no bundle"));
+await first.page.waitForFunction(() => /bundle/.test(window.__published("probe")), null, { timeout: 120000 }).catch(() => logs.push("no bundle"));
 await settled(first.page, "picked");
 console.log("the bundle picked" + ms(t) + ":", JSON.stringify(await screen(first.page)));
 await first.ctx.close();
@@ -69,7 +69,7 @@ const rest = () => page.waitForTimeout(400);
 
 /* the corner only where a step is about what it says */
 const look = (label: string, extra: () => Promise<object> | object = () => ({}), corner = false) => page.evaluate((corner) => ({
-  entry: document.documentElement.dataset.entry, editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
+  entry: window.__published("entry"), editable: document.querySelector(".ProseMirror")?.getAttribute("contenteditable"),
   ...(corner ? { corner: "" } : {}), hit: [...document.querySelectorAll(".jump-hit")].map((e) => e.textContent).join("|"),
   crumb: document.querySelector(".datelabel")?.textContent.replace(/\s+/g, " ").trim(),
 }), corner).then(async (r) => { console.log(label + ":", JSON.stringify({ ...r, ...(corner ? { corner: (await said(page)).trim() } : {}), ...(await extra()) })); await markSaid(page); });
