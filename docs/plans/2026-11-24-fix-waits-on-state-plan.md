@@ -201,3 +201,9 @@ and F7 once.
   lingering browser killed by its profile, a crashed window's tail, the
   builds, the rate given (`playEnv`, tested) and never the shell's. The
   throttle at 1x and at 4x: 0 sections read otherwise.
+- 13:49 W4: the verdict sends the ledger one record as JSON (each run's
+  result as it judged it, the sections each read otherwise, windows,
+  steps, seconds, the tree read as it started, the print for the waits
+  that ran out); the ledger's regexes over run names and the verdict's
+  wording are gone, and a fifth run's result is carried as any other's
+  (the test's record has one).

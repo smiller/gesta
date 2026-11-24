@@ -16,7 +16,8 @@ import { existsSync, readFileSync, readdirSync, writeFileSync, mkdirSync } from 
 import { relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fingerprint, readByDrivers, DRIVERS } from "./heliumStamp.ts";
-import { compared, ledger, readOtherwise, scrub, type Compared } from "./heliumVerdict.ts";
+import { compared, ledger, readOtherwise, scrub, READ_OTHERWISE, type Compared } from "./heliumVerdict.ts";
+import type { PlayRecord, RunResult } from "./heliumLedger.ts";
 import { built, clearProfile, playDealt, playEnv, playOne, profileOf, windowNames } from "./heliumPlay.ts";
 
 interface Tool { script: string; args?: string[]; env?: Record<string, string>; heldTo?: string; dealt?: boolean }
@@ -92,15 +93,13 @@ function said(name: string, c: Exclude<Compared, { pass: true }>): string {
     "read " + relative(process.cwd(), L.receivedPath(name)) + "; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
 interface Playing { name: string; played: string }
-/* what the play says of each run, kept for the ledger as it is printed */
-const told: string[] = [];
-const tell = (line: string): void => { told.push(line); console.log(line); };
+const results: Record<string, RunResult> = {}, otherwiseBy: Record<string, string[]> = {};
 /* a run to play, its stamps cleared and its profile emptied before any run
    of its group starts; null where a passing run's stamp stands */
 function prepare(name: string): Playing | null {
   /* an edit made while it plays is not what it played */
   const fp = fingerprint(inputsFor(name));
-  if (L.reusable(name, fp, !!process.env.STEPS)) { tell(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
+  if (L.reusable(name, fp, !!process.env.STEPS)) { results[name] = "not replayed"; console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   L.clear(name);
   for (const w of windowsOf(name)) clearProfile(w);
   return { name, played: fp };
@@ -113,11 +112,13 @@ function judge({ name, played }: Playing, received: string, baseline: string | n
   outputs.push(received);
   const held = !!TOOLS[name].heldTo, c = compared(received, baseline, held);
   L.after(name, { received, fp: played, steps: !!process.env.STEPS, held }, c);
-  if (c.pass === true) { tell(name + ": ok"); return; }
+  results[name] = c.pass ? "ok" : "failed" in c ? "failed" : "differs";
+  if (c.pass === true) { console.log(name + ": ok"); return; }
   failed++;
-  tell(said(name, c));
+  console.log(said(name, c));
   const otherwise = readOtherwise(name, c, received, baseline);
-  for (const l of otherwise) tell(l);
+  otherwiseBy[name] = [...new Set(otherwise.map((l) => l.slice(name.length + 2 + READ_OTHERWISE.length)))];
+  for (const l of otherwise) console.log(l);
   outputs.push(otherwise.join("\n"));
   console.log(name + ": this run kept at " + relative(process.cwd(), keptFailed(name, received)));
 }
@@ -153,8 +154,8 @@ const LEDGER = fileURLToPath(new URL("./heliumLedger.ts", import.meta.url));
 const treeAtStart = spawnSync("node", [LEDGER, "--tree"], { encoding: "utf8" }).stdout;
 function ledgered(): void {
   if (!outputs.length) return;
-  const args = [LEDGER, String(WINDOWS), process.env.STEPS ? "1" : "0", String(Math.round(process.uptime())), treeAtStart];
-  const l = spawnSync("node", args, { input: [...told, ...outputs].join("\n"), encoding: "utf8" });
+  const record: PlayRecord = { runs: results, readOtherwise: otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime()), tree: JSON.parse(treeAtStart), print: outputs.join("\n") };
+  const l = spawnSync("node", [LEDGER], { input: JSON.stringify(record), encoding: "utf8" });
   if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
 }
 if (approve) for (const name of run) approveOne(name);
