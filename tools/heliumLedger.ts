@@ -12,13 +12,15 @@ export interface LedgerLine extends PlayContext {
   readOtherwise: Record<string, string[]>;
   /* each wait that ran out, by what it waited for: "save", "search" */
   ranOut: Record<string, number>;
+  /* each run's inputs fingerprinted as it began; absent before they were kept */
+  inputs?: Record<string, string>;
 }
 export interface Tree { head: string; committed: boolean }
 /* a play's results as it ends, each run's by its name; its print kept
    only for the waits that ran out in it */
-export interface PlayRecord { runs: Record<string, RunResult>; readOtherwise: Record<string, string[]>; windows: number; steps: boolean; secs: number; tree: Tree; print: string }
+export interface PlayRecord { runs: Record<string, RunResult>; readOtherwise: Record<string, string[]>; windows: number; steps: boolean; secs: number; tree: Tree; print: string; inputs: Record<string, string> }
 export function ledgerLine(r: PlayRecord, at: string, load: number): LedgerLine {
-  return { at, ...r.tree, steps: r.steps, windows: r.windows, secs: r.secs, load, runs: r.runs, readOtherwise: r.readOtherwise, ranOut: ranOutCounts(r.print) };
+  return { at, ...r.tree, steps: r.steps, windows: r.windows, secs: r.secs, load, runs: r.runs, readOtherwise: r.readOtherwise, ranOut: ranOutCounts(r.print), inputs: r.inputs };
 }
 /* only a whole play of a committed tree is flake evidence: on an
    uncommitted tree, or a play of some sections, a section read otherwise
@@ -35,6 +37,31 @@ export function rateOf(lines: LedgerLine[]): Rate {
     for (const s of new Set(sections)) r.bySection[s] = (r.bySection[s] ?? 0) + 1;
   }
   return r;
+}
+/* a flake is the same inputs read more than one way, on any tree, so
+   the plays before a commit count; a whole play only, as a play of some
+   sections reads only those */
+export interface TwoWays { run: string; inputs: string; ways: Record<string, number>; first: string; last: string }
+const wayOf = (l: LedgerLine, run: string): string => {
+  const sections = l.readOtherwise[run] ?? [];
+  return l.runs[run] + (sections.length ? ": " + sections.join("; ") : "");
+};
+function playsByInputs(lines: LedgerLine[]): Map<string, TwoWays & { plays: number }> {
+  const by = new Map<string, TwoWays & { plays: number }>();
+  for (const l of lines.filter((x) => !x.steps)) {
+    for (const [run, inputs] of Object.entries(l.inputs ?? {})) {
+      if (!l.runs[run] || l.runs[run] === "not replayed") continue;
+      const k = run + " " + inputs, e = by.get(k) ?? { run, inputs, ways: {}, first: l.at, last: l.at, plays: 0 };
+      e.ways[wayOf(l, run)] = (e.ways[wayOf(l, run)] ?? 0) + 1;
+      e.plays++; e.last = l.at;
+      by.set(k, e);
+    }
+  }
+  return by;
+}
+export function readTwoWays(lines: LedgerLine[]): { playedAgain: number; twoWays: TwoWays[] } {
+  const again = [...playsByInputs(lines).values()].filter((e) => e.plays > 1);
+  return { playedAgain: again.length, twoWays: again.filter((e) => Object.keys(e.ways).length > 1).map(({ plays: _, ...e }) => e) };
 }
 const DIR = resolve("docs/helium-runs");
 const day = (at: string): string => at.slice(0, 10);

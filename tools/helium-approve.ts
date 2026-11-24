@@ -93,12 +93,13 @@ function said(name: string, c: Exclude<Compared, { pass: true }>): string {
     "read " + relative(process.cwd(), L.receivedPath(name)) + "; if it is right, `node tools/helium-approve.ts --approve " + name + "`"].join("\n");
 }
 interface Playing { name: string; played: string }
-const results: Record<string, RunResult> = {}, otherwiseBy: Record<string, string[]> = {};
+const results: Record<string, RunResult> = {}, otherwiseBy: Record<string, string[]> = {}, inputsBy: Record<string, string> = {};
 /* a run to play, its stamps cleared and its profile emptied before any run
    of its group starts; null where a passing run's stamp stands */
 function prepare(name: string): Playing | null {
   /* an edit made while it plays is not what it played */
   const fp = fingerprint(inputsFor(name));
+  inputsBy[name] = fp.slice(0, 16);
   if (L.reusable(name, fp, !!process.env.STEPS)) { results[name] = "not replayed"; console.log(name + ": ok — not replayed, its inputs those of a passing run"); return null; }
   L.clear(name);
   for (const w of windowsOf(name)) clearProfile(w);
@@ -159,10 +160,15 @@ function ledgered(): void {
   if (!outputs.length) return;
   const tree = treeOf(treeAtStart);
   if (!tree) { console.log("ledger failed: the tree was not read as the play started"); return; }
-  const record: PlayRecord = { runs: results, readOtherwise: otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime()), tree, print: outputs.join("\n") };
+  const record: PlayRecord = { runs: results, readOtherwise: otherwiseBy, windows: WINDOWS, steps: !!process.env.STEPS, secs: Math.round(process.uptime()), tree, print: outputs.join("\n"), inputs: inputsBy };
   const l = spawnSync("node", [LEDGER], { input: JSON.stringify(record), encoding: "utf8" });
   if (l.status !== 0) console.log("ledger failed (" + (l.status ?? l.signal) + "): " + (l.stderr || l.error?.message || "").trim());
 }
+/* a flake shows only as the same inputs read two ways, so a failed
+   whole play asks to be played again before anything is edited */
+function askReplay(): void {
+  if (failed && !process.env.STEPS) console.log("replay it unchanged before any edit: a run its same inputs read another way is a flake (node tools/heliumRate.ts)");
+}
 if (approve) for (const name of run) approveOne(name);
-else { for (const group of TOGETHER) await playGroup(group); wakeOnce(); ledgered(); }
+else { for (const group of TOGETHER) await playGroup(group); wakeOnce(); ledgered(); askReplay(); }
 process.exit(failed ? 1 : 0);
