@@ -22,7 +22,7 @@ decisions below.
 
 ## Record
 
-- 18:23 The walk reached 46 files, now 43, without `tools/heliumLedger.ts`;
+- 18:22 The walk reached 46 files, now 43, without `tools/heliumLedger.ts`;
   `src/store/fsa.ts` left the expected set (every import of it a type; its
   code reaches a run through the build) (1872d37).
 - 18:31 Built: `verdict(ask, ports)` with the seven tests through it;
