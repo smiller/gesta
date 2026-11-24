@@ -203,7 +203,7 @@ document.addEventListener("keydown", (e) => {
   const act = plainChord(e) ? chordAct(e.key, READER) : null;
   if (!act) return;
   e.preventDefault();
-  CHORD_ACTS[act]();
+  if (act !== "editor") CHORD_ACTS[act]();
 });
 
 const tabs = !READER && typeof BroadcastChannel === "function" ? new BroadcastChannel(NS + "entries") : null;

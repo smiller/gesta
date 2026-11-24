@@ -6,16 +6,17 @@
    a ⌘-mousedown is ProseMirror's own "select this node" gesture, and a
    handler on click ran after it had selected the whole paragraph and raised
    the format toolbar (pin: launch, menus, the corner, links › ⌘-click on an
-   external link). The plain click stays a click, so a drag that starts on
-   a link routes nothing. */
+   external link); it is taken even on an address that may not open (pin:
+   links.test › is taken whether or not the address may open). The plain
+   click stays a click, so a drag that starts on a link routes nothing. */
 import type { EditorView } from "prosemirror-view";
 import type { Command, EditorState } from "prosemirror-state";
 import type { Node } from "prosemirror-model";
 import { internalHash, entryAt } from "../store/nav.ts";
 
 export type LinkAction = { kind: "open"; href: string } | { kind: "route"; frag: string } | null;
-/* a link may arrive in pasted HTML from any page: a script or data address
-   opened in a new tab would run beside the journal's own storage
+/* a script or data address opened in a new tab would run beside the
+   journal's own storage, wherever the link came from
    (pin: links.test › is opened, by the key or the modifier, only as a web) */
 const OPENED = new Set(["http:", "https:", "mailto:", "file:"]);
 const opens = (href: string, docHref: string): LinkAction => {
@@ -30,6 +31,7 @@ export function linkAction(href: string | null, modified: boolean, docHref: stri
 /* the entry's last part, so a list of dated sub-entries tells each one's date
    without a heading for it (pin: links.test › a link into the journal names) */
 export function linkTitle(href: string, docHref: string = location.href): string {
+  if (!opens(href, docHref)) return "";
   const hint = "⌘-click to open";
   const frag = href ? internalHash(href, docHref) : null;
   const p = frag ? entryAt(frag) : null;
@@ -52,24 +54,21 @@ function followLink(act: LinkAction, ports: LinkPorts, docHref: string): void {
   if (act.kind === "open") ports.open(new URL(act.href, docHref).href);
   else ports.route(act.frag);
 }
-/* ⌃⌘Enter is swallowed in the text whether or not a link is there, by
-   decision, not handed on to the browser (pin: links.test › answers
-   handled even where it follows nothing) */
 export const followAtCaret = (ports: LinkPorts, docHref: string = location.href): Command => (state) => {
   const href = linkAtCaret(state);
   followLink(href ? keyAction(href, docHref) : null, ports, docHref);
   return true;
 };
-export function linkClick(ports: LinkPorts, phase: "mousedown" | "click"): (view: EditorView, e: MouseEvent) => boolean {
+export function linkClick(ports: LinkPorts, phase: "mousedown" | "click", docHref: () => string = () => location.href): (view: EditorView, e: MouseEvent) => boolean {
   return (_view, e) => {
     const a = (e.target as Element | null)?.closest("a");
     if (!a) return false;
     const modified = e.metaKey || e.ctrlKey;
     if (modified !== (phase === "mousedown")) return false;
-    const act = linkAction(a.getAttribute("href"), modified);
-    if (!act) return false;
+    const act = linkAction(a.getAttribute("href"), modified, docHref());
+    if (!act && !modified) return false;
     e.preventDefault();
-    followLink(act, ports, location.href);
+    followLink(act, ports, docHref());
     return true;
   };
 }

@@ -240,7 +240,9 @@ export function createEditor(mount: HTMLElement, doc: Node, opts: EditorOptions)
     markViews: { link: (mark) => { const a = document.createElement("a"); a.setAttribute("href", mark.attrs.href as string); a.title = linkTitle(mark.attrs.href as string); return { dom: a }; } },
     attributes: { class: "page", spellcheck: "false" },
     handleTextInput: (view, _from, _to, text) => textOnBlankRow(view, text) || (text === "|" && pipeInLine(view.state, view.dispatch)),
-    handleKeyDown: keydownHandler({ "Ctrl-Mod-Enter": followAtCaret(links) }),
+    /* ⌃⌘Enter is swallowed in the text whether or not a link is there
+       (pin: links.test › answers handled even where it follows nothing) */
+    handleKeyDown: keydownHandler({ "Ctrl-Meta-Enter": followAtCaret(links) }),
     handleDOMEvents: { mousedown: linkClick(links, "mousedown"), click: linkClick(links, "click") },
     ...pasteProps({ file: (f) => opts.onPasteFile?.(f), raise: (s) => opts.raise?.(s), href: () => location.href }),
     ...copyProps(),

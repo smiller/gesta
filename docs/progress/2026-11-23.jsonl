@@ -138,3 +138,8 @@
 {"at":"2026-11-23T18:56","ev":"start","id":"A22.1.3"}
 {"at":"2026-11-23T19:05","ev":"done","id":"A22.1.3","commits":["d80134b"]}
 {"at":"2026-11-23T19:05","ev":"done","id":"A22.1","commits":["6231ba4","85b4924","d80134b"]}
+{"at":"2026-11-23T19:07","ev":"add","id":"A23","list":"A","title":"The batch review: /code-review at HIGH over db735b9..d80134b","detail":"Asked: /code-review high db735b9..d80134b, typed at 19:07. Why: CLAUDE.md's batch review, owed when a batch touches a DOM seam or closes a phase. Done when: its findings land in one fix commit and its cost is recorded in the plan."}
+{"at":"2026-11-23T19:07","ev":"start","id":"A23"}
+{"at":"2026-11-23T19:17","ev":"add","id":"F5","list":"F","title":"The order run read \"grid\" otherwise once: the corner said nothing where it says saved","detail":"Asked: found 19:16 (not asked), the verdict over A23's fixes: the order run read 'the line made a card, switched back' with corner \"\" where the approved run has \"saved\"; the next play passed. The change under test does not touch the grid section. Why: the reading takes the corner's words, which a run's timing decides. Done when: woken, its kept print read (tools/out/helium-failed/order-2026-11-23-191616.txt is the first) and the reading held; or the reader closes it."}
+{"at":"2026-11-23T19:17","ev":"watch","id":"F5","text":"section read otherwise — grid"}
+{"at":"2026-11-23T19:17","ev":"stop","id":"F5","note":"paused: wakes on 'section read otherwise — grid', its print kept under tools/out/helium-failed"}

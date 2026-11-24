@@ -1,4 +1,4 @@
-import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor } from "./kit.ts";
+import { section, laid, settled, page, ctx, A, R, S, shot, log, go, stages, rest, jump, caretAt, searchFor, view, writeAll } from "./kit.ts";
 
 section("launch, menus, the corner, links", async () => {
   await afterWarm();
@@ -80,6 +80,21 @@ async function followedByKey(): Promise<void> {
   const newTab = ctx.waitForEvent("page", { timeout: 5000 }).then(() => true, () => false);
   await followed("⌃⌘Enter on an external link", "outside", 2);
   await log("an external link's new tab", { newTab: await newTab });
+  await go("commonplace/Links");
+  await view(true);
+  const source = () => page.evaluate(() => document.querySelector<HTMLTextAreaElement>("#editor textarea")?.value ?? null);
+  await page.evaluate(() => { const ta = document.querySelector<HTMLTextAreaElement>("#editor textarea")!; const at = ta.value.indexOf("Horace") + 3; ta.focus(); ta.setSelectionRange(at, at); });
+  const before = await source();
+  await page.keyboard.press("Control+Meta+Enter");
+  await rest(page);
+  await log("⌃⌘Enter in the source view", { entry: await A.entry(page), sourceKept: (await source()) === before });
+  await view(false);
+  await writeAll({ "commonplace/Script Link": "A [script](javascript:void(0)) link.\n" });
+  await go("commonplace/Script%20Link");
+  const scriptTab = ctx.waitForEvent("page", { timeout: 2000 }).then(() => true, () => false);
+  await page.click("#editor a[href^='javascript']", { modifiers: ["Meta"] });
+  await rest(page);
+  await log("⌘-click on a script link", { newTab: await scriptTab, ...(await R.afterModClick(page)) });
   for (const [key, label] of [["Enter", "Enter on a search result inside a link"], ["Control+Meta+Enter", "⌃⌘Enter on a search result inside a link"]]) {
     await go("commonplace/Links");
     await searchFor(page, "outside");

@@ -331,7 +331,7 @@ export const toggleDeclaredLine: Command = (state, dispatch) => {
 
 /* ⌃⌘I, "italic, but a line"; not ⌃⌘N, which is "new" */
 export const rowKeymap = keymap({
-  "Ctrl-Mod-i": toggleDeclaredLine,
+  "Ctrl-Meta-i": toggleDeclaredLine,
   Enter: chainCommands(enterInRow, exitNoteRow),
   "Shift-Enter": enterInRow,
   Backspace: backspaceInRow,

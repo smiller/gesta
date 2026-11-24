@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { EditorState, TextSelection } from "prosemirror-state";
 import { parseMarkdown } from "../model/parse.ts";
-import { linkAction, linkTitle, linkAtCaret, keyAction, followAtCaret } from "./links.ts";
+import { linkAction, linkTitle, linkAtCaret, keyAction, followAtCaret, linkClick } from "./links.ts";
 
 const DOC = "file:///Users/x/gesta/dist/index.html#2026-09-07";
 describe("linkAction", () => {
@@ -82,11 +82,29 @@ describe("⌃⌘Enter's command", () => {
     const here = ports(), out = ports();
     followAtCaret(here.ports, DOC)(caret("[Hor|ace](#commonplace/Horace)"));
     followAtCaret(out.ports, DOC)(caret("[out|side](https://example.org/)"));
-    expect([here.log, out.log]).toEqual([["route #commonplace/Horace"], ["open https://example.org/"]]);
+    followAtCaret(out.ports, DOC)(caret("[no|tes](notes.html)"));
+    expect([here.log, out.log]).toEqual([["route #commonplace/Horace"], ["open https://example.org/", "open file:///Users/x/gesta/dist/notes.html"]]);
   });
   it("answers handled even where it follows nothing, as every ⌃⌘ chord the page answers is swallowed", () => {
     const none = ports();
     expect(followAtCaret(none.ports, DOC)(caret("Some | words"))).toBe(true);
     expect(none.log).toEqual([]);
+  });
+});
+
+describe("a modified press on a link", () => {
+  const press = (href: string) => {
+    let prevented = false;
+    const a = { getAttribute: () => href };
+    const e = { target: { closest: () => a }, metaKey: true, ctrlKey: false, preventDefault: () => { prevented = true; } } as unknown as MouseEvent;
+    const taken = linkClick({ route: () => {}, open: () => {} }, "mousedown", () => DOC)(null as never, e);
+    return { taken, prevented };
+  };
+  it("is taken whether or not the address may open, so the press never selects the paragraph", () => {
+    expect(press("javascript:void(0)")).toEqual({ taken: true, prevented: true });
+  });
+  it("names no ⌘-click hint on an address that will not open", () => {
+    expect(linkTitle("javascript:void(0)", DOC)).toBe("");
+    expect(linkTitle("data:text/html,x", DOC)).toBe("");
   });
 });

@@ -30,6 +30,10 @@ launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"insid
 ⌃⌘Enter on an external link: {"entry":"commonplace/Links","cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 an external link's new tab: {"newTab":true,"cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"inside a line"}
+⌃⌘Enter in the source view: {"entry":"commonplace/Links","sourceKept":true,"cursor":"inside a line","screen":"commonplace/Links · sel none · toolbar off · opened none · rows none · source · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Script Link: {"cursor":"at a line's start"}
+⌘-click on a script link: {"newTab":false,"stayed":"commonplace/Script Link","nodeSelected":false,"selection":"","toolbar":false,"cursor":"at a line's start","screen":"commonplace/Script Link · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"at a line's start"}
 Enter on a search result inside a link: {"hits":true,"entry":"commonplace/Links","search":false,"newTab":false,"cursor":"selected 7","screen":"commonplace/Links · sel 7 chars · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"selected 7"}
 ⌃⌘Enter on a search result inside a link: {"hits":true,"entry":"commonplace/Links","search":true,"newTab":false,"cursor":"on input","screen":"commonplace/Links · sel none · toolbar off · opened none · rows search · rendered · corner [whatever stood]"}

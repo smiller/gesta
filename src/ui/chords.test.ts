@@ -12,10 +12,10 @@ describe("the ⌃⌘ chords", () => {
   it("help's table lists every chord, in the table's order, in the table's words", () => {
     expect(helpRows()).toEqual(CHORDS.map((c) => [c.label, c.help]));
   });
-  it("a key names its chord's act in either case; the reader is refused the writing and panel chords; the editor's own keys and an unknown key name none", () => {
+  it("a key names its chord's act in either case; the reader is refused the writing and panel chords; the editor's own keys name the editor; an unknown key names none", () => {
     expect([chordAct("j", false), chordAct("J", false), chordAct(",", false)]).toEqual(["round", "round", "previous"]);
     expect(["h", "b", "s", "n", "e"].map((k) => chordAct(k, true))).toEqual([null, null, null, null, null]);
     expect([chordAct("k", true), chordAct("m", true)]).toEqual(["search", "view"]);
-    expect([chordAct("i", false), chordAct("enter", false), chordAct("q", false)]).toEqual([null, null, null]);
+    expect([chordAct("i", false), chordAct("enter", true), chordAct("q", false)]).toEqual(["editor", "editor", null]);
   });
 });

@@ -87,3 +87,22 @@ link?" A link was followed only by a mouse press (`links.ts`).
   map and listener go, `switchView` joins its interface. A test reads
   help's table against the module: help lacked ⌃⌘I, now listed. The
   verdict played whole and passed unchanged, the reader's included.
+- 19:18 A23, the confirmation pass, `/code-review high db735b9..d80134b`:
+  103,941 tokens (the transcript's last message). Six findings:
+  - ⌃⌘Enter outside the rendered text was no longer swallowed: the page's
+    listener now swallows the editor's two keys too, every chord in the
+    table being swallowed. In the source view the markdown was kept
+    either way (played).
+  - ⌘-click on an address that may not open fell to ProseMirror's
+    select-this-node: the whole paragraph selected, the format toolbar up
+    (played). The press is now taken on any link.
+  - The ⌘-click hint is left off a link whose address will not open.
+  - "Ctrl-Mod-" is Ctrl alone off macOS: ⌃⌘Enter and ⌃⌘I now say
+    "Ctrl-Meta-". A mechanical class, so `tools/chordSpelling.test.ts`
+    checks src/ (2 hits before the fix; it caught both with the two files
+    put back).
+  - The opener's test resolves a relative address, as its title says.
+  - Comments that spoke of other code: reworded or folded into the
+    header.
+  - F5: the order run read "grid" otherwise once (the corner's "saved"),
+    a section this does not touch; the next play passed.
