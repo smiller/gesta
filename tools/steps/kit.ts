@@ -52,6 +52,10 @@ export async function searchFor(p: Page, words: string) {
   const focused = await p.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).then(() => true, () => false);
   if (!focused) { console.log("a search box's wait ran out after 2000 ms: the box not focused"); return null; }
   if (words) { await p.keyboard.press("Meta+a"); await p.keyboard.type(words); }
+  return searchAnswered(p);
+}
+/* once the search answers the query its box holds */
+export async function searchAnswered(p: Page) {
   const q = await p.evaluate(() => document.querySelector<HTMLInputElement>(".search-input")?.value ?? "");
   return A.waitSearchAnswered(p, q.trim());
 }

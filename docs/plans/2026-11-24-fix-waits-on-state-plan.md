@@ -142,7 +142,7 @@ and F7 once.
   (entrySave.ts:114-117).
 - 11:40 Candidates 1 and 2 grilled (Q1-Q15, all yes): 1 first, its own
   commit; 2 after, its sweep before its forms.
-- 12:05 Candidate 1 (A26.1.1): `textPoint.ts` owns the mapping, the
+- 11:50 Candidate 1 (A26.1.1): `textPoint.ts` owns the mapping, the
   editor's text in blocks of pieces and two points in, two landings or
   none out; four node tests from the real splits (marks splitting "o et
   praes", the caret closing "Sean Miller", a needle only across two
@@ -152,3 +152,8 @@ and F7 once.
   `wordAt` all through it, a missing needle failing its step by name.
   Carets set without focusing the editor, selections with it, as before.
   The whole corner at 1x in 5 windows: 0 sections read otherwise.
+- 11:53 Candidate 2, first commit (A26.1.2): the search section's two
+  waits for any row (`R.waitSearchRows`, F6's old reading) wait for the
+  answer to the query the box holds (`searchAnswered` in the kit, which
+  `searchFor` now ends with). The section alone: as approved, no wait
+  ran out.

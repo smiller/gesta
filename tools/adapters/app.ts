@@ -461,6 +461,5 @@ export const read = {
   waitSelection: (page: Page, text: string) => page.waitForFunction((t) => document.getSelection()?.toString().toLowerCase() === t, text, { timeout: 5000 }).catch(() => {}),
   waitEntryAndSelection: (page: Page, key: string, text: string) => page.waitForFunction(([k, t]) => document.documentElement.dataset.entry === k && document.getSelection()?.toString() === t, [key, text], { timeout: 5000 }),
   waitImg: (page: Page) => page.waitForFunction(() => document.querySelector("#editor img"), null, { timeout: 8000 }),
-  waitSearchRows: (page: Page) => page.waitForFunction(() => document.querySelectorAll(".search-results li").length > 0, null, { timeout: 15000 }),
   waitEntryNot: (page: Page, key: string) => page.waitForFunction((k) => document.documentElement.dataset.entry !== k, key, { timeout: 5000 }).catch(() => {}),
 };

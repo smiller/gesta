@@ -1,4 +1,4 @@
-import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, rest, openGotoRow, seed, landed } from "./kit.ts";
+import { section, laid, settled, page, A, R, S, log, go, write, winY, saidText, wheelTo, setAnswer, STANZA_SEEDS, searchFor, searchAnswered, rest, openGotoRow, seed, landed } from "./kit.ts";
 
 section("source view", async () => {
   /* the source view: ⌃⌘M over the day, the caret carried across by its count, an edit in the source landing */
@@ -184,7 +184,7 @@ section("search", async () => {
   await log("⌃⌘K", await R.search(page));
   await page.selectOption(S.searchScope, { label: "Everything" });
   await page.keyboard.type("sister");
-  await R.waitSearchRows(page);
+  await searchAnswered(page);
   await log("typed sister", await R.search(page));
   await page.keyboard.press("ArrowDown");
   await log("after ↓", (await R.search(page)).rows.filter((r) => r.includes("active")));
@@ -195,7 +195,7 @@ section("search", async () => {
   await rest(page);
   await page.selectOption(S.searchScope, { label: "Journal" });
   await page.keyboard.type("blackamoor");
-  await R.waitSearchRows(page);
+  await searchAnswered(page);
   await page.keyboard.press("Enter");
   await R.waitSelection(page, "blackamoor");
   await log("a jump to a hit in the entry already open", { entry: await A.entry(page), selected: await R.selectionText(page), open: await R.searchOpen(page) });
