@@ -17,6 +17,12 @@ and F7 once.
 3. `THROTTLE=n` slows every page's CPU n times through CDP, so a step
    that waits on a clock reads otherwise every play instead of now and
    then; the tool for finding the rest.
+4. Search reopened keeps its query with the caret at its end, so what
+   is typed adds to it (B9, the reader's pick: "if you want to modify /
+   add to an existing search, you can just keep typing"); a reading in
+   the launch section holds it.
+5. ⌃⌘Enter on a search result picks it, as Enter does (the reader's
+   yes).
 
 ## Record
 
@@ -80,3 +86,5 @@ and F7 once.
 - 07:52-07:57 Five whole plays of the committed tree at 5 windows
   (`node tools/heliumRate.ts`): 0 of 5 read a section otherwise, 77-80 s
   each; on 2026-11-23 at 5 windows, 1 of 5, 86-90 s.
+- 10:15 B9 and ⌃⌘Enter decided (4, 5). "Search reopened and typed in"
+  played alone: `{"value":"outside sky","caret":11,"end":11}`.

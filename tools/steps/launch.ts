@@ -110,6 +110,15 @@ async function followedByKey(): Promise<void> {
     await settled(page);
     await log(label, { hits, entry: await A.entry(page), search: await R.searchOpen(page), newTab: await opened });
   }
+  await searchReopened();
+}
+async function searchReopened(): Promise<void> {
+  await page.keyboard.press("Control+Meta+k");
+  await page.waitForFunction(() => document.activeElement?.classList.contains("search-input"), null, { timeout: 2000 }).catch(() => {});
+  await page.keyboard.type(" sky");
+  const box = await page.evaluate(() => { const b = document.querySelector<HTMLInputElement>(".search-input"); return b && { value: b.value, caret: b.selectionStart, end: b.selectionEnd }; });
+  await log("Search reopened and typed in: what is typed goes after the kept query", { box, answered: await A.waitSearchAnswered(page, box?.value.trim() ?? "") });
+  await page.keyboard.press("Escape");
 }
 section("fence", async () => {
   /* a verse fence pasted as TEXT mid-paragraph is set down between the halves, its first line inside */

@@ -5,3 +5,4 @@
 {"at":"2026-11-24T07:54:40","head":"ada8447","committed":true,"steps":false,"windows":5,"secs":77,"load":21.9,"runs":{"corner":"ok","order":"ok","bridge":"ok","reader":"ok"},"readOtherwise":{},"saveRanOut":0}
 {"at":"2026-11-24T07:55:57","head":"ada8447","committed":true,"steps":false,"windows":5,"secs":77,"load":23.3,"runs":{"corner":"ok","order":"ok","bridge":"ok","reader":"ok"},"readOtherwise":{},"saveRanOut":0}
 {"at":"2026-11-24T07:57:17","head":"ada8447","committed":true,"steps":false,"windows":5,"secs":79,"load":23.6,"runs":{"corner":"ok","order":"ok","bridge":"ok","reader":"ok"},"readOtherwise":{},"saveRanOut":0}
+{"at":"2026-11-24T10:13:56","head":"c2106a7","committed":false,"steps":false,"windows":5,"secs":84,"load":14.7,"runs":{"corner":"differs","order":"ok","bridge":"ok","reader":"ok"},"readOtherwise":{"corner":["launch, menus, the corner, links"]},"saveRanOut":0}

@@ -38,6 +38,7 @@ launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"at a 
 Enter on a search result inside a link: {"hits":true,"entry":"commonplace/Links","search":false,"newTab":false,"cursor":"selected 7","screen":"commonplace/Links · sel 7 chars · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
 launch, menus, the corner, links: arrived at commonplace/Links: {"cursor":"selected 7"}
 ⌃⌘Enter on a search result inside a link: {"hits":true,"entry":"commonplace/Links","search":false,"newTab":false,"cursor":"selected 7","screen":"commonplace/Links · sel 7 chars · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}
+Search reopened and typed in: what is typed goes after the kept query: {"box":{"value":"outside sky","caret":11,"end":11},"answered":{"open":true,"answered":"outside sky","rows":0,"empty":"No matches."},"cursor":"on input","screen":"commonplace/Links · sel none · toolbar off · opened none · rows search · rendered · corner [whatever stood]"}
 == fence
 fence: arrived at commonplace/Pasted Fence: {"cursor":"at a line's start"}
 a fence pasted as text mid-paragraph: {"md":"start\n\n::: verse\nHeil! Heil! | Hail! Hail!\nErlösung | Salvation\n:::\n\n end","cursor":"at a line's start","screen":"commonplace/Pasted Fence · sel none · toolbar off · opened none · rows none · rendered · corner [whatever stood]"}

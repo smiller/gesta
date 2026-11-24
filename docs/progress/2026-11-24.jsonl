@@ -30,3 +30,4 @@
 {"at":"2026-11-24T07:50","ev":"done","id":"U19.3","commits":["b292795"],"note":"THROTTLE=n and tools/heliumThrottle.ts; at 4x two sections found and held (picture decodes, column marks under a standing alert); rest() capped 6 of 574 at 1x, 5 at 4x: left as is"}
 {"at":"2026-11-24T07:50","ev":"done","id":"U19","commits":["b292795"]}
 {"at":"2026-11-24T07:50","ev":"done","id":"F6","commits":["b292795"],"note":"cause found under THROTTLE=4: the search's kept query; held by searchFor"}
+{"at":"2026-11-24T10:12","ev":"done","id":"B9","note":"the reader keeps the caret at the end; a launch reading holds it"}
