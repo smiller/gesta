@@ -180,3 +180,6 @@
 {"at":"2026-11-23T22:05","ev":"start","id":"F7"}
 {"at":"2026-11-23T22:05","ev":"watch","id":"F7","text":"a save's wait ran out"}
 {"at":"2026-11-23T22:05","ev":"stop","id":"F7","note":"paused: wakes on 'a save's wait ran out', its print kept under tools/out/helium-failed"}
+{"at":"2026-11-23T22:07","ev":"done","id":"A24.1.3","commits":["b826252"]}
+{"at":"2026-11-23T22:07","ev":"done","id":"A24.1.4","commits":["b826252"]}
+{"at":"2026-11-23T22:07","ev":"done","id":"A24.1","commits":["4b5c7ee","3f2150e","b826252"]}
